@@ -16,10 +16,13 @@ import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.gateway.GatewayRefusedException;
 import dev.jstech.computers.gateway.GatewayService;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -40,9 +43,83 @@ public final class GatewayPeripheral implements IPeripheral {
     private final NetworkGatewayBlockEntity gateway;
     /** The computers attached right now, by id, so an event can be queued on each of them. */
     private final Map<Integer, IComputerAccess> attached = new LinkedHashMap<>();
+    /**
+     * What each attached computer has mounted: by computer id, a share (its location and whether it was
+     * mounted writable) to the name ComputerCraft gave the mount, which is what unmounting takes.
+     */
+    private final Map<Integer, Map<String, String>> mounted = new LinkedHashMap<>();
 
     GatewayPeripheral(final NetworkGatewayBlockEntity gateway) {
         this.gateway = gateway;
+    }
+
+    /** Mounts, remounts or unmounts the shared folders on every attached computer, as things stand now. */
+    void refreshMounts() {
+        final GatewayService service;
+        try {
+            service = GatewayService.of(gateway);
+        } catch (final GatewayRefusedException unlinked) {
+            for (final IComputerAccess computer : attached.values()) {
+                unmountAll(computer);
+            }
+            return;
+        }
+        final List<GatewayService.SharedFolder> wanted = service.sharedFolders();
+        for (final IComputerAccess computer : attached.values()) {
+            reconcile(computer, service, wanted);
+        }
+    }
+
+    private void reconcile(final IComputerAccess computer, final GatewayService service,
+                           final List<GatewayService.SharedFolder> wanted) {
+        final Map<String, String> have = mounted.computeIfAbsent(computer.getID(), k -> new LinkedHashMap<>());
+        final Set<String> keep = new HashSet<>();
+        for (final GatewayService.SharedFolder folder : wanted) {
+            keep.add(mountKey(folder));
+        }
+        /*
+         * Stale mounts go first: a share remounted the other way round wants its location back, and
+         * ComputerCraft gives a taken location a number instead.
+         */
+        for (final Iterator<Map.Entry<String, String>> it = have.entrySet().iterator(); it.hasNext();) {
+            final Map.Entry<String, String> entry = it.next();
+            if (!keep.contains(entry.getKey())) {
+                computer.unmount(entry.getValue());
+                it.remove();
+            }
+        }
+        for (final GatewayService.SharedFolder folder : wanted) {
+            final String key = mountKey(folder);
+            if (have.containsKey(key)) {
+                continue;
+            }
+            final ShareMount mount = new ShareMount(service, folder.hostname(), folder.share(), folder.writable());
+            final String name = folder.writable()
+                    ? computer.mountWritable(folder.location(), mount)
+                    : computer.mount(folder.location(), mount);
+            if (name != null) {
+                have.put(key, name);
+            }
+        }
+    }
+
+    /** A share and the way it is mounted, so a change of either remounts it. */
+    private static String mountKey(final GatewayService.SharedFolder folder) {
+        return folder.location() + (folder.writable() ? " rw" : " ro");
+    }
+
+    private void unmountAll(final IComputerAccess computer) {
+        final Map<String, String> have = mounted.remove(computer.getID());
+        if (have != null) {
+            for (final String name : have.values()) {
+                computer.unmount(name);
+            }
+        }
+    }
+
+    /** Where {@code computerId} has the shares mounted right now, by share location; for the tests and the manager. */
+    public Map<String, String> mountsOf(final int computerId) {
+        return new LinkedHashMap<>(mounted.getOrDefault(computerId, Map.of()));
     }
 
     /** Queues {@code event} on every attached computer; how many got it. */
@@ -292,10 +369,17 @@ public final class GatewayPeripheral implements IPeripheral {
     public void attach(final IComputerAccess computer) {
         attached.put(computer.getID(), computer);
         gateway.ccAttached(computer.getID());
+        try {
+            final GatewayService service = GatewayService.of(gateway);
+            reconcile(computer, service, service.sharedFolders());
+        } catch (final GatewayRefusedException unlinked) {
+            // Not linked to a computer yet: the shares are mounted once it is, on the next refresh.
+        }
     }
 
     @Override
     public void detach(final IComputerAccess computer) {
+        unmountAll(computer);
         attached.remove(computer.getID());
         gateway.ccDetached(computer.getID());
     }

@@ -81,6 +81,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the Gateway's log, and starts a program on one of our computers. Every call is paid for out of the host
   computer's tick, counted against the Gateway's call cap, kept under its permissions and written in its
   log; an operation that settles and a watched total that moves come back as events.
+- The folders our computers share are mounted on every ComputerCraft computer attached to a Gateway, at
+  `/jsc/<computer>/<share>/`: readable while the Gateway allows reading files, writable where it allows
+  writing and the computer shared the folder for writing, gone when files are off, and following the
+  shares as they open and close. They hold text files; what a ComputerCraft program writes there weighs
+  what any file on that computer weighs and takes the file types that computer takes.
 - Mods may add a programming language of their own, and remove this one. A language that registers itself
   gets the prompt, the terminal, the task manager, saving and the tick budget without writing any of them.
 - Five editors to write a program in, each a different bargain between what it shows you and what it costs

@@ -244,6 +244,9 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
         permissions = value;
         setChanged();
         logged(by, what, "ok", GatewayLog.Tone.OK);
+        if (bridge != null) {
+            bridge.refreshMounts();
+        }
     }
 
     public GatewayLog log() {
@@ -488,6 +491,10 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
         }
         if (!watches.isEmpty() && linkedOwner != null && level.getGameTime() % WATCH_EVERY == 0L) {
             tickWatches();
+        }
+        // Shares come and go on the other computers; once a second the mounts follow them.
+        if (bridge != null && !attached.isEmpty() && level.getGameTime() % WATCH_EVERY == 10L) {
+            bridge.refreshMounts();
         }
         final boolean lit = identifying()
                 ? (level.getGameTime() / BLINK_TICKS) % 2 == 0

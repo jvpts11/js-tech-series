@@ -87,6 +87,56 @@ public final class GatewayService {
         this.shell = new ServerCliComputer(terminal, level);
     }
 
+    /** A folder one of the network's computers shares, and whether the other side may write into it. */
+    public record SharedFolder(String hostname, String share, boolean writable) {
+
+        /** Where the folder is mounted on a ComputerCraft computer. */
+        public String location() {
+            return "jsc/" + hostname + "/" + share;
+        }
+    }
+
+    /** The host's shell, for the mounts that read and write through it. */
+    public ServerCliComputer shell() {
+        return shell;
+    }
+
+    /**
+     * Every folder the network's computers share, as the mounts want it: none while the Gateway keeps
+     * files off, read-only while it allows reading, writable where it allows writing and the computer
+     * shared the folder for writing.
+     */
+    public List<SharedFolder> sharedFolders() {
+        final GatewayPermissions perms = gateway.permissions();
+        final List<SharedFolder> out = new ArrayList<>();
+        if (perms.files() == GatewayPermissions.FileAccess.OFF) {
+            return out;
+        }
+        final String own = shell.hostname();
+        for (final ICliComputer.ShareInfo share : shell.shares()) {
+            out.add(new SharedFolder(own, share.name(), share.writable() && perms.allowsWrite()));
+        }
+        for (final ICliComputer.NetworkShare share : shell.networkShares()) {
+            if (!share.hostname().equalsIgnoreCase(own)) {
+                out.add(new SharedFolder(share.hostname(), share.share().name(),
+                        share.share().writable() && perms.allowsWrite()));
+            }
+        }
+        return out;
+    }
+
+    /** A file was read through a mount: counted, and paid for by the host as a read. */
+    public void fileRead() {
+        gateway.stats().count(GatewayStats.Kind.FILE, now());
+        charge(CannonCosts.READ);
+    }
+
+    /** A file was written, made or removed through a mount: counted, and paid for by the host as a write. */
+    public void fileWritten() {
+        gateway.stats().count(GatewayStats.Kind.FILE, now());
+        charge(CannonCosts.WRITE);
+    }
+
     /** The service for a linked Gateway; refused while the Gateway has no computer to answer for it. */
     public static GatewayService of(final NetworkGatewayBlockEntity gateway) throws GatewayRefusedException {
         if (!(gateway.getLevel() instanceof ServerLevel level)) {

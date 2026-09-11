@@ -34,4 +34,11 @@ public interface IGatewayBridge {
 
     /** Queues an event on one attached computer, by id; whether it is still attached. */
     boolean eventTo(int computerId, String event, Object... arguments);
+
+    /**
+     * Brings the folders mounted on every attached computer in line with what the network shares and what
+     * the Gateway allows: new shares appear, closed ones go, and a change of the files permission
+     * remounts them the other way.
+     */
+    void refreshMounts();
 }

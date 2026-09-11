@@ -66,4 +66,9 @@ final class GatewayBridge implements IGatewayBridge {
     public boolean eventTo(final int computerId, final String event, final Object... arguments) {
         return peripheral.queueEventTo(computerId, event, arguments);
     }
+
+    @Override
+    public void refreshMounts() {
+        peripheral.refreshMounts();
+    }
 }

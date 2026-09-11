@@ -2343,6 +2343,48 @@ public final class ServerCliComputer implements ICliComputer {
         return FsResult.content(content.get());
     }
 
+    /**
+     * How many bytes the disk behind {@code path} can still take: what a mount on the other side of a
+     * Gateway reports as free space. A network path asks the machine that shares the folder.
+     */
+    public long freeBytes(final String path) {
+        final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
+        if (net != null) {
+            final Reached reached = reach(net);
+            return reached.ok() ? reached.remote().freeBytes(reached.path()) : 0L;
+        }
+        final Resolved r = resolve(path);
+        if (r.ctx() == null || r.ctx().disk().isEmpty()) {
+            return 0L;
+        }
+        return freeWeightOf(r.ctx().disk()) * DiskFilesystem.eraOf(r.ctx().disk()).bytesPerMbEq();
+    }
+
+    /** How many bytes the disk behind {@code path} holds in all; see {@link #freeBytes}. */
+    public long capacityBytes(final String path) {
+        final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
+        if (net != null) {
+            final Reached reached = reach(net);
+            return reached.ok() ? reached.remote().capacityBytes(reached.path()) : 0L;
+        }
+        final Resolved r = resolve(path);
+        if (r.ctx() == null || r.ctx().disk().isEmpty()) {
+            return 0L;
+        }
+        return capacityWeightOf(r.ctx().disk()) * DiskFilesystem.eraOf(r.ctx().disk()).bytesPerMbEq();
+    }
+
+    /** The whole of a disk or medium stack in mB-equivalents, before anything is stored on it. */
+    private static long capacityWeightOf(final ItemStack stack) {
+        if (stack.getItem() instanceof dev.jstech.computers.item.DiskItem diskItem) {
+            return diskItem.spec().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
+        }
+        if (stack.getItem() instanceof dev.jstech.computers.os.media.FormattedMediaItem mediaItem) {
+            return mediaItem.format().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
+        }
+        return 0L;
+    }
+
     @Override
     public FsResult deleteFile(final String path) {
         final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
