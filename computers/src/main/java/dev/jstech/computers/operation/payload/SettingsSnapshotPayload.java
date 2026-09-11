@@ -48,11 +48,16 @@ public record SettingsSnapshotPayload(
         List<String> installed,
         List<DiskUse> disks,
         int ramUsedMb,
-        List<RamUse> ramUses
+        List<RamUse> ramUses,
+        List<ShareRow> shares,
+        boolean remoteAllowed
 ) implements CustomPacketPayload {
 
     /** One disk's usage for the Storage page. */
     public record DiskUse(String label, long capMb, long usedMb, boolean system) {}
+
+    /** One folder this computer shares with the network: its share name, its path and whether others may write. */
+    public record ShareRow(String name, String path, boolean writable) {}
 
     /** One holder of RAM for the System Monitor: what it is called, its megabytes and its kind's name. */
     /**
@@ -126,6 +131,14 @@ public record SettingsSnapshotPayload(
             buf.writeUtf(clip(r.kind(), 16), 16);
             buf.writeVarInt(r.id());
         }
+        buf.writeVarInt(Math.min(p.shares.size(), MAX));
+        for (int i = 0; i < p.shares.size() && i < MAX; i++) {
+            final ShareRow s = p.shares.get(i);
+            buf.writeUtf(clip(s.name(), LABEL_MAX), LABEL_MAX);
+            buf.writeUtf(clip(s.path(), 128), 128);
+            buf.writeBoolean(s.writable());
+        }
+        buf.writeBoolean(p.remoteAllowed);
     }
 
     private static String clip(final String text, final int max) {
@@ -169,8 +182,14 @@ public record SettingsSnapshotPayload(
         for (int i = 0; i < ramUseCount; i++) {
             ramUses.add(new RamUse(buf.readUtf(48), buf.readVarInt(), buf.readUtf(16), buf.readVarInt()));
         }
+        final int shareCount = Math.min(buf.readVarInt(), MAX);
+        final List<ShareRow> shares = new ArrayList<>(shareCount);
+        for (int i = 0; i < shareCount; i++) {
+            shares.add(new ShareRow(buf.readUtf(48), buf.readUtf(128), buf.readBoolean()));
+        }
+        final boolean remoteAllowed = buf.readBoolean();
         return new SettingsSnapshotPayload(pos, wallpaper, computerName, accent, clock12h, guiScale, brightness,
                 saveDrive, removableAutoOpen, themePreset, taskbarCentered, darkMode, netshare, cpuLabel, cpuMhz,
-                ramMb, vramMb, osLabel, platform, installed, disks, ramUsedMb, ramUses);
+                ramMb, vramMb, osLabel, platform, installed, disks, ramUsedMb, ramUses, shares, remoteAllowed);
     }
 }

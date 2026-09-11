@@ -44,7 +44,8 @@ public final class SettingsPayloadGameTests {
                 "C", true, "", true, false, 0, "1 CPU", 100, 256, 0, "frames_11", "Frames",
                 List.of("jsc:cannonc"),
                 List.of(new SettingsSnapshotPayload.DiskUse(longDisk, 500, 12, true)),
-                40, List.of(new SettingsSnapshotPayload.RamUse(longName, 12, "PROCESS", 7)));
+                40, List.of(new SettingsSnapshotPayload.RamUse(longName, 12, "PROCESS", 7)),
+                List.of(new SettingsSnapshotPayload.ShareRow("pub", "C:\\pub", true)), false);
         final RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), helper.getLevel().registryAccess());
         SettingsSnapshotPayload.STREAM_CODEC.encode(buf, snapshot);
         final SettingsSnapshotPayload back = SettingsSnapshotPayload.STREAM_CODEC.decode(buf);
@@ -58,6 +59,9 @@ public final class SettingsPayloadGameTests {
         helper.assertTrue(back.computerName().length() == SettingsSnapshotPayload.LABEL_MAX
                         && back.installed().equals(List.of("jsc:cannonc")) && back.guiScale() == 75,
                 "everything else travels whole");
+        helper.assertTrue(back.shares().size() == 1 && back.shares().get(0).path().equals("C:\\pub")
+                        && back.shares().get(0).writable() && !back.remoteAllowed(),
+                "the shares and the remote switch travel too; got " + back.shares());
         helper.succeed();
     }
 }

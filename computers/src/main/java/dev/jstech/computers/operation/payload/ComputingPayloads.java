@@ -1390,13 +1390,17 @@ public final class ComputingPayloads {
             ramUses.add(new SettingsSnapshotPayload.RamUse(
                     entry.name(), entry.mb(), entry.kind().name(), entry.id()));
         }
+        final List<SettingsSnapshotPayload.ShareRow> shares = new ArrayList<>();
+        for (final dev.jstech.computers.program.ComputerSettings.Share share : st.shares()) {
+            shares.add(new SettingsSnapshotPayload.ShareRow(share.name(), share.path(), share.writable()));
+        }
         return new SettingsSnapshotPayload(pos, console.wallpaper(), console.computerName(),
                 st.accent(), st.clock12h(), st.guiScale(), st.brightness(),
                 String.valueOf(st.defaultSaveDrive()), st.removableAutoOpen(), st.themePreset(),
                 st.taskbarCentered(), st.darkMode(),
                 netshare, cpuLabel, computer.maxCpuMhz(),
                 computer.ramTotalMb(), computer.totalVramMb(),
-                osLabel, platform, installed, disks, ledger.usedMb(), ramUses);
+                osLabel, platform, installed, disks, ledger.usedMb(), ramUses, shares, st.remoteAllowed());
     }
 
     /** The last path segment (after the final {@code /}), or the whole path when it has no slash. */

@@ -31,6 +31,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.BooleanSupplier;
@@ -82,6 +83,26 @@ public final class SettingsApp implements IDesktopApp {
     private TextField nameField;
     @Nullable
     private Font lastFont;
+
+    /** The Network page's sharing controls, kept so the client tests can find them after a rebuild. */
+    private static final int SHARE_ROWS = 4;
+    private static final int SHARE_ROW_H = 12;
+    private static final int SHARE_PATH_MAX = 96;
+    private static final float SMALL = 0.75f;
+    private final List<Button> shareRowRead = new ArrayList<>();
+    private final List<Button> shareRowWrite = new ArrayList<>();
+    private final List<Button> shareRowRemove = new ArrayList<>();
+    @Nullable
+    private TextField shareField;
+    @Nullable
+    private Button shareReadOnly;
+    @Nullable
+    private Button shareForWriting;
+    @Nullable
+    private Button remoteAllowedButton;
+    @Nullable
+    private Button remoteRefusedButton;
+    private boolean remoteAllowed = true;
 
     /** A wallpaper style or an accent colour as a small square that a click chooses. */
     private final class Swatch extends UiComponent {
@@ -374,6 +395,131 @@ public final class SettingsApp implements IDesktopApp {
         pagePanel.add(new ProgressBar(() -> permille / 10)).setBounds(x, y, Math.min(w, 150), 6);
         y += 16;
         caption("Link: on the data network", x, y, w);
+        y += 12;
+
+        /*
+         * The folders this computer shares, as the prompt's "config share" lists them: one row each with its
+         * mode, a read / write pair to change it and Remove; then a field and two buttons to share another.
+         * The page has room for a few rows; past that the prompt is the place to see them all.
+         */
+        caption("Shared folders", x, y, w);
+        y += 10;
+        shareRowRead.clear();
+        shareRowWrite.clear();
+        shareRowRemove.clear();
+        final List<SettingsSnapshotPayload.ShareRow> shares = d.shares();
+        final int shown = Math.min(shares.size(), SHARE_ROWS);
+        for (int i = 0; i < shown; i++) {
+            final SettingsSnapshotPayload.ShareRow share = shares.get(i);
+            /*
+             * The page is narrow: the path takes what the three buttons leave, and the mode is the button
+             * that is lit (read or write), not a word of its own.
+             */
+            pagePanel.add(new Label(share.path(), share.writable() ? Label.Tone.ACCENT : Label.Tone.TEXT).setScale(SMALL))
+                    .setBounds(x, y + 2, w - 100, 8);
+            shareRowRead.add(pagePanel.add(new Button("read", () -> set("share", share.path() + " read"))
+                    .setPrimary(!share.writable()).setLabelScale(SMALL)));
+            shareRowRead.get(i).setBounds(x + w - 96, y, 24, SHARE_ROW_H - 1);
+            shareRowWrite.add(pagePanel.add(new Button("write", () -> set("share", share.path() + " write"))
+                    .setPrimary(share.writable()).setLabelScale(SMALL)));
+            shareRowWrite.get(i).setBounds(x + w - 70, y, 28, SHARE_ROW_H - 1);
+            shareRowRemove.add(pagePanel.add(new Button("Remove", () -> set("unshare", share.name())).setLabelScale(SMALL)));
+            shareRowRemove.get(i).setBounds(x + w - 40, y, 40, SHARE_ROW_H - 1);
+            y += SHARE_ROW_H;
+        }
+        if (shares.size() > shown) {
+            caption("and " + (shares.size() - shown) + " more: config share at the prompt lists them all", x, y + 2, w);
+            y += 10;
+        }
+        y += 3;
+        final TextField field = pagePanel.add(new TextField(SHARE_PATH_MAX).setPlaceholder("folder to share, as C:\\pub"));
+        field.setBounds(x, y, w, 13);
+        shareField = field;
+        y += 17;
+        final int readW = Math.round(font.width("Share read-only") * SMALL) + 10;
+        final int writeW = Math.round(font.width("Share for writing") * SMALL) + 10;
+        shareReadOnly = pagePanel.add(new Button("Share read-only", () -> shareTyped("read")).setLabelScale(SMALL));
+        shareReadOnly.setBounds(x, y, readW, BTN_H);
+        shareForWriting = pagePanel.add(new Button("Share for writing", () -> shareTyped("write")).setLabelScale(SMALL));
+        shareForWriting.setBounds(x + readW + 4, y, writeW, BTN_H);
+        y += BTN_H + 4;
+        final String host = d.computerName().isEmpty() ? "computer" : d.computerName().toLowerCase(Locale.ROOT).replace(' ', '-');
+        pagePanel.add(new Label("Others reach it as \\\\" + host + "\\<share>,", Label.Tone.DIM)
+                .setScale(SMALL)).setBounds(x, y, w, 8);
+        y += 8;
+        pagePanel.add(new Label("CC computers as /jsc/" + host + "/<share>.", Label.Tone.DIM)
+                .setScale(SMALL)).setBounds(x, y, w, 8);
+        y += 13;
+
+        caption("Remote programs", x, y, w);
+        y += 10;
+        remoteAllowed = d.remoteAllowed();
+        final int allowedW = font.width("Allowed") + 12;
+        remoteAllowedButton = pagePanel.add(new Button("Allowed", () -> set("remote", "on")).setPrimary(d.remoteAllowed()));
+        remoteAllowedButton.setBounds(x, y, allowedW, BTN_H);
+        remoteRefusedButton = pagePanel.add(new Button("Refused", () -> set("remote", "off")).setPrimary(!d.remoteAllowed()));
+        remoteRefusedButton.setBounds(x + allowedW + 4, y, font.width("Refused") + 12, BTN_H);
+    }
+
+    // what the client tests read and click
+
+    public int page() {
+        return page;
+    }
+
+    public int[] navCenter(final int index) {
+        return nav.rowCenter(index);
+    }
+
+    /** The shares the Network page shows, each as its path and mode. */
+    public List<String> sharesShown() {
+        final List<String> out = new ArrayList<>();
+        if (data != null) {
+            for (final SettingsSnapshotPayload.ShareRow share : data.shares()) {
+                out.add(share.path() + " " + (share.writable() ? "write" : "read"));
+            }
+        }
+        return out;
+    }
+
+    public boolean remoteAllowedShown() {
+        return remoteAllowed;
+    }
+
+    public int[] shareFieldCenter() {
+        return shareField == null ? new int[] {0, 0} : shareField.center();
+    }
+
+    public int[] shareReadOnlyCenter() {
+        return shareReadOnly == null ? new int[] {0, 0} : shareReadOnly.center();
+    }
+
+    public int[] shareForWritingCenter() {
+        return shareForWriting == null ? new int[] {0, 0} : shareForWriting.center();
+    }
+
+    public int[] shareRowReadCenter(final int row) {
+        return row < shareRowRead.size() ? shareRowRead.get(row).center() : new int[] {0, 0};
+    }
+
+    public int[] shareRowRemoveCenter(final int row) {
+        return row < shareRowRemove.size() ? shareRowRemove.get(row).center() : new int[] {0, 0};
+    }
+
+    public int[] remoteRefusedCenter() {
+        return remoteRefusedButton == null ? new int[] {0, 0} : remoteRefusedButton.center();
+    }
+
+    public int[] remoteAllowedCenter() {
+        return remoteAllowedButton == null ? new int[] {0, 0} : remoteAllowedButton.center();
+    }
+
+    /** Shares the folder typed in the field, {@code mode} being {@code read} or {@code write}; nothing typed, nothing sent. */
+    private void shareTyped(final String mode) {
+        final String path = shareField == null ? "" : shareField.edit().strip();
+        if (!path.isEmpty()) {
+            set("share", path + " " + mode);
+        }
     }
 
     private void storage(final int x, final int top, final int w, final Font font) {
