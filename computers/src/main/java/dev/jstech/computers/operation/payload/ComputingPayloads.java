@@ -218,6 +218,10 @@ public final class ComputingPayloads {
                 ComputingPayloads::handleLuaScreen);
         registrar.playToServer(LuaEventPayload.TYPE, LuaEventPayload.STREAM_CODEC,
                 ComputingPayloads::handleLuaEvent);
+        registrar.playToClient(UiWindowPayload.TYPE, UiWindowPayload.STREAM_CODEC,
+                ComputingPayloads::handleUiWindow);
+        registrar.playToServer(UiEventPayload.TYPE, UiEventPayload.STREAM_CODEC,
+                ComputingPayloads::handleUiEvent);
         registrar.playToServer(SaveFilePayload.TYPE, SaveFilePayload.STREAM_CODEC,
                 ComputingPayloads::handleSaveFile);
         registrar.playToClient(FileSavedPayload.TYPE, FileSavedPayload.STREAM_CODEC,
@@ -1855,6 +1859,30 @@ public final class ComputingPayloads {
             values.add(payload.name());
             values.addAll(payload.values());
             processes.queueEvent(id, values);
+        });
+    }
+
+    private static void handleUiWindow(final UiWindowPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> dev.jstech.computers.client.os.DesktopScreen.acceptWindow(payload));
+    }
+
+    /**
+     * What a player did to a widget of a program's window, handed to the program that owns it. Only what a
+     * keyboard and a mouse can do is taken, and only from a player at that machine's desktop.
+     */
+    private static void handleUiEvent(final UiEventPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (!(context.player() instanceof ServerPlayer player)
+                    || !(player.level() instanceof ServerLevel level)
+                    || !(player.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu desktop)
+                    || !payload.hostPos().equals(desktop.hostPos())
+                    || !UiEventPayload.KINDS.contains(payload.kind())
+                    || !(level.getBlockEntity(payload.hostPos())
+                            instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity computer)) {
+                return;
+            }
+            computer.cannon().deliverUiEvent(payload.program(), payload.window(), payload.widget(),
+                    payload.kind(), payload.values());
         });
     }
 

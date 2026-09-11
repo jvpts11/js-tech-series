@@ -7,7 +7,9 @@
  */
 package dev.jstech.computers.cannon.run;
 
+import dev.jstech.computers.cannon.CannonCosts;
 import dev.jstech.computers.cannon.asm.IOperand;
+import dev.jstech.computers.cannon.ui.UiWidgets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -143,12 +145,23 @@ public final class Library {
         if ("string".equals(owner)) {
             return !"Format".equals(name) && !"Concat".equals(name);
         }
-        return "List".equals(owner) || "Map".equals(owner) || this.host.takesTarget(owner, name);
+        return "List".equals(owner) || "Map".equals(owner) || UiWidgets.takesTarget(owner)
+                || this.host.takesTarget(owner, name);
     }
 
-    /** Makes one of the collections the language brings with it. */
-    public Object create(final String type, final int line) {
+    /** Makes one of the things the language brings with it: a collection, a window, a widget. */
+    public Object create(final String type, final List<Object> arguments, final int line) {
         final String bare = type.contains("<") ? type.substring(0, type.indexOf('<')) : type;
+        if (UiWidgets.handles(bare)) {
+            final Values.Obj made = UiWidgets.create(bare, arguments, line);
+            if (UiWidgets.isWidget(bare) && this.owner != null) {
+                // Every widget is known by a number, so an event can say which one it happened to.
+                made.set(UiWidgets.ID, this.owner.nextWidgetId());
+            }
+            // What it holds (the widgets in a row, the rows of a list) is the program's, and weighs as much.
+            this.adopt(made, line);
+            return made;
+        }
         if ("Map".equals(bare)) {
             final Values.MapValue made = new Values.MapValue();
             return this.heap.allocate(made, made.bytes(), line);
@@ -213,8 +226,76 @@ public final class Library {
             case "string" -> Answer.of(this.text(named.name(), self, arguments, line));
             case "List" -> Answer.of(this.list(named.name(), self, arguments, line));
             case "Map" -> this.map(named.name(), self, arguments, line);
+            case "Window", "Row", "Column", "Label", "Button", "TextBox", "CheckBox", "ProgressBar",
+                 "ListBox", "Canvas", "MessageBox" -> Answer.of(this.ui(named, self, arguments, line));
             default -> this.watchOrOutward(named, self, arguments, line);
         };
+    }
+
+    /**
+     * A call on a window or on one of the widgets in it.
+     *
+     * <p>Changing what a window shows is made here and costs what drawing costs, since the machine has to
+     * draw it again for whoever is looking. Opening and closing a window is dearer: a window is the
+     * machine's, it goes on its desktop and its taskbar, and it outlives the tick that asked for it.
+     */
+    private Object ui(final IOperand.Method named, final Object self, final List<Object> arguments,
+                      final int line) {
+        if (UiWidgets.MESSAGE_BOX.equals(named.owner())) {
+            this.owe(CannonCosts.WRITE);
+            this.open(UiWidgets.message(first(arguments), second(arguments), line), line);
+            return null;
+        }
+        if (!(self instanceof Values.Obj object) || !UiWidgets.handles(object.type())) {
+            throw new Halt(Halt.Reason.NO_OBJECT, line,
+                    "there is no " + named.owner() + " here to " + named.name());
+        }
+        if (UiWidgets.WINDOW.equals(object.type())) {
+            switch (named.name()) {
+                case "Show" -> {
+                    this.owe(CannonCosts.WRITE);
+                    this.open(object, line);
+                    return null;
+                }
+                case "Close" -> {
+                    this.owe(CannonCosts.DRAW);
+                    this.owner().closeWindow(object);
+                    return null;
+                }
+                default -> {
+                    // Anything else a window is asked is one of its own, and is answered below.
+                }
+            }
+        }
+        this.owe(CannonCosts.DRAW);
+        return UiWidgets.call(object, named.name(), arguments, line);
+    }
+
+    /** What a program writes on a widget, which the machine has to draw again. */
+    public void uiWrite(final Values.Obj widget, final String name, final Object value, final int line) {
+        this.owe(CannonCosts.DRAW);
+        UiWidgets.write(widget, name, value, line);
+    }
+
+    private void open(final Values.Obj window, final int line) {
+        // A window the runtime made itself (a message box) is the program's to hold like any other.
+        this.adopt(window, line);
+        this.owner().openWindow(window, line);
+    }
+
+    private Process owner() {
+        if (this.owner == null) {
+            throw new Halt(Halt.Reason.CANNOT_START, 0, "this program has no machine to open a window on");
+        }
+        return this.owner;
+    }
+
+    private static String first(final List<Object> arguments) {
+        return arguments.isEmpty() ? "" : String.valueOf(arguments.getFirst());
+    }
+
+    private static String second(final List<Object> arguments) {
+        return arguments.size() < 2 ? "" : String.valueOf(arguments.get(1));
     }
 
     /** The process this library serves, for the few calls that are about the program rather than the world. */

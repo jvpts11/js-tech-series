@@ -1079,12 +1079,12 @@ public final class Emitter {
             }
         }
 
-        private void putBack(final IExpr place, final IMemberSymbol.FieldSymbol field) {
-            if (field.isStatic()) {
-                this.emit(Opcode.STSFLD, new IOperand.Field(field.owner().qualifiedName(), field.name()));
+        private void putBack(final IExpr place, final IMemberSymbol member) {
+            if (member.isStatic()) {
+                this.emit(Opcode.STSFLD, new IOperand.Field(member.owner().qualifiedName(), member.name()));
                 return;
             }
-            this.emit(Opcode.STFLD, new IOperand.Field(this.ownerOf(field), field.name()));
+            this.emit(Opcode.STFLD, new IOperand.Field(this.ownerOf(member), member.name()));
         }
 
         private void one(final ITypeSymbol type) {
@@ -1331,26 +1331,33 @@ public final class Emitter {
                 this.assignElement(expression, index, target);
                 return;
             }
-            if (!(binding instanceof IBinding.Member member)
-                    || !(member.member() instanceof IMemberSymbol.FieldSymbol field)) {
+            if (!(binding instanceof IBinding.Member member)) {
                 return;
             }
-            if (!field.isStatic()) {
+            /*
+             * A field and a property a program may write are the same thing in the assembly: a named
+             * place on an object. What may not be written has already been complained about.
+             */
+            final IMemberSymbol place = member.member();
+            if (!(place instanceof IMemberSymbol.FieldSymbol) && !(place instanceof IMemberSymbol.PropertySymbol)) {
+                return;
+            }
+            if (!place.isStatic()) {
                 this.receiverOf(expression.target());
             }
             if (expression.operator() != Operator.ASSIGN) {
-                if (!field.isStatic()) {
+                if (!place.isStatic()) {
                     this.emit(Opcode.DUP);
                 }
-                this.emit(field.isStatic() ? Opcode.LDSFLD : Opcode.LDFLD,
-                        new IOperand.Field(field.isStatic() ? field.owner().qualifiedName()
-                                : this.ownerOf(field), field.name()));
+                this.emit(place.isStatic() ? Opcode.LDSFLD : Opcode.LDFLD,
+                        new IOperand.Field(place.isStatic() ? place.owner().qualifiedName()
+                                : this.ownerOf(place), place.name()));
             }
             this.combine(expression, target);
-            this.putBack(expression.target(), field);
+            this.putBack(expression.target(), place);
             if (leavesValue) {
                 this.loadMember(expression.target() instanceof IExpr.Member member2 ? member2.target() : null,
-                        field);
+                        place);
             }
         }
 

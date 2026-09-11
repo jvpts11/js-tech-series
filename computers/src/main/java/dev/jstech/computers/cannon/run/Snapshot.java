@@ -26,7 +26,8 @@ public record Snapshot(long heapBudget, List<IHeld> held, List<ThreadShot> threa
                        Map<String, Map<String, IValue>> statics, IValue script, List<WatchShot> watches,
                        List<String> console, int written, String state, String message, int spent,
                        String name, List<MonitorShot> monitors, int nextThread, List<String> args,
-                       int machineId, boolean exited, int exitCode, IValue onMessage) {
+                       int machineId, boolean exited, int exitCode, IValue onMessage, List<IValue> windows,
+                       long nextWindow, long nextWidget) {
 
     public Snapshot {
         held = List.copyOf(held);
@@ -39,6 +40,19 @@ public record Snapshot(long heapBudget, List<IHeld> held, List<ThreadShot> threa
         monitors = List.copyOf(monitors);
         args = args == null ? List.of() : List.copyOf(args);
         onMessage = onMessage == null ? new IValue.Nothing() : onMessage;
+        windows = windows == null ? List.of() : List.copyOf(windows);
+    }
+
+    /** The same, for a program of a kind that has no windows to write down. */
+    public Snapshot(final long heapBudget, final List<IHeld> held, final List<ThreadShot> threads,
+                    final List<FrameShot> waiting, final Map<String, Map<String, IValue>> statics,
+                    final IValue script, final List<WatchShot> watches, final List<String> console,
+                    final int written, final String state, final String message, final int spent,
+                    final String name, final List<MonitorShot> monitors, final int nextThread,
+                    final List<String> args, final int machineId, final boolean exited, final int exitCode,
+                    final IValue onMessage) {
+        this(heapBudget, held, threads, waiting, statics, script, watches, console, written, state, message,
+                spent, name, monitors, nextThread, args, machineId, exited, exitCode, onMessage, null, 1, 1);
     }
 
     /**

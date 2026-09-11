@@ -1214,7 +1214,68 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         cannon.tick(cannonCredits(), deadline, this::networkStock);
         if (level instanceof ServerLevel server) {
             pushCannonOutput(server);
+            pushWindows(server);
         }
+    }
+
+    /* Every window of a program that has been sent, by the program and the window, as it was sent. */
+    private final java.util.Map<Long, dev.jstech.computers.operation.payload.UiWindowPayload> sentWindows =
+            new java.util.HashMap<>();
+
+    /**
+     * Sends the windows the programs on this machine have open to whoever is at its desktop.
+     *
+     * <p>A window goes over whole whenever anything in it changes, and once more, empty, when it closes.
+     * A machine nobody is looking at sends nothing and forgets what it sent, so whoever opens the desktop
+     * next is sent everything as it stands.
+     */
+    private void pushWindows(final ServerLevel level) {
+        final java.util.List<net.minecraft.server.level.ServerPlayer> viewers = consoleViewers(level);
+        if (viewers.isEmpty()) {
+            sentWindows.clear();
+            return;
+        }
+        final java.util.Map<Long, dev.jstech.computers.operation.payload.UiWindowPayload> open =
+                new java.util.HashMap<>();
+        for (final dev.jstech.computers.cannon.machine.MachinePrograms.Live one : cannon.all()) {
+            for (final dev.jstech.computers.cannon.run.Values.Obj window : cannon.windowsOf(one.id())) {
+                final var payload = dev.jstech.computers.operation.payload.UiWindowPayload.of(
+                        worldPosition, one.id(), window);
+                if (payload != null) {
+                    open.put(key(payload.program(), payload.window()), payload);
+                }
+            }
+        }
+        final java.util.List<dev.jstech.computers.operation.payload.UiWindowPayload> send =
+                new java.util.ArrayList<>();
+        for (final var entry : open.entrySet()) {
+            if (!entry.getValue().equals(sentWindows.get(entry.getKey()))) {
+                send.add(entry.getValue());
+            }
+        }
+        for (final var entry : sentWindows.entrySet()) {
+            if (!open.containsKey(entry.getKey())) {
+                send.add(dev.jstech.computers.operation.payload.UiWindowPayload.gone(worldPosition,
+                        entry.getValue().program(), entry.getValue().window()));
+            }
+        }
+        sentWindows.clear();
+        sentWindows.putAll(open);
+        if (send.isEmpty()) {
+            return;
+        }
+        for (final net.minecraft.server.level.ServerPlayer viewer : viewers) {
+            if (!(viewer.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu)) {
+                continue;
+            }
+            for (final var payload : send) {
+                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(viewer, payload);
+            }
+        }
+    }
+
+    private static long key(final int program, final long window) {
+        return ((long) program << 32) | (window & 0xFFFFFFFFL);
     }
 
     /* What was last sent of the screen in front, so it is sent again only when there is something new. */

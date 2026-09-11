@@ -35,6 +35,7 @@ public final class ClientTestSuite {
             NetworkInteractorClientTests.class,
             NetworkSharesClientTests.class,
             SettingsSharingClientTests.class,
+            SystemUiClientTests.class,
             UiSweepClientTests.class);
 
     private ClientTestSuite() {

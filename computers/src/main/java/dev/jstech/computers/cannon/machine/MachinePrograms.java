@@ -262,6 +262,24 @@ public final class MachinePrograms {
         }
     }
 
+    /** The windows a program has open on the machine's desktop; empty for one that has none. */
+    public List<dev.jstech.computers.cannon.run.Values.Obj> windowsOf(final int id) {
+        final Live one = this.byId(id);
+        return one != null && one.process() instanceof CannonProgram program
+                ? program.process().windows() : List.of();
+    }
+
+    /**
+     * Hands a program what a player did to one of its widgets; false when there is no such program, no
+     * such window, or nothing there that answers.
+     */
+    public boolean deliverUiEvent(final int id, final long window, final long widget, final String kind,
+                                  final List<Object> values) {
+        final Live one = this.byId(id);
+        return one != null && one.process() instanceof CannonProgram program
+                && program.process().deliverUiEvent(window, widget, kind, values);
+    }
+
     /** The screen of a Lua program, or null for one that has none. */
     public dev.jstech.computers.cannon.lua.lib.LuaTerminal terminalOf(final int id) {
         final Live one = this.byId(id);

@@ -65,6 +65,7 @@ public final class BuiltIns {
         this.fillNetwork();
         this.fillMainframe();
         this.fillOperations();
+        this.fillUi();
     }
 
     /** The root of every reference type. */
@@ -135,6 +136,7 @@ public final class BuiltIns {
     private static final String OPERATIONS = "System.Operations";
     private static final String EXECUTION = "System.Execution";
     private static final String THREADING = "System.Threading";
+    private static final String UI = "System.UI";
 
     private static final Map<String, String> HOMES = Map.ofEntries(
             Map.entry("IScript", SYSTEM), Map.entry("Action", SYSTEM), Map.entry("Func", SYSTEM),
@@ -149,7 +151,12 @@ public final class BuiltIns {
             Map.entry("StockEvent", NETWORK), Map.entry("Subscription", NETWORK), Map.entry("WorkStat", NETWORK),
             Map.entry("Mainframe", NETWORK), Map.entry("RemoteComputer", NETWORK), Map.entry("Iql", NETWORK),
             Map.entry("IqlResult", NETWORK),
-            Map.entry("Operations", OPERATIONS), Map.entry("OperationInfo", OPERATIONS), Map.entry("AskResult", OPERATIONS));
+            Map.entry("Operations", OPERATIONS), Map.entry("OperationInfo", OPERATIONS),
+            Map.entry("AskResult", OPERATIONS),
+            Map.entry("Widget", UI), Map.entry("Window", UI), Map.entry("Row", UI), Map.entry("Column", UI),
+            Map.entry("Label", UI), Map.entry("Button", UI), Map.entry("TextBox", UI), Map.entry("CheckBox", UI),
+            Map.entry("ProgressBar", UI), Map.entry("ListBox", UI), Map.entry("Canvas", UI),
+            Map.entry("MessageBox", UI));
 
     /**
      * The type known by exactly {@code fullName}, its namespace in front ({@code System.IO.Console}),
@@ -189,7 +196,7 @@ public final class BuiltIns {
 
     /** Every namespace the language has, System first, for a list that offers them. */
     public List<String> namespaces() {
-        return List.of(SYSTEM, COLLECTIONS, IO, UTILS, MACHINE, NETWORK, OPERATIONS, EXECUTION);
+        return List.of(SYSTEM, COLLECTIONS, IO, UTILS, MACHINE, NETWORK, OPERATIONS, EXECUTION, UI);
     }
 
     private static String key(final String name, final int arity) {
@@ -215,6 +222,25 @@ public final class BuiltIns {
     private void property(final NamedType owner, final String name, final ITypeSymbol type,
                           final Set<IDecl.Modifier> modifiers) {
         owner.addMember(new IMemberSymbol.PropertySymbol(owner, name, type, true, false, modifiers, Set.of()));
+    }
+
+    /** A property a program may write as well as read, which is how a widget is changed. */
+    private void writable(final NamedType owner, final String name, final ITypeSymbol type) {
+        owner.addMember(new IMemberSymbol.PropertySymbol(owner, name, type, true, true, PUBLIC, Set.of()));
+    }
+
+    /** A way of making one of these, since a built-in type has no constructor of its own otherwise. */
+    private void constructor(final NamedType owner, final ITypeSymbol... takes) {
+        final List<IMemberSymbol.ParameterSymbol> parameters = new ArrayList<>();
+        for (int i = 0; i < takes.length; i++) {
+            parameters.add(IMemberSymbol.ParameterSymbol.of("a" + i, takes[i]));
+        }
+        owner.addMember(new IMemberSymbol.ConstructorSymbol(owner, parameters, PUBLIC));
+    }
+
+    /** Something a program can be told about, which it answers with a method of its own. */
+    private void event(final NamedType owner, final String name, final NamedType handler) {
+        owner.addMember(new IMemberSymbol.EventSymbol(owner, name, handler, PUBLIC));
     }
 
     private void fillString() {
@@ -655,6 +681,110 @@ public final class BuiltIns {
         this.method(operations, "Get", operation, PUBLIC_STATIC, this.stringType);
         this.method(operations, "List", new ITypeSymbol.GenericType(this.listType, List.of(operation)),
                 PUBLIC_STATIC);
+    }
+
+    /**
+     * The windows a program can open on the desktop of the machine it runs on.
+     *
+     * <p>A widget asks for the size it needs and the machine's own system draws it, so the same program
+     * looks like whichever system it is running under. Rows and columns share out the room; a weight of
+     * one or more takes a share of what is left over, and nothing else takes any.
+     */
+    private void fillUi() {
+        final ITypeSymbol integer = ITypeSymbol.Primitive.INT;
+        final ITypeSymbol flag = ITypeSymbol.Primitive.BOOL;
+        final ITypeSymbol text = this.stringType;
+        final ITypeSymbol nothing = ITypeSymbol.Primitive.VOID;
+
+        final NamedType widget = this.declare("Widget", NamedType.Kind.CLASS);
+        final NamedType window = this.declare("Window", NamedType.Kind.CLASS);
+        final NamedType row = this.declare("Row", NamedType.Kind.CLASS);
+        final NamedType column = this.declare("Column", NamedType.Kind.CLASS);
+        final NamedType label = this.declare("Label", NamedType.Kind.CLASS);
+        final NamedType button = this.declare("Button", NamedType.Kind.CLASS);
+        final NamedType textBox = this.declare("TextBox", NamedType.Kind.CLASS);
+        final NamedType checkBox = this.declare("CheckBox", NamedType.Kind.CLASS);
+        final NamedType progress = this.declare("ProgressBar", NamedType.Kind.CLASS);
+        final NamedType listBox = this.declare("ListBox", NamedType.Kind.CLASS);
+        final NamedType canvas = this.declare("Canvas", NamedType.Kind.CLASS);
+        final NamedType messageBox = this.declare("MessageBox", NamedType.Kind.CLASS);
+        for (final NamedType kind : List.of(row, column, label, button, textBox, checkBox, progress, listBox,
+                canvas)) {
+            kind.setBase(widget);
+        }
+
+        // What every widget has: whether it shows, whether it answers, and a size of its own if it wants one.
+        this.writable(widget, "Visible", flag);
+        this.writable(widget, "Enabled", flag);
+        this.writable(widget, "Width", integer);
+        this.writable(widget, "Height", integer);
+
+        this.constructor(window, text, integer, integer);
+        this.writable(window, "Title", text);
+        this.writable(window, "Content", widget);
+        this.property(window, "Open", flag, PUBLIC);
+        this.method(window, "Show", nothing, PUBLIC);
+        this.method(window, "Close", nothing, PUBLIC);
+        // A widget put exactly where the program says, for one that lays itself out.
+        this.method(window, "Add", nothing, PUBLIC, widget, integer, integer, integer, integer);
+        this.event(window, "OnClose", this.actionType);
+
+        for (final NamedType box : List.of(row, column)) {
+            this.constructor(box);
+            this.method(box, "Add", nothing, PUBLIC, widget);
+            this.method(box, "Add", nothing, PUBLIC, widget, integer);
+            this.writable(box, "Spacing", integer);
+            this.method(box, "Clear", nothing, PUBLIC);
+        }
+
+        this.constructor(label);
+        this.constructor(label, text);
+        this.writable(label, "Text", text);
+
+        this.constructor(button);
+        this.constructor(button, text);
+        this.writable(button, "Text", text);
+        this.event(button, "OnClick", this.actionType);
+
+        this.constructor(textBox);
+        this.constructor(textBox, text);
+        this.writable(textBox, "Text", text);
+        this.event(textBox, "OnChange", this.actionType);
+        this.event(textBox, "OnSubmit", this.actionType);
+
+        this.constructor(checkBox);
+        this.constructor(checkBox, text);
+        this.constructor(checkBox, text, flag);
+        this.writable(checkBox, "Text", text);
+        this.writable(checkBox, "Checked", flag);
+        this.event(checkBox, "OnToggle", this.actionType);
+
+        this.constructor(progress);
+        this.constructor(progress, integer, integer);
+        this.writable(progress, "Value", integer);
+        this.writable(progress, "Least", integer);
+        this.writable(progress, "Most", integer);
+
+        this.constructor(listBox);
+        this.method(listBox, "Add", nothing, PUBLIC, text);
+        this.method(listBox, "Add", nothing, PUBLIC, text, text);
+        this.method(listBox, "Clear", nothing, PUBLIC);
+        this.property(listBox, "Count", integer, PUBLIC);
+        this.writable(listBox, "Selected", integer);
+        this.event(listBox, "OnSelect", this.actionType);
+
+        this.constructor(canvas);
+        this.constructor(canvas, integer, integer);
+        this.method(canvas, "Clear", nothing, PUBLIC, integer);
+        this.method(canvas, "FillRect", nothing, PUBLIC, integer, integer, integer, integer, integer);
+        this.method(canvas, "DrawLine", nothing, PUBLIC, integer, integer, integer, integer, integer);
+        this.method(canvas, "DrawText", nothing, PUBLIC, text, integer, integer, integer);
+        this.method(canvas, "SetPixel", nothing, PUBLIC, integer, integer, integer);
+        this.property(canvas, "ClickX", integer, PUBLIC);
+        this.property(canvas, "ClickY", integer, PUBLIC);
+        this.event(canvas, "OnClick", this.actionType);
+
+        this.method(messageBox, "Show", nothing, PUBLIC_STATIC, text, text);
     }
 
     private void fillRandom() {

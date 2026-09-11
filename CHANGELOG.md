@@ -111,6 +111,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   reach the program as `key`, `key_up` and `char`, Ctrl+V pastes, Ctrl+T sends `terminate`, Ctrl+C stops it,
   and clicks, drags and the wheel arrive as mouse events on the cell under the pointer. When it returns, the
   prompt comes back under what it left on its screen.
+- A Cannon program can open windows of its own on the desktop of the machine it runs on. `System.UI` gives it
+  a `Window` and the widgets to put in it (`Label`, `Button`, `TextBox`, `CheckBox`, `ProgressBar`, `ListBox`
+  and a `Canvas` it draws on itself), laid out in rows and columns where a weight takes a share of the room
+  left over, or placed exactly where the program says. It hears what the player does through `OnClick`,
+  `OnChange`, `OnSubmit`, `OnToggle`, `OnSelect` and the window's `OnClose`. The machine's own system draws
+  it, so the same program is a Frames 95 window on 95 and an XP one on XP, and it has a place on the taskbar
+  under the program's name. A window is saved with the program and comes back with it; shutting the last one
+  ends the program unless it opens another. A machine that boots to a prompt has nowhere to put a window and
+  says so.
 - A Cannon program can use Lua code. `include "reactor.lua";` at the head of a file compiles the Lua file
   beside it into the program, and Cannon reaches it as `reactor`: every function the file declares is a
   method that takes whatever it is given and gives back an `object`, and every other global it sets is a

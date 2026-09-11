@@ -13,6 +13,7 @@ import dev.jstech.computers.cannon.asm.Instruction;
 import dev.jstech.computers.cannon.asm.Opcode;
 import dev.jstech.computers.cannon.asm.IOperand;
 import dev.jstech.computers.cannon.lua.LuaModule;
+import dev.jstech.computers.cannon.ui.UiWidgets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -181,6 +182,24 @@ public final class Process {
     private int exitCode;
     private Values.DelegateValue onMessage;
     private Values.Obj self;
+    /**
+     * The windows this program has open on the machine's desktop, in the order it opened them.
+     *
+     * <p>A window is the program's own object, so what it shows is written down and brought back with
+     * the program; this is the list of the ones that are open, which is what the machine draws.
+     */
+    private final Values.ListValue windows = new Values.ListValue();
+    /** The numbers the next window and the next widget get, so an event can name what it happened to. */
+    private long nextWindow = 1;
+    private long nextWidget = 1;
+
+    /** The number the next widget this program makes is known by. */
+    long nextWidgetId() {
+        return this.nextWidget++;
+    }
+
+    /** Set when a person shut the last window: the program ends once it has heard about it. */
+    private boolean endWithWindows;
     /** The Lua side of the runtime, made the first time a Lua call is run. */
     private LuaRuntime lua;
 
@@ -278,6 +297,7 @@ public final class Process {
         pending.add(this.script);
         pending.add(this.self);
         pending.add(this.onMessage);
+        pending.add(this.windows);
         for (final Watch watch : this.watches) {
             pending.add(watch.handler);
             pending.add(watch.token);
@@ -674,6 +694,14 @@ public final class Process {
                 break;
             }
         }
+        /*
+         * The last window was shut and the program has had its say about it: a program whose windows are
+         * gone has nothing left to be looked at, and ends.
+         */
+        if (this.endWithWindows && this.waiting.isEmpty() && this.windows.items().isEmpty()) {
+            this.endWithWindows = false;
+            this.exit(0);
+        }
         return used;
     }
 
@@ -947,6 +975,102 @@ public final class Process {
     /** How many calls are still waiting their turn, handlers among them. */
     public int waiting() {
         return this.waiting.size();
+    }
+
+    // windows
+
+    /** The most windows one program may have open at a time. */
+    public static final int MOST_WINDOWS = 8;
+
+    /**
+     * Opens a window on the machine's desktop.
+     *
+     * <p>A machine with no desktop has nowhere to put it and says so, which is the whole of what a
+     * program needs to be told: a window is a thing a system with a desktop has.
+     */
+    void openWindow(final Values.Obj window, final int line) {
+        if (!Boolean.TRUE.equals(this.library.peek("Computer", "Desktop", List.of()))) {
+            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "this computer has no desktop to open a window on");
+        }
+        if (Boolean.TRUE.equals(window.get(UiWidgets.OPEN))) {
+            return;
+        }
+        if (this.windows.items().size() >= MOST_WINDOWS) {
+            throw new Halt(Halt.Reason.OUT_OF_RANGE, line,
+                    "a program may have " + MOST_WINDOWS + " windows open at once");
+        }
+        window.set(UiWidgets.ID, this.nextWindow++);
+        window.set(UiWidgets.OPEN, Boolean.TRUE);
+        this.windows.items().add(window);
+    }
+
+    /** Closes a window, which takes it off the desktop; closing one that is not open is nothing at all. */
+    void closeWindow(final Values.Obj window) {
+        window.set(UiWidgets.OPEN, Boolean.FALSE);
+        this.windows.items().remove(window);
+    }
+
+    /** The windows this program has open, in the order it opened them. */
+    public List<Values.Obj> windows() {
+        final List<Values.Obj> open = new ArrayList<>();
+        for (final Object one : this.windows.items()) {
+            if (one instanceof Values.Obj window) {
+                open.add(window);
+            }
+        }
+        return open;
+    }
+
+    /** The window of that number, or null when the program has no such window open. */
+    public Values.Obj windowOf(final long id) {
+        for (final Values.Obj window : this.windows()) {
+            if (Numbers.toLong(window.get(UiWidgets.ID)) == id) {
+                return window;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Tells the program what a player did to one of its widgets.
+     *
+     * <p>What the widget holds is changed first, the way the player changed it (a box is ticked, a line
+     * is typed), and only then is the program's handler queued: a handler that reads the widget reads
+     * what the player sees. A widget with no handler still changes.
+     */
+    public boolean deliverUiEvent(final long window, final long widget, final String kind,
+                                  final List<Object> values) {
+        if (this.halted || this.exited) {
+            return false;
+        }
+        final Values.Obj open = this.windowOf(window);
+        if (open == null) {
+            return false;
+        }
+        if ("close".equals(kind)) {
+            this.closeWindow(open);
+            this.post(handlerOf(open, "OnClose"), List.of());
+            /*
+             * Shutting the last window of a program is how a person ends it, as it is on any desktop. The
+             * program hears it first, and one that opens another window in its OnClose carries on.
+             */
+            this.endWithWindows = this.windows.items().isEmpty();
+            return true;
+        }
+        final Values.Obj found = UiWidgets.widgetOf(open, widget);
+        if (found == null || !Boolean.TRUE.equals(found.get(UiWidgets.ENABLED))) {
+            return false;
+        }
+        final String handler = UiWidgets.accept(found, kind, values);
+        if (handler == null) {
+            return false;
+        }
+        this.post(handlerOf(found, handler), List.of());
+        return true;
+    }
+
+    private static Values.DelegateValue handlerOf(final Values.Obj widget, final String name) {
+        return widget.get(name) instanceof Values.DelegateValue handler ? handler : null;
     }
 
     // threads
@@ -1389,7 +1513,8 @@ public final class Process {
         return new Snapshot(this.heap.budget(), held, running, queued, kept, value(this.script, numbers),
                 watching, this.library.console(), this.library.written(), this.state().name(),
                 this.message == null ? "" : this.message, this.spent, this.name, locked, this.nextThread,
-                this.args, this.machineId, this.exited, this.exitCode, value(this.onMessage, numbers));
+                this.args, this.machineId, this.exited, this.exitCode, value(this.onMessage, numbers),
+                values(this.windows.items(), numbers), this.nextWindow, this.nextWidget);
     }
 
     /** Reads a process back out of what {@link #save()} wrote, ready to carry on where it stopped. */
@@ -1493,6 +1618,14 @@ public final class Process {
         if (value(shot.onMessage(), byNumber) instanceof Values.DelegateValue handler) {
             process.onMessage = handler;
         }
+        // The windows the program had open come back open, with everything they were showing.
+        for (final Snapshot.IValue written : shot.windows()) {
+            if (value(written, byNumber) instanceof Values.Obj window) {
+                process.windows.items().add(window);
+            }
+        }
+        process.nextWindow = Math.max(1, shot.nextWindow());
+        process.nextWidget = Math.max(1, shot.nextWidget());
         return process;
     }
 
@@ -1835,6 +1968,11 @@ public final class Process {
         if (!(target instanceof Values.Obj object)) {
             throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no object to write " + field.name() + " on");
         }
+        if (UiWidgets.handles(object.type())) {
+            // What a window shows is the machine's to draw again, so writing on a widget is paid for.
+            this.library.uiWrite(object, field.name(), value, line);
+            return;
+        }
         object.set(field.name(), value);
     }
 
@@ -1909,7 +2047,7 @@ public final class Process {
     private Object instance(final String type, final List<Object> arguments, final int line) {
         final Loaded.Type known = this.program.type(type);
         if (known == null) {
-            return this.library.create(type, line);
+            return this.library.create(type, arguments, line);
         }
         final Values.Obj made = new Values.Obj(type);
         this.heap.allocate(made, this.sizeOf(known), line);

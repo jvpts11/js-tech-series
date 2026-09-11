@@ -53,6 +53,7 @@ public final class HostComputer {
             case "RamMb" -> IHost.Reply.of(machine.ramTotalMb(), GLANCE);
             case "FreeRamMb" -> IHost.Reply.of(machine.ramLedger().freeMb(), GLANCE);
             case "Online" -> IHost.Reply.of(machine.isRunning(), GLANCE);
+            case "Desktop" -> IHost.Reply.of(hasDesktop(machine), GLANCE);
             case "Disks" -> IHost.Reply.of(disks(shell), GATHER);
             case "Programs" -> IHost.Reply.of(programs(machine), GATHER);
             case "Processes" -> IHost.Reply.of(processes(machine), GATHER);
@@ -74,6 +75,12 @@ public final class HostComputer {
     private static long id(final AbstractComputerBlockEntity machine) {
         final java.util.UUID node = machine.nodeUuid().value();
         return Math.floorMod(node.getMostSignificantBits() ^ node.getLeastSignificantBits(), ID_RANGE);
+    }
+
+    /** Whether this machine has somewhere to put a window: a system that boots to a desktop. */
+    private static boolean hasDesktop(final AbstractComputerBlockEntity machine) {
+        return dev.jstech.computers.os.boot.BootController.targetForComputer(machine)
+                == dev.jstech.computers.os.boot.BootController.BootTarget.FULL_DESKTOP;
     }
 
     private static Values.Obj cpu(final AbstractComputerBlockEntity machine) {

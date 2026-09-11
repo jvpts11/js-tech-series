@@ -110,6 +110,21 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         PENDING_OPEN.add(key);
     }
 
+    /**
+     * The windows the machine says its Cannon programs have open, waiting for the desktop to draw them.
+     *
+     * <p>A program's window is the machine's, not this screen's: it is opened when the machine first
+     * mentions it, redrawn whenever the machine sends it again, and taken away when the machine says it is
+     * gone or the player shuts it.
+     */
+    private static final java.util.List<dev.jstech.computers.operation.payload.UiWindowPayload> PENDING_UI =
+            new java.util.ArrayList<>();
+
+    /** Takes a window a Cannon program has open on the machine being looked at. */
+    public static void acceptWindow(final dev.jstech.computers.operation.payload.UiWindowPayload payload) {
+        PENDING_UI.add(payload);
+    }
+
     /** Windows a running app asked to end (the Task Manager); drained by the active desktop. */
     private static final java.util.List<String> PENDING_CLOSE = new java.util.ArrayList<>();
 
@@ -214,6 +229,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         SAVED_APPS.clear();
         PENDING_OPEN.clear();
         PENDING_CLOSE.clear();
+        PENDING_UI.clear();
     }
 
     /** The launcher labels the active desktop can open (built-in apps plus installed programs). */
@@ -1234,7 +1250,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         final java.util.List<dev.jstech.computers.os.OpenWindow> out =
                 new java.util.ArrayList<>(windows.size());
         for (final DesktopWindow w : windows) {
-            if (!w.dialog()) {
+            // A Cannon program's window is the program's, not the desktop's: the machine says what it has.
+            if (!w.dialog() && !(w.app() instanceof CannonWindowApp)) {
                 out.add(new dev.jstech.computers.os.OpenWindow(
                         w.appKey(), w.floatX(), w.floatY(), w.floatW(), w.floatH(), w.minimized(), w.maximized(),
                         w.app().saveState()));
@@ -1465,6 +1482,13 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
          * monitor from them (its plain screen-render hook skips container screens on purpose).
          */
         NeoForge.EVENT_BUS.post(new ContainerScreenEvent.Render.Background(this, g, mouseX, mouseY));
+        // Draw whatever the machine says its Cannon programs have open, opening and closing as it says.
+        if (!PENDING_UI.isEmpty()) {
+            for (final var payload : PENDING_UI) {
+                acceptProgramWindow(payload);
+            }
+            PENDING_UI.clear();
+        }
         // Drain any cross-app open requests (e.g. Files asked to launch the Editor).
         if (!PENDING_OPEN.isEmpty()) {
             for (final String key : PENDING_OPEN) {
@@ -5790,6 +5814,39 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         }
     }
 
+    /** The first window one of the machine's Cannon programs has open on this desktop, or null. */
+    @org.jetbrains.annotations.Nullable
+    public CannonWindowApp programWindow() {
+        for (final DesktopWindow open : windows) {
+            if (open.app() instanceof CannonWindowApp app) {
+                return app;
+            }
+        }
+        return null;
+    }
+
+    /** Opens, redraws or takes away a window one of the machine's Cannon programs has. */
+    private void acceptProgramWindow(final dev.jstech.computers.operation.payload.UiWindowPayload payload) {
+        if (!payload.hostPos().equals(host)) {
+            return;
+        }
+        final String key = CannonWindowApp.keyFor(payload.program(), payload.window());
+        for (final DesktopWindow open : windows) {
+            if (open.appKey().equals(key) && open.app() instanceof CannonWindowApp app) {
+                if (payload.open()) {
+                    app.accept(payload);
+                } else {
+                    // The program closed it: the window goes without telling the program again.
+                    windows.remove(open);
+                }
+                return;
+            }
+        }
+        if (payload.open()) {
+            openApp(key, new CannonWindowApp(host, payload));
+        }
+    }
+
     private void openApp(final String key, final IDesktopApp app) {
         /*
          * Open at the default size, clamped to the screen, but never below the app's minimum while the
@@ -5944,7 +6001,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         for (final DesktopWindow w : windows) {
             if (w.dialog()) {
                 w.app().onClosed(); // a question left unanswered is not kept; the program is
-            } else {
+            } else if (!(w.app() instanceof CannonWindowApp)) {
+                /*
+                 * A Cannon program's window is not kept here either: the machine sends it again, as it
+                 * stands, the moment anyone looks at that desktop.
+                 */
                 apps.put(w.appKey(), w.app());
             }
         }

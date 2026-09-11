@@ -35,6 +35,8 @@ public final class CannonCosts {
     public static final int READ = 50;
     /** Writing, which the machine cannot take back. */
     public static final int WRITE = 100;
+    /** Changing what a window shows, which the machine has to draw again for whoever is looking at it. */
+    public static final int DRAW = 50;
     /** Asking the network to do something, which becomes work for the whole base. */
     public static final int SUBMIT = 200;
 
