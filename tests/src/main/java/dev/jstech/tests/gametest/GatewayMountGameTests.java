@@ -292,6 +292,12 @@ public final class GatewayMountGameTests {
                         more.close();
                         helper.assertTrue("from cc and more".equals(lab.readFile("C:\\pub\\report.txt").message()),
                                 "append keeps what was there; got " + lab.readFile("C:\\pub\\report.txt").message());
+                        // A Lua program a ComputerCraft computer drops in a share is a file lab keeps, and runs.
+                        final SeekableByteChannel program = pub.openFile("prog.lua", MountConstants.WRITE_OPTIONS);
+                        program.write(ByteBuffer.wrap("print('hi')".getBytes(StandardCharsets.UTF_8)));
+                        program.close();
+                        helper.assertTrue("print('hi')".equals(lab.readFile("C:\\pub\\prog.lua").message()),
+                                "a Lua file written on the mount lands on lab; got " + lab.readFile("C:\\pub\\prog.lua").message());
 
                         pub.makeDirectory("out");
                         helper.assertTrue(pub.isDirectory("out") && lab.listDisk("C:\\pub\\out").ok(), "a folder is made on lab");
@@ -305,7 +311,7 @@ public final class GatewayMountGameTests {
                     } catch (final IOException error) {
                         throw new IllegalStateException(error.getMessage(), error);
                     }
-                    final String odd = failure(() -> pub.openFile("prog.lua", MountConstants.WRITE_OPTIONS).close());
+                    final String odd = failure(() -> pub.openFile("image.png", MountConstants.WRITE_OPTIONS).close());
                     helper.assertTrue(odd.contains("unknown file type"), "a file type lab does not take is refused; got " + odd);
                     final WritableMount scripts = cc.at(DESK_SCRIPTS);
                     final String denied = failure(() -> scripts.makeDirectory("x"));

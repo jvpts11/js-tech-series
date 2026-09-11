@@ -245,15 +245,31 @@ public final class MachinePrograms {
         if (language == null) {
             return Started.failed(name + ": nothing installed runs a ." + extension);
         }
+        /*
+         * A language that runs its own source files compiles them here, on the way in, under the
+         * file's own name so the program's errors quote it; what the machine keeps is the listing.
+         */
+        String runnable = binary;
+        if (language.sourceExtensions().contains(extension)) {
+            final IProgrammingLanguage.CompileResult built =
+                    language.compile(List.of(new IProgrammingLanguage.SourceText(name, binary)));
+            if (!built.ok()) {
+                final List<IProgrammingLanguage.Complaint> complaints = built.complaints();
+                return Started.failed(complaints.isEmpty() ? name + " does not compile"
+                        : complaints.getFirst().format() + (complaints.size() > 1
+                        ? " (and " + (complaints.size() - 1) + " more)" : ""));
+            }
+            runnable = built.binary();
+        }
         final int room = Math.clamp(heapMb <= 0 ? DEFAULT_HEAP_MB : heapMb, 1, MAX_HEAP_MB);
         final ILanguageProcess process =
-                language.start(binary, (long) room * 1024 * 1024, machine, args == null ? List.of() : args);
+                language.start(runnable, (long) room * 1024 * 1024, machine, args == null ? List.of() : args);
         if (process == null) {
             return Started.failed(name + ": this is not something " + language.displayName() + " can run");
         }
         final int id = this.next++;
         process.identify(id);
-        this.live.add(new Live(id, name, binary, room, process, parent, args, priority));
+        this.live.add(new Live(id, name, runnable, room, process, parent, args, priority));
         return new Started(id, name + " started as " + id);
     }
 

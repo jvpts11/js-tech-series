@@ -10,6 +10,7 @@ package dev.jstech.computers.program.cli;
 import dev.jstech.computers.cannon.CannonCompiler;
 import dev.jstech.computers.cannon.Diagnostic;
 import dev.jstech.computers.cannon.SourceFile;
+import dev.jstech.computers.cannon.lua.LuaCompiler;
 import dev.jstech.computers.cannon.pack.Manifest;
 import dev.jstech.computers.cannon.pack.Packed;
 import java.util.ArrayList;
@@ -37,6 +38,8 @@ public final class CannonCommands {
     /** The extension a program is written in, and the one it is compiled to. */
     private static final String SOURCE = ".can";
     private static final String ASSEMBLY = ".asm";
+    /** The extension of a Lua program, which the compiler and the runtime take as well. */
+    private static final String LUA_SOURCE = ".lua";
 
     private CannonCommands() {
     }
@@ -71,7 +74,8 @@ public final class CannonCommands {
 
         @Override
         public String usage() {
-            return "<file" + SOURCE + "> [more" + SOURCE + " ...] [-o <out" + ASSEMBLY + ">]";
+            return "<file" + SOURCE + "> [more" + SOURCE + " ...] [-o <out" + ASSEMBLY + ">] | <file" + LUA_SOURCE
+                    + "> [-o <out" + ASSEMBLY + ">]";
         }
 
         @Override
@@ -107,22 +111,42 @@ public final class CannonCommands {
                 sources.add(new SourceFile(leaf(path), read.message()));
             }
 
-            final CannonCompiler.Result built = CannonCompiler.compile(sources);
-            for (final Diagnostic diagnostic : built.diagnostics()) {
+            /*
+             * A Lua file is compiled by the Lua front end onto the same assembly; it is a program of
+             * one file, so it is compiled on its own.
+             */
+            final boolean lua = sources.getFirst().name().toLowerCase(Locale.ROOT).endsWith(LUA_SOURCE);
+            if (lua && sources.size() > 1) {
+                ctx.out().error("cannonc: a Lua program is one file; compile " + sources.getFirst().name()
+                        + " on its own");
+                return;
+            }
+            final List<Diagnostic> diagnostics;
+            final String assembly;
+            if (lua) {
+                final LuaCompiler.Result built = LuaCompiler.compile(sources.getFirst());
+                diagnostics = built.diagnostics();
+                assembly = built.ok() ? built.assembly() : null;
+            } else {
+                final CannonCompiler.Result built = CannonCompiler.compile(sources);
+                diagnostics = built.diagnostics();
+                assembly = built.ok() ? built.assembly() : null;
+            }
+            for (final Diagnostic diagnostic : diagnostics) {
                 if (diagnostic.isError()) {
                     ctx.out().error(diagnostic.format());
                 } else {
                     ctx.out().dim(diagnostic.format());
                 }
             }
-            if (!built.ok()) {
-                final long errors = built.diagnostics().stream().filter(Diagnostic::isError).count();
+            if (assembly == null) {
+                final long errors = diagnostics.stream().filter(Diagnostic::isError).count();
                 ctx.out().error("cannonc: " + errors + (errors == 1 ? " error" : " errors")
                         + ", nothing was written");
                 return;
             }
             final String target = out != null ? out : compiled(paths.getFirst());
-            final ICliComputer.FsResult written = ctx.computer().writeFile(target, built.assembly());
+            final ICliComputer.FsResult written = ctx.computer().writeFile(target, assembly);
             if (!written.ok()) {
                 ctx.out().error("cannonc: " + written.message());
                 return;
@@ -156,12 +180,12 @@ public final class CannonCommands {
 
         @Override
         public String summary() {
-            return "run a compiled Cannon program, stop one, or list what is running";
+            return "run a Cannon or Lua program, stop one, or list what is running";
         }
 
         @Override
         public String usage() {
-            return "run <file" + ASSEMBLY + "> [--heap <n>M] | stop <id> | ps";
+            return "run <file" + ASSEMBLY + "|" + SOURCE + "|" + LUA_SOURCE + "> [--heap <n>M] | stop <id> | ps";
         }
 
         @Override
@@ -182,7 +206,8 @@ public final class CannonCommands {
         private void start(final CliContext ctx) {
             final String path = ctx.arg(1);
             if (path.isEmpty()) {
-                ctx.out().error("usage: cannon run <file" + ASSEMBLY + "> [--heap <n>M]");
+                ctx.out().error("usage: cannon run <file" + ASSEMBLY + "|" + SOURCE + "|" + LUA_SOURCE
+                        + "> [--heap <n>M]");
                 return;
             }
             int heapMb = 0;

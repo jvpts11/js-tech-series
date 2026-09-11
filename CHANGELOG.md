@@ -86,6 +86,16 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   writing and the computer shared the folder for writing, gone when files are off, and following the
   shares as they open and close. They hold text files; what a ComputerCraft program writes there weighs
   what any file on that computer weighs and takes the file types that computer takes.
+- Our computers run Lua programs, the language ComputerCraft computers speak. `cannon run reactor.lua`
+  starts one as it is, `cannonc` compiles one to assembly like a Cannon program, and the code editors read,
+  colour, check and run them. A Lua program runs on the same runtime as Cannon: out of the same tick
+  budget, in the same counted memory, listed in the Task Manager, and carried through a save in the middle
+  of whatever it was doing. The language is all there (tables, metatables, closures, several results,
+  `...`, errors caught with `pcall`, coroutines) along with its standard library: `string` with Lua's own
+  patterns, `table`, `math`, `bit32`, `os` on the world's clock, `io.write` and `io.read`, and `load`. Lua
+  has no way to free what it made, so the memory of a Lua program is collected when it can no longer be
+  reached; a Cannon program still frees its own. `cannon run hello.can` now runs a Cannon source file as
+  it is, too.
 - Mods may add a programming language of their own, and remove this one. A language that registers itself
   gets the prompt, the terminal, the task manager, saving and the tick budget without writing any of them.
 - Five editors to write a program in, each a different bargain between what it shows you and what it costs

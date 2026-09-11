@@ -184,16 +184,38 @@ public record Snapshot(long heapBudget, List<IHeld> held, List<ThreadShot> threa
                 chain = List.copyOf(chain);
             }
         }
+
+        /**
+         * A Lua table: the run from one, then the other keys and what they hold lined up, then the
+         * table that answers for it.
+         */
+        record Tabled(int id, long bytes, int line, boolean freed, List<IValue> run, List<IValue> keys,
+                      List<IValue> values, IValue metatable) implements IHeld {
+
+            public Tabled {
+                run = List.copyOf(run);
+                keys = List.copyOf(keys);
+                values = List.copyOf(values);
+                metatable = metatable == null ? new IValue.Nothing() : metatable;
+            }
+        }
     }
 
-    /** One call in progress: which method, how far into it, and everything it was holding. */
+    /**
+     * One call in progress: which method, how far into it, and everything it was holding.
+     *
+     * <p>{@code role} says what the frame is for besides running its method: a plain call, one that
+     * carries a Lua call on when the call under it returns, or one of those that also catches what
+     * the call under it raises.
+     */
     public record FrameShot(String owner, String name, List<String> parameters, int at, IValue self,
-                            List<IValue> slots, List<IValue> stack, boolean discard) {
+                            List<IValue> slots, List<IValue> stack, boolean discard, String role) {
 
         public FrameShot {
             parameters = List.copyOf(parameters);
             slots = List.copyOf(slots);
             stack = List.copyOf(stack);
+            role = role == null || role.isEmpty() ? "PLAIN" : role;
         }
     }
 }

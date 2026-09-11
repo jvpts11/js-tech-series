@@ -48,6 +48,8 @@ public final class FileOpeners {
     static {
         final List<String> code = List.of("virtual_studio_code", "virtual_studio", "exposure", EDITOR);
         BY_TYPE.put(FileType.CAN, code);
+        // A Lua program is read in the editors that colour code, and run as it is by the runtime.
+        BY_TYPE.put(FileType.LUA, List.of("virtual_studio_code", "exposure", EDITOR, RUNTIME));
         BY_TYPE.put(FileType.ASM, List.of(RUNTIME, "virtual_studio_code", "virtual_studio", "exposure", EDITOR));
         BY_TYPE.put(FileType.SLN, List.of("virtual_studio", EDITOR));
         BY_TYPE.put(FileType.CANPROJ, List.of("virtual_studio", EDITOR));

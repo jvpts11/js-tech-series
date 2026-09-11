@@ -56,9 +56,72 @@ public final class Heap {
     private final List<Object> order = new ArrayList<>();
     private final long budget;
     private long used;
+    /*
+     * The collector, for the programs that have one. It is asked when an allocation would not fit, and
+     * again each time the heap has grown past a mark that moves up with what survived the last
+     * collection, so a program that keeps a lot is not swept over and over for the little it makes.
+     */
+    private java.util.function.LongSupplier collector;
+    private long collectAt;
 
     public Heap(final long budget) {
         this.budget = budget;
+    }
+
+    /** Gives the heap a collector: something that frees whatever the program can no longer reach. */
+    public void collectWith(final java.util.function.LongSupplier collector) {
+        this.collector = collector;
+        this.collectAt = Math.max(this.budget / 4, this.used * 2);
+    }
+
+    /** Whether this heap has a collector. */
+    public boolean collects() {
+        return this.collector != null;
+    }
+
+    /** Whether the process should collect before its next instruction: it has grown, or gone past its budget. */
+    public boolean wantsCollection() {
+        return this.collector != null && (this.used > this.collectAt || this.used > this.budget);
+    }
+
+    /** What running out reads like when a collection could not bring the heap back under its budget. */
+    public String overBudget() {
+        return this.outOfMemory(0);
+    }
+
+    /** Runs the collector now, where there is one, and says how many bytes it freed. */
+    public long collectNow() {
+        if (this.collector == null) {
+            return 0;
+        }
+        final long freed = this.collector.getAsLong();
+        this.collectAt = Math.max(this.budget / 4, this.used * 2);
+        return freed;
+    }
+
+    /**
+     * Lets go of everything not in the set given, and says how many bytes that was.
+     *
+     * <p>Something freed by the program but still in the set stays, so that reaching into it still
+     * says it was freed; something freed and no longer reachable is simply forgotten.
+     */
+    public long sweep(final java.util.Set<Object> kept) {
+        long freed = 0;
+        final List<Object> remaining = new ArrayList<>(kept.size());
+        for (final Object thing : this.order) {
+            if (kept.contains(thing)) {
+                remaining.add(thing);
+                continue;
+            }
+            final Entry entry = this.live.remove(thing);
+            if (entry != null && !entry.freed) {
+                this.used -= entry.bytes;
+                freed += entry.bytes;
+            }
+        }
+        this.order.clear();
+        this.order.addAll(remaining);
+        return freed;
     }
 
     /** How many bytes this process may hold at once. */
@@ -81,7 +144,13 @@ public final class Heap {
      * the lines that asked for the most, because that is what tells a player where to look.
      */
     public <T> T allocate(final T value, final long bytes, final int line) {
-        if (this.used + bytes > this.budget) {
+        /*
+         * A heap with a collector lets an allocation run past the budget, up to twice over, and
+         * leaves it to the process to collect before its next instruction: collecting here, in the
+         * middle of one, could let go of something the runtime has just made and not yet handed over.
+         */
+        final long ceiling = this.collector == null ? this.budget : 2 * this.budget;
+        if (this.used + bytes > ceiling) {
             throw new Halt(Halt.Reason.OUT_OF_MEMORY, line, this.outOfMemory(bytes));
         }
         this.used += bytes;
@@ -130,7 +199,7 @@ public final class Heap {
             return;
         }
         final long after = this.used - entry.bytes + bytes;
-        if (after > this.budget) {
+        if (after > (this.collector == null ? this.budget : 2 * this.budget)) {
             throw new Halt(Halt.Reason.OUT_OF_MEMORY, line, this.outOfMemory(bytes - entry.bytes));
         }
         this.used = after;

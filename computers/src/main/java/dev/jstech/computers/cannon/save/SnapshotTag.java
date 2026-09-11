@@ -53,6 +53,8 @@ public final class SnapshotTag {
     private static final String SELF = "self";
     private static final String AT = "at";
     private static final String DISCARD = "discard";
+    private static final String ROLE = "role";
+    private static final String METATABLE = "metatable";
     private static final String HELD = "held";
     private static final String FRAMES = "frames";
     private static final String WAITING = "waiting";
@@ -266,6 +268,13 @@ public final class SnapshotTag {
                 }
                 tag.put(CHAIN, chain);
             }
+            case Snapshot.IHeld.Tabled table -> {
+                tag.putString(KIND, "table");
+                tag.put(ITEMS, values(table.run()));
+                tag.put(KEYS, values(table.keys()));
+                tag.put(VALUES, values(table.values()));
+                tag.put(METATABLE, write(table.metatable()));
+            }
         }
         return tag;
     }
@@ -286,6 +295,11 @@ public final class SnapshotTag {
             case "map" -> new Snapshot.IHeld.Keyed(id, bytes, line, freed,
                     readValues(tag.getList(KEYS, Tag.TAG_COMPOUND)),
                     readValues(tag.getList(VALUES, Tag.TAG_COMPOUND)));
+            case "table" -> new Snapshot.IHeld.Tabled(id, bytes, line, freed,
+                    readValues(tag.getList(ITEMS, Tag.TAG_COMPOUND)),
+                    readValues(tag.getList(KEYS, Tag.TAG_COMPOUND)),
+                    readValues(tag.getList(VALUES, Tag.TAG_COMPOUND)),
+                    readValue(tag.getCompound(METATABLE)));
             default -> {
                 final List<Snapshot.BoundShot> chain = new ArrayList<>();
                 final ListTag written = tag.getList(CHAIN, Tag.TAG_COMPOUND);
@@ -315,6 +329,9 @@ public final class SnapshotTag {
             tag.put(SLOTS, values(frame.slots()));
             tag.put(STACK, values(frame.stack()));
             tag.putBoolean(DISCARD, frame.discard());
+            if (!"PLAIN".equals(frame.role())) {
+                tag.putString(ROLE, frame.role());
+            }
             written.add(tag);
         }
         return written;
@@ -327,7 +344,8 @@ public final class SnapshotTag {
             shots.add(new Snapshot.FrameShot(tag.getString(OWNER), tag.getString(NAME),
                     readNames(tag.getList(PARAMETERS, Tag.TAG_STRING)), tag.getInt(AT),
                     readValue(tag.getCompound(SELF)), readValues(tag.getList(SLOTS, Tag.TAG_COMPOUND)),
-                    readValues(tag.getList(STACK, Tag.TAG_COMPOUND)), tag.getBoolean(DISCARD)));
+                    readValues(tag.getList(STACK, Tag.TAG_COMPOUND)), tag.getBoolean(DISCARD),
+                    tag.getString(ROLE)));
         }
         return shots;
     }

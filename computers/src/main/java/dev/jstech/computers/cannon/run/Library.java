@@ -126,6 +126,18 @@ public final class Library {
         return this.host.tick();
     }
 
+    long hostTick() {
+        return this.host.tick();
+    }
+
+    long hostDayTime() {
+        return this.host.dayTime();
+    }
+
+    long hostDay() {
+        return this.host.day();
+    }
+
     /** Whether a call of this needs the thing it is called on to be on the stack under its arguments. */
     public boolean takesTarget(final String owner, final String name) {
         if ("string".equals(owner)) {

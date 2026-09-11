@@ -78,6 +78,12 @@ public enum FileType {
     CAN("can", true, false),
 
     /**
+     * A Lua program, the language ComputerCraft computers speak: editable, and run as it is, since
+     * the runtime compiles it on the way in.
+     */
+    LUA("lua", true, false),
+
+    /**
      * The assembly the compiler writes, user-editable, and meant to be read.
      *
      * <p>It is text on purpose: a player can open what their program was turned into and follow it a

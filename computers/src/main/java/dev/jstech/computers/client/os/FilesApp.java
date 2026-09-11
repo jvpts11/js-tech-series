@@ -1441,7 +1441,10 @@ public final class FilesApp implements IDesktopApp {
      * file written in a language an addon brought does the same thing as opening one of ours.
      */
     private static boolean isProgram(final DiskFilesPayload.WireFile f) {
-        return dev.jstech.core.JsCore.languages().runnerOf(f.ext().toLowerCase(Locale.ROOT)) != null;
+        final String extension = f.ext().toLowerCase(Locale.ROOT);
+        final var runner = dev.jstech.core.JsCore.languages().runnerOf(extension);
+        // A source file can be run too, but opening one means reading it, so it is not offered as "Run".
+        return runner != null && !runner.sourceExtensions().contains(extension);
     }
 
     private boolean isSetup(final Row r) {

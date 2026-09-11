@@ -87,6 +87,17 @@ public final class Loaded {
         return new Loaded(program);
     }
 
+    /**
+     * Takes in the types of another program, as a Lua {@code load} does with the text it compiles.
+     * A type already here stays as it is: every chunk carries the runtime's own type, and a chunk
+     * brought back after a reload is the one that was already taken in.
+     */
+    public void add(final AsmProgram more) {
+        for (final AsmType type : more.types()) {
+            this.types.putIfAbsent(type.name(), load(type));
+        }
+    }
+
     /** The type of that name, or null when the runtime provides it instead of the program. */
     public Type type(final String name) {
         return this.types.get(name);

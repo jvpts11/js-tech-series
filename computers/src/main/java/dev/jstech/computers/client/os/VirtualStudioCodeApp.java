@@ -714,8 +714,16 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
             return;
         }
         final StringBuilder line = new StringBuilder("cannonc");
+        boolean any = false;
         for (final DiskFilesPayload.WireFile file : files) {
-            line.append(' ').append(file.path());
+            // A folder builds its Cannon sources into one program; a Lua file is a program of its own.
+            if (file.path().toLowerCase(java.util.Locale.ROOT).endsWith(".can")) {
+                line.append(' ').append(file.path());
+                any = true;
+            }
+        }
+        if (!any) {
+            return;
         }
         final String folder = this.workspace.folder();
         final String stem = folder.isEmpty() ? "programs" : shortName(folder);

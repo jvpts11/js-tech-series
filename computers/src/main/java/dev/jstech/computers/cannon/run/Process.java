@@ -57,6 +57,10 @@ public final class Process {
 
     /** What starting a thread costs beyond the call itself: a stack of its own is not a small thing. */
     private static final int START_COST = 49;
+    /** How many times over a handler of an error may itself raise one before the process is simply over. */
+    private static final int RECOVERY_DEPTH = 64;
+    /** One instruction's worth of the budget for this many things the collector has to look at. */
+    private static final int COLLECTED_PER_INSTRUCTION = 32;
 
     /** What a thread is waiting for, if anything. */
     enum Parked {
@@ -70,7 +74,9 @@ public final class Process {
         /** An object's lock to be let go of. */
         LOCK,
         /** Another program on the machine to end. */
-        CHILD
+        CHILD,
+        /** A Lua coroutine: resumed by another thread, or waiting for the one it resumed to yield. */
+        COROUTINE
     }
 
     /**
@@ -79,14 +85,16 @@ public final class Process {
      * <p>The stack holds nulls, because null is a value a program can have and hand around, so it is
      * kept in something that allows one rather than in something that treats it as an absence.
      */
-    private static final class Frame {
-        private final Loaded.Method method;
-        private final Object[] slots;
-        private final List<Object> stack = new ArrayList<>();
-        private final Object self;
-        private int at;
+    static final class Frame {
+        final Loaded.Method method;
+        final Object[] slots;
+        final List<Object> stack = new ArrayList<>();
+        final Object self;
+        int at;
         /** Set on all but the last handler of a run, whose answers nobody is waiting for. */
-        private boolean discard;
+        boolean discard;
+        /** What the frame is for besides running its method. */
+        Role role = Role.PLAIN;
 
         Frame(final Loaded.Method method, final Object self) {
             this.method = method;
@@ -113,21 +121,34 @@ public final class Process {
      * <p>{@code on} is the object whose lock it waits for, or the number of the thread it is joined to;
      * {@code until} is the tick a sleep ends or a timed join gives up on, zero for never.
      */
-    private static final class Thread {
-        private final int id;
-        private final Deque<Frame> frames = new ArrayDeque<>();
-        private Values.Obj token;
-        private Parked parked = Parked.NONE;
-        private long until;
-        private Object on;
+    static final class Thread {
+        final int id;
+        final Deque<Frame> frames = new ArrayDeque<>();
+        Values.Obj token;
+        Parked parked = Parked.NONE;
+        long until;
+        Object on;
         /** The machine the program waited on runs on, or {@code ""} for this one. */
-        private String onHost = "";
-        private boolean timedOut;
-        private boolean yielded;
+        String onHost = "";
+        boolean timedOut;
+        boolean yielded;
 
         Thread(final int id) {
             this.id = id;
         }
+    }
+
+    /**
+     * What a frame is for besides running its method.
+     *
+     * <p>A Lua call that has to go on after the call under it returns (a metamethod, a sort with a
+     * comparator, a protected call) runs as a frame of its own that carries the call on; one that also
+     * catches what the call under it raises protects.
+     */
+    enum Role {
+        PLAIN,
+        RESUME,
+        PROTECT
     }
 
     /** Who holds an object's lock, and how many times over it took it. */
@@ -157,6 +178,150 @@ public final class Process {
     private int exitCode;
     private Values.DelegateValue onMessage;
     private Values.Obj self;
+    /** The Lua side of the runtime, made the first time a Lua call is run. */
+    private LuaRuntime lua;
+
+    /** The Lua side of the runtime. */
+    LuaRuntime lua() {
+        if (this.lua == null) {
+            this.lua = new LuaRuntime(this);
+        }
+        return this.lua;
+    }
+
+    Loaded program0() {
+        return this.program;
+    }
+
+    Heap heap0() {
+        return this.heap;
+    }
+
+    Library library() {
+        return this.library;
+    }
+
+    Thread current() {
+        return this.current;
+    }
+
+    List<Thread> threads0() {
+        return this.threads;
+    }
+
+    Thread mainThread() {
+        return this.main;
+    }
+
+    Values.Obj staticsOf(final String owner) {
+        return this.statics(owner);
+    }
+
+    int nextThreadId() {
+        return this.nextThread++;
+    }
+
+    void charge(final int more) {
+        this.library.owe(more);
+    }
+
+    /** Ends a thread other than the main one, as the runtime's coroutines do when theirs is over. */
+    void endThread(final Thread thread) {
+        this.end(thread);
+    }
+
+    /** Runs a method on that object with those arguments, in its turn on the current thread. */
+    void enterFrame(final Loaded.Method method, final Object self, final List<Object> arguments, final int line) {
+        this.enter(method, self, arguments, line);
+    }
+
+    /** The arguments a call takes off the stack. */
+    List<Object> takeArguments(final Frame frame, final List<String> parameters) {
+        return this.take(frame, parameters);
+    }
+
+    /** A fresh piece of text on the heap. */
+    String textOnHeap(final String value, final int line) {
+        return this.text(value, line);
+    }
+
+    /** The lines of the program's console, for the runtime to write on. */
+    Object alive0(final Object value, final int line) {
+        return this.alive(value, line);
+    }
+
+    /**
+     * Frees whatever the program can no longer reach, and says how many bytes that was.
+     *
+     * <p>Everything reachable from a frame, a static, a watch, a lock or a thread's token is kept;
+     * the rest is let go of. Something the program disposed and can still reach is kept as well, so
+     * that reaching into it still says what it did.
+     */
+    long collect() {
+        final java.util.Set<Object> kept = java.util.Collections.newSetFromMap(new IdentityHashMap<>());
+        // A list rather than a deque, because a slot holding nothing is still a slot to look at.
+        final List<Object> pending = new ArrayList<>();
+        for (final Thread thread : this.threads) {
+            for (final Frame frame : thread.frames) {
+                roots(frame, pending);
+            }
+            pending.add(thread.token);
+            pending.add(thread.on);
+        }
+        for (final Frame frame : this.waiting) {
+            roots(frame, pending);
+        }
+        pending.addAll(this.statics.values());
+        pending.add(this.script);
+        pending.add(this.self);
+        pending.add(this.onMessage);
+        for (final Watch watch : this.watches) {
+            pending.add(watch.handler);
+            pending.add(watch.token);
+        }
+        pending.addAll(this.monitors.keySet());
+        while (!pending.isEmpty()) {
+            final Object thing = pending.removeLast();
+            if (thing == null || thing instanceof Number || thing instanceof Boolean
+                    || thing instanceof Character || !kept.add(thing)) {
+                continue;
+            }
+            switch (thing) {
+                case Values.Obj object -> pending.addAll(object.all().values());
+                case Values.Arr array -> pending.addAll(array.all());
+                case Values.ListValue list -> pending.addAll(list.items());
+                case Values.MapValue map -> {
+                    pending.addAll(map.entries().keySet());
+                    pending.addAll(map.entries().values());
+                }
+                case Values.Table table -> {
+                    for (int i = 0; i < table.runLength(); i++) {
+                        pending.add(table.inRun(i));
+                    }
+                    pending.addAll(table.apartKeys());
+                    pending.addAll(table.apartValues());
+                    pending.add(table.metatable());
+                }
+                case Values.DelegateValue delegate -> {
+                    for (final Values.Bound bound : delegate.chain()) {
+                        pending.add(bound.target());
+                    }
+                }
+                default -> { }
+            }
+        }
+        // Looking through what is alive is work like any other, and the program that made it pays.
+        this.library.owe(kept.size() / COLLECTED_PER_INSTRUCTION);
+        return this.heap.sweep(kept);
+    }
+
+    private static void roots(final Frame frame, final List<Object> into) {
+        into.add(frame.self);
+        for (final Object slot : frame.slots) {
+            into.add(slot);
+        }
+        into.addAll(frame.stack);
+    }
 
     public Process(final Loaded program, final long heapBytes, final IHost host) {
         this(program, heapBytes, host, true);
@@ -168,6 +333,14 @@ public final class Process {
         this.library = new Library(this.heap, host, program.entryPoint());
         this.library.serves(this);
         this.threads.add(this.main);
+        /*
+         * A program with Lua in it makes garbage with every call, and Lua has no dispose, so what it
+         * can no longer reach is collected. A program without keeps its memory the way it always did:
+         * what it allocates stays until it says otherwise.
+         */
+        if (program.type(LuaRuntime.RUNTIME_TYPE) != null) {
+            this.heap.collectWith(this::collect);
+        }
         if (!fresh) {
             return;
         }
@@ -520,10 +693,22 @@ public final class Process {
             }
             used++;
             this.spent++;
+            /*
+             * Collecting happens here, between instructions, and nowhere else: in the middle of one,
+             * something just made may be held only by the runtime's own hands and not yet by the
+             * program, and would be let go of.
+             */
+            if (this.heap.wantsCollection()) {
+                this.heap.collectNow();
+                if (this.heap.used() > this.heap.budget()) {
+                    this.fail(thread, new Halt(Halt.Reason.OUT_OF_MEMORY, 0, this.heap.overBudget()));
+                    continue;
+                }
+            }
             try {
                 this.one();
             } catch (final Halt halt) {
-                this.halt(halt);
+                this.fail(thread, halt);
             }
             /*
              * Reaching into the machine costs more than moving a number about, and the difference is
@@ -653,7 +838,8 @@ public final class Process {
             }
             final Instruction next = frame.method.code().get(frame.at);
             if ((next.opcode() == Opcode.CALL || next.opcode() == Opcode.CALLVIRT)
-                    && next.operand() instanceof IOperand.Method named && Library.readsLine(named)) {
+                    && next.operand() instanceof IOperand.Method named
+                    && (Library.readsLine(named) || LuaRuntime.OWNER.equals(named.owner()))) {
                 return true;
             }
         }
@@ -724,6 +910,11 @@ public final class Process {
             }
         }
         return null;
+    }
+
+    /** The thread of that number, for the Lua side of the runtime. */
+    Thread threadById(final Object id) {
+        return this.thread(id);
     }
 
     /**
@@ -1066,6 +1257,25 @@ public final class Process {
         return true;
     }
 
+    /**
+     * A halt in a thread: caught by a Lua protected call under it when there is one, and the end of
+     * the process otherwise. What catches it may raise in turn, which is caught the same way.
+     */
+    private void fail(final Thread thread, final Halt first) {
+        Halt halt = first;
+        for (int attempt = 0; attempt < RECOVERY_DEPTH && this.lua != null; attempt++) {
+            try {
+                if (this.lua.recover(thread, halt)) {
+                    return;
+                }
+                break;
+            } catch (final Halt again) {
+                halt = again;
+            }
+        }
+        this.halt(halt);
+    }
+
     private void halt(final Halt halt) {
         this.halted = true;
         this.message = halt.getMessage();
@@ -1086,6 +1296,8 @@ public final class Process {
      * is written under a number and every reference is written as that number.
      */
     public Snapshot save() {
+        // What cannot be reached is not worth writing down, where there is something to let go of it.
+        this.heap.collectNow();
         final Map<Object, Integer> numbers = new IdentityHashMap<>();
         final List<Object> things = this.heap.everything();
         for (int i = 0; i < things.size(); i++) {
@@ -1150,6 +1362,11 @@ public final class Process {
             fill(written, byNumber);
             process.heap.restore(byNumber.get(written.id()), written.bytes(), written.line(),
                     written.freed());
+        }
+        final Map<String, Snapshot.IValue> runtime = shot.statics().get(LuaRuntime.RUNTIME_TYPE);
+        if (runtime != null && runtime.get(LuaRuntime.LOADED) != null) {
+            // Chunks a Lua program loaded are compiled again first, since its calls may be inside them.
+            LuaRuntime.reload(program, value(runtime.get(LuaRuntime.LOADED), byNumber));
         }
         for (final Snapshot.ThreadShot written : shot.threads()) {
             final Thread thread = written.id() == process.main.id ? process.main : new Thread(written.id());
@@ -1246,6 +1463,22 @@ public final class Process {
                     values(new ArrayList<>(map.entries().keySet()), numbers),
                     values(new ArrayList<>(map.entries().values()), numbers));
         }
+        if (thing instanceof Values.Table table) {
+            final List<Object> run = new ArrayList<>();
+            for (int i = 0; i < table.runLength(); i++) {
+                run.add(table.inRun(i));
+            }
+            final List<Object> keys = new ArrayList<>();
+            final List<Object> held = new ArrayList<>();
+            for (int i = 0; i < table.apartKeys().size(); i++) {
+                if (table.apartValues().get(i) != null) {
+                    keys.add(table.apartKeys().get(i));
+                    held.add(table.apartValues().get(i));
+                }
+            }
+            return new Snapshot.IHeld.Tabled(number, bytes, line, freed, values(run, numbers),
+                    values(keys, numbers), values(held, numbers), value(table.metatable(), numbers));
+        }
         final Values.DelegateValue delegate = (Values.DelegateValue) thing;
         final List<Snapshot.BoundShot> chain = new ArrayList<>();
         for (final Values.Bound bound : delegate.chain()) {
@@ -1263,6 +1496,7 @@ public final class Process {
             case Snapshot.IHeld.Listing ignored -> new Values.ListValue();
             case Snapshot.IHeld.Keyed ignored -> new Values.MapValue();
             case Snapshot.IHeld.Handler handler -> new Values.DelegateValue(handler.type(), List.of());
+            case Snapshot.IHeld.Tabled ignored -> new Values.Table();
         };
     }
 
@@ -1294,6 +1528,18 @@ public final class Process {
                             value(keyed.values().get(i), byNumber));
                 }
             }
+            case Snapshot.IHeld.Tabled table -> {
+                final Values.Table made = (Values.Table) thing;
+                for (int i = 0; i < table.run().size(); i++) {
+                    made.put((long) (i + 1), value(table.run().get(i), byNumber));
+                }
+                for (int i = 0; i < table.keys().size(); i++) {
+                    made.put(value(table.keys().get(i), byNumber), value(table.values().get(i), byNumber));
+                }
+                if (value(table.metatable(), byNumber) instanceof Values.Table metatable) {
+                    made.setMetatable(metatable);
+                }
+            }
             default -> { }
         }
     }
@@ -1317,7 +1563,7 @@ public final class Process {
         return new Snapshot.FrameShot(frame.method.owner(), frame.method.name(),
                 frame.method.parameters(), frame.at, value(frame.self, numbers),
                 values(java.util.Arrays.asList(frame.slots), numbers), values(frame.stack, numbers),
-                frame.discard);
+                frame.discard, frame.role.name());
     }
 
     private static Frame thaw(final Loaded program, final Snapshot.FrameShot written,
@@ -1335,6 +1581,7 @@ public final class Process {
         }
         frame.at = written.at();
         frame.discard = written.discard();
+        frame.role = Role.valueOf(written.role());
         return frame;
     }
 
@@ -1705,6 +1952,10 @@ public final class Process {
         }
         final Loaded.Method direct = this.program.method(named.owner(), named.name(), named.parameters());
         if (direct == null) {
+            if (LuaRuntime.OWNER.equals(named.owner())) {
+                this.lua().call(frame, named, line);
+                return;
+            }
             if ("Thread".equals(named.owner())) {
                 this.threadCall(frame, named, line);
                 return;

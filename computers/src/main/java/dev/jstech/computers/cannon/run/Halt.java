@@ -28,6 +28,8 @@ public final class Halt extends RuntimeException {
         OUT_OF_RANGE("outside the collection"),
         NO_SUCH_MEMBER("no such member"),
         NO_NETWORK("no network"),
+        /** A Lua program raised an error, which carries any value and can be caught by pcall. */
+        RAISED("error"),
         NOT_LOCKED("not holding the lock"),
         CANNOT_START("could not start"),
         REFUSED("refused");
@@ -46,16 +48,28 @@ public final class Halt extends RuntimeException {
 
     private final transient Reason reason;
     private final int line;
+    private final transient Object value;
 
     public Halt(final Reason reason, final int line, final String message) {
+        this(reason, line, message, null);
+    }
+
+    /** A halt that carries a value with it, which is what a Lua error is: pcall hands it back. */
+    public Halt(final Reason reason, final int line, final String message, final Object value) {
         super(message);
         this.reason = reason;
         this.line = line;
+        this.value = value;
     }
 
     /** Why the process stopped. */
     public Reason reason() {
         return this.reason;
+    }
+
+    /** What was raised, for a halt that was raised with a value; null for the others. */
+    public Object value() {
+        return this.value;
     }
 
     /** The line of the assembly it stopped on, or 0 when it was not inside one. */

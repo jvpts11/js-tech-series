@@ -68,7 +68,8 @@ public final class CannonLanguage implements IProgrammingLanguage {
 
     @Override
     public Set<String> binaryExtensions() {
-        return Set.of("asm");
+        // A source file runs too: the machine compiles it on the way in, as it does a Lua one.
+        return Set.of("asm", "can");
     }
 
     @Override

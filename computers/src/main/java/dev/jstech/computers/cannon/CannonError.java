@@ -97,7 +97,20 @@ public enum CannonError {
     INSTRUCTION_OUTSIDE_METHOD("C4008", "an instruction has to be inside a method"),
     DIRECTIVE_OUTSIDE_TYPE("C4009", "'%s' has to be inside a type"),
     UNKNOWN_LABEL("C4010", "nothing in this method is labelled '%s'"),
-    NOT_YET_BUILT("C4011", "%s is not built yet");
+    NOT_YET_BUILT("C4011", "%s is not built yet"),
+
+    LUA_UNTERMINATED_STRING("L1001", "unfinished string"),
+    LUA_UNTERMINATED_LONG("L1002", "unfinished long %s"),
+    LUA_UNEXPECTED_CHARACTER("L1003", "unexpected symbol near '%s'"),
+    LUA_MALFORMED_NUMBER("L1004", "malformed number near '%s'"),
+    LUA_BAD_ESCAPE("L1005", "invalid escape sequence '\\%s'"),
+    LUA_EXPECTED("L2001", "'%s' expected near %s"),
+    LUA_EXPECTED_CLOSE("L2002", "'%s' expected (to close '%s' at line %s) near %s"),
+    LUA_UNEXPECTED("L2003", "unexpected symbol near %s"),
+    LUA_ASSIGNMENT_TARGET("L2004", "syntax error near %s"),
+    LUA_BREAK_OUTSIDE_LOOP("L2005", "<break> not inside a loop"),
+    LUA_VARARG_OUTSIDE("L2006", "cannot use '...' outside a vararg function"),
+    LUA_NOT_SUPPORTED("L2007", "%s is not supported on this runtime");
 
     private final String code;
     private final String template;
