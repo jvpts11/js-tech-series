@@ -97,6 +97,15 @@ public final class TypeRules {
         if (to == this.builtIns.objectType() && this.isReference(from)) {
             return true;
         }
+        /*
+         * A number, a bool or a character goes where anything may go, as itself: an object holding a
+         * number is still that number, and a cast takes it back out. This is what lets a program hand
+         * numbers to a Lua file it includes, whose functions take whatever they are given.
+         */
+        if (to == this.builtIns.objectType() && from instanceof ITypeSymbol.Primitive primitive
+                && primitive != ITypeSymbol.Primitive.VOID) {
+            return true;
+        }
         if (from instanceof NamedType source && to instanceof NamedType target) {
             return source.isOrDescendsFrom(target);
         }

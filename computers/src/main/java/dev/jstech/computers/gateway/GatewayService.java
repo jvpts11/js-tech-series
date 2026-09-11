@@ -430,11 +430,12 @@ public final class GatewayService {
         final String level = priority == null || priority.isBlank() ? MachinePrograms.DEFAULT_PRIORITY
                 : priority.toLowerCase(Locale.ROOT);
         final MachinePrograms.Started started = machine.cannon().start(name, read.message(), room, machine,
-                new ArrayList<>(args), 0, level);
+                new ArrayList<>(args), 0, level, remote.besideReader(program));
         if (!started.ok()) {
             throw denied(caller, what, computer + ": " + started.message());
         }
         machine.setChanged();
+        machine.cannon().setOrigin(started.id(), remote.luaPath(program));
         gateway.stats().count(GatewayStats.Kind.OPERATION, now());
         gateway.logged(caller.label(), what, "process " + started.id(), GatewayLog.Tone.OK);
         charge(CannonCosts.SUBMIT);

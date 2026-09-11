@@ -214,6 +214,10 @@ public final class ComputingPayloads {
                 ComputingPayloads::handleDesktopShellRun);
         registrar.playToClient(DesktopShellOutputPayload.TYPE, DesktopShellOutputPayload.STREAM_CODEC,
                 ComputingPayloads::handleDesktopShellOutput);
+        registrar.playToClient(LuaScreenPayload.TYPE, LuaScreenPayload.STREAM_CODEC,
+                ComputingPayloads::handleLuaScreen);
+        registrar.playToServer(LuaEventPayload.TYPE, LuaEventPayload.STREAM_CODEC,
+                ComputingPayloads::handleLuaEvent);
         registrar.playToServer(SaveFilePayload.TYPE, SaveFilePayload.STREAM_CODEC,
                 ComputingPayloads::handleSaveFile);
         registrar.playToClient(FileSavedPayload.TYPE, FileSavedPayload.STREAM_CODEC,
@@ -1806,6 +1810,10 @@ public final class ComputingPayloads {
     private static boolean drainForeground(
             final dev.jstech.computers.cannon.machine.MachinePrograms processes, final String typed,
             final java.util.List<DesktopShellOutputPayload.WireLine> wire) {
+        // A program with a screen of its own hears the keyboard as events; an empty line is only a window asking.
+        if (typed.isEmpty() && processes.terminalOf(processes.held()) != null) {
+            return true;
+        }
         if (!INTERRUPT.equals(typed)) {
             processes.offerInput(typed);
             return true;
@@ -1816,6 +1824,38 @@ public final class ComputingPayloads {
         wire.add(new DesktopShellOutputPayload.WireLine("^C",
                 dev.jstech.computers.program.cli.CliStyle.DIM.ordinal()));
         return false;
+    }
+
+    private static void handleLuaScreen(final LuaScreenPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> dev.jstech.computers.client.os.ShellViews.acceptScreen(payload));
+    }
+
+    /**
+     * A key, a character or a click on the screen of the Lua program in front of the machine's terminal,
+     * handed to it as the event ComputerCraft would give it. Anything that is not something a keyboard or
+     * a mouse makes is dropped, and so is everything when no program with a screen has the terminal.
+     */
+    private static void handleLuaEvent(final LuaEventPayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (!(context.player() instanceof ServerPlayer player)
+                    || !(player.level() instanceof ServerLevel level)
+                    || !(player.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu desktop)
+                    || !payload.hostPos().equals(desktop.hostPos())
+                    || !LuaEventPayload.NAMES.contains(payload.name())
+                    || !(level.getBlockEntity(payload.hostPos())
+                            instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity computer)) {
+                return;
+            }
+            final var processes = computer.cannon();
+            final int id = processes.held();
+            if (id == 0) {
+                return;
+            }
+            final java.util.List<Object> values = new java.util.ArrayList<>(payload.values().size() + 1);
+            values.add(payload.name());
+            values.addAll(payload.values());
+            processes.queueEvent(id, values);
+        });
     }
 
     private static void handleDesktopShellOutput(final DesktopShellOutputPayload payload,
@@ -2486,7 +2526,10 @@ public final class ComputingPayloads {
                         new DesktopShellOutputPayload(false, false, "", wire, payload.session()));
                 return;
             }
-            final var started = computer.cannon().start(name, listing.get(), room, computer);
+            final var started = computer.cannon().start(name, listing.get(), room, computer, java.util.List.of(), 0,
+                    dev.jstech.computers.cannon.machine.MachinePrograms.DEFAULT_PRIORITY,
+                    included -> readDiskFile(level, computer,
+                            dev.jstech.computers.cannon.CannonIncludes.beside(payload.path(), included)).orElse(null));
             if (!started.ok()) {
                 wire.add(new DesktopShellOutputPayload.WireLine(started.message(),
                         dev.jstech.computers.program.cli.CliStyle.ERROR.ordinal()));

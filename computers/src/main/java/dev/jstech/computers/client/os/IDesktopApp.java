@@ -118,6 +118,11 @@ public interface IDesktopApp {
         return false;
     }
 
+    /** Handles a key being let go while this app's window is focused; returns true if consumed. */
+    default boolean keyReleased(int key, int scanCode, int modifiers) {
+        return false;
+    }
+
     /**
      * Whether this app currently has a modal dialog open. While true and the app's window is focused, the
      * desktop treats the app as modal: it dims and disables the player-inventory items, suppresses slot

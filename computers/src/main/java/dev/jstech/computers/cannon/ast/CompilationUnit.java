@@ -22,8 +22,28 @@ import java.util.Objects;
  * @param file     the name the file is known by in diagnostics
  * @param usings   what the file brought in, in the order written
  * @param declared the declarations, in the order written, each with its namespace
+ * @param includes the Lua files it includes, in the order written
  */
-public record CompilationUnit(String file, List<Using> usings, List<Declared> declared) {
+public record CompilationUnit(String file, List<Using> usings, List<Declared> declared, List<Include> includes) {
+
+    /**
+     * One Lua file the program is compiled with ({@code include "reactor.lua";}), which Cannon then
+     * reaches as a type named after the file.
+     *
+     * @param path   the file as written
+     * @param line   where the include was written, for a complaint about it
+     * @param column the column it starts at
+     */
+    public record Include(String path, int line, int column) {
+
+        public Include {
+            Objects.requireNonNull(path, "path");
+        }
+    }
+
+    public CompilationUnit(final String file, final List<Using> usings, final List<Declared> declared) {
+        this(file, usings, declared, List.of());
+    }
 
     /**
      * One using: a namespace whose every type may be named plainly ({@code using System.IO.*;}), or one
@@ -64,6 +84,7 @@ public record CompilationUnit(String file, List<Using> usings, List<Declared> de
         Objects.requireNonNull(file, "file");
         usings = usings == null ? List.of() : List.copyOf(usings);
         declared = declared == null ? List.of() : List.copyOf(declared);
+        includes = includes == null ? List.of() : List.copyOf(includes);
     }
 
     /** A file at the top, bringing nothing in, every type in {@code namespace}. */

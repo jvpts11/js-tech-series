@@ -53,6 +53,8 @@ public record SoftwareHouse(String name, String legalName) {
     /** The open house behind the Cannon compiler and its runtime, owned by nobody who sells hardware. */
     public static final SoftwareHouse CANNON_FOUNDATION =
             new SoftwareHouse("Cannon Foundation", "the Cannon Foundation");
+    /** The open house behind the Lua runtime, the language ComputerCraft computers speak. */
+    public static final SoftwareHouse MOONWORKS = new SoftwareHouse("Moonworks", "the Moonworks collective");
     /** The house behind Exposure, the editor that shows you every complaint at once. */
     public static final SoftwareHouse DAYLIGHT_FOUNDATION =
             new SoftwareHouse("Daylight Foundation", "the Daylight Foundation");

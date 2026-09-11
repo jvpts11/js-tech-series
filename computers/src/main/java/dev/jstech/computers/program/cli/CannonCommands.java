@@ -10,7 +10,6 @@ package dev.jstech.computers.program.cli;
 import dev.jstech.computers.cannon.CannonCompiler;
 import dev.jstech.computers.cannon.Diagnostic;
 import dev.jstech.computers.cannon.SourceFile;
-import dev.jstech.computers.cannon.lua.LuaCompiler;
 import dev.jstech.computers.cannon.pack.Manifest;
 import dev.jstech.computers.cannon.pack.Packed;
 import java.util.ArrayList;
@@ -74,8 +73,7 @@ public final class CannonCommands {
 
         @Override
         public String usage() {
-            return "<file" + SOURCE + "> [more" + SOURCE + " ...] [-o <out" + ASSEMBLY + ">] | <file" + LUA_SOURCE
-                    + "> [-o <out" + ASSEMBLY + ">]";
+            return "<file" + SOURCE + "> [more" + SOURCE + " ...] [-o <out" + ASSEMBLY + ">]";
         }
 
         @Override
@@ -103,35 +101,30 @@ public final class CannonCommands {
 
             final List<SourceFile> sources = new ArrayList<>();
             for (final String path : paths) {
+                if (LUA.takes(path)) {
+                    // Lua is not compiled here: it is not Cannon, and its own runtime runs it as it is.
+                    ctx.out().error("cannonc: " + path + " is a Lua program; run it as it is with lrt run " + path);
+                    return;
+                }
                 final ICliComputer.FsResult read = ctx.computer().readFile(path);
                 if (!read.ok()) {
                     ctx.out().error("cannonc: " + read.message());
                     return;
                 }
                 sources.add(new SourceFile(leaf(path), read.message()));
+                // The Lua files a Cannon source includes are read from beside it and compiled with it.
+                for (final String included : dev.jstech.computers.cannon.CannonIncludes.scan(read.message())) {
+                    final ICliComputer.FsResult text = ctx.computer().readFile(
+                            dev.jstech.computers.cannon.CannonIncludes.beside(path, included));
+                    if (text.ok()) {
+                        sources.add(new SourceFile(included, text.message()));
+                    }
+                }
             }
 
-            /*
-             * A Lua file is compiled by the Lua front end onto the same assembly; it is a program of
-             * one file, so it is compiled on its own.
-             */
-            final boolean lua = sources.getFirst().name().toLowerCase(Locale.ROOT).endsWith(LUA_SOURCE);
-            if (lua && sources.size() > 1) {
-                ctx.out().error("cannonc: a Lua program is one file; compile " + sources.getFirst().name()
-                        + " on its own");
-                return;
-            }
-            final List<Diagnostic> diagnostics;
-            final String assembly;
-            if (lua) {
-                final LuaCompiler.Result built = LuaCompiler.compile(sources.getFirst());
-                diagnostics = built.diagnostics();
-                assembly = built.ok() ? built.assembly() : null;
-            } else {
-                final CannonCompiler.Result built = CannonCompiler.compile(sources);
-                diagnostics = built.diagnostics();
-                assembly = built.ok() ? built.assembly() : null;
-            }
+            final CannonCompiler.Result built = CannonCompiler.compile(sources);
+            final List<Diagnostic> diagnostics = built.diagnostics();
+            final String assembly = built.ok() ? built.assembly() : null;
             for (final Diagnostic diagnostic : diagnostics) {
                 if (diagnostic.isError()) {
                     ctx.out().error(diagnostic.format());
@@ -170,27 +163,62 @@ public final class CannonCommands {
         }
     }
 
-    /** Starts, stops and lists the Cannon programs running on this computer. */
+    /**
+     * What one runtime's verb runs: its name at the prompt, the package that brings it, the language
+     * it speaks, and the kinds of file it takes. Cannon and Lua each have their own, because they are
+     * two languages and neither runtime runs the other's programs.
+     */
+    record Runtime(String verb, String packageId, String language, List<String> extensions) {
+
+        boolean takes(final String path) {
+            final String lower = path.toLowerCase(Locale.ROOT);
+            for (final String extension : this.extensions) {
+                if (lower.endsWith(extension)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        String files() {
+            return "<file" + String.join("|", this.extensions) + ">";
+        }
+    }
+
+    static final Runtime CANNON = new Runtime("cannon", RUNTIME, "Cannon", List.of(ASSEMBLY, SOURCE));
+    static final Runtime LUA = new Runtime("lrt", LuaCommands.RUNTIME, "Lua", List.of(LUA_SOURCE));
+
+    /** Starts, stops and lists the programs one runtime is running on this computer. */
     static final class Run implements ICliCommand {
+
+        private final Runtime runtime;
+
+        Run() {
+            this(CANNON);
+        }
+
+        Run(final Runtime runtime) {
+            this.runtime = runtime;
+        }
 
         @Override
         public String name() {
-            return "cannon";
+            return this.runtime.verb();
         }
 
         @Override
         public String summary() {
-            return "run a Cannon or Lua program, stop one, or list what is running";
+            return "run a " + this.runtime.language() + " program, stop one, or list what is running";
         }
 
         @Override
         public String usage() {
-            return "run <file" + ASSEMBLY + "|" + SOURCE + "|" + LUA_SOURCE + "> [--heap <n>M] | stop <id> | ps";
+            return "run " + this.runtime.files() + " [--heap <n>M] | stop <id> | ps";
         }
 
         @Override
         public boolean available(final ICliComputer computer) {
-            return installed(computer, RUNTIME);
+            return installed(computer, this.runtime.packageId());
         }
 
         @Override
@@ -199,15 +227,21 @@ public final class CannonCommands {
                 case "run", "start" -> this.start(ctx);
                 case "stop", "kill" -> this.stop(ctx);
                 case "ps", "list", "" -> this.list(ctx);
-                default -> ctx.out().error("usage: cannon " + this.usage());
+                default -> ctx.out().error("usage: " + this.runtime.verb() + " " + this.usage());
             }
         }
 
         private void start(final CliContext ctx) {
             final String path = ctx.arg(1);
             if (path.isEmpty()) {
-                ctx.out().error("usage: cannon run <file" + ASSEMBLY + "|" + SOURCE + "|" + LUA_SOURCE
-                        + "> [--heap <n>M]");
+                ctx.out().error("usage: " + this.runtime.verb() + " run " + this.runtime.files() + " [--heap <n>M]");
+                return;
+            }
+            if (!this.runtime.takes(path)) {
+                final Runtime other = this.runtime == CANNON ? LUA : CANNON;
+                ctx.out().error(this.runtime.verb() + ": " + path + (other.takes(path)
+                        ? " is a " + other.language() + " program; run it with " + other.verb() + " run " + path
+                        : " is not a " + this.runtime.language() + " program"));
                 return;
             }
             int heapMb = 0;
@@ -230,8 +264,9 @@ public final class CannonCommands {
 
         private void stop(final CliContext ctx) {
             final int id = whole(ctx.arg(1));
+            final String verb = this.runtime.verb();
             if (id < 0) {
-                ctx.out().error("usage: cannon stop <id>   (as listed by 'cannon ps')");
+                ctx.out().error("usage: " + verb + " stop <id>   (as listed by '" + verb + " ps')");
                 return;
             }
             final ICliComputer.OpResult stopped = ctx.computer().stopCannon(id);
@@ -243,9 +278,15 @@ public final class CannonCommands {
         }
 
         private void list(final CliContext ctx) {
-            final List<ICliComputer.CannonProcess> running = ctx.computer().cannonProcesses();
+            final List<ICliComputer.CannonProcess> running = new ArrayList<>();
+            for (final ICliComputer.CannonProcess process : ctx.computer().cannonProcesses()) {
+                // Each runtime lists its own programs: a Lua one is listed by lrt, everything else by cannon.
+                if (LUA.takes(process.file()) == (this.runtime == LUA)) {
+                    running.add(process);
+                }
+            }
             if (running.isEmpty()) {
-                ctx.out().dim("no Cannon programs are running");
+                ctx.out().dim("no " + this.runtime.language() + " programs are running");
                 return;
             }
             ctx.out().info("  id  name                 state      memory");

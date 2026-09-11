@@ -33,8 +33,16 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class ShellApp implements IDesktopApp {
 
+    /** What a window's frame takes round its content: the border, and the title bar above. */
+    private static final int FRAME_W = 8;
+    private static final int FRAME_H = DesktopWindow.TITLE_H + 8;
+
     private final ShellView view;
     private OsSkin skin = OsSkin.fallback();
+
+    /** Where the pointer was last seen over the window, which is where a turn of the wheel happens. */
+    private double pointerX;
+    private double pointerY;
 
     /** The window title: the desktop environment's own terminal name (Konsole, Terminal, Megashell...). */
     private final String title;
@@ -129,9 +137,26 @@ public final class ShellApp implements IDesktopApp {
         }
     }
 
+    /** The screen of the Lua program in front, or null while the prompt has the terminal; for tests. */
+    public dev.jstech.computers.operation.payload.LuaScreenPayload screen() {
+        return this.view.screen();
+    }
+
+    /** Where a cell of the program's screen is on the desktop, or null when it is not showing; for tests. */
+    public int[] screenCellPoint(final int column, final int row) {
+        return this.view.cellPoint(column, row);
+    }
+
+    /** The size the program's screen is drawn at, or 0 when there is none; for tests. */
+    public float screenScale() {
+        return this.view.screenScale();
+    }
+
+    /** The window's title, which names the Lua program in front while it has the terminal. */
     @Override
     public String title() {
-        return this.title;
+        final var screen = this.view.screen();
+        return screen == null || screen.program().isEmpty() ? this.title : this.title + ": " + screen.program();
     }
 
     @Override
@@ -142,6 +167,22 @@ public final class ShellApp implements IDesktopApp {
     @Override
     public int defaultHeight() {
         return 176;
+    }
+
+    /*
+     * When a Lua program's screen first arrives the window grows, once, to show it whole at full size;
+     * made smaller afterwards, the screen is drawn at three quarters, then half.
+     */
+    @Override
+    public int minWidth() {
+        return this.view.wantsRoom() ? dev.jstech.computers.gui.layout.LuaScreenLayout.fullWidth() + FRAME_W
+                : IDesktopApp.super.minWidth();
+    }
+
+    @Override
+    public int minHeight() {
+        return this.view.wantsRoom() ? dev.jstech.computers.gui.layout.LuaScreenLayout.fullHeight() + FRAME_H
+                : IDesktopApp.super.minHeight();
     }
 
     @Override
@@ -160,12 +201,29 @@ public final class ShellApp implements IDesktopApp {
                               final int width, final int height, final int mouseX, final int mouseY,
                               final float partialTick) {
         this.view.setBounds(x, y, width, height);
+        this.pointerX = mouseX;
+        this.pointerY = mouseY;
         this.view.render(g, new UiContext(this.skin, font, mouseX, mouseY, partialTick));
     }
 
     @Override
     public void mouseClicked(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
         this.view.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public void mouseDragged(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
+        this.view.mouseDragged(mouseX, mouseY, button);
+    }
+
+    @Override
+    public void mouseReleased(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
+        this.view.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean keyReleased(final int key, final int scanCode, final int modifiers) {
+        return this.view.keyReleased(key, scanCode, modifiers);
     }
 
     @Override
@@ -180,6 +238,6 @@ public final class ShellApp implements IDesktopApp {
 
     @Override
     public boolean mouseScrolled(final double delta) {
-        return this.view.mouseScrolled(this.view.x(), this.view.y(), delta);
+        return this.view.mouseScrolled(this.pointerX, this.pointerY, delta);
     }
 }

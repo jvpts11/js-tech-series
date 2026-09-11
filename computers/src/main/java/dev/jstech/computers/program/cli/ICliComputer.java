@@ -726,10 +726,15 @@ public interface ICliComputer {
     }
 
     /**
-     * One Cannon program this computer is running: what it is called, how it is getting on, and how much
-     * of the room it was given it is holding.
+     * One program this computer is running: what it is called, how it is getting on, how much of the
+     * room it was given it is holding, and the file it was started from, which says which runtime runs it.
      */
-    record CannonProcess(int id, String name, String state, long heldBytes, long heapBytes) {
+    record CannonProcess(int id, String name, String state, long heldBytes, long heapBytes, String file) {
+
+        public CannonProcess(final int id, final String name, final String state, final long heldBytes,
+                             final long heapBytes) {
+            this(id, name, state, heldBytes, heapBytes, name);
+        }
     }
 
     /** The Cannon programs running here, oldest first. */

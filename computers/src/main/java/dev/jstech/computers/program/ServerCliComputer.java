@@ -3161,11 +3161,12 @@ public final class ServerCliComputer implements ICliComputer {
         }
         final MachinePrograms.Started started = computer.cannon()
                 .start(FsPaths.fileName(path), read.message(), room, computer, arguments, 0,
-                        MachinePrograms.DEFAULT_PRIORITY);
+                        MachinePrograms.DEFAULT_PRIORITY, this.besideReader(path));
         if (!started.ok()) {
             return OpResult.fail(started.message());
         }
         computer.setChanged();
+        computer.cannon().setOrigin(started.id(), this.luaPath(path));
         final MachinePrograms.Live one = computer.cannon().byId(started.id());
         if (one != null && !one.process().isService()) {
             /*
@@ -3176,6 +3177,23 @@ public final class ServerCliComputer implements ICliComputer {
             return OpResult.ok("");
         }
         return OpResult.ok(started.message());
+    }
+
+    /** Where {@code path} is as a ComputerCraft computer would name it; see {@code HostFiles}. */
+    public String luaPath(final String path) {
+        return dev.jstech.computers.cannon.machine.HostFiles.luaPath(this,
+                dev.jstech.computers.program.cli.DosPath.resolve(currentLocation(), path));
+    }
+
+    /**
+     * Reads the files a program at {@code path} includes, each by the path it wrote, from beside it on
+     * this machine's disks; null for one that is not there, which the compiler then names.
+     */
+    public java.util.function.Function<String, String> besideReader(final String path) {
+        return included -> {
+            final FsResult found = readFile(dev.jstech.computers.cannon.CannonIncludes.beside(path, included));
+            return found.ok() ? found.message() : null;
+        };
     }
 
     @Override
@@ -3198,7 +3216,7 @@ public final class ServerCliComputer implements ICliComputer {
         final List<CannonProcess> running = new java.util.ArrayList<>();
         for (final MachinePrograms.Live one : computer.cannon().all()) {
             running.add(new CannonProcess(one.id(), one.name(), MachinePrograms.stateOf(one.process()),
-                    one.process().heldBytes(), one.process().heapBytes()));
+                    one.process().heldBytes(), one.process().heapBytes(), one.file()));
         }
         return running;
     }

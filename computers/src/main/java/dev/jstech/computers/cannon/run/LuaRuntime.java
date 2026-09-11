@@ -13,9 +13,12 @@ import dev.jstech.computers.cannon.asm.Instruction;
 import dev.jstech.computers.cannon.asm.IOperand;
 import dev.jstech.computers.cannon.lua.LuaCompiler;
 import dev.jstech.computers.cannon.lua.LuaEmitter;
+import dev.jstech.computers.cannon.lua.LuaModule;
 import dev.jstech.computers.cannon.lua.lib.ILuaContext;
 import dev.jstech.computers.cannon.lua.lib.ILuaContinuation;
+import dev.jstech.computers.cannon.lua.lib.ILuaFiles;
 import dev.jstech.computers.cannon.lua.lib.ILuaFunction;
+import dev.jstech.computers.cannon.lua.lib.LuaTerminal;
 import dev.jstech.computers.cannon.lua.lib.LuaCall;
 import dev.jstech.computers.cannon.lua.lib.LuaLib;
 import dev.jstech.computers.cannon.lua.lib.LuaNumbers;
@@ -53,6 +56,26 @@ final class LuaRuntime implements ILuaContext {
     static final String EMPTY = "Empty";
     static final String LOADED = "Loaded";
     static final String ENVIRONMENT = "0env";
+    static final String STARTED = "0started";
+    private static final String EVENTS = "Events";
+    private static final String TIMERS = "Timers";
+    private static final String ALARMS = "Alarms";
+    private static final String NEXT_ID = "NextId";
+    private static final String READING = "Reading";
+    private static final String DIRECTORY = "Dir";
+    private static final String PROGRAM = "Program";
+    private static final String TERM_TEXT = "TermText";
+    private static final String TERM_FG = "TermFg";
+    private static final String TERM_BG = "TermBg";
+    private static final String TERM_STATE = "TermState";
+    private static final String TERMINATE = "terminate";
+    private static final int MOST_EVENTS = 256;
+    private static final long ENTER_KEY = 257L;
+    private static final long TICKS_PER_SECOND = 20L;
+    private static final long DAY = 24_000L;
+    private static final String CALL = "call";
+    private static final String GET = "get";
+    private static final String SET = "set";
     static final String RESUME = "0resume";
     static final String COROUTINE_BODY = "0coroutine";
     static final String PARK = "0park";
@@ -78,6 +101,9 @@ final class LuaRuntime implements ILuaContext {
     /** The chunk each function type belongs to, worked out once, for reading globals. */
     private final java.util.Map<String, String> chunks = new java.util.HashMap<>();
     private Random random = new Random();
+    /** The program's screen, read back from its statics the first time it is asked for. */
+    private LuaTerminal screen;
+    private final ILuaFiles files = new MachineFiles();
 
     LuaRuntime(final Process process) {
         this.process = process;
@@ -100,6 +126,8 @@ final class LuaRuntime implements ILuaContext {
             case "SetGlobal" -> this.setIndex(frame, this.environment(frame, line), arguments.get(0),
                     arguments.get(1), null, line);
             case "ScriptArgs" -> frame.push(this.scriptArgs(line));
+            case "ModuleCall" -> this.moduleCall(frame, String.valueOf(arguments.get(0)),
+                    String.valueOf(arguments.get(1)), arguments.get(2), line);
             case "Flush" -> this.flush();
             case "True" -> frame.push(Boolean.TRUE);
             case "False" -> frame.push(Boolean.FALSE);
@@ -560,7 +588,7 @@ final class LuaRuntime implements ILuaContext {
      * the function's own, so that when the function returns, its answer lands there and the
      * continuation runs with it.
      */
-    private void startCall(final Process.Frame frame, final LuaCall call, final int line) {
+    private Process.Frame startCall(final Process.Frame frame, final LuaCall call, final int line) {
         final Loaded.Method resume = this.process.program0().method(RUNTIME_TYPE, RESUME, ONE_OBJECT);
         if (resume == null) {
             throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "this program has no Lua runtime in it");
@@ -570,6 +598,7 @@ final class LuaRuntime implements ILuaContext {
         carrying.role = call.protects() ? Process.Role.PROTECT : Process.Role.RESUME;
         this.process.current().frames.push(carrying);
         this.callValue(carrying, call.function(), call.arguments(), null, line);
+        return carrying;
     }
 
     /** What the carrying frame does once the call under it has returned. */
@@ -577,6 +606,9 @@ final class LuaRuntime implements ILuaContext {
         final String next = String.valueOf(state.get(LuaCall.NEXT));
         switch (next) {
             case "first" -> frame.push(first(result));
+            case "module.started" -> this.moduleAct(frame, String.valueOf(state.get("Chunk")),
+                    String.valueOf(state.get("Name")), state.get("Payload"), String.valueOf(state.get("Then")), line);
+            case "module.result" -> frame.push(this.toCannon(first(result), new java.util.IdentityHashMap<>(), line));
             case "truth" -> frame.push(LuaValues.truth(first(result)));
             case "not" -> frame.push(!LuaValues.truth(first(result)));
             case "none" -> frame.push(null);
@@ -625,7 +657,7 @@ final class LuaRuntime implements ILuaContext {
     private void library(final Process.Frame frame, final Object function, final String name,
                          final Object target, final Object[] arguments, final int line) {
         final boolean waits = switch (name) {
-            case "coroutine.resume", "coroutine.yield", "coroutine.wrapped", "io.read", "read" -> true;
+            case "coroutine.resume", "coroutine.yield", "coroutine.wrapped", "os.pullEvent", "os.pullEventRaw" -> true;
             default -> false;
         };
         if (waits && !this.inPark(frame)) {
@@ -652,7 +684,8 @@ final class LuaRuntime implements ILuaContext {
             case "coroutine.running" -> this.coroutineRunning(line);
             case "coroutine.isyieldable" -> this.current().token instanceof Values.Obj token
                     && LuaValues.COROUTINE.equals(token.type());
-            case "io.read", "read" -> this.readLine(frame, function, arguments, line);
+            case "os.pullEvent" -> this.pullEvent(frame, function, arguments, false, line);
+            case "os.pullEventRaw" -> this.pullEvent(frame, function, arguments, true, line);
             default -> {
                 final ILuaFunction found = LuaLib.function(name);
                 if (found == null) {
@@ -1002,17 +1035,6 @@ final class LuaRuntime implements ILuaContext {
 
     // the console
 
-    private Object readLine(final Process.Frame frame, final Object function, final Object[] arguments,
-                            final int line) {
-        if (!this.process.hasInput()) {
-            // Whatever was written as a prompt is shown before the wait, or nobody would know to type.
-            this.flush();
-            this.process.park();
-            return this.rewind(frame, function, arguments, line);
-        }
-        return this.text(this.process.takeInput(), line);
-    }
-
     @Override
     public void print(final String line) {
         this.write(line + "\n");
@@ -1029,6 +1051,8 @@ final class LuaRuntime implements ILuaContext {
 
     @Override
     public void write(final String text) {
+        // The screen shows it as ComputerCraft would; the console keeps it a line at a time, for its output.
+        this.terminal().print(text);
         final Values.Obj statics = this.runtimeStatics();
         final String pending = statics.get(OUT) instanceof String head ? head : "";
         final String joined = pending + text;
@@ -1118,12 +1142,181 @@ final class LuaRuntime implements ILuaContext {
         this.resized(remembered, line);
         loaded.put(loaded.length() + 1, remembered);
         this.resized(loaded, line);
+        return this.chunkFunction(chunkType, line);
+    }
+
+    /** A chunk's top level, as a function to call. */
+    private Values.DelegateValue chunkFunction(final String chunkType, final int line) {
         final String main = LuaEmitter.mainFunctionOf(chunkType);
         final Values.Obj closure = new Values.Obj(main);
         this.heap.allocate(closure, Heap.HEADER, line);
         final Values.DelegateValue made = new Values.DelegateValue(main,
                 List.of(new Values.Bound(closure, main, INVOKE, INVOKE_PARAMETERS, "object")));
         return this.heap.allocate(made, made.bytes(), line);
+    }
+
+    // Lua files a Cannon program includes
+
+    /** Calls a function of an included file, as the method Cannon calls it through does. */
+    private void moduleCall(final Process.Frame frame, final String chunk, final String name, final Object arguments,
+                            final int line) {
+        this.module(frame, chunk, name, arguments, CALL, line);
+    }
+
+    /** Reads a global of an included file, as a property Cannon reads does. */
+    void moduleGet(final Process.Frame frame, final String facade, final String name, final int line) {
+        this.module(frame, LuaModule.chunkTypeOf(facade), name, null, GET, line);
+    }
+
+    /** Writes a global of an included file, as a property Cannon writes does. */
+    void moduleSet(final Process.Frame frame, final String facade, final String name, final Object value,
+                   final int line) {
+        this.module(frame, LuaModule.chunkTypeOf(facade), name, value, SET, line);
+    }
+
+    /*
+     * The first use of an included file runs its top level, once, in globals of its own that fall
+     * back on the program's; what was asked for happens after that, in the frame that carries the
+     * top level's return.
+     */
+    private void module(final Process.Frame frame, final String chunk, final String name, final Object payload,
+                        final String then, final int line) {
+        final Values.Obj statics = this.process.staticsOf(chunk);
+        if (statics.get(STARTED) != null) {
+            this.moduleAct(frame, chunk, name, payload, then, line);
+            return;
+        }
+        statics.set(STARTED, Boolean.TRUE);
+        this.moduleGlobals(chunk, line);
+        final Values.Obj state = this.state("module.started", null, line);
+        state.set("Chunk", this.text(chunk, line));
+        state.set("Name", this.text(name, line));
+        state.set("Payload", payload);
+        state.set("Then", this.text(then, line));
+        final Process.Frame carrying =
+                this.startCall(frame, new LuaCall(this.chunkFunction(chunk, line), new Object[0], state), line);
+        // A property written gives nothing back, so the frame that carries it must not either.
+        carrying.discard = SET.equals(then);
+    }
+
+    private void moduleAct(final Process.Frame frame, final String chunk, final String name, final Object payload,
+                           final String then, final int line) {
+        final Values.Table globals = this.moduleGlobals(chunk, line);
+        switch (then) {
+            case CALL -> {
+                final Object function = globals.get(name) != null ? globals.get(name) : this.globals(line).get(name);
+                if (function == null) {
+                    throw this.error(LuaModule.facadeNameFor(chunk) + ".lua has no function '" + name + "'", line);
+                }
+                final List<Object> given = payload instanceof Values.Arr run ? run.all() : List.of();
+                final Object[] arguments = new Object[given.size()];
+                final java.util.Map<Object, Object> seen = new java.util.IdentityHashMap<>();
+                for (int i = 0; i < arguments.length; i++) {
+                    arguments[i] = this.toLua(given.get(i), seen, line);
+                }
+                this.startCall(frame, new LuaCall(function, arguments, this.state("module.result", null, line)), line);
+            }
+            case GET -> {
+                final Object value = globals.get(name) != null ? globals.get(name) : this.globals(line).get(name);
+                frame.push(this.toCannon(value, new java.util.IdentityHashMap<>(), line));
+            }
+            default -> {
+                globals.put(this.text(name, line), this.toLua(payload, new java.util.IdentityHashMap<>(), line));
+                this.resized(globals, line);
+            }
+        }
+    }
+
+    /** The globals of an included file, made the first time it is asked for. */
+    private Values.Table moduleGlobals(final String chunk, final int line) {
+        final Values.Obj statics = this.process.staticsOf(chunk);
+        if (statics.get(ENVIRONMENT) instanceof Values.Table own) {
+            return own;
+        }
+        final Values.Table made = this.table(line);
+        final Values.Table meta = this.table(line);
+        meta.put(this.text("__index", line), this.globals(line));
+        this.resized(meta, line);
+        made.setMetatable(meta);
+        statics.set(ENVIRONMENT, made);
+        return made;
+    }
+
+    /*
+     * A value on its way from Cannon to Lua: whole numbers become Lua's whole numbers, reals its reals,
+     * a character a piece of text, and a list or a map a table holding the same, made anew.
+     */
+    private Object toLua(final Object value, final java.util.Map<Object, Object> seen, final int line) {
+        if (value instanceof Integer || value instanceof Short || value instanceof Byte) {
+            return ((Number) value).longValue();
+        }
+        if (value instanceof Float real) {
+            return real.doubleValue();
+        }
+        if (value instanceof Character letter) {
+            return this.text(String.valueOf(letter), line);
+        }
+        if (seen.containsKey(value)) {
+            return seen.get(value);
+        }
+        if (value instanceof Values.ListValue || value instanceof Values.Arr) {
+            final Values.Table made = this.table(line);
+            seen.put(value, made);
+            final List<Object> items = value instanceof Values.ListValue list ? list.items() : ((Values.Arr) value).all();
+            for (int i = 0; i < items.size(); i++) {
+                made.put((long) (i + 1), this.toLua(items.get(i), seen, line));
+            }
+            this.resized(made, line);
+            return made;
+        }
+        if (value instanceof Values.MapValue map) {
+            final Values.Table made = this.table(line);
+            seen.put(value, made);
+            for (final java.util.Map.Entry<Object, Object> entry : map.entries().entrySet()) {
+                final Object key = this.toLua(entry.getKey(), seen, line);
+                if (key != null) {
+                    made.put(key, this.toLua(entry.getValue(), seen, line));
+                }
+            }
+            this.resized(made, line);
+            return made;
+        }
+        return value;
+    }
+
+    /*
+     * A value on its way from Lua to Cannon: a table that is a plain run from one becomes a list, any
+     * other table a map; everything else is already something Cannon holds.
+     */
+    private Object toCannon(final Object value, final java.util.Map<Object, Object> seen, final int line) {
+        if (!(value instanceof Values.Table table)) {
+            return value;
+        }
+        if (seen.containsKey(value)) {
+            return seen.get(value);
+        }
+        int keys = 0;
+        for (Object key = table.nextKey(null); key != null; key = table.nextKey(key)) {
+            keys++;
+        }
+        if (keys == table.length()) {
+            final Values.ListValue made = new Values.ListValue();
+            this.heap.allocate(made, made.bytes(), line);
+            seen.put(value, made);
+            for (long i = 1; i <= keys; i++) {
+                made.items().add(this.toCannon(table.get(i), seen, line));
+            }
+            this.heap.resize(made, made.bytes(), line);
+            return made;
+        }
+        final Values.MapValue made = new Values.MapValue();
+        this.heap.allocate(made, made.bytes(), line);
+        seen.put(value, made);
+        for (Object key = table.nextKey(null); key != null; key = table.nextKey(key)) {
+            made.entries().put(this.toCannon(key, seen, line), this.toCannon(table.get(key), seen, line));
+        }
+        this.heap.resize(made, made.bytes(), line);
+        return made;
     }
 
     /* How a loaded chunk names itself in its errors: its name as given, or its text's first line. */
@@ -1233,5 +1426,402 @@ final class LuaRuntime implements ILuaContext {
     @Override
     public long collect() {
         return this.heap.collectNow();
+    }
+
+    // events, as a ComputerCraft computer has them
+
+    /**
+     * Waits for an event, as {@code os.pullEvent} does.
+     *
+     * <p>Inside a coroutine it yields the filter to whoever resumed it, as on ComputerCraft, where the
+     * resumer is the one handing out events ({@code parallel} is written that way). At the top of the
+     * program it takes the next event from the program's own queue that the filter lets through, and
+     * waits, spending nothing, while there is none. {@code terminate} always comes through, and ends
+     * the program unless the raw form was asked for.
+     */
+    private Object pullEvent(final Process.Frame frame, final Object function, final Object[] arguments,
+                             final boolean raw, final int line) {
+        final Process.Thread me = this.current();
+        if (me.token instanceof Values.Obj token && LuaValues.COROUTINE.equals(token.type())) {
+            final Object got = this.coroutineYield(frame, function, arguments, line);
+            return got == REWIND || raw ? got : this.terminating(got, line);
+        }
+        final String filter = arguments.length > 0 && arguments[0] instanceof String wanted ? wanted : null;
+        final Values.Arr event = this.takeEvent(filter);
+        if (event == null) {
+            // Whatever was written as a prompt is shown before the wait, or nobody would know to type.
+            this.flush();
+            me.parked = Process.Parked.EVENT;
+            return this.rewind(frame, function, arguments, line);
+        }
+        return raw ? event : this.terminating(event, line);
+    }
+
+    private Object terminating(final Object event, final int line) {
+        if (TERMINATE.equals(first(event))) {
+            throw this.raise(this.text("Terminated", line), line);
+        }
+        return event;
+    }
+
+    /* The first event the filter lets through, taken off the queue with every one before it. */
+    private Values.Arr takeEvent(final String filter) {
+        if (!(this.runtimeStatics().get(EVENTS) instanceof Values.Table queue)) {
+            return null;
+        }
+        while (queue.length() > 0) {
+            final Object head = queue.get(1L);
+            final long size = queue.length();
+            for (long i = 1; i < size; i++) {
+                queue.put(i, queue.get(i + 1));
+            }
+            queue.put(size, null);
+            if (head instanceof Values.Arr event) {
+                final Object name = first(event);
+                if (filter == null || filter.equals(name) || TERMINATE.equals(name)) {
+                    return event;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Whether an event is waiting in the queue. */
+    boolean hasEvents() {
+        return this.runtimeStatics().get(EVENTS) instanceof Values.Table queue && queue.length() > 0;
+    }
+
+    /** Whether the program is in the middle of reading a line, which is waiting for the keyboard. */
+    boolean reading() {
+        return Boolean.TRUE.equals(this.runtimeStatics().get(READING));
+    }
+
+    /** Turns timers and alarms that have come due into events. */
+    void pump(final long now) {
+        this.due(TIMERS, "timer", now);
+        this.due(ALARMS, "alarm", now);
+    }
+
+    private void due(final String kind, final String event, final long now) {
+        if (!(this.runtimeStatics().get(kind) instanceof Values.Table waiting)) {
+            return;
+        }
+        final List<Object> fired = new ArrayList<>();
+        for (Object key = waiting.nextKey(null); key != null; key = waiting.nextKey(key)) {
+            if (LuaNumbers.toInteger(waiting.get(key)) instanceof Long at && at <= now) {
+                fired.add(key);
+            }
+        }
+        for (final Object id : fired) {
+            waiting.put(id, null);
+            final List<Object> values = new ArrayList<>(2);
+            values.add(this.text(event, 0));
+            values.add(id);
+            this.queueEvent(values);
+        }
+    }
+
+    /** A line typed at a terminal, which a Lua program hears as a character at a time and then Enter. */
+    void typed(final String typed) {
+        for (int i = 0; i < typed.length(); i++) {
+            final List<Object> values = new ArrayList<>(2);
+            values.add(this.text("char", 0));
+            values.add(this.text(String.valueOf(typed.charAt(i)), 0));
+            this.queueEvent(values);
+        }
+        final List<Object> enter = new ArrayList<>(3);
+        enter.add(this.text("key", 0));
+        enter.add(ENTER_KEY);
+        enter.add(false);
+        this.queueEvent(enter);
+    }
+
+    @Override
+    public void queueEvent(final List<Object> values) {
+        final Values.Table queue = this.store(EVENTS, 0);
+        if (queue.length() >= MOST_EVENTS) {
+            return;
+        }
+        queue.put(queue.length() + 1, this.values(values, 0));
+        this.resized(queue, 0);
+    }
+
+    private long nextId() {
+        final Values.Obj statics = this.runtimeStatics();
+        final long id = statics.get(NEXT_ID) instanceof Long last ? last + 1 : 1L;
+        statics.set(NEXT_ID, id);
+        return id;
+    }
+
+    @Override
+    public long startTimer(final double seconds) {
+        final long id = this.nextId();
+        final long ticks = Math.max(0, (long) Math.ceil(seconds * TICKS_PER_SECOND));
+        final Values.Table timers = this.store(TIMERS, 0);
+        timers.put(id, this.tick() + Math.max(1, ticks));
+        this.resized(timers, 0);
+        return id;
+    }
+
+    @Override
+    public boolean cancelTimer(final long id) {
+        final Values.Table timers = this.store(TIMERS, 0);
+        final boolean had = timers.get(id) != null;
+        timers.put(id, null);
+        return had;
+    }
+
+    @Override
+    public long setAlarm(final double hour) {
+        final long id = this.nextId();
+        // The world's day starts at six in the morning, which is where ComputerCraft's clock counts from.
+        final long target = Math.floorMod((long) Math.floor(hour * 1000) - 6000, DAY);
+        final long now = Math.floorMod(this.dayTime(), DAY);
+        final long wait = Math.floorMod(target - now, DAY);
+        final Values.Table alarms = this.store(ALARMS, 0);
+        alarms.put(id, this.tick() + (wait == 0 ? DAY : wait));
+        this.resized(alarms, 0);
+        return id;
+    }
+
+    @Override
+    public boolean cancelAlarm(final long id) {
+        final Values.Table alarms = this.store(ALARMS, 0);
+        final boolean had = alarms.get(id) != null;
+        alarms.put(id, null);
+        return had;
+    }
+
+    // the rest of what ComputerCraft's libraries ask of the runtime
+
+    @Override
+    public LuaTerminal terminal() {
+        if (this.screen == null) {
+            this.screen = new LuaTerminal();
+            this.unpersist(this.screen);
+        }
+        return this.screen;
+    }
+
+    /** Writes the screen into the program's statics, so it is saved with everything else. */
+    void persist() {
+        if (this.screen == null) {
+            return;
+        }
+        final Values.Table text = this.table(0);
+        final Values.Table fg = this.table(0);
+        final Values.Table bg = this.table(0);
+        for (int y = 0; y < LuaTerminal.HEIGHT; y++) {
+            text.put((long) (y + 1), this.text(this.screen.row(y), 0));
+            fg.put((long) (y + 1), this.text(this.screen.rowText(y), 0));
+            bg.put((long) (y + 1), this.text(this.screen.rowGround(y), 0));
+        }
+        final Values.Table state = this.table(0);
+        state.put(1L, (long) this.screen.cursorX());
+        state.put(2L, (long) this.screen.cursorY());
+        state.put(3L, this.screen.blink());
+        state.put(4L, (long) this.screen.textColour());
+        state.put(5L, (long) this.screen.groundColour());
+        final int[] palette = this.screen.palette();
+        for (int i = 0; i < palette.length; i++) {
+            state.put((long) (6 + i), (long) palette[i]);
+        }
+        for (final Values.Table made : List.of(text, fg, bg, state)) {
+            this.resized(made, 0);
+        }
+        final Values.Obj statics = this.runtimeStatics();
+        statics.set(TERM_TEXT, text);
+        statics.set(TERM_FG, fg);
+        statics.set(TERM_BG, bg);
+        statics.set(TERM_STATE, state);
+    }
+
+    private void unpersist(final LuaTerminal into) {
+        final Values.Obj statics = this.runtimeStatics();
+        if (!(statics.get(TERM_TEXT) instanceof Values.Table text) || !(statics.get(TERM_FG) instanceof Values.Table fg)
+                || !(statics.get(TERM_BG) instanceof Values.Table bg)) {
+            return;
+        }
+        for (int y = 0; y < LuaTerminal.HEIGHT; y++) {
+            into.setRow(y, LuaValues.plainString(text.get((long) (y + 1))), LuaValues.plainString(fg.get((long) (y + 1))),
+                    LuaValues.plainString(bg.get((long) (y + 1))));
+        }
+        if (statics.get(TERM_STATE) instanceof Values.Table state) {
+            into.setCursor((int) Numbers.toLong(state.get(1L)), (int) Numbers.toLong(state.get(2L)));
+            into.setBlink(Boolean.TRUE.equals(state.get(3L)));
+            into.setTextColour((int) Numbers.toLong(state.get(4L)));
+            into.setGroundColour((int) Numbers.toLong(state.get(5L)));
+            for (int i = 0; i < 16; i++) {
+                if (state.get((long) (6 + i)) != null) {
+                    into.setPaletteColour(i, (int) Numbers.toLong(state.get((long) (6 + i))));
+                }
+            }
+        }
+    }
+
+    @Override
+    public ILuaFiles files() {
+        return this.files;
+    }
+
+    @Override
+    public Object loadChunk(final String text, final String name, final Object environment, final int line) {
+        return this.load(environment == null ? new Object[] {text, name} : new Object[] {text, name, "t", environment},
+                line);
+    }
+
+    @Override
+    public String directory() {
+        return this.runtimeStatics().get(DIRECTORY) instanceof String dir ? dir : "";
+    }
+
+    @Override
+    public void setDirectory(final String path) {
+        this.runtimeStatics().set(DIRECTORY, this.text(path, 0));
+    }
+
+    @Override
+    public String programName() {
+        return this.runtimeStatics().get(PROGRAM) instanceof String name ? name : "";
+    }
+
+    /** Where the program came from, as a ComputerCraft path: its file and the folder it is in. */
+    void setOrigin(final String path) {
+        String plain = path.replace('\\', '/');
+        if (plain.length() > 1 && plain.charAt(1) == ':') {
+            plain = plain.substring(2);
+        }
+        while (plain.startsWith("/")) {
+            plain = plain.substring(1);
+        }
+        this.runtimeStatics().set(PROGRAM, this.text(plain, 0));
+        final int slash = plain.lastIndexOf('/');
+        this.setDirectory(slash < 0 ? "" : plain.substring(0, slash));
+    }
+
+    @Override
+    public String computerName() {
+        final Object name = this.ask("Computer", "Name", List.of());
+        return name == null ? "" : String.valueOf(name);
+    }
+
+    @Override
+    public long computerId() {
+        return this.ask("Computer", "Id", List.of()) instanceof Number id ? id.longValue() : 0L;
+    }
+
+    /* A question for the machine, or null when this machine does not answer it. */
+    private Object ask(final String owner, final String member, final List<Object> arguments) {
+        try {
+            return this.process.library().hostCall(owner, member, arguments, 0);
+        } catch (final Halt unanswered) {
+            return null;
+        }
+    }
+
+    @Override
+    public Object createCoroutine(final Object function, final int line) {
+        return this.coroutineCreate(function, line);
+    }
+
+    @Override
+    public boolean coroutineDead(final Object coroutine) {
+        return coroutine instanceof Values.Obj token && Numbers.toLong(token.get("Status")) == DEAD;
+    }
+
+    @Override
+    public void exit() {
+        this.flush();
+        this.process.exitNow(0);
+    }
+
+    @Override
+    public Object global(final String name) {
+        return this.globals(0).get(name);
+    }
+
+    @Override
+    public Values.Table store(final String name, final int line) {
+        final Values.Obj statics = this.runtimeStatics();
+        if (statics.get(name) instanceof Values.Table kept) {
+            return kept;
+        }
+        final Values.Table made = this.table(line);
+        statics.set(name, made);
+        return made;
+    }
+
+    @Override
+    public void reading(final boolean value) {
+        this.runtimeStatics().set(READING, value ? Boolean.TRUE : null);
+    }
+
+    /*
+     * The machine's disks as ComputerCraft's fs reaches them: every question goes to the machine as a
+     * file call, paid for like one, and a machine with no disks to reach answers as an empty one.
+     */
+    private final class MachineFiles implements ILuaFiles {
+        @Override
+        public List<Entry> list(final String path) {
+            if (!(LuaRuntime.this.ask("File", "Entries", List.of(path)) instanceof Values.ListValue rows)) {
+                return null;
+            }
+            final List<Entry> out = new ArrayList<>(rows.items().size());
+            for (final Object row : rows.items()) {
+                if (row instanceof Values.ListValue fields) {
+                    out.add(entryOf(fields.items()));
+                }
+            }
+            return out;
+        }
+
+        @Override
+        public Entry stat(final String path) {
+            return LuaRuntime.this.ask("File", "Stat", List.of(path)) instanceof Values.ListValue fields
+                    ? entryOf(fields.items()) : null;
+        }
+
+        @Override
+        public String read(final String path) {
+            return LuaRuntime.this.ask("File", "Text", List.of(path)) instanceof String text ? text : null;
+        }
+
+        @Override
+        public String write(final String path, final String text) {
+            return this.done(LuaRuntime.this.ask("File", "Put", List.of(path, text)));
+        }
+
+        @Override
+        public String makeDir(final String path) {
+            return this.done(LuaRuntime.this.ask("File", "MakeDir", List.of(path)));
+        }
+
+        @Override
+        public String delete(final String path) {
+            return this.done(LuaRuntime.this.ask("File", "Remove", List.of(path)));
+        }
+
+        @Override
+        public long free(final String path) {
+            return LuaRuntime.this.ask("File", "Free", List.of(path)) instanceof Number room ? room.longValue() : 0L;
+        }
+
+        @Override
+        public long capacity(final String path) {
+            return LuaRuntime.this.ask("File", "Capacity", List.of(path)) instanceof Number room ? room.longValue() : 0L;
+        }
+
+        /* What the machine answered: nothing when it went right, the words when it did not. */
+        private String done(final Object answer) {
+            if (answer == null) {
+                return "this computer has no disk to reach";
+            }
+            return answer instanceof String wrong && !wrong.isEmpty() ? wrong : null;
+        }
+
+        private Entry entryOf(final List<?> fields) {
+            return new Entry(String.valueOf(fields.get(0)), Boolean.TRUE.equals(fields.get(1)),
+                    Numbers.toLong(fields.get(2)), Boolean.TRUE.equals(fields.get(3)), Numbers.toLong(fields.get(4)));
+        }
     }
 }

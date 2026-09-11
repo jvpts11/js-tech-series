@@ -8,8 +8,10 @@
 package dev.jstech.computers.cannon;
 
 import dev.jstech.computers.cannon.asm.AsmProgram;
+import dev.jstech.computers.cannon.asm.AsmType;
 import dev.jstech.computers.cannon.asm.AsmWriter;
 import dev.jstech.computers.cannon.asm.Emitter;
+import dev.jstech.computers.cannon.lua.LuaModule;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,6 +63,14 @@ public final class CannonCompiler {
                 analysis.declarations(), bag).emit();
         if (bag.hasErrors()) {
             return new Result(null, bag.sorted(), bag.wasCapped());
+        }
+        // The Lua files the program includes go into the same listing, the runtime's own types once.
+        for (final LuaModule module : analysis.modules()) {
+            for (final AsmType type : module.types()) {
+                if (program.type(type.name()) == null) {
+                    program.addType(type);
+                }
+            }
         }
         return new Result(AsmWriter.write(program), bag.sorted(), bag.wasCapped());
     }

@@ -86,9 +86,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   writing and the computer shared the folder for writing, gone when files are off, and following the
   shares as they open and close. They hold text files; what a ComputerCraft program writes there weighs
   what any file on that computer weighs and takes the file types that computer takes.
-- Our computers run Lua programs, the language ComputerCraft computers speak. `cannon run reactor.lua`
-  starts one as it is, `cannonc` compiles one to assembly like a Cannon program, and the code editors read,
-  colour, check and run them. A Lua program runs on the same runtime as Cannon: out of the same tick
+- Our computers run Lua programs, the language ComputerCraft computers speak. The Lua Runtime is a package
+  of its own and brings its own verb: `lrt run reactor.lua` starts a program as it is, with nothing to
+  compile first, `lrt ps` lists what it is running and `lrt stop` stops one. The Cannon verbs leave Lua
+  alone and say so. The code editors read, colour, check and run Lua files. A Lua program runs out of the same tick
   budget, in the same counted memory, listed in the Task Manager, and carried through a save in the middle
   of whatever it was doing. The language is all there (tables, metatables, closures, several results,
   `...`, errors caught with `pcall`, coroutines) along with its standard library: `string` with Lua's own
@@ -96,6 +97,27 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   has no way to free what it made, so the memory of a Lua program is collected when it can no longer be
   reached; a Cannon program still frees its own. `cannon run hello.can` now runs a Cannon source file as
   it is, too.
+- A Lua program finds what a ComputerCraft computer gives it. Events and `os.pullEvent`, with Ctrl+T's
+  `terminate`; timers, alarms and `sleep` on the world's clock, waiting without spending anything; `parallel`;
+  a 51 by 19 screen with sixteen colours through `term`, `paintutils` and `colors`, and `read` with its
+  history; `fs` and `io` on the computer's own disks, the system disk at the root and each other drive under
+  `disk`, `disk2` and on; `textutils`, `keys`, `settings` kept in `.settings`, `shell` with `shell.run`, and
+  `require`, `dofile` and `loadfile` for the files beside the program. The computer answers to its name and a
+  number of its own. It has no peripherals or modem of its own, and says so when a program asks for one.
+  The screen is saved with the program, and comes back as it was left.
+- A Lua program at a terminal is seen on its own screen. The Command Prompt grows to show the 51 by 19 grid
+  whole, names the program in its title, and draws it at three quarters or half when made smaller; an
+  editor's terminal panel draws it at three quarters and follows the cursor, saying which rows it shows. Keys
+  reach the program as `key`, `key_up` and `char`, Ctrl+V pastes, Ctrl+T sends `terminate`, Ctrl+C stops it,
+  and clicks, drags and the wheel arrive as mouse events on the cell under the pointer. When it returns, the
+  prompt comes back under what it left on its screen.
+- A Cannon program can use Lua code. `include "reactor.lua";` at the head of a file compiles the Lua file
+  beside it into the program, and Cannon reaches it as `reactor`: every function the file declares is a
+  method that takes whatever it is given and gives back an `object`, and every other global it sets is a
+  field to read and write. The file's top level runs once, the first time the program uses it. Numbers,
+  text, lists and maps cross over as the other language holds them.
+- A number, a bool or a character can now go where an `object` goes, and a cast takes the number back out
+  as whichever kind is asked for: `int n = (int) held;`.
 - Mods may add a programming language of their own, and remove this one. A language that registers itself
   gets the prompt, the terminal, the task manager, saving and the tick budget without writing any of them.
 - Five editors to write a program in, each a different bargain between what it shows you and what it costs

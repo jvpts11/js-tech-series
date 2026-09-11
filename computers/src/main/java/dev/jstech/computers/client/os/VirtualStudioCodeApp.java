@@ -84,6 +84,10 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     private final TabStrip panelTabs;
     private final ListView<IProgrammingLanguage.Complaint> problems;
     private final ShellView terminal;
+
+    /** Where the pointer was last seen over the window, which is where a turn of the wheel happens. */
+    private double pointerX;
+    private double pointerY;
     private final CodeCompletions completions = new CodeCompletions();
     private final CommandPalette palette = new CommandPalette();
     /** The system's file window, for everything the editor opens or saves by choosing on the disk. */
@@ -206,6 +210,16 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     /** Everything the terminal panel has printed, as one piece of text. */
     public String terminalText() {
         return this.terminal.scrollbackText();
+    }
+
+    /** The screen of the Lua program in the terminal panel, or null when none has it; for tests. */
+    public dev.jstech.computers.operation.payload.LuaScreenPayload terminalScreen() {
+        return this.terminal.screen();
+    }
+
+    /** Which rows of that screen the panel shows, as the first (from 1) and how many; for tests. */
+    public int[] terminalScreenRows() {
+        return this.terminal.screenRows();
     }
 
     /** The names the suggestion list offers, top to bottom; empty when none is up. */
@@ -695,6 +709,11 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         if (doc.dirty()) {
             this.workspace.save();
         }
+        if (isLua(doc.path())) {
+            // A Lua file is not built: it runs as it is, and its margin already says what is wrong with it.
+            this.workspace.say("A Lua file runs as it is: F5 runs it with lrt");
+            return;
+        }
         focusTerminal();
         enqueue("cannonc " + doc.path() + " -o " + outputFor(doc.path()));
     }
@@ -704,8 +723,20 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         if (doc == null) {
             return;
         }
+        if (isLua(doc.path())) {
+            if (doc.dirty()) {
+                this.workspace.save();
+            }
+            focusTerminal();
+            enqueue("lrt run " + doc.path());
+            return;
+        }
         buildFile();
         enqueue("cannon run " + outputFor(doc.path()));
+    }
+
+    private static boolean isLua(final String path) {
+        return path.toLowerCase(java.util.Locale.ROOT).endsWith(".lua");
     }
 
     private void buildFolder() {
@@ -860,6 +891,8 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
                               final int width, final int height, final int mouseX, final int mouseY,
                               final float partialTick) {
         final UiContext ctx = new UiContext(this.skin, font, mouseX, mouseY, partialTick);
+        this.pointerX = mouseX;
+        this.pointerY = mouseY;
         g.fill(x, y, x + width, y + height, this.skin.windowBg());
         this.root.setBounds(x, y, width, height);
         this.menuBar.setBounds(x, y, width, MenuBar.HEIGHT);
@@ -1175,6 +1208,11 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
             this.panelH = (int) (this.dividerY + this.panelH - mouseY);
             return;
         }
+        // A Lua program's screen in the panel hears the drag as its own.
+        if (this.typingInTerminal && this.terminal.onScreen()) {
+            this.terminal.mouseDragged(mouseX, mouseY, button);
+            return;
+        }
         final CodeWorkspace.Doc doc = this.workspace.current();
         if (doc != null && !modalActive()) {
             doc.area().mouseDragged(mouseX, mouseY, button);
@@ -1184,6 +1222,10 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     @Override
     public void mouseReleased(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
         this.holding = 0;
+        if (this.typingInTerminal && this.terminal.onScreen()) {
+            this.terminal.mouseReleased(mouseX, mouseY, button);
+            return;
+        }
         final CodeWorkspace.Doc doc = this.workspace.current();
         if (doc != null) {
             doc.area().mouseReleased(mouseX, mouseY, button);
@@ -1317,6 +1359,11 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         return false;
     }
 
+    @Override
+    public boolean keyReleased(final int key, final int scanCode, final int modifiers) {
+        return this.typingInTerminal && this.terminal.keyReleased(key, scanCode, modifiers);
+    }
+
     private void offerCompletions(final CodeWorkspace.Doc doc) {
         final CodeArea area = doc.area();
         this.completions.offer(area, doc.path(), this.workspace.siblingsOf(doc),
@@ -1329,7 +1376,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
             return this.palette.mouseScrolled(0, 0, delta);
         }
         if (this.typingInTerminal) {
-            return this.terminal.mouseScrolled(this.terminal.x(), this.terminal.y(), delta);
+            return this.terminal.mouseScrolled(this.pointerX, this.pointerY, delta);
         }
         final CodeWorkspace.Doc doc = this.workspace.current();
         if (doc == null) {

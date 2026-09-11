@@ -2210,7 +2210,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             editor.openFile(path);
             return;
         }
-        if (programId.equals(dev.jstech.computers.os.fs.FileOpeners.RUNTIME)) {
+        if (programId.equals(dev.jstech.computers.os.fs.FileOpeners.RUNTIME)
+                || programId.equals(dev.jstech.computers.os.fs.FileOpeners.LUA_RUNTIME)) {
             // A compiled program is run, not read: it gets this desktop's terminal and prints into it.
             runAtTerminal(path);
             return;
@@ -5575,6 +5576,16 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             return true;
         }
         return super.keyPressed(key, scanCode, modifiers);
+    }
+
+    /** A key let go goes to the window in front, for a program that tells a press from a release. */
+    @Override
+    public boolean keyReleased(final int key, final int scanCode, final int modifiers) {
+        final DesktopWindow w = frontWindow();
+        if (popup == null && w != null && w.app().keyReleased(key, scanCode, modifiers)) {
+            return true;
+        }
+        return super.keyReleased(key, scanCode, modifiers);
     }
 
     @Override

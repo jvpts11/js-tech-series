@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
+import dev.jstech.computers.operation.payload.LuaScreenPayload;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,6 +50,13 @@ public final class ShellViews {
     /** Whether any window is looking at the console. */
     public static boolean anyOpen() {
         return !OPEN.isEmpty();
+    }
+
+    /** Hands the screen of the Lua program in front to every window looking at that machine's console. */
+    public static void acceptScreen(final LuaScreenPayload payload) {
+        for (final ShellView view : List.copyOf(OPEN)) {
+            view.acceptScreen(payload);
+        }
     }
 
     /** Hands what the console said to every window looking at it. */

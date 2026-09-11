@@ -374,6 +374,16 @@ public final class Library {
     }
 
     /**
+     * Asks the machine something for the Lua side of the runtime, which turns the answer into Lua's
+     * values itself: the answer as the machine gave it, and what it cost charged like any call.
+     */
+    Object hostCall(final String owner, final String member, final List<Object> arguments, final int line) {
+        final IHost.Reply reply = this.host.call(owner, member, arguments, this.caller, this.callerId(), line);
+        this.owed += Math.max(0, reply.cost() - 1);
+        return reply.value();
+    }
+
+    /**
      * Asks the machine something without charging for it, for what the process checks on its own
      * account between slices; nothing when the machine does not answer for it.
      */

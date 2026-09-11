@@ -1217,6 +1217,50 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         }
     }
 
+    /* What was last sent of the screen in front, so it is sent again only when there is something new. */
+    private long sentScreenRevision = -1;
+    private int sentScreenId;
+    private int sentScreenViewers;
+    private long sentScreenTick;
+
+    /** How often a screen that has not changed is sent anyway, in ticks, for a window that missed it. */
+    private static final long SCREEN_RESEND_TICKS = 40;
+
+    /**
+     * Sends the screen of the program in front to whoever is at this machine's terminal, whole, when it
+     * has changed since it was last sent, when someone new is looking, and now and then regardless.
+     */
+    private void pushScreen(final ServerLevel level, final dev.jstech.computers.cannon.machine.MachinePrograms.Live one,
+                            final dev.jstech.computers.cannon.lua.lib.LuaTerminal screen) {
+        final java.util.List<net.minecraft.server.level.ServerPlayer> viewers = consoleViewers(level);
+        final long now = level.getGameTime();
+        if (viewers.isEmpty() || (screen.revision() == sentScreenRevision && one.id() == sentScreenId
+                && viewers.size() == sentScreenViewers && now - sentScreenTick < SCREEN_RESEND_TICKS)) {
+            return;
+        }
+        sentScreenRevision = screen.revision();
+        sentScreenId = one.id();
+        sentScreenViewers = viewers.size();
+        sentScreenTick = now;
+        final int rows = dev.jstech.computers.cannon.lua.lib.LuaTerminal.HEIGHT;
+        final java.util.List<String> text = new java.util.ArrayList<>(rows);
+        final java.util.List<String> fg = new java.util.ArrayList<>(rows);
+        final java.util.List<String> bg = new java.util.ArrayList<>(rows);
+        for (int y = 0; y < rows; y++) {
+            text.add(screen.row(y));
+            fg.add(screen.rowText(y));
+            bg.add(screen.rowGround(y));
+        }
+        final var payload = new dev.jstech.computers.operation.payload.LuaScreenPayload(getBlockPos(), one.file(),
+                screen.revision(), screen.cursorX(), screen.cursorY(), screen.blink(), screen.textColour(), text, fg, bg,
+                screen.palette());
+        for (final net.minecraft.server.level.ServerPlayer viewer : viewers) {
+            if (viewer.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu) {
+                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(viewer, payload);
+            }
+        }
+    }
+
     /**
      * Sends what the program in front has printed to whoever is at this machine's terminal.
      *
@@ -1236,7 +1280,16 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         final var state = one.process().state();
         final boolean over = state != dev.jstech.core.language.ILanguageProcess.State.RUNNING
                 && state != dev.jstech.core.language.ILanguageProcess.State.PARKED;
-        final java.util.List<String> fresh = cannon.unseen();
+        /*
+         * A program with a screen of its own (a Lua program) is watched on that screen, which goes first so
+         * its last picture is there before the prompt comes back; its lines stay in its output only.
+         */
+        final dev.jstech.computers.cannon.lua.lib.LuaTerminal screen = cannon.terminalOf(one.id());
+        final java.util.List<String> unseen = cannon.unseen();
+        final java.util.List<String> fresh = screen == null ? unseen : java.util.List.of();
+        if (screen != null) {
+            pushScreen(level, one, screen);
+        }
         final String halt = over && state == dev.jstech.core.language.ILanguageProcess.State.HALTED
                 ? one.process().message() : null;
         if (over) {

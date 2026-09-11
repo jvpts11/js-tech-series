@@ -182,6 +182,11 @@ public abstract class UiComponent {
         return false;
     }
 
+    /** A key let go while the component has the keyboard; true when it took it. */
+    public boolean keyReleased(final int key, final int scanCode, final int modifiers) {
+        return false;
+    }
+
     /** The tooltip for the cursor at this point, or an empty list for none. */
     public List<Component> tooltip(final double mx, final double my) {
         return List.of();

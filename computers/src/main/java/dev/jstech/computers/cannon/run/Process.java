@@ -12,6 +12,7 @@ import dev.jstech.computers.cannon.asm.AsmType;
 import dev.jstech.computers.cannon.asm.Instruction;
 import dev.jstech.computers.cannon.asm.Opcode;
 import dev.jstech.computers.cannon.asm.IOperand;
+import dev.jstech.computers.cannon.lua.LuaModule;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -76,7 +77,9 @@ public final class Process {
         /** Another program on the machine to end. */
         CHILD,
         /** A Lua coroutine: resumed by another thread, or waiting for the one it resumed to yield. */
-        COROUTINE
+        COROUTINE,
+        /** A Lua program's next event: a key, a timer, anything queued for it. */
+        EVENT
     }
 
     /**
@@ -749,7 +752,15 @@ public final class Process {
     /** Lets every thread whose wait is over run again. */
     private void wake() {
         final long now = this.library.now();
+        // A Lua program's timers and alarms become events here, before anything asks for one.
+        final boolean events = this.program.type(LuaRuntime.RUNTIME_TYPE) != null;
+        if (events) {
+            this.lua().pump(now);
+        }
         for (final Thread thread : this.threads) {
+            if (thread.parked == Parked.EVENT && events && this.lua().hasEvents()) {
+                thread.parked = Parked.NONE;
+            }
             switch (thread.parked) {
                 case SLEEP -> {
                     if (now >= thread.until) {
@@ -815,6 +826,11 @@ public final class Process {
 
     /** Hands the process a typed line; a thread stopped on a read carries on with it. */
     public void offerInput(final String line) {
+        if (this.isLuaProgram()) {
+            // A Lua program hears the keyboard as events, a character at a time and then Enter.
+            this.lua().typed(line == null ? "" : line);
+            return;
+        }
         if (this.input.size() < INPUT_LINES) {
             this.input.addLast(line == null ? "" : line);
         }
@@ -823,12 +839,48 @@ public final class Process {
         }
     }
 
+    /** Whether this is a Lua program, started from a Lua file, rather than Cannon that may call into one. */
+    public boolean isLuaProgram() {
+        final String entry = this.program.entryPoint();
+        return entry != null && entry.startsWith(LuaRuntime.OWNER + ".");
+    }
+
+    /**
+     * The screen of a Lua program, or null for any other: a Cannon program that includes Lua code keeps
+     * its console, whatever that code draws.
+     */
+    public dev.jstech.computers.cannon.lua.lib.LuaTerminal terminal() {
+        return this.isLuaProgram() ? this.lua().terminal() : null;
+    }
+
+    /** Queues an event for a Lua program, as its screen's keyboard and mouse do; nothing for any other. */
+    public void queueEvent(final List<Object> values) {
+        if (this.program.type(LuaRuntime.RUNTIME_TYPE) != null) {
+            this.lua().queueEvent(values);
+        }
+    }
+
+    /** Where the program was started from, which a Lua program knows as its own path and folder. */
+    public void setOrigin(final String path) {
+        if (path != null && this.program.type(LuaRuntime.RUNTIME_TYPE) != null) {
+            this.lua().setOrigin(path);
+        }
+    }
+
+    /** Ends the program where it stands with that code, as the Lua side asks for. */
+    void exitNow(final int code) {
+        this.exit(code);
+    }
+
     /**
      * Whether the process is stopped on a read. Read off the code rather than kept as a flag, so a
      * process put away mid-read and brought back after the world was away is still seen to be waiting.
      */
     public boolean waitingForInput() {
         for (final Thread thread : this.threads) {
+            if (thread.parked == Parked.EVENT && this.lua != null && this.lua.reading()) {
+                return true;
+            }
             if (thread.parked != Parked.INPUT) {
                 continue;
             }
@@ -1296,6 +1348,10 @@ public final class Process {
      * is written under a number and every reference is written as that number.
      */
     public Snapshot save() {
+        // A Lua program's screen is written into its statics, which are saved with the rest.
+        if (this.lua != null) {
+            this.lua.persist();
+        }
         // What cannot be reached is not worth writing down, where there is something to let go of it.
         this.heap.collectNow();
         final Map<Object, Integer> numbers = new IdentityHashMap<>();
@@ -1686,7 +1742,7 @@ public final class Process {
             case LDFLD -> this.loadField(frame, (IOperand.Field) instruction.operand(), line);
             case STFLD -> this.storeField(frame, (IOperand.Field) instruction.operand(), line);
             case LDSFLD -> this.loadStatic(frame, (IOperand.Field) instruction.operand(), line);
-            case STSFLD -> this.storeStatic(frame, (IOperand.Field) instruction.operand());
+            case STSFLD -> this.storeStatic(frame, (IOperand.Field) instruction.operand(), line);
             case ADD, SUB, MUL, DIV, REM, AND, OR, XOR, SHL, SHR ->
                     this.arithmetic(frame, instruction.opcode(), line);
             case NEG -> frame.push(Numbers.negate(frame.pop()));
@@ -1804,10 +1860,19 @@ public final class Process {
             frame.push(type.values().get(field.name()));
             return;
         }
+        if (this.program.isA(field.owner(), LuaModule.MARKER)) {
+            // A global of a Lua file the program includes, read out of the file's own globals.
+            this.lua().moduleGet(frame, field.owner(), field.name(), line);
+            return;
+        }
         frame.push(this.statics(field.owner()).get(field.name()));
     }
 
-    private void storeStatic(final Frame frame, final IOperand.Field field) {
+    private void storeStatic(final Frame frame, final IOperand.Field field, final int line) {
+        if (this.program.isA(field.owner(), LuaModule.MARKER)) {
+            this.lua().moduleSet(frame, field.owner(), field.name(), frame.pop(), line);
+            return;
+        }
         this.statics(field.owner()).set(field.name(), frame.pop());
     }
 
@@ -1908,6 +1973,23 @@ public final class Process {
 
     private void cast(final Frame frame, final String type, final int line) {
         final Object value = frame.pop();
+        final PrimitiveKind primitive = PrimitiveKind.of(type);
+        if (primitive != null) {
+            /*
+             * An object holding a number gives the number back as the kind asked for, whichever kind of
+             * number it holds: a Lua file hands back its numbers as longs and reals.
+             */
+            if (value instanceof Number || value instanceof Character) {
+                frame.push(primitive.convert(value));
+                return;
+            }
+            if (primitive == PrimitiveKind.BOOL && value instanceof Boolean) {
+                frame.push(value);
+                return;
+            }
+            throw new Halt(Halt.Reason.BAD_CAST, line, value == null ? "there is nothing here to make a " + type
+                    : "this is not a " + type);
+        }
         if (value == null || this.isOfType(value, type)) {
             frame.push(value);
             return;
@@ -1930,8 +2012,44 @@ public final class Process {
         return switch (type) {
             case "string" -> value instanceof String;
             case "object" -> true;
-            default -> value instanceof Values.Arr array && type.equals(array.element() + "[]");
+            case "int" -> value instanceof Integer;
+            case "long" -> value instanceof Long;
+            case "float" -> value instanceof Float;
+            case "double" -> value instanceof Double;
+            case "bool" -> value instanceof Boolean;
+            case "char" -> value instanceof Character;
+            default -> value instanceof Values.Arr array && type.equals(array.element() + "[]")
+                    || value instanceof Values.ListValue && type.startsWith("List<")
+                    || value instanceof Values.MapValue && type.startsWith("Map<");
         };
+    }
+
+    /** The kinds of value a cast can take a number out of an object as. */
+    private enum PrimitiveKind {
+        INT, LONG, FLOAT, DOUBLE, CHAR, BOOL;
+
+        static PrimitiveKind of(final String written) {
+            return switch (written) {
+                case "int" -> INT;
+                case "long" -> LONG;
+                case "float" -> FLOAT;
+                case "double" -> DOUBLE;
+                case "char" -> CHAR;
+                case "bool" -> BOOL;
+                default -> null;
+            };
+        }
+
+        Object convert(final Object value) {
+            return switch (this) {
+                case INT -> Numbers.toInt(value);
+                case LONG -> Numbers.toLong(value);
+                case FLOAT -> Numbers.toFloat(value);
+                case DOUBLE -> Numbers.toDouble(value);
+                case CHAR -> (char) Numbers.toInt(value);
+                case BOOL -> value;
+            };
+        }
     }
 
     // calls

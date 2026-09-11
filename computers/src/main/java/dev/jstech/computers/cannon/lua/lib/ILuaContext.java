@@ -83,4 +83,63 @@ public interface ILuaContext {
 
     /** Frees what the program can no longer reach and says how many bytes that was. */
     long collect();
+
+    // what ComputerCraft's libraries need
+
+    /** The program's screen, made the first time it is asked for. */
+    LuaTerminal terminal();
+
+    /** Puts an event at the back of the program's queue: its name, then what it carries. */
+    void queueEvent(List<Object> values);
+
+    /** Starts a timer that queues {@code timer} after so many seconds, and gives its number. */
+    long startTimer(double seconds);
+
+    boolean cancelTimer(long id);
+
+    /** Sets an alarm that queues {@code alarm} when the world's clock reaches that hour of the day. */
+    long setAlarm(double hour);
+
+    boolean cancelAlarm(long id);
+
+    /** The machine's disks. */
+    ILuaFiles files();
+
+    /**
+     * Compiles text into a function, as {@code load} does: the function, or a run of nil and the
+     * complaint. {@code environment} is where its globals go, or null for the program's own.
+     */
+    Object loadChunk(String text, String name, Object environment, int line);
+
+    /** The folder the program was started in, as a ComputerCraft path; empty for the root. */
+    String directory();
+
+    void setDirectory(String path);
+
+    /** The name the program was started from. */
+    String programName();
+
+    /** The machine's name, which is ComputerCraft's computer label. */
+    String computerName();
+
+    /** A number for the machine that stays the same, which is ComputerCraft's computer id. */
+    long computerId();
+
+    /** Makes a coroutine of a function, as {@code coroutine.create} does. */
+    Object createCoroutine(Object function, int line);
+
+    /** Whether a coroutine has finished, one way or another. */
+    boolean coroutineDead(Object coroutine);
+
+    /** Ends the program where it stands, as {@code os.shutdown} and {@code shell.exit} do. */
+    void exit();
+
+    /** A global of the program, as the library reads one. */
+    Object global(String name);
+
+    /** A table the library keeps for itself under that name, saved with the program. */
+    Values.Table store(String name, int line);
+
+    /** Says the program is, or is no longer, in the middle of reading a line from the keyboard. */
+    void reading(boolean value);
 }

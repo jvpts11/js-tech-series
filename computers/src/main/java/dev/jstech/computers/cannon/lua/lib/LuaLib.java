@@ -29,6 +29,7 @@ public final class LuaLib {
     private static final Map<String, ILuaContinuation> CONTINUATIONS = new LinkedHashMap<>();
     private static final Set<String> HIDDEN = new LinkedHashSet<>();
     private static final Map<String, Object> CONSTANTS = new LinkedHashMap<>();
+    private static final Set<String> TABLES = new LinkedHashSet<>();
 
     static {
         LuaBase.register();
@@ -37,6 +38,12 @@ public final class LuaLib {
         LuaMath.register();
         LuaOs.register();
         LuaBit32.register();
+        // What a ComputerCraft computer adds to the language.
+        LuaColours.register();
+        LuaTerm.register();
+        LuaFs.register();
+        LuaTextutils.register();
+        LuaCc.register();
     }
 
     private LuaLib() {
@@ -77,6 +84,11 @@ public final class LuaLib {
         CONSTANTS.put(name, value);
     }
 
+    /** A name that is given a fresh, empty table of its own in every program. */
+    static void table(final String name) {
+        TABLES.add(name);
+    }
+
     /** Puts every function and constant into the table of globals, making the library tables on the way. */
     public static void install(final ILuaContext context, final Values.Table globals, final int line) {
         for (final String name : FUNCTIONS.keySet()) {
@@ -89,8 +101,12 @@ public final class LuaLib {
                     : constant.getValue();
             put(context, globals, constant.getKey(), value, line);
         }
+        for (final String name : TABLES) {
+            put(context, globals, name, context.table(line), line);
+        }
         globals.put(context.text("_G", line), globals);
         context.resized(globals, line);
+        LuaCc.installed(context, globals, line);
     }
 
     private static void put(final ILuaContext context, final Values.Table globals, final String name,

@@ -248,6 +248,8 @@
   "program.jsc.kde_plasma.desc": "The KDE Plasma desktop environment.",
   "program.jsc.load_balancer": "Load Balancer",
   "program.jsc.load_balancer.desc": "Spreads writes across the bay's drives instead of filling them one after another.",
+  "program.jsc.lrt": "Lua Runtime",
+  "program.jsc.lrt.desc": "Runs Lua programs, the language ComputerCraft computers speak, and brings the 'lrt' command to the prompt.",
   "program.jsc.minesweeper": "Minesweeper",
   "program.jsc.minesweeper.desc": "Minesweeper.",
   "program.jsc.mirror": "Mirror",

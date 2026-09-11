@@ -132,11 +132,13 @@ public final class HostRemote {
         final int slash = Math.max(path.lastIndexOf('\\'), path.lastIndexOf('/'));
         final String name = slash < 0 ? path : path.substring(slash + 1);
         final MachinePrograms.Started started =
-                machine.cannon().start(name, read.message(), room, machine, args, 0, priority);
+                machine.cannon().start(name, read.message(), room, machine, args, 0, priority,
+                        remote.besideReader(path));
         if (!started.ok()) {
             throw new Halt(Halt.Reason.CANNOT_START, line, host + ": " + started.message());
         }
         machine.setChanged();
+        machine.cannon().setOrigin(started.id(), remote.luaPath(path));
         return handle(started.id(), name, host);
     }
 

@@ -31,6 +31,9 @@ public final class HostComputer {
     private static final int GLANCE = dev.jstech.computers.cannon.CannonCosts.GLANCE;
     private static final int GATHER = dev.jstech.computers.cannon.CannonCosts.GATHER;
 
+    /** How many different machine ids there are. */
+    private static final long ID_RANGE = 100_000L;
+
     private HostComputer() {
     }
 
@@ -44,6 +47,7 @@ public final class HostComputer {
                                   final String member, final int line) {
         return switch (member) {
             case "Name" -> IHost.Reply.of(name(machine), GLANCE);
+            case "Id" -> IHost.Reply.of(id(machine), GLANCE);
             case "Cpu" -> IHost.Reply.of(cpu(machine), GLANCE);
             case "Os" -> IHost.Reply.of(os(machine), GLANCE);
             case "RamMb" -> IHost.Reply.of(machine.ramTotalMb(), GLANCE);
@@ -61,6 +65,15 @@ public final class HostComputer {
         final String given = machine.customName();
         return given.isEmpty() ? machine.getBlockState().getBlock()
                 .getName().getString() : given;
+    }
+
+    /*
+     * A short number for the machine that does not change for as long as it exists, folded out of its
+     * node's identity: what a ComputerCraft program knows as the computer's id.
+     */
+    private static long id(final AbstractComputerBlockEntity machine) {
+        final java.util.UUID node = machine.nodeUuid().value();
+        return Math.floorMod(node.getMostSignificantBits() ^ node.getLeastSignificantBits(), ID_RANGE);
     }
 
     private static Values.Obj cpu(final AbstractComputerBlockEntity machine) {

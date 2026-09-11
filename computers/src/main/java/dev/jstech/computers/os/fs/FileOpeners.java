@@ -37,6 +37,9 @@ public final class FileOpeners {
      */
     public static final String RUNTIME = "cannonrt";
 
+    /** The Lua runtime, which runs a Lua program as it is, the way the Cannon runtime runs a listing. */
+    public static final String LUA_RUNTIME = "lrt";
+
     /**
      * The programs that can open each kind of file, best first.
      *
@@ -48,8 +51,8 @@ public final class FileOpeners {
     static {
         final List<String> code = List.of("virtual_studio_code", "virtual_studio", "exposure", EDITOR);
         BY_TYPE.put(FileType.CAN, code);
-        // A Lua program is read in the editors that colour code, and run as it is by the runtime.
-        BY_TYPE.put(FileType.LUA, List.of("virtual_studio_code", "exposure", EDITOR, RUNTIME));
+        // A Lua program is read in the editors that colour code, and run as it is by its own runtime.
+        BY_TYPE.put(FileType.LUA, List.of("virtual_studio_code", "exposure", EDITOR, LUA_RUNTIME));
         BY_TYPE.put(FileType.ASM, List.of(RUNTIME, "virtual_studio_code", "virtual_studio", "exposure", EDITOR));
         BY_TYPE.put(FileType.SLN, List.of("virtual_studio", EDITOR));
         BY_TYPE.put(FileType.CANPROJ, List.of("virtual_studio", EDITOR));

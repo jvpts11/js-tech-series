@@ -85,8 +85,6 @@ final class LuaOs {
             context.write(text);
             return (long) text.split("\n", -1).length - 1;
         });
-        LuaLib.intrinsic("io.read");
-        LuaLib.intrinsic("read");
     }
 
     private static double hourOfDay(final long dayTime) {

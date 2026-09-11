@@ -317,6 +317,11 @@ public final class ExposureApp implements IDesktopApp {
         }
         this.workspace.save();
         final String source = doc.path();
+        if (source.toLowerCase(java.util.Locale.ROOT).endsWith(".lua")) {
+            // A Lua program runs as it is, by its own runtime.
+            DesktopScreen.requestTypeAtTerminal(List.of("lrt run " + quote(source)));
+            return;
+        }
         final int dot = source.lastIndexOf('.');
         final String built = (dot > source.lastIndexOf('/') ? source.substring(0, dot) : source) + ".asm";
         DesktopScreen.requestTypeAtTerminal(List.of("cannonc " + quote(source), "cannon run " + quote(built)));

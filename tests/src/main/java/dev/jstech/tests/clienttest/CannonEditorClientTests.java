@@ -314,14 +314,14 @@ public final class CannonEditorClientTests {
 
     /**
      * A Lua program lies in the folder beside the Cannon ones: the tree lists it, the editor opens it
-     * with nothing to complain about, and F5 builds and runs it at the terminal like any other.
+     * with nothing to complain about, and F5 runs it as it is with the Lua runtime, nothing built.
      */
     @ClientTest(timeoutTicks = 3000)
     public static void virtualStudioCode_runsALuaFileWithF5(final ClientTestContext ctx) {
         ctx.thenBuild(0, world -> {
                     final CraftingComputerBlockEntity computer = world.placeRunningCraftingComputer(COMPUTER);
                     computer.installOs(FRAMES_XP);
-                    for (final String id : new String[] {"virtual_studio_code", "cannonc", "cannonrt"}) {
+                    for (final String id : new String[] {"virtual_studio_code", "lrt"}) {
                         computer.console().install(program(id).toString());
                     }
                     seed(computer, "progs/count.lua", FileType.LUA,
@@ -345,8 +345,8 @@ public final class CannonEditorClientTests {
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_F5))
                 .thenWaitUntil(() -> editor(ctx).terminalText().contains("lua says 1,4,9"),
                         SCREEN_WAIT * 3, "the Lua program to print its line after F5")
-                .thenWaitUntilServer(level -> onDisk(ctx, level, "progs/build/count.asm"),
-                        SCREEN_WAIT, "the listing to be in the folder's build directory", level -> "")
+                .thenAssert(0, () -> editor(ctx).terminalText().contains("lrt run progs/count.lua"),
+                        "F5 ran the file with the Lua runtime")
                 .thenScreenshot(2, "lua-ran-f5");
     }
 

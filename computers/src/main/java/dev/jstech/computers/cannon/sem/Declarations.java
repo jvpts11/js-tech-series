@@ -89,6 +89,42 @@ public final class Declarations {
         }
     }
 
+    /**
+     * Declares a Lua file the program includes: a type named after it, belonging to no namespace so
+     * every file can name it, with a static method for each of its functions (any values in, an
+     * {@code object} out, in every count of arguments the function can take) and a static field for
+     * each other global it sets. False when the name is already something's in the program.
+     */
+    public boolean declareModule(final dev.jstech.computers.cannon.lua.LuaModule module) {
+        final String name = module.name();
+        if (this.declared.containsKey(name) || this.builtIns.qualified(name, -1) != null) {
+            return false;
+        }
+        for (final NamedType existing : this.declared.values()) {
+            if (existing.name().equals(name)) {
+                return false;
+            }
+        }
+        final NamedType type = NamedType.of(name, NamedType.Kind.CLASS, true);
+        final NamedType value = this.builtIns.objectType();
+        final java.util.Set<IDecl.Modifier> shared = java.util.Set.of(IDecl.Modifier.PUBLIC, IDecl.Modifier.STATIC);
+        for (final dev.jstech.computers.cannon.lua.LuaModule.Function function : module.functions()) {
+            for (int count = 0; count <= function.mostArguments(); count++) {
+                final java.util.List<IMemberSymbol.ParameterSymbol> parameters = new java.util.ArrayList<>(count);
+                for (int i = 0; i < count; i++) {
+                    parameters.add(IMemberSymbol.ParameterSymbol.of("value" + (i + 1), value));
+                }
+                type.addMember(new IMemberSymbol.MethodSymbol(type, function.name(), value, parameters, shared));
+            }
+        }
+        for (final String global : module.globals()) {
+            // Read and written as a static field would be; the runtime sends both to the file's globals.
+            type.addMember(new IMemberSymbol.FieldSymbol(type, global, value, shared));
+        }
+        this.declared.put(name, type);
+        return true;
+    }
+
     private void declareType(final IDecl.ITypeDecl declaration, final String file, final Scope scope,
                              final NamedType outer) {
         final String name = declaration.name();
