@@ -68,8 +68,40 @@ public final class HostNetwork {
             case "Types" -> rows(types(computer));
             case "Find" -> rows(find(computer, name(arguments)));
             case "Servers" -> rows(servers(computer));
+            case "Computers" -> rows(computers(computer));
+            case "Computer" -> IHost.Reply.of(computerNamed(computer, name(arguments)), GLANCE);
             default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "Network has no " + member);
         };
+    }
+
+    /** The other computers on the network, as a program holds them. */
+    private static Values.ListValue computers(final ICliComputer computer) {
+        final Values.ListValue all = new Values.ListValue();
+        for (final ICliComputer.RemoteHost host : computer.reachableHosts()) {
+            all.items().add(remote(host));
+        }
+        return all;
+    }
+
+    /** The computer that name picks out, by host name or by the name its owner gave it, or null. */
+    private static Values.Obj computerNamed(final ICliComputer computer, final String name) {
+        for (final ICliComputer.RemoteHost host : computer.reachableHosts()) {
+            if (host.hostname().equalsIgnoreCase(name) || host.name().equalsIgnoreCase(name)) {
+                return remote(host);
+            }
+        }
+        return null;
+    }
+
+    /** What a program holds another computer by: its host name, and a picture of what it is. */
+    public static Values.Obj remote(final ICliComputer.RemoteHost host) {
+        final Values.Obj made = new Values.Obj("RemoteComputer");
+        made.set("Host", host.hostname());
+        made.set("Name", host.name().isEmpty() ? host.hostname() : host.name());
+        made.set("Type", host.type());
+        made.set("Os", host.os());
+        made.set("Online", host.running());
+        return made;
     }
 
     /** A list, priced by how long it is. */

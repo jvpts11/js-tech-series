@@ -493,6 +493,7 @@ public final class ComputerConsoleState {
         s.putInt("Brightness", settings.brightness());
         s.putString("SaveDrive", String.valueOf(settings.defaultSaveDrive()));
         s.putBoolean("RemovableAutoOpen", settings.removableAutoOpen());
+        s.putBoolean("RemoteAllowed", settings.remoteAllowed());
         s.putBoolean("TaskbarCentered", settings.taskbarCentered());
         s.putBoolean("DarkMode", settings.darkMode());
         // Always written, even empty: a machine whose player unpinned everything must not get the default back.
@@ -507,6 +508,17 @@ public final class ComputerConsoleState {
                 favourites.add(net.minecraft.nbt.StringTag.valueOf(id));
             }
             s.put("Favourites", favourites);
+        }
+        if (!settings.shares().isEmpty()) {
+            final ListTag shares = new ListTag();
+            for (final ComputerSettings.Share share : settings.shares()) {
+                final CompoundTag each = new CompoundTag();
+                each.putString("Name", share.name());
+                each.putString("Path", share.path());
+                each.putBoolean("Write", share.writable());
+                shares.add(each);
+            }
+            s.put("Shares", shares);
         }
         if (!settings.recipeChoices().isEmpty()) {
             final CompoundTag choices = new CompoundTag();
@@ -609,6 +621,7 @@ public final class ComputerConsoleState {
             settings.setDefaultSaveDrive(saveDrive.charAt(0));
         }
         settings.setRemovableAutoOpen(!s.contains("RemovableAutoOpen") || s.getBoolean("RemovableAutoOpen"));
+        settings.setRemoteAllowed(!s.contains("RemoteAllowed") || s.getBoolean("RemoteAllowed"));
         settings.setTaskbarCentered(!s.contains("TaskbarCentered") || s.getBoolean("TaskbarCentered"));
         settings.setDarkMode(s.getBoolean("DarkMode"));
         if (s.contains("Pinned")) {
@@ -623,6 +636,14 @@ public final class ComputerConsoleState {
             favourites.add(entry.getAsString());
         }
         settings.setFavourites(favourites);
+        final java.util.List<ComputerSettings.Share> shares = new java.util.ArrayList<>();
+        final ListTag sharesTag = s.getList("Shares", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        for (int i = 0; i < sharesTag.size(); i++) {
+            final CompoundTag each = sharesTag.getCompound(i);
+            shares.add(new ComputerSettings.Share(each.getString("Name"), each.getString("Path"),
+                    each.getBoolean("Write")));
+        }
+        settings.setShares(shares);
         final Map<String, Integer> choices = new LinkedHashMap<>();
         final CompoundTag choicesTag = s.getCompound("RecipeChoices");
         for (final String key : choicesTag.getAllKeys()) {

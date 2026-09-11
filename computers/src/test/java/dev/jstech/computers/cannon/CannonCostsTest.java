@@ -23,7 +23,8 @@ class CannonCostsTest {
 
     /** The objects that reach out of the program into the machine, and therefore cost something. */
     private static final List<String> OUTWARD =
-            List.of("Computer", "File", "Network", "Mainframe", "Operations");
+            List.of("Computer", "File", "Network", "Mainframe", "Operations", "Program", "Process",
+                    "RemoteComputer", "Iql");
 
     private BuiltIns builtIns;
 

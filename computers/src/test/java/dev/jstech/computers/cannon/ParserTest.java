@@ -437,4 +437,13 @@ class ParserTest {
         final IExpr.Call call = (IExpr.Call) ((IStmt.ExprStmt) statement).expression();
         return (IExpr.Lambda) call.arguments().get(index);
     }
+
+    @Test
+    void parse_readsALockStatementWithABlockOrASingleStatement() {
+        final List<IStmt> statements = body("lock (this) { Console.PrintLine(1); } lock (this) Console.PrintLine(2);");
+        final IStmt.Lock first = (IStmt.Lock) statements.get(0);
+        assertInstanceOf(IExpr.This.class, first.target());
+        assertInstanceOf(IStmt.Block.class, first.body());
+        assertInstanceOf(IStmt.ExprStmt.class, ((IStmt.Lock) statements.get(1)).body());
+    }
 }

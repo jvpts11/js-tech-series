@@ -76,6 +76,10 @@ public sealed interface IStmt extends INode {
     record Dispose(IExpr target, int line, int column) implements IStmt {
     }
 
+    /** Holds an object's lock for as long as the body runs, whichever way the body is left. */
+    record Lock(IExpr target, IStmt body, int line, int column) implements IStmt {
+    }
+
     /** A lone semicolon. */
     record Empty(int line, int column) implements IStmt {
     }

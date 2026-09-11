@@ -22,19 +22,42 @@ import java.util.Map;
  * whole truth. References between allocated things become numbers, because two objects can point at
  * each other and a tree cannot say that.
  */
-public record Snapshot(long heapBudget, List<IHeld> held, List<FrameShot> frames, List<FrameShot> waiting,
+public record Snapshot(long heapBudget, List<IHeld> held, List<ThreadShot> threads, List<FrameShot> waiting,
                        Map<String, Map<String, IValue>> statics, IValue script, List<WatchShot> watches,
                        List<String> console, int written, String state, String message, int spent,
-                       String name) {
+                       String name, List<MonitorShot> monitors, int nextThread, List<String> args,
+                       int machineId, boolean exited, int exitCode, IValue onMessage) {
 
     public Snapshot {
         held = List.copyOf(held);
-        frames = List.copyOf(frames);
+        threads = List.copyOf(threads);
         waiting = List.copyOf(waiting);
         statics = Map.copyOf(statics);
         watches = List.copyOf(watches);
         console = List.copyOf(console);
         name = name == null ? "" : name;
+        monitors = List.copyOf(monitors);
+        args = args == null ? List.of() : List.copyOf(args);
+        onMessage = onMessage == null ? new IValue.Nothing() : onMessage;
+    }
+
+    /**
+     * One thread: its calls in progress, bottom first, and what it was waiting for if anything.
+     *
+     * <p>{@code on} is the object whose lock it waits for, or the number of the thread it is joined to;
+     * {@code until} the tick a sleep ends or a timed join gives up on, or zero for never.
+     */
+    public record ThreadShot(int id, List<FrameShot> frames, String parked, long until, IValue on,
+                             IValue token, boolean timedOut, String onHost) {
+
+        public ThreadShot {
+            frames = List.copyOf(frames);
+            onHost = onHost == null ? "" : onHost;
+        }
+    }
+
+    /** One lock held: the object, the thread holding it, and how many times over it took it. */
+    public record MonitorShot(IValue target, int owner, int count) {
     }
 
     /**

@@ -26,7 +26,8 @@ public final class CoreServerConfig {
 
     static {
         final ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
-        builder.comment("Balance of the Operations engine. Values outside their range are clamped on load.");
+        builder.comment("Balance of the Operations engine and of the programs machines run. "
+                + "Values outside their range are clamped on load.");
         for (final ConfigKey<?> key : CoreConfigKeys.registry().allKeys()) {
             VALUES.put(key.dottedPath(), define(builder, key));
         }

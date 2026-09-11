@@ -44,12 +44,25 @@ public record MachineHost(BlockEntity machine) implements IHost {
     public boolean provides(final String owner) {
         return HostFiles.handles(owner) || HostComputer.handles(owner)
                 || HostNetwork.handles(owner) || HostMainframe.handles(owner)
-                || HostOperations.handles(owner);
+                || HostOperations.handles(owner) || HostProgram.handles(owner)
+                || HostRemote.handles(owner) || HostIql.handles(owner);
+    }
+
+    @Override
+    public boolean takesTarget(final String owner, final String member) {
+        // Another computer is a thing the program holds; every call on it names which one.
+        return HostRemote.handles(owner);
     }
 
     @Override
     public Reply call(final String owner, final String member, final java.util.List<Object> arguments,
                       final String caller, final int line) {
+        return this.call(owner, member, arguments, caller, 0, line);
+    }
+
+    @Override
+    public Reply call(final String owner, final String member, final java.util.List<Object> arguments,
+                      final String caller, final int callerId, final int line) {
         final dev.jstech.computers.program.cli.ICliComputer computer = this.asComputer();
         if (computer == null) {
             throw new dev.jstech.computers.cannon.run.Halt(
@@ -58,6 +71,19 @@ public record MachineHost(BlockEntity machine) implements IHost {
         }
         if (HostFiles.handles(owner)) {
             return HostFiles.call(computer, member, arguments, line);
+        }
+        if (HostProgram.handles(owner)
+                && this.machine instanceof dev.jstech.computers.blockentity
+                        .AbstractComputerBlockEntity self) {
+            return HostProgram.call(self, computer, callerId, member, arguments, line);
+        }
+        if (HostRemote.handles(owner)
+                && computer instanceof dev.jstech.computers.program.ServerCliComputer shell) {
+            return HostRemote.call(shell, callerId, member, arguments, line);
+        }
+        if (HostIql.handles(owner)
+                && computer instanceof dev.jstech.computers.program.ServerCliComputer shell) {
+            return HostIql.call(shell, member, arguments, line);
         }
         if (HostComputer.handles(owner)
                 && this.machine instanceof dev.jstech.computers.blockentity

@@ -506,4 +506,29 @@ class TypeCheckTest {
         assertClean(result);
         assertEquals(1, result.model().declaredTypes().size());
     }
+
+    @Test
+    void check_locksAnObjectAndNothingElse() {
+        assertClean(body("object o = new List<int>(); lock (o) { int n = 1; }"));
+        assertClean(body("string s = \"x\"; lock (s) { }"));
+        assertReports("C3042", body("int n = 1; lock (n) { }"));
+        assertReports("C3042", body("bool b = true; lock (b) { }"));
+    }
+
+    @Test
+    void check_knowsTheThreadingTypes() {
+        assertClean(CannonSemantics.check(List.of(new SourceFile("Test.can", """
+                using System.*; using System.Threading.*; namespace Tests;
+                class C {
+                    void M() {
+                        Thread t = Thread.Start(() => { Thread.Sleep(2); Thread.Yield(); });
+                        int id = Thread.Current.Id;
+                        bool alive = t.Running;
+                        bool done = t.Join(20);
+                        t.Join();
+                        t.Stop();
+                    }
+                }
+                """))));
+    }
 }

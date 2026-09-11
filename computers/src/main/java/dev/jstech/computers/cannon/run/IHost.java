@@ -54,6 +54,16 @@ public interface IHost {
     }
 
     /**
+     * Whether a call of that member is made on one of the host's own objects rather than on the type.
+     *
+     * <p>The object is then handed over first, ahead of the arguments, so a host that answers for a
+     * kind of thing (another computer, say) can tell which one the program means.
+     */
+    default boolean takesTarget(final String owner, final String member) {
+        return false;
+    }
+
+    /**
      * Answers a call on one of the host's objects.
      *
      * <p>Only ever asked for an owner {@link #provides} said yes to. Throw {@link Halt} for anything the
@@ -68,6 +78,20 @@ public interface IHost {
     default Reply call(final String owner, final String member, final java.util.List<Object> arguments,
                        final String caller, final int line) {
         throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "this computer cannot reach " + owner);
+    }
+
+    /**
+     * The same, with the number the machine lists the asking program under.
+     *
+     * <p>Most calls have no use for it either; the ones about other programs on the machine do, since
+     * a program that starts another is its parent and a message has to say who sent it. A host that
+     * does not care answers the plain form.
+     *
+     * @param callerId the machine's number for the asking program, or 0 for a program it never numbered
+     */
+    default Reply call(final String owner, final String member, final java.util.List<Object> arguments,
+                       final String caller, final int callerId, final int line) {
+        return this.call(owner, member, arguments, caller, line);
     }
 
 

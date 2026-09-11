@@ -56,6 +56,11 @@ public final class PosixPath {
         if (in.startsWith("~/")) {
             return SYSTEM_DRIVE + ":\\" + String.join("\\", HOME_SEGMENTS) + "\\" + in.substring(2);
         }
+        // Another machine's shared folder: the same path a DOS shell writes with backslashes.
+        final NetPath net = NetPath.parse(in);
+        if (net != null) {
+            return net.display();
+        }
         if (!in.startsWith("/")) {
             return in;
         }

@@ -85,6 +85,7 @@ public enum CannonError {
     ENUM_VALUE_MUST_BE_WRITTEN("C3039", "an enum's number has to be written as a number"),
     NEEDS_USING("C3040", "'%s' is in %s; add 'using %s.*;' or 'using %s.%s;' at the top of the file"),
     STRUCT_NO_BASE("C3041", "a struct can implement interfaces but stands on no class, and '%s' is a class"),
+    CANNOT_LOCK("C3042", "only an object can be locked, not '%s'"),
 
     MISSING_VERSION_LINE("C4001", "the listing has to begin with a version line"),
     VERSION_TOO_NEW("C4002", "this runtime reads assembly version %s, and this listing is version %s"),

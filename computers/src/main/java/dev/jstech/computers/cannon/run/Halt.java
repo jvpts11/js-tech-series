@@ -27,7 +27,10 @@ public final class Halt extends RuntimeException {
         BAD_CAST("not of that type"),
         OUT_OF_RANGE("outside the collection"),
         NO_SUCH_MEMBER("no such member"),
-        NO_NETWORK("no network");
+        NO_NETWORK("no network"),
+        NOT_LOCKED("not holding the lock"),
+        CANNOT_START("could not start"),
+        REFUSED("refused");
 
         private final String text;
 

@@ -45,6 +45,11 @@ final class CannonProgram implements ILanguageProcess {
     }
 
     @Override
+    public void identify(final int id) {
+        this.process.identify(id);
+    }
+
+    @Override
     public State state() {
         return switch (this.process.state()) {
             case RUNNING -> State.RUNNING;
@@ -84,9 +89,10 @@ final class CannonProgram implements ILanguageProcess {
         return this.process.heap().budget();
     }
 
+    /* A script stays up until it says it is done: one that called Program.Exit is over like any other. */
     @Override
     public boolean isService() {
-        return this.process.shape() == Shape.SCRIPT;
+        return this.process.shape() == Shape.SCRIPT && !this.process.exited();
     }
 
     @Override

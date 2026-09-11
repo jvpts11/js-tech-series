@@ -186,12 +186,16 @@ public final class CannonCommands {
                 return;
             }
             int heapMb = 0;
-            for (int i = 2; i < ctx.args().size() - 1; i++) {
-                if ("--heap".equals(ctx.args().get(i))) {
-                    heapMb = megabytes(ctx.args().get(i + 1));
+            final java.util.List<String> arguments = new java.util.ArrayList<>();
+            for (int i = 2; i < ctx.args().size(); i++) {
+                if ("--heap".equals(ctx.args().get(i)) && i < ctx.args().size() - 1) {
+                    heapMb = megabytes(ctx.args().get(++i));
+                    continue;
                 }
+                // Everything else after the file is the program's own: what Program.Args reads.
+                arguments.add(ctx.args().get(i));
             }
-            final ICliComputer.OpResult started = ctx.computer().startCannon(path, heapMb);
+            final ICliComputer.OpResult started = ctx.computer().startCannon(path, heapMb, arguments);
             if (started.ok()) {
                 ctx.out().ok(started.message());
             } else {

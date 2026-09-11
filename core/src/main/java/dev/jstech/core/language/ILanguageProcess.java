@@ -43,6 +43,15 @@ public interface ILanguageProcess {
      */
     int step(int budget);
 
+    /**
+     * Tells the program the number the machine lists it under.
+     *
+     * <p>Said once, when it starts, and again when it comes back after a reload. A language whose
+     * programs cannot speak of themselves need do nothing with it.
+     */
+    default void identify(final int id) {
+    }
+
     /** Where it is up to. */
     State state();
 

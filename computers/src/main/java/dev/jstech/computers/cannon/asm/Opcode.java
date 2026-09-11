@@ -79,6 +79,10 @@ public enum Opcode {
     STELEM("stelem", Shape.NONE),
     LDLEN("ldlen", Shape.NONE),
     DISPOSE("dispose", Shape.NONE),
+    /** Takes the lock of the object on top of the stack, waiting its turn if another thread holds it. */
+    MONITOR_ENTER("monitor.enter", Shape.NONE),
+    /** Lets go of the lock of the object on top of the stack. */
+    MONITOR_EXIT("monitor.exit", Shape.NONE),
     CASTCLASS("castclass", Shape.TYPE),
     ISINST("isinst", Shape.TYPE),
 

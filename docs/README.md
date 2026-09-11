@@ -10,5 +10,7 @@ repository for the first time. What each mod does is on its own page: [J's Core]
   and their gates, snapshot builds, and how a release is cut.
 - [UI components](UI_COMPONENTS.md): the component model the desktop programs and dialogs are built from,
   and how to write a program on it.
+- [Cannon](CANNON.md): the computers' programming language: its two shapes of program, the budget and
+  the clock it runs under, and everything a program can reach.
 
 Design documents and balancing notes are not part of the repository.

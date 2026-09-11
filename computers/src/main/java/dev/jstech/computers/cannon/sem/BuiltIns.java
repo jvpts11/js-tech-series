@@ -57,6 +57,7 @@ public final class BuiltIns {
         this.fillConsole();
         this.fillConvert();
         this.fillProgram();
+        this.fillThreading();
         this.fillTime();
         this.fillRandom();
         this.fillFile();
@@ -133,10 +134,12 @@ public final class BuiltIns {
     private static final String NETWORK = "System.Network";
     private static final String OPERATIONS = "System.Operations";
     private static final String EXECUTION = "System.Execution";
+    private static final String THREADING = "System.Threading";
 
     private static final Map<String, String> HOMES = Map.ofEntries(
             Map.entry("IScript", SYSTEM), Map.entry("Action", SYSTEM), Map.entry("Func", SYSTEM),
-            Map.entry("Program", EXECUTION),
+            Map.entry("Program", EXECUTION), Map.entry("Process", EXECUTION),
+            Map.entry("ProcessMessage", EXECUTION), Map.entry("Thread", THREADING),
             Map.entry("List", COLLECTIONS), Map.entry("Map", COLLECTIONS),
             Map.entry("Console", IO), Map.entry("File", IO),
             Map.entry("Math", UTILS), Map.entry("Convert", UTILS), Map.entry("Random", UTILS), Map.entry("Time", UTILS),
@@ -144,7 +147,8 @@ public final class BuiltIns {
             Map.entry("OsInfo", MACHINE), Map.entry("ProcessInfo", MACHINE),
             Map.entry("Network", NETWORK), Map.entry("ServerInfo", NETWORK), Map.entry("HoldingInfo", NETWORK),
             Map.entry("StockEvent", NETWORK), Map.entry("Subscription", NETWORK), Map.entry("WorkStat", NETWORK),
-            Map.entry("Mainframe", NETWORK),
+            Map.entry("Mainframe", NETWORK), Map.entry("RemoteComputer", NETWORK), Map.entry("Iql", NETWORK),
+            Map.entry("IqlResult", NETWORK),
             Map.entry("Operations", OPERATIONS), Map.entry("OperationInfo", OPERATIONS), Map.entry("AskResult", OPERATIONS));
 
     /**
@@ -361,9 +365,67 @@ public final class BuiltIns {
      * listed by that name on the machine's process list; one that does not is listed by the runtime.
      */
     private void fillProgram() {
+        final ITypeSymbol nothing = ITypeSymbol.Primitive.VOID;
+        final ITypeSymbol integer = ITypeSymbol.Primitive.INT;
+        final ITypeSymbol flag = ITypeSymbol.Primitive.BOOL;
+        final ITypeSymbol strings = new ITypeSymbol.GenericType(this.listType, List.of(this.stringType));
+
         final NamedType program = this.declare("Program", NamedType.Kind.CLASS);
-        this.method(program, "SetName", ITypeSymbol.Primitive.VOID, PUBLIC_STATIC, this.stringType);
+        this.method(program, "SetName", nothing, PUBLIC_STATIC, this.stringType);
         this.property(program, "Name", this.stringType, PUBLIC_STATIC);
+        this.property(program, "Args", strings, PUBLIC_STATIC);
+        this.method(program, "Exit", nothing, PUBLIC_STATIC, integer);
+
+        /*
+         * Another program on the same machine, as the one that started it holds it: a number, a name,
+         * and the machine's word on how it is getting on. Reading its output or its exit code is
+         * asking the machine, which is why they cost what a look at the machine costs.
+         */
+        final NamedType process = this.declare("Process", NamedType.Kind.CLASS);
+        this.property(process, "Id", integer, PUBLIC);
+        this.property(process, "Name", this.stringType, PUBLIC);
+        this.property(process, "Host", this.stringType, PUBLIC);
+        this.property(process, "Running", flag, PUBLIC);
+        this.property(process, "ExitCode", integer, PUBLIC);
+        this.method(process, "Wait", nothing, PUBLIC);
+        this.method(process, "Wait", flag, PUBLIC, ITypeSymbol.Primitive.LONG);
+        this.method(process, "Kill", nothing, PUBLIC);
+        this.method(process, "Output", strings, PUBLIC);
+        this.method(process, "Send", flag, PUBLIC_STATIC, integer, this.stringType);
+
+        this.method(program, "Start", process, PUBLIC_STATIC, this.stringType);
+        this.method(program, "Start", process, PUBLIC_STATIC, this.stringType, strings);
+        this.method(program, "Start", process, PUBLIC_STATIC, this.stringType, strings, this.stringType);
+        this.property(program, "Current", process, PUBLIC_STATIC);
+
+        final NamedType message = this.declare("ProcessMessage", NamedType.Kind.CLASS);
+        this.property(message, "From", integer, PUBLIC);
+        this.property(message, "Text", this.stringType, PUBLIC);
+        this.property(message, "Tick", ITypeSymbol.Primitive.LONG, PUBLIC);
+        this.method(program, "OnMessage", nothing, PUBLIC_STATIC,
+                new ITypeSymbol.GenericType(this.actionOfType, List.of(message)));
+    }
+
+    /**
+     * More than one thing at once inside one program.
+     *
+     * <p>A thread runs a body of its own beside the rest of the program, taking turns with it a few
+     * instructions at a time, over the same memory. Nothing runs at the same instant, so a single
+     * expression is never torn; a run of them can be, which is what {@code lock} is for.
+     */
+    private void fillThreading() {
+        final NamedType thread = this.declare("Thread", NamedType.Kind.CLASS);
+        final ITypeSymbol nothing = ITypeSymbol.Primitive.VOID;
+        final ITypeSymbol ticks = ITypeSymbol.Primitive.LONG;
+        this.method(thread, "Start", thread, PUBLIC_STATIC, this.actionType);
+        this.property(thread, "Current", thread, PUBLIC_STATIC);
+        this.method(thread, "Sleep", nothing, PUBLIC_STATIC, ticks);
+        this.method(thread, "Yield", nothing, PUBLIC_STATIC);
+        this.property(thread, "Id", ITypeSymbol.Primitive.INT, PUBLIC);
+        this.property(thread, "Running", ITypeSymbol.Primitive.BOOL, PUBLIC);
+        this.method(thread, "Join", nothing, PUBLIC);
+        this.method(thread, "Join", ITypeSymbol.Primitive.BOOL, PUBLIC, ticks);
+        this.method(thread, "Stop", nothing, PUBLIC);
     }
 
     private void fillTime() {
@@ -490,6 +552,46 @@ public final class BuiltIns {
         this.method(network, "Watch", subscription, PUBLIC_STATIC, this.stringType, told);
         this.method(network, "WatchBelow", subscription, PUBLIC_STATIC, this.stringType, whole, told);
         this.method(network, "WatchAbove", subscription, PUBLIC_STATIC, this.stringType, whole, told);
+
+        /*
+         * The other computers on the network, and what a program may do on them: start a program
+         * there (a handle like a local one comes back), run a line at their prompt, send a line to a
+         * program of theirs. The other machine says whether it takes any of that.
+         */
+        final NamedType process = this.type("Process", 0);
+        final ITypeSymbol strings = new ITypeSymbol.GenericType(this.listType, List.of(this.stringType));
+        final NamedType remote = this.declare("RemoteComputer", NamedType.Kind.CLASS);
+        this.property(remote, "Host", this.stringType, PUBLIC);
+        this.property(remote, "Name", this.stringType, PUBLIC);
+        this.property(remote, "Type", this.stringType, PUBLIC);
+        this.property(remote, "Os", this.stringType, PUBLIC);
+        this.property(remote, "Online", ITypeSymbol.Primitive.BOOL, PUBLIC);
+        this.method(remote, "Start", process, PUBLIC, this.stringType);
+        this.method(remote, "Start", process, PUBLIC, this.stringType, strings);
+        this.method(remote, "Start", process, PUBLIC, this.stringType, strings, this.stringType);
+        this.method(remote, "Shell", strings, PUBLIC, this.stringType);
+        this.method(remote, "Send", ITypeSymbol.Primitive.BOOL, PUBLIC, ITypeSymbol.Primitive.INT, this.stringType);
+        this.method(remote, "Processes", new ITypeSymbol.GenericType(this.listType, List.of(process)), PUBLIC);
+        this.method(network, "Computers", new ITypeSymbol.GenericType(this.listType, List.of(remote)),
+                PUBLIC_STATIC);
+        this.method(network, "Computer", remote, PUBLIC_STATIC, this.stringType);
+
+        /*
+         * The network's own language, from a program: a statement goes to the Mainframe's engine as it
+         * would from the prompt, and what it answers comes back as rows a program can walk.
+         */
+        final ITypeSymbol row = new ITypeSymbol.GenericType(this.mapType, List.of(this.stringType, this.objectType));
+        final ITypeSymbol rows = new ITypeSymbol.GenericType(this.listType, List.of(row));
+        final NamedType result = this.declare("IqlResult", NamedType.Kind.CLASS);
+        this.property(result, "Ok", ITypeSymbol.Primitive.BOOL, PUBLIC);
+        this.property(result, "Message", this.stringType, PUBLIC);
+        this.property(result, "Rows", rows, PUBLIC);
+        final NamedType iql = this.declare("Iql", NamedType.Kind.CLASS);
+        this.method(iql, "Run", result, PUBLIC_STATIC, this.stringType);
+        this.method(iql, "Query", rows, PUBLIC_STATIC, this.stringType);
+        this.method(iql, "Exec", result, PUBLIC_STATIC, this.stringType);
+        this.method(iql, "Exec", result, PUBLIC_STATIC, this.stringType, strings);
+        this.method(iql, "RunFile", result, PUBLIC_STATIC, this.stringType);
     }
 
     /**

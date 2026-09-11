@@ -34,8 +34,28 @@ public final class ComputerSettings {
     public static final int MAX_FAVOURITES = 64;
     /** The most items whose recipe choice one machine remembers; the oldest choice makes room past that. */
     public static final int MAX_RECIPE_CHOICES = 64;
+    /** The most folders one machine opens to the others on its network. */
+    public static final int MAX_SHARES = 16;
     /** What a fresh machine pins: its file explorer. */
     public static final String DEFAULT_PINNED = "files";
+
+    /**
+     * One folder this machine opens to the others on its network.
+     *
+     * @param name     what the others reach it by ({@code \\host\name}): the folder's own name
+     * @param path     the folder on this machine, as a DOS path ({@code C:\pub})
+     * @param writable whether the others may write into it, or only read
+     */
+    public record Share(String name, String path, boolean writable) {
+
+        public Share {
+            name = name == null ? "" : name.trim();
+            path = path == null ? "" : path.trim();
+        }
+    }
+
+    /** The folders shared, in the order they were shared. */
+    private final List<Share> shares = new ArrayList<>();
 
     /** Accent colour as an ARGB int; {@code 0} means "use the OS skin's default accent". */
     private int accent;
@@ -126,6 +146,20 @@ public final class ComputerSettings {
 
     public void setRemovableAutoOpen(final boolean value) {
         this.removableAutoOpen = value;
+    }
+
+    /**
+     * Whether the other computers on this machine's network may start programs and run commands here.
+     * On by default: the network is the player's own, and a machine that says no says so on purpose.
+     */
+    private boolean remoteAllowed = true;
+
+    public boolean remoteAllowed() {
+        return remoteAllowed;
+    }
+
+    public void setRemoteAllowed(final boolean value) {
+        this.remoteAllowed = value;
     }
 
     public String themePreset() {
@@ -228,6 +262,85 @@ public final class ComputerSettings {
 
     public boolean isFavourite(final String id) {
         return favourites.contains(id == null ? "" : id.trim());
+    }
+
+    /** The folders this machine shares, in the order they were shared. */
+    public List<Share> shares() {
+        return java.util.Collections.unmodifiableList(shares);
+    }
+
+    /** Replaces the shares (used on load): blanks and repeats are dropped, and the list is capped. */
+    public void setShares(final List<Share> given) {
+        shares.clear();
+        if (given != null) {
+            for (final Share share : given) {
+                share(share.path(), share.writable());
+            }
+        }
+    }
+
+    /**
+     * Shares a folder under its own name; sharing it again changes whether it may be written to. The
+     * name is the last part of the path, or the drive letter for a drive's root. False when there is
+     * no room for one more.
+     */
+    public boolean share(final String path, final boolean writable) {
+        final String where = path == null ? "" : path.trim();
+        final String name = shareNameOf(where);
+        if (name.isEmpty()) {
+            return false;
+        }
+        final Share made = new Share(name, where, writable);
+        for (int i = 0; i < shares.size(); i++) {
+            if (shares.get(i).name().equalsIgnoreCase(name)) {
+                shares.set(i, made);
+                return true;
+            }
+        }
+        if (shares.size() >= MAX_SHARES) {
+            return false;
+        }
+        shares.add(made);
+        return true;
+    }
+
+    /** Stops sharing a folder, by its share name or by its path; false when it was not shared. */
+    public boolean unshare(final String nameOrPath) {
+        final String wanted = nameOrPath == null ? "" : nameOrPath.trim();
+        if (wanted.isEmpty()) {
+            return false;
+        }
+        return shares.removeIf(share -> share.name().equalsIgnoreCase(wanted)
+                || share.path().equalsIgnoreCase(wanted)
+                || share.name().equalsIgnoreCase(shareNameOf(wanted)) && share.path().equalsIgnoreCase(wanted));
+    }
+
+    /** The share of that name, or null. */
+    public Share shareNamed(final String name) {
+        final String wanted = name == null ? "" : name.trim();
+        for (final Share share : shares) {
+            if (share.name().equalsIgnoreCase(wanted)) {
+                return share;
+            }
+        }
+        return null;
+    }
+
+    /** What a folder is shared as: its own name, or the drive letter when it is a drive's root. */
+    public static String shareNameOf(final String path) {
+        String trimmed = path == null ? "" : path.trim();
+        while (trimmed.endsWith("\\") || trimmed.endsWith("/")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+        if (trimmed.isEmpty()) {
+            return "";
+        }
+        final int cut = Math.max(trimmed.lastIndexOf('\\'), trimmed.lastIndexOf('/'));
+        final String last = cut < 0 ? trimmed : trimmed.substring(cut + 1);
+        if (last.length() == 2 && last.charAt(1) == ':' && Character.isLetter(last.charAt(0))) {
+            return String.valueOf(Character.toLowerCase(last.charAt(0)));
+        }
+        return last;
     }
 
     /** The recipe the player picked last for a data id, or {@code -1} when none was picked. */
@@ -387,6 +500,16 @@ public final class ComputerSettings {
                 }
                 return true;
             }
+            case "remote" -> {
+                if (v.equalsIgnoreCase("on") || v.equalsIgnoreCase("true")) {
+                    setRemoteAllowed(true);
+                } else if (v.equalsIgnoreCase("off") || v.equalsIgnoreCase("false")) {
+                    setRemoteAllowed(false);
+                } else {
+                    return false;
+                }
+                return true;
+            }
             case "accent" -> {
                 final Integer argb = parseAccent(v);
                 if (argb == null) {
@@ -447,6 +570,12 @@ public final class ComputerSettings {
         lines.add(pad("accent") + (accent == 0 ? "default" : String.format(Locale.ROOT, "#%06X", accent & 0xFFFFFF)));
         lines.add(pad("pinned") + (pinned.isEmpty() ? "none" : String.join(", ", pinned)));
         lines.add(pad("favourites") + (favourites.isEmpty() ? "none" : favourites.size() + " starred"));
+        final List<String> shared = new ArrayList<>();
+        for (final Share share : shares) {
+            shared.add(share.name() + (share.writable() ? " (read and write)" : " (read only)"));
+        }
+        lines.add(pad("shares") + (shared.isEmpty() ? "none" : String.join(", ", shared)));
+        lines.add(pad("remote") + (remoteAllowed ? "on (other computers may run programs here)" : "off"));
         return lines;
     }
 

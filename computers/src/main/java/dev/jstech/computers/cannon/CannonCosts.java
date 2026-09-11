@@ -98,11 +98,38 @@ public final class CannonCosts {
          * know when the iron runs low is doing the cheap thing, and one that asks every tick is not.
          */
         put("Network", 0, false, "Watch", "WatchBelow", "WatchAbove");
+        put("Network", GLANCE_NETWORK, false, "Computer");
+        put("Network", READ, true, "Computers");
+
+        /*
+         * Another computer on the network. What it is costs nothing once it is in hand; starting a
+         * program there or running a line at its prompt is work for that machine and priced like a
+         * submission; a line sent to it is a touch; its process list is a list.
+         */
+        put("RemoteComputer", 0, false, "Host", "Name", "Type", "Os", "Online");
+        put("RemoteComputer", SUBMIT, false, "Start", "Shell");
+        put("RemoteComputer", GLANCE_NETWORK, false, "Send");
+        put("RemoteComputer", READ, true, "Processes");
+
+        // The network's own language: every statement is work for the Mainframe, and rows are rows.
+        put("Iql", WRITE, true, "Run", "Query", "Exec", "RunFile");
 
         // Operations. Asking the network to move or make something is work for the whole base.
         put("Operations", SUBMIT, false, "Pull", "Push", "Craft", "Cancel", "Reprioritise");
         put("Operations", READ, false, "Get");
         put("Operations", READ, true, "List");
+
+        /*
+         * Other programs on the machine. Starting one is dear, since a whole process is made; asking
+         * after one is a glance; its output is a list, priced by its length. What a program says about
+         * itself costs nothing.
+         */
+        put("Program", 0, false, "SetName", "Name", "Args", "Current", "Exit", "OnMessage");
+        put("Program", SUBMIT, false, "Start");
+        put("Process", 0, false, "Id", "Name", "Host", "Wait");
+        put("Process", GLANCE, false, "Running", "ExitCode");
+        put("Process", GLANCE_NETWORK, false, "Kill", "Send");
+        put("Process", READ, true, "Output");
     }
 
     private CannonCosts() {

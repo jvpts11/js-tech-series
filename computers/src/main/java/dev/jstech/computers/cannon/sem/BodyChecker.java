@@ -250,6 +250,7 @@ public final class BodyChecker {
             case IStmt.LocalDecl local -> this.checkLocal(local);
             case IStmt.ExprStmt expression -> this.check(expression.expression(), null);
             case IStmt.Dispose dispose -> this.checkDispose(dispose);
+            case IStmt.Lock lock -> this.checkLock(lock);
             case IStmt.Empty ignored -> { }
         }
     }
@@ -383,6 +384,15 @@ public final class BodyChecker {
         }
     }
 
+    /* Only something on the heap has a lock to take: a number is a value, and two copies of it are two things. */
+    private void checkLock(final IStmt.Lock lock) {
+        final ITypeSymbol target = this.check(lock.target(), null);
+        if (!this.rules.isError(target) && !this.rules.isReference(target)) {
+            this.report(lock.line(), lock.column(), CannonError.CANNOT_LOCK, target.describe());
+        }
+        this.checkStatement(lock.body());
+    }
+
     private void condition(final IExpr expression) {
         final ITypeSymbol type = this.check(expression, ITypeSymbol.Primitive.BOOL);
         if (!this.rules.isError(type) && type != ITypeSymbol.Primitive.BOOL) {
@@ -412,6 +422,7 @@ public final class BodyChecker {
             case IStmt.Switch choice -> choice.sections().stream().anyMatch(IStmt.SwitchSection::fallback)
                     && choice.sections().stream().allMatch(section ->
                             section.statements().stream().anyMatch(BodyChecker::alwaysReturns));
+            case IStmt.Lock lock -> alwaysReturns(lock.body());
             default -> false;
         };
     }
@@ -1240,6 +1251,7 @@ public final class BodyChecker {
                 yield then && otherwise;
             }
             case IStmt.DoWhile loop -> this.flow(loop.body(), name, assigned);
+            case IStmt.Lock lock -> this.flow(lock.body(), name, assigned);
             case IStmt.While loop -> this.aside(loop.body(), name, assigned);
             case IStmt.For loop -> this.aside(loop.body(), name, assigned);
             case IStmt.ForEach loop -> this.aside(loop.body(), name, assigned);

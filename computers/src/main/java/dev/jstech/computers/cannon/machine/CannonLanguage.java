@@ -137,11 +137,19 @@ public final class CannonLanguage implements IProgrammingLanguage {
     @Override
     @Nullable
     public ILanguageProcess start(final String binary, final long heapBytes, final BlockEntity machine) {
+        return this.start(binary, heapBytes, machine, java.util.List.of());
+    }
+
+    @Override
+    @Nullable
+    public ILanguageProcess start(final String binary, final long heapBytes, final BlockEntity machine,
+                                  final java.util.List<String> arguments) {
         final Loaded program = read(binary);
         if (program == null || program.entryPoint() == null) {
             return null;
         }
         final Process process = new Process(program, heapBytes, new MachineHost(machine));
+        process.setArgs(arguments);
         if (program.shape() == Shape.CONSOLE) {
             process.beginStatic(program.entryPoint(), "Main");
         } else {

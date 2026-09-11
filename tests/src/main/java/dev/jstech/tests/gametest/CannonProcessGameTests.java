@@ -14,6 +14,7 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.cannon.CannonCompiler;
 import dev.jstech.computers.cannon.SourceFile;
 import dev.jstech.computers.cannon.machine.MachinePrograms;
+import dev.jstech.computers.cannon.machine.ServerTickDeadline;
 import dev.jstech.computers.cannon.run.Library;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
@@ -25,6 +26,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -386,16 +388,245 @@ public final class CannonProcessGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void programs_budgetFollowsTheClockBetweenItsBounds(final GameTestHelper helper) {
-        helper.assertTrue(MachinePrograms.budgetFor(0) == 0, "no processor is worth nothing");
-        helper.assertTrue(MachinePrograms.budgetFor(100) == MachinePrograms.LEAST_PER_TICK,
-                "the slowest machine still moves; got " + MachinePrograms.budgetFor(100));
-        helper.assertTrue(MachinePrograms.budgetFor(700) == 87,
-                "an early one follows its clock; got " + MachinePrograms.budgetFor(700));
-        helper.assertTrue(MachinePrograms.budgetFor(4000) == 500,
-                "a middling one too; got " + MachinePrograms.budgetFor(4000));
-        helper.assertTrue(MachinePrograms.budgetFor(19_200) == MachinePrograms.MOST_PER_TICK,
-                "and the fastest is capped; got " + MachinePrograms.budgetFor(19_200));
+    public static void programs_creditsFollowTheClockWithNoCeiling(final GameTestHelper helper) {
+        helper.assertTrue(MachinePrograms.creditsFor(0) == 0, "no processor is worth nothing");
+        helper.assertTrue(MachinePrograms.creditsFor(100) == MachinePrograms.LEAST_PER_TICK,
+                "the slowest machine still moves; got " + MachinePrograms.creditsFor(100));
+        helper.assertTrue(MachinePrograms.creditsFor(700) == 87,
+                "an early one follows its clock; got " + MachinePrograms.creditsFor(700));
+        helper.assertTrue(MachinePrograms.creditsFor(4000) == 500,
+                "a middling one too; got " + MachinePrograms.creditsFor(4000));
+        helper.assertTrue(MachinePrograms.creditsFor(19_200) == 2400,
+                "and the fastest is not capped; got " + MachinePrograms.creditsFor(19_200));
+        helper.assertTrue(MachinePrograms.creditsFor(1_000_000) == 125_000,
+                "however fast it gets; got " + MachinePrograms.creditsFor(1_000_000));
         helper.succeed();
+    }
+
+    /**
+     * The server's clock bounds the tick, and a machine that went without runs next tick.
+     *
+     * <p>Run on deadlines of the test's own rather than the balance, so nothing else ticking on the
+     * server at the same time is starved by it or starves it.
+     */
+    @GameTest(template = ARENA)
+    public static void programs_aMachineTheServerHadNoTimeForRunsFirstNextTick(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos one = helper.absolutePos(new BlockPos(1, 2, 1));
+        final BlockPos two = helper.absolutePos(new BlockPos(3, 2, 1));
+        final long machineNanos = 1_000_000L;
+        final ServerTickDeadline starved = new ServerTickDeadline(() -> 0L, () -> machineNanos);
+        final ServerTickDeadline roomy = new ServerTickDeadline(() -> 8_000_000L, () -> machineNanos);
+        helper.startSequence()
+                .thenExecute(() -> {
+                    helper.assertTrue(starved.claim(level, one) == ServerTickDeadline.NONE,
+                            "a server with no time for programs gives the first machine none");
+                    helper.assertTrue(starved.claim(level, two) == ServerTickDeadline.NONE,
+                            "nor the second");
+                    final long before = System.nanoTime();
+                    final long given = roomy.claim(level, one);
+                    helper.assertTrue(given != ServerTickDeadline.NONE && given > before,
+                            "a server with time gives a deadline ahead");
+                    helper.assertTrue(given - before <= 2 * machineNanos,
+                            "bounded by the machine's own, not the server's; got " + (given - before));
+                })
+                .thenExecuteAfter(1, () -> {
+                    helper.assertTrue(starved.claim(level, one) != ServerTickDeadline.NONE,
+                            "a machine that went without runs next tick whatever the server has");
+                    helper.assertTrue(starved.claim(level, two) != ServerTickDeadline.NONE,
+                            "and so does the other");
+                })
+                .thenExecuteAfter(1, () -> {
+                    helper.assertTrue(starved.claim(level, one) == ServerTickDeadline.NONE,
+                            "and waits again the tick after");
+                })
+                .thenSucceed();
+    }
+
+    /** A script whose thread counts under a lock, giving way each round, so a save has to keep both. */
+    private static final String COUNTING_THREAD = """
+            using System.*;
+            using System.IO.*;
+            using System.Collections.*;
+            using System.Threading.*;
+            namespace Programs;
+            class Counting : IScript {
+                object gate = new List<int>();
+                int seen;
+
+                public void OnInit() {
+                    Thread.Start(() => {
+                        while (true) {
+                            lock (gate) { seen = seen + 1; Console.PrintLine("t" + seen); }
+                            Thread.Yield();
+                        }
+                    });
+                }
+                public void OnTick() { }
+                public void OnDestroy() { }
+            }
+            """;
+
+    /** Whether the lines count up from t1 with nothing missing and nothing said twice. */
+    private static boolean countsUp(final List<String> said) {
+        for (int i = 0; i < said.size(); i++) {
+            if (!said.get(i).equals("t" + (i + 1))) {
+                return false;
+            }
+        }
+        return !said.isEmpty();
+    }
+
+    @GameTest(template = ARENA)
+    public static void programs_carryAThreadAndItsLockThroughASave(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2));
+        if (computer == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final MachinePrograms before = computer.cannon();
+                    final MachinePrograms.Started started =
+                            before.start("counting.asm", listing(COUNTING_THREAD), 1, computer);
+                    helper.assertTrue(started.ok(), "it starts: " + started.message());
+                    before.tick(512);
+                    final List<String> said = only(before).console();
+                    helper.assertTrue(countsUp(said), "the thread counts as far as the tick lets it; got " + said);
+
+                    final CompoundTag tag = new CompoundTag();
+                    before.save(tag);
+                    final MachinePrograms after = new MachinePrograms();
+                    after.load(tag, computer);
+                    helper.assertTrue(after.all().size() == 1, "the program comes back");
+                    after.tick(512);
+                    final List<String> more = only(after).console();
+                    helper.assertTrue(more.size() > said.size() && countsUp(more)
+                                    && more.subList(0, said.size()).equals(said),
+                            "and the thread carries on counting after the save, lock and all; got " + more);
+                })
+                .thenSucceed();
+    }
+
+    /** A program that starts another from the disk, waits for it and reads what it left. */
+    private static final String PARENT = """
+            using System.*;
+            using System.IO.*;
+            using System.Collections.*;
+            using System.Execution.*;
+            namespace Programs;
+            class Parent {
+                static void Main() {
+                    List<string> args = new List<string>();
+                    args.Add("a");
+                    Process p = Program.Start("C:\\\\child.asm", args);
+                    Console.PrintLine("started " + p.Name);
+                    p.Wait();
+                    foreach (string line in p.Output()) { Console.PrintLine("child: " + line); }
+                    Console.PrintLine("code " + p.ExitCode);
+                }
+            }
+            """;
+
+    private static final String CHILD = """
+            using System.*;
+            using System.IO.*;
+            using System.Execution.*;
+            namespace Programs;
+            class Child {
+                static void Main() {
+                    Console.PrintLine("hello " + Program.Args.Get(0));
+                    Program.Exit(4);
+                }
+            }
+            """;
+
+    @GameTest(template = ARENA)
+    public static void programs_startAnotherFromTheDiskAndReadWhatItLeft(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2));
+        if (computer == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final dev.jstech.computers.program.ServerCliComputer shell =
+                            new dev.jstech.computers.program.ServerCliComputer(computer, helper.getLevel());
+                    helper.assertTrue(shell.writeFile("C:\\child.asm", listing(CHILD)).ok(),
+                            "the child is on the disk");
+                    final MachinePrograms programs = computer.cannon();
+                    final MachinePrograms.Started started =
+                            programs.start("parent.asm", listing(PARENT), 1, computer);
+                    helper.assertTrue(started.ok(), "the parent starts: " + started.message());
+                    final ILanguageProcess parent = programs.byId(started.id()).process();
+                    int ticks = 0;
+                    while (parent.console().size() < 3 && ticks++ < 12) {
+                        programs.tick(2048);
+                    }
+                    helper.assertTrue(parent.console().equals(List.of("started child.asm", "child: hello a", "code 4")),
+                            "the parent started the child, waited, and read it; got " + parent.console()
+                                    + " (" + parent.message() + ")");
+                    helper.assertTrue(programs.all().size() == 2,
+                            "the finished child stays for the parent to read; got " + programs.all().size());
+                    programs.tick(2048);
+                    programs.tick(2048);
+                    helper.assertTrue(programs.isEmpty(),
+                            "and both are gone once the parent is; " + programs.all().size() + " left");
+                })
+                .thenSucceed();
+    }
+
+    private static final String LISTENER = """
+            using System.*;
+            using System.IO.*;
+            using System.Execution.*;
+            namespace Programs;
+            class Listener : IScript {
+                public void OnInit() {
+                    Program.OnMessage(m => Console.PrintLine(m.From + ":" + m.Text));
+                }
+                public void OnTick() { }
+                public void OnDestroy() { }
+            }
+            """;
+
+    private static final String SENDER = """
+            using System.*;
+            using System.IO.*;
+            using System.Utils.*;
+            using System.Execution.*;
+            namespace Programs;
+            class Sender {
+                static void Main() {
+                    bool ok = Process.Send(Convert.ToInt(Program.Args.Get(0)), "ping");
+                    Console.PrintLine("sent " + ok);
+                }
+            }
+            """;
+
+    @GameTest(template = ARENA)
+    public static void programs_passALineFromOneToAnother(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2));
+        if (computer == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final MachinePrograms programs = computer.cannon();
+                    final int listener = programs.start("listener.asm", listing(LISTENER), 1, computer).id();
+                    programs.tick(2048);
+                    final MachinePrograms.Started sender = programs.start("sender.asm", listing(SENDER), 1,
+                            computer, List.of(String.valueOf(listener)), 0, MachinePrograms.DEFAULT_PRIORITY);
+                    helper.assertTrue(sender.ok(), "the sender starts: " + sender.message());
+                    for (int i = 0; i < 3; i++) {
+                        programs.tick(2048);
+                    }
+                    final List<String> heard = programs.byId(listener).process().console();
+                    helper.assertTrue(heard.equals(List.of(sender.id() + ":ping")),
+                            "the listener heard the line and who sent it; got " + heard);
+                    final MachinePrograms.Live sent = programs.byId(sender.id());
+                    helper.assertTrue(sent == null || sent.process().console().equals(List.of("sent true")),
+                            "the sender was told it was taken; got "
+                                    + (sent == null ? "gone" : sent.process().console()));
+                })
+                .thenSucceed();
     }
 }

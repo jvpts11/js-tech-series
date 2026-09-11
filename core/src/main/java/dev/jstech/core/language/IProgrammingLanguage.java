@@ -119,6 +119,18 @@ public interface IProgrammingLanguage {
     @Nullable
     ILanguageProcess start(String binary, long heapBytes, BlockEntity machine);
 
+    /**
+     * The same, with what the program was started with.
+     *
+     * <p>A language whose programs take no arguments may leave this alone; the arguments are then
+     * simply not handed on.
+     */
+    @Nullable
+    default ILanguageProcess start(final String binary, final long heapBytes, final BlockEntity machine,
+                                   final List<String> arguments) {
+        return this.start(binary, heapBytes, machine);
+    }
+
     /** Reads a program back out of what {@link ILanguageProcess#save} wrote. */
     @Nullable
     ILanguageProcess restore(String binary, CompoundTag saved, BlockEntity machine);

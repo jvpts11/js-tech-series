@@ -280,6 +280,11 @@ public final class Emitter {
         private final List<String> pending = new ArrayList<>();
         private final Deque<String> breaks = new ArrayDeque<>();
         private final Deque<String> continues = new ArrayDeque<>();
+        /** The places holding what each enclosing lock took, innermost first. */
+        private final Deque<Integer> locks = new ArrayDeque<>();
+        /** How many locks were held where each break and continue target was opened. */
+        private final Deque<Integer> breakLocks = new ArrayDeque<>();
+        private final Deque<Integer> continueLocks = new ArrayDeque<>();
         private final NamedType owner;
         private final ITypeSymbol returns;
         private Closure closure;
@@ -505,11 +510,49 @@ public final class Emitter {
                 case IStmt.For loop -> this.forLoop(loop);
                 case IStmt.ForEach loop -> this.forEach(loop);
                 case IStmt.Switch choice -> this.choice(choice);
-                case IStmt.Break ignored -> this.emit(Opcode.BR, new IOperand.Label(this.breaks.peek()));
-                case IStmt.Continue ignored -> this.emit(Opcode.BR, new IOperand.Label(this.continues.peek()));
+                case IStmt.Break ignored -> {
+                    this.unlockDownTo(this.breakLocks.peek());
+                    this.emit(Opcode.BR, new IOperand.Label(this.breaks.peek()));
+                }
+                case IStmt.Continue ignored -> {
+                    this.unlockDownTo(this.continueLocks.peek());
+                    this.emit(Opcode.BR, new IOperand.Label(this.continues.peek()));
+                }
                 case IStmt.Return give -> this.give(give);
                 case IStmt.Dispose dispose -> this.dispose(dispose);
+                case IStmt.Lock lock -> this.locked(lock);
                 case IStmt.Empty ignored -> { }
+            }
+        }
+
+        /*
+         * The lock is taken on the way in and let go on the way out, and every way out counts: the end
+         * of the body, a return, a break or a continue that leaves it. The object is kept in a place of
+         * its own so that letting go names the same object that was taken, whatever the body did.
+         */
+        private void locked(final IStmt.Lock lock) {
+            final int held = this.hidden();
+            this.value(lock.target(), null);
+            this.emit(Opcode.DUP);
+            this.emit(Opcode.STLOC, new IOperand.Slot(held));
+            this.emit(Opcode.MONITOR_ENTER);
+            this.locks.push(held);
+            this.statement(lock.body());
+            this.locks.pop();
+            this.emit(Opcode.LDLOC, new IOperand.Slot(held));
+            this.emit(Opcode.MONITOR_EXIT);
+        }
+
+        /** Lets go of every lock taken inside what is being left, innermost first, down to {@code depth}. */
+        private void unlockDownTo(final Integer depth) {
+            int held = this.locks.size();
+            for (final Integer place : this.locks) {
+                if (depth != null && held <= depth) {
+                    break;
+                }
+                this.emit(Opcode.LDLOC, new IOperand.Slot(place));
+                this.emit(Opcode.MONITOR_EXIT);
+                held--;
             }
         }
 
@@ -689,9 +732,13 @@ public final class Emitter {
 
         private void inLoop(final String again, final String end, final IStmt body) {
             this.continues.push(again);
+            this.continueLocks.push(this.locks.size());
             this.breaks.push(end);
+            this.breakLocks.push(this.locks.size());
             this.statement(body);
+            this.breakLocks.pop();
             this.breaks.pop();
+            this.continueLocks.pop();
             this.continues.pop();
         }
 
@@ -723,12 +770,14 @@ public final class Emitter {
             this.emit(Opcode.BR, new IOperand.Label(fallback));
 
             this.breaks.push(end);
+            this.breakLocks.push(this.locks.size());
             for (int i = 0; i < choice.sections().size(); i++) {
                 this.mark(starts.get(i));
                 for (final IStmt statement : choice.sections().get(i).statements()) {
                     this.statement(statement);
                 }
             }
+            this.breakLocks.pop();
             this.breaks.pop();
             this.mark(end);
         }
@@ -737,6 +786,8 @@ public final class Emitter {
             if (give.value() != null) {
                 this.copied(give.value(), this.returns);
             }
+            // The answer sits under the objects let go of, so it is still on top when the method leaves.
+            this.unlockDownTo(0);
             this.emit(Opcode.RET);
         }
 
@@ -1586,6 +1637,10 @@ public final class Emitter {
             }
             case IStmt.Return give -> this.walk(give.value(), depth, found);
             case IStmt.Dispose dispose -> this.walk(dispose.target(), depth, found);
+            case IStmt.Lock lock -> {
+                this.walk(lock.target(), depth, found);
+                this.walk(lock.body(), depth + 1, found);
+            }
             default -> { }
         }
     }

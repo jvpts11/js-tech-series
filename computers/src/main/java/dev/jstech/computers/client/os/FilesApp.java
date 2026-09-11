@@ -470,7 +470,54 @@ public final class FilesApp implements IDesktopApp {
             go("");
             return;
         }
+        // Up from the network lands on This PC too; up from a host lands on the network.
+        if (dir.equals(NET_ROOT)) {
+            go("");
+            return;
+        }
+        if (onNetwork() && dir.indexOf('/') < 0) {
+            go(NET_ROOT);
+            return;
+        }
         go(parentOf(dir));
+    }
+
+    /** The explorer's key for the other machines' shared folders. */
+    private static final String NET_ROOT = "net:";
+
+    private boolean onNetwork() {
+        return dir.startsWith(NET_ROOT);
+    }
+
+    /** How deep a network path is: 0 for a host, 1 for a share, more below it; -1 for anything else. */
+    private static int netDepth(final String path) {
+        if (!path.startsWith(NET_ROOT)) {
+            return -1;
+        }
+        int depth = 0;
+        for (int i = NET_ROOT.length(); i < path.length(); i++) {
+            if (path.charAt(i) == '/') {
+                depth++;
+            }
+        }
+        return depth;
+    }
+
+    /** The last name in a network path: the host, the share, or the entry below. */
+    private static String netName(final String path) {
+        final int slash = path.lastIndexOf('/');
+        return slash >= 0 ? path.substring(slash + 1) : path.substring(NET_ROOT.length());
+    }
+
+    /** Opens the row of that name as a double-click would; false when nothing listed has it. */
+    public boolean openNamed(final String name) {
+        for (final Row r : rows) {
+            if (r.name().equals(name) && (r.kind() == Kind.DIR || r.kind() == Kind.FILE)) {
+                open(r);
+                return true;
+            }
+        }
+        return false;
     }
 
     private void toggleView() {
@@ -530,8 +577,11 @@ public final class FilesApp implements IDesktopApp {
         for (final DiskFilesPayload.WireFile f : files) {
             if (f.directory()) {
                 final boolean drive = f.path().startsWith("media:") && f.path().indexOf('/') < 0;
-                built.add(new Row(Kind.DIR, drive ? volumeLabel(f.path()) : baseName(f.path()),
-                        drive ? "Removable drive" : "Folder", "", FileIcons.Kind.FOLDER, f, null));
+                final int depth = netDepth(f.path());
+                final String label = drive ? volumeLabel(f.path()) : depth >= 0 ? netName(f.path()) : baseName(f.path());
+                final String kind = drive ? "Removable drive"
+                        : depth == 0 ? "Computer" : depth == 1 ? "Shared folder" : "Folder";
+                built.add(new Row(Kind.DIR, label, kind, "", FileIcons.Kind.FOLDER, f, null));
             } else if (f.projectsItem()) {
                 final ItemStack stack = stackOf(f.itemId());
                 built.add(new Row(Kind.FILE, stack.isEmpty() ? baseName(f.path()) : stack.getHoverName().getString(),
@@ -675,6 +725,9 @@ public final class FilesApp implements IDesktopApp {
         if (key.isEmpty()) {
             return "C:";
         }
+        if (key.equals(NET_ROOT)) {
+            return "";
+        }
         int n = 0;
         for (final DiskFilesPayload.WireVolume v : volumes) {
             if (v.removable()) {
@@ -731,6 +784,19 @@ public final class FilesApp implements IDesktopApp {
     /** The crumbs of the current path, from the root to here. */
     private List<Breadcrumbs.Crumb> crumbs() {
         final List<Breadcrumbs.Crumb> out = new ArrayList<>();
+        if (onNetwork()) {
+            out.add(new Breadcrumbs.Crumb(linux() ? "Devices" : "This PC", ""));
+            out.add(new Breadcrumbs.Crumb("Network", NET_ROOT));
+            String acc = NET_ROOT;
+            for (final String seg : dir.substring(NET_ROOT.length()).split("/")) {
+                if (seg.isEmpty()) {
+                    continue;
+                }
+                acc = acc.equals(NET_ROOT) ? NET_ROOT + seg : acc + "/" + seg;
+                out.add(new Breadcrumbs.Crumb(seg, acc));
+            }
+            return out;
+        }
         if (onMedia()) {
             final String rootKey = "media:" + mediaReaderPos();
             out.add(new Breadcrumbs.Crumb(linux() ? "Devices" : "This PC", ""));
@@ -913,7 +979,10 @@ public final class FilesApp implements IDesktopApp {
     /** Whether {@code key} is the volume currently being browsed (system disk = any non-media path). */
     private boolean isCurrentVolume(final String key) {
         if (key.isEmpty()) {
-            return !dir.startsWith("media:");
+            return !dir.startsWith("media:") && !onNetwork();
+        }
+        if (key.equals(NET_ROOT)) {
+            return onNetwork();
         }
         return dir.equals(key) || dir.startsWith(key + "/");
     }
@@ -1208,6 +1277,11 @@ public final class FilesApp implements IDesktopApp {
 
     /** The folder the explorer is on, the way a person types it: {@code C:\progs\}, {@code D:\support\}, or {@code /progs/} on Linux. */
     private String typedPath() {
+        if (onNetwork()) {
+            final String body = dir.substring(NET_ROOT.length());
+            return linux() ? "/net/" + body + (body.isEmpty() ? "" : "/")
+                    : "\\\\" + body.replace('/', '\\') + (body.isEmpty() ? "" : "\\");
+        }
         if (linux()) {
             return "/" + (onMedia() ? mediaRest() : dir) + (dir.isEmpty() ? "" : "/");
         }
@@ -1495,7 +1569,7 @@ public final class FilesApp implements IDesktopApp {
         if (mouseX < lastX + FilesLayout.listX()) {
             return null;
         }
-        if (dir.startsWith("media:")) {
+        if (dir.startsWith("media:") || onNetwork()) {
             return null;
         }
         final int row = rowIndexAt(mouseX, mouseY);
@@ -1558,10 +1632,11 @@ public final class FilesApp implements IDesktopApp {
             return null;
         }
         final Row t = rows.get(target);
-        if (t.kind() == Kind.DIR && t.file() != null && !t.file().path().startsWith("media:")) {
+        if (t.kind() == Kind.DIR && t.file() != null && !t.file().path().startsWith("media:")
+                && !t.file().path().startsWith(NET_ROOT)) {
             return t.file().path();
         }
-        if (t.kind() == Kind.UP) {
+        if (t.kind() == Kind.UP && !onNetwork()) {
             return parentOf(dir);
         }
         return null;
@@ -1976,6 +2051,10 @@ public final class FilesApp implements IDesktopApp {
 
     /** A Windows-style address for the path: {@code C:\dir\} on the disk, the drive's label on media. */
     private String displayPath(final String dir) {
+        if (dir.startsWith(NET_ROOT)) {
+            final String body = dir.substring(NET_ROOT.length());
+            return "\\\\" + body.replace('/', '\\') + (body.isEmpty() ? "" : "\\");
+        }
         if (dir.startsWith("media:")) {
             final int slash = dir.indexOf('/');
             final String sub = slash < 0 ? "" : dir.substring(slash + 1).replace('/', '\\') + "\\";

@@ -101,7 +101,8 @@ public final class Library {
     /** Whether the runtime, rather than the program, answers for this type. */
     public boolean answersFor(final String owner) {
         return switch (owner) {
-            case "string", "List", "Map", "Math", "Console", "Convert", "Time", "Random", "Delegate", "Program" -> true;
+            case "string", "List", "Map", "Math", "Console", "Convert", "Time", "Random", "Delegate", "Program",
+                 "Thread" -> true;
             default -> this.host.provides(owner);
         };
     }
@@ -115,12 +116,22 @@ public final class Library {
 
     private int owed;
 
+    /** Charges the running instruction that much more, for a call the process answers itself. */
+    void owe(final int more) {
+        this.owed += Math.max(0, more);
+    }
+
+    /** The tick the host is on, for what the process times against the world. */
+    long now() {
+        return this.host.tick();
+    }
+
     /** Whether a call of this needs the thing it is called on to be on the stack under its arguments. */
     public boolean takesTarget(final String owner, final String name) {
         if ("string".equals(owner)) {
             return !"Format".equals(name) && !"Concat".equals(name);
         }
-        return "List".equals(owner) || "Map".equals(owner);
+        return "List".equals(owner) || "Map".equals(owner) || this.host.takesTarget(owner, name);
     }
 
     /** Makes one of the collections the language brings with it. */
@@ -169,7 +180,7 @@ public final class Library {
              * To the machine, being asked for a value and being asked to do something are the same
              * question with different names, so a property goes out as a call that takes nothing.
              */
-            final IHost.Reply reply = this.host.call(owner, name, List.of(), this.caller, line);
+            final IHost.Reply reply = this.host.call(owner, name, List.of(), this.caller, this.callerId(), line);
             this.owed += Math.max(0, reply.cost() - 1);
             return this.adopt(reply.value(), line);
         }
@@ -181,7 +192,7 @@ public final class Library {
                        final int line) {
         return switch (named.owner()) {
             case "Console" -> this.console(named.name(), arguments, line);
-            case "Program" -> this.program(named.name(), arguments, line);
+            case "Program" -> this.program(named, arguments, line);
             case "Math" -> Answer.of(this.maths(named.name(), arguments, line));
             case "Convert" -> this.convert(named.name(), arguments, line);
             case "Random" -> Answer.of(this.chance(named.name(), arguments));
@@ -190,7 +201,7 @@ public final class Library {
             case "string" -> Answer.of(this.text(named.name(), self, arguments, line));
             case "List" -> Answer.of(this.list(named.name(), self, arguments, line));
             case "Map" -> this.map(named.name(), self, arguments, line);
-            default -> this.watchOrOutward(named, arguments, line);
+            default -> this.watchOrOutward(named, self, arguments, line);
         };
     }
 
@@ -209,10 +220,17 @@ public final class Library {
      * with it across a reload. The machine is only asked what the numbers are, once a tick, for
      * everything being watched at all.
      */
-    private Answer watchOrOutward(final IOperand.Method named, final List<Object> arguments,
-                                  final int line) {
+    private Answer watchOrOutward(final IOperand.Method named, final Object self,
+                                  final List<Object> arguments, final int line) {
         if (this.owner == null || !"Network".equals(named.owner()) || !named.name().startsWith("Watch")) {
-            return this.outward(named, arguments, line);
+            if (self == null) {
+                return this.outward(named, arguments, line);
+            }
+            // A call on one of the machine's own objects: the object goes first, then the arguments.
+            final List<Object> withSelf = new ArrayList<>();
+            withSelf.add(self);
+            withSelf.addAll(arguments);
+            return this.outward(named, withSelf, line);
         }
         final Process.Watching kind = switch (named.name()) {
             case "WatchBelow" -> Process.Watching.BELOW;
@@ -242,7 +260,7 @@ public final class Library {
                     "the runtime does not answer for " + named.owner());
         }
         final IHost.Reply reply =
-                this.host.call(named.owner(), named.name(), arguments, this.caller, line);
+                this.host.call(named.owner(), named.name(), arguments, this.caller, this.callerId(), line);
         this.owed += Math.max(0, reply.cost() - 1);
         final List<Object> filled = new ArrayList<>();
         for (final Object one : reply.filled()) {
@@ -319,15 +337,74 @@ public final class Library {
         return Answer.of(null);
     }
 
-    /** What a program says about itself: for now, what it is called. */
-    private Answer program(final String name, final List<Object> arguments, final int line) {
-        if ("SetName".equals(name)) {
+    /**
+     * What a program says about itself, and what it asks of the machine about the other programs on it.
+     *
+     * <p>Its name is its own business. Starting another program, or speaking to one, is the machine's,
+     * and a machine that has no other programs to speak of (there is none around the tests) says so.
+     */
+    private Answer program(final IOperand.Method named, final List<Object> arguments, final int line) {
+        if ("SetName".equals(named.name())) {
             if (this.owner != null) {
                 this.owner.setName(String.valueOf(arguments.getFirst()));
             }
             return Answer.of(null);
         }
-        throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "Program has no " + name);
+        if (this.host.provides(named.owner())) {
+            return this.outward(named, arguments, line);
+        }
+        throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "this computer cannot reach other programs");
+    }
+
+    /** The number the machine lists the served process under, or 0 off any machine. */
+    private int callerId() {
+        return this.owner == null ? 0 : this.owner.machineId();
+    }
+
+    /**
+     * Asks the machine something without charging for it, for what the process checks on its own
+     * account between slices; nothing when the machine does not answer for it.
+     */
+    Object peek(final String owner, final String member, final List<Object> arguments) {
+        if (!this.host.provides(owner)) {
+            return null;
+        }
+        try {
+            return this.host.call(owner, member, arguments, this.caller, this.callerId(), 0).value();
+        } catch (final Halt refused) {
+            return null;
+        }
+    }
+
+    /**
+     * Whether the program listed under that number, on this machine or on the named one, is still
+     * going.
+     */
+    boolean programRunning(final Object id, final Object host) {
+        return Boolean.TRUE.equals(this.peek("Program", "Running", whereabouts(id, host)));
+    }
+
+    /**
+     * Reads one of the things only the machine knows about another program: whether it still runs
+     * and how it ended. Off any machine the only program there is is this one.
+     */
+    Object programField(final Object id, final Object host, final String name, final int line) {
+        if (this.host.provides("Program")) {
+            return this.outward(new IOperand.Method("Program", name, List.of("int", "string"),
+                    "Running".equals(name) ? "bool" : "int"), whereabouts(id, host), line).value();
+        }
+        if ("Running".equals(name)) {
+            return this.owner != null && Integer.valueOf(this.owner.machineId()).equals(id);
+        }
+        return 0;
+    }
+
+    /** A program's number and the machine it is on ({@code ""} for this one), as the machine is asked. */
+    static List<Object> whereabouts(final Object id, final Object host) {
+        final List<Object> where = new ArrayList<>();
+        where.add(id);
+        where.add(host == null ? "" : String.valueOf(host));
+        return where;
     }
 
     /** The next line typed at the terminal this program is in front of, or nothing when it has none. */

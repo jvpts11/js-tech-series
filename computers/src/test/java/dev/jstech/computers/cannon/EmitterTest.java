@@ -274,4 +274,24 @@ class EmitterTest {
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
         assertTrue(built.assembly().startsWith(".asm 1\n.start Tests.Hello console\n"), built.assembly());
     }
+
+    @Test
+    void emit_wrapsALockedBodyInMonitorEnterAndExit() {
+        final List<String> body = bodyOf(compile("    void M() { object o = null; lock (o) { int n = 1; } }\n"), "M");
+        assertEquals(List.of("ldnull", "stloc 0", "ldloc 0", "dup", "stloc 1", "monitor.enter",
+                "ldc.i4 1", "stloc 2", "ldloc 1", "monitor.exit", "ret"), body);
+    }
+
+    @Test
+    void emit_letsGoOfTheLockOnAReturnAndOnABreak() {
+        final List<String> early = bodyOf(compile("    int M() { object o = null; lock (o) { return 7; } }\n"), "M");
+        final int given = early.indexOf("ldc.i4 7");
+        assertEquals(List.of("ldc.i4 7", "ldloc 1", "monitor.exit", "ret"), early.subList(given, given + 4));
+
+        final List<String> broken = bodyOf(compile(
+                "    void M() { object o = null; while (true) { lock (o) { break; } } }\n"), "M");
+        final int entered = broken.indexOf("monitor.enter");
+        assertEquals(List.of("monitor.enter", "ldloc 1", "monitor.exit"), broken.subList(entered, entered + 3));
+        assertTrue(broken.get(entered + 3).startsWith("br "), broken.get(entered + 3));
+    }
 }

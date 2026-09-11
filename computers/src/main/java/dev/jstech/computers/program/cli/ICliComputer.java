@@ -656,6 +656,32 @@ public interface ICliComputer {
                       boolean running) {
     }
 
+    // Shared folders
+
+    /**
+     * One folder a machine opens to the others on its network.
+     *
+     * @param name     what the others reach it by: {@code \\host\name}
+     * @param path     where it is on that machine, as a DOS path
+     * @param writable whether the others may write into it as well as read
+     */
+    record ShareInfo(String name, String path, boolean writable) {
+    }
+
+    /** The folders this computer shares, in the order they were shared. */
+    default List<ShareInfo> shares() {
+        return List.of();
+    }
+
+    /** A folder another machine on this network shares, under that machine's host name. */
+    record NetworkShare(String hostname, ShareInfo share) {
+    }
+
+    /** Every folder the other running machines on this network share. */
+    default List<NetworkShare> networkShares() {
+        return List.of();
+    }
+
     /** A line in a storage listing: a name, a quantity, and an optional detail (e.g. where the item lives). */
     record StoredItem(String name, long quantity, String detail) {
 
@@ -719,6 +745,11 @@ public interface ICliComputer {
      */
     default OpResult startCannon(final String path, final int heapMb) {
         return OpResult.fail("cannon: not installed");
+    }
+
+    /** The same, with what the program is started with, as its {@code Program.Args} will read them. */
+    default OpResult startCannon(final String path, final int heapMb, final List<String> arguments) {
+        return this.startCannon(path, heapMb);
     }
 
     /** Stops one of the Cannon programs running here. */

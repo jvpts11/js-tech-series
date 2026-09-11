@@ -2249,6 +2249,10 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public FsResult listDisk(final String dir) {
+        final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(dir);
+        if (net != null) {
+            return listNetwork(net);
+        }
         final Resolved r = resolve(dir == null ? "" : dir);
         if (r.ctx() == null) {
             return driveError(r.drive());
@@ -2297,6 +2301,11 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public FsResult readFile(final String path) {
+        final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
+        if (net != null) {
+            final Reached reached = reach(net);
+            return reached.ok() ? reached.remote().readFile(reached.path()) : reached.error();
+        }
         final Resolved r = resolve(path);
         if (r.ctx() == null) {
             return driveError(r.drive());
@@ -2336,6 +2345,17 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public FsResult deleteFile(final String path) {
+        final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
+        if (net != null) {
+            final Reached reached = reach(net);
+            if (!reached.ok()) {
+                return reached.error();
+            }
+            if (!reached.share().writable()) {
+                return FsResult.fail(net.display() + ": " + net.share() + " is shared read-only");
+            }
+            return reached.remote().deleteFile(reached.path());
+        }
         final Resolved r = resolve(path);
         if (r.ctx() == null) {
             return driveError(r.drive());
@@ -2399,6 +2419,17 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public FsResult writeFile(final String path, final String content) {
+        final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
+        if (net != null) {
+            final Reached reached = reach(net);
+            if (!reached.ok()) {
+                return reached.error();
+            }
+            if (!reached.share().writable()) {
+                return FsResult.fail(net.display() + ": " + net.share() + " is shared read-only");
+            }
+            return reached.remote().writeFile(reached.path(), content);
+        }
         final Resolved r = resolve(path);
         if (r.ctx() == null) {
             return driveError(r.drive());
@@ -2471,6 +2502,17 @@ public final class ServerCliComputer implements ICliComputer {
         if (path == null || path.isBlank()) {
             return FsResult.fail("The syntax of the command is incorrect.");
         }
+        final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
+        if (net != null) {
+            final Reached reached = reach(net);
+            if (!reached.ok()) {
+                return reached.error();
+            }
+            if (!reached.share().writable()) {
+                return FsResult.fail(net.display() + ": " + net.share() + " is shared read-only");
+            }
+            return reached.remote().makeDir(reached.path());
+        }
         final Resolved r = resolve(path);
         if (r.ctx() == null) {
             return driveError(r.drive());
@@ -2535,6 +2577,11 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public FsResult copyPath(final String src, final String dest) {
+        final dev.jstech.computers.program.cli.NetPath fromNet = dev.jstech.computers.program.cli.NetPath.parse(src);
+        final dev.jstech.computers.program.cli.NetPath toNet = dev.jstech.computers.program.cli.NetPath.parse(dest);
+        if (fromNet != null || toNet != null) {
+            return copyAcrossNetwork(src, fromNet, dest, toNet);
+        }
         final Resolved s = resolve(src);
         if (s.ctx() == null) {
             return driveError(s.drive());
@@ -2581,8 +2628,39 @@ public final class ServerCliComputer implements ICliComputer {
         };
     }
 
+    /**
+     * A copy with a shared folder at either end: the file is read where it is and written where it
+     * goes, through each machine's own shell, so a read-only share refuses the write the same way its
+     * owner's prompt would. Files only; a folder is copied one file at a time.
+     */
+    private FsResult copyAcrossNetwork(final String src, final dev.jstech.computers.program.cli.NetPath fromNet,
+                                       final String dest, final dev.jstech.computers.program.cli.NetPath toNet) {
+        final FsResult content = readFile(src);
+        if (!content.ok()) {
+            return content;
+        }
+        String target = dest;
+        final String name = fromNet != null ? fromNet.name() : FsPaths.fileName(resolve(src).path());
+        if (toNet != null) {
+            if (networkDirExists(toNet)) {
+                target = toNet.display() + "\\" + name;
+            }
+        } else {
+            final Resolved d = resolve(dest);
+            if (d.ctx() != null && !d.ctx().disk().isEmpty() && dirExists(d.ctx(), d.path())) {
+                target = d.drive() + ":\\" + FsPaths.join(d.path(), name).replace('/', '\\');
+            }
+        }
+        final FsResult written = writeFile(target, content.message());
+        return written.ok() ? FsResult.ok("        1 file(s) copied.") : written;
+    }
+
     @Override
     public FsResult movePath(final String src, final String destDir) {
+        if (dev.jstech.computers.program.cli.NetPath.looksLike(src)
+                || dev.jstech.computers.program.cli.NetPath.looksLike(destDir)) {
+            return FsResult.fail("a file on another machine is copied, not moved: copy it and delete the original");
+        }
         final Resolved s = resolve(src);
         if (s.ctx() == null) {
             return driveError(s.drive());
@@ -2662,6 +2740,8 @@ public final class ServerCliComputer implements ICliComputer {
         lines.add(String.format(java.util.Locale.ROOT, "  %-12s%s", "name", name.isEmpty() ? "(unnamed)" : name));
         lines.add(String.format(java.util.Locale.ROOT, "  %-12s%d permille", "netshare", systemDiskPermille()));
         lines.addAll(console.settings().summaryLines());
+        lines.add("  'config share <folder> [read|write]' opens a folder to the network as \\\\"
+                + hostname() + "\\<name>; 'config unshare <name>' closes it");
         return lines;
     }
 
@@ -2715,6 +2795,17 @@ public final class ServerCliComputer implements ICliComputer {
                 hostBlock.setChanged();
                 return OpResult.ok("netshare set");
             }
+            case "share" -> {
+                return shareFolder(console, value);
+            }
+            case "unshare" -> {
+                final String wanted = value == null ? "" : value.trim();
+                if (!console.settings().unshare(wanted)) {
+                    return OpResult.fail("nothing is shared as " + wanted);
+                }
+                hostBlock.setChanged();
+                return OpResult.ok("no longer shared: " + wanted);
+            }
             default -> {
                 if (console.settings().applySetting(k, value)) {
                     hostBlock.setChanged();
@@ -2723,6 +2814,205 @@ public final class ServerCliComputer implements ICliComputer {
                 return OpResult.fail("unknown setting: " + k);
             }
         }
+    }
+
+    /**
+     * Shares a folder of this machine with the others on its network: {@code config share C:\pub}
+     * for reading, {@code config share C:\pub write} for writing too. The folder has to exist.
+     */
+    private OpResult shareFolder(final dev.jstech.computers.program.ComputerConsoleState console,
+                                 final String value) {
+        String path = value == null ? "" : value.trim();
+        boolean writable = false;
+        final int space = path.lastIndexOf(' ');
+        if (space > 0) {
+            final String mode = path.substring(space + 1).toLowerCase(java.util.Locale.ROOT);
+            if (mode.equals("write") || mode.equals("read")) {
+                writable = mode.equals("write");
+                path = path.substring(0, space).trim();
+            }
+        }
+        if (path.isEmpty()) {
+            return OpResult.fail("usage: config share <folder> [read|write]");
+        }
+        final Resolved r = resolve(path);
+        if (r.ctx() == null) {
+            return OpResult.fail(driveError(r.drive()).message());
+        }
+        if (r.ctx().disk().isEmpty()) {
+            return OpResult.fail(notReady(r.drive()).message());
+        }
+        if (!r.path().isEmpty() && !dirExists(r.ctx(), r.path())) {
+            return OpResult.fail(path + ": no such folder");
+        }
+        final String dos = r.drive() + ":\\" + r.path().replace('/', '\\');
+        if (!console.settings().share(dos, writable)) {
+            return OpResult.fail("this computer already shares "
+                    + dev.jstech.computers.program.ComputerSettings.MAX_SHARES + " folders");
+        }
+        hostBlock.setChanged();
+        final String name = dev.jstech.computers.program.ComputerSettings.shareNameOf(dos);
+        return OpResult.ok("shared " + dos + " as \\\\" + hostname() + "\\" + name
+                + (writable ? " (read and write)" : " (read only)"));
+    }
+
+    @Override
+    public List<ShareInfo> shares() {
+        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
+        if (console == null) {
+            return List.of();
+        }
+        final List<ShareInfo> out = new ArrayList<>();
+        for (final dev.jstech.computers.program.ComputerSettings.Share share : console.settings().shares()) {
+            out.add(new ShareInfo(share.name(), share.path(), share.writable()));
+        }
+        return out;
+    }
+
+    @Override
+    public List<NetworkShare> networkShares() {
+        final List<NetworkShare> out = new ArrayList<>();
+        reachableMachines().forEach((hostname, machine) -> {
+            final ServerCliComputer remote = new ServerCliComputer((IComputerTerminalHost) machine, level);
+            if (!remote.running()) {
+                return;
+            }
+            for (final ShareInfo share : remote.shares()) {
+                out.add(new NetworkShare(hostname, share));
+            }
+        });
+        return out;
+    }
+
+    /** Where a network path leads: the other machine's shell, the share, and the path on that machine. */
+    private record Reached(ServerCliComputer remote, ShareInfo share, String path, FsResult error) {
+
+        static Reached failed(final String message) {
+            return new Reached(null, null, "", FsResult.fail(message));
+        }
+
+        boolean ok() {
+            return this.error == null;
+        }
+    }
+
+    /**
+     * Follows a network path to the machine and the share it names.
+     *
+     * <p>The other machine answers for its own disks: what comes back is its shell, so a path below
+     * the share resolves there exactly as it would at that machine's own prompt.
+     */
+    private Reached reach(final dev.jstech.computers.program.cli.NetPath net) {
+        if (net.isNetwork() || net.isHost()) {
+            return Reached.failed(net.display() + ": a share has to be named (\\\\host\\share)");
+        }
+        final Map<String, BlockEntity> matches = matchMachines(net.host());
+        if (matches.isEmpty()) {
+            return Reached.failed("\\\\" + net.host() + ": host not found on this network");
+        }
+        if (matches.size() > 1) {
+            return Reached.failed("\\\\" + net.host() + " matches " + matches.size() + " machines ("
+                    + String.join(", ", matches.keySet()) + ") - use the host name or node id");
+        }
+        final BlockEntity target = matches.values().iterator().next();
+        final ServerCliComputer remote = new ServerCliComputer((IComputerTerminalHost) target, level);
+        if (!remote.running()) {
+            return Reached.failed("\\\\" + net.host() + ": machine is powered off");
+        }
+        for (final ShareInfo share : remote.shares()) {
+            if (share.name().equalsIgnoreCase(net.share())) {
+                return new Reached(remote, share, net.remotePath(share.path()), null);
+            }
+        }
+        return Reached.failed("\\\\" + net.host() + "\\" + net.share() + ": no such share on " + net.host());
+    }
+
+    /** Lists what a network path holds: the hosts sharing something, a host's shares, or a shared folder. */
+    private FsResult listNetwork(final dev.jstech.computers.program.cli.NetPath net) {
+        final List<FsEntry> entries = new ArrayList<>();
+        if (net.isNetwork()) {
+            final java.util.Set<String> hosts = new java.util.LinkedHashSet<>();
+            for (final NetworkShare share : networkShares()) {
+                hosts.add(share.hostname());
+            }
+            for (final String hostname : hosts) {
+                entries.add(new FsEntry(hostname, "", 0L, true, true, 0L));
+            }
+            return FsResult.listing(entries);
+        }
+        if (net.isHost()) {
+            boolean found = false;
+            for (final NetworkShare share : networkShares()) {
+                if (net.onHost(share.hostname())) {
+                    found = true;
+                    entries.add(new FsEntry(share.share().name(), "", 0L, !share.share().writable(), true, 0L));
+                }
+            }
+            if (!found && matchMachines(net.host()).isEmpty()) {
+                return FsResult.fail("\\\\" + net.host() + ": host not found on this network");
+            }
+            return FsResult.listing(entries);
+        }
+        final Reached reached = reach(net);
+        if (!reached.ok()) {
+            return reached.error();
+        }
+        final FsResult listing = reached.remote().listDisk(reached.path());
+        if (!listing.ok() || reached.share().writable() || listing.entries() == null) {
+            return listing;
+        }
+        // Everything under a read-only share reads as read-only, whatever the other machine says of it.
+        final List<FsEntry> kept = new ArrayList<>();
+        for (final FsEntry entry : listing.entries()) {
+            kept.add(new FsEntry(entry.name(), entry.ext(), entry.weightMbEq(), true, entry.isDir(),
+                    entry.modified()));
+        }
+        return FsResult.listing(kept);
+    }
+
+    /** Whether a network path names a folder that exists, for a copy that lands "into" it. */
+    private boolean networkDirExists(final dev.jstech.computers.program.cli.NetPath net) {
+        if (net.isNetwork() || net.isHost()) {
+            return false;
+        }
+        if (net.rest().isEmpty()) {
+            return reach(net).ok();
+        }
+        // A listing of a path that is not there comes back empty rather than failed, so ask the parent.
+        final Reached above = reach(net.parent());
+        if (!above.ok()) {
+            return false;
+        }
+        final FsResult listing = above.remote().listDisk(above.path());
+        return listing.ok() && listing.entries() != null && listing.entries().stream()
+                .anyMatch(entry -> entry.isDir() && entry.name().equalsIgnoreCase(net.name()));
+    }
+
+    /** The machine on this network that {@code name} picks out, as its own shell; null when none or several. */
+    @org.jetbrains.annotations.Nullable
+    public ServerCliComputer remoteShell(final String name) {
+        final Map<String, BlockEntity> matches = matchMachines(name);
+        if (matches.size() != 1) {
+            return null;
+        }
+        return new ServerCliComputer((IComputerTerminalHost) matches.values().iterator().next(), level);
+    }
+
+    /** The block this shell runs on. */
+    public BlockEntity machine() {
+        return hostBlock;
+    }
+
+    /** The Mainframe of the network this machine is on, or null off any network. */
+    @org.jetbrains.annotations.Nullable
+    public MainframeBlockEntity mainframe() {
+        return mainframe(host.networkUuid());
+    }
+
+    /** Whether this machine takes programs and commands from the other computers on its network. */
+    public boolean remoteAllowed() {
+        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
+        return console != null && console.settings().remoteAllowed();
     }
 
     /** The system disk's public-share permille (0 when there is no system disk). */
@@ -2801,6 +3091,11 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public OpResult startCannon(final String path, final int heapMb) {
+        return this.startCannon(path, heapMb, List.of());
+    }
+
+    @Override
+    public OpResult startCannon(final String path, final int heapMb, final List<String> arguments) {
         if (!(hostBlock instanceof AbstractComputerBlockEntity computer)) {
             return OpResult.fail("cannon: this machine cannot run programs");
         }
@@ -2823,7 +3118,8 @@ public final class ServerCliComputer implements ICliComputer {
                     + computer.ramLedger().freeMb() + " MB of free memory");
         }
         final MachinePrograms.Started started = computer.cannon()
-                .start(FsPaths.fileName(path), read.message(), room, computer);
+                .start(FsPaths.fileName(path), read.message(), room, computer, arguments, 0,
+                        MachinePrograms.DEFAULT_PRIORITY);
         if (!started.ok()) {
             return OpResult.fail(started.message());
         }

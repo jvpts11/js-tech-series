@@ -52,6 +52,7 @@ public enum TokenKind {
     WHILE("while", true),
     FOR("for", true),
     FOREACH("foreach", true),
+    LOCK("lock", true),
     IN("in", true),
     OUT("out", true),
     DO("do", true),

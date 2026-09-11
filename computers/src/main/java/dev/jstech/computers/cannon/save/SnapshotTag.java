@@ -70,6 +70,21 @@ public final class SnapshotTag {
     private static final String SPENT = "spent";
     private static final String BUDGET = "budget";
     private static final String PROGRAM_NAME = "programName";
+    private static final String THREADS = "threads";
+    private static final String PARKED = "parked";
+    private static final String UNTIL = "until";
+    private static final String ON = "on";
+    private static final String TOKEN = "token";
+    private static final String TIMED_OUT = "timedOut";
+    private static final String ON_HOST = "onHost";
+    private static final String MONITORS = "monitors";
+    private static final String COUNT = "count";
+    private static final String NEXT_THREAD = "nextThread";
+    private static final String ARGS = "args";
+    private static final String MACHINE_ID = "machineId";
+    private static final String EXITED = "exited";
+    private static final String EXIT_CODE = "exitCode";
+    private static final String ON_MESSAGE = "onMessage";
 
     private SnapshotTag() {
     }
@@ -83,7 +98,35 @@ public final class SnapshotTag {
             held.add(write(one));
         }
         tag.put(HELD, held);
-        tag.put(FRAMES, frames(shot.frames()));
+        final ListTag threads = new ListTag();
+        for (final Snapshot.ThreadShot thread : shot.threads()) {
+            final CompoundTag each = new CompoundTag();
+            each.putInt(ID, thread.id());
+            each.put(FRAMES, frames(thread.frames()));
+            each.putString(PARKED, thread.parked());
+            each.putLong(UNTIL, thread.until());
+            each.put(ON, write(thread.on()));
+            each.put(TOKEN, write(thread.token()));
+            each.putBoolean(TIMED_OUT, thread.timedOut());
+            each.putString(ON_HOST, thread.onHost());
+            threads.add(each);
+        }
+        tag.put(THREADS, threads);
+        final ListTag monitors = new ListTag();
+        for (final Snapshot.MonitorShot monitor : shot.monitors()) {
+            final CompoundTag each = new CompoundTag();
+            each.put(TARGET, write(monitor.target()));
+            each.putInt(OWNER, monitor.owner());
+            each.putInt(COUNT, monitor.count());
+            monitors.add(each);
+        }
+        tag.put(MONITORS, monitors);
+        tag.putInt(NEXT_THREAD, shot.nextThread());
+        tag.put(ARGS, names(shot.args()));
+        tag.putInt(MACHINE_ID, shot.machineId());
+        tag.putBoolean(EXITED, shot.exited());
+        tag.putInt(EXIT_CODE, shot.exitCode());
+        tag.put(ON_MESSAGE, write(shot.onMessage()));
         tag.put(WAITING, frames(shot.waiting()));
         final ListTag statics = new ListTag();
         for (final Map.Entry<String, Map<String, Snapshot.IValue>> entry : shot.statics().entrySet()) {
@@ -151,10 +194,29 @@ public final class SnapshotTag {
                     readValue(each.getCompound(TARGET)), each.getLong(LAST), each.getBoolean(ARMED),
                     each.getBoolean(SEEN)));
         }
-        return new Snapshot(tag.getLong(BUDGET), held, readFrames(tag.getList(FRAMES, Tag.TAG_COMPOUND)),
+        final List<Snapshot.ThreadShot> threads = new ArrayList<>();
+        final ListTag running = tag.getList(THREADS, Tag.TAG_COMPOUND);
+        for (int i = 0; i < running.size(); i++) {
+            final CompoundTag each = running.getCompound(i);
+            threads.add(new Snapshot.ThreadShot(each.getInt(ID),
+                    readFrames(each.getList(FRAMES, Tag.TAG_COMPOUND)), each.getString(PARKED),
+                    each.getLong(UNTIL), readValue(each.getCompound(ON)), readValue(each.getCompound(TOKEN)),
+                    each.getBoolean(TIMED_OUT), each.getString(ON_HOST)));
+        }
+        final List<Snapshot.MonitorShot> monitors = new ArrayList<>();
+        final ListTag locked = tag.getList(MONITORS, Tag.TAG_COMPOUND);
+        for (int i = 0; i < locked.size(); i++) {
+            final CompoundTag each = locked.getCompound(i);
+            monitors.add(new Snapshot.MonitorShot(readValue(each.getCompound(TARGET)), each.getInt(OWNER),
+                    each.getInt(COUNT)));
+        }
+        return new Snapshot(tag.getLong(BUDGET), held, threads,
                 readFrames(tag.getList(WAITING, Tag.TAG_COMPOUND)), statics,
                 readValue(tag.getCompound(SCRIPT)), watches, console, tag.getInt(WRITTEN),
-                tag.getString(STATE), tag.getString(MESSAGE), tag.getInt(SPENT), tag.getString(PROGRAM_NAME));
+                tag.getString(STATE), tag.getString(MESSAGE), tag.getInt(SPENT), tag.getString(PROGRAM_NAME),
+                monitors, tag.getInt(NEXT_THREAD), readNames(tag.getList(ARGS, Tag.TAG_STRING)),
+                tag.getInt(MACHINE_ID), tag.getBoolean(EXITED), tag.getInt(EXIT_CODE),
+                readValue(tag.getCompound(ON_MESSAGE)));
     }
 
     // what the program allocated

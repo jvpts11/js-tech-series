@@ -50,11 +50,25 @@ public final class MachinePrograms {
      */
     public static final String RUNTIME_NAME = "cannonrt";
 
+    /** What a program runs at when nobody said otherwise: the middle, the same as anything at the prompt. */
+    public static final String DEFAULT_PRIORITY = "medium";
+
+    /** The priority a program may be passed over at, every other round, so the others get on. */
+    public static final String LOW_PRIORITY = "low";
+
     /**
      * One program the machine is running: the file it was started from, what it was started from, and
-     * where it is.
+     * where it is; and, for one another program started, which one that was, with what, and how
+     * urgently.
      */
-    public record Live(int id, String file, String binary, int heapMb, ILanguageProcess process) {
+    public record Live(int id, String file, String binary, int heapMb, ILanguageProcess process, int parent,
+                       List<String> args, String priority) {
+
+        public Live {
+            args = args == null ? List.of() : List.copyOf(args);
+            priority = priority == null || priority.isBlank() ? DEFAULT_PRIORITY
+                    : priority.toLowerCase(Locale.ROOT);
+        }
 
         /** The extension its file ended in, which is how the language that runs it is found again. */
         public String extension() {
@@ -82,6 +96,7 @@ public final class MachinePrograms {
     }
 
     private final List<Live> live = new ArrayList<>();
+    private final Scheduler scheduler = new Scheduler();
     private int next = 1;
     private int held;
     private int shown;
@@ -194,6 +209,20 @@ public final class MachinePrograms {
      */
     public Started start(final String name, final String binary, final int heapMb,
                          final BlockEntity machine) {
+        return this.start(name, binary, heapMb, machine, List.of(), 0, DEFAULT_PRIORITY);
+    }
+
+    /**
+     * The same, started by another program on this machine, with what it was given and how urgently.
+     *
+     * @param args     what the program's {@code Program.Args} will read
+     * @param parent   the number of the program that started it, or 0 for one started at the prompt
+     * @param priority {@code low}, {@code medium} or {@code high}; a low one is passed over every other
+     *                 round of the tick
+     */
+    public Started start(final String name, final String binary, final int heapMb,
+                         final BlockEntity machine, final List<String> args, final int parent,
+                         final String priority) {
         final int dot = name.lastIndexOf('.');
         final String extension = dot < 0 ? "" : name.substring(dot + 1).toLowerCase(Locale.ROOT);
         final IProgrammingLanguage language = JsCore.languages().runnerOf(extension);
@@ -202,13 +231,40 @@ public final class MachinePrograms {
         }
         final int room = Math.clamp(heapMb <= 0 ? DEFAULT_HEAP_MB : heapMb, 1, MAX_HEAP_MB);
         final ILanguageProcess process =
-                language.start(binary, (long) room * 1024 * 1024, machine);
+                language.start(binary, (long) room * 1024 * 1024, machine, args == null ? List.of() : args);
         if (process == null) {
             return Started.failed(name + ": this is not something " + language.displayName() + " can run");
         }
         final int id = this.next++;
-        this.live.add(new Live(id, name, binary, room, process));
+        process.identify(id);
+        this.live.add(new Live(id, name, binary, room, process, parent, args, priority));
         return new Started(id, name + " started as " + id);
+    }
+
+    /**
+     * Hands a line from one program to another on this machine.
+     *
+     * <p>True when the other program is there to take it, whether or not it does anything with it; a
+     * program that has stopped, or was never here, is not there.
+     */
+    public boolean send(final int from, final int to, final String text, final long tick) {
+        final Live target = this.byId(to);
+        if (target == null || target.process().state() == ILanguageProcess.State.HALTED) {
+            return false;
+        }
+        if (target.process() instanceof CannonProgram cannon) {
+            return cannon.process().deliverMessage(from, text, tick);
+        }
+        return true;
+    }
+
+    /** One program as the tick deals it out: what it runs and whether it may be passed over. */
+    private record Slot(ILanguageProcess process, boolean low) implements Scheduler.ISlot {
+
+        @Override
+        public int step(final int budget) {
+            return this.process.step(budget);
+        }
     }
 
     /**
@@ -238,22 +294,34 @@ public final class MachinePrograms {
         }
     }
 
-    /** Gives the machine's instructions out and runs them. */
-    public void tick(final int budget) {
-        this.tick(budget, null);
+    /** Gives the machine's instructions out and runs them, with all the time in the world. */
+    public void tick(final int credits) {
+        this.tick(credits, Long.MAX_VALUE, null);
+    }
+
+    /** The same, with a way to look up what the network holds and still no deadline. */
+    public void tick(final int credits, final java.util.function.ToLongFunction<String> stock) {
+        this.tick(credits, Long.MAX_VALUE, stock);
     }
 
     /**
-     * The same, with a way to look up what the network holds.
+     * The same, bounded by the clock and with a way to look up what the network holds.
      *
      * <p>Everything being watched is looked up once, however many programs are watching it, and the
      * answers are handed to each of them. A machine watching nothing pays nothing for the ability.
      *
-     * <p>Every program that is still going gets the same share of the tick, and whatever does not divide
-     * evenly goes to the ones that have been waiting longest. A program that stays up and has finished
-     * what it was asked to do is asked again, which is what makes it stay up.
+     * <p>Every program that is still going gets the same share of the tick, dealt in turns so none
+     * finishes its share before another has begun, and the tick ends early when the deadline passes,
+     * with the program that went without first in line next time. A program that stays up and has
+     * finished what it was asked to do is asked again, which is what makes it stay up.
+     *
+     * @param credits  how many instructions the machine's processors are worth this tick
+     * @param deadline when the tick must end, on {@link System#nanoTime()}; one already passed runs
+     *                 nothing, and one far in the future never interrupts
+     * @param stock    what the network holds of an item, or null on a machine that cannot ask
      */
-    public void tick(final int budget, final java.util.function.ToLongFunction<String> stock) {
+    public void tick(final int credits, final long deadline,
+                     final java.util.function.ToLongFunction<String> stock) {
         if (stock != null && !this.live.isEmpty()) {
             final Map<String, Long> totals = new LinkedHashMap<>();
             for (final Live one : this.live) {
@@ -267,7 +335,7 @@ public final class MachinePrograms {
                 }
             }
         }
-        if (this.live.isEmpty() || budget <= 0) {
+        if (this.live.isEmpty() || credits <= 0) {
             return;
         }
         final List<Live> ready = new ArrayList<>();
@@ -291,7 +359,13 @@ public final class MachinePrograms {
                  * once whoever was waiting on it has read it.
                  */
                 if (!one.process().isService() && one.id() != this.held) {
-                    done.add(one);
+                    /*
+                     * One started by another program keeps its output and its exit code for that program
+                     * to read, and goes when it goes.
+                     */
+                    if (one.parent() == 0 || this.byId(one.parent()) == null) {
+                        done.add(one);
+                    }
                 } else if (one.process().isService() && state == ILanguageProcess.State.FINISHED) {
                     one.process().onTick();
                     ready.add(one);
@@ -304,11 +378,11 @@ public final class MachinePrograms {
         if (ready.isEmpty()) {
             return;
         }
-        final int share = budget / ready.size();
-        final int over = budget % ready.size();
-        for (int i = 0; i < ready.size(); i++) {
-            ready.get(i).process().step(share + (i < over ? 1 : 0));
+        final List<Scheduler.ISlot> slots = new ArrayList<>(ready.size());
+        for (final Live one : ready) {
+            slots.add(new Slot(one.process(), LOW_PRIORITY.equals(one.priority())));
         }
+        this.scheduler.run(slots, credits, System::nanoTime, deadline);
     }
 
     // across a reload
@@ -322,6 +396,9 @@ public final class MachinePrograms {
     private static final String STATE = "state";
     private static final String HELD = "held";
     private static final String SHOWN = "shown";
+    private static final String PARENT = "parent";
+    private static final String ARGS = "args";
+    private static final String PRIORITY = "priority";
 
     /** Writes every running program down. */
     public void save(final CompoundTag tag) {
@@ -332,6 +409,13 @@ public final class MachinePrograms {
             each.putString(NAME, one.file());
             each.putString(BINARY, one.binary());
             each.putInt(HEAP, one.heapMb());
+            each.putInt(PARENT, one.parent());
+            final ListTag args = new ListTag();
+            for (final String arg : one.args()) {
+                args.add(net.minecraft.nbt.StringTag.valueOf(arg));
+            }
+            each.put(ARGS, args);
+            each.putString(PRIORITY, one.priority());
             final CompoundTag state = new CompoundTag();
             one.process().save(state);
             each.put(STATE, state);
@@ -366,8 +450,14 @@ public final class MachinePrograms {
             final ILanguageProcess process = language.restore(each.getString(BINARY),
                     each.getCompound(STATE), machine);
             if (process != null) {
+                final List<String> args = new ArrayList<>();
+                final ListTag given = each.getList(ARGS, Tag.TAG_STRING);
+                for (int j = 0; j < given.size(); j++) {
+                    args.add(given.getString(j));
+                }
+                process.identify(each.getInt(ID));
                 this.live.add(new Live(each.getInt(ID), name, each.getString(BINARY),
-                        each.getInt(HEAP), process));
+                        each.getInt(HEAP), process, each.getInt(PARENT), args, each.getString(PRIORITY)));
             }
         }
     }
@@ -377,20 +467,18 @@ public final class MachinePrograms {
     /** The fewest instructions a tick, so even the oldest processor that can run this gets somewhere. */
     public static final int LEAST_PER_TICK = 32;
 
-    /** The most, so one machine cannot spend the server's tick on a loop that never ends. */
-    public static final int MOST_PER_TICK = 2048;
-
     /**
      * What a machine's processors are worth in a tick, given their cores times their megahertz added up.
      *
-     * <p>It follows the clock, so a faster machine really does get through more of a program in the same
-     * second, and it is bounded at both ends: an old machine still moves, and a new one cannot take the
-     * server's tick with it.
+     * <p>It follows the clock with no ceiling, so a faster machine really does get through more of a
+     * program in the same second, however fast it is; an old machine still moves. What keeps a machine
+     * from taking the server's tick with it is not a cap on these but the clock the tick is run against
+     * (see {@link ServerTickDeadline}).
      */
-    public static int budgetFor(final long coreMegahertz) {
+    public static int creditsFor(final long coreMegahertz) {
         if (coreMegahertz <= 0) {
             return 0;
         }
-        return Math.clamp(coreMegahertz / 8, LEAST_PER_TICK, MOST_PER_TICK);
+        return (int) Math.min(Integer.MAX_VALUE, Math.max(coreMegahertz / 8, LEAST_PER_TICK));
     }
 }

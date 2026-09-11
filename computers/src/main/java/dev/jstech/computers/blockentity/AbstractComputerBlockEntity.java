@@ -1176,7 +1176,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * <p>A machine with no build is worth nothing, which is the honest answer for one whose parts have
      * been taken out from under a running program.
      */
-    protected int cannonBudget() {
+    protected int cannonCredits() {
         final ComputerBuild build = currentBuild();
         if (build == null) {
             return 0;
@@ -1185,7 +1185,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         for (final dev.jstech.computers.hardware.CpuSpec cpu : build.cpus()) {
             coreMegahertz += (long) cpu.cores() * cpu.freqMhz();
         }
-        return dev.jstech.computers.cannon.machine.MachinePrograms.budgetFor(coreMegahertz);
+        return dev.jstech.computers.cannon.machine.MachinePrograms.creditsFor(coreMegahertz);
     }
 
     /**
@@ -1203,7 +1203,14 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
             setChanged();
             return;
         }
-        cannon.tick(cannonBudget(), this::networkStock);
+        /*
+         * The server's clock, not this machine's worth, is what bounds the tick: a machine the server has
+         * no time for this tick runs nothing and is first next tick.
+         */
+        final long deadline = level instanceof ServerLevel server
+                ? dev.jstech.computers.cannon.machine.ServerTickDeadline.shared().claim(server, worldPosition)
+                : Long.MAX_VALUE;
+        cannon.tick(cannonCredits(), deadline, this::networkStock);
         if (level instanceof ServerLevel server) {
             pushCannonOutput(server);
         }

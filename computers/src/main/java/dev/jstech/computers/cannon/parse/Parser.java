@@ -731,9 +731,20 @@ public final class Parser {
                 return this.parseReturn();
             case DISPOSE:
                 return this.parseDispose();
+            case LOCK:
+                return this.parseLock();
             default:
                 return this.parseDeclarationOrExpressionStatement();
         }
+    }
+
+    private IStmt parseLock() {
+        final Token start = this.advance();
+        this.expect(TokenKind.LEFT_PAREN);
+        final IExpr target = this.parseExpression();
+        this.expect(TokenKind.RIGHT_PAREN);
+        final IStmt body = this.parseStatement();
+        return new IStmt.Lock(target, body, start.line(), start.column());
     }
 
     private IStmt parseIf() {
