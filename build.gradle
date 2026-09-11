@@ -51,6 +51,12 @@ subprojects {
             url = 'https://maven.blamejared.com'
             content { includeGroup 'mezz.jei' }
         }
+        // SquidDev: CC: Tweaked, whose API the Network Gateway compiles against; the whole mod joins the dev runs.
+        maven {
+            name = 'SquidDev'
+            url = 'https://maven.squiddev.cc'
+            content { includeGroup 'cc.tweaked' }
+        }
         // Create + its libraries (Flywheel, Ponder): dev-runtime only, heavy kinetic tick load for stress testing.
         maven {
             name = 'CreateMod'

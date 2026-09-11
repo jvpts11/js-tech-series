@@ -40,7 +40,7 @@ class LayoutAuditTest {
             "BusLayout", "ClusterManagementComputerLayout", "CraftingComputerLayout", "NmsLayout",
             "ComputerTerminalLayout", "ServerRouterLayout", "NetworkInteractorLayout",
             "CraftingSwitchLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
-            "PatternStudioLayout");
+            "PatternStudioLayout", "NetworkGatewayLayout");
 
     private record AuditCase(String label, GuiLayout layout, boolean fixedSize) {
     }
@@ -51,6 +51,7 @@ class LayoutAuditTest {
         c.add(new AuditCase("BusLayout", BusLayout.layout(), true));
         c.add(new AuditCase("CraftingSwitchLayout", CraftingSwitchLayout.layout(), true));
         c.add(new AuditCase("PatternEncoderLayout", PatternEncoderLayout.layout(), true));
+        c.add(new AuditCase("NetworkGatewayLayout", NetworkGatewayLayout.layout(), true));
         c.add(new AuditCase("ClusterManagementComputerLayout", ClusterManagementComputerLayout.layout(), true));
         c.add(new AuditCase("CraftingComputerLayout", CraftingComputerLayout.layout(), true));
         c.add(new AuditCase("NmsLayout", NmsLayout.layout(), true));

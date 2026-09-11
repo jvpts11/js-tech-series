@@ -16,7 +16,37 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   after the world has been away and come back.
 - A program spends only what the machine's processors are worth in a tick, so an old computer really does
   print line by line where a fast one finishes at once, and one that loops forever costs its machine the
-  same tick as one that does nothing.
+  same tick as one that does nothing. There is no ceiling on that worth: a faster machine gets through
+  more, however fast it is. What protects the server is the clock instead: each machine may run its
+  programs for so much real time a tick, and all machines together for so much, both set in
+  `jstech-balance.toml`. A machine the server had no time for goes first on the next tick, so a busy
+  server slows every computer evenly and never stops one.
+- A program can do more than one thing at once. `Thread.Start` runs a body beside the rest of the
+  program, the two taking turns a few instructions at a time over the same memory; a thread can sleep
+  for so many ticks, yield its turn, wait for another to end (or give up after a while) and be stopped.
+  Because nothing runs at the same instant, a single expression is never torn; a run of them can be,
+  and `lock (thing) { ... }` keeps it together, held on every way out of the block. Threads, their waits
+  and their locks come back from a save where they were.
+- Programs can start programs. `Program.Start` runs a compiled program from the same disks, with
+  arguments the other reads through `Program.Args`, and hands back a handle to wait on, read the output
+  of, ask the exit code of, or stop. A program ends itself with `Program.Exit(code)`; what another program
+  started keeps its output and code for that program to read until it goes. Programs on one machine
+  can send each other lines, heard through `Program.OnMessage`. At the prompt, `cannon run` passes on
+  whatever follows the file name.
+- Computers on one data network can share folders with each other. `config share C:\pub` opens a folder
+  for reading, `config share C:\pub write` for writing too, and `config unshare pub` closes it. Every
+  other machine on the network reaches it as `\\host\pub` at the prompt (`/net/host/pub` on the Linux
+  systems), from a program through `File`, and in the file explorer under Network, where hosts, their
+  shares and the files inside can be browsed, opened and copied.
+- A program can reach the other computers on its network. `Network.Computers()` lists them and
+  `Network.Computer("desk")` picks one; on it a program can start a program from that machine's disks
+  (the same handle as a local one comes back, to wait on, read and stop), run a line at its prompt, send
+  a line to one of its programs and list what it runs. Everything runs on the other machine, out of its
+  own budget. A machine that would rather not take any of that says `config remote off`.
+- A program can speak the network's own language. `Iql.Run` sends a statement to the Mainframe as the
+  prompt would and hands back whether it went, what it said and the rows it read; `Iql.Query` gives
+  the rows alone and stops the program on a refusal; `Iql.Exec` runs a saved procedure and `Iql.RunFile`
+  a file of statements, one a line.
 - What a program can reach: the machine's own drives, with the same paths the prompt uses; what the machine
   is made of and what it is running; what the network holds, could hold, and which servers hold it; what the
   Mainframe has been doing this past hour; and the network itself, to pull, push, craft and cancel. Every row
@@ -30,6 +60,21 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the windows and services, and a machine without the memory for one says so instead of trying.
 - The file explorer knows a source file, a compiled program and a package on sight, and running one is a
   double-click.
+- The Network Gateway, a peripheral that puts the data network within reach of ComputerCraft's computers
+  when CC: Tweaked is installed. It is placed facing away from the computer it serves: the peripheral cable
+  plugs into its back, a ComputerCraft computer, wired modem or networking cable meets its front, and
+  there it is a `jsc_gateway` peripheral under its own name. Between the two sides sits a buffer of nine
+  slots, reachable from the other faces by a chest, a hopper or a turtle, and shown on the block's own
+  screen with a status line and two lights. Several Gateways may serve one computer.
+- The Gateway Manager, a program for the computer that has Gateways on its ports: the rail lists them
+  by name, Rename and Identify (the block's lights blink) act on the selected one, and five tabs show it.
+  Status puts this side and the ComputerCraft side as two cards, says how CC names the Gateway, shows
+  the buffer with a button that empties it into the network as operations, and lists the last requests.
+  Permissions holds the switches for reading the network, running operations and reaching the shared
+  folders, a priority ceiling for requests from CC, and how many calls a tick the Gateway answers.
+  Computers lists the ComputerCraft computers attached and can send them a test event; Shares lists
+  every folder the network's computers share as CC will see it; Log keeps the last forty things the
+  Gateway did. The `gateway` command does the same at any prompt.
 - Mods may add a programming language of their own, and remove this one. A language that registers itself
   gets the prompt, the terminal, the task manager, saving and the tick budget without writing any of them.
 - Five editors to write a program in, each a different bargain between what it shows you and what it costs

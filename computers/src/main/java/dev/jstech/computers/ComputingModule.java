@@ -790,6 +790,25 @@ public final class ComputingModule {
                     () -> BlockEntityType.Builder.of(MediaReaderBlockEntity::new,
                             FLOPPY_DRIVE.get(), CD_DRIVE.get(), DVD_DRIVE.get(), DOCK_STATION.get()).build(null));
 
+    /*
+     * The Network Gateway: a peripheral of one of our computers that is, on its other face, a ComputerCraft
+     * peripheral, so the two families of computers reach each other through it. Managed from its host.
+     */
+    public static final DeferredBlock<dev.jstech.computers.block.NetworkGatewayBlock> NETWORK_GATEWAY =
+            BLOCKS.register("network_gateway", () -> new dev.jstech.computers.block.NetworkGatewayBlock(
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(1.5F).sound(SoundType.METAL)));
+    public static final DeferredItem<BlockItem> NETWORK_GATEWAY_ITEM = ITEMS.register("network_gateway",
+            () -> new BlockItem(NETWORK_GATEWAY.get(), new Item.Properties()));
+    public static final DeferredHolder<BlockEntityType<?>,
+            BlockEntityType<dev.jstech.computers.blockentity.NetworkGatewayBlockEntity>> NETWORK_GATEWAY_BE =
+            BLOCK_ENTITIES.register("network_gateway",
+                    () -> BlockEntityType.Builder.of(dev.jstech.computers.blockentity.NetworkGatewayBlockEntity::new,
+                            NETWORK_GATEWAY.get()).build(null));
+    public static final DeferredHolder<MenuType<?>,
+            MenuType<dev.jstech.computers.menu.NetworkGatewayMenu>> NETWORK_GATEWAY_MENU =
+            MENUS.register("network_gateway", () -> IMenuTypeExtension.create(
+                    dev.jstech.computers.menu.NetworkGatewayMenu::fromNetwork));
+
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_P = ITEMS.register(
             "motherboard_eeb_p", () -> new MotherboardItem(new Item.Properties(),
                     new MotherboardSpec(dev.jstech.computers.hardware.FormFactor.EEB,

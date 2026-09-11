@@ -90,6 +90,7 @@ public final class BuiltinCommands {
                 new Config(),
                 new Reboot(),
                 new ClusterCommand(),
+                new GatewayCommand(),
                 new MirrorCommand(),
                 new Uninstall(),
                 new Format(),

@@ -26,11 +26,13 @@ public final class ClientTestSuite {
             ExposureClientTests.class,
             FilesSyncClientTests.class,
             FullJourneyClientTests.class,
+            GatewayManagerClientTests.class,
             InstallMediaClientTests.class,
             TaskbarClientTests.class,
             TerminalEditorClientTests.class,
             MekanismClientTests.class,
             NetworkInteractorClientTests.class,
+            NetworkSharesClientTests.class,
             UiSweepClientTests.class);
 
     private ClientTestSuite() {

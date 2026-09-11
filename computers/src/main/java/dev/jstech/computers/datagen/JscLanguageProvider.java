@@ -82,6 +82,7 @@ public class JscLanguageProvider extends LanguageProvider {
         addBlock(ComputingModule.CD_DRIVE, "CD Drive");
         addBlock(ComputingModule.DVD_DRIVE, "DVD Drive");
         addBlock(ComputingModule.DOCK_STATION, "Dock Station");
+        addBlock(ComputingModule.NETWORK_GATEWAY, "Network Gateway");
         add(ComputingModule.FLOPPY_DISK.get(), "Floppy Disk");
         add(ComputingModule.CD_ROM.get(), "CD-ROM");
         add(ComputingModule.CD_RW.get(), "CD-RW");

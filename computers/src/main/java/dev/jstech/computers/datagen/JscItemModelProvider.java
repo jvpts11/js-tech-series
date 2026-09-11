@@ -127,6 +127,7 @@ public class JscItemModelProvider extends ItemModelProvider {
         getBuilder("cd_drive").parent(new ModelFile.UncheckedModelFile(modLoc("block/cd_drive")));
         getBuilder("dvd_drive").parent(new ModelFile.UncheckedModelFile(modLoc("block/dvd_drive")));
         getBuilder("dock_station").parent(new ModelFile.UncheckedModelFile(modLoc("block/dock_station")));
+        getBuilder("network_gateway").parent(new ModelFile.UncheckedModelFile(modLoc("block/network_gateway")));
         basicItem(ComputingModule.FLOPPY_DISK.get());
         basicItem(ComputingModule.CD_ROM.get());
         basicItem(ComputingModule.CD_RW.get());

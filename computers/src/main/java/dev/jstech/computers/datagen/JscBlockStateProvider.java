@@ -213,6 +213,24 @@ public class JscBlockStateProvider extends BlockStateProvider {
         horizontalBlock(ComputingModule.DOCK_STATION.get(),
                 s -> s.getValue(dev.jstech.computers.os.media.MediaReaderBlock.LOADED) ? dockDocked : dockIdle);
 
+        /*
+         * The Network Gateway: the ComputerCraft modem socket and the status plate on the front, the
+         * peripheral cable socket on the back, louvres on the sides and a hatch top and bottom. The lit
+         * front shows its three lights on, for a linked Gateway and for one blinking to be found.
+         */
+        final ModelFile gatewayDark = models().cube("network_gateway",
+                modLoc("block/network_gateway_top"), modLoc("block/network_gateway_top"),
+                modLoc("block/network_gateway_front"), modLoc("block/network_gateway_back"),
+                modLoc("block/network_gateway_side"), modLoc("block/network_gateway_side"))
+                .texture("particle", modLoc("block/network_gateway_side"));
+        final ModelFile gatewayLit = models().cube("network_gateway_lit",
+                modLoc("block/network_gateway_top"), modLoc("block/network_gateway_top"),
+                modLoc("block/network_gateway_front_lit"), modLoc("block/network_gateway_back"),
+                modLoc("block/network_gateway_side"), modLoc("block/network_gateway_side"))
+                .texture("particle", modLoc("block/network_gateway_side"));
+        horizontalBlock(ComputingModule.NETWORK_GATEWAY.get(),
+                s -> s.getValue(dev.jstech.computers.block.NetworkGatewayBlock.LIT) ? gatewayLit : gatewayDark);
+
         // Monitor: a screen on the front, casing on the other faces. The screen has
         final ModelFile monitorOff = models().orientable(
                 "monitor",

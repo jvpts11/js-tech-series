@@ -81,6 +81,7 @@ public final class JscCreativeModeTabs {
                         output.accept(ComputingModule.CD_DRIVE_ITEM.get());
                         output.accept(ComputingModule.DVD_DRIVE_ITEM.get());
                         output.accept(ComputingModule.DOCK_STATION_ITEM.get());
+                        output.accept(ComputingModule.NETWORK_GATEWAY_ITEM.get());
                         // Blank typed media (one item per physical format).
                         output.accept(ComputingModule.FLOPPY_DISK.get());
                         output.accept(ComputingModule.CD_ROM.get());

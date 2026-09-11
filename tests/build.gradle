@@ -135,6 +135,10 @@ dependencies {
     localRuntime "appeng:appliedenergistics2:${ae2_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
     localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+    // CC: Tweaked in the dev runs, so the Network Gateway bridge is tested against real ComputerCraft
+    // computers, and its API for the test rigs that talk to them. Its NeoForge build carries the "forge" name.
+    compileOnly "cc.tweaked:cc-tweaked-${minecraft_version}-forge-api:${cc_tweaked_version}"
+    localRuntime "cc.tweaked:cc-tweaked-${minecraft_version}-forge:${cc_tweaked_version}"
 }
 
 // Expands the declared properties into the mod metadata template. A missing property is an error.

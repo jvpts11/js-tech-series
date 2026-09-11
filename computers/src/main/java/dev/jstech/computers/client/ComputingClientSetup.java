@@ -55,6 +55,7 @@ public final class ComputingClientSetup {
         event.register(ComputingModule.CRAFTING_COMPUTER_MENU.get(), CraftingComputerScreen::new);
         event.register(ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_MENU.get(), ClusterManagementComputerScreen::new);
         event.register(ComputingModule.PATTERN_ENCODER_MENU.get(), PatternEncoderScreen::new);
+        event.register(ComputingModule.NETWORK_GATEWAY_MENU.get(), NetworkGatewayScreen::new);
         event.register(ComputingModule.COMMAND_PROMPT_MENU.get(),
                 (final dev.jstech.computers.menu.CommandPromptMenu menu,
                  final net.minecraft.world.entity.player.Inventory inv,

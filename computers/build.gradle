@@ -72,6 +72,10 @@ dependencies {
     compileOnly "mekanism:Mekanism:${mekanism_version}:api"
     // JEI API: the plugin (IModPlugin, IRecipeTransferHandler, ...) compiles against it; never a hard dependency.
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
+    // CC: Tweaked API: the Network Gateway is a ComputerCraft peripheral, so the bridge compiles against the
+    // API jar; nothing loads a ComputerCraft class unless the mod is present (soft dependency, guarded at
+    // runtime). The 1.21.1 line publishes its NeoForge build under the "forge" artifact name.
+    compileOnly "cc.tweaked:cc-tweaked-${minecraft_version}-forge-api:${cc_tweaked_version}"
 }
 
 // Expands the declared properties into the mod metadata template. A missing property is an error.

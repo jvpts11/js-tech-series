@@ -88,13 +88,41 @@ public final class PeripheralLinks {
         return result;
     }
 
+    /** Finds the computer reachable from {@code endpointPos} through any of its six faces. */
     public static OptionalLong discoverOwner(final ServerLevel level, final long endpointPos) {
+        return discoverFrom(level, endpointPos, neighbors(endpointPos));
+    }
+
+    /**
+     * Finds the computer reachable through one face only: {@code socketPos} is the neighbour on that face.
+     * For devices with a single cable socket, so a cable against another face is not a link.
+     */
+    public static OptionalLong discoverOwnerThrough(final ServerLevel level, final long endpointPos,
+                                                    final long socketPos) {
+        return discoverFrom(level, endpointPos, List.of(socketPos));
+    }
+
+    /**
+     * Whether the block at {@code socketPos} carries a link of {@code type} to {@code ownerPos}: a cable of
+     * that type, or the owner itself (or one of its parts) standing there.
+     */
+    public static boolean socketReaches(final ServerLevel level, final long socketPos, final long ownerPos,
+                                        final PeripheralCableType type) {
+        if (cableTypeAt(level, socketPos).filter(t -> t == type).isPresent()) {
+            return true;
+        }
+        final OptionalLong owner = resolveOwnerPos(level, socketPos, type);
+        return owner.isPresent() && owner.getAsLong() == ownerPos;
+    }
+
+    private static OptionalLong discoverFrom(final ServerLevel level, final long endpointPos,
+                                             final List<Long> seeds) {
         final PeripheralCableType type = PeripheralCableType.COMPUTING;
         final int max = type.maxLength();
         final Set<Long> visited = new HashSet<>();
         final Deque<long[]> queue = new ArrayDeque<>();
         visited.add(endpointPos);
-        for (final long neighbor : neighbors(endpointPos)) {
+        for (final long neighbor : seeds) {
             if (!visited.add(neighbor)) {
                 continue;
             }

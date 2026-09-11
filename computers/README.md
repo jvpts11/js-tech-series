@@ -43,6 +43,14 @@ across as many machines as the network has.
   Crafting Manager, the Craft Planner, Storage Insights, the Automation Manager, and a few small programs.
 - Machine autocrafting with multi-stage recipes, parallel stages and crafting-card threads; fluids and
   chemicals travel through the network like items.
+- Cannon, the computers' own programming language, with five editors to write it in: programs that run
+  at the prompt or stay up, threads, programs starting programs on the same machine or on another one of
+  the network, folders shared between machines, and the network's query language from inside a
+  program. The reference is in [docs/CANNON.md](../docs/CANNON.md).
+- The Network Gateway, a peripheral that puts the data network within reach of ComputerCraft's
+  computers when CC: Tweaked is present: our cable on its back, CC's on its front, an item buffer between
+  them, and the Gateway Manager on the host computer (or the `gateway` command) to name it, set what the
+  other side may do and read its log.
 - JEI support: the ingredient list sits beside every monitor screen and recipes transfer straight into the
   Pattern Studio. Mekanism machines can be driven through the network when Mekanism is present.
 
@@ -56,6 +64,8 @@ make their parts. Play it in creative for now.
 - [GeckoLib](https://github.com/bernie-g/geckolib) 4.7 or newer (required).
 - [JEI](https://github.com/mezz/JustEnoughItems) (optional, for recipe lookup beside the monitors).
 - [Mekanism](https://github.com/mekanism/Mekanism) (optional, its machines and chemicals join the network).
+- [CC: Tweaked](https://tweaked.cc) 1.120 or newer (optional, for the Network Gateway; without it the
+  block links and holds items but its ComputerCraft side never comes up).
 
 It does not need [J's Industrial](../industrial/README.md): the network drives any machine that exposes
 the usual item and energy capabilities, whichever mod it comes from.

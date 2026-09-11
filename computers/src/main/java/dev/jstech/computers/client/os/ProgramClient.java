@@ -74,6 +74,7 @@ public final class ProgramClient {
         register(rl("crafting_manager"), (host, mon, os) -> new CraftingManagerApp(host));
         register(rl("pattern_studio"), (host, mon, os) -> new PatternStudioApp(host, mon));
         register(rl("cluster_manager"), (host, mon, os) -> new ClusterManagerApp(host));
+        register(rl("gateway_manager"), (host, mon, os) -> new GatewayManagerApp(host));
         register(rl("minesweeper"), (host, mon, os) -> new MinesweeperApp());
         register(rl("storage_insights"), (host, mon, os) -> new StorageInsightsApp(host, mon));
         register(rl("craft_planner"), (host, mon, os) -> new CraftPlannerApp(host, mon));

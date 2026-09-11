@@ -29,6 +29,7 @@ public final class ProgramVersions {
             Map.entry("crafting_manager", "3.2"),
             Map.entry("pattern_studio", "2.0"),
             Map.entry("cluster_manager", "1.4"),
+            Map.entry("gateway_manager", "1.0"),
             Map.entry("storage_insights", "2.1"),
             Map.entry("craft_planner", "1.8"),
             Map.entry("automation_engine", "4.0"),

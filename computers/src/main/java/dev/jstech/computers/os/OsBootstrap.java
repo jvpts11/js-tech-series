@@ -256,6 +256,9 @@ public final class OsBootstrap {
             // The Cluster Manager installs only on a Cluster Management Computer -> Frames XP or newer.
             ProgramSpec.of(rl("cluster_manager"), "clustermgr", "Cluster Manager", false, DESKTOPS, 96, ProgramKind.APP, 2, HostScope.CLUSTER_MANAGEMENT_COMPUTER)
                     .withEra(STANDARD).withHouse(SoftwareHouse.JSC).withRam(96),
+            // The Gateway Manager runs on whichever computer has Network Gateways on its ports -> Frames XP or newer.
+            ProgramSpec.of(rl("gateway_manager"), "gatewaymgr", "Gateway Manager", false, DESKTOPS, 96, ProgramKind.APP, 2, HostScope.ANY)
+                    .withEra(LEGACY).withHouse(SoftwareHouse.JSC).withRam(32),
             // Minesweeper: a small game available on any desktop (rank 0 = Frames 95 and newer).
             ProgramSpec.of(rl("minesweeper"), "mines", "Minesweeper", false, DESKTOPS, 16, ProgramKind.APP, 0, HostScope.ANY)
                     .withEra(VINTAGE).withHouse(SoftwareHouse.MIDSOFT).withRam(1),

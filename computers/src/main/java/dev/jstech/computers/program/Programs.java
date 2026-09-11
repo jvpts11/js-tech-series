@@ -54,6 +54,10 @@ public final class Programs {
     public static final ResourceLocation CLUSTER_MANAGER =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "cluster_manager");
 
+    /** Gateway Manager: the host computer's front for the Network Gateways on its peripheral ports. */
+    public static final ResourceLocation GATEWAY_MANAGER =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "gateway_manager");
+
     /** Minesweeper: the classic game, installed by the player like any other add-on. */
     public static final ResourceLocation MINESWEEPER =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "minesweeper");

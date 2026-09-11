@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "jsc:block/network_gateway_top",
+    "east": "jsc:block/network_gateway_side",
+    "north": "jsc:block/network_gateway_front_lit",
+    "particle": "jsc:block/network_gateway_side",
+    "south": "jsc:block/network_gateway_back",
+    "up": "jsc:block/network_gateway_top",
+    "west": "jsc:block/network_gateway_side"
+  }
+}

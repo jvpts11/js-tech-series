@@ -61,3 +61,10 @@ type = "optional"
 versionRange = "*"
 ordering = "AFTER"
 side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "computercraft"
+type = "optional"
+versionRange = "*"
+ordering = "AFTER"
+side = "BOTH"

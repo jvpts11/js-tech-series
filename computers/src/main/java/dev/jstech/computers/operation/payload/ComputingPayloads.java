@@ -349,6 +349,13 @@ public final class ComputingPayloads {
                 ComputingPayloads::handleClusterRename);
         registrar.playToClient(ClusterManagerStatePayload.TYPE, ClusterManagerStatePayload.STREAM_CODEC,
                 ComputingPayloads::handleClusterManagerState);
+        // The Gateway Manager: the host computer's program asks about its Gateways, acts on one, and gets a state back.
+        registrar.playToServer(RequestGatewayManagerPayload.TYPE, RequestGatewayManagerPayload.STREAM_CODEC,
+                ComputingPayloads::handleRequestGatewayManager);
+        registrar.playToServer(GatewayManagerActionPayload.TYPE, GatewayManagerActionPayload.STREAM_CODEC,
+                ComputingPayloads::handleGatewayManagerAction);
+        registrar.playToClient(GatewayManagerStatePayload.TYPE, GatewayManagerStatePayload.STREAM_CODEC,
+                ComputingPayloads::handleGatewayManagerState);
         registrar.playToServer(SetMachineConfigPayload.TYPE, SetMachineConfigPayload.STREAM_CODEC,
                 ComputingPayloads::handleSetMachineConfig);
         registrar.playToClient(CraftManagerStatePayload.TYPE, CraftManagerStatePayload.STREAM_CODEC,
@@ -919,8 +926,14 @@ public final class ComputingPayloads {
                                 dev.jstech.computers.os.VolumeLabel.of(medium, fallback)));
                     }
                 }
+                // The other machines' shared folders, reached through this machine's own shell.
+                if (netShell(level, computer) != null) {
+                    volumes.add(new DiskFilesPayload.WireVolume(NET_ROOT, "Network"));
+                }
                 final String reqDir = payload.dir();
-                if (reqDir.startsWith("media:")) {
+                if (reqDir.startsWith(NET_ROOT)) {
+                    listNetworkInto(wire, level, computer, reqDir);
+                } else if (reqDir.startsWith("media:")) {
                     // Browsing a removable medium in a linked drive.
                     listMediaInto(wire, level, computer, reqDir);
                 } else {
@@ -966,6 +979,51 @@ public final class ComputingPayloads {
             }
             context.reply(new DiskFilesPayload(payload.dir(), wire, volumes));
         });
+    }
+
+    /** The explorer's key for the network: the other machines' shares, under their host names. */
+    private static final String NET_ROOT = "net:";
+
+    /**
+     * The shell of the machine the explorer is on, which is how another machine's shared folder is
+     * reached: the path the explorer holds is handed to it in the shell's own spelling. Null on a
+     * machine no shell can run on.
+     */
+    @org.jetbrains.annotations.Nullable
+    private static dev.jstech.computers.program.ServerCliComputer netShell(
+            final ServerLevel level, final dev.jstech.computers.os.IOsHost computer) {
+        if (computer instanceof dev.jstech.computers.terminal.IComputerTerminalHost terminal) {
+            return new dev.jstech.computers.program.ServerCliComputer(terminal, level);
+        }
+        return null;
+    }
+
+    /** An explorer path on the network ({@code net:host/share/rest}) as the shell writes it ({@code \\host\share\rest}). */
+    private static String netDos(final String path) {
+        return "\\\\" + path.substring(NET_ROOT.length()).replace('/', '\\');
+    }
+
+    /** An explorer path on the system disk as the shell writes it. */
+    private static String localDos(final String path) {
+        return "C:\\" + path.replace('/', '\\');
+    }
+
+    /** Lists what a network path holds into {@code wire}: hosts, a host's shares, or a shared folder. */
+    private static void listNetworkInto(final java.util.List<DiskFilesPayload.WireFile> wire,
+            final ServerLevel level, final dev.jstech.computers.os.IOsHost computer, final String reqDir) {
+        final dev.jstech.computers.program.ServerCliComputer shell = netShell(level, computer);
+        if (shell == null) {
+            return;
+        }
+        final dev.jstech.computers.program.cli.ICliComputer.FsResult listing = shell.listDisk(netDos(reqDir));
+        if (!listing.ok() || listing.entries() == null) {
+            return;
+        }
+        final String prefix = reqDir.equals(NET_ROOT) ? NET_ROOT : reqDir + "/";
+        for (final dev.jstech.computers.program.cli.ICliComputer.FsEntry entry : listing.entries()) {
+            wire.add(new DiskFilesPayload.WireFile(prefix + entry.name(), entry.ext(), entry.weightMbEq(),
+                    entry.readOnly(), entry.isDir()));
+        }
     }
 
     /** Lists a removable medium's files into {@code wire}, paths prefixed {@code media:<readerPos>/}. */
@@ -1777,6 +1835,15 @@ public final class ComputingPayloads {
                             instanceof dev.jstech.computers.os
                                     .IOsHost computer) {
                 final String path = payload.path();
+                if (path.startsWith(NET_ROOT)) {
+                    // Another machine's share: its own shell says whether the write may happen.
+                    final dev.jstech.computers.program.ServerCliComputer shell = netShell(level, computer);
+                    final dev.jstech.computers.program.cli.ICliComputer.FsResult written =
+                            shell == null ? null : shell.writeFile(netDos(path), payload.content());
+                    context.reply(new FileSavedPayload(written != null && written.ok(),
+                            written == null ? "No shell" : written.ok() ? "Saved " + path : written.message()));
+                    return;
+                }
                 final boolean media = path.startsWith("media:");
                 final net.minecraft.world.item.ItemStack vol =
                         media ? mediaStackFor(level, computer, path) : computer.systemDisk();
@@ -1844,6 +1911,13 @@ public final class ComputingPayloads {
                 return;
             }
             final String path = payload.path();
+            if (path.startsWith(NET_ROOT)) {
+                final dev.jstech.computers.program.ServerCliComputer shell = netShell(level, computer);
+                if (shell != null && shell.deleteFile(netDos(path)).ok()) {
+                    computer.setChanged();
+                }
+                return;
+            }
             final boolean media = path.startsWith("media:");
             final net.minecraft.world.item.ItemStack vol =
                     media ? mediaStackFor(level, computer, path) : computer.systemDisk();
@@ -1909,6 +1983,13 @@ public final class ComputingPayloads {
                 return;
             }
             final String path = payload.path();
+            if (path.startsWith(NET_ROOT)) {
+                final dev.jstech.computers.program.ServerCliComputer shell = netShell(level, computer);
+                if (shell != null && shell.makeDir(netDos(path)).ok()) {
+                    computer.setChanged();
+                }
+                return;
+            }
             final boolean media = path.startsWith("media:");
             final net.minecraft.world.item.ItemStack vol =
                     media ? mediaStackFor(level, computer, path) : computer.systemDisk();
@@ -1943,6 +2024,21 @@ public final class ComputingPayloads {
             }
             final String src = payload.src();
             final String destDir = payload.destDir();
+            if (src.startsWith(NET_ROOT) || destDir.startsWith(NET_ROOT)) {
+                /*
+                 * A copy to or from another machine's share goes through the shell, which reads where
+                 * the file is and writes where it goes; a medium is not on that road.
+                 */
+                if (src.startsWith("media:") || destDir.startsWith("media:")) {
+                    return;
+                }
+                final dev.jstech.computers.program.ServerCliComputer shell = netShell(level, computer);
+                if (shell != null && shell.copyPath(src.startsWith(NET_ROOT) ? netDos(src) : localDos(src),
+                        destDir.startsWith(NET_ROOT) ? netDos(destDir) : localDos(destDir)).ok()) {
+                    computer.setChanged();
+                }
+                return;
+            }
             final boolean srcMedia = src.startsWith("media:");
             final boolean dstMedia = destDir.startsWith("media:");
             final net.minecraft.world.item.ItemStack srcVol =
@@ -2004,6 +2100,10 @@ public final class ComputingPayloads {
             }
             final String src = payload.srcPath();
             final String destDir = payload.destDir();
+            if (src.startsWith(NET_ROOT) || destDir.startsWith(NET_ROOT)) {
+                // A file on another machine is copied, not moved: the copy is what the explorer offers.
+                return;
+            }
             final boolean srcMedia = src.startsWith("media:");
             final boolean dstMedia = destDir.startsWith("media:");
             final net.minecraft.world.item.ItemStack srcVol =
@@ -2331,6 +2431,14 @@ public final class ComputingPayloads {
      */
     private static java.util.Optional<String> readDiskFile(
             final ServerLevel level, final dev.jstech.computers.os.IOsHost computer, final String path) {
+        if (path.startsWith(NET_ROOT)) {
+            final dev.jstech.computers.program.ServerCliComputer shell = netShell(level, computer);
+            if (shell == null) {
+                return java.util.Optional.empty();
+            }
+            final dev.jstech.computers.program.cli.ICliComputer.FsResult read = shell.readFile(netDos(path));
+            return read.ok() ? java.util.Optional.of(read.message()) : java.util.Optional.empty();
+        }
         final boolean media = path.startsWith("media:");
         final net.minecraft.world.item.ItemStack vol =
                 media ? mediaStackFor(level, computer, path) : computer.systemDisk();
@@ -2418,6 +2526,10 @@ public final class ComputingPayloads {
             }
             final String oldPath = payload.oldPath();
             final String newPath = payload.newPath();
+            if (oldPath.startsWith(NET_ROOT)) {
+                // Another machine's files keep the names their owner gave them.
+                return;
+            }
             final boolean media = oldPath.startsWith("media:");
             final net.minecraft.world.item.ItemStack vol =
                     media ? mediaStackFor(level, computer, oldPath) : computer.systemDisk();
@@ -5651,6 +5763,42 @@ public final class ComputingPayloads {
     }
 
     /** Routes the Cluster Manager state to the open window. */
+    private static void handleRequestGatewayManager(final RequestGatewayManagerPayload payload,
+                                                     final IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (!(context.player() instanceof ServerPlayer player) || !(player.level() instanceof ServerLevel level)) {
+                return;
+            }
+            final var host = level.getBlockEntity(payload.hostPos());
+            if (host == null) {
+                return;
+            }
+            PacketDistributor.sendToPlayer(player,
+                    dev.jstech.computers.gateway.GatewayManager.state(level, host, payload.selected(), ""));
+        });
+    }
+
+    private static void handleGatewayManagerAction(final GatewayManagerActionPayload payload,
+                                                   final IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (!(context.player() instanceof ServerPlayer player) || !(player.level() instanceof ServerLevel level)) {
+                return;
+            }
+            final var host = level.getBlockEntity(payload.hostPos());
+            if (host == null) {
+                return;
+            }
+            final String status = dev.jstech.computers.gateway.GatewayManager.act(level, host, payload.gatewayPos(),
+                    payload.action(), payload.value(), payload.text());
+            PacketDistributor.sendToPlayer(player,
+                    dev.jstech.computers.gateway.GatewayManager.state(level, host, payload.gatewayPos(), status));
+        });
+    }
+
+    private static void handleGatewayManagerState(final GatewayManagerStatePayload payload, final IPayloadContext context) {
+        context.enqueueWork(() -> dev.jstech.computers.client.os.GatewayManagerApp.accept(payload));
+    }
+
     private static void handleClusterManagerState(final ClusterManagerStatePayload payload, final IPayloadContext context) {
         context.enqueueWork(() ->
                 dev.jstech.computers.client.os.ClusterManagerApp.accept(payload));
