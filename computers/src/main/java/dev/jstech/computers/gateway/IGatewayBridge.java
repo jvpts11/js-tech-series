@@ -31,4 +31,7 @@ public interface IGatewayBridge {
 
     /** Queues an event on every ComputerCraft computer attached to the Gateway; how many got it. */
     int sendEvent(String event, Object... arguments);
+
+    /** Queues an event on one attached computer, by id; whether it is still attached. */
+    boolean eventTo(int computerId, String event, Object... arguments);
 }

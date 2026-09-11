@@ -100,6 +100,8 @@ public final class MachinePrograms {
     private int next = 1;
     private int held;
     private int shown;
+    /** What the machine still owes for work done on its behalf outside its programs. */
+    private int owed;
 
     /** Everything running, in the order it was started. */
     public List<Live> all() {
@@ -120,6 +122,20 @@ public final class MachinePrograms {
     /** Whether anything is running at all, which is what lets a machine skip the work entirely. */
     public boolean isEmpty() {
         return this.live.isEmpty();
+    }
+
+    /**
+     * Charges the machine for work done on its behalf outside its programs (a Gateway answering a
+     * ComputerCraft computer, say): the next tick's programs get that much less, and a debt larger than
+     * one tick's worth carries over, so a hammered bridge slows this machine and nothing else.
+     */
+    public void owe(final int credits) {
+        this.owed = (int) Math.min(Integer.MAX_VALUE, this.owed + (long) Math.max(0, credits));
+    }
+
+    /** What the machine still owes for work done outside its programs. */
+    public int owed() {
+        return this.owed;
     }
 
     /** The megabytes every running program is holding between them. */
@@ -335,7 +351,10 @@ public final class MachinePrograms {
                 }
             }
         }
-        if (this.live.isEmpty() || credits <= 0) {
+        // What was spent on the machine's behalf outside its programs comes off the top first.
+        final int available = Math.max(0, credits - this.owed);
+        this.owed = Math.max(0, this.owed - Math.max(0, credits));
+        if (this.live.isEmpty() || available <= 0) {
             return;
         }
         final List<Live> ready = new ArrayList<>();
@@ -382,7 +401,7 @@ public final class MachinePrograms {
         for (final Live one : ready) {
             slots.add(new Slot(one.process(), LOW_PRIORITY.equals(one.priority())));
         }
-        this.scheduler.run(slots, credits, System::nanoTime, deadline);
+        this.scheduler.run(slots, available, System::nanoTime, deadline);
     }
 
     // across a reload

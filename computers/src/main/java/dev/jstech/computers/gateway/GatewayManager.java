@@ -126,7 +126,7 @@ public final class GatewayManager {
         final GatewayPermissions perms = g.permissions();
         return new Detail(g.getBlockPos().asLong(), g.name(), g.linkKind(),
                 net == null ? 0 : net.indexedTypes(), net == null ? 0 : net.servers(),
-                mainframe != null && mainframe.isRunning(), 0,
+                mainframe != null && mainframe.isRunning(), g.budgetPermille(),
                 g.ccOnline(), bridge == null ? 0 : bridge.computersOnWire(), bridge == null ? 0 : bridge.devicesOnWire(),
                 0, computers.size(),
                 g.stats().lastMinute(GatewayStats.Kind.CALL, now),

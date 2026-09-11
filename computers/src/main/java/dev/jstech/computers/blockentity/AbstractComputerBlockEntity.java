@@ -1176,7 +1176,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * <p>A machine with no build is worth nothing, which is the honest answer for one whose parts have
      * been taken out from under a running program.
      */
-    protected int cannonCredits() {
+    public int cannonCredits() {
         final ComputerBuild build = currentBuild();
         if (build == null) {
             return 0;
@@ -1195,7 +1195,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * their chance to say goodbye rather than being left frozen for whenever it comes back on.
      */
     protected void tickCannon() {
-        if (cannon.isEmpty()) {
+        // A machine running nothing still pays down what a Gateway spent on its behalf, tick by tick.
+        if (cannon.isEmpty() && cannon.owed() == 0) {
             return;
         }
         if (!isRunning()) {

@@ -10,9 +10,11 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
 import dev.jstech.computers.block.NetworkGatewayBlock;
+import dev.jstech.computers.cannon.CannonCosts;
 import dev.jstech.computers.gateway.GatewayLog;
 import dev.jstech.computers.gateway.GatewayName;
 import dev.jstech.computers.gateway.GatewayPermissions;
+import dev.jstech.computers.gateway.GatewayService;
 import dev.jstech.computers.gateway.GatewayStats;
 import dev.jstech.computers.gateway.IGatewayBridge;
 import dev.jstech.computers.gateway.NetworkGateways;
@@ -101,6 +103,16 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
     private IGatewayBridge bridge;
     private String publishedAs = "";
     private final Map<Integer, Long> attached = new LinkedHashMap<>();
+    /* The other side's use of the host's tick: calls and credits this tick, and the last second of credits. */
+    private static final int BUDGET_TICKS = 20;
+    private static final int WATCH_EVERY = 20;
+    private long tickSeen = Long.MIN_VALUE;
+    private int callsThisTick;
+    private int spentThisTick;
+    private final int[] spent = new int[BUDGET_TICKS];
+    private int spentAt;
+    /** What each attached computer watches: by computer id, the name and the total it last heard. */
+    private final Map<Integer, Map<String, Long>> watches = new LinkedHashMap<>();
     /* What the client knows of the server side, for the block's own screen. */
     private String clientHostName = "";
     private boolean clientCcOnline;
@@ -317,7 +329,108 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
 
     public void ccDetached(final int computerId) {
         attached.remove(computerId);
+        watches.remove(computerId);
         syncToClients();
+    }
+
+    /** Queues an event on one attached computer; false without the mod or once it has gone. */
+    public boolean eventTo(final int computerId, final String event, final Object... arguments) {
+        return bridge != null && bridge.eventTo(computerId, event, arguments);
+    }
+
+    // The other side's use of the host
+
+    /** Counts a call from the other side against this tick's cap; false once the cap is spent. */
+    public boolean admit() {
+        rollTick();
+        if (callsThisTick >= permissions.callCap()) {
+            return false;
+        }
+        callsThisTick++;
+        stats.count(GatewayStats.Kind.CALL, level == null ? 0L : level.getGameTime());
+        return true;
+    }
+
+    /**
+     * Charges the host for work done on the other side's behalf: its programs get that much less of the
+     * next tick, so a ComputerCraft computer hammering the bridge slows the host, not the server.
+     */
+    public void charge(final int credits) {
+        rollTick();
+        spentThisTick += Math.max(0, credits);
+        if (owner() instanceof AbstractComputerBlockEntity host) {
+            host.cannon().owe(credits);
+        }
+    }
+
+    private void rollTick() {
+        final long now = level == null ? 0L : level.getGameTime();
+        if (now != tickSeen) {
+            spent[spentAt] = spentThisTick;
+            spentAt = (spentAt + 1) % BUDGET_TICKS;
+            spentThisTick = 0;
+            callsThisTick = 0;
+            tickSeen = now;
+        }
+    }
+
+    /** How much of the host's tick the other side has been taking over the last second, per mille. */
+    public int budgetPermille() {
+        if (!(owner() instanceof AbstractComputerBlockEntity host)) {
+            return 0;
+        }
+        final int credits = host.cannonCredits();
+        if (credits <= 0) {
+            return 0;
+        }
+        long sum = spentThisTick;
+        for (final int tick : spent) {
+            sum += tick;
+        }
+        return (int) Math.min(1000L, sum * 1000L / ((long) credits * (BUDGET_TICKS + 1)));
+    }
+
+    // Watches
+
+    /** Remembers that {@code computer} wants to hear when the total of {@code name} moves from {@code total}. */
+    public void watch(final int computer, final String name, final long total) {
+        watches.computeIfAbsent(computer, k -> new LinkedHashMap<>()).put(name, total);
+    }
+
+    /** Forgets a watch; whether there was one. */
+    public boolean unwatch(final int computer, final String name) {
+        final Map<String, Long> mine = watches.get(computer);
+        if (mine == null) {
+            return false;
+        }
+        final boolean was = mine.remove(name) != null;
+        if (mine.isEmpty()) {
+            watches.remove(computer);
+        }
+        return was;
+    }
+
+    /** What {@code computer} watches, with the totals it last heard. */
+    public Map<String, Long> watchesOf(final int computer) {
+        return new LinkedHashMap<>(watches.getOrDefault(computer, Map.of()));
+    }
+
+    /**
+     * Looks every watched name up once a second and tells the computer that asked when a total moved: on
+     * the change, not for as long as it stays changed. Each look costs the host a read.
+     */
+    private void tickWatches() {
+        for (final Map.Entry<Integer, Map<String, Long>> byComputer : watches.entrySet()) {
+            for (final Map.Entry<String, Long> watched : byComputer.getValue().entrySet()) {
+                final long total = GatewayService.stockOf(this, watched.getKey());
+                charge(CannonCosts.READ);
+                if (total != watched.getValue()) {
+                    final long previous = watched.getValue();
+                    watched.setValue(total);
+                    eventTo(byComputer.getKey(), GatewayService.EVENT_STOCK, watched.getKey(), total, previous);
+                }
+            }
+        }
     }
 
     /** Notes that computer {@code computerId} just called, for the "last seen" column. */
@@ -342,6 +455,7 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
     }
 
     private void tick(final ServerLevel level) {
+        rollTick();
         final long self = worldPosition.asLong();
         final long socket = socketPos().asLong();
         final PeripheralLinkValidator validator = PeripheralLinks.validator(level);
@@ -371,6 +485,9 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
         if (bridge != null && !peripheralName().equals(publishedAs)) {
             bridge.publish(peripheralName());
             publishedAs = peripheralName();
+        }
+        if (!watches.isEmpty() && linkedOwner != null && level.getGameTime() % WATCH_EVERY == 0L) {
+            tickWatches();
         }
         final boolean lit = identifying()
                 ? (level.getGameTime() / BLINK_TICKS) % 2 == 0
