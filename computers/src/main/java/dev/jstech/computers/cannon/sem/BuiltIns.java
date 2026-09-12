@@ -65,6 +65,7 @@ public final class BuiltIns {
         this.fillNetwork();
         this.fillMainframe();
         this.fillOperations();
+        this.fillGateway();
         this.fillUi();
     }
 
@@ -153,6 +154,8 @@ public final class BuiltIns {
             Map.entry("IqlResult", NETWORK),
             Map.entry("Operations", OPERATIONS), Map.entry("OperationInfo", OPERATIONS),
             Map.entry("AskResult", OPERATIONS),
+            Map.entry("Gateway", NETWORK), Map.entry("CcComputer", NETWORK), Map.entry("CcPeripheral", NETWORK),
+            Map.entry("GatewayMessage", NETWORK),
             Map.entry("Widget", UI), Map.entry("Window", UI), Map.entry("Row", UI), Map.entry("Column", UI),
             Map.entry("Label", UI), Map.entry("Button", UI), Map.entry("TextBox", UI), Map.entry("CheckBox", UI),
             Map.entry("ProgressBar", UI), Map.entry("ListBox", UI), Map.entry("Canvas", UI),
@@ -528,6 +531,61 @@ public final class BuiltIns {
                 PUBLIC_STATIC);
         this.method(computer, "Processes", new ITypeSymbol.GenericType(this.listType, List.of(process)),
                 PUBLIC_STATIC);
+    }
+
+    /**
+     * The Gateways this machine has, and through them the ComputerCraft computers and devices on the wire.
+     *
+     * <p>{@code Online} answers anywhere, because whether there is a Gateway at all is a fair question on
+     * any machine. Everything else needs one, and a machine with none says so rather than pretending.
+     * Running a program on the other side is not here: that needs the agent, and is its own thing.
+     */
+    private void fillGateway() {
+        final ITypeSymbol whole = ITypeSymbol.Primitive.LONG;
+        final ITypeSymbol flag = ITypeSymbol.Primitive.BOOL;
+        final ITypeSymbol text = this.stringType;
+
+        final NamedType computer = this.declare("CcComputer", NamedType.Kind.CLASS);
+        this.property(computer, "Id", whole, PUBLIC);
+        this.property(computer, "Name", text, PUBLIC);
+        this.property(computer, "Label", text, PUBLIC);
+        this.property(computer, "Online", flag, PUBLIC);
+
+        final NamedType device = this.declare("CcPeripheral", NamedType.Kind.CLASS);
+        this.property(device, "Name", text, PUBLIC);
+        this.property(device, "Type", text, PUBLIC);
+        this.property(device, "Methods", new ITypeSymbol.GenericType(this.listType, List.of(text)), PUBLIC);
+
+        final NamedType message = this.declare("GatewayMessage", NamedType.Kind.CLASS);
+        this.property(message, "From", whole, PUBLIC);
+        this.property(message, "Text", text, PUBLIC);
+        this.property(message, "Tick", whole, PUBLIC);
+
+        final NamedType gateway = this.declare("Gateway", NamedType.Kind.CLASS);
+        this.property(gateway, "Online", flag, PUBLIC_STATIC);
+        this.property(gateway, "Current", text, PUBLIC_STATIC);
+        this.method(gateway, "Names", new ITypeSymbol.GenericType(this.listType, List.of(text)), PUBLIC_STATIC);
+        this.method(gateway, "Select", flag, PUBLIC_STATIC, text);
+        this.method(gateway, "Computers", new ITypeSymbol.GenericType(this.listType, List.of(computer)),
+                PUBLIC_STATIC);
+        this.method(gateway, "Peripherals", new ITypeSymbol.GenericType(this.listType, List.of(device)),
+                PUBLIC_STATIC);
+        /*
+         * A call takes whatever that peripheral's method takes, which is a different number of things for
+         * every one of them, so there is a way of writing it for each count rather than one that takes a
+         * list the program has to build first.
+         */
+        this.method(gateway, "Call", this.objectType, PUBLIC_STATIC, text, text);
+        this.method(gateway, "Call", this.objectType, PUBLIC_STATIC, text, text, this.objectType);
+        this.method(gateway, "Call", this.objectType, PUBLIC_STATIC, text, text, this.objectType, this.objectType);
+        this.method(gateway, "Call", this.objectType, PUBLIC_STATIC, text, text, this.objectType, this.objectType,
+                this.objectType);
+        this.method(gateway, "TurnOn", flag, PUBLIC_STATIC, whole);
+        this.method(gateway, "Shutdown", flag, PUBLIC_STATIC, whole);
+        this.method(gateway, "Reboot", flag, PUBLIC_STATIC, whole);
+        this.method(gateway, "Send", flag, PUBLIC_STATIC, whole, text);
+        this.method(gateway, "OnMessage", ITypeSymbol.Primitive.VOID, PUBLIC_STATIC,
+                new ITypeSymbol.GenericType(this.actionOfType, List.of(message)));
     }
 
     /**

@@ -262,6 +262,21 @@ public final class MachinePrograms {
         }
     }
 
+    /**
+     * Hands every program listening what a ComputerCraft computer said through a Gateway; how many heard
+     * it. A machine where nobody is listening simply drops it, which is what a message nobody wants is.
+     */
+    public int deliverGatewayMessage(final int from, final String text, final long tick) {
+        int heard = 0;
+        for (final Live one : List.copyOf(this.live)) {
+            if (one.process() instanceof CannonProgram program
+                    && program.process().deliverGatewayMessage(from, text, tick)) {
+                heard++;
+            }
+        }
+        return heard;
+    }
+
     /** The windows a program has open on the machine's desktop; empty for one that has none. */
     public List<dev.jstech.computers.cannon.run.Values.Obj> windowsOf(final int id) {
         final Live one = this.byId(id);

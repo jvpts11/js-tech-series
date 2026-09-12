@@ -88,6 +88,8 @@ public final class SnapshotTag {
     private static final String EXIT_CODE = "exitCode";
     private static final String ON_MESSAGE = "onMessage";
     private static final String WINDOWS = "windows";
+    private static final String ON_GATEWAY_MESSAGE = "onGatewayMessage";
+    private static final String GATEWAY = "gateway";
     private static final String NEXT_WINDOW = "nextWindow";
     private static final String NEXT_WIDGET = "nextWidget";
 
@@ -133,6 +135,8 @@ public final class SnapshotTag {
         tag.putInt(EXIT_CODE, shot.exitCode());
         tag.put(ON_MESSAGE, write(shot.onMessage()));
         tag.put(WINDOWS, values(shot.windows()));
+        tag.put(ON_GATEWAY_MESSAGE, write(shot.onGatewayMessage()));
+        tag.putString(GATEWAY, shot.gateway());
         tag.putLong(NEXT_WINDOW, shot.nextWindow());
         tag.putLong(NEXT_WIDGET, shot.nextWidget());
         tag.put(WAITING, frames(shot.waiting()));
@@ -225,7 +229,8 @@ public final class SnapshotTag {
                 monitors, tag.getInt(NEXT_THREAD), readNames(tag.getList(ARGS, Tag.TAG_STRING)),
                 tag.getInt(MACHINE_ID), tag.getBoolean(EXITED), tag.getInt(EXIT_CODE),
                 readValue(tag.getCompound(ON_MESSAGE)), readValues(tag.getList(WINDOWS, Tag.TAG_COMPOUND)),
-                Math.max(1, tag.getLong(NEXT_WINDOW)), Math.max(1, tag.getLong(NEXT_WIDGET)));
+                Math.max(1, tag.getLong(NEXT_WINDOW)), Math.max(1, tag.getLong(NEXT_WIDGET)),
+                readValue(tag.getCompound(ON_GATEWAY_MESSAGE)), tag.getString(GATEWAY));
     }
 
     // what the program allocated

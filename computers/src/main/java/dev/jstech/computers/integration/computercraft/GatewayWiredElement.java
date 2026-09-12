@@ -32,7 +32,8 @@ final class GatewayWiredElement implements WiredElement {
     private final NetworkGatewayBlockEntity gateway;
     @Nullable
     private WiredNode node;
-    private final Map<String, String> seen = new LinkedHashMap<>();
+    /** Everything else on the wire, by the name ComputerCraft knows it by: computers and devices alike. */
+    private final Map<String, IPeripheral> seen = new LinkedHashMap<>();
 
     GatewayWiredElement(final NetworkGatewayBlockEntity gateway) {
         this.gateway = gateway;
@@ -68,7 +69,7 @@ final class GatewayWiredElement implements WiredElement {
     @Override
     public void networkChanged(final WiredNetworkChange change) {
         change.peripheralsRemoved().keySet().forEach(seen::remove);
-        change.peripheralsAdded().forEach((name, peripheral) -> seen.put(name, peripheral.getType()));
+        seen.putAll(change.peripheralsAdded());
     }
 
     void publish(final String name, final IPeripheral peripheral) {
@@ -89,12 +90,22 @@ final class GatewayWiredElement implements WiredElement {
 
     int computersOnWire() {
         int count = 0;
-        for (final String type : seen.values()) {
-            if (COMPUTER_TYPES.contains(type)) {
+        for (final IPeripheral peripheral : seen.values()) {
+            if (COMPUTER_TYPES.contains(peripheral.getType())) {
                 count++;
             }
         }
         return count;
+    }
+
+    /** Everything on the wire, by name, so a program on our side can list it and call it. */
+    Map<String, IPeripheral> peripherals() {
+        return new LinkedHashMap<>(seen);
+    }
+
+    /** Whether a peripheral of that name is one of ComputerCraft's own computers. */
+    static boolean isComputer(final IPeripheral peripheral) {
+        return COMPUTER_TYPES.contains(peripheral.getType());
     }
 
     int devicesOnWire() {

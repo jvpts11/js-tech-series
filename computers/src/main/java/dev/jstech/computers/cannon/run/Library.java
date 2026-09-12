@@ -203,9 +203,12 @@ public final class Library {
         if (this.host.provides(owner)) {
             /*
              * To the machine, being asked for a value and being asked to do something are the same
-             * question with different names, so a property goes out as a call that takes nothing.
+             * question with different names, so a property goes out as a call that takes nothing. A
+             * Gateway is the one thing that takes something even so: which Gateway the program chose.
              */
-            final IHost.Reply reply = this.host.call(owner, name, List.of(), this.caller, this.callerId(), line);
+            final List<Object> asked = UiWidgets.WINDOW.equals(owner) || !"Gateway".equals(owner) ? List.of()
+                    : List.of(this.owner == null ? "" : this.owner.gatewayName());
+            final IHost.Reply reply = this.host.call(owner, name, asked, this.caller, this.callerId(), line);
             this.owed += Math.max(0, reply.cost() - 1);
             return this.adopt(reply.value(), line);
         }
@@ -228,6 +231,7 @@ public final class Library {
             case "Map" -> this.map(named.name(), self, arguments, line);
             case "Window", "Row", "Column", "Label", "Button", "TextBox", "CheckBox", "ProgressBar",
                  "ListBox", "Canvas", "MessageBox" -> Answer.of(this.ui(named, self, arguments, line));
+            case "Gateway" -> this.gateway(named, arguments, line);
             default -> this.watchOrOutward(named, self, arguments, line);
         };
     }
@@ -269,6 +273,34 @@ public final class Library {
         }
         this.owe(CannonCosts.DRAW);
         return UiWidgets.call(object, named.name(), arguments, line);
+    }
+
+    /**
+     * A call on one of the machine's Gateways.
+     *
+     * <p>Which Gateway is the program's own choice and stays with the program, so every call carries it
+     * to the machine in front of whatever else it takes. Listening for what the other side says is the
+     * program's too, and is kept here rather than asked of the machine.
+     */
+    private Answer gateway(final IOperand.Method named, final List<Object> arguments, final int line) {
+        if ("OnMessage".equals(named.name())) {
+            if (this.owner != null) {
+                this.owner.hearGateway(arguments.isEmpty()
+                        || !(arguments.getFirst() instanceof Values.DelegateValue handler) ? null : handler);
+            }
+            return Answer.of(null);
+        }
+        final boolean choosing = "Select".equals(named.name());
+        final String chosen = choosing && !arguments.isEmpty() ? String.valueOf(arguments.getFirst())
+                : (this.owner == null ? "" : this.owner.gatewayName());
+        final List<Object> passed = new ArrayList<>();
+        passed.add(chosen);
+        passed.addAll(arguments);
+        final Answer answered = this.outward(named, passed, line);
+        if (choosing && this.owner != null && Boolean.TRUE.equals(answered.value())) {
+            this.owner.chooseGateway(chosen);
+        }
+        return answered;
     }
 
     /** What a program writes on a widget, which the machine has to draw again. */

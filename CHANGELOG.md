@@ -111,6 +111,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   reach the program as `key`, `key_up` and `char`, Ctrl+V pastes, Ctrl+T sends `terminate`, Ctrl+C stops it,
   and clicks, drags and the wheel arrive as mouse events on the cell under the pointer. When it returns, the
   prompt comes back under what it left on its screen.
+- A Cannon program reaches the ComputerCraft side through its machine's Gateways. `Gateway.Names` lists them
+  and `Gateway.Select` picks the one a program means, which stays with the program; `Gateway.Computers` and
+  `Gateway.Peripherals` say what is on that Gateway's wire and what each thing answers to; `Gateway.Call`
+  calls one of those methods and brings back what it said (a table comes back as a list or a map, a whole
+  number whole); `Gateway.TurnOn`, `Shutdown` and `Reboot` work the computers over there; `Gateway.Send`
+  says something to one of them, and `Gateway.OnMessage` hears what they say back through the Gateway's own
+  `send`. A machine with no Gateway, or a Gateway with no ComputerCraft behind it, says so.
 - A Cannon program can open windows of its own on the desktop of the machine it runs on. `System.UI` gives it
   a `Window` and the widgets to put in it (`Label`, `Button`, `TextBox`, `CheckBox`, `ProgressBar`, `ListBox`
   and a `Canvas` it draws on itself), laid out in rows and columns where a weight takes a share of the room

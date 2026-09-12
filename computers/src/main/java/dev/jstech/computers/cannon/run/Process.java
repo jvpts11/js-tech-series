@@ -181,6 +181,10 @@ public final class Process {
     private boolean exited;
     private int exitCode;
     private Values.DelegateValue onMessage;
+    /** Who to tell when a ComputerCraft computer says something through a Gateway, if anyone. */
+    private Values.DelegateValue onGatewayMessage;
+    /** The Gateway this program chose to reach through, or nothing for whichever the machine lists first. */
+    private String gateway = "";
     private Values.Obj self;
     /**
      * The windows this program has open on the machine's desktop, in the order it opened them.
@@ -297,6 +301,7 @@ public final class Process {
         pending.add(this.script);
         pending.add(this.self);
         pending.add(this.onMessage);
+        pending.add(this.onGatewayMessage);
         pending.add(this.windows);
         for (final Watch watch : this.watches) {
             pending.add(watch.handler);
@@ -451,6 +456,47 @@ public final class Process {
 
     public int machineId() {
         return this.machineId;
+    }
+
+    // the Gateways to ComputerCraft
+
+    /** Which Gateway this program's calls go through; empty for whichever the machine lists first. */
+    public String gatewayName() {
+        return this.gateway;
+    }
+
+    /** Remembers the Gateway the program chose, which it keeps across a reload like anything else. */
+    public void chooseGateway(final String name) {
+        this.gateway = name == null ? "" : name;
+    }
+
+    /** Who to tell when a ComputerCraft computer says something; null takes the listener away. */
+    public void hearGateway(@org.jetbrains.annotations.Nullable final Values.DelegateValue handler) {
+        this.onGatewayMessage = handler;
+    }
+
+    /**
+     * Hands the program what a ComputerCraft computer said through a Gateway.
+     *
+     * <p>It is queued for the handler the program gave {@code Gateway.OnMessage}, on the main thread, in
+     * its turn. A program that gave none does not hear it, which is what false says.
+     */
+    public boolean deliverGatewayMessage(final int from, final String text, final long tick) {
+        if (this.halted || this.exited || this.onGatewayMessage == null) {
+            return false;
+        }
+        this.post(this.onGatewayMessage, List.of(this.gatewayMessageOf(from, text, tick)));
+        return true;
+    }
+
+    /** What a Gateway message is as a value the program holds. */
+    private Values.Obj gatewayMessageOf(final int from, final String text, final long tick) {
+        final Values.Obj made = new Values.Obj("GatewayMessage");
+        made.set("From", (long) from);
+        made.set("Text", this.text(text == null ? "" : text, 0));
+        made.set("Tick", tick);
+        this.heap.allocate(made, Heap.HEADER + 3L * Heap.REFERENCE, 0);
+        return made;
     }
 
     /** Whether the program ended itself with {@code Program.Exit}. */
@@ -1514,7 +1560,8 @@ public final class Process {
                 watching, this.library.console(), this.library.written(), this.state().name(),
                 this.message == null ? "" : this.message, this.spent, this.name, locked, this.nextThread,
                 this.args, this.machineId, this.exited, this.exitCode, value(this.onMessage, numbers),
-                values(this.windows.items(), numbers), this.nextWindow, this.nextWidget);
+                values(this.windows.items(), numbers), this.nextWindow, this.nextWidget,
+                value(this.onGatewayMessage, numbers), this.gateway);
     }
 
     /** Reads a process back out of what {@link #save()} wrote, ready to carry on where it stopped. */
@@ -1626,6 +1673,10 @@ public final class Process {
         }
         process.nextWindow = Math.max(1, shot.nextWindow());
         process.nextWidget = Math.max(1, shot.nextWidget());
+        if (value(shot.onGatewayMessage(), byNumber) instanceof Values.DelegateValue listening) {
+            process.onGatewayMessage = listening;
+        }
+        process.gateway = shot.gateway();
         return process;
     }
 

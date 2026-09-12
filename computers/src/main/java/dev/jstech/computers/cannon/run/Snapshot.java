@@ -27,7 +27,7 @@ public record Snapshot(long heapBudget, List<IHeld> held, List<ThreadShot> threa
                        List<String> console, int written, String state, String message, int spent,
                        String name, List<MonitorShot> monitors, int nextThread, List<String> args,
                        int machineId, boolean exited, int exitCode, IValue onMessage, List<IValue> windows,
-                       long nextWindow, long nextWidget) {
+                       long nextWindow, long nextWidget, IValue onGatewayMessage, String gateway) {
 
     public Snapshot {
         held = List.copyOf(held);
@@ -41,6 +41,8 @@ public record Snapshot(long heapBudget, List<IHeld> held, List<ThreadShot> threa
         args = args == null ? List.of() : List.copyOf(args);
         onMessage = onMessage == null ? new IValue.Nothing() : onMessage;
         windows = windows == null ? List.of() : List.copyOf(windows);
+        onGatewayMessage = onGatewayMessage == null ? new IValue.Nothing() : onGatewayMessage;
+        gateway = gateway == null ? "" : gateway;
     }
 
     /** The same, for a program of a kind that has no windows to write down. */
@@ -52,7 +54,8 @@ public record Snapshot(long heapBudget, List<IHeld> held, List<ThreadShot> threa
                     final List<String> args, final int machineId, final boolean exited, final int exitCode,
                     final IValue onMessage) {
         this(heapBudget, held, threads, waiting, statics, script, watches, console, written, state, message,
-                spent, name, monitors, nextThread, args, machineId, exited, exitCode, onMessage, null, 1, 1);
+                spent, name, monitors, nextThread, args, machineId, exited, exitCode, onMessage, null, 1, 1,
+                null, "");
     }
 
     /**

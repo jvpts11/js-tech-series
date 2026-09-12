@@ -1215,6 +1215,23 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (level instanceof ServerLevel server) {
             pushCannonOutput(server);
             pushWindows(server);
+            hearGateways();
+        }
+    }
+
+    /**
+     * Hands the programs on this machine whatever the ComputerCraft computers said through its Gateways.
+     *
+     * <p>A message waits on the Gateway until this tick and no longer: whoever is listening hears it now,
+     * and a machine where no program listens simply lets it go.
+     */
+    private void hearGateways() {
+        for (final dev.jstech.computers.blockentity.NetworkGatewayBlockEntity gateway
+                : dev.jstech.computers.cannon.machine.HostGateway.gatewaysOf(this)) {
+            for (final dev.jstech.computers.blockentity.NetworkGatewayBlockEntity.Message said
+                    : gateway.takeMessages()) {
+                cannon.deliverGatewayMessage(said.from(), said.text(), said.tick());
+            }
         }
     }
 

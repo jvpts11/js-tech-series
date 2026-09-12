@@ -45,7 +45,8 @@ public record MachineHost(BlockEntity machine) implements IHost {
         return HostFiles.handles(owner) || HostComputer.handles(owner)
                 || HostNetwork.handles(owner) || HostMainframe.handles(owner)
                 || HostOperations.handles(owner) || HostProgram.handles(owner)
-                || HostRemote.handles(owner) || HostIql.handles(owner);
+                || HostRemote.handles(owner) || HostIql.handles(owner)
+                || HostGateway.handles(owner);
     }
 
     @Override
@@ -89,6 +90,9 @@ public record MachineHost(BlockEntity machine) implements IHost {
                 && this.machine instanceof dev.jstech.computers.blockentity
                         .AbstractComputerBlockEntity self) {
             return HostComputer.call(self, computer, member, line);
+        }
+        if (HostGateway.handles(owner)) {
+            return HostGateway.call(this.machine, member, arguments, line);
         }
         if (HostNetwork.handles(owner)) {
             return HostNetwork.call(computer, member, arguments, line);

@@ -91,6 +91,13 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
     public record AttachedComputer(int id, long lastSeen) {
     }
 
+    /** Something a ComputerCraft computer said to this side: which computer, what it said, and when. */
+    public record Message(int from, String text, long tick) {
+    }
+
+    /** The most messages that wait to be read; a side nobody listens to does not grow for ever. */
+    private static final int MESSAGES_KEPT = 64;
+
     @Nullable
     private Long linkedOwner;
     private int linkLength = -1;
@@ -113,6 +120,13 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
     private int spentAt;
     /** What each attached computer watches: by computer id, the name and the total it last heard. */
     private final Map<Integer, Map<String, Long>> watches = new LinkedHashMap<>();
+    /**
+     * What ComputerCraft computers have said to this side and nobody has read yet.
+     *
+     * <p>A message waits here for the programs on the host machine to be handed it on the next tick, and
+     * no longer: one nobody is listening for is dropped rather than piling up for ever.
+     */
+    private final java.util.Deque<Message> messages = new java.util.ArrayDeque<>();
     /* What the client knows of the server side, for the block's own screen. */
     private String clientHostName = "";
     private boolean clientCcOnline;
@@ -309,6 +323,24 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
     }
 
     // The ComputerCraft side
+
+    /** Takes what a ComputerCraft computer said to this side, for the host machine's programs to read. */
+    public void said(final int from, final String text, final long tick) {
+        while (messages.size() >= MESSAGES_KEPT) {
+            messages.removeFirst();
+        }
+        messages.addLast(new Message(from, text == null ? "" : text, tick));
+    }
+
+    /** Everything said to this side since the last time anyone asked, oldest first. */
+    public java.util.List<Message> takeMessages() {
+        if (messages.isEmpty()) {
+            return java.util.List.of();
+        }
+        final java.util.List<Message> said = java.util.List.copyOf(messages);
+        messages.clear();
+        return said;
+    }
 
     /** The bridge to ComputerCraft, or null without CC: Tweaked (or before the block joined the world). */
     @Nullable

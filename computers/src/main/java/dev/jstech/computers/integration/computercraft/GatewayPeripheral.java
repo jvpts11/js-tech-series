@@ -360,6 +360,20 @@ public final class GatewayPeripheral implements IPeripheral {
     }
 
     /** The name of the computer the Gateway is linked to, or an empty string while it is not. */
+    /**
+     * Says something to the machine the Gateway is linked to, for a program of ours listening for it.
+     *
+     * <p>This is the other half of {@code Gateway.Send}: a line of text, from this computer, waiting for
+     * whoever is listening on the other side. Nobody listening means nobody hears it.
+     */
+    @LuaFunction(mainThread = true)
+    public boolean send(final IComputerAccess computer, final String text) throws LuaException {
+        service();
+        gateway.said(computer.getID(), text, gateway.getLevel() == null ? 0L : gateway.getLevel().getGameTime());
+        gateway.logged("computer " + computer.getID(), "send", "said", dev.jstech.computers.gateway.GatewayLog.Tone.OK);
+        return true;
+    }
+
     @LuaFunction(mainThread = true)
     public String host() {
         return gateway.hostName();
