@@ -456,8 +456,8 @@ public final class PatternStudioApp implements IInventoryBandApp {
 
         tabs.setBounds(x, y, editorW, TAB_H);
         tabs.setSelected(tab);
-        layoutBench(x, editorY, editorW, loaded && tab == TAB_BENCH);
-        layoutMachine(x, editorY, editorW, loaded && tab == TAB_MACHINE);
+        layoutBench(x, editorY + spare(editorH, benchHeight()), editorW, loaded && tab == TAB_BENCH);
+        layoutMachine(x, editorY + spare(editorH, machineHeight()), editorW, loaded && tab == TAB_MACHINE);
         layoutPipeline(g, x, editorY, editorW, editorH, loaded && tab == TAB_PIPELINE);
         if (!loaded) {
             g.drawString(font, "Loading...", x + PAD, editorY + PAD, skin.dim(), false);
@@ -501,6 +501,27 @@ public final class PatternStudioApp implements IInventoryBandApp {
             case TAB_PIPELINE -> "Add a draft or a file as a stage";
             default -> "Right-click a cell: the tag it accepts";
         };
+    }
+
+    /**
+     * How far down an editor of {@code needs} tall starts in {@code room}.
+     *
+     * <p>A recipe is a fixed shape: three by three cells and a result, whatever the window is. Given
+     * more room than that, it sits in the middle of it rather than in the top corner with the rest of
+     * the glass empty under it.
+     */
+    private static int spare(final int room, final int needs) {
+        return Math.max(0, (room - needs) / 2);
+    }
+
+    /** The room the bench editor asks for: its grid and the name row under it. */
+    private static int benchHeight() {
+        return PAD + 3 * CELL + PAD + FIELD_H + PAD;
+    }
+
+    /** The same for the machine editor, whose grids are taller. */
+    private static int machineHeight() {
+        return PAD + PROC_ROWS * CELL + PAD + FIELD_H + PAD;
     }
 
     // bench

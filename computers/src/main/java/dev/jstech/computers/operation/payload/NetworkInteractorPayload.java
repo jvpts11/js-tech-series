@@ -27,11 +27,14 @@ import java.util.List;
  * @param crafts          the network's craft catalog (Crafting tab), with per-entry availability dots
  * @param favourites      the data this computer keeps starred, by {@link dev.jstech.computers.storage.StorageKey#id()}
  * @param capacityItems   the network's whole storage in item-equivalents, for the storage gauge
+ * @param usedMb          the same use in megabytes, which is what the drives' labels say
+ * @param capacityMb      the same whole in megabytes; counted by the drives, since what an item costs
+ *                        is decided by the era of the drive holding it and by nothing on this side
  */
 public record NetworkInteractorPayload(List<NetworkItemEntry> networkItems, List<NetworkItemEntry> localItems,
                                        boolean mainframeOnline, long usedItems, int serverCount,
                                        List<CraftCatalogPayload.Entry> crafts, List<String> favourites,
-                                       long capacityItems)
+                                       long capacityItems, long usedMb, long capacityMb)
         implements CustomPacketPayload {
 
     public static final int MAX_ENTRIES = 512;
@@ -54,6 +57,8 @@ public record NetworkInteractorPayload(List<NetworkItemEntry> networkItems, List
         CraftCatalogPayload.Entry.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ENTRIES)).encode(buf, p.crafts);
         ByteBufCodecs.stringUtf8(MAX_ID).apply(ByteBufCodecs.list(MAX_FAVOURITES)).encode(buf, p.favourites);
         buf.writeVarLong(p.capacityItems);
+        buf.writeVarLong(p.usedMb);
+        buf.writeVarLong(p.capacityMb);
     }
 
     private static NetworkInteractorPayload decode(final RegistryFriendlyByteBuf buf) {
@@ -66,7 +71,10 @@ public record NetworkInteractorPayload(List<NetworkItemEntry> networkItems, List
                 CraftCatalogPayload.Entry.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ENTRIES)).decode(buf);
         final List<String> favourites = ByteBufCodecs.stringUtf8(MAX_ID).apply(ByteBufCodecs.list(MAX_FAVOURITES)).decode(buf);
         final long capacity = buf.readVarLong();
-        return new NetworkInteractorPayload(network, local, online, used, servers, crafts, favourites, capacity);
+        final long usedMb = buf.readVarLong();
+        final long capacityMb = buf.readVarLong();
+        return new NetworkInteractorPayload(network, local, online, used, servers, crafts, favourites, capacity,
+                usedMb, capacityMb);
     }
 
     @Override

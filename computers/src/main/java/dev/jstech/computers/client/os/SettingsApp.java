@@ -528,7 +528,7 @@ public final class SettingsApp implements IDesktopApp {
         heading("Storage", x, y, w);
         y += 13;
         for (final SettingsSnapshotPayload.DiskUse disk : d.disks()) {
-            final String cap = disk.capMb() >= 1000 ? (disk.capMb() / 1000) + " GB" : disk.capMb() + " MB";
+            final String cap = dev.jstech.computers.hardware.DiskSpec.sizeLabel(disk.capMb());
             pagePanel.add(new Label(disk.label() + (disk.system() ? "  [sys]" : ""))).setBounds(x, y, w - font.width(cap) - 4, 8);
             pagePanel.add(new Label(cap, Label.Tone.DIM).setAlign(Label.Align.RIGHT)).setBounds(x, y, w, 8);
             y += 10;

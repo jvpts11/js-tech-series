@@ -1161,6 +1161,47 @@ public final class NetworkGameTests {
                 .thenSucceed();
     }
 
+    /*
+     * What the network says it holds, in the unit a drive's label is written in. The two numbers are not
+     * one scaled by a constant: what an item costs is the era of the drive under it, so the drives are
+     * asked rather than a count multiplied, and a 500 GB standard drive holding 2 000 items is full.
+     */
+    @GameTest(template = ARENA)
+    public static void networkStorage_countsMegabytesTheWayTheDrivesDo(final GameTestHelper helper) {
+        final BlockPos m = new BlockPos(1, 2, 2);
+        final BlockPos hbw = new BlockPos(2, 2, 2);
+        final BlockPos rack = new BlockPos(3, 2, 2);
+        final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
+        helper.setBlock(hbw, ComputingModule.HBW_CABLE.get());
+        helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
+                .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, Direction.EAST));
+        if (!(helper.getBlockEntity(rack) instanceof ServerRackBlockEntity rackBe)) {
+            helper.fail("no server rack");
+            return;
+        }
+        rackBe.getServers().setStackInSlot(0, ComputingModule.defaultServer());
+        final ItemStack drive = new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500));
+        rackBe.insertDrive(0, drive);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    final NetworkStorage ns = NetworkStorage.of(helper.getLevel(), mainframe.networkUuid());
+                    final long nameplate = ((dev.jstech.computers.item.DiskItem) drive.getItem()).spec().capacityMb();
+                    helper.assertTrue(ns.capacityMb() == nameplate,
+                            "the network is as big as the drive's label says; got " + ns.capacityMb()
+                                    + " against " + nameplate);
+                    helper.assertTrue(ns.usedMb() == 0L, "and empty; got " + ns.usedMb());
+
+                    ns.insert(new ItemStack(Items.COBBLESTONE, 960));
+                    final long perItem = ((dev.jstech.computers.item.DiskItem) drive.getItem())
+                            .spec().era().mbPerItem();
+                    helper.assertTrue(ns.usedMb() == 960L * perItem,
+                            "960 items take 960 times what one costs on that drive; got " + ns.usedMb());
+                    helper.assertTrue(ns.used() == 960L && ns.capacity() == 2_000L,
+                            "while the item count stays a count; got " + ns.used() + " of " + ns.capacity());
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA)
     public static void networkOperation_insertDispatchedByMainframe(final GameTestHelper helper) {
         final BlockPos m = new BlockPos(1, 2, 2);

@@ -58,12 +58,53 @@ public final class LocalStore implements IWeightedStore {
         return disk.getItem() instanceof DiskItem item ? item.spec().capacityItems() : 0L;
     }
 
+    /** What one item costs on that drive, in megabytes: its era's word size decides. */
+    private static long megabytesPerItem(final ItemStack disk) {
+        return disk.getItem() instanceof DiskItem item ? item.spec().era().mbPerItem() : 0L;
+    }
+
     public long capacity() {
         long total = 0L;
         for (final ItemStack disk : disks) {
             total += diskCapacity(disk);
         }
         return total;
+    }
+
+    /**
+     * The nameplate size of these drives together, in megabytes: what their labels say.
+     *
+     * <p>Asked of the drives rather than worked out from a count, because how many megabytes an item
+     * takes is the drive's own business: a vintage disk spends one on it and a standard one 256, which
+     * is why the same 2 000 items fill a 2 GB drive of one era and a 500 GB drive of another.
+     */
+    public long capacityMb() {
+        long total = 0L;
+        for (final ItemStack disk : disks) {
+            total += diskCapacity(disk) * megabytesPerItem(disk);
+        }
+        return total;
+    }
+
+    /** How many of those megabytes are spoken for, counted the same way, drive by drive. */
+    public long usedMb() {
+        long total = 0L;
+        for (final ItemStack disk : disks) {
+            total += DriveVolumes.peek(disk).usedWeight() * megabytesPerItem(disk)
+                    / StorageKey.MB_EQ_PER_ITEM;
+        }
+        return total;
+    }
+
+    /**
+     * What {@code items} would cost on these drives, in megabytes, at what they charge for one.
+     *
+     * <p>For the parts of a machine that hold a share of the whole rather than whole drives: a logical
+     * volume over an array, or the slice of its disks a personal computer publishes to the network.
+     */
+    public long megabytesFor(final long items) {
+        final long all = capacity();
+        return all <= 0L ? 0L : items * capacityMb() / all;
     }
 
     public long capacityWeight() {

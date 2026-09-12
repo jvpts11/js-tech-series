@@ -29,8 +29,14 @@ public final class CompletionContext {
      * @param prefix   how much of the name has been typed
      * @param from     the column the prefix starts at, counting from one, which is what a chosen name
      *                 replaces
+     * @param onUsing  whether the line is a {@code using}, where what is worth offering is the
+     *                 namespaces rather than what a variable can do
      */
-    public record Where(String receiver, String prefix, int from) {
+    public record Where(String receiver, String prefix, int from, boolean onUsing) {
+
+        public Where(final String receiver, final String prefix, final int from) {
+            this(receiver, prefix, from, false);
+        }
 
         /** Whether this is a reach into something rather than a name being typed on its own. */
         public boolean intoMember() {
@@ -65,6 +71,12 @@ public final class CompletionContext {
             start--;
         }
         final String prefix = line.substring(start, caret);
+        /*
+         * A using line is answered differently: what belongs there is the namespaces, and it is worth
+         * offering them the moment the word is written, with nothing typed yet, because there is
+         * nothing else a using could be asking for.
+         */
+        final boolean onUsing = isUsingLine(line, start);
         if (start > 0 && line.charAt(start - 1) == '.') {
             /*
              * Everything reached through before this: names joined with dots, read back until something
@@ -79,13 +91,25 @@ public final class CompletionContext {
                 receiver = receiver.substring(1);
             }
             return receiver.isEmpty() || receiver.endsWith(".") || receiver.contains("..")
-                    ? null : new Where(receiver, prefix, start + 1);
+                    ? null : new Where(receiver, prefix, start + 1, onUsing);
         }
         /*
          * A bare name is worth offering types for, but only once there is something to narrow them by:
          * every type in the language on an empty line is a list nobody asked for.
          */
-        return prefix.isEmpty() ? null : new Where("", prefix, start + 1);
+        return prefix.isEmpty() && !onUsing ? null : new Where("", prefix, start + 1, onUsing);
+    }
+
+    /**
+     * Whether what is being written at {@code start} is the name on a {@code using} line.
+     *
+     * <p>Read from the text before it rather than from the whole line, so a using half written is still
+     * one, and a word that merely begins with those letters is not.
+     */
+    private static boolean isUsingLine(final String line, final int start) {
+        final String before = line.substring(0, start).trim();
+        return before.equals("using") || before.equals("using.") || before.startsWith("using ")
+                || (before.startsWith("using") && before.length() > 5 && before.charAt(5) == '.');
     }
 
     /** Whether a character can be part of a name. */

@@ -144,6 +144,23 @@ public final class NetworkStorage {
         return sum;
     }
 
+    /** The same pair in megabytes: each node asked what its own drives charge for an item. */
+    public long capacityMb() {
+        long sum = 0L;
+        for (final Entry entry : entries) {
+            sum += entry.store().capacityMb();
+        }
+        return sum;
+    }
+
+    public long usedMb() {
+        long sum = 0L;
+        for (final Entry entry : entries) {
+            sum += entry.store().usedMb();
+        }
+        return sum;
+    }
+
     /** The same pair for one node, or zeroes when it is not on this network. */
     public long capacityOf(final NodeUuid node) {
         final Entry entry = byNode.get(node);

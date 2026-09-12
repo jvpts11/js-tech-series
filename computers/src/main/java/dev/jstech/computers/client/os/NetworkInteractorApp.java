@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.crafting.RecipeChoice;
 import dev.jstech.computers.crafting.RecipeDifferences;
 import dev.jstech.computers.gui.layout.NetworkInteractorLayout;
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
 import dev.jstech.computers.operation.payload.CraftPlanPayload;
 import dev.jstech.computers.operation.payload.CraftPlanRequestPayload;
@@ -185,6 +186,9 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     private boolean online;
     private long usedItems;
     private long capacityItems;
+    /* The same two in megabytes, as the drives count them; the gauge fills by items, the figures read these. */
+    private long usedMb;
+    private long capacityMb;
     private int serverCount;
     /** Whether the last frame showed the network's card, which wants the live operations too. */
     private boolean cardShown;
@@ -437,6 +441,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         active.online = payload.mainframeOnline();
         active.usedItems = payload.usedItems();
         active.capacityItems = payload.capacityItems();
+        active.usedMb = payload.usedMb();
+        active.capacityMb = payload.capacityMb();
         active.serverCount = payload.serverCount();
     }
 
@@ -761,7 +767,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             case TAB_CRAFTING -> crafts.size() + (crafts.size() == 1 ? " recipe" : " recipes");
             case TAB_FAV -> favourites.size() + " starred";
             case TAB_OPS -> activeOps.size() + " live · " + recentOps.size() + " recent";
-            default -> networkItems.size() + " types · " + dataLabel(usedItems);
+            default -> networkItems.size() + " types · " + DiskSpec.sizeLabel(usedMb);
         };
     }
 
@@ -776,8 +782,9 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         sx = statusSegment(g, font, sx, ty, networkItems.size() + " types", skin.text(), y, h);
         statusSegment(g, font, sx, ty, serverCount + (serverCount == 1 ? " server" : " servers"), skin.text(), y, h);
         // The storage gauge, right: a small bar and the figures.
-        final String figures = capacityItems > 0 ? dataLabel(usedItems) + " / " + dataLabel(capacityItems)
-                : dataLabel(usedItems) + " stored";
+        final String figures = capacityItems > 0
+                ? DiskSpec.sizeLabel(usedMb) + " / " + DiskSpec.sizeLabel(capacityMb)
+                : DiskSpec.sizeLabel(usedMb) + " stored";
         final int fw = Texts.smallWidth(font, figures);
         final int fx = x + width - 3 - fw;
         Texts.small(g, font, figures, fx, ty, skin.dim());
@@ -1389,7 +1396,10 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         }
         py += 8;
         py = cardRow(g, font, px, py, dw, "used", capacityItems > 0
-                ? dataLabel(usedItems) + " of " + dataLabel(capacityItems) : dataLabel(usedItems));
+                ? DiskSpec.sizeLabel(usedMb) + " of " + DiskSpec.sizeLabel(capacityMb)
+                : DiskSpec.sizeLabel(usedMb));
+        py = cardRow(g, font, px, py, dw, "held", formatCount(usedItems)
+                + (capacityItems > 0 ? " of " + formatCount(capacityItems) + " items" : " items"));
         py = sectionRule(g, font, px, py + 2, dw, "ON THE NETWORK");
         py = cardRow(g, font, px, py, dw, "Item types", Integer.toString(networkItems.size()));
         py = cardRow(g, font, px, py, dw, "Servers", Integer.toString(serverCount));
@@ -1491,7 +1501,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         }
         py = detail(g, font, px, py, dw, "ID", id.toString());
         py = detail(g, font, px, py, dw, "KIND", key.isItem() ? "Item" : key.isFluid() ? "Fluid" : "Chemical");
-        py = detail(g, font, px, py, dw, "WEIGHT", dataLabel(key.weight(e.total())));
+        py = detail(g, font, px, py, dw, "ROOM", weightLabel(key.weight(e.total())));
         if (key.isItem() && stack.isDamageableItem()) {
             py = detail(g, font, px, py, dw, "DURABILITY",
                     (stack.getMaxDamage() - stack.getDamageValue()) + " / " + stack.getMaxDamage());
@@ -1535,7 +1545,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         int py = panelHeader(g, font, dx, dy, dw, null, count + " items selected", names.toString(), skin.dim(), false);
         py = detailList(g, font, px, py, dw, "SELECTED", lines.size() > 12 ? lines.subList(0, 12) : lines);
         if (tab != TAB_CRAFTING) {
-            py = detail(g, font, px, py, dw, "TOGETHER", formatCount(items) + " items · " + dataLabel(weight));
+            py = detail(g, font, px, py, dw, "TOGETHER", formatCount(items) + " items · " + weightLabel(weight));
         }
         if (lines.size() > 12) {
             Texts.small(g, font, "+" + (lines.size() - 12) + " more", px + 2, py - 2, skin.dim());
@@ -3039,16 +3049,16 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                 : String.format(Locale.ROOT, "%,d mB", n);
     }
 
-    /** The data a weight amounts to, at 4 MB the item (1 000 mB-eq): a bucket of fluid weighs as much as an item. */
-    private static String dataLabel(final long weight) {
-        final long mb = weight * 4L / StorageKey.MB_EQ_PER_ITEM;
-        if (mb < 1024L) {
-            return mb + " MB";
-        }
-        if (mb < 1024L * 1024L) {
-            return String.format(Locale.ROOT, "%.1f GB", mb / 1024.0);
-        }
-        return String.format(Locale.ROOT, "%.1f TB", mb / (1024.0 * 1024.0));
+    /**
+     * The room a weight takes on this network's drives, written the way a drive's label writes a size.
+     *
+     * <p>Worked out from what the network itself says it holds and how much room that is, because what
+     * one item costs is the era of the drive holding it: the same stack fills a tenth of a vintage
+     * network and a hundredth of a standard one. A bucket of fluid weighs what an item weighs.
+     */
+    private String weightLabel(final long weight) {
+        final long whole = capacityItems * StorageKey.MB_EQ_PER_ITEM;
+        return DiskSpec.sizeLabel(whole <= 0L ? 0L : weight * capacityMb / whole);
     }
 
     /**

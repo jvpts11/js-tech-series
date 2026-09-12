@@ -68,4 +68,15 @@ final class PcPublicNodeStore implements INodeStore {
         }
         return sum;
     }
+
+    /* The published share is a slice of the same disks, so it costs what an item costs on them. */
+    @Override
+    public long capacityMb() {
+        return store.megabytesFor(capacity());
+    }
+
+    @Override
+    public long usedMb() {
+        return store.megabytesFor(used());
+    }
 }

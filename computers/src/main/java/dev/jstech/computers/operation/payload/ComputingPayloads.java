@@ -4831,10 +4831,12 @@ public final class ComputingPayloads {
         final List<CraftCatalogPayload.Entry> crafts = buildCraftCatalog(level, network);
         final List<String> favourites = computer.console() == null ? List.of()
                 : computer.console().settings().favourites();
-        final long capacity = network == null ? 0L
-                : dev.jstech.computers.operation.NetworkStorage.of(level, network).capacity();
+        final dev.jstech.computers.operation.NetworkStorage room = network == null ? null
+                : dev.jstech.computers.operation.NetworkStorage.of(level, network);
         PacketDistributor.sendToPlayer(player, new NetworkInteractorPayload(
-                networkItems, localItems, online, usedItems, serverCount, crafts, favourites, capacity));
+                networkItems, localItems, online, usedItems, serverCount, crafts, favourites,
+                room == null ? 0L : room.capacity(),
+                room == null ? 0L : room.usedMb(), room == null ? 0L : room.capacityMb()));
     }
 
     /** Answers the details panel: what makes the item on this network, and what uses it. */

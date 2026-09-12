@@ -166,11 +166,39 @@ public final class Declarations {
         for (final CompilationUnit.Using using : scope.usings()) {
             if (using.all()) {
                 found = this.find(using.name() + "." + name, arity);
+                if (found == null) {
+                    found = this.underneath(using.name(), name, arity);
+                }
             } else if (using.name().equals(name) || using.name().endsWith("." + name)) {
                 found = this.find(using.name(), arity);
             }
             if (found != null) {
                 return found;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The type {@code name} names in a namespace nested under {@code prefix}, for a using that opened
+     * that prefix with a star.
+     *
+     * <p>{@code using System.*;} opens what is under System as well as System itself, which is what
+     * anyone writing it means: the console lives in System.IO and a program that brought in System
+     * expects to be able to name it. The language's own types are found by asking where the name lives,
+     * so this costs nothing; the program's own are looked for among what it declared, which is small.
+     */
+    private NamedType underneath(final String prefix, final String name, final int arity) {
+        final String home = this.builtIns.homeOf(name);
+        if (home != null && home.startsWith(prefix + ".")) {
+            final NamedType found = this.find(home + "." + name, arity);
+            if (found != null) {
+                return found;
+            }
+        }
+        for (final NamedType declared : this.declared.values()) {
+            if (declared.name().equals(name) && declared.namespace().startsWith(prefix + ".")) {
+                return declared;
             }
         }
         return null;

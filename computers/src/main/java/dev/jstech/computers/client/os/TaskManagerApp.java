@@ -528,7 +528,8 @@ public final class TaskManagerApp implements IDesktopApp {
             }
             final String tag = disk.label() + (disk.system() ? " (system)" : "");
             Texts.small(g, font, Texts.clip(font, tag, w - 70), x, row, skin.text());
-            final String use = JsTechTheme.fmt(disk.usedMb()) + " / " + JsTechTheme.fmt(disk.capMb()) + " MB";
+            final String use = dev.jstech.computers.hardware.DiskSpec.sizeLabel(disk.usedMb())
+                    + " / " + dev.jstech.computers.hardware.DiskSpec.sizeLabel(disk.capMb());
             Texts.small(g, font, use, x + w - Texts.smallWidth(font, use), row, skin.dim());
             final double frac = Math.min(1.0, (double) disk.usedMb() / Math.max(1L, disk.capMb()));
             g.fill(x, row + 9, x + w, row + 15, skin.fieldBg());

@@ -168,7 +168,13 @@ public final class GatewayCommand implements ICliCommand {
             return;
         }
         ctx.out().header(String.format(Locale.ROOT, "%-9s %-14s %-30s %s", "WHEN", "WHO", "WHAT", "RESULT"));
-        for (final WireLog row : d.log()) {
+        /*
+         * Oldest first here, which is the other way round from the table in the manager: a terminal is
+         * read from the bottom, so the newest line belongs against the prompt, where the eye already is.
+         */
+        final List<WireLog> rows = d.log();
+        for (int i = rows.size() - 1; i >= 0; i--) {
+            final WireLog row = rows.get(i);
             ctx.out().line(String.format(Locale.ROOT, "%-9s %-14s %-30s %s", row.when(), row.who(), row.what(), row.result()));
         }
     }

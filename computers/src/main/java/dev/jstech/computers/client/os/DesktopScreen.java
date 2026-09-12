@@ -829,6 +829,19 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         return oy();
     }
 
+    /**
+     * A rectangle an app drew, as it lands on the screen.
+     *
+     * <p>The desktop is drawn at a scale of its own, so a rectangle in an app's coordinates is not
+     * where it appears: it moves with the glass and shrinks with it. Anything outside the desktop that
+     * has to line up with something inside it asks here, rather than adding the corner and forgetting
+     * the scale, which lands the shape low, right and too big.
+     */
+    public net.minecraft.client.renderer.Rect2i onScreen(final int x, final int y, final int w, final int h) {
+        return new net.minecraft.client.renderer.Rect2i(sx(x), sy(y),
+                (int) Math.round(w * scale()), (int) Math.round(h * scale()));
+    }
+
     /** Whether the panel's own menu is open. */
     public boolean isPanelMenuOpen() {
         return panelCtxOpen;

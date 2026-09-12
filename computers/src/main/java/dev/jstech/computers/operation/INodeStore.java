@@ -38,4 +38,14 @@ interface INodeStore {
 
     /** How many it is holding, counted the same way. */
     long used();
+
+    /**
+     * The same pair in megabytes, which is what a drive's label says and what a player reads.
+     *
+     * <p>Items and megabytes are not one number scaled: what an item costs is the era of the drive
+     * holding it, so only the node knows. Ask it here rather than multiplying a count anywhere else.
+     */
+    long capacityMb();
+
+    long usedMb();
 }

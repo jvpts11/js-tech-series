@@ -284,6 +284,46 @@ public final class CannonCompletions {
     }
 
     /**
+     * What belongs on a {@code using} line: the namespaces, and the types inside the one being reached
+     * into, since a using may name either.
+     *
+     * <p>{@code using } offers the roots, {@code using System.} what is under System and the types it
+     * holds, and a star is offered beside them because opening a whole namespace is what most usings
+     * are for.
+     *
+     * @param under what has been written before the name, namespaces joined with dots, or empty
+     */
+    public static List<Item> namespaces(final BuiltIns builtIns, final SemanticModel model,
+                                        final String under, final String prefix) {
+        final String wanted = prefix == null ? "" : prefix.toLowerCase(Locale.ROOT);
+        final String inside = under == null ? "" : under;
+        final Set<String> seen = new LinkedHashSet<>();
+        final List<Item> items = new ArrayList<>();
+        if (!inside.isEmpty() && "*".startsWith(wanted)) {
+            items.add(new Item("*", "* : everything in " + inside, Sort.TYPE, inside));
+        }
+        for (final String namespace : builtIns.namespaces()) {
+            final String rest = inside.isEmpty() ? namespace
+                    : namespace.startsWith(inside + ".") ? namespace.substring(inside.length() + 1) : "";
+            final int dot = rest.indexOf('.');
+            final String head = dot < 0 ? rest : rest.substring(0, dot);
+            if (!head.isEmpty() && head.toLowerCase(Locale.ROOT).startsWith(wanted) && seen.add(head)) {
+                items.add(new Item(head, head + " : namespace", Sort.TYPE,
+                        inside.isEmpty() ? "namespace" : inside));
+            }
+        }
+        items.sort(Comparator.comparing(Item::label));
+        if (!inside.isEmpty()) {
+            for (final Item type : types(builtIns, model, prefix)) {
+                if (seen.add(type.label())) {
+                    items.add(type);
+                }
+            }
+        }
+        return items;
+    }
+
+    /**
      * The types whose names begin with {@code prefix}: the language's, and the ones the program
      * declares, with the program's own first when a name is in both.
      */

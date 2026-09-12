@@ -46,6 +46,14 @@ public final class CodeArea extends UiComponent {
     private static final float MAX_SCALE = 2.0f;
     /** How thick the two scroll bars are, in screen pixels. */
     private static final int BAR = 3;
+    /**
+     * How far either side of a bar a click still takes hold of it.
+     *
+     * <p>A bar three pixels wide is drawn thin on purpose, and a desktop drawn at three quarters makes
+     * it thinner still; aiming at it exactly is not something a player should have to do, so the grab
+     * is wider than the paint, the way it is in any editor worth typing in.
+     */
+    private static final int BAR_GRIP = 3;
     /** The colours of a bar's track and of its thumb, translucent so the code under them still reads. */
     private static final int BAR_TRACK = 0x30808080;
     private static final int BAR_THUMB = 0xA0909090;
@@ -91,6 +99,8 @@ public final class CodeArea extends UiComponent {
     private int shift;
     /** Which of the two bars the mouse is dragging: 'v', 'h', or 0 for neither. */
     private char draggingBar;
+    /** Where in the thumb it was taken hold of, so the view does not jump when the grab is not at its top. */
+    private double grabbedAt;
     private Font lastFont;
     /** How big the text is drawn, 1 being the game's own size. */
     private float scale = 1.0f;
@@ -344,11 +354,8 @@ public final class CodeArea extends UiComponent {
         final int rows = this.doc.lineCount();
         final int visible = visibleLines();
         if (rows > visible) {
-            final int trackH = height() - BAR;
-            final int thumbH = Math.max(6, trackH * visible / rows);
-            final int thumbY = y() + (trackH - thumbH) * this.scroll / Math.max(1, rows - visible);
-            g.fill(right() - BAR, y(), right(), y() + trackH, BAR_TRACK);
-            g.fill(right() - BAR, thumbY, right(), thumbY + thumbH, BAR_THUMB);
+            g.fill(right() - BAR, y(), right(), y() + height() - BAR, BAR_TRACK);
+            g.fill(right() - BAR, verticalThumbY(), right(), verticalThumbY() + verticalThumbHeight(), BAR_THUMB);
         }
         final int room = Math.max(8, codeRoom(font));
         final int widest = widestLine(font) + 4;
@@ -362,24 +369,43 @@ public final class CodeArea extends UiComponent {
         }
     }
 
-    /** Whether the point is on the vertical bar's track. */
+    /** How tall the vertical thumb is: the share of the rows that fit, never too small to grab. */
+    private int verticalThumbHeight() {
+        final int trackH = height() - BAR;
+        return Math.max(6, trackH * visibleLines() / Math.max(1, this.doc.lineCount()));
+    }
+
+    /** Where that thumb sits right now. */
+    private int verticalThumbY() {
+        final int span = height() - BAR - verticalThumbHeight();
+        final int scrollable = Math.max(1, this.doc.lineCount() - visibleLines());
+        return y() + span * this.scroll / scrollable;
+    }
+
+    /** Whether the point is near enough the vertical bar's track to take hold of it. */
     private boolean onVerticalBar(final double mx, final double my) {
-        return this.doc.lineCount() > visibleLines() && mx >= right() - BAR && mx < right()
+        return this.doc.lineCount() > visibleLines() && mx >= right() - BAR - BAR_GRIP && mx < right()
                 && my >= y() && my < bottom() - BAR;
     }
 
-    /** Whether the point is on the horizontal bar's track. */
+    /** Whether the point is near enough the horizontal bar's track to take hold of it. */
     private boolean onHorizontalBar(final double mx, final double my) {
         return this.lastFont != null && widestLine(this.lastFont) + 4 > Math.max(8, codeRoom(this.lastFont))
-                && my >= bottom() - BAR && my < bottom() && mx >= x() && mx < right() - BAR;
+                && my >= bottom() - BAR - BAR_GRIP && my < bottom() && mx >= x() && mx < right() - BAR;
     }
 
-    /** Puts the view where a point on a bar's track asks, the way dragging a thumb does. */
+    /**
+     * Puts the view where the thumb now is, given where in the thumb it was taken hold of.
+     *
+     * <p>The offset matters: a thumb grabbed at its middle must stay under the pointer rather than jump
+     * so its top is there, which is the difference between dragging a scroll bar and fighting one.
+     */
     private void dragBar(final double mx, final double my) {
         if (this.draggingBar == 'v') {
             final int rows = this.doc.lineCount();
             final int visible = visibleLines();
-            final double along = (my - y()) / Math.max(1, height() - BAR);
+            final int span = Math.max(1, height() - BAR - verticalThumbHeight());
+            final double along = (my - this.grabbedAt - y()) / span;
             this.scroll = (int) Math.round(along * (rows - visible));
             this.scroll = Math.max(0, Math.min(Math.max(0, rows - visible), this.scroll));
         } else if (this.draggingBar == 'h' && this.lastFont != null) {
@@ -506,6 +532,12 @@ public final class CodeArea extends UiComponent {
         }
         if (button == 0 && onVerticalBar(mx, my)) {
             this.draggingBar = 'v';
+            /*
+             * On the thumb, the drag keeps the grip; on the bare track, the thumb comes to the pointer
+             * with its middle, which is what a click on a track is asking for.
+             */
+            final double within = my - verticalThumbY();
+            this.grabbedAt = within >= 0 && within < verticalThumbHeight() ? within : verticalThumbHeight() / 2.0;
             dragBar(mx, my);
             return true;
         }

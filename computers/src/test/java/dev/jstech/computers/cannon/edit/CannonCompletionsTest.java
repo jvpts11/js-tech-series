@@ -343,4 +343,28 @@ class CannonCompletionsTest {
                 CannonCompletions.resolve(this.builtIns, result.model(), scope, List.of("silo"));
         assertEquals(List.of("Fill", "Stored"), labels(CannonCompletions.members(target, "")));
     }
+
+    @Test
+    void namespaces_offersTheRootsOnABareUsing() {
+        final List<String> roots = labels(CannonCompletions.namespaces(this.builtIns, null, "", ""));
+        assertEquals(List.of("System"), roots);
+    }
+
+    @Test
+    void namespaces_offersWhatIsUnderTheOneBeingReachedInto() {
+        final List<String> under = labels(CannonCompletions.namespaces(this.builtIns, null, "System", ""));
+        assertTrue(under.contains("IO"), () -> "System.IO is offered; got " + under);
+        assertTrue(under.contains("Collections"), () -> "and System.Collections; got " + under);
+        assertTrue(under.contains("*"), () -> "with the star that opens the whole of it; got " + under);
+        // The types in that namespace belong on a using too, since a using may name one.
+        assertTrue(under.contains("Console"), () -> "and the types it holds; got " + under);
+    }
+
+    @Test
+    void namespaces_narrowsByWhatHasBeenTypedAndPutsTheNamespacesFirst() {
+        final List<String> matching = labels(CannonCompletions.namespaces(this.builtIns, null, "System", "i"));
+        assertEquals("IO", matching.getFirst(), () -> "the namespace leads; got " + matching);
+        assertTrue(matching.contains("IScript"), () -> "the types that match follow it; got " + matching);
+        assertTrue(labels(CannonCompletions.namespaces(this.builtIns, null, "System", "zz")).isEmpty());
+    }
 }

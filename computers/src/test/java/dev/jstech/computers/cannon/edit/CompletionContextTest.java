@@ -119,4 +119,26 @@ class CompletionContextTest {
         assertEquals("Network", where.receiver());
         assertEquals("", where.prefix());
     }
+
+    @Test
+    void at_knowsAUsingLineWantsNamespaces() {
+        final CompletionContext.Where bare = at("using |");
+        assertTrue(bare.onUsing());
+        assertEquals("", bare.receiver());
+        assertEquals("", bare.prefix());
+
+        final CompletionContext.Where typed = at("using Sys|");
+        assertTrue(typed.onUsing());
+        assertEquals("Sys", typed.prefix());
+
+        final CompletionContext.Where inside = at("using System.|");
+        assertTrue(inside.onUsing());
+        assertEquals("System", inside.receiver());
+    }
+
+    @Test
+    void at_doesNotTakeALineThatMerelyStartsLikeAUsingForOne() {
+        assertFalse(at("        usingValue.|").onUsing());
+        assertFalse(at("        Network.Wat|").onUsing());
+    }
 }

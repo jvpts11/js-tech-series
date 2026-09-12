@@ -187,6 +187,19 @@ class CannonSemanticsTest {
     }
 
     @Test
+    void check_letsAStarUsingReachTheNamespacesUnderIt() {
+        // "using System.*" means System and what is under it: the console lives in System.IO.
+        assertClean(CannonSemantics.check(List.of(new SourceFile("Test.can",
+                "using System.*; namespace Tests; class M { void F() { Console.PrintLine(\"x\"); } }"))));
+        assertClean(CannonSemantics.check(List.of(new SourceFile("Test.can",
+                "using System.*; namespace Tests; class M { void F() { List<string> all = new List<string>(); "
+                        + "all.Add(\"x\"); } }"))));
+        // A star opens what is under the prefix it names, not what is beside it.
+        assertReports("C3040", CannonSemantics.check(List.of(new SourceFile("Test.can",
+                "using System.Collections.*; namespace Tests; class M { void F() { Console.PrintLine(\"x\"); } }"))));
+    }
+
+    @Test
     void check_wantsEveryTypeInANamespace() {
         assertReports("C2011", CannonSemantics.check(List.of(new SourceFile("Test.can", "class M { }"))));
     }

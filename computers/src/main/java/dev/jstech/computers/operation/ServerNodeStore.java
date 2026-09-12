@@ -58,4 +58,14 @@ final class ServerNodeStore implements INodeStore {
     public long used() {
         return store.used();
     }
+
+    @Override
+    public long capacityMb() {
+        return store.capacityMb();
+    }
+
+    @Override
+    public long usedMb() {
+        return store.usedMb();
+    }
 }

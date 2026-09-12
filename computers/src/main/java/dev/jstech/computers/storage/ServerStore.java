@@ -85,6 +85,22 @@ public final class ServerStore implements IWeightedStore {
         return capacity() * StorageKey.MB_EQ_PER_ITEM;
     }
 
+    /**
+     * The nameplate size of this server's volume in megabytes.
+     *
+     * <p>An array presents one logical volume, so its size is the items that volume holds at what an
+     * item costs on the drives behind it, not the sum of the drives: a mirror's second copy is
+     * redundancy and was never room to fill.
+     */
+    public long capacityMb() {
+        return drives().megabytesFor(capacity());
+    }
+
+    /** How many of those megabytes are spoken for. */
+    public long usedMb() {
+        return drives().usedMb();
+    }
+
     public long usedWeight() {
         return drives().usedWeight();
     }

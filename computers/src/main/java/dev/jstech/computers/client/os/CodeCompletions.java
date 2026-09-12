@@ -147,6 +147,9 @@ public final class CodeCompletions {
              */
             JsComputers.LOGGER.debug("Completions could not read {}", path, e);
         }
+        if (where.onUsing()) {
+            return CannonCompletions.namespaces(this.builtIns, model, where.receiver(), where.prefix());
+        }
         if (!where.intoMember()) {
             return CannonCompletions.names(this.builtIns, model, scope, where.prefix());
         }

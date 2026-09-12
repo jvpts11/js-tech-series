@@ -32,12 +32,11 @@ public final class StudioGhostIngredientHandler implements IGhostIngredientHandl
         if (studio == null || !screen.isFront(studio) || ingredient.getItemStack().isEmpty()) {
             return targets;
         }
-        final int ox = screen.desktopX();
-        final int oy = screen.desktopY();
         for (final int[] cell : studio.ghostCells()) {
             final int kind = cell[4];
             final int index = cell[5];
-            final Rect2i area = new Rect2i(ox + cell[0], oy + cell[1], cell[2], cell[3]);
+            // Where the cell actually is on the screen: the desktop is drawn at a scale of its own.
+            final Rect2i area = screen.onScreen(cell[0], cell[1], cell[2], cell[3]);
             targets.add(new Target<>() {
                 @Override
                 public Rect2i getArea() {
