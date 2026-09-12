@@ -14,8 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.cannon.asm.AsmProgram;
 import dev.jstech.computers.cannon.asm.AsmReader;
+import dev.jstech.computers.cannon.run.ConsoleBuffer;
 import dev.jstech.computers.cannon.run.IHost;
-import dev.jstech.computers.cannon.run.Library;
 import dev.jstech.computers.cannon.run.Loaded;
 import dev.jstech.computers.cannon.run.Process;
 import dev.jstech.computers.cannon.run.Values;
@@ -352,7 +352,7 @@ class ProcessTest {
                 """);
         assertFinished(process);
         final List<String> said = process.console();
-        assertEquals(Library.CONSOLE_LINES, said.size());
+        assertEquals(ConsoleBuffer.MOST_LINES, said.size());
         assertEquals("line 60", said.getFirst());
         assertEquals("line 259", said.getLast());
     }

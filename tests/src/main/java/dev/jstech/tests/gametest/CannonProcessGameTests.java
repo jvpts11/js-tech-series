@@ -15,7 +15,7 @@ import dev.jstech.computers.cannon.CannonCompiler;
 import dev.jstech.computers.cannon.SourceFile;
 import dev.jstech.computers.cannon.machine.MachinePrograms;
 import dev.jstech.computers.cannon.machine.ServerTickDeadline;
-import dev.jstech.computers.cannon.run.Library;
+import dev.jstech.computers.cannon.run.ConsoleBuffer;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.core.language.ILanguageProcess;
@@ -357,7 +357,7 @@ public final class CannonProcessGameTests {
                      * What fell off the end while nobody looked is gone, as it is on any terminal; what
                      * is left is the newest, in order, ending with the last thing the program said.
                      */
-                    helper.assertTrue(seen.size() == Library.CONSOLE_LINES,
+                    helper.assertTrue(seen.size() == ConsoleBuffer.MOST_LINES,
                             "it hands over everything still kept; got " + seen.size());
                     helper.assertTrue("line 259".equals(seen.getLast()),
                             "ending with the last; got " + seen.getLast());
