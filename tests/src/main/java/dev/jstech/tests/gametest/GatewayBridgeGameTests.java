@@ -325,6 +325,45 @@ public final class GatewayBridgeGameTests {
                 .thenSucceed();
     }
 
+    /*
+     * The other door: not a ComputerCraft program reading our network, but one of OUR programs, moved
+     * onto one of their computers, asking the same machine the same things by the same names.
+     */
+    @GameTest(template = ARENA)
+    public static void bridge_answersWhatOneOfOurProgramsAsksItsMachineFromOverThere(final GameTestHelper helper) {
+        final Fleet fleet = wire(helper);
+        final FakeComputer cc = new FakeComputer(CC_ID);
+        final GatewayPeripheral[] peripheral = new GatewayPeripheral[1];
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 6, () -> {
+                    fleet.storage(helper).insert(StorageKey.of(Items.COBBLESTONE), 200);
+                    peripheral[0] = attach(helper, cc);
+                })
+                .thenExecuteAfter(2, () -> lua(() -> {
+                    final Object total = peripheral[0].ask(cc, new ObjectArguments("Network", "Total", COBBLESTONE));
+                    helper.assertTrue(Double.valueOf(200.0).equals(total),
+                            "Network.Total answers the program what it would answer at home; got " + total);
+                    final Object online = peripheral[0].ask(cc, new ObjectArguments("Network", "Online"));
+                    helper.assertTrue(Boolean.TRUE.equals(online), "a property is a call that takes nothing");
+                    final Object servers = peripheral[0].ask(cc, new ObjectArguments("Network", "Servers"));
+                    helper.assertTrue(servers instanceof Map<?, ?> table && "List".equals(table.get("type")),
+                            "a list comes back in the shape the program reads one; got " + servers);
+                    helper.assertTrue(fleet.host().cannon().owed() > 0, "the host pays for the program's questions");
+                }).run())
+                .thenExecuteAfter(2, () -> {
+                    final String nothing = refusal(lua(() ->
+                            peripheral[0].ask(cc, new ObjectArguments("Reactor", "Heat"))));
+                    helper.assertTrue(nothing.contains("not something this computer answers"),
+                            "a thing no machine of ours has is said so; got " + nothing);
+                    gateway(helper).setPermissions(GatewayPermissions.DEFAULT.withRead(false), "desk", "set read off");
+                    final String refused = refusal(lua(() ->
+                            peripheral[0].ask(cc, new ObjectArguments("Network", "Total", COBBLESTONE))));
+                    helper.assertTrue(refused.contains("reading the network is off"),
+                            "the Gateway's own rules hold for our programs too; got " + refused);
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA)
     public static void bridge_refusesWhatThePermissionsDeny(final GameTestHelper helper) {
         final Fleet fleet = wire(helper);

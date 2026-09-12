@@ -11,8 +11,16 @@ import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.cannon.CannonCosts;
+import dev.jstech.computers.cannon.machine.HostFiles;
+import dev.jstech.computers.cannon.machine.HostIql;
 import dev.jstech.computers.cannon.machine.HostNetwork;
+import dev.jstech.computers.cannon.machine.HostOperations;
+import dev.jstech.computers.cannon.machine.HostProgram;
+import dev.jstech.computers.cannon.machine.HostRemote;
+import dev.jstech.computers.cannon.machine.MachineHost;
 import dev.jstech.computers.cannon.machine.MachinePrograms;
+import dev.jstech.computers.cannon.run.Halt;
+import dev.jstech.computers.cannon.run.IHost;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.NetworkInsertOperation;
@@ -65,6 +73,10 @@ public final class GatewayService {
     private static final String FLUID_PREFIX = "fluid/";
     private static final String CHEMICAL_PREFIX = "chemical/";
     private static final int WHAT_LENGTH = 96;
+
+    /** The file calls that change what is on a disk rather than only reading it. */
+    private static final List<String> WRITES_FILES =
+            List.of("Write", "Append", "Delete", "MkDir", "Put", "MakeDir", "Remove");
 
     /** Who is asking, from the other side: a ComputerCraft computer by its id. */
     public record Caller(int id) {
@@ -440,6 +452,68 @@ public final class GatewayService {
         gateway.logged(caller.label(), what, "process " + started.id(), GatewayLog.Tone.OK);
         charge(CannonCosts.SUBMIT);
         return started.id();
+    }
+
+    // A program of ours, running over there
+
+    /**
+     * Anything one of our own programs asks its machine, asked from the other side.
+     *
+     * <p>A program written here and translated to run on a ComputerCraft computer is the same program,
+     * so it asks the same questions by the same names: the thing, the member, and what the call takes.
+     * They go to the host computer's own machine, which answers them exactly as it answers a program
+     * standing on it, at the same prices, so nothing is cheaper or freer for having moved over there.
+     * On top of that sit the Gateway's own rules, which is what a Gateway is for: reading the network
+     * needs reading allowed, anything that moves or starts something needs operations allowed, and the
+     * folders need the file setting.
+     *
+     * @param arguments what the call takes, in the shapes a translated program holds them in
+     */
+    public Object ask(final Caller caller, final String owner, final String member, final List<Object> arguments)
+            throws GatewayRefusedException {
+        final String what = owner + "." + member;
+        gate(caller, owner, what);
+        final IHost host = new MachineHost((BlockEntity) terminal);
+        if (!host.provides(owner)) {
+            throw new GatewayRefusedException(what + " is not something this computer answers");
+        }
+        final List<Object> given = new ArrayList<>(arguments.size());
+        for (final Object one : arguments) {
+            given.add(GatewayValues.fromTranslated(one));
+        }
+        final IHost.Reply reply;
+        try {
+            reply = host.call(owner, member, given, caller.label(), caller.id(), 0);
+        } catch (final Halt refused) {
+            throw denied(caller, what, refused.getMessage());
+        }
+        // Counted and charged like any other call; not written into the log, which a busy program would fill.
+        charge(reply.cost());
+        return GatewayValues.toTranslated(reply.value());
+    }
+
+    /* Which of the Gateway's three switches a question of that kind stands behind. */
+    private void gate(final Caller caller, final String owner, final String what) throws GatewayRefusedException {
+        if (HostFiles.handles(owner)) {
+            admit(caller, what);
+            if (gateway.permissions().files() == GatewayPermissions.FileAccess.OFF) {
+                throw denied(caller, what, "denied: the shared folders are off");
+            }
+            if (WRITES_FILES.contains(member(what)) && !gateway.permissions().allowsWrite()) {
+                throw denied(caller, what, "denied: the shared folders are read-only");
+            }
+            return;
+        }
+        if (HostOperations.handles(owner) || HostProgram.handles(owner) || HostRemote.handles(owner)
+                || HostIql.handles(owner)) {
+            operations(caller, what);
+            return;
+        }
+        read(caller, what);
+    }
+
+    private static String member(final String what) {
+        return what.substring(what.indexOf('.') + 1);
     }
 
     // Watches and the log

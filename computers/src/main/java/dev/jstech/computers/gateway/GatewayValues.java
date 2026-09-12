@@ -63,6 +63,88 @@ public final class GatewayValues {
         };
     }
 
+    /**
+     * One of our values as a program of ours holds it after being translated to the other side.
+     *
+     * <p>A translated program is the same program, so it reaches into what it is given the same way it
+     * would here: a list by its place, a map by its key, an object by the name of a field. Its values
+     * are tables with those parts written down, and this is where one of ours takes that shape. It is
+     * not the shape a ComputerCraft program of somebody's own gets from the same Gateway, which is a
+     * plain table: that one is written for the other side to read, this one for our own program to.
+     */
+    public static Object toTranslated(final Object ours) {
+        return switch (ours) {
+            case null -> null;
+            case Values.ListValue list -> run("List", list.items());
+            case Values.Arr array -> run(null, array.all());
+            case Values.MapValue map -> {
+                final Map<Object, Object> inside = new LinkedHashMap<>();
+                for (final Map.Entry<Object, Object> entry : map.entries().entrySet()) {
+                    inside.put(toTranslated(entry.getKey()), toTranslated(entry.getValue()));
+                }
+                yield table("Map", inside.size(), inside);
+            }
+            case Values.Obj object -> {
+                final Map<Object, Object> made = new LinkedHashMap<>();
+                made.put("type", object.type());
+                for (final Map.Entry<String, Object> field : object.all().entrySet()) {
+                    made.put(field.getKey(), toTranslated(field.getValue()));
+                }
+                yield made;
+            }
+            case Character letter -> String.valueOf(letter);
+            case Number number -> number.doubleValue();
+            default -> ours;
+        };
+    }
+
+    /** What a translated program handed over, as a value one of our hosts can take. */
+    public static Object fromTranslated(final Object theirs) {
+        if (!(theirs instanceof Map<?, ?> table)) {
+            return fromLua(theirs);
+        }
+        final Object kind = table.get("type");
+        final Object inside = table.get("v");
+        if ("List".equals(kind) && inside instanceof Map<?, ?> places) {
+            final Values.ListValue list = new Values.ListValue();
+            for (int i = 1; i <= places.size(); i++) {
+                list.items().add(fromTranslated(at(places, i)));
+            }
+            return list;
+        }
+        if ("Map".equals(kind) && inside instanceof Map<?, ?> pairs) {
+            final Values.MapValue map = new Values.MapValue();
+            for (final Map.Entry<?, ?> entry : pairs.entrySet()) {
+                map.entries().put(fromTranslated(entry.getKey()), fromTranslated(entry.getValue()));
+            }
+            return map;
+        }
+        return fromLua(theirs);
+    }
+
+    /* A run of values, counted from one, as the translated program reads one. */
+    private static Map<Object, Object> run(final String kind, final List<Object> items) {
+        final Map<Object, Object> inside = new LinkedHashMap<>();
+        for (int i = 0; i < items.size(); i++) {
+            inside.put((double) (i + 1), toTranslated(items.get(i)));
+        }
+        return table(kind, items.size(), inside);
+    }
+
+    private static Map<Object, Object> table(final String kind, final int count, final Map<Object, Object> inside) {
+        final Map<Object, Object> made = new LinkedHashMap<>();
+        if (kind != null) {
+            made.put("type", kind);
+        }
+        made.put("n", (double) count);
+        made.put("v", inside);
+        return made;
+    }
+
+    private static Object at(final Map<?, ?> places, final int index) {
+        return places.containsKey((double) index) ? places.get((double) index) : places.get((long) index);
+    }
+
     /** What the other side answered, as a value one of our programs can hold. */
     public static Object fromLua(final Object theirs) {
         return switch (theirs) {

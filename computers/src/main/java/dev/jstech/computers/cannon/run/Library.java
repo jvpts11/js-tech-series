@@ -142,11 +142,20 @@ public final class Library {
 
     /** Whether a call of this needs the thing it is called on to be on the stack under its arguments. */
     public boolean takesTarget(final String owner, final String name) {
+        return Library.onSomething(owner, name) || this.host.takesTarget(owner, name);
+    }
+
+    /**
+     * The same question for the part of it no machine is needed to answer.
+     *
+     * <p>Anything else depends on the machine the program is standing on, which is why the answer above
+     * asks it; this one is what is true of the language itself wherever it runs.
+     */
+    public static boolean onSomething(final String owner, final String name) {
         if ("string".equals(owner)) {
             return !"Format".equals(name) && !"Concat".equals(name);
         }
-        return "List".equals(owner) || "Map".equals(owner) || UiWidgets.takesTarget(owner)
-                || this.host.takesTarget(owner, name);
+        return "List".equals(owner) || "Map".equals(owner) || UiWidgets.takesTarget(owner);
     }
 
     /** Makes one of the things the language brings with it: a collection, a window, a widget. */

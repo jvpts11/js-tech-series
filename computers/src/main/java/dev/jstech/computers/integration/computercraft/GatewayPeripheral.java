@@ -310,6 +310,29 @@ public final class GatewayPeripheral implements IPeripheral {
         }
     }
 
+    /**
+     * Anything one of our own programs asks its machine, from one of our programs translated to run here:
+     * {@code ask(thing, member, ...)}.
+     *
+     * <p>This is not written for a ComputerCraft program of somebody's own, which has the methods above
+     * with the shapes that side reads easily. It is the door our own programs come back through when
+     * they are put on one of these computers: same names, same prices, same refusals as at home.
+     */
+    @LuaFunction(mainThread = true)
+    public Object ask(final IComputerAccess computer, final IArguments arguments) throws LuaException {
+        final String owner = arguments.getString(0);
+        final String member = arguments.getString(1);
+        final List<Object> passed = new ArrayList<>();
+        for (int i = 2; i < arguments.count(); i++) {
+            passed.add(arguments.get(i));
+        }
+        try {
+            return service().ask(caller(computer), owner, member, passed);
+        } catch (final GatewayRefusedException refused) {
+            throw error(refused);
+        }
+    }
+
     // Watches and the log
 
     /** Asks for a {@code jsc_stock} event whenever the total of {@code name} moves; the total now. */

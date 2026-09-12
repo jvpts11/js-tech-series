@@ -13,6 +13,7 @@ import dev.jstech.computers.cannon.ast.IDecl;
 import dev.jstech.computers.cannon.ast.IExpr;
 import dev.jstech.computers.cannon.ast.Operator;
 import dev.jstech.computers.cannon.ast.IStmt;
+import dev.jstech.computers.cannon.ast.TypeRef;
 import dev.jstech.computers.cannon.sem.IBinding;
 import dev.jstech.computers.cannon.sem.BodyChecker;
 import dev.jstech.computers.cannon.sem.BuiltIns;
@@ -947,6 +948,11 @@ public final class Emitter {
             final ITypeSymbol target = Emitter.this.model.typeOf(expression.target());
             this.value(expression.target(), null);
             this.value(expression.index(), null);
+            this.readElement(target);
+        }
+
+        /** Reads the place the index names: an array by its number, a list or a map by its own way in. */
+        private void readElement(final ITypeSymbol target) {
             if (target instanceof ITypeSymbol.ArrayType) {
                 this.emit(Opcode.LDELEM);
                 return;
@@ -957,6 +963,21 @@ public final class Emitter {
             this.emit(Opcode.CALL, new IOperand.Method(named == null ? "object" : named.qualifiedName(), "Get",
                     List.of(isMap ? held.getFirst().describe() : "int"),
                     held.isEmpty() ? "object" : held.getLast().describe()));
+        }
+
+        /** Writes the place the index names, with the thing, the place and the value already on the stack. */
+        private void writeElement(final ITypeSymbol target) {
+            if (target instanceof ITypeSymbol.ArrayType) {
+                this.emit(Opcode.STELEM);
+                return;
+            }
+            final NamedType named = Emitter.this.rules.named(target);
+            final List<ITypeSymbol> held = Emitter.this.rules.arguments(target);
+            final boolean isMap = named == Emitter.this.builtIns.mapType();
+            this.emit(Opcode.CALL, new IOperand.Method(named == null ? "object" : named.qualifiedName(),
+                    isMap ? "Put" : "Set",
+                    List.of(isMap ? held.getFirst().describe() : "int",
+                            held.isEmpty() ? "object" : held.getLast().describe()), "void"));
         }
 
         private void created(final IExpr.New expression) {
@@ -982,7 +1003,15 @@ public final class Emitter {
                 this.convert(to);
                 return;
             }
-            this.emit(Opcode.CASTCLASS, new IOperand.Type(expression.type().describe()));
+            this.emit(Opcode.CASTCLASS, new IOperand.Type(this.named(expression.type())));
+        }
+
+        /*
+         * A type as the runtime knows it, which is the whole name. What was written may be the short
+         * one, and a short name matches nothing at all once the program lives in a namespace.
+         */
+        private String named(final TypeRef reference) {
+            return Emitter.this.declarations.resolve(reference, this.owner).describe();
         }
 
         /*
@@ -990,7 +1019,7 @@ public final class Emitter {
          * it cannot, which is the same question asked first and acted on.
          */
         private void typeTest(final IExpr.TypeTest expression) {
-            final String written = expression.type().describe();
+            final String written = this.named(expression.type());
             if (!expression.conversion()) {
                 this.value(expression.value(), null);
                 this.emit(Opcode.ISINST, new IOperand.Type(written));
@@ -1064,19 +1093,65 @@ public final class Emitter {
                 this.emit(Opcode.STLOC, new IOperand.Slot(at));
                 return;
             }
-            this.value(place, null);
+            final IMemberSymbol member = binding instanceof IBinding.Member held ? held.member() : null;
+            if (member != null && member.isStatic()) {
+                this.value(place, null);
+                if (expression.postfix()) {
+                    this.emit(Opcode.DUP);
+                }
+                this.one(type);
+                this.emit(change);
+                if (!expression.postfix()) {
+                    this.emit(Opcode.DUP);
+                }
+                this.putBack(place, member);
+                return;
+            }
+            this.stepInPlace(expression, place, type, change, member);
+        }
+
+        /**
+         * One more or one less in a place that lives on something: a field or a property of an object, or
+         * a place inside an array, a list or a map.
+         *
+         * <p>What it lives on has to be on the stack UNDER the new value when the value goes back, so the
+         * answer the expression itself gives cannot simply be left on top: it is put away in a place of
+         * its own first and read back once the writing is done.
+         */
+        private void stepInPlace(final IExpr.Unary expression, final IExpr place, final ITypeSymbol type,
+                                 final Opcode change, final IMemberSymbol member) {
+            final int kept = this.hidden();
+            final IExpr.Index index = place instanceof IExpr.Index at ? at : null;
+            final ITypeSymbol inside = index == null ? null : Emitter.this.model.typeOf(index.target());
+            if (index != null) {
+                this.value(index.target(), null);
+                this.value(index.index(), null);
+                this.value(index.target(), null);
+                this.value(index.index(), null);
+                this.readElement(inside);
+            } else if (member != null) {
+                this.receiverOf(place);
+                this.emit(Opcode.DUP);
+                this.emit(Opcode.LDFLD, new IOperand.Field(this.ownerOf(member), member.name()));
+            } else {
+                return;
+            }
             if (expression.postfix()) {
                 this.emit(Opcode.DUP);
+                this.emit(Opcode.STLOC, new IOperand.Slot(kept));
             }
             this.one(type);
             this.emit(change);
             if (!expression.postfix()) {
                 this.emit(Opcode.DUP);
+                this.emit(Opcode.STLOC, new IOperand.Slot(kept));
             }
-            if (binding instanceof IBinding.Member member
-                    && member.member() instanceof IMemberSymbol.FieldSymbol field) {
-                this.putBack(place, field);
+            if (index != null) {
+                this.writeElement(inside);
+            } else {
+                this.putBack(place, member);
             }
+            this.emit(Opcode.LDLOC, new IOperand.Slot(kept));
         }
 
         private void putBack(final IExpr place, final IMemberSymbol member) {
@@ -1110,7 +1185,26 @@ public final class Emitter {
                     this.value(expression.left(), result);
                     this.value(expression.right(), shiftKeepsItsOwn(expression) ? null : result);
                     this.emit(arithmetic(expression.operator()));
+                    this.wholeDivision(expression, result);
                 }
+            }
+        }
+
+        /**
+         * Says in the assembly that a division or a remainder was between whole numbers.
+         *
+         * <p>Dividing two whole numbers throws the fraction away and dividing two real ones does not, and
+         * which of those a line meant is something only the compiler knows: it reads the types. Writing
+         * the conversion down after the division puts that knowledge in the assembly itself, where
+         * anything that reads it later (a machine of another kind, another language) can see it; the
+         * runtime it was written for hands a whole number straight back.
+         */
+        private void wholeDivision(final IExpr.Binary expression, final ITypeSymbol result) {
+            if (expression.operator() != Operator.DIVIDE && expression.operator() != Operator.REMAINDER) {
+                return;
+            }
+            if (result == ITypeSymbol.Primitive.INT || result == ITypeSymbol.Primitive.LONG) {
+                this.convert(result);
             }
         }
 
@@ -1389,23 +1483,16 @@ public final class Emitter {
             this.value(index.target(), null);
             this.value(index.index(), null);
             if (expression.operator() != Operator.ASSIGN) {
-                this.emit(Opcode.DUP);
+                /*
+                 * What is already there is read for the combining, and the thing and the place are
+                 * named again to read it: the write below still wants its own pair underneath.
+                 */
                 this.value(index.target(), null);
                 this.value(index.index(), null);
-                this.emit(Opcode.LDELEM);
+                this.readElement(target);
             }
             this.combine(expression, element);
-            if (target instanceof ITypeSymbol.ArrayType) {
-                this.emit(Opcode.STELEM);
-                return;
-            }
-            final NamedType named = Emitter.this.rules.named(target);
-            final List<ITypeSymbol> held = Emitter.this.rules.arguments(target);
-            final boolean isMap = named == Emitter.this.builtIns.mapType();
-            this.emit(Opcode.CALL, new IOperand.Method(named == null ? "object" : named.qualifiedName(),
-                    isMap ? "Put" : "Set",
-                    List.of(isMap ? held.getFirst().describe() : "int",
-                            held.isEmpty() ? "object" : held.getLast().describe()), "void"));
+            this.writeElement(target);
         }
 
         /*

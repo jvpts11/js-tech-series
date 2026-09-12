@@ -90,6 +90,51 @@ class GatewayValuesTest {
     }
 
     @Test
+    void toTranslated_sendsAListTheWayATranslatedProgramReadsOne() {
+        final Map<?, ?> table = assertInstanceOf(Map.class, GatewayValues.toTranslated(listOf("a", 2L)));
+        assertEquals("List", table.get("type"));
+        assertEquals(2.0, table.get("n"));
+        final Map<?, ?> inside = assertInstanceOf(Map.class, table.get("v"));
+        assertEquals("a", inside.get(1.0));
+        assertEquals(2.0, inside.get(2.0));
+    }
+
+    @Test
+    void toTranslated_sendsAnObjectAsItsFieldsUnderItsOwnName() {
+        final Values.Obj server = new Values.Obj("ServerInfo");
+        server.set("Name", "server-1");
+        server.set("Stored", 40L);
+        final Map<?, ?> table = assertInstanceOf(Map.class, GatewayValues.toTranslated(server));
+        assertEquals("ServerInfo", table.get("type"));
+        assertEquals("server-1", table.get("Name"));
+        assertEquals(40.0, table.get("Stored"));
+    }
+
+    @Test
+    void toTranslated_sendsAMapWithItsKeysWhereThePlacesAreLookedFor() {
+        final Values.MapValue map = new Values.MapValue();
+        map.entries().put("left", 4L);
+        final Map<?, ?> table = assertInstanceOf(Map.class, GatewayValues.toTranslated(map));
+        assertEquals("Map", table.get("type"));
+        assertEquals(1.0, table.get("n"));
+        assertEquals(4.0, assertInstanceOf(Map.class, table.get("v")).get("left"));
+    }
+
+    @Test
+    void fromTranslated_takesBackWhatATranslatedProgramHandsOver() {
+        final Values.ListValue list = assertInstanceOf(Values.ListValue.class,
+                GatewayValues.fromTranslated(GatewayValues.toTranslated(listOf("a", 2L))));
+        assertEquals(List.of("a", 2L), list.items());
+        final Values.MapValue map = new Values.MapValue();
+        map.entries().put("left", 4L);
+        final Values.MapValue back = assertInstanceOf(Values.MapValue.class,
+                GatewayValues.fromTranslated(GatewayValues.toTranslated(map)));
+        assertEquals(4L, back.entries().get("left"));
+        assertEquals(7L, GatewayValues.fromTranslated(7.0));
+        assertEquals("said", GatewayValues.fromTranslated("said"));
+    }
+
+    @Test
     void bothWays_carryATableInsideATable() {
         final Values.ListValue nested = listOf(listOf("a", "b"), 1L);
         final Object sent = GatewayValues.toLua(nested);
