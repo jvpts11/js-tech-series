@@ -127,6 +127,25 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   under the program's name. A window is saved with the program and comes back with it; shutting the last one
   ends the program unless it opens another. A machine that boots to a prompt has nowhere to put a window and
   says so.
+- A program written for our computers can run on a ComputerCraft computer. It is not rewritten and there
+  is no switch to throw: going to one of their computers is what makes it translated, so the assembly a
+  program compiles to becomes what that computer runs, at the moment it is sent. A program written in
+  their own language crosses untouched. The same program sent a hundred times is only made ready once.
+- Their computers carry a small agent of ours, which starts with the computer and does nothing at all on
+  one with no Gateway within reach. Where there is one, it says it is there and answers what our side
+  asks of it. The agent is itself one of our programs, translated the same way as any other, so it can
+  never drift from the programs it serves.
+- With an agent running, a Cannon program can ask a computer over there to run a program or a line at its
+  prompt, and to read, write or list its files. Each of those waits for that computer to answer: waiting
+  costs the program nothing, its machine carries on, and a computer that never answers ends the wait
+  after five seconds with an empty answer rather than holding the program. A world saved while a question
+  is out does not ask it again when it comes back, because that computer may already have done it.
+- At a ComputerCraft prompt, `jsc run <program>` runs one of the host computer's programs there and
+  `jsc list` says what there is. At one of our prompts, `gateway <name> get 3:/file here` and
+  `gateway <name> put here 3:/file` carry a file either way.
+- The file explorer shows ComputerCraft computers under Network: the ones with an agent, and their
+  folders, browsable like anything else. A folder there is asked for rather than read, so the window says
+  it is asking until the answer lands.
 - A Cannon program can use Lua code. `include "reactor.lua";` at the head of a file compiles the Lua file
   beside it into the program, and Cannon reaches it as `reactor`: every function the file declares is a
   method that takes whatever it is given and gives back an `object`, and every other global it sets is a

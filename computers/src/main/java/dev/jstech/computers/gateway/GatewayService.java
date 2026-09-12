@@ -454,6 +454,52 @@ public final class GatewayService {
         return started.id();
     }
 
+    // Our programs, going over there
+
+    /**
+     * One of the host computer's programs, as the computer asking for it runs it.
+     *
+     * <p>It is a file of ours being read, so it stands behind the file setting and is paid for as a
+     * read; what it costs to turn it into their language is paid on top, once, the first time it is
+     * asked for.
+     */
+    public String program(final Caller caller, final String name) throws GatewayRefusedException {
+        final String what = "program " + name;
+        admit(caller, what);
+        if (gateway.permissions().files() == GatewayPermissions.FileAccess.OFF) {
+            throw denied(caller, what, "denied: the shared folders are off");
+        }
+        if (name == null || name.isBlank() || name.contains("..")) {
+            throw new GatewayRefusedException("which program?");
+        }
+        final ICliComputer.FsResult read = shell.readFile(name);
+        if (!read.ok()) {
+            throw new GatewayRefusedException(read.message());
+        }
+        charge(CannonCosts.READ);
+        return GatewayPrograms.translated(name, read.message());
+    }
+
+    /** The host computer's programs that can cross, by name. */
+    public List<String> programs(final Caller caller) throws GatewayRefusedException {
+        admit(caller, "programs");
+        if (gateway.permissions().files() == GatewayPermissions.FileAccess.OFF) {
+            throw denied(caller, "programs", "denied: the shared folders are off");
+        }
+        final ICliComputer.FsResult listing = shell.listDisk("");
+        if (!listing.ok()) {
+            throw new GatewayRefusedException(listing.message());
+        }
+        final List<String> named = new ArrayList<>();
+        for (final ICliComputer.FsEntry entry : listing.entries()) {
+            if (!entry.isDir() && GatewayPrograms.carries(entry.name())) {
+                named.add(entry.name());
+            }
+        }
+        charge(HostNetwork.priceOf(named.size()));
+        return named;
+    }
+
     // A program of ours, running over there
 
     /**

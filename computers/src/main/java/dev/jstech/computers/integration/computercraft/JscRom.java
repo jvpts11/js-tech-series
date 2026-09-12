@@ -34,13 +34,17 @@ import java.util.List;
  */
 public final class JscRom {
 
-    /** The agent's source, beside this class in the jar. */
+    /** The sources, beside this class in the jar. */
     private static final String AGENT_SOURCE = "/jsc/agent/Agent.can";
+    private static final String COMMAND_SOURCE = "/jsc/agent/Jsc.can";
 
     /** Where a ComputerCraft computer looks for what to run when it starts. */
     public static final String AGENT_PATH = "lua/rom/autorun/jsc.lua";
+    /** Where it looks for the commands a player can type. */
+    public static final String COMMAND_PATH = "lua/rom/programs/jsc.lua";
 
     private static String agent;
+    private static String command;
     private static String failure = "";
 
     private JscRom() {
@@ -54,6 +58,22 @@ public final class JscRom {
         return agent;
     }
 
+    /** The {@code jsc} command as Lua, or nothing at all when it could not be made. */
+    public static synchronized String command() {
+        if (command == null) {
+            command = translate(COMMAND_SOURCE);
+        }
+        return command;
+    }
+
+    /** What this pack serves, by the path a computer over there looks for it at. */
+    public static synchronized String at(final String path) {
+        if (AGENT_PATH.equals(path)) {
+            return agent();
+        }
+        return COMMAND_PATH.equals(path) ? command() : "";
+    }
+
     /** Why there is no agent, or an empty text when there is one. */
     public static synchronized String failure() {
         return failure;
@@ -62,6 +82,7 @@ public final class JscRom {
     /** Forgets what was made, so a reload makes it again. */
     public static synchronized void forget() {
         agent = null;
+        command = null;
         failure = "";
     }
 

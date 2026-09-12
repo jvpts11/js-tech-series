@@ -280,18 +280,15 @@ public final class MachinePrograms {
     /**
      * Hands a program the answer a computer on the other side of a Gateway sent back.
      *
-     * <p>Only one program can be waiting for a given question, because the number that names it comes
-     * from the Gateway and is handed out once, so the first program that was waiting for it is the one.
+     * <p>Which program is waiting is known from the question itself, so this goes straight to it rather
+     * than asking every program on the machine whether the answer is theirs.
      *
-     * @return whether a program was still waiting for that answer
+     * @return whether that program was still waiting for that answer
      */
-    public boolean deliverAnswer(final int question, final Object value) {
-        for (final Live one : List.copyOf(this.live)) {
-            if (one.process() instanceof CannonProgram program && program.process().answered(question, value)) {
-                return true;
-            }
-        }
-        return false;
+    public boolean deliverAnswer(final int program, final java.util.UUID question, final Object value) {
+        final Live one = this.byId(program);
+        return one != null && one.process() instanceof CannonProgram running
+                && running.process().answered(question, value);
     }
 
     /** The windows a program has open on the machine's desktop; empty for one that has none. */

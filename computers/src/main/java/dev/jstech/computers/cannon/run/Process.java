@@ -101,15 +101,17 @@ public final class Process {
      * back, since a call that never finished is simply a call that has not happened yet.
      */
     static final class Asked {
-        private final int id;
+        private final java.util.UUID id;
         private Object value;
         private boolean done;
+        /** Whether the answer can still arrive, or the question was lost with the world being saved. */
+        private boolean lost;
 
-        Asked(final int id) {
+        Asked(final java.util.UUID id) {
             this.id = id;
         }
 
-        int id() {
+        java.util.UUID id() {
             return this.id;
         }
     }
@@ -730,19 +732,24 @@ public final class Process {
 
     /** Puts a call on that object in the queue, to be run by the slices that follow. */
     /**
-     * Whether a turn of that method is already queued and has not had its chance yet.
+     * Whether the program can be given another turn of that method right now.
      *
-     * <p>A program that is waiting for something is not given another tick's work to do on top of the
-     * one it has not started: a tick that is missed is missed, rather than piling up to be run all at
-     * once the moment the wait ends.
+     * <p>It cannot while one is already queued and has not had its chance, and it cannot while the
+     * thread those turns run on is waiting for something: a line to be typed, a lock, an answer from
+     * the other side of a Gateway. A tick that is missed while a program waits is missed, rather than
+     * piling up to be run all at once the moment the wait ends, which is neither what a tick means nor
+     * something the machine can afford in one go.
      */
-    public boolean queued(final String method) {
+    public boolean readyForTurn(final String method) {
+        if (this.main.parked != Parked.NONE) {
+            return false;
+        }
         for (final Frame frame : this.waiting) {
             if (frame.method.name().equals(method)) {
-                return true;
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
     public void begin(final Values.Obj self, final String method) {
@@ -1669,6 +1676,18 @@ public final class Process {
                 }
             }
             thread.parked = Parked.valueOf(written.parked());
+            if (thread.parked == Parked.ANSWER) {
+                /*
+                 * A question that was out when the world was saved is a question that was never
+                 * answered. It is NOT asked again: the computer on the other side may well have done
+                 * what it was asked before the world was put down, and asking twice would run it twice.
+                 * The call gives back nothing instead, which the program can tell apart and try again
+                 * itself if trying again is safe for what it was doing.
+                 */
+                thread.asked = new Asked(java.util.UUID.randomUUID());
+                thread.asked.lost = true;
+                thread.asked.done = true;
+            }
             thread.until = written.until();
             thread.on = value(written.on(), byNumber);
             thread.onHost = written.onHost();
@@ -2325,14 +2344,26 @@ public final class Process {
         if (asked != null && asked.done) {
             this.current.asked = null;
             this.take(frame, named.parameters());
-            this.push(frame, named, Library.Answer.of(asked.value == null
-                    ? nothing(named.returns()) : asked.value));
+            /*
+             * The answer comes from outside this program, so it goes on the program's own heap before
+             * the program can hold it: a value a program can reach that the heap has never seen is a
+             * value outside its RAM, and one the snapshot would lose on the way back.
+             */
+            final Object answer = asked.value == null ? nothing(named.returns())
+                    : this.library.adoptExternal(asked.value, line);
+            this.push(frame, named, Library.Answer.of(answer));
             return;
         }
         if (asked == null) {
             final List<Object> arguments = this.peek(frame, named.parameters().size());
             final Library.Answer sent = this.library.call(named, null, arguments, line);
-            this.current.asked = new Asked(Numbers.toInt(sent.value()));
+            if (!(sent.value() instanceof java.util.UUID name)) {
+                // The machine could not even put the question; there is nothing to wait for.
+                this.take(frame, named.parameters());
+                this.push(frame, named, Library.Answer.of(nothing(named.returns())));
+                return;
+            }
+            this.current.asked = new Asked(name);
         }
         // The call has not happened yet as far as the program is concerned, so it is run again later.
         frame.at--;
@@ -2364,9 +2395,9 @@ public final class Process {
      *
      * @return whether a thread was still waiting for it
      */
-    public boolean answered(final int id, final Object value) {
+    public boolean answered(final java.util.UUID id, final Object value) {
         for (final Thread thread : this.threads) {
-            if (thread.asked != null && thread.asked.id() == id && !thread.asked.done) {
+            if (thread.asked != null && thread.asked.id().equals(id) && !thread.asked.done) {
                 thread.asked.value = value;
                 thread.asked.done = true;
                 return true;

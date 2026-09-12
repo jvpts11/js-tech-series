@@ -182,6 +182,11 @@ public final class ComputingPayloads {
                 ComputingPayloads::handleRequestDiskFiles);
         registrar.playToClient(DiskFilesPayload.TYPE, DiskFilesPayload.STREAM_CODEC,
                 ComputingPayloads::handleDiskFiles);
+        /* Looking into a ComputerCraft computer's folders: asked here, answered when that computer gets to it. */
+        registrar.playToServer(RequestCcFilesPayload.TYPE, RequestCcFilesPayload.STREAM_CODEC,
+                dev.jstech.computers.gateway.GatewayBrowseHandler::requested);
+        registrar.playToClient(CcFilesPayload.TYPE, CcFilesPayload.STREAM_CODEC,
+                dev.jstech.computers.gateway.GatewayBrowseHandler::listed);
         registrar.playToServer(RequestDesktopFilesPayload.TYPE, RequestDesktopFilesPayload.STREAM_CODEC,
                 ComputingPayloads::handleRequestDesktopFiles);
         registrar.playToClient(DesktopFilesPayload.TYPE, DesktopFilesPayload.STREAM_CODEC,

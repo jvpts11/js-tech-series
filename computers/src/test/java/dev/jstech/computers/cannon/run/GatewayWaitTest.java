@@ -38,7 +38,7 @@ class GatewayWaitTest {
 
         private long now;
         private final List<String> asked = new ArrayList<>();
-        private int question;
+        private final List<java.util.UUID> names = new ArrayList<>();
 
         @Override
         public long tick() {
@@ -66,10 +66,10 @@ class GatewayWaitTest {
             if ("HasAgent".equals(member)) {
                 return Reply.of(Boolean.TRUE, 1);
             }
-            // Every question is taken and answered by its number, which is what a Gateway does.
+            // Every question is taken and answered by its own name, which is what a Gateway hands back.
             this.asked.add(member + " " + arguments);
-            this.question++;
-            return Reply.of(this.question, 1);
+            this.names.add(java.util.UUID.randomUUID());
+            return Reply.of(this.names.getLast(), 1);
         }
     }
 
@@ -88,7 +88,8 @@ class GatewayWaitTest {
             }
             """;
 
-    private static Process started(final Fake host) {
+    /** The program, loaded, ready to be run or to be read back into. */
+    private static Loaded loaded() {
         final CannonCompiler.Result built =
                 CannonCompiler.compile(List.of(new SourceFile("asker.can", ASKER)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
@@ -96,7 +97,11 @@ class GatewayWaitTest {
         final AsmProgram read = new AsmReader(built.assembly(), bag).read();
         assertFalse(bag.hasErrors(), () -> String.join("\n",
                 bag.sorted().stream().map(Diagnostic::format).toList()));
-        final Loaded program = Loaded.of(read);
+        return Loaded.of(read);
+    }
+
+    private static Process started(final Fake host) {
+        final Loaded program = loaded();
         final Process process = new Process(program, ROOM, host);
         process.beginStatic(program.entryPoint(), "Main");
         return process;
@@ -112,11 +117,14 @@ class GatewayWaitTest {
         assertEquals(1, host.asked.size(), "the question was put once");
         assertEquals(0, process.step(PLENTY), "and waiting costs nothing");
 
-        process.answered(1, "shell");
+        final long held = process.heap().used();
+        process.answered(host.names.getFirst(), "shell");
         process.step(PLENTY);
         assertEquals(List.of("before", "read shell", "after"), process.console(), "it carries on with it");
         assertEquals(Process.State.FINISHED, process.state());
         assertEquals(1, host.asked.size(), "and never asked twice");
+        assertTrue(process.heap().used() > held,
+                "the answer came onto the program's own heap, not from nowhere");
     }
 
     @Test
@@ -140,8 +148,28 @@ class GatewayWaitTest {
         final Fake host = new Fake();
         final Process process = started(host);
         process.step(PLENTY);
-        assertFalse(process.answered(77, "not for us"), "no one was waiting for that number");
+        assertFalse(process.answered(java.util.UUID.randomUUID(), "not for us"),
+                "no one was waiting for that name");
         assertEquals(List.of("before"), process.console(), "and the program is where it was");
-        assertTrue(process.answered(1, "ours"), "the one it is waiting for lands");
+        assertTrue(process.answered(host.names.getFirst(), "ours"), "the one it is waiting for lands");
+    }
+
+    /*
+     * A question that was out when the world was put down is a question that was never answered: the
+     * computer over there may already have done what it was asked, so asking again would do it twice.
+     */
+    @Test
+    void asking_isNotPutAgainAfterTheWorldIsReadBack() {
+        final Fake host = new Fake();
+        final Process process = started(host);
+        process.step(PLENTY);
+        assertEquals(1, host.asked.size(), "the question is out");
+
+        final Fake again = new Fake();
+        final Process read = Process.restore(loaded(), process.save(), again);
+        read.step(PLENTY);
+        assertEquals(List.of("before", "read ", "after"), read.console(),
+                "the call gives back nothing rather than happening a second time");
+        assertEquals(0, again.asked.size(), "and nothing was asked again");
     }
 }

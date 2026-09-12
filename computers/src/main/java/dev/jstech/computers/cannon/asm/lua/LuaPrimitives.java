@@ -108,10 +108,33 @@ final class LuaPrimitives {
         out.append("  for y = 1, last do _listadd(said, rows[y]) end\n");
         out.append("  return said\n");
         out.append("end\n");
-        out.append("local function _start(line)\n");
+        /* Starting something there, with whatever it was given: that side takes the word and its words. */
+        out.append("local function _start(name, given)\n");
         out.append("  local ok = false\n");
-        out.append("  if shell ~= nil then ok = shell.run(line) == true end\n");
-        out.append("  return { type = \"Process\", Id = 0, Name = line, Host = \"\",");
+        out.append("  if shell ~= nil then\n");
+        out.append("    local said = { name }\n");
+        out.append("    if type(given) == \"table\" and given.v ~= nil then\n");
+        out.append("      for i = 1, given.n do said[#said + 1] = tostring(given.v[i]) end\n");
+        out.append("    end\n");
+        out.append("    ok = shell.run(table.unpack(said)) == true\n");
+        out.append("  end\n");
+        out.append("  return { type = \"Process\", Id = 0, Name = name, Host = \"\",");
+        out.append(" Running = false, ExitCode = ok and 0 or 1 }\n");
+        out.append("end\n");
+        /*
+         * Running a program that was handed over as text rather than as a name on a disk. It is read as
+         * its own chunk with its own name, so a mistake inside it says where it is, and it runs to its
+         * end like anything else started here.
+         */
+        out.append("local function _runsource(text, given, named)\n");
+        out.append("  local made, why = load(text, \"@\" .. (named or \"program\"), \"t\")\n");
+        out.append("  if made == nil then error(why, 0) end\n");
+        out.append("  local said = {}\n");
+        out.append("  if type(given) == \"table\" and given.v ~= nil then\n");
+        out.append("    for i = 1, given.n do said[i] = given.v[i] end\n");
+        out.append("  end\n");
+        out.append("  local ok = pcall(made, table.unpack(said))\n");
+        out.append("  return { type = \"Process\", Id = 0, Name = named or \"program\", Host = \"\",");
         out.append(" Running = false, ExitCode = ok and 0 or 1 }\n");
         out.append("end\n");
     }
@@ -127,14 +150,8 @@ final class LuaPrimitives {
      */
     private static void serve(final StringBuilder out) {
         out.append("local function _serve(P, handler)\n");
-        out.append("  local found = nil\n");
-        out.append("  if peripheral ~= nil then\n");
-        out.append("    for _, name in ipairs(peripheral.getNames()) do\n");
-        out.append("      if peripheral.getType(name) == \"jsc_gateway\" then found = name end\n");
-        out.append("    end\n");
-        out.append("  end\n");
-        out.append("  if found == nil then return end\n");
-        out.append("  pcall(peripheral.call, found, \"hello\")\n");
+        out.append("  if _gatewayname() == nil then return end\n");
+        out.append("  pcall(peripheral.call, _gatewayname(), \"hello\")\n");
         out.append("  if _G.jsc_serving then return end\n");
         out.append("  _G.jsc_serving = true\n");
         out.append("  local pull = os.pullEventRaw\n");
@@ -145,7 +162,15 @@ final class LuaPrimitives {
         out.append("        local asked = _list()\n");
         out.append("        for i = 3, #said do _listadd(asked, said[i]) end\n");
         out.append("        local ok, answer = pcall(_invoke, P, handler, asked)\n");
-        out.append("        pcall(peripheral.call, found, \"answer\", said[2], ok and answer or nil)\n");
+        /*
+         * The Gateway is looked for again for every answer rather than remembered: the one that was
+         * there when the computer started may have been taken away, renamed or moved to another side,
+         * and an answer sent to a name that no longer means anything is an answer nobody receives.
+         */
+        out.append("        local back = _gatewayname()\n");
+        out.append("        if back ~= nil then\n");
+        out.append("          pcall(peripheral.call, back, \"answer\", said[2], ok and answer or nil)\n");
+        out.append("        end\n");
         out.append("      elseif filter == nil or said[1] == filter then\n");
         out.append("        return table.unpack(said)\n");
         out.append("      end\n");
@@ -159,25 +184,31 @@ final class LuaPrimitives {
      * what every question about our machines and our network goes through. It is looked for once.
      */
     private static void gateway(final StringBuilder out) {
+        /*
+         * Always the FIRST one, so a computer with two Gateways is not answered by one and asking the
+         * other depending on the order the sides happen to be named in. What was found last is kept, but
+         * only while it is still a Gateway: one that is taken away, renamed or moved is looked for again.
+         */
         out.append("local _found = nil\n");
-        out.append("local function _gateway()\n");
-        out.append("  if _found ~= nil then return _found end\n");
-        out.append("  if peripheral == nil then error(\"this computer has no peripherals\", 0) end\n");
-        out.append("  for _, name in ipairs(peripheral.getNames()) do\n");
-        out.append("    if peripheral.getType(name) == \"jsc_gateway\" then\n");
-        out.append("      _found = name\n");
-        out.append("      return _found\n");
-        out.append("    end\n");
+        out.append("local function _gatewayname()\n");
+        out.append("  if peripheral == nil then return nil end\n");
+        out.append("  if _found ~= nil and peripheral.getType(_found) == \"jsc_gateway\" then\n");
+        out.append("    return _found\n");
         out.append("  end\n");
-        out.append("  error(\"there is no Gateway this computer can reach\", 0)\n");
+        out.append("  _found = nil\n");
+        out.append("  for _, name in ipairs(peripheral.getNames()) do\n");
+        out.append("    if _found == nil and peripheral.getType(name) == \"jsc_gateway\" then _found = name end\n");
+        out.append("  end\n");
+        out.append("  return _found\n");
+        out.append("end\n");
+        out.append("local function _gateway()\n");
+        out.append("  local found = _gatewayname()\n");
+        out.append("  if found == nil then error(\"there is no Gateway this computer can reach\", 0) end\n");
+        out.append("  return found\n");
         out.append("end\n");
         /* Whether there is one at all, which is a question rather than an attempt, so it never stops. */
         out.append("local function _hasgateway()\n");
-        out.append("  if peripheral == nil then return false end\n");
-        out.append("  for _, name in ipairs(peripheral.getNames()) do\n");
-        out.append("    if peripheral.getType(name) == \"jsc_gateway\" then return true end\n");
-        out.append("  end\n");
-        out.append("  return false\n");
+        out.append("  return _gatewayname() ~= nil\n");
         out.append("end\n");
         /*
          * The same question a program standing on one of our machines asks its own machine: the name of
@@ -419,6 +450,23 @@ final class LuaPrimitives {
         out.append("local function _maptake(m, k)\n");
         out.append("  if m.v[k] ~= nil then m.n = m.n - 1 end\n");
         out.append("  m.v[k] = nil\n");
+        out.append("end\n");
+        /* A plain run of things from that side, as a list of the kind the program reads. */
+        out.append("local function _ours(given)\n");
+        out.append("  local made = _list()\n");
+        out.append("  if type(given) ~= \"table\" then return made end\n");
+        out.append("  local at = 1\n");
+        out.append("  while given[at] ~= nil do\n");
+        out.append("    _listadd(made, given[at])\n");
+        out.append("    at = at + 1\n");
+        out.append("  end\n");
+        out.append("  return made\n");
+        out.append("end\n");
+        /* The words the program was started with, as a list of the kind the program reads. */
+        out.append("local function _arglist()\n");
+        out.append("  local made = _list()\n");
+        out.append("  for i = 1, #_given do _listadd(made, tostring(_given[i])) end\n");
+        out.append("  return made\n");
         out.append("end\n");
     }
 

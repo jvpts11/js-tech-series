@@ -59,6 +59,11 @@ public final class AsmToLua {
 
     private void write() {
         this.line(0, "local " + PROGRAM + " = {}");
+        /*
+         * What the program was started with. It has to be taken here, at the top of the file: the words
+         * after a program's name reach a chunk as its own varargs and are out of reach anywhere else.
+         */
+        this.line(0, "local _given = { ... }");
         LuaPrimitives.write(this.out, this.needs());
         for (final Loaded.Type type : this.program.types()) {
             this.type(type);

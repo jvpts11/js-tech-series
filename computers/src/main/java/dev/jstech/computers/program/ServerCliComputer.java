@@ -3137,6 +3137,25 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     @Override
+    public OpResult startCarried(final String name, final String binary, final List<String> arguments) {
+        if (!(hostBlock instanceof AbstractComputerBlockEntity computer)) {
+            return OpResult.fail(name + ": this machine cannot run programs");
+        }
+        if (binary.isEmpty()) {
+            return OpResult.fail(name + ": this build does not carry that program");
+        }
+        final MachinePrograms.Started started = computer.cannon()
+                .start(name, binary, 1, computer, arguments, 0, MachinePrograms.DEFAULT_PRIORITY);
+        if (!started.ok()) {
+            return OpResult.fail(started.message());
+        }
+        // It takes the prompt like anything else started from here, and gives it back when it is done.
+        computer.cannon().hold(started.id());
+        computer.setChanged();
+        return OpResult.ok("");
+    }
+
+    @Override
     public OpResult startCannon(final String path, final int heapMb, final List<String> arguments) {
         if (!(hostBlock instanceof AbstractComputerBlockEntity computer)) {
             return OpResult.fail("cannon: this machine cannot run programs");

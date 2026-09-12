@@ -52,7 +52,11 @@ class Agent {
             two = asked[2];
         }
         if (verb == "run") {
-            Process started = Program.Start(one);
+            List<string> given = new List<string>();
+            for (int i = 2; i < asked.Count; i = i + 1) {
+                given.Add(asked[i]);
+            }
+            Process started = Program.Start(one, given);
             return started.ExitCode == 0;
         }
         if (verb == "shell") {

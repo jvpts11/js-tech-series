@@ -160,6 +160,107 @@ A statement goes to the Mainframe as it would from the prompt or the Network Man
 the program's name. Rows are maps keyed by their columns (`name`, `quantity`, `detail`). Plain
 statements need only a Mainframe; views, procedures and jobs need the IQL Engine installed on it.
 
+## Windows of its own: `System.UI`
+
+A program is not only a stream of printed lines. It can open a window on the desktop of the machine it
+runs on, and the machine's own system draws it, so the same program looks like a Frames 95 program on a
+Frames 95 machine and like a KDE one on Linux.
+
+```
+Window made = new Window("Reactor");
+Label heat = new Label("holding at 900");
+made.Content = new Column(new Row(heat, new Button("Scram", Scram)), new ProgressBar(0.62));
+made.Show();
+```
+
+Every widget is an object the program holds, on the program's own heap, and is saved with it: a machine
+that is loaded back opens the same windows with the same words in them. `Window`, `Row`, `Column`,
+`Label`, `Button`, `TextBox`, `CheckBox`, `ProgressBar`, `ListBox`, `Canvas` and `MessageBox` are what
+there is. What a player does reaches the program as a handler, on the program's own thread and in turn
+with everything else it does. A window is a thing of the machine, not of the screen: closing the desktop
+does not close it, and a program that ends with a window open ends.
+
+## The ComputerCraft side: `Gateway`
+
+A Network Gateway is a device of a computer, linked to it through a peripheral cable, whose other face
+is a ComputerCraft peripheral. Where there is one, a program reaches across it.
+
+```
+Gateway.Online -> bool                    Gateway.Names() -> List<string>
+Gateway.Select(string name) -> bool       Gateway.Current -> string
+Gateway.Computers() -> List<CcComputer>   Gateway.Peripherals() -> List<CcPeripheral>
+Gateway.Call(string peripheral, string method[, object ...]) -> object
+Gateway.TurnOn(long id) / Shutdown(long id) / Reboot(long id) -> bool
+Gateway.Send(long id, string text) -> bool
+Gateway.OnMessage(Action<GatewayMessage>)
+```
+
+`Call` reaches any peripheral on their wired network by the names that side knows it by. A machine with
+several Gateways has a program choose with `Select`; one that chooses nothing gets the first.
+
+What needs the agent (below) is what asks one of THEIR computers to do something:
+
+```
+Gateway.HasAgent(long id) -> bool
+Gateway.Run(long id, string program[, List<string> args]) -> bool
+Gateway.Shell(long id, string line) -> List<string>
+Gateway.Read(long id, string path) -> string
+Gateway.Write(long id, string path, string text) -> bool
+Gateway.List(long id, string path) -> List<string>
+```
+
+Each of these waits for that computer to answer. Waiting costs the program nothing: it stops where it
+stands, its machine carries on, and it goes on with the answer when it lands. A computer that never
+answers ends the wait after five seconds and the call gives back nothing of its own kind, which a
+program can tell apart and act on. A world saved while a question is out does not ask it again when it
+is read back, because that computer may already have done what it was asked.
+
+What a Gateway allows is set on the Gateway itself, in the Gateway Manager or with `gateway <name> set`:
+reading the network, running operations, and how far the shared folders reach. Allowing operations is
+authority over the computer on the other side, its own files and peripherals included, because running
+a line there runs code with that computer's powers.
+
+## Programs crossing: the agent, `jsc` and translation
+
+A program of ours runs on a ComputerCraft computer. It is not rewritten and there is no switch to throw:
+going to one of their computers means being translated on the way, so the assembly a program compiles to
+becomes what that computer runs, at the moment it is sent.
+
+Their computers carry a small agent of ours, which starts with the computer and does nothing at all on
+one with no Gateway within reach. Where there is one, it says it is there, and answers what this side
+asks of it. It is itself one of our programs, translated the same way as any other.
+
+At one of their prompts:
+
+```
+jsc run <program> [words]     one of the host computer's programs, run there
+jsc list                      what there is to run
+```
+
+At one of ours:
+
+```
+gateway cc-bridge get 3:/reactor.lua C:\cc\reactor.lua
+gateway cc-bridge put C:\prog\batch.can 3:/batch
+```
+
+A `.can` or `.asm` put on one of their computers is compiled and translated on the way; a `.lua` crosses
+untouched. The file explorer shows the same thing under Network, as ComputerCraft: the computers with an
+agent, and their folders.
+
+A program that is meant to answer rather than ask says so, which is what the agent itself does:
+
+```
+Gateway.Serve(Func<List<string>, object> handler)
+```
+
+## Two kinds of number, one language
+
+A translated program is the same program, but the machine it lands on is not the same machine. Their
+computers count in one kind of number, so a program that prints a whole `3.0` here prints `3` there, and
+a whole number larger than about nine thousand million million loses its last digits crossing over.
+Everything else, the language itself, means what it means on either side.
+
 ## Watching the network
 
 ```

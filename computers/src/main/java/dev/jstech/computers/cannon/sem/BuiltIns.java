@@ -431,6 +431,11 @@ public final class BuiltIns {
          * a remote computer is asked for, asked of the machine the program is standing on instead.
          */
         this.method(program, "Shell", strings, PUBLIC_STATIC, this.stringType);
+        /*
+         * A program handed over as text rather than named on a disk: it is read, run to its end, and
+         * says how it went, the same as one started by name.
+         */
+        this.method(program, "RunSource", process, PUBLIC_STATIC, this.stringType, strings, this.stringType);
 
         final NamedType message = this.declare("ProcessMessage", NamedType.Kind.CLASS);
         this.property(message, "From", integer, PUBLIC);
@@ -612,6 +617,13 @@ public final class BuiltIns {
          */
         this.method(gateway, "Serve", ITypeSymbol.Primitive.VOID, PUBLIC_STATIC,
                 new ITypeSymbol.GenericType(this.funcType, List.of(lines, this.objectType)));
+        /*
+         * One of the network's own programs, handed over ready to run on the machine asking for it. A
+         * program of ours goes to a computer over there already turned into what that computer runs, so
+         * there is never a switch to throw or a form to choose: it is translated because it is going.
+         */
+        this.method(gateway, "Program", text, PUBLIC_STATIC, text);
+        this.method(gateway, "Programs", lines, PUBLIC_STATIC);
     }
 
     /**

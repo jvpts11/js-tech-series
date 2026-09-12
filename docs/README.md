@@ -12,5 +12,7 @@ repository for the first time. What each mod does is on its own page: [J's Core]
   and how to write a program on it.
 - [Cannon](CANNON.md): the computers' programming language: its two shapes of program, the budget and
   the clock it runs under, and everything a program can reach.
+- [ComputerCraft](COMPUTERCRAFT.md): the bridge to CC: Tweaked: the Network Gateway, what each side can
+  ask of the other, the agent their computers carry, and what it costs.
 
 Design documents and balancing notes are not part of the repository.

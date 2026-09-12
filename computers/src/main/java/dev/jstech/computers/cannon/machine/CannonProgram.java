@@ -98,7 +98,7 @@ final class CannonProgram implements ILanguageProcess {
     @Override
     public void onTick() {
         final Values.Obj script = this.process.script();
-        if (script != null && !this.process.queued("OnTick")) {
+        if (script != null && this.process.readyForTurn("OnTick")) {
             this.process.begin(script, "OnTick");
         }
     }

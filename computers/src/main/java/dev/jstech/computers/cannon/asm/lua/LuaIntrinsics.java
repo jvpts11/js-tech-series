@@ -57,10 +57,20 @@ final class LuaIntrinsics {
         }
         if ("Program".equals(owner) && "Start".equals(member)) {
             // A program started over there runs to its end there and then, since nothing runs behind.
-            return "_start(" + first + ")";
+            return "_start(" + first + ", " + second + ")";
         }
         if ("Gateway".equals(owner) && "Serve".equals(member)) {
             return "_serve(" + AsmToLua.PROGRAM + ", " + first + ")";
+        }
+        if ("Gateway".equals(owner) && "Program".equals(member)) {
+            // One of our programs, handed over already turned into something this computer can run.
+            return "peripheral.call(_gateway(), \"program\", " + first + ")";
+        }
+        if ("Gateway".equals(owner) && "Programs".equals(member)) {
+            return "_ours(peripheral.call(_gateway(), \"programs\"))";
+        }
+        if ("Program".equals(owner) && "RunSource".equals(member)) {
+            return "_runsource(" + first + ", " + second + ", " + third + ")";
         }
         if ("Program".equals(owner) && OURS.contains(member)) {
             /*

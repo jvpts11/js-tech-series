@@ -44,6 +44,25 @@ class JscRomTest {
     }
 
     @Test
+    void command_compilesAndIsTheOneAPlayerTypes() {
+        JscRom.forget();
+        final String lua = JscRom.command();
+        assertFalse(lua.isEmpty(), "the jsc command's source is in the jar and compiles");
+        final LuaCompiler.Result read = LuaCompiler.compile(new SourceFile("jsc.lua", lua));
+        assertTrue(read.ok(), () -> String.join("\n", read.lines()) + "\n\n" + lua);
+        assertTrue(lua.contains("_arglist()"), "it reads the words it was typed with");
+        assertTrue(lua.contains("\"program\""), "it asks the Gateway for one of our programs");
+        assertTrue(lua.contains("_runsource("), "and runs what it gets back");
+    }
+
+    @Test
+    void at_servesEachFileWhereTheirComputersLookForIt() {
+        assertEquals(JscRom.agent(), JscRom.at(JscRom.AGENT_PATH));
+        assertEquals(JscRom.command(), JscRom.at(JscRom.COMMAND_PATH));
+        assertEquals("", JscRom.at("lua/rom/programs/something_else.lua"), "and nothing else at all");
+    }
+
+    @Test
     void agent_isMadeOnceAndKept() {
         JscRom.forget();
         final String first = JscRom.agent();

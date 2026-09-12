@@ -410,6 +410,18 @@ public final class Library {
      * weighs. Anything already on the heap is left where it is, so handing back something the program
      * gave in the first place does not charge it twice.
      */
+    /**
+     * Puts a value that came from outside onto the program's heap, so the program may hold it.
+     *
+     * <p>The one door for everything the world hands a program: an answer from a host call comes through
+     * here, and so does an answer from a computer on the other side of a Gateway. A value that skips it
+     * is a value outside the program's RAM and outside its snapshot, which is to say a value that
+     * quietly becomes nothing the next time the world is read back.
+     */
+    Object adoptExternal(final Object made, final int line) {
+        return this.adopt(made, line);
+    }
+
     private Object adopt(final Object made, final int line) {
         if (made == null || this.heap.bytesOf(made) > 0) {
             return made;

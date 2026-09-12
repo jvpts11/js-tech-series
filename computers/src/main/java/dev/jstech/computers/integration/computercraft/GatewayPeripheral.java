@@ -14,6 +14,7 @@ import dan200.computercraft.api.peripheral.IComputerAccess;
 import dan200.computercraft.api.peripheral.IPeripheral;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.gateway.GatewayRefusedException;
+import dev.jstech.computers.gateway.GatewayRequestId;
 import dev.jstech.computers.gateway.GatewayService;
 import dev.jstech.computers.gateway.GatewayValues;
 import java.util.ArrayList;
@@ -312,6 +313,31 @@ public final class GatewayPeripheral implements IPeripheral {
     }
 
     /**
+     * One of the network's programs, handed over ready to run on this computer: {@code program(name)}.
+     *
+     * <p>A program of ours arrives already turned into what this computer runs; one written in this
+     * computer's own language arrives unchanged. There is no switch and no second copy kept anywhere.
+     */
+    @LuaFunction(mainThread = true)
+    public String program(final IComputerAccess computer, final String name) throws LuaException {
+        try {
+            return service().program(caller(computer), name);
+        } catch (final GatewayRefusedException refused) {
+            throw error(refused);
+        }
+    }
+
+    /** What this Gateway's host computer has that could be run here, by name. */
+    @LuaFunction(mainThread = true)
+    public List<String> programs(final IComputerAccess computer) throws LuaException {
+        try {
+            return service().programs(caller(computer));
+        } catch (final GatewayRefusedException refused) {
+            throw error(refused);
+        }
+    }
+
+    /**
      * Anything one of our own programs asks its machine, from one of our programs translated to run here:
      * {@code ask(thing, member, ...)}.
      *
@@ -353,10 +379,15 @@ public final class GatewayPeripheral implements IPeripheral {
      */
     @LuaFunction(mainThread = true)
     public boolean answer(final IComputerAccess computer, final IArguments arguments) throws LuaException {
-        final int question = arguments.getInt(0);
+        final GatewayRequestId question = GatewayRequestId.of(arguments.getString(0));
         final Object value = arguments.count() > 1 ? arguments.get(1) : null;
         gateway.agentOn(computer.getID());
-        return gateway.answered(question, GatewayValues.fromTranslated(value));
+        /*
+         * The answer is checked against the question before anything of it is turned into one of our
+         * values: which computer was asked, and how much it may say. A computer that answers what was
+         * asked of another one, or says more than an answer may, is refused here and not further in.
+         */
+        return gateway.answered(question, computer.getID(), value);
     }
 
     // Watches and the log

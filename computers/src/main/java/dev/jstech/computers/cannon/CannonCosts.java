@@ -130,6 +130,8 @@ public final class CannonCosts {
         put("Program", SUBMIT, false, "Start");
         // A line at the machine's own prompt is a program started and waited for, priced as one.
         put("Program", SUBMIT, true, "Shell");
+        // A program handed over as text: read, made ready and run, which is a start and a read together.
+        put("Program", SUBMIT + READ, false, "RunSource");
         put("Process", 0, false, "Id", "Name", "Host", "Wait");
         put("Process", GLANCE, false, "Running", "ExitCode");
         put("Process", GLANCE_NETWORK, false, "Kill", "Send");

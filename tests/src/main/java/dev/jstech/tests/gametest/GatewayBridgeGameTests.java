@@ -364,6 +364,52 @@ public final class GatewayBridgeGameTests {
                 .thenSucceed();
     }
 
+    /** A program of ours written for our own computers, asked for by a computer of theirs. */
+    private static final String REACTOR = """
+            using System.*;
+            using System.IO.*;
+            namespace Plant;
+            class Reactor {
+                static void Main() {
+                    Console.PrintLine("holding");
+                }
+            }
+            """;
+
+    /*
+     * Our programs going the other way: a computer over there asks the Gateway for one of the host's
+     * programs and is handed it ready to run, translated on the way because that is what going means.
+     */
+    @GameTest(template = ARENA)
+    public static void bridge_handsOverOneOfOurProgramsReadyToRunThere(final GameTestHelper helper) {
+        final Fleet fleet = wire(helper);
+        final FakeComputer cc = new FakeComputer(CC_ID);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 6, () -> {
+                    final ServerCliComputer shell =
+                            new ServerCliComputer(fleet.host(), helper.getLevel());
+                    helper.assertTrue(shell.writeFile("reactor.can", REACTOR).ok(), "the program is on the disk");
+                    final GatewayPeripheral peripheral = attach(helper, cc);
+                    lua(() -> {
+                        final String made = peripheral.program(cc, "reactor.can");
+                        helper.assertTrue(made.startsWith("local P") && made.contains("holding"),
+                                "it arrives as something that computer can run; got "
+                                        + made.substring(0, Math.min(40, made.length())));
+                        final List<String> there = peripheral.programs(cc);
+                        helper.assertTrue(there.contains("reactor.can"),
+                                "and it is listed among what can be run; got " + there);
+                    }).run();
+                    final String missing = refusal(lua(() -> peripheral.program(cc, "nothing.can")));
+                    helper.assertTrue(!missing.isEmpty(), "a program that is not there is refused");
+                    gateway(helper).setPermissions(GatewayPermissions.DEFAULT
+                            .withFiles(GatewayPermissions.FileAccess.OFF), "desk", "files off");
+                    final String denied = refusal(lua(() -> peripheral.program(cc, "reactor.can")));
+                    helper.assertTrue(denied.contains("shared folders are off"),
+                            "and with files off, nothing crosses at all; got " + denied);
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA)
     public static void bridge_refusesWhatThePermissionsDeny(final GameTestHelper helper) {
         final Fleet fleet = wire(helper);

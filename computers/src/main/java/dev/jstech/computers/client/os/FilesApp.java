@@ -8,6 +8,8 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.layout.FilesLayout;
+import dev.jstech.computers.gui.layout.FilesPaths;
+import dev.jstech.computers.operation.payload.CcFilesPayload;
 import dev.jstech.computers.operation.payload.CopyFilePayload;
 import dev.jstech.computers.operation.payload.DeleteFilePayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
@@ -18,6 +20,7 @@ import dev.jstech.computers.operation.payload.MkdirPayload;
 import dev.jstech.computers.operation.payload.MoveFilePayload;
 import dev.jstech.computers.operation.payload.RenameFilePayload;
 import dev.jstech.computers.operation.payload.RenameVolumePayload;
+import dev.jstech.computers.operation.payload.RequestCcFilesPayload;
 import dev.jstech.computers.operation.payload.RequestDiskFilesPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.os.fs.InstallerLayout;
@@ -325,6 +328,30 @@ public final class FilesApp implements IDesktopApp {
         rebuild(payload.files());
     }
 
+    /**
+     * What a ComputerCraft computer said its folder holds.
+     *
+     * <p>It arrives some ticks after it was asked for, so an explorer that has moved on since leaves it:
+     * what came back is about a folder nobody here is looking at any more. What came back as nothing
+     * says why, in the place the files would have been.
+     */
+    void acceptCc(final CcFilesPayload payload) {
+        if (!FilesPaths.isCc(dir) || !dir.equals(FilesPaths.ccOf(payload.computer(), payload.path()))) {
+            return;
+        }
+        this.waitingOn = "";
+        this.waitingWhy = payload.message();
+        final List<DiskFilesPayload.WireFile> files = new ArrayList<>();
+        for (final String name : payload.names()) {
+            final boolean folder = name.endsWith("/");
+            final String bare = folder ? name.substring(0, name.length() - 1) : name;
+            final int dot = bare.lastIndexOf('.');
+            files.add(new DiskFilesPayload.WireFile(dir + "/" + bare,
+                    dot > 0 ? bare.substring(dot + 1) : "", 0L, true, folder));
+        }
+        rebuild(files);
+    }
+
     @Override
     public void onClosed() {
         FilesApps.forget(this);
@@ -428,8 +455,28 @@ public final class FilesApp implements IDesktopApp {
         // Row indices are about to mean something else, so a sweep selection cannot survive.
         this.bandActive = false;
         this.bandRows.clear();
+        if (FilesPaths.isCc(target)) {
+            /*
+             * A folder on a computer of another mod: it is asked, not read. The answer comes back when
+             * that computer gets to it, so the listing is emptied and the window says what it is doing
+             * rather than showing the folder it was on as though nothing had been asked.
+             */
+            this.waitingOn = target;
+            this.waitingWhy = "";
+            this.allRows = new ArrayList<>();
+            this.rows = new ArrayList<>();
+            PacketDistributor.sendToServer(new RequestCcFilesPayload(host,
+                    FilesPaths.ccComputer(target), FilesPaths.ccPath(target)));
+            return;
+        }
+        this.waitingOn = "";
+        this.waitingWhy = "";
         PacketDistributor.sendToServer(new RequestDiskFilesPayload(host, target));
     }
+
+    /** The folder being waited on, or empty; and why the last wait came back with nothing. */
+    private String waitingOn = "";
+    private String waitingWhy = "";
 
     /** Navigates somewhere new: the current folder joins the back history and forward is cleared. */
     private void go(final String target) {
@@ -763,6 +810,9 @@ public final class FilesApp implements IDesktopApp {
             out.add(new TreeItem(letter.isEmpty() ? v.label() : v.label() + " (" + letter + ")", v.key(),
                     false, v.removable(), i));
         }
+        out.add(new TreeItem("Network", "", true, false, -1));
+        out.add(new TreeItem(linux() ? "Shares" : "Shared folders", NET_ROOT, false, false, -1));
+        out.add(new TreeItem("ComputerCraft", FilesPaths.CC, false, false, -1));
         return out;
     }
 
@@ -1030,6 +1080,13 @@ public final class FilesApp implements IDesktopApp {
     }
 
     private String statusLeftText() {
+        if (!waitingOn.isEmpty()) {
+            // A folder of another mod's computer answers when it gets to it, so the window says so.
+            return "asking computer " + FilesPaths.ccComputer(waitingOn) + "...";
+        }
+        if (!waitingWhy.isEmpty()) {
+            return waitingWhy;
+        }
         int items = 0;
         for (final Row r : rows) {
             if (r.kind() == Kind.FILE || r.kind() == Kind.DIR) {

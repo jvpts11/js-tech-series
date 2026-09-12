@@ -92,7 +92,8 @@ public record MachineHost(BlockEntity machine) implements IHost {
             return HostComputer.call(self, computer, member, line);
         }
         if (HostGateway.handles(owner)) {
-            return HostGateway.call(this.machine, member, arguments, line);
+            // The asking program is named because a question put across waits for an answer addressed to it.
+            return HostGateway.call(this.machine, callerId, member, arguments, line);
         }
         if (HostNetwork.handles(owner)) {
             return HostNetwork.call(computer, member, arguments, line);

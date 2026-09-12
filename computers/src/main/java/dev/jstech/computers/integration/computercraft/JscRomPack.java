@@ -79,14 +79,18 @@ public final class JscRomPack implements PackResources {
         return null;
     }
 
+    /** Everything this pack serves, in the places their computers look for them. */
+    private static final java.util.List<String> FILES =
+            java.util.List.of(JscRom.AGENT_PATH, JscRom.COMMAND_PATH);
+
     @Override
     @Nullable
     public IoSupplier<InputStream> getResource(final PackType type, final ResourceLocation at) {
         if (type != PackType.SERVER_DATA || !CC.equals(at.getNamespace())
-                || !JscRom.AGENT_PATH.equals(at.getPath())) {
+                || !FILES.contains(at.getPath())) {
             return null;
         }
-        final String lua = JscRom.agent();
+        final String lua = JscRom.at(at.getPath());
         if (lua.isEmpty()) {
             /*
              * The agent is made out of this mod's own source by this mod's own translator, so there is
@@ -104,13 +108,18 @@ public final class JscRomPack implements PackResources {
     @Override
     public void listResources(final PackType type, final String namespace, final String path,
                               final ResourceOutput output) {
-        if (type != PackType.SERVER_DATA || !CC.equals(namespace) || !JscRom.AGENT_PATH.startsWith(path)) {
+        if (type != PackType.SERVER_DATA || !CC.equals(namespace)) {
             return;
         }
-        final ResourceLocation at = ResourceLocation.fromNamespaceAndPath(CC, JscRom.AGENT_PATH);
-        final IoSupplier<InputStream> held = this.getResource(type, at);
-        if (held != null) {
-            output.accept(at, held);
+        for (final String file : FILES) {
+            if (!file.startsWith(path)) {
+                continue;
+            }
+            final ResourceLocation at = ResourceLocation.fromNamespaceAndPath(CC, file);
+            final IoSupplier<InputStream> held = this.getResource(type, at);
+            if (held != null) {
+                output.accept(at, held);
+            }
         }
     }
 

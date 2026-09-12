@@ -74,6 +74,7 @@ public final class GatewayCommand implements ICliCommand {
             case "clear" -> act(ctx, level, host, pos, GatewayManagerActionPayload.ACTION_CLEAR_BUFFER, 0, "");
             case "test" -> act(ctx, level, host, pos, GatewayManagerActionPayload.ACTION_TEST_EVENT, 0, "");
             case "set" -> set(ctx, level, host, pos);
+            case "get", "put" -> carry(ctx, host, verb);
             default -> ctx.out().error("usage: gateway " + usage());
         }
     }
@@ -89,6 +90,37 @@ public final class GatewayCommand implements ICliCommand {
 
     private static GatewayManagerStatePayload state(final ServerLevel level, final BlockEntity host, final long pos) {
         return GatewayManager.state(level, host, pos, "");
+    }
+
+    /**
+     * Carries one file across, in either direction.
+     *
+     * <p>The prompt does not do this itself: a computer over there answers when it gets to it, several
+     * ticks later, and a prompt has no way to say anything once a line has been answered. So the line
+     * starts the program that can wait for it, which prints here when it is done, the same as any other
+     * program started from this terminal.
+     */
+    private static void carry(final CliContext ctx, final BlockEntity host, final String verb) {
+        final String there = ctx.arg(2);
+        final String here = ctx.arg(3);
+        final int colon = there.indexOf(':');
+        if (there.isEmpty() || here.isEmpty() || colon < 1) {
+            ctx.out().error("gateway: " + verb + " <computer>:<file there> <file here>");
+            return;
+        }
+        final String computer = there.substring(0, colon);
+        final String path = there.substring(colon + 1);
+        if (!computer.chars().allMatch(Character::isDigit)) {
+            ctx.out().error("gateway: " + computer + " is not the number of a ComputerCraft computer");
+            return;
+        }
+        final ICliComputer.OpResult started = ctx.computer().startCarried("transfer.asm",
+                ShellPrograms.transfer(), java.util.List.of(verb, computer, path, here));
+        if (!started.ok()) {
+            ctx.out().error("gateway: " + started.message());
+            return;
+        }
+        ctx.out().dim("asking computer " + computer + "...");
     }
 
     private static void list(final CliContext ctx, final ServerLevel level, final BlockEntity host) {
