@@ -64,14 +64,22 @@ release says which phase begins.
 
 ## Cutting a release
 
-1. Merge the slice into `main` with a merge commit.
+1. Merge the slice into `main` with a merge commit, once the Build workflow is green on the branch.
 2. Confirm `mod_version` in `gradle.properties` is the version being released.
 3. Move the `Unreleased` entries of `CHANGELOG.md` under the new version and date; note a phase change
    there if the release crosses a gate.
-4. Tag the commit `v<version>` (for example `v0.1.0a`).
-5. Build the release jars from that tag with `./gradlew build -Prelease`; each mod's jar lands in its own
-   `build/libs`, named `<mod id>-<minecraft version>-<version>.jar` (`jscore-…`, `jsc-…`, `jsindustrial-…`).
-   The `tests` subproject's jar is a development tool, never a release: it is not attached, not offered,
-   and not to be installed by anyone.
+4. Tag the commit `v<version>` (for example `v0.1.0a`) and push the tag.
+5. The tag starts the Release workflow. It checks that the tag and `mod_version` agree, builds the jars
+   with `./gradlew build -Prelease`, takes the version's section of `CHANGELOG.md` as the notes and drafts
+   a GitHub release with each mod's jar attached, named `<mod id>-<minecraft version>-<version>.jar`
+   (`jscore-…`, `jsc-…`, `jsindustrial-…`). The `tests` subproject's jar is a development tool, never a
+   release: it is not attached, not offered, and not to be installed by anyone.
 6. Keep a copy of the jars in a local `releases/` folder (ignored by git); every version stays there.
-7. Publish the tag and the jars on GitHub.
+7. Review the draft and publish it.
+
+## Checks
+
+Every push runs the Build workflow: it compiles every mod, runs the unit tests, regenerates the data of
+every mod and fails if the result differs from what is committed, and runs the GameTests. The client
+tests open real game windows, so they run every night on `main` and on demand from the Actions tab,
+with each shard's report and screenshots kept on the run.

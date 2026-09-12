@@ -1,0 +1,65 @@
+name: Client tests
+
+on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shard:
+    name: Shard ${{ matrix.shard }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: false
+
+      - name: Install a virtual display
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1-mesa-dri
+
+      - name: Run the shard
+        # The game renders through Mesa's software OpenGL on a virtual screen.
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: >
+          xvfb-run --auto-servernum --server-args="-screen 0 1280x800x24"
+          ./gradlew ":tests:runClientTests${{ matrix.shard }}" --console=plain
+
+      - name: Read the report
+        # The client closes normally either way, so the verdict is the report's last line.
+        run: |
+          report="run/clienttests/shard-${{ matrix.shard }}/clienttests/report.txt"
+          if [ ! -f "$report" ]; then
+            echo "The client closed without writing its report."
+            exit 1
+          fi
+          cat "$report"
+          tail -n 1 "$report" | grep -q '^ALL PASSED'
+
+      - name: Keep the report, the screenshots and the logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: client-tests-shard-${{ matrix.shard }}
+          path: |
+            run/clienttests/shard-${{ matrix.shard }}/clienttests/
+            run/clienttests/shard-${{ matrix.shard }}/screenshots/
+            run/clienttests/shard-${{ matrix.shard }}/logs/
+          if-no-files-found: ignore
