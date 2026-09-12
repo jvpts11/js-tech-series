@@ -237,8 +237,6 @@ public class JscLanguageProvider extends LanguageProvider {
                 "Compiles a Cannon program into the assembly the runtime reads.");
         add("program.jsc.cannonrt.desc",
                 "Runs compiled Cannon programs, and brings the 'cannon' command to the prompt.");
-        add("program.jsc.lrt.desc",
-                "Runs Lua programs, the language ComputerCraft computers speak, and brings the 'lrt' command to the prompt.");
         add("program.jsc.kde_plasma.desc", "The KDE Plasma desktop environment.");
         add("program.jsc.gnome.desc", "The GNOME desktop environment.");
         add("program.jsc.cinnamon.desc", "The Cinnamon desktop environment.");
