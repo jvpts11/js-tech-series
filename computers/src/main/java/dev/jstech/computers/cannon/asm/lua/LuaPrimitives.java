@@ -65,9 +65,10 @@ final class LuaPrimitives {
         out.append("  held.close()\n");
         out.append("  return text or \"\"\n");
         out.append("end\n");
+        /* Whether it is there, and what it says: both, because that is what the call gives back. */
         out.append("local function _fstry(path)\n");
-        out.append("  if not fs.exists(path) or fs.isDir(path) then return \"\" end\n");
-        out.append("  return _fsread(path)\n");
+        out.append("  if not fs.exists(path) or fs.isDir(path) then return false, \"\" end\n");
+        out.append("  return true, _fsread(path)\n");
         out.append("end\n");
         out.append("local function _fswrite(path, text, adding)\n");
         out.append("  local held = fs.open(path, adding and \"a\" or \"w\")\n");
@@ -149,27 +150,47 @@ final class LuaPrimitives {
      * throws must not take somebody else's program down with it.
      */
     private static void serve(final StringBuilder out) {
+        /*
+         * Answering one question. The Gateway is looked for again every time rather than remembered: the
+         * one that was there when the computer started may have been taken away, renamed or moved to
+         * another side, and an answer sent to a name that means nothing any more reaches nobody.
+         */
+        out.append("local function _answer(P, handler, said)\n");
+        out.append("  local asked = _list()\n");
+        out.append("  for i = 3, #said do _listadd(asked, said[i]) end\n");
+        out.append("  local ok, answer = pcall(_invoke, P, handler, asked)\n");
+        out.append("  local back = _gatewayname()\n");
+        out.append("  if back ~= nil then\n");
+        out.append("    pcall(peripheral.call, back, \"answer\", said[2], ok and answer or nil)\n");
+        out.append("  end\n");
+        out.append("end\n");
         out.append("local function _serve(P, handler)\n");
         out.append("  if _gatewayname() == nil then return end\n");
         out.append("  pcall(peripheral.call, _gatewayname(), \"hello\")\n");
-        out.append("  if _G.jsc_serving then return end\n");
-        out.append("  _G.jsc_serving = true\n");
+        out.append("  if _G.jsc_agent ~= nil then return end\n");
+        /* Said plainly in the globals, so anything else on this computer can see what is here. */
+        out.append("  _G.jsc_agent = { serving = false, waiting = {} }\n");
         out.append("  local pull = os.pullEventRaw\n");
         out.append("  os.pullEventRaw = function(filter)\n");
         out.append("    while true do\n");
         out.append("      local said = { pull() }\n");
         out.append("      if said[1] == \"jsc_ask\" then\n");
-        out.append("        local asked = _list()\n");
-        out.append("        for i = 3, #said do _listadd(asked, said[i]) end\n");
-        out.append("        local ok, answer = pcall(_invoke, P, handler, asked)\n");
         /*
-         * The Gateway is looked for again for every answer rather than remembered: the one that was
-         * there when the computer started may have been taken away, renamed or moved to another side,
-         * and an answer sent to a name that no longer means anything is an answer nobody receives.
+         * Answering a question can run a whole program, and that program waits for events of its own,
+         * which comes back through this very hook. A second question arriving in the middle of the
+         * first is NOT answered inside it: it is put aside and answered when the first is done, so
+         * nothing is lost, nothing runs inside something else, and nothing goes round for ever.
          */
-        out.append("        local back = _gatewayname()\n");
-        out.append("        if back ~= nil then\n");
-        out.append("          pcall(peripheral.call, back, \"answer\", said[2], ok and answer or nil)\n");
+        out.append("        if _G.jsc_agent.serving then\n");
+        out.append("          _G.jsc_agent.waiting[#_G.jsc_agent.waiting + 1] = said\n");
+        out.append("        else\n");
+        out.append("          _G.jsc_agent.serving = true\n");
+        out.append("          _answer(P, handler, said)\n");
+        out.append("          while #_G.jsc_agent.waiting > 0 do\n");
+        out.append("            local later = table.remove(_G.jsc_agent.waiting, 1)\n");
+        out.append("            _answer(P, handler, later)\n");
+        out.append("          end\n");
+        out.append("          _G.jsc_agent.serving = false\n");
         out.append("        end\n");
         out.append("      elseif filter == nil or said[1] == filter then\n");
         out.append("        return table.unpack(said)\n");

@@ -1517,7 +1517,7 @@ public final class NetworkGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = ARENA)
+    @GameTest(template = ARENA, timeoutTicks = 400)
     public static void localStorage_cappedByDiskCapacity(final GameTestHelper helper) {
         final BlockPos m = new BlockPos(1, 2, 2);
         final BlockPos hbw = new BlockPos(2, 2, 2);
@@ -1552,12 +1552,19 @@ public final class NetworkGameTests {
                             computer.localStorage(), "storage", null);
                     helper.assertTrue(op != null, "Mainframe should dispatch the SELECT");
                 })
-                .thenExecuteAfter(8, () -> {
+                /*
+                 * Waited for rather than counted in ticks: how long a SELECT of 2,500 items takes is the
+                 * network's business and the server's load, and a fixed number of ticks here is a test
+                 * that fails when the machine is busy rather than when the code is wrong.
+                 */
+                .thenWaitUntil(() -> helper.assertTrue(
+                        computer.localStore().count(StorageKey.of(Items.COBBLESTONE)) == 2_000,
+                        "local storage must cap at the 2,000-item disk capacity; got "
+                                + computer.localStore().count(StorageKey.of(Items.COBBLESTONE))))
+                .thenExecute(() -> {
                     final long inStorage = computer.localStore().count(StorageKey.of(Items.COBBLESTONE));
                     final long inNet = NetworkStorage.of(helper.getLevel(), mainframe.networkUuid())
                             .count(Items.COBBLESTONE);
-                    helper.assertTrue(inStorage == 2_000,
-                            "local storage must cap at the 2,000-item disk capacity; got " + inStorage);
                     helper.assertTrue(inStorage + inNet == 2_500,
                             "the rest must stay in the network, nothing lost; storage=" + inStorage + " net=" + inNet);
                 })

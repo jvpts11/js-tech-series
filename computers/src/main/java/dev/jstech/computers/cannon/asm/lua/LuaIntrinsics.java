@@ -137,6 +137,7 @@ final class LuaIntrinsics {
              */
             case "File.Exists" -> "fs.exists(" + first + ")";
             case "File.Read", "File.Text" -> "_fsread(" + first + ")";
+            /* Says whether it found it AND hands back what it found, which is a pair on both sides. */
             case "File.TryRead" -> "_fstry(" + first + ")";
             case "File.Write", "File.Put" -> "_fswrite(" + first + ", " + text(second) + ", false)";
             case "File.Append" -> "_fswrite(" + first + ", " + text(second) + ", true)";

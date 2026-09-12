@@ -407,12 +407,15 @@ public final class AsmToLua {
      * calls that thing.
      */
     private void call(final IOperand.Method named) {
-        final int count = named.parameters().size();
         final boolean ours = this.program.type(named.owner()) != null;
         final boolean takesTarget = ours ? !this.isStatic(named)
                 : LuaIntrinsics.takesTarget(named.owner(), named.name());
         final List<String> passed = new ArrayList<>();
-        final int taken = count + (takesTarget ? 1 : 0);
+        /*
+         * A place the call FILLS IN is not something it is given: it was never pushed, so it is not
+         * among what comes off the stack either. What it fills comes back beside the answer instead.
+         */
+        final int taken = given(named) + (takesTarget ? 1 : 0);
         for (int i = taken; i > 0; i--) {
             passed.add(under(i - 1));
         }
@@ -422,22 +425,49 @@ public final class AsmToLua {
         this.answered(named, answer, taken);
     }
 
+    /** How many of a call's parameters it is actually given, which is all but the ones it fills in. */
+    private static int given(final IOperand.Method named) {
+        int count = 0;
+        for (final String parameter : named.parameters()) {
+            if (!parameter.startsWith("out ")) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /** How many places a call fills in, which come back beside its answer. */
+    private static int filled(final IOperand.Method named) {
+        return named.parameters().size() - given(named);
+    }
+
     /*
      * What the call gives back is worked out while everything it takes is still on the stack, and only
      * then does the stack come down: reading it afterwards would read the wrong places.
      */
     private void answered(final IOperand.Method named, final String answer, final int taken) {
-        if (!"void".equals(named.returns())) {
-            this.line(3, "local answered = " + answer);
+        final int fills = filled(named);
+        if ("void".equals(named.returns()) && fills == 0) {
+            this.line(3, answer);
             if (taken > 0) {
                 this.drop(taken);
             }
-            this.push("answered");
             return;
         }
-        this.line(3, answer);
+        final List<String> held = new ArrayList<>();
+        if (!"void".equals(named.returns())) {
+            held.add("answered");
+        }
+        for (int i = 0; i < fills; i++) {
+            held.add("filled" + i);
+        }
+        this.line(3, "local " + String.join(", ", held) + " = " + answer);
         if (taken > 0) {
             this.drop(taken);
+        }
+        // The answer first, then whatever the call filled in, which is the order the program reads them.
+        for (final String one : held) {
+            this.push(one);
         }
     }
 

@@ -1332,10 +1332,12 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         final var payload = new dev.jstech.computers.operation.payload.LuaScreenPayload(getBlockPos(), one.file(),
                 screen.revision(), screen.cursorX(), screen.cursorY(), screen.blink(), screen.textColour(), text, fg, bg,
                 screen.palette());
+        /*
+         * Everyone at this machine's terminal sees it, whether that terminal is a window on a desktop
+         * or the whole glass of a machine that has none.
+         */
         for (final net.minecraft.server.level.ServerPlayer viewer : viewers) {
-            if (viewer.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu) {
-                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(viewer, payload);
-            }
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(viewer, payload);
         }
     }
 
@@ -1393,10 +1395,21 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         }
         final var payload = new dev.jstech.computers.operation.payload.DesktopShellOutputPayload(
                 false, !over, over ? shellPrompt() : "", wire);
+        /*
+         * The same said twice, once in each terminal's own words: a window on a desktop, and the prompt
+         * that is the whole glass of a machine that has none. Both are watching this one console.
+         */
+        final java.util.List<dev.jstech.computers.operation.payload.CommandOutputPayload.WireLine> promptWire =
+                new java.util.ArrayList<>(wire.size());
+        for (final var line : wire) {
+            promptWire.add(new dev.jstech.computers.operation.payload.CommandOutputPayload.WireLine(
+                    line.text(), line.style()));
+        }
+        final var prompt = new dev.jstech.computers.operation.payload.CommandOutputPayload(
+                false, over ? shellPrompt() : "", promptWire);
         for (final net.minecraft.server.level.ServerPlayer viewer : viewers) {
-            if (viewer.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu) {
-                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(viewer, payload);
-            }
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(viewer,
+                    viewer.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu ? payload : prompt);
         }
     }
 

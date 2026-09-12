@@ -66,6 +66,20 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
     private EditBox input;
 
+    /**
+     * The screen of the Lua program in front of this machine, when one has it.
+     *
+     * <p>A terminal with no desktop is still a terminal: a program that draws on the 51 by 19 grid is
+     * drawn here as it is anywhere else, on the same glass, with the keyboard and the mouse going to it
+     * rather than to the prompt. When the program is over, what it left on the screen joins the
+     * scrollback, so the prompt comes back underneath it the way it does in a window.
+     */
+    private dev.jstech.computers.client.os.LuaScreenView luaScreen;
+    private boolean onScreen;
+
+    /** Every prompt now open, so a program's screen reaches the ones showing that machine. */
+    private static final List<CommandPromptScreen<?>> OPEN = new ArrayList<>();
+
     /** The DOS prompt, synced from the server after each command so it tracks the current directory. */
     private String dosPrompt = "C:\\>";
 
@@ -103,6 +117,12 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         this.imageWidth = Math.min(this.width - 44, 384);
         this.imageHeight = Math.min(this.height - 60, 256);
         super.init();
+        if (this.luaScreen == null) {
+            this.luaScreen = new dev.jstech.computers.client.os.LuaScreenView(menu.hostPos(), 0, true);
+        }
+        if (!OPEN.contains(this)) {
+            OPEN.add(this);
+        }
         // Start the input box just past the "jsc> " prompt so the caret never sits on top of it.
         final int promptW = font.width(prompt() + " ");
         input = new EditBox(font, leftPos + 10 + promptW, topPos + imageHeight - 18,
@@ -220,6 +240,14 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     }
 
     private void apply(final CommandOutputPayload payload) {
+        /*
+         * The prompt coming back is what says the program that had the glass is done with it. A reply
+         * that only prints (a build's progress, a notice) carries no prompt and leaves the program in
+         * front, the way the same lines do in a terminal window.
+         */
+        if (this.onScreen && !payload.prompt().isEmpty()) {
+            leaveScreen();
+        }
         if (payload.clear()) {
             scrollback.clear();
         }
@@ -352,6 +380,17 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             JsTechTheme.text(g, font, "COMMAND PROMPT", 12, 11, JsTechTheme.text());
             JsTechTheme.textRight(g, font, "PROGRAM", imageWidth - 10, 11, JsTechTheme.accent());
         }
+        if (this.onScreen) {
+            /*
+             * A program has the glass: it is drawn instead of the scrollback and the input strip, over
+             * the whole console, and the terminal is only the frame around it until the program is done.
+             */
+            final int top = bareTerminal() ? 0 : 26;
+            final int bottom = bareTerminal() ? imageHeight : imageHeight - 8;
+            this.luaScreen.render(g, font, bareTerminal() ? 0 : 6, top,
+                    imageWidth - (bareTerminal() ? 0 : 12), bottom - top);
+            return;
+        }
 
         // Console scrollback, newest at the bottom, honoring the scroll offset.
         final int top = bareTerminal() ? 8 : 27;
@@ -458,6 +497,10 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             this.editor.keyPressed(key, mods);
             return true;
         }
+        // The same while a program has the glass: the keyboard is the program's, not the prompt's.
+        if (this.onScreen && this.luaScreen.keyPressed(key, mods)) {
+            return true;
+        }
         if (key == 257 || key == 335) { // Enter / numpad Enter
             submit();
             return true;
@@ -494,7 +537,43 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         if (this.editor != null) {
             return this.editor.charTyped(c);
         }
+        if (this.onScreen) {
+            return this.luaScreen.charTyped(c);
+        }
         return input != null && input.charTyped(c, mods);
+    }
+
+    @Override
+    public boolean keyReleased(final int key, final int scan, final int mods) {
+        if (this.onScreen && this.luaScreen.keyReleased(key)) {
+            return true;
+        }
+        return super.keyReleased(key, scan, mods);
+    }
+
+    @Override
+    public boolean mouseClicked(final double mx, final double my, final int button) {
+        if (this.onScreen && this.luaScreen.mouseClicked(mx - leftPos, my - topPos, button)) {
+            return true;
+        }
+        return super.mouseClicked(mx, my, button);
+    }
+
+    @Override
+    public boolean mouseDragged(final double mx, final double my, final int button,
+                                final double dx, final double dy) {
+        if (this.onScreen && this.luaScreen.mouseDragged(mx - leftPos, my - topPos, button)) {
+            return true;
+        }
+        return super.mouseDragged(mx, my, button, dx, dy);
+    }
+
+    @Override
+    public boolean mouseReleased(final double mx, final double my, final int button) {
+        if (this.onScreen && this.luaScreen.mouseReleased(mx - leftPos, my - topPos, button)) {
+            return true;
+        }
+        return super.mouseReleased(mx, my, button);
     }
 
     /**
@@ -608,7 +687,36 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
          * Nothing to remember: a terminal that is closed is over, and the next one opens fresh with
          * its own banner. The command history lives on the machine and comes back with the session.
          */
+        OPEN.remove(this);
         super.removed();
+    }
+
+    /**
+     * Hands a program's screen to every prompt showing that machine.
+     *
+     * <p>A machine with no desktop has this window and nothing else, so this is where a Lua program's
+     * screen is seen there. A prompt showing another machine is left alone.
+     */
+    public static void acceptScreen(final dev.jstech.computers.operation.payload.LuaScreenPayload payload) {
+        for (final CommandPromptScreen<?> open : new ArrayList<>(OPEN)) {
+            if (payload.hostPos().equals(open.menu.hostPos())) {
+                open.onScreen = true;
+                open.luaScreen.accept(payload);
+            }
+        }
+    }
+
+    /** The screen of the Lua program that has this terminal, or null while the prompt has it. */
+    public dev.jstech.computers.operation.payload.LuaScreenPayload screen() {
+        return this.onScreen ? this.luaScreen.screen() : null;
+    }
+
+    /* The program is over: what it left on the glass joins the scrollback, and the prompt comes back. */
+    private void leaveScreen() {
+        for (final String row : this.luaScreen.rows()) {
+            push(row, CliStyle.PLAIN);
+        }
+        this.onScreen = false;
     }
 
     @Override

@@ -1836,7 +1836,23 @@ public final class ComputingPayloads {
     }
 
     private static void handleLuaScreen(final LuaScreenPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> dev.jstech.computers.client.os.ShellViews.acceptScreen(payload));
+        context.enqueueWork(() -> {
+            dev.jstech.computers.client.os.ShellViews.acceptScreen(payload);
+            // A machine with no desktop has only its prompt, and a program's screen belongs there too.
+            dev.jstech.computers.client.CommandPromptScreen.acceptScreen(payload);
+        });
+    }
+
+    /**
+     * Whether this player is at the terminal of the machine at {@code host}: either the desktop of that
+     * machine, or its prompt on a machine that has no desktop. Both are the same glass to the player, and
+     * a program in front is theirs to type at from either.
+     */
+    private static boolean atTerminal(final ServerPlayer player, final net.minecraft.core.BlockPos host) {
+        return (player.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu desktop
+                        && host.equals(desktop.hostPos()))
+                || (player.containerMenu instanceof dev.jstech.computers.menu.CommandPromptMenu prompt
+                        && host.equals(prompt.hostPos()));
     }
 
     /**
@@ -1848,8 +1864,7 @@ public final class ComputingPayloads {
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)
                     || !(player.level() instanceof ServerLevel level)
-                    || !(player.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu desktop)
-                    || !payload.hostPos().equals(desktop.hostPos())
+                    || !atTerminal(player, payload.hostPos())
                     || !LuaEventPayload.NAMES.contains(payload.name())
                     || !(level.getBlockEntity(payload.hostPos())
                             instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity computer)) {

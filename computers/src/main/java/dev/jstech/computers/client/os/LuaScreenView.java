@@ -30,7 +30,7 @@ import org.lwjgl.glfw.GLFW;
  * Ctrl+V pastes, Ctrl+T asks the program to {@code terminate}, and clicks on a cell go as the mouse
  * events, counted in cells from 1. Ctrl+C is not the program's: the terminal takes it to stop it.
  */
-final class LuaScreenView {
+public final class LuaScreenView {
 
     private static final int GROUND = 0xFF000000;
     private static final int TAG_GROUND = 0xFF39D6C4;
@@ -51,22 +51,22 @@ final class LuaScreenView {
     private int dragButton = -1;
     private int[] dragCell;
 
-    LuaScreenView(final BlockPos host, final int session, final boolean window) {
+    public LuaScreenView(final BlockPos host, final int session, final boolean window) {
         this.host = host;
         this.session = session;
         this.window = window;
     }
 
-    void accept(final LuaScreenPayload payload) {
+    public void accept(final LuaScreenPayload payload) {
         this.screen = payload;
     }
 
-    LuaScreenPayload screen() {
+    public LuaScreenPayload screen() {
         return this.screen;
     }
 
     /** The screen as rows of plain text, the blank rows at the bottom left off: what the scrollback keeps. */
-    List<String> rows() {
+    public List<String> rows() {
         final List<String> rows = new ArrayList<>();
         if (this.screen == null) {
             return rows;
@@ -95,7 +95,8 @@ final class LuaScreenView {
         return this.placed;
     }
 
-    void render(final GuiGraphics g, final Font font, final int x, final int y, final int width, final int height) {
+    public void render(final GuiGraphics g, final Font font, final int x, final int y,
+                       final int width, final int height) {
         g.fill(x, y, x + width, y + height, GROUND);
         if (this.screen == null) {
             return;
@@ -205,7 +206,7 @@ final class LuaScreenView {
 
     // the keyboard
 
-    boolean keyPressed(final int key, final int modifiers) {
+    public boolean keyPressed(final int key, final int modifiers) {
         final boolean control = (modifiers & GLFW.GLFW_MOD_CONTROL) != 0;
         if (control && key == GLFW.GLFW_KEY_T) {
             this.send("terminate");
@@ -225,13 +226,13 @@ final class LuaScreenView {
         return true;
     }
 
-    boolean keyReleased(final int key) {
+    public boolean keyReleased(final int key) {
         this.down.remove(key);
         this.send("key_up", (long) key);
         return true;
     }
 
-    boolean charTyped(final char c) {
+    public boolean charTyped(final char c) {
         if (c < 32 || c == 127) {
             return false;
         }
@@ -250,7 +251,7 @@ final class LuaScreenView {
 
     // the mouse
 
-    boolean mouseClicked(final double mx, final double my, final int button) {
+    public boolean mouseClicked(final double mx, final double my, final int button) {
         final int[] cell = this.cellAt(mx, my);
         if (cell == null) {
             return false;
@@ -261,7 +262,7 @@ final class LuaScreenView {
         return true;
     }
 
-    boolean mouseDragged(final double mx, final double my, final int button) {
+    public boolean mouseDragged(final double mx, final double my, final int button) {
         final int[] cell = this.cellAt(mx, my);
         if (cell == null || this.dragButton != button || this.dragCell == null
                 || (cell[0] == this.dragCell[0] && cell[1] == this.dragCell[1])) {
@@ -272,7 +273,7 @@ final class LuaScreenView {
         return true;
     }
 
-    boolean mouseReleased(final double mx, final double my, final int button) {
+    public boolean mouseReleased(final double mx, final double my, final int button) {
         if (this.dragButton != button) {
             return false;
         }
@@ -287,7 +288,7 @@ final class LuaScreenView {
         return true;
     }
 
-    boolean mouseScrolled(final double mx, final double my, final double delta) {
+    public boolean mouseScrolled(final double mx, final double my, final double delta) {
         final int[] cell = this.cellAt(mx, my);
         if (cell == null || delta == 0) {
             return false;

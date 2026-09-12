@@ -9,6 +9,7 @@ package dev.jstech.tests.clienttest;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.client.CommandPromptScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.IDesktopApp;
 import dev.jstech.computers.client.os.ShellApp;
@@ -144,6 +145,42 @@ public final class LuaScreenClientTests {
                 .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).launcherLabels().contains(opened),
                         SCREEN_WAIT, opened + " to be listed in Start")
                 .then(0, () -> launch(ctx, opened));
+    }
+
+    /**
+     * A machine with no desktop is still a terminal, and a program that draws is still drawn.
+     *
+     * <p>MC-DOS boots straight to the prompt that fills the glass, with no windows anywhere. A Lua
+     * program run from there takes the whole screen, the keyboard is its while it holds it, and what it
+     * left is under the prompt when it is over, exactly as it is in a window on a desktop machine.
+     */
+    @ClientTest(timeoutTicks = 3000)
+    public static void fullScreenPrompt_showsALuaProgramsScreenOnAMachineWithNoDesktop(
+            final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+                    final CraftingComputerBlockEntity computer = world.placeRunningCraftingComputer(COMPUTER);
+                    dev.jstech.tests.testkit.TestWorldBuilder.installDesktop(computer,
+                            ResourceLocation.fromNamespaceAndPath("jsc", "mc_dos"));
+                    computer.console().install(program("lrt").toString());
+                    seed(computer, "progs/dash.lua", DASHBOARD);
+                    world.placeMonitor(MONITOR, Direction.EAST);
+                })
+                .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
+                .thenRightClick(SETTLE, MONITOR)
+                .thenAwaitScreen(CommandPromptScreen.class, BOOT_WAIT)
+                .then(SETTLE, () -> ctx.type("lrt run progs/dash.lua"))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .thenWaitUntil(() -> shows(ctx.screen(CommandPromptScreen.class).screen(), "REACTOR 1"),
+                        SCREEN_WAIT, "the program's screen to fill the prompt")
+                .thenAssert(SETTLE, () -> shows(ctx.screen(CommandPromptScreen.class).screen(), "name?"),
+                        "and to be waiting for what it asked")
+                .then(SETTLE, () -> ctx.type("ada"))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .thenWaitUntil(() -> shows(ctx.screen(CommandPromptScreen.class).screen(), "hi ada"),
+                        SCREEN_WAIT, "what was typed to reach the program")
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_T, GLFW.GLFW_MOD_CONTROL))
+                .thenWaitUntil(() -> ctx.screen(CommandPromptScreen.class).screen() == null,
+                        SCREEN_WAIT, "Ctrl+T to end it and give the prompt back");
     }
 
     /**
