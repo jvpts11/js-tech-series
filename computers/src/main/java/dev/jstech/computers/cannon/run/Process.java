@@ -88,8 +88,6 @@ public final class Process {
         int at;
         /** Set on all but the last handler of a run, whose answers nobody is waiting for. */
         boolean discard;
-        /** What the frame is for besides running its method. */
-        Role role = Role.PLAIN;
 
         Frame(final Loaded.Method method, final Object self) {
             this.method = method;
@@ -131,19 +129,6 @@ public final class Process {
         Thread(final int id) {
             this.id = id;
         }
-    }
-
-    /**
-     * What a frame is for besides running its method.
-     *
-     * <p>A call that has to go on after the call under it returns (a sort with a comparator, say) runs
-     * as a frame of its own that carries the call on; one that also catches what the call under it
-     * raises protects.
-     */
-    enum Role {
-        PLAIN,
-        RESUME,
-        PROTECT
     }
 
     /** Who holds an object's lock, and how many times over it took it. */
@@ -1564,22 +1549,6 @@ public final class Process {
                     values(new ArrayList<>(map.entries().keySet()), numbers),
                     values(new ArrayList<>(map.entries().values()), numbers));
         }
-        if (thing instanceof Values.Table table) {
-            final List<Object> run = new ArrayList<>();
-            for (int i = 0; i < table.runLength(); i++) {
-                run.add(table.inRun(i));
-            }
-            final List<Object> keys = new ArrayList<>();
-            final List<Object> held = new ArrayList<>();
-            for (int i = 0; i < table.apartKeys().size(); i++) {
-                if (table.apartValues().get(i) != null) {
-                    keys.add(table.apartKeys().get(i));
-                    held.add(table.apartValues().get(i));
-                }
-            }
-            return new Snapshot.IHeld.Tabled(number, bytes, line, freed, values(run, numbers),
-                    values(keys, numbers), values(held, numbers), value(table.metatable(), numbers));
-        }
         final Values.DelegateValue delegate = (Values.DelegateValue) thing;
         final List<Snapshot.BoundShot> chain = new ArrayList<>();
         for (final Values.Bound bound : delegate.chain()) {
@@ -1597,7 +1566,6 @@ public final class Process {
             case Snapshot.IHeld.Listing ignored -> new Values.ListValue();
             case Snapshot.IHeld.Keyed ignored -> new Values.MapValue();
             case Snapshot.IHeld.Handler handler -> new Values.DelegateValue(handler.type(), List.of());
-            case Snapshot.IHeld.Tabled ignored -> new Values.Table();
         };
     }
 
@@ -1629,18 +1597,6 @@ public final class Process {
                             value(keyed.values().get(i), byNumber));
                 }
             }
-            case Snapshot.IHeld.Tabled table -> {
-                final Values.Table made = (Values.Table) thing;
-                for (int i = 0; i < table.run().size(); i++) {
-                    made.put((long) (i + 1), value(table.run().get(i), byNumber));
-                }
-                for (int i = 0; i < table.keys().size(); i++) {
-                    made.put(value(table.keys().get(i), byNumber), value(table.values().get(i), byNumber));
-                }
-                if (value(table.metatable(), byNumber) instanceof Values.Table metatable) {
-                    made.setMetatable(metatable);
-                }
-            }
             default -> { }
         }
     }
@@ -1664,7 +1620,7 @@ public final class Process {
         return new Snapshot.FrameShot(frame.method.owner(), frame.method.name(),
                 frame.method.parameters(), frame.at, value(frame.self, numbers),
                 values(java.util.Arrays.asList(frame.slots), numbers), values(frame.stack, numbers),
-                frame.discard, frame.role.name());
+                frame.discard);
     }
 
     private static Frame thaw(final Loaded program, final Snapshot.FrameShot written,
@@ -1682,7 +1638,6 @@ public final class Process {
         }
         frame.at = written.at();
         frame.discard = written.discard();
-        frame.role = Role.valueOf(written.role());
         return frame;
     }
 

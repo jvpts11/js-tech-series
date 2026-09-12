@@ -3178,12 +3178,6 @@ public final class ServerCliComputer implements ICliComputer {
         return OpResult.ok(started.message());
     }
 
-    /** Where {@code path} is as a ComputerCraft computer would name it; see {@code HostFiles}. */
-    public String luaPath(final String path) {
-        return dev.jstech.computers.cannon.machine.HostFiles.luaPath(this,
-                dev.jstech.computers.program.cli.DosPath.resolve(currentLocation(), path));
-    }
-
     @Override
     public OpResult stopCannon(final int id) {
         if (!(hostBlock instanceof AbstractComputerBlockEntity computer)) {

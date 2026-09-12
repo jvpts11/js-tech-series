@@ -150,8 +150,7 @@ public final class CannonCommands {
 
     /**
      * What one runtime's verb runs: its name at the prompt, the package that brings it, the language
-     * it speaks, and the kinds of file it takes. Cannon and Lua each have their own, because they are
-     * two languages and neither runtime runs the other's programs.
+     * it speaks, and the kinds of file it takes.
      */
     record Runtime(String verb, String packageId, String language, List<String> extensions) {
 
