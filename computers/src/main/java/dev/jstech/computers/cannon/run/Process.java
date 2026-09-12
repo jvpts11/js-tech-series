@@ -1371,19 +1371,12 @@ public final class Process {
      * Writes the whole process down: what it has allocated, what each thread was doing, and where each
      * of its calls had got to.
      *
-     * <p>Two names for one object come back as two names for one object, because everything allocated
-     * is written under a number and every reference is written as that number.
+     * <p>Two names for one object come back as two names for one object, because everything still held,
+     * and anything freed that something written still reaches, is written under a number and every
+     * reference is written as that number.
      */
     public Snapshot save() {
-        final Map<Object, Integer> numbers = new IdentityHashMap<>();
-        final List<Object> things = this.heap.everything();
-        for (int i = 0; i < things.size(); i++) {
-            numbers.put(things.get(i), i);
-        }
-        final List<Snapshot.IHeld> held = new ArrayList<>();
-        for (int i = 0; i < things.size(); i++) {
-            held.add(this.freeze(things.get(i), i, numbers));
-        }
+        final HeldNumbers numbers = new HeldNumbers(this.heap);
         final List<Snapshot.ThreadShot> running = new ArrayList<>();
         for (final Thread thread : this.threads) {
             running.add(freeze(thread, numbers));
@@ -1407,12 +1400,23 @@ public final class Process {
             locked.add(new Snapshot.MonitorShot(value(entry.getKey(), numbers), entry.getValue().owner,
                     entry.getValue().count));
         }
-        return new Snapshot(this.heap.budget(), held, running, queued, kept, value(this.script, numbers),
+        final Snapshot.IValue scriptShot = value(this.script, numbers);
+        final Snapshot.IValue onMessageShot = value(this.onMessage, numbers);
+        final List<Snapshot.IValue> windowShots = values(this.windows.items(), numbers);
+        final Snapshot.IValue onGatewayShot = value(this.onGatewayMessage, numbers);
+        /*
+         * The objects are written last: writing anything else down can number a freed thing it still
+         * reaches, and so can writing an object, so the numbers are walked while they grow.
+         */
+        final List<Snapshot.IHeld> held = new ArrayList<>();
+        for (int number = 0; number < numbers.size(); number++) {
+            held.add(this.freeze(numbers.thing(number), number, numbers));
+        }
+        return new Snapshot(this.heap.budget(), held, running, queued, kept, scriptShot,
                 watching, this.library.console(), this.library.written(), this.state().name(),
                 this.message == null ? "" : this.message, this.spent, this.name, locked, this.nextThread,
-                this.args, this.machineId, this.exited, this.exitCode, value(this.onMessage, numbers),
-                values(this.windows.items(), numbers), this.nextWindow, this.nextWidget,
-                value(this.onGatewayMessage, numbers), this.gateway);
+                this.args, this.machineId, this.exited, this.exitCode, onMessageShot,
+                windowShots, this.nextWindow, this.nextWidget, onGatewayShot, this.gateway);
     }
 
     /** Reads a process back out of what {@link #save()} wrote, ready to carry on where it stopped. */
@@ -1526,7 +1530,7 @@ public final class Process {
         return process;
     }
 
-    private Snapshot.IHeld freeze(final Object thing, final int number, final Map<Object, Integer> numbers) {
+    private Snapshot.IHeld freeze(final Object thing, final int number, final HeldNumbers numbers) {
         final long bytes = this.heap.bytesOf(thing);
         final int line = this.heap.lineOf(thing);
         final boolean freed = this.heap.isFreed(thing);
@@ -1605,7 +1609,7 @@ public final class Process {
      * The frames are a stack, so they come out top first; they are written bottom first, which is the
      * order they have to be put back in.
      */
-    private static Snapshot.ThreadShot freeze(final Thread thread, final Map<Object, Integer> numbers) {
+    private static Snapshot.ThreadShot freeze(final Thread thread, final HeldNumbers numbers) {
         final List<Frame> stack = new ArrayList<>(thread.frames);
         java.util.Collections.reverse(stack);
         final List<Snapshot.FrameShot> frames = new ArrayList<>();
@@ -1616,7 +1620,7 @@ public final class Process {
                 value(thread.on, numbers), value(thread.token, numbers), thread.timedOut, thread.onHost);
     }
 
-    private static Snapshot.FrameShot freeze(final Frame frame, final Map<Object, Integer> numbers) {
+    private static Snapshot.FrameShot freeze(final Frame frame, final HeldNumbers numbers) {
         return new Snapshot.FrameShot(frame.method.owner(), frame.method.name(),
                 frame.method.parameters(), frame.at, value(frame.self, numbers),
                 values(java.util.Arrays.asList(frame.slots), numbers), values(frame.stack, numbers),
@@ -1663,8 +1667,7 @@ public final class Process {
                 ? setUp : null;
     }
 
-    private static Map<String, Snapshot.IValue> fields(final Values.Obj object,
-                                                      final Map<Object, Integer> numbers) {
+    private static Map<String, Snapshot.IValue> fields(final Values.Obj object, final HeldNumbers numbers) {
         final Map<String, Snapshot.IValue> written = new LinkedHashMap<>();
         for (final Map.Entry<String, Object> field : object.all().entrySet()) {
             written.put(field.getKey(), value(field.getValue(), numbers));
@@ -1672,8 +1675,7 @@ public final class Process {
         return written;
     }
 
-    private static List<Snapshot.IValue> values(final List<Object> things,
-                                               final Map<Object, Integer> numbers) {
+    private static List<Snapshot.IValue> values(final List<Object> things, final HeldNumbers numbers) {
         final List<Snapshot.IValue> written = new ArrayList<>();
         for (final Object thing : things) {
             written.add(value(thing, numbers));
@@ -1681,8 +1683,7 @@ public final class Process {
         return written;
     }
 
-    private static Snapshot.IValue value(final Object thing,
-                                        final Map<Object, Integer> numbers) {
+    private static Snapshot.IValue value(final Object thing, final HeldNumbers numbers) {
         return switch (thing) {
             case null -> new Snapshot.IValue.Nothing();
             case Integer number -> new Snapshot.IValue.I4(number);
@@ -1692,7 +1693,7 @@ public final class Process {
             case Boolean flag -> new Snapshot.IValue.Bool(flag);
             case Character letter -> new Snapshot.IValue.Ch(letter);
             default -> {
-                final Integer number = numbers.get(thing);
+                final Integer number = numbers.numberOf(thing);
                 yield number == null ? new Snapshot.IValue.Nothing() : new Snapshot.IValue.Ref(number);
             }
         };

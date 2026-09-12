@@ -244,4 +244,33 @@ class SnapshotTest {
         final Process saved = throughSaves(program);
         assertEquals(straight.spent(), saved.spent());
     }
+
+    @Test
+    void save_leavesOutWhatWasFreedAndIsReachedNoMore() {
+        final Process process = straight(load("", """
+                        for (int i = 0; i < 300; i++) {
+                            List<string> scratch = new List<string>();
+                            dispose scratch;
+                        }
+                """));
+        assertEquals(Process.State.FINISHED, process.state(), () -> String.valueOf(process.message()));
+
+        final Snapshot shot = process.save();
+
+        assertTrue(shot.held().size() < 10,
+                "a save writes what is still reached, not everything ever freed; it wrote " + shot.held().size());
+    }
+
+    @Test
+    void save_keepsAFreedThingFreedForAnotherNameThatStillReachesIt() {
+        final Process process = bothWays(load("", """
+                        List<string> names = new List<string>();
+                        List<string> also = names;
+                        dispose names;
+                        Console.PrintLine("freed");
+                        also.Add("late");
+                """));
+        assertEquals(Process.State.HALTED, process.state());
+        assertTrue(process.message().contains("disposed"), process.message());
+    }
 }

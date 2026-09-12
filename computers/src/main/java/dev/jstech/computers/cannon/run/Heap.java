@@ -22,6 +22,11 @@ import java.util.Map;
  * is only worth doing if the arithmetic is the same everywhere, so the sizes live here and nowhere
  * else.
  *
+ * <p>Freeing is the program's word, and from then on the heap keeps only what it needs to catch the
+ * thing being used again: it forgets the size and the line, and remembers the thing itself for as long
+ * as the program can still reach it (see {@link Tombstones}). A program that allocates and frees for as
+ * long as the world runs holds only what it holds.
+ *
  * <p>The heap also remembers which line each allocation came from. That costs a little and buys the
  * one thing a player needs when a process runs out: the three lines that asked for the most.
  */
@@ -36,26 +41,25 @@ public final class Heap {
     /** How many of the biggest allocating lines are named when a process runs out. */
     private static final int NAMED_LINES = 3;
 
-    /** One thing on the heap: how big it is, where it was made, and whether it has been freed. */
+    /** One thing on the heap: how big it is, where it was made, and when. */
     private static final class Entry {
         private long bytes;
         private final int line;
-        private boolean freed;
+        private final long made;
 
-        Entry(final long bytes, final int line) {
+        Entry(final long bytes, final int line, final long made) {
             this.bytes = bytes;
             this.line = line;
+            this.made = made;
         }
     }
 
     private final Map<Object, Entry> live = new IdentityHashMap<>();
-    /*
-     * Kept beside the map because two objects are told apart by being themselves, and a map that does
-     * that has no order of its own. Writing a process down needs one, so this is it.
-     */
-    private final List<Object> order = new ArrayList<>();
+    private final Tombstones freed = new Tombstones();
     private final long budget;
     private long used;
+    /** How many things were ever put here, which is the order they were put here in. */
+    private long allocations;
 
     public Heap(final long budget) {
         this.budget = budget;
@@ -90,23 +94,33 @@ public final class Heap {
             throw new Halt(Halt.Reason.OUT_OF_MEMORY, line, this.outOfMemory(bytes));
         }
         this.used += bytes;
-        this.live.put(value, new Entry(bytes, line));
-        this.order.add(value);
+        this.live.put(value, new Entry(bytes, line, this.allocations++));
         return value;
     }
 
-    /** Everything ever allocated, in the order it was, freed things included. */
-    public List<Object> everything() {
-        return List.copyOf(this.order);
+    /**
+     * Everything still held, in the order it was allocated.
+     *
+     * <p>The order is what makes two saves of the same program read the same; it is worked out here, when
+     * asked, rather than kept up on every allocation and free.
+     */
+    public List<Object> live() {
+        final List<Map.Entry<Object, Entry>> held = new ArrayList<>(this.live.entrySet());
+        held.sort(Comparator.comparingLong(entry -> entry.getValue().made));
+        final List<Object> things = new ArrayList<>(held.size());
+        for (final Map.Entry<Object, Entry> entry : held) {
+            things.add(entry.getKey());
+        }
+        return things;
     }
 
-    /** What that thing costs, or 0 if the heap never saw it. */
+    /** What that thing costs, or 0 if it is not held (never seen, or freed). */
     public long bytesOf(final Object value) {
         final Entry entry = this.live.get(value);
         return entry == null ? 0 : entry.bytes;
     }
 
-    /** The line that thing was made on, or 0. */
+    /** The line that thing was made on, or 0 if it is not held. */
     public int lineOf(final Object value) {
         final Entry entry = this.live.get(value);
         return entry == null ? 0 : entry.line;
@@ -115,20 +129,19 @@ public final class Heap {
     /**
      * Puts something back exactly as it was, for a process being read out of a save.
      *
-     * <p>It goes back with the size and the line it had, and freed if it was freed, so what the player
-     * sees after the world comes back is what they saw before it went away.
+     * <p>A live thing goes back with the size and the line it had; a freed one goes back freed, so a
+     * name that still reaches it is still caught using it.
      */
     public void restore(final Object value, final long bytes, final int line, final boolean freed) {
-        final Entry entry = new Entry(bytes, line);
-        entry.freed = freed;
-        this.live.put(value, entry);
-        this.order.add(value);
-        if (!freed) {
-            this.used += bytes;
+        if (freed) {
+            this.freed.add(value);
+            return;
         }
+        this.used += bytes;
+        this.live.put(value, new Entry(bytes, line, this.allocations++));
     }
 
-    /** Makes something already recorded bigger or smaller, as a collection does when it changes. */
+    /** Makes something already held bigger or smaller, as a collection does when it changes. */
     public void resize(final Object value, final long bytes, final int line) {
         final Entry entry = this.live.get(value);
         if (entry == null) {
@@ -147,27 +160,24 @@ public final class Heap {
      * reference that named it is set to null by the same statement; using a freed one is.
      */
     public void dispose(final Object value, final int line) {
-        final Entry entry = this.live.get(value);
-        if (entry == null || entry.freed) {
+        final Entry entry = this.live.remove(value);
+        if (entry == null) {
             return;
         }
-        entry.freed = true;
         this.used -= entry.bytes;
+        this.freed.add(value);
     }
 
     /** Whether this was freed and may no longer be read. */
     public boolean isFreed(final Object value) {
-        final Entry entry = this.live.get(value);
-        return entry != null && entry.freed;
+        return this.freed.contains(value);
     }
 
     /** Everything still held, biggest first, for the console to show. */
     public List<String> liveByLine() {
         final Map<Integer, Long> byLine = new LinkedHashMap<>();
         for (final Entry entry : this.live.values()) {
-            if (!entry.freed) {
-                byLine.merge(entry.line, entry.bytes, Long::sum);
-            }
+            byLine.merge(entry.line, entry.bytes, Long::sum);
         }
         final List<Map.Entry<Integer, Long>> sorted = new ArrayList<>(byLine.entrySet());
         sorted.sort(Comparator.<Map.Entry<Integer, Long>>comparingLong(Map.Entry::getValue).reversed());
