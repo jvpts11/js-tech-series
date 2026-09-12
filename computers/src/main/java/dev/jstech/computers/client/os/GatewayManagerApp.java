@@ -14,7 +14,6 @@ import dev.jstech.computers.operation.payload.GatewayManagerStatePayload.Detail;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload.WireComputer;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload.WireGateway;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload.WireLog;
-import dev.jstech.computers.operation.payload.GatewayManagerStatePayload.WireShare;
 import dev.jstech.computers.operation.payload.RequestGatewayManagerPayload;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.CellGrid;
@@ -52,8 +51,7 @@ public final class GatewayManagerApp implements IDesktopApp {
 
     public static final String TITLE = "Gateway Manager";
     private static final String NETWORK_PROGRAM = "Network";
-    private static final String[] TABS = {"Status", "Permissions", "Computers", "Shares", "Log"};
-    private static final String[] FILES_LABELS = {"off", "read", "read & write"};
+    private static final String[] TABS = {"Status", "Permissions", "Computers", "Log"};
     private static final String[] CEILING_LABELS = {"LOW", "MEDIUM", "HIGH"};
     private static final String[] CAP_LABELS = {"4", "8", "16"};
 
@@ -133,10 +131,8 @@ public final class GatewayManagerApp implements IDesktopApp {
     // Permissions
     private final Checkbox readBox;
     private final Checkbox operationsBox;
-    private final Label filesLabel;
     private final Label ceilingLabel;
     private final Label capLabel;
-    private final Button[] filesChoice = new Button[3];
     private final Button[] ceilingChoice = new Button[3];
     private final Button[] capChoice = new Button[3];
     // Computers
@@ -147,12 +143,6 @@ public final class GatewayManagerApp implements IDesktopApp {
     private final Button reboot;
     private final Button shutdown;
     private final Button testEvent;
-    // Shares
-    private final ColumnHeader shareColumns;
-    private final ListView<WireShare> shareList;
-    private final Label noShares;
-    private final Label sharesNote;
-    private final Label sharesNote2;
     // Log
     private final ColumnHeader logColumns;
     private final ListView<WireLog> logList;
@@ -211,12 +201,11 @@ public final class GatewayManagerApp implements IDesktopApp {
                 : detail().wiredComputers() + plural(detail().wiredComputers(), " computer") + ", "
                 + detail().wiredDevices() + plural(detail().wiredDevices(), " device")).setScale(CARD_SCALE));
         ccLines[1] = root.add(new Label(() -> detail() == null || !ccInstalled() ? ""
-                : detail().agents() + " of " + detail().agentsTotal() + " agents answering").setScale(CARD_SCALE));
+                : "Served: " + detail().calls() + plural(detail().calls(), " call")).setScale(CARD_SCALE));
         ccLines[2] = root.add(new Label(() -> detail() == null || !ccInstalled() ? ""
-                : "Served: " + detail().calls() + plural(detail().calls(), " call") + ", " + detail().operations() + " ops,")
+                : detail().operations() + plural(detail().operations(), " operation") + " this minute")
                 .setScale(CARD_SCALE));
-        ccLines[3] = root.add(new Label(() -> detail() == null || !ccInstalled() ? ""
-                : detail().files() + plural(detail().files(), " file") + " this minute").setScale(CARD_SCALE));
+        ccLines[3] = root.add(new Label(() -> "").setScale(CARD_SCALE));
         namesLabel = root.add(new Label(this::namesText, Label.Tone.DIM).setScale(CARD_SCALE));
         bufferCaption = root.add(new Label(() -> "BUFFER " + bufferUsed() + " of " + GatewayManagerStatePayload.BUFFER_SLOTS,
                 Label.Tone.DIM).setScale(CARD_SCALE));
@@ -227,7 +216,7 @@ public final class GatewayManagerApp implements IDesktopApp {
         recentCaption = root.add(new Label("RECENT", Label.Tone.DIM).setScale(CARD_SCALE));
         recentList = root.add(new ListView<WireLog>(this::recent, LOG_ROW_H, this::renderLogRow));
         noRecent = root.add(new Label("nothing served yet", Label.Tone.DIM).setScale(CARD_SCALE));
-        openLog = root.add(new Button("Open the log", () -> selectTab(4)));
+        openLog = root.add(new Button("Open the log", () -> selectTab(3)));
         openNetwork = root.add(new Button("Open Network", () -> DesktopScreen.requestOpen(NETWORK_PROGRAM)));
 
         readBox = root.add(new Checkbox(() -> "Read the network: types, totals, servers, watches",
@@ -238,13 +227,10 @@ public final class GatewayManagerApp implements IDesktopApp {
                 () -> detail() != null && detail().operationsAllowed(),
                 () -> act(GatewayManagerActionPayload.ACTION_SET_OPERATIONS, detail() != null && detail().operationsAllowed() ? 0 : 1))
                 .setLabelScale(CARD_SCALE));
-        filesLabel = root.add(new Label("Files: the shares mounted on CC computers").setScale(CARD_SCALE));
         ceilingLabel = root.add(new Label("Priority ceiling for CC requests").setScale(CARD_SCALE));
         capLabel = root.add(new Label("Calls per tick from CC, paid from this budget").setScale(CARD_SCALE));
         for (int i = 0; i < 3; i++) {
             final int index = i;
-            filesChoice[i] = root.add(new Button(FILES_LABELS[i], () -> act(GatewayManagerActionPayload.ACTION_SET_FILES, index))
-                    .setLabelScale(CARD_SCALE));
             ceilingChoice[i] = root.add(new Button(CEILING_LABELS[i], () -> act(GatewayManagerActionPayload.ACTION_SET_CEILING, index))
                     .setLabelScale(CARD_SCALE));
             capChoice[i] = root.add(new Button(CAP_LABELS[i], () -> act(GatewayManagerActionPayload.ACTION_SET_CAP, index))
@@ -258,12 +244,6 @@ public final class GatewayManagerApp implements IDesktopApp {
         reboot = root.add(new Button("Reboot", () -> act(GatewayManagerActionPayload.ACTION_REBOOT)));
         shutdown = root.add(new Button("Shutdown", () -> act(GatewayManagerActionPayload.ACTION_SHUTDOWN)));
         testEvent = root.add(new Button("Test event", () -> act(GatewayManagerActionPayload.ACTION_TEST_EVENT)));
-
-        shareColumns = root.add(new ColumnHeader(List.of("COMPUTER", "SHARE", "ON CC AS", "MODE")).setSortable(false));
-        shareList = root.add(new ListView<WireShare>(this::shares, ROW_H, this::renderShareRow));
-        noShares = root.add(new Label("no computer on this network shares a folder", Label.Tone.DIM).setScale(CARD_SCALE));
-        sharesNote = root.add(new Label("Set on each computer: config share, or Settings.", Label.Tone.DIM).setScale(CARD_SCALE));
-        sharesNote2 = root.add(new Label("The Gateway only decides whether CC may write.", Label.Tone.DIM).setScale(CARD_SCALE));
 
         logColumns = root.add(new ColumnHeader(List.of("WHEN", "WHO", "RESULT")).setSortable(false));
         logList = root.add(new ListView<WireLog>(this::log, LOG_ROW_H, this::renderLogRow));
@@ -374,10 +354,6 @@ public final class GatewayManagerApp implements IDesktopApp {
         return detail() == null ? List.of() : detail().computers();
     }
 
-    private List<WireShare> shares() {
-        return detail() == null ? List.of() : detail().shares();
-    }
-
     private List<WireLog> log() {
         return detail() == null ? List.of() : detail().log();
     }
@@ -436,7 +412,6 @@ public final class GatewayManagerApp implements IDesktopApp {
         tabs.setSelected(tab);
         recentList.setScroll(0);
         computerList.setScroll(0);
-        shareList.setScroll(0);
         logList.setScroll(0);
     }
 
@@ -560,26 +535,21 @@ public final class GatewayManagerApp implements IDesktopApp {
         final boolean status = d != null && tab == 0;
         final boolean permissions = d != null && tab == 1;
         final boolean computersTab = d != null && tab == 2;
-        final boolean sharesTab = d != null && tab == 3;
-        final boolean logTab = d != null && tab == 4;
+        final boolean logTab = d != null && tab == 3;
         for (final UiComponent c : List.of(jsTitle, jsBig, jsLines[0], jsLines[1], jsLines[2], jsLines[3], ccTitle, ccBig,
                 ccLines[0], ccLines[1], ccLines[2], ccLines[3], namesLabel, bufferCaption, bufferGrid, clearBuffer,
                 recentCaption, recentList, noRecent, openLog, openNetwork)) {
             c.setVisible(status);
         }
-        for (final UiComponent c : List.of(readBox, operationsBox, filesLabel, ceilingLabel, capLabel)) {
+        for (final UiComponent c : List.of(readBox, operationsBox, ceilingLabel, capLabel)) {
             c.setVisible(permissions);
         }
         for (int i = 0; i < 3; i++) {
-            filesChoice[i].setVisible(permissions);
             ceilingChoice[i].setVisible(permissions);
             capChoice[i].setVisible(permissions);
         }
         for (final UiComponent c : List.of(computerColumns, computerList, noComputers, turnOn, reboot, shutdown, testEvent)) {
             c.setVisible(computersTab);
-        }
-        for (final UiComponent c : List.of(shareColumns, shareList, noShares, sharesNote, sharesNote2)) {
-            c.setVisible(sharesTab);
         }
         for (final UiComponent c : List.of(logColumns, logList, noLog)) {
             c.setVisible(logTab);
@@ -628,8 +598,6 @@ public final class GatewayManagerApp implements IDesktopApp {
             ry += rowH;
             operationsBox.setBounds(px, ry, pw, rowH);
             ry += rowH;
-            layoutChoice(px, ry, pw, filesLabel, filesChoice, d.filesAccess());
-            ry += KNOB_ROW_H;
             layoutChoice(px, ry, pw, ceilingLabel, ceilingChoice, d.ceiling());
             ry += KNOB_ROW_H;
             layoutChoice(px, ry, pw, capLabel, capChoice, d.cap());
@@ -652,31 +620,15 @@ public final class GatewayManagerApp implements IDesktopApp {
             reboot.setBounds(px + bw + PAD, by, bw, BTN_H);
             shutdown.setBounds(px + (bw + PAD) * 2, by, bw, BTN_H);
             testEvent.setBounds(px + pw - testW, by, testW, BTN_H);
-            // Power over a CC computer needs the agent on it, which is not there yet; the event needs only CC.
-            final boolean agents = d.agents() > 0;
-            turnOn.setEnabled(agents);
-            reboot.setEnabled(agents);
-            shutdown.setEnabled(agents);
-            testEvent.setEnabled(ccInstalled());
-        } else if (sharesTab) {
             /*
-             * The rows are drawn at the small font, so the columns are measured for it: the mode takes what
-             * "read & write" needs, the CC path takes the most of the rest, the computer and the share split
-             * what is left.
+             * Turning a computer over there on and off is the ComputerCraft side's own doing, so the
+             * buttons need nothing but the mod being there and a computer picked.
              */
-            final int c0 = px;
-            final int c3 = dx + dw - PAD - 58;
-            final int c1 = c0 + 54;
-            final int c2 = c1 + 54;
-            shareColumns.setBounds(dx, top, dw, ROW_H);
-            shareColumns.setColumnX(c0, c1, c2, c3);
-            final int noteY = bottom - 18;
-            shareList.setBounds(dx, top + ROW_H, dw, Math.max(ROW_H, noteY - PAD - (top + ROW_H)));
-            shareList.setVisible(!shares().isEmpty());
-            noShares.setVisible(shares().isEmpty());
-            noShares.setBounds(px, top + ROW_H + 1, pw, 8);
-            sharesNote.setBounds(px, noteY, pw, 8);
-            sharesNote2.setBounds(px, noteY + 9, pw, 8);
+            final boolean reachable = ccInstalled() && !d.computers().isEmpty();
+            turnOn.setEnabled(reachable);
+            reboot.setEnabled(reachable);
+            shutdown.setEnabled(reachable);
+            testEvent.setEnabled(ccInstalled());
         } else if (logTab) {
             logColumns.setBounds(dx, top, dw, ROW_H);
             logColumns.setColumnX(logWhenX(), logWhoX(), logResultX(font));
@@ -816,25 +768,6 @@ public final class GatewayManagerApp implements IDesktopApp {
         g.drawString(font, c.lastSeen(), computerColumns.columnX(4), ty, ctx.skin().dim(), false);
     }
 
-    private void renderShareRow(final GuiGraphics g, final UiContext ctx, final WireShare s, final int index,
-                                final int x, final int y, final int w, final int h, final boolean hovered,
-                                final boolean selectedRow) {
-        ctx.skin().listRow(g, x + 2, y, w - 4, h, hovered, false);
-        final Font font = ctx.font();
-        final int ty = y + 2;
-        final int c0 = shareColumns.columnX(0);
-        final int c1 = shareColumns.columnX(1);
-        final int c2 = shareColumns.columnX(2);
-        final int c3 = shareColumns.columnX(3);
-        Texts.scaled(g, font, Texts.clip(font, s.computer(), (int) ((c1 - c0 - GAP) / CARD_SCALE)), c0, ty, CARD_SCALE,
-                ctx.skin().text());
-        Texts.scaled(g, font, Texts.clip(font, s.share(), (int) ((c2 - c1 - GAP) / CARD_SCALE)), c1, ty, CARD_SCALE,
-                ctx.skin().text());
-        Texts.scaled(g, font, Texts.clip(font, s.onCc(), (int) ((c3 - c2 - GAP) / CARD_SCALE)), c2, ty, CARD_SCALE,
-                ctx.skin().dim());
-        Texts.scaled(g, font, s.mode(), c3, ty, CARD_SCALE, s.mode().equals("off") ? RED : ctx.skin().accent());
-    }
-
     // dialogs
 
     @Override
@@ -900,7 +833,7 @@ public final class GatewayManagerApp implements IDesktopApp {
             return true;
         }
         final int step = delta > 0 ? -1 : 1;
-        final ListView<?> table = tab == 2 ? computerList : tab == 3 ? shareList : tab == 4 ? logList : rail;
+        final ListView<?> table = tab == 2 ? computerList : tab == 3 ? logList : rail;
         table.setScroll(table.scroll() + step);
         return true;
     }
@@ -946,25 +879,17 @@ public final class GatewayManagerApp implements IDesktopApp {
         return names;
     }
 
-    /** The selected Gateway's permissions as shown: read, operations, files, ceiling, cap. */
+    /** The selected Gateway's permissions as shown: read, operations, ceiling, cap. */
     public int[] permissionsShown() {
         final Detail d = detail();
         return d == null ? new int[0]
-                : new int[]{d.read() ? 1 : 0, d.operationsAllowed() ? 1 : 0, d.filesAccess(), d.ceiling(), d.cap()};
+                : new int[]{d.read() ? 1 : 0, d.operationsAllowed() ? 1 : 0, d.ceiling(), d.cap()};
     }
 
     public List<String> logWhats() {
         final List<String> out = new ArrayList<>();
         for (final WireLog row : log()) {
             out.add(row.what());
-        }
-        return out;
-    }
-
-    public List<String> shareComputers() {
-        final List<String> out = new ArrayList<>();
-        for (final WireShare s : shares()) {
-            out.add(s.computer());
         }
         return out;
     }
@@ -1007,10 +932,6 @@ public final class GatewayManagerApp implements IDesktopApp {
 
     public int[] operationsToggleCenter() {
         return operationsBox.center();
-    }
-
-    public int[] filesChoiceCenter(final int index) {
-        return filesChoice[index].center();
     }
 
     public int[] ceilingChoiceCenter(final int index) {

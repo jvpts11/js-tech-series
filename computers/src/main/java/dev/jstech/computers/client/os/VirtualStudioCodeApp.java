@@ -212,15 +212,6 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         return this.terminal.scrollbackText();
     }
 
-    /** The screen of the Lua program in the terminal panel, or null when none has it; for tests. */
-    public dev.jstech.computers.operation.payload.LuaScreenPayload terminalScreen() {
-        return this.terminal.screen();
-    }
-
-    /** Which rows of that screen the panel shows, as the first (from 1) and how many; for tests. */
-    public int[] terminalScreenRows() {
-        return this.terminal.screenRows();
-    }
 
     /** The names the suggestion list offers, top to bottom; empty when none is up. */
     public List<String> completionLabels() {
@@ -709,11 +700,6 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         if (doc.dirty()) {
             this.workspace.save();
         }
-        if (isLua(doc.path())) {
-            // A Lua file is not built: it runs as it is, and its margin already says what is wrong with it.
-            this.workspace.say("A Lua file runs as it is: F5 runs it with lrt");
-            return;
-        }
         focusTerminal();
         enqueue("cannonc " + doc.path() + " -o " + outputFor(doc.path()));
     }
@@ -723,20 +709,8 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         if (doc == null) {
             return;
         }
-        if (isLua(doc.path())) {
-            if (doc.dirty()) {
-                this.workspace.save();
-            }
-            focusTerminal();
-            enqueue("lrt run " + doc.path());
-            return;
-        }
         buildFile();
         enqueue("cannon run " + outputFor(doc.path()));
-    }
-
-    private static boolean isLua(final String path) {
-        return path.toLowerCase(java.util.Locale.ROOT).endsWith(".lua");
     }
 
     private void buildFolder() {
@@ -1208,11 +1182,6 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
             this.panelH = (int) (this.dividerY + this.panelH - mouseY);
             return;
         }
-        // A Lua program's screen in the panel hears the drag as its own.
-        if (this.typingInTerminal && this.terminal.onScreen()) {
-            this.terminal.mouseDragged(mouseX, mouseY, button);
-            return;
-        }
         final CodeWorkspace.Doc doc = this.workspace.current();
         if (doc != null && !modalActive()) {
             doc.area().mouseDragged(mouseX, mouseY, button);
@@ -1222,10 +1191,6 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     @Override
     public void mouseReleased(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
         this.holding = 0;
-        if (this.typingInTerminal && this.terminal.onScreen()) {
-            this.terminal.mouseReleased(mouseX, mouseY, button);
-            return;
-        }
         final CodeWorkspace.Doc doc = this.workspace.current();
         if (doc != null) {
             doc.area().mouseReleased(mouseX, mouseY, button);

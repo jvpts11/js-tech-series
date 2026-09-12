@@ -120,16 +120,11 @@ public final class HostProgram {
         final int slash = Math.max(path.lastIndexOf('\\'), path.lastIndexOf('/'));
         final String name = slash < 0 ? path : path.substring(slash + 1);
         final MachinePrograms.Started started =
-                machine.cannon().start(name, read.message(), room, machine, args, parent, priority,
-                        shell instanceof dev.jstech.computers.program.ServerCliComputer own
-                                ? own.besideReader(path) : null);
+                machine.cannon().start(name, read.message(), room, machine, args, parent, priority);
         if (!started.ok()) {
             throw new Halt(Halt.Reason.CANNOT_START, line, started.message());
         }
         machine.setChanged();
-        if (shell instanceof dev.jstech.computers.program.ServerCliComputer own) {
-            machine.cannon().setOrigin(started.id(), own.luaPath(path));
-        }
         // The handle carries the file the program came from; what the program calls itself is its own.
         return HostRemote.handle(started.id(), name, "");
     }

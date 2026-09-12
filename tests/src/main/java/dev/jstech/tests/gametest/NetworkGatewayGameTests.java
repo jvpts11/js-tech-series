@@ -129,7 +129,6 @@ public final class NetworkGatewayGameTests {
                     helper.assertTrue(g.rename("CC Bridge!", "desk").contains("cc-bridge"), "the name is cleaned");
                     helper.assertTrue("cc-bridge".equals(g.name()), "and kept; got " + g.name());
                     g.setPermissions(GatewayPermissions.DEFAULT.withRead(false)
-                            .withFiles(GatewayPermissions.FileAccess.READ_WRITE)
                             .withCeiling(OperationPriority.HIGH).withCallCap(16), "desk", "set everything");
                     g.buffer().setStackInSlot(2, new ItemStack(Items.COBBLESTONE, 7));
                     final CompoundTag saved = g.saveWithoutMetadata(helper.getLevel().registryAccess());
@@ -137,7 +136,7 @@ public final class NetworkGatewayGameTests {
                     fresh.loadWithComponents(saved, helper.getLevel().registryAccess());
                     helper.assertTrue("cc-bridge".equals(fresh.name()), "the name survives a save; got " + fresh.name());
                     final GatewayPermissions p = fresh.permissions();
-                    helper.assertTrue(!p.read() && p.operations() && p.allowsWrite()
+                    helper.assertTrue(!p.read() && p.operations()
                                     && p.ceiling() == OperationPriority.HIGH && p.callCap() == 16,
                             "so do the permissions; got " + p);
                     helper.assertTrue(fresh.log().size() == g.log().size() && fresh.log().entries().get(0).what()

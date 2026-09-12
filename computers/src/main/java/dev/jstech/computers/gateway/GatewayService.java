@@ -99,56 +99,6 @@ public final class GatewayService {
         this.shell = new ServerCliComputer(terminal, level);
     }
 
-    /** A folder one of the network's computers shares, and whether the other side may write into it. */
-    public record SharedFolder(String hostname, String share, boolean writable) {
-
-        /** Where the folder is mounted on a ComputerCraft computer. */
-        public String location() {
-            return "jsc/" + hostname + "/" + share;
-        }
-    }
-
-    /** The host's shell, for the mounts that read and write through it. */
-    public ServerCliComputer shell() {
-        return shell;
-    }
-
-    /**
-     * Every folder the network's computers share, as the mounts want it: none while the Gateway keeps
-     * files off, read-only while it allows reading, writable where it allows writing and the computer
-     * shared the folder for writing.
-     */
-    public List<SharedFolder> sharedFolders() {
-        final GatewayPermissions perms = gateway.permissions();
-        final List<SharedFolder> out = new ArrayList<>();
-        if (perms.files() == GatewayPermissions.FileAccess.OFF) {
-            return out;
-        }
-        final String own = shell.hostname();
-        for (final ICliComputer.ShareInfo share : shell.shares()) {
-            out.add(new SharedFolder(own, share.name(), share.writable() && perms.allowsWrite()));
-        }
-        for (final ICliComputer.NetworkShare share : shell.networkShares()) {
-            if (!share.hostname().equalsIgnoreCase(own)) {
-                out.add(new SharedFolder(share.hostname(), share.share().name(),
-                        share.share().writable() && perms.allowsWrite()));
-            }
-        }
-        return out;
-    }
-
-    /** A file was read through a mount: counted, and paid for by the host as a read. */
-    public void fileRead() {
-        gateway.stats().count(GatewayStats.Kind.FILE, now());
-        charge(CannonCosts.READ);
-    }
-
-    /** A file was written, made or removed through a mount: counted, and paid for by the host as a write. */
-    public void fileWritten() {
-        gateway.stats().count(GatewayStats.Kind.FILE, now());
-        charge(CannonCosts.WRITE);
-    }
-
     /** The service for a linked Gateway; refused while the Gateway has no computer to answer for it. */
     public static GatewayService of(final NetworkGatewayBlockEntity gateway) throws GatewayRefusedException {
         if (!(gateway.getLevel() instanceof ServerLevel level)) {
@@ -442,124 +392,15 @@ public final class GatewayService {
         final String level = priority == null || priority.isBlank() ? MachinePrograms.DEFAULT_PRIORITY
                 : priority.toLowerCase(Locale.ROOT);
         final MachinePrograms.Started started = machine.cannon().start(name, read.message(), room, machine,
-                new ArrayList<>(args), 0, level, remote.besideReader(program));
+                new ArrayList<>(args), 0, level);
         if (!started.ok()) {
             throw denied(caller, what, computer + ": " + started.message());
         }
         machine.setChanged();
-        machine.cannon().setOrigin(started.id(), remote.luaPath(program));
         gateway.stats().count(GatewayStats.Kind.OPERATION, now());
         gateway.logged(caller.label(), what, "process " + started.id(), GatewayLog.Tone.OK);
         charge(CannonCosts.SUBMIT);
         return started.id();
-    }
-
-    // Our programs, going over there
-
-    /**
-     * One of the host computer's programs, as the computer asking for it runs it.
-     *
-     * <p>It is a file of ours being read, so it stands behind the file setting and is paid for as a
-     * read; what it costs to turn it into their language is paid on top, once, the first time it is
-     * asked for.
-     */
-    public String program(final Caller caller, final String name) throws GatewayRefusedException {
-        final String what = "program " + name;
-        admit(caller, what);
-        if (gateway.permissions().files() == GatewayPermissions.FileAccess.OFF) {
-            throw denied(caller, what, "denied: the shared folders are off");
-        }
-        if (name == null || name.isBlank() || name.contains("..")) {
-            throw new GatewayRefusedException("which program?");
-        }
-        final ICliComputer.FsResult read = shell.readFile(name);
-        if (!read.ok()) {
-            throw new GatewayRefusedException(read.message());
-        }
-        charge(CannonCosts.READ);
-        return GatewayPrograms.translated(name, read.message());
-    }
-
-    /** The host computer's programs that can cross, by name. */
-    public List<String> programs(final Caller caller) throws GatewayRefusedException {
-        admit(caller, "programs");
-        if (gateway.permissions().files() == GatewayPermissions.FileAccess.OFF) {
-            throw denied(caller, "programs", "denied: the shared folders are off");
-        }
-        final ICliComputer.FsResult listing = shell.listDisk("");
-        if (!listing.ok()) {
-            throw new GatewayRefusedException(listing.message());
-        }
-        final List<String> named = new ArrayList<>();
-        for (final ICliComputer.FsEntry entry : listing.entries()) {
-            if (!entry.isDir() && GatewayPrograms.carries(entry.name())) {
-                named.add(entry.name());
-            }
-        }
-        charge(HostNetwork.priceOf(named.size()));
-        return named;
-    }
-
-    // A program of ours, running over there
-
-    /**
-     * Anything one of our own programs asks its machine, asked from the other side.
-     *
-     * <p>A program written here and translated to run on a ComputerCraft computer is the same program,
-     * so it asks the same questions by the same names: the thing, the member, and what the call takes.
-     * They go to the host computer's own machine, which answers them exactly as it answers a program
-     * standing on it, at the same prices, so nothing is cheaper or freer for having moved over there.
-     * On top of that sit the Gateway's own rules, which is what a Gateway is for: reading the network
-     * needs reading allowed, anything that moves or starts something needs operations allowed, and the
-     * folders need the file setting.
-     *
-     * @param arguments what the call takes, in the shapes a translated program holds them in
-     */
-    public Object ask(final Caller caller, final String owner, final String member, final List<Object> arguments)
-            throws GatewayRefusedException {
-        final String what = owner + "." + member;
-        gate(caller, owner, what);
-        final IHost host = new MachineHost((BlockEntity) terminal);
-        if (!host.provides(owner)) {
-            throw new GatewayRefusedException(what + " is not something this computer answers");
-        }
-        final List<Object> given = new ArrayList<>(arguments.size());
-        for (final Object one : arguments) {
-            given.add(GatewayValues.fromTranslated(one));
-        }
-        final IHost.Reply reply;
-        try {
-            reply = host.call(owner, member, given, caller.label(), caller.id(), 0);
-        } catch (final Halt refused) {
-            throw denied(caller, what, refused.getMessage());
-        }
-        // Counted and charged like any other call; not written into the log, which a busy program would fill.
-        charge(reply.cost());
-        return GatewayValues.toTranslated(reply.value());
-    }
-
-    /* Which of the Gateway's three switches a question of that kind stands behind. */
-    private void gate(final Caller caller, final String owner, final String what) throws GatewayRefusedException {
-        if (HostFiles.handles(owner)) {
-            admit(caller, what);
-            if (gateway.permissions().files() == GatewayPermissions.FileAccess.OFF) {
-                throw denied(caller, what, "denied: the shared folders are off");
-            }
-            if (WRITES_FILES.contains(member(what)) && !gateway.permissions().allowsWrite()) {
-                throw denied(caller, what, "denied: the shared folders are read-only");
-            }
-            return;
-        }
-        if (HostOperations.handles(owner) || HostProgram.handles(owner) || HostRemote.handles(owner)
-                || HostIql.handles(owner)) {
-            operations(caller, what);
-            return;
-        }
-        read(caller, what);
-    }
-
-    private static String member(final String what) {
-        return what.substring(what.indexOf('.') + 1);
     }
 
     // Watches and the log

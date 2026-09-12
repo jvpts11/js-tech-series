@@ -75,27 +75,16 @@ public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, 
                 WireComputer::new);
     }
 
-    /** One shared folder as ComputerCraft will see it through this Gateway. */
-    public record WireShare(String computer, String share, String onCc, String mode) {
-        public static final StreamCodec<RegistryFriendlyByteBuf, WireShare> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.stringUtf8(64), WireShare::computer,
-                ByteBufCodecs.stringUtf8(128), WireShare::share,
-                ByteBufCodecs.stringUtf8(160), WireShare::onCc,
-                ByteBufCodecs.stringUtf8(16), WireShare::mode,
-                WireShare::new);
-    }
-
     /**
      * The selected Gateway in full: this side (host, link, network, budget), the ComputerCraft side
-     * (network, agents, what was served), the names, the buffer, the last requests, the permissions, and
-     * the three tables.
+     * (network, what was served), the names, the buffer, the last requests, the permissions, and the
+     * two tables.
      */
     public record Detail(long pos, String name, String link, int types, int servers, boolean mainframeOnline,
-                         int budgetPermille, boolean ccOnline, int wiredComputers, int wiredDevices, int agents,
-                         int agentsTotal, int calls, int operations, int files, String peripheralName, int rednetId,
+                         int budgetPermille, boolean ccOnline, int wiredComputers, int wiredDevices,
+                         int calls, int operations, String peripheralName, int rednetId,
                          List<ItemStack> buffer, List<WireLog> recent, boolean read, boolean operationsAllowed,
-                         int filesAccess, int ceiling, int cap, List<WireComputer> computers, List<WireShare> shares,
-                         List<WireLog> log) {
+                         int ceiling, int cap, List<WireComputer> computers, List<WireLog> log) {
 
         public static final StreamCodec<RegistryFriendlyByteBuf, Detail> STREAM_CODEC = StreamCodec.of(
                 (buf, d) -> {
@@ -103,15 +92,13 @@ public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, 
                             .writeVarInt(d.types()).writeVarInt(d.servers()).writeBoolean(d.mainframeOnline())
                             .writeVarInt(d.budgetPermille()).writeBoolean(d.ccOnline())
                             .writeVarInt(d.wiredComputers()).writeVarInt(d.wiredDevices())
-                            .writeVarInt(d.agents()).writeVarInt(d.agentsTotal())
-                            .writeVarInt(d.calls()).writeVarInt(d.operations()).writeVarInt(d.files())
+                            .writeVarInt(d.calls()).writeVarInt(d.operations())
                             .writeUtf(d.peripheralName(), 48).writeVarInt(d.rednetId());
                     ItemStack.OPTIONAL_STREAM_CODEC.apply(ByteBufCodecs.list(BUFFER_SLOTS)).encode(buf, d.buffer());
                     WireLog.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ROWS)).encode(buf, d.recent());
-                    buf.writeBoolean(d.read()).writeBoolean(d.operationsAllowed()).writeVarInt(d.filesAccess())
+                    buf.writeBoolean(d.read()).writeBoolean(d.operationsAllowed())
                             .writeVarInt(d.ceiling()).writeVarInt(d.cap());
                     WireComputer.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ROWS)).encode(buf, d.computers());
-                    WireShare.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ROWS)).encode(buf, d.shares());
                     WireLog.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ROWS)).encode(buf, d.log());
                 },
                 buf -> {
@@ -125,11 +112,8 @@ public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, 
                     final boolean ccOnline = buf.readBoolean();
                     final int wiredComputers = buf.readVarInt();
                     final int wiredDevices = buf.readVarInt();
-                    final int agents = buf.readVarInt();
-                    final int agentsTotal = buf.readVarInt();
                     final int calls = buf.readVarInt();
                     final int operations = buf.readVarInt();
-                    final int files = buf.readVarInt();
                     final String peripheralName = buf.readUtf(48);
                     final int rednetId = buf.readVarInt();
                     final List<ItemStack> buffer =
@@ -137,22 +121,20 @@ public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, 
                     final List<WireLog> recent = WireLog.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ROWS)).decode(buf);
                     final boolean read = buf.readBoolean();
                     final boolean operationsAllowed = buf.readBoolean();
-                    final int filesAccess = buf.readVarInt();
                     final int ceiling = buf.readVarInt();
                     final int cap = buf.readVarInt();
                     final List<WireComputer> computers =
                             WireComputer.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ROWS)).decode(buf);
-                    final List<WireShare> shares = WireShare.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ROWS)).decode(buf);
                     final List<WireLog> log = WireLog.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ROWS)).decode(buf);
                     return new Detail(pos, name, link, types, servers, mainframeOnline, budget, ccOnline, wiredComputers,
-                            wiredDevices, agents, agentsTotal, calls, operations, files, peripheralName, rednetId, buffer,
-                            recent, read, operationsAllowed, filesAccess, ceiling, cap, computers, shares, log);
+                            wiredDevices, calls, operations, peripheralName, rednetId, buffer,
+                            recent, read, operationsAllowed, ceiling, cap, computers, log);
                 });
 
         /** No Gateway selected. */
         public static Detail none() {
-            return new Detail(0L, "", "", 0, 0, false, 0, false, 0, 0, 0, 0, 0, 0, 0, "", -1, emptyBuffer(),
-                    List.of(), true, true, 1, 1, 1, List.of(), List.of(), List.of());
+            return new Detail(0L, "", "", 0, 0, false, 0, false, 0, 0, 0, 0, "", -1, emptyBuffer(),
+                    List.of(), true, true, 1, 1, List.of(), List.of());
         }
 
         public boolean present() {

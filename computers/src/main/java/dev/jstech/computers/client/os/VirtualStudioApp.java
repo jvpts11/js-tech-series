@@ -2373,11 +2373,6 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             this.dockH = (int) (this.dividerY + this.dockH - mouseY);
             return;
         }
-        // A Lua program's screen in the terminal panel hears the drag as its own.
-        if (this.typingInTerminal && this.terminal.visible() && this.terminal.onScreen()) {
-            this.terminal.mouseDragged(mouseX, mouseY, button);
-            return;
-        }
         final CodeWorkspace.Doc doc = this.workspace.current();
         if (doc != null && this.page == Page.SOLUTION && !modalActive()) {
             doc.area().mouseDragged(mouseX, mouseY, button);
@@ -2387,10 +2382,6 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     @Override
     public void mouseReleased(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
         this.holding = 0;
-        if (this.typingInTerminal && this.terminal.visible() && this.terminal.onScreen()) {
-            this.terminal.mouseReleased(mouseX, mouseY, button);
-            return;
-        }
         final CodeWorkspace.Doc doc = this.workspace.current();
         if (doc != null) {
             doc.area().mouseReleased(mouseX, mouseY, button);

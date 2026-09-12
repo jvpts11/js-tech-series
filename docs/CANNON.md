@@ -198,68 +198,10 @@ Gateway.OnMessage(Action<GatewayMessage>)
 `Call` reaches any peripheral on their wired network by the names that side knows it by. A machine with
 several Gateways has a program choose with `Select`; one that chooses nothing gets the first.
 
-What needs the agent (below) is what asks one of THEIR computers to do something:
-
-```
-Gateway.HasAgent(long id) -> bool
-Gateway.Run(long id, string program[, List<string> args]) -> bool
-Gateway.Shell(long id, string line) -> List<string>
-Gateway.Read(long id, string path) -> string
-Gateway.Write(long id, string path, string text) -> bool
-Gateway.List(long id, string path) -> List<string>
-```
-
-Each of these waits for that computer to answer. Waiting costs the program nothing: it stops where it
-stands, its machine carries on, and it goes on with the answer when it lands. A computer that never
-answers ends the wait after five seconds and the call gives back nothing of its own kind, which a
-program can tell apart and act on. A world saved while a question is out does not ask it again when it
-is read back, because that computer may already have done what it was asked.
-
 What a Gateway allows is set on the Gateway itself, in the Gateway Manager or with `gateway <name> set`:
-reading the network, running operations, and how far the shared folders reach. Allowing operations is
-authority over the computer on the other side, its own files and peripherals included, because running
-a line there runs code with that computer's powers.
-
-## Programs crossing: the agent, `jsc` and translation
-
-A program of ours runs on a ComputerCraft computer. It is not rewritten and there is no switch to throw:
-going to one of their computers means being translated on the way, so the assembly a program compiles to
-becomes what that computer runs, at the moment it is sent.
-
-Their computers carry a small agent of ours, which starts with the computer and does nothing at all on
-one with no Gateway within reach. Where there is one, it says it is there, and answers what this side
-asks of it. It is itself one of our programs, translated the same way as any other.
-
-At one of their prompts:
-
-```
-jsc run <program> [words]     one of the host computer's programs, run there
-jsc list                      what there is to run
-```
-
-At one of ours:
-
-```
-gateway cc-bridge get 3:/reactor.lua C:\cc\reactor.lua
-gateway cc-bridge put C:\prog\batch.can 3:/batch
-```
-
-A `.can` or `.asm` put on one of their computers is compiled and translated on the way; a `.lua` crosses
-untouched. The file explorer shows the same thing under Network, as ComputerCraft: the computers with an
-agent, and their folders.
-
-A program that is meant to answer rather than ask says so, which is what the agent itself does:
-
-```
-Gateway.Serve(Func<List<string>, object> handler)
-```
-
-## Two kinds of number, one language
-
-A translated program is the same program, but the machine it lands on is not the same machine. Their
-computers count in one kind of number, so a program that prints a whole `3.0` here prints `3` there, and
-a whole number larger than about nine thousand million million loses its last digits crossing over.
-Everything else, the language itself, means what it means on either side.
+reading the network and running operations. The bridge goes one way for programs: a ComputerCraft
+program uses our network through the Gateway, and a program of ours reaches their devices and their
+computers' power switches, but never into a computer's own files or prompt.
 
 ## Watching the network
 

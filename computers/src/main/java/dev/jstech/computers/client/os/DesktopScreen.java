@@ -2234,8 +2234,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             editor.openFile(path);
             return;
         }
-        if (programId.equals(dev.jstech.computers.os.fs.FileOpeners.RUNTIME)
-                || programId.equals(dev.jstech.computers.os.fs.FileOpeners.LUA_RUNTIME)) {
+        if (programId.equals(dev.jstech.computers.os.fs.FileOpeners.RUNTIME)) {
             // A compiled program is run, not read: it gets this desktop's terminal and prints into it.
             runAtTerminal(path);
             return;

@@ -182,11 +182,6 @@ public final class ComputingPayloads {
                 ComputingPayloads::handleRequestDiskFiles);
         registrar.playToClient(DiskFilesPayload.TYPE, DiskFilesPayload.STREAM_CODEC,
                 ComputingPayloads::handleDiskFiles);
-        /* Looking into a ComputerCraft computer's folders: asked here, answered when that computer gets to it. */
-        registrar.playToServer(RequestCcFilesPayload.TYPE, RequestCcFilesPayload.STREAM_CODEC,
-                dev.jstech.computers.gateway.GatewayBrowseHandler::requested);
-        registrar.playToClient(CcFilesPayload.TYPE, CcFilesPayload.STREAM_CODEC,
-                dev.jstech.computers.gateway.GatewayBrowseHandler::listed);
         registrar.playToServer(RequestDesktopFilesPayload.TYPE, RequestDesktopFilesPayload.STREAM_CODEC,
                 ComputingPayloads::handleRequestDesktopFiles);
         registrar.playToClient(DesktopFilesPayload.TYPE, DesktopFilesPayload.STREAM_CODEC,
@@ -219,10 +214,6 @@ public final class ComputingPayloads {
                 ComputingPayloads::handleDesktopShellRun);
         registrar.playToClient(DesktopShellOutputPayload.TYPE, DesktopShellOutputPayload.STREAM_CODEC,
                 ComputingPayloads::handleDesktopShellOutput);
-        registrar.playToClient(LuaScreenPayload.TYPE, LuaScreenPayload.STREAM_CODEC,
-                ComputingPayloads::handleLuaScreen);
-        registrar.playToServer(LuaEventPayload.TYPE, LuaEventPayload.STREAM_CODEC,
-                ComputingPayloads::handleLuaEvent);
         registrar.playToClient(UiWindowPayload.TYPE, UiWindowPayload.STREAM_CODEC,
                 ComputingPayloads::handleUiWindow);
         registrar.playToServer(UiEventPayload.TYPE, UiEventPayload.STREAM_CODEC,
@@ -1819,10 +1810,6 @@ public final class ComputingPayloads {
     private static boolean drainForeground(
             final dev.jstech.computers.cannon.machine.MachinePrograms processes, final String typed,
             final java.util.List<DesktopShellOutputPayload.WireLine> wire) {
-        // A program with a screen of its own hears the keyboard as events; an empty line is only a window asking.
-        if (typed.isEmpty() && processes.terminalOf(processes.held()) != null) {
-            return true;
-        }
         if (!INTERRUPT.equals(typed)) {
             processes.offerInput(typed);
             return true;
@@ -1833,53 +1820,6 @@ public final class ComputingPayloads {
         wire.add(new DesktopShellOutputPayload.WireLine("^C",
                 dev.jstech.computers.program.cli.CliStyle.DIM.ordinal()));
         return false;
-    }
-
-    private static void handleLuaScreen(final LuaScreenPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            dev.jstech.computers.client.os.ShellViews.acceptScreen(payload);
-            // A machine with no desktop has only its prompt, and a program's screen belongs there too.
-            dev.jstech.computers.client.CommandPromptScreen.acceptScreen(payload);
-        });
-    }
-
-    /**
-     * Whether this player is at the terminal of the machine at {@code host}: either the desktop of that
-     * machine, or its prompt on a machine that has no desktop. Both are the same glass to the player, and
-     * a program in front is theirs to type at from either.
-     */
-    private static boolean atTerminal(final ServerPlayer player, final net.minecraft.core.BlockPos host) {
-        return (player.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu desktop
-                        && host.equals(desktop.hostPos()))
-                || (player.containerMenu instanceof dev.jstech.computers.menu.CommandPromptMenu prompt
-                        && host.equals(prompt.hostPos()));
-    }
-
-    /**
-     * A key, a character or a click on the screen of the Lua program in front of the machine's terminal,
-     * handed to it as the event ComputerCraft would give it. Anything that is not something a keyboard or
-     * a mouse makes is dropped, and so is everything when no program with a screen has the terminal.
-     */
-    private static void handleLuaEvent(final LuaEventPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !atTerminal(player, payload.hostPos())
-                    || !LuaEventPayload.NAMES.contains(payload.name())
-                    || !(level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity computer)) {
-                return;
-            }
-            final var processes = computer.cannon();
-            final int id = processes.held();
-            if (id == 0) {
-                return;
-            }
-            final java.util.List<Object> values = new java.util.ArrayList<>(payload.values().size() + 1);
-            values.add(payload.name());
-            values.addAll(payload.values());
-            processes.queueEvent(id, values);
-        });
     }
 
     private static void handleUiWindow(final UiWindowPayload payload, final IPayloadContext context) {
@@ -2575,9 +2515,7 @@ public final class ComputingPayloads {
                 return;
             }
             final var started = computer.cannon().start(name, listing.get(), room, computer, java.util.List.of(), 0,
-                    dev.jstech.computers.cannon.machine.MachinePrograms.DEFAULT_PRIORITY,
-                    included -> readDiskFile(level, computer,
-                            dev.jstech.computers.cannon.CannonIncludes.beside(payload.path(), included)).orElse(null));
+                    dev.jstech.computers.cannon.machine.MachinePrograms.DEFAULT_PRIORITY);
             if (!started.ok()) {
                 wire.add(new DesktopShellOutputPayload.WireLine(started.message(),
                         dev.jstech.computers.program.cli.CliStyle.ERROR.ordinal()));

@@ -105,7 +105,6 @@ public final class GatewayManagerGameTests {
                     final String said = act(helper, fleet, GatewayManagerActionPayload.ACTION_RENAME, 0, "CC Bridge");
                     helper.assertTrue(said.contains("cc-bridge"), "the rename says what it did; got " + said);
                     act(helper, fleet, GatewayManagerActionPayload.ACTION_SET_READ, 0, "");
-                    act(helper, fleet, GatewayManagerActionPayload.ACTION_SET_FILES, 2, "");
                     act(helper, fleet, GatewayManagerActionPayload.ACTION_SET_CEILING, 2, "");
                     act(helper, fleet, GatewayManagerActionPayload.ACTION_SET_CAP, 2, "");
                     act(helper, fleet, GatewayManagerActionPayload.ACTION_IDENTIFY, 0, "");
@@ -113,55 +112,20 @@ public final class GatewayManagerGameTests {
                     final GatewayManagerStatePayload after = state(helper, fleet);
                     final GatewayManagerStatePayload.Detail d = after.detail();
                     helper.assertTrue("cc-bridge".equals(d.name()), "the new name shows; got " + d.name());
-                    helper.assertTrue(!d.read() && d.operationsAllowed() && d.filesAccess() == 2 && d.ceiling() == 2 && d.cap() == 2,
-                            "every knob moved; got read=" + d.read() + " files=" + d.filesAccess() + " ceiling=" + d.ceiling()
-                                    + " cap=" + d.cap());
+                    helper.assertTrue(!d.read() && d.operationsAllowed() && d.ceiling() == 2 && d.cap() == 2,
+                            "every knob moved; got read=" + d.read() + " ceiling=" + d.ceiling() + " cap=" + d.cap());
                     helper.assertTrue("jsc_gateway_cc_bridge".equals(d.peripheralName()), "CC's name follows; got " + d.peripheralName());
                     helper.assertTrue(gateway(helper).identifying(), "Identify sets the lights blinking");
                     final List<String> whats = new ArrayList<>();
                     for (final GatewayManagerStatePayload.WireLog row : d.log()) {
                         whats.add(row.what());
                     }
-                    helper.assertTrue(whats.contains("rename gateway-1 to cc-bridge") && whats.contains("set files read & write")
-                                    && whats.contains("identify"), "the log has it all, signed by the host; got " + whats);
+                    helper.assertTrue(whats.contains("rename gateway-1 to cc-bridge") && whats.contains("identify"),
+                            "the log has it all, signed by the host; got " + whats);
                     helper.assertTrue(d.log().stream().allMatch(row -> row.who().equals("desk")), "signed by the host");
                     helper.assertTrue(d.recent().size() == GatewayManager.RECENT, "the status tab shows the last few");
                     final String missing = act(helper, fleet, GatewayManagerActionPayload.ACTION_RENAME, 0, "");
                     helper.assertTrue("gateway-1".equals(gateway(helper).name()), "an empty name goes back to the default; " + missing);
-                })
-                .thenSucceed();
-    }
-
-    @GameTest(template = ARENA)
-    public static void manager_listsTheSharesAsComputerCraftWillSeeThem(final GameTestHelper helper) {
-        final Fleet fleet = wire(helper);
-        helper.startSequence()
-                .thenExecuteAfter(SETTLE + 6, () -> {
-                    final ServerCliComputer lab = new ServerCliComputer(fleet.lab(), helper.getLevel());
-                    helper.assertTrue(lab.makeDir("C:\\pub").ok(), "the folder is made");
-                    helper.assertTrue(lab.setConfig("share", "C:\\pub write").ok(), "and shared for writing");
-                    final ServerCliComputer desk = new ServerCliComputer(fleet.host(), helper.getLevel());
-                    helper.assertTrue(desk.makeDir("C:\\scripts").ok() && desk.setConfig("share", "C:\\scripts").ok(),
-                            "the host shares one of its own, read-only");
-
-                    List<GatewayManagerStatePayload.WireShare> shares = state(helper, fleet).detail().shares();
-                    helper.assertTrue(shares.size() == 2, "both shares are listed; got " + shares);
-                    final GatewayManagerStatePayload.WireShare labShare = shares.stream()
-                            .filter(s -> s.computer().equals("lab")).findFirst().orElse(null);
-                    helper.assertTrue(labShare != null && labShare.onCc().equals("/jsc/lab/pub") && labShare.mode().equals("read"),
-                            "a writable share reads only while the Gateway allows reads; got " + labShare);
-
-                    act(helper, fleet, GatewayManagerActionPayload.ACTION_SET_FILES, 2, "");
-                    shares = state(helper, fleet).detail().shares();
-                    helper.assertTrue(shares.stream().anyMatch(s -> s.computer().equals("lab") && s.mode().equals("read & write")),
-                            "with writes allowed the writable share is read & write; got " + shares);
-                    helper.assertTrue(shares.stream().anyMatch(s -> s.computer().equals("desk") && s.mode().equals("read")),
-                            "while a read-only share stays read; got " + shares);
-
-                    act(helper, fleet, GatewayManagerActionPayload.ACTION_SET_FILES, 0, "");
-                    shares = state(helper, fleet).detail().shares();
-                    helper.assertTrue(shares.stream().allMatch(s -> s.mode().equals("off")),
-                            "with files off every share is off; got " + shares);
                 })
                 .thenSucceed();
     }
@@ -217,12 +181,12 @@ public final class GatewayManagerGameTests {
                     helper.assertTrue(says(lines, "gateway-1") && says(lines, "up"), "list names the Gateway and its link; got " + lines);
                     lines = shell(helper, fleet.host(), "gateway gateway-1 rename farm-link");
                     helper.assertTrue(says(lines, "renamed gateway-1 to farm-link"), "rename answers; got " + lines);
-                    lines = shell(helper, fleet.host(), "gateway farm-link set files write");
-                    helper.assertTrue(says(lines, "read & write"), "set files answers; got " + lines);
+                    lines = shell(helper, fleet.host(), "gateway farm-link set operations off");
+                    helper.assertTrue(says(lines, "denied"), "set operations answers; got " + lines);
                     lines = shell(helper, fleet.host(), "gateway farm-link set cap 16");
                     helper.assertTrue(says(lines, "16 calls"), "set cap answers; got " + lines);
                     lines = shell(helper, fleet.host(), "gateway farm-link perms");
-                    helper.assertTrue(says(lines, "files: read & write") && says(lines, "calls a tick: 16"),
+                    helper.assertTrue(says(lines, "operations: off") && says(lines, "calls a tick: 16"),
                             "perms prints the knobs; got " + lines);
                     lines = shell(helper, fleet.host(), "gateway farm-link status");
                     helper.assertTrue(says(lines, "linked to desk, adjacent") && says(lines, "jsc_gateway_farm_link"),

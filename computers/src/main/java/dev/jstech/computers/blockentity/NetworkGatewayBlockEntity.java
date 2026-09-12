@@ -11,13 +11,9 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
 import dev.jstech.computers.block.NetworkGatewayBlock;
 import dev.jstech.computers.cannon.CannonCosts;
-import dev.jstech.computers.gateway.GatewayBrowse;
-import dev.jstech.computers.gateway.GatewayLimits;
 import dev.jstech.computers.gateway.GatewayLog;
 import dev.jstech.computers.gateway.GatewayName;
 import dev.jstech.computers.gateway.GatewayPermissions;
-import dev.jstech.computers.gateway.GatewayRequestId;
-import dev.jstech.computers.gateway.GatewayRpcBroker;
 import dev.jstech.computers.gateway.GatewayService;
 import dev.jstech.computers.gateway.GatewayStats;
 import dev.jstech.computers.gateway.GatewayValues;
@@ -79,7 +75,6 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
     private static final String NBT_NAME = "Name";
     private static final String NBT_READ = "Read";
     private static final String NBT_OPERATIONS = "Operations";
-    private static final String NBT_FILES = "Files";
     private static final String NBT_CEILING = "Ceiling";
     private static final String NBT_CAP = "CallCap";
     private static final String NBT_LOG = "Log";
@@ -263,9 +258,6 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
         permissions = value;
         setChanged();
         logged(by, what, "ok", GatewayLog.Tone.OK);
-        if (bridge != null) {
-            bridge.refreshMounts();
-        }
     }
 
     public GatewayLog log() {
@@ -337,105 +329,6 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
         messages.addLast(new Message(from, text == null ? "" : text, tick));
     }
 
-    /*
-     * The agents. A computer over there says hello when its agent starts, and stops counting as one when
-     * it detaches or is turned off, so a program here is told the truth about what it can reach.
-     */
-    private final java.util.Set<Integer> agents = new java.util.HashSet<>();
-    /** The questions put to the other side and who waits for each; the whole of the bookkeeping. */
-    private final GatewayRpcBroker rpc = new GatewayRpcBroker();
-
-    /** An agent on that computer said it is there and will answer what this side asks it. */
-    public void agentOn(final int computerId) {
-        // Said once. An agent answers every question this way, and a log of forty says nothing else.
-        if (agents.add(computerId)) {
-            logged("computer " + computerId, "agent", "ready", GatewayLog.Tone.OK);
-        }
-    }
-
-    /** Whether a computer over there has an agent that answers. */
-    public boolean hasAgent(final int computerId) {
-        return agents.contains(computerId) && attached.containsKey(computerId);
-    }
-
-    /** Forgets the agent of a computer that is gone, and every question it will now never answer. */
-    public void agentGone(final int computerId) {
-        agents.remove(computerId);
-        for (final GatewayRpcBroker.Pending one : rpc.forget(computerId)) {
-            logged("computer " + computerId, one.verb(), "the computer is gone", GatewayLog.Tone.DENIED);
-        }
-    }
-
-    /**
-     * Puts a question to the agent on one of the computers over there; the name it will answer by.
-     *
-     * <p>Nothing waits here: the question goes out as an event on that computer and this side carries on.
-     * The program that asked is parked until the answer comes back through {@link #answered}. What goes
-     * over is turned into the shapes that side reads first, at this one boundary, so no caller has to.
-     *
-     * @param program the program on this machine that will be waiting for the answer
-     */
-    @Nullable
-    public GatewayRequestId ask(final int computerId, final GatewayRpcBroker.Waiting who, final String verb,
-                                final java.util.List<Object> arguments, final long expiresAt) {
-        final GatewayRpcBroker.Pending question = rpc.submit(computerId, who, verb, expiresAt);
-        if (question == null || bridge == null) {
-            return null;
-        }
-        final Object[] said = new Object[arguments.size() + 2];
-        said[0] = question.id().text();
-        said[1] = verb;
-        for (int i = 0; i < arguments.size(); i++) {
-            said[i + 2] = GatewayValues.toTranslated(arguments.get(i));
-        }
-        if (!bridge.eventTo(computerId, "jsc_ask", said)) {
-            rpc.landing(question.id(), computerId, null);
-            return null;
-        }
-        stats.count(GatewayStats.Kind.CALL, level == null ? 0L : level.getGameTime());
-        return question.id();
-    }
-
-    /**
-     * The answer to one of those questions, on its way to the program that is waiting for it.
-     *
-     * @param from the computer that sent it, which has to be the one that was asked
-     * @return whether a program was still waiting for it
-     */
-    public boolean answered(@Nullable final GatewayRequestId question, final int from, final Object value) {
-        final GatewayRpcBroker.Pending waiting = rpc.waiting(question);
-        final GatewayRpcBroker.Landing landing = rpc.landing(question, from, value);
-        if (landing != GatewayRpcBroker.Landing.DELIVERED) {
-            if (landing != GatewayRpcBroker.Landing.UNKNOWN) {
-                logged("computer " + from, waiting == null ? "answer" : waiting.verb(),
-                        landing == GatewayRpcBroker.Landing.TOO_MUCH
-                                ? "refused: " + GatewayLimits.refuse(value) : "refused: not the computer asked",
-                        GatewayLog.Tone.DENIED);
-            }
-            return false;
-        }
-        // Only now, once it is known to be the right answer and small enough, does it become ours.
-        final Object ours = GatewayValues.fromTranslated(value);
-        return switch (waiting.who()) {
-            case GatewayRpcBroker.Waiting.ByProgram program -> owner() instanceof AbstractComputerBlockEntity machine
-                    && machine.cannon().deliverAnswer(program.id(), waiting.id().value(), ours);
-            case GatewayRpcBroker.Waiting.ByPlayer player ->
-                    GatewayBrowse.answered(this, player, waiting.computer(), ours);
-        };
-    }
-
-    /** Lets go of the questions whose waiting is over, which is all this costs while none are out. */
-    private void sweepQuestions() {
-        for (final GatewayRpcBroker.Pending one : rpc.expired(level == null ? 0L : level.getGameTime())) {
-            logged("computer " + one.computer(), one.verb(), "no answer", GatewayLog.Tone.BUSY);
-            if (one.who() instanceof GatewayRpcBroker.Waiting.ByPlayer player) {
-                // A program finds out by its own wait ending; a player has to be told, or the explorer waits for ever.
-                GatewayBrowse.nothing(this, player, one.computer(), "computer " + one.computer()
-                        + " did not answer");
-            }
-        }
-    }
-
     /** Everything said to this side since the last time anyone asked, oldest first. */
     public java.util.List<Message> takeMessages() {
         if (messages.isEmpty()) {
@@ -469,7 +362,6 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
     public void ccDetached(final int computerId) {
         attached.remove(computerId);
         watches.remove(computerId);
-        agentGone(computerId);
         syncToClients();
     }
 
@@ -596,7 +488,6 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
 
     private void tick(final ServerLevel level) {
         rollTick();
-        sweepQuestions();
         final long self = worldPosition.asLong();
         final long socket = socketPos().asLong();
         final PeripheralLinkValidator validator = PeripheralLinks.validator(level);
@@ -629,10 +520,6 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
         }
         if (!watches.isEmpty() && linkedOwner != null && level.getGameTime() % WATCH_EVERY == 0L) {
             tickWatches();
-        }
-        // Shares come and go on the other computers; once a second the mounts follow them.
-        if (bridge != null && !attached.isEmpty() && level.getGameTime() % WATCH_EVERY == 10L) {
-            bridge.refreshMounts();
         }
         final boolean lit = identifying()
                 ? (level.getGameTime() / BLINK_TICKS) % 2 == 0
@@ -698,7 +585,6 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
         tag.putString(NBT_NAME, name);
         tag.putBoolean(NBT_READ, permissions.read());
         tag.putBoolean(NBT_OPERATIONS, permissions.operations());
-        tag.putInt(NBT_FILES, permissions.filesIndex());
         tag.putInt(NBT_CEILING, permissions.ceilingIndex());
         tag.putInt(NBT_CAP, permissions.capIndex());
         final ListTag entries = new ListTag();
@@ -725,7 +611,7 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
         name = tag.getString(NBT_NAME);
         if (tag.contains(NBT_READ)) {
             permissions = GatewayPermissions.of(tag.getBoolean(NBT_READ), tag.getBoolean(NBT_OPERATIONS),
-                    tag.getInt(NBT_FILES), tag.getInt(NBT_CEILING), tag.getInt(NBT_CAP));
+                    tag.getInt(NBT_CEILING), tag.getInt(NBT_CAP));
         }
         if (tag.contains(NBT_LOG)) {
             final List<GatewayLog.Entry> oldestFirst = new ArrayList<>();

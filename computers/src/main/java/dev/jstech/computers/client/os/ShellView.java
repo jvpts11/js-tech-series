@@ -10,7 +10,6 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.operation.payload.ComputingPayloads;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
-import dev.jstech.computers.operation.payload.LuaScreenPayload;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.client.gui.component.CommandLine;
 import dev.jstech.core.client.gui.component.Label;
@@ -80,17 +79,6 @@ public final class ShellView extends Panel {
     private boolean busy;
 
     /**
-     * The screen of the Lua program in front, while one has the terminal; null the rest of the time.
-     *
-     * <p>A Lua program is ComputerCraft's, and it draws on ComputerCraft's screen rather than printing
-     * lines: while it runs, that screen is what this view shows, and the keyboard and mouse are its.
-     */
-    private final LuaScreenView luaScreen;
-    private boolean onScreen;
-    /** Set when a program's screen first arrives, so a terminal window grows to show it whole once. */
-    private boolean wantsRoom;
-
-    /**
      * A view of the console of the computer at {@code host}.
      *
      * @param posix  whether the machine speaks bash rather than the DOS prompt
@@ -99,7 +87,6 @@ public final class ShellView extends Panel {
      */
     public ShellView(final BlockPos host, final boolean posix, final boolean banner) {
         this.host = host;
-        this.luaScreen = new LuaScreenView(host, this.session, banner);
         if (posix) {
             /*
              * A real Linux terminal opens on a bare prompt; the empty round trip below replaces this
@@ -257,70 +244,8 @@ public final class ShellView extends Panel {
         submit(line);
     }
 
-    /** Takes the screen of the Lua program in front of this machine's terminal. */
-    void acceptScreen(final LuaScreenPayload payload) {
-        if (!payload.hostPos().equals(this.host)) {
-            return;
-        }
-        if (!this.onScreen) {
-            this.onScreen = true;
-            this.wantsRoom = true;
-        }
-        this.luaScreen.accept(payload);
-    }
-
-    /** Whether a Lua program's screen has this terminal. */
-    public boolean onScreen() {
-        return this.onScreen;
-    }
-
-    /** Where a cell of the program's screen is drawn (from 1, across then down), or null when not showing. */
-    public int[] cellPoint(final int column, final int row) {
-        return this.onScreen ? this.luaScreen.cellPoint(column, row) : null;
-    }
-
-    /** The size the program's screen was last drawn at, or 0 before it has been. */
-    public float screenScale() {
-        final var at = this.luaScreen.placed();
-        return this.onScreen && at != null ? at.scale() : 0f;
-    }
-
-    /** Which rows of the program's screen show, as the first (from 1) and how many; null before it is drawn. */
-    public int[] screenRows() {
-        final var at = this.luaScreen.placed();
-        return this.onScreen && at != null ? new int[] {at.firstRow() + 1, at.rows()} : null;
-    }
-
-    /** The screen of the Lua program in front, or null when none has the terminal. */
-    public LuaScreenPayload screen() {
-        return this.onScreen ? this.luaScreen.screen() : null;
-    }
-
-    /**
-     * Whether this view has just been given a program's screen and would like the room to show it whole;
-     * asked once, when the window next lays itself out.
-     */
-    public boolean wantsRoom() {
-        return this.wantsRoom;
-    }
-
-    /*
-     * The program returned: the prompt comes back under what it left on its screen, which stays in the
-     * scrollback as plain text, the blank rows at its bottom left off.
-     */
-    private void leaveScreen() {
-        for (final String row : this.luaScreen.rows()) {
-            push(row, colorOf(CliStyle.PLAIN.ordinal()));
-        }
-        this.onScreen = false;
-        this.wantsRoom = false;
-    }
-
     /** Takes what the machine's console said. */
     void accept(final DesktopShellOutputPayload payload) {
-        if (this.onScreen && !payload.informational() && !payload.busy()) {
-            leaveScreen();
-        }
         if (payload.clear()) {
             this.scrollback.clear();
             this.generation++;
@@ -432,11 +357,6 @@ public final class ShellView extends Panel {
                     dev.jstech.computers.os.edit.InkPalette.DARK);
             return;
         }
-        if (this.onScreen) {
-            this.luaScreen.render(g, ctx.font(), x(), y(), width(), height());
-            this.wantsRoom = false;
-            return;
-        }
         final int ground = groundOf(this.osSkin);
         g.fill(x(), y(), right(), bottom(), ground);
         // Lines wrap to the view's current width, so nothing leaks past the frame however it is resized.
@@ -462,50 +382,16 @@ public final class ShellView extends Panel {
 
     @Override
     public boolean mouseClicked(final double mx, final double my, final int button) {
-        if (this.onScreen) {
-            this.luaScreen.mouseClicked(mx, my, button);
-            return true;
-        }
         super.mouseClicked(mx, my, button);
         // Typing always goes to the command line: a click on the output must not take the keyboard away.
         focus(this.console);
         return true;
     }
 
-    /** A button let go, which a program's screen hears as the end of a click or a drag. */
-    @Override
-    public boolean mouseReleased(final double mx, final double my, final int button) {
-        if (this.onScreen) {
-            return this.luaScreen.mouseReleased(mx, my, button);
-        }
-        return super.mouseReleased(mx, my, button);
-    }
-
-    /** The mouse moved with a button held, which a program's screen hears as a drag from cell to cell. */
-    @Override
-    public boolean mouseDragged(final double mx, final double my, final int button) {
-        if (this.onScreen) {
-            return this.luaScreen.mouseDragged(mx, my, button);
-        }
-        return super.mouseDragged(mx, my, button);
-    }
-
-    /** A key let go, which a program's screen hears as {@code key_up}. */
-    @Override
-    public boolean keyReleased(final int key, final int scanCode, final int modifiers) {
-        if (this.onScreen) {
-            return this.luaScreen.keyReleased(key);
-        }
-        return super.keyReleased(key, scanCode, modifiers);
-    }
-
     @Override
     public boolean charTyped(final char c) {
         if (this.editor != null) {
             return this.editor.charTyped(c);
-        }
-        if (this.onScreen) {
-            return this.luaScreen.charTyped(c);
         }
         // While a program has the terminal, what is typed is the program's to read when it asks.
         return super.charTyped(c);
@@ -521,9 +407,6 @@ public final class ShellView extends Panel {
             interrupt();
             return true;
         }
-        if (this.onScreen) {
-            return this.luaScreen.keyPressed(key, modifiers);
-        }
         return super.keyPressed(key, scanCode, modifiers);
     }
 
@@ -531,10 +414,6 @@ public final class ShellView extends Panel {
     public boolean mouseScrolled(final double mx, final double my, final double delta) {
         if (this.editor != null) {
             return this.editor.scrolled(delta);
-        }
-        if (this.onScreen) {
-            this.luaScreen.mouseScrolled(mx, my, delta);
-            return true;
         }
         this.scrollOffset = Math.max(0, this.scrollOffset + (delta > 0 ? 1 : -1));
         return true;

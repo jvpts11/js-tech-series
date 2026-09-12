@@ -55,7 +55,6 @@ public final class BuiltinCommands {
          * always the one a player types into.
          */
         out.addAll(CannonCommands.all());
-        out.addAll(LuaCommands.all());
         return List.copyOf(out);
     }
 

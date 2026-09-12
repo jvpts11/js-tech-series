@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.client.os;
 
-import dev.jstech.computers.cannon.lua.lib.LuaTerminal;
 import dev.jstech.computers.gui.layout.UiLayout;
 import dev.jstech.computers.operation.payload.UiEventPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
@@ -321,9 +320,20 @@ public final class CannonWindowApp implements IDesktopApp {
         }
     }
 
+    /**
+     * The sixteen colours a program paints a canvas with, in the order it names them.
+     *
+     * <p>Sixteen rather than a free choice of colour, because a canvas is drawn by a machine whose
+     * screen has this many and no more, and a program that says "green" means the same green on any of
+     * them.
+     */
+    private static final int[] PALETTE = {
+        0xF0F0F0, 0xF2B233, 0xE57FD8, 0x99B2F2, 0xDEDE6C, 0x7FCC19, 0xF2B2CC, 0x4C4C4C,
+        0x999999, 0x4C99B2, 0xB266E5, 0x3366CC, 0x7F664C, 0x57A64E, 0xCC4C4C, 0x111111
+    };
+
     private static int paint(final int colour) {
-        final int[] palette = LuaTerminal.DEFAULT_PALETTE;
-        return 0xFF000000 | palette[Math.floorMod(colour, palette.length)];
+        return 0xFF000000 | PALETTE[Math.floorMod(colour, PALETTE.length)];
     }
 
     /* A line of single pixels, since the screen has no line of its own to draw with. */

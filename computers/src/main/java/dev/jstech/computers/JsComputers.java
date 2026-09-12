@@ -37,9 +37,6 @@ public class JsComputers {
          */
         dev.jstech.core.JsCore.languages().register(
                 dev.jstech.computers.cannon.machine.CannonLanguage.INSTANCE);
-        // Lua, so a program written for a ComputerCraft computer runs on one of ours as it is.
-        dev.jstech.core.JsCore.languages().register(
-                dev.jstech.computers.cannon.machine.LuaLanguage.INSTANCE);
 
         ComputingModule.register(modEventBus);
         JscCreativeModeTabs.register(modEventBus);

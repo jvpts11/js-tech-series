@@ -53,8 +53,6 @@ public final class Parser {
             TokenKind.CLASS, TokenKind.STRUCT, TokenKind.RECORD, TokenKind.INTERFACE, TokenKind.ENUM,
             TokenKind.DELEGATE);
 
-    /** The word that brings a Lua file into a program, at the head of a file. */
-    private static final String INCLUDE = "include";
 
     private final List<Token> tokens;
     private final DiagnosticBag diagnostics;
@@ -76,27 +74,12 @@ public final class Parser {
     public CompilationUnit parse(final String file) {
         final List<CompilationUnit.Using> usings = new ArrayList<>();
         final List<CompilationUnit.Declared> declared = new ArrayList<>();
-        final List<CompilationUnit.Include> includes = new ArrayList<>();
         String fileNamespace = "";
         final java.util.Deque<String> blocks = new java.util.ArrayDeque<>();
         boolean askedForNamespace = false;
         while (!this.atEnd()) {
             final int before = this.position;
-            /*
-             * "include" is only a word here, at the head of a file and followed by a file name, so a
-             * program that calls something else "include" keeps compiling.
-             */
-            if (this.check(TokenKind.IDENTIFIER) && INCLUDE.equals(this.peek().text())
-                    && this.kindAt(this.position + 1) == TokenKind.STRING_LITERAL) {
-                final Token start = this.advance();
-                final Token included = this.advance();
-                includes.add(new CompilationUnit.Include(String.valueOf(included.value()), start.line(),
-                        start.column()));
-                this.expect(TokenKind.SEMICOLON);
-                if (!declared.isEmpty() || !fileNamespace.isEmpty() || !blocks.isEmpty()) {
-                    this.diagnostics.error(start.line(), start.column(), CannonError.INCLUDE_TOO_LATE);
-                }
-            } else if (this.check(TokenKind.USING)) {
+            if (this.check(TokenKind.USING)) {
                 final Token start = this.advance();
                 final String name = this.parseDottedName();
                 boolean all = false;
@@ -150,7 +133,7 @@ public final class Parser {
             final Token end = this.peek();
             this.diagnostics.error(end.line(), end.column(), CannonError.EXPECTED_TOKEN, "}", end.describe());
         }
-        return new CompilationUnit(file, usings, declared, includes);
+        return new CompilationUnit(file, usings, declared);
     }
 
     /** The namespace a type is in: the file's, then every block open around it, joined with dots. */

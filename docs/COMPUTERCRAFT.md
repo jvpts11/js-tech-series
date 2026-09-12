@@ -55,61 +55,16 @@ Names are what CC programs expect: an item is its registry id (`minecraft:iron_i
 Two things arrive as events on the computer that asked for them: `jsc_stock(name, total, previous)` when
 a watched total moves, and `jsc_operation(id, status)` when an operation of theirs settles.
 
-Our shared folders are mounted on their computers as `/jsc/<host>/<share>`, readable or writable
-according to what the sharing computer and the Gateway both allow.
-
-## Lua programs on our computers
-
-Our computers run Lua too, with `lrt run reactor.lua`, and a Lua program there finds what it expects to
-find: its own disks through `fs`, a 51 by 19 screen through `term`, events, timers, `shell`, `require`.
-
-Its **peripherals are the things on the other side of its machine's Gateway**, by the names that side
-uses. `peripheral.getNames`, `getType`, `isPresent`, `getMethods`, `call`, `wrap` and `find` all work, so
-a program written for one of their computers finds the same devices running on one of ours. A machine
-with no Gateway has nothing attached, which is what such a computer says too.
-
-`rednet` and `gps` are not bridged: there is no modem of our own yet.
-
 ## What one of our programs can ask of them
 
 From Cannon, through `Gateway`: which computers and peripherals are on the other side, calling any of
-their peripherals by name, turning their computers on and off, and sending them a line. With the agent
-running, also: running a program or a line there, and reading, writing or listing their files. The
-language reference has the shape of every call, on the [Cannon page](CANNON.md).
+their peripherals by name, turning their computers on and off, and sending them a line. The language
+reference has the shape of every call, on the [Cannon page](CANNON.md).
 
-## The agent
-
-Their computers carry a small program of ours, which starts with the computer. On a computer with no
-Gateway within reach it does nothing and is over in a line. Where there is one, it says it is there and
-answers what our side asks of it.
-
-It is not written in their language by hand: it is one of our own programs, translated on the way out by
-the same translator every program of ours goes through, and given to their computers as a data pack of
-one file. If our translator were ever wrong, the agent would be wrong with it and say so at once, which
-is the point of building it that way.
-
-The agent is also why `Gateway.Run`, `Shell`, `Read`, `Write` and `List` need the computer to be ON: a
-computer that is off has no agent, and those calls say so rather than pretending.
-
-## Programs crossing
-
-```
-jsc run <program> [words]    at their prompt: one of the host computer's programs, run there
-jsc list                     what there is to run
-```
-
-```
-gateway cc-bridge get 3:/reactor.lua C:\cc\reactor.lua      at ours: a file from their computer
-gateway cc-bridge put C:\prog\batch.can 3:/batch            a file to it
-```
-
-A program of ours is compiled and translated as it goes; one of theirs crosses untouched. There is no
-flag for this and no second copy of anything: translation is what going to another kind of computer
-means. The file explorer shows their computers under Network, as ComputerCraft, and their folders are
-browsable there.
-
-A translated program is the same program, but their computers count in one kind of number, so a whole
-`3.0` prints as `3` over there, and very large whole numbers lose their last digits crossing.
+The bridge stops there on purpose. A program of ours does not reach into one of their computers' files
+or prompt, and a program does not cross from one kind of computer to the other: each side is programmed
+in its own language, and the Gateway is what they share. Their computers speak Lua, ours speak Cannon,
+and the network is the thing in the middle.
 
 ## What it costs, and what it is allowed
 
@@ -117,13 +72,10 @@ Every call across the bridge is paid for by the Gateway's host computer, out of 
 programs run on: a ComputerCraft computer hammering the bridge slows that computer, not the server. The
 Gateway answers a fixed number of calls a tick (4, 8 or 16) and refuses the rest with `busy`.
 
-Three switches, in the **Gateway Manager** program or with `gateway <name> set`:
+Two switches, in the **Gateway Manager** program or with `gateway <name> set`:
 
 - **read** the network: totals, types, servers, watches.
-- **operations**: pulling, pushing, crafting, and running things. Allowing it is authority over the
-  computer on the other side, its own files and peripherals included, because running a line there runs
-  code with that computer's powers.
-- **files**: off, read, or read and write, for the shared folders and for reaching into their disks.
+- **operations**: pulling, pushing, crafting, and starting one of the network's own programs.
 
 There is also a ceiling on the priority a request from their side may carry, so their computers cannot
 outrank the network's own work.
@@ -133,8 +85,4 @@ Everything refused is written into the Gateway's log, which the Gateway Manager 
 
 ## Limits worth knowing
 
-- An answer from one of their computers is measured before any of it reaches a program of ours: 64 KB of
-  text, 4096 things in a list, eight deep, 256 KB in all. Bigger than that is refused whole.
-- Sixty-four questions may be in flight at once per Gateway.
-- A question that is still out when the world is saved is not asked again when it is read back.
 - `rednet` and `gps` are not bridged yet.

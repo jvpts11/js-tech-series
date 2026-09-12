@@ -579,25 +579,6 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
                 out.add(new IProgrammingLanguage.SourceText(ProblemReport.nameOf(entry.getKey()), entry.getValue()));
             }
         }
-        /*
-         * A Cannon file that includes a Lua one is checked with it, so what it calls in that file is
-         * known; the Lua files beside it are handed over, and the compiler takes the ones it includes.
-         */
-        if (language == dev.jstech.computers.cannon.machine.CannonLanguage.INSTANCE
-                && !dev.jstech.computers.cannon.CannonIncludes.scan(doc.area.text()).isEmpty()) {
-            for (final Doc other : this.docs) {
-                if (other != doc && dirOf(other.path).equals(dir) && other.path.toLowerCase(Locale.ROOT).endsWith(".lua")
-                        && seen.add(other.path)) {
-                    out.add(new IProgrammingLanguage.SourceText(other.name(), other.area.text()));
-                }
-            }
-            for (final java.util.Map.Entry<String, String> entry : this.folderTexts.entrySet()) {
-                if (dirOf(entry.getKey()).equals(dir) && entry.getKey().toLowerCase(Locale.ROOT).endsWith(".lua")
-                        && seen.add(entry.getKey())) {
-                    out.add(new IProgrammingLanguage.SourceText(ProblemReport.nameOf(entry.getKey()), entry.getValue()));
-                }
-            }
-        }
         return out;
     }
 

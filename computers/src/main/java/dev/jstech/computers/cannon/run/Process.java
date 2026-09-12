@@ -12,7 +12,6 @@ import dev.jstech.computers.cannon.asm.AsmType;
 import dev.jstech.computers.cannon.asm.Instruction;
 import dev.jstech.computers.cannon.asm.Opcode;
 import dev.jstech.computers.cannon.asm.IOperand;
-import dev.jstech.computers.cannon.lua.LuaModule;
 import dev.jstech.computers.cannon.ui.UiWidgets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -61,15 +60,6 @@ public final class Process {
     private static final int START_COST = 49;
     /** How many times over a handler of an error may itself raise one before the process is simply over. */
     private static final int RECOVERY_DEPTH = 64;
-    /**
-     * How long a program waits for a computer on the other side of a Gateway before giving up.
-     *
-     * <p>Five seconds: long enough for a computer that is busy with something else to get to the
-     * question, short enough that a program is never held by a computer that was turned off.
-     */
-    private static final int ANSWER_TICKS = 100;
-    /** One instruction's worth of the budget for this many things the collector has to look at. */
-    private static final int COLLECTED_PER_INSTRUCTION = 32;
 
     /** What a thread is waiting for, if anything. */
     enum Parked {
@@ -83,37 +73,7 @@ public final class Process {
         /** An object's lock to be let go of. */
         LOCK,
         /** Another program on the machine to end. */
-        CHILD,
-        /** A Lua coroutine: resumed by another thread, or waiting for the one it resumed to yield. */
-        COROUTINE,
-        /** A Lua program's next event: a key, a timer, anything queued for it. */
-        EVENT,
-        /** A computer on the other side of a Gateway to answer what it was asked. */
-        ANSWER
-    }
-
-    /**
-     * A question put to a computer on the other side of a Gateway, and the answer when it comes.
-     *
-     * <p>The thread that asked is parked while the question is out, so it costs nothing to wait. The
-     * instruction that asked is rewound rather than remembered: when the answer lands the call runs
-     * again and finds it, which is also what makes a question survive the machine being saved and read
-     * back, since a call that never finished is simply a call that has not happened yet.
-     */
-    static final class Asked {
-        private final java.util.UUID id;
-        private Object value;
-        private boolean done;
-        /** Whether the answer can still arrive, or the question was lost with the world being saved. */
-        private boolean lost;
-
-        Asked(final java.util.UUID id) {
-            this.id = id;
-        }
-
-        java.util.UUID id() {
-            return this.id;
-        }
+        CHILD
     }
 
     /**
@@ -169,8 +129,6 @@ public final class Process {
         String onHost = "";
         boolean timedOut;
         boolean yielded;
-        /** The question this thread put to the other side of a Gateway, while it is still out. */
-        Asked asked;
 
         Thread(final int id) {
             this.id = id;
@@ -180,9 +138,9 @@ public final class Process {
     /**
      * What a frame is for besides running its method.
      *
-     * <p>A Lua call that has to go on after the call under it returns (a metamethod, a sort with a
-     * comparator, a protected call) runs as a frame of its own that carries the call on; one that also
-     * catches what the call under it raises protects.
+     * <p>A call that has to go on after the call under it returns (a sort with a comparator, say) runs
+     * as a frame of its own that carries the call on; one that also catches what the call under it
+     * raises protects.
      */
     enum Role {
         PLAIN,
@@ -239,16 +197,6 @@ public final class Process {
 
     /** Set when a person shut the last window: the program ends once it has heard about it. */
     private boolean endWithWindows;
-    /** The Lua side of the runtime, made the first time a Lua call is run. */
-    private LuaRuntime lua;
-
-    /** The Lua side of the runtime. */
-    LuaRuntime lua() {
-        if (this.lua == null) {
-            this.lua = new LuaRuntime(this);
-        }
-        return this.lua;
-    }
 
     Loaded program0() {
         return this.program;
@@ -311,81 +259,6 @@ public final class Process {
         return this.alive(value, line);
     }
 
-    /**
-     * Frees whatever the program can no longer reach, and says how many bytes that was.
-     *
-     * <p>Everything reachable from a frame, a static, a watch, a lock or a thread's token is kept;
-     * the rest is let go of. Something the program disposed and can still reach is kept as well, so
-     * that reaching into it still says what it did.
-     */
-    long collect() {
-        final java.util.Set<Object> kept = java.util.Collections.newSetFromMap(new IdentityHashMap<>());
-        // A list rather than a deque, because a slot holding nothing is still a slot to look at.
-        final List<Object> pending = new ArrayList<>();
-        for (final Thread thread : this.threads) {
-            for (final Frame frame : thread.frames) {
-                roots(frame, pending);
-            }
-            pending.add(thread.token);
-            pending.add(thread.on);
-        }
-        for (final Frame frame : this.waiting) {
-            roots(frame, pending);
-        }
-        pending.addAll(this.statics.values());
-        pending.add(this.script);
-        pending.add(this.self);
-        pending.add(this.onMessage);
-        pending.add(this.onGatewayMessage);
-        pending.add(this.windows);
-        for (final Watch watch : this.watches) {
-            pending.add(watch.handler);
-            pending.add(watch.token);
-        }
-        pending.addAll(this.monitors.keySet());
-        while (!pending.isEmpty()) {
-            final Object thing = pending.removeLast();
-            if (thing == null || thing instanceof Number || thing instanceof Boolean
-                    || thing instanceof Character || !kept.add(thing)) {
-                continue;
-            }
-            switch (thing) {
-                case Values.Obj object -> pending.addAll(object.all().values());
-                case Values.Arr array -> pending.addAll(array.all());
-                case Values.ListValue list -> pending.addAll(list.items());
-                case Values.MapValue map -> {
-                    pending.addAll(map.entries().keySet());
-                    pending.addAll(map.entries().values());
-                }
-                case Values.Table table -> {
-                    for (int i = 0; i < table.runLength(); i++) {
-                        pending.add(table.inRun(i));
-                    }
-                    pending.addAll(table.apartKeys());
-                    pending.addAll(table.apartValues());
-                    pending.add(table.metatable());
-                }
-                case Values.DelegateValue delegate -> {
-                    for (final Values.Bound bound : delegate.chain()) {
-                        pending.add(bound.target());
-                    }
-                }
-                default -> { }
-            }
-        }
-        // Looking through what is alive is work like any other, and the program that made it pays.
-        this.library.owe(kept.size() / COLLECTED_PER_INSTRUCTION);
-        return this.heap.sweep(kept);
-    }
-
-    private static void roots(final Frame frame, final List<Object> into) {
-        into.add(frame.self);
-        for (final Object slot : frame.slots) {
-            into.add(slot);
-        }
-        into.addAll(frame.stack);
-    }
-
     public Process(final Loaded program, final long heapBytes, final IHost host) {
         this(program, heapBytes, host, true);
     }
@@ -396,14 +269,6 @@ public final class Process {
         this.library = new Library(this.heap, host, program.entryPoint());
         this.library.serves(this);
         this.threads.add(this.main);
-        /*
-         * A program with Lua in it makes garbage with every call, and Lua has no dispose, so what it
-         * can no longer reach is collected. A program without keeps its memory the way it always did:
-         * what it allocates stays until it says otherwise.
-         */
-        if (program.type(LuaRuntime.RUNTIME_TYPE) != null) {
-            this.heap.collectWith(this::collect);
-        }
         if (!fresh) {
             return;
         }
@@ -826,18 +691,6 @@ public final class Process {
             }
             used++;
             this.spent++;
-            /*
-             * Collecting happens here, between instructions, and nowhere else: in the middle of one,
-             * something just made may be held only by the runtime's own hands and not yet by the
-             * program, and would be let go of.
-             */
-            if (this.heap.wantsCollection()) {
-                this.heap.collectNow();
-                if (this.heap.used() > this.heap.budget()) {
-                    this.fail(thread, new Halt(Halt.Reason.OUT_OF_MEMORY, 0, this.heap.overBudget()));
-                    continue;
-                }
-            }
             try {
                 this.one();
             } catch (final Halt halt) {
@@ -882,15 +735,7 @@ public final class Process {
     /** Lets every thread whose wait is over run again. */
     private void wake() {
         final long now = this.library.now();
-        // A Lua program's timers and alarms become events here, before anything asks for one.
-        final boolean events = this.program.type(LuaRuntime.RUNTIME_TYPE) != null;
-        if (events) {
-            this.lua().pump(now);
-        }
         for (final Thread thread : this.threads) {
-            if (thread.parked == Parked.EVENT && events && this.lua().hasEvents()) {
-                thread.parked = Parked.NONE;
-            }
             switch (thread.parked) {
                 case SLEEP -> {
                     if (now >= thread.until) {
@@ -920,18 +765,6 @@ public final class Process {
                 }
                 case INPUT -> {
                     if (!this.input.isEmpty()) {
-                        thread.parked = Parked.NONE;
-                    }
-                }
-                case ANSWER -> {
-                    /*
-                     * A computer that was turned off in the meantime never answers, so the wait ends by
-                     * itself and the call gives back nothing rather than holding the program for ever.
-                     */
-                    if (thread.asked != null && !thread.asked.done && now >= thread.until) {
-                        thread.asked.done = true;
-                    }
-                    if (thread.asked == null || thread.asked.done) {
                         thread.parked = Parked.NONE;
                     }
                 }
@@ -968,11 +801,6 @@ public final class Process {
 
     /** Hands the process a typed line; a thread stopped on a read carries on with it. */
     public void offerInput(final String line) {
-        if (this.isLuaProgram()) {
-            // A Lua program hears the keyboard as events, a character at a time and then Enter.
-            this.lua().typed(line == null ? "" : line);
-            return;
-        }
         if (this.input.size() < INPUT_LINES) {
             this.input.addLast(line == null ? "" : line);
         }
@@ -981,48 +809,12 @@ public final class Process {
         }
     }
 
-    /** Whether this is a Lua program, started from a Lua file, rather than Cannon that may call into one. */
-    public boolean isLuaProgram() {
-        final String entry = this.program.entryPoint();
-        return entry != null && entry.startsWith(LuaRuntime.OWNER + ".");
-    }
-
-    /**
-     * The screen of a Lua program, or null for any other: a Cannon program that includes Lua code keeps
-     * its console, whatever that code draws.
-     */
-    public dev.jstech.computers.cannon.lua.lib.LuaTerminal terminal() {
-        return this.isLuaProgram() ? this.lua().terminal() : null;
-    }
-
-    /** Queues an event for a Lua program, as its screen's keyboard and mouse do; nothing for any other. */
-    public void queueEvent(final List<Object> values) {
-        if (this.program.type(LuaRuntime.RUNTIME_TYPE) != null) {
-            this.lua().queueEvent(values);
-        }
-    }
-
-    /** Where the program was started from, which a Lua program knows as its own path and folder. */
-    public void setOrigin(final String path) {
-        if (path != null && this.program.type(LuaRuntime.RUNTIME_TYPE) != null) {
-            this.lua().setOrigin(path);
-        }
-    }
-
-    /** Ends the program where it stands with that code, as the Lua side asks for. */
-    void exitNow(final int code) {
-        this.exit(code);
-    }
-
     /**
      * Whether the process is stopped on a read. Read off the code rather than kept as a flag, so a
      * process put away mid-read and brought back after the world was away is still seen to be waiting.
      */
     public boolean waitingForInput() {
         for (final Thread thread : this.threads) {
-            if (thread.parked == Parked.EVENT && this.lua != null && this.lua.reading()) {
-                return true;
-            }
             if (thread.parked != Parked.INPUT) {
                 continue;
             }
@@ -1033,7 +825,7 @@ public final class Process {
             final Instruction next = frame.method.code().get(frame.at);
             if ((next.opcode() == Opcode.CALL || next.opcode() == Opcode.CALLVIRT)
                     && next.operand() instanceof IOperand.Method named
-                    && (Library.readsLine(named) || LuaRuntime.OWNER.equals(named.owner()))) {
+                    && Library.readsLine(named)) {
                 return true;
             }
         }
@@ -1202,7 +994,7 @@ public final class Process {
         return null;
     }
 
-    /** The thread of that number, for the Lua side of the runtime. */
+    /** The thread of that number. */
     Thread threadById(final Object id) {
         return this.thread(id);
     }
@@ -1548,22 +1340,10 @@ public final class Process {
     }
 
     /**
-     * A halt in a thread: caught by a Lua protected call under it when there is one, and the end of
-     * the process otherwise. What catches it may raise in turn, which is caught the same way.
+     * A halt in a thread is the end of the process.
      */
     private void fail(final Thread thread, final Halt first) {
-        Halt halt = first;
-        for (int attempt = 0; attempt < RECOVERY_DEPTH && this.lua != null; attempt++) {
-            try {
-                if (this.lua.recover(thread, halt)) {
-                    return;
-                }
-                break;
-            } catch (final Halt again) {
-                halt = again;
-            }
-        }
-        this.halt(halt);
+        this.halt(first);
     }
 
     private void halt(final Halt halt) {
@@ -1586,12 +1366,6 @@ public final class Process {
      * is written under a number and every reference is written as that number.
      */
     public Snapshot save() {
-        // A Lua program's screen is written into its statics, which are saved with the rest.
-        if (this.lua != null) {
-            this.lua.persist();
-        }
-        // What cannot be reached is not worth writing down, where there is something to let go of it.
-        this.heap.collectNow();
         final Map<Object, Integer> numbers = new IdentityHashMap<>();
         final List<Object> things = this.heap.everything();
         for (int i = 0; i < things.size(); i++) {
@@ -1659,11 +1433,6 @@ public final class Process {
             process.heap.restore(byNumber.get(written.id()), written.bytes(), written.line(),
                     written.freed());
         }
-        final Map<String, Snapshot.IValue> runtime = shot.statics().get(LuaRuntime.RUNTIME_TYPE);
-        if (runtime != null && runtime.get(LuaRuntime.LOADED) != null) {
-            // Chunks a Lua program loaded are compiled again first, since its calls may be inside them.
-            LuaRuntime.reload(program, value(runtime.get(LuaRuntime.LOADED), byNumber));
-        }
         for (final Snapshot.ThreadShot written : shot.threads()) {
             final Thread thread = written.id() == process.main.id ? process.main : new Thread(written.id());
             if (thread != process.main) {
@@ -1676,18 +1445,6 @@ public final class Process {
                 }
             }
             thread.parked = Parked.valueOf(written.parked());
-            if (thread.parked == Parked.ANSWER) {
-                /*
-                 * A question that was out when the world was saved is a question that was never
-                 * answered. It is NOT asked again: the computer on the other side may well have done
-                 * what it was asked before the world was put down, and asking twice would run it twice.
-                 * The call gives back nothing instead, which the program can tell apart and try again
-                 * itself if trying again is safe for what it was doing.
-                 */
-                thread.asked = new Asked(java.util.UUID.randomUUID());
-                thread.asked.lost = true;
-                thread.asked.done = true;
-            }
             thread.until = written.until();
             thread.on = value(written.on(), byNumber);
             thread.onHost = written.onHost();
@@ -2129,19 +1886,10 @@ public final class Process {
             frame.push(type.values().get(field.name()));
             return;
         }
-        if (this.program.isA(field.owner(), LuaModule.MARKER)) {
-            // A global of a Lua file the program includes, read out of the file's own globals.
-            this.lua().moduleGet(frame, field.owner(), field.name(), line);
-            return;
-        }
         frame.push(this.statics(field.owner()).get(field.name()));
     }
 
     private void storeStatic(final Frame frame, final IOperand.Field field, final int line) {
-        if (this.program.isA(field.owner(), LuaModule.MARKER)) {
-            this.lua().moduleSet(frame, field.owner(), field.name(), frame.pop(), line);
-            return;
-        }
         this.statics(field.owner()).set(field.name(), frame.pop());
     }
 
@@ -2244,10 +1992,7 @@ public final class Process {
         final Object value = frame.pop();
         final PrimitiveKind primitive = PrimitiveKind.of(type);
         if (primitive != null) {
-            /*
-             * An object holding a number gives the number back as the kind asked for, whichever kind of
-             * number it holds: a Lua file hands back its numbers as longs and reals.
-             */
+            // An object holding a number gives it back as the kind asked for, whichever kind it holds.
             if (value instanceof Number || value instanceof Character) {
                 frame.push(primitive.convert(value));
                 return;
@@ -2339,73 +2084,6 @@ public final class Process {
      * answer lands the call simply runs again, finds it, and takes its arguments off then. That is what
      * makes the wait free (a parked thread is given no budget) and what makes it survive a save.
      */
-    private void askAcross(final Frame frame, final IOperand.Method named, final int line) {
-        final Asked asked = this.current.asked;
-        if (asked != null && asked.done) {
-            this.current.asked = null;
-            this.take(frame, named.parameters());
-            /*
-             * The answer comes from outside this program, so it goes on the program's own heap before
-             * the program can hold it: a value a program can reach that the heap has never seen is a
-             * value outside its RAM, and one the snapshot would lose on the way back.
-             */
-            final Object answer = asked.value == null ? nothing(named.returns())
-                    : this.library.adoptExternal(asked.value, line);
-            this.push(frame, named, Library.Answer.of(answer));
-            return;
-        }
-        if (asked == null) {
-            final List<Object> arguments = this.peek(frame, named.parameters().size());
-            final Library.Answer sent = this.library.call(named, null, arguments, line);
-            if (!(sent.value() instanceof java.util.UUID name)) {
-                // The machine could not even put the question; there is nothing to wait for.
-                this.take(frame, named.parameters());
-                this.push(frame, named, Library.Answer.of(nothing(named.returns())));
-                return;
-            }
-            this.current.asked = new Asked(name);
-        }
-        // The call has not happened yet as far as the program is concerned, so it is run again later.
-        frame.at--;
-        this.current.parked = Parked.ANSWER;
-        this.current.until = this.library.now() + ANSWER_TICKS;
-    }
-
-    /** What a question that was never answered gives back: the empty answer of its own kind. */
-    private static Object nothing(final String returns) {
-        return switch (returns) {
-            case "bool" -> Boolean.FALSE;
-            case "string" -> "";
-            case "int", "long", "float", "double", "char" -> 0;
-            default -> new Values.ListValue();
-        };
-    }
-
-    /** The top of the stack without taking anything off it, in the order the arguments were pushed. */
-    private List<Object> peek(final Frame frame, final int count) {
-        final List<Object> seen = new ArrayList<>(count);
-        for (int i = count; i > 0; i--) {
-            seen.add(frame.stack.get(frame.stack.size() - i));
-        }
-        return seen;
-    }
-
-    /**
-     * An answer from the other side, for the thread that asked for it.
-     *
-     * @return whether a thread was still waiting for it
-     */
-    public boolean answered(final java.util.UUID id, final Object value) {
-        for (final Thread thread : this.threads) {
-            if (thread.asked != null && thread.asked.id().equals(id) && !thread.asked.done) {
-                thread.asked.value = value;
-                thread.asked.done = true;
-                return true;
-            }
-        }
-        return false;
-    }
-
     private void call(final Frame frame, final IOperand.Method named, final boolean through, final int line) {
         if (through) {
             this.invoke(frame, this.take(frame, named.parameters()), line);
@@ -2413,10 +2091,6 @@ public final class Process {
         }
         final Loaded.Method direct = this.program.method(named.owner(), named.name(), named.parameters());
         if (direct == null) {
-            if (LuaRuntime.OWNER.equals(named.owner())) {
-                this.lua().call(frame, named, line);
-                return;
-            }
             if ("Thread".equals(named.owner())) {
                 this.threadCall(frame, named, line);
                 return;
@@ -2426,10 +2100,6 @@ public final class Process {
             }
             if ("Process".equals(named.owner())) {
                 this.processCall(frame, named, line);
-                return;
-            }
-            if (Library.waitsForAnswer(named)) {
-                this.askAcross(frame, named, line);
                 return;
             }
             if (Library.readsLine(named) && this.input.isEmpty()) {

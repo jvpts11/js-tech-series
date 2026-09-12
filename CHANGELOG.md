@@ -81,39 +81,7 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the Gateway's log, and starts a program on one of our computers. Every call is paid for out of the host
   computer's tick, counted against the Gateway's call cap, kept under its permissions and written in its
   log; an operation that settles and a watched total that moves come back as events.
-- The folders our computers share are mounted on every ComputerCraft computer attached to a Gateway, at
-  `/jsc/<computer>/<share>/`: readable while the Gateway allows reading files, writable where it allows
-  writing and the computer shared the folder for writing, gone when files are off, and following the
-  shares as they open and close. They hold text files; what a ComputerCraft program writes there weighs
-  what any file on that computer weighs and takes the file types that computer takes.
-- Our computers run Lua programs, the language ComputerCraft computers speak. The Lua Runtime is a package
-  of its own and brings its own verb: `lrt run reactor.lua` starts a program as it is, with nothing to
-  compile first, `lrt ps` lists what it is running and `lrt stop` stops one. The Cannon verbs leave Lua
-  alone and say so. The code editors read, colour, check and run Lua files. A Lua program runs out of the same tick
-  budget, in the same counted memory, listed in the Task Manager, and carried through a save in the middle
-  of whatever it was doing. The language is all there (tables, metatables, closures, several results,
-  `...`, errors caught with `pcall`, coroutines) along with its standard library: `string` with Lua's own
-  patterns, `table`, `math`, `bit32`, `os` on the world's clock, `io.write` and `io.read`, and `load`. Lua
-  has no way to free what it made, so the memory of a Lua program is collected when it can no longer be
-  reached; a Cannon program still frees its own. `cannon run hello.can` now runs a Cannon source file as
-  it is, too.
-- A Lua program finds what a ComputerCraft computer gives it. Events and `os.pullEvent`, with Ctrl+T's
-  `terminate`; timers, alarms and `sleep` on the world's clock, waiting without spending anything; `parallel`;
-  a 51 by 19 screen with sixteen colours through `term`, `paintutils` and `colors`, and `read` with its
-  history; `fs` and `io` on the computer's own disks, the system disk at the root and each other drive under
-  `disk`, `disk2` and on; `textutils`, `keys`, `settings` kept in `.settings`, `shell` with `shell.run`, and
-  `require`, `dofile` and `loadfile` for the files beside the program. The computer answers to its name and a
-  number of its own. Its peripherals are the things on the other side of its Gateway, found by the names
-  that side uses: `peripheral.getNames`, `getType`, `isPresent`, `getMethods`, `call`, `wrap` and `find`
-  all work, so a program written for one of their computers finds the same devices on one of ours. A
-  machine with no Gateway has nothing attached, and says so. It has no modem of its own.
-  The screen is saved with the program, and comes back as it was left.
-- A Lua program at a terminal is seen on its own screen. The Command Prompt grows to show the 51 by 19 grid
-  whole, names the program in its title, and draws it at three quarters or half when made smaller; an
-  editor's terminal panel draws it at three quarters and follows the cursor, saying which rows it shows. Keys
-  reach the program as `key`, `key_up` and `char`, Ctrl+V pastes, Ctrl+T sends `terminate`, Ctrl+C stops it,
-  and clicks, drags and the wheel arrive as mouse events on the cell under the pointer. When it returns, the
-  prompt comes back under what it left on its screen.
+- `cannon run hello.can` runs a Cannon source file as it is, compiling it on the way in.
 - A Cannon program reaches the ComputerCraft side through its machine's Gateways. `Gateway.Names` lists them
   and `Gateway.Select` picks the one a program means, which stays with the program; `Gateway.Computers` and
   `Gateway.Peripherals` say what is on that Gateway's wire and what each thing answers to; `Gateway.Call`
@@ -130,30 +98,6 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   under the program's name. A window is saved with the program and comes back with it; shutting the last one
   ends the program unless it opens another. A machine that boots to a prompt has nowhere to put a window and
   says so.
-- A program written for our computers can run on a ComputerCraft computer. It is not rewritten and there
-  is no switch to throw: going to one of their computers is what makes it translated, so the assembly a
-  program compiles to becomes what that computer runs, at the moment it is sent. A program written in
-  their own language crosses untouched. The same program sent a hundred times is only made ready once.
-- Their computers carry a small agent of ours, which starts with the computer and does nothing at all on
-  one with no Gateway within reach. Where there is one, it says it is there and answers what our side
-  asks of it. The agent is itself one of our programs, translated the same way as any other, so it can
-  never drift from the programs it serves.
-- With an agent running, a Cannon program can ask a computer over there to run a program or a line at its
-  prompt, and to read, write or list its files. Each of those waits for that computer to answer: waiting
-  costs the program nothing, its machine carries on, and a computer that never answers ends the wait
-  after five seconds with an empty answer rather than holding the program. A world saved while a question
-  is out does not ask it again when it comes back, because that computer may already have done it.
-- At a ComputerCraft prompt, `jsc run <program>` runs one of the host computer's programs there and
-  `jsc list` says what there is. At one of our prompts, `gateway <name> get 3:/file here` and
-  `gateway <name> put here 3:/file` carry a file either way.
-- The file explorer shows ComputerCraft computers under Network: the ones with an agent, and their
-  folders, browsable like anything else. A folder there is asked for rather than read, so the window says
-  it is asking until the answer lands.
-- A Cannon program can use Lua code. `include "reactor.lua";` at the head of a file compiles the Lua file
-  beside it into the program, and Cannon reaches it as `reactor`: every function the file declares is a
-  method that takes whatever it is given and gives back an `object`, and every other global it sets is a
-  field to read and write. The file's top level runs once, the first time the program uses it. Numbers,
-  text, lists and maps cross over as the other language holds them.
 - A number, a bool or a character can now go where an `object` goes, and a cast takes the number back out
   as whichever kind is asked for: `int n = (int) held;`.
 - Mods may add a programming language of their own, and remove this one. A language that registers itself

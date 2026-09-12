@@ -313,44 +313,6 @@ public final class CannonEditorClientTests {
     }
 
     /**
-     * A Lua program lies in the folder beside the Cannon ones: the tree lists it, the editor opens it
-     * with nothing to complain about, and F5 runs it as it is with the Lua runtime, nothing built.
-     */
-    @ClientTest(timeoutTicks = 3000)
-    public static void virtualStudioCode_runsALuaFileWithF5(final ClientTestContext ctx) {
-        ctx.thenBuild(0, world -> {
-                    final CraftingComputerBlockEntity computer = world.placeRunningCraftingComputer(COMPUTER);
-                    computer.installOs(FRAMES_XP);
-                    for (final String id : new String[] {"virtual_studio_code", "lrt"}) {
-                        computer.console().install(program(id).toString());
-                    }
-                    seed(computer, "progs/count.lua", FileType.LUA,
-                            "local t = {}\nfor i = 1, 3 do t[#t + 1] = i * i end\nprint(\"lua says \" .. table.concat(t, \",\"))\n");
-                    world.placeMonitor(MONITOR, Direction.EAST);
-                })
-                .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
-                .thenRightClick(SETTLE, MONITOR)
-                .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
-                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).launcherLabels().contains(EDITOR_LAUNCHER),
-                        SCREEN_WAIT, "the editor to be listed in Start")
-                .then(0, () -> launch(ctx, EDITOR_LAUNCHER))
-                .thenWaitUntil(() -> editor(ctx) != null, SCREEN_WAIT, "the editor window to open")
-                .then(SETTLE, () -> editor(ctx).openFolder("progs"))
-                .thenWaitUntil(() -> editor(ctx).sideLabels().contains("count.lua"), SCREEN_WAIT,
-                        "the folder's tree to list the Lua file")
-                .then(SETTLE, () -> editor(ctx).openFile("progs/count.lua"))
-                .thenWaitUntil(() -> "progs/count.lua".equals(editor(ctx).openFile()), SCREEN_WAIT,
-                        "the Lua file to be on a tab")
-                .thenScreenshot(2, "lua-open")
-                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_F5))
-                .thenWaitUntil(() -> editor(ctx).terminalText().contains("lua says 1,4,9"),
-                        SCREEN_WAIT * 3, "the Lua program to print its line after F5")
-                .thenAssert(0, () -> editor(ctx).terminalText().contains("lrt run progs/count.lua"),
-                        "F5 ran the file with the Lua runtime")
-                .thenScreenshot(2, "lua-ran-f5");
-    }
-
-    /**
      * The tree opens on a double click and only picks on one, and the empty end of the tab strip is
      * nothing to click: it used to be the last tab's close mark, and a stray click there shut the tabs
      * one at a time.

@@ -37,8 +37,6 @@ public final class CannonCommands {
     /** The extension a program is written in, and the one it is compiled to. */
     private static final String SOURCE = ".can";
     private static final String ASSEMBLY = ".asm";
-    /** The extension of a Lua program, which the compiler and the runtime take as well. */
-    private static final String LUA_SOURCE = ".lua";
 
     private CannonCommands() {
     }
@@ -101,25 +99,12 @@ public final class CannonCommands {
 
             final List<SourceFile> sources = new ArrayList<>();
             for (final String path : paths) {
-                if (LUA.takes(path)) {
-                    // Lua is not compiled here: it is not Cannon, and its own runtime runs it as it is.
-                    ctx.out().error("cannonc: " + path + " is a Lua program; run it as it is with lrt run " + path);
-                    return;
-                }
                 final ICliComputer.FsResult read = ctx.computer().readFile(path);
                 if (!read.ok()) {
                     ctx.out().error("cannonc: " + read.message());
                     return;
                 }
                 sources.add(new SourceFile(leaf(path), read.message()));
-                // The Lua files a Cannon source includes are read from beside it and compiled with it.
-                for (final String included : dev.jstech.computers.cannon.CannonIncludes.scan(read.message())) {
-                    final ICliComputer.FsResult text = ctx.computer().readFile(
-                            dev.jstech.computers.cannon.CannonIncludes.beside(path, included));
-                    if (text.ok()) {
-                        sources.add(new SourceFile(included, text.message()));
-                    }
-                }
             }
 
             final CannonCompiler.Result built = CannonCompiler.compile(sources);
@@ -186,7 +171,6 @@ public final class CannonCommands {
     }
 
     static final Runtime CANNON = new Runtime("cannon", RUNTIME, "Cannon", List.of(ASSEMBLY, SOURCE));
-    static final Runtime LUA = new Runtime("lrt", LuaCommands.RUNTIME, "Lua", List.of(LUA_SOURCE));
 
     /** Starts, stops and lists the programs one runtime is running on this computer. */
     static final class Run implements ICliCommand {
@@ -238,10 +222,8 @@ public final class CannonCommands {
                 return;
             }
             if (!this.runtime.takes(path)) {
-                final Runtime other = this.runtime == CANNON ? LUA : CANNON;
-                ctx.out().error(this.runtime.verb() + ": " + path + (other.takes(path)
-                        ? " is a " + other.language() + " program; run it with " + other.verb() + " run " + path
-                        : " is not a " + this.runtime.language() + " program"));
+                ctx.out().error(this.runtime.verb() + ": " + path + " is not a "
+                        + this.runtime.language() + " program");
                 return;
             }
             int heapMb = 0;
@@ -278,13 +260,8 @@ public final class CannonCommands {
         }
 
         private void list(final CliContext ctx) {
-            final List<ICliComputer.CannonProcess> running = new ArrayList<>();
-            for (final ICliComputer.CannonProcess process : ctx.computer().cannonProcesses()) {
-                // Each runtime lists its own programs: a Lua one is listed by lrt, everything else by cannon.
-                if (LUA.takes(process.file()) == (this.runtime == LUA)) {
-                    running.add(process);
-                }
-            }
+            final List<ICliComputer.CannonProcess> running =
+                    new ArrayList<>(ctx.computer().cannonProcesses());
             if (running.isEmpty()) {
                 ctx.out().dim("no " + this.runtime.language() + " programs are running");
                 return;

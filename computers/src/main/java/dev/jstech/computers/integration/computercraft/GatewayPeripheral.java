@@ -14,7 +14,6 @@ import dan200.computercraft.api.peripheral.IComputerAccess;
 import dan200.computercraft.api.peripheral.IPeripheral;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.gateway.GatewayRefusedException;
-import dev.jstech.computers.gateway.GatewayRequestId;
 import dev.jstech.computers.gateway.GatewayService;
 import dev.jstech.computers.gateway.GatewayValues;
 import java.util.ArrayList;
@@ -45,83 +44,8 @@ public final class GatewayPeripheral implements IPeripheral {
     private final NetworkGatewayBlockEntity gateway;
     /** The computers attached right now, by id, so an event can be queued on each of them. */
     private final Map<Integer, IComputerAccess> attached = new LinkedHashMap<>();
-    /**
-     * What each attached computer has mounted: by computer id, a share (its location and whether it was
-     * mounted writable) to the name ComputerCraft gave the mount, which is what unmounting takes.
-     */
-    private final Map<Integer, Map<String, String>> mounted = new LinkedHashMap<>();
-
     GatewayPeripheral(final NetworkGatewayBlockEntity gateway) {
         this.gateway = gateway;
-    }
-
-    /** Mounts, remounts or unmounts the shared folders on every attached computer, as things stand now. */
-    void refreshMounts() {
-        final GatewayService service;
-        try {
-            service = GatewayService.of(gateway);
-        } catch (final GatewayRefusedException unlinked) {
-            for (final IComputerAccess computer : attached.values()) {
-                unmountAll(computer);
-            }
-            return;
-        }
-        final List<GatewayService.SharedFolder> wanted = service.sharedFolders();
-        for (final IComputerAccess computer : attached.values()) {
-            reconcile(computer, service, wanted);
-        }
-    }
-
-    private void reconcile(final IComputerAccess computer, final GatewayService service,
-                           final List<GatewayService.SharedFolder> wanted) {
-        final Map<String, String> have = mounted.computeIfAbsent(computer.getID(), k -> new LinkedHashMap<>());
-        final Set<String> keep = new HashSet<>();
-        for (final GatewayService.SharedFolder folder : wanted) {
-            keep.add(mountKey(folder));
-        }
-        /*
-         * Stale mounts go first: a share remounted the other way round wants its location back, and
-         * ComputerCraft gives a taken location a number instead.
-         */
-        for (final Iterator<Map.Entry<String, String>> it = have.entrySet().iterator(); it.hasNext();) {
-            final Map.Entry<String, String> entry = it.next();
-            if (!keep.contains(entry.getKey())) {
-                computer.unmount(entry.getValue());
-                it.remove();
-            }
-        }
-        for (final GatewayService.SharedFolder folder : wanted) {
-            final String key = mountKey(folder);
-            if (have.containsKey(key)) {
-                continue;
-            }
-            final ShareMount mount = new ShareMount(service, folder.hostname(), folder.share(), folder.writable());
-            final String name = folder.writable()
-                    ? computer.mountWritable(folder.location(), mount)
-                    : computer.mount(folder.location(), mount);
-            if (name != null) {
-                have.put(key, name);
-            }
-        }
-    }
-
-    /** A share and the way it is mounted, so a change of either remounts it. */
-    private static String mountKey(final GatewayService.SharedFolder folder) {
-        return folder.location() + (folder.writable() ? " rw" : " ro");
-    }
-
-    private void unmountAll(final IComputerAccess computer) {
-        final Map<String, String> have = mounted.remove(computer.getID());
-        if (have != null) {
-            for (final String name : have.values()) {
-                computer.unmount(name);
-            }
-        }
-    }
-
-    /** Where {@code computerId} has the shares mounted right now, by share location; for the tests and the manager. */
-    public Map<String, String> mountsOf(final int computerId) {
-        return new LinkedHashMap<>(mounted.getOrDefault(computerId, Map.of()));
     }
 
     /** Queues {@code event} on every attached computer; how many got it. */
@@ -312,84 +236,6 @@ public final class GatewayPeripheral implements IPeripheral {
         }
     }
 
-    /**
-     * One of the network's programs, handed over ready to run on this computer: {@code program(name)}.
-     *
-     * <p>A program of ours arrives already turned into what this computer runs; one written in this
-     * computer's own language arrives unchanged. There is no switch and no second copy kept anywhere.
-     */
-    @LuaFunction(mainThread = true)
-    public String program(final IComputerAccess computer, final String name) throws LuaException {
-        try {
-            return service().program(caller(computer), name);
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
-    }
-
-    /** What this Gateway's host computer has that could be run here, by name. */
-    @LuaFunction(mainThread = true)
-    public List<String> programs(final IComputerAccess computer) throws LuaException {
-        try {
-            return service().programs(caller(computer));
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
-    }
-
-    /**
-     * Anything one of our own programs asks its machine, from one of our programs translated to run here:
-     * {@code ask(thing, member, ...)}.
-     *
-     * <p>This is not written for a ComputerCraft program of somebody's own, which has the methods above
-     * with the shapes that side reads easily. It is the door our own programs come back through when
-     * they are put on one of these computers: same names, same prices, same refusals as at home.
-     */
-    @LuaFunction(mainThread = true)
-    public Object ask(final IComputerAccess computer, final IArguments arguments) throws LuaException {
-        final String owner = arguments.getString(0);
-        final String member = arguments.getString(1);
-        final List<Object> passed = new ArrayList<>();
-        for (int i = 2; i < arguments.count(); i++) {
-            passed.add(arguments.get(i));
-        }
-        try {
-            return service().ask(caller(computer), owner, member, passed);
-        } catch (final GatewayRefusedException refused) {
-            throw error(refused);
-        }
-    }
-
-    /**
-     * The agent on that computer saying it is there, which is what makes this side able to ask it things.
-     *
-     * <p>It costs nothing and is not counted against the call cap: a computer that has just started
-     * should not be refused its own introduction because something else was busy that tick.
-     */
-    @LuaFunction(mainThread = true)
-    public void hello(final IComputerAccess computer) {
-        gateway.agentOn(computer.getID());
-    }
-
-    /**
-     * The agent's answer to something this side asked it: the number of the question, and what it found.
-     *
-     * <p>An answer nobody is waiting for any more (the program gave up, or was stopped) is simply
-     * dropped, which is why this says whether it landed rather than refusing.
-     */
-    @LuaFunction(mainThread = true)
-    public boolean answer(final IComputerAccess computer, final IArguments arguments) throws LuaException {
-        final GatewayRequestId question = GatewayRequestId.of(arguments.getString(0));
-        final Object value = arguments.count() > 1 ? arguments.get(1) : null;
-        gateway.agentOn(computer.getID());
-        /*
-         * The answer is checked against the question before anything of it is turned into one of our
-         * values: which computer was asked, and how much it may say. A computer that answers what was
-         * asked of another one, or says more than an answer may, is refused here and not further in.
-         */
-        return gateway.answered(question, computer.getID(), value);
-    }
-
     // Watches and the log
 
     /** Asks for a {@code jsc_stock} event whenever the total of {@code name} moves; the total now. */
@@ -463,17 +309,10 @@ public final class GatewayPeripheral implements IPeripheral {
     public void attach(final IComputerAccess computer) {
         attached.put(computer.getID(), computer);
         gateway.ccAttached(computer.getID());
-        try {
-            final GatewayService service = GatewayService.of(gateway);
-            reconcile(computer, service, service.sharedFolders());
-        } catch (final GatewayRefusedException unlinked) {
-            // Not linked to a computer yet: the shares are mounted once it is, on the next refresh.
-        }
     }
 
     @Override
     public void detach(final IComputerAccess computer) {
-        unmountAll(computer);
         attached.remove(computer.getID());
         gateway.ccDetached(computer.getID());
     }

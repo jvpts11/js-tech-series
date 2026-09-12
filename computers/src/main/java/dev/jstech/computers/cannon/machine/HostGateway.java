@@ -14,14 +14,8 @@ import dev.jstech.computers.cannon.run.Halt;
 import dev.jstech.computers.cannon.run.IHost;
 import dev.jstech.computers.cannon.run.Values;
 import dev.jstech.computers.gateway.GatewayManager;
-import dev.jstech.computers.gateway.GatewayPermissions;
-import dev.jstech.computers.gateway.GatewayPrograms;
 import dev.jstech.computers.gateway.GatewayRefusedException;
-import dev.jstech.computers.gateway.GatewayRequestId;
-import dev.jstech.computers.gateway.GatewayRpcBroker;
 import dev.jstech.computers.gateway.IGatewayBridge;
-import dev.jstech.computers.program.ServerCliComputer;
-import dev.jstech.computers.program.cli.ICliComputer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -115,12 +109,6 @@ public final class HostGateway {
             case "Reboot" -> IHost.Reply.of(bridge.power(whole(rest, 0, line), "again"), SEND);
             case "Send" -> IHost.Reply.of(bridge.eventTo(whole(rest, 0, line), "jsc_message",
                     rest.size() < 2 ? "" : String.valueOf(rest.get(1))), SEND);
-            case "HasAgent" -> IHost.Reply.of(gateway.hasAgent(whole(rest, 0, line)), GLANCE);
-            case "Program" -> ours(machine, rest.isEmpty() ? "" : String.valueOf(rest.getFirst()), line);
-            case "Programs" -> ourProgramNames(machine);
-            case "Serve" -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line,
-                    "only a program on a computer a Gateway reaches can be asked to serve");
-            case "Run", "Shell", "Read", "Write", "List" -> asked(gateway, caller, member, rest, line);
             default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "Gateway has no " + member);
         };
     }
@@ -199,117 +187,6 @@ public final class HostGateway {
                     dev.jstech.computers.gateway.GatewayLog.Tone.DENIED);
             throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, refused.getMessage());
         }
-    }
-
-    /**
-     * Puts one of the five questions to the agent on a computer over there.
-     *
-     * <p>What comes back here is not the answer but the name the answer will come back by: the program
-     * that asked is parked on that name and the call runs again when it lands.
-     *
-     * <p>The Gateway's own switches hold in this direction as well as the other, because they are about
-     * the bridge itself and not about who started the conversation: reaching into that computer's files
-     * needs the file setting, and writing needs it open both ways. Allowing OPERATIONS is the wider of
-     * the two and should be read as it is: running a line or a program over there is running code on
-     * that computer, and that code has whatever its own computer has, its files and its peripherals
-     * included. Operations is authority over the target computer, not a narrower thing that the file
-     * setting can take back.
-     */
-    private static IHost.Reply asked(final NetworkGatewayBlockEntity gateway, final int caller,
-                                     final String member, final List<Object> rest, final int line) {
-        final boolean writes = "Write".equals(member);
-        final boolean files = writes || "Read".equals(member) || "List".equals(member);
-        if (files && gateway.permissions().files() == GatewayPermissions.FileAccess.OFF) {
-            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, gateway.name() + ": the shared folders are off");
-        }
-        if (writes && !gateway.permissions().allowsWrite()) {
-            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, gateway.name() + ": the folders are read-only");
-        }
-        if (!files && !gateway.permissions().operations()) {
-            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, gateway.name() + ": operations are off");
-        }
-        final int computer = whole(rest, 0, line);
-        if (!gateway.hasAgent(computer)) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line,
-                    "computer " + computer + " has no agent running (is it turned on?)");
-        }
-        /*
-         * What goes over is a flat run of plain values, which is what the agent's handler takes: a list
-         * handed to Run (the words a program is started with) is spread into it rather than crossing as
-         * a table, so every question looks the same on the other side however it was written here.
-         */
-        final List<Object> said = new ArrayList<>();
-        for (int i = 1; i < rest.size(); i++) {
-            if (rest.get(i) instanceof Values.ListValue several) {
-                said.addAll(several.items());
-            } else {
-                said.add(rest.get(i));
-            }
-        }
-        final long until = gateway.getLevel() == null ? 0L : gateway.getLevel().getGameTime() + WAIT;
-        final GatewayRequestId question = gateway.ask(computer,
-                new GatewayRpcBroker.Waiting.ByProgram(caller),
-                member.toLowerCase(java.util.Locale.ROOT), said, until);
-        if (question == null) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line, "computer " + computer + " cannot be reached");
-        }
-        return IHost.Reply.of(question.value(), priceOf(member));
-    }
-
-    /**
-     * One of this machine's own programs, as a computer on the other side runs it.
-     *
-     * <p>Asked here as well as over there, because it is the same question: a program going across is
-     * translated on the way, and a program on this machine sending one is asking for exactly that.
-     */
-    private static IHost.Reply ours(final BlockEntity machine, final String name, final int line) {
-        final ServerCliComputer shell = shellOf(machine);
-        if (shell == null) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line, "this is not a computer with a disk");
-        }
-        final ICliComputer.FsResult read = shell.readFile(name);
-        if (!read.ok()) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line, read.message());
-        }
-        try {
-            return IHost.Reply.of(GatewayPrograms.translated(name, read.message()), CannonCosts.READ);
-        } catch (final GatewayRefusedException refused) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line, refused.getMessage());
-        }
-    }
-
-    /** The programs on this machine that could cross, by name. */
-    private static IHost.Reply ourProgramNames(final BlockEntity machine) {
-        final Values.ListValue named = new Values.ListValue();
-        final ServerCliComputer shell = shellOf(machine);
-        if (shell != null) {
-            for (final ICliComputer.FsEntry entry : shell.listDisk("").entries()) {
-                if (!entry.isDir() && GatewayPrograms.carries(entry.name())) {
-                    named.items().add(entry.name());
-                }
-            }
-        }
-        return IHost.Reply.of(named, GATHER + named.items().size());
-    }
-
-    /** The machine's own shell, or null when this is not a machine with one. */
-    @Nullable
-    private static ServerCliComputer shellOf(final BlockEntity machine) {
-        if (machine instanceof dev.jstech.computers.terminal.IComputerTerminalHost terminal
-                && machine.getLevel() instanceof ServerLevel level) {
-            return new ServerCliComputer(terminal, level);
-        }
-        return null;
-    }
-
-    /** What each of them costs: starting something is the dearest, looking at a folder the cheapest. */
-    private static int priceOf(final String member) {
-        return switch (member) {
-            case "Run", "Shell" -> CannonCosts.SUBMIT;
-            case "Write" -> CannonCosts.WRITE;
-            case "Read" -> CannonCosts.READ;
-            default -> CannonCosts.GATHER;
-        };
     }
 
     private static int whole(final List<Object> arguments, final int at, final int line) {

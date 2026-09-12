@@ -18,7 +18,6 @@ import dev.jstech.computers.operation.payload.GatewayManagerStatePayload.Head;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload.WireComputer;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload.WireGateway;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload.WireLog;
-import dev.jstech.computers.operation.payload.GatewayManagerStatePayload.WireShare;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
@@ -128,41 +127,11 @@ public final class GatewayManager {
                 net == null ? 0 : net.indexedTypes(), net == null ? 0 : net.servers(),
                 mainframe != null && mainframe.isRunning(), g.budgetPermille(),
                 g.ccOnline(), bridge == null ? 0 : bridge.computersOnWire(), bridge == null ? 0 : bridge.devicesOnWire(),
-                0, computers.size(),
                 g.stats().lastMinute(GatewayStats.Kind.CALL, now),
                 g.stats().lastMinute(GatewayStats.Kind.OPERATION, now),
-                g.stats().lastMinute(GatewayStats.Kind.FILE, now),
                 g.peripheralName(), CC_ID_NONE, buffer, recent,
-                perms.read(), perms.operations(), perms.filesIndex(), perms.ceilingIndex(), perms.capIndex(),
-                computers, shares(shell, perms), log);
-    }
-
-    /** Every folder the network's computers share, as ComputerCraft would see it through this Gateway. */
-    public static List<WireShare> shares(@Nullable final ServerCliComputer shell, final GatewayPermissions perms) {
-        final List<WireShare> out = new ArrayList<>();
-        if (shell == null) {
-            return out;
-        }
-        final String own = shell.hostname();
-        for (final ICliComputer.ShareInfo share : shell.shares()) {
-            out.add(shareRow(own, share, perms));
-        }
-        for (final ICliComputer.NetworkShare share : shell.networkShares()) {
-            if (out.size() >= GatewayManagerStatePayload.MAX_ROWS) {
-                break;
-            }
-            if (!share.hostname().equalsIgnoreCase(own)) {
-                out.add(shareRow(share.hostname(), share.share(), perms));
-            }
-        }
-        return out;
-    }
-
-    private static WireShare shareRow(final String hostname, final ICliComputer.ShareInfo share,
-                                      final GatewayPermissions perms) {
-        final String mode = perms.files() == GatewayPermissions.FileAccess.OFF ? "off"
-                : share.writable() && perms.allowsWrite() ? "read & write" : "read";
-        return new WireShare(hostname, share.path(), "/jsc/" + hostname.toLowerCase(Locale.ROOT) + "/" + share.name(), mode);
+                perms.read(), perms.operations(), perms.ceilingIndex(), perms.capIndex(),
+                computers, log);
     }
 
     /** "2 s ago", "4 min ago", for the computers table. */
@@ -206,11 +175,6 @@ public final class GatewayManager {
             case GatewayManagerActionPayload.ACTION_SET_OPERATIONS -> {
                 g.setPermissions(perms.withOperations(value != 0), by, "set operations " + onOff(value != 0));
                 yield "operations " + (value != 0 ? "allowed" : "denied");
-            }
-            case GatewayManagerActionPayload.ACTION_SET_FILES -> {
-                final GatewayPermissions.FileAccess files = GatewayPermissions.FileAccess.at(value);
-                g.setPermissions(perms.withFiles(files), by, "set files " + files.label());
-                yield "files " + files.label();
             }
             case GatewayManagerActionPayload.ACTION_SET_CEILING -> {
                 final GatewayPermissions changed = perms.withCeiling(GatewayPermissions.ceilingAt(value));

@@ -59,11 +59,4 @@ public interface IGatewayBridge {
      * @param what one of {@code on}, {@code off} or {@code again}
      */
     boolean power(int computerId, String what);
-
-    /**
-     * Brings the folders mounted on every attached computer in line with what the network shares and what
-     * the Gateway allows: new shares appear, closed ones go, and a change of the files permission
-     * remounts them the other way.
-     */
-    void refreshMounts();
 }

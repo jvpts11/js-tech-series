@@ -8,7 +8,6 @@
 package dev.jstech.computers.cannon;
 
 import dev.jstech.computers.cannon.ast.CompilationUnit;
-import dev.jstech.computers.cannon.lua.LuaModule;
 import dev.jstech.computers.cannon.sem.BodyChecker;
 import dev.jstech.computers.cannon.sem.BuiltIns;
 import dev.jstech.computers.cannon.sem.Declarations;
@@ -109,64 +108,10 @@ public final class CannonSemantics {
      *
      * <p>The stage after this one needs more than the model: it has to resolve a type it meets in a
      * cast, and ask what two numbers meet in, which is what these carry. The trees come along, one per
-     * Cannon source in the order the sources were given, for an editor asking where in a file a caret
-     * is, and so do the Lua files the program includes, whose code goes into the same program.
+     * source in the order the sources were given, for an editor asking where in a file a caret is.
      */
     record Analysis(SemanticModel model, BuiltIns builtIns, TypeRules rules, Declarations declarations,
-                    List<CompilationUnit> units, List<LuaModule> modules) {
-
-        Analysis(final SemanticModel model, final BuiltIns builtIns, final TypeRules rules,
-                 final Declarations declarations, final List<CompilationUnit> units) {
-            this(model, builtIns, rules, declarations, units, List.of());
-        }
-    }
-
-    /** Whether a source is a Lua file, which the program only takes in where something includes it. */
-    static boolean isLua(final String name) {
-        return name.toLowerCase(Locale.ROOT).endsWith(".lua");
-    }
-
-    private static String leaf(final String path) {
-        final int slash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
-        return (slash < 0 ? path : path.substring(slash + 1)).toLowerCase(Locale.ROOT);
-    }
-
-    /*
-     * Every Lua file a Cannon file includes, read once however many include it, and declared as a type
-     * named after it. An include names a file by its path; it is found among the sources by the file's
-     * own name, since whoever compiles gathers them from beside the file that includes them.
-     */
-    private static List<LuaModule> includes(final List<CompilationUnit> units, final Map<String, SourceFile> lua,
-                                            final Declarations declarations, final DiagnosticBag bag) {
-        final List<LuaModule> modules = new ArrayList<>();
-        final Map<String, LuaModule> read = new LinkedHashMap<>();
-        for (final CompilationUnit unit : units) {
-            for (final CompilationUnit.Include include : unit.includes()) {
-                final String key = leaf(include.path());
-                if (read.containsKey(key)) {
-                    continue;
-                }
-                final SourceFile file = lua.get(key);
-                if (file == null) {
-                    bag.setFile(unit.file());
-                    bag.error(include.line(), include.column(), CannonError.INCLUDE_NOT_FOUND, include.path());
-                    continue;
-                }
-                final LuaModule module = LuaModule.read(file, bag);
-                read.put(key, module);
-                if (module == null) {
-                    continue;
-                }
-                if (!declarations.declareModule(module)) {
-                    bag.setFile(unit.file());
-                    bag.error(include.line(), include.column(), CannonError.INCLUDE_NAME_TAKEN, module.name(),
-                            include.path());
-                    continue;
-                }
-                modules.add(module);
-            }
-        }
-        return modules;
+                    List<CompilationUnit> units) {
     }
 
     /** Reads and checks into a bag the caller owns, and hands back what the next stage needs. */
@@ -178,12 +123,7 @@ public final class CannonSemantics {
     private static Analysis analyse(final List<SourceFile> sources, final DiagnosticBag bag,
                                     final boolean wholeProgram, final boolean tolerant) {
         final List<CompilationUnit> units = new ArrayList<>();
-        final Map<String, SourceFile> lua = new LinkedHashMap<>();
         for (final SourceFile source : sources) {
-            if (isLua(source.name())) {
-                lua.putIfAbsent(leaf(source.name()), source);
-                continue;
-            }
             bag.setFile(source.name());
             units.add(CannonFrontEnd.parse(source, bag));
         }
@@ -201,14 +141,6 @@ public final class CannonSemantics {
             return new Analysis(model, builtIns, rules, declarations, units);
         }
         declarations.declare(units);
-        final List<LuaModule> modules = includes(units, lua, declarations, bag);
-        /*
-         * A Lua file that does not read leaves nothing for the Cannon code to call, and every use of it
-         * would be a second complaint about the first one, so its own mistakes are what is reported.
-         */
-        if (bag.hasErrors() && !tolerant) {
-            return new Analysis(model, builtIns, rules, declarations, units, modules);
-        }
         declarations.fill();
         declarations.checkInterfaces();
         new BodyChecker(builtIns, rules, declarations, bag, model).check(model.declaredTypes());
@@ -216,6 +148,6 @@ public final class CannonSemantics {
             bag.setFile(sources.isEmpty() ? "" : sources.getFirst().name());
             declarations.checkEntryPoint(1, 1);
         }
-        return new Analysis(model, builtIns, rules, declarations, units, modules);
+        return new Analysis(model, builtIns, rules, declarations, units);
     }
 }

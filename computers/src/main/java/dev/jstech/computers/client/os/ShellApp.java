@@ -137,26 +137,9 @@ public final class ShellApp implements IDesktopApp {
         }
     }
 
-    /** The screen of the Lua program in front, or null while the prompt has the terminal; for tests. */
-    public dev.jstech.computers.operation.payload.LuaScreenPayload screen() {
-        return this.view.screen();
-    }
-
-    /** Where a cell of the program's screen is on the desktop, or null when it is not showing; for tests. */
-    public int[] screenCellPoint(final int column, final int row) {
-        return this.view.cellPoint(column, row);
-    }
-
-    /** The size the program's screen is drawn at, or 0 when there is none; for tests. */
-    public float screenScale() {
-        return this.view.screenScale();
-    }
-
-    /** The window's title, which names the Lua program in front while it has the terminal. */
     @Override
     public String title() {
-        final var screen = this.view.screen();
-        return screen == null || screen.program().isEmpty() ? this.title : this.title + ": " + screen.program();
+        return this.title;
     }
 
     @Override
@@ -167,22 +150,6 @@ public final class ShellApp implements IDesktopApp {
     @Override
     public int defaultHeight() {
         return 176;
-    }
-
-    /*
-     * When a Lua program's screen first arrives the window grows, once, to show it whole at full size;
-     * made smaller afterwards, the screen is drawn at three quarters, then half.
-     */
-    @Override
-    public int minWidth() {
-        return this.view.wantsRoom() ? dev.jstech.computers.gui.layout.LuaScreenLayout.fullWidth() + FRAME_W
-                : IDesktopApp.super.minWidth();
-    }
-
-    @Override
-    public int minHeight() {
-        return this.view.wantsRoom() ? dev.jstech.computers.gui.layout.LuaScreenLayout.fullHeight() + FRAME_H
-                : IDesktopApp.super.minHeight();
     }
 
     @Override

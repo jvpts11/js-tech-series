@@ -16,7 +16,6 @@ import dev.jstech.computers.operation.payload.GatewayManagerStatePayload.Detail;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload.WireComputer;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload.WireGateway;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload.WireLog;
-import dev.jstech.computers.operation.payload.GatewayManagerStatePayload.WireShare;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.server.level.ServerLevel;
@@ -40,8 +39,8 @@ public final class GatewayCommand implements ICliCommand {
 
     @Override
     public String usage() {
-        return "list | <name> [status|perms|computers|shares|log] | <name> rename <new> | <name> identify"
-                + " | <name> set read|operations on|off | <name> set files off|read|write"
+        return "list | <name> [status|perms|computers|log] | <name> rename <new> | <name> identify"
+                + " | <name> set read|operations on|off"
                 + " | <name> set priority low|medium|high | <name> set cap 4|8|16 | <name> clear | <name> test";
     }
 
@@ -67,14 +66,12 @@ public final class GatewayCommand implements ICliCommand {
             case "", "status" -> status(ctx, level, host, pos);
             case "perms", "permissions" -> perms(ctx, level, host, pos);
             case "computers" -> computers(ctx, level, host, pos);
-            case "shares" -> shares(ctx, level, host, pos);
             case "log" -> log(ctx, level, host, pos);
             case "rename" -> act(ctx, level, host, pos, GatewayManagerActionPayload.ACTION_RENAME, 0, ctx.rest(2));
             case "identify" -> act(ctx, level, host, pos, GatewayManagerActionPayload.ACTION_IDENTIFY, 0, "");
             case "clear" -> act(ctx, level, host, pos, GatewayManagerActionPayload.ACTION_CLEAR_BUFFER, 0, "");
             case "test" -> act(ctx, level, host, pos, GatewayManagerActionPayload.ACTION_TEST_EVENT, 0, "");
             case "set" -> set(ctx, level, host, pos);
-            case "get", "put" -> carry(ctx, host, verb);
             default -> ctx.out().error("usage: gateway " + usage());
         }
     }
@@ -90,37 +87,6 @@ public final class GatewayCommand implements ICliCommand {
 
     private static GatewayManagerStatePayload state(final ServerLevel level, final BlockEntity host, final long pos) {
         return GatewayManager.state(level, host, pos, "");
-    }
-
-    /**
-     * Carries one file across, in either direction.
-     *
-     * <p>The prompt does not do this itself: a computer over there answers when it gets to it, several
-     * ticks later, and a prompt has no way to say anything once a line has been answered. So the line
-     * starts the program that can wait for it, which prints here when it is done, the same as any other
-     * program started from this terminal.
-     */
-    private static void carry(final CliContext ctx, final BlockEntity host, final String verb) {
-        final String there = ctx.arg(2);
-        final String here = ctx.arg(3);
-        final int colon = there.indexOf(':');
-        if (there.isEmpty() || here.isEmpty() || colon < 1) {
-            ctx.out().error("gateway: " + verb + " <computer>:<file there> <file here>");
-            return;
-        }
-        final String computer = there.substring(0, colon);
-        final String path = there.substring(colon + 1);
-        if (!computer.chars().allMatch(Character::isDigit)) {
-            ctx.out().error("gateway: " + computer + " is not the number of a ComputerCraft computer");
-            return;
-        }
-        final ICliComputer.OpResult started = ctx.computer().startCarried("transfer.asm",
-                ShellPrograms.transfer(), java.util.List.of(verb, computer, path, here));
-        if (!started.ok()) {
-            ctx.out().error("gateway: " + started.message());
-            return;
-        }
-        ctx.out().dim("asking computer " + computer + "...");
     }
 
     private static void list(final CliContext ctx, final ServerLevel level, final BlockEntity host) {
@@ -153,9 +119,7 @@ public final class GatewayCommand implements ICliCommand {
         } else {
             ctx.out().line("  CC: Tweaked " + state.head().ccVersion() + ", " + (d.ccOnline() ? "reachable" : "nothing attached"));
             ctx.out().line("  wired network: " + d.wiredComputers() + " computers, " + d.wiredDevices() + " devices");
-            ctx.out().line("  agents: " + d.agents() + " of " + d.agentsTotal() + " answering");
-            ctx.out().line("  served this minute: " + d.calls() + " calls, " + d.operations() + " operations, "
-                    + d.files() + " files");
+            ctx.out().line("  served this minute: " + d.calls() + " calls, " + d.operations() + " operations");
         }
         ctx.out().line("  seen from CC as " + d.peripheralName());
         int used = 0;
@@ -178,7 +142,6 @@ public final class GatewayCommand implements ICliCommand {
         ctx.out().header(d.name() + " · permissions");
         ctx.out().line("  read the network: " + (d.read() ? "on" : "off"));
         ctx.out().line("  operations: " + (d.operationsAllowed() ? "on" : "off"));
-        ctx.out().line("  files: " + GatewayPermissions.FileAccess.at(d.filesAccess()).label());
         ctx.out().line("  priority ceiling: " + GatewayPermissions.ceilingAt(d.ceiling()).name().toLowerCase(Locale.ROOT));
         ctx.out().line("  calls a tick: " + GatewayPermissions.capAt(d.cap()));
     }
@@ -196,20 +159,6 @@ public final class GatewayCommand implements ICliCommand {
                     c.label().isEmpty() ? "(no label)" : c.label(), c.on() ? "on" : "off",
                     c.agent() ? "answering" : "none", c.lastSeen()));
         }
-    }
-
-    private static void shares(final CliContext ctx, final ServerLevel level, final BlockEntity host, final long pos) {
-        final Detail d = state(level, host, pos).detail();
-        final List<WireShare> rows = d.shares();
-        if (rows.isEmpty()) {
-            ctx.out().dim("no computer on this network shares a folder");
-            return;
-        }
-        ctx.out().header(String.format(Locale.ROOT, "%-14s %-18s %-26s %s", "COMPUTER", "SHARE", "ON CC AS", "MODE"));
-        for (final WireShare s : rows) {
-            ctx.out().line(String.format(Locale.ROOT, "%-14s %-18s %-26s %s", s.computer(), s.share(), s.onCc(), s.mode()));
-        }
-        ctx.out().dim("shares are set on each computer (config share); the gateway decides whether CC may write");
     }
 
     private static void log(final CliContext ctx, final ServerLevel level, final BlockEntity host, final long pos) {
@@ -235,19 +184,6 @@ public final class GatewayCommand implements ICliCommand {
                 }
                 act(ctx, level, host, pos, what.equals("read") ? GatewayManagerActionPayload.ACTION_SET_READ
                         : GatewayManagerActionPayload.ACTION_SET_OPERATIONS, to.equals("on") ? 1 : 0, "");
-            }
-            case "files" -> {
-                final int index = switch (to) {
-                    case "off" -> 0;
-                    case "read" -> 1;
-                    case "write", "read-write", "rw" -> 2;
-                    default -> -1;
-                };
-                if (index < 0) {
-                    ctx.out().error("usage: gateway <name> set files off|read|write");
-                    return;
-                }
-                act(ctx, level, host, pos, GatewayManagerActionPayload.ACTION_SET_FILES, index, "");
             }
             case "priority" -> {
                 final int index = switch (to) {
@@ -275,7 +211,7 @@ public final class GatewayCommand implements ICliCommand {
                 }
                 act(ctx, level, host, pos, GatewayManagerActionPayload.ACTION_SET_CAP, index, "");
             }
-            default -> ctx.out().error("usage: gateway <name> set read|operations|files|priority|cap ...");
+            default -> ctx.out().error("usage: gateway <name> set read|operations|priority|cap ...");
         }
     }
 

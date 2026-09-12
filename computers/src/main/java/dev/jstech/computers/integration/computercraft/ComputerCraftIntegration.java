@@ -53,19 +53,6 @@ public final class ComputerCraftIntegration {
         }
     }
 
-    /**
-     * Hands their computers the agent, as a data pack of one file; a no-op without the mod.
-     *
-     * <p>Nothing here needs a class of theirs, but there is no point in a pack that only they read when
-     * they are not installed, so it goes in behind the same guard as everything else.
-     */
-    public static void addAgentPack(final AddPackFindersEvent event) {
-        if (isLoaded() && event.getPackType() == PackType.SERVER_DATA) {
-            final Pack pack = JscRomPack.pack();
-            event.addRepositorySource(packs -> packs.accept(pack));
-        }
-    }
-
     // Each kept in its own method so the classes behind it are only resolved once the mod is known to be there.
     private static String version() {
         return ComputerCraftAPI.getInstalledVersion();

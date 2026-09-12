@@ -124,33 +124,27 @@ public final class GatewayManagerClientTests {
                 .thenScreenshot(2, "permissions")
                 .then(SETTLE, () -> ctx.clickDesktop(manager(ctx).readToggleCenter()))
                 .thenWaitUntil(() -> manager(ctx).permissionsShown()[0] == 0, SCREEN_WAIT, "reads to be denied")
-                .then(SETTLE, () -> ctx.clickDesktop(manager(ctx).filesChoiceCenter(2)))
-                .thenWaitUntil(() -> manager(ctx).permissionsShown()[2] == 2, SCREEN_WAIT, "files to be read & write")
                 .then(SETTLE, () -> ctx.clickDesktop(manager(ctx).ceilingChoiceCenter(0)))
-                .thenWaitUntil(() -> manager(ctx).permissionsShown()[3] == 0, SCREEN_WAIT, "the ceiling to be low")
+                .thenWaitUntil(() -> manager(ctx).permissionsShown()[2] == 0, SCREEN_WAIT, "the ceiling to be low")
                 .then(SETTLE, () -> ctx.clickDesktop(manager(ctx).capChoiceCenter(2)))
-                .thenWaitUntil(() -> manager(ctx).permissionsShown()[4] == 2, SCREEN_WAIT, "the cap to be 16")
+                .thenWaitUntil(() -> manager(ctx).permissionsShown()[3] == 2, SCREEN_WAIT, "the cap to be 16")
                 .thenScreenshot(2, "permissions-moved")
                 .then(0, () -> ctx.assertTrue(manager(ctx).permissionsShown()[1] == 1, "operations were left alone"));
     }
 
     @ClientTest(timeoutTicks = 2400)
-    public static void gatewayManager_showsComputersSharesAndTheLog(final ClientTestContext ctx) {
+    public static void gatewayManager_showsTheComputersAndTheLog(final ClientTestContext ctx) {
         atTheManager(ctx)
                 .then(SETTLE, () -> ctx.clickDesktop(manager(ctx).tabCenter(2)))
                 .thenWaitUntil(() -> manager(ctx).tab() == 2, SCREEN_WAIT, "the Computers tab")
                 .thenScreenshot(2, "computers")
                 .then(SETTLE, () -> ctx.clickDesktop(manager(ctx).tabCenter(3)))
-                .thenWaitUntil(() -> manager(ctx).tab() == 3 && manager(ctx).shareComputers().contains("lab"), SCREEN_WAIT,
-                        "the Shares tab to list the computer that shares")
-                .thenScreenshot(2, "shares")
-                .then(SETTLE, () -> ctx.clickDesktop(manager(ctx).tabCenter(4)))
-                .thenWaitUntil(() -> manager(ctx).tab() == 4 && manager(ctx).logWhats().contains("link"), SCREEN_WAIT,
+                .thenWaitUntil(() -> manager(ctx).tab() == 3 && manager(ctx).logWhats().contains("link"), SCREEN_WAIT,
                         "the Log tab to show the link")
                 .thenScreenshot(2, "log")
                 .then(SETTLE, () -> ctx.clickDesktop(manager(ctx).tabCenter(0)))
                 .thenWaitUntil(() -> manager(ctx).tab() == 0, SCREEN_WAIT, "back on Status")
                 .then(SETTLE, () -> ctx.clickDesktop(manager(ctx).openLogCenter()))
-                .thenWaitUntil(() -> manager(ctx).tab() == 4, SCREEN_WAIT, "Open the log to switch tabs");
+                .thenWaitUntil(() -> manager(ctx).tab() == 3, SCREEN_WAIT, "Open the log to switch tabs");
     }
 }

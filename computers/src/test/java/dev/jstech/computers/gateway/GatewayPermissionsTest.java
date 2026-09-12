@@ -17,34 +17,30 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 final class GatewayPermissionsTest {
 
     @Test
-    void defaults_allowReadsAndOperationsWithReadableFiles() {
+    void defaults_allowReadsAndOperations() {
         final GatewayPermissions p = GatewayPermissions.DEFAULT;
         assertTrue(p.read());
         assertTrue(p.operations());
-        assertEquals(GatewayPermissions.FileAccess.READ, p.files());
         assertEquals(OperationPriority.MEDIUM, p.ceiling());
         assertEquals(8, p.callCap());
-        assertFalse(p.allowsWrite());
     }
 
     @Test
     void of_clampsTheWireNumbersOntoTheKnobs() {
-        final GatewayPermissions p = GatewayPermissions.of(false, true, 9, -1, 7);
-        assertEquals(GatewayPermissions.FileAccess.READ_WRITE, p.files());
+        final GatewayPermissions p = GatewayPermissions.of(false, true, -1, 7);
+        assertFalse(p.read());
+        assertTrue(p.operations());
         assertEquals(OperationPriority.LOW, p.ceiling());
         assertEquals(16, p.callCap());
-        assertTrue(p.allowsWrite());
     }
 
     @Test
     void constructor_snapsOddValuesOntoTheNearestKnobAbove() {
-        final GatewayPermissions p = new GatewayPermissions(true, true, GatewayPermissions.FileAccess.OFF,
-                OperationPriority.MEDIUM_LOW, 5);
+        final GatewayPermissions p = new GatewayPermissions(true, true, OperationPriority.MEDIUM_LOW, 5);
         assertEquals(OperationPriority.MEDIUM, p.ceiling());
         assertEquals(8, p.callCap());
         assertEquals(1, p.ceilingIndex());
         assertEquals(1, p.capIndex());
-        assertEquals(0, p.filesIndex());
     }
 
     @Test
@@ -58,11 +54,9 @@ final class GatewayPermissionsTest {
     @Test
     void with_changesOneThingAndKeepsTheRest() {
         final GatewayPermissions p = GatewayPermissions.DEFAULT.withRead(false).withCallCap(16)
-                .withFiles(GatewayPermissions.FileAccess.OFF).withOperations(false)
-                .withCeiling(OperationPriority.HIGH);
+                .withOperations(false).withCeiling(OperationPriority.HIGH);
         assertFalse(p.read());
         assertFalse(p.operations());
-        assertEquals(GatewayPermissions.FileAccess.OFF, p.files());
         assertEquals(OperationPriority.HIGH, p.ceiling());
         assertEquals(16, p.callCap());
         assertEquals(2, p.capIndex());

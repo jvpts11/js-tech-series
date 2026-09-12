@@ -68,11 +68,6 @@ final class GatewayBridge implements IGatewayBridge {
     }
 
     @Override
-    public void refreshMounts() {
-        peripheral.refreshMounts();
-    }
-
-    @Override
     public java.util.Map<String, String> peripherals() {
         final java.util.Map<String, String> out = new java.util.LinkedHashMap<>();
         element.peripherals().forEach((name, found) -> out.put(name, found.getType()));

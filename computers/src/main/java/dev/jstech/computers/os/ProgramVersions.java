@@ -42,7 +42,6 @@ public final class ProgramVersions {
             Map.entry("screenfetch", "3.9.1"),
             Map.entry("cannonc", "1.0"),
             Map.entry("cannonrt", "1.0"),
-            Map.entry("lrt", "5.2"),
             Map.entry("virtual_studio", "17.0"),
             Map.entry("virtual_studio_code", "1.85"),
             Map.entry("exposure", "4.2"),

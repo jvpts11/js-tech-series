@@ -318,12 +318,6 @@ public final class OsBootstrap {
             ProgramSpec.of(rl("cannonrt"), "cannon", "Cannon Runtime", false, ALL_PLATFORMS, 12, ProgramKind.SERVICE, 2, HostScope.ANY)
                     .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.CANNON_FOUNDATION).withRam(24),
             /*
-             * The Lua runtime: a package of its own, and a verb of its own at the prompt, because Lua is
-             * not Cannon and the runtime a player installs for it should not pretend to be.
-             */
-            ProgramSpec.of(rl("lrt"), "lrt", "Lua Runtime", false, ALL_PLATFORMS, 10, ProgramKind.SERVICE, 2, HostScope.ANY)
-                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.MOONWORKS).withRam(24),
-            /*
              * Virtual Studio: the whole workshop in one window, and the only editor that says what a call
              * will cost the program before the line is written. Frames only, and it asks the machine to
              * prove it: a quarter of a gigabyte held while it is open, which is what a program of the

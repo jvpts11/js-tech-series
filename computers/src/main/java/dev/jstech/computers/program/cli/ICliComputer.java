@@ -757,22 +757,6 @@ public interface ICliComputer {
         return this.startCannon(path, heapMb);
     }
 
-    /**
-     * Starts a program the machine itself carries, from what it says rather than from a file on a disk.
-     *
-     * <p>Some of what a prompt offers cannot be answered while the line is being typed: carrying a file
-     * across a Gateway waits on another mod's computer. The line starts one of these instead, which
-     * waits where a prompt cannot and prints here when it is done. They are ordinary programs, held to
-     * the machine's memory and budget like any other.
-     *
-     * @param name      what the program is called, which is what the process list will show
-     * @param binary    the program itself
-     * @param arguments what it is started with, as its {@code Program.Args} will read them
-     */
-    default OpResult startCarried(final String name, final String binary, final List<String> arguments) {
-        return OpResult.fail(name + ": this machine cannot run programs");
-    }
-
     /** Stops one of the Cannon programs running here. */
     default OpResult stopCannon(final int id) {
         return OpResult.fail("cannon: not installed");

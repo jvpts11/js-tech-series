@@ -32,9 +32,6 @@ public enum CannonError {
             + "can be used as a statement"),
     DUPLICATE_MODIFIER("C2007", "'%s' was given twice"),
     USING_TOO_LATE("C2009", "a using has to come before the namespace and the types"),
-    INCLUDE_TOO_LATE("C2013", "an include has to come before the namespace and the types"),
-    INCLUDE_NOT_FOUND("C3043", "'%s' was not compiled with this program: keep it beside the file that includes it"),
-    INCLUDE_NAME_TAKEN("C3044", "'%s' is already the name of something in this program, so '%s' cannot be included"),
     ONE_NAMESPACE("C2010", "a file declares one namespace on its own line, before its types; put more "
             + "of them in blocks"),
     INVALID_ASSIGNMENT_TARGET("C2008", "the left side of an assignment must be a variable, a field, "

@@ -50,9 +50,6 @@ public final class MachinePrograms {
      */
     public static final String RUNTIME_NAME = "cannonrt";
 
-    /** What a Lua program that gave itself no name is listed as. */
-    public static final String LUA_RUNTIME_NAME = "lrt";
-
     /** What a program runs at when nobody said otherwise: the middle, the same as anything at the prompt. */
     public static final String DEFAULT_PRIORITY = "medium";
 
@@ -79,16 +76,10 @@ public final class MachinePrograms {
             return dot < 0 ? "" : this.file.substring(dot + 1).toLowerCase(Locale.ROOT);
         }
 
-        /**
-         * What the machine lists it as: the name the program gave itself, or the runtime's that runs
-         * it, which for a Lua file is the Lua runtime's and never Cannon's.
-         */
+        /** What the machine lists it as: the name the program gave itself, or the runtime's that runs it. */
         public String name() {
             final String own = this.process.name();
-            if (own != null && !own.isBlank()) {
-                return own;
-            }
-            return this.file.toLowerCase(Locale.ROOT).endsWith(".lua") ? LUA_RUNTIME_NAME : RUNTIME_NAME;
+            return own != null && !own.isBlank() ? own : RUNTIME_NAME;
         }
     }
 
@@ -248,18 +239,7 @@ public final class MachinePrograms {
     public Started start(final String name, final String binary, final int heapMb,
                          final BlockEntity machine, final List<String> args, final int parent,
                          final String priority) {
-        return this.start(name, binary, heapMb, machine, args, parent, priority, null);
-    }
-
-    /**
-     * Tells a program where on the machine it was started from, as a ComputerCraft path, which a Lua
-     * program reads as its own name and the folder it works in; nothing for any other program.
-     */
-    public void setOrigin(final int id, final String luaPath) {
-        final Live one = this.byId(id);
-        if (one != null && luaPath != null && one.process() instanceof CannonProgram program) {
-            program.process().setOrigin(luaPath);
-        }
+        return this.startCompiling(name, binary, heapMb, machine, args, parent, priority);
     }
 
     /**
@@ -275,20 +255,6 @@ public final class MachinePrograms {
             }
         }
         return heard;
-    }
-
-    /**
-     * Hands a program the answer a computer on the other side of a Gateway sent back.
-     *
-     * <p>Which program is waiting is known from the question itself, so this goes straight to it rather
-     * than asking every program on the machine whether the answer is theirs.
-     *
-     * @return whether that program was still waiting for that answer
-     */
-    public boolean deliverAnswer(final int program, final java.util.UUID question, final Object value) {
-        final Live one = this.byId(program);
-        return one != null && one.process() instanceof CannonProgram running
-                && running.process().answered(question, value);
     }
 
     /** The windows a program has open on the machine's desktop; empty for one that has none. */
@@ -309,32 +275,9 @@ public final class MachinePrograms {
                 && program.process().deliverUiEvent(window, widget, kind, values);
     }
 
-    /** The screen of a Lua program, or null for one that has none. */
-    public dev.jstech.computers.cannon.lua.lib.LuaTerminal terminalOf(final int id) {
-        final Live one = this.byId(id);
-        return one != null && one.process() instanceof CannonProgram program ? program.process().terminal() : null;
-    }
-
-    /**
-     * Queues an event for a Lua program, as its screen's keyboard and mouse do: the event's name, then
-     * what it carries. False when there is no such program to hear it.
-     */
-    public boolean queueEvent(final int id, final List<Object> values) {
-        final Live one = this.byId(id);
-        if (one == null || !(one.process() instanceof CannonProgram program) || program.process().terminal() == null) {
-            return false;
-        }
-        program.process().queueEvent(values);
-        return true;
-    }
-
-    /**
-     * The same, for a source file that may include others: {@code reader} reads a file the source
-     * names, by the path it wrote, from beside the source, or gives null when there is none.
-     */
-    public Started start(final String name, final String binary, final int heapMb,
-                         final BlockEntity machine, final List<String> args, final int parent,
-                         final String priority, final java.util.function.Function<String, String> reader) {
+    private Started startCompiling(final String name, final String binary, final int heapMb,
+                                   final BlockEntity machine, final List<String> args, final int parent,
+                                   final String priority) {
         final int dot = name.lastIndexOf('.');
         final String extension = dot < 0 ? "" : name.substring(dot + 1).toLowerCase(Locale.ROOT);
         final IProgrammingLanguage language = JsCore.languages().runnerOf(extension);
@@ -349,15 +292,6 @@ public final class MachinePrograms {
         if (language.sourceExtensions().contains(extension)) {
             final List<IProgrammingLanguage.SourceText> sources = new ArrayList<>();
             sources.add(new IProgrammingLanguage.SourceText(name, binary));
-            if (reader != null && language == CannonLanguage.INSTANCE) {
-                // The Lua files a Cannon source includes are compiled with it, into the same program.
-                for (final String included : dev.jstech.computers.cannon.CannonIncludes.scan(binary)) {
-                    final String text = reader.apply(included);
-                    if (text != null) {
-                        sources.add(new IProgrammingLanguage.SourceText(included, text));
-                    }
-                }
-            }
             final IProgrammingLanguage.CompileResult built = language.compile(sources);
             if (!built.ok()) {
                 final List<IProgrammingLanguage.Complaint> complaints = built.complaints();
