@@ -137,6 +137,53 @@ public final class RemoteExecutionGameTests {
                 .thenSucceed();
     }
 
+    private static final String PATIENT = """
+            using System.*;
+            using System.IO.*;
+            using System.Collections.*;
+            using System.Network.*;
+            using System.Execution.*;
+            using System.Threading.*;
+            namespace Programs;
+            class Patient {
+                static void Main() {
+                    List<string> args = new List<string>();
+                    args.Add("y");
+                    Process p = Network.Computer("desk").Start("C:\\\\tool.asm", args);
+                    p.Wait();
+                    Thread.Sleep(10);
+                    Console.PrintLine("code " + p.ExitCode);
+                }
+            }
+            """;
+
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void programs_keepWhatTheyLeftForAParentOnAnotherComputerUntilItIsGone(final GameTestHelper helper) {
+        final Fleet fleet = wire(helper);
+        final ILanguageProcess[] patient = new ILanguageProcess[1];
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    final ServerCliComputer desk = new ServerCliComputer(fleet.desk(), helper.getLevel());
+                    helper.assertTrue(desk.writeFile("C:\\tool.asm", listing(TOOL)).ok(), "the tool is on desk");
+                    patient[0] = held(helper, fleet.lab(), "patient.asm", PATIENT);
+                })
+                .thenExecuteAfter(60, () -> {
+                    /*
+                     * The parent reads the exit code ten ticks after the tool ended, long after desk would
+                     * have cleared away a finished program nobody on desk was waiting for. Once the parent
+                     * has returned and its terminal has let it go, desk has nobody left to keep the tool for.
+                     */
+                    helper.assertTrue(patient[0].console().contains("code 6"), "the exit code outlived the wait; got "
+                            + patient[0].console() + " (" + patient[0].message() + ")");
+                    helper.assertTrue(!hasTool(fleet.desk()), "once the parent is gone, desk lets the tool go");
+                })
+                .thenSucceed();
+    }
+
+    private static boolean hasTool(final PersonalComputerBlockEntity machine) {
+        return machine.cannon().all().stream().anyMatch(one -> "tool.asm".equals(one.file()));
+    }
+
     private static final String REFUSED = """
             using System.*;
             using System.IO.*;

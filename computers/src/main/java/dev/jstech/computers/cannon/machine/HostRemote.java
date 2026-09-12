@@ -20,6 +20,7 @@ import dev.jstech.computers.program.cli.ICliComputer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Another computer on the network, as a running program reaches it.
@@ -50,7 +51,8 @@ public final class HostRemote {
      * Answers one of them. The first argument is the computer the program holds; the rest are the
      * call's own.
      *
-     * @param callerId the machine's number for the asking program, named as the sender of a line
+     * @param callerId the machine's number for the asking program, named as the sender of a line and as
+     *                 the parent of what it starts
      */
     public static IHost.Reply call(final ServerCliComputer shell, final int callerId, final String member,
                                   final List<Object> arguments, final int line) {
@@ -66,7 +68,7 @@ public final class HostRemote {
             throw new Halt(Halt.Reason.REFUSED, line, host + " does not take programs from other computers");
         }
         return switch (member) {
-            case "Start" -> IHost.Reply.of(start(remote, host, arguments, line), START);
+            case "Start" -> IHost.Reply.of(start(parentOf(shell, callerId), remote, host, arguments, line), START);
             case "Shell" -> IHost.Reply.of(shell(remote, arguments), START);
             case "Send" -> {
                 final int id = arguments.size() > 1 && arguments.get(1) instanceof Number number
@@ -99,8 +101,20 @@ public final class HostRemote {
         return "";
     }
 
+    /**
+     * The asking program as the other machine will know it, so that what it starts there is kept for it
+     * to read; null for a caller that is not a numbered program on a computer.
+     */
+    @Nullable
+    private static MachinePrograms.RemoteParent parentOf(final ServerCliComputer caller, final int callerId) {
+        return callerId > 0 && caller.machine() instanceof AbstractComputerBlockEntity machine
+                ? new MachinePrograms.RemoteParent(machine.getBlockPos(), machine.nodeUuid(), callerId)
+                : null;
+    }
+
     /** Starts a compiled program from the other machine's disks, on that machine, as the prompt would. */
-    private static Values.Obj start(final ServerCliComputer remote, final String host,
+    private static Values.Obj start(@Nullable final MachinePrograms.RemoteParent parent,
+                                    final ServerCliComputer remote, final String host,
                                     final List<Object> arguments, final int line) {
         if (!(remote.machine() instanceof AbstractComputerBlockEntity machine)) {
             throw new Halt(Halt.Reason.CANNOT_START, line, host + " cannot run programs");
@@ -131,8 +145,9 @@ public final class HostRemote {
         }
         final int slash = Math.max(path.lastIndexOf('\\'), path.lastIndexOf('/'));
         final String name = slash < 0 ? path : path.substring(slash + 1);
-        final MachinePrograms.Started started =
-                machine.cannon().start(name, read.message(), room, machine, args, 0, priority);
+        final MachinePrograms.Started started = parent == null
+                ? machine.cannon().start(name, read.message(), room, machine, args, 0, priority)
+                : machine.cannon().startFor(parent, name, read.message(), room, machine, args, priority);
         if (!started.ok()) {
             throw new Halt(Halt.Reason.CANNOT_START, line, host + ": " + started.message());
         }

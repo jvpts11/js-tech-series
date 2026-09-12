@@ -10,11 +10,14 @@ package dev.jstech.computers.cannon.machine;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.language.ILanguageProcess;
 import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Predicate;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -56,13 +59,16 @@ public final class MachinePrograms {
     /** The priority a program may be passed over at, every other round, so the others get on. */
     public static final String LOW_PRIORITY = "low";
 
+    /** Who is waiting on a machine with no world to ask: nobody that can be found. */
+    private static final Predicate<RemoteParent> NO_WORLD = parent -> false;
+
     /**
      * One program the machine is running: the file it was started from, what it was started from, and
-     * where it is; and, for one another program started, which one that was, with what, and how
-     * urgently.
+     * where it is; and, for one another program started, which one that was (here, or on another
+     * machine), with what, and how urgently.
      */
     public record Live(int id, String file, String binary, int heapMb, ILanguageProcess process, int parent,
-                       List<String> args, String priority) {
+                       List<String> args, String priority, @Nullable RemoteParent remoteParent) {
 
         public Live {
             args = args == null ? List.of() : List.copyOf(args);
@@ -81,6 +87,17 @@ public final class MachinePrograms {
             final String own = this.process.name();
             return own != null && !own.isBlank() ? own : RUNTIME_NAME;
         }
+    }
+
+    /**
+     * The program on another machine of the network that started a program here: where that machine
+     * stands, which machine it is, and the number it lists the program under.
+     *
+     * <p>A program started from the same machine names its parent by number alone. One started from
+     * another computer cannot, since that number means nothing here, so this says which program on which
+     * machine is waiting for what it leaves.
+     */
+    public record RemoteParent(BlockPos machine, NodeUuid node, int program) {
     }
 
     /** What came of asking for a program to start: its number, or why it did not. */
@@ -239,7 +256,17 @@ public final class MachinePrograms {
     public Started start(final String name, final String binary, final int heapMb,
                          final BlockEntity machine, final List<String> args, final int parent,
                          final String priority) {
-        return this.startCompiling(name, binary, heapMb, machine, args, parent, priority);
+        return this.startCompiling(name, binary, heapMb, machine, args, parent, null, priority);
+    }
+
+    /**
+     * The same, started by a program on another machine of the network, which keeps what the program
+     * leaves (its output and its exit code) for as long as that program is there to read it.
+     */
+    public Started startFor(final RemoteParent parent, final String name, final String binary,
+                            final int heapMb, final BlockEntity machine, final List<String> args,
+                            final String priority) {
+        return this.startCompiling(name, binary, heapMb, machine, args, 0, parent, priority);
     }
 
     /**
@@ -277,7 +304,7 @@ public final class MachinePrograms {
 
     private Started startCompiling(final String name, final String binary, final int heapMb,
                                    final BlockEntity machine, final List<String> args, final int parent,
-                                   final String priority) {
+                                   @Nullable final RemoteParent remoteParent, final String priority) {
         final int dot = name.lastIndexOf('.');
         final String extension = dot < 0 ? "" : name.substring(dot + 1).toLowerCase(Locale.ROOT);
         final IProgrammingLanguage language = JsCore.languages().runnerOf(extension);
@@ -309,7 +336,7 @@ public final class MachinePrograms {
         }
         final int id = this.next++;
         process.identify(id);
-        this.live.add(new Live(id, name, runnable, room, process, parent, args, priority));
+        this.live.add(new Live(id, name, runnable, room, process, parent, args, priority, remoteParent));
         return new Started(id, name + " started as " + id);
     }
 
@@ -376,8 +403,15 @@ public final class MachinePrograms {
         this.tick(credits, Long.MAX_VALUE, stock);
     }
 
+    /** The same, bounded by the clock, on a machine with no world to find other machines in. */
+    public void tick(final int credits, final long deadline,
+                     final java.util.function.ToLongFunction<String> stock) {
+        this.tick(credits, deadline, stock, NO_WORLD);
+    }
+
     /**
-     * The same, bounded by the clock and with a way to look up what the network holds.
+     * The same, bounded by the clock, with a way to look up what the network holds and a way to ask
+     * whether a program on another machine is still waiting on one started here.
      *
      * <p>Everything being watched is looked up once, however many programs are watching it, and the
      * answers are handed to each of them. A machine watching nothing pays nothing for the ability.
@@ -391,9 +425,12 @@ public final class MachinePrograms {
      * @param deadline when the tick must end, on {@link System#nanoTime()}; one already passed runs
      *                 nothing, and one far in the future never interrupts
      * @param stock    what the network holds of an item, or null on a machine that cannot ask
+     * @param waiting  whether the program on another machine that started one here is still there; only
+     *                 ever asked about a program that has finished
      */
     public void tick(final int credits, final long deadline,
-                     final java.util.function.ToLongFunction<String> stock) {
+                     final java.util.function.ToLongFunction<String> stock,
+                     final Predicate<RemoteParent> waiting) {
         if (stock != null && !this.live.isEmpty()) {
             final Map<String, Long> totals = new LinkedHashMap<>();
             for (final Live one : this.live) {
@@ -435,10 +472,10 @@ public final class MachinePrograms {
                  */
                 if (!one.process().isService() && one.id() != this.held) {
                     /*
-                     * One started by another program keeps its output and its exit code for that program
-                     * to read, and goes when it goes.
+                     * One started by another program, on this machine or on another, keeps its output and
+                     * its exit code for that program to read, and goes when it goes.
                      */
-                    if (one.parent() == 0 || this.byId(one.parent()) == null) {
+                    if (!this.awaited(one, waiting)) {
                         done.add(one);
                     }
                 } else if (one.process().isService() && state == ILanguageProcess.State.FINISHED) {
@@ -460,6 +497,14 @@ public final class MachinePrograms {
         this.scheduler.run(slots, available, System::nanoTime, deadline);
     }
 
+    /** Whether the program that started this one is still there to read what it left. */
+    private boolean awaited(final Live one, final Predicate<RemoteParent> waiting) {
+        if (one.remoteParent() != null) {
+            return waiting.test(one.remoteParent());
+        }
+        return one.parent() != 0 && this.byId(one.parent()) != null;
+    }
+
     // across a reload
 
     private static final String PROGRAMS = "programs";
@@ -472,6 +517,9 @@ public final class MachinePrograms {
     private static final String HELD = "held";
     private static final String SHOWN = "shown";
     private static final String PARENT = "parent";
+    private static final String REMOTE_PARENT = "remoteParent";
+    private static final String MACHINE = "machine";
+    private static final String NODE = "node";
     private static final String ARGS = "args";
     private static final String PRIORITY = "priority";
 
@@ -485,6 +533,13 @@ public final class MachinePrograms {
             each.putString(BINARY, one.binary());
             each.putInt(HEAP, one.heapMb());
             each.putInt(PARENT, one.parent());
+            if (one.remoteParent() != null) {
+                final CompoundTag from = new CompoundTag();
+                from.putLong(MACHINE, one.remoteParent().machine().asLong());
+                from.putUUID(NODE, one.remoteParent().node().value());
+                from.putInt(ID, one.remoteParent().program());
+                each.put(REMOTE_PARENT, from);
+            }
             final ListTag args = new ListTag();
             for (final String arg : one.args()) {
                 args.add(net.minecraft.nbt.StringTag.valueOf(arg));
@@ -532,9 +587,21 @@ public final class MachinePrograms {
                 }
                 process.identify(each.getInt(ID));
                 this.live.add(new Live(each.getInt(ID), name, each.getString(BINARY),
-                        each.getInt(HEAP), process, each.getInt(PARENT), args, each.getString(PRIORITY)));
+                        each.getInt(HEAP), process, each.getInt(PARENT), args, each.getString(PRIORITY),
+                        readRemoteParent(each)));
             }
         }
+    }
+
+    /** The program on another machine that started this one, or null for one that has none. */
+    @Nullable
+    private static RemoteParent readRemoteParent(final CompoundTag each) {
+        if (!each.contains(REMOTE_PARENT, Tag.TAG_COMPOUND)) {
+            return null;
+        }
+        final CompoundTag from = each.getCompound(REMOTE_PARENT);
+        return from.hasUUID(NODE) ? new RemoteParent(BlockPos.of(from.getLong(MACHINE)),
+                new NodeUuid(from.getUUID(NODE)), from.getInt(ID)) : null;
     }
 
     // what the machine is worth

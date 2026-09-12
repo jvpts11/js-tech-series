@@ -1211,12 +1211,32 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         final long deadline = level instanceof ServerLevel server
                 ? dev.jstech.computers.cannon.machine.ServerTickDeadline.shared().claim(server, worldPosition)
                 : Long.MAX_VALUE;
-        cannon.tick(cannonCredits(), deadline, this::networkStock);
+        cannon.tick(cannonCredits(), deadline, this::networkStock, this::remoteParentWaiting);
         if (level instanceof ServerLevel server) {
             pushCannonOutput(server);
             pushWindows(server);
             hearGateways();
         }
+    }
+
+    /**
+     * Whether the program on another machine that started one of this machine's programs is still there
+     * to read what it left.
+     *
+     * <p>It is only asked about a program that has finished and was started from elsewhere, so an ordinary
+     * tick never looks. A machine whose chunk is not loaded is not known to be gone: its programs come back
+     * with it, so what was started for them is kept until it can be asked.
+     */
+    private boolean remoteParentWaiting(final dev.jstech.computers.cannon.machine.MachinePrograms.RemoteParent parent) {
+        if (!(level instanceof ServerLevel server)) {
+            return false;
+        }
+        if (!server.isLoaded(parent.machine())) {
+            return true;
+        }
+        return server.getBlockEntity(parent.machine()) instanceof AbstractComputerBlockEntity machine
+                && parent.node().equals(machine.nodeUuid())
+                && machine.cannon().byId(parent.program()) != null;
     }
 
     /**
