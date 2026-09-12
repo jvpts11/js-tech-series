@@ -70,10 +70,10 @@ technical reasoning out.
   and why: `Add the energy network distribution`, `Fix the peripheral cable length clamp`. No type
   prefixes such as `feat:` or `fix:`.
 - Branch names in English, in three parts: the mods the branch touches, the kind of work, and its name:
-  `<mod>,<mod>/<kind>/<name>`. The mods are the subproject names separated by commas, with no spaces
-  (git does not allow them in a ref); the kind is `feature`, `fix` or whatever the work is. Examples:
-  `core/fix/payload-streamcodec`, `computers,core/feature/user-software`. The first part says at a
-  glance which jars a branch changes.
+  `<mod>-<mod>/<kind>/<name>`. The mods are the subproject names in alphabetical order, joined by
+  hyphens (no subproject name contains one); the kind is `feature`, `fix` or whatever the work is.
+  Examples: `core/fix/payload-streamcodec`, `computers-core/feature/user-software`. The first part says
+  at a glance which jars a branch changes, and the merge commit's message keeps it in the history.
 - Commits carry the author's own authorship and nothing else.
 
 ## NeoForge 1.21.1
