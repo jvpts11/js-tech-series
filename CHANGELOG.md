@@ -103,7 +103,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   history; `fs` and `io` on the computer's own disks, the system disk at the root and each other drive under
   `disk`, `disk2` and on; `textutils`, `keys`, `settings` kept in `.settings`, `shell` with `shell.run`, and
   `require`, `dofile` and `loadfile` for the files beside the program. The computer answers to its name and a
-  number of its own. It has no peripherals or modem of its own, and says so when a program asks for one.
+  number of its own. Its peripherals are the things on the other side of its Gateway, found by the names
+  that side uses: `peripheral.getNames`, `getType`, `isPresent`, `getMethods`, `call`, `wrap` and `find`
+  all work, so a program written for one of their computers finds the same devices on one of ours. A
+  machine with no Gateway has nothing attached, and says so. It has no modem of its own.
   The screen is saved with the program, and comes back as it was left.
 - A Lua program at a terminal is seen on its own screen. The Command Prompt grows to show the 51 by 19 grid
   whole, names the program in its title, and draws it at three quarters or half when made smaller; an

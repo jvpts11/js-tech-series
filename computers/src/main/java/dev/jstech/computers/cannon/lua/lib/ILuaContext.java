@@ -105,6 +105,11 @@ public interface ILuaContext {
     /** The machine's disks. */
     ILuaFiles files();
 
+    /** What the machine has within reach across a Gateway, which is what a program calls peripherals. */
+    default ILuaPeripherals peripherals() {
+        return ILuaPeripherals.NONE;
+    }
+
     /**
      * Compiles text into a function, as {@code load} does: the function, or a run of nil and the
      * complaint. {@code environment} is where its globals go, or null for the program's own.

@@ -17,6 +17,7 @@ import dev.jstech.computers.cannon.lua.LuaModule;
 import dev.jstech.computers.cannon.lua.lib.ILuaContext;
 import dev.jstech.computers.cannon.lua.lib.ILuaContinuation;
 import dev.jstech.computers.cannon.lua.lib.ILuaFiles;
+import dev.jstech.computers.cannon.lua.lib.ILuaPeripherals;
 import dev.jstech.computers.cannon.lua.lib.ILuaFunction;
 import dev.jstech.computers.cannon.lua.lib.LuaTerminal;
 import dev.jstech.computers.cannon.lua.lib.LuaCall;
@@ -104,6 +105,7 @@ final class LuaRuntime implements ILuaContext {
     /** The program's screen, read back from its statics the first time it is asked for. */
     private LuaTerminal screen;
     private final ILuaFiles files = new MachineFiles();
+    private final ILuaPeripherals devices = new MachinePeripherals();
 
     LuaRuntime(final Process process) {
         this.process = process;
@@ -1665,6 +1667,11 @@ final class LuaRuntime implements ILuaContext {
     }
 
     @Override
+    public ILuaPeripherals peripherals() {
+        return this.devices;
+    }
+
+    @Override
     public Object loadChunk(final String text, final String name, final Object environment, final int line) {
         return this.load(environment == null ? new Object[] {text, name} : new Object[] {text, name, "t", environment},
                 line);
@@ -1719,6 +1726,18 @@ final class LuaRuntime implements ILuaContext {
         }
     }
 
+    /**
+     * The same, letting the refusal through.
+     *
+     * <p>Some questions have an answer of "no" that a program is meant to see: a peripheral call that
+     * the other side refused is a mistake in the program, not an empty answer, and saying nothing would
+     * turn it into one.
+     */
+    private Object askOrHalt(final String owner, final String member, final List<Object> arguments,
+                             final int line) {
+        return this.process.library().hostCall(owner, member, arguments, line);
+    }
+
     @Override
     public Object createCoroutine(final Object function, final int line) {
         return this.coroutineCreate(function, line);
@@ -1760,6 +1779,75 @@ final class LuaRuntime implements ILuaContext {
      * The machine's disks as ComputerCraft's fs reaches them: every question goes to the machine as a
      * file call, paid for like one, and a machine with no disks to reach answers as an empty one.
      */
+    /**
+     * The other side of the machine's Gateway, as a ComputerCraft program expects to find it.
+     *
+     * <p>A Lua program written for one of their computers asks for peripherals; on one of our machines
+     * the honest answer is what is on the ComputerCraft network our Gateway sits on, which is the same
+     * set of things a Cannon program on this machine reaches through {@code Gateway}. A machine with no
+     * Gateway has nothing attached, which is exactly what such a computer would say.
+     */
+    private final class MachinePeripherals implements ILuaPeripherals {
+
+        @Override
+        public List<String> names() {
+            final List<String> out = new ArrayList<>();
+            if (LuaRuntime.this.ask("Gateway", "Peripherals", List.of()) instanceof Values.ListValue all) {
+                for (final Object one : all.items()) {
+                    if (one instanceof Values.Obj device && device.get("Name") != null) {
+                        out.add(String.valueOf(device.get("Name")));
+                    }
+                }
+            }
+            return out;
+        }
+
+        @Override
+        public String typeOf(final String name) {
+            return this.field(name, "Type");
+        }
+
+        @Override
+        public List<String> methodsOf(final String name) {
+            final Object held = this.of(name, "Methods");
+            final List<String> out = new ArrayList<>();
+            if (held instanceof Values.ListValue methods) {
+                for (final Object one : methods.items()) {
+                    out.add(String.valueOf(one));
+                }
+            }
+            return out;
+        }
+
+        @Override
+        public Object call(final String name, final String method, final List<Object> arguments) {
+            final List<Object> asked = new ArrayList<>();
+            // The Gateway a program means comes first; a Lua program has not chosen one, so it is the first.
+            asked.add("");
+            asked.add(name);
+            asked.add(method);
+            asked.addAll(arguments);
+            return LuaRuntime.this.askOrHalt("Gateway", "Call", asked, 0);
+        }
+
+        private String field(final String name, final String what) {
+            final Object held = this.of(name, what);
+            return held == null ? null : String.valueOf(held);
+        }
+
+        private Object of(final String name, final String what) {
+            if (!(LuaRuntime.this.ask("Gateway", "Peripherals", List.of()) instanceof Values.ListValue all)) {
+                return null;
+            }
+            for (final Object one : all.items()) {
+                if (one instanceof Values.Obj device && String.valueOf(device.get("Name")).equals(name)) {
+                    return device.get(what);
+                }
+            }
+            return null;
+        }
+    }
+
     private final class MachineFiles implements ILuaFiles {
         @Override
         public List<Entry> list(final String path) {

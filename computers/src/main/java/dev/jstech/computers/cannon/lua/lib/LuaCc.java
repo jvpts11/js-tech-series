@@ -728,15 +728,92 @@ final class LuaCc {
     // devices
 
     private static void registerDevices() {
-        LuaLib.define("peripheral.getNames", (context, target, arguments, line) -> context.table(line));
-        LuaLib.define("peripheral.isPresent", (context, target, arguments, line) -> false);
-        LuaLib.define("peripheral.getType", (context, target, arguments, line) -> null);
-        LuaLib.define("peripheral.hasType", (context, target, arguments, line) -> null);
-        LuaLib.define("peripheral.getMethods", (context, target, arguments, line) -> null);
-        LuaLib.define("peripheral.wrap", (context, target, arguments, line) -> null);
-        LuaLib.define("peripheral.find", (context, target, arguments, line) -> context.values(List.of(), line));
+        /*
+         * The peripherals are the ones on the other side of this machine's Gateway: to a program that
+         * came from one of their computers, that is exactly what a peripheral is, and it finds the same
+         * things here that it would find there. A machine with no Gateway has none attached.
+         */
+        LuaLib.define("peripheral.getNames", (context, target, arguments, line) -> {
+            final Values.Table out = context.table(line);
+            final List<String> names = context.peripherals().names();
+            for (int i = 0; i < names.size(); i++) {
+                out.put((long) (i + 1), context.text(names.get(i), line));
+            }
+            context.resized(out, line);
+            return out;
+        });
+        LuaLib.define("peripheral.isPresent", (context, target, arguments, line) ->
+                context.peripherals().typeOf(new LuaArgs(context, "isPresent", arguments, line).text(0)) != null);
+        LuaLib.define("peripheral.getType", (context, target, arguments, line) -> {
+            final String type = context.peripherals()
+                    .typeOf(new LuaArgs(context, "getType", arguments, line).text(0));
+            return type == null ? null : context.text(type, line);
+        });
+        LuaLib.define("peripheral.hasType", (context, target, arguments, line) -> {
+            final LuaArgs args = new LuaArgs(context, "hasType", arguments, line);
+            final String type = context.peripherals().typeOf(args.text(0));
+            return type == null ? null : type.equals(args.text(1));
+        });
+        LuaLib.define("peripheral.getMethods", (context, target, arguments, line) -> {
+            final String name = new LuaArgs(context, "getMethods", arguments, line).text(0);
+            if (context.peripherals().typeOf(name) == null) {
+                return null;
+            }
+            final Values.Table out = context.table(line);
+            final List<String> methods = context.peripherals().methodsOf(name);
+            for (int i = 0; i < methods.size(); i++) {
+                out.put((long) (i + 1), context.text(methods.get(i), line));
+            }
+            context.resized(out, line);
+            return out;
+        });
         LuaLib.define("peripheral.call", (context, target, arguments, line) -> {
-            throw context.error("No peripheral attached", line);
+            final LuaArgs args = new LuaArgs(context, "call", arguments, line);
+            final List<Object> passed = new java.util.ArrayList<>();
+            for (int i = 2; i < arguments.length; i++) {
+                passed.add(arguments[i]);
+            }
+            return context.peripherals().call(args.text(0), args.text(1), passed);
+        });
+        LuaLib.define("peripheral.wrap", (context, target, arguments, line) -> {
+            final String name = new LuaArgs(context, "wrap", arguments, line).text(0);
+            if (context.peripherals().typeOf(name) == null) {
+                return null;
+            }
+            final Values.Table wrapped = context.table(line);
+            for (final String method : context.peripherals().methodsOf(name)) {
+                final Values.Obj state = context.state("peripheral.wrapped", null, line);
+                state.set("name", context.text(name, line));
+                state.set("method", context.text(method, line));
+                wrapped.put(context.text(method, line), context.function("peripheral.wrapped", state, line));
+            }
+            context.resized(wrapped, line);
+            return wrapped;
+        });
+        LuaLib.define("peripheral.wrapped", (context, target, arguments, line) -> {
+            if (!(target instanceof Values.Obj state)) {
+                throw context.error("No peripheral attached", line);
+            }
+            final List<Object> passed = new java.util.ArrayList<>();
+            // Called with a colon, the wrapped table comes first and is not one of the call's own words.
+            for (int i = arguments.length > 0 && arguments[0] instanceof Values.Table ? 1 : 0;
+                    i < arguments.length; i++) {
+                passed.add(arguments[i]);
+            }
+            return context.peripherals().call(String.valueOf(state.get("name")),
+                    String.valueOf(state.get("method")), passed);
+        });
+        LuaLib.define("peripheral.find", (context, target, arguments, line) -> {
+            final LuaArgs args = new LuaArgs(context, "find", arguments, line);
+            final String wanted = args.text(0);
+            final List<Object> found = new java.util.ArrayList<>();
+            for (final String name : context.peripherals().names()) {
+                if (wanted.equals(context.peripherals().typeOf(name))) {
+                    found.add(LuaLib.function("peripheral.wrap").call(context, null,
+                            new Object[] {context.text(name, line)}, line));
+                }
+            }
+            return context.values(found, line);
         });
         LuaLib.define("rednet.open", (context, target, arguments, line) -> {
             throw context.error("No such modem: " + new LuaArgs(context, "open", arguments, line).text(0), line);

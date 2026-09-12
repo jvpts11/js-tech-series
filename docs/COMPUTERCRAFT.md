@@ -58,6 +58,18 @@ a watched total moves, and `jsc_operation(id, status)` when an operation of thei
 Our shared folders are mounted on their computers as `/jsc/<host>/<share>`, readable or writable
 according to what the sharing computer and the Gateway both allow.
 
+## Lua programs on our computers
+
+Our computers run Lua too, with `lrt run reactor.lua`, and a Lua program there finds what it expects to
+find: its own disks through `fs`, a 51 by 19 screen through `term`, events, timers, `shell`, `require`.
+
+Its **peripherals are the things on the other side of its machine's Gateway**, by the names that side
+uses. `peripheral.getNames`, `getType`, `isPresent`, `getMethods`, `call`, `wrap` and `find` all work, so
+a program written for one of their computers finds the same devices running on one of ours. A machine
+with no Gateway has nothing attached, which is what such a computer says too.
+
+`rednet` and `gps` are not bridged: there is no modem of our own yet.
+
 ## What one of our programs can ask of them
 
 From Cannon, through `Gateway`: which computers and peripherals are on the other side, calling any of
