@@ -128,6 +128,8 @@ public final class CannonCosts {
          */
         put("Program", 0, false, "SetName", "Name", "Args", "Current", "Exit", "OnMessage");
         put("Program", SUBMIT, false, "Start");
+        // A line at the machine's own prompt is a program started and waited for, priced as one.
+        put("Program", SUBMIT, true, "Shell");
         put("Process", 0, false, "Id", "Name", "Host", "Wait");
         put("Process", GLANCE, false, "Running", "ExitCode");
         put("Process", GLANCE_NETWORK, false, "Kill", "Send");

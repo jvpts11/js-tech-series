@@ -426,6 +426,11 @@ public final class BuiltIns {
         this.method(program, "Start", process, PUBLIC_STATIC, this.stringType, strings);
         this.method(program, "Start", process, PUBLIC_STATIC, this.stringType, strings, this.stringType);
         this.property(program, "Current", process, PUBLIC_STATIC);
+        /*
+         * A line at this machine's own prompt, run to the end, and what it printed. It is the same thing
+         * a remote computer is asked for, asked of the machine the program is standing on instead.
+         */
+        this.method(program, "Shell", strings, PUBLIC_STATIC, this.stringType);
 
         final NamedType message = this.declare("ProcessMessage", NamedType.Kind.CLASS);
         this.property(message, "From", integer, PUBLIC);
@@ -586,6 +591,27 @@ public final class BuiltIns {
         this.method(gateway, "Send", flag, PUBLIC_STATIC, whole, text);
         this.method(gateway, "OnMessage", ITypeSymbol.Primitive.VOID, PUBLIC_STATIC,
                 new ITypeSymbol.GenericType(this.actionOfType, List.of(message)));
+
+        /*
+         * What a computer over there does for us, which needs the agent running on it. Every one of these
+         * waits for that computer to answer: the program stops where it stands and costs nothing while it
+         * waits, the same as a program waiting for a line to be typed, and gives up after a few seconds
+         * rather than hanging on a computer that was turned off in the meantime.
+         */
+        final ITypeSymbol lines = new ITypeSymbol.GenericType(this.listType, List.of(text));
+        this.method(gateway, "HasAgent", flag, PUBLIC_STATIC, whole);
+        this.method(gateway, "Run", flag, PUBLIC_STATIC, whole, text);
+        this.method(gateway, "Run", flag, PUBLIC_STATIC, whole, text, lines);
+        this.method(gateway, "Shell", lines, PUBLIC_STATIC, whole, text);
+        this.method(gateway, "Read", text, PUBLIC_STATIC, whole, text);
+        this.method(gateway, "Write", flag, PUBLIC_STATIC, whole, text, text);
+        this.method(gateway, "List", lines, PUBLIC_STATIC, whole, text);
+        /*
+         * The other side of all that: a program that says it will answer those questions rather than ask
+         * them. It is what the agent is, and it only means anything on a machine a Gateway reaches into.
+         */
+        this.method(gateway, "Serve", ITypeSymbol.Primitive.VOID, PUBLIC_STATIC,
+                new ITypeSymbol.GenericType(this.funcType, List.of(lines, this.objectType)));
     }
 
     /**

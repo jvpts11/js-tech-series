@@ -277,6 +277,23 @@ public final class MachinePrograms {
         return heard;
     }
 
+    /**
+     * Hands a program the answer a computer on the other side of a Gateway sent back.
+     *
+     * <p>Only one program can be waiting for a given question, because the number that names it comes
+     * from the Gateway and is handed out once, so the first program that was waiting for it is the one.
+     *
+     * @return whether a program was still waiting for that answer
+     */
+    public boolean deliverAnswer(final int question, final Object value) {
+        for (final Live one : List.copyOf(this.live)) {
+            if (one.process() instanceof CannonProgram program && program.process().answered(question, value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** The windows a program has open on the machine's desktop; empty for one that has none. */
     public List<dev.jstech.computers.cannon.run.Values.Obj> windowsOf(final int id) {
         final Live one = this.byId(id);

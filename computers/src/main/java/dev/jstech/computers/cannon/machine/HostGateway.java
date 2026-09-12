@@ -13,6 +13,7 @@ import dev.jstech.computers.cannon.run.Halt;
 import dev.jstech.computers.cannon.run.IHost;
 import dev.jstech.computers.cannon.run.Values;
 import dev.jstech.computers.gateway.GatewayManager;
+import dev.jstech.computers.gateway.GatewayPermissions;
 import dev.jstech.computers.gateway.GatewayRefusedException;
 import dev.jstech.computers.gateway.IGatewayBridge;
 import java.util.ArrayList;
@@ -100,6 +101,10 @@ public final class HostGateway {
             case "Reboot" -> IHost.Reply.of(bridge.power(whole(rest, 0, line), "again"), SEND);
             case "Send" -> IHost.Reply.of(bridge.eventTo(whole(rest, 0, line), "jsc_message",
                     rest.size() < 2 ? "" : String.valueOf(rest.get(1))), SEND);
+            case "HasAgent" -> IHost.Reply.of(gateway.hasAgent(whole(rest, 0, line)), GLANCE);
+            case "Serve" -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line,
+                    "only a program on a computer a Gateway reaches can be asked to serve");
+            case "Run", "Shell", "Read", "Write", "List" -> asked(gateway, member, rest, line);
             default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "Gateway has no " + member);
         };
     }
@@ -178,6 +183,54 @@ public final class HostGateway {
                     dev.jstech.computers.gateway.GatewayLog.Tone.DENIED);
             throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, refused.getMessage());
         }
+    }
+
+    /**
+     * Puts one of the five questions to the agent on a computer over there.
+     *
+     * <p>What comes back here is not the answer but the number the answer will come back by: the program
+     * that asked is parked on that number and the call runs again when it lands. The Gateway's own
+     * switches hold in this direction as well as the other, because they are about the bridge itself and
+     * not about who started the conversation: starting something needs operations, and reaching into
+     * that computer's files needs the file setting, writing needing it open both ways.
+     */
+    private static IHost.Reply asked(final NetworkGatewayBlockEntity gateway, final String member,
+                                     final List<Object> rest, final int line) {
+        final boolean writes = "Write".equals(member);
+        final boolean files = writes || "Read".equals(member) || "List".equals(member);
+        if (files && gateway.permissions().files() == GatewayPermissions.FileAccess.OFF) {
+            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, gateway.name() + ": the shared folders are off");
+        }
+        if (writes && !gateway.permissions().allowsWrite()) {
+            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, gateway.name() + ": the folders are read-only");
+        }
+        if (!files && !gateway.permissions().operations()) {
+            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, gateway.name() + ": operations are off");
+        }
+        final int computer = whole(rest, 0, line);
+        if (!gateway.hasAgent(computer)) {
+            throw new Halt(Halt.Reason.NO_OBJECT, line,
+                    "computer " + computer + " has no agent running (is it turned on?)");
+        }
+        final List<Object> said = new ArrayList<>();
+        for (int i = 1; i < rest.size(); i++) {
+            said.add(rest.get(i));
+        }
+        final int question = gateway.ask(computer, member.toLowerCase(java.util.Locale.ROOT), said);
+        if (question == 0) {
+            throw new Halt(Halt.Reason.NO_OBJECT, line, "computer " + computer + " cannot be reached");
+        }
+        return IHost.Reply.of(question, priceOf(member));
+    }
+
+    /** What each of them costs: starting something is the dearest, looking at a folder the cheapest. */
+    private static int priceOf(final String member) {
+        return switch (member) {
+            case "Run", "Shell" -> CannonCosts.SUBMIT;
+            case "Write" -> CannonCosts.WRITE;
+            case "Read" -> CannonCosts.READ;
+            default -> CannonCosts.GATHER;
+        };
     }
 
     private static int whole(final List<Object> arguments, final int at, final int line) {

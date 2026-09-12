@@ -15,6 +15,7 @@ import dan200.computercraft.api.peripheral.IPeripheral;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.gateway.GatewayRefusedException;
 import dev.jstech.computers.gateway.GatewayService;
+import dev.jstech.computers.gateway.GatewayValues;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -331,6 +332,31 @@ public final class GatewayPeripheral implements IPeripheral {
         } catch (final GatewayRefusedException refused) {
             throw error(refused);
         }
+    }
+
+    /**
+     * The agent on that computer saying it is there, which is what makes this side able to ask it things.
+     *
+     * <p>It costs nothing and is not counted against the call cap: a computer that has just started
+     * should not be refused its own introduction because something else was busy that tick.
+     */
+    @LuaFunction(mainThread = true)
+    public void hello(final IComputerAccess computer) {
+        gateway.agentOn(computer.getID());
+    }
+
+    /**
+     * The agent's answer to something this side asked it: the number of the question, and what it found.
+     *
+     * <p>An answer nobody is waiting for any more (the program gave up, or was stopped) is simply
+     * dropped, which is why this says whether it landed rather than refusing.
+     */
+    @LuaFunction(mainThread = true)
+    public boolean answer(final IComputerAccess computer, final IArguments arguments) throws LuaException {
+        final int question = arguments.getInt(0);
+        final Object value = arguments.count() > 1 ? arguments.get(1) : null;
+        gateway.agentOn(computer.getID());
+        return gateway.answered(question, GatewayValues.fromTranslated(value));
     }
 
     // Watches and the log

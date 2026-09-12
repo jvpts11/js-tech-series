@@ -61,6 +61,13 @@ public final class Process {
     private static final int START_COST = 49;
     /** How many times over a handler of an error may itself raise one before the process is simply over. */
     private static final int RECOVERY_DEPTH = 64;
+    /**
+     * How long a program waits for a computer on the other side of a Gateway before giving up.
+     *
+     * <p>Five seconds: long enough for a computer that is busy with something else to get to the
+     * question, short enough that a program is never held by a computer that was turned off.
+     */
+    private static final int ANSWER_TICKS = 100;
     /** One instruction's worth of the budget for this many things the collector has to look at. */
     private static final int COLLECTED_PER_INSTRUCTION = 32;
 
@@ -80,7 +87,31 @@ public final class Process {
         /** A Lua coroutine: resumed by another thread, or waiting for the one it resumed to yield. */
         COROUTINE,
         /** A Lua program's next event: a key, a timer, anything queued for it. */
-        EVENT
+        EVENT,
+        /** A computer on the other side of a Gateway to answer what it was asked. */
+        ANSWER
+    }
+
+    /**
+     * A question put to a computer on the other side of a Gateway, and the answer when it comes.
+     *
+     * <p>The thread that asked is parked while the question is out, so it costs nothing to wait. The
+     * instruction that asked is rewound rather than remembered: when the answer lands the call runs
+     * again and finds it, which is also what makes a question survive the machine being saved and read
+     * back, since a call that never finished is simply a call that has not happened yet.
+     */
+    static final class Asked {
+        private final int id;
+        private Object value;
+        private boolean done;
+
+        Asked(final int id) {
+            this.id = id;
+        }
+
+        int id() {
+            return this.id;
+        }
     }
 
     /**
@@ -136,6 +167,8 @@ public final class Process {
         String onHost = "";
         boolean timedOut;
         boolean yielded;
+        /** The question this thread put to the other side of a Gateway, while it is still out. */
+        Asked asked;
 
         Thread(final int id) {
             this.id = id;
@@ -696,6 +729,22 @@ public final class Process {
     }
 
     /** Puts a call on that object in the queue, to be run by the slices that follow. */
+    /**
+     * Whether a turn of that method is already queued and has not had its chance yet.
+     *
+     * <p>A program that is waiting for something is not given another tick's work to do on top of the
+     * one it has not started: a tick that is missed is missed, rather than piling up to be run all at
+     * once the moment the wait ends.
+     */
+    public boolean queued(final String method) {
+        for (final Frame frame : this.waiting) {
+            if (frame.method.name().equals(method)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void begin(final Values.Obj self, final String method) {
         final Loaded.Method found = this.program.method(self.type(), method, List.of());
         if (found == null) {
@@ -864,6 +913,18 @@ public final class Process {
                 }
                 case INPUT -> {
                     if (!this.input.isEmpty()) {
+                        thread.parked = Parked.NONE;
+                    }
+                }
+                case ANSWER -> {
+                    /*
+                     * A computer that was turned off in the meantime never answers, so the wait ends by
+                     * itself and the call gives back nothing rather than holding the program for ever.
+                     */
+                    if (thread.asked != null && !thread.asked.done && now >= thread.until) {
+                        thread.asked.done = true;
+                    }
+                    if (thread.asked == null || thread.asked.done) {
                         thread.parked = Parked.NONE;
                     }
                 }
@@ -2252,6 +2313,68 @@ public final class Process {
         frame.push(made);
     }
 
+    /**
+     * Puts a question to a computer on the other side of a Gateway and waits for its answer.
+     *
+     * <p>Nothing comes off the stack while the question is out: the instruction is rewound, so when the
+     * answer lands the call simply runs again, finds it, and takes its arguments off then. That is what
+     * makes the wait free (a parked thread is given no budget) and what makes it survive a save.
+     */
+    private void askAcross(final Frame frame, final IOperand.Method named, final int line) {
+        final Asked asked = this.current.asked;
+        if (asked != null && asked.done) {
+            this.current.asked = null;
+            this.take(frame, named.parameters());
+            this.push(frame, named, Library.Answer.of(asked.value == null
+                    ? nothing(named.returns()) : asked.value));
+            return;
+        }
+        if (asked == null) {
+            final List<Object> arguments = this.peek(frame, named.parameters().size());
+            final Library.Answer sent = this.library.call(named, null, arguments, line);
+            this.current.asked = new Asked(Numbers.toInt(sent.value()));
+        }
+        // The call has not happened yet as far as the program is concerned, so it is run again later.
+        frame.at--;
+        this.current.parked = Parked.ANSWER;
+        this.current.until = this.library.now() + ANSWER_TICKS;
+    }
+
+    /** What a question that was never answered gives back: the empty answer of its own kind. */
+    private static Object nothing(final String returns) {
+        return switch (returns) {
+            case "bool" -> Boolean.FALSE;
+            case "string" -> "";
+            case "int", "long", "float", "double", "char" -> 0;
+            default -> new Values.ListValue();
+        };
+    }
+
+    /** The top of the stack without taking anything off it, in the order the arguments were pushed. */
+    private List<Object> peek(final Frame frame, final int count) {
+        final List<Object> seen = new ArrayList<>(count);
+        for (int i = count; i > 0; i--) {
+            seen.add(frame.stack.get(frame.stack.size() - i));
+        }
+        return seen;
+    }
+
+    /**
+     * An answer from the other side, for the thread that asked for it.
+     *
+     * @return whether a thread was still waiting for it
+     */
+    public boolean answered(final int id, final Object value) {
+        for (final Thread thread : this.threads) {
+            if (thread.asked != null && thread.asked.id() == id && !thread.asked.done) {
+                thread.asked.value = value;
+                thread.asked.done = true;
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void call(final Frame frame, final IOperand.Method named, final boolean through, final int line) {
         if (through) {
             this.invoke(frame, this.take(frame, named.parameters()), line);
@@ -2272,6 +2395,10 @@ public final class Process {
             }
             if ("Process".equals(named.owner())) {
                 this.processCall(frame, named, line);
+                return;
+            }
+            if (Library.waitsForAnswer(named)) {
+                this.askAcross(frame, named, line);
                 return;
             }
             if (Library.readsLine(named) && this.input.isEmpty()) {

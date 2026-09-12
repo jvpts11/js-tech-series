@@ -21,8 +21,18 @@ final class LuaPrimitives {
     private LuaPrimitives() {
     }
 
+    /**
+     * What a program needs beyond the language itself, which is not the same for every program.
+     *
+     * @param files whether it reaches into the files of the machine it is standing on
+     * @param shell whether it runs anything at that machine's prompt
+     * @param serve whether it answers what comes across a Gateway rather than asking
+     */
+    record Needs(boolean files, boolean shell, boolean serve) {
+    }
+
     /** Writes them all, in the order they need each other. */
-    static void write(final StringBuilder out) {
+    static void write(final StringBuilder out, final Needs needs) {
         whole(out);
         arithmetic(out);
         objects(out);
@@ -32,6 +42,116 @@ final class LuaPrimitives {
         handlers(out);
         waiting(out);
         gateway(out);
+        if (needs.files()) {
+            files(out);
+        }
+        if (needs.shell() || needs.serve()) {
+            shell(out);
+        }
+        if (needs.serve()) {
+            serve(out);
+        }
+    }
+
+    /*
+     * The files of the machine the program is standing on, which over there is that computer's own disk
+     * and not ours. A program that wants what is on our network asks the Gateway for it by name.
+     */
+    private static void files(final StringBuilder out) {
+        out.append("local function _fsread(path)\n");
+        out.append("  local held = fs.open(path, \"r\")\n");
+        out.append("  if held == nil then error(\"there is no file called \" .. path, 0) end\n");
+        out.append("  local text = held.readAll()\n");
+        out.append("  held.close()\n");
+        out.append("  return text or \"\"\n");
+        out.append("end\n");
+        out.append("local function _fstry(path)\n");
+        out.append("  if not fs.exists(path) or fs.isDir(path) then return \"\" end\n");
+        out.append("  return _fsread(path)\n");
+        out.append("end\n");
+        out.append("local function _fswrite(path, text, adding)\n");
+        out.append("  local held = fs.open(path, adding and \"a\" or \"w\")\n");
+        out.append("  if held == nil then error(\"cannot write \" .. path, 0) end\n");
+        out.append("  held.write(text)\n");
+        out.append("  held.close()\n");
+        out.append("  return true\n");
+        out.append("end\n");
+        out.append("local function _fslist(path)\n");
+        out.append("  local made = _list()\n");
+        out.append("  if not fs.exists(path) or not fs.isDir(path) then return made end\n");
+        out.append("  for _, name in ipairs(fs.list(path)) do _listadd(made, name) end\n");
+        out.append("  return made\n");
+        out.append("end\n");
+    }
+
+    /*
+     * A line at that computer's prompt, run to the end, with what it printed caught rather than shown.
+     * The screen is put back exactly as it was, so a program that was drawing carries on undisturbed.
+     */
+    private static void shell(final StringBuilder out) {
+        out.append("local function _shell(line)\n");
+        out.append("  local said = _list()\n");
+        out.append("  if shell == nil or window == nil then return said end\n");
+        out.append("  local wide, tall = term.getSize()\n");
+        out.append("  local box = window.create(term.current(), 1, 1, wide, tall, false)\n");
+        out.append("  local before = term.redirect(box)\n");
+        out.append("  pcall(shell.run, line)\n");
+        out.append("  term.redirect(before)\n");
+        out.append("  local rows = {}\n");
+        out.append("  local last = 0\n");
+        out.append("  for y = 1, tall do\n");
+        out.append("    local text = box.getLine(y)\n");
+        out.append("    if text == nil then text = \"\" end\n");
+        out.append("    rows[y] = (string.match(text, \"^(.-)%s*$\"))\n");
+        out.append("    if rows[y] ~= \"\" then last = y end\n");
+        out.append("  end\n");
+        out.append("  for y = 1, last do _listadd(said, rows[y]) end\n");
+        out.append("  return said\n");
+        out.append("end\n");
+        out.append("local function _start(line)\n");
+        out.append("  local ok = false\n");
+        out.append("  if shell ~= nil then ok = shell.run(line) == true end\n");
+        out.append("  return { type = \"Process\", Id = 0, Name = line, Host = \"\",");
+        out.append(" Running = false, ExitCode = ok and 0 or 1 }\n");
+        out.append("end\n");
+    }
+
+    /*
+     * Answering instead of asking, which is what the agent does.
+     *
+     * <p>There is no such thing as a program that runs in the background over there, so the way to be
+     * there when a question arrives is to look at every event on its way to whatever is running: the
+     * one hook takes ours and lets everything else past untouched, and a program that was waiting for a
+     * key still waits for a key. Everything the handler does is inside a pcall, because an agent that
+     * throws must not take somebody else's program down with it.
+     */
+    private static void serve(final StringBuilder out) {
+        out.append("local function _serve(P, handler)\n");
+        out.append("  local found = nil\n");
+        out.append("  if peripheral ~= nil then\n");
+        out.append("    for _, name in ipairs(peripheral.getNames()) do\n");
+        out.append("      if peripheral.getType(name) == \"jsc_gateway\" then found = name end\n");
+        out.append("    end\n");
+        out.append("  end\n");
+        out.append("  if found == nil then return end\n");
+        out.append("  pcall(peripheral.call, found, \"hello\")\n");
+        out.append("  if _G.jsc_serving then return end\n");
+        out.append("  _G.jsc_serving = true\n");
+        out.append("  local pull = os.pullEventRaw\n");
+        out.append("  os.pullEventRaw = function(filter)\n");
+        out.append("    while true do\n");
+        out.append("      local said = { pull() }\n");
+        out.append("      if said[1] == \"jsc_ask\" then\n");
+        out.append("        local asked = _list()\n");
+        out.append("        for i = 3, #said do _listadd(asked, said[i]) end\n");
+        out.append("        local ok, answer = pcall(_invoke, P, handler, asked)\n");
+        out.append("        pcall(peripheral.call, found, \"answer\", said[2], ok and answer or nil)\n");
+        out.append("      elseif filter == nil or said[1] == filter then\n");
+        out.append("        return table.unpack(said)\n");
+        out.append("      end\n");
+        out.append("    end\n");
+        out.append("  end\n");
+        out.append("end\n");
     }
 
     /*
@@ -50,6 +170,14 @@ final class LuaPrimitives {
         out.append("    end\n");
         out.append("  end\n");
         out.append("  error(\"there is no Gateway this computer can reach\", 0)\n");
+        out.append("end\n");
+        /* Whether there is one at all, which is a question rather than an attempt, so it never stops. */
+        out.append("local function _hasgateway()\n");
+        out.append("  if peripheral == nil then return false end\n");
+        out.append("  for _, name in ipairs(peripheral.getNames()) do\n");
+        out.append("    if peripheral.getType(name) == \"jsc_gateway\" then return true end\n");
+        out.append("  end\n");
+        out.append("  return false\n");
         out.append("end\n");
         /*
          * The same question a program standing on one of our machines asks its own machine: the name of

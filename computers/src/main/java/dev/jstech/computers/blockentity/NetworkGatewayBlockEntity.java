@@ -332,6 +332,64 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
         messages.addLast(new Message(from, text == null ? "" : text, tick));
     }
 
+    /*
+     * The agents. A computer over there says hello when its agent starts, and stops counting as one when
+     * it detaches or is turned off, so a program here is told the truth about what it can reach.
+     */
+    private final java.util.Set<Integer> agents = new java.util.HashSet<>();
+    /** The number the next question put to the other side is known by; they are handed out one at a time. */
+    private int nextQuestion = 1;
+
+    /** An agent on that computer said it is there and will answer what this side asks it. */
+    public void agentOn(final int computerId) {
+        agents.add(computerId);
+        logged("computer " + computerId, "agent", "ready", GatewayLog.Tone.OK);
+    }
+
+    /** Whether a computer over there has an agent that answers. */
+    public boolean hasAgent(final int computerId) {
+        return agents.contains(computerId) && attached.containsKey(computerId);
+    }
+
+    /** Forgets the agent of a computer that is gone, which is what detaching or turning off means. */
+    public void agentGone(final int computerId) {
+        agents.remove(computerId);
+    }
+
+    /**
+     * Puts a question to the agent on one of the computers over there; the number it will answer by.
+     *
+     * <p>Nothing waits here: the question goes out as an event on that computer and this side carries on.
+     * The program that asked is parked until the answer comes back through {@link #answered}.
+     */
+    public int ask(final int computerId, final String verb, final java.util.List<Object> arguments) {
+        final int question = nextQuestion++;
+        final Object[] said = new Object[arguments.size() + 2];
+        said[0] = question;
+        said[1] = verb;
+        for (int i = 0; i < arguments.size(); i++) {
+            said[i + 2] = arguments.get(i);
+        }
+        if (bridge == null || !bridge.eventTo(computerId, "jsc_ask", said)) {
+            return 0;
+        }
+        stats.count(GatewayStats.Kind.CALL, level == null ? 0L : level.getGameTime());
+        return question;
+    }
+
+    /**
+     * The answer to one of those questions, on its way to the program that is waiting for it.
+     *
+     * @return whether a program was still waiting for it
+     */
+    public boolean answered(final int question, final Object value) {
+        final IPeripheralOwner owner = owner();
+        if (owner instanceof AbstractComputerBlockEntity machine) {
+            return machine.cannon().deliverAnswer(question, value);
+        }
+        return false;
+    }
+
     /** Everything said to this side since the last time anyone asked, oldest first. */
     public java.util.List<Message> takeMessages() {
         if (messages.isEmpty()) {
@@ -365,6 +423,7 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
     public void ccDetached(final int computerId) {
         attached.remove(computerId);
         watches.remove(computerId);
+        agentGone(computerId);
         syncToClients();
     }
 

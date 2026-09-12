@@ -561,6 +561,19 @@ public final class Library {
         return "Console".equals(named.owner()) && named.name().startsWith("Read");
     }
 
+    /** What a computer on the other side of a Gateway does for us, none of which it answers at once. */
+    private static final List<String> ACROSS = List.of("Run", "Shell", "Read", "Write", "List");
+
+    /**
+     * Whether that call has to be put to a computer on the other side of a Gateway and waited for.
+     *
+     * <p>The rest of what a Gateway answers it answers itself, out of what the machine already knows;
+     * these five are the ones only the computer over there can answer, and it answers when it gets to it.
+     */
+    public static boolean waitsForAnswer(final IOperand.Method named) {
+        return "Gateway".equals(named.owner()) && ACROSS.contains(named.name());
+    }
+
     private Object maths(final String name, final List<Object> arguments, final int line) {
         final Object first = arguments.getFirst();
         final boolean real = first instanceof Double || first instanceof Float;

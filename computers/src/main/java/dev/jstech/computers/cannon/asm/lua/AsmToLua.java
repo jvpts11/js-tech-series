@@ -59,11 +59,35 @@ public final class AsmToLua {
 
     private void write() {
         this.line(0, "local " + PROGRAM + " = {}");
-        LuaPrimitives.write(this.out);
+        LuaPrimitives.write(this.out, this.needs());
         for (final Loaded.Type type : this.program.types()) {
             this.type(type);
         }
         this.entry();
+    }
+
+    /*
+     * What this program asks of the machine it will be standing on, which decides how much of the
+     * prelude has to go with it. A program that never touches a file carries no file reading at all.
+     */
+    private LuaPrimitives.Needs needs() {
+        boolean files = false;
+        boolean shell = false;
+        boolean serve = false;
+        for (final Loaded.Type type : this.program.types()) {
+            for (final Loaded.Method method : type.methods().values()) {
+                for (final Instruction instruction : method.code()) {
+                    if (!(instruction.operand() instanceof IOperand.Method named)) {
+                        continue;
+                    }
+                    files = files || "File".equals(named.owner());
+                    shell = shell || "Program".equals(named.owner())
+                            && ("Shell".equals(named.name()) || "Start".equals(named.name()));
+                    serve = serve || "Gateway".equals(named.owner()) && "Serve".equals(named.name());
+                }
+            }
+        }
+        return new LuaPrimitives.Needs(files, shell, serve);
     }
 
     // types

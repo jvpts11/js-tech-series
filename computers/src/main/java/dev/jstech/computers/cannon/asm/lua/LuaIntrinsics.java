@@ -26,7 +26,7 @@ final class LuaIntrinsics {
 
     /** The owners the other side answers itself. */
     private static final List<String> THEIRS = List.of("Console", "string", "List", "Map", "Math", "Convert",
-            "Time", "Random", "Delegate");
+            "Time", "Random", "Delegate", "File");
 
     /** The one thing of ours a program holds rather than names: another computer on the network. */
     private static final String REMOTE = "RemoteComputer";
@@ -52,6 +52,16 @@ final class LuaIntrinsics {
         final String first = at(passed, 0);
         final String second = at(passed, 1);
         final String third = at(passed, 2);
+        if ("Program".equals(owner) && "Shell".equals(member)) {
+            return "_shell(" + first + ")";
+        }
+        if ("Program".equals(owner) && "Start".equals(member)) {
+            // A program started over there runs to its end there and then, since nothing runs behind.
+            return "_start(" + first + ")";
+        }
+        if ("Gateway".equals(owner) && "Serve".equals(member)) {
+            return "_serve(" + AsmToLua.PROGRAM + ", " + first + ")";
+        }
         if ("Program".equals(owner) && OURS.contains(member)) {
             /*
              * Stopping and being told are the running program's own business, here as there: the
@@ -111,6 +121,20 @@ final class LuaIntrinsics {
             case "Map.At", "Map.Get" -> "_mapat(" + first + ", " + second + ")";
             case "Map.Remove" -> "_maptake(" + first + ", " + second + ")";
             case "Map.Count" -> first + ".n";
+            /*
+             * The files of the machine the program is standing on. Over there that is that computer's
+             * own disk: a program asking for its own files gets its own, wherever "its own" now is.
+             */
+            case "File.Exists" -> "fs.exists(" + first + ")";
+            case "File.Read", "File.Text" -> "_fsread(" + first + ")";
+            case "File.TryRead" -> "_fstry(" + first + ")";
+            case "File.Write", "File.Put" -> "_fswrite(" + first + ", " + text(second) + ", false)";
+            case "File.Append" -> "_fswrite(" + first + ", " + text(second) + ", true)";
+            case "File.Delete", "File.Remove" -> "fs.delete(" + first + ")";
+            case "File.MkDir", "File.MakeDir" -> "fs.makeDir(" + first + ")";
+            case "File.List", "File.Entries" -> "_fslist(" + first + ")";
+            case "File.Free" -> "fs.getFreeSpace(" + first + ")";
+            case "File.Capacity" -> "fs.getCapacity(" + first + ")";
             default -> unknown(owner, member);
         };
     }
@@ -133,6 +157,8 @@ final class LuaIntrinsics {
     /** A value the machine keeps rather than the program: the world's clock, or something of ours. */
     static String read(final String owner, final String name) {
         return switch (owner + "." + name) {
+            /* Whether there is a Gateway within reach is a fair question anywhere, and never an error. */
+            case "Gateway.Online" -> "_hasgateway()";
             case "Time.Tick" -> "_int(os.epoch(\"ingame\") / 50)";
             case "Time.DayTime" -> "_int(os.time() * 1000)";
             case "Time.Day" -> "os.day()";
