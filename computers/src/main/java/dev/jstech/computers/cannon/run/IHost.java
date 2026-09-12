@@ -94,6 +94,17 @@ public interface IHost {
         return this.call(owner, member, arguments, caller, line);
     }
 
+    /**
+     * Told when the runtime itself failed while running one of this host's programs.
+     *
+     * <p>The program has already been stopped with a message of its own; this is where the fault is
+     * written down for whoever has to fix it. A host with nowhere to write it lets it go.
+     *
+     * @param process the name the program is listed under
+     * @param line    the instruction it was on, or 0 when it was between instructions
+     */
+    default void fault(final String process, final int line, final RuntimeException cause) {
+    }
 
     /** A host for a program that has no world around it, whose clock never moves. */
     static IHost still() {

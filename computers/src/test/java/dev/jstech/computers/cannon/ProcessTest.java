@@ -598,4 +598,69 @@ class ProcessTest {
         assertFinished(process);
         assertEquals(List.of("Test sum: 10 (8)", "46", "plain"), process.console());
     }
+
+    /** A machine that fails inside itself: on every call, and on its clock too when asked to. */
+    private static final class Faulty implements IHost {
+
+        private final boolean clockFails;
+
+        Faulty(final boolean clockFails) {
+            this.clockFails = clockFails;
+        }
+
+        @Override
+        public long tick() {
+            if (this.clockFails) {
+                throw new IllegalStateException("the clock broke");
+            }
+            return 0;
+        }
+
+        @Override
+        public long dayTime() {
+            return 0;
+        }
+
+        @Override
+        public long day() {
+            return 0;
+        }
+
+        @Override
+        public boolean provides(final String owner) {
+            return "Operations".equals(owner);
+        }
+
+        @Override
+        public Reply call(final String owner, final String member, final List<Object> arguments,
+                          final String caller, final int line) {
+            throw new IllegalStateException("the network broke");
+        }
+    }
+
+    @Test
+    void step_endsOnlyTheProcessWhenTheRuntimeFailsOnAnInstruction() {
+        final Loaded program = load("", "        Operations.Push(\"minecraft:cobblestone\", 1);");
+        final Process process = new Process(program, ROOM, new Faulty(false));
+        process.begin(process.create(program.entryPoint()), "OnTick");
+
+        process.step(PLENTY);
+
+        assertEquals(Process.State.HALTED, process.state());
+        assertTrue(process.message().startsWith("the runtime could not carry this out"), process.message());
+        assertEquals(List.of(process.message()), process.console());
+    }
+
+    @Test
+    void step_endsOnlyTheProcessWhenTheRuntimeFailsBetweenInstructions() {
+        final Loaded program = load("", "        Console.PrintLine(\"never\");");
+        final Process process = new Process(program, ROOM, new Faulty(true));
+        process.begin(process.create(program.entryPoint()), "OnTick");
+
+        process.step(PLENTY);
+
+        assertEquals(Process.State.HALTED, process.state());
+        assertTrue(process.message().startsWith("the runtime could not carry this out"), process.message());
+        assertFalse(process.console().contains("never"));
+    }
 }

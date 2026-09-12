@@ -133,6 +133,21 @@ public final class Values {
             this.items.set(index, value);
         }
 
+        /** Puts something in at that place, moving what was there one along; the end is a place too. */
+        public void insert(final int index, final Object value, final int line) {
+            if (index < 0 || index > this.items.size()) {
+                throw new Halt(Halt.Reason.OUT_OF_RANGE, line,
+                        "there is no place " + index + " to insert at in a list of " + this.items.size());
+            }
+            this.items.add(index, value);
+        }
+
+        /** Takes out what is at that place, moving what came after it one back. */
+        public void removeAt(final int index, final int line) {
+            this.check(index, line);
+            this.items.remove(index);
+        }
+
         private void check(final int index, final int line) {
             if (index < 0 || index >= this.items.size()) {
                 throw new Halt(Halt.Reason.OUT_OF_RANGE, line,

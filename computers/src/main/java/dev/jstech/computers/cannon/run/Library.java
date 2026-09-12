@@ -404,13 +404,6 @@ public final class Library {
     }
 
     /**
-     * Puts something the machine made onto the program's heap, contents and all.
-     *
-     * <p>What a program is handed is the program's to hold and to free, and it has to weigh what it
-     * weighs. Anything already on the heap is left where it is, so handing back something the program
-     * gave in the first place does not charge it twice.
-     */
-    /**
      * Puts a value that came from outside onto the program's heap, so the program may hold it.
      *
      * <p>The one door for everything the world hands a program: an answer from a host call comes through
@@ -422,6 +415,18 @@ public final class Library {
         return this.adopt(made, line);
     }
 
+    /** Hands a failure of the runtime itself to the machine, which is where it gets written down. */
+    void fault(final String process, final int line, final RuntimeException cause) {
+        this.host.fault(process, line, cause);
+    }
+
+    /**
+     * Puts something the machine made onto the program's heap, contents and all.
+     *
+     * <p>What a program is handed is the program's to hold and to free, and it has to weigh what it
+     * weighs. Anything already on the heap is left where it is, so handing back something the program
+     * gave in the first place does not charge it twice.
+     */
     private Object adopt(final Object made, final int line) {
         if (made == null || this.heap.bytesOf(made) > 0) {
             return made;
@@ -508,16 +513,6 @@ public final class Library {
     }
 
     /**
-     * Asks the machine something for the Lua side of the runtime, which turns the answer into Lua's
-     * values itself: the answer as the machine gave it, and what it cost charged like any call.
-     */
-    Object hostCall(final String owner, final String member, final List<Object> arguments, final int line) {
-        final IHost.Reply reply = this.host.call(owner, member, arguments, this.caller, this.callerId(), line);
-        this.owed += Math.max(0, reply.cost() - 1);
-        return reply.value();
-    }
-
-    /**
      * Asks the machine something without charging for it, for what the process checks on its own
      * account between slices; nothing when the machine does not answer for it.
      */
@@ -571,19 +566,6 @@ public final class Library {
     /** Whether that call reads a line, and so has to wait for one when none has been typed. */
     public static boolean readsLine(final IOperand.Method named) {
         return "Console".equals(named.owner()) && named.name().startsWith("Read");
-    }
-
-    /** What a computer on the other side of a Gateway does for us, none of which it answers at once. */
-    private static final List<String> ACROSS = List.of("Run", "Shell", "Read", "Write", "List");
-
-    /**
-     * Whether that call has to be put to a computer on the other side of a Gateway and waited for.
-     *
-     * <p>The rest of what a Gateway answers it answers itself, out of what the machine already knows;
-     * these five are the ones only the computer over there can answer, and it answers when it gets to it.
-     */
-    public static boolean waitsForAnswer(final IOperand.Method named) {
-        return "Gateway".equals(named.owner()) && ACROSS.contains(named.name());
     }
 
     private Object maths(final String name, final List<Object> arguments, final int line) {
@@ -723,10 +705,7 @@ public final class Library {
         }
         final String value = String.valueOf(self);
         return switch (name) {
-            case "Substring" -> this.made(arguments.size() == 1
-                    ? value.substring(Numbers.toInt(arguments.getFirst()))
-                    : value.substring(Numbers.toInt(arguments.getFirst()),
-                            Numbers.toInt(arguments.getFirst()) + Numbers.toInt(arguments.get(1))), line);
+            case "Substring" -> this.made(slice(value, arguments, line), line);
             case "IndexOf" -> value.indexOf(String.valueOf(arguments.getFirst()));
             case "Contains" -> value.contains(String.valueOf(arguments.getFirst()));
             case "StartsWith" -> value.startsWith(String.valueOf(arguments.getFirst()));
@@ -749,6 +728,26 @@ public final class Library {
         return result;
     }
 
+    /**
+     * The piece of a string a Substring asks for: from a place to the end, or so many characters from it.
+     *
+     * <p>The place and the count are checked against the string first, so a program asking for more than
+     * is there stops with a message saying what it asked for, and never hands the runtime a range it
+     * cannot take.
+     */
+    private static String slice(final String value, final List<Object> arguments, final int line) {
+        final int start = Numbers.toInt(arguments.getFirst());
+        final boolean toEnd = arguments.size() == 1;
+        final long length = toEnd ? (long) value.length() - start : Numbers.toInt(arguments.get(1));
+        if (start < 0 || start > value.length() || length < 0 || start + length > value.length()) {
+            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, toEnd
+                    ? "there is no place " + start + " to start from in a string of " + value.length()
+                    : "there are no " + length + " characters from place " + start + " in a string of "
+                            + value.length());
+        }
+        return value.substring(start, (int) (start + length));
+    }
+
     private Object split(final String value, final Object on, final int line) {
         final Values.ListValue made = new Values.ListValue();
         this.heap.allocate(made, made.bytes(), line);
@@ -769,12 +768,11 @@ public final class Library {
                 yield null;
             }
             case "Insert" -> {
-                held.items().add(Numbers.toInt(arguments.getFirst()), arguments.get(1));
+                held.insert(Numbers.toInt(arguments.getFirst()), arguments.get(1), line);
                 yield null;
             }
             case "RemoveAt" -> {
-                held.get(Numbers.toInt(arguments.getFirst()), line);
-                held.items().remove(Numbers.toInt(arguments.getFirst()));
+                held.removeAt(Numbers.toInt(arguments.getFirst()), line);
                 yield null;
             }
             case "Remove" -> held.items().remove(arguments.getFirst());
@@ -833,11 +831,28 @@ public final class Library {
         return made;
     }
 
+    /*
+     * One order over everything a list can hold, or the sort gives up part way through: numbers by value
+     * come first, then text in order, then anything else, which keeps the place it had.
+     */
     private static int compare(final Object left, final Object right) {
-        if (left instanceof String first && right instanceof String second) {
-            return first.compareTo(second);
+        final int kinds = Integer.compare(rank(left), rank(right));
+        if (kinds != 0) {
+            return kinds;
         }
-        return Numbers.compare(left, right);
+        return switch (rank(left)) {
+            case 0 -> Numbers.compare(left, right);
+            case 1 -> ((String) left).compareTo((String) right);
+            default -> 0;
+        };
+    }
+
+    /** Where a kind of value falls in a sort: 0 for a number, 1 for text, 2 for anything else. */
+    private static int rank(final Object value) {
+        if (value instanceof Number || value instanceof Character) {
+            return 0;
+        }
+        return value instanceof String ? 1 : 2;
     }
 
     private String made(final String value, final int line) {

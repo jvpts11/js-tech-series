@@ -58,8 +58,6 @@ public final class Process {
 
     /** What starting a thread costs beyond the call itself: a stack of its own is not a small thing. */
     private static final int START_COST = 49;
-    /** How many times over a handler of an error may itself raise one before the process is simply over. */
-    private static final int RECOVERY_DEPTH = 64;
 
     /** What a thread is waiting for, if anything. */
     enum Parked {
@@ -637,37 +635,45 @@ public final class Process {
      */
     public int step(final int budget) {
         int used = 0;
-        this.wake();
-        while (used < budget && !this.halted) {
-            final List<Thread> ready = new ArrayList<>();
-            for (final Thread thread : this.threads) {
-                if (this.runnable(thread)) {
-                    ready.add(thread);
+        try {
+            this.wake();
+            while (used < budget && !this.halted) {
+                final List<Thread> ready = new ArrayList<>();
+                for (final Thread thread : this.threads) {
+                    if (this.runnable(thread)) {
+                        ready.add(thread);
+                    }
+                }
+                if (ready.isEmpty()) {
+                    break;
+                }
+                final int slice = Math.max(1, Math.min(SLICE, (budget - used) / ready.size()));
+                final int first = Math.floorMod(this.turn, ready.size());
+                int moved = 0;
+                for (int k = 0; k < ready.size() && used < budget && !this.halted; k++) {
+                    final int ran = this.run(ready.get((first + k) % ready.size()),
+                            Math.min(slice, budget - used));
+                    used += ran;
+                    moved += ran;
+                }
+                this.turn = first + 1;
+                if (moved == 0) {
+                    break;
                 }
             }
-            if (ready.isEmpty()) {
-                break;
+            /*
+             * The last window was shut and the program has had its say about it: a program whose windows
+             * are gone has nothing left to be looked at, and ends.
+             */
+            if (this.endWithWindows && this.waiting.isEmpty() && this.windows.items().isEmpty()) {
+                this.endWithWindows = false;
+                this.exit(0);
             }
-            final int slice = Math.max(1, Math.min(SLICE, (budget - used) / ready.size()));
-            final int first = Math.floorMod(this.turn, ready.size());
-            int moved = 0;
-            for (int k = 0; k < ready.size() && used < budget && !this.halted; k++) {
-                final int ran = this.run(ready.get((first + k) % ready.size()), Math.min(slice, budget - used));
-                used += ran;
-                moved += ran;
-            }
-            this.turn = first + 1;
-            if (moved == 0) {
-                break;
-            }
-        }
-        /*
-         * The last window was shut and the program has had its say about it: a program whose windows are
-         * gone has nothing left to be looked at, and ends.
-         */
-        if (this.endWithWindows && this.waiting.isEmpty() && this.windows.items().isEmpty()) {
-            this.endWithWindows = false;
-            this.exit(0);
+        } catch (final Halt halt) {
+            this.halt(halt);
+        } catch (final RuntimeException fault) {
+            // What goes wrong between instructions (waking a thread, asking the machine) ends here too.
+            this.halt(this.fault(fault, 0));
         }
         return used;
     }
@@ -695,6 +701,9 @@ public final class Process {
                 this.one();
             } catch (final Halt halt) {
                 this.fail(thread, halt);
+            } catch (final RuntimeException fault) {
+                final Frame top = thread.frames.peek();
+                this.fail(thread, this.fault(fault, top == null ? 0 : top.at));
             }
             /*
              * Reaching into the machine costs more than moving a number about, and the difference is
@@ -709,6 +718,21 @@ public final class Process {
             }
         }
         return used;
+    }
+
+    /**
+     * A failure of the runtime itself, made into the end of the one process it happened in.
+     *
+     * <p>A program cannot make the runtime throw by being wrong: every mistake it can make is checked and
+     * halts with a message of its own. What arrives here is a fault of the machine, or of a listing
+     * written by hand that no compiler would produce. Either way the server's tick is no place for it, so
+     * the process stops and says so, and the machine is told so it can write down what is needed to find
+     * the fault.
+     */
+    private Halt fault(final RuntimeException cause, final int line) {
+        this.library.fault(this.name(), line, cause);
+        return new Halt(Halt.Reason.FAULT, line,
+                "the runtime could not carry this out (" + cause.getClass().getSimpleName() + ")");
     }
 
     /**

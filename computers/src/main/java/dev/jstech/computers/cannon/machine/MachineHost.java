@@ -7,9 +7,11 @@
  */
 package dev.jstech.computers.cannon.machine;
 
+import com.mojang.logging.LogUtils;
 import dev.jstech.computers.cannon.run.IHost;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import org.slf4j.Logger;
 
 /**
  * The clock a program running on a real machine reads.
@@ -21,6 +23,8 @@ public record MachineHost(BlockEntity machine) implements IHost {
 
     /** The length of a Minecraft day in ticks. */
     private static final long DAY = 24_000L;
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     @Override
     public long tick() {
@@ -38,6 +42,12 @@ public record MachineHost(BlockEntity machine) implements IHost {
     public long day() {
         final Level level = this.machine.getLevel();
         return level == null ? 0 : level.getDayTime() / DAY;
+    }
+
+    @Override
+    public void fault(final String process, final int line, final RuntimeException cause) {
+        LOGGER.error("Cannon program '{}' on the machine at {} failed inside the runtime at instruction {}",
+                process, this.machine.getBlockPos(), line, cause);
     }
 
     @Override
