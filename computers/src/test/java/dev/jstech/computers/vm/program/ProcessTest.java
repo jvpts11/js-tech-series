@@ -217,6 +217,25 @@ class ProcessTest {
     }
 
     @Test
+    void map_tellsAKeyHoldingNothingFromAMissingOneAndFillsInTheValuesType() {
+        final Process process = run("""
+                        Map<string, string> names = new Map<string, string>();
+                        names.Put("empty", null);
+                        string found = "unset";
+                        Console.PrintLine("empty " + names.TryGet("empty", out found) + " " + (found == null));
+                        found = "unset";
+                        Console.PrintLine("missing " + names.TryGet("missing", out found) + " " + (found == null));
+                        Map<string, int> counts = new Map<string, int>();
+                        int count = 7;
+                        Console.PrintLine("count " + counts.TryGet("iron", out count) + " " + count);
+                        Console.PrintLine("removed " + names.Remove("empty") + " " + names.ContainsKey("empty"));
+                """);
+        assertFinished(process);
+        assertEquals(List.of("empty true true", "missing false true", "count false 0", "removed true false"),
+                process.console());
+    }
+
+    @Test
     void constructor_chainsToItsBaseAndToItsOwnInsideANamespace() {
         /*
          * Every program has a namespace, so the name of a type has dots in it; a chained call still has to

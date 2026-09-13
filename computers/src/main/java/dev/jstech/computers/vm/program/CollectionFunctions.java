@@ -70,13 +70,20 @@ final class CollectionFunctions {
                 held.entries().get(arguments[0])), "K");
         registry.onObject(MAP, "ContainsKey", FLAG, onMap((context, held, arguments, line) ->
                 held.entries().containsKey(arguments[0])), "K");
+        /*
+         * A key can hold nothing and still be there, so these answer whether the key is there. A missing key leaves
+         * the value empty, and the call fills it in with what a variable of its type starts with.
+         */
         registry.onObject(MAP, "TryGet", FLAG, onMap((context, held, arguments, line) -> {
-            final Object found = held.entries().get(arguments[0]);
-            arguments[1] = found == null ? 0 : found;
-            return found != null;
+            final boolean there = held.entries().containsKey(arguments[0]);
+            arguments[1] = there ? held.entries().get(arguments[0]) : null;
+            return there;
         }), "K", "out V");
-        registry.onObject(MAP, "Remove", FLAG, onMap((context, held, arguments, line) ->
-                held.entries().remove(arguments[0]) != null), "K");
+        registry.onObject(MAP, "Remove", FLAG, onMap((context, held, arguments, line) -> {
+            final boolean there = held.entries().containsKey(arguments[0]);
+            held.entries().remove(arguments[0]);
+            return there;
+        }), "K");
         registry.onObject(MAP, "Keys", "List<K>", onMap((context, held, arguments, line) ->
                 listOf(context, held.entries().keySet(), line)));
         registry.onObject(MAP, "Values", "List<V>", onMap((context, held, arguments, line) ->

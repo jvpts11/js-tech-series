@@ -2159,7 +2159,7 @@ public final class Process {
         }
         for (int i = 0; i < outs.length; i++) {
             if (outs[i]) {
-                frame.push(arguments[i]);
+                frame.push(arguments[i] == null ? site.defaults()[i] : arguments[i]);
             }
         }
     }

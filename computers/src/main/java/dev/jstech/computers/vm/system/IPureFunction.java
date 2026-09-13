@@ -17,7 +17,8 @@ public interface IPureFunction {
      * @param context   the calling program's heap, for anything the call makes
      * @param target    what the call is made on, or null for a call on the type
      * @param arguments what the call hands over, in order; a place the call fills in holds nothing on the way in and
-     *                  what the function put there on the way out
+     *                  what the function put there on the way out, and a place it leaves empty is given what a
+     *                  variable of that type starts with
      * @param line      the line of the listing making the call, for what the program is told when it goes wrong
      * @return the answer, or null for a call that gives nothing back
      */

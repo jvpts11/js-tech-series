@@ -8,6 +8,8 @@
 package dev.jstech.computers.vm.program;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -23,6 +25,13 @@ class CollectionFunctionsTest {
                                  final Object... arguments) {
         return PureFunctions.REGISTRY.find("List", name, parameters).function()
                 .call(new Heap(64L * 1024), list, arguments, LINE);
+    }
+
+    /** Calls a method of a map the way a program does, through the call it loaded with. */
+    private static Object onMap(final Values.MapValue map, final String name, final List<String> parameters,
+                                final Object... arguments) {
+        return PureFunctions.REGISTRY.find("Map", name, parameters).function()
+                .call(new Heap(64L * 1024), map, arguments, LINE);
     }
 
     private static void assertOutOfRange(final String name, final List<String> parameters, final Object... arguments) {
@@ -49,6 +58,27 @@ class CollectionFunctionsTest {
     void insert_haltsOutsideTheListInsteadOfThrowing() {
         assertOutOfRange("Insert", List.of("int", "T"), 3, 0);
         assertOutOfRange("Insert", List.of("int", "T"), -1, 0);
+    }
+
+    @Test
+    void tryGet_findsAKeyThatHoldsNothingAndLeavesAMissingOneEmpty() {
+        final Values.MapValue map = new Values.MapValue();
+        map.entries().put("empty", null);
+        final Object[] held = {"empty", "unset"};
+        assertEquals(true, onMap(map, "TryGet", List.of("string", "out string"), held));
+        assertNull(held[1]);
+        final Object[] missing = {"missing", "unset"};
+        assertEquals(false, onMap(map, "TryGet", List.of("string", "out string"), missing));
+        assertNull(missing[1]);
+    }
+
+    @Test
+    void remove_answersWhetherTheKeyWasThereEvenWhenItHeldNothing() {
+        final Values.MapValue map = new Values.MapValue();
+        map.entries().put("empty", null);
+        assertEquals(true, onMap(map, "Remove", List.of("string"), "empty"));
+        assertFalse(map.entries().containsKey("empty"));
+        assertEquals(false, onMap(map, "Remove", List.of("string"), "empty"));
     }
 
     @Test

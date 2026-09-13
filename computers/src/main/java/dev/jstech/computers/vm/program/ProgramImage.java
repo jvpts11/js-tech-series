@@ -45,9 +45,11 @@ public final class ProgramImage {
      * @param intrinsic  the function the system answers the call with when the program has no method for it, or null
      *                   when the runtime answers it by name
      * @param gives      whether the call leaves an answer on the stack
+     * @param defaults   for each parameter the call fills in, what it holds when the function left it empty: what a
+     *                   variable of the type the call is written with starts with
      */
     record CallSite(IOperand.Method named, MethodImage direct, Integer signature, boolean[] outs, boolean constructs,
-                    IntrinsicSpec intrinsic, boolean gives) {
+                    IntrinsicSpec intrinsic, boolean gives, Object[] defaults) {
     }
 
     /**
@@ -146,7 +148,28 @@ public final class ProgramImage {
         final IntrinsicSpec intrinsic = direct == null
                 ? this.registry.find(called.owner(), called.name(), called.parameters()) : null;
         return new CallSite(called, direct, signature, MethodImage.outsOf(called.parameters()),
-                AsmMethod.CONSTRUCTOR.equals(called.name()), intrinsic, !"void".equals(called.returns()));
+                AsmMethod.CONSTRUCTOR.equals(called.name()), intrinsic, !"void".equals(called.returns()),
+                defaultsOf(called.parameters()));
+    }
+
+    /** For each outward parameter, what a variable of its type starts with: nothing, or zero or false. */
+    private static Object[] defaultsOf(final List<String> parameters) {
+        final Object[] defaults = new Object[parameters.size()];
+        for (int i = 0; i < defaults.length; i++) {
+            final String written = parameters.get(i);
+            if (written.startsWith("out ")) {
+                defaults[i] = switch (written.substring("out ".length())) {
+                    case "int" -> 0;
+                    case "long" -> 0L;
+                    case "float" -> 0.0f;
+                    case "double" -> 0.0d;
+                    case "bool" -> false;
+                    case "char" -> '\0';
+                    default -> null;
+                };
+            }
+        }
+        return defaults;
     }
 
     Creation creation(final IOperand.Constructor made) {
