@@ -69,9 +69,9 @@ public interface ILanguageProcess {
      *
      * <p>The nearest thing a program has to how long it has been running, and the only honest measure of
      * it: a program on a fast machine gets more done per second than one on a slow machine, and this
-     * counts the work, not the seconds.
+     * counts the work, not the seconds. A long, because a program that stays up runs as long as the world does.
      */
-    int spent();
+    long spent();
 
     /** How many bytes it is holding. */
     long heldBytes();

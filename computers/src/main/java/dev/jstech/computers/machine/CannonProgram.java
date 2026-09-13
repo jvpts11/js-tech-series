@@ -74,7 +74,7 @@ final class CannonProgram implements ILanguageProcess {
     }
 
     @Override
-    public int spent() {
+    public long spent() {
         return this.process.spent();
     }
 

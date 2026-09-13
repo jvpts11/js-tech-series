@@ -208,8 +208,8 @@ public final class CannonProcessGameTests {
                     programs.start("one.asm", listing, 1, computer);
                     programs.start("two.asm", listing, 1, computer);
                     programs.tick(9);
-                    final int first = programs.all().getFirst().process().spent();
-                    final int second = programs.all().get(1).process().spent();
+                    final long first = programs.all().getFirst().process().spent();
+                    final long second = programs.all().get(1).process().spent();
                     helper.assertTrue(first + second == 9,
                             "the whole tick is spent; got " + first + " and " + second);
                     helper.assertTrue(Math.abs(first - second) <= 1,

@@ -217,6 +217,17 @@ class ProcessTest {
     }
 
     @Test
+    void current_readsTheNameTheProgramGaveItselfAfterItWasFirstHeld() {
+        final Process process = run("""
+                        Process me = Program.Current;
+                        Program.SetName("miner");
+                        Console.PrintLine(me.Name + " " + Program.Current.Name + " " + Program.Name);
+                """);
+        assertFinished(process);
+        assertEquals(List.of("miner miner miner"), process.console());
+    }
+
+    @Test
     void map_tellsAKeyHoldingNothingFromAMissingOneAndFillsInTheValuesType() {
         final Process process = run("""
                         Map<string, string> names = new Map<string, string>();

@@ -184,7 +184,7 @@ public final class LanguageApiGameTests {
         }
 
         @Override
-        public int spent() {
+        public long spent() {
             return this.counted;
         }
 

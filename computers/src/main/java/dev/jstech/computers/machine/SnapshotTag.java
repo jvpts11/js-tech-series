@@ -170,7 +170,7 @@ public final class SnapshotTag {
         tag.putInt(WRITTEN, shot.written());
         tag.putString(STATE, shot.state());
         tag.putString(MESSAGE, shot.message());
-        tag.putInt(SPENT, shot.spent());
+        tag.putLong(SPENT, shot.spent());
         if (!shot.name().isEmpty()) {
             tag.putString(PROGRAM_NAME, shot.name());
         }
@@ -223,7 +223,7 @@ public final class SnapshotTag {
         return new Snapshot(tag.getLong(BUDGET), held, threads,
                 readFrames(tag.getList(WAITING, Tag.TAG_COMPOUND)), statics,
                 readValue(tag.getCompound(SCRIPT)), watches, console, tag.getInt(WRITTEN),
-                tag.getString(STATE), tag.getString(MESSAGE), tag.getInt(SPENT), tag.getString(PROGRAM_NAME),
+                tag.getString(STATE), tag.getString(MESSAGE), tag.getLong(SPENT), tag.getString(PROGRAM_NAME),
                 monitors, tag.getInt(NEXT_THREAD), readNames(tag.getList(ARGS, Tag.TAG_STRING)),
                 tag.getInt(MACHINE_ID), tag.getBoolean(EXITED), tag.getInt(EXIT_CODE),
                 readValue(tag.getCompound(ON_MESSAGE)), readValues(tag.getList(WINDOWS, Tag.TAG_COMPOUND)),

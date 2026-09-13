@@ -333,7 +333,7 @@ public final class Process {
     }
 
     /** How many instructions it has run since it started. */
-    public int spent() {
+    public long spent() {
         return this.identity.spent();
     }
 
@@ -859,9 +859,15 @@ public final class Process {
         return false;
     }
 
-    /** Names the program, as its own call to {@code Program.SetName} does; blank means no name. */
-    void setName(final String value) {
+    /**
+     * Names the program, as its own call to {@code Program.SetName} does; blank means no name. The object the program
+     * holds itself by takes the new name too, since {@code Program.Current} hands back that same object every time.
+     */
+    void setName(final String value, final int line) {
         this.identity.rename(value);
+        if (this.self != null) {
+            this.self.set("Name", this.text(this.identity.name(), line));
+        }
     }
 
     /** The name the program gave itself, or empty when it gave none. */
@@ -1463,7 +1469,7 @@ public final class Process {
     /** Reads a process back out of what {@link #save()} wrote, ready to carry on where it stopped. */
     public static Process restore(final ProgramImage program, final Snapshot shot, final IHost host) {
         final Process process = new Process(program, shot.heapBudget(), host, false);
-        process.setName(shot.name());
+        process.identity.rename(shot.name());
         final Map<Integer, Object> byNumber = new LinkedHashMap<>();
         for (final Snapshot.IHeld written : shot.held()) {
             byNumber.put(written.id(), shell(written));

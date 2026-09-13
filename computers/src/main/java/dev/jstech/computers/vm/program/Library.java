@@ -446,7 +446,7 @@ public final class Library {
     private Answer program(final IOperand.Method named, final List<Object> arguments, final int line) {
         if ("SetName".equals(named.name())) {
             if (this.owner != null) {
-                this.owner.setName(String.valueOf(arguments.getFirst()));
+                this.owner.setName(String.valueOf(arguments.getFirst()), line);
             }
             return Answer.of(null);
         }

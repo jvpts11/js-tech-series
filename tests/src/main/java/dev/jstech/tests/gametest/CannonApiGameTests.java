@@ -219,9 +219,9 @@ public final class CannonApiGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final int quiet = spend(computer,
+                    final long quiet = spend(computer,
                             "namespace Costs; class A { static void Main() { int n = 1 + 1; } }");
-                    final int loud = spend(computer, "using System.IO.*; namespace Costs; "
+                    final long loud = spend(computer, "using System.IO.*; namespace Costs; "
                             + "class B { static void Main() { File.Write(\"a.txt\", \"x\"); } }");
                     helper.assertTrue(loud > quiet + 50,
                             "writing to a disk is charged for; " + loud + " against " + quiet);
@@ -574,12 +574,12 @@ public final class CannonApiGameTests {
     }
 
     /** Runs a program to the end on that machine and says what it spent. */
-    private static int spend(final CraftingComputerBlockEntity computer, final String source) {
+    private static long spend(final CraftingComputerBlockEntity computer, final String source) {
         final MachinePrograms.Started started =
                 computer.cannon().start("one.asm", listing(source), 1, computer);
         computer.cannon().tick(100000);
         final MachinePrograms.Live one = computer.cannon().byId(started.id());
-        final int spent = one == null ? 0 : one.process().spent();
+        final long spent = one == null ? 0 : one.process().spent();
         computer.cannon().stop(started.id());
         return spent;
     }

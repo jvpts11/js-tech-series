@@ -21,7 +21,8 @@ final class ProgramIdentity {
     private int machineId;
     private String name = "";
     private List<String> args = List.of();
-    private int spent;
+    /** A long, because a program that stays up runs for as long as the world does. */
+    private long spent;
     private boolean exited;
     private int exitCode;
     private boolean halted;
@@ -58,7 +59,7 @@ final class ProgramIdentity {
     }
 
     /** How many instructions it has run since it started. */
-    int spent() {
+    long spent() {
         return this.spent;
     }
 
@@ -110,7 +111,7 @@ final class ProgramIdentity {
     }
 
     /** Puts back everything but the name, as a snapshot wrote it. */
-    void restore(final List<String> arguments, final int id, final int instructions, final boolean ended,
+    void restore(final List<String> arguments, final int id, final long instructions, final boolean ended,
                  final int code, final boolean stopped, final String told) {
         this.startWith(arguments);
         this.machineId = id;

@@ -60,4 +60,12 @@ class ProgramIdentityTest {
         assertEquals(65, identity.spent());
         assertNull(identity.message());
     }
+
+    @Test
+    void spend_countsPastWhatAnIntCanHold() {
+        final ProgramIdentity identity = new ProgramIdentity();
+        identity.spend(Integer.MAX_VALUE);
+        identity.spend(Integer.MAX_VALUE);
+        assertEquals(2L * Integer.MAX_VALUE, identity.spent());
+    }
 }
