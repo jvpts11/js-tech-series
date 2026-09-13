@@ -493,14 +493,8 @@ public final class GatewayService {
     }
 
     private OperationPriority priorityOf(@Nullable final String name) {
-        OperationPriority asked = OperationPriority.DEFAULT;
-        if (name != null && !name.isBlank()) {
-            try {
-                asked = OperationPriority.valueOf(name.trim().toUpperCase(Locale.ROOT));
-            } catch (final IllegalArgumentException notAPriority) {
-                asked = OperationPriority.DEFAULT;
-            }
-        }
+        final OperationPriority asked = name == null ? OperationPriority.DEFAULT
+                : OperationPriority.fromKeyword(name).orElse(OperationPriority.DEFAULT);
         return gateway.permissions().cap(asked);
     }
 
@@ -546,7 +540,7 @@ public final class GatewayService {
     private static Map<String, Object> row(final OperationRecord record) {
         return row("id", record.id().toString(), "type", typeName(record.type()), "status", status(record.status()),
                 "item", record.key() == null ? "" : nameOf(record.key()), "requested", record.requested(),
-                "moved", record.moved(), "priority", record.priority().name().toLowerCase(Locale.ROOT));
+                "moved", record.moved(), "priority", record.priority().serializedName());
     }
 
     private static Map<String, Object> row(final Object... pairs) {

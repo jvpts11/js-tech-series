@@ -7,18 +7,39 @@
  */
 package dev.jstech.core.network;
 
+import dev.jstech.core.id.IStableId;
+import dev.jstech.core.id.StableIds;
+
 /**
  * The role a Mainframe plays in a Failover redundancy pair.
  */
-public enum FailoverRole {
+public enum FailoverRole implements IStableId {
 
-    NONE,
+    NONE(0),
 
-    ACTIVE,
+    ACTIVE(1),
 
-    PASSIVE;
+    PASSIVE(2);
+
+    private static final StableIds<FailoverRole> IDS = StableIds.of(FailoverRole.class);
+
+    private final int id;
+
+    FailoverRole(final int id) {
+        this.id = id;
+    }
+
+    @Override
+    public int id() {
+        return id;
+    }
 
     public boolean isPaired() {
         return this == ACTIVE || this == PASSIVE;
+    }
+
+    /** The role that declares {@code id}; an id no role declares reads as {@link #NONE}. */
+    public static FailoverRole byId(final int id) {
+        return IDS.byId(id, NONE);
     }
 }

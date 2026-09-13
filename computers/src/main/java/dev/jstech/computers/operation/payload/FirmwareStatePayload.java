@@ -24,7 +24,7 @@ import java.util.List;
  */
 public record FirmwareStatePayload(
         BlockPos hostPos,
-        int eraOrdinal,
+        int eraId,
         String cpuLabel,
         int cpuMhz,
         int ramMb,
@@ -40,10 +40,10 @@ public record FirmwareStatePayload(
      * this lives.
      *
      * @param present    whether a controller is fitted at all (false hides the storage page)
-     * @param mode       the array mode ordinal currently configured
+     * @param mode       the id of the array mode currently configured
      * @param members    how many drives the array was formed with (0 when unconfigured)
      * @param drives     how many member drives are present right now
-     * @param capacities usable capacity in items for each mode, indexed by mode ordinal
+     * @param capacities usable capacity in items for each mode, one per mode in the order the modes are declared
      */
     public record RaidInfo(boolean present, int mode, int members, int drives, List<Long> capacities) {
 
@@ -69,7 +69,7 @@ public record FirmwareStatePayload(
      * @param detail      a second line: the disk/medium size and device
      * @param bootable    whether this entry can be booted (a disk with an OS; an OS-installer medium whose OS
      *                    passes the hardware era gate)
-     * @param installMode the OS's install mode ordinal for a medium (guided / live manual / source), else -1
+     * @param installMode the id of the OS's install mode for a medium (guided / live manual / source), else -1
      */
     public record Entry(int kind, long ref, String osId, String label, String detail, boolean bootable,
                         int installMode) {
@@ -88,7 +88,7 @@ public record FirmwareStatePayload(
 
     private static void encode(final RegistryFriendlyByteBuf buf, final FirmwareStatePayload p) {
         buf.writeBlockPos(p.hostPos);
-        buf.writeVarInt(p.eraOrdinal);
+        buf.writeVarInt(p.eraId);
         buf.writeUtf(p.cpuLabel, 48);
         buf.writeVarInt(p.cpuMhz);
         buf.writeVarInt(p.ramMb);

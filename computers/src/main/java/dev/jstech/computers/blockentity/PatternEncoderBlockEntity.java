@@ -16,6 +16,8 @@ import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaFormat;
+import dev.jstech.core.id.IStableId;
+import dev.jstech.core.id.StableIds;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.peripheral.PeripheralLinkValidator;
@@ -86,8 +88,31 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
     public static final int HOLD_TICKS = 30;
 
     /** Where a job is. */
-    public enum Phase {
-        IDLE, SEEK, WRITE, VERIFY, DONE, ERROR
+    public enum Phase implements IStableId {
+        IDLE(0),
+        SEEK(1),
+        WRITE(2),
+        VERIFY(3),
+        DONE(4),
+        ERROR(5);
+
+        private static final StableIds<Phase> IDS = StableIds.of(Phase.class);
+
+        private final int id;
+
+        Phase(final int id) {
+            this.id = id;
+        }
+
+        @Override
+        public int id() {
+            return id;
+        }
+
+        /** The phase that declares {@code id}; an id no phase declares reads as {@link #IDLE}. */
+        public static Phase byId(final int id) {
+            return IDS.byId(id, IDLE);
+        }
     }
 
     /** One file waiting to be burned: its base name (no extension) and its content. */
@@ -540,7 +565,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
             final CompoundTag job = jobs.getCompound(i);
             queue.addLast(new BurnRequest(job.getString("Name"), job.getString("Content")));
         }
-        phase = phaseOf(tag.getString("Phase"));
+        phase = Phase.byId(tag.getByte("Phase"));
         phaseTicks = tag.getInt("PhaseTicks");
         phaseTotal = tag.getInt("PhaseTotal");
         writeTicks = tag.getInt("WriteTicks");
@@ -548,15 +573,6 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
         message = tag.getString("Message");
         completed = tag.getInt("Completed");
         linkedOwner = tag.contains(NBT_LINKED_OWNER) ? tag.getLong(NBT_LINKED_OWNER) : null;
-    }
-
-    private static Phase phaseOf(final String name) {
-        for (final Phase p : Phase.values()) {
-            if (p.name().equals(name)) {
-                return p;
-            }
-        }
-        return Phase.IDLE;
     }
 
     @Override
@@ -571,7 +587,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
             jobs.add(t);
         }
         tag.put("Queue", jobs);
-        tag.putString("Phase", phase.name());
+        tag.putByte("Phase", (byte) phase.id());
         tag.putInt("PhaseTicks", phaseTicks);
         tag.putInt("PhaseTotal", phaseTotal);
         tag.putInt("WriteTicks", writeTicks);
@@ -597,7 +613,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
         final CompoundTag tag = super.getUpdateTag(registries);
         // The client draws the bay, the display and the LEDs; the queued contents themselves stay on the server.
         tag.put("Media", media.serializeNBT(registries));
-        tag.putString("Phase", phase.name());
+        tag.putByte("Phase", (byte) phase.id());
         tag.putInt("PhaseTicks", phaseTicks);
         tag.putInt("PhaseTotal", phaseTotal);
         tag.putInt("WriteTicks", writeTicks);

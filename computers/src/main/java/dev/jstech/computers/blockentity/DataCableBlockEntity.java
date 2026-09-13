@@ -118,7 +118,7 @@ public class DataCableBlockEntity extends BlockEntity {
 
     @Nullable
     public CablePartType partType(final Direction face) {
-        return CablePartType.byId(partTypes[face.get3DDataValue()]);
+        return CablePartType.find(partTypes[face.get3DDataValue()]);
     }
 
     @Nullable
@@ -130,7 +130,7 @@ public class DataCableBlockEntity extends BlockEntity {
         final int idx = face.get3DDataValue();
         part.attach(this, face);
         parts[idx] = part;
-        partTypes[idx] = part.type().id();
+        partTypes[idx] = (byte) part.type().id();
         setChanged();
         syncToClients();
     }
@@ -232,7 +232,7 @@ public class DataCableBlockEntity extends BlockEntity {
             }
             final CompoundTag entry = new CompoundTag();
             entry.putByte("Face", (byte) i);
-            entry.putByte("Type", part.type().id());
+            entry.putByte("Type", (byte) part.type().id());
             final CompoundTag data = new CompoundTag();
             part.save(data, registries);
             entry.put("Data", data);
@@ -257,7 +257,7 @@ public class DataCableBlockEntity extends BlockEntity {
         for (int i = 0; i < list.size(); i++) {
             final CompoundTag entry = list.getCompound(i);
             final int idx = entry.getByte("Face") & 0xFF;
-            final CablePartType type = CablePartType.byId(entry.getByte("Type"));
+            final CablePartType type = CablePartType.find(entry.getByte("Type"));
             if (idx < 0 || idx >= parts.length || type == null) {
                 continue;
             }
@@ -266,7 +266,7 @@ public class DataCableBlockEntity extends BlockEntity {
             part.attach(this, face);
             part.load(entry.getCompound("Data"), registries);
             parts[idx] = part;
-            partTypes[idx] = type.id();
+            partTypes[idx] = (byte) type.id();
         }
         loadedNetwork = tag.contains("Network")
                 ? NetworkUuid.fromString(tag.getString("Network"))

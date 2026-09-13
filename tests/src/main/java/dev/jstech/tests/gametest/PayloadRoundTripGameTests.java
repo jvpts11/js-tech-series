@@ -44,7 +44,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * One payload of every family goes over the wire and back: written, read, and written again to the same bytes, with
  * nothing left unread. The crafting and machine families are covered by {@code MachinePayloadGameTests}; the two
- * payloads that carry a priority by its position in the enum go through every priority there is.
+ * payloads that carry a priority by its id go through every priority there is.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -113,7 +113,7 @@ public final class PayloadRoundTripGameTests {
     public static void operations_logRoundTripsAtEveryPriority(final GameTestHelper helper) {
         final List<OperationRecord> records = new ArrayList<>();
         for (final OperationPriority priority : OperationPriority.values()) {
-            records.add(new OperationRecord(new UUID(7L, priority.ordinal()), (byte) 0, logs(), 64L, 32L, (byte) 1,
+            records.add(new OperationRecord(new UUID(7L, priority.id()), (byte) 0, logs(), 64L, 32L, (byte) 1,
                     priority, List.of(new OperationRecord.MoveRow("rack-1", 32L, "Cannon: Programs.Restock")),
                     List.of(new OperationRecord.SubRow("rack-1", 64L, 32L, OperationRecord.SubRow.SUB_STREAMING)),
                     4, 12));

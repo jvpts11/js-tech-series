@@ -136,8 +136,8 @@ public final class ThisPcPayloads {
         final net.minecraft.core.BlockPos at = net.minecraft.core.BlockPos.of(endpoint);
         final int blocksAway = Math.abs(at.getX() - host.getX()) + Math.abs(at.getY() - host.getY())
                 + Math.abs(at.getZ() - host.getZ());
-        return new ThisPcPayload.WireMedia(endpoint, reader.driveType().name(),
-                m.isEmpty() ? "" : m.getHoverName().getString(), kind != null ? kind.name() : "",
+        return new ThisPcPayload.WireMedia(endpoint, reader.driveType().serializedName(),
+                m.isEmpty() ? "" : m.getHoverName().getString(), kind != null ? kind.serializedName() : "",
                 pl != null ? pl.getPath() : "", installable, payloadName, payloadYear, packageId, needs,
                 stored, blocksAway);
     }

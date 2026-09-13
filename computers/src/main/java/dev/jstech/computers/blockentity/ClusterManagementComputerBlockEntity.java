@@ -375,7 +375,21 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
 
     // the install job: timed, per node, cancellable
 
-    public enum JobKind { SYSTEM, PROGRAM }
+    public enum JobKind implements dev.jstech.core.id.IStableId {
+        SYSTEM(0),
+        PROGRAM(1);
+
+        private final int id;
+
+        JobKind(final int id) {
+            this.id = id;
+        }
+
+        @Override
+        public int id() {
+            return id;
+        }
+    }
 
     /** One node being written right now. */
     public record Lane(NodeRef node, String name, int ticksTotal, int ticksLeft) {

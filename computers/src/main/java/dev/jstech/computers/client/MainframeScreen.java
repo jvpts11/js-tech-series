@@ -115,7 +115,7 @@ public class MainframeScreen extends AbstractComputerScreen<MainframeMenu> {
         } else if (!menu.buildValid()) {
             status = "OFFLINE";
             statusColor = JsTechTheme.red();
-        } else if (menu.isRunning() && menu.failoverRole() == FailoverRole.PASSIVE.ordinal()) {
+        } else if (menu.isRunning() && menu.failoverRole() == FailoverRole.PASSIVE) {
             status = "STANDBY"; // a Passive Failover member: powered and synced, not orchestrating
             statusColor = JsTechTheme.amber();
         } else if (menu.isRunning()) {

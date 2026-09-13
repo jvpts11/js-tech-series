@@ -752,8 +752,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         final long now = level.getGameTime();
         final java.util.List<dev.jstech.computers.operation.payload.CommandOutputPayload.WireLine>
                 wire = new java.util.ArrayList<>();
-        final int dim = dev.jstech.computers.program.cli.CliStyle.DIM.ordinal();
-        final int ok = dev.jstech.computers.program.cli.CliStyle.OK.ordinal();
+        final int dim = dev.jstech.computers.program.cli.CliStyle.DIM.id();
+        final int ok = dev.jstech.computers.program.cli.CliStyle.OK.id();
 
         // Package builds (emerge): progress quarters while compiling.
         for (final java.util.Map.Entry<String, Long> entry : console.pendingBuilds().entrySet()) {
@@ -1352,11 +1352,11 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
                 .WireLine> wire = new java.util.ArrayList<>();
         for (final String line : fresh) {
             wire.add(new dev.jstech.computers.operation.payload.DesktopShellOutputPayload.WireLine(
-                    line, dev.jstech.computers.program.cli.CliStyle.PLAIN.ordinal()));
+                    line, dev.jstech.computers.program.cli.CliStyle.PLAIN.id()));
         }
         if (halt != null) {
             wire.add(new dev.jstech.computers.operation.payload.DesktopShellOutputPayload.WireLine(
-                    halt, dev.jstech.computers.program.cli.CliStyle.ERROR.ordinal()));
+                    halt, dev.jstech.computers.program.cli.CliStyle.ERROR.id()));
         }
         final var payload = new dev.jstech.computers.operation.payload.DesktopShellOutputPayload(
                 false, !over, over ? shellPrompt() : "", wire);

@@ -252,7 +252,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final String targetLabel = slot < 0 ? "the default disk" : "Disk " + slot;
         dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, owner);
         PacketDistributor.sendToPlayer(player, new dev.jstech.computers.operation.payload
-                .OpenInstallDonePayload(owner, monitorPos, kind.ordinal(), osName, targetLabel, slot, ""));
+                .OpenInstallDonePayload(owner, monitorPos, kind.id(), osName, targetLabel, slot, ""));
     }
 
     /** Sends the client the switch's channel bar: every machine this rack can put on the monitor. */
@@ -286,7 +286,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
         dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, owner);
         PacketDistributor.sendToPlayer(player, new dev.jstech.computers.operation.payload
-                .OpenPostPayload(owner, monitorPos, kind.ordinal(), name));
+                .OpenPostPayload(owner, monitorPos, kind.id(), name));
     }
 
     /**
@@ -342,7 +342,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final HardwareEra era = ownerBe instanceof IOsHost c ? c.displayEra() : null;
         final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
         dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, owner);
-        PacketDistributor.sendToPlayer(player, new OpenComputerUiPayload(owner, monitorPos, kind.ordinal(), name));
+        PacketDistributor.sendToPlayer(player, new OpenComputerUiPayload(owner, monitorPos, kind.id(), name));
     }
 
     /** Opens the desktop shell (a real container menu) for the host's installed FULL_DESKTOP OS. */

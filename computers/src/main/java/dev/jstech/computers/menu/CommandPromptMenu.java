@@ -84,16 +84,14 @@ public class CommandPromptMenu extends AbstractContainerMenu {
     protected static OpenData readOpenBuffer(final RegistryFriendlyByteBuf buf) {
         final BlockPos monitor = buf.readBlockPos();
         final BlockPos host = buf.readBlockPos();
-        final int eraOrdinal = buf.readVarInt();
-        final HardwareEra era = eraOrdinal >= 0 && eraOrdinal < HardwareEra.values().length
-                ? HardwareEra.values()[eraOrdinal] : null;
+        final HardwareEra era = HardwareEra.find(buf.readVarInt());
         final String shellId = buf.readUtf(16);
         final String hostname = buf.readUtf(48);
         final String osLabel = buf.readUtf(48);
         return new OpenData(monitor, host, era, shellId, hostname, osLabel);
     }
 
-    /** Writes the open buffer the client reconstructs from: the two positions plus the host era ordinal (-1 if none). */
+    /** Writes the open buffer the client reconstructs from: the two positions plus the host era's id (-1 if none). */
     public static void writeOpenBuffer(final RegistryFriendlyByteBuf buf, final BlockPos monitorPos,
                                        final BlockPos hostPos, @Nullable final HardwareEra era) {
         writeOpenBuffer(buf, monitorPos, hostPos, era, "", "", "");
@@ -105,7 +103,7 @@ public class CommandPromptMenu extends AbstractContainerMenu {
                                        final String shellId, final String hostname, final String osLabel) {
         buf.writeBlockPos(monitorPos);
         buf.writeBlockPos(hostPos);
-        buf.writeVarInt(era == null ? -1 : era.ordinal());
+        buf.writeVarInt(era == null ? -1 : era.id());
         buf.writeUtf(shellId == null ? "" : shellId, 16);
         buf.writeUtf(hostname == null ? "" : hostname, 48);
         buf.writeUtf(osLabel == null ? "" : osLabel, 48);

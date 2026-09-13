@@ -164,7 +164,7 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
                         buf.writeVarLong(rec.requested());
                         buf.writeVarLong(rec.moved());
                         buf.writeByte(rec.status());
-                        buf.writeByte(rec.priority().ordinal());
+                        buf.writeByte(rec.priority().id());
                         MOVES_CODEC.encode(buf, rec.moves());
                         SUBS_CODEC.encode(buf, rec.subs());
                         buf.writeVarInt(rec.waitedTicks());
@@ -177,7 +177,7 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
                             buf.readVarLong(),
                             buf.readVarLong(),
                             buf.readByte(),
-                            OperationPriority.byOrdinal(buf.readByte()),
+                            OperationPriority.byId(buf.readByte()),
                             MOVES_CODEC.decode(buf),
                             SUBS_CODEC.decode(buf),
                             buf.readVarInt(),
@@ -194,7 +194,7 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
         tag.putLong("requested", requested);
         tag.putLong("moved", moved);
         tag.putByte("status", status);
-        tag.putByte("priority", (byte) priority.ordinal());
+        tag.putByte("priority", (byte) priority.id());
         tag.putInt("waited", waitedTicks);
         tag.putInt("ran", ranTicks);
         final ListTag moveList = new ListTag();
@@ -237,7 +237,7 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
         }
         final UUID id = tag.hasUUID("id") ? tag.getUUID("id") : NO_ID;
         final OperationPriority priority = tag.contains("priority")
-                ? OperationPriority.byOrdinal(tag.getByte("priority")) : OperationPriority.DEFAULT;
+                ? OperationPriority.byId(tag.getByte("priority")) : OperationPriority.DEFAULT;
         return new OperationRecord(id, tag.getByte("type"), key, tag.getLong("requested"),
                 tag.getLong("moved"), tag.getByte("status"), priority, List.copyOf(moves), List.copyOf(subs),
                 tag.getInt("waited"), tag.getInt("ran"));

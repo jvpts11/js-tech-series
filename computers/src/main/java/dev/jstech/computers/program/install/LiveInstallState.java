@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.program.install;
 
+import dev.jstech.core.id.IStableName;
+import dev.jstech.core.id.StableNames;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -24,7 +27,28 @@ import java.util.Locale;
  */
 public final class LiveInstallState {
 
-    public enum Distro { ARCH, GENTOO }
+    public enum Distro implements IStableName {
+        ARCH("arch"),
+        GENTOO("gentoo");
+
+        private static final StableNames<Distro> NAMES = StableNames.of(Distro.class);
+
+        private final String serializedName;
+
+        Distro(final String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        @Override
+        public String serializedName() {
+            return serializedName;
+        }
+
+        /** The distribution a saved state names, or null for a name none declares. */
+        static Distro find(final String name) {
+            return NAMES.find(name);
+        }
+    }
 
     /** What the shell needs from the world for one command. */
     public record Env(List<String> devices, boolean mirror, long now, long kernelBuildTicks) {
@@ -344,7 +368,7 @@ public final class LiveInstallState {
     // persistence (a compact key=value string, so the console state stays free of NBT here)
 
     public String serialize() {
-        return distro.name() + ";" + device + ";" + (formatted ? 1 : 0) + ";" + (mounted ? 1 : 0) + ";" + (base ? 1 : 0)
+        return distro.serializedName() + ";" + device + ";" + (formatted ? 1 : 0) + ";" + (mounted ? 1 : 0) + ";" + (base ? 1 : 0)
                 + ";" + (fstab ? 1 : 0) + ";" + (chroot ? 1 : 0) + ";" + (synced ? 1 : 0) + ";" + kernelReadyAt + ";"
                 + (kernelBuilt ? 1 : 0) + ";" + (bootloader ? 1 : 0) + ";" + (password ? 1 : 0);
     }
@@ -354,7 +378,11 @@ public final class LiveInstallState {
         if (p.length < 12) {
             return null;
         }
-        final LiveInstallState st = new LiveInstallState(Distro.valueOf(p[0]));
+        final Distro distro = Distro.find(p[0]);
+        if (distro == null) {
+            return null;
+        }
+        final LiveInstallState st = new LiveInstallState(distro);
         st.device = p[1];
         st.formatted = p[2].equals("1");
         st.mounted = p[3].equals("1");

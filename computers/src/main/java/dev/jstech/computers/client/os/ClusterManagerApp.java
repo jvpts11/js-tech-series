@@ -409,11 +409,9 @@ public final class ClusterManagerApp implements IDesktopApp {
     }
 
     private String balanceName() {
-        return switch (detail() == null ? 0 : detail().balance()) {
-            case 0 -> "MANUAL";
-            case 1 -> "ROUND-ROBIN";
-            default -> "LEAST-LOADED";
-        };
+        final var mode = detail() == null ? dev.jstech.computers.datacenter.LoadBalanceMode.ROUND_ROBIN
+                : dev.jstech.computers.datacenter.LoadBalanceMode.byId(detail().balance());
+        return mode.label();
     }
 
     // selection

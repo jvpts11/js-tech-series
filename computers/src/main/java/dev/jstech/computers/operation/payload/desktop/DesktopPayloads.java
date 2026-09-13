@@ -266,7 +266,7 @@ public final class DesktopPayloads {
         final List<SettingsSnapshotPayload.RamUse> ramUses = new ArrayList<>();
         for (final dev.jstech.computers.os.RamLedger.Entry entry : ledger.entries()) {
             ramUses.add(new SettingsSnapshotPayload.RamUse(
-                    entry.name(), entry.mb(), entry.kind().name(), entry.id()));
+                    entry.name(), entry.mb(), entry.kind().serializedName(), entry.id()));
         }
         final List<SettingsSnapshotPayload.ShareRow> shares = new ArrayList<>();
         for (final dev.jstech.computers.program.ComputerSettings.Share share : st.shares()) {

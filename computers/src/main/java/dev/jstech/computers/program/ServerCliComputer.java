@@ -571,11 +571,9 @@ public final class ServerCliComputer implements ICliComputer {
         if (mainframe == null) {
             return OpResult.fail("the network has no running Mainframe");
         }
-        final dev.jstech.core.operation.OperationPriority wanted;
-        try {
-            wanted = dev.jstech.core.operation.OperationPriority.valueOf(
-                    priority.trim().toUpperCase(java.util.Locale.ROOT));
-        } catch (final IllegalArgumentException notAPriority) {
+        final dev.jstech.core.operation.OperationPriority wanted =
+                dev.jstech.core.operation.OperationPriority.fromKeyword(priority).orElse(null);
+        if (wanted == null) {
             return OpResult.fail("no such priority: " + priority);
         }
         final String prefix = id.trim().toLowerCase(java.util.Locale.ROOT);
@@ -586,8 +584,7 @@ public final class ServerCliComputer implements ICliComputer {
             final String full = operation.operationId().toString();
             if (full.startsWith(prefix) && prefix.length() >= ShortId.of(full).length()) {
                 operation.setPriority(wanted);
-                return OpResult.ok(ShortId.of(full) + " is now "
-                        + wanted.name().toLowerCase(java.util.Locale.ROOT));
+                return OpResult.ok(ShortId.of(full) + " is now " + wanted.serializedName());
             }
         }
         return OpResult.fail("no operation " + id + " is still running");

@@ -45,7 +45,7 @@ public final class ClusterManagerStateBuilder {
         final var card = cmc.clusterCard();
         final var systemDisc = cmc.medium(dev.jstech.computers.os.media.MediaKind.OS_INSTALL);
         final var program = cmc.medium(dev.jstech.computers.os.media.MediaKind.PROGRAM_INSTALL);
-        final var head = new ClusterManagerStatePayload.Head(card != null, card == null ? 0 : card.reach().ordinal(),
+        final var head = new ClusterManagerStatePayload.Head(card != null, card == null ? 0 : card.reach().id(),
                 cmc.parallelLanes(), systemDisc == null ? "" : systemDisc.label(), program == null ? "" : program.label(),
                 status.isEmpty() ? cmc.lastJobSummary() : status);
         final List<ClusterManagerStatePayload.WireCluster> clusters = new ArrayList<>();
@@ -70,7 +70,8 @@ public final class ClusterManagerStateBuilder {
                 total += store.capacityWeight();
             }
             final int mode = level.getBlockEntity(ref.routerPos()) instanceof ServerRouterBlockEntity router
-                    ? router.loadBalanceMode(ref.face()).ordinal() : 0;
+                    ? router.loadBalanceMode(ref.face()).id()
+                    : dev.jstech.computers.datacenter.LoadBalanceMode.ROUND_ROBIN.id();
             clusters.add(new ClusterManagerStatePayload.WireCluster(ClusterManagerStatePayload.KIND_DATACENTER, i,
                     ref.label(), ref.section().serverCount() > 0, ref.section().serverCount(), used, total, mode,
                     ref.section().rackCount() + " racks · " + ref.section().serverCount() + " srv",
@@ -164,7 +165,8 @@ public final class ClusterManagerStateBuilder {
                 }
             }
             final int mode = level.getBlockEntity(ref.routerPos()) instanceof ServerRouterBlockEntity router
-                    ? router.loadBalanceMode(ref.face()).ordinal() : 0;
+                    ? router.loadBalanceMode(ref.face()).id()
+                    : dev.jstech.computers.datacenter.LoadBalanceMode.ROUND_ROBIN.id();
             final BlockPos rp = ref.routerPos();
             detail = new ClusterManagerStatePayload.Detail(selKind, selIndex, ref.label(),
                     ref.section().rackCount() + " rack" + (ref.section().rackCount() == 1 ? "" : "s") + " · "
@@ -221,7 +223,7 @@ public final class ClusterManagerStateBuilder {
                     }
                 }
             }
-            job = new ClusterManagerStatePayload.WireJob(true, running.kind().ordinal(), running.medium().label(),
+            job = new ClusterManagerStatePayload.WireJob(true, running.kind().id(), running.medium().label(),
                     clusterKind, clusterIndex, running.done(), running.skipped(), running.queued(), running.total(),
                     running.elapsedTicks(), running.cancelled(), lanes, cmc.lastJobSummary());
         }

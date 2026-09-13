@@ -743,10 +743,10 @@ public final class GatewayManagerApp implements IDesktopApp {
     }
 
     private static int toneColor(final int tone, final UiContext ctx) {
-        return switch (tone) {
-            case 1 -> AMBER;
-            case 2 -> RED;
-            default -> GREEN;
+        return switch (dev.jstech.computers.gateway.GatewayLog.Tone.byId(tone)) {
+            case OK -> GREEN;
+            case BUSY -> AMBER;
+            case DENIED -> RED;
         };
     }
 

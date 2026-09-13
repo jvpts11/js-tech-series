@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -78,6 +79,15 @@ class HardwareEraTest {
     void fromLevel_rejectsOutOfRange() {
         assertThrows(IllegalArgumentException.class, () -> HardwareEra.fromLevel(-1));
         assertThrows(IllegalArgumentException.class, () -> HardwareEra.fromLevel(6));
+    }
+
+    @Test
+    void find_readsBackEveryEraByItsIdAndNothingElse() {
+        for (final HardwareEra era : HardwareEra.values()) {
+            assertEquals(era, HardwareEra.find(era.id()));
+        }
+        assertNull(HardwareEra.find(-1));
+        assertNull(HardwareEra.find(6));
     }
 
     @Test

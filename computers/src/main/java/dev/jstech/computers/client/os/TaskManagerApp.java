@@ -11,6 +11,7 @@ import dev.jstech.computers.operation.payload.RequestSettingsPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload.DiskUse;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload.RamUse;
+import dev.jstech.computers.os.RamLedger;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
@@ -45,12 +46,6 @@ public final class TaskManagerApp implements IDesktopApp {
     private static final int ROW_H = 10;
     private static final int MENU_H = 11;
     private static final int STATUS_H = 11;
-
-    private static final String KIND_WINDOW = "WINDOW";
-    private static final String KIND_SYSTEM = "SYSTEM";
-    private static final String KIND_DESKTOP = "DESKTOP";
-    private static final String KIND_SERVICE = "SERVICE";
-    private static final String KIND_PROCESS = "PROCESS";
 
     private final BlockPos host;
     private final Form form;
@@ -112,7 +107,7 @@ public final class TaskManagerApp implements IDesktopApp {
     private List<RamUse> tasks() {
         final List<RamUse> out = new ArrayList<>();
         for (final RamUse use : processes()) {
-            if (KIND_WINDOW.equals(use.kind())) {
+            if (kindOf(use) == RamLedger.Kind.WINDOW) {
                 out.add(use);
             }
         }
@@ -122,7 +117,7 @@ public final class TaskManagerApp implements IDesktopApp {
     private List<RamUse> services() {
         final List<RamUse> out = new ArrayList<>();
         for (final RamUse use : processes()) {
-            if (KIND_SERVICE.equals(use.kind())) {
+            if (kindOf(use) == RamLedger.Kind.SERVICE) {
                 out.add(use);
             }
         }
@@ -161,9 +156,10 @@ public final class TaskManagerApp implements IDesktopApp {
         if (use == null) {
             return;
         }
-        if (KIND_WINDOW.equals(use.kind())) {
+        final RamLedger.Kind kind = kindOf(use);
+        if (kind == RamLedger.Kind.WINDOW) {
             DesktopScreen.requestClose(use.label());
-        } else if (KIND_PROCESS.equals(use.kind())) {
+        } else if (kind == RamLedger.Kind.PROCESS) {
             /*
              * A script is ended by its number: two of them can have come from the same file, and the
              * machine is the one that knows which is which.
@@ -179,7 +175,7 @@ public final class TaskManagerApp implements IDesktopApp {
 
     private boolean canEnd() {
         final RamUse use = selectedRow();
-        return use != null && (KIND_WINDOW.equals(use.kind()) || KIND_PROCESS.equals(use.kind()));
+        return use != null && (kindOf(use) == RamLedger.Kind.WINDOW || kindOf(use) == RamLedger.Kind.PROCESS);
     }
 
     private int totalMb() {
@@ -687,14 +683,20 @@ public final class TaskManagerApp implements IDesktopApp {
         Texts.small(g, font, label, x + (w - tw) / 2, y + (h - 7) / 2, enabled ? skin.text() : skin.dim());
     }
 
+    /** The ledger kind a row names, or null for a name the ledger does not declare. */
+    @Nullable
+    private static RamLedger.Kind kindOf(final RamUse use) {
+        return RamLedger.Kind.find(use.kind());
+    }
+
     private static String kindLabel(final String kind) {
-        return switch (kind) {
-            case KIND_SYSTEM -> "system";
-            case KIND_DESKTOP -> "desktop";
-            case KIND_SERVICE -> "service";
-            case KIND_WINDOW -> "program";
-            case KIND_PROCESS -> "script";
-            default -> kind.toLowerCase(Locale.ROOT);
+        final RamLedger.Kind known = RamLedger.Kind.find(kind);
+        return known == null ? kind.toLowerCase(Locale.ROOT) : switch (known) {
+            case SYSTEM -> "system";
+            case DESKTOP -> "desktop";
+            case SERVICE -> "service";
+            case WINDOW -> "program";
+            case PROCESS -> "script";
         };
     }
 

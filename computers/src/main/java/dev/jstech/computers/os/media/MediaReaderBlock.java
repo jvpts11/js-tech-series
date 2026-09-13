@@ -7,10 +7,10 @@
  */
 package dev.jstech.computers.os.media;
 
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
 import dev.jstech.core.util.BlockEntityTickers;
@@ -53,8 +53,7 @@ public class MediaReaderBlock extends HorizontalDirectionalBlock implements Enti
 
     public static final MapCodec<MediaReaderBlock> CODEC = RecordCodecBuilder.mapCodec(instance ->
             instance.group(
-                    Codec.STRING.xmap(MediaDriveType::valueOf, MediaDriveType::name)
-                            .fieldOf("drive_type").forGetter(b -> b.driveType),
+                    StableCodecs.byName(MediaDriveType.class).fieldOf("drive_type").forGetter(b -> b.driveType),
                     propertiesCodec()
             ).apply(instance, MediaReaderBlock::new));
 

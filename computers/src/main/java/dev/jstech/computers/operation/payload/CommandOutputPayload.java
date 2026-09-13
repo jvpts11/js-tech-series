@@ -17,8 +17,8 @@ import java.util.List;
 
 /**
  * Server to client: the styled output of one Command Prompt line, plus whether the console should be
- * cleared before printing it (the {@code clear} command). Each line carries its text and a style
- * ordinal the client maps to a colour.
+ * cleared before printing it (the {@code clear} command). Each line carries its text and the id of a
+ * style the client maps to a colour.
  *
  * <p>{@code replaceLast} says the lines redraw over the last one printed rather than follow it, the way
  * a progress bar at a real terminal grows on the same line instead of filling the screen with copies.
@@ -63,7 +63,7 @@ public record CommandOutputPayload(boolean clear, String prompt, List<WireLine> 
         return TYPE;
     }
 
-    /** One console line on the wire: its text and the ordinal of its {@code CliStyle}. */
+    /** One console line on the wire: its text and the id of its {@code CliStyle}. */
     public record WireLine(String text, int style) {
 
         public static final StreamCodec<RegistryFriendlyByteBuf, WireLine> STREAM_CODEC =

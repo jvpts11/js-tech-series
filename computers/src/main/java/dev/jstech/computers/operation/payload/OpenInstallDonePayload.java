@@ -20,7 +20,7 @@ import net.minecraft.resources.ResourceLocation;
  *
  * @param host         the computer
  * @param monitorPos   the monitor the screen renders on
- * @param firmwareKind the firmware look of the machine's era, as an ordinal
+ * @param firmwareKind the firmware look of the machine's era, as its id
  * @param osName       the system that was installed, for the prompt
  * @param targetLabel  the disk it went onto, for the prompt
  * @param targetSlot   the disk slot to boot when the player restarts ({@code -1} = the default disk)

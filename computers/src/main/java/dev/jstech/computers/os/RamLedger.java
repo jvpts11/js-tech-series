@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.core.id.IStableName;
+import dev.jstech.core.id.StableNames;
 import dev.jstech.core.tier.HardwareEra;
 
 import java.util.ArrayList;
@@ -27,8 +29,32 @@ public final class RamLedger {
      */
     public static final int MB_PER_BUFFER_ITEM = 4;
 
-    /** What an entry of the ledger is. */
-    public enum Kind { SYSTEM, DESKTOP, SERVICE, WINDOW, PROCESS }
+    /** What an entry of the ledger is. The System Monitor and the Task Manager receive it by its name. */
+    public enum Kind implements IStableName {
+        SYSTEM("system"),
+        DESKTOP("desktop"),
+        SERVICE("service"),
+        WINDOW("window"),
+        PROCESS("process");
+
+        private static final StableNames<Kind> NAMES = StableNames.of(Kind.class);
+
+        private final String serializedName;
+
+        Kind(final String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        @Override
+        public String serializedName() {
+            return serializedName;
+        }
+
+        /** The kind a name stands for, or null for a name no kind declares. */
+        public static Kind find(final String name) {
+            return NAMES.find(name);
+        }
+    }
 
     /**
      * One thing holding memory: a label to show, its megabytes, what it is, and the number it answers to

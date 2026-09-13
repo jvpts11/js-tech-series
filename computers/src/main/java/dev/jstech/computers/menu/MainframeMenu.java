@@ -9,6 +9,7 @@ package dev.jstech.computers.menu;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.core.network.FailoverRole;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -155,8 +156,8 @@ public class MainframeMenu extends AbstractComputerMenu {
         return data.get(MainframeBlockEntity.DATA_FAILOVER_ENABLED) != 0;
     }
 
-    public int failoverRole() {
-        return data.get(MainframeBlockEntity.DATA_FAILOVER_ROLE);
+    public FailoverRole failoverRole() {
+        return FailoverRole.byId(data.get(MainframeBlockEntity.DATA_FAILOVER_ROLE));
     }
 
     @Override

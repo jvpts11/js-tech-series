@@ -228,7 +228,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             scrollback.removeLast();
         }
         for (final CommandOutputPayload.WireLine line : payload.lines()) {
-            push(line.text(), styleOf(line.style()));
+            push(line.text(), CliStyle.byId(line.style()));
         }
         // An empty prompt means "unchanged"; otherwise track the new current directory.
         if (!payload.prompt().isEmpty()) {
@@ -413,11 +413,6 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         g.pose().scale(TEXT_SCALE, TEXT_SCALE, 1.0f);
         g.drawString(font, text, 0, 0, color, false);
         g.pose().popPose();
-    }
-
-    private static CliStyle styleOf(final int ordinal) {
-        final CliStyle[] values = CliStyle.values();
-        return ordinal >= 0 && ordinal < values.length ? values[ordinal] : CliStyle.PLAIN;
     }
 
     private int colorOf(final CliStyle style) {

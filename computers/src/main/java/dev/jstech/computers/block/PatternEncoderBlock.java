@@ -50,9 +50,7 @@ public class PatternEncoderBlock extends HorizontalDirectionalBlock implements E
 
     public static final MapCodec<PatternEncoderBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
-            com.mojang.serialization.Codec.STRING.xmap(
-                    s -> HardwareEra.valueOf(s.toUpperCase(java.util.Locale.ROOT)),
-                    e -> e.name().toLowerCase(java.util.Locale.ROOT)).fieldOf("era").forGetter(b -> b.era)
+            dev.jstech.core.id.StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(b -> b.era)
     ).apply(i, PatternEncoderBlock::new));
 
     private final HardwareEra era;

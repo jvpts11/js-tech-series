@@ -59,10 +59,9 @@ public record SettingsSnapshotPayload(
     /** One folder this computer shares with the network: its share name, its path and whether others may write. */
     public record ShareRow(String name, String path, boolean writable) {}
 
-    /** One holder of RAM for the System Monitor: what it is called, its megabytes and its kind's name. */
     /**
-     * One thing holding memory: what to call it, how many megabytes, what kind it is, and the number it
-     * answers to if it is something that can be ended.
+     * One thing holding memory: what to call it, how many megabytes, the serialized name of its ledger kind, and
+     * the number it answers to if it is something that can be ended.
      *
      * <p>A window is ended by its name, but two scripts can be started from the same file and only the
      * number tells them apart, so the number travels for those and is 0 for everything else.

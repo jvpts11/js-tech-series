@@ -170,9 +170,9 @@ public final class PatternStudioPayloads {
                 status = openFile(level, host, payload.text(), payload.text2(), opened);
                 tab = opened[0];
             }
-            case PatternStudioEditPayload.SAVE_TO_DISK -> status = saveToDisk(level, host, kindOf(payload.index()));
-            case PatternStudioEditPayload.LOAD_INTO_ROM -> status = loadIntoRom(level, host, kindOf(payload.index()));
-            case PatternStudioEditPayload.BURN -> status = burn(level, host, kindOf(payload.index()));
+            case PatternStudioEditPayload.SAVE_TO_DISK -> status = saveToDisk(level, host, PatternWorkbench.Kind.byId(payload.index()));
+            case PatternStudioEditPayload.LOAD_INTO_ROM -> status = loadIntoRom(level, host, PatternWorkbench.Kind.byId(payload.index()));
+            case PatternStudioEditPayload.BURN -> status = burn(level, host, PatternWorkbench.Kind.byId(payload.index()));
             case PatternStudioEditPayload.ENCODER_CANCEL -> {
                 final PatternEncoderBlockEntity enc = encoderOf(level, host);
                 if (enc != null) {
@@ -201,11 +201,6 @@ public final class PatternStudioPayloads {
         studio.refreshPreview(level);
         host.setChanged();
         PacketDistributor.sendToPlayer(player, buildState(level, host, status, tab));
-    }
-
-    private static PatternWorkbench.Kind kindOf(final int index) {
-        final PatternWorkbench.Kind[] kinds = PatternWorkbench.Kind.values();
-        return index >= 0 && index < kinds.length ? kinds[index] : PatternWorkbench.Kind.BENCH;
     }
 
     /** Fills the bench from a recipe viewer's transfer: the nine cells, tags cleared. */

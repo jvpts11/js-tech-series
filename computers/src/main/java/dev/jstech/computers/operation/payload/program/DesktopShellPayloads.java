@@ -86,7 +86,7 @@ public final class DesktopShellPayloads {
                 wire.add(new DesktopShellOutputPayload.WireLine(
                         (setup.removing() ? "Removing " : "Setting up ") + setup.name() + "  "
                                 + (setup.permille() / 10) + "%  (Ctrl+C to cancel)",
-                        dev.jstech.computers.program.cli.CliStyle.DIM.ordinal()));
+                        dev.jstech.computers.program.cli.CliStyle.DIM.id()));
                 PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(false, true, computer.prompt(),
                         wire, payload.session()));
                 return;
@@ -97,7 +97,7 @@ public final class DesktopShellPayloads {
             clear = response.clearScreen();
             handOver = response.handOver();
             for (final var cliLine : response.lines()) {
-                wire.add(new DesktopShellOutputPayload.WireLine(cliLine.text(), cliLine.style().ordinal()));
+                wire.add(new DesktopShellOutputPayload.WireLine(cliLine.text(), cliLine.style().id()));
             }
             prompt = computer.prompt();
             /*
@@ -151,7 +151,7 @@ public final class DesktopShellPayloads {
         processes.release();
         processes.stop(id);
         wire.add(new DesktopShellOutputPayload.WireLine("^C",
-                dev.jstech.computers.program.cli.CliStyle.DIM.ordinal()));
+                dev.jstech.computers.program.cli.CliStyle.DIM.id()));
         return false;
     }
 

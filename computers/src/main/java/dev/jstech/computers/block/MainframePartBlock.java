@@ -57,8 +57,8 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
 
     /*
      * The part inherits its controller's hardware era so the whole footprint wears one skin. The value
-     * is the era's level() ordinal (0=Vintage, 1=Legacy, 2=Standard), and only the eras that actually have
-     * a Mainframe controller. Storing the ordinal keeps the Minecraft-aware property type out of the
+     * is the era's level() (0=Vintage, 1=Legacy, 2=Standard), and only the eras that actually have
+     * a Mainframe controller. Storing the level keeps the Minecraft-aware property type out of the
      * pure HardwareEra enum; consumers map it back with HardwareEra.fromLevel(int).
      */
     public static final IntegerProperty ERA = IntegerProperty.create(

@@ -36,10 +36,23 @@ class OperationPriorityTest {
     }
 
     @Test
-    void byOrdinal_clampsOutOfRangeValues() {
-        assertEquals(OperationPriority.LOW, OperationPriority.byOrdinal(-3));
-        assertEquals(OperationPriority.HIGH, OperationPriority.byOrdinal(99));
-        assertEquals(OperationPriority.MEDIUM, OperationPriority.byOrdinal(2));
+    void byId_readsBackEveryLevel() {
+        for (final OperationPriority level : OperationPriority.values()) {
+            assertEquals(level, OperationPriority.byId(level.id()));
+        }
+    }
+
+    @Test
+    void byId_fallsBackToTheDefaultForAnIdNoLevelDeclares() {
+        assertEquals(OperationPriority.DEFAULT, OperationPriority.byId(-3));
+        assertEquals(OperationPriority.DEFAULT, OperationPriority.byId(99));
+    }
+
+    @Test
+    void fromKeyword_readsBackEveryLevelsOwnName() {
+        for (final OperationPriority level : OperationPriority.values()) {
+            assertEquals(Optional.of(level), OperationPriority.fromKeyword(level.serializedName()));
+        }
     }
 
     @Test

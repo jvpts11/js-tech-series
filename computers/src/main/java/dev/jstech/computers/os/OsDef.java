@@ -9,10 +9,10 @@ package dev.jstech.computers.os;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -66,17 +66,17 @@ public record OsDef(
 
     public static final Codec<OsDef> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             ResourceLocation.CODEC.fieldOf("id").forGetter(OsDef::id),
-            enumCodec(OsCapability.class).fieldOf("capability").forGetter(OsDef::capability),
-            enumCodec(HardwareEra.class).fieldOf("min_era").forGetter(OsDef::minEra),
+            StableCodecs.byName(OsCapability.class).fieldOf("capability").forGetter(OsDef::capability),
+            StableCodecs.byName(HardwareEra.class).fieldOf("min_era").forGetter(OsDef::minEra),
             ResourceLocation.CODEC.fieldOf("kernel").forGetter(OsDef::kernelId),
             Codec.INT.optionalFieldOf("footprint_mb", 0).forGetter(OsDef::footprintMb),
             ResourceLocation.CODEC.optionalFieldOf("install_media").forGetter(OsDef::installMediaId),
-            enumCodec(Platform.class).fieldOf("platform").forGetter(OsDef::platform),
+            StableCodecs.byName(Platform.class).fieldOf("platform").forGetter(OsDef::platform),
             Codec.STRING.optionalFieldOf("display_name", "").forGetter(OsDef::displayName),
             Codec.STRING.optionalFieldOf("shell", "cmd").forGetter(OsDef::shellId),
-            enumCodec(PackageManagerKind.class).optionalFieldOf("package_manager", PackageManagerKind.NONE)
+            StableCodecs.byName(PackageManagerKind.class).optionalFieldOf("package_manager", PackageManagerKind.NONE)
                     .forGetter(OsDef::packageManager),
-            enumCodec(InstallMode.class).optionalFieldOf("install_mode", InstallMode.GUIDED)
+            StableCodecs.byName(InstallMode.class).optionalFieldOf("install_mode", InstallMode.GUIDED)
                     .forGetter(OsDef::installMode),
             ResourceLocation.CODEC.optionalFieldOf("bundled_desktop").forGetter(OsDef::bundledDesktop),
             SoftwareHouse.CODEC.optionalFieldOf("house", SoftwareHouse.MIDSOFT).forGetter(OsDef::house),
@@ -153,10 +153,5 @@ public record OsDef(
     /** The translation key for this OS's display name, in vanilla {@code os.<ns>.<path>} form. */
     public String titleKey() {
         return "os." + id.getNamespace() + "." + id.getPath();
-    }
-
-    private static <E extends Enum<E>> Codec<E> enumCodec(final Class<E> type) {
-        return Codec.STRING.xmap(s -> Enum.valueOf(type, s.toUpperCase(Locale.ROOT)),
-                e -> e.name().toLowerCase(Locale.ROOT));
     }
 }

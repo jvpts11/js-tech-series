@@ -13,6 +13,8 @@ import dev.jstech.computers.cannon.asm.Instruction;
 import dev.jstech.computers.cannon.asm.Opcode;
 import dev.jstech.computers.cannon.asm.IOperand;
 import dev.jstech.computers.cannon.ui.UiWidgets;
+import dev.jstech.core.id.IStableName;
+import dev.jstech.core.id.StableNames;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -41,16 +43,27 @@ import java.util.Map;
  */
 public final class Process {
 
-    /** Where a process is up to. */
-    public enum State {
+    /** Where a process is up to. A snapshot writes it by its name. */
+    public enum State implements IStableName {
         /** It has instructions left to run. */
-        RUNNING,
+        RUNNING("running"),
         /** It is waiting for something outside it and will not spend budget until that settles. */
-        PARKED,
+        PARKED("parked"),
         /** It ran to the end. */
-        FINISHED,
+        FINISHED("finished"),
         /** It stopped on a mistake. */
-        HALTED
+        HALTED("halted");
+
+        private final String serializedName;
+
+        State(final String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        @Override
+        public String serializedName() {
+            return serializedName;
+        }
     }
 
     /** The most instructions one thread runs before another of the same process has its turn. */
@@ -59,19 +72,45 @@ public final class Process {
     /** What starting a thread costs beyond the call itself: a stack of its own is not a small thing. */
     private static final int START_COST = 49;
 
-    /** What a thread is waiting for, if anything. */
-    enum Parked {
-        NONE,
+    /** What a thread is waiting for, if anything. A snapshot writes it by its name. */
+    enum Parked implements IStableName {
+        NONE("none"),
         /** A line typed at the terminal. */
-        INPUT,
+        INPUT("input"),
         /** A tick to come. */
-        SLEEP,
+        SLEEP("sleep"),
         /** Another thread to end. */
-        JOIN,
+        JOIN("join"),
         /** An object's lock to be let go of. */
-        LOCK,
+        LOCK("lock"),
         /** Another program on the machine to end. */
-        CHILD
+        CHILD("child");
+
+        private static final StableNames<Parked> NAMES = StableNames.of(Parked.class);
+
+        private final String serializedName;
+
+        Parked(final String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        @Override
+        public String serializedName() {
+            return serializedName;
+        }
+
+        /**
+         * The wait a snapshot names.
+         *
+         * @throws IllegalArgumentException for a name no wait declares, which only a damaged snapshot holds
+         */
+        static Parked named(final String name) {
+            final Parked found = NAMES.find(name);
+            if (found == null) {
+                throw new IllegalArgumentException("no thread wait is named '" + name + "'");
+            }
+            return found;
+        }
     }
 
     /**
@@ -1191,14 +1230,40 @@ public final class Process {
 
     // watching the world
 
-    /** What a watch is waiting for. */
-    public enum Watching {
+    /** What a watch is waiting for. A snapshot writes it by its name. */
+    public enum Watching implements IStableName {
         /** Any change at all in what the network holds of that thing. */
-        CHANGE,
+        CHANGE("change"),
         /** The moment it falls to or below a number, and not again until it has gone back above. */
-        BELOW,
+        BELOW("below"),
         /** The moment it rises to or above a number, and not again until it has gone back below. */
-        ABOVE
+        ABOVE("above");
+
+        private static final StableNames<Watching> NAMES = StableNames.of(Watching.class);
+
+        private final String serializedName;
+
+        Watching(final String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        @Override
+        public String serializedName() {
+            return serializedName;
+        }
+
+        /**
+         * The watch a snapshot names.
+         *
+         * @throws IllegalArgumentException for a name no watch declares, which only a damaged snapshot holds
+         */
+        static Watching named(final String name) {
+            final Watching found = NAMES.find(name);
+            if (found == null) {
+                throw new IllegalArgumentException("no watch is named '" + name + "'");
+            }
+            return found;
+        }
     }
 
     /** One thing a program asked to be told about. */
@@ -1391,7 +1456,7 @@ public final class Process {
         }
         final List<Snapshot.WatchShot> watching = new ArrayList<>();
         for (final Watch watch : this.watches) {
-            watching.add(new Snapshot.WatchShot(watch.id, watch.item, watch.kind.name(), watch.threshold,
+            watching.add(new Snapshot.WatchShot(watch.id, watch.item, watch.kind.serializedName(), watch.threshold,
                     value(watch.handler, numbers), value(watch.token, numbers), watch.last, watch.armed,
                     watch.seen));
         }
@@ -1413,7 +1478,7 @@ public final class Process {
             held.add(this.freeze(numbers.thing(number), number, numbers));
         }
         return new Snapshot(this.heap.budget(), held, running, queued, kept, scriptShot,
-                watching, this.library.console(), this.library.written(), this.state().name(),
+                watching, this.library.console(), this.library.written(), this.state().serializedName(),
                 this.message == null ? "" : this.message, this.spent, this.name, locked, this.nextThread,
                 this.args, this.machineId, this.exited, this.exitCode, onMessageShot,
                 windowShots, this.nextWindow, this.nextWidget, onGatewayShot, this.gateway);
@@ -1457,7 +1522,7 @@ public final class Process {
                     thread.frames.push(frame);
                 }
             }
-            thread.parked = Parked.valueOf(written.parked());
+            thread.parked = Parked.named(written.parked());
             thread.until = written.until();
             thread.on = value(written.on(), byNumber);
             thread.onHost = written.onHost();
@@ -1496,7 +1561,7 @@ public final class Process {
             if (value(written.handler(), byNumber) instanceof Values.DelegateValue handler
                     && value(written.token(), byNumber) instanceof Values.Obj token) {
                 final Watch watch = new Watch(written.id(), written.item(),
-                        Watching.valueOf(written.kind()), written.threshold(), handler, token);
+                        Watching.named(written.kind()), written.threshold(), handler, token);
                 watch.last = written.last();
                 watch.armed = written.armed();
                 watch.seen = written.seen();
@@ -1505,7 +1570,7 @@ public final class Process {
             }
         }
         process.library.restore(shot.console(), shot.written());
-        process.halted = State.HALTED.name().equals(shot.state());
+        process.halted = State.HALTED.serializedName().equals(shot.state());
         process.message = shot.message().isEmpty() ? null : shot.message();
         process.spent = shot.spent();
         process.args = shot.args();
@@ -1616,7 +1681,7 @@ public final class Process {
         for (final Frame frame : stack) {
             frames.add(freeze(frame, numbers));
         }
-        return new Snapshot.ThreadShot(thread.id, frames, thread.parked.name(), thread.until,
+        return new Snapshot.ThreadShot(thread.id, frames, thread.parked.serializedName(), thread.until,
                 value(thread.on, numbers), value(thread.token, numbers), thread.timedOut, thread.onHost);
     }
 

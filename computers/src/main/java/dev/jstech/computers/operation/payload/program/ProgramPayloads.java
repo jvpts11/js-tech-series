@@ -129,7 +129,7 @@ public final class ProgramPayloads {
         // Only the firmware setup is a client-only screen; the desktop opens as a server-side menu.
         dev.jstech.computers.block.IFirmwareScreenOpener.Holder.open(
                 payload.host(), payload.monitorPos(),
-                dev.jstech.computers.os.FirmwareKind.values()[payload.firmwareKind()],
+                dev.jstech.computers.os.FirmwareKind.byId(payload.firmwareKind()),
                 payload.name());
     }
 
@@ -217,7 +217,7 @@ public final class ProgramPayloads {
         final java.util.Optional<String> listing = readDiskFile(level, computer, payload.path());
         if (listing.isEmpty()) {
             wire.add(new DesktopShellOutputPayload.WireLine(name + ": file not found",
-                    dev.jstech.computers.program.cli.CliStyle.ERROR.ordinal()));
+                    dev.jstech.computers.program.cli.CliStyle.ERROR.id()));
             PacketDistributor.sendToPlayer(player,
                     new DesktopShellOutputPayload(false, false, "", wire, payload.session()));
             return;
@@ -225,7 +225,7 @@ public final class ProgramPayloads {
         final int room = dev.jstech.computers.cannon.machine.MachinePrograms.DEFAULT_HEAP_MB;
         if (!computer.ramLedger().fits(room)) {
             wire.add(new DesktopShellOutputPayload.WireLine(name + ": not enough memory to run it",
-                    dev.jstech.computers.program.cli.CliStyle.ERROR.ordinal()));
+                    dev.jstech.computers.program.cli.CliStyle.ERROR.id()));
             PacketDistributor.sendToPlayer(player,
                     new DesktopShellOutputPayload(false, false, "", wire, payload.session()));
             return;
@@ -234,7 +234,7 @@ public final class ProgramPayloads {
                 dev.jstech.computers.cannon.machine.MachinePrograms.DEFAULT_PRIORITY);
         if (!started.ok()) {
             wire.add(new DesktopShellOutputPayload.WireLine(started.message(),
-                    dev.jstech.computers.program.cli.CliStyle.ERROR.ordinal()));
+                    dev.jstech.computers.program.cli.CliStyle.ERROR.id()));
             PacketDistributor.sendToPlayer(player,
                     new DesktopShellOutputPayload(false, false, "", wire, payload.session()));
             return;
@@ -246,7 +246,7 @@ public final class ProgramPayloads {
             computer.cannon().hold(started.id());
         } else {
             wire.add(new DesktopShellOutputPayload.WireLine(started.message(),
-                    dev.jstech.computers.program.cli.CliStyle.OK.ordinal()));
+                    dev.jstech.computers.program.cli.CliStyle.OK.id()));
         }
         PacketDistributor.sendToPlayer(player,
                 new DesktopShellOutputPayload(false, console, "", wire, payload.session()));

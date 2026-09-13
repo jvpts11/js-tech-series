@@ -9,9 +9,8 @@ package dev.jstech.computers.os;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.core.id.StableCodecs;
 import net.minecraft.resources.ResourceLocation;
-
-import java.util.Locale;
 
 /**
  * Immutable descriptor for a kernel that an OS can run on top of.
@@ -35,9 +34,9 @@ public record KernelDef(
 
     public static final Codec<KernelDef> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             ResourceLocation.CODEC.fieldOf("id").forGetter(KernelDef::id),
-            enumCodec(SchedulerKind.class).fieldOf("scheduler").forGetter(KernelDef::scheduler),
-            enumCodec(FilesystemKind.class).fieldOf("filesystem").forGetter(KernelDef::filesystem),
-            enumCodec(ShellFamily.class).optionalFieldOf("shell_family", ShellFamily.DOS)
+            StableCodecs.byName(SchedulerKind.class).fieldOf("scheduler").forGetter(KernelDef::scheduler),
+            StableCodecs.byName(FilesystemKind.class).fieldOf("filesystem").forGetter(KernelDef::filesystem),
+            StableCodecs.byName(ShellFamily.class).optionalFieldOf("shell_family", ShellFamily.DOS)
                     .forGetter(KernelDef::shellFamily)
     ).apply(inst, KernelDef::new));
 
@@ -45,10 +44,5 @@ public record KernelDef(
         if (shellFamily == null) {
             shellFamily = ShellFamily.DOS;
         }
-    }
-
-    private static <E extends Enum<E>> Codec<E> enumCodec(final Class<E> type) {
-        return Codec.STRING.xmap(s -> Enum.valueOf(type, s.toUpperCase(Locale.ROOT)),
-                e -> e.name().toLowerCase(Locale.ROOT));
     }
 }

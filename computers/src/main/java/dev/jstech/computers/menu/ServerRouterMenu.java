@@ -103,9 +103,7 @@ public class ServerRouterMenu extends AbstractContainerMenu {
     }
 
     public LoadBalanceMode sectionMode(final int i) {
-        final int ord = sectionField(i, 3);
-        final LoadBalanceMode[] values = LoadBalanceMode.values();
-        return ord >= 0 && ord < values.length ? values[ord] : LoadBalanceMode.ROUND_ROBIN;
+        return LoadBalanceMode.byId(sectionField(i, 3));
     }
 
     @Override

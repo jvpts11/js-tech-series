@@ -115,7 +115,7 @@ public final class ServerRouterScreen extends AbstractContainerScreen<ServerRout
             JsTechTheme.textS(g, font, menu.sectionRacks(i) + "R · " + menu.sectionServers(i) + "S",
                     40, ry + 3, JsTechTheme.dim());
             final LoadBalanceMode mode = menu.sectionMode(i);
-            JsTechTheme.textSCenter(g, font, modeLabel(mode), MODE_X + MODE_W / 2, ry + 3, modeColor(mode));
+            JsTechTheme.textSCenter(g, font, mode.label(), MODE_X + MODE_W / 2, ry + 3, modeColor(mode));
         }
     }
 
@@ -142,14 +142,6 @@ public final class ServerRouterScreen extends AbstractContainerScreen<ServerRout
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
         super.render(g, mouseX, mouseY, partialTick);
         renderTooltip(g, mouseX, mouseY);
-    }
-
-    private static String modeLabel(final LoadBalanceMode mode) {
-        return switch (mode) {
-            case ROUND_ROBIN -> "ROUND-ROBIN";
-            case LEAST_LOADED -> "LEAST-LOADED";
-            case MANUAL -> "MANUAL";
-        };
     }
 
     private static int modeColor(final LoadBalanceMode mode) {

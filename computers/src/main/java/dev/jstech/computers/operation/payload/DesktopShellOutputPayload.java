@@ -110,7 +110,7 @@ public record DesktopShellOutputPayload(boolean clear, boolean busy, String prom
         return TYPE;
     }
 
-    /** One output line: its text and the ordinal of its {@code CliStyle} for colouring. */
+    /** One output line: its text and the id of its {@code CliStyle} for colouring. */
     public record WireLine(String text, int style) {
 
         public static final StreamCodec<RegistryFriendlyByteBuf, WireLine> STREAM_CODEC =

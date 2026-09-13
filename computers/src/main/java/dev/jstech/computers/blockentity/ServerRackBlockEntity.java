@@ -135,9 +135,8 @@ public class ServerRackBlockEntity extends BlockEntity
                 case SUPERCOMPUTER_NODE -> UNIT_NODE_2U;
             };
         }
-        final dev.jstech.computers.item.RackUnitItem.Kind[] kinds =
-                dev.jstech.computers.item.RackUnitItem.Kind.values();
-        for (final dev.jstech.computers.item.RackUnitItem.Kind kind : kinds) {
+        for (final dev.jstech.computers.item.RackUnitItem.Kind kind
+                : dev.jstech.computers.item.RackUnitItem.Kind.values()) {
             if (dev.jstech.computers.item.RackUnitItem.is(stack, kind)) {
                 return switch (kind) {
                     case KVM_SWITCH -> UNIT_KVM_SWITCH;
@@ -1954,7 +1953,7 @@ public class ServerRackBlockEntity extends BlockEntity
          * full build on the wire on every block update, for one enum the screens need.
          */
         final dev.jstech.core.tier.HardwareEra era = installedEra();
-        tag.putInt("DisplayEra", era == null ? -1 : era.ordinal());
+        tag.putInt("DisplayEra", era == null ? -1 : era.id());
         /*
          * The cabinet model: one byte per row says what is seated there, the mask says which bays are
          * off, and the panel flag whether the supercomputer's livery is on. Enough to draw it all.
@@ -1986,10 +1985,7 @@ public class ServerRackBlockEntity extends BlockEntity
          * over the client copy and reset the transient rack state to its defaults.
          */
         final CompoundTag tag = packet.getTag();
-        final int ordinal = tag != null ? tag.getInt("DisplayEra") : -1;
-        final dev.jstech.core.tier.HardwareEra[] eras =
-                dev.jstech.core.tier.HardwareEra.values();
-        clientEra = ordinal >= 0 && ordinal < eras.length ? eras[ordinal] : null;
+        clientEra = dev.jstech.core.tier.HardwareEra.find(tag != null ? tag.getInt("DisplayEra") : -1);
         if (tag != null) {
             applyVisualTag(tag);
         }

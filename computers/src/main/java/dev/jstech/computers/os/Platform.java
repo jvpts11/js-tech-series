@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.core.id.IStableName;
+
 /**
  * The OS platform (family) a computer runs, and the axis a program is gated on.
  *
@@ -18,24 +20,31 @@ package dev.jstech.computers.os;
  * <p>The three current platforms are all Windows-family surfaces. Future Linux-family operating systems
  * will add their own platform values, at which point cross-platform programs will list several.
  */
-public enum Platform {
+public enum Platform implements IStableName {
 
     /** The MC-DOS command-line platform. */
-    MC_DOS("MC-DOS"),
+    MC_DOS("mc_dos", "MC-DOS"),
 
     /** The MC-NET single-screen network platform. */
-    MC_NET("MC-NET"),
+    MC_NET("mc_net", "MC-NET"),
 
     /** The Frames graphical desktop platform (Frames 95 / XP / 11). */
-    FRAMES("Frames"),
+    FRAMES("frames", "Frames"),
 
     /** The Linux platform: every distribution on the Linux kernel (TTY, or a desktop environment on top). */
-    LINUX("Linux");
+    LINUX("linux", "Linux");
 
+    private final String serializedName;
     private final String label;
 
-    Platform(final String label) {
+    Platform(final String serializedName, final String label) {
+        this.serializedName = serializedName;
         this.label = label;
+    }
+
+    @Override
+    public String serializedName() {
+        return serializedName;
     }
 
     /** A human-readable name for tooltips and UI. */

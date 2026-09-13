@@ -602,7 +602,7 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         tag.putLongArray("Delivered", delivered);
         tag.putInt("IdleTicks", idleTicks);
         tag.putString("Label", requesterLabel);
-        tag.putByte(NetworkCraftOperation.PRIORITY_KEY, (byte) priority.ordinal());
+        tag.putByte(NetworkCraftOperation.PRIORITY_KEY, (byte) priority.id());
         return tag;
     }
 

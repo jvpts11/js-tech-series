@@ -12,6 +12,8 @@ import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.computers.os.InstallMode;
+import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -80,7 +82,7 @@ public class FirmwareScreen extends Screen {
     private static final int PAGE_STORAGE = 3;
 
     /** The array mode highlighted on the storage page, and where its rows were drawn. */
-    private int storageSel;
+    private RaidMode storageSel = RaidMode.NONE;
     private int storageRowY;
     private int storageRowH = 10;
     private static final String[] PAGES = {"Boot", "Boot Order", "Hardware", "Storage"};
@@ -183,11 +185,9 @@ public class FirmwareScreen extends Screen {
         // On the storage page Enter applies the highlighted array mode; there are no boot entries there.
         if (page == PAGE_STORAGE) {
             if (state != null && state.raid().present()
-                    && (storageSel == 0 || state.raid().drives()
-                            >= dev.jstech.computers.rack.RaidMode
-                                    .values()[storageSel].minDrives())) {
+                    && (storageSel == RaidMode.NONE || state.raid().drives() >= storageSel.minDrives())) {
                 PacketDistributor.sendToServer(new FirmwareActionPayload(computerPos, monitorPos,
-                        FirmwareActionPayload.ACTION_RAID_MODE, storageSel, -1));
+                        FirmwareActionPayload.ACTION_RAID_MODE, storageSel.id(), -1));
             }
             return;
         }
@@ -210,7 +210,7 @@ public class FirmwareScreen extends Screen {
          * installation sequence so both routes to a new system look and feel the same. A live medium
          * (Arch, Gentoo) really does just boot, and its system is put on the disk by hand afterwards.
          */
-        if (e.kind() == FirmwareStatePayload.KIND_MEDIA && e.installMode() == 0) {
+        if (e.kind() == FirmwareStatePayload.KIND_MEDIA && e.installMode() == InstallMode.GUIDED.id()) {
             openInstaller(e.label(), e.ref());
             return;
         }
@@ -241,7 +241,7 @@ public class FirmwareScreen extends Screen {
              * A live/source medium (Arch, Gentoo) has no one-click install: "installing" it means booting
              * its shell and putting the system on the disk by hand, so the action boots the medium.
              */
-            if (e.installMode() != 0) {
+            if (e.installMode() != InstallMode.GUIDED.id()) {
                 activateSelected();
                 return;
             }
@@ -325,8 +325,8 @@ public class FirmwareScreen extends Screen {
     }
 
     private String eraLabel() {
-        return state == null ? "-" : switch (HardwareEra.values()[Math.min(state.eraOrdinal(),
-                HardwareEra.values().length - 1)]) {
+        final HardwareEra era = state == null ? null : HardwareEra.find(state.eraId());
+        return era == null ? "-" : switch (era) {
             case VINTAGE -> "Vintage";
             case LEGACY -> "Legacy";
             case STANDARD -> "Standard";
@@ -653,21 +653,25 @@ public class FirmwareScreen extends Screen {
         ty += lh;
         storageRowY = ty;
         storageRowH = lh;
-        final var modes = dev.jstech.computers.rack.RaidMode.values();
-        for (int i = 0; i < modes.length; i++) {
-            final var mode = modes[i];
-            final boolean current = i == raid.mode();
-            final boolean usable = i == 0 || raid.drives() >= mode.minDrives();
-            final long capacity = i < raid.capacities().size() ? raid.capacities().get(i) : 0L;
-            final String label = (storageSel == i ? "> " : "  ")
-                    + (i == 0 ? "NONE (independent)" : mode.name());
-            final String detail = !usable ? "needs " + mode.minDrives() + " drives"
-                    : capacity + " items" + (i == 1 ? "  +25% throughput"
-                            : i == 2 ? "  survives to 1 drive"
-                                    : i == 3 ? "  survives 1 loss" : "");
+        // The server sends one capacity per mode, in the order the modes are declared, which is the order listed here.
+        int row = 0;
+        for (final RaidMode mode : RaidMode.values()) {
+            final boolean current = mode.id() == raid.mode();
+            final boolean usable = mode == RaidMode.NONE || raid.drives() >= mode.minDrives();
+            final long capacity = row < raid.capacities().size() ? raid.capacities().get(row) : 0L;
+            final String label = (storageSel == mode ? "> " : "  ")
+                    + (mode == RaidMode.NONE ? "NONE (independent)" : mode.name());
+            final String strength = switch (mode) {
+                case NONE -> "";
+                case RAID0 -> "  +25% throughput";
+                case RAID1 -> "  survives to 1 drive";
+                case RAID5 -> "  survives 1 loss";
+            };
+            final String detail = !usable ? "needs " + mode.minDrives() + " drives" : capacity + " items" + strength;
             g.drawString(font, label, x, ty, current ? 0xFF39D6C4 : usable ? valueColor : dimColor, false);
             g.drawString(font, detail, x + 130, ty, dimColor, false);
             ty += lh;
+            row++;
         }
         g.drawString(font, "Enter applies the mode. Changing it erases the array.", x, ty + 4,
                 dimColor, false);
@@ -763,7 +767,7 @@ public class FirmwareScreen extends Screen {
             }
             case 265 -> { // Up
                 if (page == PAGE_STORAGE) {
-                    storageSel = Math.max(0, storageSel - 1);
+                    storageSel = storageSel.previous();
                 } else {
                     selected = Math.max(0, selected - 1);
                 }
@@ -772,9 +776,7 @@ public class FirmwareScreen extends Screen {
             }
             case 264 -> { // Down
                 if (page == PAGE_STORAGE) {
-                    storageSel = Math.min(
-                            dev.jstech.computers.rack.RaidMode.values().length - 1,
-                            storageSel + 1);
+                    storageSel = storageSel.next();
                 } else {
                     selected = Math.min(Math.max(0, rows().size() - 1), selected + 1);
                 }

@@ -74,7 +74,7 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
     private static final int DATA_USABLE_SLOTS = 18;
     private static final int DATA_CRAFT_COMPUTERS = 29;
     /*
-     * The host's board-derived hardware-era ordinal (or -1 when no board), synced so the client can skin the
+     * The host's board-derived hardware-era id (or -1 when no board), synced so the client can skin the
      * terminal in the host computer's era. It re-resolves each tick, so swapping the board repaints live.
      */
     private static final int DATA_ERA = 30;
@@ -228,7 +228,7 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
             case DATA_CRAFT_COMPUTERS -> craftComputerCount();
             case DATA_ERA -> {
                 final dev.jstech.core.tier.HardwareEra era = host.displayEra();
-                yield era == null ? -1 : era.ordinal();
+                yield era == null ? -1 : era.id();
             }
             case DATA_INDEX_HEALTH -> host.indexHealthState();
             case DATA_INDEX_HEALTH_TYPES -> host.indexHealthTypeCount();
@@ -579,11 +579,9 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
         return data.get(26);
     }
 
-    /** The index's health state, as an {@code IndexHealth.State} ordinal. */
+    /** The index's health state, read back from the id the host synced. */
     public dev.jstech.computers.operation.index.IndexHealth.State indexHealth() {
-        final var states = dev.jstech.computers.operation.index.IndexHealth.State.values();
-        final int ordinal = data.get(DATA_INDEX_HEALTH);
-        return ordinal >= 0 && ordinal < states.length ? states[ordinal] : states[0];
+        return dev.jstech.computers.operation.index.IndexHealth.State.byId(data.get(DATA_INDEX_HEALTH));
     }
 
     /** How many item types the index has flagged. */
@@ -630,10 +628,7 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
     /** The host computer's board-derived hardware era for the GUI skin, or {@code null} (STANDARD) when none. */
     @Nullable
     public dev.jstech.core.tier.HardwareEra hardwareEra() {
-        final int ordinal = data.get(DATA_ERA);
-        final dev.jstech.core.tier.HardwareEra[] values =
-                dev.jstech.core.tier.HardwareEra.values();
-        return ordinal >= 0 && ordinal < values.length ? values[ordinal] : null;
+        return dev.jstech.core.tier.HardwareEra.find(data.get(DATA_ERA));
     }
 
     @Override

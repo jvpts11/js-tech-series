@@ -284,7 +284,7 @@ public final class SetupRunner {
     }
 
     private static CommandOutputPayload.WireLine line(final String text, final CliStyle style) {
-        return new CommandOutputPayload.WireLine(text, style.ordinal());
+        return new CommandOutputPayload.WireLine(text, style.id());
     }
 
     /* Who gets told */

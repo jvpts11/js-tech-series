@@ -21,6 +21,8 @@ import dev.jstech.computers.os.MinSpecTooltip;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.media.MediaDriveType;
+import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.CellGrid;
 import dev.jstech.core.client.gui.component.Draw;
@@ -226,12 +228,12 @@ public final class ThisPcApp implements IDesktopApp {
                 int detailColor = ctx.skin().dim();
                 if (!media.loaded()) {
                     detail = prettyDrive(media.drive()) + " drive, " + media.blocksAway() + " blocks away";
-                } else if (media.kind().equals("OS_INSTALL")) {
+                } else if (media.kind().equals(MediaKind.OS_INSTALL.serializedName())) {
                     detail = "Installs " + (media.payloadName().isEmpty() ? media.payloadPath() : media.payloadName())
                             + (media.payloadYear() > 0 ? " · " + media.payloadYear() : "") + " · bootable"
                             + (media.packageId().isEmpty() ? "" : " · package " + media.packageId());
                     detailColor = AMBER;
-                } else if (media.kind().equals("PROGRAM_INSTALL")) {
+                } else if (media.kind().equals(MediaKind.PROGRAM_INSTALL.serializedName())) {
                     detail = (media.installable() ? "Installs " : "Installed: ")
                             + (media.payloadName().isEmpty() ? media.payloadPath() : media.payloadName())
                             + (media.payloadYear() > 0 ? " · " + media.payloadYear() : "")
@@ -268,7 +270,7 @@ public final class ThisPcApp implements IDesktopApp {
             }
             if (media != null) {
                 // The requirements ride on the tooltip of the detail line; the row has room for one line.
-                if (!media.needs().isEmpty() && media.loaded() && !media.kind().equals("DATA") && my >= y() + 11 && my < y() + 20) {
+                if (!media.needs().isEmpty() && media.loaded() && !media.kind().equals(MediaKind.DATA.serializedName()) && my >= y() + 11 && my < y() + 20) {
                     final List<Component> lines = new ArrayList<>(3);
                     lines.add(Component.literal(media.payloadName().isEmpty() ? media.mediaName() : media.payloadName()));
                     for (final String need : media.needs().split(" · ")) {
@@ -575,22 +577,19 @@ public final class ThisPcApp implements IDesktopApp {
             Draw.outline(g, x + 2, y, 10, 10, 0xFFC2C7D4);
             return;
         }
-        switch (m.drive()) {
-            case "DOCK_STATION" -> {
-                g.fill(x + 1, y + 1, x + 13, y + 9, 0xFF2E3238);
-                g.fill(x + 9, y + 3, x + 12, y + 7, 0xFFB8BEC8);
-                Draw.outline(g, x + 1, y + 1, 12, 8, 0xFF1C1F24);
-            }
-            case "FLOPPY_DRIVE" -> {
-                g.fill(x + 1, y, x + 13, y + 10, 0xFF1C2438);
-                g.fill(x + 4, y + 1, x + 10, y + 4, 0xFFB8BEC8);
-                Draw.outline(g, x + 1, y, 12, 10, 0xFF0B1220);
-            }
-            default -> {
-                g.fill(x + 2, y, x + 12, y + 10, 0xFFB9C0CE);
-                g.fill(x + 5, y + 3, x + 9, y + 7, 0xFFEDF0F6);
-                Draw.outline(g, x + 2, y, 10, 10, 0xFF6E7686);
-            }
+        final MediaDriveType drive = MediaDriveType.find(m.drive());
+        if (drive == MediaDriveType.DOCK_STATION) {
+            g.fill(x + 1, y + 1, x + 13, y + 9, 0xFF2E3238);
+            g.fill(x + 9, y + 3, x + 12, y + 7, 0xFFB8BEC8);
+            Draw.outline(g, x + 1, y + 1, 12, 8, 0xFF1C1F24);
+        } else if (drive == MediaDriveType.FLOPPY_DRIVE) {
+            g.fill(x + 1, y, x + 13, y + 10, 0xFF1C2438);
+            g.fill(x + 4, y + 1, x + 10, y + 4, 0xFFB8BEC8);
+            Draw.outline(g, x + 1, y, 12, 10, 0xFF0B1220);
+        } else {
+            g.fill(x + 2, y, x + 12, y + 10, 0xFFB9C0CE);
+            g.fill(x + 5, y + 3, x + 9, y + 7, 0xFFEDF0F6);
+            Draw.outline(g, x + 2, y, 10, 10, 0xFF6E7686);
         }
     }
 
@@ -731,12 +730,12 @@ public final class ThisPcApp implements IDesktopApp {
     // helpers
 
     private static String prettyDrive(final String drive) {
-        return switch (drive) {
-            case "FLOPPY_DRIVE" -> "Floppy";
-            case "CD_DRIVE" -> "CD";
-            case "DVD_DRIVE" -> "DVD";
-            case "DOCK_STATION" -> "USB";
-            default -> drive;
+        final MediaDriveType type = MediaDriveType.find(drive);
+        return type == null ? drive : switch (type) {
+            case FLOPPY_DRIVE -> "Floppy";
+            case CD_DRIVE -> "CD";
+            case DVD_DRIVE -> "DVD";
+            case DOCK_STATION -> "USB";
         };
     }
 

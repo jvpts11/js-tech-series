@@ -51,7 +51,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         StorageKey.CODEC.encodeStart(ops, resultKey).result().ifPresent(t -> tag.put("Result", t));
         tag.putLong("Requested", requested);
         tag.putString("Label", requesterLabel);
-        tag.putByte(PRIORITY_KEY, (byte) priority.ordinal());
+        tag.putByte(PRIORITY_KEY, (byte) priority.id());
         if (embeddedPattern != null) {
             CraftingPattern.CODEC.encodeStart(ops, embeddedPattern).result().ifPresent(t -> tag.put("Embedded", t));
         }
@@ -185,7 +185,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
     /** The scheduling level a saved operation ran at; the default for saves that predate priorities. */
     static OperationPriority savedPriority(final CompoundTag tag) {
         return tag.contains(PRIORITY_KEY)
-                ? OperationPriority.byOrdinal(tag.getByte(PRIORITY_KEY)) : OperationPriority.DEFAULT;
+                ? OperationPriority.byId(tag.getByte(PRIORITY_KEY)) : OperationPriority.DEFAULT;
     }
 
     @org.jetbrains.annotations.Nullable

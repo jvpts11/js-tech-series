@@ -2151,7 +2151,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     public int indexHealthState() {
-        return networkIndex.health().state().ordinal();
+        return networkIndex.health().state().id();
     }
 
     @Override
@@ -2210,7 +2210,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             case DATA_RUNNING_OPS -> runningOps();
             case DATA_COMPLETED_OPS -> (int) Math.min(Integer.MAX_VALUE, completedOps());
             case DATA_FAILOVER_ENABLED -> failoverEnabled ? 1 : 0;
-            case DATA_FAILOVER_ROLE -> failoverRole.ordinal();
+            case DATA_FAILOVER_ROLE -> failoverRole.id();
             default -> 0;
         };
     }
@@ -2270,11 +2270,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
          * could, with frequent chunk cycling, stop a standby from ever promoting).
          */
         if (tag.contains("FailoverRole")) {
-            try {
-                failoverRole = FailoverRole.valueOf(tag.getString("FailoverRole"));
-            } catch (final IllegalArgumentException ignored) {
-                failoverRole = FailoverRole.NONE;
-            }
+            failoverRole = FailoverRole.byId(tag.getByte("FailoverRole"));
         }
         failoverWaitTicks = tag.getInt("FailoverWaitTicks");
         if (tag.contains("NetworkUuid")) {
@@ -2306,11 +2302,9 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         for (int i = 0; i < catalog.size(); i++) {
             final CompoundTag entry = catalog.getCompound(i);
             iqlCatalog.put(new dev.jstech.computers.program.iql.IqlSavedObject(
-                    dev.jstech.computers.program.iql.IqlDefinition.ObjectType
-                            .valueOf(entry.getString("Type")),
+                    dev.jstech.computers.program.iql.IqlDefinition.ObjectType.byId(entry.getByte("Type")),
                     entry.getString("Name"), entry.getString("Body"),
-                    dev.jstech.computers.program.iql.IqlDefinition.TriggerKind
-                            .valueOf(entry.getString("Trigger")),
+                    dev.jstech.computers.program.iql.IqlDefinition.TriggerKind.byId(entry.getByte("Trigger")),
                     entry.getString("Spec")));
         }
         pausedJobs.clear();
@@ -2325,7 +2319,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     protected void saveExtra(final CompoundTag tag, final HolderLookup.Provider registries) {
         tag.putBoolean("Failover", failoverEnabled);
         tag.putBoolean("ServicePanelOff", servicePanelOff);
-        tag.putString("FailoverRole", failoverRole.name());
+        tag.putByte("FailoverRole", (byte) failoverRole.id());
         tag.putInt("FailoverWaitTicks", failoverWaitTicks);
         if (nativeNetworkUuid != null) {
             tag.putString("NetworkUuid", nativeNetworkUuid.asString());
@@ -2379,10 +2373,10 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             final net.minecraft.nbt.ListTag catalog = new net.minecraft.nbt.ListTag();
             for (final dev.jstech.computers.program.iql.IqlSavedObject object : iqlCatalog.all()) {
                 final CompoundTag entry = new CompoundTag();
-                entry.putString("Type", object.type().name());
+                entry.putByte("Type", (byte) object.type().id());
                 entry.putString("Name", object.name());
                 entry.putString("Body", object.body());
-                entry.putString("Trigger", object.triggerKind().name());
+                entry.putByte("Trigger", (byte) object.triggerKind().id());
                 entry.putString("Spec", object.triggerSpec());
                 catalog.add(entry);
             }

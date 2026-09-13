@@ -90,7 +90,7 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
         MultiStagePattern.CODEC.encodeStart(ops, pattern).result().ifPresent(t -> tag.put("Pattern", t));
         tag.putLong("Requested", requested);
         tag.putString("Label", requesterLabel);
-        tag.putByte(NetworkCraftOperation.PRIORITY_KEY, (byte) priority.ordinal());
+        tag.putByte(NetworkCraftOperation.PRIORITY_KEY, (byte) priority.id());
         tag.putInt("StageIndex", stageIndex);
         if (currentStage instanceof IPersistentOperation stage && !currentStage.isDone()) {
             tag.putUUID("StageId", stage.operationId());

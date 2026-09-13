@@ -135,9 +135,9 @@ public record ThisPcPayload(WireMachine machine, List<WireDisk> disks, List<Wire
      * One drive linked to the computer, with whatever medium is in it.
      *
      * @param readerPos   the drive block's packed position
-     * @param drive       the drive type name (e.g. CD_DRIVE)
+     * @param drive       the drive type's serialized name (e.g. cd_drive)
      * @param mediaName   the medium's display name, or empty for an empty drive
-     * @param kind        the media kind (OS_INSTALL / PROGRAM_INSTALL / DATA / empty when none)
+     * @param kind        the media kind's serialized name (os_install / program_install / data, empty when none)
      * @param payloadPath the OS/program id carried, or empty
      * @param installable true if this is an installer whose software is not yet installed here
      * @param payloadName what the medium installs, by name, or empty

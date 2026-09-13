@@ -96,8 +96,8 @@ public final class ShellView extends Panel {
         } else {
             this.prompt = "C:\\>";
             if (banner) {
-                push("J's Computers Shell", colorOf(CliStyle.ACCENT.ordinal()));
-                push("type a command and press ENTER", colorOf(CliStyle.DIM.ordinal()));
+                push("J's Computers Shell", colorOf(CliStyle.ACCENT));
+                push("type a command and press ENTER", colorOf(CliStyle.DIM));
             }
         }
         this.output = add(new ListView<Line>(() -> this.wrapCache, LINE_H, this::renderLine));
@@ -236,7 +236,7 @@ public final class ShellView extends Panel {
 
     /** Puts a line in this view's scrollback without asking the machine anything. */
     public void say(final String text, final CliStyle style) {
-        push(text, colorOf(style.ordinal()));
+        push(text, colorOf(style));
     }
 
     /** Runs a line as though the player had typed it. */
@@ -430,7 +430,7 @@ public final class ShellView extends Panel {
             PacketDistributor.sendToServer(new DesktopShellRunPayload(this.host, line, this.session));
             return;
         }
-        push(this.prompt + " " + line, colorOf(CliStyle.PROMPT.ordinal()));
+        push(this.prompt + " " + line, colorOf(CliStyle.PROMPT));
         final String[] parts = line.split("\\s+", 2);
         final String verb = parts[0].toLowerCase(Locale.ROOT);
         // "run/start/open <program>" launches a desktop window client-side (the server shell has no windows).
@@ -460,9 +460,11 @@ public final class ShellView extends Panel {
         push("No such program: " + name + " (type 'run' to list them)", 0xFFE06A6A);
     }
 
-    static int colorOf(final int ordinal) {
-        final CliStyle[] values = CliStyle.values();
-        final CliStyle style = ordinal >= 0 && ordinal < values.length ? values[ordinal] : CliStyle.PLAIN;
+    static int colorOf(final int styleId) {
+        return colorOf(CliStyle.byId(styleId));
+    }
+
+    static int colorOf(final CliStyle style) {
         return switch (style) {
             case PROMPT -> 0xFFCDD6E2;
             case ACCENT, HEADER -> 0xFF39D6C4;

@@ -85,7 +85,7 @@ public final class ConsolePayloads {
         final var response = shell.run(payload.line(), computer);
         final List<CommandOutputPayload.WireLine> wire = new ArrayList<>(response.lines().size());
         for (final var cliLine : response.lines()) {
-            wire.add(new CommandOutputPayload.WireLine(cliLine.text(), cliLine.style().ordinal()));
+            wire.add(new CommandOutputPayload.WireLine(cliLine.text(), cliLine.style().id()));
         }
         final String prompt = computer.prompt();
         final var handOver = response.handOver();
@@ -177,7 +177,7 @@ public final class ConsolePayloads {
                 : dev.jstech.computers.program.cli.CliStyle.OK;
         final List<CommandOutputPayload.WireLine> wire = new ArrayList<>();
         for (final String line : wrapToConsole(text)) {
-            wire.add(new CommandOutputPayload.WireLine(line, style.ordinal()));
+            wire.add(new CommandOutputPayload.WireLine(line, style.id()));
         }
         // An empty prompt means "keep the current prompt", so this helper does not change the directory.
         PacketDistributor.sendToPlayer(player, new CommandOutputPayload(false, "", wire));

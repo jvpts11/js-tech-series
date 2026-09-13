@@ -7,21 +7,38 @@
  */
 package dev.jstech.core.tier;
 
+import dev.jstech.core.id.IStableId;
+import dev.jstech.core.id.IStableName;
+import dev.jstech.core.id.StableIds;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Hardware Era: the progression axis for computational hardware (motherboards, CPUs, RAM, storage).
  *
- * <p>This is pure domain logic with no Minecraft dependency, so it stays unit-testable. When an era
- * has to back a block-state property, the binding layer stores its {@link #level()} as an
- * {@code IntegerProperty} and turns the stored value back into an era with {@link #fromLevel(int)};
- * that keeps the Minecraft-aware property type out of this enum.
+ * <p>This is pure domain logic with no Minecraft dependency, so it stays unit-testable. Each era declares its
+ * {@link #level()}, its place in the progression counted from 0 without gaps, and that level is also its stable id:
+ * saves, packets and menu data carry it. When an era has to back a block-state property, the binding layer stores
+ * the level as an {@code IntegerProperty} and turns the stored value back into an era with {@link #fromLevel(int)};
+ * that keeps the Minecraft-aware property type out of this enum. Data files name an era by its
+ * {@link #serializedName()}.
  */
-public enum HardwareEra {
-    VINTAGE,
-    LEGACY,
-    STANDARD,
-    ADVANCED,
-    EXA,
-    SINGULARITY;
+public enum HardwareEra implements IStableId, IStableName {
+    VINTAGE(0, "vintage"),
+    LEGACY(1, "legacy"),
+    STANDARD(2, "standard"),
+    ADVANCED(3, "advanced"),
+    EXA(4, "exa"),
+    SINGULARITY(5, "singularity");
+
+    private static final StableIds<HardwareEra> IDS = StableIds.of(HardwareEra.class);
+
+    private final int level;
+    private final String serializedName;
+
+    HardwareEra(final int level, final String serializedName) {
+        this.level = level;
+        this.serializedName = serializedName;
+    }
 
     /**
      * The colour an era's screens are remembered by, as an RGB int for a tooltip: the green phosphor of a
@@ -81,15 +98,25 @@ public enum HardwareEra {
     }
 
     public HardwareEra next() {
-        return this == SINGULARITY ? SINGULARITY : values()[ordinal() + 1];
+        return this == SINGULARITY ? SINGULARITY : fromLevel(level + 1);
     }
 
     public HardwareEra prev() {
-        return this == VINTAGE ? VINTAGE : values()[ordinal() - 1];
+        return this == VINTAGE ? VINTAGE : fromLevel(level - 1);
     }
 
     public int level() {
-        return ordinal();
+        return level;
+    }
+
+    @Override
+    public int id() {
+        return level;
+    }
+
+    @Override
+    public String serializedName() {
+        return serializedName;
     }
 
     /**
@@ -99,11 +126,17 @@ public enum HardwareEra {
      * @throws IllegalArgumentException if no era has that level
      */
     public static HardwareEra fromLevel(final int level) {
-        final HardwareEra[] all = values();
-        if (level < 0 || level >= all.length) {
+        final HardwareEra era = IDS.find(level);
+        if (era == null) {
             throw new IllegalArgumentException("no hardware era at level " + level);
         }
-        return all[level];
+        return era;
+    }
+
+    /** The era a save or a packet names by {@code id}, or null for an id no era has (the -1 of "no era"). */
+    @Nullable
+    public static HardwareEra find(final int id) {
+        return IDS.find(id);
     }
 
     public boolean isAtLeast(HardwareEra other) {

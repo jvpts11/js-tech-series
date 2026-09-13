@@ -74,14 +74,14 @@ public final class FirmwarePayloads {
                 ClientPayloadHandlers.onMainThread((payload, player) ->
                         dev.jstech.computers.block.IPostScreenOpener.Holder.open(
                                 payload.host(), payload.monitorPos(),
-                                dev.jstech.computers.os.FirmwareKind.values()[payload.firmwareKind()],
+                                dev.jstech.computers.os.FirmwareKind.byId(payload.firmwareKind()),
                                 payload.name())));
         // A finished installer still waiting for its reboot: the monitor comes back to that prompt.
         registrar.playToClient(OpenInstallDonePayload.TYPE, OpenInstallDonePayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
                         dev.jstech.computers.block.IInstallDoneScreenOpener.Holder.open(
                                 payload.host(), payload.monitorPos(),
-                                dev.jstech.computers.os.FirmwareKind.values()[payload.firmwareKind()],
+                                dev.jstech.computers.os.FirmwareKind.byId(payload.firmwareKind()),
                                 payload.osName(), payload.targetLabel(), payload.targetSlot(), payload.failure())));
         ComputerAccess.accept(registrar, PostCompletePayload.TYPE, PostCompletePayload.STREAM_CODEC,
                 ComputerAccess.screen(PostCompletePayload::hostPos), FirmwarePayloads::handlePostComplete);
@@ -137,12 +137,12 @@ public final class FirmwarePayloads {
                     os.displayName() + (os.installMode() == dev.jstech.computers.os.InstallMode.GUIDED
                             ? " installer" : " (live)"),
                     drive + (eraOk ? "" : " - " + eraName(os.minEra()) + " era or newer"), eraOk,
-                    os.installMode().ordinal()));
+                    os.installMode().id()));
         }
         final int cpuMhz = computer.maxCpuMhz();
         final String cpuLabel = cpuMhz > 0 ? cpuMhz + " MHz" : "not detected";
         final int ramMb = (int) Math.min(Integer.MAX_VALUE, computer.ramBuffer());
-        return new FirmwareStatePayload(pos, era.ordinal(), cpuLabel, cpuMhz, ramMb, computer.bootDiskSlot(),
+        return new FirmwareStatePayload(pos, era.id(), cpuLabel, cpuMhz, ramMb, computer.bootDiskSlot(),
                 computer.defaultInstallSlot(), entries, raidInfoOf(level, computer));
     }
 
@@ -167,15 +167,14 @@ public final class FirmwarePayloads {
                 sizes.add(disk.spec().capacityItems());
             }
         }
-        final var modes = dev.jstech.computers.rack.RaidMode.values();
-        final List<Long> capacities = new ArrayList<>(modes.length);
-        for (final var mode : modes) {
+        final List<Long> capacities = new ArrayList<>(dev.jstech.computers.rack.RaidMode.values().length);
+        for (final var mode : dev.jstech.computers.rack.RaidMode.values()) {
             // NONE presents the drives as they are; the others present the array they would form.
             capacities.add(mode == dev.jstech.computers.rack.RaidMode.NONE
                     ? sizes.stream().mapToLong(Long::longValue).sum()
                     : mode.usableCapacity(sizes));
         }
-        return new FirmwareStatePayload.RaidInfo(true, rack.raidModeOf(slot).ordinal(),
+        return new FirmwareStatePayload.RaidInfo(true, rack.raidModeOf(slot).id(),
                 rack.raidMemberCount(slot), sizes.size(), capacities);
     }
 
@@ -202,11 +201,10 @@ public final class FirmwarePayloads {
             }
             case FirmwareActionPayload.ACTION_SET_BOOT -> computer.setBootDiskSlot((int) payload.ref());
             case FirmwareActionPayload.ACTION_RAID_MODE -> {
-                final var modes = dev.jstech.computers.rack.RaidMode.values();
-                final int mode = (int) payload.ref();
+                final var mode = dev.jstech.computers.rack.RaidMode.find((int) payload.ref());
                 if (computer instanceof dev.jstech.computers.blockentity
-                        .ServerRackBlockEntity rack && mode >= 0 && mode < modes.length) {
-                    rack.setRaidMode(rack.soleComputerSlot(), modes[mode]);
+                        .ServerRackBlockEntity rack && mode != null) {
+                    rack.setRaidMode(rack.soleComputerSlot(), mode);
                 }
             }
             case FirmwareActionPayload.ACTION_FORMAT -> computer.formatDisk((int) payload.ref());
@@ -223,7 +221,7 @@ public final class FirmwarePayloads {
                     PacketDistributor.sendToPlayer(player, new OpenInstallDonePayload(payload.hostPos(),
                             payload.monitorPos(),
                             dev.jstech.computers.os.FirmwareKind
-                                    .forEra(era != null ? era : HardwareEra.STANDARD).ordinal(),
+                                    .forEra(era != null ? era : HardwareEra.STANDARD).id(),
                             "", slot < 0 ? "the default disk" : "Disk " + slot, slot, failure));
                 }
             }

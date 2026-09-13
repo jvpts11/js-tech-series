@@ -88,11 +88,11 @@ public interface IComputerTerminalHost {
     }
 
     /**
-     * The storage index's health as an {@link dev.jstech.computers.operation.index.IndexHealth.State}
-     * ordinal, so the terminal can show a permanent status strip. Hosts that own no index report OK.
+     * The storage index's health as the id of an {@link dev.jstech.computers.operation.index.IndexHealth.State},
+     * so the terminal can show a permanent status strip. Hosts that own no index report OK.
      */
     default int indexHealthState() {
-        return dev.jstech.computers.operation.index.IndexHealth.State.OK.ordinal();
+        return dev.jstech.computers.operation.index.IndexHealth.State.OK.id();
     }
 
     /** How many item types the index has flagged as unconfirmed or orphaned. */

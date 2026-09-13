@@ -9,6 +9,7 @@ package dev.jstech.computers.os;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.core.id.StableCodecs;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
@@ -72,21 +73,21 @@ public record ProgramSpec(
             Codec.STRING.optionalFieldOf("command_name", "").forGetter(ProgramSpec::commandName),
             Codec.STRING.optionalFieldOf("display_name", "").forGetter(ProgramSpec::displayName),
             Codec.BOOL.optionalFieldOf("preinstalled", false).forGetter(ProgramSpec::preinstalled),
-            enumCodec(Platform.class).listOf().xmap(Set::copyOf, List::copyOf)
+            StableCodecs.byName(Platform.class).listOf().xmap(Set::copyOf, List::copyOf)
                     .fieldOf("platforms").forGetter(ProgramSpec::platforms),
             Codec.INT.optionalFieldOf("min_cpu_mhz", 0).forGetter(ProgramSpec::minCpuMhz),
             Codec.INT.optionalFieldOf("min_vram_mb", 0).forGetter(ProgramSpec::minVramMb),
             Codec.INT.optionalFieldOf("min_disk_mb", 0).forGetter(ProgramSpec::minDiskMb),
-            enumCodec(ProgramKind.class).optionalFieldOf("kind", ProgramKind.APP).forGetter(ProgramSpec::kind),
+            StableCodecs.byName(ProgramKind.class).optionalFieldOf("kind", ProgramKind.APP).forGetter(ProgramSpec::kind),
             Codec.INT.optionalFieldOf("min_os_rank", 0).forGetter(ProgramSpec::minOsRank),
-            enumCodec(HostScope.class).optionalFieldOf("host_scope", HostScope.ANY).forGetter(ProgramSpec::hostScope),
+            StableCodecs.byName(HostScope.class).optionalFieldOf("host_scope", HostScope.ANY).forGetter(ProgramSpec::hostScope),
             ResourceLocation.CODEC.optionalFieldOf("icon_id", ResourceLocation.fromNamespaceAndPath("jsc", "generic"))
                     .forGetter(ProgramSpec::iconId),
-            enumCodec(dev.jstech.core.tier.HardwareEra.class)
+            StableCodecs.byName(dev.jstech.core.tier.HardwareEra.class)
                     .optionalFieldOf("min_era", dev.jstech.core.tier.HardwareEra.VINTAGE)
                     .forGetter(ProgramSpec::minEra),
             // Absent means "derive it from the OS rank", which the compact constructor does.
-            enumCodec(dev.jstech.core.tier.HardwareEra.class)
+            StableCodecs.byName(dev.jstech.core.tier.HardwareEra.class)
                     .optionalFieldOf("era", null)
                     .forGetter(ProgramSpec::era),
             SoftwareHouse.CODEC.optionalFieldOf("house", SoftwareHouse.BUNDLED).forGetter(ProgramSpec::house),
@@ -233,10 +234,5 @@ public record ProgramSpec(
             sb.append(Character.toUpperCase(p.charAt(0))).append(p.substring(1));
         }
         return sb.toString();
-    }
-
-    private static <E extends Enum<E>> Codec<E> enumCodec(final Class<E> type) {
-        return Codec.STRING.xmap(s -> Enum.valueOf(type, s.toUpperCase(java.util.Locale.ROOT)),
-                e -> e.name().toLowerCase(java.util.Locale.ROOT));
     }
 }

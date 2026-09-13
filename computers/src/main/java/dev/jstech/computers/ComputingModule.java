@@ -216,10 +216,8 @@ public final class ComputingModule {
     public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
             net.minecraft.core.component.DataComponentType<MediaKind>>
             MEDIA_KIND = COMPONENTS.registerComponentType("media_kind", b -> b
-                    .persistent(com.mojang.serialization.Codec.STRING.xmap(
-                            MediaKind::valueOf, MediaKind::name))
-                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8.map(
-                            MediaKind::valueOf, MediaKind::name)));
+                    .persistent(dev.jstech.core.id.StableCodecs.byName(MediaKind.class))
+                    .networkSynchronized(dev.jstech.core.id.StableCodecs.byId(MediaKind.class, MediaKind.OS_INSTALL)));
 
     // Data contents (DATA kind): a portable item/fluid storage snapshot.
     public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,

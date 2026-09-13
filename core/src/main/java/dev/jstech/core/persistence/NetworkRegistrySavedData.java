@@ -51,7 +51,7 @@ public final class NetworkRegistrySavedData extends CoreSavedData{
             final CompoundTag entry = list.getCompound(i);
             try {
                 final NetworkUuid uuid = new NetworkUuid(UUID.fromString(entry.getString(KEY_UUID)));
-                networks.put(uuid, parseState(entry.getString(KEY_STATE)));
+                networks.put(uuid, NetworkUuidState.byId(entry.getByte(KEY_STATE)));
             } catch (final IllegalArgumentException ignored) {
                 // Corrupt UUID string, skip it rather than crash the load.
             }
@@ -71,14 +71,6 @@ public final class NetworkRegistrySavedData extends CoreSavedData{
         return new NetworkRegistrySavedData(NetworkRegistryState.ofStates(networks));
     }
 
-    private static NetworkUuidState parseState(final String raw) {
-        try {
-            return NetworkUuidState.valueOf(raw);
-        } catch (final IllegalArgumentException ignored) {
-            return NetworkUuidState.ACTIVE;
-        }
-    }
-
     public static SavedData.Factory<NetworkRegistrySavedData> factory() {
         return new SavedData.Factory<>(
                 NetworkRegistrySavedData::create,
@@ -95,7 +87,7 @@ public final class NetworkRegistrySavedData extends CoreSavedData{
         state.states().forEach((uuid, networkState) -> {
             final CompoundTag entry = new CompoundTag();
             entry.putString(KEY_UUID, uuid.value().toString());
-            entry.putString(KEY_STATE, networkState.name());
+            entry.putByte(KEY_STATE, (byte) networkState.id());
             list.add(entry);
         });
         tag.put(KEY_NETWORKS, list);

@@ -596,7 +596,7 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
             one.putString(NBT_WHO, e.who());
             one.putString(NBT_WHAT, e.what());
             one.putString(NBT_RESULT, e.result());
-            one.putInt(NBT_TONE, e.tone().ordinal());
+            one.putInt(NBT_TONE, e.tone().id());
             entries.add(one);
         }
         tag.put(NBT_LOG, entries);
@@ -618,7 +618,7 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
             for (final Tag raw : tag.getList(NBT_LOG, Tag.TAG_COMPOUND)) {
                 final CompoundTag one = (CompoundTag) raw;
                 oldestFirst.add(new GatewayLog.Entry(one.getLong(NBT_WHEN), one.getString(NBT_WHO),
-                        one.getString(NBT_WHAT), one.getString(NBT_RESULT), GatewayLog.Tone.at(one.getInt(NBT_TONE))));
+                        one.getString(NBT_WHAT), one.getString(NBT_RESULT), GatewayLog.Tone.byId(one.getInt(NBT_TONE))));
             }
             log.restore(oldestFirst);
         }

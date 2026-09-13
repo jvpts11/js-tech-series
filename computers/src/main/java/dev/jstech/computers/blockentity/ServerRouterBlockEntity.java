@@ -57,7 +57,7 @@ public class ServerRouterBlockEntity extends BlockEntity {
     public static final int DATA_OVER_CAPACITY = 3;   // 0 or 1
     public static final int DATA_SECTION_COUNT = 4;
     public static final int DATA_SECTION_BASE = 5;
-    public static final int DATA_PER_SECTION = 4;     // face 3D value, racks, servers, mode ordinal
+    public static final int DATA_PER_SECTION = 4;     // face 3D value, racks, servers, mode id
     public static final int MAX_SECTIONS = 5;         // the 6 faces minus the one input face
     public static final int DATA_COUNT = DATA_SECTION_BASE + MAX_SECTIONS * DATA_PER_SECTION;
 
@@ -311,7 +311,7 @@ public class ServerRouterBlockEntity extends BlockEntity {
                 data.set(base, section.face().get3DDataValue());
                 data.set(base + 1, section.rackCount());
                 data.set(base + 2, section.serverCount());
-                data.set(base + 3, loadBalanceMode(section.face()).ordinal());
+                data.set(base + 3, loadBalanceMode(section.face()).id());
             } else {
                 data.set(base, -1);
                 data.set(base + 1, 0);
@@ -414,7 +414,7 @@ public class ServerRouterBlockEntity extends BlockEntity {
         }
         final CompoundTag modes = new CompoundTag();
         for (final Map.Entry<Direction, LoadBalanceMode> entry : loadBalanceModes.entrySet()) {
-            modes.putByte(entry.getKey().getName(), (byte) entry.getValue().ordinal());
+            modes.putByte(entry.getKey().getName(), (byte) entry.getValue().id());
         }
         if (!modes.isEmpty()) {
             tag.put("LoadBalance", modes);
@@ -448,11 +448,7 @@ public class ServerRouterBlockEntity extends BlockEntity {
             final CompoundTag modes = tag.getCompound("LoadBalance");
             for (final Direction direction : Direction.values()) {
                 if (modes.contains(direction.getName())) {
-                    final int ordinal = modes.getByte(direction.getName()) & 0xFF;
-                    final LoadBalanceMode[] values = LoadBalanceMode.values();
-                    if (ordinal < values.length) {
-                        loadBalanceModes.put(direction, values[ordinal]);
-                    }
+                    loadBalanceModes.put(direction, LoadBalanceMode.byId(modes.getByte(direction.getName())));
                 }
             }
         }
