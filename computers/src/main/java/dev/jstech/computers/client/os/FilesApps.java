@@ -58,18 +58,6 @@ public final class FilesApps {
         }
     }
 
-    /**
-     * Hands every explorer waiting on that ComputerCraft folder what came back.
-     *
-     * <p>The same rule as a listing of our own: one that has moved on somewhere else is left alone, and
-     * a listing that never comes leaves the explorer saying so rather than waiting for ever.
-     */
-    public static void acceptCc(final dev.jstech.computers.operation.payload.CcFilesPayload payload) {
-        for (final FilesApp app : List.copyOf(OPEN)) {
-            app.acceptCc(payload);
-        }
-    }
-
     /** Has every open explorer ask the disk again, whatever folder each is on. */
     public static void refreshAll() {
         for (final FilesApp app : List.copyOf(OPEN)) {
