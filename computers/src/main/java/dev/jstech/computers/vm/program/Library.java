@@ -39,7 +39,7 @@ public final class Library {
 
     private final Heap heap;
     private final IHost host;
-    private final ConsoleBuffer console = new ConsoleBuffer();
+    private final ProgramConsole console = new ProgramConsole();
     private final Random random = new Random(0);
 
     /** The class this process was started from, which is how the world knows which program asked. */

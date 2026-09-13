@@ -405,7 +405,7 @@ class ProcessTest {
                 """);
         assertFinished(process);
         final List<String> said = process.console();
-        assertEquals(ConsoleBuffer.MOST_LINES, said.size());
+        assertEquals(ProgramConsole.MOST_LINES, said.size());
         assertEquals("line 60", said.getFirst());
         assertEquals("line 259", said.getLast());
     }

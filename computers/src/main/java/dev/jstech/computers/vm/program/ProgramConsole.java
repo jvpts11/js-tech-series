@@ -22,7 +22,7 @@ import java.util.List;
  * short ones. What a program said that long ago is not what anyone reads anyway, and what is kept is
  * written into the save of the machine it runs on.
  */
-public final class ConsoleBuffer {
+public final class ProgramConsole {
 
     /** The most lines kept. */
     public static final int MOST_LINES = 200;

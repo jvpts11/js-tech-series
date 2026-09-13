@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-class ConsoleBufferTest {
+class ProgramConsoleTest {
 
     private static int characters(final List<String> lines) {
         return lines.stream().mapToInt(String::length).sum();
@@ -22,44 +22,44 @@ class ConsoleBufferTest {
 
     @Test
     void write_keepsTheNewestLinesUpToTheLineLimit() {
-        final ConsoleBuffer console = new ConsoleBuffer();
-        for (int i = 0; i < ConsoleBuffer.MOST_LINES + 50; i++) {
+        final ProgramConsole console = new ProgramConsole();
+        for (int i = 0; i < ProgramConsole.MOST_LINES + 50; i++) {
             console.write("line " + i);
         }
         final List<String> kept = console.lines();
-        assertEquals(ConsoleBuffer.MOST_LINES, kept.size());
+        assertEquals(ProgramConsole.MOST_LINES, kept.size());
         assertEquals("line 50", kept.getFirst());
-        assertEquals("line " + (ConsoleBuffer.MOST_LINES + 49), kept.getLast());
-        assertEquals(ConsoleBuffer.MOST_LINES + 50, console.written());
+        assertEquals("line " + (ProgramConsole.MOST_LINES + 49), kept.getLast());
+        assertEquals(ProgramConsole.MOST_LINES + 50, console.written());
     }
 
     @Test
     void write_cutsALineLongerThanALineMayBe() {
-        final ConsoleBuffer console = new ConsoleBuffer();
-        console.write("x".repeat(ConsoleBuffer.MOST_LINE_CHARACTERS * 3));
+        final ProgramConsole console = new ProgramConsole();
+        console.write("x".repeat(ProgramConsole.MOST_LINE_CHARACTERS * 3));
         final String kept = console.lines().getFirst();
-        assertEquals(ConsoleBuffer.MOST_LINE_CHARACTERS, kept.length());
-        assertTrue(kept.endsWith(ConsoleBuffer.CUT));
+        assertEquals(ProgramConsole.MOST_LINE_CHARACTERS, kept.length());
+        assertTrue(kept.endsWith(ProgramConsole.CUT));
     }
 
     @Test
     void write_keepsALineThatIsExactlyAsLongAsALineMayBe() {
-        final ConsoleBuffer console = new ConsoleBuffer();
-        final String line = "y".repeat(ConsoleBuffer.MOST_LINE_CHARACTERS);
+        final ProgramConsole console = new ProgramConsole();
+        final String line = "y".repeat(ProgramConsole.MOST_LINE_CHARACTERS);
         console.write(line);
         assertEquals(line, console.lines().getFirst());
     }
 
     @Test
     void write_letsTheOldestLinesGoOnceTheCharactersRunOut() {
-        final ConsoleBuffer console = new ConsoleBuffer();
-        final int lines = ConsoleBuffer.MOST_CHARACTERS / ConsoleBuffer.MOST_LINE_CHARACTERS + 5;
+        final ProgramConsole console = new ProgramConsole();
+        final int lines = ProgramConsole.MOST_CHARACTERS / ProgramConsole.MOST_LINE_CHARACTERS + 5;
         for (int i = 0; i < lines; i++) {
-            console.write(Character.toString('a' + i).repeat(ConsoleBuffer.MOST_LINE_CHARACTERS));
+            console.write(Character.toString('a' + i).repeat(ProgramConsole.MOST_LINE_CHARACTERS));
         }
         final List<String> kept = console.lines();
-        assertTrue(characters(kept) <= ConsoleBuffer.MOST_CHARACTERS, "kept " + characters(kept));
-        assertEquals(ConsoleBuffer.MOST_CHARACTERS / ConsoleBuffer.MOST_LINE_CHARACTERS, kept.size());
+        assertTrue(characters(kept) <= ProgramConsole.MOST_CHARACTERS, "kept " + characters(kept));
+        assertEquals(ProgramConsole.MOST_CHARACTERS / ProgramConsole.MOST_LINE_CHARACTERS, kept.size());
         assertTrue(kept.getLast().startsWith(Character.toString('a' + lines - 1)), "the newest line stays");
         assertEquals(lines, console.written());
     }
@@ -67,23 +67,23 @@ class ConsoleBufferTest {
     @Test
     void restore_holdsWhatWasSavedToTheSameLimits() {
         final List<String> saved = new ArrayList<>();
-        for (int i = 0; i < ConsoleBuffer.MOST_LINES + 10; i++) {
+        for (int i = 0; i < ProgramConsole.MOST_LINES + 10; i++) {
             saved.add("saved " + i);
         }
-        saved.add("z".repeat(ConsoleBuffer.MOST_LINE_CHARACTERS + 1));
-        final ConsoleBuffer console = new ConsoleBuffer();
+        saved.add("z".repeat(ProgramConsole.MOST_LINE_CHARACTERS + 1));
+        final ProgramConsole console = new ProgramConsole();
 
         console.restore(saved, 5);
 
         final List<String> kept = console.lines();
-        assertEquals(ConsoleBuffer.MOST_LINES, kept.size());
-        assertEquals(ConsoleBuffer.MOST_LINE_CHARACTERS, kept.getLast().length());
-        assertEquals(ConsoleBuffer.MOST_LINES, console.written(), "never fewer written than kept");
+        assertEquals(ProgramConsole.MOST_LINES, kept.size());
+        assertEquals(ProgramConsole.MOST_LINE_CHARACTERS, kept.getLast().length());
+        assertEquals(ProgramConsole.MOST_LINES, console.written(), "never fewer written than kept");
     }
 
     @Test
     void clear_emptiesTheConsoleButKeepsTheCountOfWhatWasWritten() {
-        final ConsoleBuffer console = new ConsoleBuffer();
+        final ProgramConsole console = new ProgramConsole();
         console.write("one");
         console.write("two");
         console.clear();
