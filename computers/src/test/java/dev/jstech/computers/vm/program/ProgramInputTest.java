@@ -11,6 +11,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class ProgramInputTest {
@@ -59,5 +61,26 @@ class ProgramInputTest {
         assertTrue(input.has(), "asking takes nothing");
         assertEquals("one", input.take());
         assertFalse(input.has());
+    }
+
+    @Test
+    void lines_givesWhatIsWaitingWithoutTakingIt() {
+        final ProgramInput input = new ProgramInput();
+        input.offer("one");
+        input.offer("two");
+        assertEquals(List.of("one", "two"), input.lines());
+        assertEquals("one", input.take());
+    }
+
+    @Test
+    void restore_putsBackTheWaitingLinesInOrderHeldToTheSameLimit() {
+        final List<String> saved = new ArrayList<>();
+        for (int i = 0; i < ProgramInput.MOST_LINES + 3; i++) {
+            saved.add("saved " + i);
+        }
+        final ProgramInput input = new ProgramInput();
+        input.offer("typed before");
+        input.restore(saved);
+        assertEquals(saved.subList(0, ProgramInput.MOST_LINES), input.lines());
     }
 }

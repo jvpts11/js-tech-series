@@ -24,10 +24,11 @@ import java.util.Map;
  */
 public record Snapshot(long heapBudget, List<IHeld> held, List<ThreadShot> threads, List<FrameShot> waiting,
                        Map<String, Map<String, IValue>> statics, IValue script, List<WatchShot> watches,
-                       List<String> console, long written, long random, String state, String message, long spent,
-                       String name, List<MonitorShot> monitors, int nextThread, List<String> args,
-                       int machineId, boolean exited, int exitCode, IValue onMessage, List<IValue> windows,
-                       long nextWindow, long nextWidget, IValue onGatewayMessage, String gateway) {
+                       List<String> console, long written, long random, List<String> input, String state,
+                       String message, long spent, String name, List<MonitorShot> monitors, int nextThread,
+                       List<String> args, int machineId, boolean exited, int exitCode, IValue onMessage,
+                       List<IValue> windows, long nextWindow, long nextWidget, IValue onGatewayMessage,
+                       String gateway) {
 
     public Snapshot {
         held = List.copyOf(held);
@@ -36,6 +37,7 @@ public record Snapshot(long heapBudget, List<IHeld> held, List<ThreadShot> threa
         statics = Map.copyOf(statics);
         watches = List.copyOf(watches);
         console = List.copyOf(console);
+        input = input == null ? List.of() : List.copyOf(input);
         name = name == null ? "" : name;
         monitors = List.copyOf(monitors);
         args = args == null ? List.of() : List.copyOf(args);
@@ -49,11 +51,11 @@ public record Snapshot(long heapBudget, List<IHeld> held, List<ThreadShot> threa
     public Snapshot(final long heapBudget, final List<IHeld> held, final List<ThreadShot> threads,
                     final List<FrameShot> waiting, final Map<String, Map<String, IValue>> statics,
                     final IValue script, final List<WatchShot> watches, final List<String> console,
-                    final long written, final long random, final String state, final String message,
-                    final long spent, final String name, final List<MonitorShot> monitors, final int nextThread,
-                    final List<String> args, final int machineId, final boolean exited, final int exitCode,
-                    final IValue onMessage) {
-        this(heapBudget, held, threads, waiting, statics, script, watches, console, written, random, state,
+                    final long written, final long random, final List<String> input, final String state,
+                    final String message, final long spent, final String name, final List<MonitorShot> monitors,
+                    final int nextThread, final List<String> args, final int machineId, final boolean exited,
+                    final int exitCode, final IValue onMessage) {
+        this(heapBudget, held, threads, waiting, statics, script, watches, console, written, random, input, state,
                 message, spent, name, monitors, nextThread, args, machineId, exited, exitCode, onMessage, null, 1,
                 1, null, "");
     }

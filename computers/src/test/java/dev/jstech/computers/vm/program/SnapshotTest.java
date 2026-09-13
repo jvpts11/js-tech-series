@@ -119,6 +119,21 @@ class SnapshotTest {
     }
 
     @Test
+    void save_keepsTheLinesTypedAheadOfTheRead() {
+        final ProgramImage program = load("", """
+                        Console.PrintLine(Console.ReadLine() + " " + Console.ReadLine());
+                """);
+        final Process typedAt = new Process(program, ROOM, IHost.still());
+        typedAt.offerInput("first");
+        typedAt.offerInput("second");
+        typedAt.begin(typedAt.create(program.entryPoint()), "OnTick");
+        final Process process = Process.restore(program, typedAt.save(), IHost.still());
+        process.step(PLENTY);
+        assertEquals(Process.State.FINISHED, process.state(), () -> String.valueOf(process.message()));
+        assertEquals(List.of("first second"), process.console());
+    }
+
+    @Test
     void save_keepsTwoNamesForOneThingAsOneThing() {
         final Process process = bothWays(load("", """
                         List<string> names = new List<string>();

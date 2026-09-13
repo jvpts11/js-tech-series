@@ -831,22 +831,13 @@ public final class Process {
     }
 
     /**
-     * Whether the process is stopped on a read. Read off the code rather than kept as a flag, so a
-     * process put away mid-read and brought back after the world was away is still seen to be waiting.
+     * Whether the process is stopped on a read: a thread parked on a typed line, which is how a read that finds
+     * nothing typed waits. The parked state is written down with each thread, so a process put away mid-read and
+     * brought back is still seen to be waiting.
      */
     public boolean waitingForInput() {
         for (final Thread thread : this.threads) {
-            if (thread.parked != Parked.INPUT) {
-                continue;
-            }
-            final Frame frame = thread.frames.peek();
-            if (frame == null || frame.at >= frame.method.length()) {
-                continue;
-            }
-            final Instruction next = frame.method.instruction(frame.at);
-            if ((next.opcode() == Opcode.CALL || next.opcode() == Opcode.CALLVIRT)
-                    && next.operand() instanceof IOperand.Method named
-                    && Library.readsLine(named)) {
+            if (thread.parked == Parked.INPUT) {
                 return true;
             }
         }
@@ -1453,7 +1444,8 @@ public final class Process {
         }
         return new Snapshot(this.heap.budget(), held, running, queued, kept, scriptShot,
                 watching, this.library.console(), this.library.written(), this.library.randomState(),
-                this.state().serializedName(), this.identity.message() == null ? "" : this.identity.message(),
+                this.input.lines(), this.state().serializedName(),
+                this.identity.message() == null ? "" : this.identity.message(),
                 this.identity.spent(), this.identity.name(), locked, this.nextThread, this.identity.args(),
                 this.identity.machineId(), this.identity.exited(), this.identity.givenExitCode(), onMessageShot,
                 windowShots, this.nextWindow, this.nextWidget, onGatewayShot, this.gateway);
@@ -1545,6 +1537,7 @@ public final class Process {
             }
         }
         process.library.restore(shot.console(), shot.written(), shot.random());
+        process.input.restore(shot.input());
         process.identity.restore(shot.args(), shot.machineId(), shot.spent(), shot.exited(), shot.exitCode(),
                 State.HALTED.serializedName().equals(shot.state()), shot.message().isEmpty() ? null : shot.message());
         if (value(shot.onMessage(), byNumber) instanceof Values.DelegateValue handler) {
