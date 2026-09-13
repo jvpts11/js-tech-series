@@ -47,6 +47,13 @@ jobs:
             echo "CHANGELOG.md has no section for $VERSION."
             exit 1
           fi
+          # A release that brings more than fixes gives its name after the date: "## [0.3.0a] - 2026-09-13 - The Programming Update".
+          name=$(grep -m 1 -F "## [$VERSION]" CHANGELOG.md | sed -n 's/^## \[[^]]*\] - [0-9-]* - //p')
+          if [ -n "$name" ]; then
+            echo "RELEASE_TITLE=J's Tech Series $VERSION: $name" >> "$GITHUB_ENV"
+          else
+            echo "RELEASE_TITLE=J's Tech Series $VERSION" >> "$GITHUB_ENV"
+          fi
 
       - name: Draft the release with the mod jars
         # A draft, so the release is reviewed and published by hand. The tests jar is never attached.
@@ -55,7 +62,7 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" \
             --draft \
-            --title "J's Tech Series $VERSION" \
+            --title "$RELEASE_TITLE" \
             --notes-file release-notes.md \
             "core/build/libs/jscore-$MINECRAFT-$VERSION.jar" \
             "computers/build/libs/jsc-$MINECRAFT-$VERSION.jar" \

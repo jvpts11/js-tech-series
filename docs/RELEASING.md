@@ -57,21 +57,43 @@ release says which phase begins.
 ## When a version starts and ends
 
 - A version starts when the branch for its slice opens: `mod_version` is bumped on that branch right
-  away, so every jar built from it is a snapshot of the coming version.
+  away, so every jar built from it is a snapshot of the coming version, and the cycle takes its codename
+  (see below).
 - A version ends when the branch merges into `main` (a recorded merge) and the merge is tagged
   `v<version>`. That tag is the release.
 - Fixes made on `main` between slices are `PATCH` releases, tagged the same way.
+
+## Names and codenames
+
+Every development cycle has a codename, and every release that brings more than fixes has a name.
+
+- The codename belongs to the cycle. It is the chemical element whose atomic number is the cycle's place
+  in line, so the codename alone says which cycle it was: the first was Hydrogen, the third Lithium. A
+  cycle takes its codename when its branch opens, and no codename is ever used twice.
+- The name is the title of the release, given when the cycle ends and what it brings is known, such as
+  The Programming Update. It heads the version's section of `CHANGELOG.md` and titles the GitHub release.
+- A `PATCH` release belongs to the cycle of the version it fixes: it keeps that codename and has no name
+  of its own.
+
+| Cycle | Codename | Version | Name                   |
+|------:|----------|---------|------------------------|
+| 1     | Hydrogen | 0.1.0a  |                        |
+| 2     | Helium   | 0.2.0a  |                        |
+| 3     | Lithium  | 0.3.0a  | The Programming Update |
 
 ## Cutting a release
 
 1. Merge the slice into `main` with a merge commit, once the Build workflow is green on the branch.
 2. Confirm `mod_version` in `gradle.properties` is the version being released.
-3. Move the `Unreleased` entries of `CHANGELOG.md` under the new version and date; note a phase change
-   there if the release crosses a gate.
+3. Move the `Unreleased` entries of `CHANGELOG.md` under the new version and date, followed by the
+   release's name when it has one (`## [0.3.0a] - 2026-09-13 - The Programming Update`). The section
+   opens with the cycle's codename, and notes a phase change if the release crosses a gate. Add the
+   name to the table above.
 4. Tag the commit `v<version>` (for example `v0.1.0a`) and push the tag.
 5. The tag starts the Release workflow. It checks that the tag and `mod_version` agree, builds the jars
    with `./gradlew build -Prelease`, takes the version's section of `CHANGELOG.md` as the notes and drafts
-   a GitHub release with each mod's jar attached, named `<mod id>-<minecraft version>-<version>.jar`
+   a GitHub release, titled with the version and the release's name when the section heading gives one,
+   with each mod's jar attached, named `<mod id>-<minecraft version>-<version>.jar`
    (`jscore-…`, `jsc-…`, `jsindustrial-…`). The `tests` subproject's jar is a development tool, never a
    release: it is not attached, not offered, and not to be installed by anyone.
 6. Keep a copy of the jars in a local `releases/` folder (ignored by git); every version stays there.
