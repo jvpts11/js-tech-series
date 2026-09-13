@@ -11,23 +11,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import dev.jstech.computers.vm.listing.IOperand;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-class LibraryTest {
+class CollectionFunctionsTest {
 
     private static final int LINE = 7;
 
-    private static Object call(final String owner, final String name, final Object self,
-                               final List<Object> arguments) {
-        final Library library = new Library(new Heap(64L * 1024), IHost.still());
-        return library.call(new IOperand.Method(owner, name, List.of(), "void"), self, arguments, LINE).value();
+    /** Calls a method of a list the way a program does, through the call it loaded with. */
+    private static Object onList(final Values.ListValue list, final String name, final List<String> parameters,
+                                 final Object... arguments) {
+        return PureFunctions.REGISTRY.find("List", name, parameters).function()
+                .call(new Heap(64L * 1024), list, arguments, LINE);
     }
 
-    private static void assertOutOfRange(final String owner, final String name, final Object self,
-                                         final List<Object> arguments) {
-        final Halt halt = assertThrows(Halt.class, () -> call(owner, name, self, arguments));
+    private static void assertOutOfRange(final String name, final List<String> parameters, final Object... arguments) {
+        final Halt halt = assertThrows(Halt.class, () -> onList(listOf(1, 2), name, parameters, arguments));
         assertEquals(Halt.Reason.OUT_OF_RANGE, halt.reason(), halt.getMessage());
         assertEquals(LINE, halt.line());
     }
@@ -39,40 +38,23 @@ class LibraryTest {
     }
 
     @Test
-    void substring_takesTheCharactersItIsAskedFor() {
-        assertEquals("cde", call("string", "Substring", "abcdef", List.of(2, 3)));
-        assertEquals("cdef", call("string", "Substring", "abcdef", List.of(2)));
-        assertEquals("", call("string", "Substring", "abcdef", List.of(6)));
-        assertEquals("", call("string", "Substring", "abcdef", List.of(6, 0)));
-    }
-
-    @Test
-    void substring_haltsOutsideTheStringInsteadOfThrowing() {
-        assertOutOfRange("string", "Substring", "abc", List.of(4));
-        assertOutOfRange("string", "Substring", "abc", List.of(-1));
-        assertOutOfRange("string", "Substring", "abc", List.of(1, 3));
-        assertOutOfRange("string", "Substring", "abc", List.of(1, -1));
-        assertOutOfRange("string", "Substring", "abc", List.of(Integer.MAX_VALUE, Integer.MAX_VALUE));
-    }
-
-    @Test
     void insert_putsAValueInsideTheListOrAtItsEnd() {
         final Values.ListValue list = listOf(1, 3);
-        call("List", "Insert", list, List.of(1, 2));
-        call("List", "Insert", list, List.of(3, 4));
+        onList(list, "Insert", List.of("int", "T"), 1, 2);
+        onList(list, "Insert", List.of("int", "T"), 3, 4);
         assertEquals(List.of(1, 2, 3, 4), list.items());
     }
 
     @Test
     void insert_haltsOutsideTheListInsteadOfThrowing() {
-        assertOutOfRange("List", "Insert", listOf(1, 2), List.of(3, 0));
-        assertOutOfRange("List", "Insert", listOf(1, 2), List.of(-1, 0));
+        assertOutOfRange("Insert", List.of("int", "T"), 3, 0);
+        assertOutOfRange("Insert", List.of("int", "T"), -1, 0);
     }
 
     @Test
     void removeAt_haltsOutsideTheListInsteadOfThrowing() {
-        assertOutOfRange("List", "RemoveAt", listOf(1, 2), List.of(2));
-        assertOutOfRange("List", "RemoveAt", listOf(1, 2), List.of(-1));
+        assertOutOfRange("RemoveAt", List.of("int"), 2);
+        assertOutOfRange("RemoveAt", List.of("int"), -1);
     }
 
     @Test
@@ -87,7 +69,7 @@ class LibraryTest {
             list.items().add("t" + (char) ('z' - i % 26) + i);
         }
 
-        call("List", "Sort", list, List.of());
+        onList(list, "Sort", List.of());
 
         final List<Object> sorted = list.items();
         for (int i = 0; i < 100; i++) {

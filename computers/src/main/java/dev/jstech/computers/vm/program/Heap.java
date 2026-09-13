@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.vm.program;
 
+import dev.jstech.computers.vm.system.IPureContext;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.IdentityHashMap;
@@ -30,7 +31,7 @@ import java.util.Map;
  * <p>The heap also remembers which line each allocation came from. That costs a little and buys the
  * one thing a player needs when a process runs out: the three lines that asked for the most.
  */
-public final class Heap {
+public final class Heap implements IPureContext {
 
     /** What every object costs before its own contents. */
     public static final int HEADER = 16;
@@ -89,6 +90,7 @@ public final class Heap {
      * Records something new and gives it back. Halts when it would not fit, naming what was live and
      * the lines that asked for the most, because that is what tells a player where to look.
      */
+    @Override
     public <T> T allocate(final T value, final long bytes, final int line) {
         if (this.used + bytes > this.budget) {
             throw new Halt(Halt.Reason.OUT_OF_MEMORY, line, this.outOfMemory(bytes));
@@ -141,7 +143,17 @@ public final class Heap {
         this.live.put(value, new Entry(bytes, line, this.allocations++));
     }
 
+    /**
+     * A fresh piece of text, held here. Each is a thing of its own, so two that read the same are still two things the
+     * program can free one of without the other going with it.
+     */
+    @Override
+    public String text(final String value, final int line) {
+        return this.allocate(new String(value.toCharArray()), sizeOfText(value), line);
+    }
+
     /** Makes something already held bigger or smaller, as a collection does when it changes. */
+    @Override
     public void resize(final Object value, final long bytes, final int line) {
         final Entry entry = this.live.get(value);
         if (entry == null) {

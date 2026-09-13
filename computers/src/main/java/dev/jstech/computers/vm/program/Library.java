@@ -16,11 +16,11 @@ import java.util.Map;
 import java.util.Random;
 
 /**
- * The part of the library the runtime answers for itself.
+ * The part of the library the runtime answers for itself that needs more than a call's arguments.
  *
- * <p>These are the calls a program can make that are pure calculation or that touch nothing but the
- * process: text, the two collections, the numbers, the console it writes to, and the joining of
- * handlers. What reaches into the world lives elsewhere, beside the network it reads.
+ * <p>These are the calls that touch the process or the machine: the console it writes to and reads from, its name,
+ * its random numbers, its windows, its Gateway and its watches, and handing everything else to the machine. The calls
+ * that need nothing but their arguments (text, the two collections, numbers) are {@link PureFunctions}.
  */
 public final class Library {
 
@@ -75,15 +75,6 @@ public final class Library {
         this.console.restore(lines, written);
     }
 
-    /** Whether the runtime, rather than the program, answers for this type. */
-    public boolean answersFor(final String owner) {
-        return switch (owner) {
-            case "string", "List", "Map", "Math", "Console", "Convert", "Time", "Random", "Delegate", "Program",
-                 "Thread" -> true;
-            default -> this.host.provides(owner);
-        };
-    }
-
     /** What the last call cost beyond the one instruction every call costs, and clears it. */
     public int drawCost() {
         final int owed = this.owed;
@@ -115,22 +106,12 @@ public final class Library {
         return this.host.day();
     }
 
-    /** Whether a call of this needs the thing it is called on to be on the stack under its arguments. */
-    public boolean takesTarget(final String owner, final String name) {
-        return Library.onSomething(owner, name) || this.host.takesTarget(owner, name);
-    }
-
     /**
-     * The same question for the part of it no machine is needed to answer.
-     *
-     * <p>Anything else depends on the machine the program is standing on, which is why the answer above
-     * asks it; this one is what is true of the language itself wherever it runs.
+     * Whether a call of this needs the thing it is called on to be on the stack under its arguments: a widget's calls
+     * do, and so do the calls on the machine's own objects. A pure function says so for itself.
      */
-    public static boolean onSomething(final String owner, final String name) {
-        if ("string".equals(owner)) {
-            return !"Format".equals(name) && !"Concat".equals(name);
-        }
-        return "List".equals(owner) || "Map".equals(owner) || UiWidgets.takesTarget(owner);
+    public boolean takesTarget(final String owner, final String name) {
+        return UiWidgets.takesTarget(owner) || this.host.takesTarget(owner, name);
     }
 
     /** Makes one of the things the language brings with it: a collection, a window, a widget. */
@@ -172,7 +153,7 @@ public final class Library {
     public Object readStatic(final String owner, final String name, final int line) {
         if ("Program".equals(owner)) {
             if ("Name".equals(name)) {
-                return this.made(this.owner == null ? "" : this.owner.name(), line);
+                return this.heap.text(this.owner == null ? "" : this.owner.name(), line);
             }
             throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "Program has no " + name);
         }
@@ -205,14 +186,7 @@ public final class Library {
         return switch (named.owner()) {
             case "Console" -> this.console(named.name(), arguments, line);
             case "Program" -> this.program(named, arguments, line);
-            case "Math" -> Answer.of(this.maths(named.name(), arguments, line));
-            case "Convert" -> this.convert(named.name(), arguments, line);
             case "Random" -> Answer.of(this.chance(named.name(), arguments));
-            case "Time" -> Answer.of(Numbers.toLong(arguments.getFirst()) * 20L);
-            case "Delegate" -> Answer.of(this.delegates(named.name(), arguments, line));
-            case "string" -> Answer.of(this.text(named.name(), self, arguments, line));
-            case "List" -> Answer.of(this.list(named.name(), self, arguments, line));
-            case "Map" -> this.map(named.name(), self, arguments, line);
             case "Window", "Row", "Column", "Label", "Button", "TextBox", "CheckBox", "ProgressBar",
                  "ListBox", "Canvas", "MessageBox" -> Answer.of(this.ui(named, self, arguments, line));
             case "Gateway" -> this.gateway(named, arguments, line);
@@ -444,16 +418,16 @@ public final class Library {
                 return Answer.of(this.typed());
             }
             case "ReadInt" -> {
-                return Answer.of(this.number("ToInt", this.typed(), line));
+                return Answer.of(NumberFunctions.number("ToInt", this.typed(), line));
             }
             case "ReadLong" -> {
-                return Answer.of(this.number("ToLong", this.typed(), line));
+                return Answer.of(NumberFunctions.number("ToLong", this.typed(), line));
             }
             case "ReadDouble" -> {
-                return Answer.of(this.number("ToDouble", this.typed(), line));
+                return Answer.of(NumberFunctions.number("ToDouble", this.typed(), line));
             }
             case "ReadBool" -> {
-                return Answer.of(this.truth(this.typed(), line));
+                return Answer.of(NumberFunctions.truth(this.typed(), line));
             }
             case "HasLine" -> {
                 return Answer.of(this.owner != null && this.owner.hasInput());
@@ -543,92 +517,6 @@ public final class Library {
         return "Console".equals(named.owner()) && named.name().startsWith("Read");
     }
 
-    private Object maths(final String name, final List<Object> arguments, final int line) {
-        final Object first = arguments.getFirst();
-        final boolean real = first instanceof Double || first instanceof Float;
-        return switch (name) {
-            case "Abs" -> real ? (Object) Math.abs(Numbers.toDouble(first))
-                    : (Object) Math.abs(Numbers.toInt(first));
-            case "Min" -> real ? (Object) Math.min(Numbers.toDouble(first), Numbers.toDouble(arguments.get(1)))
-                    : (Object) Math.min(Numbers.toInt(first), Numbers.toInt(arguments.get(1)));
-            case "Max" -> real ? (Object) Math.max(Numbers.toDouble(first), Numbers.toDouble(arguments.get(1)))
-                    : (Object) Math.max(Numbers.toInt(first), Numbers.toInt(arguments.get(1)));
-            case "Clamp" -> real
-                    ? (Object) Math.min(Math.max(Numbers.toDouble(first), Numbers.toDouble(arguments.get(1))),
-                            Numbers.toDouble(arguments.get(2)))
-                    : (Object) Math.min(Math.max(Numbers.toInt(first), Numbers.toInt(arguments.get(1))),
-                            Numbers.toInt(arguments.get(2)));
-            case "Floor" -> Math.floor(Numbers.toDouble(first));
-            case "Ceil" -> Math.ceil(Numbers.toDouble(first));
-            case "Round" -> (double) Math.round(Numbers.toDouble(first));
-            case "Sqrt" -> Math.sqrt(Numbers.toDouble(first));
-            case "Pow" -> Math.pow(Numbers.toDouble(first), Numbers.toDouble(arguments.get(1)));
-            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "Math has no " + name);
-        };
-    }
-
-    private Answer convert(final String name, final List<Object> arguments, final int line) {
-        final Object first = arguments.getFirst();
-        switch (name) {
-            case "ToString" -> {
-                return Answer.of(this.made(String.valueOf(first), line));
-            }
-            case "ToBool" -> {
-                return Answer.of(this.truth(String.valueOf(first), line));
-            }
-            case "TryInt", "TryLong", "TryDouble", "TryBool" -> {
-                /*
-                 * The value goes out sideways and the answer says whether it is worth anything: a
-                 * program asking again is a program that never stopped on a mistyped line.
-                 */
-                final String text = String.valueOf(first);
-                try {
-                    final Object value = switch (name) {
-                        case "TryInt" -> Integer.parseInt(text.trim());
-                        case "TryLong" -> Long.parseLong(text.trim());
-                        case "TryDouble" -> Double.parseDouble(text.trim());
-                        default -> this.truth(text, line);
-                    };
-                    return new Answer(true, List.of(value));
-                } catch (final NumberFormatException | Halt notAValue) {
-                    final Object none = switch (name) {
-                        case "TryInt" -> 0;
-                        case "TryLong" -> 0L;
-                        case "TryDouble" -> 0.0d;
-                        default -> false;
-                    };
-                    return new Answer(false, List.of(none));
-                }
-            }
-            default -> {
-                return Answer.of(this.number(name, String.valueOf(first), line));
-            }
-        }
-    }
-
-    private Object number(final String name, final String text, final int line) {
-        try {
-            return switch (name) {
-                case "ToInt" -> Integer.parseInt(text.trim());
-                case "ToLong" -> Long.parseLong(text.trim());
-                case "ToFloat" -> Float.parseFloat(text.trim());
-                case "ToDouble" -> Double.parseDouble(text.trim());
-                default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "Convert has no " + name);
-            };
-        } catch (final NumberFormatException notANumber) {
-            throw new Halt(Halt.Reason.BAD_CAST, line, "'" + text + "' is not a number");
-        }
-    }
-
-    /** What a line says when it is asked for yes or no: the usual spellings of either, or a halt. */
-    private boolean truth(final String text, final int line) {
-        return switch (text.trim().toLowerCase(java.util.Locale.ROOT)) {
-            case "true", "yes", "y", "on", "1" -> true;
-            case "false", "no", "n", "off", "0" -> false;
-            default -> throw new Halt(Halt.Reason.BAD_CAST, line, "'" + text + "' is not true or false");
-        };
-    }
-
     private Object chance(final String name, final List<Object> arguments) {
         return switch (name) {
             case "Next" -> this.random.nextInt(Math.max(1, Numbers.toInt(arguments.getFirst())));
@@ -638,199 +526,5 @@ public final class Library {
                 yield null;
             }
         };
-    }
-
-    /*
-     * Joining two handlers makes a third that calls both. Parting takes the last one that matches,
-     * which is how a listener removes only what it added.
-     */
-    private Object delegates(final String name, final List<Object> arguments, final int line) {
-        final Object left = arguments.getFirst();
-        final Object right = arguments.get(1);
-        if (!(right instanceof Values.DelegateValue added)) {
-            return left;
-        }
-        final List<Values.Bound> chain = new ArrayList<>();
-        if (left instanceof Values.DelegateValue held) {
-            chain.addAll(held.chain());
-        }
-        if ("Combine".equals(name)) {
-            chain.addAll(added.chain());
-        } else {
-            for (int i = chain.size() - 1; i >= 0; i--) {
-                if (chain.get(i).equals(added.chain().getFirst())) {
-                    chain.remove(i);
-                    break;
-                }
-            }
-        }
-        if (chain.isEmpty()) {
-            return null;
-        }
-        final Values.DelegateValue made = new Values.DelegateValue(added.type(), chain);
-        return this.heap.allocate(made, made.bytes(), line);
-    }
-
-    private Object text(final String name, final Object self, final List<Object> arguments, final int line) {
-        if ("Concat".equals(name)) {
-            return this.made(String.valueOf(arguments.getFirst()) + String.valueOf(arguments.get(1)), line);
-        }
-        if ("Format".equals(name)) {
-            return this.made(this.format(arguments), line);
-        }
-        final String value = String.valueOf(self);
-        return switch (name) {
-            case "Substring" -> this.made(slice(value, arguments, line), line);
-            case "IndexOf" -> value.indexOf(String.valueOf(arguments.getFirst()));
-            case "Contains" -> value.contains(String.valueOf(arguments.getFirst()));
-            case "StartsWith" -> value.startsWith(String.valueOf(arguments.getFirst()));
-            case "EndsWith" -> value.endsWith(String.valueOf(arguments.getFirst()));
-            case "ToUpper" -> this.made(value.toUpperCase(java.util.Locale.ROOT), line);
-            case "ToLower" -> this.made(value.toLowerCase(java.util.Locale.ROOT), line);
-            case "Trim" -> this.made(value.strip(), line);
-            case "Replace" -> this.made(value.replace(String.valueOf(arguments.getFirst()),
-                    String.valueOf(arguments.get(1))), line);
-            case "Split" -> this.split(value, arguments.getFirst(), line);
-            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "a string has no " + name);
-        };
-    }
-
-    private String format(final List<Object> arguments) {
-        String result = String.valueOf(arguments.getFirst());
-        for (int i = 1; i < arguments.size(); i++) {
-            result = result.replace("{" + (i - 1) + "}", String.valueOf(arguments.get(i)));
-        }
-        return result;
-    }
-
-    /**
-     * The piece of a string a Substring asks for: from a place to the end, or so many characters from it.
-     *
-     * <p>The place and the count are checked against the string first, so a program asking for more than
-     * is there stops with a message saying what it asked for, and never hands the runtime a range it
-     * cannot take.
-     */
-    private static String slice(final String value, final List<Object> arguments, final int line) {
-        final int start = Numbers.toInt(arguments.getFirst());
-        final boolean toEnd = arguments.size() == 1;
-        final long length = toEnd ? (long) value.length() - start : Numbers.toInt(arguments.get(1));
-        if (start < 0 || start > value.length() || length < 0 || start + length > value.length()) {
-            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, toEnd
-                    ? "there is no place " + start + " to start from in a string of " + value.length()
-                    : "there are no " + length + " characters from place " + start + " in a string of "
-                            + value.length());
-        }
-        return value.substring(start, (int) (start + length));
-    }
-
-    private Object split(final String value, final Object on, final int line) {
-        final Values.ListValue made = new Values.ListValue();
-        this.heap.allocate(made, made.bytes(), line);
-        for (final String part : value.split(java.util.regex.Pattern.quote(String.valueOf(on)), -1)) {
-            made.items().add(this.made(part, line));
-        }
-        this.heap.resize(made, made.bytes(), line);
-        return made;
-    }
-
-    private Object list(final String name, final Object self, final List<Object> arguments, final int line) {
-        if (!(self instanceof Values.ListValue held)) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no list here");
-        }
-        final Object answer = switch (name) {
-            case "Add" -> {
-                held.items().add(arguments.getFirst());
-                yield null;
-            }
-            case "Insert" -> {
-                held.insert(Numbers.toInt(arguments.getFirst()), arguments.get(1), line);
-                yield null;
-            }
-            case "RemoveAt" -> {
-                held.removeAt(Numbers.toInt(arguments.getFirst()), line);
-                yield null;
-            }
-            case "Remove" -> held.items().remove(arguments.getFirst());
-            case "Clear" -> {
-                held.items().clear();
-                yield null;
-            }
-            case "Contains" -> held.items().contains(arguments.getFirst());
-            case "IndexOf" -> held.items().indexOf(arguments.getFirst());
-            case "Get" -> held.get(Numbers.toInt(arguments.getFirst()), line);
-            case "Set" -> {
-                held.set(Numbers.toInt(arguments.getFirst()), arguments.get(1), line);
-                yield null;
-            }
-            case "Sort" -> {
-                held.items().sort((left, right) -> compare(left, right));
-                yield null;
-            }
-            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "a list has no " + name);
-        };
-        this.heap.resize(held, held.bytes(), line);
-        return answer;
-    }
-
-    private Answer map(final String name, final Object self, final List<Object> arguments, final int line) {
-        if (!(self instanceof Values.MapValue held)) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no map here");
-        }
-        if ("TryGet".equals(name)) {
-            final Object found = held.entries().get(arguments.getFirst());
-            return new Answer(found != null, List.of(found == null ? 0 : found));
-        }
-        final Object answer = switch (name) {
-            case "Put" -> {
-                held.entries().put(arguments.getFirst(), arguments.get(1));
-                yield null;
-            }
-            case "Get" -> held.entries().get(arguments.getFirst());
-            case "ContainsKey" -> held.entries().containsKey(arguments.getFirst());
-            case "Remove" -> held.entries().remove(arguments.getFirst()) != null;
-            case "Keys" -> this.listOf(held.entries().keySet(), line);
-            case "Values" -> this.listOf(held.entries().values(), line);
-            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "a map has no " + name);
-        };
-        this.heap.resize(held, held.bytes(), line);
-        return Answer.of(answer);
-    }
-
-    private Object listOf(final Iterable<Object> values, final int line) {
-        final Values.ListValue made = new Values.ListValue();
-        this.heap.allocate(made, made.bytes(), line);
-        for (final Object value : values) {
-            made.items().add(value);
-        }
-        this.heap.resize(made, made.bytes(), line);
-        return made;
-    }
-
-    /*
-     * One order over everything a list can hold, or the sort gives up part way through: numbers by value
-     * come first, then text in order, then anything else, which keeps the place it had.
-     */
-    private static int compare(final Object left, final Object right) {
-        final int kinds = Integer.compare(rank(left), rank(right));
-        if (kinds != 0) {
-            return kinds;
-        }
-        return switch (rank(left)) {
-            case 0 -> Numbers.compare(left, right);
-            case 1 -> ((String) left).compareTo((String) right);
-            default -> 0;
-        };
-    }
-
-    /** Where a kind of value falls in a sort: 0 for a number, 1 for text, 2 for anything else. */
-    private static int rank(final Object value) {
-        if (value instanceof Number || value instanceof Character) {
-            return 0;
-        }
-        return value instanceof String ? 1 : 2;
-    }
-
-    private String made(final String value, final int line) {
-        return this.heap.allocate(new String(value.toCharArray()), Heap.sizeOfText(value), line);
     }
 }

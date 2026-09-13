@@ -12,6 +12,8 @@ import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmType;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Shape;
+import dev.jstech.computers.vm.system.IntrinsicRegistry;
+import dev.jstech.computers.vm.system.IntrinsicSpec;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,8 +42,12 @@ public final class ProgramImage {
      *                   a method of that shape
      * @param outs       which of its arguments the call fills in rather than hands over
      * @param constructs whether the call runs a constructor, which always runs on the type it names
+     * @param intrinsic  the function the system answers the call with when the program has no method for it, or null
+     *                   when the runtime answers it by name
+     * @param gives      whether the call leaves an answer on the stack
      */
-    record CallSite(IOperand.Method named, MethodImage direct, Integer signature, boolean[] outs, boolean constructs) {
+    record CallSite(IOperand.Method named, MethodImage direct, Integer signature, boolean[] outs, boolean constructs,
+                    IntrinsicSpec intrinsic, boolean gives) {
     }
 
     /**
@@ -58,10 +64,12 @@ public final class ProgramImage {
     private final Map<String, TypeImage> types = new LinkedHashMap<>();
     /** Every method shape a type of the program declares, numbered in the order they were first met. */
     private final Map<String, Integer> signatures = new HashMap<>();
+    private final IntrinsicRegistry registry;
     private final String entryPoint;
     private final Shape shape;
 
-    private ProgramImage(final AsmProgram program) {
+    private ProgramImage(final AsmProgram program, final IntrinsicRegistry registry) {
+        this.registry = registry;
         this.entryPoint = program.entryPoint();
         this.shape = program.shape();
         for (final AsmType type : program.types()) {
@@ -78,9 +86,14 @@ public final class ProgramImage {
         }
     }
 
-    /** Makes a program ready to run. */
+    /** Makes a program ready to run, with the language's pure functions answering what it does not declare. */
     public static ProgramImage of(final AsmProgram program) {
-        return new ProgramImage(program);
+        return of(program, PureFunctions.REGISTRY);
+    }
+
+    /** Makes a program ready to run, with {@code registry} answering the calls it does not declare. */
+    public static ProgramImage of(final AsmProgram program, final IntrinsicRegistry registry) {
+        return new ProgramImage(program, registry);
     }
 
     /** The type of that name, or null when the runtime provides it instead of the program. */
@@ -129,8 +142,11 @@ public final class ProgramImage {
     CallSite callSite(final IOperand.Method called) {
         final Integer signature = this.signatures.get(key(called.name(), called.parameters()));
         final TypeImage owner = this.types.get(called.owner());
-        return new CallSite(called, owner == null ? null : owner.method(signature), signature,
-                MethodImage.outsOf(called.parameters()), AsmMethod.CONSTRUCTOR.equals(called.name()));
+        final MethodImage direct = owner == null ? null : owner.method(signature);
+        final IntrinsicSpec intrinsic = direct == null
+                ? this.registry.find(called.owner(), called.name(), called.parameters()) : null;
+        return new CallSite(called, direct, signature, MethodImage.outsOf(called.parameters()),
+                AsmMethod.CONSTRUCTOR.equals(called.name()), intrinsic, !"void".equals(called.returns()));
     }
 
     Creation creation(final IOperand.Constructor made) {

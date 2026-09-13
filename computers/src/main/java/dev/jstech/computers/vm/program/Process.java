@@ -12,6 +12,7 @@ import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Instruction;
 import dev.jstech.computers.vm.listing.Opcode;
 import dev.jstech.computers.vm.listing.Shape;
+import dev.jstech.computers.vm.system.IntrinsicSpec;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
 import java.util.ArrayDeque;
@@ -2107,6 +2108,10 @@ public final class Process {
         }
         final MethodImage direct = site.direct();
         if (direct == null) {
+            if (site.intrinsic() != null) {
+                this.answer(frame, site, line);
+                return;
+            }
             if ("Thread".equals(named.owner())) {
                 this.threadCall(frame, named, line);
                 return;
@@ -2137,6 +2142,26 @@ public final class Process {
         final List<Object> arguments = this.take(frame, site.outs());
         final Object self = direct.isStatic() ? null : this.alive(frame.pop(), line);
         this.enter(this.onItsOwnType(site, self), self, arguments, line);
+    }
+
+    /**
+     * Answers a call the system takes in Java: the arguments come off the stack, then the object the call is made on
+     * when it is made on one, and the answer goes back on followed by whatever the call filled in.
+     */
+    private void answer(final Frame frame, final ProgramImage.CallSite site, final int line) {
+        final IntrinsicSpec intrinsic = site.intrinsic();
+        final boolean[] outs = site.outs();
+        final Object[] arguments = takeArray(frame, outs);
+        final Object target = intrinsic.onTarget() ? this.alive(frame.pop(), line) : null;
+        final Object answer = intrinsic.function().call(this.heap, target, arguments, line);
+        if (site.gives()) {
+            frame.push(answer);
+        }
+        for (int i = 0; i < outs.length; i++) {
+            if (outs[i]) {
+                frame.push(arguments[i]);
+            }
+        }
     }
 
     /*
@@ -2255,23 +2280,23 @@ public final class Process {
 
     /** The same, for a call whose shape was worked out when the program loaded. */
     private List<Object> take(final Frame frame, final boolean[] outs) {
+        return java.util.Arrays.asList(takeArray(frame, outs));
+    }
+
+    private static Object[] takeArray(final Frame frame, final boolean[] outs) {
         final Object[] taken = new Object[outs.length];
         for (int i = outs.length - 1; i >= 0; i--) {
             if (!outs[i]) {
                 taken[i] = frame.pop();
             }
         }
-        return java.util.Arrays.asList(taken);
+        return taken;
     }
 
     // odds and ends
 
     private String text(final String value, final int line) {
-        /*
-         * A fresh piece of text each time, so two that read the same are still two things the program
-         * can free one of without the other going with it.
-         */
-        return this.heap.allocate(new String(value.toCharArray()), Heap.sizeOfText(value), line);
+        return this.heap.text(value, line);
     }
 
     private Object alive(final Object value, final int line) {

@@ -84,15 +84,18 @@ class ProgramImageTest {
     }
 
     @Test
-    void resolve_givesACallTheMethodItReachesOrLeavesItToTheRuntime() {
+    void resolve_givesACallTheMethodItReachesOrTheFunctionTheSystemAnswersItWith() {
         final MethodImage area = squareArea(shapes());
         final ProgramImage.CallSite inherited = area.call(2);
         assertEquals("Tests.Shape", inherited.direct().owner());
+        assertNull(inherited.intrinsic());
         assertFalse(inherited.constructs());
-        final ProgramImage.CallSite library = area.call(3);
-        assertNull(library.direct());
-        assertNull(library.signature());
-        assertEquals(1, library.outs().length);
+        assertTrue(inherited.gives());
+        final ProgramImage.CallSite pure = area.call(3);
+        assertNull(pure.direct());
+        assertNull(pure.signature());
+        assertEquals("Math.Abs(double)", pure.intrinsic().describe());
+        assertEquals(1, pure.outs().length);
     }
 
     @Test
