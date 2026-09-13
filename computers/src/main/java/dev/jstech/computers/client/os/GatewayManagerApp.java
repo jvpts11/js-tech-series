@@ -42,10 +42,10 @@ import org.lwjgl.glfw.GLFW;
 /**
  * The Gateway Manager: the host computer's front for the Network Gateways on its ports. The rail on the
  * left lists every Gateway linked to this computer, with Rename and Identify; the pane on the right shows
- * the selected one in five tabs. Status: this side and the ComputerCraft side as two cards, how CC names
+ * the selected one in four tabs. Status: this side and the ComputerCraft side as two cards, how CC names
  * the Gateway, its buffer and the last requests. Permissions: what CC may do through it. Computers: the
- * CC computers it knows. Shares: the folders CC sees. Log: the last forty things it did. Every click is an
- * action the server answers with a fresh state; nothing here decides anything on its own.
+ * CC computers it knows. Log: the last forty things it did. Every click is an action the server answers
+ * with a fresh state; nothing here decides anything on its own.
  */
 public final class GatewayManagerApp implements IDesktopApp {
 
