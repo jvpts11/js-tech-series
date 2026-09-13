@@ -791,7 +791,7 @@ public final class Process {
                     }
                 }
                 case INPUT -> {
-                    if (!this.input.isEmpty()) {
+                    if (this.input.has()) {
                         thread.parked = Parked.NONE;
                     }
                 }
@@ -819,18 +819,12 @@ public final class Process {
         }
     }
 
-    /*
-     * Lines typed at the terminal this process is in front of, in the order they came, waiting for the
-     * program to read them. Bounded: a terminal keeps what was typed ahead, not everything ever typed.
-     */
-    private final Deque<String> input = new ArrayDeque<>();
-    private static final int INPUT_LINES = 16;
+    /** The lines typed at the terminal this process is in front of, waiting for the program to read them. */
+    private final ProgramInput input = new ProgramInput();
 
     /** Hands the process a typed line; a thread stopped on a read carries on with it. */
     public void offerInput(final String line) {
-        if (this.input.size() < INPUT_LINES) {
-            this.input.addLast(line == null ? "" : line);
-        }
+        this.input.offer(line);
         if (this.waitingForInput()) {
             this.resume();
         }
@@ -877,13 +871,12 @@ public final class Process {
 
     /** The next line typed, or an empty string when none has been. */
     String takeInput() {
-        final String line = this.input.pollFirst();
-        return line == null ? "" : line;
+        return this.input.take();
     }
 
     /** Whether a typed line is waiting to be read. */
     boolean hasInput() {
-        return !this.input.isEmpty();
+        return this.input.has();
     }
 
     /**
@@ -2114,7 +2107,7 @@ public final class Process {
                 this.processCall(frame, named, line);
                 return;
             }
-            if (Library.readsLine(named) && this.input.isEmpty()) {
+            if (Library.readsLine(named) && !this.input.has()) {
                 /*
                  * Nothing has been typed: the call is put back so it is asked again once a line comes,
                  * and the thread waits without spending anything. The read takes nothing off the
