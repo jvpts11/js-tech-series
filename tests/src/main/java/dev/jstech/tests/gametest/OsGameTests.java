@@ -12,7 +12,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
-import dev.jstech.computers.operation.payload.ComputingPayloads;
+import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.boot.BootController;
 import dev.jstech.computers.os.media.MediaItem;
@@ -143,7 +143,7 @@ public final class OsGameTests {
 
                     // Run the server-side install logic directly (no client packet needed in a GameTest).
                     final ServerLevel level = helper.getLevel();
-                    ComputingPayloads.installOsFromLinkedReader(level, helper.absolutePos(mainframePos));
+                    FirmwarePayloads.installOsFromLinkedReader(level, helper.absolutePos(mainframePos));
 
                     // The OS must now be installed.
                     helper.assertTrue(mainframe.hasOs(),

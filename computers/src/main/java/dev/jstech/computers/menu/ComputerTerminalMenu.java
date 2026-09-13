@@ -10,8 +10,13 @@ package dev.jstech.computers.menu;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
-import dev.jstech.computers.operation.payload.ComputingPayloads;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
+import dev.jstech.computers.operation.payload.crafting.CraftingPayloads;
+import dev.jstech.computers.operation.payload.network.NetworkPayloads;
+import dev.jstech.computers.operation.payload.operations.OperationsPayloads;
+import dev.jstech.computers.operation.payload.program.ProgramPayloads;
+import dev.jstech.computers.operation.payload.terminal.TerminalLocalPayloads;
+import dev.jstech.computers.operation.payload.terminal.TerminalPayloads;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -278,31 +283,31 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
             return;
         }
         if (id == TAB_STORAGE) {
-            ComputingPayloads.dispatchLocalSnapshot(serverPlayer, host);
+            TerminalLocalPayloads.dispatchLocalSnapshot(serverPlayer, host);
         } else if (host.networkUuid() != null) {
             if (id == TAB_NETWORK) {
-                ComputingPayloads.dispatchTerminalQuery(serverPlayer, host.networkUuid(), serverLevel);
+                TerminalPayloads.dispatchTerminalQuery(serverPlayer, host.networkUuid(), serverLevel);
             } else if (id == TAB_OPS || id == TAB_TASKS) {
-                ComputingPayloads.dispatchTerminalOpsLog(serverPlayer, host.networkUuid(), serverLevel);
-                ComputingPayloads.dispatchActiveOperations(serverPlayer, host.networkUuid(), serverLevel);
+                OperationsPayloads.dispatchTerminalOpsLog(serverPlayer, host.networkUuid(), serverLevel);
+                OperationsPayloads.dispatchActiveOperations(serverPlayer, host.networkUuid(), serverLevel);
             } else if (id == TAB_MAINTENANCE) {
                 /*
                  * The DROP popup needs the network's data types (the TYPES grid) and the list of
                  * Servers it can wipe (the SERVER picker); the index stats arrive via ContainerData.
                  */
-                ComputingPayloads.dispatchTerminalQuery(serverPlayer, host.networkUuid(), serverLevel);
-                ComputingPayloads.dispatchNetworkServers(serverPlayer, host.networkUuid(), serverLevel);
+                TerminalPayloads.dispatchTerminalQuery(serverPlayer, host.networkUuid(), serverLevel);
+                NetworkPayloads.dispatchNetworkServers(serverPlayer, host.networkUuid(), serverLevel);
             } else if (id == TAB_CRAFT) {
                 /*
                  * The Craft tab needs the catalog plus the live/logged Operations for its
                  * RUNNING and RECENT panels.
                  */
-                ComputingPayloads.dispatchCraftCatalog(serverPlayer, host.networkUuid(), serverLevel);
-                ComputingPayloads.dispatchTerminalOpsLog(serverPlayer, host.networkUuid(), serverLevel);
-                ComputingPayloads.dispatchActiveOperations(serverPlayer, host.networkUuid(), serverLevel);
+                CraftingPayloads.dispatchCraftCatalog(serverPlayer, host.networkUuid(), serverLevel);
+                OperationsPayloads.dispatchTerminalOpsLog(serverPlayer, host.networkUuid(), serverLevel);
+                OperationsPayloads.dispatchActiveOperations(serverPlayer, host.networkUuid(), serverLevel);
             } else if (id == TAB_PROCESSES) {
                 // Per-host: the processes shown are the ones running on THIS computer (the host).
-                ComputingPayloads.dispatchProcesses(serverPlayer, hostPos(), serverLevel);
+                ProgramPayloads.dispatchProcesses(serverPlayer, hostPos(), serverLevel);
             }
         }
     }
@@ -459,24 +464,24 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
          * only while something is in flight (its snapshot is already pushed on deposit/withdraw/settle).
          */
         if (activeTab == TAB_TASKS || activeTab == TAB_OPS) {
-            ComputingPayloads.dispatchActiveOperations(serverPlayer, host.networkUuid(), serverLevel);
+            OperationsPayloads.dispatchActiveOperations(serverPlayer, host.networkUuid(), serverLevel);
         }
         if (activeTab == TAB_OPS) {
             /*
              * Keep the log live too: a craft that just settled drops out of the active list and must appear in
              * the recent log the same tick, so the Operations view is fully real-time (in flight and just done).
              */
-            ComputingPayloads.dispatchTerminalOpsLog(serverPlayer, host.networkUuid(), serverLevel);
+            OperationsPayloads.dispatchTerminalOpsLog(serverPlayer, host.networkUuid(), serverLevel);
         }
         if (activeTab == TAB_CRAFT
-                && ComputingPayloads.networkHasActiveOps(serverLevel, host.networkUuid())) {
+                && TerminalPayloads.networkHasActiveOps(serverLevel, host.networkUuid())) {
             // Keep the RUNNING bars moving and settle finished crafts into RECENT.
-            ComputingPayloads.dispatchActiveOperations(serverPlayer, host.networkUuid(), serverLevel);
-            ComputingPayloads.dispatchTerminalOpsLog(serverPlayer, host.networkUuid(), serverLevel);
+            OperationsPayloads.dispatchActiveOperations(serverPlayer, host.networkUuid(), serverLevel);
+            OperationsPayloads.dispatchTerminalOpsLog(serverPlayer, host.networkUuid(), serverLevel);
         }
         if (activeTab == TAB_NETWORK
-                && ComputingPayloads.networkHasActiveOps(serverLevel, host.networkUuid())) {
-            ComputingPayloads.dispatchTerminalQuery(serverPlayer, host.networkUuid(), serverLevel);
+                && TerminalPayloads.networkHasActiveOps(serverLevel, host.networkUuid())) {
+            TerminalPayloads.dispatchTerminalQuery(serverPlayer, host.networkUuid(), serverLevel);
         }
     }
 

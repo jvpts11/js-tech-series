@@ -16,7 +16,7 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
-import dev.jstech.computers.operation.payload.ComputingPayloads;
+import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
@@ -83,7 +83,7 @@ public final class OsInstallGameTests {
     /** Runs the installer's final write, as the firmware action does when the on-screen progress ends. */
     private static void finishInstaller(final GameTestHelper helper, final MainframeBlockEntity mainframe) {
         helper.assertTrue(!mainframe.linkedEndpoints().isEmpty(), "the reader links to the Mainframe");
-        helper.assertTrue(ComputingPayloads.installOsFromReader(helper.getLevel(), mainframe, -1L, -1),
+        helper.assertTrue(FirmwarePayloads.installOsFromReader(helper.getLevel(), mainframe, -1L, -1),
                 "the guided installer writes the system");
         helper.assertTrue(DEBIAN.equals(mainframe.installedOsId()), "the system is on the disk");
     }
@@ -152,7 +152,7 @@ public final class OsInstallGameTests {
                 .thenExecuteAfter(SETTLE + 4, () -> {
                     helper.assertTrue(pc.isRunning(), "the vintage machine powers on");
                     helper.assertTrue(!pc.linkedEndpoints().isEmpty(), "the reader links to the computer");
-                    final String failure = ComputingPayloads.installFailure(helper.getLevel(), pc, -1L, -1);
+                    final String failure = FirmwarePayloads.installFailure(helper.getLevel(), pc, -1L, -1);
                     helper.assertTrue(failure != null && failure.contains("Legacy") && failure.contains("Vintage"),
                             "the refusal names the era the system needs and the machine's own, got: " + failure);
                     helper.assertTrue(!pc.hasOs(), "nothing was written to the disk");

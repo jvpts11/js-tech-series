@@ -21,6 +21,11 @@ import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.crafting.RecipeBook;
 import dev.jstech.computers.crafting.RecipeMachines;
+import dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk;
+import dev.jstech.computers.operation.payload.crafting.CraftManagerPayloads;
+import dev.jstech.computers.operation.payload.files.FileAccess;
+import dev.jstech.computers.operation.payload.network.NetworkLookup;
+import dev.jstech.computers.operation.payload.terminal.TerminalHosts;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.VolumeLabel;
@@ -85,7 +90,7 @@ public final class PatternStudioPayloads {
     @Nullable
     public static IOsHost studioHost(final ServerPlayer player, final ServerLevel level, final BlockPos hostPos,
                                     final BlockPos monitorPos) {
-        final var terminal = ComputingPayloads.niHost(player, level, hostPos, monitorPos);
+        final var terminal = TerminalHosts.niHost(player, level, hostPos, monitorPos);
         return terminal instanceof IOsHost host && host.studio() != null ? host : null;
     }
 
@@ -258,12 +263,12 @@ public final class PatternStudioPayloads {
         if (DISK_KEY.equals(key)) {
             return host.systemDisk();
         }
-        return key.startsWith("media:") ? ComputingPayloads.mediaStackFor(level, host, key) : ItemStack.EMPTY;
+        return key.startsWith("media:") ? FileAccess.mediaStackFor(level, host, key) : ItemStack.EMPTY;
     }
 
     /** The path a craft file name has on {@code key}: under the crafts folder on a hierarchical system disk. */
     private static String pathOn(final IOsHost host, final String key, final String fileName) {
-        if (DISK_KEY.equals(key) && ComputingPayloads.filesystemKindOf(host) == FilesystemKind.HIERARCHICAL) {
+        if (DISK_KEY.equals(key) && FileAccess.filesystemKindOf(host) == FilesystemKind.HIERARCHICAL) {
             return CRAFTS_DIR + "/" + fileName;
         }
         return fileName;
@@ -340,7 +345,7 @@ public final class PatternStudioPayloads {
     private static String fileBaseFor(final PatternWorkbench studio, final PatternWorkbench.Kind kind) {
         final String name = studio.draftName(kind);
         if (!name.isBlank()) {
-            return ComputingPayloads.sanitizeFileBase(name);
+            return CraftFilesOnDisk.sanitizeFileBase(name);
         }
         return switch (kind) {
             case BENCH -> "pattern";
@@ -359,7 +364,7 @@ public final class PatternStudioPayloads {
             return "The draft is not complete";
         }
         final ItemStack disk = host.systemDisk();
-        final FilesystemKind fs = ComputingPayloads.filesystemKindOf(host);
+        final FilesystemKind fs = FileAccess.filesystemKindOf(host);
         if (disk.isEmpty() || fs == FilesystemKind.NONE) {
             return "No system disk to save to";
         }
@@ -422,7 +427,7 @@ public final class PatternStudioPayloads {
         if (!loaded) {
             return "Not loaded: already in the ROM, or the ROM is full";
         }
-        ComputingPayloads.reconcileCraftsFolder(cc, level);
+        CraftFilesOnDisk.reconcileCraftsFolder(cc, level);
         return "Loaded into the ROM: " + name;
     }
 
@@ -491,7 +496,7 @@ public final class PatternStudioPayloads {
             computers.add(cc);
         }
         final MainframeBlockEntity mf = host.networkUuid() == null ? null
-                : ComputingPayloads.resolveMainframe(level, host.networkUuid());
+                : NetworkLookup.resolveMainframe(level, host.networkUuid());
         if (mf != null) {
             for (final BlockPos pos : mf.craftingComputerPositions()) {
                 final BlockEntity be = level.getBlockEntity(pos);
@@ -516,7 +521,7 @@ public final class PatternStudioPayloads {
                                                        final String status, final int tabHint) {
         final PatternWorkbench studio = host.studio();
         final MainframeBlockEntity mf = host.networkUuid() == null ? null
-                : ComputingPayloads.resolveMainframe(level, host.networkUuid());
+                : NetworkLookup.resolveMainframe(level, host.networkUuid());
         final Map<StorageKey, Long> stock = mf == null ? Map.of() : mf.networkIndex().snapshot();
 
         // Bench: each cell with what an "any" cell would use right now, and how much of it the network holds.
@@ -588,11 +593,11 @@ public final class PatternStudioPayloads {
                 drives.add(new PatternStudioStatePayload.Drive("media:" + endpoint,
                         wire(drive + ": " + VolumeLabel.of(m, m.getHoverName().getString()),
                                 PatternStudioStatePayload.MAX_LABEL),
-                        fmt.writable(), ComputingPayloads.craftFileListFromMedia(m)));
+                        fmt.writable(), CraftManagerPayloads.craftFileListFromMedia(m)));
             }
         }
         final ItemStack disk = host.systemDisk();
-        final FilesystemKind fs = ComputingPayloads.filesystemKindOf(host);
+        final FilesystemKind fs = FileAccess.filesystemKindOf(host);
         if (!disk.isEmpty() && fs != FilesystemKind.NONE) {
             final List<String> files = new ArrayList<>();
             final String dir = fs == FilesystemKind.HIERARCHICAL ? CRAFTS_DIR : "";

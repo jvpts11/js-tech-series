@@ -7,9 +7,9 @@
  */
 package dev.jstech.computers.client.os;
 
-import dev.jstech.computers.operation.payload.ComputingPayloads;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
+import dev.jstech.computers.operation.payload.program.DesktopShellPayloads;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.client.gui.component.CommandLine;
 import dev.jstech.core.client.gui.component.Label;
@@ -123,7 +123,7 @@ public final class ShellView extends Panel {
     /** Asks the program in front to stop, the way Ctrl+C at the terminal does. */
     public void interrupt() {
         if (this.busy) {
-            PacketDistributor.sendToServer(new DesktopShellRunPayload(this.host, ComputingPayloads.INTERRUPT,
+            PacketDistributor.sendToServer(new DesktopShellRunPayload(this.host, DesktopShellPayloads.INTERRUPT,
                     this.session));
         }
     }

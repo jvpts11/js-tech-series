@@ -8,8 +8,8 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.operation.payload.ComputingPayloads;
 import dev.jstech.computers.operation.payload.CraftManagerStatePayload;
+import dev.jstech.computers.operation.payload.crafting.CraftManagerPayloads;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.CraftFiles;
@@ -69,7 +69,7 @@ public final class CraftingManagerMediaGameTests {
                             "both drives link to the Crafting Computer; got " + floppyDrive.ownerPos() + " and "
                                     + dvdDrive.ownerPos());
                     final CraftManagerStatePayload state =
-                            ComputingPayloads.buildCraftManagerState(net.cc(), helper.getLevel());
+                            CraftManagerPayloads.buildCraftManagerState(net.cc(), helper.getLevel());
                     helper.assertTrue(state.mediaVolumeKey().equals("media:" + dvdDrive.getBlockPos().asLong()),
                             "the manager shows the DVD drive, whose disc holds the craft; got " + state.mediaVolumeKey());
                     helper.assertTrue(state.mediaFiles().size() == 1,
@@ -77,7 +77,7 @@ public final class CraftingManagerMediaGameTests {
                     // With the DVD out, the blank floppy is still offered: a download needs a writable target.
                     dvdDrive.mediaSlot().setStackInSlot(0, ItemStack.EMPTY);
                     final CraftManagerStatePayload fallback =
-                            ComputingPayloads.buildCraftManagerState(net.cc(), helper.getLevel());
+                            CraftManagerPayloads.buildCraftManagerState(net.cc(), helper.getLevel());
                     helper.assertTrue(fallback.mediaVolumeKey().equals("media:" + floppyDrive.getBlockPos().asLong())
                                     && fallback.mediaFiles().isEmpty(),
                             "without crafts anywhere, the first writable medium is offered; got "
@@ -128,7 +128,7 @@ public final class CraftingManagerMediaGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     final CraftManagerStatePayload state =
-                            ComputingPayloads.buildCraftManagerState(net.cc(), helper.getLevel());
+                            CraftManagerPayloads.buildCraftManagerState(net.cc(), helper.getLevel());
                     final RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(
                             io.netty.buffer.Unpooled.buffer(), helper.getLevel().registryAccess());
                     CraftManagerStatePayload.STREAM_CODEC.encode(buf, state); // must not throw

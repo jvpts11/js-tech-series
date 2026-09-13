@@ -15,8 +15,8 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.NetworkStorage;
-import dev.jstech.computers.operation.payload.ComputingPayloads;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.OsDef;
@@ -330,7 +330,7 @@ public final class ServerCliComputer implements ICliComputer {
         }
         final java.util.Map<NodeUuid, Long> breakdown = NetworkStorage.of(level, net).breakdown(key);
         if (breakdown.size() == 1) {
-            return ComputingPayloads.serverLabel(level, breakdown.keySet().iterator().next());
+            return NetworkLookup.serverLabel(level, breakdown.keySet().iterator().next());
         }
         return breakdown.size() + " servers";
     }
@@ -392,7 +392,7 @@ public final class ServerCliComputer implements ICliComputer {
             if (out.size() >= limit) {
                 break;
             }
-            out.add(new StoredItem(ComputingPayloads.serverLabel(level, server.nodeUuid()) + " (server)", 1L));
+            out.add(new StoredItem(NetworkLookup.serverLabel(level, server.nodeUuid()) + " (server)", 1L));
         }
         for (final var pc : system.personalComputersOf(net)) {
             if (out.size() >= limit) {
@@ -439,7 +439,7 @@ public final class ServerCliComputer implements ICliComputer {
                 : NetworkSystem.get(level).serversOf(net)) {
             final long used = NetworkStorage.ofServers(level, java.util.List.of(srv.nodeUuid()))
                     .query().values().stream().mapToLong(Long::longValue).sum();
-            out.add(new StoredItem(ComputingPayloads.serverLabel(level, srv.nodeUuid()), used));
+            out.add(new StoredItem(NetworkLookup.serverLabel(level, srv.nodeUuid()), used));
             if (out.size() >= limit) {
                 break;
             }
@@ -482,7 +482,7 @@ public final class ServerCliComputer implements ICliComputer {
         final NetworkStorage storage = NetworkStorage.of(level, net);
         final List<ServerUse> rows = new ArrayList<>();
         for (final dev.jstech.core.network.ServerNode server : NetworkSystem.get(level).serversOf(net)) {
-            rows.add(new ServerUse(ComputingPayloads.serverLabel(level, server.nodeUuid()),
+            rows.add(new ServerUse(NetworkLookup.serverLabel(level, server.nodeUuid()),
                     storage.usedOf(server.nodeUuid()), storage.capacityOf(server.nodeUuid())));
         }
         return rows;
@@ -509,7 +509,7 @@ public final class ServerCliComputer implements ICliComputer {
         final List<Holding> rows = new ArrayList<>();
         for (final Map.Entry<NodeUuid, Long> entry : perServer.entrySet()) {
             if (entry.getValue() > 0L) {
-                rows.add(new Holding(ComputingPayloads.serverLabel(level, entry.getKey()), entry.getValue()));
+                rows.add(new Holding(NetworkLookup.serverLabel(level, entry.getKey()), entry.getValue()));
             }
         }
         return rows;
@@ -1182,7 +1182,7 @@ public final class ServerCliComputer implements ICliComputer {
         }
         return queued == 0 ? OpResult.fail("could not start the MOVE")
                 : OpResult.ok("MOVE queued: " + describe(op, keys)
-                        + " " + op.from() + " -> " + ComputingPayloads.serverLabel(level, dest));
+                        + " " + op.from() + " -> " + NetworkLookup.serverLabel(level, dest));
     }
 
     /** Network -> a named bus's external inventory: a timed export, the same path the Export Bus uses. */
@@ -1258,7 +1258,7 @@ public final class ServerCliComputer implements ICliComputer {
         }
         for (final dev.jstech.core.network.ServerNode server
                 : NetworkSystem.get(level).serversOf(net)) {
-            if (ComputingPayloads.serverLabel(level, server.nodeUuid()).equalsIgnoreCase(name)) {
+            if (NetworkLookup.serverLabel(level, server.nodeUuid()).equalsIgnoreCase(name)) {
                 return server.nodeUuid();
             }
         }

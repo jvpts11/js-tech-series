@@ -1369,7 +1369,7 @@ public final class NetworkGameTests {
                             "executing the pull must queue an operation");
 
                     // The Object Explorer snapshot must mirror the real network, not a static example tree.
-                    final var schema = dev.jstech.computers.operation.payload.ComputingPayloads
+                    final var schema = dev.jstech.computers.operation.payload.iql.IqlPayloads
                             .nmsSchema(helper.getLevel(),
                                     (dev.jstech.computers.terminal.IComputerTerminalHost) computer);
                     helper.assertTrue(schema.networkLabel().startsWith("jsc-net-"),
@@ -1425,7 +1425,7 @@ public final class NetworkGameTests {
                             "the catalog must hold the created view");
 
                     // The NMS Object Explorer snapshot must reflect the real catalog, not mock examples.
-                    final var schema = dev.jstech.computers.operation.payload.ComputingPayloads
+                    final var schema = dev.jstech.computers.operation.payload.iql.IqlPayloads
                             .nmsSchema(helper.getLevel(),
                                     (dev.jstech.computers.terminal.IComputerTerminalHost) computer);
                     helper.assertTrue(schema.engine().views().contains("stock"),
@@ -2062,7 +2062,7 @@ public final class NetworkGameTests {
                 .thenExecuteAfter(SETTLE + 6, () -> {
                     mainframe.installIqlEngine();
                     mainframe.setSavedScript("QUERY items WHERE qty > 10");
-                    final var schema = dev.jstech.computers.operation.payload.ComputingPayloads
+                    final var schema = dev.jstech.computers.operation.payload.iql.IqlPayloads
                             .nmsSchema(helper.getLevel(), mainframe);
                     helper.assertTrue("QUERY items WHERE qty > 10".equals(schema.engine().script()),
                             "the saved script must travel in the schema snapshot; got: '"

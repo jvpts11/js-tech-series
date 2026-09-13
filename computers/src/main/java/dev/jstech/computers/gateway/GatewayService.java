@@ -26,8 +26,8 @@ import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkSelectOperation;
 import dev.jstech.computers.operation.NetworkStorage;
-import dev.jstech.computers.operation.payload.ComputingPayloads;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.storage.StorageKey;
@@ -203,7 +203,7 @@ public final class GatewayService {
         final List<Map<String, Object>> rows = new ArrayList<>();
         for (final Map.Entry<NodeUuid, Long> entry : storage().breakdown(resolve(name)).entrySet()) {
             if (entry.getValue() > 0L) {
-                rows.add(row("server", ComputingPayloads.serverLabel(level, entry.getKey()), "quantity", entry.getValue()));
+                rows.add(row("server", NetworkLookup.serverLabel(level, entry.getKey()), "quantity", entry.getValue()));
             }
         }
         charge(HostNetwork.priceOf(rows.size()));
