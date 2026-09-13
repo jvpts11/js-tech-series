@@ -6,10 +6,48 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 
 ## [Unreleased]
 
+### Added
+- Every mod's jar now carries its licence texts under `META-INF`: the GNU LGPL 3.0 the series is licensed
+  under, and the GNU GPL 3.0 it builds on.
+
+### Changed
+- Programs run faster. What a program's calls, branches and `new` reach is worked out once, when the program
+  loads, instead of on every line it runs, and so is which of the language's own functions (text, `List`,
+  `Map`, `Math`, `Convert`) a call means. Depending on what a program does, each instruction takes between 13
+  and 34 percent less time.
+- Compiled listings use format version 2. A listing compiled by 0.3.0a is refused with C4012; compiling its
+  source again brings it up to date.
+- `Random` draws from a generator of its own, so a given `Random.Seed` draws different numbers than it did in
+  0.3.0a.
+- Saves, network packets and menu data carry each setting by an id of its own instead of by its place in a
+  list, so adding a setting never changes what an old one means. Machine states that 0.3.0a worlds stored the
+  old way are not read back.
+- Inside the mods, with no change to how anything behaves: the handlers behind the computers' screens and
+  programs are split into feature packages; the virtual machine that runs programs has packages of its own,
+  with nothing of Minecraft in them, and reads a listing's problems without the compiler; a running program
+  keeps who it is, its console, its random numbers and the lines typed at it in parts of their own; every
+  source file's header names the mod it belongs to.
+
 ### Fixed
 - Cutting the last data cable between a Mainframe and the rest of its network now takes the network away
   from everything past the cut. The computers there no longer keep working through a Mainframe they are not
   connected to, and the network does not come back when the world is loaded again.
+- Constructors can chain to another with `: base(...)` or `: this(...)`. The first chained call used to stop
+  the program.
+- `Map.TryGet` and `Map.Remove` treat a key that holds `null` as present, as `ContainsKey` does; they used to
+  answer false.
+- `Map.TryGet` on a missing key fills its value with what a variable of the map's value type starts with
+  (nothing for text and objects, zero or false for numbers and bools) instead of 0 in every map.
+- `Program.Current.Name` follows `Program.SetName`. It used to keep the name the program had when
+  `Program.Current` was first read.
+- A program that stays up for a very long time no longer sees its count of instructions run, or of lines
+  written, wrap into negative numbers.
+- A program's random numbers carry on where they were when the world is saved and loaded, instead of starting
+  the sequence over.
+- Lines typed at a program's terminal before the program asked for them are still there after a save.
+- The Cluster Manager shows a section balancing round-robin as round-robin. It used to say MANUAL.
+- A listing edited by hand in which a type stands on itself no longer sends the server into an endless loop
+  when the program loads.
 
 ## [0.3.0a] - 2026-09-13 - The Programming Update
 
