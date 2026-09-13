@@ -694,31 +694,37 @@ public final class Process {
         this.current = thread;
         thread.yielded = false;
         int used = 0;
-        while (used < allowance && !this.identity.halted() && thread.parked == Parked.NONE && !thread.yielded) {
-            if (thread.frames.isEmpty() && (thread != this.main || !this.take())) {
-                break;
+        try {
+            while (used < allowance && !this.identity.halted() && thread.parked == Parked.NONE && !thread.yielded) {
+                if (thread.frames.isEmpty() && (thread != this.main || !this.take())) {
+                    break;
+                }
+                used++;
+                try {
+                    this.one();
+                } catch (final Halt halt) {
+                    this.fail(thread, halt);
+                } catch (final RuntimeException fault) {
+                    final Frame top = thread.frames.peek();
+                    this.fail(thread, this.fault(fault, top == null ? 0 : top.at));
+                }
+                /*
+                 * Reaching into the machine costs more than moving a number about, and the difference is
+                 * charged to this tick rather than hidden, so a program that talks to the world all the time
+                 * gets through less of itself than one that does its own arithmetic.
+                 */
+                used += this.library.drawCost();
+                if (thread.frames.isEmpty()) {
+                    this.ended(thread);
+                }
             }
-            used++;
-            this.identity.spend(1);
-            try {
-                this.one();
-            } catch (final Halt halt) {
-                this.fail(thread, halt);
-            } catch (final RuntimeException fault) {
-                final Frame top = thread.frames.peek();
-                this.fail(thread, this.fault(fault, top == null ? 0 : top.at));
-            }
+        } finally {
             /*
-             * Reaching into the machine costs more than moving a number about, and the difference is
-             * charged to this tick rather than hidden, so a program that talks to the world all the time
-             * gets through less of itself than one that does its own arithmetic.
+             * Counted once a turn rather than once an instruction: nothing reads the count in the middle of a
+             * turn, and writing it to another object after every instruction is a measurable share of what an
+             * instruction costs.
              */
-            final int reached = this.library.drawCost();
-            used += reached;
-            this.identity.spend(reached);
-            if (thread.frames.isEmpty()) {
-                this.ended(thread);
-            }
+            this.identity.spend(used);
         }
         return used;
     }
