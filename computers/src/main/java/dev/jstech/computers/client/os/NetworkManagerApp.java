@@ -568,7 +568,7 @@ public final class NetworkManagerApp implements IDesktopApp {
         if (op.priority() != OperationPriority.DEFAULT) {
             final String tag = op.priority().label();
             g.drawString(font, tag, nameX, y + 3,
-                    op.priority().ordinal() > OperationPriority.DEFAULT.ordinal() ? C_AMBER : ctx.skin().dim(), false);
+                    op.priority().compareTo(OperationPriority.DEFAULT) > 0 ? C_AMBER : ctx.skin().dim(), false);
             nameX += font.width(tag) + 4;
         }
         final int barX = x + w / 2 + 4;

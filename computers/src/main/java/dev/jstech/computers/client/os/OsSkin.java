@@ -190,7 +190,7 @@ public final class OsSkin implements ISkin {
      */
     public static OsSkin forDesktop(final ResourceLocation desktopId,
                                     final dev.jstech.core.tier.HardwareEra era) {
-        if (era != null && era.ordinal() <= dev.jstech.core.tier.HardwareEra.LEGACY.ordinal()) {
+        if (era != null && era.isAtMost(dev.jstech.core.tier.HardwareEra.LEGACY)) {
             switch (desktopId.getPath()) {
                 case "kde_plasma":
                     return KDE_PLASMA_LEGACY;

@@ -81,7 +81,7 @@ public final class SetupTiming {
      * A machine with no generation to speak of counts as Vintage.
      */
     public static int eraFactor(final dev.jstech.core.tier.HardwareEra era) {
-        return era == null ? 1 : 1 << era.ordinal();
+        return era == null ? 1 : 1 << era.level();
     }
 
     /** A disc's time on a machine that works {@code factor} times as fast as a Vintage one. */

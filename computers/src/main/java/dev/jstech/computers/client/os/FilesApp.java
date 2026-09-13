@@ -645,9 +645,12 @@ public final class FilesApp implements IDesktopApp {
     }
 
     private SortBy sortBy() {
-        final SortBy[] all = SortBy.values();
-        final int column = columns.sortColumn();
-        return column >= 0 && column < all.length ? all[column] : SortBy.NAME;
+        // The header's columns are Name, Type and Size, in that order.
+        return switch (columns.sortColumn()) {
+            case 1 -> SortBy.TYPE;
+            case 2 -> SortBy.SIZE;
+            default -> SortBy.NAME;
+        };
     }
 
     private int indexOfPath(final String path) {

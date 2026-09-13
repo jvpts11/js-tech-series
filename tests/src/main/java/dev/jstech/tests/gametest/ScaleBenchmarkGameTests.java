@@ -162,7 +162,7 @@ public final class ScaleBenchmarkGameTests {
         report.put("racks", params.racks()).put("servers", params.servers()).put("nodes", params.nodes())
                 .put("personal_computers", params.personalComputers()).put("types", params.types())
                 .put("types_small", smallTypes).put("ops_per_tick", OPS_PER_TICK)
-                .put("drives_per_server", params.drivesPerServer()).put("drive_size", params.driveSize().name())
+                .put("drives_per_server", params.drivesPerServer()).put("drive_size", params.driveSize().id())
                 .put("max_lot", params.maxLot()).put("mainframe_queues", base.mainframe().parallelQueues());
 
         /*

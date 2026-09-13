@@ -15,7 +15,9 @@ import dev.jstech.core.client.gui.component.UiContext;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
+import java.util.EnumMap;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Minesweeper as a desktop app. The window chrome follows the installed skin, while the minefield keeps the
@@ -47,7 +49,8 @@ public final class MinesweeperApp implements IDesktopApp {
     private long frozenSeconds;
 
     private final Panel root = new Panel();
-    private final Button[] difficultyButtons = new Button[MinesweeperGame.Difficulty.values().length];
+    private final Map<MinesweeperGame.Difficulty, Button> difficultyButtons =
+            new EnumMap<>(MinesweeperGame.Difficulty.class);
     private final Button face;
     private final Board board;
 
@@ -131,10 +134,8 @@ public final class MinesweeperApp implements IDesktopApp {
     }
 
     public MinesweeperApp() {
-        final MinesweeperGame.Difficulty[] all = MinesweeperGame.Difficulty.values();
-        for (int i = 0; i < all.length; i++) {
-            final MinesweeperGame.Difficulty d = all[i];
-            difficultyButtons[i] = root.add(new Button(shortLabel(d), () -> newGame(d)));
+        for (final MinesweeperGame.Difficulty d : MinesweeperGame.Difficulty.values()) {
+            difficultyButtons.put(d, root.add(new Button(shortLabel(d), () -> newGame(d))));
         }
         face = root.add(new Button(this::faceGlyph, () -> newGame(difficulty)));
         board = root.add(new Board());
@@ -201,12 +202,12 @@ public final class MinesweeperApp implements IDesktopApp {
         g.fill(x, y, x + width, y + height, skin.windowBg());
 
         // Difficulty selector row.
-        final MinesweeperGame.Difficulty[] all = MinesweeperGame.Difficulty.values();
         int dx = x + 4;
-        for (int i = 0; i < all.length; i++) {
-            final int dw = font.width(shortLabel(all[i])) + 10;
-            difficultyButtons[i].setBounds(dx, y + 3, dw, 13);
-            difficultyButtons[i].setPrimary(all[i] == difficulty);
+        for (final MinesweeperGame.Difficulty d : MinesweeperGame.Difficulty.values()) {
+            final int dw = font.width(shortLabel(d)) + 10;
+            final Button button = difficultyButtons.get(d);
+            button.setBounds(dx, y + 3, dw, 13);
+            button.setPrimary(d == difficulty);
             dx += dw + 3;
         }
 

@@ -15,7 +15,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -41,7 +40,7 @@ public class MotherboardItem extends SpecItem<MotherboardSpec> {
         tooltip.add(Component.literal(spec.formFactor().label() + " form factor")
                 .withStyle(ChatFormatting.AQUA));
         final String ramTypes = spec.acceptedRam().stream()
-                .sorted(Comparator.comparingInt(RamGeneration::ordinal))
+                .sorted()
                 .map(RamGeneration::name)
                 .collect(Collectors.joining(" / "));
         /*

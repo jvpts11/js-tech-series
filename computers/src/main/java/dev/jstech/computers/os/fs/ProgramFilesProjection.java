@@ -82,7 +82,7 @@ public final class ProgramFilesProjection {
              * day put programs made for the one before it.
              */
             final boolean older = spec.era() != null && os.minEra() != null
-                    && spec.era().ordinal() < os.minEra().ordinal();
+                    && !spec.era().isAtLeast(os.minEra());
             final String folder = (older ? PROGRAM_FILES_X86 : PROGRAM_FILES) + "/" + spec.displayName();
             out.add(dir(folder));
             out.add(file(folder + "/" + spec.commandName() + ".exe", FileType.EXE));

@@ -76,7 +76,7 @@ public record GatewayPermissions(boolean read, boolean operations, OperationPrio
 
     /** The priority a CC request actually runs at: what it asked for, no higher than the ceiling. */
     public OperationPriority cap(final OperationPriority asked) {
-        return asked == null || asked.ordinal() > ceiling.ordinal() ? ceiling : asked;
+        return asked == null || asked.compareTo(ceiling) > 0 ? ceiling : asked;
     }
 
     /** The index of the ceiling that is at least {@code priority}, so any priority maps onto a knob position. */
@@ -85,7 +85,7 @@ public record GatewayPermissions(boolean read, boolean operations, OperationPrio
             return 1;
         }
         for (int i = 0; i < CEILINGS.length; i++) {
-            if (priority.ordinal() <= CEILINGS[i].ordinal()) {
+            if (priority.compareTo(CEILINGS[i]) <= 0) {
                 return i;
             }
         }
