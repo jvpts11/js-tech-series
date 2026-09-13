@@ -168,8 +168,9 @@ public final class Emitter {
 
     /*
      * A class with fields that start out holding something, and no constructor of its own, still has
-     * to put those values there. A static one gets a method named after its type, which no source
-     * method can be, because inside a class that name is a constructor.
+     * to put those values there, and so does its static part: the first in a constructor that takes
+     * nothing, the second in the type's set-up method. Neither can clash with a method written in the
+     * source, because no name in the source starts with a dot.
      */
     private void addSetUp(final NamedType type, final AsmType written, final IDecl.ClassDecl declaration,
                           final List<IDecl.FieldDecl> instanceStart, final List<IDecl.FieldDecl> staticStart) {
@@ -178,13 +179,13 @@ public final class Emitter {
         if (!hasConstructor && !instanceStart.isEmpty()) {
             final Body body = new Body(type, ITypeSymbol.Primitive.VOID);
             body.fieldStarts(instanceStart);
-            written.addMethod(new AsmMethod(type.qualifiedName(), "void", List.of(), false,
+            written.addMethod(new AsmMethod(AsmMethod.CONSTRUCTOR, "void", List.of(), false,
                     body.slotCount(), body.finish()));
         }
         if (!staticStart.isEmpty()) {
             final Body body = new Body(type, ITypeSymbol.Primitive.VOID);
             body.fieldStarts(staticStart);
-            written.addMethod(new AsmMethod(type.qualifiedName(), "void", List.of(), true,
+            written.addMethod(new AsmMethod(AsmMethod.TYPE_SET_UP, "void", List.of(), true,
                     body.slotCount(), body.finish()));
         }
     }
@@ -265,7 +266,7 @@ public final class Emitter {
                     constructor));
             body.block(constructor.body());
         }
-        return new AsmMethod(type.qualifiedName(), "void", this.written(constructor.parameters()), false,
+        return new AsmMethod(AsmMethod.CONSTRUCTOR, "void", this.written(constructor.parameters()), false,
                 body.slotCount(), body.finish());
     }
 
@@ -408,7 +409,7 @@ public final class Emitter {
             this.emit(Opcode.LDTHIS);
             final IMemberSymbol.MethodSymbol chosen = this.constructorOf(target, call.arguments().size());
             this.arguments(call.arguments(), chosen);
-            this.emit(Opcode.CALL, new IOperand.Method(target.qualifiedName(), target.qualifiedName(),
+            this.emit(Opcode.CALL, new IOperand.Method(target.qualifiedName(), AsmMethod.CONSTRUCTOR,
                     chosen == null ? List.of() : writtenParameters(chosen), "void"));
         }
 
@@ -416,7 +417,7 @@ public final class Emitter {
             for (final IMemberSymbol member : target.members()) {
                 if (member instanceof IMemberSymbol.ConstructorSymbol constructor
                         && constructor.parameters().size() == count) {
-                    return new IMemberSymbol.MethodSymbol(target, target.qualifiedName(),
+                    return new IMemberSymbol.MethodSymbol(target, AsmMethod.CONSTRUCTOR,
                             ITypeSymbol.Primitive.VOID, constructor.parameters(), constructor.modifiers());
                 }
             }

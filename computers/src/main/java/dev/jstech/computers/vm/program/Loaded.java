@@ -191,7 +191,7 @@ public final class Loaded {
         Method setUp = null;
         for (final AsmMethod method : type.methods()) {
             final Method loaded = load(type.name(), method);
-            if (method.isStatic() && method.name().equals(type.name()) && method.parameters().isEmpty()) {
+            if (method.isStatic() && AsmMethod.TYPE_SET_UP.equals(method.name()) && method.parameters().isEmpty()) {
                 setUp = loaded;
                 continue;
             }

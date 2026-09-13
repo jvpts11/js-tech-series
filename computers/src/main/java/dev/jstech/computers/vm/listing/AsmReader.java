@@ -56,6 +56,10 @@ public final class AsmReader {
             this.report(at + 1, ListingError.VERSION_TOO_NEW, AsmProgram.VERSION, version);
             return new AsmProgram(version);
         }
+        if (version >= 0 && version < AsmProgram.VERSION) {
+            this.report(at + 1, ListingError.VERSION_TOO_OLD, version, AsmProgram.VERSION);
+            return new AsmProgram(version);
+        }
         final AsmProgram program = new AsmProgram(version < 0 ? AsmProgram.VERSION : version);
         for (int line = at + 1; line < this.lines.length; line++) {
             this.readLine(program, this.lines[line], line + 1);
@@ -298,7 +302,11 @@ public final class AsmReader {
             return null;
         }
         final String head = text.substring(0, open);
-        final int dot = head.lastIndexOf('.');
+        int dot = head.lastIndexOf('.');
+        // A constructor's name starts with a dot of its own, so its owner ends at the dot before that one.
+        if (dot > 0 && head.charAt(dot - 1) == '.') {
+            dot--;
+        }
         if (dot < 0) {
             this.report(line, ListingError.MALFORMED_OPERAND, text, "call");
             return null;

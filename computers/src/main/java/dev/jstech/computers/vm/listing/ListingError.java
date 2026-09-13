@@ -24,7 +24,9 @@ public enum ListingError {
     UNKNOWN_DIRECTIVE("C4007", "'%s' is not a line this format has"),
     INSTRUCTION_OUTSIDE_METHOD("C4008", "an instruction has to be inside a method"),
     DIRECTIVE_OUTSIDE_TYPE("C4009", "'%s' has to be inside a type"),
-    UNKNOWN_LABEL("C4010", "nothing in this method is labelled '%s'");
+    UNKNOWN_LABEL("C4010", "nothing in this method is labelled '%s'"),
+    VERSION_TOO_OLD("C4012", "this listing is assembly version %s and this runtime reads version %s: compile its "
+            + "source again");
 
     private final String code;
     private final String template;

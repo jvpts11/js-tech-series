@@ -24,6 +24,16 @@ import java.util.Objects;
 public record AsmMethod(String name, String returns, List<String> parameters, boolean isStatic,
                         int slots, List<Instruction> body) {
 
+    /**
+     * The name every constructor is written under. It starts with a dot, which no name in a source can, so it is never
+     * a method a program wrote, and every type's constructors share it; a call to one reads back with the owner
+     * before the double dot ({@code call Tests.Base..ctor(int) -> void}).
+     */
+    public static final String CONSTRUCTOR = ".ctor";
+
+    /** The name of the static method that puts a type's static fields in place before anything else of it runs. */
+    public static final String TYPE_SET_UP = ".cctor";
+
     public AsmMethod {
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(returns, "returns");

@@ -217,6 +217,31 @@ class ProcessTest {
     }
 
     @Test
+    void constructor_chainsToItsBaseAndToItsOwnInsideANamespace() {
+        /*
+         * Every program has a namespace, so the name of a type has dots in it; a chained call still has to
+         * reach the constructor it names, and the starting values run once, in the constructor that chains
+         * to the base.
+         */
+        final Process process = run("""
+                class Base { public int A; public Base(int a) { A = a; } }
+                class Below : Base {
+                    public int B;
+                    public int C = 5;
+                    public Below(int a, int b) : base(a) { B = b; }
+                    public Below(int b) : this(7, b) { C = C + 1; }
+                }
+                """, """
+                        Below one = new Below(1, 2);
+                        Below two = new Below(3);
+                        Console.PrintLine(one.A + " " + one.B + " " + one.C);
+                        Console.PrintLine(two.A + " " + two.B + " " + two.C);
+                """, ROOM);
+        assertFinished(process);
+        assertEquals(List.of("1 2 5", "7 3 6"), process.console());
+    }
+
+    @Test
     void record_readsAsItsFieldsWhenJoinedToAString() {
         /*
          * A record in a sentence reads as what it holds, through the ToString it was given, and two

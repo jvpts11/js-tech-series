@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.vm.program;
 
+import dev.jstech.computers.vm.listing.AsmMethod;
 import dev.jstech.computers.vm.listing.AsmType;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Instruction;
@@ -1983,7 +1984,7 @@ public final class Process {
 
     private Loaded.Method constructorOf(final Loaded.Type type, final int count) {
         for (final Loaded.Method method : type.methods().values()) {
-            if (method.name().equals(type.name()) && !method.isStatic()
+            if (AsmMethod.CONSTRUCTOR.equals(method.name()) && !method.isStatic()
                     && method.parameters().size() == count) {
                 return method;
             }
@@ -2173,7 +2174,9 @@ public final class Process {
      */
     private Loaded.Method onItsOwnType(final Loaded.Method direct, final Object self,
                                        final IOperand.Method named) {
-        if (!(self instanceof Values.Obj object) || object.type().equals(named.owner())) {
+        // A constructor runs on the type it names: a class chaining to its base must not land in one of its own.
+        if (AsmMethod.CONSTRUCTOR.equals(named.name()) || !(self instanceof Values.Obj object)
+                || object.type().equals(named.owner())) {
             return direct;
         }
         final Loaded.Method own = this.program.method(object.type(), named.name(), named.parameters());

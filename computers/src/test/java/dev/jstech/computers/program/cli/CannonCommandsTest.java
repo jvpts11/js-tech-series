@@ -152,7 +152,7 @@ class CannonCommandsTest {
         this.computer.add(CannonCommands.COMPILER);
         this.computer.files.put("Monitor.can", SCRIPT);
         assertTrue(this.run("cannonc Monitor.can").contains("wrote Monitor.asm"));
-        assertTrue(this.computer.files.get("Monitor.asm").startsWith(".asm 1"));
+        assertTrue(this.computer.files.get("Monitor.asm").startsWith(".asm 2"));
         assertTrue(this.computer.files.get("Monitor.asm").contains(".start Tests.Monitor"));
     }
 

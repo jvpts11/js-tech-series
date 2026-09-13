@@ -15,12 +15,14 @@ import java.util.List;
  *
  * <p>The version at the head is the format's, not the program's. A runtime refuses a listing whose
  * major version is above the one it knows, because a listing from a later version may use
- * instructions it has never heard of, and guessing at those would be worse than saying so.
+ * instructions it has never heard of, and guessing at those would be worse than saying so. It refuses
+ * one below it as well: the format changed since, and reading an older listing as today's would run
+ * it wrongly without a word, where compiling its source again costs nothing.
  */
 public final class AsmProgram {
 
-    /** The version of the format this build writes and reads. */
-    public static final int VERSION = 1;
+    /** The version of the format this build writes and reads; 2 names every constructor {@code .ctor}. */
+    public static final int VERSION = 2;
 
     private final int version;
     private final List<AsmType> types = new ArrayList<>();

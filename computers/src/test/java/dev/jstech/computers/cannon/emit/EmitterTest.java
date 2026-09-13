@@ -76,6 +76,17 @@ class EmitterTest {
     }
 
     @Test
+    void emit_writesEveryConstructorAsCtorAndCallsTheOneItChainsTo() {
+        final String listing = compile("""
+                class Base { public Base(int a) { } }
+                class Below : Base { public Below() : base(1) { } }
+                """, "");
+        assertTrue(listing.contains(".method void .ctor(int) slots"), listing);
+        assertTrue(listing.contains(".method void .ctor() slots"), listing);
+        assertTrue(bodyOf(listing, ".ctor").contains("call Tests.Base..ctor(int) -> void"), listing);
+    }
+
+    @Test
     void emit_widensANumberWhereItHasTo() {
         assertEquals(List.of("ldc.i4 1", "conv.r8", "stloc 0", "ret"),
                 bodyOf(compile("    void M() { double d = 1; }\n"), "M"));
@@ -143,7 +154,7 @@ class EmitterTest {
     @Test
     void emit_putsAFieldsStartingValueInAMethodOfTheTypeItself() {
         final String listing = compile("    int threshold = 5;\n");
-        assertEquals(List.of("ldthis", "ldc.i4 5", "stfld threshold", "ret"), bodyOf(listing, "Tests.Monitor"));
+        assertEquals(List.of("ldthis", "ldc.i4 5", "stfld threshold", "ret"), bodyOf(listing, ".ctor"));
     }
 
     @Test
@@ -264,7 +275,7 @@ class EmitterTest {
 
     @Test
     void emit_namesTheClassTheRuntimeStartsFromAndWhatKindOfProgramItIs() {
-        assertTrue(compile("").startsWith(".asm 1\n.start Tests.Monitor script\n"));
+        assertTrue(compile("").startsWith(".asm 2\n.start Tests.Monitor script\n"));
     }
 
     @Test
@@ -275,7 +286,7 @@ class EmitterTest {
                 }
                 """)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
-        assertTrue(built.assembly().startsWith(".asm 1\n.start Tests.Hello console\n"), built.assembly());
+        assertTrue(built.assembly().startsWith(".asm 2\n.start Tests.Hello console\n"), built.assembly());
     }
 
     @Test

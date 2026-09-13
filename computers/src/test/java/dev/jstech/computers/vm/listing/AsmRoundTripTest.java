@@ -112,7 +112,7 @@ class AsmRoundTripTest {
     @Test
     void write_laysTheListingOutInColumnsAPlayerCanFollow() {
         final String[] lines = AsmWriter.write(golden()).split("\n", -1);
-        assertEquals(".asm 1", lines[0]);
+        assertEquals(".asm 2", lines[0]);
         assertEquals(".start Monitor script", lines[1]);
         assertEquals("", lines[2]);
         assertEquals(".class Monitor : IScript", lines[3]);
@@ -195,7 +195,7 @@ class AsmRoundTripTest {
     @Test
     void write_thenRead_copesWithAProgramThatHoldsNothing() {
         final String text = AsmWriter.write(new AsmProgram());
-        assertEquals(".asm 1\n", text);
+        assertEquals(".asm 2\n", text);
         final AsmProgram read = this.read(text);
         assertFalse(this.reader.hasProblems());
         assertTrue(read.types().isEmpty());
@@ -215,45 +215,65 @@ class AsmRoundTripTest {
     }
 
     @Test
+    void read_refusesAListingFromAnEarlierVersion() {
+        this.read(".asm " + (AsmProgram.VERSION - 1) + "\n.class C\n");
+        assertEquals(List.of("C4012"), this.codes());
+    }
+
+    @Test
+    void read_findsTheOwnerOfAConstructorCallBeforeTheDoubleDot() {
+        final String text = ".asm " + AsmProgram.VERSION + "\n\n.class Tests.Below\n\n.method void .ctor() slots 0\n"
+                + "    call    Tests.Base..ctor(int) -> void\n    ret\n";
+        final AsmProgram read = this.read(text);
+        assertFalse(this.reader.hasProblems(), () -> String.join("\n", this.reader.problems().stream()
+                .map(ListingProblem::format).toList()));
+        final AsmMethod constructor = read.type("Tests.Below").methods().getFirst();
+        assertEquals(AsmMethod.CONSTRUCTOR, constructor.name());
+        assertEquals(new IOperand.Method("Tests.Base", AsmMethod.CONSTRUCTOR, List.of("int"), "void"),
+                constructor.body().getFirst().operand());
+        assertEquals(text, AsmWriter.write(read));
+    }
+
+    @Test
     void read_reportsALineItDoesNotKnow() {
-        this.read(".asm 1\n.class C\n.method void M() slots 0\n    nonsense\n");
+        this.read(".asm 2\n.class C\n.method void M() slots 0\n    nonsense\n");
         assertEquals(List.of("C4003"), this.codes());
     }
 
     @Test
     void read_reportsAnInstructionGivenTheWrongThing() {
-        this.read(".asm 1\n.class C\n.method void M() slots 0\n    ldc.i4\n    ret 7\n    br\n");
+        this.read(".asm 2\n.class C\n.method void M() slots 0\n    ldc.i4\n    ret 7\n    br\n");
         assertEquals(List.of("C4004", "C4005", "C4004"), this.codes());
     }
 
     @Test
     void read_reportsANumberThatIsNotOne() {
-        this.read(".asm 1\n.class C\n.method void M() slots 0\n    ldc.i4  nine\n");
+        this.read(".asm 2\n.class C\n.method void M() slots 0\n    ldc.i4  nine\n");
         assertEquals(List.of("C4006"), this.codes());
     }
 
     @Test
     void read_reportsAnInstructionThatIsNotInAMethod() {
-        this.read(".asm 1\n.class C\n    ret\n");
+        this.read(".asm 2\n.class C\n    ret\n");
         assertEquals(List.of("C4008"), this.codes());
     }
 
     @Test
     void read_reportsADirectiveThatIsNotInAType() {
-        this.read(".asm 1\n.field int x\n");
+        this.read(".asm 2\n.field int x\n");
         assertEquals(List.of("C4009"), this.codes());
     }
 
     @Test
     void read_reportsABranchToALabelNothingCarries() {
-        this.read(".asm 1\n.class C\n.method void M() slots 0\n    br      L9\n    ret\n");
+        this.read(".asm 2\n.class C\n.method void M() slots 0\n    br      L9\n    ret\n");
         assertEquals(List.of("C4010"), this.codes());
         assertEquals(4, this.reader.problems().getFirst().line());
     }
 
     @Test
     void read_ignoresBlankLinesAndLinesThatAreOnlyANote() {
-        final AsmProgram read = this.read(".asm 1\n\n; a note of its own\n.class C\n"
+        final AsmProgram read = this.read(".asm 2\n\n; a note of its own\n.class C\n"
                 + ".method void M() slots 0\n\n    ret\n");
         assertFalse(this.reader.hasProblems());
         assertEquals(1, read.type("C").methods().getFirst().body().size());
