@@ -57,7 +57,12 @@ public class InstructionBenchmarks {
             + "using System.Utils.*; using System.Machine.*; using System.Network.*; using System.Operations.*; "
             + "using System.Execution.*; using System.Threading.*; namespace Benchmarks; ";
 
-    @Param({"arithmetic", "fields", "calls", "objects", "arrays", "strings", "library", "locks"})
+    /** A class behind an interface, for the families that reach an object through what it implements. */
+    private static final String SHAPES = "interface IShape { int Area(); }\n"
+            + "class Square : IShape { public int Side; public int Area() { return Side * Side; } }\n";
+
+    @Param({"arithmetic", "fields", "calls", "objects", "arrays", "strings", "library", "locks", "virtual",
+            "constructors", "casts", "text", "collections"})
     public String family;
 
     private Loaded program;
@@ -109,6 +114,22 @@ public class InstructionBenchmarks {
                     "double d = 7.0; while (true) { d = Math.Abs(d - 5.0); }"};
             case "locks" -> new String[]{"", "int count;",
                     "while (true) { lock (this) { count = count + 1; } }"};
+            case "virtual" -> new String[]{SHAPES, "",
+                    "Square square = new Square(); square.Side = 3; IShape shape = square; int total = 0; "
+                            + "while (true) { total = shape.Area() + total % 1000; }"};
+            case "constructors" -> new String[]{"class Base { public int A; public Base(int a) { A = a; } }\n"
+                    + "class Point : Base { public int B; public Point(int a, int b) : base(a) { B = b; } }\n", "",
+                    "int i = 0; while (true) { Point p = new Point(i, i + 1); i = i + 1; }"};
+            case "casts" -> new String[]{SHAPES, "",
+                    "object thing = new Square(); int hits = 0; while (true) { if (thing is IShape) { hits = hits + 1; } "
+                            + "IShape shape = thing as IShape; if (hits > 100000) { hits = 0; } }"};
+            case "text" -> new String[]{"", "",
+                    "string line = \"iron ore, 64\"; int found = 0; while (true) { string head = line.Substring(0, 4); "
+                            + "found = found + line.IndexOf(\",\"); if (found > 100000) { found = 0; } }"};
+            case "collections" -> new String[]{"", "",
+                    "List<int> items = new List<int>(); Map<string, int> counts = new Map<string, int>(); int i = 0; "
+                            + "while (true) { items.Add(i); int last = items.Get(i); counts.Put(\"iron\", i); "
+                            + "int held = counts.Get(\"iron\"); i = i + 1; }"};
             default -> throw new IllegalArgumentException("no benchmark family " + family);
         };
         return parts[0] + "class Monitor : IScript {\n" + parts[1] + "\n"
