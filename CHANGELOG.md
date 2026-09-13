@@ -6,6 +6,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 
 ## [Unreleased]
 
+## [0.3.0a] - 2026-09-13 - The Programming Update
+
+Codename: Lithium.
+
+The computers became programmable. Cannon, the series' own language, is written, compiled and run on
+the computers themselves, with five editors to write it in, and ComputerCraft's computers reach the
+data network through the Network Gateway. The computing mod is now called J's Computers.
+
 ### Added
 - Computers can now be programmed with the series' own programming language, Cannon. You write it at any computer, compile
   it there with `cannonc` down to assembly, and run what comes out. The compiler produces a listing you can open and read a
@@ -67,14 +75,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   slots, reachable from the other faces by a chest, a hopper or a turtle, and shown on the block's own
   screen with a status line and two lights. Several Gateways may serve one computer.
 - The Gateway Manager, a program for the computer that has Gateways on its ports: the rail lists them
-  by name, Rename and Identify (the block's lights blink) act on the selected one, and five tabs show it.
+  by name, Rename and Identify (the block's lights blink) act on the selected one, and four tabs show it.
   Status puts this side and the ComputerCraft side as two cards, says how CC names the Gateway, shows
   the buffer with a button that empties it into the network as operations, and lists the last requests.
-  Permissions holds the switches for reading the network, running operations and reaching the shared
-  folders, a priority ceiling for requests from CC, and how many calls a tick the Gateway answers.
-  Computers lists the ComputerCraft computers attached and can send them a test event; Shares lists
-  every folder the network's computers share as CC will see it; Log keeps the last forty things the
-  Gateway did. The `gateway` command does the same at any prompt.
+  Permissions holds the switches for reading the network and running operations, a priority ceiling for
+  requests from CC, and how many calls a tick the Gateway answers. Computers lists the ComputerCraft
+  computers attached and can send them a test event; Log keeps the last forty things the Gateway did.
+  The `gateway` command does the same at any prompt.
 - Through a Gateway, a ComputerCraft program reads the network (what it holds and where, how much room is
   left, which computers are on it), pulls items into the Gateway's buffer and pushes them back, asks for
   a craft, follows and cancels operations, watches a total and is told when it moves, writes a line in
@@ -361,6 +368,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   behind by another program taking the terminal could never be answered; it sat at no cost and some
   memory, listed as running. It is stopped the moment the terminal moves on, and a machine finding one
   in that state clears it.
+- A Cluster Management Computer can be renamed from its own screen. The name typed there was refused.
+
+### Security
+- A computer acts only on what a player at its screen sends. A modified client could put any position
+  in a request and reach a machine it had never opened. Every request from a client is now checked on
+  the server against the screen that player really has open: a desktop, command prompt or terminal on
+  that machine within reach, a firmware, self-test, installer or KVM screen the server opened on a
+  monitor still showing the machine, or the assembly screen of the block being changed. A request that
+  fails the check is dropped and written to the server log.
 
 ## [0.2.0a] - 2026-09-06
 
@@ -442,6 +458,7 @@ The mod is in alpha: computing is the only module, and it is still growing.
 - Breaking a drive that still holds a disc removes the drive.
 - A rack server's desktop no longer crashes the monitor before the rack's era has reached the client.
 
-[Unreleased]: https://github.com/jvpts11/js-tech-series/compare/v0.2.0a...HEAD
+[Unreleased]: https://github.com/jvpts11/js-tech-series/compare/v0.3.0a...HEAD
+[0.3.0a]: https://github.com/jvpts11/js-tech-series/releases/tag/v0.3.0a
 [0.2.0a]: https://github.com/jvpts11/js-tech-series/releases/tag/v0.2.0a
 [0.1.0a]: https://github.com/jvpts11/js-tech-series/releases/tag/v0.1.0a
