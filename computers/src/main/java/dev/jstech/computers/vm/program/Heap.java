@@ -185,6 +185,67 @@ public final class Heap implements IPureContext {
         return this.freed.contains(value);
     }
 
+    /**
+     * The value itself, when the program may reach into it. Reaching into nothing halts, and so does reaching into
+     * something already freed, since using it again is the mistake freeing exists to catch.
+     */
+    Object alive(final Object value, final int line) {
+        if (value == null || this.freed.contains(value)) {
+            throw unreachable(value, line);
+        }
+        return value;
+    }
+
+    /* Built apart from alive, so the check every reach makes stays small enough to be inlined wherever it is called. */
+    private static Halt unreachable(final Object value, final int line) {
+        return value == null
+                ? new Halt(Halt.Reason.NO_OBJECT, line, "there is nothing here to reach into")
+                : new Halt(Halt.Reason.USE_AFTER_DISPOSE, line, "this was disposed and cannot be used");
+    }
+
+    /**
+     * Puts a value that came from outside onto the heap, contents and all, so the program may hold it.
+     *
+     * <p>The one door for everything the world hands a program: an answer from the machine comes through here. A
+     * value that skips it is outside the program's RAM and outside its snapshot, which is to say a value that quietly
+     * becomes nothing the next time the world is read back. What a program is handed is the program's to hold and to
+     * free, and it weighs what it weighs; anything already held is left where it is, so handing back something the
+     * program gave in the first place does not charge it twice.
+     */
+    Object adopt(final Object made, final int line) {
+        if (made == null || this.bytesOf(made) > 0) {
+            return made;
+        }
+        switch (made) {
+            case String text -> this.allocate(text, sizeOfText(text), line);
+            case Values.ListValue list -> {
+                for (int i = 0; i < list.items().size(); i++) {
+                    list.items().set(i, this.adopt(list.items().get(i), line));
+                }
+                this.allocate(list, list.bytes(), line);
+            }
+            case Values.MapValue map -> {
+                final Map<Object, Object> adopted = new LinkedHashMap<>();
+                for (final Map.Entry<Object, Object> entry : map.entries().entrySet()) {
+                    adopted.put(this.adopt(entry.getKey(), line), this.adopt(entry.getValue(), line));
+                }
+                map.entries().clear();
+                map.entries().putAll(adopted);
+                this.allocate(map, map.bytes(), line);
+            }
+            case Values.Obj object -> {
+                for (final Map.Entry<String, Object> field : object.all().entrySet()) {
+                    object.set(field.getKey(), this.adopt(field.getValue(), line));
+                }
+                this.allocate(object, HEADER + (long) REFERENCE * object.all().size(), line);
+            }
+            default -> {
+                // A number, a bool or a character: a value, which weighs nothing of its own.
+            }
+        }
+        return made;
+    }
+
     /** Everything still held, biggest first, for the console to show. */
     public List<String> liveByLine() {
         final Map<Integer, Long> byLine = new LinkedHashMap<>();

@@ -25,8 +25,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Inside the mods, with no change to how anything behaves: the handlers behind the computers' screens and
   programs are split into feature packages; the virtual machine that runs programs has packages of its own,
   with nothing of Minecraft in them, and reads a listing's problems without the compiler; a running program
-  keeps who it is, its console, its random numbers and the lines typed at it in parts of their own; every
-  source file's header names the mod it belongs to.
+  keeps who it is, its console, its random numbers and the lines typed at it in parts of their own, and its
+  heap takes in whatever the machine hands the program and checks what the program reaches into; every source
+  file's header names the mod it belongs to.
 
 ### Fixed
 - Cutting the last data cable between a Mainframe and the rest of its network now takes the network away

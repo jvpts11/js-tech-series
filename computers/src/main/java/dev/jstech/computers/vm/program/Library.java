@@ -10,9 +10,7 @@ package dev.jstech.computers.vm.program;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.system.CannonCosts;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * The part of the library the runtime answers for itself that needs more than a call's arguments.
@@ -129,7 +127,7 @@ public final class Library {
                 made.set(UiWidgets.ID, this.owner.nextWidgetId());
             }
             // What it holds (the widgets in a row, the rows of a list) is the program's, and weighs as much.
-            this.adopt(made, line);
+            this.heap.adopt(made, line);
             return made;
         }
         if ("Map".equals(bare)) {
@@ -180,7 +178,7 @@ public final class Library {
                     : List.of(this.owner == null ? "" : this.owner.gatewayName());
             final IHost.Reply reply = this.host.call(owner, name, asked, this.caller, this.callerId(), line);
             this.owed += Math.max(0, reply.cost() - 1);
-            return this.adopt(reply.value(), line);
+            return this.heap.adopt(reply.value(), line);
         }
         throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, owner + " has no " + name);
     }
@@ -274,7 +272,7 @@ public final class Library {
 
     private void open(final Values.Obj window, final int line) {
         // A window the runtime made itself (a message box) is the program's to hold like any other.
-        this.adopt(window, line);
+        this.heap.adopt(window, line);
         this.owner().openWindow(window, line);
     }
 
@@ -352,68 +350,14 @@ public final class Library {
         this.owed += Math.max(0, reply.cost() - 1);
         final List<Object> filled = new ArrayList<>();
         for (final Object one : reply.filled()) {
-            filled.add(this.adopt(one, line));
+            filled.add(this.heap.adopt(one, line));
         }
-        return new Answer(this.adopt(reply.value(), line), filled);
-    }
-
-    /**
-     * Puts a value that came from outside onto the program's heap, so the program may hold it.
-     *
-     * <p>The one door for everything the world hands a program: an answer from a host call comes through
-     * here, and so does an answer from a computer on the other side of a Gateway. A value that skips it
-     * is a value outside the program's RAM and outside its snapshot, which is to say a value that
-     * quietly becomes nothing the next time the world is read back.
-     */
-    Object adoptExternal(final Object made, final int line) {
-        return this.adopt(made, line);
+        return new Answer(this.heap.adopt(reply.value(), line), filled);
     }
 
     /** Hands a failure of the runtime itself to the machine, which is where it gets written down. */
     void fault(final String process, final int line, final RuntimeException cause) {
         this.host.fault(process, line, cause);
-    }
-
-    /**
-     * Puts something the machine made onto the program's heap, contents and all.
-     *
-     * <p>What a program is handed is the program's to hold and to free, and it has to weigh what it
-     * weighs. Anything already on the heap is left where it is, so handing back something the program
-     * gave in the first place does not charge it twice.
-     */
-    private Object adopt(final Object made, final int line) {
-        if (made == null || this.heap.bytesOf(made) > 0) {
-            return made;
-        }
-        switch (made) {
-            case String text -> this.heap.allocate(text, Heap.sizeOfText(text), line);
-            case Values.ListValue list -> {
-                for (int i = 0; i < list.items().size(); i++) {
-                    list.items().set(i, this.adopt(list.items().get(i), line));
-                }
-                this.heap.allocate(list, list.bytes(), line);
-            }
-            case Values.MapValue map -> {
-                final Map<Object, Object> adopted = new LinkedHashMap<>();
-                for (final Map.Entry<Object, Object> entry : map.entries().entrySet()) {
-                    adopted.put(this.adopt(entry.getKey(), line), this.adopt(entry.getValue(), line));
-                }
-                map.entries().clear();
-                map.entries().putAll(adopted);
-                this.heap.allocate(map, map.bytes(), line);
-            }
-            case Values.Obj object -> {
-                for (final Map.Entry<String, Object> field : object.all().entrySet()) {
-                    object.set(field.getKey(), this.adopt(field.getValue(), line));
-                }
-                this.heap.allocate(object, Heap.HEADER
-                        + (long) Heap.REFERENCE * object.all().size(), line);
-            }
-            default -> {
-                // A number, a bool or a character: a value, which weighs nothing of its own.
-            }
-        }
-        return made;
     }
 
     private Answer console(final String name, final List<Object> arguments, final int line) {

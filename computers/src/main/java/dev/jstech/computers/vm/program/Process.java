@@ -251,16 +251,6 @@ public final class Process {
         this.end(thread);
     }
 
-    /** A fresh piece of text on the heap. */
-    String textOnHeap(final String value, final int line) {
-        return this.text(value, line);
-    }
-
-    /** The lines of the program's console, for the runtime to write on. */
-    Object alive0(final Object value, final int line) {
-        return this.alive(value, line);
-    }
-
     public Process(final ProgramImage program, final long heapBytes, final IHost host) {
         this(program, heapBytes, host, true);
     }
@@ -516,7 +506,7 @@ public final class Process {
     }
 
     private Integer processId(final Object token, final int line) {
-        if (this.alive(token, line) instanceof Values.Obj object && object.get("Id") instanceof Integer id) {
+        if (this.heap.alive(token, line) instanceof Values.Obj object && object.get("Id") instanceof Integer id) {
             return id;
         }
         throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no process here");
@@ -1106,7 +1096,7 @@ public final class Process {
     }
 
     private Integer threadId(final Object token, final int line) {
-        if (this.alive(token, line) instanceof Values.Obj object && object.get("Id") instanceof Integer id) {
+        if (this.heap.alive(token, line) instanceof Values.Obj object && object.get("Id") instanceof Integer id) {
             return id;
         }
         throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no thread here");
@@ -1148,7 +1138,7 @@ public final class Process {
      * finds it held by another leaves the object where it is and waits, to ask again when it is free.
      */
     private void enterMonitor(final Frame frame, final int line) {
-        final Object target = this.alive(frame.peek(), line);
+        final Object target = this.heap.alive(frame.peek(), line);
         final Monitor held = this.monitors.get(target);
         if (held == null) {
             final Monitor made = new Monitor();
@@ -1169,7 +1159,7 @@ public final class Process {
     }
 
     private void exitMonitor(final Frame frame, final int line) {
-        final Object target = this.alive(frame.pop(), line);
+        final Object target = this.heap.alive(frame.pop(), line);
         final Monitor held = this.monitors.get(target);
         if (held == null || held.owner != this.current.id) {
             throw new Halt(Halt.Reason.NOT_LOCKED, line, "this thread is letting go of a lock it does not hold");
@@ -1851,7 +1841,7 @@ public final class Process {
     // fields
 
     private void loadField(final Frame frame, final IOperand.Field field, final int line) {
-        final Object target = this.alive(frame.pop(), line);
+        final Object target = this.heap.alive(frame.pop(), line);
         if (target instanceof Values.Obj object) {
             if ("Process".equals(object.type())
                     && ("Running".equals(field.name()) || "ExitCode".equals(field.name()))) {
@@ -1867,7 +1857,7 @@ public final class Process {
 
     private void storeField(final Frame frame, final IOperand.Field field, final int line) {
         final Object value = frame.pop();
-        final Object target = this.alive(frame.pop(), line);
+        final Object target = this.heap.alive(frame.pop(), line);
         if (!(target instanceof Values.Obj object)) {
             throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no object to write " + field.name() + " on");
         }
@@ -1981,7 +1971,7 @@ public final class Process {
     }
 
     private Values.Arr array(final Object value, final int line) {
-        if (this.alive(value, line) instanceof Values.Arr array) {
+        if (this.heap.alive(value, line) instanceof Values.Arr array) {
             return array;
         }
         throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no array here");
@@ -2118,12 +2108,12 @@ public final class Process {
             }
             final List<Object> arguments = this.take(frame, site.outs());
             final Object self = this.library.takesTarget(named.owner(), named.name())
-                    ? this.alive(frame.pop(), line) : null;
+                    ? this.heap.alive(frame.pop(), line) : null;
             this.push(frame, named, this.library.call(named, self, arguments, line));
             return;
         }
         final List<Object> arguments = this.take(frame, site.outs());
-        final Object self = direct.isStatic() ? null : this.alive(frame.pop(), line);
+        final Object self = direct.isStatic() ? null : this.heap.alive(frame.pop(), line);
         this.enter(this.onItsOwnType(site, self), self, arguments, line);
     }
 
@@ -2135,7 +2125,7 @@ public final class Process {
         final IntrinsicSpec intrinsic = site.intrinsic();
         final boolean[] outs = site.outs();
         final Object[] arguments = takeArray(frame, outs);
-        final Object target = intrinsic.onTarget() ? this.alive(frame.pop(), line) : null;
+        final Object target = intrinsic.onTarget() ? this.heap.alive(frame.pop(), line) : null;
         final Object answer = intrinsic.function().call(this.heap, target, arguments, line);
         if (site.gives()) {
             frame.push(answer);
@@ -2171,7 +2161,7 @@ public final class Process {
      * is waiting for.
      */
     private void invoke(final Frame frame, final List<Object> arguments, final int line) {
-        final Object value = this.alive(frame.pop(), line);
+        final Object value = this.heap.alive(frame.pop(), line);
         if (!(value instanceof Values.DelegateValue delegate) || delegate.chain().isEmpty()) {
             throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no handler to call");
         }
@@ -2280,16 +2270,6 @@ public final class Process {
 
     private String text(final String value, final int line) {
         return this.heap.text(value, line);
-    }
-
-    private Object alive(final Object value, final int line) {
-        if (value != null && this.heap.isFreed(value)) {
-            throw new Halt(Halt.Reason.USE_AFTER_DISPOSE, line, "this was disposed and cannot be used");
-        }
-        if (value == null) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line, "there is nothing here to reach into");
-        }
-        return value;
     }
 
     /**
