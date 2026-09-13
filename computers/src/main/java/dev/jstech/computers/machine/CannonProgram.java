@@ -69,7 +69,7 @@ final class CannonProgram implements ILanguageProcess {
     }
 
     @Override
-    public int written() {
+    public long written() {
         return this.process.written();
     }
 

@@ -179,7 +179,7 @@ public final class LanguageApiGameTests {
         }
 
         @Override
-        public int written() {
+        public long written() {
             return this.console.size();
         }
 

@@ -92,4 +92,12 @@ class ProgramConsoleTest {
         console.write("three");
         assertEquals(List.of("three"), console.lines());
     }
+
+    @Test
+    void written_countsPastWhatAnIntCanHold() {
+        final ProgramConsole console = new ProgramConsole();
+        console.restore(List.of("last"), Integer.MAX_VALUE);
+        console.write("one more");
+        assertEquals(Integer.MAX_VALUE + 1L, console.written());
+    }
 }

@@ -62,7 +62,7 @@ public interface ILanguageProcess {
     List<String> console();
 
     /** How many lines it has written since it started, the ones no longer kept included. */
-    int written();
+    long written();
 
     /**
      * How many instructions it has spent since it started.

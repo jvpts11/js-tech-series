@@ -411,6 +411,18 @@ class ProcessTest {
     }
 
     @Test
+    void random_drawsTheSameNumbersAgainFromTheSameSeed() {
+        final Process process = run("""
+                        Random.Seed(42);
+                        int first = Random.Next(1000000);
+                        Random.Seed(42);
+                        Console.PrintLine("" + (first == Random.Next(1000000)));
+                """);
+        assertFinished(process);
+        assertEquals(List.of("true"), process.console());
+    }
+
+    @Test
     void run_stopsWhenItDividesByZero() {
         final Process process = run("""
                         int zero = 0;

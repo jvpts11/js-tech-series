@@ -38,7 +38,7 @@ public final class ProgramConsole {
 
     private final Deque<String> lines = new ArrayDeque<>();
     private int characters;
-    private int written;
+    private long written;
 
     /** Writes a line, cut to size, and lets the oldest go while the limits are passed. */
     public void write(final String line) {
@@ -53,7 +53,7 @@ public final class ProgramConsole {
     }
 
     /** Puts back what a process had kept before it was put away, held to the same limits. */
-    public void restore(final List<String> saved, final int written) {
+    public void restore(final List<String> saved, final long written) {
         this.clear();
         for (final String line : saved) {
             this.keep(line);
@@ -70,9 +70,10 @@ public final class ProgramConsole {
      * How many lines have been written since the process started, the ones already dropped included.
      *
      * <p>A terminal showing what a program prints needs to know what it has not shown yet, and the count
-     * of what is kept cannot say that once the oldest lines start falling off the end.
+     * of what is kept cannot say that once the oldest lines start falling off the end. A long, because a
+     * program that stays up can print more lines than an int counts.
      */
-    public int written() {
+    public long written() {
         return this.written;
     }
 

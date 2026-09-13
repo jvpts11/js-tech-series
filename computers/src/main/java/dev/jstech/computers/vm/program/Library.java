@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 /**
  * The part of the library the runtime answers for itself that needs more than a call's arguments.
@@ -40,7 +39,7 @@ public final class Library {
     private final Heap heap;
     private final IHost host;
     private final ProgramConsole console = new ProgramConsole();
-    private final Random random = new Random(0);
+    private final ProgramRandom random = new ProgramRandom();
 
     /** The class this process was started from, which is how the world knows which program asked. */
     private final String caller;
@@ -61,7 +60,7 @@ public final class Library {
     }
 
     /** How many lines the process has written since it started, the ones already dropped included. */
-    public int written() {
+    public long written() {
         return this.console.written();
     }
 
@@ -70,9 +69,15 @@ public final class Library {
         this.console.write(line);
     }
 
-    /** Puts back what a process had written before it was put away. */
-    public void restore(final List<String> lines, final int written) {
+    /** Where the process's random numbers have got to, for the save. */
+    public long randomState() {
+        return this.random.state();
+    }
+
+    /** Puts back what a process had written, and where its random numbers were, before it was put away. */
+    public void restore(final List<String> lines, final long written, final long random) {
         this.console.restore(lines, written);
+        this.random.startFrom(random);
     }
 
     /** What the last call cost beyond the one instruction every call costs, and clears it. */
@@ -519,10 +524,10 @@ public final class Library {
 
     private Object chance(final String name, final List<Object> arguments) {
         return switch (name) {
-            case "Next" -> this.random.nextInt(Math.max(1, Numbers.toInt(arguments.getFirst())));
+            case "Next" -> this.random.next(Numbers.toInt(arguments.getFirst()));
             case "NextDouble" -> this.random.nextDouble();
             default -> {
-                this.random.setSeed(Numbers.toLong(arguments.getFirst()));
+                this.random.startFrom(Numbers.toLong(arguments.getFirst()));
                 yield null;
             }
         };

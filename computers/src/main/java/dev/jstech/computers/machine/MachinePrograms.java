@@ -116,7 +116,7 @@ public final class MachinePrograms {
     private final Scheduler scheduler = new Scheduler();
     private int next = 1;
     private int held;
-    private int shown;
+    private long shown;
     /** What the machine still owes for work done on its behalf outside its programs. */
     private int owed;
 
@@ -228,8 +228,8 @@ public final class MachinePrograms {
             return List.of();
         }
         final List<String> kept = one.process().console();
-        final int written = one.process().written();
-        final int fresh = Math.min(written - this.shown, kept.size());
+        final long written = one.process().written();
+        final int fresh = (int) Math.min(written - this.shown, kept.size());
         this.shown = written;
         return fresh <= 0 ? List.of() : List.copyOf(kept.subList(kept.size() - fresh, kept.size()));
     }
@@ -554,7 +554,7 @@ public final class MachinePrograms {
         tag.put(PROGRAMS, written);
         tag.putInt(NEXT, this.next);
         tag.putInt(HELD, this.held);
-        tag.putInt(SHOWN, this.shown);
+        tag.putLong(SHOWN, this.shown);
     }
 
     /** Reads them back, each one carrying on from where it stopped. */
@@ -562,7 +562,7 @@ public final class MachinePrograms {
         this.live.clear();
         this.next = Math.max(1, tag.getInt(NEXT));
         this.held = tag.getInt(HELD);
-        this.shown = tag.getInt(SHOWN);
+        this.shown = tag.getLong(SHOWN);
         final ListTag written = tag.getList(PROGRAMS, Tag.TAG_COMPOUND);
         for (int i = 0; i < written.size(); i++) {
             final CompoundTag each = written.getCompound(i);

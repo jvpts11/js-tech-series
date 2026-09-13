@@ -111,6 +111,14 @@ class SnapshotTest {
     }
 
     @Test
+    void save_carriesTheRandomNumbersOnFromWhereTheyWere() {
+        final Process saved = bothWays(load("", """
+                        for (int i = 0; i < 8; i++) { Console.PrintLine("" + Random.Next(1000000)); }
+                """));
+        assertEquals(8, saved.console().size());
+    }
+
+    @Test
     void save_keepsTwoNamesForOneThingAsOneThing() {
         final Process process = bothWays(load("", """
                         List<string> names = new List<string>();

@@ -323,7 +323,7 @@ public final class Process {
     }
 
     /** How many lines it has written since it started, the ones no longer kept included. */
-    public int written() {
+    public long written() {
         return this.library.written();
     }
 
@@ -1459,10 +1459,10 @@ public final class Process {
             held.add(this.freeze(numbers.thing(number), number, numbers));
         }
         return new Snapshot(this.heap.budget(), held, running, queued, kept, scriptShot,
-                watching, this.library.console(), this.library.written(), this.state().serializedName(),
-                this.identity.message() == null ? "" : this.identity.message(), this.identity.spent(),
-                this.identity.name(), locked, this.nextThread, this.identity.args(), this.identity.machineId(),
-                this.identity.exited(), this.identity.givenExitCode(), onMessageShot,
+                watching, this.library.console(), this.library.written(), this.library.randomState(),
+                this.state().serializedName(), this.identity.message() == null ? "" : this.identity.message(),
+                this.identity.spent(), this.identity.name(), locked, this.nextThread, this.identity.args(),
+                this.identity.machineId(), this.identity.exited(), this.identity.givenExitCode(), onMessageShot,
                 windowShots, this.nextWindow, this.nextWidget, onGatewayShot, this.gateway);
     }
 
@@ -1551,7 +1551,7 @@ public final class Process {
                 process.nextWatch = Math.max(process.nextWatch, written.id() + 1);
             }
         }
-        process.library.restore(shot.console(), shot.written());
+        process.library.restore(shot.console(), shot.written(), shot.random());
         process.identity.restore(shot.args(), shot.machineId(), shot.spent(), shot.exited(), shot.exitCode(),
                 State.HALTED.serializedName().equals(shot.state()), shot.message().isEmpty() ? null : shot.message());
         if (value(shot.onMessage(), byNumber) instanceof Values.DelegateValue handler) {
