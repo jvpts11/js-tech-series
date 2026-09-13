@@ -159,6 +159,11 @@ public class Panel extends UiComponent {
     }
 
     @Override
+    public boolean keyReleased(final int key, final int scanCode, final int modifiers) {
+        return focusedChild != null && focusedChild.keyReleased(key, scanCode, modifiers);
+    }
+
+    @Override
     public List<Component> tooltip(final double mx, final double my) {
         for (int i = children.size() - 1; i >= 0; i--) {
             final UiComponent child = children.get(i);

@@ -3,25 +3,25 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.JsComputronics;
-import dev.jstech.computronics.blockentity.MainframeBlockEntity;
-import dev.jstech.computronics.hardware.DiskSize;
-import dev.jstech.computronics.hardware.StorageTier;
-import dev.jstech.computronics.os.FilesystemKind;
-import dev.jstech.computronics.os.OsRegistry;
-import dev.jstech.computronics.os.VolumeLabel;
-import dev.jstech.computronics.os.boot.BootController;
-import dev.jstech.computronics.os.fs.DiskFilesystem;
-import dev.jstech.computronics.os.fs.FileType;
-import dev.jstech.computronics.os.fs.FilesystemContents;
-import dev.jstech.computronics.os.fs.StoredFile;
-import dev.jstech.computronics.storage.DriveVolumes;
-import dev.jstech.computronics.storage.StorageKey;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.os.FilesystemKind;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.VolumeLabel;
+import dev.jstech.computers.os.boot.BootController;
+import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.os.fs.FilesystemContents;
+import dev.jstech.computers.os.fs.StoredFile;
+import dev.jstech.computers.storage.DriveVolumes;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -54,7 +54,7 @@ public final class OsFilesystemGameTests {
 
     @GameTest(template = ARENA)
     public static void fs_componentsRoundTripOnDisk(final GameTestHelper helper) {
-        // Build a DiskItem stack (NVMe 1 TB — any registered disk works).
+        // Build a DiskItem stack (NVMe 1 TB, since any registered disk works).
         final ItemStack stack = new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1));
 
         // Stamp it with a FILESYSTEM containing one IQL file.
@@ -64,11 +64,13 @@ public final class OsFilesystemGameTests {
 
         // Stamp it with a SYSTEM_OS identifying mc_net.
         final ResourceLocation osId =
-                ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, "mc_net");
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_net");
         stack.set(ComputingModule.SYSTEM_OS.get(), osId);
 
-        // copy() exercises the DataComponent codec path (the components are serialised and
-        // deserialised into a fresh stack, exactly as happens on save/load).
+        /*
+         * copy() exercises the DataComponent codec path (the components are serialised and
+         * deserialised into a fresh stack, exactly as happens on save/load).
+         */
         final ItemStack copy = stack.copy();
 
         helper.startSequence()
@@ -151,7 +153,7 @@ public final class OsFilesystemGameTests {
         mainframe.togglePower();
 
         final ResourceLocation soRede =
-                ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, "mc_net");
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_net");
 
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
@@ -169,7 +171,7 @@ public final class OsFilesystemGameTests {
                     helper.assertTrue(soRede.equals(onDisk),
                             "the system disk stack must carry SYSTEM_OS == jsc:mc_net; got " + onDisk);
 
-                    // Remove the disk from the inventory — the OS must disappear with it.
+                    // Remove the disk from the inventory, and the OS must disappear with it.
                     inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START, ItemStack.EMPTY);
 
                     helper.assertFalse(mainframe.hasOs(),
@@ -182,9 +184,7 @@ public final class OsFilesystemGameTests {
                 .thenSucceed();
     }
 
-    // -------------------------------------------------------------------------
-    // Task 5 — DiskFilesystem API tests
-    // -------------------------------------------------------------------------
+    // Task 5: DiskFilesystem API tests
 
     /**
      * A write followed by a read must return the same content (FLAT filesystem).
@@ -253,9 +253,7 @@ public final class OsFilesystemGameTests {
                 .thenSucceed();
     }
 
-    // -------------------------------------------------------------------------
-    // Task 6 — StorageProjection tests
-    // -------------------------------------------------------------------------
+    // Task 6: StorageProjection tests
 
     /**
      * A disk whose storage volume holds two StorageKeys must surface two read-only .dat entries in
@@ -332,9 +330,7 @@ public final class OsFilesystemGameTests {
                 .thenSucceed();
     }
 
-    // -------------------------------------------------------------------------
-    // Real directories (hierarchical filesystem — the Frames desktop)
-    // -------------------------------------------------------------------------
+    // Real directories (hierarchical filesystem, the Frames desktop)
 
     /**
      * mkdir creates a persistent empty directory on a hierarchical disk and listDirs surfaces it;
@@ -440,6 +436,67 @@ public final class OsFilesystemGameTests {
     }
 
     /**
+     * A file's kind follows its name: renamed from .txt to .can it is a program, since its kind is read
+     * off the extension everywhere else and a text file wearing a program's name would open in nothing.
+     */
+    @GameTest(template = ARENA)
+    public static void fs_renameChangesTheKindWithTheExtension(final GameTestHelper helper) {
+        final ItemStack disk = new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1));
+
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    DiskFilesystem.write(disk, "progs/hello.txt", FileType.TXT, "class A {}", 1000L,
+                            FilesystemKind.HIERARCHICAL);
+                    helper.assertTrue(DiskFilesystem.rename(disk, "progs/hello.txt", "progs/hello.can",
+                                    FilesystemKind.HIERARCHICAL), "renaming across kinds must succeed");
+                    FileType kind = null;
+                    for (final DiskFilesystem.FileEntry entry
+                            : DiskFilesystem.list(disk, "progs", FilesystemKind.HIERARCHICAL)) {
+                        if (entry.path().equals("progs/hello.can")) {
+                            kind = entry.type();
+                        }
+                    }
+                    helper.assertTrue(kind == FileType.CAN, "the renamed file must be a program, was " + kind);
+                    final Optional<String> content = DiskFilesystem.read(disk, "progs/hello.can");
+                    helper.assertTrue(content.isPresent() && "class A {}".equals(content.get()),
+                            "the content must survive the change of kind");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * Renaming into a kind the machine writes by itself is refused, the way writing one by hand is: a
+     * .dat is a view of what a drive holds, and a real file under that name would be one nothing can edit.
+     */
+    @GameTest(template = ARENA)
+    public static void fs_renameRefusesAKindTheMachineOwns(final GameTestHelper helper) {
+        final ItemStack disk = new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1));
+
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    DiskFilesystem.write(disk, "notes.txt", FileType.TXT, "keep", 1000L,
+                            FilesystemKind.HIERARCHICAL);
+                    helper.assertFalse(DiskFilesystem.rename(disk, "notes.txt", "notes.dat",
+                            FilesystemKind.HIERARCHICAL), "renaming into .dat must be refused");
+                    helper.assertFalse(DiskFilesystem.rename(disk, "notes.txt", "setup.exe",
+                            FilesystemKind.HIERARCHICAL), "renaming into .exe must be refused");
+                    helper.assertTrue(DiskFilesystem.exists(disk, "notes.txt"),
+                            "the file must still be where it was after a refused rename");
+                    // A name with no extension keeps the kind it had, so the file can still be opened.
+                    helper.assertTrue(DiskFilesystem.rename(disk, "notes.txt", "notes",
+                            FilesystemKind.HIERARCHICAL), "dropping the extension is allowed");
+                    for (final DiskFilesystem.FileEntry entry
+                            : DiskFilesystem.list(disk, "", FilesystemKind.HIERARCHICAL)) {
+                        if (entry.path().equals("notes")) {
+                            helper.assertTrue(entry.type() == FileType.TXT,
+                                    "a file with no extension keeps its kind, was " + entry.type());
+                        }
+                    }
+                })
+                .thenSucceed();
+    }
+
+    /**
      * Renaming a directory onto an already-occupied destination is rejected, so colliding files in the
      * destination are never silently overwritten (no data loss).
      */
@@ -473,13 +530,13 @@ public final class OsFilesystemGameTests {
      */
     @GameTest(template = ARENA)
     public static void os_programGatingHonorsCapability(final GameTestHelper helper) {
-        final ResourceLocation nms = ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, "nms");
-        final ResourceLocation iql = ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, "iqlengine");
-        final ResourceLocation frames95 = ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, "frames_95");
-        final ResourceLocation framesXp = ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, "frames_xp");
-        final ResourceLocation mcDos = ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, "mc_dos");
+        final ResourceLocation nms = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "nms");
+        final ResourceLocation iql = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "iqlengine");
+        final ResourceLocation frames95 = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_95");
+        final ResourceLocation framesXp = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp");
+        final ResourceLocation mcDos = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_dos");
         final ResourceLocation unknown =
-                ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, "no_such_program");
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "no_such_program");
 
         // Ample hardware, so only the platform and OS-version gates decide the outcome here.
         final int cpu = 9999;
@@ -497,9 +554,9 @@ public final class OsFilesystemGameTests {
         helper.assertTrue(OsRegistry.canRunProgram(mcDos, unknown, cpu, vram),
                 "an unregistered program declares no requirement and must pass");
         // The 11-only Automation Manager: refused on Frames XP, allowed on Frames 11.
-        final ResourceLocation frames11 = ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, "frames_11");
+        final ResourceLocation frames11 = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_11");
         final ResourceLocation autoMgr =
-                ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, "automation_manager");
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "automation_manager");
         helper.assertFalse(OsRegistry.canRunProgram(framesXp, autoMgr, cpu, vram),
                 "the Automation Manager needs Frames 11, so Frames XP must refuse it");
         helper.assertTrue(OsRegistry.canRunProgram(frames11, autoMgr, cpu, vram),
@@ -514,7 +571,7 @@ public final class OsFilesystemGameTests {
      */
     @GameTest(template = ARENA)
     public static void programs_registryIsWellFormed(final GameTestHelper helper) {
-        final var builtins = dev.jstech.computronics.os.OsBootstrap.builtinPrograms();
+        final var builtins = dev.jstech.computers.os.OsBootstrap.builtinPrograms();
         helper.assertTrue(!builtins.isEmpty(), "the built-in program list must not be empty");
         for (final var spec : builtins) {
             helper.assertTrue(OsRegistry.getProgram(spec.id()) == spec,
@@ -524,14 +581,16 @@ public final class OsFilesystemGameTests {
             helper.assertTrue(!spec.platforms().isEmpty(), "program " + spec.id() + " needs a platform");
         }
         // A known program resolves, and its title key follows the vanilla convention.
-        final ResourceLocation nms = ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, "nms");
+        final ResourceLocation nms = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "nms");
         helper.assertTrue(OsRegistry.getProgram(nms) != null, "the NMS must be registered");
         helper.assertTrue(OsRegistry.getProgram(nms).titleKey().equals("program.jsc.nms"),
                 "the title key must be program.jsc.nms");
 
-        // The OS registry is well-formed too: every built-in OS is registered with a display name and a
-        // kernel that itself exists, so its lang key and install disc derive cleanly.
-        final var oses = dev.jstech.computronics.os.OsBootstrap.builtinOses();
+        /*
+         * The OS registry is well-formed too: every built-in OS is registered with a display name and a
+         * kernel that itself exists, so its lang key and install disc derive cleanly.
+         */
+        final var oses = dev.jstech.computers.os.OsBootstrap.builtinOses();
         helper.assertTrue(!oses.isEmpty(), "the built-in OS list must not be empty");
         for (final var os : oses) {
             helper.assertTrue(OsRegistry.getOs(os.id()) == os, "OS " + os.id() + " must be registered");
@@ -590,7 +649,7 @@ public final class OsFilesystemGameTests {
         mainframe.togglePower();
 
         final ResourceLocation framesXp =
-                ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, "frames_xp");
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp");
 
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
@@ -608,23 +667,23 @@ public final class OsFilesystemGameTests {
     }
 
     /**
-     * The console state — installed programs and the desktop personalization — must survive an
+     * The console state (installed programs and the desktop personalization) must survive an
      * NBT save/load round-trip (a world reload).
      */
     @GameTest(template = ARENA)
     public static void console_prefsAndInstallPersistNbt(final GameTestHelper helper) {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final dev.jstech.computronics.program.ComputerConsoleState state =
-                            new dev.jstech.computronics.program.ComputerConsoleState();
+                    final dev.jstech.computers.program.ComputerConsoleState state =
+                            new dev.jstech.computers.program.ComputerConsoleState();
                     state.install("jsc:nms");
                     state.setWallpaper("winxp");
                     state.setComputerName("HAL");
                     final net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
                     state.save(tag);
 
-                    final dev.jstech.computronics.program.ComputerConsoleState loaded =
-                            new dev.jstech.computronics.program.ComputerConsoleState();
+                    final dev.jstech.computers.program.ComputerConsoleState loaded =
+                            new dev.jstech.computers.program.ComputerConsoleState();
                     loaded.load(tag);
                     helper.assertTrue(loaded.isInstalled("jsc:nms"),
                             "an installed program must persist across a reload");
@@ -644,28 +703,28 @@ public final class OsFilesystemGameTests {
     public static void console_iconPositionPersistsNbt(final GameTestHelper helper) {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final dev.jstech.computronics.program.ComputerConsoleState state =
-                            new dev.jstech.computronics.program.ComputerConsoleState();
+                    final dev.jstech.computers.program.ComputerConsoleState state =
+                            new dev.jstech.computers.program.ComputerConsoleState();
                     final int cell =
-                            dev.jstech.computronics.program.ComputerConsoleState.packCell(2, 3);
+                            dev.jstech.computers.program.ComputerConsoleState.packCell(2, 3);
                     state.setIconCell("file:Notes.txt", cell);
                     state.setIconCell("app:Network",
-                            dev.jstech.computronics.program.ComputerConsoleState.packCell(1, 0));
+                            dev.jstech.computers.program.ComputerConsoleState.packCell(1, 0));
                     final net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
                     state.save(tag);
 
-                    final dev.jstech.computronics.program.ComputerConsoleState loaded =
-                            new dev.jstech.computronics.program.ComputerConsoleState();
+                    final dev.jstech.computers.program.ComputerConsoleState loaded =
+                            new dev.jstech.computers.program.ComputerConsoleState();
                     loaded.load(tag);
                     final Integer back = loaded.iconCells().get("file:Notes.txt");
                     helper.assertTrue(back != null && back == cell,
                             "a pinned icon's cell must persist; got " + back);
                     helper.assertTrue(
-                            dev.jstech.computronics.program.ComputerConsoleState
+                            dev.jstech.computers.program.ComputerConsoleState
                                     .cellColumn(back) == 2,
                             "the persisted column must be 2");
                     helper.assertTrue(
-                            dev.jstech.computronics.program.ComputerConsoleState
+                            dev.jstech.computers.program.ComputerConsoleState
                                     .cellRow(back) == 3,
                             "the persisted row must be 3");
                     helper.assertTrue(loaded.iconCells().containsKey("app:Network"),
@@ -676,13 +735,13 @@ public final class OsFilesystemGameTests {
 
     /**
      * Dragging a file from the desktop folder into another folder, then back to the desktop, conserves the
-     * file and its content end to end (the move never loses or duplicates it) — the data path behind the
+     * file and its content end to end (the move never loses or duplicates it), the data path behind the
      * cross-window desktop&lt;-&gt;explorer drag.
      */
     @GameTest(template = ARENA)
     public static void fs_moveBetweenDesktopAndFolderConservesFile(final GameTestHelper helper) {
         final ItemStack disk = new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1));
-        final String desktop = dev.jstech.computronics.os.fs.SystemLayout.DESKTOP_DIR;
+        final String desktop = dev.jstech.computers.os.fs.SystemLayout.DESKTOP_DIR;
 
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
@@ -720,7 +779,7 @@ public final class OsFilesystemGameTests {
     }
 
     /**
-     * A {@code .dat} projection cannot be moved between folders by hand — the move is refused without
+     * A {@code .dat} projection cannot be moved between folders by hand, and the move is refused without
      * mutating the disk, so the no-drag rule holds at the data layer (the desktop and explorer also block
      * it client-side and raise the locked dialog).
      */

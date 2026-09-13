@@ -3,16 +3,16 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.block.part.InputBusPart;
-import dev.jstech.computronics.block.part.ReceivingBusPart;
-import dev.jstech.computronics.blockentity.CraftingSwitchBlockEntity;
-import dev.jstech.computronics.blockentity.DataCableBlockEntity;
-import dev.jstech.computronics.storage.StorageKey;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.part.InputBusPart;
+import dev.jstech.computers.block.part.ReceivingBusPart;
+import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
+import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -52,9 +52,11 @@ public final class MekanismRig {
     public static final BlockPos CABLE_EAST = new BlockPos(7, 2, 7);
     public static final BlockPos CABLE_NORTH = new BlockPos(6, 2, 6);
 
-    // A second machine of the same kind, further south, for tests that need two physical machines (concurrency
-    // scales with the machines present). Its buses hang from B_ABOVE (top input), B_BELOW (bottom extra) and
-    // B_RUN (right/west receiving); the run links back to the first machine's cables at (5,2,8).
+    /*
+     * A second machine of the same kind, further south, for tests that need two physical machines (concurrency
+     * scales with the machines present). Its buses hang from B_ABOVE (top input), B_BELOW (bottom extra) and
+     * B_RUN (right/west receiving); the run links back to the first machine's cables at (5,2,8).
+     */
     public static final BlockPos MACHINE_B = new BlockPos(6, 2, 10);
     public static final BlockPos B_RUN = new BlockPos(5, 2, 10);
     public static final BlockPos B_ABOVE = new BlockPos(6, 3, 10);
@@ -205,6 +207,30 @@ public final class MekanismRig {
         if (world.getBlockEntity(CABLE_NORTH) instanceof DataCableBlockEntity cable) {
             cable.addPart(Direction.SOUTH, new ReceivingBusPart());
         }
+    }
+
+    /**
+     * Sets a factory up the way a player who cared would: every speed and energy upgrade it takes, and its
+     * auto-sort switched on. Without the sorting a factory only ever fills one of its slots, so it works one
+     * item at a time and is no faster than the bare machine; without the speed upgrades each of those
+     * operations still runs at the base rate. Returns false when the machine is not a factory.
+     */
+    public static boolean tuneFactory(final ServerLevel level, final BlockPos machine) {
+        if (!(level.getBlockEntity(machine) instanceof mekanism.common.tile.factory.TileEntityFactory<?> factory)) {
+            return false;
+        }
+        if (!factory.isSorting()) {
+            factory.toggleSorting();
+        }
+        final mekanism.common.tile.component.TileComponentUpgrade upgrades = factory.getComponent();
+        for (final mekanism.api.Upgrade upgrade
+                : new mekanism.api.Upgrade[] {mekanism.api.Upgrade.SPEED, mekanism.api.Upgrade.ENERGY}) {
+            if (upgrades.supports(upgrade)) {
+                upgrades.addUpgrades(upgrade, upgrade.getMax() - upgrades.getUpgrades(upgrade));
+                factory.recalculateUpgrades(upgrade);
+            }
+        }
+        return true;
     }
 
     /**

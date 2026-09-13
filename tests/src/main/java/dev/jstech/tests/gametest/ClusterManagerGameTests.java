@@ -3,38 +3,38 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.HardwareItems;
-import dev.jstech.computronics.JsComputronics;
-import dev.jstech.computronics.blockentity.ClusterManagementComputerBlockEntity.ClusterRef;
-import dev.jstech.computronics.blockentity.ClusterManagementComputerBlockEntity.InstallJob;
-import dev.jstech.computronics.blockentity.ClusterManagementComputerBlockEntity.JobKind;
-import dev.jstech.computronics.blockentity.ClusterManagementComputerBlockEntity.NodeRef;
-import dev.jstech.computronics.blockentity.ClusterManagementComputerBlockEntity.SectionRef;
-import dev.jstech.computronics.blockentity.ClusterManagementComputerBlockEntity;
-import dev.jstech.computronics.blockentity.HbwInterfaceBlockEntity;
-import dev.jstech.computronics.blockentity.MainframeBlockEntity;
-import dev.jstech.computronics.blockentity.ServerRackBlockEntity;
-import dev.jstech.computronics.blockentity.ServerRouterBlockEntity;
-import dev.jstech.computronics.hardware.DiskSize;
-import dev.jstech.computronics.hardware.StorageTier;
-import dev.jstech.computronics.item.ServerHardwareHandler;
-import dev.jstech.computronics.item.ServerItem;
-import dev.jstech.computronics.operation.payload.ClusterManagerStatePayload;
-import dev.jstech.computronics.operation.payload.ComputingPayloads;
-import dev.jstech.computronics.os.OsHost;
-import dev.jstech.computronics.os.media.MediaItem;
-import dev.jstech.computronics.os.media.MediaKind;
-import dev.jstech.computronics.os.media.MediaReaderBlockEntity;
-import dev.jstech.computronics.program.ServerCliComputer;
-import dev.jstech.computronics.program.cli.CliCommands;
-import dev.jstech.computronics.program.cli.CliLine;
-import dev.jstech.computronics.program.cli.CliShell;
-import dev.jstech.computronics.rack.RackChassis;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity.ClusterRef;
+import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity.InstallJob;
+import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity.JobKind;
+import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity.NodeRef;
+import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity.SectionRef;
+import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
+import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
+import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.item.ServerHardwareHandler;
+import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.operation.payload.ClusterManagerStatePayload;
+import dev.jstech.computers.operation.payload.ComputingPayloads;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.CliCommands;
+import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.computers.program.cli.CliShell;
+import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -61,7 +61,7 @@ import java.util.stream.Collectors;
  * Card: it reaches every supercomputer and datacenter section on its network, writes a system or a
  * program to their nodes a few at a time over real time, and switches their bays in bulk. Every
  * action goes through the same per-node hosts a player reaches rack by rack, so what the manager
- * does by itself must equal what a player could do by hand — a shortcut, never a loophole.
+ * does by itself must equal what a player could do by hand, a shortcut, never a loophole.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -88,19 +88,19 @@ public final class ClusterManagerGameTests {
     private static final BlockPos SECTION_CABLE = new BlockPos(5, 2, 3);
     private static final BlockPos SERVER_RACK = new BlockPos(6, 2, 3);
 
-    private static final ResourceLocation DEBIAN = ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, "debian");
+    private static final ResourceLocation DEBIAN = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "debian");
     private static final ResourceLocation MINESWEEPER =
-            ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, "minesweeper");
-    private static final ResourceLocation MC_DOS = ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, "mc_dos");
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "minesweeper");
+    private static final ResourceLocation MC_DOS = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_dos");
 
     private ClusterManagerGameTests() {
     }
 
-    // ---- fixtures ----
+    // fixtures
 
     /**
-     * Places the backbone and the manager on it — rear to the cable, the same consumer build a PC runs on,
-     * {@code card} in its first expansion slot (none when empty) — and powers it on.
+     * Places the backbone and the manager on it (rear to the cable, the same consumer build a PC runs on,
+     * {@code card} in its first expansion slot, none when empty) and powers it on.
      */
     private static ClusterManagementComputerBlockEntity placeBackbone(final GameTestHelper helper,
                                                                        final ItemStack card) {
@@ -247,7 +247,7 @@ public final class ClusterManagerGameTests {
         return count;
     }
 
-    // ---- the card ----
+    // the card
 
     @GameTest(template = ARENA)
     public static void manager_isAnOrdinaryComputerWithoutTheCard(final GameTestHelper helper) {
@@ -292,7 +292,7 @@ public final class ClusterManagerGameTests {
                 .thenSucceed();
     }
 
-    // ---- reach over the network ----
+    // reach over the network
 
     @GameTest(template = ARENA)
     public static void manager_seesTheSupercomputerOverTheNetwork(final GameTestHelper helper) {
@@ -357,8 +357,10 @@ public final class ClusterManagerGameTests {
                     helper.assertTrue(manager.powerAll(ref, false) == 1, "power-all-off flips the one bay");
                     helper.assertTrue(!rack.bayPowerOn(0), "the bay is off");
                     helper.assertTrue(manager.powerAll(ref, false) == 0, "an off section has nothing left to switch");
-                    // The off bay has left the network, but the manager still lists it — or it could never
-                    // switch it back on from here.
+                    /*
+                     * The off bay has left the network, but the manager still lists it, or it could never
+                     * switch it back on from here.
+                     */
                     helper.assertTrue(manager.nodesOf(ref).size() == 1,
                             "an off bay stays in the section's node list; got " + manager.nodesOf(ref).size());
                     helper.assertTrue(manager.toggleNode(helper.absolutePos(SERVER_RACK), 0) && rack.bayPowerOn(0),
@@ -483,8 +485,8 @@ public final class ClusterManagerGameTests {
     }
 
     /**
-     * A supercomputer node is only worth a cluster slot with a coprocessor in it. The manager must name that
-     * — a node seated, powered and systemless otherwise looks the same as one that is pulling its weight.
+     * A supercomputer node is only worth a cluster slot with a coprocessor in it. The manager must name that,
+     * since a node seated, powered and systemless otherwise looks the same as one that is pulling its weight.
      */
     @GameTest(template = ARENA)
     public static void manager_namesASupercomputerNodeWithoutItsCoprocessor(final GameTestHelper helper) {
@@ -512,7 +514,7 @@ public final class ClusterManagerGameTests {
                 .thenSucceed();
     }
 
-    // ---- install jobs ----
+    // install jobs
 
     @GameTest(template = ARENA, timeoutTicks = INSTALL_TIMEOUT)
     public static void manager_installsTheSystemOnEveryNodeOverTime(final GameTestHelper helper) {
@@ -581,7 +583,7 @@ public final class ClusterManagerGameTests {
                 })
                 .thenWaitUntil(() -> helper.assertTrue(manager.job() == null, "the job finishes"))
                 .thenExecute(() -> {
-                    final OsHost first = rack.unitHost(0);
+                    final IOsHost first = rack.unitHost(0);
                     helper.assertTrue(first.console() != null && first.console().isInstalled(MINESWEEPER.toString()),
                             "the node with a system has the program");
                     helper.assertTrue(rack.unitHost(2).installedOsId() == null, "the bare node is untouched");
@@ -652,7 +654,7 @@ public final class ClusterManagerGameTests {
                 .thenSucceed();
     }
 
-    // ---- reach is the card's, not the network's ----
+    // reach is the card's, not the network's
 
     /**
      * The Vintage manager on the backbone: an AT board (the era's PCI bus, Socket 7) with the era's
@@ -707,7 +709,7 @@ public final class ClusterManagerGameTests {
                 .thenSucceed();
     }
 
-    // ---- the shell ----
+    // the shell
 
     @GameTest(template = ARENA)
     public static void clusterCommand_drivesTheClustersFromTheManagersShellOnly(final GameTestHelper helper) {

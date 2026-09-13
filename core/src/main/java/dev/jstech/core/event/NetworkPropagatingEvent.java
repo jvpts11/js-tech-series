@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.event;
 
@@ -14,7 +14,7 @@ import java.util.Objects;
 /**
  * Cancellable event fired when a network UUID is about to propagate through a newly-placed cable into adjacent components.
  */
-public final class NetworkPropagatingEvent implements CoreEvent.Cancellable{
+public final class NetworkPropagatingEvent implements ICoreEvent.ICancellable{
 
     private final NetworkUuid networkUuid;
     private final long fromPos;

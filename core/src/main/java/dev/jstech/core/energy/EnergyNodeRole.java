@@ -3,12 +3,12 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.energy;
 
 /**
- * Role of an {@link EnergyNode} in the energy network.
+ * Role of an {@link IEnergyNode} in the energy network.
  */
 public enum EnergyNodeRole {
 

@@ -7,25 +7,25 @@
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.block.part.InputBusPart;
-import dev.jstech.computronics.block.part.ReceivingBusPart;
-import dev.jstech.computronics.blockentity.DataCableBlockEntity;
-import dev.jstech.computronics.blockentity.MainframeBlockEntity;
-import dev.jstech.computronics.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computronics.blockentity.ServerRackBlockEntity;
-import dev.jstech.computronics.crafting.NetworkProcessingOperation;
-import dev.jstech.computronics.crafting.ProcessingPattern;
-import dev.jstech.computronics.hardware.DiskSize;
-import dev.jstech.computronics.hardware.StorageTier;
-import dev.jstech.computronics.operation.NetworkSelectOperation;
-import dev.jstech.computronics.operation.NetworkStorage;
-import dev.jstech.computronics.operation.payload.OperationRecord;
-import dev.jstech.computronics.program.ServerCliComputer;
-import dev.jstech.computronics.program.cli.CliCommands;
-import dev.jstech.computronics.program.cli.CliShell;
-import dev.jstech.computronics.storage.StorageKey;
-import dev.jstech.computronics.terminal.ComputerTerminalHost;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.part.InputBusPart;
+import dev.jstech.computers.block.part.ReceivingBusPart;
+import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.crafting.NetworkProcessingOperation;
+import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.operation.NetworkSelectOperation;
+import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.CliCommands;
+import dev.jstech.computers.program.cli.CliShell;
+import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.tests.JsTests;
@@ -194,11 +194,13 @@ public final class OperationCancelGameTests {
         rackBe.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         rackBe.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         final String[] shortId = new String[1];
-        final ServerCliComputer cli = new ServerCliComputer((ComputerTerminalHost) computer, helper.getLevel());
+        final ServerCliComputer cli = new ServerCliComputer((IComputerTerminalHost) computer, helper.getLevel());
         final CliShell shell = CliCommands.newShell(50);
         helper.startSequence()
-                // Seed a tick ahead of the prompt: the index catalogues the stock on the next tick, and a pull
-                // planned against an index that does not know the items yet settles FAILED on the spot.
+                /*
+                 * Seed a tick ahead of the prompt: the index catalogues the stock on the next tick, and a pull
+                 * planned against an index that does not know the items yet settles FAILED on the spot.
+                 */
                 .thenExecuteAfter(SETTLE + 6, () -> rackBe.getServerStorage(0).insert(Items.COBBLESTONE, 200))
                 .thenExecuteAfter(2, () -> {
                     helper.assertTrue(cliContains(shell.run("operation select 30 cobblestone", cli), "SELECT queued"),

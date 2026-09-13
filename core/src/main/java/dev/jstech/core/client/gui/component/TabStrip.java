@@ -11,6 +11,7 @@ import net.minecraft.client.gui.GuiGraphics;
 
 import java.util.List;
 import java.util.function.IntConsumer;
+import java.util.function.Supplier;
 
 /**
  * A row of tabs, one of them selected, with the skin's separator under the row. The tabs share the width
@@ -18,7 +19,7 @@ import java.util.function.IntConsumer;
  */
 public final class TabStrip extends UiComponent {
 
-    private final List<String> labels;
+    private final Supplier<List<String>> labels;
     private int selected;
     private IntConsumer onSelect = i -> { };
     private boolean underline = true;
@@ -26,8 +27,23 @@ public final class TabStrip extends UiComponent {
     /** The widths of the tabs as last drawn; equal shares until the first frame measures the labels. */
     private int[] widths = new int[0];
 
+    /** A strip whose tabs never change: the sections of a screen. */
     public TabStrip(final List<String> labels) {
-        this.labels = List.copyOf(labels);
+        final List<String> fixed = List.copyOf(labels);
+        this.labels = () -> fixed;
+    }
+
+    /**
+     * A strip whose tabs come and go: the files an editor has open. The labels are read as they are
+     * drawn, so opening or closing one needs nothing said here.
+     */
+    public TabStrip(final Supplier<List<String>> labels) {
+        this.labels = labels;
+    }
+
+    private List<String> labels() {
+        final List<String> current = this.labels.get();
+        return current == null ? List.of() : current;
     }
 
     /** Gives each tab the width of its label plus {@code padding}, instead of an equal share of the strip. */
@@ -47,18 +63,33 @@ public final class TabStrip extends UiComponent {
         return this;
     }
 
+    /** Room for the close mark at the right of a tab that can be closed. */
+    private static final int CLOSE_W = 9;
+    private IntConsumer onClose;
+
+    /**
+     * Gives every tab a close mark at its right, and says what closing one does.
+     *
+     * <p>The mark takes the click that lands on it, and so does the middle button anywhere on the tab,
+     * the way an editor's tabs close; neither selects the tab first.
+     */
+    public TabStrip setCloseable(final IntConsumer action) {
+        onClose = action;
+        return this;
+    }
+
     public int selected() {
         return selected;
     }
 
     /** Selects a tab without firing the callback, as a state refresh from outside does. */
     public TabStrip setSelected(final int index) {
-        selected = Math.max(0, Math.min(labels.size() - 1, index));
+        selected = Math.max(0, Math.min(labels().size() - 1, index));
         return this;
     }
 
     public int count() {
-        return labels.size();
+        return labels().size();
     }
 
     /** The width of tab {@code index} as laid out now. */
@@ -66,11 +97,31 @@ public final class TabStrip extends UiComponent {
         if (labelPadding >= 0 && index < widths.length) {
             return widths[index];
         }
-        return Math.max(1, width() / Math.max(1, labels.size()));
+        return Math.max(1, width() / Math.max(1, labels().size()));
+    }
+
+    /** The first tab laid out from the strip's right end; every tab from it on sits there, in order. */
+    private int trailingFrom = Integer.MAX_VALUE;
+
+    /**
+     * Lays the tabs from {@code index} on at the right end of the strip instead of after the others, the
+     * way a favourites tab sits apart from a screen's sections. Tabs before it stay at the left.
+     */
+    public TabStrip setTrailing(final int index) {
+        trailingFrom = index;
+        return this;
     }
 
     /** The left edge of tab {@code index} as laid out now. */
     private int tabX(final int index) {
+        final int count = labels().size();
+        if (index >= trailingFrom && trailingFrom < count) {
+            int tx = x() + width();
+            for (int i = count - 1; i >= index; i--) {
+                tx -= tabWidth(i);
+            }
+            return tx;
+        }
         int tx = x();
         for (int i = 0; i < index; i++) {
             tx += tabWidth(i);
@@ -85,15 +136,25 @@ public final class TabStrip extends UiComponent {
 
     @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
+        final List<String> current = labels();
+        final int close = onClose == null ? 0 : CLOSE_W;
         if (labelPadding >= 0) {
-            final int[] measured = new int[labels.size()];
-            for (int i = 0; i < labels.size(); i++) {
-                measured[i] = ctx.font().width(labels.get(i)) + labelPadding;
+            final int[] measured = new int[current.size()];
+            for (int i = 0; i < current.size(); i++) {
+                measured[i] = ctx.font().width(current.get(i)) + labelPadding + close;
             }
             widths = measured;
         }
-        for (int i = 0; i < labels.size(); i++) {
-            ctx.skin().tab(g, ctx.font(), tabX(i), y(), tabWidth(i), height(), labels.get(i), i == selected);
+        for (int i = 0; i < current.size(); i++) {
+            final int tx = tabX(i);
+            final int tw = tabWidth(i);
+            ctx.skin().tab(g, ctx.font(), tx, y(), tw - close, height(), current.get(i), i == selected);
+            if (close > 0) {
+                // The mark is part of the tab, drawn on the same ground, lit when the mouse is over it.
+                final boolean over = ctx.over(tx + tw - close, y(), close, height());
+                g.drawString(ctx.font(), "x", tx + tw - close + 2, y() + (height() - 7) / 2,
+                        over ? ctx.skin().text() : ctx.skin().dim(), false);
+            }
         }
         if (underline) {
             g.fill(x(), y() + height() - 1, x() + width(), y() + height(), ctx.skin().edge());
@@ -102,11 +163,32 @@ public final class TabStrip extends UiComponent {
 
     @Override
     public boolean mouseClicked(final double mx, final double my, final int button) {
-        int index = labels.size() - 1;
-        for (int i = 0; i < labels.size(); i++) {
-            if (mx < tabX(i) + tabWidth(i)) {
+        final List<String> current = labels();
+        if (current.isEmpty()) {
+            // A strip whose tabs come and go can be empty, and an empty strip has nothing to select.
+            return true;
+        }
+        int index = -1;
+        for (int i = 0; i < current.size(); i++) {
+            final int tx = tabX(i);
+            if (mx >= tx && mx < tx + tabWidth(i)) {
                 index = i;
                 break;
+            }
+        }
+        if (index < 0) {
+            /*
+             * Past the last tab (or between the leading tabs and a trailing one) is the strip's empty end, and
+             * a click there is a click on nothing: it used to count as the last tab's close mark, which shut
+             * the tabs one by one.
+             */
+            return true;
+        }
+        if (onClose != null) {
+            final boolean onMark = mx >= tabX(index) + tabWidth(index) - CLOSE_W;
+            if (button == 2 || (button == 0 && onMark)) {
+                onClose.accept(index);
+                return true;
             }
         }
         if (index != selected) {

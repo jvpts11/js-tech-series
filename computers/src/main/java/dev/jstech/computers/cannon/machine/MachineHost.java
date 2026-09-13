@@ -1,0 +1,136 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Computers.
+ */
+package dev.jstech.computers.cannon.machine;
+
+import com.mojang.logging.LogUtils;
+import dev.jstech.computers.cannon.run.IHost;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import org.slf4j.Logger;
+
+/**
+ * The clock a program running on a real machine reads.
+ *
+ * <p>It asks the machine for its world every time rather than holding on to one, because a block entity
+ * is read out of a save before it is placed in a world and its programs come back with it.
+ */
+public record MachineHost(BlockEntity machine) implements IHost {
+
+    /** The length of a Minecraft day in ticks. */
+    private static final long DAY = 24_000L;
+
+    private static final Logger LOGGER = LogUtils.getLogger();
+
+    @Override
+    public long tick() {
+        final Level level = this.machine.getLevel();
+        return level == null ? 0 : level.getGameTime();
+    }
+
+    @Override
+    public long dayTime() {
+        final Level level = this.machine.getLevel();
+        return level == null ? 0 : level.getDayTime() % DAY;
+    }
+
+    @Override
+    public long day() {
+        final Level level = this.machine.getLevel();
+        return level == null ? 0 : level.getDayTime() / DAY;
+    }
+
+    @Override
+    public void fault(final String process, final int line, final RuntimeException cause) {
+        LOGGER.error("Cannon program '{}' on the machine at {} failed inside the runtime at instruction {}",
+                process, this.machine.getBlockPos(), line, cause);
+    }
+
+    @Override
+    public boolean provides(final String owner) {
+        return HostFiles.handles(owner) || HostComputer.handles(owner)
+                || HostNetwork.handles(owner) || HostMainframe.handles(owner)
+                || HostOperations.handles(owner) || HostProgram.handles(owner)
+                || HostRemote.handles(owner) || HostIql.handles(owner)
+                || HostGateway.handles(owner);
+    }
+
+    @Override
+    public boolean takesTarget(final String owner, final String member) {
+        // Another computer is a thing the program holds; every call on it names which one.
+        return HostRemote.handles(owner);
+    }
+
+    @Override
+    public Reply call(final String owner, final String member, final java.util.List<Object> arguments,
+                      final String caller, final int line) {
+        return this.call(owner, member, arguments, caller, 0, line);
+    }
+
+    @Override
+    public Reply call(final String owner, final String member, final java.util.List<Object> arguments,
+                      final String caller, final int callerId, final int line) {
+        final dev.jstech.computers.program.cli.ICliComputer computer = this.asComputer();
+        if (computer == null) {
+            throw new dev.jstech.computers.cannon.run.Halt(
+                    dev.jstech.computers.cannon.run.Halt.Reason.NO_SUCH_MEMBER, line,
+                    "this machine cannot reach " + owner);
+        }
+        if (HostFiles.handles(owner)) {
+            return HostFiles.call(computer, member, arguments, line);
+        }
+        if (HostProgram.handles(owner)
+                && this.machine instanceof dev.jstech.computers.blockentity
+                        .AbstractComputerBlockEntity self) {
+            return HostProgram.call(self, computer, callerId, member, arguments, line);
+        }
+        if (HostRemote.handles(owner)
+                && computer instanceof dev.jstech.computers.program.ServerCliComputer shell) {
+            return HostRemote.call(shell, callerId, member, arguments, line);
+        }
+        if (HostIql.handles(owner)
+                && computer instanceof dev.jstech.computers.program.ServerCliComputer shell) {
+            return HostIql.call(shell, member, arguments, line);
+        }
+        if (HostComputer.handles(owner)
+                && this.machine instanceof dev.jstech.computers.blockentity
+                        .AbstractComputerBlockEntity self) {
+            return HostComputer.call(self, computer, member, line);
+        }
+        if (HostGateway.handles(owner)) {
+            // The asking program is named because a question put across waits for an answer addressed to it.
+            return HostGateway.call(this.machine, callerId, member, arguments, line);
+        }
+        if (HostNetwork.handles(owner)) {
+            return HostNetwork.call(computer, member, arguments, line);
+        }
+        if (HostMainframe.handles(owner)) {
+            return HostMainframe.call(computer, member, arguments, line);
+        }
+        if (HostOperations.handles(owner)) {
+            return HostOperations.call(computer, caller, member, arguments, line);
+        }
+        throw new dev.jstech.computers.cannon.run.Halt(
+                dev.jstech.computers.cannon.run.Halt.Reason.NO_SUCH_MEMBER, line,
+                "this machine cannot reach " + owner);
+    }
+
+    /**
+     * The machine as the shell sees it, which is how a program reaches its drives and its network.
+     *
+     * <p>Null when this block entity is not one a person could sit at, or when it has been read out of a
+     * save and not yet placed in a world.
+     */
+    @org.jetbrains.annotations.Nullable
+    private dev.jstech.computers.program.cli.ICliComputer asComputer() {
+        if (this.machine instanceof dev.jstech.computers.terminal.IComputerTerminalHost terminal
+                && this.machine.getLevel() instanceof net.minecraft.server.level.ServerLevel level) {
+            return new dev.jstech.computers.program.ServerCliComputer(terminal, level);
+        }
+        return null;
+    }
+}

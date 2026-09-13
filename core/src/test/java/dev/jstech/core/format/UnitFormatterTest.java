@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.format;
 
@@ -137,8 +137,10 @@ class UnitFormatterTest {
 
     @Test
     void compact_minLong_singleSignNoDoubleNegative() {
-        // Math.abs(Long.MIN_VALUE) overflows back to a negative value; the magnitude must be clamped so
-        // the output carries exactly one leading sign and never a "--" prefix.
+        /*
+         * Math.abs(Long.MIN_VALUE) overflows back to a negative value; the magnitude must be clamped so
+         * the output carries exactly one leading sign and never a "--" prefix.
+         */
         UnitFormatter formatter = new UnitFormatter(EN);
         String result = formatter.compact(Long.MIN_VALUE, Unit.FE);
         assertTrue(result.endsWith(" FE"));

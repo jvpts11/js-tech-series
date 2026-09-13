@@ -69,6 +69,55 @@ public final class ColumnHeader extends UiComponent {
     }
 
     /** The column whose span holds {@code mx}: the last column that starts at or before it. */
+    /**
+     * How close to a column's left edge a press has to land to take hold of it. Wide enough to hit with
+     * a mouse on a desktop drawn at three quarters, where a pixel here is less than one on the screen.
+     */
+    private static final int GRIP = 6;
+    /** The column whose left edge the mouse is dragging, or -1. */
+    private int dragging = -1;
+    private java.util.function.BiConsumer<Integer, Integer> onResize = (column, edge) -> { };
+
+    /**
+     * Says what happens when a column's left edge is dragged: called with the column and where its
+     * edge now is, for the owner to lay the columns out again.
+     */
+    public ColumnHeader setOnResize(final java.util.function.BiConsumer<Integer, Integer> action) {
+        onResize = action;
+        return this;
+    }
+
+    /** Whether a column edge is being dragged, so the owner keeps feeding the mouse here. */
+    public boolean dragging() {
+        return dragging >= 0;
+    }
+
+    /** The column whose left edge is under {@code mx}, or -1; the first column's edge does not move. */
+    private int edgeAt(final double mx) {
+        for (int i = 1; i < columnX.length && i < labels.size(); i++) {
+            if (Math.abs(mx - columnX[i]) <= GRIP) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    @Override
+    public boolean mouseDragged(final double mx, final double my, final int button) {
+        if (dragging < 0) {
+            return false;
+        }
+        onResize.accept(dragging, (int) mx);
+        return true;
+    }
+
+    @Override
+    public boolean mouseReleased(final double mx, final double my, final int button) {
+        final boolean was = dragging >= 0;
+        dragging = -1;
+        return was;
+    }
+
     public int columnAt(final double mx) {
         int column = 0;
         for (int i = 0; i < columnX.length && i < labels.size(); i++) {
@@ -85,6 +134,10 @@ public final class ColumnHeader extends UiComponent {
         g.fill(x(), bottom() - 1, right(), bottom(), ctx.skin().edge());
         final String arrow = ascending ? " ^" : " v";
         for (int i = 0; i < labels.size() && i < columnX.length; i++) {
+            // A line before every column but the first: the edge that is dragged, drawn so it can be seen.
+            if (i > 0) {
+                g.fill(columnX[i] - 3, y() + 1, columnX[i] - 2, bottom() - 1, ctx.skin().edge());
+            }
             g.drawString(ctx.font(), labels.get(i) + (sortable && i == sortColumn ? arrow : ""), columnX[i], y() + 1,
                     ctx.skin().dim(), false);
         }
@@ -92,6 +145,12 @@ public final class ColumnHeader extends UiComponent {
 
     @Override
     public boolean mouseClicked(final double mx, final double my, final int button) {
+        // A press on the edge between two columns takes hold of it rather than sorting.
+        final int edge = edgeAt(mx);
+        if (edge >= 0 && button == 0) {
+            dragging = edge;
+            return true;
+        }
         if (!sortable) {
             return false;
         }

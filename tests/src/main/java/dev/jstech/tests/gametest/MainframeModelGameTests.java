@@ -3,14 +3,14 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.blockentity.MainframeBlockEntity;
-import dev.jstech.computronics.hardware.DiskSize;
-import dev.jstech.computronics.hardware.StorageTier;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -136,8 +136,10 @@ public final class MainframeModelGameTests {
                                     && vintage.mainframeEra() == dev.jstech.core.tier.HardwareEra.VINTAGE
                                     && legacy.mainframeEra() == dev.jstech.core.tier.HardwareEra.LEGACY,
                             "each cabinet reports its own era, which picks its model and atlas");
-                    // The cabinet is three wide, two tall and two deep; culling by the controller's own
-                    // block would blink the whole machine out as the player walks past it.
+                    /*
+                     * The cabinet is three wide, two tall and two deep; culling by the controller's own
+                     * block would blink the whole machine out as the player walks past it.
+                     */
                     final net.minecraft.world.phys.AABB box = standard.renderBox();
                     helper.assertTrue(box.getXsize() >= 3.0D && box.getYsize() >= 2.0D && box.getZsize() >= 2.0D,
                             "the render box covers the whole footprint, not just the controller");

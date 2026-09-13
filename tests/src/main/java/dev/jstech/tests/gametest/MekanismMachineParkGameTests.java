@@ -3,21 +3,21 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computronics.crafting.CraftingPattern;
-import dev.jstech.computronics.crafting.MultiStagePattern;
-import dev.jstech.computronics.crafting.NetworkProcessingOperation;
-import dev.jstech.computronics.crafting.NetworkRecipe;
-import dev.jstech.computronics.crafting.ProcessingPattern;
-import dev.jstech.computronics.operation.NetworkOperation;
-import dev.jstech.computronics.operation.NetworkStorage;
-import dev.jstech.computronics.operation.payload.OperationRecord;
-import dev.jstech.computronics.storage.StorageKey;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.crafting.MultiStagePattern;
+import dev.jstech.computers.crafting.NetworkProcessingOperation;
+import dev.jstech.computers.crafting.NetworkRecipe;
+import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.operation.INetworkOperation;
+import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -35,7 +35,7 @@ import java.util.List;
  * The Mekanism machine classes the Fusion Reactor build needs, each driven by the network through the crafting
  * switch: the Metallurgic Infuser and the Osmium Compressor (an "extra" slot fed through the bottom face), the
  * Crusher (the plain electric family), and finally the whole alloy chain ending in Fusion Reactor Frames on the
- * bench — once as one multi-stage pipeline, once as flat patterns the planner composes on its own.
+ * bench: once as one multi-stage pipeline, once as flat patterns the planner composes on its own.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -104,7 +104,7 @@ public final class MekanismMachineParkGameTests {
         return new CraftingPattern(grid, new ItemStack(MekanismRig.item(FRAME), 4));
     }
 
-    private static void assertCompleted(final GameTestHelper helper, final NetworkOperation op, final String what) {
+    private static void assertCompleted(final GameTestHelper helper, final INetworkOperation op, final String what) {
         helper.assertTrue(op.toRecord().status() == OperationRecord.STATUS_COMPLETED,
                 what + " must complete; status=" + op.toRecord().status());
     }
@@ -215,11 +215,13 @@ public final class MekanismMachineParkGameTests {
 
     @GameTest(template = ARENA, timeoutTicks = 4000)
     public static void pipeline_makesFusionReactorFramesFromRawMaterials(final GameTestHelper helper) {
-        // Strategy B, "by stages": one multi-stage pattern walks copper up the alloy ladder in the infuser
-        // (infused -> reinforced -> atomic) and ends on the bench with the frame recipe, from raw stock only.
+        /*
+         * Strategy B, "by stages": one multi-stage pattern walks copper up the alloy ladder in the infuser
+         * (infused -> reinforced -> atomic) and ends on the bench with the frame recipe, from raw stock only.
+         */
         final MekanismRig.Rig rig = MekanismRig.build(helper, INFUSER);
         final StorageKey frame = MekanismRig.itemKey(FRAME);
-        final NetworkOperation[] op = new NetworkOperation[1];
+        final INetworkOperation[] op = new INetworkOperation[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     MekanismRig.mountBuses(helper);
@@ -264,12 +266,14 @@ public final class MekanismMachineParkGameTests {
 
     @GameTest(template = ARENA, timeoutTicks = 4000)
     public static void flatPatterns_makeFusionReactorFramesFromRawMaterials(final GameTestHelper helper) {
-        // Strategy A, "flat patterns": one pattern per recipe in the Recipe ROM and a single request for the
-        // frames. The planner walks the tree itself (bench <- machine <- machine <- machine) and the craft runs
-        // each machine step as a processing operation of its own before the bench step.
+        /*
+         * Strategy A, "flat patterns": one pattern per recipe in the Recipe ROM and a single request for the
+         * frames. The planner walks the tree itself (bench <- machine <- machine <- machine) and the craft runs
+         * each machine step as a processing operation of its own before the bench step.
+         */
         final MekanismRig.Rig rig = MekanismRig.build(helper, INFUSER);
         final StorageKey frame = MekanismRig.itemKey(FRAME);
-        final NetworkOperation[] op = new NetworkOperation[1];
+        final INetworkOperation[] op = new INetworkOperation[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     MekanismRig.mountBuses(helper);
@@ -320,8 +324,10 @@ public final class MekanismMachineParkGameTests {
 
     @GameTest(template = ARENA, timeoutTicks = 4000)
     public static void cliCraft_plansTheAlloyChainFromTheCommandLine(final GameTestHelper helper) {
-        // The command-line route (MC-NET / MC-DOS shells): "operation craft" on the Crafting Computer's console
-        // must reach the same planner and drive the same machine steps as the desktop request.
+        /*
+         * The command-line route (MC-NET / MC-DOS shells): "operation craft" on the Crafting Computer's console
+         * must reach the same planner and drive the same machine steps as the desktop request.
+         */
         final MekanismRig.Rig rig = MekanismRig.build(helper, INFUSER);
         final StorageKey frame = MekanismRig.itemKey(FRAME);
         helper.startSequence()
@@ -345,9 +351,9 @@ public final class MekanismMachineParkGameTests {
                     }
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    final var cli = new dev.jstech.computronics.program.ServerCliComputer(
-                            (dev.jstech.computronics.terminal.ComputerTerminalHost) rig.net().cc(), helper.getLevel());
-                    final var shell = dev.jstech.computronics.program.cli.CliCommands.newShell(50);
+                    final var cli = new dev.jstech.computers.program.ServerCliComputer(
+                            (dev.jstech.computers.terminal.IComputerTerminalHost) rig.net().cc(), helper.getLevel());
+                    final var shell = dev.jstech.computers.program.cli.CliCommands.newShell(50);
                     final var response = shell.run("operation craft 4 " + FRAME, cli);
                     final boolean queued = response.lines().stream().anyMatch(l -> l.text().contains("CRAFT queued"));
                     helper.assertTrue(queued, "the shell must queue the craft; got " + response.lines().stream().map(l -> l.text()).toList());
@@ -370,9 +376,11 @@ public final class MekanismMachineParkGameTests {
 
     @GameTest(template = ARENA, timeoutTicks = 4000)
     public static void flatPatterns_craftSurvivesAReloadWhileItsMachineStepRuns(final GameTestHelper helper) {
-        // The Mainframe is torn down and rebuilt from its NBT while the first infuser step is running. The
-        // machine step resumes on its own; the craft must wait for it and then finish from what it made,
-        // instead of planning the alloy a second time (which the drained raw stock could not even cover).
+        /*
+         * The Mainframe is torn down and rebuilt from its NBT while the first infuser step is running. The
+         * machine step resumes on its own; the craft must wait for it and then finish from what it made,
+         * instead of planning the alloy a second time (which the drained raw stock could not even cover).
+         */
         final MekanismRig.Rig rig = MekanismRig.build(helper, INFUSER);
         final StorageKey frame = MekanismRig.itemKey(FRAME);
         final BlockPos mainframePos = new BlockPos(1, 2, 2);
@@ -413,14 +421,14 @@ public final class MekanismMachineParkGameTests {
                 })
                 .thenExecuteAfter(SETTLE, () -> {
                     rig.world().setBlock(mainframePos, ComputingModule.MAINFRAME.get());
-                    rig.world().blockEntity(mainframePos, dev.jstech.computronics.blockentity.MainframeBlockEntity.class)
+                    rig.world().blockEntity(mainframePos, dev.jstech.computers.blockentity.MainframeBlockEntity.class)
                             .loadWithComponents(snapshot[0], helper.getLevel().registryAccess());
                 })
                 .thenWaitUntil(() -> {
                     MekanismRig.power(helper);
                     final NetworkStorage storage = rig.net().storage(helper.getLevel());
                     helper.assertTrue(storage.count(frame) >= 4, "waiting for the frames after the reload: "
-                            + rig.world().blockEntity(mainframePos, dev.jstech.computronics.blockentity.MainframeBlockEntity.class)
+                            + rig.world().blockEntity(mainframePos, dev.jstech.computers.blockentity.MainframeBlockEntity.class)
                                     .activeOperationRecords());
                 })
                 .thenExecute(() -> {

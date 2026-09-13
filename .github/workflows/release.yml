@@ -1,0 +1,69 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  draft:
+    name: Draft the release
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Check the tag matches the declared version
+        run: |
+          declared=$(grep '^mod_version=' gradle.properties | cut -d= -f2)
+          tagged="${GITHUB_REF_NAME#v}"
+          if [ "$tagged" != "$declared" ]; then
+            echo "The tag is $tagged but gradle.properties declares $declared."
+            exit 1
+          fi
+          echo "VERSION=$declared" >> "$GITHUB_ENV"
+          echo "MINECRAFT=$(grep '^minecraft_version=' gradle.properties | cut -d= -f2)" >> "$GITHUB_ENV"
+
+      - name: Build the release jars
+        run: ./gradlew build -Prelease --console=plain
+
+      - name: Take this version's notes from the changelog
+        run: |
+          awk -v heading="## [$VERSION]" '
+            index($0, heading) == 1 { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "CHANGELOG.md has no section for $VERSION."
+            exit 1
+          fi
+          # A release that brings more than fixes gives its name after the date: "## [0.3.0a] - 2026-09-13 - The Programming Update".
+          name=$(grep -m 1 -F "## [$VERSION]" CHANGELOG.md | sed -n 's/^## \[[^]]*\] - [0-9-]* - //p')
+          if [ -n "$name" ]; then
+            echo "RELEASE_TITLE=J's Tech Series $VERSION: $name" >> "$GITHUB_ENV"
+          else
+            echo "RELEASE_TITLE=J's Tech Series $VERSION" >> "$GITHUB_ENV"
+          fi
+
+      - name: Draft the release with the mod jars
+        # A draft, so the release is reviewed and published by hand. The tests jar is never attached.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --draft \
+            --title "$RELEASE_TITLE" \
+            --notes-file release-notes.md \
+            "core/build/libs/jscore-$MINECRAFT-$VERSION.jar" \
+            "computers/build/libs/jsc-$MINECRAFT-$VERSION.jar" \
+            "industrial/build/libs/jsindustrial-$MINECRAFT-$VERSION.jar"

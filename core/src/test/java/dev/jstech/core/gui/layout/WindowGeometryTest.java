@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.gui.layout;
 
@@ -15,9 +15,11 @@ class WindowGeometryTest {
 
     @Test
     void resolve_floatingNeverRendersBelowTheMinimum() {
-        // The shipped bug: a window persisted below the (since-grown) minimum rendered a tiny content area, so
-        // the Network Interactor's details panel was clipped to a few pixels and slid over the grid. The
-        // resolved size MUST clamp up to the minimum — this test fails if that clamp is ever dropped again.
+        /*
+         * The shipped bug: a window persisted below the (since-grown) minimum rendered a tiny content area, so
+         * the Network Interactor's details panel was clipped to a few pixels and slid over the grid. The
+         * resolved size MUST clamp up to the minimum; this test fails if that clamp is ever dropped again.
+         */
         final WindowGeometry.Rect r = WindowGeometry.resolve(10, 20, 200, 100, 313, 158, false, 800, 600, 24);
         assertEquals(313, r.w(), "width clamps up to the minimum");
         assertEquals(158, r.h(), "height clamps up to the minimum");
@@ -50,8 +52,10 @@ class WindowGeometryTest {
 
     @Test
     void resolve_maximizedStartsBelowATopPanel() {
-        // A GNOME-style desktop reserves its bar at the top and nothing at the bottom: the maximized window
-        // starts under the bar and runs to the bottom edge.
+        /*
+         * A GNOME-style desktop reserves its bar at the top and nothing at the bottom: the maximized window
+         * starts under the bar and runs to the bottom edge.
+         */
         final WindowGeometry.Rect r = WindowGeometry.resolve(10, 20, 200, 100, 313, 158, true, 800, 600, 0, 24);
         assertEquals(0, r.x());
         assertEquals(24, r.y(), "maximized top is the top panel's bottom edge");
@@ -68,13 +72,28 @@ class WindowGeometryTest {
 
     @Test
     void scissor_addsThePoseTranslationToTheLocalRectangle() {
-        // GuiGraphics.enableScissor ignores the pose, so a desktop app MUST add the pose translation to its
-        // window-local scissor coords or the clip is offset from the drawn content — the bug that clipped the
-        // Network Interactor's details text and grid cells in the wrong place. Absolute = pose-origin + local.
+        /*
+         * GuiGraphics.enableScissor ignores the pose, so a desktop app MUST add the pose translation to its
+         * window-local scissor coords or the clip is offset from the drawn content, the bug that clipped the
+         * Network Interactor's details text and grid cells in the wrong place. Absolute = pose-origin + local.
+         */
         final WindowGeometry.Rect r = WindowGeometry.scissor(40, 50, 5, 6, 105, 56);
         assertEquals(45, r.x(), "x = poseX + x1");
         assertEquals(56, r.y(), "y = poseY + y1");
         assertEquals(100, r.w(), "width = x2 - x1");
         assertEquals(50, r.h(), "height = y2 - y1");
+    }
+
+    @Test
+    void scissor_underAScaledPoseShrinksTheClipTowardsTheOrigin() {
+        // A desktop drawn at three quarters: local 100..200 sits on the screen at 40 + 75 .. 40 + 150.
+        final WindowGeometry.Rect r = WindowGeometry.scissor(40f, 50f, 0.75f, 0.75f, 100, 20, 200, 60);
+        assertEquals(115, r.x(), "x = poseX + x1 * scale");
+        assertEquals(65, r.y(), "y = poseY + y1 * scale");
+        assertEquals(75, r.w(), "width scales with the pose");
+        assertEquals(30, r.h(), "height scales with the pose");
+        final WindowGeometry.Rect whole = WindowGeometry.scissor(40f, 50f, 1f, 1f, 5, 6, 105, 56);
+        assertEquals(45, whole.x(), "at scale one it is the plain sum");
+        assertEquals(100, whole.w());
     }
 }

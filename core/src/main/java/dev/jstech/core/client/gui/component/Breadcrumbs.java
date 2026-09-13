@@ -50,7 +50,10 @@ public final class Breadcrumbs extends UiComponent {
             final String label = trail.get(i).label();
             final int w = ctx.font().width(label);
             if (px + w > maxX) {
-                g.drawString(ctx.font(), "..", px, cy, ctx.skin().dim(), false);
+                // As much of the crumb as fits, so a long volume name still reads, then the dots.
+                final int room = maxX - px - ctx.font().width("..");
+                final String head = room > 0 ? ctx.font().plainSubstrByWidth(label, room) : "";
+                g.drawString(ctx.font(), head + "..", px, cy, ctx.skin().dim(), false);
                 break;
             }
             final boolean last = i == trail.size() - 1;
@@ -82,11 +85,21 @@ public final class Breadcrumbs extends UiComponent {
         return null;
     }
 
+    /** What a click on the empty part of the field does: an explorer turns the trail into text to edit. */
+    private Runnable onEmptyClick = () -> { };
+
+    public Breadcrumbs setOnEmptyClick(final Runnable action) {
+        onEmptyClick = action == null ? () -> { } : action;
+        return this;
+    }
+
     @Override
     public boolean mouseClicked(final double mx, final double my, final int button) {
         final String target = crumbAt(mx);
         if (target != null) {
             onNavigate.accept(target);
+        } else {
+            onEmptyClick.run();
         }
         return true;
     }

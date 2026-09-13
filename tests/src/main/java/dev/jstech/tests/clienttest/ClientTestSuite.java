@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.clienttest;
 
@@ -14,15 +14,27 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * The explicit list of client test classes. Tests are discovered by reflection from these classes only —
- * no classpath scanning — and ordered by name so every shard sees the same list and can take its slice.
+ * The explicit list of client test classes. Tests are discovered by reflection from these classes only (
+ * no classpath scanning) and ordered by name so every shard sees the same list and can take its slice.
  */
 public final class ClientTestSuite {
 
     private static final List<Class<?>> CLASSES = List.of(
+            CannonEditorClientTests.class,
             CraftingChainClientTests.class,
+            DesktopMenuClientTests.class,
+            ExposureClientTests.class,
+            FilesSyncClientTests.class,
             FullJourneyClientTests.class,
+            GatewayManagerClientTests.class,
+            InstallMediaClientTests.class,
+            TaskbarClientTests.class,
+            TerminalEditorClientTests.class,
             MekanismClientTests.class,
+            NetworkInteractorClientTests.class,
+            NetworkSharesClientTests.class,
+            SettingsSharingClientTests.class,
+            SystemUiClientTests.class,
             UiSweepClientTests.class);
 
     private ClientTestSuite() {
@@ -30,7 +42,7 @@ public final class ClientTestSuite {
 
     /**
      * One discovered test: its display name, the method to invoke, its timeout and its index in the whole
-     * (sorted) suite — the index places the test's world area, so shards never overlap.
+     * (sorted) suite, and the index places the test's world area, so shards never overlap.
      */
     public record Entry(String name, Method method, int timeoutTicks, int index) {
     }

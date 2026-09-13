@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.material;
 
@@ -58,7 +58,7 @@ public enum ModMaterial {
     }
 
     /**
-     * Forms that exist as vanilla Minecraft items — this mod only needs to add them to {@code c:} tags,
+     * Forms that exist as vanilla Minecraft items; this mod only needs to add them to {@code c:} tags,
      * not register new items.
      */
     public Set<MaterialForm> vanillaForms() {

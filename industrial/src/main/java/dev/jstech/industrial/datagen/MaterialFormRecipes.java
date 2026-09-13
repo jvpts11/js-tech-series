@@ -35,11 +35,11 @@ import java.util.EnumMap;
 public final class MaterialFormRecipes {
 
     @FunctionalInterface
-    private interface FormRecipe {
+    private interface IFormRecipe {
         void generate(RecipeOutput out, ModMaterial mat, MaterialForm form);
     }
 
-    private static final EnumMap<MaterialForm, FormRecipe> PRODUCTIONS = new EnumMap<>(MaterialForm.class);
+    private static final EnumMap<MaterialForm, IFormRecipe> PRODUCTIONS = new EnumMap<>(MaterialForm.class);
 
     static {
         // Compress one ingot into one plate.
@@ -62,8 +62,10 @@ public final class MaterialFormRecipes {
                                 200),
                         null));
 
-        // BOLT, ROD, GEAR: production routes not yet established.
-        // Add one entry here per form when input, machine and ratio are defined.
+        /*
+         * BOLT, ROD, GEAR: production routes not yet established.
+         * Add one entry here per form when input, machine and ratio are defined.
+         */
     }
 
     private MaterialFormRecipes() {}
@@ -72,7 +74,7 @@ public final class MaterialFormRecipes {
     public static void generateAll(final RecipeOutput out) {
         for (final ModMaterial mat : ModMaterial.values()) {
             for (final MaterialForm form : mat.activeModForms()) {
-                final FormRecipe recipe = PRODUCTIONS.get(form);
+                final IFormRecipe recipe = PRODUCTIONS.get(form);
                 if (recipe != null) {
                     recipe.generate(out, mat, form);
                 }

@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.network.payload;
 
@@ -33,8 +33,10 @@ public final class CorePacketHandlerRegistry {
     private static void handlePing(
             final PingPayload payload,
             final IPayloadContext context) {
-        // Echo back to sender. The reply travels the opposite direction,
-        // which is why the payload is registered bidirectionally.
+        /*
+         * Echo back to sender. The reply travels the opposite direction,
+         * which is why the payload is registered bidirectionally.
+         */
         context.reply(payload);
     }
 }

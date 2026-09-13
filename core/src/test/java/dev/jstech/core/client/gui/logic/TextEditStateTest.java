@@ -15,6 +15,95 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TextEditStateTest {
 
+    private static TextEditState holding(final String text) {
+        final TextEditState state = new TextEditState(64);
+        state.sync(text);
+        return state;
+    }
+
+    @Test
+    public void left_withExtendGrowsASelectionBackFromTheCaret() {
+        final TextEditState state = holding("C:\\progs\\");
+        state.left(true);
+        state.left(true);
+        assertTrue(state.hasSelection());
+        assertEquals("s\\", state.selectedText());
+        assertEquals(7, state.selectionStart());
+        assertEquals(9, state.selectionEnd());
+    }
+
+    @Test
+    public void left_withoutExtendCollapsesTheSelectionToItsStart() {
+        final TextEditState state = holding("abcdef");
+        state.left(true);
+        state.left(true);
+        state.left();
+        assertFalse(state.hasSelection());
+        assertEquals(4, state.caret());
+    }
+
+    @Test
+    public void selectAll_takesTheWholeEditAndCtrlCWouldCopyIt() {
+        final TextEditState state = holding("C:\\progs\\");
+        state.selectAll();
+        assertEquals("C:\\progs\\", state.selectedText());
+        assertEquals(9, state.caret());
+    }
+
+    @Test
+    public void selectAll_onNothingSelectsNothing() {
+        final TextEditState state = holding("");
+        state.selectAll();
+        assertFalse(state.hasSelection());
+    }
+
+    @Test
+    public void type_replacesTheSelection() {
+        final TextEditState state = holding("abcdef");
+        state.home(false);
+        state.right(true);
+        state.right(true);
+        state.type('X');
+        assertEquals("Xcdef", state.edit());
+        assertEquals(1, state.caret());
+        assertFalse(state.hasSelection());
+    }
+
+    @Test
+    public void backspace_andDelete_removeTheSelectionRatherThanOneCharacter() {
+        final TextEditState state = holding("abcdef");
+        state.end(false);
+        state.wordLeft(true);
+        state.backspace();
+        assertEquals("", state.edit());
+        state.sync("abc def");
+        state.home(false);
+        state.wordRight(true);
+        state.delete();
+        assertEquals(" def", state.edit());
+        assertEquals(0, state.caret());
+    }
+
+    @Test
+    public void moveTo_withoutExtendDropsTheSelection() {
+        final TextEditState state = holding("abcdef");
+        state.selectAll();
+        state.moveTo(2, false);
+        assertFalse(state.hasSelection());
+        assertEquals(2, state.caret());
+    }
+
+    @Test
+    public void sync_andRevert_dropTheSelection() {
+        final TextEditState state = holding("abcdef");
+        state.selectAll();
+        state.sync("xy");
+        assertFalse(state.hasSelection());
+        state.selectAll();
+        state.revert();
+        assertFalse(state.hasSelection());
+    }
+
     @Test
     public void type_appendsUntilTheMaximumLength() {
         final TextEditState state = new TextEditState(3);
@@ -67,5 +156,81 @@ public class TextEditStateTest {
         assertEquals("new", state.edit());
         state.sync(null);
         assertEquals("", state.value());
+    }
+
+    @Test
+    public void caret_startsAfterTheTextAndMovesWithinIt() {
+        final TextEditState state = new TextEditState(16);
+        state.sync("file.can");
+        assertEquals(8, state.caret());
+        state.left();
+        state.left();
+        assertEquals(6, state.caret());
+        state.home();
+        assertEquals(0, state.caret());
+        state.left();
+        assertEquals(0, state.caret(), "the caret never leaves the text on the left");
+        state.end();
+        state.right();
+        assertEquals(8, state.caret(), "nor on the right");
+        state.setCaret(4);
+        assertEquals(4, state.caret());
+        state.setCaret(99);
+        assertEquals(8, state.caret(), "a place past the end is the end");
+    }
+
+    @Test
+    public void type_insertsAtTheCaretAndBackspaceDeleteWorkAroundIt() {
+        final TextEditState state = new TextEditState(16);
+        state.sync("file.can");
+        state.setCaret(4);
+        state.type('s');
+        assertEquals("files.can", state.edit());
+        assertEquals(5, state.caret());
+        state.backspace();
+        assertEquals("file.can", state.edit());
+        assertEquals(4, state.caret());
+        state.delete();
+        assertEquals("filecan", state.edit());
+        assertEquals(4, state.caret(), "delete takes what is after the caret and leaves it where it was");
+        state.home();
+        state.backspace();
+        assertEquals("filecan", state.edit(), "nothing before the caret, nothing removed");
+        state.end();
+        state.delete();
+        assertEquals("filecan", state.edit(), "nothing after the caret, nothing removed");
+    }
+
+    @Test
+    public void wordLeft_andWordRight_jumpOverWordsAndTheGapsBetweenThem() {
+        final TextEditState state = new TextEditState(64);
+        state.sync("cd progs/build  ok");
+        state.wordLeft();
+        assertEquals(16, state.caret(), "back to the start of the last word");
+        state.wordLeft();
+        assertEquals(9, state.caret(), "over the gap and the word before it");
+        state.wordLeft();
+        state.wordLeft();
+        assertEquals(0, state.caret());
+        state.wordLeft();
+        assertEquals(0, state.caret(), "held at the start");
+        state.wordRight();
+        assertEquals(2, state.caret(), "to the end of the first word");
+        state.wordRight();
+        assertEquals(8, state.caret());
+        state.end();
+        state.wordRight();
+        assertEquals(18, state.caret(), "held at the end");
+    }
+
+    @Test
+    public void revert_putsTheCaretBackAfterTheValue() {
+        final TextEditState state = new TextEditState(16);
+        state.sync("abc");
+        state.home();
+        state.type('x');
+        state.revert();
+        assertEquals("abc", state.edit());
+        assertEquals(3, state.caret());
     }
 }

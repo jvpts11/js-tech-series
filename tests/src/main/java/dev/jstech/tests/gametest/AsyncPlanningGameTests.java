@@ -7,11 +7,11 @@
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.blockentity.MainframeBlockEntity;
-import dev.jstech.computronics.crafting.PendingCraftOperation;
-import dev.jstech.computronics.operation.NetworkOperation;
-import dev.jstech.computronics.operation.payload.OperationRecord;
-import dev.jstech.computronics.storage.StorageKey;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.crafting.PendingCraftOperation;
+import dev.jstech.computers.operation.INetworkOperation;
+import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.CraftFiles;
@@ -26,8 +26,8 @@ import java.util.List;
 
 /**
  * A craft request plans off the tick: the request is listed at once as a pending craft, a virtual thread
- * makes the plan, and the real craft takes over on the main thread when the plan lands — carrying the level
- * and the settle callback given meanwhile — while the log shows one craft, not two. A request nothing can
+ * makes the plan, and the real craft takes over on the main thread when the plan lands (carrying the level
+ * and the settle callback given meanwhile) while the log shows one craft, not two. A request nothing can
  * make is refused at once, and one cancelled while planning never starts.
  */
 @GameTestHolder(JsTests.MODID)
@@ -50,7 +50,7 @@ public final class AsyncPlanningGameTests {
     public static void craftRequest_plansOffTheTickThenRunsOneCraft(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
-        final NetworkOperation[] request = new NetworkOperation[1];
+        final INetworkOperation[] request = new INetworkOperation[1];
         final int[] settled = {0};
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
@@ -68,8 +68,10 @@ public final class AsyncPlanningGameTests {
                                     && live.get(0).status() == OperationRecord.STATUS_PENDING,
                             "the pending craft is listed at once; got " + live);
                 })
-                // The plan is made on a virtual thread promoted on the next tick and lands the tick after: the
-                // placeholder is still the only thing listed one tick in.
+                /*
+                 * The plan is made on a virtual thread promoted on the next tick and lands the tick after: the
+                 * placeholder is still the only thing listed one tick in.
+                 */
                 .thenExecuteAfter(1, () -> {
                     final List<OperationRecord> live = net.mainframe().activeOperationRecords();
                     helper.assertTrue(!request[0].isDone() && live.size() == 1
@@ -125,7 +127,7 @@ public final class AsyncPlanningGameTests {
                     net.cc().loadPattern(CraftFiles.oakPlanks());
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    final NetworkOperation request = net.mainframe().submitCraftRequest(PLANKS, 8, false, "test",
+                    final INetworkOperation request = net.mainframe().submitCraftRequest(PLANKS, 8, false, "test",
                             () -> settled[0]++);
                     helper.assertTrue(request != null, "the request is accepted");
                     helper.assertTrue(net.mainframe().cancelOperation(request.operationId()),

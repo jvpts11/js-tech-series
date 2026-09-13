@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.client.gui.widget;
 
@@ -73,8 +73,10 @@ public final class RadialMenuWidget extends AbstractWidget {
                 dx, dy, segmentLabels.size(), innerRadius, outerRadius);
         selectedSegment = seg.orElse(-1);
 
-        // Draw each segment's label at the midpoint angle, radius =
-        // average of inner/outer. Segment 0 at top, clockwise.
+        /*
+         * Draw each segment's label at the midpoint angle, radius =
+         * average of inner/outer. Segment 0 at top, clockwise.
+         */
         final double labelRadius = (innerRadius + outerRadius) / 2.0;
         final double segSize = (Math.PI * 2) / segmentLabels.size();
         for (int i = 0; i < segmentLabels.size(); i++) {

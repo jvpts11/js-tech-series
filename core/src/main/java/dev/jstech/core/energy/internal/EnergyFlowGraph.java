@@ -3,12 +3,12 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.energy.internal;
 
-import dev.jstech.core.energy.EnergyCable;
-import dev.jstech.core.energy.EnergyNode;
+import dev.jstech.core.energy.IEnergyCable;
+import dev.jstech.core.energy.IEnergyNode;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -26,13 +26,13 @@ import java.util.Set;
  */
 public final class EnergyFlowGraph {
 
-    private final Map<Long, EnergyNode> nodes;
-    private final Map<Long, EnergyCable> cables;
+    private final Map<Long, IEnergyNode> nodes;
+    private final Map<Long, IEnergyCable> cables;
     private final Map<Long, List<Long>> adjacency;
 
     public EnergyFlowGraph(
-            final Map<Long, EnergyNode> nodes,
-            final Map<Long, EnergyCable> cables,
+            final Map<Long, IEnergyNode> nodes,
+            final Map<Long, IEnergyCable> cables,
             final Map<Long, List<Long>> adjacency) {
         this.nodes = Map.copyOf(nodes);
         this.cables = Map.copyOf(cables);
@@ -59,7 +59,7 @@ public final class EnergyFlowGraph {
                 .sorted(Map.Entry.comparingByKey())
                 .forEach(e -> {
                     final long pos = e.getKey();
-                    final EnergyNode node = e.getValue();
+                    final IEnergyNode node = e.getValue();
                     if (node.role().canSupply()) {
                         final long s = Math.max(0L, node.supply());
                         if (s > 0) {
@@ -91,11 +91,11 @@ public final class EnergyFlowGraph {
 
         // 3: remaining throughput per cable (Long.MAX_VALUE for T7).
         final Map<Long, Long> remainingThroughput = new HashMap<>();
-        for (final Map.Entry<Long, EnergyCable> e : cables.entrySet()) {
+        for (final Map.Entry<Long, IEnergyCable> e : cables.entrySet()) {
             remainingThroughput.put(e.getKey(), e.getValue().maxThroughput());
         }
 
-        // Remaining demand per consumer — updated as flow accumulates.
+        // Remaining demand per consumer, updated as flow accumulates.
         final Map<Long, Long> remainingDemand = new LinkedHashMap<>(reportedDemand);
 
         // Accumulated result.
@@ -154,11 +154,13 @@ public final class EnergyFlowGraph {
             for (final Map.Entry<Long, Long> a : allocations.entrySet()) {
                 final long consumerPos = a.getKey();
                 final List<Long> path = pathsToConsumers.get(consumerPos);
-                // Clamp to the LIVE remaining throughput along this path. The proportional split was computed
-                // from per-consumer caps snapshotted before any flow was applied; when two or more consumers
-                // share a bottleneck cable those caps overlap, so the split can sum to more than the cable can
-                // carry. Applying each consumer's flow in order against the cable's live remaining capacity
-                // keeps the total through any shared cable within its rated throughput — no FE is created.
+                /*
+                 * Clamp to the LIVE remaining throughput along this path. The proportional split was computed
+                 * from per-consumer caps snapshotted before any flow was applied; when two or more consumers
+                 * share a bottleneck cable those caps overlap, so the split can sum to more than the cable can
+                 * carry. Applying each consumer's flow in order against the cable's live remaining capacity
+                 * keeps the total through any shared cable within its rated throughput, so no FE is created.
+                 */
                 final long amount = Math.min(a.getValue(), minThroughputAlong(path, remainingThroughput));
                 if (amount <= 0) {
                     continue;
@@ -260,9 +262,11 @@ public final class EnergyFlowGraph {
             final List<Long> path,
             final Map<Long, Long> remainingThroughput) {
         if (path.isEmpty()) {
-            // A direct node-to-node connection with no cable in between is not a valid power path: treat it
-            // as non-traversable rather than an unlimited pipe (the MAX_VALUE sentinel) so a future direct
-            // wire can never bypass cable-tier throughput limits and silently create energy.
+            /*
+             * A direct node-to-node connection with no cable in between is not a valid power path: treat it
+             * as non-traversable rather than an unlimited pipe (the MAX_VALUE sentinel) so a future direct
+             * wire can never bypass cable-tier throughput limits and silently create energy.
+             */
             return 0L;
         }
         long min = Long.MAX_VALUE;

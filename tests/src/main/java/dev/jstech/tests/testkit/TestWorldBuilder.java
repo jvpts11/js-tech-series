@@ -3,19 +3,19 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.testkit;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.block.DataCableBlock;
-import dev.jstech.computronics.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computronics.blockentity.MainframeBlockEntity;
-import dev.jstech.computronics.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computronics.blockentity.ServerRackBlockEntity;
-import dev.jstech.computronics.hardware.DiskSize;
-import dev.jstech.computronics.hardware.StorageTier;
-import dev.jstech.computronics.operation.NetworkStorage;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.DataCableBlock;
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.operation.NetworkStorage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -163,6 +163,21 @@ public final class TestWorldBuilder {
      * OS footprint, and the Network OS itself so Operations get dispatched. A valid build never powers on by
      * itself; callers toggle power when they want the machine running.
      */
+    /**
+     * Runs whatever {@code host} is setting up to its end, tick by tick, the way waiting would.
+     *
+     * <p>A setup takes seconds of game time so a player sees it; a test that only cares what the
+     * machine looks like afterwards ticks the job itself rather than sleeping through the bar.
+     */
+    public static void finishSetup(final dev.jstech.computers.os.IOsHost host, final ServerLevel level,
+                                   final BlockPos pos) {
+        final int most = dev.jstech.computers.os.install.SetupTiming.MAX_SECONDS
+                * dev.jstech.computers.os.install.SetupTiming.TICKS_PER_SECOND + 1;
+        for (int i = 0; i < most && host.console() != null && host.console().setup() != null; i++) {
+            dev.jstech.computers.os.install.SetupRunner.tick(host, level, pos);
+        }
+    }
+
     public static void installMainframeBuild(final MainframeBlockEntity be) {
         final ItemStackHandler inv = be.getInventory();
         inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
@@ -173,8 +188,10 @@ public final class TestWorldBuilder {
                 new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT,
                 new ItemStack(ComputingModule.PSU_650G.get()));
-        // The Network OS is 8 MB, one item of a 500 GB HDD's 2 000 at 256 MB the item. The disk must be in
-        // place before installOs() so the footprint check passes.
+        /*
+         * The Network OS is 8 MB, one item of a 500 GB HDD's 2 000 at 256 MB the item. The disk must be in
+         * place before installOs() so the footprint check passes.
+         */
         inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         be.installOs(NETWORK_OS);
@@ -203,8 +220,10 @@ public final class TestWorldBuilder {
                 new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         hw.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
                 new ItemStack(ComputingModule.PSU_650G.get()));
-        // A machine on a real base has a disk with a system on it. Without one the computer powers on into
-        // its firmware with nothing to boot, which is not what the base is meant to demonstrate.
+        /*
+         * A machine on a real base has a disk with a system on it. Without one the computer powers on into
+         * its firmware with nothing to boot, which is not what the base is meant to demonstrate.
+         */
         hw.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         be.installOs(DESKTOP_OS);
@@ -247,7 +266,7 @@ public final class TestWorldBuilder {
 
     /**
      * Mounts the default server at {@code slot} and slots the default pair of NVMe drives into the
-     * bay it claims — storage lives on the rack's front-panel drives, not on the Server item, so a
+     * bay it claims, since storage lives on the rack's front-panel drives, not on the Server item, so a
      * fixture that needs network storage must populate the bay too.
      */
     public static void mountDefaultServer(final ServerRackBlockEntity rack, final int slot) {
@@ -332,8 +351,8 @@ public final class TestWorldBuilder {
     }
 
     /**
-     * Builds the standard crafting network along the x axis at y=2: Mainframe (1,2,2) — HBW cable (2,2,2)
-     * with the rack beside it at (2,2,1) — Personal Router (3,2,2) — Ethernet cable (4,2,2) — Crafting
+     * Builds the standard crafting network along the x axis at y=2: Mainframe (1,2,2) to HBW cable (2,2,2)
+     * with the rack beside it at (2,2,1) to Personal Router (3,2,2) to Ethernet cable (4,2,2) to Crafting
      * Computer (5,2,2), rear toward the cable.
      */
     public CraftingNetwork buildCraftingNetwork() {

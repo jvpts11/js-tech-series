@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.multiblock;
 
@@ -20,7 +20,7 @@ class BlockMatcherTest {
 
     @Test
     void exact_matchesOnlyTheRequiredId() {
-        var m = BlockMatcher.exact("jsc:casing");
+        var m = IBlockMatcher.exact("jsc:casing");
         assertTrue(m.matches("jsc:casing"));
         assertFalse(m.matches("jsc:other"));
         assertFalse(m.matches("minecraft:stone"));
@@ -29,12 +29,12 @@ class BlockMatcherTest {
 
     @Test
     void exact_rejectsNullId() {
-        assertThrows(NullPointerException.class, () -> BlockMatcher.exact(null));
+        assertThrows(NullPointerException.class, () -> IBlockMatcher.exact(null));
     }
 
     @Test
     void anyOf_matchesAnyMember() {
-        var m = BlockMatcher.anyOf(Set.of("jsc:casing_t3", "jsc:casing_t4"));
+        var m = IBlockMatcher.anyOf(Set.of("jsc:casing_t3", "jsc:casing_t4"));
         assertTrue(m.matches("jsc:casing_t3"));
         assertTrue(m.matches("jsc:casing_t4"));
         assertFalse(m.matches("jsc:casing_t2"));
@@ -42,28 +42,30 @@ class BlockMatcherTest {
 
     @Test
     void anyOf_rejectsNullSet() {
-        assertThrows(NullPointerException.class, () -> BlockMatcher.anyOf(null));
+        assertThrows(NullPointerException.class, () -> IBlockMatcher.anyOf(null));
     }
 
     @Test
     void anyOf_rejectsEmptySet() {
         assertThrows(IllegalArgumentException.class,
-                () -> BlockMatcher.anyOf(Set.of()));
+                () -> IBlockMatcher.anyOf(Set.of()));
     }
 
     @Test
     void anyOf_isolatesItselfFromCallerMutations() {
-        // If the caller mutates their set after creating the matcher,
-        // the matcher's behavior must not change.
+        /*
+         * If the caller mutates their set after creating the matcher,
+         * the matcher's behavior must not change.
+         */
         var mutable = new HashSet<>(Set.of("jsc:a", "jsc:b"));
-        var m = BlockMatcher.anyOf(mutable);
+        var m = IBlockMatcher.anyOf(mutable);
         mutable.add("jsc:c");
         assertFalse(m.matches("jsc:c"));
     }
 
     @Test
     void air_matchesOnlyMinecraftAir() {
-        var m = BlockMatcher.air();
+        var m = IBlockMatcher.air();
         assertTrue(m.matches("minecraft:air"));
         assertFalse(m.matches("minecraft:cave_air"));
         assertFalse(m.matches("jsc:casing"));
@@ -71,7 +73,7 @@ class BlockMatcherTest {
 
     @Test
     void any_matchesEverything() {
-        var m = BlockMatcher.any();
+        var m = IBlockMatcher.any();
         assertTrue(m.matches("minecraft:air"));
         assertTrue(m.matches("jsc:anything"));
         assertTrue(m.matches(""));

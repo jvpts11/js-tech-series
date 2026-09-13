@@ -3,18 +3,18 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.block.part.InputBusPart;
-import dev.jstech.computronics.block.part.ReceivingBusPart;
-import dev.jstech.computronics.blockentity.DataCableBlockEntity;
-import dev.jstech.computronics.crafting.NetworkRecipe;
-import dev.jstech.computronics.crafting.ProcessingPattern;
-import dev.jstech.computronics.operation.NetworkStorage;
-import dev.jstech.computronics.storage.StorageKey;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.part.InputBusPart;
+import dev.jstech.computers.block.part.ReceivingBusPart;
+import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.computers.crafting.NetworkRecipe;
+import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -33,7 +33,7 @@ import java.util.List;
 
 /**
  * Machine selection must honor the bus filters, not just the block type. Two machines of the same type are told
- * apart only by their Crafting Input Bus filters — one factory takes iron, another takes enriched iron — so a
+ * apart only by their Crafting Input Bus filters (one factory takes iron, another takes enriched iron) so a
  * recipe whose input only the second machine's bus can carry must run on that second machine, not fail on the
  * first. An unfiltered Input Bus is a wildcard, so a machine carrying it can run any recipe of its type. This is
  * the multi-machine group setup a player builds to spread load without congesting one machine.
@@ -92,8 +92,10 @@ public final class MachineSelectionGameTests {
                     // Furnace A only carries raw iron; furnace B only carries raw copper.
                     wireFurnace(helper, furnaceA, Items.RAW_IRON);
                     wireFurnace(helper, furnaceB, Items.RAW_COPPER);
-                    // Finished copper ingots sit in furnace B's output so the receiving path has something to
-                    // pull without waiting out a real smelt; furnace A holds none.
+                    /*
+                     * Finished copper ingots sit in furnace B's output so the receiving path has something to
+                     * pull without waiting out a real smelt; furnace A holds none.
+                     */
                     if (helper.getBlockEntity(furnaceB) instanceof FurnaceBlockEntity furnace) {
                         furnace.setItem(2, new ItemStack(Items.COPPER_INGOT, 8));
                     }
@@ -106,8 +108,10 @@ public final class MachineSelectionGameTests {
                         helper.assertTrue(net.mainframe().submitNetworkProcessing(smelt(Items.RAW_COPPER, Items.COPPER_INGOT), 4, "sel") != null,
                                 "the processing operation is accepted"))
                 .thenWaitUntil(() -> {
-                    // Only reachable if the engine chose furnace B (whose bus routes raw copper) and collected its
-                    // output; choosing furnace A would block the input on its iron filter and collect nothing.
+                    /*
+                     * Only reachable if the engine chose furnace B (whose bus routes raw copper) and collected its
+                     * output; choosing furnace A would block the input on its iron filter and collect nothing.
+                     */
                     final long have = net.storage(helper.getLevel()).count(copperIngot);
                     if (have < 4) {
                         throw new GameTestAssertException("engine must route to the copper-capable furnace; network copper="

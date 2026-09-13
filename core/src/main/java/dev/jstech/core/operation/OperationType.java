@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.operation;
 
@@ -16,13 +16,13 @@ import java.util.Objects;
 /**
  * Definition of an operation type registered with the {@link OperationTypeRegistry}.
  */
-public record OperationType<T extends OperationArgs>(
+public record OperationType<T extends IOperationArgs>(
         String id,
         Class<T> argsClass,
         OperationCategory category,
         IndustrialTier minTier,
         EnumSet<NetworkCategory> requiredCategories,
-        OperationHandler<T> handler
+        IOperationHandler<T> handler
 ) {
 
     public OperationType {

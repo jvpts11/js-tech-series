@@ -3,19 +3,19 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.blockentity.MainframeBlockEntity;
-import dev.jstech.computronics.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computronics.operation.NetworkStorage;
-import dev.jstech.computronics.program.ServerCliComputer;
-import dev.jstech.computronics.program.iql.IqlParseResult;
-import dev.jstech.computronics.program.iql.IqlParser;
-import dev.jstech.computronics.storage.StorageKey;
-import dev.jstech.computronics.terminal.ComputerTerminalHost;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.iql.IqlParseResult;
+import dev.jstech.computers.program.iql.IqlParser;
+import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -60,7 +60,7 @@ public final class IqlStressGameTests {
         world.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
         world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE.get());
         final PersonalComputerBlockEntity pc = world.placeRunningPersonalComputer(new BlockPos(5, 2, 2));
-        final ComputerTerminalHost host = pc;
+        final IComputerTerminalHost host = pc;
         final StorageKey cobble = StorageKey.of(Items.COBBLESTONE);
         final StorageKey dirt = StorageKey.of(Items.DIRT);
 
@@ -99,9 +99,11 @@ public final class IqlStressGameTests {
                     run(cli, "UNLOCK dirt");
                     helper.assertFalse(mainframe.networkIndex().isManuallyLocked(dirt), "UNLOCK must release dirt");
 
-                    // Malformed, incomplete and unknown-target statements must be refused, never crash. (A
-                    // non-positive quantity is NOT malformed: like CRAFT and SELECT, it means "all", so it is
-                    // left out here to avoid actually locking cobblestone.)
+                    /*
+                     * Malformed, incomplete and unknown-target statements must be refused, never crash. (A
+                     * non-positive quantity is NOT malformed: like CRAFT and SELECT, it means "all", so it is
+                     * left out here to avoid actually locking cobblestone.)
+                     */
                     for (final String bad : new String[]{
                             "", "   ", "LOCK", "UNLOCK", "LOCK 5 not_a_real_item",
                             "SELECT", "SELECT 5 not_a_real_item", "COUNT nonsense WHERE", "garbage tokens", "operation"}) {

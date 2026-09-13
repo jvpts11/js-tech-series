@@ -3,14 +3,14 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.gui;
 
 /**
  * Pure color math for checking that GUI text stays readable on its background. The Studio shipped a couple
  * of unreadable-text bugs (near-invisible light-grey text on white), so a screen's palette can be unit-tested
- * for contrast here instead of being caught only in-game. No Minecraft types — plain ARGB ints.
+ * for contrast here instead of being caught only in-game. No Minecraft types, just plain ARGB ints.
  *
  * <p>The ratio is the standard WCAG contrast ratio (1.0 for identical colors, up to 21.0 for black on white):
  * {@code (Lhi + 0.05) / (Llo + 0.05)} over the two colors' relative luminances. As a rough guide, body text

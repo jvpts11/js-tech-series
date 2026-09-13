@@ -3,12 +3,12 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.network;
 
 /**
- * Network Category — classifies how a block participates in the network.
+ * Network Category: classifies how a block participates in the network.
  */
 public enum NetworkCategory {
     A,

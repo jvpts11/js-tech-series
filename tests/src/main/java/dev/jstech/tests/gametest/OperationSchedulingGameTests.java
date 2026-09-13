@@ -7,20 +7,20 @@
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.blockentity.MainframeBlockEntity;
-import dev.jstech.computronics.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computronics.blockentity.ServerRackBlockEntity;
-import dev.jstech.computronics.hardware.DiskSize;
-import dev.jstech.computronics.hardware.StorageTier;
-import dev.jstech.computronics.operation.NetworkSelectOperation;
-import dev.jstech.computronics.operation.NetworkStorage;
-import dev.jstech.computronics.operation.payload.OperationRecord;
-import dev.jstech.computronics.program.ServerCliComputer;
-import dev.jstech.computronics.program.cli.CliCommands;
-import dev.jstech.computronics.program.cli.CliShell;
-import dev.jstech.computronics.storage.ExternalDataPort;
-import dev.jstech.computronics.terminal.ComputerTerminalHost;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.operation.NetworkSelectOperation;
+import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.CliCommands;
+import dev.jstech.computers.program.cli.CliShell;
+import dev.jstech.computers.storage.ExternalDataPort;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -223,11 +223,13 @@ public final class OperationSchedulingGameTests {
         final ServerRackBlockEntity rackBe = world.blockEntity(rack, ServerRackBlockEntity.class);
         TestWorldBuilder.mountDefaultServer(rackBe, 0);
         helper.startSequence()
-                // Seed a tick ahead of the prompt: the index catalogues the stock on the next tick, and a pull
-                // planned against an index that does not know the items yet settles FAILED on the spot.
+                /*
+                 * Seed a tick ahead of the prompt: the index catalogues the stock on the next tick, and a pull
+                 * planned against an index that does not know the items yet settles FAILED on the spot.
+                 */
                 .thenExecuteAfter(SETTLE + 6, () -> rackBe.getServerStorage(0).insert(Items.COBBLESTONE, 200))
                 .thenExecuteAfter(2, () -> {
-                    final ServerCliComputer cli = new ServerCliComputer((ComputerTerminalHost) computer, helper.getLevel());
+                    final ServerCliComputer cli = new ServerCliComputer((IComputerTerminalHost) computer, helper.getLevel());
                     final CliShell shell = CliCommands.newShell(50);
 
                     helper.assertTrue(cliContains(shell.run("operation select 30 cobblestone priority high", cli),

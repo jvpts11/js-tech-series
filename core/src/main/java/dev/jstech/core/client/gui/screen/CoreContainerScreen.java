@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.client.gui.screen;
 
@@ -34,8 +34,10 @@ public abstract class CoreContainerScreen<T extends AbstractContainerMenu>
             final float partialTick) {
         this.renderBackground(graphics, mouseX, mouseY, partialTick);
         super.render(graphics, mouseX, mouseY, partialTick);
-        // Vanilla AbstractContainerScreen renders tooltips for hovered
-        // slots when this is called after super.
+        /*
+         * Vanilla AbstractContainerScreen renders tooltips for hovered
+         * slots when this is called after super.
+         */
         this.renderTooltip(graphics, mouseX, mouseY);
     }
 

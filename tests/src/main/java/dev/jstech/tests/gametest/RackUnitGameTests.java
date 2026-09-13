@@ -3,22 +3,22 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.JsComputronics;
-import dev.jstech.computronics.blockentity.ServerRackBlockEntity;
-import dev.jstech.computronics.hardware.DiskSize;
-import dev.jstech.computronics.hardware.StorageTier;
-import dev.jstech.computronics.item.DiskItem;
-import dev.jstech.computronics.item.ServerItem;
-import dev.jstech.computronics.rack.RackLayout;
-import dev.jstech.computronics.rack.RaidMode;
-import dev.jstech.computronics.storage.DriveVolumes;
-import dev.jstech.computronics.storage.ServerStore;
-import dev.jstech.computronics.storage.StorageKey;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.rack.RackLayout;
+import dev.jstech.computers.rack.RaidMode;
+import dev.jstech.computers.storage.DriveVolumes;
+import dev.jstech.computers.storage.ServerStore;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -37,7 +37,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * The rack-unit model of the Server Rack: front-panel hotswap slots belong to the rack, a mounted
  * chassis claims the drive and gadget slots of the rows it occupies, and server storage is the
- * union of the claimed bay drives — so drives (and their data) stay in the rack when the server
+ * union of the claimed bay drives, so drives (and their data) stay in the rack when the server
  * itself is pulled.
  */
 @GameTestHolder(JsTests.MODID)
@@ -85,8 +85,10 @@ public final class RackUnitGameTests {
         final Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    // Half a block up the controller's front is texel 16: the second rack unit from the
-                    // bottom, which is row 6 counted from the top.
+                    /*
+                     * Half a block up the controller's front is texel 16: the second rack unit from the
+                     * bottom, which is row 6 counted from the top.
+                     */
                     player.setItemInHand(InteractionHand.MAIN_HAND, ComputingModule.defaultServer());
                     helper.useBlock(pos, player, hitOn(helper, pos, Direction.NORTH, 0.5));
                     helper.assertTrue(rack.getServers().getStackInSlot(6).getItem() instanceof ServerItem,
@@ -229,13 +231,13 @@ public final class RackUnitGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     helper.assertTrue(rack.isRunning(), "a complete powered build makes the host run");
                     helper.assertTrue(rack.needsPost(), "a freshly mounted server runs POST first");
-                    helper.assertTrue(dev.jstech.computronics.os.boot.BootController
+                    helper.assertTrue(dev.jstech.computers.os.boot.BootController
                                     .targetForComputer(rack)
-                                    == dev.jstech.computronics.os.boot.BootController.BootTarget.FIRMWARE,
+                                    == dev.jstech.computers.os.boot.BootController.BootTarget.FIRMWARE,
                             "with no system on the bay drive the host boots to the firmware");
                     final net.minecraft.resources.ResourceLocation mcNet =
                             net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
-                                    JsComputronics.MODID, "mc_net");
+                                    JsComputers.MODID, "mc_net");
                     helper.assertTrue(rack.installOs(mcNet), "the OS must install onto the bay drive");
                     helper.assertTrue(rack.hasOs(), "the host sees the system on its bay drive");
                     helper.assertTrue(mcNet.equals(rack.installedOsId()),
@@ -243,9 +245,9 @@ public final class RackUnitGameTests {
                     helper.assertTrue(rack.getFrontSlots().getStackInSlot(0)
                                     .get(ComputingModule.SYSTEM_OS.get()) != null,
                             "the SYSTEM_OS component lives on the drive itself");
-                    helper.assertTrue(dev.jstech.computronics.os.boot.BootController
+                    helper.assertTrue(dev.jstech.computers.os.boot.BootController
                                     .targetForComputer(rack)
-                                    != dev.jstech.computronics.os.boot.BootController.BootTarget.FIRMWARE,
+                                    != dev.jstech.computers.os.boot.BootController.BootTarget.FIRMWARE,
                             "with a system installed the host boots past the firmware");
                 })
                 .thenSucceed();
@@ -259,7 +261,7 @@ public final class RackUnitGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     rack.installOs(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
-                            JsComputronics.MODID, "mc_net"));
+                            JsComputers.MODID, "mc_net"));
                     helper.assertTrue(rack.validateOsSession(), "an installed system validates the session");
                     // Hotswap the OS drive out: the system travels with it and the session dies.
                     final ItemStack pulled = rack.getFrontSlots().extractItem(0, 1, false);
@@ -316,7 +318,7 @@ public final class RackUnitGameTests {
                     helper.assertTrue(!rack.isRunning(), "the delegating host is off with the bay");
                     // Leave a window on the machine's desktop: the power cycle must not carry it over.
                     rack.setOpenWindows(java.util.List.of(
-                            new dev.jstech.computronics.os.OpenWindow(
+                            new dev.jstech.computers.os.OpenWindow(
                                     "Files", 40, 30, 200, 140, false, false)));
                     rack.toggleBayPower(0);
                 })
@@ -455,8 +457,10 @@ public final class RackUnitGameTests {
                     final long stored = rack.getServerStorage(0).insert(StorageKey.of(Items.COBBLESTONE), 900L);
                     helper.assertTrue(stored == 900L, "the mirror must accept 900 items; got " + stored);
 
-                    // Pull a member: the volume survives and the drive comes out blank, so nothing
-                    // is duplicated into the player's hands.
+                    /*
+                     * Pull a member: the volume survives and the drive comes out blank, so nothing
+                     * is duplicated into the player's hands.
+                     */
                     final ItemStack pulled = rack.getFrontSlots().extractItem(0, 1, false);
                     helper.assertTrue(DriveVolumes.contents(pulled).items().isEmpty(),
                             "a pulled array member must come out blank - never a second copy");
@@ -536,7 +540,7 @@ public final class RackUnitGameTests {
                     // Pulling a drive out from under a running machine leaves rows unconfirmed.
                     rack.getFrontSlots().extractItem(0, 1, false);
                     helper.assertTrue(index.health().state()
-                                    == dev.jstech.computronics.operation.index.IndexHealth.State.STALE,
+                                    == dev.jstech.computers.operation.index.IndexHealth.State.STALE,
                             "a hot pull marks the index stale");
                     helper.assertTrue(index.health().recommendedAction().equals("REINDEX"),
                             "the strip asks for a reindex");
@@ -559,12 +563,12 @@ public final class RackUnitGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     // Name the server so it has a host name worth typing.
-                    dev.jstech.computronics.item.ServerItem.setCustomName(
+                    dev.jstech.computers.item.ServerItem.setCustomName(
                             rack.getServers().getStackInSlot(0), "vault");
                     rack.console().setComputerName("vault");
                 })
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    final var cli = new dev.jstech.computronics.program.ServerCliComputer(
+                    final var cli = new dev.jstech.computers.program.ServerCliComputer(
                             mainframe, helper.getLevel());
                     helper.assertTrue(cli.reachableHosts().stream()
                                     .anyMatch(h -> h.hostname().equals("vault")),
@@ -593,10 +597,10 @@ public final class RackUnitGameTests {
         final var mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    final var cli = new dev.jstech.computronics.program.ServerCliComputer(
+                    final var cli = new dev.jstech.computers.program.ServerCliComputer(
                             mainframe, helper.getLevel());
                     final var console = mainframe.console();
-                    final String version = dev.jstech.computronics.program
+                    final String version = dev.jstech.computers.program
                             .ServerCliComputer.modVersion();
 
                     // Nothing to reconcile on a machine with no packages.
@@ -617,7 +621,7 @@ public final class RackUnitGameTests {
     /**
      * The era of the machine on the active channel, asked of a cabinet in every state a player can put
      * it in. A server's hardware is a data component, so a machine that was never assembled carries a
-     * container with no slots at all — reading the board out of it must answer "no era", not throw.
+     * container with no slots at all, where reading the board out of it must answer "no era", not throw.
      */
     @GameTest(template = ARENA)
     public static void displayEra_followsTheActiveChannelAndSurvivesBareHardware(final GameTestHelper helper) {
@@ -636,8 +640,10 @@ public final class RackUnitGameTests {
                     helper.assertTrue(rack.installedEra() != null,
                             "an assembled machine reports the era of its board");
 
-                    // Two machines and no KVM: the monitor cannot say which one it means, so there is
-                    // no channel to read an era from.
+                    /*
+                     * Two machines and no KVM: the monitor cannot say which one it means, so there is
+                     * no channel to read an era from.
+                     */
                     rack.getServers().setStackInSlot(1, ComputingModule.defaultServer());
                     helper.assertTrue(rack.installedEra() == null,
                             "two machines without a KVM switch address none");
@@ -665,24 +671,26 @@ public final class RackUnitGameTests {
         final net.minecraft.world.entity.player.Player player =
                 helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
         final net.minecraft.world.InteractionHand hand = net.minecraft.world.InteractionHand.MAIN_HAND;
-        final int slot = dev.jstech.computronics.item.ServerHardwareHandler.GPU_START;
+        final int slot = dev.jstech.computers.item.ServerHardwareHandler.GPU_START;
         final ItemStack phi = new ItemStack(ComputingModule.PHI_5100.get());
         final ItemStack gpu = new ItemStack(ComputingModule.GPU_HD_7970.get());
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     player.setItemInHand(hand, new ItemStack(ComputingModule.SUPERCOMPUTER_NODE.get()));
-                    final var node = new dev.jstech.computronics.item.ServerHardwareHandler(player, hand);
+                    final var node = new dev.jstech.computers.item.ServerHardwareHandler(player, hand);
                     helper.assertTrue(node.insertItem(slot, phi.copy(), false).isEmpty(),
                             "a node's expansion slot takes the co-processor");
-                    // The second slot is for the GPU a machine needs to be sat at — not for a second
-                    // co-processor, which the cluster would never count.
+                    /*
+                     * The second slot is for the GPU a machine needs to be sat at, not for a second
+                     * co-processor, which the cluster would never count.
+                     */
                     helper.assertTrue(!node.insertItem(slot + 1, phi.copy(), true).isEmpty(),
                             "a node seats exactly one co-processor");
                     helper.assertTrue(node.insertItem(slot + 1, gpu.copy(), true).isEmpty(),
                             "the node's second expansion slot takes a GPU");
 
                     player.setItemInHand(hand, new ItemStack(ComputingModule.SERVER.get()));
-                    final var server = new dev.jstech.computronics.item.ServerHardwareHandler(player, hand);
+                    final var server = new dev.jstech.computers.item.ServerHardwareHandler(player, hand);
                     helper.assertTrue(!server.insertItem(slot, phi.copy(), true).isEmpty(),
                             "a plain server refuses the co-processor");
                     helper.assertTrue(server.insertItem(slot, gpu.copy(), true).isEmpty(),
@@ -695,13 +703,13 @@ public final class RackUnitGameTests {
     private static ItemStack hotServer() {
         final ItemStack server = ComputingModule.defaultServer();
         final net.minecraft.core.NonNullList<ItemStack> hw = net.minecraft.core.NonNullList.withSize(
-                dev.jstech.computronics.item.ServerHardwareHandler.SLOTS, ItemStack.EMPTY);
-        final var existing = dev.jstech.computronics.item.ServerItem.hardware(server);
+                dev.jstech.computers.item.ServerHardwareHandler.SLOTS, ItemStack.EMPTY);
+        final var existing = dev.jstech.computers.item.ServerItem.hardware(server);
         for (int i = 0; i < hw.size() && i < existing.getSlots(); i++) {
             hw.set(i, existing.getStackInSlot(i).copy());
         }
         // One accelerator: enough to make the machine hot, still inside the 650W supply.
-        hw.set(dev.jstech.computronics.item.ServerHardwareHandler.GPU_START,
+        hw.set(dev.jstech.computers.item.ServerHardwareHandler.GPU_START,
                 new ItemStack(ComputingModule.GPU_HD_7970.get()));
         server.set(ComputingModule.SERVER_HARDWARE.get(),
                 net.minecraft.world.item.component.ItemContainerContents.fromItems(hw));
@@ -715,8 +723,10 @@ public final class RackUnitGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     helper.assertTrue(rack.thermalThrottlePercent() == 100,
                             "an empty cabinet runs free");
-                    // Fill the cabinet with accelerator-laden machines: this is the dense rack the
-                    // thermal budget exists for (plain servers stay comfortably inside it).
+                    /*
+                     * Fill the cabinet with accelerator-laden machines: this is the dense rack the
+                     * thermal budget exists for (plain servers stay comfortably inside it).
+                     */
                     for (int row = 0; row < 4; row++) {
                         rack.getServers().setStackInSlot(row, hotServer());
                     }
@@ -757,9 +767,11 @@ public final class RackUnitGameTests {
                     helper.assertTrue(!rack.hasService(0, "load_balancer"),
                             "a fresh server runs no services");
 
-                    // Load Balancer: each write goes to the emptiest drive, so the bay evens out
-                    // instead of filling drive after drive. The first write lands anywhere; what the
-                    // service changes is where the SECOND one goes.
+                    /*
+                     * Load Balancer: each write goes to the emptiest drive, so the bay evens out
+                     * instead of filling drive after drive. The first write lands anywhere; what the
+                     * service changes is where the SECOND one goes.
+                     */
                     final long perDrive = ((DiskItem) nvmeDrive().getItem()).spec().capacityItems();
                     rack.getServerStorage(0).insert(StorageKey.of(Items.COBBLESTONE), perDrive / 4);
                     rack.consoleOf(0).install("jsc:load_balancer");
@@ -776,8 +788,10 @@ public final class RackUnitGameTests {
                     helper.assertTrue(fullest == emptiest,
                             "two equal writes leave the bay even; " + fullest + " vs " + emptiest);
 
-                    // Integrity Monitor: the machine re-reads its own bay, so a hot pull leaves the
-                    // index clean instead of stale.
+                    /*
+                     * Integrity Monitor: the machine re-reads its own bay, so a hot pull leaves the
+                     * index clean instead of stale.
+                     */
                     rack.consoleOf(0).install("jsc:integrity_monitor");
                     mainframe.networkIndex().health().onFullRebuild();
                     rack.getFrontSlots().extractItem(0, 1, false);
@@ -793,14 +807,14 @@ public final class RackUnitGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     helper.assertTrue(rack.rackType()
-                                    == dev.jstech.computronics.rack.RackChassis.RackType.SERVER,
+                                    == dev.jstech.computers.rack.RackChassis.RackType.SERVER,
                             "the Server Rack is the general cabinet");
                     // The three server chassis belong to this cabinet; the supercomputer node does not.
-                    for (final var chassis : dev.jstech.computronics.rack.RackChassis.values()) {
+                    for (final var chassis : dev.jstech.computers.rack.RackChassis.values()) {
                         final boolean server = chassis
-                                != dev.jstech.computronics.rack.RackChassis.SUPERCOMPUTER_NODE;
+                                != dev.jstech.computers.rack.RackChassis.SUPERCOMPUTER_NODE;
                         helper.assertTrue((chassis.rackType()
-                                        == dev.jstech.computronics.rack.RackChassis.RackType.SERVER)
+                                        == dev.jstech.computers.rack.RackChassis.RackType.SERVER)
                                         == server,
                                 chassis + (server ? " belongs in the Server Rack" : " belongs in the Supercomputer Rack"));
                     }

@@ -3,18 +3,18 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.hardware.DiskSize;
-import dev.jstech.computronics.hardware.StorageTier;
-import dev.jstech.computronics.storage.DiskUsage;
-import dev.jstech.computronics.storage.DriveVolumes;
-import dev.jstech.computronics.storage.ServerStore;
-import dev.jstech.computronics.storage.StorageKey;
-import dev.jstech.computronics.storage.StorageVolume;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.storage.DiskUsage;
+import dev.jstech.computers.storage.DriveVolumes;
+import dev.jstech.computers.storage.ServerStore;
+import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.storage.StorageVolume;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.gametest.framework.GameTest;
@@ -28,8 +28,8 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * A drive's capacity is one budget in one unit of weight — an item weighs 1 000 mB-eq, a millibucket of
- * fluid or chemical weighs 1 — and its usage summary reports what that weight is made of in each kind's own
+ * A drive's capacity is one budget in one unit of weight (an item weighs 1 000 mB-eq, a millibucket of
+ * fluid or chemical weighs 1) and its usage summary reports what that weight is made of in each kind's own
  * unit. A store never writes past its capacity, whatever the kind.
  */
 @GameTestHolder(JsTests.MODID)
@@ -78,7 +78,7 @@ public final class DiskUsageGameTests {
         helper.assertTrue(both.equals("Used 44%: 12 items, 22,944 mB of fluid, 500 mB of chemical across 3 types"), "got: " + both);
         // Chemicals are named only while a chemical mod (Mekanism on the dev runtime) is present.
         final String capacity = "Holds 80 items, or 80,000 mB of fluid"
-                + (dev.jstech.computronics.storage.ChemicalBridges.anyRegistered() ? " or chemical" : "");
+                + (dev.jstech.computers.storage.ChemicalBridges.anyRegistered() ? " or chemical" : "");
         helper.assertTrue(DiskUsage.capacityLine(80).equals(capacity), "got: " + DiskUsage.capacityLine(80));
         helper.assertTrue(DiskUsage.EMPTY.isEmpty() && !water.isEmpty(), "emptiness follows the weight");
         helper.succeed();

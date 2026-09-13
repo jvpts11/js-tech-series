@@ -7,7 +7,7 @@ plugins {
 
 // The runs below reach into the other subprojects' source sets, so those must be configured first.
 evaluationDependsOn(':core')
-evaluationDependsOn(':computronics')
+evaluationDependsOn(':computers')
 evaluationDependsOn(':industrial')
 
 base {
@@ -107,7 +107,7 @@ neoForge {
             sourceSet(rootProject.project(':core').sourceSets.main)
         }
         jsc {
-            sourceSet(rootProject.project(':computronics').sourceSets.main)
+            sourceSet(rootProject.project(':computers').sourceSets.main)
         }
         jsindustrial {
             sourceSet(rootProject.project(':industrial').sourceSets.main)
@@ -117,7 +117,7 @@ neoForge {
 
 dependencies {
     implementation project(':core')
-    implementation project(':computronics')
+    implementation project(':computers')
     implementation project(':industrial')
 
     // The computing mod's dependencies, present so the runs load them as well.
@@ -128,9 +128,17 @@ dependencies {
     localRuntime "mekanism:Mekanism:${mekanism_version}"
     localRuntime "mekanism:Mekanism:${mekanism_version}:generators"
     compileOnly "mekanism:Mekanism:${mekanism_version}:api"
+    // The whole mod, not just its API, so a test rig can set a machine up the way a player would: install
+    // its upgrades and switch its sorting on. Only this module compiles against it, and this module is
+    // development-only and never released; the mods themselves keep Mekanism a soft, guarded dependency.
+    compileOnly "mekanism:Mekanism:${mekanism_version}"
     localRuntime "appeng:appliedenergistics2:${ae2_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
     localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+    // CC: Tweaked in the dev runs, so the Network Gateway bridge is tested against real ComputerCraft
+    // computers, and its API for the test rigs that talk to them. Its NeoForge build carries the "forge" name.
+    compileOnly "cc.tweaked:cc-tweaked-${minecraft_version}-forge-api:${cc_tweaked_version}"
+    localRuntime "cc.tweaked:cc-tweaked-${minecraft_version}-forge:${cc_tweaked_version}"
 }
 
 // Expands the declared properties into the mod metadata template. A missing property is an error.

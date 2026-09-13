@@ -7,14 +7,14 @@
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.block.part.InputBusPart;
-import dev.jstech.computronics.block.part.ReceivingBusPart;
-import dev.jstech.computronics.blockentity.DataCableBlockEntity;
-import dev.jstech.computronics.blockentity.MainframeBlockEntity;
-import dev.jstech.computronics.crafting.ProcessingPattern;
-import dev.jstech.computronics.operation.payload.OperationRecord;
-import dev.jstech.computronics.storage.StorageKey;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.part.InputBusPart;
+import dev.jstech.computers.block.part.ReceivingBusPart;
+import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -33,8 +33,8 @@ import java.util.List;
 
 /**
  * Operations in flight must survive the world being saved and reopened: the Mainframe writes them into its
- * NBT and resumes them after the boot. These tests replay that round trip server-side — snapshot the running
- * Mainframe's NBT, replace the block, load the snapshot into the fresh block entity — and check the craft
+ * NBT and resumes them after the boot. These tests replay that round trip server-side: snapshot the running
+ * Mainframe's NBT, replace the block, load the snapshot into the fresh block entity, and check the craft
  * carries on where it stopped instead of vanishing.
  */
 @GameTestHolder(JsTests.MODID)
@@ -92,8 +92,10 @@ public final class OperationResumeGameTests {
                     snapshot[0] = net.mainframe().saveWithoutMetadata(helper.getLevel().registryAccess());
                     helper.assertTrue(snapshot[0].contains("ActiveOperations"),
                             "the Mainframe's NBT must carry the in-flight operation");
-                    // Replace the block: the old block entity is torn down like a reload would tear it down,
-                    // and the fresh one gets the saved NBT, exactly as loading the chunk would give it.
+                    /*
+                     * Replace the block: the old block entity is torn down like a reload would tear it down,
+                     * and the fresh one gets the saved NBT, exactly as loading the chunk would give it.
+                     */
                     world.setBlock(MAINFRAME, Blocks.AIR);
                 })
                 .thenExecuteAfter(SETTLE, () -> {

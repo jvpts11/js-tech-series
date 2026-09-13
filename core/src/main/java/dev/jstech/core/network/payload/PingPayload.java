@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.network.payload;
 
@@ -18,7 +18,7 @@ import net.minecraft.resources.ResourceLocation;
  * A minimal bidirectional payload carrying a single timestamp, used to measure round-trip latency and as the canonical payload template.
  */
 public record PingPayload(PingData data)
-        implements CustomPacketPayload, CorePayload {
+        implements CustomPacketPayload, ICorePayload {
 
     public PingPayload(final long timestamp) {
         this(new PingData(timestamp));

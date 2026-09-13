@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.network;
 
@@ -39,7 +39,7 @@ public final class DisjointSetUnion {
 
     public int makeSet() {
         if (size == parent.length) {
-            // Grow by 2x — same strategy as ArrayList, amortized O(1).
+            // Grow by 2x, the same strategy as ArrayList, amortized O(1).
             int newCapacity = parent.length * 2;
             parent = Arrays.copyOf(parent, newCapacity);
             rank = Arrays.copyOf(rank, newCapacity);

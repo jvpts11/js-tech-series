@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.network;
 
@@ -13,7 +13,7 @@ import dev.jstech.core.uuid.NodeUuid;
 /**
  * Sealed root for any participant of the data network with a persistent identity (Category B and C nodes).
  */
-public sealed interface INetworkNode permits ComputerNode, ServiceNode{
+public sealed interface INetworkNode permits IComputerNode, IServiceNode{
 
     NodeUuid nodeUuid();
 

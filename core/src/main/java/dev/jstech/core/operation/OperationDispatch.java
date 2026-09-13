@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.operation;
 
@@ -22,11 +22,11 @@ import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 /**
- * The Operation dispatcher: runs CPU-bound Operation work on virtual threads while keeping every world mutation on the main (server) thread. A task does its computation on a virtual thread and uses its {@link OperationContext} to bounce world reads/writes back to the main thread and to wait on whole game ticks — so disk latency and throughput are paced deterministically by ticks, never by a wall clock. Multiple disks (one task per server) therefore process in parallel without ever touching the world off-thread.
+ * The Operation dispatcher: runs CPU-bound Operation work on virtual threads while keeping every world mutation on the main (server) thread. A task does its computation on a virtual thread and uses its {@link IOperationContext} to bounce world reads/writes back to the main thread and to wait on whole game ticks, so disk latency and throughput are paced deterministically by ticks, never by a wall clock. Multiple disks (one task per server) therefore process in parallel without ever touching the world off-thread.
  */
-public final class OperationDispatch implements AutoCloseable, LatencyScheduler {
+public final class OperationDispatch implements AutoCloseable, ILatencyScheduler {
 
-    private record PendingOp(UUID id, OperationTask task, OperationPriority priority, long sequence) {
+    private record PendingOp(UUID id, IOperationTask task, OperationPriority priority, long sequence) {
     }
 
     private static final Comparator<PendingOp> ORDER =
@@ -35,16 +35,20 @@ public final class OperationDispatch implements AutoCloseable, LatencyScheduler 
 
     private static final int MAX_TERMINAL_HISTORY = 256;
 
-    // Not final: the lane count follows the Mainframe's GPU count, which the player can change at runtime by
-    // hot-swapping a GPU. It is resized in place (see setParallelQueues) rather than by rebuilding the dispatcher,
-    // so a hardware change never tears down the in-flight Operations the Mainframe is tracking.
+    /*
+     * Not final: the lane count follows the Mainframe's GPU count, which the player can change at runtime by
+     * hot-swapping a GPU. It is resized in place (see setParallelQueues) rather than by rebuilding the dispatcher,
+     * so a hardware change never tears down the in-flight Operations the Mainframe is tracking.
+     */
     private volatile int parallelQueues;
     private final ExecutorService workers;
     private final PriorityQueue<PendingOp> pending = new PriorityQueue<>(ORDER);
     private final ConcurrentLinkedQueue<Runnable> mainThreadActions = new ConcurrentLinkedQueue<>();
     private final Map<UUID, OperationStatus> statuses = new ConcurrentHashMap<>();
-    // Settle order, so the status map keeps only the most recent terminal entries: without this it would
-    // grow one entry per Operation forever on a long-lived dispatcher. Touched on the main thread only.
+    /*
+     * Settle order, so the status map keeps only the most recent terminal entries: without this it would
+     * grow one entry per Operation forever on a long-lived dispatcher. Touched on the main thread only.
+     */
     private final java.util.ArrayDeque<UUID> terminalOrder = new java.util.ArrayDeque<>();
     private final Set<CompletableFuture<?>> inFlight = ConcurrentHashMap.newKeySet();
     private final Object tickMonitor = new Object();
@@ -64,7 +68,7 @@ public final class OperationDispatch implements AutoCloseable, LatencyScheduler 
         this.workers = Executors.newVirtualThreadPerTaskExecutor();
     }
 
-    public UUID submit(final OperationTask task, final OperationPriority priority) {
+    public UUID submit(final IOperationTask task, final OperationPriority priority) {
         Objects.requireNonNull(task, "task must not be null");
         Objects.requireNonNull(priority, "priority must not be null");
         final UUID id = UUID.randomUUID();
@@ -104,13 +108,15 @@ public final class OperationDispatch implements AutoCloseable, LatencyScheduler 
     @Override
     public void afterTicks(final int ticks, final Runnable callback) {
         Objects.requireNonNull(callback, "callback must not be null");
-        // Park a virtual thread for the disk's read time, then resume the transfer on the main thread.
-        // Many disks call this at once, so their reads genuinely overlap, capped only by the latency.
+        /*
+         * Park a virtual thread for the disk's read time, then resume the transfer on the main thread.
+         * Many disks call this at once, so their reads genuinely overlap, capped only by the latency.
+         */
         workers.execute(() -> {
             try {
                 awaitTicks(ticks);
             } catch (final OperationCancelledException cancelled) {
-                return; // dispatcher shut down — the Operation is being abandoned, drop the read
+                return; // dispatcher shut down, the Operation is being abandoned, drop the read
             }
             mainThreadActions.add(callback);
         });
@@ -142,26 +148,26 @@ public final class OperationDispatch implements AutoCloseable, LatencyScheduler 
     }
 
     private void dispatch(final PendingOp op) {
-        final OperationContext context = new DispatchContext();
+        final IOperationContext context = new DispatchContext();
         workers.execute(() -> {
-            OperationResult result;
+            IOperationResult result;
             try {
                 result = op.task().run(context);
                 if (result == null) {
-                    result = OperationResult.failure("task returned a null result");
+                    result = IOperationResult.failure("task returned a null result");
                 }
             } catch (final OperationCancelledException cancelled) {
-                result = OperationResult.failure("cancelled");
+                result = IOperationResult.failure("cancelled");
             } catch (final Throwable throwable) {
-                result = OperationResult.failure(throwable.toString());
+                result = IOperationResult.failure(throwable.toString());
             }
-            final OperationResult finalResult = result;
+            final IOperationResult finalResult = result;
             mainThreadActions.add(() -> complete(op.id(), finalResult));
         });
     }
 
-    private void complete(final UUID id, final OperationResult result) {
-        if (result instanceof OperationResult.Success) {
+    private void complete(final UUID id, final IOperationResult result) {
+        if (result instanceof IOperationResult.Success) {
             statuses.put(id, OperationStatus.COMPLETED);
             completed++;
         } else {
@@ -243,7 +249,7 @@ public final class OperationDispatch implements AutoCloseable, LatencyScheduler 
     }
 
     /** The per-task handle: marshals work to the main thread and waits on ticks, all virtual-thread-safe. */
-    private final class DispatchContext implements OperationContext {
+    private final class DispatchContext implements IOperationContext {
 
         @Override
         public void onMainThread(final Runnable mainThreadAction) {
@@ -257,9 +263,11 @@ public final class OperationDispatch implements AutoCloseable, LatencyScheduler 
             }
             final CompletableFuture<T> future = new CompletableFuture<>();
             inFlight.add(future);
-            // Close the race with close(): if a shutdown set closed after our first check but before
-            // this add became visible, close()'s drain may have missed this future — re-check now so
-            // we never join() on a future nobody will ever complete.
+            /*
+             * Close the race with close(): if a shutdown set closed after our first check but before
+             * this add became visible, close()'s drain may have missed this future; re-check now so
+             * we never join() on a future nobody will ever complete.
+             */
             if (closed) {
                 inFlight.remove(future);
                 throw new OperationCancelledException();

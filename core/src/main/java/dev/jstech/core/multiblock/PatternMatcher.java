@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.multiblock;
 
@@ -11,37 +11,37 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Algorithm for matching a {@link MultiblockPattern} against a world (abstracted as a {@link BlockProvider}) at a candidate controller position.
+ * Algorithm for matching a {@link MultiblockPattern} against a world (abstracted as an {@link IBlockProvider}) at a candidate controller position.
  */
 public final class PatternMatcher {
 
     private PatternMatcher() {
-        // Utility class — no instances.
+        // Utility class, no instances.
     }
 
-    public static MatchResult match(
+    public static IMatchResult match(
             MultiblockPattern pattern,
-            BlockProvider provider,
+            IBlockProvider provider,
             long controllerEncodedPos
     ) {
         // Try NORTH first; remember its failure for the debug-friendly fallback.
-        MatchResult.Failure firstFailure = null;
+        IMatchResult.Failure firstFailure = null;
         for (Rotation rotation : Rotation.values()) {
-            MatchResult result = matchRotation(pattern, provider, controllerEncodedPos, rotation);
-            if (result instanceof MatchResult.Success) {
+            IMatchResult result = matchRotation(pattern, provider, controllerEncodedPos, rotation);
+            if (result instanceof IMatchResult.Success) {
                 return result;
             }
             if (firstFailure == null) {
-                firstFailure = (MatchResult.Failure) result;
+                firstFailure = (IMatchResult.Failure) result;
             }
         }
         // No rotation matched. Return the NORTH-orientation failure for clarity.
         return firstFailure;
     }
 
-    private static MatchResult matchRotation(
+    private static IMatchResult matchRotation(
             MultiblockPattern pattern,
-            BlockProvider provider,
+            IBlockProvider provider,
             long controllerEncodedPos,
             Rotation rotation
     ) {
@@ -71,7 +71,7 @@ public final class PatternMatcher {
                     long worldEncoded = encodePosition(worldX, worldY, worldZ);
 
                     if (c == MultiblockPattern.IGNORE_CHAR) {
-                        // Ignored slot — no validation, no slave registration.
+                        // Ignored slot, no validation, no slave registration.
                         continue;
                     }
 
@@ -81,16 +81,18 @@ public final class PatternMatcher {
                     }
 
                     if (c == MultiblockPattern.CONTROLLER_CHAR) {
-                        // Controller slot — must be at the controller's own
+                        // Controller slot, must be at the controller's own
                         continue;
                     }
 
-                    // Regular slot — must satisfy the matcher.
-                    BlockMatcher matcher = pattern.mapping().get(c);
-                    // Builder validation guarantees mapping is present, but
-                    // be defensive in case of ill-constructed patterns.
+                    // Regular slot, must satisfy the matcher.
+                    IBlockMatcher matcher = pattern.mapping().get(c);
+                    /*
+                     * Builder validation guarantees mapping is present, but
+                     * be defensive in case of ill-constructed patterns.
+                     */
                     if (matcher == null || !matcher.matches(actualBlockId)) {
-                        return new MatchResult.Failure(
+                        return new IMatchResult.Failure(
                                 relX, relY, relZ,
                                 c,
                                 actualBlockId
@@ -101,7 +103,7 @@ public final class PatternMatcher {
             }
         }
 
-        return new MatchResult.Success(rotation, slavePositions);
+        return new IMatchResult.Success(rotation, slavePositions);
     }
 
     // Position encoding (Phase 0 only)

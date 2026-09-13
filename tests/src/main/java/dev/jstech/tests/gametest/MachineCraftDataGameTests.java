@@ -3,18 +3,18 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.crafting.CraftingPattern;
-import dev.jstech.computronics.crafting.MultiStagePattern;
-import dev.jstech.computronics.crafting.NetworkRecipe;
-import dev.jstech.computronics.crafting.ProcessingPattern.ProcessingInput;
-import dev.jstech.computronics.crafting.ProcessingPattern.ProcessingOutput;
-import dev.jstech.computronics.crafting.ProcessingPattern;
-import dev.jstech.computronics.os.fs.CraftFile;
-import dev.jstech.computronics.storage.StorageKey;
+import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.crafting.MultiStagePattern;
+import dev.jstech.computers.crafting.NetworkRecipe;
+import dev.jstech.computers.crafting.ProcessingPattern.ProcessingInput;
+import dev.jstech.computers.crafting.ProcessingPattern.ProcessingOutput;
+import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.os.fs.CraftFile;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.gametest.framework.GameTest;
@@ -32,7 +32,7 @@ import java.util.Map;
 
 /**
  * Battery 1, front A: the machine-crafting DATA model and {@code .craft} serialization, exhaustively and
- * adversarially — chance clamping and yield math, ingredient totals, recipe equality, item AND fluid round-trips,
+ * adversarially: chance clamping and yield math, ingredient totals, recipe equality, item AND fluid round-trips,
  * preserved chances, mixed multi-stage round-trips, and malformed/unknown content. Pure data behavior validated
  * with the registries a running server provides (StorageKey/ItemStack/FluidStack are MC types, so this is a
  * GameTest, not JUnit).
@@ -193,8 +193,8 @@ public final class MachineCraftDataGameTests {
     public static void externalDataPort_routesItemsFluidsAndToleratesNull(final GameTestHelper helper) {
         final net.neoforged.neoforge.items.ItemStackHandler items =
                 new net.neoforged.neoforge.items.ItemStackHandler(2);
-        final dev.jstech.computronics.storage.ExternalDataPort itemPort =
-                new dev.jstech.computronics.storage.ExternalDataPort(items, null);
+        final dev.jstech.computers.storage.ExternalDataPort itemPort =
+                new dev.jstech.computers.storage.ExternalDataPort(items, null);
         helper.assertTrue(itemPort.insert(StorageKey.of(Items.IRON_INGOT), 10, false) == 10,
                 "items insert into the item handler");
         helper.assertTrue(itemPort.count(StorageKey.of(Items.IRON_INGOT)) == 10, "count reflects the insert");
@@ -202,8 +202,8 @@ public final class MachineCraftDataGameTests {
                 "a fluid into an item-only port inserts nothing");
         helper.assertTrue(itemPort.extract(StorageKey.of(Items.IRON_INGOT), 4, false) == 4, "items extract back");
 
-        final dev.jstech.computronics.storage.ExternalDataPort nullPort =
-                new dev.jstech.computronics.storage.ExternalDataPort(null, null);
+        final dev.jstech.computers.storage.ExternalDataPort nullPort =
+                new dev.jstech.computers.storage.ExternalDataPort(null, null);
         helper.assertTrue(nullPort.isEmpty(), "a port with no handlers is empty");
         helper.assertTrue(nullPort.insert(StorageKey.of(Items.IRON_INGOT), 5, false) == 0,
                 "a null port accepts nothing, without crashing");
@@ -228,7 +228,7 @@ public final class MachineCraftDataGameTests {
         helper.succeed();
     }
 
-    // --- builders ---
+    // builders
 
     private static ProcessingInput in(final net.minecraft.world.item.Item item, final long amount) {
         return new ProcessingInput(StorageKey.of(item), amount);

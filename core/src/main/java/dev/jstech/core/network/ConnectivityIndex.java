@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.network;
 
@@ -22,7 +22,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Spatial connectivity index for the J's Computronics computation network.
+ * Spatial connectivity index for the J's Computers computation network.
  */
 public final class ConnectivityIndex {
 
@@ -36,8 +36,10 @@ public final class ConnectivityIndex {
 
     private final Map<Long, Set<Long>> adjacency = new HashMap<>();
 
-    // Every component's positions, by root, kept until the topology changes: a Mainframe asks for its
-    // segment every tick, and walking every cable of a big base to answer was a fixed cost on the idle tick.
+    /*
+     * Every component's positions, by root, kept until the topology changes: a Mainframe asks for its
+     * segment every tick, and walking every cable of a big base to answer was a fixed cost on the idle tick.
+     */
     private final Map<Integer, Set<Long>> componentCache = new HashMap<>();
 
     // Queries
@@ -116,7 +118,7 @@ public final class ConnectivityIndex {
 
     // Mutations
 
-    public PlacementResult onCablePlaced(long encodedPos, Set<Long> neighbors) {
+    public IPlacementResult onCablePlaced(long encodedPos, Set<Long> neighbors) {
         if (posToId.containsKey(encodedPos)) {
             throw new IllegalStateException(
                     "Position already registered: " + encodedPos);
@@ -137,7 +139,7 @@ public final class ConnectivityIndex {
         for (Long neighborPos : neighbors) {
             Integer neighborId = posToId.get(neighborPos);
             if (neighborId == null) {
-                continue; // Unknown neighbor — ignore.
+                continue; // Unknown neighbor, ignore it.
             }
             // Record the edge in both directions for rediscovery.
             adjacency.get(encodedPos).add(neighborPos);
@@ -153,39 +155,45 @@ public final class ConnectivityIndex {
                 }
             }
 
-            // Union regardless — even on conflict, we want the topology
+            // Union regardless: even on conflict, we want the topology
             if (dsu.union(newId, neighborId)) {
                 unionedWithAny = true;
             }
         }
 
-        // 3. After all unions, the new cable's component has ONE root.
-        //    Decide what UUID (if any) the merged component should have.
+        /*
+         * 3. After all unions, the new cable's component has ONE root.
+         *    Decide what UUID (if any) the merged component should have.
+         */
         int newRoot = dsu.find(newId);
 
         if (conflictingUuid != null) {
             // Multiple distinct UUIDs were merged. Keep the first one as
             cleanupOrphanedUuids(newRoot);
             rootToUuid.put(newRoot, firstSeenUuid);
-            return new PlacementResult.Conflict(firstSeenUuid, conflictingUuid);
+            return new IPlacementResult.Conflict(firstSeenUuid, conflictingUuid);
         }
 
         if (firstSeenUuid != null) {
-            // All neighbors with UUIDs agreed on a single value. The
-            // merged component now carries that UUID.
+            /*
+             * All neighbors with UUIDs agreed on a single value. The
+             * merged component now carries that UUID.
+             */
             cleanupOrphanedUuids(newRoot);
             rootToUuid.put(newRoot, firstSeenUuid);
-            return new PlacementResult.Inherited(firstSeenUuid);
+            return new IPlacementResult.Inherited(firstSeenUuid);
         }
 
         if (unionedWithAny) {
-            // We merged with at least one neighbor, but none of them had
-            // a UUID. The merged component is still UUID-less.
-            return PlacementResult.MERGED_WITHOUT_UUID;
+            /*
+             * We merged with at least one neighbor, but none of them had
+             * a UUID. The merged component is still UUID-less.
+             */
+            return IPlacementResult.MERGED_WITHOUT_UUID;
         }
 
-        // No relevant neighbors at all — isolated cable.
-        return PlacementResult.ISOLATED;
+        // No relevant neighbors at all, so the cable is isolated.
+        return IPlacementResult.ISOLATED;
     }
 
     private void cleanupOrphanedUuids(int currentRoot) {
@@ -210,16 +218,18 @@ public final class ConnectivityIndex {
                 continue;
             }
             ids.add(id);
-            // Deterministic survivor: the lexicographically smallest UUID among the merged components, so
-            // which network identity wins a merge does not depend on iteration order (unpredictable to the
-            // player and unstable across reloads).
+            /*
+             * Deterministic survivor: the lexicographically smallest UUID among the merged components, so
+             * which network identity wins a merge does not depend on iteration order (unpredictable to the
+             * player and unstable across reloads).
+             */
             final NetworkUuid uuid = rootToUuid.get(dsu.find(id));
             if (uuid != null && (surviving == null || uuid.asString().compareTo(surviving.asString()) < 0)) {
                 surviving = uuid;
             }
         }
         if (ids.size() < 2) {
-            return; // nothing to bridge — a device touching one run (or none) changes nothing
+            return; // nothing to bridge, since a device touching one run (or none) changes nothing
         }
         int root = dsu.find(ids.get(0));
         boolean merged = false;
@@ -371,36 +381,36 @@ public final class ConnectivityIndex {
     public record RemovalResult(Optional<NetworkUuid> previousUuid, int resultingComponents) {
     }
 
-    // PlacementResult
+    // IPlacementResult
 
     /**
      * Outcome of a single {@link #onCablePlaced} invocation.
      */
-    public sealed interface PlacementResult
-            permits PlacementResult.Isolated,
-            PlacementResult.MergedWithoutUuid,
-            PlacementResult.Inherited,
-            PlacementResult.Conflict {
+    public sealed interface IPlacementResult
+            permits IPlacementResult.Isolated,
+            IPlacementResult.MergedWithoutUuid,
+            IPlacementResult.Inherited,
+            IPlacementResult.Conflict {
 
         /**
-         * No registered neighbors — cable is alone in its own new component.
+         * No registered neighbors, so the cable is alone in its own new component.
          */
-        record Isolated() implements PlacementResult {}
+        record Isolated() implements IPlacementResult {}
 
         /**
          * Unioned with neighbors, but none of them had a UUID.
          */
-        record MergedWithoutUuid() implements PlacementResult {}
+        record MergedWithoutUuid() implements IPlacementResult {}
 
         /**
          * Unioned with neighbors that all agreed on a single UUID; component now carries it.
          */
-        record Inherited(NetworkUuid uuid) implements PlacementResult {}
+        record Inherited(NetworkUuid uuid) implements IPlacementResult {}
 
         /**
          * Two or more neighbors carried distinct UUIDs.
          */
-        record Conflict(NetworkUuid first, NetworkUuid second) implements PlacementResult {}
+        record Conflict(NetworkUuid first, NetworkUuid second) implements IPlacementResult {}
 
         // Stateless singletons for the cases without payload.
         Isolated ISOLATED = new Isolated();

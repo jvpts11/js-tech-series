@@ -3,23 +3,23 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.clienttest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computronics.blockentity.MainframeBlockEntity;
-import dev.jstech.computronics.client.CommandPromptScreen;
-import dev.jstech.computronics.client.os.DesktopScreen;
-import dev.jstech.computronics.client.os.DesktopWindow;
-import dev.jstech.computronics.client.os.NetworkInteractorApp;
-import dev.jstech.computronics.crafting.CraftingPattern;
-import dev.jstech.computronics.crafting.NetworkRecipe;
-import dev.jstech.computronics.crafting.ProcessingPattern;
-import dev.jstech.computronics.operation.NetworkStorage;
-import dev.jstech.computronics.program.Programs;
-import dev.jstech.computronics.storage.StorageKey;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.client.CommandPromptScreen;
+import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.client.os.DesktopWindow;
+import dev.jstech.computers.client.os.NetworkInteractorApp;
+import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.crafting.NetworkRecipe;
+import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.program.Programs;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.gametest.MekanismRig;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -35,8 +35,8 @@ import java.util.List;
 
 /**
  * The Mekanism build as the player drives it: with the alloy machine patterns and the frame recipe in the Recipe
- * ROM, one request — from the Network Interactor's Crafting tab on the Frames desktop, or typed at the MC-DOS
- * Command Prompt — must plan the whole tree, run the infuser three times over through its buses and finish on
+ * ROM, one request (from the Network Interactor's Crafting tab on the Frames desktop, or typed at the MC-DOS
+ * Command Prompt) must plan the whole tree, run the infuser three times over through its buses and finish on
  * the bench with Fusion Reactor Frames.
  */
 public final class MekanismClientTests {
@@ -56,7 +56,13 @@ public final class MekanismClientTests {
     /** The Crafting Manager needs Frames XP or newer. */
     private static final ResourceLocation FRAMES_XP = ResourceLocation.fromNamespaceAndPath("jsc", "frames_xp");
     private static final ResourceLocation MC_DOS = ResourceLocation.fromNamespaceAndPath("jsc", "mc_dos");
-    private static final ResourceLocation INFUSER = MekanismRig.mek("metallurgic_infuser");
+    /**
+     * The chain runs through an Ultimate Infusing Factory rather than a bare Metallurgic Infuser. It is the
+     * same machine to the mod (one declared type behind buses) but it works nine operations at a time, so
+     * the twelve infusions this build needs take a fraction of the ticks. The bare infuser stays covered by
+     * the machine GameTests, which leaves both a raw machine and a factory under test.
+     */
+    private static final ResourceLocation INFUSER = MekanismRig.mek("ultimate_infusing_factory");
     private static final ResourceLocation ALLOY_INFUSED = MekanismRig.mek("alloy_infused");
     private static final ResourceLocation ALLOY_REINFORCED = MekanismRig.mek("alloy_reinforced");
     private static final ResourceLocation ALLOY_ATOMIC = MekanismRig.mek("alloy_atomic");
@@ -73,6 +79,26 @@ public final class MekanismClientTests {
                 List.of(new ProcessingPattern.ProcessingInput(in, 1), new ProcessingPattern.ProcessingInput(extra, extraCount)),
                 List.of(new ProcessingPattern.ProcessingOutput(out, 1, 100)),
                 INFUSER.toString(), 400);
+    }
+
+    /**
+     * Tells the engine to fill this machine rather than hand it one lot at a time. A factory works several
+     * operations at once, and the default one-lot-per-cycle feed leaves all but one of its slots idle, so the
+     * chain ran as slowly as it would on a bare machine. This is the Machines tab's own Feed setting.
+     */
+    private static void fillTheFactory(final CraftingComputerBlockEntity cc) {
+        cc.setMachineConfig(INFUSER.toString(),
+                new CraftingComputerBlockEntity.MachineConfig(0, false, true));
+    }
+
+    /**
+     * Sets the factory up as a player would before leaning on it: sorting on and its upgrades in, so it works
+     * its slots in parallel and at speed. Without this the chain runs one infusion at a time at the base rate,
+     * which is what made this test take two minutes of real machine time.
+     */
+    private static void tuneMachines(final ClientTestContext ctx, final ServerLevel level) {
+        ctx.assertTrue(MekanismRig.tuneFactory(level, ctx.abs(MekanismRig.MACHINE)),
+                "the rig's machine must be a factory, so its upgrades and sorting can be set");
     }
 
     private static CraftingPattern framePattern() {
@@ -100,8 +126,10 @@ public final class MekanismClientTests {
                     net.cc().togglePower();
                     net.cc().togglePower();
                     world.placeMonitor(MONITOR, Direction.EAST);
-                    // Raw stock sized for exactly one bench run of frames, straight into the server's store
-                    // (the network itself only forms over the next ticks).
+                    /*
+                     * Raw stock sized for exactly one bench run of frames, straight into the server's store
+                     * (the network itself only forms over the next ticks).
+                     */
                     net.seed(Items.COPPER_INGOT, 4);
                     net.seed(Items.REDSTONE, 4);
                     net.seed(MekanismRig.item(DUST_DIAMOND), 8);
@@ -115,6 +143,8 @@ public final class MekanismClientTests {
                     MekanismRig.mountBottomInputBus(world);
                     // Flat patterns in the Recipe ROM: one per recipe, nothing chained by hand.
                     final CraftingComputerBlockEntity cc = world.blockEntity(CRAFTING_COMPUTER, CraftingComputerBlockEntity.class);
+                    fillTheFactory(cc);
+                    tuneMachines(ctx, level);
                     ctx.assertTrue(cc.loadPattern(framePattern()), "the frame pattern loads into the ROM");
                     ctx.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(infuse(
                             StorageKey.of(Items.COPPER_INGOT), StorageKey.of(Items.REDSTONE), 1, MekanismRig.itemKey(ALLOY_INFUSED)))),
@@ -154,9 +184,11 @@ public final class MekanismClientTests {
                 // Request four frames through the popup: it must plan through the machine patterns.
                 .then(0, () -> {
                     final NetworkInteractorApp app = networkInteractor(ctx);
+                    // A click selects the frame; a second one right after opens it.
+                    ctx.clickDesktop(networkInteractorPoint(ctx, app.craftableCellCenter(app.craftableNames().indexOf(FRAME_NAME))));
                     ctx.clickDesktop(networkInteractorPoint(ctx, app.craftableCellCenter(app.craftableNames().indexOf(FRAME_NAME))));
                 })
-                .thenAssert(1, () -> networkInteractor(ctx).isCraftPopupOpen(), "clicking the frame opens the request popup")
+                .thenAssert(1, () -> networkInteractor(ctx).isCraftPopupOpen(), "double-clicking the frame opens the request popup")
                 .then(1, () -> {
                     final NetworkInteractorApp app = networkInteractor(ctx);
                     for (int i = 0; i < 3; i++) {
@@ -201,8 +233,10 @@ public final class MekanismClientTests {
 
     @ClientTest(timeoutTicks = 6000)
     public static void commandPrompt_craftRequestPlansTheAlloyChainThroughTheInfuser(final ClientTestContext ctx) {
-        // The terminal-only route: MC-DOS on the Crafting Computer, the Command Prompt on its monitor, and
-        // "operation craft" typed by the player must reach the same planner and drive the same machine steps.
+        /*
+         * The terminal-only route: MC-DOS on the Crafting Computer, the Command Prompt on its monitor, and
+         * "operation craft" typed by the player must reach the same planner and drive the same machine steps.
+         */
         ctx.thenBuild(0, world -> {
                     final TestWorldBuilder.CraftingNetwork net = MekanismRig.place(world, INFUSER);
                     TestWorldBuilder.installDesktop(net.cc(), MC_DOS);
@@ -221,6 +255,8 @@ public final class MekanismClientTests {
                     MekanismRig.mountBuses(world);
                     MekanismRig.mountBottomInputBus(world);
                     final CraftingComputerBlockEntity cc = world.blockEntity(CRAFTING_COMPUTER, CraftingComputerBlockEntity.class);
+                    fillTheFactory(cc);
+                    tuneMachines(ctx, level);
                     ctx.assertTrue(cc.loadPattern(framePattern()), "the frame pattern loads into the ROM");
                     ctx.assertTrue(cc.loadMachineRecipe(NetworkRecipe.ofProcessing(infuse(
                             StorageKey.of(Items.COPPER_INGOT), StorageKey.of(Items.REDSTONE), 1, MekanismRig.itemKey(ALLOY_INFUSED)))), "infused loads");

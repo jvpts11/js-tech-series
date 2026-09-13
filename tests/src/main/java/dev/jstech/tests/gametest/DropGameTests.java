@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
@@ -20,7 +20,7 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * Verifies that a content-holding block spills its stored items into the world instead of destroying them when broken — the conservation contract every machine, computer and rack now shares through {@link BlockDrops}.
+ * Verifies that a content-holding block spills its stored items into the world instead of destroying them when broken, the conservation contract every machine, computer and rack now shares through {@link BlockDrops}.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)

@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.persistence;
 
@@ -53,7 +53,7 @@ public final class NetworkRegistrySavedData extends CoreSavedData{
                 final NetworkUuid uuid = new NetworkUuid(UUID.fromString(entry.getString(KEY_UUID)));
                 networks.put(uuid, parseState(entry.getString(KEY_STATE)));
             } catch (final IllegalArgumentException ignored) {
-                // Corrupt UUID string — skip it rather than crash the load.
+                // Corrupt UUID string, skip it rather than crash the load.
             }
         }
         // Backward compatibility: an older save stored a plain string list (every network ACTIVE).

@@ -3,24 +3,24 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.block.part.InputBusPart;
-import dev.jstech.computronics.block.part.ReceivingBusPart;
-import dev.jstech.computronics.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computronics.blockentity.DataCableBlockEntity;
-import dev.jstech.computronics.blockentity.HbwInterfaceBlockEntity;
-import dev.jstech.computronics.blockentity.MainframeBlockEntity;
-import dev.jstech.computronics.crafting.CraftingPattern;
-import dev.jstech.computronics.crafting.NetworkRecipe;
-import dev.jstech.computronics.crafting.ProcessingPattern;
-import dev.jstech.computronics.operation.NetworkOperation;
-import dev.jstech.computronics.operation.NetworkStorage;
-import dev.jstech.computronics.operation.payload.OperationRecord;
-import dev.jstech.computronics.storage.StorageKey;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.part.InputBusPart;
+import dev.jstech.computers.block.part.ReceivingBusPart;
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.crafting.NetworkRecipe;
+import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.operation.INetworkOperation;
+import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -38,7 +38,7 @@ import java.util.List;
 
 /**
  * Everything at once: two Mekanism machines on the crafting run, two Crafting Computers, a Supercomputer
- * cluster and a Mainframe with a GPU serve three requests together — frames through the infuser, iron dust
+ * cluster and a Mainframe with a GPU serve three requests together: frames through the infuser, iron dust
  * through the crusher and a large bench craft fanned out across the computers. Both machines must work at the
  * same time, every request must complete, and the stock must balance to the unit.
  */
@@ -100,14 +100,14 @@ public final class MekanismParallelLoadGameTests {
         world.setBlock(CABLE, ComputingModule.HPC_CABLE.get());
         world.setBlock(NODE_RACK, ComputingModule.SUPERCOMPUTER_RACK.get());
         final var rack = world.blockEntity(NODE_RACK,
-                dev.jstech.computronics.blockentity.ServerRackBlockEntity.class);
+                dev.jstech.computers.blockentity.ServerRackBlockEntity.class);
         rack.getServers().setStackInSlot(0, ComputingModule.defaultSupercomputerNode());
         rack.toggleBayPower(0); // bays start on; the offline fixture wants the node dark
     }
 
     private static void powerCluster(final TestWorldBuilder world) {
         world.blockEntity(NODE_RACK,
-                dev.jstech.computronics.blockentity.ServerRackBlockEntity.class).toggleBayPower(0);
+                dev.jstech.computers.blockentity.ServerRackBlockEntity.class).toggleBayPower(0);
     }
 
     private static void placeCluster(final TestWorldBuilder world) {
@@ -134,17 +134,21 @@ public final class MekanismParallelLoadGameTests {
 
     @GameTest(template = ARENA, timeoutTicks = 6000)
     public static void clusterComingOnlineMidCraft_freesItsSlotWhileWaitingOnAMachine(final GameTestHelper helper) {
-        // Regression for the exclusiveClaim latch: a craft that starts with no cluster (exclusive claim) and then
-        // sees the cluster come online mid-flight must switch to fan-out AND still release the cluster slot while
-        // it waits on a later machine step — so a second request can use the cluster.
+        /*
+         * Regression for the exclusiveClaim latch: a craft that starts with no cluster (exclusive claim) and then
+         * sees the cluster come online mid-flight must switch to fan-out AND still release the cluster slot while
+         * it waits on a later machine step, so a second request can use the cluster.
+         */
         final MekanismRig.Rig rig = MekanismRig.build(helper, INFUSER);
         final TestWorldBuilder world = rig.world();
         final StorageKey frame = MekanismRig.itemKey(MekanismRig.generators("fusion_reactor_frame"));
         placeClusterOffline(world); // present but OFF at submit → the craft claims a single computer exclusively
-        final NetworkOperation[] op = new NetworkOperation[1];
-        // The longest run of consecutive ticks the craft held a cluster slot after the cluster came online. With
-        // the stale-latch bug, a fanned-out craft never releases the slot, so it stays held for a whole machine
-        // step (dozens of ticks); with the fix it is taken and freed within one tick per machine step.
+        final INetworkOperation[] op = new INetworkOperation[1];
+        /*
+         * The longest run of consecutive ticks the craft held a cluster slot after the cluster came online. With
+         * the stale-latch bug, a fanned-out craft never releases the slot, so it stays held for a whole machine
+         * step (dozens of ticks); with the fix it is taken and freed within one tick per machine step.
+         */
         final int[] maxHeld = {0};
         final int[] held = {0};
         final boolean[] clusterWasOnlineMidCraft = {false};
@@ -186,8 +190,10 @@ public final class MekanismParallelLoadGameTests {
                     helper.assertTrue(rig.net().storage(helper.getLevel()).count(frame) == 4, "four frames must be made");
                     helper.assertTrue(clusterWasOnlineMidCraft[0],
                             "the cluster must have come online while the craft still had machine steps to run");
-                    // The final bench step legitimately holds the slot for a few ticks; a stale exclusiveClaim
-                    // latch would instead pin it across a whole ~200-tick machine step. 20 separates the two.
+                    /*
+                     * The final bench step legitimately holds the slot for a few ticks; a stale exclusiveClaim
+                     * latch would instead pin it across a whole ~200-tick machine step. 20 separates the two.
+                     */
                     helper.assertTrue(maxHeld[0] <= 20,
                             "a fanned-out craft must not hold a cluster slot across a machine-step wait; held for " + maxHeld[0] + " ticks");
                 })
@@ -201,7 +207,7 @@ public final class MekanismParallelLoadGameTests {
         final StorageKey frame = MekanismRig.itemKey(MekanismRig.generators("fusion_reactor_frame"));
         final StorageKey dust = MekanismRig.itemKey(MekanismRig.mek("dust_iron"));
         final StorageKey infused = MekanismRig.itemKey(MekanismRig.mek("alloy_infused"));
-        final NetworkOperation[] ops = new NetworkOperation[3];
+        final INetworkOperation[] ops = new INetworkOperation[3];
         // The second machine and its buses, further down the run.
         world.setBlock(new BlockPos(5, 2, 8), ComputingModule.CRAFTING_CABLE.get());
         world.setBlock(CABLE_2_WEST, ComputingModule.CRAFTING_CABLE.get());
@@ -267,8 +273,10 @@ public final class MekanismParallelLoadGameTests {
                                     && r.status() == OperationRecord.STATUS_PROCESSING)
                             .count();
                     helper.assertTrue(running == 2, "both machines must be working at once on their own queues; active=" + records);
-                    // Crafts waiting on their machines hold no cluster slot: the planks are done, the other
-                    // two are parked on the infuser and the crusher, so the cluster is free for the next request.
+                    /*
+                     * Crafts waiting on their machines hold no cluster slot: the planks are done, the other
+                     * two are parked on the infuser and the crusher, so the cluster is free for the next request.
+                     */
                     helper.assertTrue(world.blockEntity(HUB, HbwInterfaceBlockEntity.class).craftSlotsInUse() == 0,
                             "a craft waiting on a machine step must not hold cluster slots; in use="
                                     + world.blockEntity(HUB, HbwInterfaceBlockEntity.class).craftSlotsInUse());
@@ -280,7 +288,7 @@ public final class MekanismParallelLoadGameTests {
                             "still running: " + rig.net().mainframe().activeOperationRecords());
                 })
                 .thenExecute(() -> {
-                    for (final NetworkOperation op : ops) {
+                    for (final INetworkOperation op : ops) {
                         helper.assertTrue(op.toRecord().status() == OperationRecord.STATUS_COMPLETED,
                                 "every request must complete; " + op.toRecord());
                     }

@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.client.gui.logic;
 
@@ -26,8 +26,10 @@ class RadialGeometryTest {
 
     @Test
     void segmentAtAngle_fourQuadrants() {
-        // 4 segments of π/2 each, starting at top, clockwise.
-        // Pick angle in the MIDDLE of each segment to avoid boundaries.
+        /*
+         * 4 segments of π/2 each, starting at top, clockwise.
+         * Pick angle in the MIDDLE of each segment to avoid boundaries.
+         */
         double q = Math.PI / 2;
         assertEquals(0, RadialGeometry.segmentAtAngle(q * 0.5, 4)); // top-right of top seg
         assertEquals(1, RadialGeometry.segmentAtAngle(q * 1.5, 4)); // right

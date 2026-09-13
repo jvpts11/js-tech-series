@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.network;
 
@@ -19,7 +19,7 @@ public record ServerRouterElement(
         NetworkUuid networkUuid,
         long pos,
         IndustrialTier tier
-) implements NetworkTopologyElement {
+) implements INetworkTopologyElement {
 
     public ServerRouterElement {
         Objects.requireNonNull(networkUuid, "networkUuid must not be null");

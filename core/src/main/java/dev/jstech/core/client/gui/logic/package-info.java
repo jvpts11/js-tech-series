@@ -3,9 +3,9 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 /**
- * Pure GUI logic — scroll math, pagination, radial geometry, graph scaling — with no Minecraft dependency.
+ * Pure GUI logic (scroll math, pagination, radial geometry, graph scaling) with no Minecraft dependency.
  */
 package dev.jstech.core.client.gui.logic;

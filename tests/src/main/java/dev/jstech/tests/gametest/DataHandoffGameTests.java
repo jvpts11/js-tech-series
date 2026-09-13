@@ -3,16 +3,16 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.operation.DataHandoff;
-import dev.jstech.computronics.storage.ChemicalBridges;
-import dev.jstech.computronics.storage.ChemicalPort;
-import dev.jstech.computronics.storage.DataContainers;
-import dev.jstech.computronics.storage.LocalStore;
-import dev.jstech.computronics.storage.StorageKey;
+import dev.jstech.computers.operation.DataHandoff;
+import dev.jstech.computers.storage.ChemicalBridges;
+import dev.jstech.computers.storage.IChemicalPort;
+import dev.jstech.computers.storage.DataContainers;
+import dev.jstech.computers.storage.LocalStore;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -41,7 +41,7 @@ import java.util.Optional;
 
 /**
  * What passes between a player's hands and a computer. A stack handed over as items is stored as its item,
- * the way a chest takes it — a bucket included. Handing over what a held container HOLDS stores the fluid or
+ * the way a chest takes it, a bucket included. Handing over what a held container HOLDS stores the fluid or
  * chemical and returns the container emptied, never stored as an item. A held empty container over a fluid or
  * chemical entry fills from it. Every route (cursor, slot, inventory; terminal or desktop) goes through the
  * same handoff, so a bucket that works on the terminal works on the desktop too.
@@ -183,7 +183,7 @@ public final class DataHandoffGameTests {
         world.placeFromItem(TANK, tank(CHEMICAL_TANK));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    final Optional<ChemicalPort> port = ChemicalBridges.portFor(helper.getLevel(), world.absolute(TANK), Direction.UP);
+                    final Optional<IChemicalPort> port = ChemicalBridges.portFor(helper.getLevel(), world.absolute(TANK), Direction.UP);
                     helper.assertTrue(port.isPresent() && port.get().fill(OXYGEN, 800, false) == 800, "the chemical tank must take 800 mB of oxygen");
                 })
                 .thenExecuteAfter(2, () -> {
@@ -236,7 +236,7 @@ public final class DataHandoffGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     player.containerMenu.setCarried(new ItemStack(Items.WATER_BUCKET));
-                    // Handed over as items — a left click or a shift-click — the bucket is what goes in.
+                    // Handed over as items (a left click or a shift-click), the bucket is what goes in.
                     final DataHandoff.Outcome outcome = DataHandoff.intoNetwork(net.mainframe(), helper.getLevel(),
                             net.mainframe().networkUuid(), player, DataHandoff.cursor(player), 1, false, "test", () -> { });
                     helper.assertTrue(outcome == DataHandoff.Outcome.DEPOSITED, "the bucket must deposit; got " + outcome);
@@ -259,7 +259,7 @@ public final class DataHandoffGameTests {
         final Player player = player(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    final Optional<ChemicalPort> port = ChemicalBridges.portFor(helper.getLevel(), world.absolute(TANK), Direction.UP);
+                    final Optional<IChemicalPort> port = ChemicalBridges.portFor(helper.getLevel(), world.absolute(TANK), Direction.UP);
                     helper.assertTrue(port.isPresent() && port.get().fill(OXYGEN, 800, false) == 800, "the chemical tank must take 800 mB of oxygen");
                 })
                 .thenExecuteAfter(2, () -> {

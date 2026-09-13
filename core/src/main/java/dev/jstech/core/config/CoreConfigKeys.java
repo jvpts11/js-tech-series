@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.config;
 
+import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.operation.OperationBalance;
 
 import java.util.List;
@@ -26,6 +27,10 @@ public final class CoreConfigKeys {
     private static final int MAX_LATENCY_TICKS = 200;
     private static final int MAX_TIMEOUT_TICKS = 72_000;
     private static final int MAX_EXPIRY_HOURS = 24 * 365;
+    private static final int MIN_MACHINE_MICROS = 50;
+    private static final int MAX_MACHINE_MICROS = 1_000_000;
+    private static final int MIN_SERVER_MICROS = 100;
+    private static final int MAX_SERVER_MICROS = 10_000_000;
 
     /** The seek latency of a hard disk drive, in ticks. */
     public static final ConfigKey<Integer> HDD_LATENCY_TICKS = REGISTRY.register(ConfigKey.ranged(
@@ -62,6 +67,16 @@ public final class CoreConfigKeys {
             List.of(BALANCE, "orphaned_operations_expiry_hours"), Integer.class,
             OperationBalance.DEFAULT_ORPHANED_OPERATIONS_EXPIRY_HOURS, new ConfigKeyRange<>(0, MAX_EXPIRY_HOURS)));
 
+    /** Real time one machine may spend running its programs in a tick, in microseconds. */
+    public static final ConfigKey<Integer> PROGRAM_MACHINE_MICROS = REGISTRY.register(ConfigKey.ranged(
+            List.of(BALANCE, "program_machine_micros"), Integer.class,
+            ExecutionBalance.DEFAULT_MACHINE_MICROS, new ConfigKeyRange<>(MIN_MACHINE_MICROS, MAX_MACHINE_MICROS)));
+
+    /** Real time every machine together may spend running programs in a tick, in microseconds. */
+    public static final ConfigKey<Integer> PROGRAM_SERVER_MICROS = REGISTRY.register(ConfigKey.ranged(
+            List.of(BALANCE, "program_server_micros"), Integer.class,
+            ExecutionBalance.DEFAULT_SERVER_MICROS, new ConfigKeyRange<>(MIN_SERVER_MICROS, MAX_SERVER_MICROS)));
+
     private CoreConfigKeys() {
     }
 
@@ -83,6 +98,8 @@ public final class CoreConfigKeys {
             case "balance.subframe_efficiency_factor" -> OperationBalance.setSubframeEfficiencyFactor((Double) value);
             case "balance.orphaned_operations_expiry_hours" ->
                     OperationBalance.setOrphanedOperationsExpiryHours((Integer) value);
+            case "balance.program_machine_micros" -> ExecutionBalance.setMachineMicros((Integer) value);
+            case "balance.program_server_micros" -> ExecutionBalance.setServerMicros((Integer) value);
             default -> { }
         }
     }

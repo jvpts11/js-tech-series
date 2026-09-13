@@ -3,25 +3,25 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.config;
 
 import java.util.Objects;
 
 /**
- * Validates a raw value against a {@link ConfigKey}, returning a {@link ConfigValidationResult}.
+ * Validates a raw value against a {@link ConfigKey}, returning an {@link IConfigValidationResult}.
  */
 public final class ConfigValidator {
 
-    private final ConfigLogger logger;
+    private final IConfigLogger logger;
 
-    public ConfigValidator(final ConfigLogger logger) {
+    public ConfigValidator(final IConfigLogger logger) {
         this.logger = Objects.requireNonNull(logger, "logger must not be null");
     }
 
     @SuppressWarnings("unchecked")
-    public <T> ConfigValidationResult<T> validate(
+    public <T> IConfigValidationResult<T> validate(
             final ConfigKey<T> key,
             final Object rawValue) {
         Objects.requireNonNull(key, "key must not be null");
@@ -31,7 +31,7 @@ public final class ConfigValidator {
             final String reason = "value for key '" + key.dottedPath()
                     + "' is null; using default";
             logger.warn(reason);
-            return new ConfigValidationResult.Rejected<>(
+            return new IConfigValidationResult.Rejected<>(
                     key.defaultValue(), reason);
         }
 
@@ -43,21 +43,23 @@ public final class ConfigValidator {
                     + ", got " + rawValue.getClass().getSimpleName()
                     + "; using default";
             logger.warn(reason);
-            return new ConfigValidationResult.Rejected<>(
+            return new IConfigValidationResult.Rejected<>(
                     key.defaultValue(), reason);
         }
 
         final T typedValue = (T) rawValue;
 
-        // Rule 3: value not in the string whitelist -> Rejected (default substituted).
-        // There is no "nearest valid" string to clamp to, so the safe house rule is to fall back to the
-        // default, which the key guarantees is itself whitelisted.
+        /*
+         * Rule 3: value not in the string whitelist -> Rejected (default substituted).
+         * There is no "nearest valid" string to clamp to, so the safe house rule is to fall back to the
+         * default, which the key guarantees is itself whitelisted.
+         */
         if (key.whitelist().isPresent() && !key.whitelist().get().contains(typedValue)) {
             final String reason = "value '" + typedValue + "' for key '"
                     + key.dottedPath() + "' is not one of " + key.whitelist().get()
                     + "; using default '" + key.defaultValue() + "'";
             logger.warn(reason);
-            return new ConfigValidationResult.Rejected<>(key.defaultValue(), reason);
+            return new IConfigValidationResult.Rejected<>(key.defaultValue(), reason);
         }
 
         // Rule 4: numeric out of range -> Clamped.
@@ -74,10 +76,10 @@ public final class ConfigValidator {
                         + range.min() + ", " + range.max()
                         + "]; clamped to " + clamped;
                 logger.warn(reason);
-                return new ConfigValidationResult.Clamped<>(clamped, typedValue);
+                return new IConfigValidationResult.Clamped<>(clamped, typedValue);
             }
         }
 
-        return new ConfigValidationResult.Valid<>(typedValue);
+        return new IConfigValidationResult.Valid<>(typedValue);
     }
 }

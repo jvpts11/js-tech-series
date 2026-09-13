@@ -3,15 +3,15 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.operation.NetworkStorage;
-import dev.jstech.computronics.storage.ChemicalBridges;
-import dev.jstech.computronics.storage.ChemicalPort;
-import dev.jstech.computronics.storage.ExternalDataPort;
-import dev.jstech.computronics.storage.StorageKey;
+import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.storage.ChemicalBridges;
+import dev.jstech.computers.storage.IChemicalPort;
+import dev.jstech.computers.storage.ExternalDataPort;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -189,7 +189,7 @@ public final class FusionReactorIgnitionGameTests {
                     final NetworkStorage storage = net.storage(helper.getLevel());
                     helper.assertTrue(storage.insert(fuel, 2000) == 2000, "2 000 mB of D-T fuel must go in as data");
                     // Network -> chemical tank: the tank will fill the Hohlraum from it.
-                    final Optional<ChemicalPort> tankPort = ChemicalBridges.portFor(helper.getLevel(), helper.absolutePos(TANK), Direction.UP);
+                    final Optional<IChemicalPort> tankPort = ChemicalBridges.portFor(helper.getLevel(), helper.absolutePos(TANK), Direction.UP);
                     helper.assertTrue(tankPort.isPresent(), "the tank must expose a chemical port");
                     final long toTank = storage.select(fuel, 1000, new ExternalDataPort(null, null, tankPort.get()));
                     helper.assertTrue(toTank == 1000, "1 000 mB of fuel must reach the tank; got " + toTank);
@@ -200,7 +200,7 @@ public final class FusionReactorIgnitionGameTests {
                 })
                 // The tank drains 10 mB into the Hohlraum: full when the tank is down to 990.
                 .thenWaitUntil(() -> {
-                    final Optional<ChemicalPort> tankPort = ChemicalBridges.portFor(helper.getLevel(), helper.absolutePos(TANK), Direction.UP);
+                    final Optional<IChemicalPort> tankPort = ChemicalBridges.portFor(helper.getLevel(), helper.absolutePos(TANK), Direction.UP);
                     helper.assertTrue(tankPort.isPresent() && tankPort.get().count(FUEL) <= 990,
                             "the tank must fill the Hohlraum; tank holds " + tankPort.map(p -> p.count(FUEL)).orElse(-1L));
                 })
@@ -219,8 +219,10 @@ public final class FusionReactorIgnitionGameTests {
                     helper.assertTrue(ChemicalBridges.portFor(helper.getLevel(), helper.absolutePos(NORTH_PORT), Direction.NORTH).isPresent(),
                             "the reactor port must expose a chemical port on its outer face");
                 })
-                // The physical chain: the Laser (fed FE on its back) fires into the amplifier, which fires
-                // into the matrix; the plasma must warm up from the ambient 300 K.
+                /*
+                 * The physical chain: the Laser (fed FE on its back) fires into the amplifier, which fires
+                 * into the matrix; the plasma must warm up from the ambient 300 K.
+                 */
                 .thenExecuteAfter(SETTLE, () -> plasmaBefore[0] = number(multiblock(helper.getBlockEntity(CONTROLLER)), "getPlasmaTemp"))
                 .thenWaitUntil(() -> {
                     final IEnergyStorage fe = helper.getLevel().getCapability(Capabilities.EnergyStorage.BLOCK, helper.absolutePos(LASER), Direction.NORTH);
@@ -229,8 +231,10 @@ public final class FusionReactorIgnitionGameTests {
                     helper.assertTrue(number(data, "getPlasmaTemp") > plasmaBefore[0] + 1000.0,
                             "the laser chain must heat the plasma; plasma=" + number(data, "getPlasmaTemp") + " before=" + plasmaBefore[0]);
                 })
-                // Ignition needs about 1E10 J; a Laser gives 10 kJ per tick, so the rest of the shot goes in the
-                // way the amplifier's beam delivers it: through the matrix's laser-receptor capability.
+                /*
+                 * Ignition needs about 1E10 J; a Laser gives 10 kJ per tick, so the rest of the shot goes in the
+                 * way the amplifier's beam delivers it: through the matrix's laser-receptor capability.
+                 */
                 .thenWaitUntil(() -> {
                     final Object data = multiblock(helper.getBlockEntity(CONTROLLER));
                     if (!flag(data, "isBurning")) {
@@ -239,13 +243,15 @@ public final class FusionReactorIgnitionGameTests {
                     helper.assertTrue(flag(data, "isBurning"), "waiting for ignition: plasma=" + number(data, "getPlasmaTemp")
                             + " ignition=" + number(data, "getIgnitionTemperature", false));
                 })
-                // Burning, the plasma eats whatever fuel the tank holds above ignition heat, so the network
-                // meters it in: two millibuckets a tick through the port, like an injection rate, for 40 ticks.
+                /*
+                 * Burning, the plasma eats whatever fuel the tank holds above ignition heat, so the network
+                 * meters it in: two millibuckets a tick through the port, like an injection rate, for 40 ticks.
+                 */
                 .thenWaitUntil(() -> {
                     final Object data = multiblock(helper.getBlockEntity(CONTROLLER));
                     helper.assertTrue(flag(data, "isBurning"), "the reactor must keep burning on metered network fuel; tick " + sustained[0]
                             + " plasma=" + number(data, "getPlasmaTemp"));
-                    final Optional<ChemicalPort> port = ChemicalBridges.portFor(helper.getLevel(), helper.absolutePos(NORTH_PORT), Direction.NORTH);
+                    final Optional<IChemicalPort> port = ChemicalBridges.portFor(helper.getLevel(), helper.absolutePos(NORTH_PORT), Direction.NORTH);
                     final long fed = port.isEmpty() ? 0 : net.storage(helper.getLevel()).select(fuel, 2, new ExternalDataPort(null, null, port.get()));
                     fedTotal[0] += fed;
                     helper.assertTrue(fed == 2, "the port must take the network's 2 mB every tick; took " + fed);

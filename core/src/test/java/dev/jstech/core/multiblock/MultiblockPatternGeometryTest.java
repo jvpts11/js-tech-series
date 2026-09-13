@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.multiblock;
 
@@ -28,7 +28,7 @@ class MultiblockPatternGeometryTest {
     private static final MultiblockPattern MAINFRAME_PATTERN = MultiblockPattern.builder("mainframe_test")
             .layer("P#P", "PPP")
             .layer("PPP", "PPP")
-            .where('P', BlockMatcher.any())
+            .where('P', IBlockMatcher.any())
             .build();
 
     // Server Rack: 2 wide × 3 tall × 2 deep = 12 cells, all non-IGNORE
@@ -36,7 +36,7 @@ class MultiblockPatternGeometryTest {
             .layer("#P", "PP")
             .layer("PP", "PP")
             .layer("PP", "PP")
-            .where('P', BlockMatcher.any())
+            .where('P', IBlockMatcher.any())
             .build();
 
     // ── blockCount ─────────────────────────────────────────────────────────────
@@ -64,7 +64,7 @@ class MultiblockPatternGeometryTest {
         // 3 × 1 × 2 = 6 cells total; one IGNORE at (x=2, y=0, z=0) → 5 counted
         MultiblockPattern holed = MultiblockPattern.builder("holed")
                 .layer("#P ", "PPP")
-                .where('P', BlockMatcher.any())
+                .where('P', IBlockMatcher.any())
                 .build();
         assertEquals(5, new MultiblockPatternGeometry(holed).blockCount());
     }
@@ -84,7 +84,7 @@ class MultiblockPatternGeometryTest {
         MultiblockPattern frame = MultiblockPattern.builder("frame")
                 .layer(" P ", "P#P", " P ")
                 .layer(" P ", "PPP", " P ")
-                .where('P', BlockMatcher.any())
+                .where('P', IBlockMatcher.any())
                 .build();
         assertEquals(10, new MultiblockPatternGeometry(frame).blockCount());
     }

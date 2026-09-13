@@ -3,18 +3,18 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.block.part.ImportBusPart;
-import dev.jstech.computronics.blockentity.DataCableBlockEntity;
-import dev.jstech.computronics.storage.CompositeDataPort;
-import dev.jstech.computronics.storage.DataPort;
-import dev.jstech.computronics.storage.ExternalDataPort;
-import dev.jstech.computronics.storage.FilteredDataPort;
-import dev.jstech.computronics.storage.StorageKey;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.part.ImportBusPart;
+import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.computers.storage.CompositeDataPort;
+import dev.jstech.computers.storage.IDataPort;
+import dev.jstech.computers.storage.ExternalDataPort;
+import dev.jstech.computers.storage.FilteredDataPort;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -40,7 +40,7 @@ import java.util.List;
 /**
  * The two per-face routing behaviors: a bus carrying a filter restricts its face to that one key so the crafting
  * engine can drive a machine whose ingredients enter through different faces, and bus auto-placement snaps onto a
- * face that offers any kind of data — a fluid- or chemical-only machine face, not just an inventory.
+ * face that offers any kind of data, such as a fluid- or chemical-only machine face, not just an inventory.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -61,9 +61,9 @@ public final class BusFilterRoutingGameTests {
         final StorageKey cobble = StorageKey.of(Items.COBBLESTONE);
         final StorageKey dirt = StorageKey.of(Items.DIRT);
         final StorageKey stone = StorageKey.of(Items.STONE);
-        final DataPort portA = new FilteredDataPort(new ExternalDataPort(faceA, null), cobble);
-        final DataPort portB = new FilteredDataPort(new ExternalDataPort(faceB, null), dirt);
-        final DataPort composite = CompositeDataPort.of(List.of(portA, portB));
+        final IDataPort portA = new FilteredDataPort(new ExternalDataPort(faceA, null), cobble);
+        final IDataPort portB = new FilteredDataPort(new ExternalDataPort(faceB, null), dirt);
+        final IDataPort composite = CompositeDataPort.of(List.of(portA, portB));
 
         // The cobblestone route reaches only the cobblestone-filtered face.
         final long insertedCobble = composite.insert(cobble, 10, false);
@@ -96,7 +96,7 @@ public final class BusFilterRoutingGameTests {
     public static void unfilteredPort_carriesAnyKey(final GameTestHelper helper) {
         // An empty filter is a wildcard, so an unfiltered bus behaves exactly like the raw machine face.
         final ItemStackHandler face = new ItemStackHandler(1);
-        final DataPort wild = new FilteredDataPort(new ExternalDataPort(face, null), null);
+        final IDataPort wild = new FilteredDataPort(new ExternalDataPort(face, null), null);
         final long inserted = wild.insert(StorageKey.of(Items.STONE), 7, false);
         helper.assertTrue(inserted == 7 && face.getStackInSlot(0).getCount() == 7,
                 "a null filter must carry anything; face held " + face.getStackInSlot(0).getCount());
@@ -118,13 +118,17 @@ public final class BusFilterRoutingGameTests {
                         helper.fail("no data cable at " + cablePos);
                         return;
                     }
-                    // The tank offers a chemical face toward the cable but no inventory there, so the old
-                    // item-only auto-placement would have missed it. It is the cable's only data neighbor.
+                    /*
+                     * The tank offers a chemical face toward the cable but no inventory there, so the old
+                     * item-only auto-placement would have missed it. It is the cable's only data neighbor.
+                     */
                     helper.assertTrue(!cable.neighborPort(Direction.SOUTH).isEmpty(),
                             "the cable must see the tank's chemical face as a data neighbor");
 
-                    // Right-click the Import Bus onto the cable's top face: auto-placement must snap it onto the
-                    // chemical face (south), not the clicked face, exactly as it would onto an inventory.
+                    /*
+                     * Right-click the Import Bus onto the cable's top face: auto-placement must snap it onto the
+                     * chemical face (south), not the clicked face, exactly as it would onto an inventory.
+                     */
                     final Player player = helper.makeMockPlayer(GameType.CREATIVE);
                     final BlockPos absCable = world.absolute(cablePos);
                     player.setPos(absCable.getX() + 0.5, absCable.getY() + 1.0, absCable.getZ() + 0.5);

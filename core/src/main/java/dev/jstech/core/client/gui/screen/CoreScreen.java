@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.client.gui.screen;
 
@@ -36,8 +36,10 @@ public abstract class CoreScreen extends Screen {
 
     @Override
     public boolean isPauseScreen() {
-        // Mod screens do not pause singleplayer — a running computer or
-        // machine keeps ticking while its GUI is open.
+        /*
+         * Mod screens do not pause singleplayer; a running computer or
+         * machine keeps ticking while its GUI is open.
+         */
         return false;
     }
 }

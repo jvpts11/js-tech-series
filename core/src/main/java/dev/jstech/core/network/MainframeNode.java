@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.network;
 
@@ -21,7 +21,7 @@ public record MainframeNode(NodeUuid nodeUuid,
                                long ownCapacity,
                                FailoverRole failoverRole,
                                Optional<NodeUuid> failoverPartnerUuid,
-                               long lastHeartbeatTick) implements ComputerNode{
+                               long lastHeartbeatTick) implements IComputerNode{
 
     public MainframeNode {
         Objects.requireNonNull(nodeUuid, "nodeUuid must not be null");
@@ -47,10 +47,12 @@ public record MainframeNode(NodeUuid nodeUuid,
 
     @Override
     public long contributedCapacity() {
-        // PASSIVE consumes 50% in standby; NOT contributed to total.
-        // The function below returns the "net contribution" view.
+        /*
+         * PASSIVE consumes 50% in standby; NOT contributed to total.
+         * The function below returns the "net contribution" view.
+         */
         if (failoverRole == FailoverRole.PASSIVE) {
-            return 0; // Passive contributes nothing — pure overhead.
+            return 0; // Passive contributes nothing, it is pure overhead.
         }
         return ownCapacity;
     }

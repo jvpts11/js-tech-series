@@ -3,22 +3,22 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.JsComputronics;
-import dev.jstech.computronics.os.OsRegistry;
-import dev.jstech.computronics.os.ProgramSpec;
-import dev.jstech.computronics.os.fs.InstallerLayout;
-import dev.jstech.computronics.os.media.InstallMedia;
-import dev.jstech.computronics.os.media.InstallerProjection;
-import dev.jstech.computronics.os.media.MediaFormat;
-import dev.jstech.computronics.os.media.MediaItem;
-import dev.jstech.computronics.os.media.MediaKind;
-import dev.jstech.computronics.os.media.MediaReaderBlock;
-import dev.jstech.computronics.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.fs.InstallerLayout;
+import dev.jstech.computers.os.media.InstallMedia;
+import dev.jstech.computers.os.media.InstallerProjection;
+import dev.jstech.computers.os.media.MediaFormat;
+import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.MediaReaderBlock;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
@@ -52,7 +52,7 @@ public final class InstallMediaGameTests {
     }
 
     private static ResourceLocation rl(final String path) {
-        return ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, path);
+        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, path);
     }
 
     private static ItemStack installer(final Item medium, final MediaKind kind, final String payload) {
@@ -149,8 +149,15 @@ public final class InstallMediaGameTests {
                     helper.assertTrue(root.contains("SETUP.EXE") && root.contains("README.TXT")
                                     && root.contains("CRAFTMGR.PKG") && root.contains("SUPPORT"),
                             "a CD lists setup, readme, manifest and its folders: " + root);
-                    helper.assertTrue(InstallerProjection.list(disc, "SUPPORT").isEmpty(),
-                            "a folder on the disc lists what is inside it, which here is nothing");
+                    final List<String> support = new ArrayList<>();
+                    for (final InstallerLayout.Entry e : InstallerProjection.list(disc, "SUPPORT")) {
+                        support.add(e.path());
+                    }
+                    helper.assertTrue(support.contains("SUPPORT/README.TXT") && support.contains("SUPPORT/CHECKSUM.TXT"),
+                            "a folder on the disc lists what is inside it: the support notes and the checksums; got "
+                                    + support);
+                    helper.assertTrue(InstallerProjection.text(disc, "SUPPORT/CHECKSUM.TXT").orElse("")
+                                    .contains("SETUP.EXE"), "the checksum list names every file on the disc");
                     final String readme = InstallerProjection.text(disc, "README.TXT").orElse("");
                     helper.assertTrue(readme.contains("Package id: craftmgr") && readme.contains("Crafting Manager"),
                             "the readme is generated from the stamp: " + readme);

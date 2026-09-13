@@ -3,17 +3,17 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.crafting.NetworkProcessingOperation;
-import dev.jstech.computronics.crafting.ProcessingPattern;
-import dev.jstech.computronics.operation.NetworkStorage;
-import dev.jstech.computronics.operation.payload.OperationRecord;
-import dev.jstech.computronics.storage.ChemicalBridges;
-import dev.jstech.computronics.storage.ChemicalPort;
-import dev.jstech.computronics.storage.StorageKey;
+import dev.jstech.computers.crafting.NetworkProcessingOperation;
+import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.storage.ChemicalBridges;
+import dev.jstech.computers.storage.IChemicalPort;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -87,7 +87,7 @@ public final class MekanismProcessingGameTests {
                     // With a bus on the hydrogen face too, the by-product is data as well - nothing stays behind.
                     helper.assertTrue(storage.count(hydrogen) == 400,
                             "the hydrogen must reach the network through its own bus; got " + storage.count(hydrogen));
-                    final Optional<ChemicalPort> left = ChemicalBridges.portFor(helper.getLevel(), helper.absolutePos(MACHINE), Direction.EAST);
+                    final Optional<IChemicalPort> left = ChemicalBridges.portFor(helper.getLevel(), helper.absolutePos(MACHINE), Direction.EAST);
                     helper.assertTrue(left.isPresent() && left.get().count(HYDROGEN) == 0,
                             "the separator must be drained of hydrogen; holds " + left.map(p -> p.count(HYDROGEN)).orElse(-1L));
                 })
@@ -139,7 +139,7 @@ public final class MekanismProcessingGameTests {
                             "two lots (400 mB) of water must have been fed, no more; left " + storage.count(water()));
                     // Hydrogen leaves through the other output face, which carries no bus: it stays in the machine.
                     helper.assertTrue(storage.count(hydrogen) == 0, "no hydrogen must reach the network without a bus on its face");
-                    final Optional<ChemicalPort> left = ChemicalBridges.portFor(helper.getLevel(), helper.absolutePos(MACHINE), Direction.EAST);
+                    final Optional<IChemicalPort> left = ChemicalBridges.portFor(helper.getLevel(), helper.absolutePos(MACHINE), Direction.EAST);
                     helper.assertTrue(left.isPresent() && left.get().count(HYDROGEN) == 400,
                             "the separator must hold the 400 mB of hydrogen it made; got "
                                     + left.map(p -> p.count(HYDROGEN)).orElse(-1L));
@@ -173,7 +173,7 @@ public final class MekanismProcessingGameTests {
                     MekanismRig.power(helper);
                     helper.assertTrue(!op[0].isWaiting() && !op[0].isDone(), "the operation must have resolved the chamber; waiting="
                             + op[0].isWaiting() + " done=" + op[0].isDone() + " status=" + op[0].toRecord().status());
-                    final Optional<ChemicalPort> top = ChemicalBridges.portFor(helper.getLevel(), helper.absolutePos(MACHINE), Direction.UP);
+                    final Optional<IChemicalPort> top = ChemicalBridges.portFor(helper.getLevel(), helper.absolutePos(MACHINE), Direction.UP);
                     final var items = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK,
                             helper.absolutePos(MACHINE), Direction.UP);
                     helper.assertTrue(top.isPresent() && top.get().count(OXYGEN) > 0,
@@ -203,9 +203,11 @@ public final class MekanismProcessingGameTests {
 
     @GameTest(template = ARENA, timeoutTicks = 600)
     public static void chemicalInfuser_makesFusionFuelFromDeuteriumAndTritiumData(final GameTestHelper helper) {
-        // The reactor's fuel as data: deuterium and tritium held by the network go into the Chemical Infuser
-        // through one bus on each side face (the machine takes a different input on each), and the D-T fuel
-        // comes back through the bus on its front.
+        /*
+         * The reactor's fuel as data: deuterium and tritium held by the network go into the Chemical Infuser
+         * through one bus on each side face (the machine takes a different input on each), and the D-T fuel
+         * comes back through the bus on its front.
+         */
         final MekanismRig.Rig rig = MekanismRig.build(helper, MekanismRig.mek("chemical_infuser"));
         final StorageKey deuterium = StorageKey.chemical(MekanismRig.generators("deuterium"));
         final StorageKey tritium = StorageKey.chemical(MekanismRig.generators("tritium"));
@@ -215,8 +217,8 @@ public final class MekanismProcessingGameTests {
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     final dev.jstech.tests.testkit.TestWorldBuilder world = rig.world();
                     // Right (west) face: the run cable already touches it; left (east) and front (north) spurs.
-                    if (world.getBlockEntity(MekanismRig.CABLE_WEST) instanceof dev.jstech.computronics.blockentity.DataCableBlockEntity cable) {
-                        cable.addPart(Direction.EAST, new dev.jstech.computronics.block.part.InputBusPart());
+                    if (world.getBlockEntity(MekanismRig.CABLE_WEST) instanceof dev.jstech.computers.blockentity.DataCableBlockEntity cable) {
+                        cable.addPart(Direction.EAST, new dev.jstech.computers.block.part.InputBusPart());
                     }
                     MekanismRig.mountLeftInputBus(world);
                     MekanismRig.mountFrontReceivingBus(world);

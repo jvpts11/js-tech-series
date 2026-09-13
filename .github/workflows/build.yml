@@ -1,0 +1,88 @@
+name: Build
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Compile, unit tests and generated data
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          # Work happens on feature branches, so they keep the cache warm too.
+          cache-read-only: false
+
+      - name: Build and run the unit tests
+        run: ./gradlew build --console=plain
+
+      - name: Regenerate the data of every mod
+        # One at a time: the data runs share the same game directory.
+        run: |
+          for project in core computers industrial tests; do
+            ./gradlew ":$project:runData" --console=plain
+          done
+
+      - name: Check the generated data is committed
+        run: |
+          changes=$(git status --porcelain --untracked-files=all -- '*/src/generated/*' \
+            ':(exclude)*/src/generated/resources/.cache/*')
+          if [ -n "$changes" ]; then
+            echo "The generated data is out of date. Run runData and commit what it writes:"
+            echo "$changes"
+            exit 1
+          fi
+
+      - name: Keep the unit test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: unit-test-reports
+          path: '*/build/reports/tests/'
+          if-no-files-found: ignore
+
+  gametests:
+    name: GameTests
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: false
+
+      - name: Run the GameTests
+        # The server exits with the number of required tests that failed.
+        run: ./gradlew :tests:runGameTestServer --console=plain
+
+      - name: Keep the server logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gametest-logs
+          path: run/logs/
+          if-no-files-found: ignore

@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.config;
 
+import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.operation.OperationBalance;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -20,18 +21,43 @@ class CoreConfigKeysTest {
     @AfterEach
     void restoreDefaults() {
         OperationBalance.reset();
+        ExecutionBalance.reset();
     }
 
     @Test
     void registry_whitelistsEveryBalanceKey() {
         final CoreConfigRegistry registry = CoreConfigKeys.registry();
-        assertEquals(7, registry.size());
+        assertEquals(9, registry.size());
         for (final String path : new String[] {
                 "balance.hdd_latency_ticks", "balance.ssd_latency_ticks", "balance.nvme_latency_ticks",
                 "balance.operation_waiting_timeout_ticks", "balance.operation_priority_aging_ticks",
-                "balance.subframe_efficiency_factor", "balance.orphaned_operations_expiry_hours"}) {
+                "balance.subframe_efficiency_factor", "balance.orphaned_operations_expiry_hours",
+                "balance.program_machine_micros", "balance.program_server_micros"}) {
             assertTrue(registry.isWhitelisted(path), path + " must be whitelisted");
         }
+    }
+
+    @Test
+    void keys_defaultToTheExecutionDefaults() {
+        assertEquals(ExecutionBalance.DEFAULT_MACHINE_MICROS, CoreConfigKeys.PROGRAM_MACHINE_MICROS.defaultValue());
+        assertEquals(ExecutionBalance.DEFAULT_SERVER_MICROS, CoreConfigKeys.PROGRAM_SERVER_MICROS.defaultValue());
+    }
+
+    @Test
+    void apply_pushesTheDeadlinesIntoTheExecutionBalanceAsNanos() {
+        CoreConfigKeys.apply(CoreConfigKeys.PROGRAM_MACHINE_MICROS, 250);
+        CoreConfigKeys.apply(CoreConfigKeys.PROGRAM_SERVER_MICROS, 4000);
+        assertEquals(250_000L, ExecutionBalance.machineNanos());
+        assertEquals(4_000_000L, ExecutionBalance.serverNanos());
+    }
+
+    @Test
+    void validate_clampsADeadlineBelowItsFloor() {
+        final ConfigValidator validator = new ConfigValidator(IConfigLogger.NOOP);
+        final IConfigValidationResult<Integer> result =
+                validator.validate(CoreConfigKeys.PROGRAM_SERVER_MICROS, 1);
+        assertInstanceOf(IConfigValidationResult.Clamped.class, result);
+        assertEquals(100, result.value());
     }
 
     @Test
@@ -47,18 +73,18 @@ class CoreConfigKeysTest {
 
     @Test
     void validate_clampsAnOutOfRangeLatency() {
-        final ConfigValidator validator = new ConfigValidator(ConfigLogger.NOOP);
-        final ConfigValidationResult<Integer> result = validator.validate(CoreConfigKeys.HDD_LATENCY_TICKS, 5000);
-        assertInstanceOf(ConfigValidationResult.Clamped.class, result);
+        final ConfigValidator validator = new ConfigValidator(IConfigLogger.NOOP);
+        final IConfigValidationResult<Integer> result = validator.validate(CoreConfigKeys.HDD_LATENCY_TICKS, 5000);
+        assertInstanceOf(IConfigValidationResult.Clamped.class, result);
         assertEquals(200, result.value());
     }
 
     @Test
     void validate_rejectsAWrongTypeToTheDefault() {
-        final ConfigValidator validator = new ConfigValidator(ConfigLogger.NOOP);
-        final ConfigValidationResult<Double> result =
+        final ConfigValidator validator = new ConfigValidator(IConfigLogger.NOOP);
+        final IConfigValidationResult<Double> result =
                 validator.validate(CoreConfigKeys.SUBFRAME_EFFICIENCY_FACTOR, "fast");
-        assertInstanceOf(ConfigValidationResult.Rejected.class, result);
+        assertInstanceOf(IConfigValidationResult.Rejected.class, result);
         assertEquals(0.6, result.value());
     }
 

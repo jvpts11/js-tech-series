@@ -3,20 +3,20 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computronics.blockentity.MainframeBlockEntity;
-import dev.jstech.computronics.crafting.CraftingPattern;
-import dev.jstech.computronics.crafting.NetworkRecipe;
-import dev.jstech.computronics.crafting.ProcessingPattern;
-import dev.jstech.computronics.operation.NetworkOperation;
-import dev.jstech.computronics.operation.NetworkStorage;
-import dev.jstech.computronics.operation.payload.OperationRecord;
-import dev.jstech.computronics.storage.StorageKey;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.crafting.NetworkRecipe;
+import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.operation.INetworkOperation;
+import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -103,13 +103,15 @@ public final class MekanismHardwareMatrixGameTests {
 
     @GameTest(template = ARENA, timeoutTicks = 600)
     public static void oneQueue_stillRunsBothMachineCraftsAndTheirStages(final GameTestHelper helper) {
-        // One CPU, no GPU: one Mainframe queue. Crafting is a subnet independent of the Mainframe's operation
-        // queues, so the single queue does NOT gate crafts or their machine stages. Two machine crafts on one
-        // Crafting Computer both run (each parks on its machine while the other takes the computer for bench work),
-        // and each launches its own machine step, gated by the Crafting Computer's threads (T2 card = 2) and the
-        // machines present, not by the queue. With two infusers, both machine steps run at once even on one queue.
-        // (The Mainframe queue count is for distinct operations and throughput; a Supercomputer is what scales
-        // distinct crafts across computers — see supercomputer_unlocksParallelCrafting.)
+        /*
+         * One CPU, no GPU: one Mainframe queue. Crafting is a subnet independent of the Mainframe's operation
+         * queues, so the single queue does NOT gate crafts or their machine stages. Two machine crafts on one
+         * Crafting Computer both run (each parks on its machine while the other takes the computer for bench work),
+         * and each launches its own machine step, gated by the Crafting Computer's threads (T2 card = 2) and the
+         * machines present, not by the queue. With two infusers, both machine steps run at once even on one queue.
+         * (The Mainframe queue count is for distinct operations and throughput; a Supercomputer is what scales
+         * distinct crafts across computers, see supercomputer_unlocksParallelCrafting.)
+         */
         final MekanismRig.Rig rig = MekanismRig.build(helper, INFUSER);
         final StorageKey frame = MekanismRig.itemKey(FRAME);
         final StorageKey infused = MekanismRig.itemKey(ALLOY_INFUSED);
@@ -140,10 +142,12 @@ public final class MekanismHardwareMatrixGameTests {
 
     @GameTest(template = ARENA, timeoutTicks = 600)
     public static void gpu_doesNotChangeMachineCraftConcurrency(final GameTestHelper helper) {
-        // The same two crafts and two infusers, now on a Mainframe with a GPU (two queues). Because crafting is a
-        // subnet independent of the Mainframe queues, the extra queue changes nothing for the crafts: both still
-        // run and both machine steps run at once, exactly as on one queue (see oneQueue_stillRunsBothMachineCrafts
-        // AndTheirStages). The GPU adds a queue for distinct operations and throughput, not for crafts or stages.
+        /*
+         * The same two crafts and two infusers, now on a Mainframe with a GPU (two queues). Because crafting is a
+         * subnet independent of the Mainframe queues, the extra queue changes nothing for the crafts: both still
+         * run and both machine steps run at once, exactly as on one queue (see oneQueue_stillRunsBothMachineCrafts
+         * AndTheirStages). The GPU adds a queue for distinct operations and throughput, not for crafts or stages.
+         */
         final MekanismRig.Rig rig = MekanismRig.build(helper, INFUSER);
         final StorageKey frame = MekanismRig.itemKey(FRAME);
         final StorageKey infused = MekanismRig.itemKey(ALLOY_INFUSED);
@@ -175,12 +179,14 @@ public final class MekanismHardwareMatrixGameTests {
 
     @GameTest(template = ARENA, timeoutTicks = 1500)
     public static void gpuPulledMidCraft_craftSurvivesAndCompletes(final GameTestHelper helper) {
-        // Hot-swapping the GPU changes the Mainframe's queue count. Resizing the dispatcher must happen IN PLACE:
-        // rebuilding it would abandon every in-flight Operation, so pulling a GPU mid-craft would discard the craft
-        // and strand its machines (the receiving buses stop pulling). The craft must survive the pull and finish.
+        /*
+         * Hot-swapping the GPU changes the Mainframe's queue count. Resizing the dispatcher must happen IN PLACE:
+         * rebuilding it would abandon every in-flight Operation, so pulling a GPU mid-craft would discard the craft
+         * and strand its machines (the receiving buses stop pulling). The craft must survive the pull and finish.
+         */
         final MekanismRig.Rig rig = MekanismRig.build(helper, INFUSER);
         final StorageKey infused = MekanismRig.itemKey(ALLOY_INFUSED);
-        final NetworkOperation[] op = new NetworkOperation[1];
+        final INetworkOperation[] op = new INetworkOperation[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     prepare(helper, rig, 1);
@@ -222,7 +228,7 @@ public final class MekanismHardwareMatrixGameTests {
         final MekanismRig.Rig rig = MekanismRig.build(helper, INFUSER);
         final StorageKey frame = MekanismRig.itemKey(FRAME);
         final StorageKey infused = MekanismRig.itemKey(ALLOY_INFUSED);
-        final NetworkOperation[] op = new NetworkOperation[1];
+        final INetworkOperation[] op = new INetworkOperation[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> prepare(helper, rig, 1))
                 .thenExecuteAfter(SETTLE + 2, () -> {
@@ -265,7 +271,7 @@ public final class MekanismHardwareMatrixGameTests {
     public static void machineBrokenMidStep_craftFailsVisiblyAndTheMachineKeepsItsContents(final GameTestHelper helper) {
         final MekanismRig.Rig rig = MekanismRig.build(helper, INFUSER);
         final StorageKey frame = MekanismRig.itemKey(FRAME);
-        final NetworkOperation[] op = new NetworkOperation[1];
+        final INetworkOperation[] op = new INetworkOperation[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> prepare(helper, rig, 1))
                 .thenExecuteAfter(SETTLE + 2, () -> {
@@ -307,9 +313,9 @@ public final class MekanismHardwareMatrixGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     helper.assertTrue(rig.net().mainframe().submitNetworkCraft(frame, 4, false, "battery", null) == null,
                             "a Mainframe that is not running must refuse the request");
-                    final var cli = new dev.jstech.computronics.program.ServerCliComputer(
-                            (dev.jstech.computronics.terminal.ComputerTerminalHost) rig.net().cc(), helper.getLevel());
-                    final var response = dev.jstech.computronics.program.cli.CliCommands.newShell(50)
+                    final var cli = new dev.jstech.computers.program.ServerCliComputer(
+                            (dev.jstech.computers.terminal.IComputerTerminalHost) rig.net().cc(), helper.getLevel());
+                    final var response = dev.jstech.computers.program.cli.CliCommands.newShell(50)
                             .run("operation craft 4 " + FRAME, cli);
                     final String text = String.join(" | ", response.lines().stream().map(l -> l.text()).toList());
                     helper.assertTrue(!text.contains("CRAFT queued"), "the shell must not queue a craft without a running Mainframe; got " + text);

@@ -3,21 +3,21 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.JsComputronics;
-import dev.jstech.computronics.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computronics.blockentity.MainframeBlockEntity;
-import dev.jstech.computronics.crafting.CraftingPattern;
-import dev.jstech.computronics.hardware.DiskSize;
-import dev.jstech.computronics.hardware.StorageTier;
-import dev.jstech.computronics.os.FilesystemKind;
-import dev.jstech.computronics.os.fs.CraftFile;
-import dev.jstech.computronics.os.fs.DiskFilesystem;
-import dev.jstech.computronics.os.fs.FileType;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.os.FilesystemKind;
+import dev.jstech.computers.os.fs.CraftFile;
+import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -80,7 +80,7 @@ public final class CraftFileGameTests {
     /**
      * Writes a {@code .craft} file onto a disk, asserts it appears in {@link DiskFilesystem#list},
      * then reads and parses it back, and finally clears the pattern from the ROM and loads it
-     * again from the file — verifying the full save → list → load round-trip.
+     * again from the file, verifying the full save → list → load round-trip.
      */
     @GameTest(template = ARENA)
     public static void craftFile_saveListLoadRoundTrip(final GameTestHelper helper) {
@@ -116,7 +116,7 @@ public final class CraftFileGameTests {
 
         // Install the Network OS onto the disk; FLAT filesystem (mc_net uses the DOS kernel).
         final ResourceLocation soRede =
-                ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, "mc_net");
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_net");
         cc.installOs(soRede);
 
         // Load a pattern into the ROM.
@@ -125,8 +125,10 @@ public final class CraftFileGameTests {
 
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    // --- SAVE ---
-                    // Serialize the first ROM pattern and write it to the system disk.
+                    /*
+                     * SAVE
+                     * Serialize the first ROM pattern and write it to the system disk.
+                     */
                     final ItemStack sysDisk = cc.systemDisk();
                     helper.assertFalse(sysDisk.isEmpty(), "system disk must be present after installOs");
 
@@ -142,7 +144,7 @@ public final class CraftFileGameTests {
                             "write must return OK; got: " + writeResult);
                     cc.setChanged();
 
-                    // --- LIST ---
+                    // LIST
                     final List<DiskFilesystem.FileEntry> entries =
                             DiskFilesystem.list(sysDisk, "", FilesystemKind.FLAT);
                     final long craftCount = entries.stream()
@@ -153,8 +155,10 @@ public final class CraftFileGameTests {
                     helper.assertTrue(DiskFilesystem.exists(sysDisk, "test_recipe.craft"),
                             "exists() must confirm the written file");
 
-                    // --- LOAD ---
-                    // Clear the ROM so we can verify the load re-adds the pattern.
+                    /*
+                     * LOAD
+                     * Clear the ROM so we can verify the load re-adds the pattern.
+                     */
                     cc.removePattern(0);
                     helper.assertTrue(cc.romUsed() == 0, "ROM must be empty after removePattern");
 

@@ -3,21 +3,21 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.JsComputronics;
-import dev.jstech.computronics.blockentity.MainframeBlockEntity;
-import dev.jstech.computronics.hardware.DiskSize;
-import dev.jstech.computronics.hardware.StorageTier;
-import dev.jstech.computronics.operation.payload.ComputingPayloads;
-import dev.jstech.computronics.os.OsRegistry;
-import dev.jstech.computronics.os.boot.BootController;
-import dev.jstech.computronics.os.media.MediaItem;
-import dev.jstech.computronics.os.media.MediaKind;
-import dev.jstech.computronics.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.operation.payload.ComputingPayloads;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.boot.BootController;
+import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
@@ -47,10 +47,10 @@ public final class OsGameTests {
     private static final int SETTLE = 4;
 
     private static final ResourceLocation SO_REDE =
-            ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, "mc_net");
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_net");
 
     private static final ResourceLocation MC_DOS =
-            ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, "mc_dos");
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_dos");
 
     @GameTest(template = ARENA)
     public static void os_installPersistsAndConsumesDisk(final GameTestHelper helper) {
@@ -103,7 +103,7 @@ public final class OsGameTests {
     @GameTest(template = ARENA, timeoutTicks = 60)
     public static void os_installFromLinkedReader(final GameTestHelper helper) {
         final BlockPos mainframePos = new BlockPos(2, 2, 2);
-        final BlockPos readerPos = mainframePos.east(); // placed adjacent — no cable needed for adjacency
+        final BlockPos readerPos = mainframePos.east(); // placed adjacent, no cable needed for adjacency
 
         // Place a Mainframe with a GPU so it has peripheral ports, then add a Media Reader next to it.
         final MainframeBlockEntity mainframe = placeRunningMainframeWithDisk(helper, mainframePos);
@@ -159,7 +159,7 @@ public final class OsGameTests {
 
                     // Era gating: a LEGACY-minimum OS must NOT install on a Vintage-era hardware.
                     helper.assertTrue(
-                            !dev.jstech.computronics.os.OsGating.canInstall(
+                            !dev.jstech.computers.os.OsGating.canInstall(
                                     HardwareEra.LEGACY, HardwareEra.VINTAGE),
                             "canInstall(LEGACY, VINTAGE) must be false (era gate rejects newer OS on older hardware)");
                 })
@@ -181,13 +181,15 @@ public final class OsGameTests {
                     helper.assertFalse(mainframe.hasOs(),
                             "Mainframe must start with no OS");
 
-                    // Without an OS the tick gate never calls runDispatch(), so the dispatcher is never
-                    // created. submitSelfTest guards on dispatch == null and returns 0 (no tasks queued).
+                    /*
+                     * Without an OS the tick gate never calls runDispatch(), so the dispatcher is never
+                     * created. submitSelfTest guards on dispatch == null and returns 0 (no tasks queued).
+                     */
                     final int submitted = mainframe.submitSelfTest(3, 1);
                     helper.assertTrue(submitted == 0,
                             "submitSelfTest must return 0 while the Mainframe has no OS; got " + submitted);
 
-                    // The completed count must remain at zero — no dispatch, no progress.
+                    // The completed count must remain at zero, no dispatch, no progress.
                     helper.assertTrue(mainframe.completedOps() == 0,
                             "completedOps must be 0 before any OS; got " + mainframe.completedOps());
                 })
@@ -197,7 +199,7 @@ public final class OsGameTests {
                             "no Operations must complete while the Mainframe has no OS; completedOps="
                                     + mainframe.completedOps());
 
-                    // Install the OS — the next tick will create the dispatcher.
+                    // Install the OS, and the next tick will create the dispatcher.
                     final boolean installed = mainframe.installOs(SO_REDE);
                     helper.assertTrue(installed, "installOs must succeed after the OS gate is cleared");
                 })
@@ -234,40 +236,38 @@ public final class OsGameTests {
                 NetworkGameTests.placeRunningMainframe(helper, mainframePos);
         helper.setBlock(cablePos, ComputingModule.HBW_CABLE.get());
 
-        // Place a Server Router (Category B — no OS concept).
+        // Place a Server Router (Category B, no OS concept).
         helper.setBlock(routerPos, ComputingModule.SERVER_ROUTER.get().defaultBlockState()
                 .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
                         Direction.EAST));
 
-        // Place a Cluster Management Computer (Category A — a computer that runs a system).
+        // Place a Cluster Management Computer (Category A, a computer that runs a system).
         helper.setBlock(managerPos, ComputingModule.CLUSTER_MANAGEMENT_COMPUTER.get());
 
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     final var routerBe = helper.getBlockEntity(routerPos);
-                    helper.assertTrue(routerBe instanceof dev.jstech.computronics.blockentity
+                    helper.assertTrue(routerBe instanceof dev.jstech.computers.blockentity
                                     .ServerRouterBlockEntity,
                             "the Server Router must create a ServerRouterBlockEntity");
                     helper.assertFalse(
-                            routerBe instanceof dev.jstech.computronics.blockentity
+                            routerBe instanceof dev.jstech.computers.blockentity
                                     .AbstractComputerBlockEntity,
                             "the Server Router must NOT extend AbstractComputerBlockEntity");
                     final var managerBe = helper.getBlockEntity(managerPos);
                     helper.assertTrue(
-                            managerBe instanceof dev.jstech.computronics.blockentity
+                            managerBe instanceof dev.jstech.computers.blockentity
                                     .AbstractComputerBlockEntity,
                             "the Cluster Management Computer is a computer: it extends AbstractComputerBlockEntity");
 
-                    // The Mainframe still owns its network — the appliance does not interfere.
+                    // The Mainframe still owns its network, and the appliance does not interfere.
                     helper.assertTrue(mainframe.networkUuid() != null,
                             "Mainframe must own a network regardless of appliance presence");
                 })
                 .thenSucceed();
     }
 
-    // -------------------------------------------------------------------------
     // Helpers
-    // -------------------------------------------------------------------------
 
     /**
      * Places a running Mainframe with a valid hardware build AND one HDD so that storage capacity

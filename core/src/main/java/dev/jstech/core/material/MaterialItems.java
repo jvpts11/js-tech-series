@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.material;
 
@@ -57,7 +57,7 @@ public final class MaterialItems {
         if (formMap == null || !formMap.containsKey(form)) {
             throw new IllegalStateException(
                     "Not registered: " + mat + "/" + form
-                    + " — check activeModForms or call MaterialItems.register() first");
+                    + ". Check activeModForms or call MaterialItems.register() first");
         }
         return formMap.get(form);
     }

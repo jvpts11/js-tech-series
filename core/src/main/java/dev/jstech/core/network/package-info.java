@@ -3,9 +3,9 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 /**
- * The NetworkSystem — graph of cables, network anchors, gateways and routers that connects computers, machines and peripherals.
+ * The NetworkSystem: the graph of cables, network anchors, gateways and routers that connects computers, machines and peripherals.
  */
 package dev.jstech.core.network;

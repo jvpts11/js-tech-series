@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.clienttest;
 
@@ -48,11 +48,11 @@ public final class ClientTestContext {
 
     /** One unit of work; returns true once it has finished (a one-shot step finishes on its first tick). */
     @FunctionalInterface
-    public interface Step {
+    public interface IStep {
         boolean tick();
     }
 
-    record Queued(int delay, String label, Step step) {
+    record Queued(int delay, String label, IStep step) {
     }
 
     private final Minecraft mc;
@@ -88,7 +88,7 @@ public final class ClientTestContext {
 
     /** Runs {@code action} on the integrated server's thread and waits for it to complete. */
     public ClientTestContext thenServer(final int delayTicks, final Consumer<ServerLevel> action) {
-        queue.add(new Queued(delayTicks, "server", new Step() {
+        queue.add(new Queued(delayTicks, "server", new IStep() {
             private CompletableFuture<Void> pending;
 
             @Override
@@ -126,11 +126,11 @@ public final class ClientTestContext {
 
     /**
      * As {@link #thenWaitUntil(BooleanSupplier, int, String)}, with {@code diagnostics} evaluated only on
-     * timeout and appended to the failure — for the state that explains why the wait never ended.
+     * timeout and appended to the failure, for the state that explains why the wait never ended.
      */
     public ClientTestContext thenWaitUntil(final BooleanSupplier condition, final int maxTicks, final String what,
                                            final java.util.function.Supplier<String> diagnostics) {
-        queue.add(new Queued(0, "wait:" + what, new Step() {
+        queue.add(new Queued(0, "wait:" + what, new IStep() {
             private int waited;
 
             @Override
@@ -162,7 +162,7 @@ public final class ClientTestContext {
     public ClientTestContext thenWaitUntilServer(final java.util.function.Predicate<ServerLevel> condition,
                                                  final int maxTicks, final String what,
                                                  final java.util.function.Function<ServerLevel, String> diagnostics) {
-        queue.add(new Queued(0, "waitServer:" + what, new Step() {
+        queue.add(new Queued(0, "waitServer:" + what, new IStep() {
             private int waited;
             private CompletableFuture<Boolean> probe;
 
@@ -213,11 +213,11 @@ public final class ClientTestContext {
     }
 
     /**
-     * Saves and leaves the world, reopens it from disk and waits until the player is back in — a real reload,
+     * Saves and leaves the world, reopens it from disk and waits until the player is back in, a real reload,
      * so whatever the test checks afterwards went through NBT and the level save. Any open screen is closed.
      */
     public ClientTestContext thenSaveAndReload(final int delayTicks) {
-        queue.add(new Queued(delayTicks, "saveAndReload", new Step() {
+        queue.add(new Queued(delayTicks, "saveAndReload", new IStep() {
             private int phase;
             private int waited;
 
@@ -262,9 +262,20 @@ public final class ClientTestContext {
         return this;
     }
 
-    /** Teleports the synthetic player to {@code relative} (its feet), looking toward {@code facing}. */
+    /**
+     * Teleports the synthetic player to {@code relative} (its feet), looking toward {@code facing}, and
+     * waits for the client to have got there.
+     *
+     * <p>The move is the server's, and the client learns of it a packet later; the steps that follow
+     * click from where the client thinks the player stands, so a click sent before the move arrived
+     * would aim from the old place. A client busy with a mod's start-up work can fall a second behind
+     * in the first test of a run, which is exactly when that happened.
+     */
     public ClientTestContext thenTeleport(final int delayTicks, final BlockPos relative, final Direction facing) {
-        return thenServer(delayTicks, level -> teleport(relative, facing));
+        thenServer(delayTicks, level -> teleport(relative, facing));
+        return thenWaitUntil(() -> player() != null
+                        && player().position().distanceTo(Vec3.atBottomCenterOf(abs(relative))) < 2.0,
+                200, "the client's player to arrive at " + relative);
     }
 
     /** Right-clicks the block at {@code relative} with the empty hand, the way the player opens a GUI. */
@@ -357,7 +368,7 @@ public final class ClientTestContext {
 
     /**
      * Client-side: uses the held item on the block at {@code relative}, hitting the face that looks at the
-     * player — the same path a real click takes, so the server-side reach and hit checks apply.
+     * player, the same path a real click takes, so the server-side reach and hit checks apply.
      */
     public void rightClick(final BlockPos relative) {
         final BlockPos target = abs(relative);
@@ -435,11 +446,43 @@ public final class ClientTestContext {
         screen.mouseReleased(x, y, 0);
     }
 
+    /** Presses and releases the right mouse button at screen coordinates ({@code x}, {@code y}). */
+    public void rightClick(final double x, final double y) {
+        final Screen screen = screen(Screen.class);
+        screen.mouseClicked(x, y, 1);
+        screen.mouseReleased(x, y, 1);
+    }
+
     /** Clicks a desktop-relative point (window and app geometry, as the desktop apps report it). */
     public void clickDesktop(final int[] point) {
-        final dev.jstech.computronics.client.os.DesktopScreen desktop =
-                screen(dev.jstech.computronics.client.os.DesktopScreen.class);
-        click(desktop.desktopX() + point[0] + 0.5, desktop.desktopY() + point[1] + 0.5);
+        final dev.jstech.computers.client.os.DesktopScreen desktop =
+                screen(dev.jstech.computers.client.os.DesktopScreen.class);
+        // A desktop drawn smaller puts its points closer together on the screen; the click goes where they are drawn.
+        click(desktop.desktopX() + point[0] * desktop.desktopScale() + 0.5,
+                desktop.desktopY() + point[1] * desktop.desktopScale() + 0.5);
+    }
+
+    /** Presses on one desktop-local point, drags to another and lets go, at the desktop's scale. */
+    public void dragDesktop(final int[] from, final int[] to) {
+        final dev.jstech.computers.client.os.DesktopScreen desktop =
+                screen(dev.jstech.computers.client.os.DesktopScreen.class);
+        final double s = desktop.desktopScale();
+        final double sx = desktop.desktopX() + from[0] * s + 0.5;
+        final double sy = desktop.desktopY() + from[1] * s + 0.5;
+        final double ex = desktop.desktopX() + to[0] * s + 0.5;
+        final double ey = desktop.desktopY() + to[1] * s + 0.5;
+        desktop.mouseClicked(sx, sy, 0);
+        desktop.mouseDragged((sx + ex) / 2, (sy + ey) / 2, 0, (ex - sx) / 2, (ey - sy) / 2);
+        desktop.mouseDragged(ex, ey, 0, (ex - sx) / 2, (ey - sy) / 2);
+        desktop.mouseReleased(ex, ey, 0);
+    }
+
+    /** The right button on a desktop-local point, the way {@link #clickDesktop} is the left one. */
+    public void rightClickDesktop(final int[] point) {
+        final dev.jstech.computers.client.os.DesktopScreen desktop =
+                screen(dev.jstech.computers.client.os.DesktopScreen.class);
+        rightClick(desktop.desktopX() + point[0] * desktop.desktopScale() + 0.5,
+                desktop.desktopY() + point[1] * desktop.desktopScale() + 0.5);
     }
 
     /** Clicks at ({@code x}, {@code y}) relative to the open container screen's top-left corner. */
@@ -468,9 +511,19 @@ public final class ClientTestContext {
 
     /** Presses and releases a GLFW key on the open screen. */
     public void key(final int keyCode) {
+        key(keyCode, 0);
+    }
+
+    /**
+     * The same, with modifiers held: {@code GLFW_MOD_CONTROL} and friends, combined with {@code |}.
+     *
+     * <p>The shortcuts a program has are keys held with something, so a test that never holds anything
+     * cannot reach them at all.
+     */
+    public void key(final int keyCode, final int modifiers) {
         final Screen screen = screen(Screen.class);
-        screen.keyPressed(keyCode, 0, 0);
-        screen.keyReleased(keyCode, 0, 0);
+        screen.keyPressed(keyCode, 0, modifiers);
+        screen.keyReleased(keyCode, 0, modifiers);
     }
 
     /** Types {@code text} into the open screen, character by character. */

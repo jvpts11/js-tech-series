@@ -15,14 +15,14 @@ Every `.java` file starts with this block comment, above the `package` line:
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
-package dev.jstech.computronics...;
+package dev.jstech.computers...;
 ```
 
 The SPDX tag identifies the licence; the full text lives in `LICENSE`. Do not use the line-comment form and
 do not paste the long licence preamble. The last line names the mod the file belongs to: J's Core, J's
-Computronics or J's Industrial.
+Computers or J's Industrial.
 
 ## Modelling
 
@@ -69,7 +69,11 @@ technical reasoning out.
 - A plain imperative title, no trailing period, followed by an optional body that explains what changed
   and why: `Add the energy network distribution`, `Fix the peripheral cable length clamp`. No type
   prefixes such as `feat:` or `fix:`.
-- Branch names in English: `feature/energy-network`, `fix/payload-streamcodec`.
+- Branch names in English, in three parts: the mods the branch touches, the kind of work, and its name:
+  `<mod>-<mod>/<kind>/<name>`. The mods are the subproject names in alphabetical order, joined by
+  hyphens (no subproject name contains one); the kind is `feature`, `fix` or whatever the work is.
+  Examples: `core/fix/payload-streamcodec`, `computers-core/feature/user-software`. The first part says
+  at a glance which jars a branch changes, and the merge commit's message keeps it in the history.
 - Commits carry the author's own authorship and nothing else.
 
 ## NeoForge 1.21.1

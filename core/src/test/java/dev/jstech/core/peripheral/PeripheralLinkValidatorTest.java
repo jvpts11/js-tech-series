@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.peripheral;
 
@@ -38,9 +38,9 @@ class PeripheralLinkValidatorTest {
         adj.put(ENDPOINT_POS, List.of(OWNER_POS));
 
         PeripheralLinkValidator validator = build(adj, owner, endpoint, Map.of());
-        LinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+        ILinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
 
-        LinkResult.Established e = assertInstanceOf(LinkResult.Established.class, result);
+        ILinkResult.Established e = assertInstanceOf(ILinkResult.Established.class, result);
         assertEquals(0, e.pathLength());
         assertTrue(owner.linkedEndpoints().contains(ENDPOINT_POS));
         assertEquals(Optional.of(OWNER_POS), endpoint.linkedOwner());
@@ -59,15 +59,15 @@ class PeripheralLinkValidatorTest {
                 C1, PeripheralCableType.COMPUTING);
 
         PeripheralLinkValidator validator = build(adj, owner, endpoint, cables);
-        LinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+        ILinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
 
-        LinkResult.Established e = assertInstanceOf(LinkResult.Established.class, result);
+        ILinkResult.Established e = assertInstanceOf(ILinkResult.Established.class, result);
         assertEquals(1, e.pathLength());
     }
 
     @Test
     void pathWithinMaxLength_succeeds() {
-        // 3-cable path for COMPUTING (max 16) — well within budget.
+        // 3-cable path for COMPUTING (max 16), well within budget.
         TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8);
         TestEndpoint endpoint = new TestEndpoint(PeripheralCableType.COMPUTING);
 
@@ -84,9 +84,9 @@ class PeripheralLinkValidatorTest {
                 C3, PeripheralCableType.COMPUTING);
 
         PeripheralLinkValidator validator = build(adj, owner, endpoint, cables);
-        LinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+        ILinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
 
-        LinkResult.Established e = assertInstanceOf(LinkResult.Established.class, result);
+        ILinkResult.Established e = assertInstanceOf(ILinkResult.Established.class, result);
         assertEquals(3, e.pathLength());
     }
 
@@ -111,10 +111,10 @@ class PeripheralLinkValidatorTest {
         adj.put(ENDPOINT_POS, List.of(prev));
 
         PeripheralLinkValidator validator = build(adj, owner, endpoint, cables);
-        LinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+        ILinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
 
-        LinkResult.ExceedsMaxLength too = assertInstanceOf(
-                LinkResult.ExceedsMaxLength.class, result);
+        ILinkResult.ExceedsMaxLength too = assertInstanceOf(
+                ILinkResult.ExceedsMaxLength.class, result);
         assertEquals(10, too.pathLength());
         assertEquals(8, too.maxAllowed());
     }
@@ -130,18 +130,20 @@ class PeripheralLinkValidatorTest {
                 ENDPOINT_POS, List.of(OWNER_POS));
 
         PeripheralLinkValidator validator = build(adj, owner, endpoint, Map.of());
-        LinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+        ILinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
 
-        LinkResult.CableTypeMismatch m = assertInstanceOf(
-                LinkResult.CableTypeMismatch.class, result);
+        ILinkResult.CableTypeMismatch m = assertInstanceOf(
+                ILinkResult.CableTypeMismatch.class, result);
         assertEquals(PeripheralCableType.COMPUTING, m.expected());
         assertEquals(PeripheralCableType.TELEMETRY, m.actual());
     }
 
     @Test
     void bfs_ignoresCablesOfWrongType() {
-        // Path is OWNER -- C1(TELEMETRY) -- ENDPOINT, but owner needs COMPUTING.
-        // Path should fail because BFS won't traverse the TELEMETRY cable.
+        /*
+         * Path is OWNER -- C1(TELEMETRY) -- ENDPOINT, but owner needs COMPUTING.
+         * Path should fail because BFS won't traverse the TELEMETRY cable.
+         */
         TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8);
         TestEndpoint endpoint = new TestEndpoint(PeripheralCableType.COMPUTING);
 
@@ -153,9 +155,9 @@ class PeripheralLinkValidatorTest {
                 C1, PeripheralCableType.TELEMETRY);
 
         PeripheralLinkValidator validator = build(adj, owner, endpoint, cables);
-        LinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+        ILinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
 
-        assertInstanceOf(LinkResult.NoPathFound.class, result);
+        assertInstanceOf(ILinkResult.NoPathFound.class, result);
     }
 
     @Test
@@ -169,10 +171,10 @@ class PeripheralLinkValidatorTest {
                 ENDPOINT_POS, List.of(OWNER_POS));
 
         PeripheralLinkValidator validator = build(adj, owner, endpoint, Map.of());
-        LinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+        ILinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
 
-        LinkResult.AlreadyLinked al = assertInstanceOf(
-                LinkResult.AlreadyLinked.class, result);
+        ILinkResult.AlreadyLinked al = assertInstanceOf(
+                ILinkResult.AlreadyLinked.class, result);
         assertEquals(99_999_999L, al.existingOwnerPos());
     }
 
@@ -188,18 +190,20 @@ class PeripheralLinkValidatorTest {
                 ENDPOINT_POS, List.of(OWNER_POS));
 
         PeripheralLinkValidator validator = build(adj, owner, endpoint, Map.of());
-        LinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+        ILinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
 
-        LinkResult.OwnerAtCapacity cap = assertInstanceOf(
-                LinkResult.OwnerAtCapacity.class, result);
+        ILinkResult.OwnerAtCapacity cap = assertInstanceOf(
+                ILinkResult.OwnerAtCapacity.class, result);
         assertEquals(2, cap.currentCount());
         assertEquals(2, cap.maxAllowed());
     }
 
     @Test
     void reLinkSameEndpoint_atCapacity_succeeds() {
-        // If endpoint is already linked to this owner, link is idempotent
-        // and should succeed even when capacity is full.
+        /*
+         * If endpoint is already linked to this owner, link is idempotent
+         * and should succeed even when capacity is full.
+         */
         TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 2);
         owner.onEndpointLinked(ENDPOINT_POS); // pre-linked
         owner.onEndpointLinked(60L);          // at capacity now
@@ -211,9 +215,9 @@ class PeripheralLinkValidatorTest {
                 ENDPOINT_POS, List.of(OWNER_POS));
 
         PeripheralLinkValidator validator = build(adj, owner, endpoint, Map.of());
-        LinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+        ILinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
 
-        assertInstanceOf(LinkResult.Established.class, result);
+        assertInstanceOf(ILinkResult.Established.class, result);
     }
 
     @Test
@@ -232,9 +236,9 @@ class PeripheralLinkValidatorTest {
                 C2, PeripheralCableType.TELEMETRY);
 
         PeripheralLinkValidator validator = build(adj, owner, endpoint, cables);
-        LinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+        ILinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
 
-        LinkResult.Established e = assertInstanceOf(LinkResult.Established.class, result);
+        ILinkResult.Established e = assertInstanceOf(ILinkResult.Established.class, result);
         assertEquals(1, e.pathLength());
     }
 
@@ -277,7 +281,7 @@ class PeripheralLinkValidatorTest {
 
     @Test
     void telemetryCable_supportsLongPaths() {
-        // Build a 50-hop path of TELEMETRY cables — well under max 256.
+        // Build a 50-hop path of TELEMETRY cables, well under max 256.
         TestOwner owner = new TestOwner(PeripheralCableType.TELEMETRY, 6);
         TestEndpoint endpoint = new TestEndpoint(PeripheralCableType.TELEMETRY);
 
@@ -296,9 +300,9 @@ class PeripheralLinkValidatorTest {
         adj.put(ENDPOINT_POS, List.of(prev));
 
         PeripheralLinkValidator validator = build(adj, owner, endpoint, cables);
-        LinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+        ILinkResult result = validator.tryEstablishLink(OWNER_POS, ENDPOINT_POS);
 
-        LinkResult.Established e = assertInstanceOf(LinkResult.Established.class, result);
+        ILinkResult.Established e = assertInstanceOf(ILinkResult.Established.class, result);
         assertEquals(50, e.pathLength());
     }
 
@@ -306,8 +310,8 @@ class PeripheralLinkValidatorTest {
 
     private static PeripheralLinkValidator build(
             Map<Long, List<Long>> adjacency,
-            PeripheralOwner owner,
-            PeripheralEndpoint endpoint,
+            IPeripheralOwner owner,
+            IPeripheralEndpoint endpoint,
             Map<Long, PeripheralCableType> cables) {
         return new PeripheralLinkValidator(
                 pos -> Optional.ofNullable(cables.get(pos)),
@@ -317,9 +321,9 @@ class PeripheralLinkValidatorTest {
     }
 
     /**
-     * Mutable test-only PeripheralOwner.
+     * Mutable test-only IPeripheralOwner.
      */
-    private static final class TestOwner implements PeripheralOwner {
+    private static final class TestOwner implements IPeripheralOwner {
         private final PeripheralCableType cableType;
         private final int maxEndpoints;
         private final List<Long> linked = new ArrayList<>();
@@ -343,9 +347,9 @@ class PeripheralLinkValidatorTest {
     }
 
     /**
-     * Mutable test-only PeripheralEndpoint.
+     * Mutable test-only IPeripheralEndpoint.
      */
-    private static final class TestEndpoint implements PeripheralEndpoint {
+    private static final class TestEndpoint implements IPeripheralEndpoint {
         private final PeripheralCableType cableType;
         private Optional<Long> ownerPos = Optional.empty();
 

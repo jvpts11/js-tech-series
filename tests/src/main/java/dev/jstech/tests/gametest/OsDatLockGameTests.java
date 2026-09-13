@@ -3,23 +3,23 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.gametest;
 
-import dev.jstech.computronics.ComputingModule;
-import dev.jstech.computronics.JsComputronics;
-import dev.jstech.computronics.blockentity.MainframeBlockEntity;
-import dev.jstech.computronics.hardware.DiskSize;
-import dev.jstech.computronics.hardware.StorageTier;
-import dev.jstech.computronics.operation.payload.ComputingPayloads;
-import dev.jstech.computronics.os.FilesystemKind;
-import dev.jstech.computronics.os.fs.DiskFilesystem;
-import dev.jstech.computronics.os.fs.FileType;
-import dev.jstech.computronics.os.media.MediaItem;
-import dev.jstech.computronics.os.media.MediaKind;
-import dev.jstech.computronics.storage.DriveVolumes;
-import dev.jstech.computronics.storage.StorageKey;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.operation.payload.ComputingPayloads;
+import dev.jstech.computers.os.FilesystemKind;
+import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.storage.DriveVolumes;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -37,7 +37,7 @@ import java.util.Map;
 
 /**
  * In-world tests for the {@code .dat} integrity rule: a {@code .dat} is a read-only projection of stored
- * items, so it can never be created, written, deleted, or renamed by hand — and the one sanctioned manual
+ * items, so it can never be created, written, deleted, or renamed by hand, and the one sanctioned manual
  * action, dragging it onto a removable medium, moves the underlying item conservatively (no loss, no dupe).
  */
 @GameTestHolder(JsTests.MODID)
@@ -51,7 +51,7 @@ public final class OsDatLockGameTests {
     private static final int SETTLE = 4;
 
     /**
-     * A manual {@code .dat} action — delete or rename — is refused at the filesystem API, the gate every
+     * A manual {@code .dat} action (delete or rename) is refused at the filesystem API, the gate every
      * client and server path funnels through. Neither mutates the disk.
      */
     @GameTest(template = ARENA)
@@ -146,7 +146,7 @@ public final class OsDatLockGameTests {
         mainframe.togglePower();
 
         final ResourceLocation mcNetOs =
-                ResourceLocation.fromNamespaceAndPath(JsComputronics.MODID, "mc_net");
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_net");
 
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {

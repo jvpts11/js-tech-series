@@ -1,0 +1,626 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Computers.
+ */
+package dev.jstech.computers.cannon.machine;
+
+import dev.jstech.core.JsCore;
+import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.core.language.IProgrammingLanguage;
+import dev.jstech.core.uuid.NodeUuid;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.function.Predicate;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * The programs one computer is running, in whatever languages are registered.
+ *
+ * <p>A program is called once when it starts, once per tick after that if it is the sort that stays up,
+ * and once more when it is stopped. It is never waited on: each tick the machine hands out the
+ * instructions its processor is worth and every program spends its share and stops where it stands, so
+ * one that loops forever costs the same tick as one that does nothing.
+ *
+ * <p>Nothing here knows any language. The text a program was started from is kept beside it and handed
+ * back to whichever language claims its extension, so a program that came back after a reload is the
+ * program that was running even if the file has been deleted or edited since.
+ */
+public final class MachinePrograms {
+
+    /** What a program gets when it did not ask for a size of its own. */
+    public static final int DEFAULT_HEAP_MB = 1;
+
+    /** The most a program may ask for, because a script is not what a machine's memory is for. */
+    public static final int MAX_HEAP_MB = 64;
+
+    /** What a program is allowed to spend on its farewell before the machine stops waiting. */
+    private static final int FAREWELL = 4096;
+
+    /**
+     * What a program is listed as when it gave itself no name: the runtime that is running it, the
+     * way an interpreted program shows up under its interpreter on any machine.
+     */
+    public static final String RUNTIME_NAME = "cannonrt";
+
+    /** What a program runs at when nobody said otherwise: the middle, the same as anything at the prompt. */
+    public static final String DEFAULT_PRIORITY = "medium";
+
+    /** The priority a program may be passed over at, every other round, so the others get on. */
+    public static final String LOW_PRIORITY = "low";
+
+    /** Who is waiting on a machine with no world to ask: nobody that can be found. */
+    private static final Predicate<RemoteParent> NO_WORLD = parent -> false;
+
+    /**
+     * One program the machine is running: the file it was started from, what it was started from, and
+     * where it is; and, for one another program started, which one that was (here, or on another
+     * machine), with what, and how urgently.
+     */
+    public record Live(int id, String file, String binary, int heapMb, ILanguageProcess process, int parent,
+                       List<String> args, String priority, @Nullable RemoteParent remoteParent) {
+
+        public Live {
+            args = args == null ? List.of() : List.copyOf(args);
+            priority = priority == null || priority.isBlank() ? DEFAULT_PRIORITY
+                    : priority.toLowerCase(Locale.ROOT);
+        }
+
+        /** The extension its file ended in, which is how the language that runs it is found again. */
+        public String extension() {
+            final int dot = this.file.lastIndexOf('.');
+            return dot < 0 ? "" : this.file.substring(dot + 1).toLowerCase(Locale.ROOT);
+        }
+
+        /** What the machine lists it as: the name the program gave itself, or the runtime's that runs it. */
+        public String name() {
+            final String own = this.process.name();
+            return own != null && !own.isBlank() ? own : RUNTIME_NAME;
+        }
+    }
+
+    /**
+     * The program on another machine of the network that started a program here: where that machine
+     * stands, which machine it is, and the number it lists the program under.
+     *
+     * <p>A program started from the same machine names its parent by number alone. One started from
+     * another computer cannot, since that number means nothing here, so this says which program on which
+     * machine is waiting for what it leaves.
+     */
+    public record RemoteParent(BlockPos machine, NodeUuid node, int program) {
+    }
+
+    /** What came of asking for a program to start: its number, or why it did not. */
+    public record Started(int id, String message) {
+
+        public boolean ok() {
+            return this.id > 0;
+        }
+
+        static Started failed(final String why) {
+            return new Started(0, why);
+        }
+    }
+
+    private final List<Live> live = new ArrayList<>();
+    private final Scheduler scheduler = new Scheduler();
+    private int next = 1;
+    private int held;
+    private int shown;
+    /** What the machine still owes for work done on its behalf outside its programs. */
+    private int owed;
+
+    /** Everything running, in the order it was started. */
+    public List<Live> all() {
+        return List.copyOf(this.live);
+    }
+
+    /** The program of that number, or null. */
+    @Nullable
+    public Live byId(final int id) {
+        for (final Live one : this.live) {
+            if (one.id() == id) {
+                return one;
+            }
+        }
+        return null;
+    }
+
+    /** Whether anything is running at all, which is what lets a machine skip the work entirely. */
+    public boolean isEmpty() {
+        return this.live.isEmpty();
+    }
+
+    /**
+     * Charges the machine for work done on its behalf outside its programs (a Gateway answering a
+     * ComputerCraft computer, say): the next tick's programs get that much less, and a debt larger than
+     * one tick's worth carries over, so a hammered bridge slows this machine and nothing else.
+     */
+    public void owe(final int credits) {
+        this.owed = (int) Math.min(Integer.MAX_VALUE, this.owed + (long) Math.max(0, credits));
+    }
+
+    /** What the machine still owes for work done outside its programs. */
+    public int owed() {
+        return this.owed;
+    }
+
+    /** The megabytes every running program is holding between them. */
+    public int heapMb() {
+        int sum = 0;
+        for (final Live one : this.live) {
+            sum += one.heapMb();
+        }
+        return sum;
+    }
+
+    /**
+     * The program the terminal is holding, or 0.
+     *
+     * <p>A machine has one prompt, so it has at most one program in front of it. That program keeps its
+     * place in the list after it returns, because what it printed last is not read until the terminal
+     * has had its turn; every other finished program is cleared away as soon as it is done.
+     */
+    public int held() {
+        return this.held;
+    }
+
+    /** Says the terminal is now waiting on that program. */
+    public void hold(final int id) {
+        final Live before = this.byId(this.held);
+        if (before != null && before.id() != id && !before.process().isService()) {
+            /*
+             * The terminal is one, and a program that loses it can never read from it again: what is
+             * typed goes to the program in front. Left alone it would wait for ever at no cost and some
+             * memory, listed as running, so it is stopped the moment the terminal moves on.
+             */
+            this.stop(before.id());
+        }
+        this.held = id;
+        this.shown = 0;
+    }
+
+    /** Hands a line typed at the terminal to the program it is holding; false when it holds none. */
+    public boolean offerInput(final String line) {
+        final Live one = this.byId(this.held);
+        if (one == null) {
+            return false;
+        }
+        one.process().offerInput(line);
+        return true;
+    }
+
+    /** How a program's state reads to a person: a program stopped on a read is waiting for input. */
+    public static String stateOf(final ILanguageProcess process) {
+        return process.waitingForInput() ? "input"
+                : process.state().name().toLowerCase(java.util.Locale.ROOT);
+    }
+
+    /** Lets the terminal go, clearing the program away if it had already finished. */
+    public void release() {
+        final Live one = this.byId(this.held);
+        this.held = 0;
+        if (one != null && one.process().state() != ILanguageProcess.State.RUNNING
+                && one.process().state() != ILanguageProcess.State.PARKED) {
+            this.live.remove(one);
+        }
+    }
+
+    /**
+     * What the held program has printed since this was last asked, and never the same line twice.
+     *
+     * <p>A program that printed more than its console keeps while nobody was looking has scrolled: what
+     * fell off the end is gone, the way it is gone from any terminal nobody was watching.
+     */
+    public List<String> unseen() {
+        final Live one = this.byId(this.held);
+        if (one == null) {
+            return List.of();
+        }
+        final List<String> kept = one.process().console();
+        final int written = one.process().written();
+        final int fresh = Math.min(written - this.shown, kept.size());
+        this.shown = written;
+        return fresh <= 0 ? List.of() : List.copyOf(kept.subList(kept.size() - fresh, kept.size()));
+    }
+
+    /**
+     * Starts a program from the text it was compiled to.
+     *
+     * <p>Which language runs it follows from what the file is called, so a machine runs whatever is
+     * registered without knowing any of them by name.
+     */
+    public Started start(final String name, final String binary, final int heapMb,
+                         final BlockEntity machine) {
+        return this.start(name, binary, heapMb, machine, List.of(), 0, DEFAULT_PRIORITY);
+    }
+
+    /**
+     * The same, started by another program on this machine, with what it was given and how urgently.
+     *
+     * @param args     what the program's {@code Program.Args} will read
+     * @param parent   the number of the program that started it, or 0 for one started at the prompt
+     * @param priority {@code low}, {@code medium} or {@code high}; a low one is passed over every other
+     *                 round of the tick
+     */
+    public Started start(final String name, final String binary, final int heapMb,
+                         final BlockEntity machine, final List<String> args, final int parent,
+                         final String priority) {
+        return this.startCompiling(name, binary, heapMb, machine, args, parent, null, priority);
+    }
+
+    /**
+     * The same, started by a program on another machine of the network, which keeps what the program
+     * leaves (its output and its exit code) for as long as that program is there to read it.
+     */
+    public Started startFor(final RemoteParent parent, final String name, final String binary,
+                            final int heapMb, final BlockEntity machine, final List<String> args,
+                            final String priority) {
+        return this.startCompiling(name, binary, heapMb, machine, args, 0, parent, priority);
+    }
+
+    /**
+     * Hands every program listening what a ComputerCraft computer said through a Gateway; how many heard
+     * it. A machine where nobody is listening simply drops it, which is what a message nobody wants is.
+     */
+    public int deliverGatewayMessage(final int from, final String text, final long tick) {
+        int heard = 0;
+        for (final Live one : List.copyOf(this.live)) {
+            if (one.process() instanceof CannonProgram program
+                    && program.process().deliverGatewayMessage(from, text, tick)) {
+                heard++;
+            }
+        }
+        return heard;
+    }
+
+    /** The windows a program has open on the machine's desktop; empty for one that has none. */
+    public List<dev.jstech.computers.cannon.run.Values.Obj> windowsOf(final int id) {
+        final Live one = this.byId(id);
+        return one != null && one.process() instanceof CannonProgram program
+                ? program.process().windows() : List.of();
+    }
+
+    /**
+     * Hands a program what a player did to one of its widgets; false when there is no such program, no
+     * such window, or nothing there that answers.
+     */
+    public boolean deliverUiEvent(final int id, final long window, final long widget, final String kind,
+                                  final List<Object> values) {
+        final Live one = this.byId(id);
+        return one != null && one.process() instanceof CannonProgram program
+                && program.process().deliverUiEvent(window, widget, kind, values);
+    }
+
+    private Started startCompiling(final String name, final String binary, final int heapMb,
+                                   final BlockEntity machine, final List<String> args, final int parent,
+                                   @Nullable final RemoteParent remoteParent, final String priority) {
+        final int dot = name.lastIndexOf('.');
+        final String extension = dot < 0 ? "" : name.substring(dot + 1).toLowerCase(Locale.ROOT);
+        final IProgrammingLanguage language = JsCore.languages().runnerOf(extension);
+        if (language == null) {
+            return Started.failed(name + ": nothing installed runs a ." + extension);
+        }
+        /*
+         * A language that runs its own source files compiles them here, on the way in, under the
+         * file's own name so the program's errors quote it; what the machine keeps is the listing.
+         */
+        String runnable = binary;
+        if (language.sourceExtensions().contains(extension)) {
+            final List<IProgrammingLanguage.SourceText> sources = new ArrayList<>();
+            sources.add(new IProgrammingLanguage.SourceText(name, binary));
+            final IProgrammingLanguage.CompileResult built = language.compile(sources);
+            if (!built.ok()) {
+                final List<IProgrammingLanguage.Complaint> complaints = built.complaints();
+                return Started.failed(complaints.isEmpty() ? name + " does not compile"
+                        : complaints.getFirst().format() + (complaints.size() > 1
+                        ? " (and " + (complaints.size() - 1) + " more)" : ""));
+            }
+            runnable = built.binary();
+        }
+        final int room = Math.clamp(heapMb <= 0 ? DEFAULT_HEAP_MB : heapMb, 1, MAX_HEAP_MB);
+        final ILanguageProcess process =
+                language.start(runnable, (long) room * 1024 * 1024, machine, args == null ? List.of() : args);
+        if (process == null) {
+            return Started.failed(name + ": this is not something " + language.displayName() + " can run");
+        }
+        final int id = this.next++;
+        process.identify(id);
+        this.live.add(new Live(id, name, runnable, room, process, parent, args, priority, remoteParent));
+        return new Started(id, name + " started as " + id);
+    }
+
+    /**
+     * Hands a line from one program to another on this machine.
+     *
+     * <p>True when the other program is there to take it, whether or not it does anything with it; a
+     * program that has stopped, or was never here, is not there.
+     */
+    public boolean send(final int from, final int to, final String text, final long tick) {
+        final Live target = this.byId(to);
+        if (target == null || target.process().state() == ILanguageProcess.State.HALTED) {
+            return false;
+        }
+        if (target.process() instanceof CannonProgram cannon) {
+            return cannon.process().deliverMessage(from, text, tick);
+        }
+        return true;
+    }
+
+    /** One program as the tick deals it out: what it runs and whether it may be passed over. */
+    private record Slot(ILanguageProcess process, boolean low) implements Scheduler.ISlot {
+
+        @Override
+        public int step(final int budget) {
+            return this.process.step(budget);
+        }
+    }
+
+    /**
+     * Stops a program, letting it say goodbye first.
+     *
+     * <p>The farewell is paid for out of a budget of its own rather than the machine's, because a machine
+     * that is being taken apart cannot be asked to wait several ticks for it, and a program that spends
+     * more than that has forfeited the chance to finish.
+     */
+    public boolean stop(final int id) {
+        final Live one = this.byId(id);
+        if (one == null) {
+            return false;
+        }
+        one.process().onStop(FAREWELL);
+        this.live.remove(one);
+        if (this.held == id) {
+            this.held = 0;
+        }
+        return true;
+    }
+
+    /** Stops everything, as a machine being turned off or broken does. */
+    public void stopAll() {
+        for (final Live one : List.copyOf(this.live)) {
+            this.stop(one.id());
+        }
+    }
+
+    /** Gives the machine's instructions out and runs them, with all the time in the world. */
+    public void tick(final int credits) {
+        this.tick(credits, Long.MAX_VALUE, null);
+    }
+
+    /** The same, with a way to look up what the network holds and still no deadline. */
+    public void tick(final int credits, final java.util.function.ToLongFunction<String> stock) {
+        this.tick(credits, Long.MAX_VALUE, stock);
+    }
+
+    /** The same, bounded by the clock, on a machine with no world to find other machines in. */
+    public void tick(final int credits, final long deadline,
+                     final java.util.function.ToLongFunction<String> stock) {
+        this.tick(credits, deadline, stock, NO_WORLD);
+    }
+
+    /**
+     * The same, bounded by the clock, with a way to look up what the network holds and a way to ask
+     * whether a program on another machine is still waiting on one started here.
+     *
+     * <p>Everything being watched is looked up once, however many programs are watching it, and the
+     * answers are handed to each of them. A machine watching nothing pays nothing for the ability.
+     *
+     * <p>Every program that is still going gets the same share of the tick, dealt in turns so none
+     * finishes its share before another has begun, and the tick ends early when the deadline passes,
+     * with the program that went without first in line next time. A program that stays up and has
+     * finished what it was asked to do is asked again, which is what makes it stay up.
+     *
+     * @param credits  how many instructions the machine's processors are worth this tick
+     * @param deadline when the tick must end, on {@link System#nanoTime()}; one already passed runs
+     *                 nothing, and one far in the future never interrupts
+     * @param stock    what the network holds of an item, or null on a machine that cannot ask
+     * @param waiting  whether the program on another machine that started one here is still there; only
+     *                 ever asked about a program that has finished
+     */
+    public void tick(final int credits, final long deadline,
+                     final java.util.function.ToLongFunction<String> stock,
+                     final Predicate<RemoteParent> waiting) {
+        if (stock != null && !this.live.isEmpty()) {
+            final Map<String, Long> totals = new LinkedHashMap<>();
+            for (final Live one : this.live) {
+                for (final String item : one.process().watching()) {
+                    totals.computeIfAbsent(item, stock::applyAsLong);
+                }
+            }
+            if (!totals.isEmpty()) {
+                for (final Live one : this.live) {
+                    one.process().deliver(totals);
+                }
+            }
+        }
+        // What was spent on the machine's behalf outside its programs comes off the top first.
+        final int available = Math.max(0, credits - this.owed);
+        this.owed = Math.max(0, this.owed - Math.max(0, credits));
+        if (this.live.isEmpty() || available <= 0) {
+            return;
+        }
+        final List<Live> ready = new ArrayList<>();
+        final List<Live> done = new ArrayList<>();
+        for (final Live one : this.live) {
+            final ILanguageProcess.State state = one.process().state();
+            if (!one.process().isService() && one.id() != this.held && one.process().waitingForInput()) {
+                /*
+                 * A terminal program stopped on a read with no terminal in front of it: only the program
+                 * in front gets what is typed, so nothing can ever reach this one. However it came to be
+                 * here, it is stopped rather than kept for ever as something the machine is running.
+                 */
+                one.process().onStop(FAREWELL);
+                done.add(one);
+                continue;
+            }
+            if (state == ILanguageProcess.State.HALTED || state == ILanguageProcess.State.FINISHED) {
+                /*
+                 * A program that runs at a terminal is done when it returns, and is asked nothing more;
+                 * one that stays up is asked again. Either way, a finished terminal program only leaves
+                 * once whoever was waiting on it has read it.
+                 */
+                if (!one.process().isService() && one.id() != this.held) {
+                    /*
+                     * One started by another program, on this machine or on another, keeps its output and
+                     * its exit code for that program to read, and goes when it goes.
+                     */
+                    if (!this.awaited(one, waiting)) {
+                        done.add(one);
+                    }
+                } else if (one.process().isService() && state == ILanguageProcess.State.FINISHED) {
+                    one.process().onTick();
+                    ready.add(one);
+                }
+                continue;
+            }
+            ready.add(one);
+        }
+        this.live.removeAll(done);
+        if (ready.isEmpty()) {
+            return;
+        }
+        final List<Scheduler.ISlot> slots = new ArrayList<>(ready.size());
+        for (final Live one : ready) {
+            slots.add(new Slot(one.process(), LOW_PRIORITY.equals(one.priority())));
+        }
+        this.scheduler.run(slots, available, System::nanoTime, deadline);
+    }
+
+    /** Whether the program that started this one is still there to read what it left. */
+    private boolean awaited(final Live one, final Predicate<RemoteParent> waiting) {
+        if (one.remoteParent() != null) {
+            return waiting.test(one.remoteParent());
+        }
+        return one.parent() != 0 && this.byId(one.parent()) != null;
+    }
+
+    // across a reload
+
+    private static final String PROGRAMS = "programs";
+    private static final String NEXT = "next";
+    private static final String ID = "id";
+    private static final String NAME = "name";
+    private static final String BINARY = "binary";
+    private static final String HEAP = "heap";
+    private static final String STATE = "state";
+    private static final String HELD = "held";
+    private static final String SHOWN = "shown";
+    private static final String PARENT = "parent";
+    private static final String REMOTE_PARENT = "remoteParent";
+    private static final String MACHINE = "machine";
+    private static final String NODE = "node";
+    private static final String ARGS = "args";
+    private static final String PRIORITY = "priority";
+
+    /** Writes every running program down. */
+    public void save(final CompoundTag tag) {
+        final ListTag written = new ListTag();
+        for (final Live one : this.live) {
+            final CompoundTag each = new CompoundTag();
+            each.putInt(ID, one.id());
+            each.putString(NAME, one.file());
+            each.putString(BINARY, one.binary());
+            each.putInt(HEAP, one.heapMb());
+            each.putInt(PARENT, one.parent());
+            if (one.remoteParent() != null) {
+                final CompoundTag from = new CompoundTag();
+                from.putLong(MACHINE, one.remoteParent().machine().asLong());
+                from.putUUID(NODE, one.remoteParent().node().value());
+                from.putInt(ID, one.remoteParent().program());
+                each.put(REMOTE_PARENT, from);
+            }
+            final ListTag args = new ListTag();
+            for (final String arg : one.args()) {
+                args.add(net.minecraft.nbt.StringTag.valueOf(arg));
+            }
+            each.put(ARGS, args);
+            each.putString(PRIORITY, one.priority());
+            final CompoundTag state = new CompoundTag();
+            one.process().save(state);
+            each.put(STATE, state);
+            written.add(each);
+        }
+        tag.put(PROGRAMS, written);
+        tag.putInt(NEXT, this.next);
+        tag.putInt(HELD, this.held);
+        tag.putInt(SHOWN, this.shown);
+    }
+
+    /** Reads them back, each one carrying on from where it stopped. */
+    public void load(final CompoundTag tag, final BlockEntity machine) {
+        this.live.clear();
+        this.next = Math.max(1, tag.getInt(NEXT));
+        this.held = tag.getInt(HELD);
+        this.shown = tag.getInt(SHOWN);
+        final ListTag written = tag.getList(PROGRAMS, Tag.TAG_COMPOUND);
+        for (int i = 0; i < written.size(); i++) {
+            final CompoundTag each = written.getCompound(i);
+            final String name = each.getString(NAME);
+            final int dot = name.lastIndexOf('.');
+            final IProgrammingLanguage language = JsCore.languages()
+                    .runnerOf(dot < 0 ? "" : name.substring(dot + 1).toLowerCase(Locale.ROOT));
+            if (language == null) {
+                /*
+                 * The language that ran this is no longer installed. Dropping the program is better
+                 * than refusing to load the machine it was on.
+                 */
+                continue;
+            }
+            final ILanguageProcess process = language.restore(each.getString(BINARY),
+                    each.getCompound(STATE), machine);
+            if (process != null) {
+                final List<String> args = new ArrayList<>();
+                final ListTag given = each.getList(ARGS, Tag.TAG_STRING);
+                for (int j = 0; j < given.size(); j++) {
+                    args.add(given.getString(j));
+                }
+                process.identify(each.getInt(ID));
+                this.live.add(new Live(each.getInt(ID), name, each.getString(BINARY),
+                        each.getInt(HEAP), process, each.getInt(PARENT), args, each.getString(PRIORITY),
+                        readRemoteParent(each)));
+            }
+        }
+    }
+
+    /** The program on another machine that started this one, or null for one that has none. */
+    @Nullable
+    private static RemoteParent readRemoteParent(final CompoundTag each) {
+        if (!each.contains(REMOTE_PARENT, Tag.TAG_COMPOUND)) {
+            return null;
+        }
+        final CompoundTag from = each.getCompound(REMOTE_PARENT);
+        return from.hasUUID(NODE) ? new RemoteParent(BlockPos.of(from.getLong(MACHINE)),
+                new NodeUuid(from.getUUID(NODE)), from.getInt(ID)) : null;
+    }
+
+    // what the machine is worth
+
+    /** The fewest instructions a tick, so even the oldest processor that can run this gets somewhere. */
+    public static final int LEAST_PER_TICK = 32;
+
+    /**
+     * What a machine's processors are worth in a tick, given their cores times their megahertz added up.
+     *
+     * <p>It follows the clock with no ceiling, so a faster machine really does get through more of a
+     * program in the same second, however fast it is; an old machine still moves. What keeps a machine
+     * from taking the server's tick with it is not a cap on these but the clock the tick is run against
+     * (see {@link ServerTickDeadline}).
+     */
+    public static int creditsFor(final long coreMegahertz) {
+        if (coreMegahertz <= 0) {
+            return 0;
+        }
+        return (int) Math.min(Integer.MAX_VALUE, Math.max(coreMegahertz / 8, LEAST_PER_TICK));
+    }
+}

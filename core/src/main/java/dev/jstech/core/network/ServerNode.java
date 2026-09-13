@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.core.network;
 
@@ -20,7 +20,7 @@ public record ServerNode(
         NodeUuid nodeUuid,
         NetworkUuid networkUuid,
         long storageItems
-) implements ServiceNode{
+) implements IServiceNode{
     public ServerNode {
         Objects.requireNonNull(nodeUuid, "nodeUuid must not be null");
         Objects.requireNonNull(networkUuid, "networkUuid must not be null");

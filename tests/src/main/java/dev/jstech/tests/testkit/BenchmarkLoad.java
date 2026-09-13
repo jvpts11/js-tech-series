@@ -3,14 +3,14 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computronics.
+ * This file is part of J's Computers.
  */
 package dev.jstech.tests.testkit;
 
-import dev.jstech.computronics.blockentity.MainframeBlockEntity;
-import dev.jstech.computronics.crafting.ProcessingPattern;
-import dev.jstech.computronics.storage.ExternalDataPort;
-import dev.jstech.computronics.storage.StorageKey;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.storage.ExternalDataPort;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -25,8 +25,8 @@ import java.util.Random;
 
 /**
  * The traffic a busy base puts on its Mainframe, tick after tick: terminal pulls of random catalog
- * items, deposits of the same, and a crafting workload — bench recipes, recipe chains and machine
- * processing — requested in bursts. The scale benchmark ticks a {@link Session} itself; the
+ * items, deposits of the same, and a crafting workload (bench recipes, recipe chains and machine
+ * processing) requested in bursts. The scale benchmark ticks a {@link Session} itself; the
  * {@code /jsc benchmark load} command runs one on the server tick so a player can watch the profiler
  * while the base works.
  */
@@ -160,7 +160,7 @@ public final class BenchmarkLoad {
         }
     }
 
-    // ---- the in-world driver behind the command ----
+    // the in-world driver behind the command
 
     public static void remember(final BigBaseScenario.Built built) {
         lastBuilt = built;
