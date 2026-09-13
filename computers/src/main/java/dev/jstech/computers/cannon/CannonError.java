@@ -87,16 +87,7 @@ public enum CannonError {
     STRUCT_NO_BASE("C3041", "a struct can implement interfaces but stands on no class, and '%s' is a class"),
     CANNOT_LOCK("C3042", "only an object can be locked, not '%s'"),
 
-    MISSING_VERSION_LINE("C4001", "the listing has to begin with a version line"),
-    VERSION_TOO_NEW("C4002", "this runtime reads assembly version %s, and this listing is version %s"),
-    UNKNOWN_INSTRUCTION("C4003", "'%s' is not an instruction"),
-    MISSING_OPERAND("C4004", "'%s' needs something after it"),
-    UNEXPECTED_OPERAND("C4005", "'%s' takes nothing after it"),
-    MALFORMED_OPERAND("C4006", "'%s' is not what '%s' takes"),
-    UNKNOWN_DIRECTIVE("C4007", "'%s' is not a line this format has"),
-    INSTRUCTION_OUTSIDE_METHOD("C4008", "an instruction has to be inside a method"),
-    DIRECTIVE_OUTSIDE_TYPE("C4009", "'%s' has to be inside a type"),
-    UNKNOWN_LABEL("C4010", "nothing in this method is labelled '%s'"),
+    // C4001 to C4010 are the listing's own problems, reported by reading one back (ListingError).
     NOT_YET_BUILT("C4011", "%s is not built yet"),
 
     LUA_UNTERMINATED_STRING("L1001", "unfinished string"),

@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.cannon.asm.AsmProgram;
 import dev.jstech.computers.cannon.asm.AsmReader;
+import dev.jstech.computers.cannon.asm.ListingProblem;
 import dev.jstech.computers.cannon.run.Loaded;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -68,12 +69,12 @@ class ListingRoundTripTest {
             }
             """;
 
-    /** Reads a listing the way the machine does: a reader with a bag, and nothing when the bag has errors. */
+    /** Reads a listing the way the machine does: a reader, and nothing when the listing has a problem. */
     private static Loaded readBack(final String assembly) {
-        final DiagnosticBag bag = new DiagnosticBag("listing");
-        final AsmProgram program = new AsmReader(assembly, bag).read();
-        assertFalse(bag.hasErrors(), () -> "the listing reads back clean:\n" + String.join("\n", bag.sorted().stream()
-                .map(Diagnostic::format).toList()) + "\n--- listing ---\n" + assembly);
+        final AsmReader reader = new AsmReader(assembly);
+        final AsmProgram program = reader.read();
+        assertFalse(reader.hasProblems(), () -> "the listing reads back clean:\n" + String.join("\n", reader.problems()
+                .stream().map(ListingProblem::format).toList()) + "\n--- listing ---\n" + assembly);
         return Loaded.of(program);
     }
 

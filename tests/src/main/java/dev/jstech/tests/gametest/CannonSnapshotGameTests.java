@@ -8,10 +8,10 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.cannon.CannonCompiler;
-import dev.jstech.computers.cannon.DiagnosticBag;
 import dev.jstech.computers.cannon.SourceFile;
 import dev.jstech.computers.cannon.asm.AsmProgram;
 import dev.jstech.computers.cannon.asm.AsmReader;
+import dev.jstech.computers.cannon.asm.ListingProblem;
 import dev.jstech.computers.cannon.run.IHost;
 import dev.jstech.computers.cannon.run.Loaded;
 import dev.jstech.computers.cannon.run.Process;
@@ -60,10 +60,11 @@ public final class CannonSnapshotGameTests {
         if (!built.ok()) {
             throw new IllegalStateException(String.join("\n", built.lines()));
         }
-        final DiagnosticBag bag = new DiagnosticBag("Monitor.asm");
-        final AsmProgram program = new AsmReader(built.assembly(), bag).read();
-        if (bag.hasErrors()) {
-            throw new IllegalStateException(String.join("\n", bag.sorted().stream().map(d -> d.format()).toList()));
+        final AsmReader reader = new AsmReader(built.assembly());
+        final AsmProgram program = reader.read();
+        if (reader.hasProblems()) {
+            throw new IllegalStateException(String.join("\n",
+                    reader.problems().stream().map(ListingProblem::format).toList()));
         }
         return Loaded.of(program);
     }

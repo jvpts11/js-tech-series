@@ -13,11 +13,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.cannon.CannonCompiler;
-import dev.jstech.computers.cannon.Diagnostic;
-import dev.jstech.computers.cannon.DiagnosticBag;
 import dev.jstech.computers.cannon.SourceFile;
 import dev.jstech.computers.cannon.asm.AsmProgram;
 import dev.jstech.computers.cannon.asm.AsmReader;
+import dev.jstech.computers.cannon.asm.ListingProblem;
 import dev.jstech.computers.cannon.run.IHost;
 import dev.jstech.computers.cannon.run.Loaded;
 import dev.jstech.computers.cannon.run.Process;
@@ -73,10 +72,10 @@ class UiWidgetsTest {
         final CannonCompiler.Result built =
                 CannonCompiler.compile(List.of(new SourceFile("Panel.can", PRELUDE + source)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
-        final DiagnosticBag bag = new DiagnosticBag("Panel.asm");
-        final AsmProgram program = new AsmReader(built.assembly(), bag).read();
-        assertFalse(bag.hasErrors(), () -> String.join("\n",
-                bag.sorted().stream().map(Diagnostic::format).toList()) + "\n" + built.assembly());
+        final AsmReader reader = new AsmReader(built.assembly());
+        final AsmProgram program = reader.read();
+        assertFalse(reader.hasProblems(), () -> String.join("\n",
+                reader.problems().stream().map(ListingProblem::format).toList()) + "\n" + built.assembly());
         return Loaded.of(program);
     }
 

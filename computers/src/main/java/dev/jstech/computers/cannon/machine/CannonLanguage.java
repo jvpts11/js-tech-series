@@ -177,8 +177,8 @@ public final class CannonLanguage implements IProgrammingLanguage {
     /** Reads a listing, or null when it is not one. */
     @Nullable
     private static Loaded read(final String binary) {
-        final DiagnosticBag bag = new DiagnosticBag("listing");
-        final AsmProgram program = new AsmReader(binary, bag).read();
-        return bag.hasErrors() ? null : Loaded.of(program);
+        final AsmReader reader = new AsmReader(binary);
+        final AsmProgram program = reader.read();
+        return reader.hasProblems() ? null : Loaded.of(program);
     }
 }

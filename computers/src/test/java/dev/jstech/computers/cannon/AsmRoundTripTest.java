@@ -21,25 +21,21 @@ import dev.jstech.computers.cannon.asm.AsmWriter;
 import dev.jstech.computers.cannon.asm.Instruction;
 import dev.jstech.computers.cannon.asm.Opcode;
 import dev.jstech.computers.cannon.asm.IOperand;
+import dev.jstech.computers.cannon.asm.ListingProblem;
 import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class AsmRoundTripTest {
 
-    private DiagnosticBag bag;
-
-    @BeforeEach
-    void setUp() {
-        this.bag = new DiagnosticBag("Monitor.asm");
-    }
+    private AsmReader reader;
 
     private AsmProgram read(final String text) {
-        return new AsmReader(text, this.bag).read();
+        this.reader = new AsmReader(text);
+        return this.reader.read();
     }
 
     private List<String> codes() {
-        return this.bag.sorted().stream().map(Diagnostic::code).toList();
+        return this.reader.problems().stream().map(ListingProblem::code).toList();
     }
 
     /** A program using every directive and a spread of operand shapes. */
@@ -147,8 +143,8 @@ class AsmRoundTripTest {
     void write_thenRead_thenWrite_givesTheSameText() {
         final String once = AsmWriter.write(sample());
         final AsmProgram read = this.read(once);
-        assertFalse(this.bag.hasErrors(), () -> String.join("\n", this.bag.sorted().stream()
-                .map(Diagnostic::format).toList()));
+        assertFalse(this.reader.hasProblems(), () -> String.join("\n", this.reader.problems().stream()
+                .map(ListingProblem::format).toList()));
         assertEquals(once, AsmWriter.write(read));
     }
 
@@ -210,7 +206,7 @@ class AsmRoundTripTest {
         final String text = AsmWriter.write(new AsmProgram());
         assertEquals(".asm 1\n", text);
         final AsmProgram read = this.read(text);
-        assertFalse(this.bag.hasErrors());
+        assertFalse(this.reader.hasProblems());
         assertTrue(read.types().isEmpty());
         assertNull(read.entryPoint());
     }
@@ -261,14 +257,14 @@ class AsmRoundTripTest {
     void read_reportsABranchToALabelNothingCarries() {
         this.read(".asm 1\n.class C\n.method void M() slots 0\n    br      L9\n    ret\n");
         assertEquals(List.of("C4010"), this.codes());
-        assertEquals(4, this.bag.sorted().getFirst().line());
+        assertEquals(4, this.reader.problems().getFirst().line());
     }
 
     @Test
     void read_ignoresBlankLinesAndLinesThatAreOnlyANote() {
         final AsmProgram read = this.read(".asm 1\n\n; a note of its own\n.class C\n"
                 + ".method void M() slots 0\n\n    ret\n");
-        assertFalse(this.bag.hasErrors());
+        assertFalse(this.reader.hasProblems());
         assertEquals(1, read.type("C").methods().getFirst().body().size());
     }
 }

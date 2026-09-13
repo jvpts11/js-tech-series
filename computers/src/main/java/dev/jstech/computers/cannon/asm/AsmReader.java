@@ -7,10 +7,10 @@
  */
 package dev.jstech.computers.cannon.asm;
 
-import dev.jstech.computers.cannon.CannonError;
-import dev.jstech.computers.cannon.DiagnosticBag;
 import dev.jstech.computers.cannon.Shape;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,20 +22,23 @@ import java.util.Set;
  * open a file, follow what it does, and know that is what runs. That only holds if the text can be
  * read back exactly, which is what this does.
  *
- * <p>Like the rest of the compiler it never throws: a line it cannot read is reported and the next
- * one is tried, so a file mangled in an editor says everything that is wrong with it at once.
+ * <p>It never throws: a line it cannot read is reported and the next one is tried, so a file mangled
+ * in an editor says everything that is wrong with it at once. The problems are the listing's own, so
+ * reading one needs nothing from the language that wrote it.
  */
 public final class AsmReader {
 
+    /** Past this many, further problems are almost always the same mistake echoing. */
+    public static final int MAX_PROBLEMS = 100;
+
     private final String[] lines;
-    private final DiagnosticBag diagnostics;
+    private final List<ListingProblem> problems = new ArrayList<>();
 
     private AsmType type;
     private AsmMethod.Builder method;
 
-    public AsmReader(final String text, final DiagnosticBag diagnostics) {
+    public AsmReader(final String text) {
         this.lines = text.split("\n", -1);
-        this.diagnostics = diagnostics;
     }
 
     /** Reads the whole listing. Always gives back a program, even one nothing could be read into. */
@@ -45,13 +48,13 @@ public final class AsmReader {
             at++;
         }
         if (at >= this.lines.length || !code(this.lines[at]).trim().startsWith(".asm ")) {
-            this.diagnostics.error(1, 1, CannonError.MISSING_VERSION_LINE);
+            this.report(1, ListingError.MISSING_VERSION_LINE);
             return new AsmProgram();
         }
         final String versionText = code(this.lines[at]).trim().substring(".asm ".length()).trim();
         final int version = number(versionText, at + 1, -1);
         if (version > AsmProgram.VERSION) {
-            this.diagnostics.error(at + 1, 1, CannonError.VERSION_TOO_NEW, AsmProgram.VERSION, version);
+            this.report(at + 1, ListingError.VERSION_TOO_NEW, AsmProgram.VERSION, version);
             return new AsmProgram(version);
         }
         final AsmProgram program = new AsmProgram(version < 0 ? AsmProgram.VERSION : version);
@@ -60,6 +63,24 @@ public final class AsmReader {
         }
         this.closeMethod();
         return program;
+    }
+
+    /** Whether the listing read has anything wrong with it; a listing that has does not run. */
+    public boolean hasProblems() {
+        return !this.problems.isEmpty();
+    }
+
+    /** What was wrong with the listing, by position, in the order it was found within one line. */
+    public List<ListingProblem> problems() {
+        final List<ListingProblem> copy = new ArrayList<>(this.problems);
+        copy.sort(Comparator.comparingInt(ListingProblem::line).thenComparingInt(ListingProblem::column));
+        return Collections.unmodifiableList(copy);
+    }
+
+    private void report(final int line, final ListingError error, final Object... arguments) {
+        if (this.problems.size() < MAX_PROBLEMS) {
+            this.problems.add(new ListingProblem(line, 1, error.code(), error.message(arguments)));
+        }
     }
 
     private void readLine(final AsmProgram program, final String raw, final int line) {
@@ -103,7 +124,7 @@ public final class AsmReader {
             case "event" -> this.readEvent(rest, line);
             case "value" -> this.readValue(rest, line);
             case "method" -> this.readMethodHead(rest, line);
-            default -> this.diagnostics.error(line, 1, CannonError.UNKNOWN_DIRECTIVE, "." + word);
+            default -> this.report(line, ListingError.UNKNOWN_DIRECTIVE, "." + word);
         }
     }
 
@@ -126,7 +147,7 @@ public final class AsmReader {
         final int open = rest.indexOf('(');
         final int close = rest.lastIndexOf(')');
         if (open < 0 || close < open) {
-            this.diagnostics.error(line, 1, CannonError.MALFORMED_OPERAND, rest, ".delegate");
+            this.report(line, ListingError.MALFORMED_OPERAND, rest, ".delegate");
             return new AsmType(AsmType.Kind.DELEGATE, rest);
         }
         final int nameStart = nameStart(rest, open);
@@ -144,7 +165,7 @@ public final class AsmReader {
         final String body = isStatic ? rest.substring("static ".length()).trim() : rest;
         final int split = body.lastIndexOf(' ');
         if (split < 0) {
-            this.diagnostics.error(line, 1, CannonError.MALFORMED_OPERAND, rest, ".field");
+            this.report(line, ListingError.MALFORMED_OPERAND, rest, ".field");
             return;
         }
         this.type.addField(new AsmType.Field(body.substring(split + 1).trim(),
@@ -157,7 +178,7 @@ public final class AsmReader {
         }
         final int split = rest.lastIndexOf(' ');
         if (split < 0) {
-            this.diagnostics.error(line, 1, CannonError.MALFORMED_OPERAND, rest, ".event");
+            this.report(line, ListingError.MALFORMED_OPERAND, rest, ".event");
             return;
         }
         this.type.addEvent(new AsmType.Event(rest.substring(split + 1).trim(),
@@ -170,7 +191,7 @@ public final class AsmReader {
         }
         final int equals = rest.indexOf('=');
         if (equals < 0) {
-            this.diagnostics.error(line, 1, CannonError.MALFORMED_OPERAND, rest, ".value");
+            this.report(line, ListingError.MALFORMED_OPERAND, rest, ".value");
             return;
         }
         this.type.addValue(new AsmType.Value(rest.substring(0, equals).trim(),
@@ -195,7 +216,7 @@ public final class AsmReader {
         final int open = body.indexOf('(');
         final int close = body.lastIndexOf(')');
         if (open < 0 || close < open) {
-            this.diagnostics.error(line, 1, CannonError.MALFORMED_OPERAND, rest, ".method");
+            this.report(line, ListingError.MALFORMED_OPERAND, rest, ".method");
             return;
         }
         final int nameStart = nameStart(body, open);
@@ -206,7 +227,7 @@ public final class AsmReader {
 
     private void readInstruction(final String text, final String comment, final int line) {
         if (this.method == null) {
-            this.diagnostics.error(line, 1, CannonError.INSTRUCTION_OUTSIDE_METHOD);
+            this.report(line, ListingError.INSTRUCTION_OUTSIDE_METHOD);
             return;
         }
         String rest = text;
@@ -222,15 +243,15 @@ public final class AsmReader {
         final String operandText = split < 0 ? "" : rest.substring(split + 1).trim();
         final Opcode opcode = Opcode.written(word);
         if (opcode == null) {
-            this.diagnostics.error(line, 1, CannonError.UNKNOWN_INSTRUCTION, word);
+            this.report(line, ListingError.UNKNOWN_INSTRUCTION, word);
             return;
         }
         if (!opcode.takesOperand() && !operandText.isEmpty()) {
-            this.diagnostics.error(line, 1, CannonError.UNEXPECTED_OPERAND, word);
+            this.report(line, ListingError.UNEXPECTED_OPERAND, word);
             return;
         }
         if (opcode.takesOperand() && operandText.isEmpty()) {
-            this.diagnostics.error(line, 1, CannonError.MISSING_OPERAND, word);
+            this.report(line, ListingError.MISSING_OPERAND, word);
             return;
         }
         final IOperand operand = opcode.takesOperand()
@@ -264,7 +285,7 @@ public final class AsmReader {
                 default -> new IOperand.Type(text);
             };
         } catch (final NumberFormatException notANumber) {
-            this.diagnostics.error(line, 1, CannonError.MALFORMED_OPERAND, text, opcode.text());
+            this.report(line, ListingError.MALFORMED_OPERAND, text, opcode.text());
             return null;
         }
     }
@@ -274,13 +295,13 @@ public final class AsmReader {
         final int close = text.indexOf(')', open + 1);
         final int arrow = text.indexOf("->", close < 0 ? 0 : close);
         if (open < 0 || close < 0 || arrow < 0) {
-            this.diagnostics.error(line, 1, CannonError.MALFORMED_OPERAND, text, "call");
+            this.report(line, ListingError.MALFORMED_OPERAND, text, "call");
             return null;
         }
         final String head = text.substring(0, open);
         final int dot = head.lastIndexOf('.');
         if (dot < 0) {
-            this.diagnostics.error(line, 1, CannonError.MALFORMED_OPERAND, text, "call");
+            this.report(line, ListingError.MALFORMED_OPERAND, text, "call");
             return null;
         }
         return new IOperand.Method(head.substring(0, dot).trim(), head.substring(dot + 1).trim(),
@@ -291,7 +312,7 @@ public final class AsmReader {
         final int open = text.indexOf('(');
         final int close = text.lastIndexOf(')');
         if (open < 0 || close < open) {
-            this.diagnostics.error(line, 1, CannonError.MALFORMED_OPERAND, text, "newobj");
+            this.report(line, ListingError.MALFORMED_OPERAND, text, "newobj");
             return null;
         }
         return new IOperand.Constructor(text.substring(0, open).trim(),
@@ -300,7 +321,7 @@ public final class AsmReader {
 
     private boolean outsideType(final String directive, final int line) {
         if (this.type == null) {
-            this.diagnostics.error(line, 1, CannonError.DIRECTIVE_OUTSIDE_TYPE, directive);
+            this.report(line, ListingError.DIRECTIVE_OUTSIDE_TYPE, directive);
             return true;
         }
         return false;
@@ -329,7 +350,7 @@ public final class AsmReader {
         for (int i = 0; i < instructions.size(); i++) {
             if (instructions.get(i).operand() instanceof IOperand.Label target
                     && !marked.contains(target.name())) {
-                this.diagnostics.error(built.lineOf(i), 1, CannonError.UNKNOWN_LABEL, target.name());
+                this.report(built.lineOf(i), ListingError.UNKNOWN_LABEL, target.name());
             }
         }
     }
@@ -338,7 +359,7 @@ public final class AsmReader {
         try {
             return Integer.parseInt(text.trim());
         } catch (final NumberFormatException notANumber) {
-            this.diagnostics.error(line, 1, CannonError.MALFORMED_OPERAND, text, "a whole number");
+            this.report(line, ListingError.MALFORMED_OPERAND, text, "a whole number");
             return fallback;
         }
     }

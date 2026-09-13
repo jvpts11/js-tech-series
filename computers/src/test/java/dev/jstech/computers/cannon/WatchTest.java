@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.cannon.asm.AsmProgram;
 import dev.jstech.computers.cannon.asm.AsmReader;
+import dev.jstech.computers.cannon.asm.ListingProblem;
 import dev.jstech.computers.cannon.run.IHost;
 import dev.jstech.computers.cannon.run.Loaded;
 import dev.jstech.computers.cannon.run.Process;
@@ -45,10 +46,10 @@ class WatchTest {
         final CannonCompiler.Result built =
                 CannonCompiler.compile(List.of(new SourceFile("Watcher.can", source)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
-        final DiagnosticBag bag = new DiagnosticBag("Watcher.asm");
-        final AsmProgram written = new AsmReader(built.assembly(), bag).read();
-        assertFalse(bag.hasErrors(), () -> String.join("\n",
-                bag.sorted().stream().map(Diagnostic::format).toList()));
+        final AsmReader reader = new AsmReader(built.assembly());
+        final AsmProgram written = reader.read();
+        assertFalse(reader.hasProblems(), () -> String.join("\n",
+                reader.problems().stream().map(ListingProblem::format).toList()));
         final Loaded program = Loaded.of(written);
         final Process process = new Process(program, ROOM, IHost.still());
         process.begin(process.create(program.entryPoint()), "OnInit");

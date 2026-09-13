@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.cannon.asm.AsmProgram;
 import dev.jstech.computers.cannon.asm.AsmReader;
+import dev.jstech.computers.cannon.asm.ListingProblem;
 import dev.jstech.computers.cannon.run.ConsoleBuffer;
 import dev.jstech.computers.cannon.run.IHost;
 import dev.jstech.computers.cannon.run.Loaded;
@@ -56,10 +57,10 @@ class ProcessTest {
         final CannonCompiler.Result built =
                 CannonCompiler.compile(List.of(new SourceFile("Monitor.can", PRELUDE + source)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
-        final DiagnosticBag bag = new DiagnosticBag("Monitor.asm");
-        final AsmProgram program = new AsmReader(built.assembly(), bag).read();
-        assertFalse(bag.hasErrors(), () -> String.join("\n",
-                bag.sorted().stream().map(Diagnostic::format).toList()));
+        final AsmReader reader = new AsmReader(built.assembly());
+        final AsmProgram program = reader.read();
+        assertFalse(reader.hasProblems(), () -> String.join("\n",
+                reader.problems().stream().map(ListingProblem::format).toList()));
         return Loaded.of(program);
     }
 
@@ -571,10 +572,10 @@ class ProcessTest {
                         }
                         """)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
-        final DiagnosticBag bag = new DiagnosticBag("Monitor.asm");
-        final AsmProgram program = new AsmReader(built.assembly(), bag).read();
-        assertFalse(bag.hasErrors(), () -> String.join("\n",
-                bag.sorted().stream().map(Diagnostic::format).toList()));
+        final AsmReader reader = new AsmReader(built.assembly());
+        final AsmProgram program = reader.read();
+        assertFalse(reader.hasProblems(), () -> String.join("\n",
+                reader.problems().stream().map(ListingProblem::format).toList()));
         final Loaded loaded = Loaded.of(program);
         final Process process = new Process(loaded, ROOM, IHost.still());
         final Values.Obj self = process.create(loaded.entryPoint());

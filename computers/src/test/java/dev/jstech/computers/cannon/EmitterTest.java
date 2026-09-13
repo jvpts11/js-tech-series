@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.cannon.asm.AsmReader;
 import dev.jstech.computers.cannon.asm.AsmWriter;
+import dev.jstech.computers.cannon.asm.ListingProblem;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -252,10 +253,10 @@ class EmitterTest {
                         }
                     }
                 """);
-        final DiagnosticBag bag = new DiagnosticBag("Monitor.asm");
-        final String again = AsmWriter.write(new AsmReader(listing, bag).read());
-        assertFalse(bag.hasErrors(), () -> String.join("\n",
-                bag.sorted().stream().map(Diagnostic::format).toList()));
+        final AsmReader reader = new AsmReader(listing);
+        final String again = AsmWriter.write(reader.read());
+        assertFalse(reader.hasProblems(), () -> String.join("\n",
+                reader.problems().stream().map(ListingProblem::format).toList()));
         assertEquals(listing, again);
     }
 
