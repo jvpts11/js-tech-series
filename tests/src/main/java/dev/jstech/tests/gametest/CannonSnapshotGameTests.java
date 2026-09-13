@@ -14,8 +14,8 @@ import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
 import dev.jstech.computers.vm.program.IHost;
-import dev.jstech.computers.vm.program.Loaded;
 import dev.jstech.computers.vm.program.Process;
+import dev.jstech.computers.vm.program.ProgramImage;
 import dev.jstech.computers.vm.program.Snapshot;
 import dev.jstech.tests.JsTests;
 import java.util.List;
@@ -48,7 +48,7 @@ public final class CannonSnapshotGameTests {
 
     private static final int PATIENCE = 4000;
 
-    private static Loaded load(final String body) {
+    private static ProgramImage load(final String body) {
         final String source = "using System.*; using System.IO.*; using System.Collections.*; using System.Utils.*; "
                 + "using System.Machine.*; using System.Network.*; using System.Operations.*; namespace Programs; "
                 + "class Monitor : IScript {\n"
@@ -66,10 +66,10 @@ public final class CannonSnapshotGameTests {
             throw new IllegalStateException(String.join("\n",
                     reader.problems().stream().map(ListingProblem::format).toList()));
         }
-        return Loaded.of(program);
+        return ProgramImage.of(program);
     }
 
-    private static Process straight(final Loaded program) {
+    private static Process straight(final ProgramImage program) {
         final Process process = new Process(program, ROOM, IHost.still());
         process.begin(process.create(program.entryPoint()), "OnTick");
         process.step(PLENTY);
@@ -77,7 +77,7 @@ public final class CannonSnapshotGameTests {
     }
 
     /** Runs the program in slices, writing it to a tag and reading it back between every one. */
-    private static Process throughTags(final Loaded program) {
+    private static Process throughTags(final ProgramImage program) {
         Process process = new Process(program, ROOM, IHost.still());
         process.begin(process.create(program.entryPoint()), "OnTick");
         for (int i = 0; i < PATIENCE && process.state() == Process.State.RUNNING; i++) {
@@ -89,7 +89,7 @@ public final class CannonSnapshotGameTests {
     }
 
     private static void bothWays(final GameTestHelper helper, final String body, final List<String> said) {
-        final Loaded program = load(body);
+        final ProgramImage program = load(body);
         final Process straight = straight(program);
         final Process saved = throughTags(program);
         helper.assertTrue(straight.console().equals(said),

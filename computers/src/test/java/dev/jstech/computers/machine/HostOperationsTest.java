@@ -18,8 +18,8 @@ import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IHost;
-import dev.jstech.computers.vm.program.Loaded;
 import dev.jstech.computers.vm.program.Process;
+import dev.jstech.computers.vm.program.ProgramImage;
 import dev.jstech.computers.vm.program.Values;
 import java.util.ArrayList;
 import java.util.List;
@@ -112,7 +112,7 @@ class HostOperationsTest {
         final AsmProgram written = reader.read();
         assertFalse(reader.hasProblems(), () -> String.join("\n",
                 reader.problems().stream().map(ListingProblem::format).toList()));
-        final Loaded program = Loaded.of(written);
+        final ProgramImage program = ProgramImage.of(written);
         final Process process = new Process(program, ROOM, net);
         process.begin(process.create(program.entryPoint()), "OnTick");
         process.step(PLENTY);
@@ -183,7 +183,7 @@ class HostOperationsTest {
 
     @Test
     void operations_isNotThereAtAllOnAMachineOffTheNetwork() {
-        final Loaded lonely = compile();
+        final ProgramImage lonely = compile();
         final Process process = new Process(lonely, ROOM, IHost.still());
         process.begin(process.create(lonely.entryPoint()), "OnTick");
         process.step(PLENTY);
@@ -191,7 +191,7 @@ class HostOperationsTest {
         assertTrue(process.message().contains("Operations"), process.message());
     }
 
-    private static Loaded compile() {
+    private static ProgramImage compile() {
         final CannonCompiler.Result built = CannonCompiler.compile(List.of(new SourceFile("Lonely.can", PRELUDE + """
                 class Lonely : IScript {
                     public void OnInit() { }
@@ -204,6 +204,6 @@ class HostOperationsTest {
         final AsmProgram written = reader.read();
         assertFalse(reader.hasProblems(), () -> String.join("\n",
                 reader.problems().stream().map(ListingProblem::format).toList()));
-        return Loaded.of(written);
+        return ProgramImage.of(written);
     }
 }

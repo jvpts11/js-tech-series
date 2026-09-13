@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.vm.program;
 
-import dev.jstech.computers.vm.listing.AsmMethod;
 import dev.jstech.computers.vm.listing.AsmType;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Instruction;
@@ -120,7 +119,7 @@ public final class Process {
      * kept in something that allows one rather than in something that treats it as an absence.
      */
     static final class Frame {
-        final Loaded.Method method;
+        final MethodImage method;
         final Object[] slots;
         final List<Object> stack = new ArrayList<>();
         final Object self;
@@ -128,7 +127,7 @@ public final class Process {
         /** Set on all but the last handler of a run, whose answers nobody is waiting for. */
         boolean discard;
 
-        Frame(final Loaded.Method method, final Object self) {
+        Frame(final MethodImage method, final Object self) {
             this.method = method;
             this.slots = new Object[Math.max(method.slots(), method.parameters().size())];
             this.self = self;
@@ -176,7 +175,7 @@ public final class Process {
         private int count;
     }
 
-    private final Loaded program;
+    private final ProgramImage program;
     private final Heap heap;
     private final Library library;
     private final List<Thread> threads = new ArrayList<>();
@@ -220,10 +219,6 @@ public final class Process {
     /** Set when a person shut the last window: the program ends once it has heard about it. */
     private boolean endWithWindows;
 
-    Loaded program0() {
-        return this.program;
-    }
-
     Heap heap0() {
         return this.heap;
     }
@@ -261,16 +256,6 @@ public final class Process {
         this.end(thread);
     }
 
-    /** Runs a method on that object with those arguments, in its turn on the current thread. */
-    void enterFrame(final Loaded.Method method, final Object self, final List<Object> arguments, final int line) {
-        this.enter(method, self, arguments, line);
-    }
-
-    /** The arguments a call takes off the stack. */
-    List<Object> takeArguments(final Frame frame, final List<String> parameters) {
-        return this.take(frame, parameters);
-    }
-
     /** A fresh piece of text on the heap. */
     String textOnHeap(final String value, final int line) {
         return this.text(value, line);
@@ -281,11 +266,11 @@ public final class Process {
         return this.alive(value, line);
     }
 
-    public Process(final Loaded program, final long heapBytes, final IHost host) {
+    public Process(final ProgramImage program, final long heapBytes, final IHost host) {
         this(program, heapBytes, host, true);
     }
 
-    private Process(final Loaded program, final long heapBytes, final IHost host, final boolean fresh) {
+    private Process(final ProgramImage program, final long heapBytes, final IHost host, final boolean fresh) {
         this.program = program;
         this.heap = new Heap(heapBytes);
         this.library = new Library(this.heap, host, program.entryPoint());
@@ -298,7 +283,7 @@ public final class Process {
          * Putting the starting values in a type's own fields is the program's work like any other, so
          * it waits its turn and is paid for out of the budget rather than run on the spot.
          */
-        for (final Loaded.Type type : program.types()) {
+        for (final TypeImage type : program.types()) {
             if (type.setUp() != null) {
                 this.waiting.add(new Frame(type.setUp(), null));
             }
@@ -328,7 +313,7 @@ public final class Process {
     }
 
     /** The program it is running, for reading it back after it has been written down. */
-    public Loaded program() {
+    public ProgramImage program() {
         return this.program;
     }
 
@@ -609,7 +594,7 @@ public final class Process {
      * never has an instance of anything to be called on.
      */
     public void beginStatic(final String owner, final String method) {
-        final Loaded.Method found = this.program.method(owner, method, List.of());
+        final MethodImage found = this.program.method(owner, method, List.of());
         if (found == null) {
             this.halt(new Halt(Halt.Reason.NO_SUCH_MEMBER, 0, owner + " has no " + method + " to run"));
             return;
@@ -640,7 +625,7 @@ public final class Process {
     }
 
     public void begin(final Values.Obj self, final String method) {
-        final Loaded.Method found = this.program.method(self.type(), method, List.of());
+        final MethodImage found = this.program.method(self.type(), method, List.of());
         if (found == null) {
             this.halt(new Halt(Halt.Reason.NO_SUCH_MEMBER, 0,
                     self.type() + " has no " + method + " to run"));
@@ -867,10 +852,10 @@ public final class Process {
                 continue;
             }
             final Frame frame = thread.frames.peek();
-            if (frame == null || frame.at >= frame.method.code().size()) {
+            if (frame == null || frame.at >= frame.method.length()) {
                 continue;
             }
-            final Instruction next = frame.method.code().get(frame.at);
+            final Instruction next = frame.method.instruction(frame.at);
             if ((next.opcode() == Opcode.CALL || next.opcode() == Opcode.CALLVIRT)
                     && next.operand() instanceof IOperand.Method named
                     && Library.readsLine(named)) {
@@ -916,9 +901,9 @@ public final class Process {
             return;
         }
         final Values.Bound bound = handler.chain().getFirst();
-        final Loaded.Method method =
+        final MethodImage method =
                 this.program.method(bound.owner(), bound.method(), bound.parameters());
-        if (method == null || method.code().isEmpty()) {
+        if (method == null || !method.hasCode()) {
             return;
         }
         final Frame frame = new Frame(method, bound.target());
@@ -1070,9 +1055,9 @@ public final class Process {
             throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no body to run on the thread");
         }
         final Values.Bound bound = delegate.chain().getFirst();
-        final Loaded.Method method =
+        final MethodImage method =
                 this.program.method(bound.owner(), bound.method(), bound.parameters());
-        if (method == null || method.code().isEmpty()) {
+        if (method == null || !method.hasCode()) {
             throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line,
                     "there is no " + bound.method() + " to run on the thread");
         }
@@ -1393,8 +1378,8 @@ public final class Process {
     }
 
     public Values.DelegateValue handlerFor(final Values.Obj self, final String name) {
-        final Loaded.Type type = this.program.type(self.type());
-        for (final Loaded.Method method : type.methods().values()) {
+        final TypeImage type = this.program.type(self.type());
+        for (final MethodImage method : type.methods().values()) {
             if (method.name().equals(name)) {
                 return new Values.DelegateValue(self.type(), List.of(new Values.Bound(self,
                         method.owner(), method.name(), method.parameters(), method.returns())));
@@ -1485,7 +1470,7 @@ public final class Process {
     }
 
     /** Reads a process back out of what {@link #save()} wrote, ready to carry on where it stopped. */
-    public static Process restore(final Loaded program, final Snapshot shot, final IHost host) {
+    public static Process restore(final ProgramImage program, final Snapshot shot, final IHost host) {
         final Process process = new Process(program, shot.heapBudget(), host, false);
         process.setName(shot.name());
         final Map<Integer, Object> byNumber = new LinkedHashMap<>();
@@ -1692,9 +1677,9 @@ public final class Process {
                 frame.discard);
     }
 
-    private static Frame thaw(final Loaded program, final Snapshot.FrameShot written,
+    private static Frame thaw(final ProgramImage program, final Snapshot.FrameShot written,
                               final Map<Integer, Object> byNumber) {
-        final Loaded.Method method = found(program, written);
+        final MethodImage method = found(program, written);
         if (method == null) {
             return null;
         }
@@ -1717,17 +1702,17 @@ public final class Process {
      * called by name, so it is asked for separately: a process put away before it ran would otherwise
      * come back without it.
      */
-    private static Loaded.Method found(final Loaded program, final Snapshot.FrameShot written) {
-        final Loaded.Method named =
+    private static MethodImage found(final ProgramImage program, final Snapshot.FrameShot written) {
+        final MethodImage named =
                 program.method(written.owner(), written.name(), written.parameters());
         if (named != null) {
             return named;
         }
-        final Loaded.Type type = program.type(written.owner());
+        final TypeImage type = program.type(written.owner());
         if (type == null || type.setUp() == null) {
             return null;
         }
-        final Loaded.Method setUp = type.setUp();
+        final MethodImage setUp = type.setUp();
         return setUp.name().equals(written.name()) && setUp.parameters().equals(written.parameters())
                 ? setUp : null;
     }
@@ -1782,11 +1767,11 @@ public final class Process {
 
     private void one() {
         final Frame frame = this.current.frames.peek();
-        if (frame.at >= frame.method.code().size()) {
+        if (frame.at >= frame.method.length()) {
             this.leave(frame, null);
             return;
         }
-        final Instruction instruction = frame.method.code().get(frame.at);
+        final Instruction instruction = frame.method.instruction(frame.at);
         frame.at++;
         this.run(frame, instruction, frame.at);
     }
@@ -1818,11 +1803,11 @@ public final class Process {
             case CONV_R4 -> frame.push(Numbers.toFloat(frame.pop()));
             case CONV_R8 -> frame.push(Numbers.toDouble(frame.pop()));
             case CEQ, CLT, CGT -> this.compare(frame, instruction.opcode());
-            case BR -> frame.at = Loaded.target(frame.method, instruction);
-            case BRTRUE -> this.jumpIf(frame, instruction, truth(frame.pop()));
-            case BRFALSE -> this.jumpIf(frame, instruction, !truth(frame.pop()));
-            case BEQ, BNE, BLT, BLE, BGT, BGE -> this.jumpCompare(frame, instruction);
-            case NEWOBJ -> this.newObject(frame, (IOperand.Constructor) instruction.operand(), line);
+            case BR -> frame.at = frame.method.jump(line - 1);
+            case BRTRUE -> this.jumpIf(frame, line, truth(frame.pop()));
+            case BRFALSE -> this.jumpIf(frame, line, !truth(frame.pop()));
+            case BEQ, BNE, BLT, BLE, BGT, BGE -> this.jumpCompare(frame, instruction.opcode(), line);
+            case NEWOBJ -> this.newObject(frame, frame.method.creation(line - 1), line);
             case NEWARR -> this.newArray(frame, (IOperand.Type) instruction.operand(), line);
             case LDELEM -> this.loadElement(frame, line);
             case STELEM -> this.storeElement(frame, line);
@@ -1833,7 +1818,7 @@ public final class Process {
             case CASTCLASS -> this.cast(frame, ((IOperand.Type) instruction.operand()).name(), line);
             case ISINST -> this.isInstance(frame, ((IOperand.Type) instruction.operand()).name());
             case LDFN -> this.handler(frame, (IOperand.Method) instruction.operand(), line);
-            case CALL, CALLVIRT -> this.call(frame, (IOperand.Method) instruction.operand(),
+            case CALL, CALLVIRT -> this.call(frame, frame.method.call(line - 1),
                     instruction.opcode() == Opcode.CALLVIRT, line);
             case SYS -> throw new Halt(Halt.Reason.NO_NETWORK, line,
                     "this computer is not on a network");
@@ -1842,16 +1827,17 @@ public final class Process {
         }
     }
 
-    private void jumpIf(final Frame frame, final Instruction instruction, final boolean go) {
+    /** Branches when {@code go}; {@code line} is where the frame already stands, one past the branch. */
+    private void jumpIf(final Frame frame, final int line, final boolean go) {
         if (go) {
-            frame.at = Loaded.target(frame.method, instruction);
+            frame.at = frame.method.jump(line - 1);
         }
     }
 
-    private void jumpCompare(final Frame frame, final Instruction instruction) {
+    private void jumpCompare(final Frame frame, final Opcode opcode, final int line) {
         final Object right = frame.pop();
         final Object left = frame.pop();
-        final boolean go = switch (instruction.opcode()) {
+        final boolean go = switch (opcode) {
             case BEQ -> same(left, right);
             case BNE -> !same(left, right);
             case BLT -> Numbers.compare(left, right) < 0;
@@ -1859,7 +1845,7 @@ public final class Process {
             case BGT -> Numbers.compare(left, right) > 0;
             default -> Numbers.compare(left, right) >= 0;
         };
-        this.jumpIf(frame, instruction, go);
+        this.jumpIf(frame, line, go);
     }
 
     private void compare(final Frame frame, final Opcode opcode) {
@@ -1922,7 +1908,7 @@ public final class Process {
             frame.push(this.selfToken(line));
             return;
         }
-        final Loaded.Type type = this.program.type(field.owner());
+        final TypeImage type = this.program.type(field.owner());
         if (type == null) {
             frame.push(this.library.readStatic(field.owner(), field.name(), line));
             return;
@@ -1944,8 +1930,11 @@ public final class Process {
 
     // objects
 
-    private void newObject(final Frame frame, final IOperand.Constructor made, final int line) {
-        frame.push(this.instance(made.owner(), this.take(frame, made.parameters()), line));
+    private void newObject(final Frame frame, final ProgramImage.Creation creation, final int line) {
+        final List<Object> arguments = this.take(frame, creation.outs());
+        frame.push(creation.type() == null
+                ? this.library.create(creation.made().owner(), arguments, line)
+                : this.instance(creation.type(), creation.constructor(), arguments, line));
     }
 
     /**
@@ -1956,12 +1945,12 @@ public final class Process {
         if (!(value instanceof Values.Obj original)) {
             return value;
         }
-        final Loaded.Type known = this.program.type(original.type());
+        final TypeImage known = this.program.type(original.type());
         if (known == null || known.kind() != AsmType.Kind.STRUCT) {
             return value;
         }
         final Values.Obj made = new Values.Obj(original.type());
-        this.heap.allocate(made, this.sizeOf(known), line);
+        this.heap.allocate(made, known.instanceSize(), line);
         for (final Map.Entry<String, Object> field : original.all().entrySet()) {
             made.set(field.getKey(), this.copyOf(field.getValue(), line));
         }
@@ -1969,40 +1958,21 @@ public final class Process {
     }
 
     private Object instance(final String type, final List<Object> arguments, final int line) {
-        final Loaded.Type known = this.program.type(type);
+        final TypeImage known = this.program.type(type);
         if (known == null) {
             return this.library.create(type, arguments, line);
         }
-        final Values.Obj made = new Values.Obj(type);
-        this.heap.allocate(made, this.sizeOf(known), line);
-        final Loaded.Method constructor = this.constructorOf(known, arguments.size());
+        return this.instance(known, known.constructor(arguments.size()), arguments, line);
+    }
+
+    private Values.Obj instance(final TypeImage type, final MethodImage constructor, final List<Object> arguments,
+                                final int line) {
+        final Values.Obj made = new Values.Obj(type.name());
+        this.heap.allocate(made, type.instanceSize(), line);
         if (constructor != null) {
             this.enter(constructor, made, arguments, line);
         }
         return made;
-    }
-
-    private Loaded.Method constructorOf(final Loaded.Type type, final int count) {
-        for (final Loaded.Method method : type.methods().values()) {
-            if (AsmMethod.CONSTRUCTOR.equals(method.name()) && !method.isStatic()
-                    && method.parameters().size() == count) {
-                return method;
-            }
-        }
-        return null;
-    }
-
-    private long sizeOf(final Loaded.Type type) {
-        long bytes = Heap.HEADER;
-        for (String at = type.name(); at != null; at = this.program.baseOf(at)) {
-            final Loaded.Type known = this.program.type(at);
-            for (final AsmType.Field field : known.fields()) {
-                if (!field.isStatic()) {
-                    bytes += Heap.sizeOf(field.type());
-                }
-            }
-        }
-        return bytes;
     }
 
     private void newArray(final Frame frame, final IOperand.Type element, final int line) {
@@ -2129,12 +2099,13 @@ public final class Process {
      * answer lands the call simply runs again, finds it, and takes its arguments off then. That is what
      * makes the wait free (a parked thread is given no budget) and what makes it survive a save.
      */
-    private void call(final Frame frame, final IOperand.Method named, final boolean through, final int line) {
+    private void call(final Frame frame, final ProgramImage.CallSite site, final boolean through, final int line) {
+        final IOperand.Method named = site.named();
         if (through) {
-            this.invoke(frame, this.take(frame, named.parameters()), line);
+            this.invoke(frame, this.take(frame, site.outs()), line);
             return;
         }
-        final Loaded.Method direct = this.program.method(named.owner(), named.name(), named.parameters());
+        final MethodImage direct = site.direct();
         if (direct == null) {
             if ("Thread".equals(named.owner())) {
                 this.threadCall(frame, named, line);
@@ -2157,30 +2128,29 @@ public final class Process {
                 this.park();
                 return;
             }
-            final List<Object> arguments = this.take(frame, named.parameters());
+            final List<Object> arguments = this.take(frame, site.outs());
             final Object self = this.library.takesTarget(named.owner(), named.name())
                     ? this.alive(frame.pop(), line) : null;
             this.push(frame, named, this.library.call(named, self, arguments, line));
             return;
         }
-        final List<Object> arguments = this.take(frame, named.parameters());
+        final List<Object> arguments = this.take(frame, site.outs());
         final Object self = direct.isStatic() ? null : this.alive(frame.pop(), line);
-        this.enter(this.onItsOwnType(direct, self, named), self, arguments, line);
+        this.enter(this.onItsOwnType(site, self), self, arguments, line);
     }
 
     /*
      * A call through an interface names the interface, but the object knows which class it is, and
      * that is the one whose lines should run.
      */
-    private Loaded.Method onItsOwnType(final Loaded.Method direct, final Object self,
-                                       final IOperand.Method named) {
+    private MethodImage onItsOwnType(final ProgramImage.CallSite site, final Object self) {
         // A constructor runs on the type it names: a class chaining to its base must not land in one of its own.
-        if (AsmMethod.CONSTRUCTOR.equals(named.name()) || !(self instanceof Values.Obj object)
-                || object.type().equals(named.owner())) {
-            return direct;
+        if (site.constructs() || !(self instanceof Values.Obj object) || object.type().equals(site.named().owner())) {
+            return site.direct();
         }
-        final Loaded.Method own = this.program.method(object.type(), named.name(), named.parameters());
-        return own != null && !own.code().isEmpty() ? own : direct;
+        final TypeImage own = this.program.type(object.type());
+        final MethodImage found = own == null ? null : own.method(site.signature());
+        return found != null && found.hasCode() ? found : site.direct();
     }
 
     /**
@@ -2200,9 +2170,9 @@ public final class Process {
         final List<Values.Bound> chain = delegate.chain();
         for (int i = chain.size() - 1; i >= 0; i--) {
             final Values.Bound bound = chain.get(i);
-            final Loaded.Method method =
+            final MethodImage method =
                     this.program.method(bound.owner(), bound.method(), bound.parameters());
-            if (method == null || method.code().isEmpty()) {
+            if (method == null || !method.hasCode()) {
                 if (i == chain.size() - 1) {
                     throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line,
                             "there is no " + bound.method() + " to call");
@@ -2216,9 +2186,9 @@ public final class Process {
         }
     }
 
-    private void enter(final Loaded.Method method, final Object self, final List<Object> arguments,
+    private void enter(final MethodImage method, final Object self, final List<Object> arguments,
                        final int line) {
-        if (method.code().isEmpty()) {
+        if (!method.hasCode()) {
             throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, method.describe() + " has no body to run");
         }
         final Frame frame = new Frame(method, self);
@@ -2283,6 +2253,17 @@ public final class Process {
         return taken;
     }
 
+    /** The same, for a call whose shape was worked out when the program loaded. */
+    private List<Object> take(final Frame frame, final boolean[] outs) {
+        final Object[] taken = new Object[outs.length];
+        for (int i = outs.length - 1; i >= 0; i--) {
+            if (!outs[i]) {
+                taken[i] = frame.pop();
+            }
+        }
+        return java.util.Arrays.asList(taken);
+    }
+
     // odds and ends
 
     private String text(final String value, final int line) {
@@ -2335,7 +2316,7 @@ public final class Process {
             return left.equals(right);
         }
         if (left instanceof Values.Obj one && right instanceof Values.Obj other && one.type().equals(other.type())) {
-            final Loaded.Type kind = this.program.type(one.type());
+            final TypeImage kind = this.program.type(one.type());
             if (kind != null && kind.kind().byValue()) {
                 final Map<String, Object> mine = one.all();
                 final Map<String, Object> theirs = other.all();

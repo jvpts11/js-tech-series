@@ -103,7 +103,7 @@ class ExecutionTest {
         }
     }
 
-    private static Loaded load(final String members, final String tick) {
+    private static ProgramImage load(final String members, final String tick) {
         final String source = "class Monitor : IScript {\n" + members
                 + "    public void OnInit() { }\n"
                 + "    public void OnTick() {\n" + tick + "\n    }\n"
@@ -115,11 +115,11 @@ class ExecutionTest {
         final AsmProgram program = reader.read();
         assertFalse(reader.hasProblems(), () -> String.join("\n",
                 reader.problems().stream().map(ListingProblem::format).toList()));
-        return Loaded.of(program);
+        return ProgramImage.of(program);
     }
 
     /** A script ready for its first tick, with the tick queued and nothing run yet. */
-    private static Process start(final Loaded program, final IHost host) {
+    private static Process start(final ProgramImage program, final IHost host) {
         final Process process = new Process(program, ROOM, host);
         final Values.Obj self = process.create(program.entryPoint());
         assertNotNull(self);
@@ -249,7 +249,7 @@ class ExecutionTest {
 
     @Test
     void save_keepsArgsTheNumberTheExitAndTheHandler() {
-        final Loaded program = load("", """
+        final ProgramImage program = load("", """
                 Program.OnMessage(m => Console.PrintLine("got " + m.Text + " as " + Program.Current.Id
                         + " with " + Program.Args.Get(0)));
                 """);
@@ -264,7 +264,7 @@ class ExecutionTest {
         process.step(PLENTY);
         assertEquals(List.of("got back as 6 with z"), process.console(), () -> String.valueOf(process.message()));
 
-        final Loaded leaving = load("", "        Program.Exit(3);");
+        final ProgramImage leaving = load("", "        Program.Exit(3);");
         final Process left = Process.restore(leaving, start(leaving, IHost.still()).save(), IHost.still());
         left.step(PLENTY);
         final Process back = Process.restore(leaving, left.save(), IHost.still());

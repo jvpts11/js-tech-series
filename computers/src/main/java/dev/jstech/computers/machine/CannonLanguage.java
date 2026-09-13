@@ -17,8 +17,8 @@ import dev.jstech.computers.cannon.lex.Lexer;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.Shape;
-import dev.jstech.computers.vm.program.Loaded;
 import dev.jstech.computers.vm.program.Process;
+import dev.jstech.computers.vm.program.ProgramImage;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.core.language.ILanguageProcess;
 import dev.jstech.core.language.IProgrammingLanguage;
@@ -144,7 +144,7 @@ public final class CannonLanguage implements IProgrammingLanguage {
     @Nullable
     public ILanguageProcess start(final String binary, final long heapBytes, final BlockEntity machine,
                                   final java.util.List<String> arguments) {
-        final Loaded program = read(binary);
+        final ProgramImage program = read(binary);
         if (program == null || program.entryPoint() == null) {
             return null;
         }
@@ -165,7 +165,7 @@ public final class CannonLanguage implements IProgrammingLanguage {
     @Override
     @Nullable
     public ILanguageProcess restore(final String binary, final CompoundTag saved, final BlockEntity machine) {
-        final Loaded program = read(binary);
+        final ProgramImage program = read(binary);
         if (program == null) {
             return null;
         }
@@ -175,9 +175,9 @@ public final class CannonLanguage implements IProgrammingLanguage {
 
     /** Reads a listing, or null when it is not one. */
     @Nullable
-    private static Loaded read(final String binary) {
+    private static ProgramImage read(final String binary) {
         final AsmReader reader = new AsmReader(binary);
         final AsmProgram program = reader.read();
-        return reader.hasProblems() ? null : Loaded.of(program);
+        return reader.hasProblems() ? null : ProgramImage.of(program);
     }
 }

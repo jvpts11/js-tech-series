@@ -31,7 +31,7 @@ class SnapshotTest {
     /** How many times a program may be put away before the test gives up on it ending. */
     private static final int PATIENCE = 4000;
 
-    private static Loaded load(final String before, final String body) {
+    private static ProgramImage load(final String before, final String body) {
         return loadSource(before + "class Monitor : IScript {\n"
                 + "    public void OnInit() { }\n"
                 + "    public void OnTick() {\n" + body + "\n    }\n"
@@ -43,7 +43,7 @@ class SnapshotTest {
             + "using System.Utils.*; using System.Machine.*; using System.Network.*; using System.Operations.*; "
             + "using System.Execution.*; namespace Tests; ";
 
-    private static Loaded loadSource(final String source) {
+    private static ProgramImage loadSource(final String source) {
         final CannonCompiler.Result built =
                 CannonCompiler.compile(List.of(new SourceFile("Monitor.can", PRELUDE + source)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
@@ -51,11 +51,11 @@ class SnapshotTest {
         final AsmProgram program = reader.read();
         assertFalse(reader.hasProblems(), () -> String.join("\n",
                 reader.problems().stream().map(ListingProblem::format).toList()));
-        return Loaded.of(program);
+        return ProgramImage.of(program);
     }
 
     /** Runs a tick straight through, for the answer a run through saves has to match. */
-    private static Process straight(final Loaded program) {
+    private static Process straight(final ProgramImage program) {
         final Process process = new Process(program, ROOM, IHost.still());
         process.begin(process.create(program.entryPoint()), "OnTick");
         process.step(PLENTY);
@@ -66,7 +66,7 @@ class SnapshotTest {
      * Runs a tick a few instructions at a time, putting the process away and reading it back between
      * every slice, which is what a world being saved and loaded does to it.
      */
-    private static Process throughSaves(final Loaded program) {
+    private static Process throughSaves(final ProgramImage program) {
         Process process = new Process(program, ROOM, IHost.still());
         process.begin(process.create(program.entryPoint()), "OnTick");
         for (int i = 0; i < PATIENCE && process.state() == Process.State.RUNNING; i++) {
@@ -78,7 +78,7 @@ class SnapshotTest {
     }
 
     /** Runs the same program both ways and says they agree, giving back the one that was saved. */
-    private static Process bothWays(final Loaded program) {
+    private static Process bothWays(final ProgramImage program) {
         final Process straight = straight(program);
         final Process saved = throughSaves(program);
         assertEquals(straight.state(), saved.state(), () -> String.valueOf(saved.message()));
@@ -89,7 +89,7 @@ class SnapshotTest {
 
     @Test
     void save_keepsTheNameTheProgramGaveItself() {
-        final Loaded program = load("", """
+        final ProgramImage program = load("", """
                         Program.SetName("Sorter");
                         for (int i = 0; i < 20; i++) { Console.PrintLine("" + i); }
                         Console.PrintLine(Program.Name);
@@ -238,7 +238,7 @@ class SnapshotTest {
 
     @Test
     void save_countsWhatItRanOnBothSidesOfTheSave() {
-        final Loaded program = load("", "        for (int i = 0; i < 20; i++) { }");
+        final ProgramImage program = load("", "        for (int i = 0; i < 20; i++) { }");
         final Process straight = straight(program);
         final Process saved = throughSaves(program);
         assertEquals(straight.spent(), saved.spent());

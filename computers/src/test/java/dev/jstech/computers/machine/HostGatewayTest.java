@@ -18,8 +18,8 @@ import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IHost;
-import dev.jstech.computers.vm.program.Loaded;
 import dev.jstech.computers.vm.program.Process;
+import dev.jstech.computers.vm.program.ProgramImage;
 import dev.jstech.computers.vm.program.Snapshot;
 import dev.jstech.computers.vm.program.Values;
 import java.util.ArrayList;
@@ -115,7 +115,7 @@ class HostGatewayTest {
     private static final String PRELUDE =
             "using System.*; using System.IO.*; using System.Collections.*; using System.Network.*; namespace Tests; ";
 
-    private static Loaded load(final String source) {
+    private static ProgramImage load(final String source) {
         final CannonCompiler.Result built =
                 CannonCompiler.compile(List.of(new SourceFile("Bridge.can", PRELUDE + source)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
@@ -123,10 +123,10 @@ class HostGatewayTest {
         final AsmProgram program = reader.read();
         assertFalse(reader.hasProblems(), () -> String.join("\n",
                 reader.problems().stream().map(ListingProblem::format).toList()) + "\n" + built.assembly());
-        return Loaded.of(program);
+        return ProgramImage.of(program);
     }
 
-    private static Process start(final Loaded program, final Machine machine) {
+    private static Process start(final ProgramImage program, final Machine machine) {
         final Process process = new Process(program, ROOM, machine);
         process.begin(process.create(program.entryPoint()), "OnInit");
         process.step(PLENTY);
@@ -194,7 +194,7 @@ class HostGatewayTest {
     @Test
     void save_keepsTheChosenGatewayAndTheListening() {
         final Machine machine = new Machine();
-        final Loaded program = load(BRIDGE);
+        final ProgramImage program = load(BRIDGE);
         Process process = start(program, machine);
         final Snapshot shot = process.save();
         process = Process.restore(program, shot, machine);

@@ -63,7 +63,7 @@ class UiWidgetsTest {
     private static final String PRELUDE = "using System.*; using System.UI.*; using System.IO.*; "
             + "namespace Tests; ";
 
-    private static Loaded load(final String source) {
+    private static ProgramImage load(final String source) {
         final CannonCompiler.Result built =
                 CannonCompiler.compile(List.of(new SourceFile("Panel.can", PRELUDE + source)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
@@ -71,10 +71,10 @@ class UiWidgetsTest {
         final AsmProgram program = reader.read();
         assertFalse(reader.hasProblems(), () -> String.join("\n",
                 reader.problems().stream().map(ListingProblem::format).toList()) + "\n" + built.assembly());
-        return Loaded.of(program);
+        return ProgramImage.of(program);
     }
 
-    private static Process start(final Loaded program, final IHost host) {
+    private static Process start(final ProgramImage program, final IHost host) {
         final Process process = new Process(program, ROOM, host);
         process.begin(process.create(program.entryPoint()), "OnInit");
         process.step(PLENTY);
@@ -232,7 +232,7 @@ class UiWidgetsTest {
 
     @Test
     void save_bringsBackTheWindowAndWhatItShowed() {
-        final Loaded program = load(PANEL);
+        final ProgramImage program = load(PANEL);
         Process process = start(program, desktop(true));
         final Snapshot shot = process.save();
         process = Process.restore(program, shot, desktop(true));

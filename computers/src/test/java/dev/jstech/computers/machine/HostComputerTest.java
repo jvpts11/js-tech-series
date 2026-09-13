@@ -18,8 +18,8 @@ import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IHost;
-import dev.jstech.computers.vm.program.Loaded;
 import dev.jstech.computers.vm.program.Process;
+import dev.jstech.computers.vm.program.ProgramImage;
 import dev.jstech.computers.vm.program.Values;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -111,7 +111,7 @@ class HostComputerTest {
         final AsmProgram written = reader.read();
         assertFalse(reader.hasProblems(), () -> String.join("\n",
                 reader.problems().stream().map(ListingProblem::format).toList()));
-        final Loaded program = Loaded.of(written);
+        final ProgramImage program = ProgramImage.of(written);
         final Process process = new Process(program, ROOM, new Machine());
         process.begin(process.create(program.entryPoint()), "OnTick");
         process.step(PLENTY);

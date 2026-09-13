@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.cannon.CannonCompiler;
 import dev.jstech.computers.cannon.SourceFile;
-import dev.jstech.computers.vm.program.Loaded;
+import dev.jstech.computers.vm.program.ProgramImage;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -69,12 +69,12 @@ class ListingRoundTripTest {
             """;
 
     /** Reads a listing the way the machine does: a reader, and nothing when the listing has a problem. */
-    private static Loaded readBack(final String assembly) {
+    private static ProgramImage readBack(final String assembly) {
         final AsmReader reader = new AsmReader(assembly);
         final AsmProgram program = reader.read();
         assertFalse(reader.hasProblems(), () -> "the listing reads back clean:\n" + String.join("\n", reader.problems()
                 .stream().map(ListingProblem::format).toList()) + "\n--- listing ---\n" + assembly);
-        return Loaded.of(program);
+        return ProgramImage.of(program);
     }
 
     @Test
@@ -83,7 +83,7 @@ class ListingRoundTripTest {
                 new SourceFile("Hello_World.can", HELLO_WORLD),
                 new SourceFile("ClassToInherit.can", CLASS_TO_INHERIT)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
-        final Loaded program = readBack(built.assembly());
+        final ProgramImage program = readBack(built.assembly());
         assertNotNull(program.entryPoint(), "the machine finds where to start");
         assertEquals("Main.Main", program.entryPoint());
     }

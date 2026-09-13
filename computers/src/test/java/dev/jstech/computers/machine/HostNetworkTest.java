@@ -18,8 +18,8 @@ import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IHost;
-import dev.jstech.computers.vm.program.Loaded;
 import dev.jstech.computers.vm.program.Process;
+import dev.jstech.computers.vm.program.ProgramImage;
 import dev.jstech.computers.vm.program.Values;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -117,7 +117,7 @@ class HostNetworkTest {
         }
     }
 
-    private static Loaded compile(final String body) {
+    private static ProgramImage compile(final String body) {
         final String source = "using System.*; using System.IO.*; using System.Collections.*; using System.Utils.*; "
                 + "using System.Machine.*; using System.Network.*; using System.Operations.*; namespace Tests; "
                 + "class Monitor : IScript {\n"
@@ -131,11 +131,11 @@ class HostNetworkTest {
         final AsmProgram written = reader.read();
         assertFalse(reader.hasProblems(), () -> String.join("\n",
                 reader.problems().stream().map(ListingProblem::format).toList()));
-        return Loaded.of(written);
+        return ProgramImage.of(written);
     }
 
     private static Process run(final Net net, final String body) {
-        final Loaded program = compile(body);
+        final ProgramImage program = compile(body);
         final Process process = new Process(program, ROOM, net);
         process.begin(process.create(program.entryPoint()), "OnTick");
         process.step(PLENTY);
@@ -239,7 +239,7 @@ class HostNetworkTest {
          * A small machine asking a big network for everything is told it does not fit, which is the
          * honest answer and the one that says to put more memory in.
          */
-        final Loaded program = compile("        List<string> t = Network.Types();");
+        final ProgramImage program = compile("        List<string> t = Network.Types();");
         final Process process = new Process(program, 8L * 1024, huge);
         process.begin(process.create(program.entryPoint()), "OnTick");
         process.step(PLENTY);

@@ -49,7 +49,7 @@ class WatchTest {
         final AsmProgram written = reader.read();
         assertFalse(reader.hasProblems(), () -> String.join("\n",
                 reader.problems().stream().map(ListingProblem::format).toList()));
-        final Loaded program = Loaded.of(written);
+        final ProgramImage program = ProgramImage.of(written);
         final Process process = new Process(program, ROOM, IHost.still());
         process.begin(process.create(program.entryPoint()), "OnInit");
         process.step(PLENTY);

@@ -19,8 +19,8 @@ import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IHost;
-import dev.jstech.computers.vm.program.Loaded;
 import dev.jstech.computers.vm.program.Process;
+import dev.jstech.computers.vm.program.ProgramImage;
 import dev.jstech.computers.vm.program.Values;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -99,7 +99,7 @@ class HostFileTest {
         }
     }
 
-    private static Loaded load(final String body) {
+    private static ProgramImage load(final String body) {
         final String source = "using System.*; using System.IO.*; using System.Collections.*; using System.Utils.*; "
                 + "using System.Machine.*; using System.Network.*; using System.Operations.*; namespace Tests; "
                 + "class Monitor : IScript {\n"
@@ -113,11 +113,11 @@ class HostFileTest {
         final AsmProgram program = reader.read();
         assertFalse(reader.hasProblems(), () -> String.join("\n",
                 reader.problems().stream().map(ListingProblem::format).toList()));
-        return Loaded.of(program);
+        return ProgramImage.of(program);
     }
 
     private static Process run(final Drive drive, final String body) {
-        final Loaded program = load(body);
+        final ProgramImage program = load(body);
         final Process process = new Process(program, ROOM, drive);
         final Values.Obj self = process.create(program.entryPoint());
         assertNotNull(self);
@@ -215,7 +215,7 @@ class HostFileTest {
 
     /** The same run, on the host that answers for nothing at all. */
     private static Process run2(final String body) {
-        final Loaded program = load(body);
+        final ProgramImage program = load(body);
         final Process process = new Process(program, ROOM, IHost.still());
         process.begin(process.create(program.entryPoint()), "OnTick");
         process.step(PLENTY);

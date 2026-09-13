@@ -37,7 +37,7 @@ class ProcessTest {
             """;
 
     /** Compiles a script whose tick does {@code body}, and loads it ready to run. */
-    private static Loaded load(final String before, final String body) {
+    private static ProgramImage load(final String before, final String body) {
         return loadSource(before + "class Monitor : IScript {\n" + HELPERS
                 + "    public void OnInit() { }\n"
                 + "    public void OnTick() {\n" + body + "\n    }\n"
@@ -50,7 +50,7 @@ class ProcessTest {
             + "using System.Execution.*; namespace Tests; ";
 
     /** Compiles a whole file, for the scripts that need a shape of their own. */
-    private static Loaded loadSource(final String source) {
+    private static ProgramImage loadSource(final String source) {
         final CannonCompiler.Result built =
                 CannonCompiler.compile(List.of(new SourceFile("Monitor.can", PRELUDE + source)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
@@ -58,7 +58,7 @@ class ProcessTest {
         final AsmProgram program = reader.read();
         assertFalse(reader.hasProblems(), () -> String.join("\n",
                 reader.problems().stream().map(ListingProblem::format).toList()));
-        return Loaded.of(program);
+        return ProgramImage.of(program);
     }
 
     /** Runs a tick to the end, on a heap big enough not to matter. */
@@ -67,7 +67,7 @@ class ProcessTest {
     }
 
     private static Process run(final String before, final String body, final long heap) {
-        final Loaded program = load(before, body);
+        final ProgramImage program = load(before, body);
         final Process process = new Process(program, heap, IHost.still());
         final Values.Obj self = process.create(program.entryPoint());
         assertNotNull(self);
@@ -103,7 +103,7 @@ class ProcessTest {
 
     @Test
     void readLine_takesALineTypedAheadWithoutWaiting() {
-        final Loaded program = load("", "        Console.PrintLine(\"got \" + Console.ReadLine());");
+        final ProgramImage program = load("", "        Console.PrintLine(\"got \" + Console.ReadLine());");
         final Process process = new Process(program, ROOM, IHost.still());
         process.offerInput("early");
         process.begin(process.create(program.entryPoint()), "OnTick");
@@ -114,7 +114,7 @@ class ProcessTest {
 
     @Test
     void hasLine_saysWhetherALineIsWaitingWithoutTakingIt() {
-        final Loaded program = load("", """
+        final ProgramImage program = load("", """
                         Console.PrintLine(Console.HasLine() ? "yes" : "no");
                         Console.PrintLine(Console.ReadLine());
                         Console.PrintLine(Console.HasLine() ? "yes" : "no");
@@ -168,7 +168,7 @@ class ProcessTest {
 
     @Test
     void readBool_readsTheUsualSpellingsOfYesAndNo() {
-        final Loaded program = load("", """
+        final ProgramImage program = load("", """
                         Console.PrintLine(Console.ReadBool() ? "yes" : "no");
                         Console.PrintLine(Console.ReadBool() ? "yes" : "no");
                         Console.PrintLine("" + (Console.ReadDouble() + Console.ReadLong()));
@@ -459,7 +459,7 @@ class ProcessTest {
 
     @Test
     void run_spendsOnlyTheBudgetItIsGiven() {
-        final Loaded program = load("", "        for (int i = 0; i < 1000; i++) { }");
+        final ProgramImage program = load("", "        for (int i = 0; i < 1000; i++) { }");
         final Process process = new Process(program, ROOM, IHost.still());
         process.begin(process.create(program.entryPoint()), "OnTick");
         assertEquals(5, process.step(5));
@@ -468,7 +468,7 @@ class ProcessTest {
 
     @Test
     void run_runsWhatWasQueuedAfterTheWorkThatWasAlreadyThere() {
-        final Loaded program = load("", "        Console.PrintLine(\"tick\");");
+        final ProgramImage program = load("", "        Console.PrintLine(\"tick\");");
         final Process process = new Process(program, ROOM, IHost.still());
         final Values.Obj self = process.create(program.entryPoint());
         process.begin(self, "OnTick");
@@ -483,7 +483,7 @@ class ProcessTest {
 
     @Test
     void run_spendsNothingWhileItIsWaiting() {
-        final Loaded program = load("", "        Console.PrintLine(\"after\");");
+        final ProgramImage program = load("", "        Console.PrintLine(\"after\");");
         final Process process = new Process(program, ROOM, IHost.still());
         process.begin(process.create(program.entryPoint()), "OnTick");
         process.park();
@@ -498,7 +498,7 @@ class ProcessTest {
 
     @Test
     void run_paysForItsConstructorOutOfTheBudgetAndRunsItFirst() {
-        final Loaded program = loadSource("""
+        final ProgramImage program = loadSource("""
                 class Monitor : IScript {
                     int held = 0;
 
@@ -523,7 +523,7 @@ class ProcessTest {
 
     @Test
     void run_callsEveryHandlerJoinedToAnEventInTheOrderTheyWereJoined() {
-        final Loaded program = loadSource("""
+        final ProgramImage program = loadSource("""
                 delegate void Note(int n);
                 class Monitor : IScript {
                     event Note Notes;
@@ -549,7 +549,7 @@ class ProcessTest {
 
     @Test
     void run_carriesOnFromWhereItStopped() {
-        final Loaded program = load("", """
+        final ProgramImage program = load("", """
                         for (int i = 0; i < 3; i++) {
                             Console.PrintLine("round " + i);
                         }
@@ -598,7 +598,7 @@ class ProcessTest {
         final AsmProgram program = reader.read();
         assertFalse(reader.hasProblems(), () -> String.join("\n",
                 reader.problems().stream().map(ListingProblem::format).toList()));
-        final Loaded loaded = Loaded.of(program);
+        final ProgramImage loaded = ProgramImage.of(program);
         final Process process = new Process(loaded, ROOM, IHost.still());
         final Values.Obj self = process.create(loaded.entryPoint());
         assertNotNull(self);
@@ -663,7 +663,7 @@ class ProcessTest {
 
     @Test
     void step_endsOnlyTheProcessWhenTheRuntimeFailsOnAnInstruction() {
-        final Loaded program = load("", "        Operations.Push(\"minecraft:cobblestone\", 1);");
+        final ProgramImage program = load("", "        Operations.Push(\"minecraft:cobblestone\", 1);");
         final Process process = new Process(program, ROOM, new Faulty(false));
         process.begin(process.create(program.entryPoint()), "OnTick");
 
@@ -676,7 +676,7 @@ class ProcessTest {
 
     @Test
     void step_endsOnlyTheProcessWhenTheRuntimeFailsBetweenInstructions() {
-        final Loaded program = load("", "        Console.PrintLine(\"never\");");
+        final ProgramImage program = load("", "        Console.PrintLine(\"never\");");
         final Process process = new Process(program, ROOM, new Faulty(true));
         process.begin(process.create(program.entryPoint()), "OnTick");
 

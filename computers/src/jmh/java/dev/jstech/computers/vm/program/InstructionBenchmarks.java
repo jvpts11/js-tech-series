@@ -65,7 +65,7 @@ public class InstructionBenchmarks {
             "constructors", "casts", "text", "collections"})
     public String family;
 
-    private Loaded program;
+    private ProgramImage program;
     private Process process;
 
     @Setup(Level.Trial)
@@ -138,7 +138,7 @@ public class InstructionBenchmarks {
                 + "    public void OnDestroy() { }\n}\n";
     }
 
-    private static Loaded load(final String source) {
+    private static ProgramImage load(final String source) {
         final CannonCompiler.Result built =
                 CannonCompiler.compile(List.of(new SourceFile("Benchmark.can", PRELUDE + source)));
         if (!built.ok()) {
@@ -150,6 +150,6 @@ public class InstructionBenchmarks {
             throw new IllegalStateException(String.join("\n",
                     reader.problems().stream().map(ListingProblem::format).toList()));
         }
-        return Loaded.of(listing);
+        return ProgramImage.of(listing);
     }
 }

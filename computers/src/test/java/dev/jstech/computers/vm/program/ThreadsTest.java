@@ -54,7 +54,7 @@ class ThreadsTest {
         }
     }
 
-    private static Loaded load(final String members, final String tick) {
+    private static ProgramImage load(final String members, final String tick) {
         final String source = "class Monitor : IScript {\n" + members
                 + "    public void OnInit() { }\n"
                 + "    public void OnTick() {\n" + tick + "\n    }\n"
@@ -66,11 +66,11 @@ class ThreadsTest {
         final AsmProgram program = reader.read();
         assertFalse(reader.hasProblems(), () -> String.join("\n",
                 reader.problems().stream().map(ListingProblem::format).toList()));
-        return Loaded.of(program);
+        return ProgramImage.of(program);
     }
 
     /** A script ready for its first tick, with the tick queued and nothing run yet. */
-    private static Process start(final Loaded program, final IHost host) {
+    private static Process start(final ProgramImage program, final IHost host) {
         final Process process = new Process(program, ROOM, host);
         final Values.Obj self = process.create(program.entryPoint());
         assertNotNull(self);
@@ -270,7 +270,7 @@ class ThreadsTest {
 
     @Test
     void save_bringsBackThreadsLocksAndWaits() {
-        final Loaded program = load(COUNTER, """
+        final ProgramImage program = load(COUNTER, """
                 Thread a = Thread.Start(() => { Bump(30); });
                 Thread b = Thread.Start(() => { Bump(30); });
                 a.Join();
@@ -296,7 +296,7 @@ class ThreadsTest {
     @Test
     void sleep_inALoopUnderALockCountsTheTicksAScriptIsGiven() {
         final Clock clock = new Clock();
-        final Loaded program = load("""
+        final ProgramImage program = load("""
                     object gate = new List<int>();
                     int seen;
                 """, "");
@@ -307,7 +307,7 @@ class ThreadsTest {
         process.step(PLENTY);
         // OnInit is empty here; the thread is started by hand the way the script would.
         assertEquals(Process.State.FINISHED, process.state());
-        final Loaded counting = load("""
+        final ProgramImage counting = load("""
                     object gate = new List<int>();
                     int seen;
 
@@ -338,7 +338,7 @@ class ThreadsTest {
     @Test
     void save_keepsASleeperAsleepAcrossTheSave() {
         final Clock clock = new Clock();
-        final Loaded program = load("", """
+        final ProgramImage program = load("", """
                 Thread.Start(() => { Thread.Sleep(10); Console.PrintLine("up"); });
                 """);
         Process process = start(program, clock);
