@@ -42,6 +42,12 @@ public final class ConnectivityIndex {
      */
     private final Map<Integer, Set<Long>> componentCache = new HashMap<>();
 
+    /*
+     * The cables each network owner touches, keyed by the owner's own position. A Mainframe is not a position of
+     * this index, so these are what let a removal tell the fragment that still reaches it from one it cut away.
+     */
+    private final Map<Long, Anchor> anchors = new HashMap<>();
+
     // Queries
 
     public Optional<NetworkUuid> networkOf(long encodedPos) {
@@ -260,6 +266,18 @@ public final class ConnectivityIndex {
 
     public void clearNetwork(NetworkUuid uuid) {
         rootToUuid.values().removeIf(uuid::equals);
+        anchors.values().removeIf(anchor -> anchor.network().equals(uuid));
+    }
+
+    /**
+     * Records the cables the owner of {@code network} at {@code ownerPos} touches. Reporting the same cables again
+     * changes nothing, so an owner can report them every tick.
+     */
+    public void anchor(final long ownerPos, final NetworkUuid network, final Set<Long> cables) {
+        final Anchor current = anchors.get(ownerPos);
+        if (current == null || !current.network().equals(network) || !current.cables().equals(cables)) {
+            anchors.put(ownerPos, new Anchor(network, Set.copyOf(cables)));
+        }
     }
 
     public RemovalResult onCableRemoved(long encodedPos) {
@@ -317,10 +335,17 @@ public final class ConnectivityIndex {
             }
         }
         final boolean severed = fragmentRoots.size() >= 2;
+        /*
+         * Removing the only cable an owner touched cuts everything else away from that owner, even though the
+         * surviving cables still form one fragment; that fragment used to keep the network with nothing left
+         * connecting it to its Mainframe.
+         */
+        final boolean cutFromOwner = !severed && previousUuid.isPresent()
+                && cutFromItsOwner(previousUuid.get(), encodedPos, affectedComponent);
 
         // Restore UUIDs. Networks untouched by this removal keep theirs. But
         for (final Map.Entry<Long, NetworkUuid> entry : uuidByPos.entrySet()) {
-            if (severed && affectedComponent.contains(entry.getKey())) {
+            if ((severed || cutFromOwner) && affectedComponent.contains(entry.getKey())) {
                 continue;
             }
             final Integer id = posToId.get(entry.getKey());
@@ -329,6 +354,28 @@ public final class ConnectivityIndex {
             }
         }
         return new RemovalResult(previousUuid, fragmentRoots.size());
+    }
+
+    /**
+     * Whether removing {@code removed} took an anchor of {@code network} and left no other anchor of it among the
+     * surviving cables of {@code affected}. A network whose owner has not reported its cables yet (right after a
+     * world loads) is never treated as cut here.
+     */
+    private boolean cutFromItsOwner(final NetworkUuid network, final long removed, final Set<Long> affected) {
+        boolean removedAnAnchor = false;
+        for (final Anchor anchor : anchors.values()) {
+            if (!anchor.network().equals(network)) {
+                continue;
+            }
+            for (final long cable : anchor.cables()) {
+                if (cable == removed) {
+                    removedAnAnchor = true;
+                } else if (posToId.containsKey(cable) && affected.contains(cable)) {
+                    return false;
+                }
+            }
+        }
+        return removedAnAnchor;
     }
 
     public Set<Long> reachableFrom(final long start, final Set<Long> blocked) {
@@ -373,6 +420,11 @@ public final class ConnectivityIndex {
         adjacency.clear();
         dsu.clear();
         componentCache.clear();
+        anchors.clear();
+    }
+
+    /** The network an owner holds and the cables it touches. */
+    private record Anchor(NetworkUuid network, Set<Long> cables) {
     }
 
     /**

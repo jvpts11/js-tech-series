@@ -449,4 +449,60 @@ class ConnectivityIndexTest {
     void reachableFrom_unregisteredStart_isEmpty() {
         assertTrue(index.reachableFrom(pos(7, 7, 7), Set.of()).isEmpty());
     }
+
+    @Test
+    void removeTheOwnersOnlyCable_leavesTheRestWithoutUuid() {
+        // The owner touches only A; removing A cuts B-C away from it, though B-C is still one fragment.
+        var uuid = NetworkUuid.random();
+        index.onCablePlaced(pos(0, 0, 0), Set.of());
+        index.onCablePlaced(pos(1, 0, 0), Set.of(pos(0, 0, 0)));
+        index.onCablePlaced(pos(2, 0, 0), Set.of(pos(1, 0, 0)));
+        index.assignUuid(pos(0, 0, 0), uuid);
+        index.anchor(pos(-1, 0, 0), uuid, Set.of(pos(0, 0, 0)));
+        var result = index.onCableRemoved(pos(0, 0, 0));
+        assertEquals(1, result.resultingComponents());
+        assertFalse(index.networkOf(pos(1, 0, 0)).isPresent());
+        assertFalse(index.networkOf(pos(2, 0, 0)).isPresent());
+    }
+
+    @Test
+    void removeACableTheOwnerDoesNotTouch_keepsUuid() {
+        var uuid = NetworkUuid.random();
+        index.onCablePlaced(pos(0, 0, 0), Set.of());
+        index.onCablePlaced(pos(1, 0, 0), Set.of(pos(0, 0, 0)));
+        index.onCablePlaced(pos(2, 0, 0), Set.of(pos(1, 0, 0)));
+        index.assignUuid(pos(0, 0, 0), uuid);
+        index.anchor(pos(-1, 0, 0), uuid, Set.of(pos(0, 0, 0)));
+        index.onCableRemoved(pos(2, 0, 0));
+        assertEquals(uuid, index.networkOf(pos(0, 0, 0)).orElseThrow());
+        assertEquals(uuid, index.networkOf(pos(1, 0, 0)).orElseThrow());
+    }
+
+    @Test
+    void removeOneOfTheOwnersCables_keepsUuidThroughTheOther() {
+        // The owner touches both ends of A-B-C; removing A leaves B-C, which still holds C.
+        var uuid = NetworkUuid.random();
+        index.onCablePlaced(pos(0, 0, 0), Set.of());
+        index.onCablePlaced(pos(1, 0, 0), Set.of(pos(0, 0, 0)));
+        index.onCablePlaced(pos(2, 0, 0), Set.of(pos(1, 0, 0)));
+        index.assignUuid(pos(0, 0, 0), uuid);
+        index.anchor(pos(-1, 0, 0), uuid, Set.of(pos(0, 0, 0), pos(2, 0, 0)));
+        index.onCableRemoved(pos(0, 0, 0));
+        assertEquals(uuid, index.networkOf(pos(1, 0, 0)).orElseThrow());
+        assertEquals(uuid, index.networkOf(pos(2, 0, 0)).orElseThrow());
+    }
+
+    @Test
+    void clearNetwork_forgetsTheOwnersCables() {
+        // With the owner forgotten, removing A falls back to keeping the network on the one fragment left.
+        var uuid = NetworkUuid.random();
+        index.onCablePlaced(pos(0, 0, 0), Set.of());
+        index.onCablePlaced(pos(1, 0, 0), Set.of(pos(0, 0, 0)));
+        index.assignUuid(pos(0, 0, 0), uuid);
+        index.anchor(pos(-1, 0, 0), uuid, Set.of(pos(0, 0, 0)));
+        index.clearNetwork(uuid);
+        index.assignUuid(pos(0, 0, 0), uuid);
+        index.onCableRemoved(pos(0, 0, 0));
+        assertEquals(uuid, index.networkOf(pos(1, 0, 0)).orElseThrow());
+    }
 }

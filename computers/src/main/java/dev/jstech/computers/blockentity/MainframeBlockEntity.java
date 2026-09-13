@@ -558,6 +558,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
                 index.assignUuid(cable, effective);
             }
         }
+        // The cables it touches tell the index, when one of them goes, whether the rest still reaches this Mainframe.
+        index.anchor(worldPosition.asLong(), effective, cables);
         networkUuid = effective;
         // Restore the network from any prior CONFLICTED or ORPHANED state, since adopting it revives it.
         NetworkRegistrySavedData.get(level).setNetworkState(effective, NetworkUuidState.ACTIVE);
