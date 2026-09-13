@@ -107,14 +107,14 @@ public final class CraftPlanMath {
 
     /** A plan preview: the raw-ingredient rows (need vs have), whether it is feasible, and how many are. */
     record PlanPreview(dev.jstech.computers.crafting.CraftPlanner.Plan plan,
-                               java.util.List<CraftPlanPayload.Row> rows, boolean feasible, long maxFeasible) {
+                       java.util.List<CraftPlanPayload.Row> rows, boolean feasible, long maxFeasible) {
     }
 
     /** Plans {@code quantity} of {@code key} and shapes the dialog's rows; pure over its inputs. */
     static PlanPreview planPreview(final StorageKey key, final long quantity,
-                                           final java.util.List<dev.jstech.computers.crafting.CraftingPattern> patterns,
-                                           final java.util.List<dev.jstech.computers.crafting.ProcessingPattern> machines,
-                                           final java.util.Map<StorageKey, Long> stock) {
+                                   final java.util.List<dev.jstech.computers.crafting.CraftingPattern> patterns,
+                                   final java.util.List<dev.jstech.computers.crafting.ProcessingPattern> machines,
+                                   final java.util.Map<StorageKey, Long> stock) {
         final var plan = dev.jstech.computers.crafting.CraftPlanner.plan(key, quantity, patterns, machines, stock);
         // Raw-ingredient rows: total needed (consumed + still missing) vs what the network has.
         final java.util.Map<StorageKey, Long> need = new java.util.LinkedHashMap<>(plan.rawConsumption());
@@ -137,7 +137,7 @@ public final class CraftPlanMath {
     }
 
     static int estimateTicks(final ServerLevel level, final MainframeBlockEntity mainframe,
-                                     final dev.jstech.computers.crafting.CraftPlanner.Plan plan) {
+                             final dev.jstech.computers.crafting.CraftPlanner.Plan plan) {
         long units = 0;
         long machineTicks = 0;
         for (final var step : plan.steps()) {
@@ -162,7 +162,7 @@ public final class CraftPlanMath {
 
     /** A machine recipe's plan for the request popup: direct rows (need vs have), feasibility, max, estimate, stages. */
     record MachinePlan(java.util.List<CraftPlanPayload.Row> rows, boolean feasible, long maxFeasible,
-                               int estimateTicks, boolean plainMachine, int stages) {
+                       int estimateTicks, boolean plainMachine, int stages) {
     }
 
     /**
@@ -173,7 +173,7 @@ public final class CraftPlanMath {
      */
     @org.jetbrains.annotations.Nullable
     static MachinePlan planMachineRecipe(final dev.jstech.computers.crafting.NetworkRecipe recipe,
-                                                 final long quantity, final java.util.Map<StorageKey, Long> stock) {
+                                         final long quantity, final java.util.Map<StorageKey, Long> stock) {
         final dev.jstech.computers.crafting.ProcessingPattern first;
         final long firstDemand;
         int estimate;

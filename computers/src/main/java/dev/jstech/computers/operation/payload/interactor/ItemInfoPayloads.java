@@ -57,8 +57,6 @@ public final class ItemInfoPayloads {
                         dev.jstech.computers.client.os.NetworkInteractorApp.acceptItemRecipes(payload)));
     }
 
-    /** The player-facing reason a program's host scope rejected this computer. */
-
     private static void handleRequestItemDetail(final RequestItemDetailPayload payload, final ServerPlayer player,
                                                 final ServerLevel level) {
         if (!payload.item().isEmpty()) {

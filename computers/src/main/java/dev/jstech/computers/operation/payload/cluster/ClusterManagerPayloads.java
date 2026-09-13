@@ -76,8 +76,6 @@ public final class ClusterManagerPayloads {
         return stores;
     }
 
-    // the Cluster Manager: the Cluster Management Computer's program
-
     private static void handleRequestClusterManager(final RequestClusterManagerPayload payload,
                                                     final ServerPlayer player, final ServerLevel level) {
         if (!(level.getBlockEntity(payload.hostPos())

@@ -50,8 +50,6 @@ public final class AutomationPayloads {
                 ComputerAccess.machine(JobActionPayload::host), AutomationPayloads::handleJobAction);
     }
 
-    // Automation Manager: the job list, engine status, create, and pause/resume/delete
-
     private static void handleRequestAutomation(final RequestAutomationPayload payload, final ServerPlayer player,
                                                 final ServerLevel level) {
         final var host = niHost(player, level, payload.host(), payload.monitorPos());

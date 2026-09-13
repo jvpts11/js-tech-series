@@ -19,11 +19,11 @@ import net.minecraft.world.item.ItemStack;
  */
 public final class FileAccess {
 
-    private FileAccess() {
-    }
-
     /** The explorer's key for the network: the other machines' shares, under their host names. */
     static final String NET_ROOT = "net:";
+
+    private FileAccess() {
+    }
 
     /**
      * The shell of the machine the explorer is on, which is how another machine's shared folder is

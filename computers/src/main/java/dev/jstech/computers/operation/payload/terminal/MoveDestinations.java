@@ -39,12 +39,12 @@ public final class MoveDestinations {
      * A resolved SELECT destination: where the pulled items land, the provenance label, whether it is a MOVE (into another Server), and that target Server's node (so it can be excluded as a source).
      */
     public record Dest(dev.jstech.computers.storage.IDataSink handler, String label,
-                        boolean move, @Nullable NodeUuid target) {
+                       boolean move, @Nullable NodeUuid target) {
     }
 
     @Nullable
     public static Dest resolveDest(final IComputerTerminalHost host, final ServerLevel level,
-                                    final NetworkUuid net, final int kind, final String serverKey) {
+                                   final NetworkUuid net, final int kind, final String serverKey) {
         return kind == TerminalSelectPayload.DEST_SERVER
                 ? resolveComputerDest(level, net, serverKey)
                 : resolveTerminalDest(host);
@@ -109,7 +109,7 @@ public final class MoveDestinations {
     }
 
     public static Set<NodeUuid> sourcesWithout(final ServerLevel level, final NetworkUuid net,
-                                                @Nullable final Set<NodeUuid> sources, final NodeUuid target) {
+                                               @Nullable final Set<NodeUuid> sources, final NodeUuid target) {
         final Set<NodeUuid> result;
         if (sources != null) {
             result = new HashSet<>(sources);

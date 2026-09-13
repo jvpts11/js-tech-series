@@ -22,11 +22,11 @@ import static dev.jstech.computers.operation.payload.files.FileAccess.filesystem
  */
 public final class CraftFilesOnDisk {
 
-    private CraftFilesOnDisk() {
-    }
-
     /** The folder on a Crafting Computer's system disk that mirrors its loaded {@code .craft} files. */
     private static final String CRAFTS_DIR = "crafts";
+
+    private CraftFilesOnDisk() {
+    }
 
     /**
      * Mirrors a {@code .craft} onto the Crafting Computer's system disk under {@code crafts/} so the

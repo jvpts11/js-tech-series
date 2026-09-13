@@ -98,8 +98,6 @@ public final class TerminalLocalPayloads {
         });
     }
 
-    // Local storage (the Storage tab): disk-backed, component-preserving quantity view.
-
     private static void handleLocalSnapshot(final LocalStorageSnapshotPayload payload, final Player player) {
         if (player.containerMenu instanceof ComputerTerminalMenu menu) {
             menu.setLocalItems(payload.items());

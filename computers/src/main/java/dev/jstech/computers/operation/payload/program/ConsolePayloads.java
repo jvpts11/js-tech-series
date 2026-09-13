@@ -29,6 +29,9 @@ import java.util.List;
  */
 public final class ConsolePayloads {
 
+    /** How many characters wide a command prompt is: the shell lays its output out to this and long lines wrap at it. */
+    static final int CLI_WIDTH = 50;
+
     private ConsolePayloads() {
     }
 
@@ -43,13 +46,6 @@ public final class ConsolePayloads {
         registrar.playToClient(ConsoleInitPayload.TYPE, ConsoleInitPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(ConsolePayloads::handleConsoleInit));
     }
-
-    /*
-     * Command Prompt: a typed line runs through the shell against the open host and the styled
-     * output is streamed back. The CLI is an alternative interface over the same network operations.
-     */
-
-    static final int CLI_WIDTH = 50;
 
     private static void handleRunCommand(final RunCommandPayload payload, final ServerPlayer player,
                                          final ServerLevel level) {

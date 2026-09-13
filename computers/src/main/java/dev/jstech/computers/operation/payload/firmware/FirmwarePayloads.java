@@ -87,10 +87,6 @@ public final class FirmwarePayloads {
                 ComputerAccess.screen(PostCompletePayload::hostPos), FirmwarePayloads::handlePostComplete);
     }
 
-    // OS install flow: the client asks the server to scan linked media readers and install the OS.
-
-    // Firmware boot manager
-
     private static void handleRequestFirmwareState(final RequestFirmwareStatePayload payload, final ServerPlayer player,
                                                    final ServerLevel level) {
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {

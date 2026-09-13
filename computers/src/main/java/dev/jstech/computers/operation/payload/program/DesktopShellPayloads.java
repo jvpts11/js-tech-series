@@ -25,6 +25,15 @@ import static dev.jstech.computers.operation.payload.program.ConsolePayloads.CLI
  */
 public final class DesktopShellPayloads {
 
+    /**
+     * What the shell sends when the player asks the program in front to stop.
+     *
+     * <p>The value is the single character U+0003, the one a terminal has always sent for this and one no
+     * keyboard puts into a line of text, so nothing a player writes can be mistaken for it. An empty
+     * line means something else entirely: the shell asking whether there is more output to show.
+     */
+    public static final String INTERRUPT = String.valueOf((char) 0x03);
+
     private DesktopShellPayloads() {
     }
 
@@ -123,15 +132,6 @@ public final class DesktopShellPayloads {
                 handOver == null ? "" : handOver.editor(),
                 handOver == null ? "" : handOver.path(), payload.session()));
     }
-
-    /**
-     * What the shell sends when the player asks the program in front to stop.
-     *
-     * <p>The value is the single byte U+0003, the one a terminal has always sent for this and one no
-     * keyboard puts into a line of text, so nothing a player writes can be mistaken for it. An empty
-     * line means something else entirely: the shell asking whether there is more output to show.
-     */
-    public static final String INTERRUPT = "";
 
     /**
      * Answers a line typed while a program has the terminal, and says whether it still has it.

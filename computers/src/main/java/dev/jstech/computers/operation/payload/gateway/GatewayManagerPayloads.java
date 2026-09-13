@@ -38,7 +38,7 @@ public final class GatewayManagerPayloads {
                 ClientPayloadHandlers.onMainThread(GatewayManagerPayloads::handleGatewayManagerState));
     }
 
-    /** Routes the Cluster Manager state to the open window. */
+    /** Sends the Gateway Manager the state of the Gateways its computer hosts. */
     private static void handleRequestGatewayManager(final RequestGatewayManagerPayload payload,
                                                     final ServerPlayer player, final ServerLevel level) {
         final var host = level.getBlockEntity(payload.hostPos());

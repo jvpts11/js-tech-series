@@ -210,8 +210,6 @@ public final class IqlPayloads {
         return Math.max(0L, capacityWeight - storageUsed - fsUsed - osReserved);
     }
 
-    // IQL filesystem: save/open/list .iql files on the Mainframe's system disk
-
     /**
      * Resolves the Mainframe reachable from {@code hostPos}, then writes the editor content to an
      * {@code .iql} file on its system disk. Replies with a refreshed {@link IqlFileListPayload}

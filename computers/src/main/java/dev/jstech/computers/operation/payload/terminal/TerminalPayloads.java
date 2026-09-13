@@ -8,7 +8,6 @@
 package dev.jstech.computers.operation.payload.terminal;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.DataHandoff;
 import dev.jstech.computers.operation.MoveLabels;
@@ -78,33 +77,6 @@ public final class TerminalPayloads {
                 ComputerAccess.machine(TerminalMaintenancePayload::hostPos), TerminalPayloads::handleTerminalMaintenance);
         ComputerAccess.accept(registrar, TerminalDropPayload.TYPE, TerminalDropPayload.STREAM_CODEC,
                 ComputerAccess.machine(TerminalDropPayload::hostPos), TerminalPayloads::handleTerminalDrop);
-    }
-
-    // Network-operation dispatch: the ONLY way storage is touched. Every request
-
-    private static void returnToPlayer(final ServerPlayer player, final ItemStack stack) {
-        DataHandoff.returnToPlayer(player, stack);
-    }
-
-    public static void dispatchQuery(final ServerPlayer player, final PersonalComputerBlockEntity pc) {
-        dispatch(player, pc, (level, net, mf) -> mf.submitOperation(
-                new dev.jstech.computers.operation.NetworkQueryOperationTask(level, net, player),
-                dev.jstech.core.operation.OperationPriority.MEDIUM));
-    }
-
-    @FunctionalInterface
-    private interface IOperationSubmit {
-        boolean submit(ServerLevel level, NetworkUuid net, MainframeBlockEntity mainframe);
-    }
-
-    private static boolean dispatch(final ServerPlayer player, final PersonalComputerBlockEntity pc,
-                                    final IOperationSubmit submit) {
-        final NetworkUuid net = pc.networkUuid();
-        if (net == null || !(pc.getLevel() instanceof ServerLevel level)) {
-            return false;
-        }
-        final MainframeBlockEntity mainframe = resolveMainframe(level, net);
-        return mainframe != null && submit.submit(level, net, mainframe);
     }
 
     public static boolean networkHasActiveOps(final ServerLevel level, final NetworkUuid network) {

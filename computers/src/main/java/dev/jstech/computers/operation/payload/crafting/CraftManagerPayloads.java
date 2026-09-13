@@ -84,8 +84,6 @@ public final class CraftManagerPayloads {
         return names;
     }
 
-    // Crafting Manager (B2): media ↔ ROM transfer
-
     /** The Machines tab sets a machine's concurrency config on a Crafting Computer, then gets a fresh state. */
     private static void handleSetMachineConfig(final SetMachineConfigPayload payload, final ServerPlayer player,
                                                final ServerLevel level) {
