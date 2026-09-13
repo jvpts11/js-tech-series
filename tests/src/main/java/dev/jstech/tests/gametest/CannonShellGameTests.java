@@ -20,7 +20,6 @@ import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.tests.JsTests;
-import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -198,10 +197,10 @@ public final class CannonShellGameTests {
                 .thenExecuteAfter(SETTLE * 4, () -> {
                     final int id = computer.cannon().held();
                     helper.assertTrue(id > 0, "the terminal is holding the program");
-                    final dev.jstech.computers.cannon.machine.MachinePrograms.Live one = computer.cannon().byId(id);
+                    final dev.jstech.computers.machine.MachinePrograms.Live one = computer.cannon().byId(id);
                     helper.assertTrue(one != null && one.process().waitingForInput(),
                             "the program stops on its read; state " + (one == null ? "gone" : one.process().state()));
-                    helper.assertTrue("input".equals(dev.jstech.computers.cannon.machine.MachinePrograms.stateOf(one.process())),
+                    helper.assertTrue("input".equals(dev.jstech.computers.machine.MachinePrograms.stateOf(one.process())),
                             "the machine lists it as waiting for input");
                     helper.assertTrue(one.process().console().contains("name?"), "what it printed before the read is there");
                     asked[0] = one.process();
@@ -219,7 +218,7 @@ public final class CannonShellGameTests {
                     helper.assertTrue(computer.cannon().all().isEmpty(),
                             "a program that returned leaves the machine's list; still there: "
                                     + computer.cannon().all().stream().map(one -> one.name() + "/"
-                                    + dev.jstech.computers.cannon.machine.MachinePrograms.stateOf(one.process())).toList());
+                                    + dev.jstech.computers.machine.MachinePrograms.stateOf(one.process())).toList());
                 })
                 .thenSucceed();
     }
@@ -321,7 +320,7 @@ public final class CannonShellGameTests {
                     helper.assertTrue(listed.contains("cannonrt"), "the nameless one is listed by the runtime; got " + listed);
                     helper.assertFalse(listed.contains("asks.asm") || listed.contains("progs"),
                             "no path stands in for a name; got " + listed);
-                    for (final dev.jstech.computers.cannon.machine.MachinePrograms.Live one : computer.cannon().all()) {
+                    for (final dev.jstech.computers.machine.MachinePrograms.Live one : computer.cannon().all()) {
                         helper.assertTrue("Sorter".equals(one.name()) || "cannonrt".equals(one.name()),
                                 "the machine's own list agrees; got " + one.name());
                     }

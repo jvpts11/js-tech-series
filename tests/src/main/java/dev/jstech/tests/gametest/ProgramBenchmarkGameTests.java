@@ -8,9 +8,9 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.cannon.machine.MachinePrograms;
-import dev.jstech.computers.cannon.run.Values;
+import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
+import dev.jstech.computers.vm.program.Values;
 import dev.jstech.core.language.ILanguageProcess;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.BenchReport;

@@ -9,11 +9,11 @@ package dev.jstech.computers.cannon.sem;
 
 import dev.jstech.computers.cannon.CannonError;
 import dev.jstech.computers.cannon.DiagnosticBag;
-import dev.jstech.computers.cannon.Shape;
 import dev.jstech.computers.cannon.ast.CompilationUnit;
 import dev.jstech.computers.cannon.ast.IDecl;
 import dev.jstech.computers.cannon.ast.INode;
 import dev.jstech.computers.cannon.ast.TypeRef;
+import dev.jstech.computers.vm.listing.Shape;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;

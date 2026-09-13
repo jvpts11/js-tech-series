@@ -8,13 +8,13 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.cannon.CannonCosts;
 import dev.jstech.computers.cannon.CannonSemantics;
 import dev.jstech.computers.cannon.SourceFile;
 import dev.jstech.computers.cannon.edit.CannonCompletions;
 import dev.jstech.computers.cannon.edit.CompletionContext;
 import dev.jstech.computers.cannon.sem.BuiltIns;
 import dev.jstech.computers.cannon.sem.SemanticModel;
+import dev.jstech.computers.vm.system.CannonCosts;
 import dev.jstech.core.client.gui.component.ContextMenu;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.logic.TextDocument;

@@ -7,9 +7,9 @@
  */
 package dev.jstech.computers.cannon.sem;
 
-import dev.jstech.computers.cannon.Shape;
 import dev.jstech.computers.cannon.ast.IExpr;
 import dev.jstech.computers.cannon.ast.INode;
+import dev.jstech.computers.vm.listing.Shape;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;

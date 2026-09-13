@@ -7,10 +7,9 @@
  */
 package dev.jstech.computers.cannon;
 
-import dev.jstech.computers.cannon.asm.AsmProgram;
-import dev.jstech.computers.cannon.asm.AsmType;
-import dev.jstech.computers.cannon.asm.AsmWriter;
-import dev.jstech.computers.cannon.asm.Emitter;
+import dev.jstech.computers.cannon.emit.Emitter;
+import dev.jstech.computers.vm.listing.AsmProgram;
+import dev.jstech.computers.vm.listing.AsmWriter;
 import java.util.ArrayList;
 import java.util.List;
 

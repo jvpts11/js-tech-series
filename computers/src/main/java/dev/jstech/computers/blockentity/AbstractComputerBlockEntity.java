@@ -23,7 +23,6 @@ import dev.jstech.computers.item.PsuItem;
 import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
-import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.DataTier;
@@ -1126,14 +1125,14 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * rather than with its system disk: they are what it is doing, not what it has installed.
      */
 
-    private final dev.jstech.computers.cannon.machine.MachinePrograms cannon =
-            new dev.jstech.computers.cannon.machine.MachinePrograms();
+    private final dev.jstech.computers.machine.MachinePrograms cannon =
+            new dev.jstech.computers.machine.MachinePrograms();
 
-    private final dev.jstech.computers.cannon.run.IHost cannonHost =
-            new dev.jstech.computers.cannon.machine.MachineHost(this);
+    private final dev.jstech.computers.vm.program.IHost cannonHost =
+            new dev.jstech.computers.machine.MachineHost(this);
 
     /** The Cannon programs this machine is running. */
-    public dev.jstech.computers.cannon.machine.MachinePrograms cannon() {
+    public dev.jstech.computers.machine.MachinePrograms cannon() {
         return cannon;
     }
 
@@ -1166,7 +1165,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     /** The clock those programs read, which is this machine's own world. */
-    public dev.jstech.computers.cannon.run.IHost cannonHost() {
+    public dev.jstech.computers.vm.program.IHost cannonHost() {
         return cannonHost;
     }
 
@@ -1185,7 +1184,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         for (final dev.jstech.computers.hardware.CpuSpec cpu : build.cpus()) {
             coreMegahertz += (long) cpu.cores() * cpu.freqMhz();
         }
-        return dev.jstech.computers.cannon.machine.MachinePrograms.creditsFor(coreMegahertz);
+        return dev.jstech.computers.machine.MachinePrograms.creditsFor(coreMegahertz);
     }
 
     /**
@@ -1209,7 +1208,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
          * no time for this tick runs nothing and is first next tick.
          */
         final long deadline = level instanceof ServerLevel server
-                ? dev.jstech.computers.cannon.machine.ServerTickDeadline.shared().claim(server, worldPosition)
+                ? dev.jstech.computers.machine.ServerTickDeadline.shared().claim(server, worldPosition)
                 : Long.MAX_VALUE;
         cannon.tick(cannonCredits(), deadline, this::networkStock, this::remoteParentWaiting);
         if (level instanceof ServerLevel server) {
@@ -1227,7 +1226,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * tick never looks. A machine whose chunk is not loaded is not known to be gone: its programs come back
      * with it, so what was started for them is kept until it can be asked.
      */
-    private boolean remoteParentWaiting(final dev.jstech.computers.cannon.machine.MachinePrograms.RemoteParent parent) {
+    private boolean remoteParentWaiting(final dev.jstech.computers.machine.MachinePrograms.RemoteParent parent) {
         if (!(level instanceof ServerLevel server)) {
             return false;
         }
@@ -1247,7 +1246,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
     private void hearGateways() {
         for (final dev.jstech.computers.blockentity.NetworkGatewayBlockEntity gateway
-                : dev.jstech.computers.cannon.machine.HostGateway.gatewaysOf(this)) {
+                : dev.jstech.computers.machine.HostGateway.gatewaysOf(this)) {
             for (final dev.jstech.computers.blockentity.NetworkGatewayBlockEntity.Message said
                     : gateway.takeMessages()) {
                 cannon.deliverGatewayMessage(said.from(), said.text(), said.tick());
@@ -1274,8 +1273,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         }
         final java.util.Map<Long, dev.jstech.computers.operation.payload.UiWindowPayload> open =
                 new java.util.HashMap<>();
-        for (final dev.jstech.computers.cannon.machine.MachinePrograms.Live one : cannon.all()) {
-            for (final dev.jstech.computers.cannon.run.Values.Obj window : cannon.windowsOf(one.id())) {
+        for (final dev.jstech.computers.machine.MachinePrograms.Live one : cannon.all()) {
+            for (final dev.jstech.computers.vm.program.Values.Obj window : cannon.windowsOf(one.id())) {
                 final var payload = dev.jstech.computers.operation.payload.UiWindowPayload.of(
                         worldPosition, one.id(), window);
                 if (payload != null) {

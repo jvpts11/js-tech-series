@@ -7,9 +7,9 @@
  */
 package dev.jstech.computers.operation.payload;
 
-import dev.jstech.computers.cannon.run.Numbers;
-import dev.jstech.computers.cannon.run.Values;
-import dev.jstech.computers.cannon.ui.UiWidgets;
+import dev.jstech.computers.vm.program.Numbers;
+import dev.jstech.computers.vm.program.UiWidgets;
+import dev.jstech.computers.vm.program.Values;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;

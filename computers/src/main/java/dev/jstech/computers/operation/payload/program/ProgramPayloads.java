@@ -222,7 +222,7 @@ public final class ProgramPayloads {
                     new DesktopShellOutputPayload(false, false, "", wire, payload.session()));
             return;
         }
-        final int room = dev.jstech.computers.cannon.machine.MachinePrograms.DEFAULT_HEAP_MB;
+        final int room = dev.jstech.computers.machine.MachinePrograms.DEFAULT_HEAP_MB;
         if (!computer.ramLedger().fits(room)) {
             wire.add(new DesktopShellOutputPayload.WireLine(name + ": not enough memory to run it",
                     dev.jstech.computers.program.cli.CliStyle.ERROR.id()));
@@ -231,7 +231,7 @@ public final class ProgramPayloads {
             return;
         }
         final var started = computer.cannon().start(name, listing.get(), room, computer, java.util.List.of(), 0,
-                dev.jstech.computers.cannon.machine.MachinePrograms.DEFAULT_PRIORITY);
+                dev.jstech.computers.machine.MachinePrograms.DEFAULT_PRIORITY);
         if (!started.ok()) {
             wire.add(new DesktopShellOutputPayload.WireLine(started.message(),
                     dev.jstech.computers.program.cli.CliStyle.ERROR.id()));

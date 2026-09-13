@@ -8,7 +8,6 @@
 package dev.jstech.computers;
 
 import com.mojang.logging.LogUtils;
-import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.registry.JscCreativeModeTabs;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -36,7 +35,7 @@ public class JsComputers {
          * registry an addon would use, and can be taken out of it by one.
          */
         dev.jstech.core.JsCore.languages().register(
-                dev.jstech.computers.cannon.machine.CannonLanguage.INSTANCE);
+                dev.jstech.computers.machine.CannonLanguage.INSTANCE);
 
         ComputingModule.register(modEventBus);
         JscCreativeModeTabs.register(modEventBus);

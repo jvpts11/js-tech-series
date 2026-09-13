@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-import dev.jstech.computers.cannon.run.Values;
+import dev.jstech.computers.vm.program.Values;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;

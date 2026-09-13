@@ -141,7 +141,7 @@ public final class DesktopShellPayloads {
      * program's to read, and the interrupt is the one thing that means something to the terminal itself.
      */
     private static boolean drainForeground(
-            final dev.jstech.computers.cannon.machine.MachinePrograms processes, final String typed,
+            final dev.jstech.computers.machine.MachinePrograms processes, final String typed,
             final java.util.List<DesktopShellOutputPayload.WireLine> wire) {
         if (!INTERRUPT.equals(typed)) {
             processes.offerInput(typed);

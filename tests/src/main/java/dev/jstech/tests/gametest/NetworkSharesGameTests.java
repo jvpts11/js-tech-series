@@ -12,7 +12,7 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.cannon.CannonCompiler;
 import dev.jstech.computers.cannon.SourceFile;
-import dev.jstech.computers.cannon.machine.MachinePrograms;
+import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.tests.JsTests;
