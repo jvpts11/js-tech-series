@@ -10,7 +10,6 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
-import dev.jstech.computers.operation.payload.InstallOsPayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.core.tier.HardwareEra;

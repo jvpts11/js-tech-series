@@ -86,216 +86,237 @@ public final class ComputingPayloads {
         final PayloadRegistrar registrar = event.registrar("1");
         registrar.playToClient(NetworkSnapshotPayload.TYPE, NetworkSnapshotPayload.STREAM_CODEC,
                 ComputingPayloads::handleSnapshot);
-        registrar.playToServer(RackBayPowerPayload.TYPE, RackBayPowerPayload.STREAM_CODEC,
+        ComputerAccess.accept(registrar, RackBayPowerPayload.TYPE, RackBayPowerPayload.STREAM_CODEC,
+                ComputerAccess.menu(dev.jstech.computers.menu.ServerRackMenu.class,
+                        dev.jstech.computers.menu.ServerRackMenu::rackPos, RackBayPowerPayload::rackPos),
                 ComputingPayloads::handleRackBayPower);
-        registrar.playToServer(MachinePowerPayload.TYPE, MachinePowerPayload.STREAM_CODEC,
-                ComputingPayloads::handleMachinePower);
+        ComputerAccess.accept(registrar, MachinePowerPayload.TYPE, MachinePowerPayload.STREAM_CODEC,
+                ComputerAccess.machine(MachinePowerPayload::hostPos), ComputingPayloads::handleMachinePower);
         registrar.playToClient(OpenKvmPayload.TYPE, OpenKvmPayload.STREAM_CODEC,
                 ComputingPayloads::handleOpenKvm);
-        registrar.playToServer(RemoteControlPayload.TYPE, RemoteControlPayload.STREAM_CODEC,
-                ComputingPayloads::handleRemoteControl);
+        ComputerAccess.accept(registrar, RemoteControlPayload.TYPE, RemoteControlPayload.STREAM_CODEC,
+                ComputerAccess.machine(RemoteControlPayload::hostPos), ComputingPayloads::handleRemoteControl);
         registrar.playToClient(RemoteHostsPayload.TYPE, RemoteHostsPayload.STREAM_CODEC,
                 ComputingPayloads::handleRemoteHosts);
         registrar.playBidirectional(DesktopWindowsPayload.TYPE, DesktopWindowsPayload.STREAM_CODEC,
                 new net.neoforged.neoforge.network.handling.DirectionalPayloadHandler<>(
                         ComputingPayloads::handleDesktopWindowsOnClient,
-                        ComputingPayloads::handleDesktopWindowsOnServer));
-        registrar.playToServer(KvmSelectPayload.TYPE, KvmSelectPayload.STREAM_CODEC,
-                ComputingPayloads::handleKvmSelect);
-        registrar.playToServer(RequestNetworkManagerPayload.TYPE, RequestNetworkManagerPayload.STREAM_CODEC,
+                        ComputerAccess.guarded(DesktopWindowsPayload.TYPE,
+                                ComputerAccess.machineOrClosingDesktop(DesktopWindowsPayload::host),
+                                ComputingPayloads::handleDesktopWindowsOnServer)));
+        ComputerAccess.accept(registrar, KvmSelectPayload.TYPE, KvmSelectPayload.STREAM_CODEC,
+                ComputerAccess.screen(KvmSelectPayload::rackPos), ComputingPayloads::handleKvmSelect);
+        ComputerAccess.accept(registrar, RequestNetworkManagerPayload.TYPE, RequestNetworkManagerPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestNetworkManagerPayload::hostPos),
                 ComputingPayloads::handleRequestNetworkManager);
         registrar.playToClient(NetworkManagerPayload.TYPE, NetworkManagerPayload.STREAM_CODEC,
                 ComputingPayloads::handleNetworkManager);
-        registrar.playToServer(RequestStorageInsightsPayload.TYPE, RequestStorageInsightsPayload.STREAM_CODEC,
+        ComputerAccess.accept(registrar, RequestStorageInsightsPayload.TYPE, RequestStorageInsightsPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestStorageInsightsPayload::host),
                 ComputingPayloads::handleRequestStorageInsights);
         registrar.playToClient(StorageInsightsPayload.TYPE, StorageInsightsPayload.STREAM_CODEC,
                 ComputingPayloads::handleStorageInsights);
-        registrar.playToServer(RequestItemDetailPayload.TYPE, RequestItemDetailPayload.STREAM_CODEC,
-                ComputingPayloads::handleRequestItemDetail);
+        ComputerAccess.accept(registrar, RequestItemDetailPayload.TYPE, RequestItemDetailPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestItemDetailPayload::host), ComputingPayloads::handleRequestItemDetail);
         registrar.playToClient(ItemDetailPayload.TYPE, ItemDetailPayload.STREAM_CODEC,
                 ComputingPayloads::handleItemDetail);
-        registrar.playToServer(RequestCraftPlannerPayload.TYPE, RequestCraftPlannerPayload.STREAM_CODEC,
-                ComputingPayloads::handleRequestCraftPlanner);
+        ComputerAccess.accept(registrar, RequestCraftPlannerPayload.TYPE, RequestCraftPlannerPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestCraftPlannerPayload::host), ComputingPayloads::handleRequestCraftPlanner);
         registrar.playToClient(CraftPlannerPayload.TYPE, CraftPlannerPayload.STREAM_CODEC,
                 ComputingPayloads::handleCraftPlanner);
-        registrar.playToServer(RequestAutomationPayload.TYPE, RequestAutomationPayload.STREAM_CODEC,
-                ComputingPayloads::handleRequestAutomation);
+        ComputerAccess.accept(registrar, RequestAutomationPayload.TYPE, RequestAutomationPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestAutomationPayload::host), ComputingPayloads::handleRequestAutomation);
         registrar.playToClient(AutomationPayload.TYPE, AutomationPayload.STREAM_CODEC,
                 ComputingPayloads::handleAutomation);
-        registrar.playToServer(CreateAutomationJobPayload.TYPE, CreateAutomationJobPayload.STREAM_CODEC,
-                ComputingPayloads::handleCreateAutomationJob);
-        registrar.playToServer(JobActionPayload.TYPE, JobActionPayload.STREAM_CODEC,
-                ComputingPayloads::handleJobAction);
-        registrar.playToServer(TerminalSelectPayload.TYPE, TerminalSelectPayload.STREAM_CODEC,
-                ComputingPayloads::handleTerminalSelect);
-        registrar.playToServer(TerminalInsertPayload.TYPE, TerminalInsertPayload.STREAM_CODEC,
-                ComputingPayloads::handleTerminalInsert);
-        registrar.playToServer(RequestServerBreakdownPayload.TYPE, RequestServerBreakdownPayload.STREAM_CODEC,
-                ComputingPayloads::handleRequestBreakdown);
+        ComputerAccess.accept(registrar, CreateAutomationJobPayload.TYPE, CreateAutomationJobPayload.STREAM_CODEC,
+                ComputerAccess.machine(CreateAutomationJobPayload::host), ComputingPayloads::handleCreateAutomationJob);
+        ComputerAccess.accept(registrar, JobActionPayload.TYPE, JobActionPayload.STREAM_CODEC,
+                ComputerAccess.machine(JobActionPayload::host), ComputingPayloads::handleJobAction);
+        ComputerAccess.accept(registrar, TerminalSelectPayload.TYPE, TerminalSelectPayload.STREAM_CODEC,
+                ComputerAccess.machine(TerminalSelectPayload::hostPos), ComputingPayloads::handleTerminalSelect);
+        ComputerAccess.accept(registrar, TerminalInsertPayload.TYPE, TerminalInsertPayload.STREAM_CODEC,
+                ComputerAccess.machine(TerminalInsertPayload::hostPos), ComputingPayloads::handleTerminalInsert);
+        ComputerAccess.accept(registrar, RequestServerBreakdownPayload.TYPE, RequestServerBreakdownPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestServerBreakdownPayload::hostPos), ComputingPayloads::handleRequestBreakdown);
         registrar.playToClient(ServerBreakdownPayload.TYPE, ServerBreakdownPayload.STREAM_CODEC,
                 ComputingPayloads::handleServerBreakdown);
         registrar.playToClient(OperationsLogPayload.TYPE, OperationsLogPayload.STREAM_CODEC,
                 ComputingPayloads::handleOpsLog);
         registrar.playToClient(LocalStorageSnapshotPayload.TYPE, LocalStorageSnapshotPayload.STREAM_CODEC,
                 ComputingPayloads::handleLocalSnapshot);
-        registrar.playToServer(TerminalLocalWithdrawPayload.TYPE, TerminalLocalWithdrawPayload.STREAM_CODEC,
-                ComputingPayloads::handleLocalWithdraw);
-        registrar.playToServer(TerminalDiskPrivacyPayload.TYPE, TerminalDiskPrivacyPayload.STREAM_CODEC,
-                ComputingPayloads::handleDiskPrivacy);
-        registrar.playToServer(TerminalLocalDepositPayload.TYPE, TerminalLocalDepositPayload.STREAM_CODEC,
-                ComputingPayloads::handleLocalDeposit);
+        ComputerAccess.accept(registrar, TerminalLocalWithdrawPayload.TYPE, TerminalLocalWithdrawPayload.STREAM_CODEC,
+                ComputerAccess.machine(TerminalLocalWithdrawPayload::hostPos), ComputingPayloads::handleLocalWithdraw);
+        ComputerAccess.accept(registrar, TerminalDiskPrivacyPayload.TYPE, TerminalDiskPrivacyPayload.STREAM_CODEC,
+                ComputerAccess.machine(TerminalDiskPrivacyPayload::hostPos), ComputingPayloads::handleDiskPrivacy);
+        ComputerAccess.accept(registrar, TerminalLocalDepositPayload.TYPE, TerminalLocalDepositPayload.STREAM_CODEC,
+                ComputerAccess.machine(TerminalLocalDepositPayload::hostPos), ComputingPayloads::handleLocalDeposit);
         registrar.playToClient(ActiveOperationsPayload.TYPE, ActiveOperationsPayload.STREAM_CODEC,
                 ComputingPayloads::handleActiveOps);
         registrar.playToClient(NetworkServersPayload.TYPE, NetworkServersPayload.STREAM_CODEC,
                 ComputingPayloads::handleNetworkServers);
-        registrar.playToServer(RenameServerPayload.TYPE, RenameServerPayload.STREAM_CODEC,
+        ComputerAccess.accept(registrar, RenameServerPayload.TYPE, RenameServerPayload.STREAM_CODEC,
+                ComputerAccess.menu(dev.jstech.computers.menu.ServerAssemblyMenu.class),
                 ComputingPayloads::handleRenameServer);
-        registrar.playToServer(TerminalLocalUploadPayload.TYPE, TerminalLocalUploadPayload.STREAM_CODEC,
-                ComputingPayloads::handleLocalUpload);
-        registrar.playToServer(RenamePcPayload.TYPE, RenamePcPayload.STREAM_CODEC,
+        ComputerAccess.accept(registrar, TerminalLocalUploadPayload.TYPE, TerminalLocalUploadPayload.STREAM_CODEC,
+                ComputerAccess.machine(TerminalLocalUploadPayload::hostPos), ComputingPayloads::handleLocalUpload);
+        // A desk computer, a crafting computer and a cluster management computer are each renamed in their own assembly.
+        ComputerAccess.accept(registrar, RenamePcPayload.TYPE, RenamePcPayload.STREAM_CODEC,
+                ComputerAccess.anyOf(
+                        ComputerAccess.menu(PersonalComputerMenu.class, PersonalComputerMenu::pcPos, RenamePcPayload::pcPos),
+                        ComputerAccess.menu(CraftingComputerMenu.class, CraftingComputerMenu::computerPos,
+                                RenamePcPayload::pcPos),
+                        ComputerAccess.menu(dev.jstech.computers.menu.ClusterManagementComputerMenu.class,
+                                dev.jstech.computers.menu.ClusterManagementComputerMenu::computerPos,
+                                RenamePcPayload::pcPos)),
                 ComputingPayloads::handleRenamePc);
-        registrar.playToServer(RenameServerRouterPayload.TYPE, RenameServerRouterPayload.STREAM_CODEC,
+        ComputerAccess.accept(registrar, RenameServerRouterPayload.TYPE, RenameServerRouterPayload.STREAM_CODEC,
+                ComputerAccess.menu(ServerRouterMenu.class, ServerRouterMenu::routerPos, RenameServerRouterPayload::routerPos),
                 ComputingPayloads::handleRenameServerRouter);
-        registrar.playToServer(SetBusNamePayload.TYPE, SetBusNamePayload.STREAM_CODEC,
+        ComputerAccess.accept(registrar, SetBusNamePayload.TYPE, SetBusNamePayload.STREAM_CODEC,
+                ComputerAccess.menu(AbstractBusMenu.class, AbstractBusMenu::cablePos, SetBusNamePayload::cablePos),
                 ComputingPayloads::handleSetBusName);
-        registrar.playToServer(TerminalMaintenancePayload.TYPE, TerminalMaintenancePayload.STREAM_CODEC,
-                ComputingPayloads::handleTerminalMaintenance);
-        registrar.playToServer(TerminalDropPayload.TYPE, TerminalDropPayload.STREAM_CODEC,
-                ComputingPayloads::handleTerminalDrop);
+        ComputerAccess.accept(registrar, TerminalMaintenancePayload.TYPE, TerminalMaintenancePayload.STREAM_CODEC,
+                ComputerAccess.machine(TerminalMaintenancePayload::hostPos), ComputingPayloads::handleTerminalMaintenance);
+        ComputerAccess.accept(registrar, TerminalDropPayload.TYPE, TerminalDropPayload.STREAM_CODEC,
+                ComputerAccess.machine(TerminalDropPayload::hostPos), ComputingPayloads::handleTerminalDrop);
         registrar.playToClient(CraftCatalogPayload.TYPE, CraftCatalogPayload.STREAM_CODEC,
                 ComputingPayloads::handleCraftCatalog);
-        registrar.playToServer(CraftPlanRequestPayload.TYPE, CraftPlanRequestPayload.STREAM_CODEC,
-                ComputingPayloads::handleCraftPlanRequest);
+        ComputerAccess.accept(registrar, CraftPlanRequestPayload.TYPE, CraftPlanRequestPayload.STREAM_CODEC,
+                ComputerAccess.machine(CraftPlanRequestPayload::hostPos), ComputingPayloads::handleCraftPlanRequest);
         registrar.playToClient(CraftPlanPayload.TYPE, CraftPlanPayload.STREAM_CODEC,
                 ComputingPayloads::handleCraftPlan);
-        registrar.playToServer(CraftSubmitPayload.TYPE, CraftSubmitPayload.STREAM_CODEC,
-                ComputingPayloads::handleCraftSubmit);
-        registrar.playToServer(RunCommandPayload.TYPE, RunCommandPayload.STREAM_CODEC,
-                ComputingPayloads::handleRunCommand);
+        ComputerAccess.accept(registrar, CraftSubmitPayload.TYPE, CraftSubmitPayload.STREAM_CODEC,
+                ComputerAccess.machine(CraftSubmitPayload::hostPos), ComputingPayloads::handleCraftSubmit);
+        ComputerAccess.accept(registrar, RunCommandPayload.TYPE, RunCommandPayload.STREAM_CODEC,
+                ComputerAccess.machine(RunCommandPayload::hostPos), ComputingPayloads::handleRunCommand);
         registrar.playToClient(CommandOutputPayload.TYPE, CommandOutputPayload.STREAM_CODEC,
                 ComputingPayloads::handleCommandOutput);
-        registrar.playToServer(RequestConsoleInitPayload.TYPE, RequestConsoleInitPayload.STREAM_CODEC,
-                ComputingPayloads::handleRequestConsoleInit);
+        ComputerAccess.accept(registrar, RequestConsoleInitPayload.TYPE, RequestConsoleInitPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestConsoleInitPayload::hostPos), ComputingPayloads::handleRequestConsoleInit);
         registrar.playToClient(ConsoleInitPayload.TYPE, ConsoleInitPayload.STREAM_CODEC,
                 ComputingPayloads::handleConsoleInit);
-        registrar.playToServer(RequestDiskFilesPayload.TYPE, RequestDiskFilesPayload.STREAM_CODEC,
-                ComputingPayloads::handleRequestDiskFiles);
+        ComputerAccess.accept(registrar, RequestDiskFilesPayload.TYPE, RequestDiskFilesPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestDiskFilesPayload::hostPos), ComputingPayloads::handleRequestDiskFiles);
         registrar.playToClient(DiskFilesPayload.TYPE, DiskFilesPayload.STREAM_CODEC,
                 ComputingPayloads::handleDiskFiles);
-        registrar.playToServer(RequestDesktopFilesPayload.TYPE, RequestDesktopFilesPayload.STREAM_CODEC,
-                ComputingPayloads::handleRequestDesktopFiles);
+        ComputerAccess.accept(registrar, RequestDesktopFilesPayload.TYPE, RequestDesktopFilesPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestDesktopFilesPayload::hostPos), ComputingPayloads::handleRequestDesktopFiles);
         registrar.playToClient(DesktopFilesPayload.TYPE, DesktopFilesPayload.STREAM_CODEC,
                 ComputingPayloads::handleDesktopFiles);
-        registrar.playToServer(RequestThisPcPayload.TYPE, RequestThisPcPayload.STREAM_CODEC,
-                ComputingPayloads::handleRequestThisPc);
+        ComputerAccess.accept(registrar, RequestThisPcPayload.TYPE, RequestThisPcPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestThisPcPayload::hostPos), ComputingPayloads::handleRequestThisPc);
         registrar.playToClient(ThisPcPayload.TYPE, ThisPcPayload.STREAM_CODEC,
                 ComputingPayloads::handleThisPc);
-        registrar.playToServer(EjectMediaPayload.TYPE, EjectMediaPayload.STREAM_CODEC,
-                ComputingPayloads::handleEjectMedia);
-        registrar.playToServer(CopyFilePayload.TYPE, CopyFilePayload.STREAM_CODEC,
-                ComputingPayloads::handleCopyFile);
-        registrar.playToServer(InstallFromMediaPayload.TYPE, InstallFromMediaPayload.STREAM_CODEC,
-                ComputingPayloads::handleInstallFromMedia);
-        registrar.playToServer(SetDesktopPrefsPayload.TYPE, SetDesktopPrefsPayload.STREAM_CODEC,
-                ComputingPayloads::handleSetDesktopPrefs);
-        registrar.playToServer(RequestSettingsPayload.TYPE, RequestSettingsPayload.STREAM_CODEC,
-                ComputingPayloads::handleRequestSettings);
-        registrar.playToServer(SetSettingPayload.TYPE, SetSettingPayload.STREAM_CODEC,
-                ComputingPayloads::handleSetSetting);
-        registrar.playToServer(EndProcessPayload.TYPE, EndProcessPayload.STREAM_CODEC,
-                ComputingPayloads::handleEndProcess);
-        registrar.playToServer(RunProgramPayload.TYPE, RunProgramPayload.STREAM_CODEC,
-                ComputingPayloads::handleRunProgram);
+        ComputerAccess.accept(registrar, EjectMediaPayload.TYPE, EjectMediaPayload.STREAM_CODEC,
+                ComputerAccess.machine(EjectMediaPayload::hostPos), ComputingPayloads::handleEjectMedia);
+        ComputerAccess.accept(registrar, CopyFilePayload.TYPE, CopyFilePayload.STREAM_CODEC,
+                ComputerAccess.machine(CopyFilePayload::hostPos), ComputingPayloads::handleCopyFile);
+        ComputerAccess.accept(registrar, InstallFromMediaPayload.TYPE, InstallFromMediaPayload.STREAM_CODEC,
+                ComputerAccess.machine(InstallFromMediaPayload::hostPos), ComputingPayloads::handleInstallFromMedia);
+        ComputerAccess.accept(registrar, SetDesktopPrefsPayload.TYPE, SetDesktopPrefsPayload.STREAM_CODEC,
+                ComputerAccess.machine(SetDesktopPrefsPayload::hostPos), ComputingPayloads::handleSetDesktopPrefs);
+        ComputerAccess.accept(registrar, RequestSettingsPayload.TYPE, RequestSettingsPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestSettingsPayload::hostPos), ComputingPayloads::handleRequestSettings);
+        ComputerAccess.accept(registrar, SetSettingPayload.TYPE, SetSettingPayload.STREAM_CODEC,
+                ComputerAccess.machine(SetSettingPayload::hostPos), ComputingPayloads::handleSetSetting);
+        ComputerAccess.accept(registrar, EndProcessPayload.TYPE, EndProcessPayload.STREAM_CODEC,
+                ComputerAccess.machine(EndProcessPayload::hostPos), ComputingPayloads::handleEndProcess);
+        ComputerAccess.accept(registrar, RunProgramPayload.TYPE, RunProgramPayload.STREAM_CODEC,
+                ComputerAccess.machine(RunProgramPayload::hostPos), ComputingPayloads::handleRunProgram);
         registrar.playToClient(SettingsSnapshotPayload.TYPE, SettingsSnapshotPayload.STREAM_CODEC,
                 ComputingPayloads::handleSettingsSnapshot);
-        registrar.playToServer(SetIconPositionPayload.TYPE, SetIconPositionPayload.STREAM_CODEC,
-                ComputingPayloads::handleSetIconPosition);
-        registrar.playToServer(DesktopShellRunPayload.TYPE, DesktopShellRunPayload.STREAM_CODEC,
-                ComputingPayloads::handleDesktopShellRun);
+        ComputerAccess.accept(registrar, SetIconPositionPayload.TYPE, SetIconPositionPayload.STREAM_CODEC,
+                ComputerAccess.machine(SetIconPositionPayload::hostPos), ComputingPayloads::handleSetIconPosition);
+        ComputerAccess.accept(registrar, DesktopShellRunPayload.TYPE, DesktopShellRunPayload.STREAM_CODEC,
+                ComputerAccess.machine(DesktopShellRunPayload::hostPos), ComputingPayloads::handleDesktopShellRun);
         registrar.playToClient(DesktopShellOutputPayload.TYPE, DesktopShellOutputPayload.STREAM_CODEC,
                 ComputingPayloads::handleDesktopShellOutput);
         registrar.playToClient(UiWindowPayload.TYPE, UiWindowPayload.STREAM_CODEC,
                 ComputingPayloads::handleUiWindow);
-        registrar.playToServer(UiEventPayload.TYPE, UiEventPayload.STREAM_CODEC,
-                ComputingPayloads::handleUiEvent);
-        registrar.playToServer(SaveFilePayload.TYPE, SaveFilePayload.STREAM_CODEC,
-                ComputingPayloads::handleSaveFile);
+        ComputerAccess.accept(registrar, UiEventPayload.TYPE, UiEventPayload.STREAM_CODEC,
+                ComputerAccess.machine(UiEventPayload::hostPos), ComputingPayloads::handleUiEvent);
+        ComputerAccess.accept(registrar, SaveFilePayload.TYPE, SaveFilePayload.STREAM_CODEC,
+                ComputerAccess.machine(SaveFilePayload::hostPos), ComputingPayloads::handleSaveFile);
         registrar.playToClient(FileSavedPayload.TYPE, FileSavedPayload.STREAM_CODEC,
                 ComputingPayloads::handleFileSaved);
-        registrar.playToServer(DeleteFilePayload.TYPE, DeleteFilePayload.STREAM_CODEC,
-                ComputingPayloads::handleDeleteFile);
-        registrar.playToServer(RequestFileContentPayload.TYPE, RequestFileContentPayload.STREAM_CODEC,
-                ComputingPayloads::handleRequestFileContent);
-        registrar.playToServer(RequestFolderContentPayload.TYPE, RequestFolderContentPayload.STREAM_CODEC,
+        ComputerAccess.accept(registrar, DeleteFilePayload.TYPE, DeleteFilePayload.STREAM_CODEC,
+                ComputerAccess.machine(DeleteFilePayload::hostPos), ComputingPayloads::handleDeleteFile);
+        ComputerAccess.accept(registrar, RequestFileContentPayload.TYPE, RequestFileContentPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestFileContentPayload::hostPos), ComputingPayloads::handleRequestFileContent);
+        ComputerAccess.accept(registrar, RequestFolderContentPayload.TYPE, RequestFolderContentPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestFolderContentPayload::hostPos),
                 ComputingPayloads::handleRequestFolderContent);
         registrar.playToClient(FolderContentPayload.TYPE, FolderContentPayload.STREAM_CODEC,
                 ComputingPayloads::handleFolderContent);
         registrar.playToClient(SetupProgressPayload.TYPE, SetupProgressPayload.STREAM_CODEC,
                 ComputingPayloads::handleSetupProgress);
-        registrar.playToServer(CancelSetupPayload.TYPE, CancelSetupPayload.STREAM_CODEC,
-                ComputingPayloads::handleCancelSetup);
+        ComputerAccess.accept(registrar, CancelSetupPayload.TYPE, CancelSetupPayload.STREAM_CODEC,
+                ComputerAccess.machine(CancelSetupPayload::hostPos), ComputingPayloads::handleCancelSetup);
         registrar.playToClient(FileContentPayload.TYPE, FileContentPayload.STREAM_CODEC,
                 ComputingPayloads::handleFileContent);
-        registrar.playToServer(RenameFilePayload.TYPE, RenameFilePayload.STREAM_CODEC,
-                ComputingPayloads::handleRenameFile);
-        registrar.playToServer(MkdirPayload.TYPE, MkdirPayload.STREAM_CODEC,
-                ComputingPayloads::handleMkdir);
-        registrar.playToServer(MoveFilePayload.TYPE, MoveFilePayload.STREAM_CODEC,
-                ComputingPayloads::handleMoveFile);
-        registrar.playToServer(MediumTransferPayload.TYPE, MediumTransferPayload.STREAM_CODEC,
-                ComputingPayloads::handleMediumTransfer);
-        registrar.playToServer(RenameVolumePayload.TYPE, RenameVolumePayload.STREAM_CODEC,
-                ComputingPayloads::handleRenameVolume);
-        registrar.playToServer(RequestNetworkInteractorPayload.TYPE,
+        ComputerAccess.accept(registrar, RenameFilePayload.TYPE, RenameFilePayload.STREAM_CODEC,
+                ComputerAccess.machine(RenameFilePayload::hostPos), ComputingPayloads::handleRenameFile);
+        ComputerAccess.accept(registrar, MkdirPayload.TYPE, MkdirPayload.STREAM_CODEC,
+                ComputerAccess.machine(MkdirPayload::hostPos), ComputingPayloads::handleMkdir);
+        ComputerAccess.accept(registrar, MoveFilePayload.TYPE, MoveFilePayload.STREAM_CODEC,
+                ComputerAccess.machine(MoveFilePayload::hostPos), ComputingPayloads::handleMoveFile);
+        ComputerAccess.accept(registrar, MediumTransferPayload.TYPE, MediumTransferPayload.STREAM_CODEC,
+                ComputerAccess.machine(MediumTransferPayload::hostPos), ComputingPayloads::handleMediumTransfer);
+        ComputerAccess.accept(registrar, RenameVolumePayload.TYPE, RenameVolumePayload.STREAM_CODEC,
+                ComputerAccess.machine(RenameVolumePayload::host), ComputingPayloads::handleRenameVolume);
+        ComputerAccess.accept(registrar, RequestNetworkInteractorPayload.TYPE,
                 RequestNetworkInteractorPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestNetworkInteractorPayload::host),
                 ComputingPayloads::handleRequestNetworkInteractor);
         registrar.playToClient(NetworkInteractorPayload.TYPE, NetworkInteractorPayload.STREAM_CODEC,
                 ComputingPayloads::handleNetworkInteractor);
-        registrar.playToServer(NiGridClickPayload.TYPE, NiGridClickPayload.STREAM_CODEC,
-                ComputingPayloads::handleNiGridClick);
-        registrar.playToServer(NiDepositPayload.TYPE, NiDepositPayload.STREAM_CODEC,
-                ComputingPayloads::handleNiDeposit);
-        registrar.playToServer(NiShiftInsertPayload.TYPE, NiShiftInsertPayload.STREAM_CODEC,
-                ComputingPayloads::handleNiShiftInsert);
-        registrar.playToServer(SetCraftingSwitchFacePayload.TYPE, SetCraftingSwitchFacePayload.STREAM_CODEC,
+        ComputerAccess.accept(registrar, NiGridClickPayload.TYPE, NiGridClickPayload.STREAM_CODEC,
+                ComputerAccess.machine(NiGridClickPayload::host), ComputingPayloads::handleNiGridClick);
+        ComputerAccess.accept(registrar, NiDepositPayload.TYPE, NiDepositPayload.STREAM_CODEC,
+                ComputerAccess.machine(NiDepositPayload::host), ComputingPayloads::handleNiDeposit);
+        ComputerAccess.accept(registrar, NiShiftInsertPayload.TYPE, NiShiftInsertPayload.STREAM_CODEC,
+                ComputerAccess.machine(NiShiftInsertPayload::host), ComputingPayloads::handleNiShiftInsert);
+        ComputerAccess.accept(registrar, SetCraftingSwitchFacePayload.TYPE, SetCraftingSwitchFacePayload.STREAM_CODEC,
+                ComputerAccess.menu(dev.jstech.computers.menu.CraftingSwitchMenu.class,
+                        dev.jstech.computers.menu.CraftingSwitchMenu::switchPos, SetCraftingSwitchFacePayload::switchPos),
                 ComputingPayloads::handleSetCraftingSwitchFace);
-        registrar.playToServer(RequestNiServersPayload.TYPE, RequestNiServersPayload.STREAM_CODEC,
-                ComputingPayloads::handleRequestNiServers);
-        registrar.playToServer(RequestItemRecipesPayload.TYPE, RequestItemRecipesPayload.STREAM_CODEC,
-                ComputingPayloads::handleRequestItemRecipes);
+        ComputerAccess.accept(registrar, RequestNiServersPayload.TYPE, RequestNiServersPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestNiServersPayload::host), ComputingPayloads::handleRequestNiServers);
+        ComputerAccess.accept(registrar, RequestItemRecipesPayload.TYPE, RequestItemRecipesPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestItemRecipesPayload::hostPos), ComputingPayloads::handleRequestItemRecipes);
         registrar.playToClient(ItemRecipesPayload.TYPE, ItemRecipesPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(
                         () -> dev.jstech.computers.client.os.NetworkInteractorApp.acceptItemRecipes(payload)));
-        registrar.playToServer(NiSelectPayload.TYPE, NiSelectPayload.STREAM_CODEC,
-                ComputingPayloads::handleNiSelect);
-        registrar.playToServer(RequestNiOperationsPayload.TYPE, RequestNiOperationsPayload.STREAM_CODEC,
-                ComputingPayloads::handleRequestNiOperations);
-        registrar.playToServer(SetOperationPriorityPayload.TYPE, SetOperationPriorityPayload.STREAM_CODEC,
-                ComputingPayloads::handleSetOperationPriority);
-        registrar.playToServer(CancelOperationPayload.TYPE, CancelOperationPayload.STREAM_CODEC,
-                ComputingPayloads::handleCancelOperation);
-        registrar.playToServer(NiCraftPayload.TYPE, NiCraftPayload.STREAM_CODEC,
-                ComputingPayloads::handleNiCraft);
-        registrar.playToServer(OpenProgramPayload.TYPE, OpenProgramPayload.STREAM_CODEC,
-                ComputingPayloads::handleOpenProgram);
-        registrar.playToServer(RunIqlPayload.TYPE, RunIqlPayload.STREAM_CODEC,
-                ComputingPayloads::handleRunIql);
+        ComputerAccess.accept(registrar, NiSelectPayload.TYPE, NiSelectPayload.STREAM_CODEC,
+                ComputerAccess.machine(NiSelectPayload::host), ComputingPayloads::handleNiSelect);
+        ComputerAccess.accept(registrar, RequestNiOperationsPayload.TYPE, RequestNiOperationsPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestNiOperationsPayload::host), ComputingPayloads::handleRequestNiOperations);
+        ComputerAccess.accept(registrar, SetOperationPriorityPayload.TYPE, SetOperationPriorityPayload.STREAM_CODEC,
+                ComputerAccess.machine(SetOperationPriorityPayload::host), ComputingPayloads::handleSetOperationPriority);
+        ComputerAccess.accept(registrar, CancelOperationPayload.TYPE, CancelOperationPayload.STREAM_CODEC,
+                ComputerAccess.machine(CancelOperationPayload::host), ComputingPayloads::handleCancelOperation);
+        ComputerAccess.accept(registrar, NiCraftPayload.TYPE, NiCraftPayload.STREAM_CODEC,
+                ComputerAccess.machine(NiCraftPayload::host), ComputingPayloads::handleNiCraft);
+        ComputerAccess.accept(registrar, OpenProgramPayload.TYPE, OpenProgramPayload.STREAM_CODEC,
+                ComputerAccess.machine(OpenProgramPayload::hostPos), ComputingPayloads::handleOpenProgram);
+        ComputerAccess.accept(registrar, RunIqlPayload.TYPE, RunIqlPayload.STREAM_CODEC,
+                ComputerAccess.machine(RunIqlPayload::hostPos), ComputingPayloads::handleRunIql);
         registrar.playToClient(IqlResultPayload.TYPE, IqlResultPayload.STREAM_CODEC,
                 ComputingPayloads::handleIqlResult);
-        registrar.playToServer(RequestNmsSchemaPayload.TYPE, RequestNmsSchemaPayload.STREAM_CODEC,
-                ComputingPayloads::handleRequestNmsSchema);
+        ComputerAccess.accept(registrar, RequestNmsSchemaPayload.TYPE, RequestNmsSchemaPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestNmsSchemaPayload::hostPos), ComputingPayloads::handleRequestNmsSchema);
         registrar.playToClient(NmsSchemaPayload.TYPE, NmsSchemaPayload.STREAM_CODEC,
                 ComputingPayloads::handleNmsSchema);
-        registrar.playToServer(SaveScriptPayload.TYPE, SaveScriptPayload.STREAM_CODEC,
-                ComputingPayloads::handleSaveScript);
         registrar.playToClient(ProcessListPayload.TYPE, ProcessListPayload.STREAM_CODEC,
                 ComputingPayloads::handleProcessList);
-        registrar.playToServer(ProcessActionPayload.TYPE, ProcessActionPayload.STREAM_CODEC,
-                ComputingPayloads::handleProcessAction);
-        registrar.playToServer(InstallOsPayload.TYPE, InstallOsPayload.STREAM_CODEC,
-                ComputingPayloads::handleInstallOs);
-        // The firmware boot manager: state request/reply, boot/install/boot-order actions, restart into setup.
-        registrar.playToServer(RequestFirmwareStatePayload.TYPE, RequestFirmwareStatePayload.STREAM_CODEC,
+        ComputerAccess.accept(registrar, ProcessActionPayload.TYPE, ProcessActionPayload.STREAM_CODEC,
+                ComputerAccess.machine(ProcessActionPayload::hostPos), ComputingPayloads::handleProcessAction);
+        /*
+         * The firmware boot manager: state request/reply, boot/install/boot-order actions, restart into setup.
+         * The setup, the installer and the self-test are plain screens, so they answer to the screen gate.
+         */
+        ComputerAccess.accept(registrar, RequestFirmwareStatePayload.TYPE, RequestFirmwareStatePayload.STREAM_CODEC,
+                ComputerAccess.screen(RequestFirmwareStatePayload::hostPos),
                 ComputingPayloads::handleRequestFirmwareState);
         registrar.playToClient(FirmwareStatePayload.TYPE, FirmwareStatePayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> {
@@ -303,9 +324,12 @@ public final class ComputingPayloads {
                     dev.jstech.computers.client.FirmwareScreen.accept(payload);
                     dev.jstech.computers.client.BootSequenceScreen.accept(payload);
                 }));
-        registrar.playToServer(FirmwareActionPayload.TYPE, FirmwareActionPayload.STREAM_CODEC,
-                ComputingPayloads::handleFirmwareAction);
-        registrar.playToServer(RequestFirmwarePayload.TYPE, RequestFirmwarePayload.STREAM_CODEC,
+        ComputerAccess.accept(registrar, FirmwareActionPayload.TYPE, FirmwareActionPayload.STREAM_CODEC,
+                ComputerAccess.screen(FirmwareActionPayload::hostPos), ComputingPayloads::handleFirmwareAction);
+        // Setup is asked for from a running system's settings as well as from the installer.
+        ComputerAccess.accept(registrar, RequestFirmwarePayload.TYPE, RequestFirmwarePayload.STREAM_CODEC,
+                ComputerAccess.anyOf(ComputerAccess.machine(RequestFirmwarePayload::hostPos),
+                        ComputerAccess.screen(RequestFirmwarePayload::hostPos)),
                 ComputingPayloads::handleRequestFirmware);
         /*
          * The power-on self-test: the server asks the monitor to play it; the client reports it finished
@@ -324,52 +348,54 @@ public final class ComputingPayloads {
                                 payload.host(), payload.monitorPos(),
                                 dev.jstech.computers.os.FirmwareKind.values()[payload.firmwareKind()],
                                 payload.osName(), payload.targetLabel(), payload.targetSlot(), payload.failure())));
-        registrar.playToServer(PostCompletePayload.TYPE, PostCompletePayload.STREAM_CODEC,
-                ComputingPayloads::handlePostComplete);
-        registrar.playToServer(UninstallProgramPayload.TYPE, UninstallProgramPayload.STREAM_CODEC,
-                ComputingPayloads::handleUninstallProgram);
-        registrar.playToServer(SaveIqlFilePayload.TYPE, SaveIqlFilePayload.STREAM_CODEC,
-                ComputingPayloads::handleSaveIqlFile);
-        registrar.playToServer(RequestIqlFileListPayload.TYPE, RequestIqlFileListPayload.STREAM_CODEC,
-                ComputingPayloads::handleRequestIqlFileList);
+        ComputerAccess.accept(registrar, PostCompletePayload.TYPE, PostCompletePayload.STREAM_CODEC,
+                ComputerAccess.screen(PostCompletePayload::hostPos), ComputingPayloads::handlePostComplete);
+        ComputerAccess.accept(registrar, UninstallProgramPayload.TYPE, UninstallProgramPayload.STREAM_CODEC,
+                ComputerAccess.machine(UninstallProgramPayload::hostPos), ComputingPayloads::handleUninstallProgram);
+        ComputerAccess.accept(registrar, SaveIqlFilePayload.TYPE, SaveIqlFilePayload.STREAM_CODEC,
+                ComputerAccess.machine(SaveIqlFilePayload::hostPos), ComputingPayloads::handleSaveIqlFile);
+        ComputerAccess.accept(registrar, RequestIqlFileListPayload.TYPE, RequestIqlFileListPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestIqlFileListPayload::hostPos), ComputingPayloads::handleRequestIqlFileList);
         registrar.playToClient(IqlFileListPayload.TYPE, IqlFileListPayload.STREAM_CODEC,
                 ComputingPayloads::handleIqlFileList);
-        registrar.playToServer(OpenIqlFilePayload.TYPE, OpenIqlFilePayload.STREAM_CODEC,
-                ComputingPayloads::handleOpenIqlFile);
+        ComputerAccess.accept(registrar, OpenIqlFilePayload.TYPE, OpenIqlFilePayload.STREAM_CODEC,
+                ComputerAccess.machine(OpenIqlFilePayload::hostPos), ComputingPayloads::handleOpenIqlFile);
         registrar.playToClient(IqlFileContentPayload.TYPE, IqlFileContentPayload.STREAM_CODEC,
                 ComputingPayloads::handleIqlFileContent);
         registrar.playToClient(OpenComputerUiPayload.TYPE, OpenComputerUiPayload.STREAM_CODEC,
                 ComputingPayloads::handleOpenComputerUi);
-        registrar.playToServer(RequestCraftManagerPayload.TYPE, RequestCraftManagerPayload.STREAM_CODEC,
-                ComputingPayloads::handleRequestCraftManager);
+        ComputerAccess.accept(registrar, RequestCraftManagerPayload.TYPE, RequestCraftManagerPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestCraftManagerPayload::hostPos), ComputingPayloads::handleRequestCraftManager);
         // The Cluster Manager: the Cluster Management Computer's program asks, acts, and gets a state back.
-        registrar.playToServer(RequestClusterManagerPayload.TYPE, RequestClusterManagerPayload.STREAM_CODEC,
+        ComputerAccess.accept(registrar, RequestClusterManagerPayload.TYPE, RequestClusterManagerPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestClusterManagerPayload::hostPos),
                 ComputingPayloads::handleRequestClusterManager);
-        registrar.playToServer(ClusterManagerActionPayload.TYPE, ClusterManagerActionPayload.STREAM_CODEC,
-                ComputingPayloads::handleClusterManagerAction);
-        registrar.playToServer(ClusterMoveOutPayload.TYPE, ClusterMoveOutPayload.STREAM_CODEC,
-                ComputingPayloads::handleClusterMoveOut);
-        registrar.playToServer(ClusterRenamePayload.TYPE, ClusterRenamePayload.STREAM_CODEC,
-                ComputingPayloads::handleClusterRename);
+        ComputerAccess.accept(registrar, ClusterManagerActionPayload.TYPE, ClusterManagerActionPayload.STREAM_CODEC,
+                ComputerAccess.machine(ClusterManagerActionPayload::hostPos), ComputingPayloads::handleClusterManagerAction);
+        ComputerAccess.accept(registrar, ClusterMoveOutPayload.TYPE, ClusterMoveOutPayload.STREAM_CODEC,
+                ComputerAccess.machine(ClusterMoveOutPayload::hostPos), ComputingPayloads::handleClusterMoveOut);
+        ComputerAccess.accept(registrar, ClusterRenamePayload.TYPE, ClusterRenamePayload.STREAM_CODEC,
+                ComputerAccess.machine(ClusterRenamePayload::hostPos), ComputingPayloads::handleClusterRename);
         registrar.playToClient(ClusterManagerStatePayload.TYPE, ClusterManagerStatePayload.STREAM_CODEC,
                 ComputingPayloads::handleClusterManagerState);
         // The Gateway Manager: the host computer's program asks about its Gateways, acts on one, and gets a state back.
-        registrar.playToServer(RequestGatewayManagerPayload.TYPE, RequestGatewayManagerPayload.STREAM_CODEC,
+        ComputerAccess.accept(registrar, RequestGatewayManagerPayload.TYPE, RequestGatewayManagerPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestGatewayManagerPayload::hostPos),
                 ComputingPayloads::handleRequestGatewayManager);
-        registrar.playToServer(GatewayManagerActionPayload.TYPE, GatewayManagerActionPayload.STREAM_CODEC,
-                ComputingPayloads::handleGatewayManagerAction);
+        ComputerAccess.accept(registrar, GatewayManagerActionPayload.TYPE, GatewayManagerActionPayload.STREAM_CODEC,
+                ComputerAccess.machine(GatewayManagerActionPayload::hostPos), ComputingPayloads::handleGatewayManagerAction);
         registrar.playToClient(GatewayManagerStatePayload.TYPE, GatewayManagerStatePayload.STREAM_CODEC,
                 ComputingPayloads::handleGatewayManagerState);
-        registrar.playToServer(SetMachineConfigPayload.TYPE, SetMachineConfigPayload.STREAM_CODEC,
-                ComputingPayloads::handleSetMachineConfig);
+        ComputerAccess.accept(registrar, SetMachineConfigPayload.TYPE, SetMachineConfigPayload.STREAM_CODEC,
+                ComputerAccess.machine(SetMachineConfigPayload::hostPos), ComputingPayloads::handleSetMachineConfig);
         registrar.playToClient(CraftManagerStatePayload.TYPE, CraftManagerStatePayload.STREAM_CODEC,
                 ComputingPayloads::handleCraftManagerState);
-        registrar.playToServer(LoadFromMediaPayload.TYPE, LoadFromMediaPayload.STREAM_CODEC,
-                ComputingPayloads::handleLoadFromMedia);
-        registrar.playToServer(DownloadToMediaPayload.TYPE, DownloadToMediaPayload.STREAM_CODEC,
-                ComputingPayloads::handleDownloadToMedia);
-        registrar.playToServer(RemoveRomCraftPayload.TYPE, RemoveRomCraftPayload.STREAM_CODEC,
-                ComputingPayloads::handleRemoveRomCraft);
+        ComputerAccess.accept(registrar, LoadFromMediaPayload.TYPE, LoadFromMediaPayload.STREAM_CODEC,
+                ComputerAccess.machine(LoadFromMediaPayload::hostPos), ComputingPayloads::handleLoadFromMedia);
+        ComputerAccess.accept(registrar, DownloadToMediaPayload.TYPE, DownloadToMediaPayload.STREAM_CODEC,
+                ComputerAccess.machine(DownloadToMediaPayload::hostPos), ComputingPayloads::handleDownloadToMedia);
+        ComputerAccess.accept(registrar, RemoveRomCraftPayload.TYPE, RemoveRomCraftPayload.STREAM_CODEC,
+                ComputerAccess.machine(RemoveRomCraftPayload::hostPos), ComputingPayloads::handleRemoveRomCraft);
     }
 
     /** The processes running on the host at {@code hostPos}: the IQL Engine and its jobs if it is a Mainframe with the Engine installed, else an empty list (a computer with no service). */
@@ -676,26 +702,6 @@ public final class ComputingPayloads {
     private static void handleNmsSchema(final NmsSchemaPayload payload, final IPayloadContext context) {
         context.enqueueWork(() ->
                 dev.jstech.computers.client.NmsApp.acceptSchema(payload));
-    }
-
-    private static void handleSaveScript(final SaveScriptPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos()) instanceof IComputerTerminalHost host)
-                    || host.networkUuid() == null) {
-                return;
-            }
-            /*
-             * Save to the network's Mainframe (the same place the schema snapshot reads it back from)
-             * whether the studio's host is the Mainframe itself or a PC on its network. Saving to the raw
-             * host position instead would silently drop the script when the host is not the Mainframe.
-             */
-            final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
-            if (mainframe != null) {
-                mainframe.setSavedScript(payload.script());
-            }
-        });
     }
 
     /**
@@ -3114,8 +3120,6 @@ public final class ComputingPayloads {
                                                  final IPayloadContext context) {
         context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player
-                    && player.containerMenu instanceof ServerRouterMenu menu
-                    && menu.routerPos().equals(payload.routerPos())
                     && player.level().getBlockEntity(payload.routerPos())
                             instanceof ServerRouterBlockEntity router) {
                 router.setCustomName(payload.name());
@@ -3156,10 +3160,7 @@ public final class ComputingPayloads {
                     && player.level() instanceof ServerLevel level
                     && level.getBlockEntity(payload.rackPos())
                             instanceof dev.jstech.computers.blockentity
-                                    .ServerRackBlockEntity rack
-                    // Only a player actually standing at the open rack GUI may flip its switches.
-                    && player.containerMenu
-                            instanceof dev.jstech.computers.menu.ServerRackMenu) {
+                                    .ServerRackBlockEntity rack) {
                 rack.toggleBayPower(payload.slot());
             }
         });
@@ -3303,29 +3304,18 @@ public final class ComputingPayloads {
         });
     }
 
+    /*
+     * Its gate has already made sure the player is in that computer's assembly. A supercomputer node is a
+     * rack computer: it is renamed through the Server assembly like any other server.
+     */
     private static void handleRenamePc(final RenamePcPayload payload, final IPayloadContext context) {
         context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player
-                    && hasOpenAssemblyFor(player, payload.pcPos())
                     && player.level().getBlockEntity(payload.pcPos())
                             instanceof dev.jstech.computers.os.IOsHost computer) {
                 computer.setCustomName(payload.name());
             }
         });
-    }
-
-    private static boolean hasOpenAssemblyFor(final ServerPlayer player, final net.minecraft.core.BlockPos pos) {
-        if (player.containerMenu instanceof PersonalComputerMenu menu) {
-            return menu.pcPos().equals(pos);
-        }
-        if (player.containerMenu instanceof dev.jstech.computers.menu.CraftingComputerMenu menu) {
-            return menu.computerPos().equals(pos);
-        }
-        /*
-         * A supercomputer node is a rack computer now: it is renamed through the Server assembly GUI
-         * like any other server, so it has no assembly menu of its own to check here.
-         */
-        return false;
     }
 
     private static void handleLocalUpload(final TerminalLocalUploadPayload payload, final IPayloadContext context) {
@@ -5465,6 +5455,7 @@ public final class ComputingPayloads {
                          */
                         final HardwareEra era = computer.displayEra();
                         final int slot = payload.target();
+                        ScreenSessions.opened(player, payload.monitorPos(), payload.hostPos());
                         PacketDistributor.sendToPlayer(player, new OpenInstallDonePayload(payload.hostPos(),
                                 payload.monitorPos(),
                                 dev.jstech.computers.os.FirmwareKind
@@ -5651,16 +5642,6 @@ public final class ComputingPayloads {
                 dev.jstech.computers.block.MonitorBlock.openBootTarget(
                         player, level, payload.monitorPos(), payload.hostPos());
             }
-        });
-    }
-
-    private static void handleInstallOs(final InstallOsPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)) {
-                return;
-            }
-            installOsFromLinkedReader(level, payload.computerPos());
         });
     }
 

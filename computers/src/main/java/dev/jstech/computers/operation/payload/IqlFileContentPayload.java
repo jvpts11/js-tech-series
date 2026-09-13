@@ -37,7 +37,7 @@ public record IqlFileContentPayload(String fileName, String content, boolean ok)
     public static final StreamCodec<RegistryFriendlyByteBuf, IqlFileContentPayload> STREAM_CODEC =
             StreamCodec.composite(
                     ByteBufCodecs.stringUtf8(MAX_NAME), IqlFileContentPayload::fileName,
-                    ByteBufCodecs.stringUtf8(SaveScriptPayload.MAX_LEN), IqlFileContentPayload::content,
+                    ByteBufCodecs.stringUtf8(SaveIqlFilePayload.MAX_CONTENT_LEN), IqlFileContentPayload::content,
                     ByteBufCodecs.BOOL, IqlFileContentPayload::ok,
                     IqlFileContentPayload::new);
 

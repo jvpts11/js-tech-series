@@ -70,10 +70,10 @@ public final class PatternStudioPayloads {
     @SubscribeEvent
     public static void register(final RegisterPayloadHandlersEvent event) {
         final PayloadRegistrar registrar = event.registrar("1");
-        registrar.playToServer(RequestPatternStudioPayload.TYPE, RequestPatternStudioPayload.STREAM_CODEC,
-                PatternStudioPayloads::handleRequest);
-        registrar.playToServer(PatternStudioEditPayload.TYPE, PatternStudioEditPayload.STREAM_CODEC,
-                PatternStudioPayloads::handleEdit);
+        ComputerAccess.accept(registrar, RequestPatternStudioPayload.TYPE, RequestPatternStudioPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestPatternStudioPayload::host), PatternStudioPayloads::handleRequest);
+        ComputerAccess.accept(registrar, PatternStudioEditPayload.TYPE, PatternStudioEditPayload.STREAM_CODEC,
+                ComputerAccess.machine(PatternStudioEditPayload::host), PatternStudioPayloads::handleEdit);
         registrar.playToClient(PatternStudioStatePayload.TYPE, PatternStudioStatePayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() ->
                         dev.jstech.computers.client.os.PatternStudioApp.accept(payload)));

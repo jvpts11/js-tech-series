@@ -8,6 +8,7 @@
 package dev.jstech.computers.integration.jei.payload;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.PatternStudioPayloads;
 import dev.jstech.computers.os.IOsHost;
 import net.minecraft.server.level.ServerLevel;
@@ -17,6 +18,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 /**
  * Registers and handles the payloads the recipe-viewer integration sends: a recipe dropped into the Pattern
@@ -31,10 +33,11 @@ public final class JeiPayloads {
 
     @SubscribeEvent
     public static void register(final RegisterPayloadHandlersEvent event) {
-        event.registrar("1").playToServer(SetPatternPayload.TYPE, SetPatternPayload.STREAM_CODEC,
-                JeiPayloads::handleSetPattern);
-        event.registrar("1").playToServer(SetProcessingPatternPayload.TYPE, SetProcessingPatternPayload.STREAM_CODEC,
-                JeiPayloads::handleSetProcessingPattern);
+        final PayloadRegistrar registrar = event.registrar("1");
+        ComputerAccess.accept(registrar, SetPatternPayload.TYPE, SetPatternPayload.STREAM_CODEC,
+                ComputerAccess.machine(SetPatternPayload::host), JeiPayloads::handleSetPattern);
+        ComputerAccess.accept(registrar, SetProcessingPatternPayload.TYPE, SetProcessingPatternPayload.STREAM_CODEC,
+                ComputerAccess.machine(SetProcessingPatternPayload::host), JeiPayloads::handleSetProcessingPattern);
     }
 
     private static void handleSetPattern(final SetPatternPayload payload, final IPayloadContext context) {

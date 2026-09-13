@@ -21,13 +21,16 @@ import net.minecraft.resources.ResourceLocation;
  *
  * @param hostPos  the position of the host computer (Mainframe or PC whose network has the Mainframe)
  * @param fileName the base file name, without extension (max {@value #MAX_NAME_LEN} chars)
- * @param content  the IQL script content to write (max {@value SaveScriptPayload#MAX_LEN} chars)
+ * @param content  the IQL script content to write (max {@value #MAX_CONTENT_LEN} chars)
  */
 public record SaveIqlFilePayload(BlockPos hostPos, String fileName,
                                  String content) implements CustomPacketPayload {
 
     /** Maximum base-name length (without the {@code .iql} extension). */
     public static final int MAX_NAME_LEN = 32;
+
+    /** Maximum length of an IQL script, sent either way. */
+    public static final int MAX_CONTENT_LEN = 8192;
 
     public static final CustomPacketPayload.Type<SaveIqlFilePayload> TYPE =
             new CustomPacketPayload.Type<>(
@@ -37,7 +40,7 @@ public record SaveIqlFilePayload(BlockPos hostPos, String fileName,
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC, SaveIqlFilePayload::hostPos,
                     ByteBufCodecs.stringUtf8(MAX_NAME_LEN), SaveIqlFilePayload::fileName,
-                    ByteBufCodecs.stringUtf8(SaveScriptPayload.MAX_LEN), SaveIqlFilePayload::content,
+                    ByteBufCodecs.stringUtf8(MAX_CONTENT_LEN), SaveIqlFilePayload::content,
                     SaveIqlFilePayload::new);
 
     @Override

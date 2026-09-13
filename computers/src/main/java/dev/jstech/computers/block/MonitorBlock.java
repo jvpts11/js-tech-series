@@ -250,6 +250,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                 : dev.jstech.computers.os.OsRegistry.getOs(osId);
         final String osName = os != null ? os.displayName() : "";
         final String targetLabel = slot < 0 ? "the default disk" : "Disk " + slot;
+        dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, owner);
         PacketDistributor.sendToPlayer(player, new dev.jstech.computers.operation.payload
                 .OpenInstallDonePayload(owner, monitorPos, kind.ordinal(), osName, targetLabel, slot, ""));
     }
@@ -270,6 +271,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                     rack.bayPowerOn(slot)
                             && dev.jstech.computers.item.ServerItem.build(stack) != null));
         }
+        dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, rack.getBlockPos());
         PacketDistributor.sendToPlayer(player,
                 new dev.jstech.computers.operation.payload.OpenKvmPayload(
                         rack.getBlockPos(), monitorPos, rack.activeChannel(), channels));
@@ -282,6 +284,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final String name = level.getBlockState(owner).getBlock().getName().getString();
         final HardwareEra era = ownerBe instanceof IOsHost c ? c.displayEra() : null;
         final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
+        dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, owner);
         PacketDistributor.sendToPlayer(player, new dev.jstech.computers.operation.payload
                 .OpenPostPayload(owner, monitorPos, kind.ordinal(), name));
     }
@@ -338,6 +341,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final String name = level.getBlockState(owner).getBlock().getName().getString();
         final HardwareEra era = ownerBe instanceof IOsHost c ? c.displayEra() : null;
         final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
+        dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, owner);
         PacketDistributor.sendToPlayer(player, new OpenComputerUiPayload(owner, monitorPos, kind.ordinal(), name));
     }
 
