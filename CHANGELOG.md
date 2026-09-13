@@ -6,6 +6,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 
 ## [Unreleased]
 
+### Fixed
+- Cutting the last data cable between a Mainframe and the rest of its network now takes the network away
+  from everything past the cut. The computers there no longer keep working through a Mainframe they are not
+  connected to, and the network does not come back when the world is loaded again.
+
 ## [0.3.0a] - 2026-09-13 - The Programming Update
 
 Codename: Lithium.
