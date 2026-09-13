@@ -188,13 +188,7 @@ public final class Process {
     private final Deque<Frame> waiting = new ArrayDeque<>();
     private final Map<String, Values.Obj> statics = new LinkedHashMap<>();
     private Values.Obj script;
-    private boolean halted;
-    private String message;
-    private int spent;
-    private List<String> args = List.of();
-    private int machineId;
-    private boolean exited;
-    private int exitCode;
+    private final ProgramIdentity identity = new ProgramIdentity();
     private Values.DelegateValue onMessage;
     /** Who to tell when a ComputerCraft computer says something through a Gateway, if anyone. */
     private Values.DelegateValue onGatewayMessage;
@@ -299,7 +293,7 @@ public final class Process {
      * runs at a terminal is over); parked when everything with work to do is waiting; running otherwise.
      */
     public State state() {
-        if (this.halted) {
+        if (this.identity.halted()) {
             return State.HALTED;
         }
         if (this.main.frames.isEmpty() && this.waiting.isEmpty()) {
@@ -320,7 +314,7 @@ public final class Process {
 
     /** What it said when it stopped, or null while it is still going. */
     public String message() {
-        return this.message;
+        return this.identity.message();
     }
 
     /** What it has written to its own console. */
@@ -340,7 +334,7 @@ public final class Process {
 
     /** How many instructions it has run since it started. */
     public int spent() {
-        return this.spent;
+        return this.identity.spent();
     }
 
     /** How many threads it has, the main one counted. */
@@ -350,20 +344,20 @@ public final class Process {
 
     /** What the program was started with, as its {@code Program.Args} reads them. */
     public void setArgs(final List<String> arguments) {
-        this.args = arguments == null ? List.of() : List.copyOf(arguments);
+        this.identity.startWith(arguments);
     }
 
     public List<String> args() {
-        return this.args;
+        return this.identity.args();
     }
 
     /** Tells the process the number the machine lists it under, which is what it calls itself by. */
     public void identify(final int id) {
-        this.machineId = id;
+        this.identity.identify(id);
     }
 
     public int machineId() {
-        return this.machineId;
+        return this.identity.machineId();
     }
 
     // the Gateways to ComputerCraft
@@ -390,7 +384,7 @@ public final class Process {
      * its turn. A program that gave none does not hear it, which is what false says.
      */
     public boolean deliverGatewayMessage(final int from, final String text, final long tick) {
-        if (this.halted || this.exited || this.onGatewayMessage == null) {
+        if (this.identity.over() || this.onGatewayMessage == null) {
             return false;
         }
         this.post(this.onGatewayMessage, List.of(this.gatewayMessageOf(from, text, tick)));
@@ -409,12 +403,12 @@ public final class Process {
 
     /** Whether the program ended itself with {@code Program.Exit}. */
     public boolean exited() {
-        return this.exited;
+        return this.identity.exited();
     }
 
     /** How the program ended: what it said with {@code Program.Exit}, one for a halt, zero otherwise. */
     public int exitCode() {
-        return this.halted ? 1 : this.exitCode;
+        return this.identity.exitCode();
     }
 
     /**
@@ -424,7 +418,7 @@ public final class Process {
      * in its turn; a program that gave none simply does not hear it. False when the program is over.
      */
     public boolean deliverMessage(final int from, final String text, final long tick) {
-        if (this.halted || this.exited) {
+        if (this.identity.over()) {
             return false;
         }
         if (this.onMessage != null) {
@@ -444,8 +438,7 @@ public final class Process {
 
     /** Ends the program where it stands with that code: every thread stops and nothing is asked again. */
     private void exit(final int code) {
-        this.exited = true;
-        this.exitCode = code;
+        this.identity.exit(code);
         this.main.frames.clear();
         this.waiting.clear();
         for (final Thread other : List.copyOf(this.threads)) {
@@ -459,8 +452,8 @@ public final class Process {
     private Values.Obj selfToken(final int line) {
         if (this.self == null) {
             final Values.Obj token = new Values.Obj("Process");
-            token.set("Id", this.machineId);
-            token.set("Name", this.text(this.name, line));
+            token.set("Id", this.identity.machineId());
+            token.set("Name", this.text(this.identity.name(), line));
             token.set("Host", this.text("", line));
             this.heap.allocate(token, Heap.HEADER + 3L * Heap.REFERENCE, line);
             this.self = token;
@@ -471,7 +464,7 @@ public final class Process {
     /** A fresh list of the arguments, the program's to hold and to free like anything else. */
     private Values.ListValue argsList(final int line) {
         final Values.ListValue made = new Values.ListValue();
-        for (final String arg : this.args) {
+        for (final String arg : this.identity.args()) {
             made.items().add(this.text(arg, line));
         }
         this.heap.allocate(made, made.bytes(), line);
@@ -647,7 +640,7 @@ public final class Process {
         int used = 0;
         try {
             this.wake();
-            while (used < budget && !this.halted) {
+            while (used < budget && !this.identity.halted()) {
                 final List<Thread> ready = new ArrayList<>();
                 for (final Thread thread : this.threads) {
                     if (this.runnable(thread)) {
@@ -660,7 +653,7 @@ public final class Process {
                 final int slice = Math.max(1, Math.min(SLICE, (budget - used) / ready.size()));
                 final int first = Math.floorMod(this.turn, ready.size());
                 int moved = 0;
-                for (int k = 0; k < ready.size() && used < budget && !this.halted; k++) {
+                for (int k = 0; k < ready.size() && used < budget && !this.identity.halted(); k++) {
                     final int ran = this.run(ready.get((first + k) % ready.size()),
                             Math.min(slice, budget - used));
                     used += ran;
@@ -701,12 +694,12 @@ public final class Process {
         this.current = thread;
         thread.yielded = false;
         int used = 0;
-        while (used < allowance && !this.halted && thread.parked == Parked.NONE && !thread.yielded) {
+        while (used < allowance && !this.identity.halted() && thread.parked == Parked.NONE && !thread.yielded) {
             if (thread.frames.isEmpty() && (thread != this.main || !this.take())) {
                 break;
             }
             used++;
-            this.spent++;
+            this.identity.spend(1);
             try {
                 this.one();
             } catch (final Halt halt) {
@@ -722,7 +715,7 @@ public final class Process {
              */
             final int reached = this.library.drawCost();
             used += reached;
-            this.spent += reached;
+            this.identity.spend(reached);
             if (thread.frames.isEmpty()) {
                 this.ended(thread);
             }
@@ -866,17 +859,14 @@ public final class Process {
         return false;
     }
 
-    /** The name the program gave itself, kept with it so a machine lists it by that after a reload. */
-    private String name = "";
-
     /** Names the program, as its own call to {@code Program.SetName} does; blank means no name. */
     void setName(final String value) {
-        this.name = value == null ? "" : value.strip();
+        this.identity.rename(value);
     }
 
     /** The name the program gave itself, or empty when it gave none. */
     public String name() {
-        return this.name;
+        return this.identity.name();
     }
 
     /** The next line typed, or an empty string when none has been. */
@@ -980,7 +970,7 @@ public final class Process {
      */
     public boolean deliverUiEvent(final long window, final long widget, final String kind,
                                   final List<Object> values) {
-        if (this.halted || this.exited) {
+        if (this.identity.over()) {
             return false;
         }
         final Values.Obj open = this.windowOf(window);
@@ -1407,8 +1397,7 @@ public final class Process {
     }
 
     private void halt(final Halt halt) {
-        this.halted = true;
-        this.message = halt.getMessage();
+        this.identity.halt(halt.getMessage());
         this.library.write(halt.getMessage());
         for (final Thread thread : this.threads) {
             thread.frames.clear();
@@ -1465,8 +1454,9 @@ public final class Process {
         }
         return new Snapshot(this.heap.budget(), held, running, queued, kept, scriptShot,
                 watching, this.library.console(), this.library.written(), this.state().serializedName(),
-                this.message == null ? "" : this.message, this.spent, this.name, locked, this.nextThread,
-                this.args, this.machineId, this.exited, this.exitCode, onMessageShot,
+                this.identity.message() == null ? "" : this.identity.message(), this.identity.spent(),
+                this.identity.name(), locked, this.nextThread, this.identity.args(), this.identity.machineId(),
+                this.identity.exited(), this.identity.givenExitCode(), onMessageShot,
                 windowShots, this.nextWindow, this.nextWidget, onGatewayShot, this.gateway);
     }
 
@@ -1556,13 +1546,8 @@ public final class Process {
             }
         }
         process.library.restore(shot.console(), shot.written());
-        process.halted = State.HALTED.serializedName().equals(shot.state());
-        process.message = shot.message().isEmpty() ? null : shot.message();
-        process.spent = shot.spent();
-        process.args = shot.args();
-        process.machineId = shot.machineId();
-        process.exited = shot.exited();
-        process.exitCode = shot.exitCode();
+        process.identity.restore(shot.args(), shot.machineId(), shot.spent(), shot.exited(), shot.exitCode(),
+                State.HALTED.serializedName().equals(shot.state()), shot.message().isEmpty() ? null : shot.message());
         if (value(shot.onMessage(), byNumber) instanceof Values.DelegateValue handler) {
             process.onMessage = handler;
         }
