@@ -13,6 +13,7 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.gateway.GatewayManager;
+import dev.jstech.computers.integration.computercraft.ComputerCraftIntegration;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.GatewayManagerActionPayload;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload;
@@ -100,7 +101,8 @@ public final class GatewayManagerGameTests {
                             "with the selected one in detail; got " + before.detail().link());
                     helper.assertTrue(before.detail().servers() >= 1 && before.detail().mainframeOnline(),
                             "and the network it reaches; servers " + before.detail().servers());
-                    helper.assertTrue(before.head().ccInstalled(), "CC: Tweaked is there in the dev runs");
+                    helper.assertTrue(before.head().ccInstalled() == ComputerCraftIntegration.isLoaded(),
+                            "the head says whether CC: Tweaked is installed; got " + before.head().ccInstalled());
 
                     final String said = act(helper, fleet, GatewayManagerActionPayload.ACTION_RENAME, 0, "CC Bridge");
                     helper.assertTrue(said.contains("cc-bridge"), "the rename says what it did; got " + said);

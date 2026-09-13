@@ -31,6 +31,21 @@ sourceSets.main.resources {
     exclude("src/generated/**/.cache")
 }
 
+/*
+ * -PwithoutComputerCraft runs the development mods without CC: Tweaked, to prove every mod stands without it. The
+ * tests written against ComputerCraft's own classes could not even load then, so they leave that build, and the
+ * GameTests are told which of the two worlds they run in.
+ */
+def withoutComputerCraft = providers.gradleProperty('withoutComputerCraft').isPresent()
+if (withoutComputerCraft) {
+    sourceSets.main.java {
+        exclude '**/gametest/ComputerCraftGameTests.java'
+        exclude '**/gametest/GatewayBridgeGameTests.java'
+        exclude '**/gametest/GatewayCannonGameTests.java'
+        exclude '**/gametest/NetworkGatewayGameTests.java'
+    }
+}
+
 neoForge {
     version = project.neo_version
 
@@ -80,6 +95,7 @@ neoForge {
             type = "gameTestServer"
             gameDirectory = rootProject.file('run')
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            systemProperty 'jsc.gametests.computercraft', withoutComputerCraft ? 'absent' : 'present'
         }
 
         data {
@@ -138,7 +154,9 @@ dependencies {
     // CC: Tweaked in the dev runs, so the Network Gateway bridge is tested against real ComputerCraft
     // computers, and its API for the test rigs that talk to them. Its NeoForge build carries the "forge" name.
     compileOnly "cc.tweaked:cc-tweaked-${minecraft_version}-forge-api:${cc_tweaked_version}"
-    localRuntime "cc.tweaked:cc-tweaked-${minecraft_version}-forge:${cc_tweaked_version}"
+    if (!withoutComputerCraft) {
+        localRuntime "cc.tweaked:cc-tweaked-${minecraft_version}-forge:${cc_tweaked_version}"
+    }
 }
 
 // Expands the declared properties into the mod metadata template. A missing property is an error.
