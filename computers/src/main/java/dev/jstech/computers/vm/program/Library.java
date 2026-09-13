@@ -364,7 +364,7 @@ public final class Library {
         switch (name) {
             case "Print", "PrintLine" -> this.write(String.valueOf(arguments.getFirst()));
             case "ReadLine" -> {
-                return Answer.of(this.typed());
+                return Answer.of(this.heap.adopt(this.typed(), line));
             }
             case "ReadInt" -> {
                 return Answer.of(NumberFunctions.number("ToInt", this.typed(), line));

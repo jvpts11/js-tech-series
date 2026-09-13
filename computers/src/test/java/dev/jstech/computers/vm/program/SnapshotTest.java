@@ -134,6 +134,25 @@ class SnapshotTest {
     }
 
     @Test
+    void save_keepsALineReadFromTheTerminalThroughASave() {
+        final ProgramImage program = load("", """
+                        string name = Console.ReadLine();
+                        for (int i = 0; i < 6; i++) { }
+                        Console.PrintLine("got " + name);
+                """);
+        Process process = new Process(program, ROOM, IHost.still());
+        process.offerInput("Ada");
+        process.begin(process.create(program.entryPoint()), "OnTick");
+        for (int i = 0; i < PATIENCE && process.state() == Process.State.RUNNING; i++) {
+            process.step(SLICE);
+            process = Process.restore(program, process.save(), IHost.still());
+        }
+        final Process ended = process;
+        assertEquals(Process.State.FINISHED, ended.state(), () -> String.valueOf(ended.message()));
+        assertEquals(List.of("got Ada"), ended.console());
+    }
+
+    @Test
     void save_keepsTwoNamesForOneThingAsOneThing() {
         final Process process = bothWays(load("", """
                         List<string> names = new List<string>();
