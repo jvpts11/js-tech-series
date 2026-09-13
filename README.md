@@ -57,4 +57,5 @@ Read [docs/CODE_STYLE.md](docs/CODE_STYLE.md) before opening a pull request, and
 
 ## License
 
-[LGPL-3.0-only](LICENSE), © jvpts11.
+[LGPL-3.0-only](COPYING.LESSER), © jvpts11. The LGPL adds its permissions to the GPL, whose text is in
+[COPYING](COPYING).
