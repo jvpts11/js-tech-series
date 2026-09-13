@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Tech Series.
  */
 package dev.jstech.tests.clienttest;
 

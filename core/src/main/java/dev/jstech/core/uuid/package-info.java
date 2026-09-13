@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Core.
  */
 /**
  * Network UUID assignment, propagation along cable graphs, and collision-detection primitives.

@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Core.
  */
 /**
  * The Operation system: SQL-like requests dispatched across the network (SELECT, INSERT, DELETE, CRAFT, VACUUM, etc.) and the OperationType registry used to declare new operation kinds.

@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Core.
  */
 /**
  * Custom mod event system: a type-safe, testable, in-house event bus that future NeoForge integration can sit behind.
