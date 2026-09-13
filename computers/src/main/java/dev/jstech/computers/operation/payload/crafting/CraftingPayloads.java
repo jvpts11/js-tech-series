@@ -11,6 +11,7 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.MoveLabels;
+import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
 import dev.jstech.computers.operation.payload.CraftPlanPayload;
@@ -24,9 +25,9 @@ import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import java.util.List;
@@ -53,11 +54,11 @@ public final class CraftingPayloads {
     /** Registers the payloads this class handles. */
     public static void register(final PayloadRegistrar registrar) {
         registrar.playToClient(CraftCatalogPayload.TYPE, CraftCatalogPayload.STREAM_CODEC,
-                CraftingPayloads::handleCraftCatalog);
+                ClientPayloadHandlers.onMainThread(CraftingPayloads::handleCraftCatalog));
         ComputerAccess.accept(registrar, CraftPlanRequestPayload.TYPE, CraftPlanRequestPayload.STREAM_CODEC,
                 ComputerAccess.machine(CraftPlanRequestPayload::hostPos), CraftingPayloads::handleCraftPlanRequest);
         registrar.playToClient(CraftPlanPayload.TYPE, CraftPlanPayload.STREAM_CODEC,
-                CraftingPayloads::handleCraftPlan);
+                ClientPayloadHandlers.onMainThread(CraftingPayloads::handleCraftPlan));
         ComputerAccess.accept(registrar, CraftSubmitPayload.TYPE, CraftSubmitPayload.STREAM_CODEC,
                 ComputerAccess.machine(CraftSubmitPayload::hostPos), CraftingPayloads::handleCraftSubmit);
         ComputerAccess.accept(registrar, SetCraftingSwitchFacePayload.TYPE, SetCraftingSwitchFacePayload.STREAM_CODEC,
@@ -66,26 +67,22 @@ public final class CraftingPayloads {
                 CraftingPayloads::handleSetCraftingSwitchFace);
     }
 
-    private static void handleCraftCatalog(final CraftCatalogPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player().containerMenu instanceof ComputerTerminalMenu menu) {
-                menu.setCraftCatalog(payload.entries());
-            } else {
-                // The desktop Craft Planner has no container menu; route the catalogue to it.
-                dev.jstech.computers.client.os.CraftPlannerApp.acceptCatalog(payload.entries());
-            }
-        });
+    private static void handleCraftCatalog(final CraftCatalogPayload payload, final Player player) {
+        if (player.containerMenu instanceof ComputerTerminalMenu menu) {
+            menu.setCraftCatalog(payload.entries());
+        } else {
+            // The desktop Craft Planner has no container menu; route the catalogue to it.
+            dev.jstech.computers.client.os.CraftPlannerApp.acceptCatalog(payload.entries());
+        }
     }
 
-    private static void handleCraftPlan(final CraftPlanPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player().containerMenu instanceof ComputerTerminalMenu menu) {
-                menu.setCraftPlan(payload);
-            } else {
-                // The desktop Network Interactor has no container menu; route the plan to its craft popup.
-                dev.jstech.computers.client.os.NetworkInteractorApp.acceptCraftPlan(payload);
-            }
-        });
+    private static void handleCraftPlan(final CraftPlanPayload payload, final Player player) {
+        if (player.containerMenu instanceof ComputerTerminalMenu menu) {
+            menu.setCraftPlan(payload);
+        } else {
+            // The desktop Network Interactor has no container menu; route the plan to its craft popup.
+            dev.jstech.computers.client.os.NetworkInteractorApp.acceptCraftPlan(payload);
+        }
     }
 
     public static void dispatchCraftCatalog(final ServerPlayer player, final NetworkUuid net,
@@ -164,82 +161,77 @@ public final class CraftingPayloads {
         return java.util.List.copyOf(entries.values());
     }
 
-    private static void handleCraftPlanRequest(final CraftPlanRequestPayload payload,
-                                               final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            final IComputerTerminalHost host = craftHost(context, payload.monitorPos(), payload.hostPos());
-            if (host == null || host.networkUuid() == null
-                    || !(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || payload.quantity() <= 0L) {
-                return;
-            }
-            final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
-            if (mainframe == null) {
-                return;
-            }
-            final var machines = mainframe.networkProcessingPatterns();
-            final var stock = dev.jstech.computers.operation.NetworkStorage
-                    .of(level, host.networkUuid()).query();
-            final StorageKey key = StorageKey.of(payload.result());
-            final long quantity = payload.quantity();
-            final ItemStack result = payload.result();
-            /*
-             * Which recipe to plan with: the one the dialog named, else the one this machine remembers the
-             * player picking for the item, else the first. The reply carries every recipe that makes the item
-             * when there is more than one, so the dialog can offer the choice.
-             */
-            final java.util.List<dev.jstech.computers.crafting.NetworkRecipe> recipes = mainframe.recipesFor(key);
-            int chosen = payload.recipe();
-            if (chosen < 0 || chosen >= recipes.size()) {
-                chosen = rememberedRecipe(host, key, recipes.size());
-            }
-            final java.util.List<dev.jstech.computers.crafting.RecipeChoice> options = recipes.size() > 1
-                    ? recipeChoices(level, mainframe, recipes, key, quantity, machines, stock) : java.util.List.of();
-            final dev.jstech.computers.crafting.NetworkRecipe recipe = recipes.isEmpty() ? null : recipes.get(chosen);
-            final var patterns = mainframe.patternsPreferring(recipe == null ? null : recipe.bench().orElse(null));
-            final int recipeIndex = chosen;
-            /*
-             * A machine recipe plans by its own direct inputs, red where short, with a line per shortfall saying
-             * what the network would craft to cover it (a processing run's whole tree covers it; a pipeline runs
-             * on what is in stock). Otherwise the recursive planner expands bench and machine patterns alike, so
-             * a machine-made ingredient shows up as the raw materials of its own recipe rather than as missing.
-             */
-            final var machinePlan = recipe == null || !recipe.usesMachine() ? null
-                    : planMachineRecipe(recipe, quantity, stock);
-            if (machinePlan != null) {
-                final Cover cover = coverShortfalls(machinePlan.rows(), patterns, machines, stock,
-                        machinePlan.plainMachine());
-                final boolean feasible = machinePlan.feasible()
-                        || (machinePlan.plainMachine() && cover.covered()
-                                && dev.jstech.computers.crafting.CraftPlanner.plan(key, quantity, patterns, machines, stock)
-                                        .feasible());
-                PacketDistributor.sendToPlayer(player, new CraftPlanPayload(
-                        result, quantity, machinePlan.rows(), feasible,
-                        feasible ? quantity : machinePlan.maxFeasible(), machinePlan.estimateTicks(),
-                        recipeIndex, options, cover.lines(), machinePlan.stages()));
-                return;
-            }
-            /*
-             * The recursive plan is CPU work over immutable inputs: it runs on a virtual thread and the reply
-             * goes out from the main thread when it is ready (the dialog shows "planning..." meanwhile). Without
-             * a dispatcher the plan is made here and now instead.
-             */
-            final java.util.function.Supplier<PlanPreview> preview =
-                    () -> planPreview(key, quantity, patterns, machines, stock);
-            final java.util.function.Consumer<PlanPreview> reply = made ->
-                    PacketDistributor.sendToPlayer(player, new CraftPlanPayload(result, quantity, made.rows(),
-                            made.feasible(), made.maxFeasible(), estimateTicks(level, mainframe, made.plan()),
-                            recipeIndex, options, unmakeableLines(made.plan()), Math.max(1, made.plan().steps().size())));
-            final boolean queued = mainframe.submitOperation(task -> {
-                final PlanPreview made = preview.get();
-                task.onMainThread(() -> reply.accept(made));
-                return dev.jstech.core.operation.IOperationResult.success();
-            }, dev.jstech.core.operation.OperationPriority.MEDIUM);
-            if (!queued) {
-                reply.accept(preview.get());
-            }
-        });
+    private static void handleCraftPlanRequest(final CraftPlanRequestPayload payload, final ServerPlayer player,
+                                               final ServerLevel level) {
+        final IComputerTerminalHost host = craftHost(player, level, payload.monitorPos(), payload.hostPos());
+        if (host == null || host.networkUuid() == null || payload.quantity() <= 0L) {
+            return;
+        }
+        final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
+        if (mainframe == null) {
+            return;
+        }
+        final var machines = mainframe.networkProcessingPatterns();
+        final var stock = dev.jstech.computers.operation.NetworkStorage
+                .of(level, host.networkUuid()).query();
+        final StorageKey key = StorageKey.of(payload.result());
+        final long quantity = payload.quantity();
+        final ItemStack result = payload.result();
+        /*
+         * Which recipe to plan with: the one the dialog named, else the one this machine remembers the
+         * player picking for the item, else the first. The reply carries every recipe that makes the item
+         * when there is more than one, so the dialog can offer the choice.
+         */
+        final java.util.List<dev.jstech.computers.crafting.NetworkRecipe> recipes = mainframe.recipesFor(key);
+        int chosen = payload.recipe();
+        if (chosen < 0 || chosen >= recipes.size()) {
+            chosen = rememberedRecipe(host, key, recipes.size());
+        }
+        final java.util.List<dev.jstech.computers.crafting.RecipeChoice> options = recipes.size() > 1
+                ? recipeChoices(level, mainframe, recipes, key, quantity, machines, stock) : java.util.List.of();
+        final dev.jstech.computers.crafting.NetworkRecipe recipe = recipes.isEmpty() ? null : recipes.get(chosen);
+        final var patterns = mainframe.patternsPreferring(recipe == null ? null : recipe.bench().orElse(null));
+        final int recipeIndex = chosen;
+        /*
+         * A machine recipe plans by its own direct inputs, red where short, with a line per shortfall saying
+         * what the network would craft to cover it (a processing run's whole tree covers it; a pipeline runs
+         * on what is in stock). Otherwise the recursive planner expands bench and machine patterns alike, so
+         * a machine-made ingredient shows up as the raw materials of its own recipe rather than as missing.
+         */
+        final var machinePlan = recipe == null || !recipe.usesMachine() ? null
+                : planMachineRecipe(recipe, quantity, stock);
+        if (machinePlan != null) {
+            final Cover cover = coverShortfalls(machinePlan.rows(), patterns, machines, stock,
+                    machinePlan.plainMachine());
+            final boolean feasible = machinePlan.feasible()
+                    || (machinePlan.plainMachine() && cover.covered()
+                            && dev.jstech.computers.crafting.CraftPlanner.plan(key, quantity, patterns, machines, stock)
+                                    .feasible());
+            PacketDistributor.sendToPlayer(player, new CraftPlanPayload(
+                    result, quantity, machinePlan.rows(), feasible,
+                    feasible ? quantity : machinePlan.maxFeasible(), machinePlan.estimateTicks(),
+                    recipeIndex, options, cover.lines(), machinePlan.stages()));
+            return;
+        }
+        /*
+         * The recursive plan is CPU work over immutable inputs: it runs on a virtual thread and the reply
+         * goes out from the main thread when it is ready (the dialog shows "planning..." meanwhile). Without
+         * a dispatcher the plan is made here and now instead.
+         */
+        final java.util.function.Supplier<PlanPreview> preview =
+                () -> planPreview(key, quantity, patterns, machines, stock);
+        final java.util.function.Consumer<PlanPreview> reply = made ->
+                PacketDistributor.sendToPlayer(player, new CraftPlanPayload(result, quantity, made.rows(),
+                        made.feasible(), made.maxFeasible(), estimateTicks(level, mainframe, made.plan()),
+                        recipeIndex, options, unmakeableLines(made.plan()), Math.max(1, made.plan().steps().size())));
+        final boolean queued = mainframe.submitOperation(task -> {
+            final PlanPreview made = preview.get();
+            task.onMainThread(() -> reply.accept(made));
+            return dev.jstech.core.operation.IOperationResult.success();
+        }, dev.jstech.core.operation.OperationPriority.MEDIUM);
+        if (!queued) {
+            reply.accept(preview.get());
+        }
     }
 
     /** The recipe index this machine remembers for {@code key} when it is still one of {@code count}, else 0. */
@@ -330,65 +322,55 @@ public final class CraftingPayloads {
         return step.isMachine() ? step.machine().displayName() : step.pattern().displayName();
     }
 
-    private static void handleCraftSubmit(final CraftSubmitPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            final IComputerTerminalHost host = craftHost(context, payload.monitorPos(), payload.hostPos());
-            if (host == null || host.networkUuid() == null
-                    || !(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || payload.quantity() <= 0L) {
-                return;
-            }
-            final NetworkUuid net = host.networkUuid();
-            final MainframeBlockEntity mainframe = resolveMainframe(level, net);
-            if (mainframe == null) {
-                return;
-            }
-            final StorageKey resultKey = StorageKey.of(payload.result());
-            final Runnable refresh = () -> {
-                dispatchTerminalOpsLog(player, net, level);
-                dispatchActiveOperations(player, net, level);
-                dispatchCraftCatalog(player, net, level);
-            };
-            /*
-             * The shared entry point runs a machine or multi-stage recipe directly, else plans a recursive
-             * craft; onSettle refreshes the screen when it settles, and refresh.run() updates it now. A recipe
-             * the dialog named runs as picked; without one, the multiStage flag picks the pipeline over the flat
-             * recursive path when a result has both.
-             */
-            final var op = payload.recipe() >= 0
-                    ? mainframe.submitCraftRequest(resultKey, payload.quantity(), payload.partial(),
-                            host.originLabel(MoveLabels.TERMINAL), refresh, payload.recipe())
-                    : mainframe.submitCraftRequest(resultKey, payload.quantity(), payload.partial(),
-                            host.originLabel(MoveLabels.TERMINAL), refresh, payload.multiStage());
-            if (op != null) {
-                op.setPriority(payload.priority());
-            }
-            refresh.run();
-        });
+    private static void handleCraftSubmit(final CraftSubmitPayload payload, final ServerPlayer player,
+                                          final ServerLevel level) {
+        final IComputerTerminalHost host = craftHost(player, level, payload.monitorPos(), payload.hostPos());
+        if (host == null || host.networkUuid() == null || payload.quantity() <= 0L) {
+            return;
+        }
+        final NetworkUuid net = host.networkUuid();
+        final MainframeBlockEntity mainframe = resolveMainframe(level, net);
+        if (mainframe == null) {
+            return;
+        }
+        final StorageKey resultKey = StorageKey.of(payload.result());
+        final Runnable refresh = () -> {
+            dispatchTerminalOpsLog(player, net, level);
+            dispatchActiveOperations(player, net, level);
+            dispatchCraftCatalog(player, net, level);
+        };
+        /*
+         * The shared entry point runs a machine or multi-stage recipe directly, else plans a recursive
+         * craft; onSettle refreshes the screen when it settles, and refresh.run() updates it now. A recipe
+         * the dialog named runs as picked; without one, the multiStage flag picks the pipeline over the flat
+         * recursive path when a result has both.
+         */
+        final var op = payload.recipe() >= 0
+                ? mainframe.submitCraftRequest(resultKey, payload.quantity(), payload.partial(),
+                        host.originLabel(MoveLabels.TERMINAL), refresh, payload.recipe())
+                : mainframe.submitCraftRequest(resultKey, payload.quantity(), payload.partial(),
+                        host.originLabel(MoveLabels.TERMINAL), refresh, payload.multiStage());
+        if (op != null) {
+            op.setPriority(payload.priority());
+        }
+        refresh.run();
     }
 
     private static void handleSetCraftingSwitchFace(final SetCraftingSwitchFacePayload payload,
-                                                    final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)) {
-                return;
-            }
-            final net.minecraft.core.BlockPos pos = payload.switchPos();
-            if (player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > 64.0) {
-                return; // out of reach
-            }
-            if (level.getBlockEntity(pos) instanceof dev.jstech.computers.blockentity
-                    .CraftingSwitchBlockEntity sw) {
-                final net.minecraft.core.Direction face =
-                        net.minecraft.core.Direction.from3DDataValue(payload.face());
-                sw.setFaceName(face, payload.name());
-                sw.setFaceActive(face, payload.active());
-                sw.setFaceCategory(face, payload.category());
-                final net.minecraft.world.level.block.state.BlockState st = level.getBlockState(pos);
-                level.sendBlockUpdated(pos, st, st, net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
-            }
-        });
+                                                    final ServerPlayer player, final ServerLevel level) {
+        final net.minecraft.core.BlockPos pos = payload.switchPos();
+        if (player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > 64.0) {
+            return; // out of reach
+        }
+        if (level.getBlockEntity(pos) instanceof dev.jstech.computers.blockentity
+                .CraftingSwitchBlockEntity sw) {
+            final net.minecraft.core.Direction face =
+                    net.minecraft.core.Direction.from3DDataValue(payload.face());
+            sw.setFaceName(face, payload.name());
+            sw.setFaceActive(face, payload.active());
+            sw.setFaceCategory(face, payload.category());
+            final net.minecraft.world.level.block.state.BlockState st = level.getBlockState(pos);
+            level.sendBlockUpdated(pos, st, st, net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+        }
     }
 }

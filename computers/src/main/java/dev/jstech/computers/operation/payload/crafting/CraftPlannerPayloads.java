@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload.crafting;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.CraftPlanPayload;
 import dev.jstech.computers.operation.payload.CraftPlannerPayload;
@@ -16,8 +17,8 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import java.util.ArrayList;
@@ -41,31 +42,25 @@ public final class CraftPlannerPayloads {
         ComputerAccess.accept(registrar, RequestCraftPlannerPayload.TYPE, RequestCraftPlannerPayload.STREAM_CODEC,
                 ComputerAccess.machine(RequestCraftPlannerPayload::host), CraftPlannerPayloads::handleRequestCraftPlanner);
         registrar.playToClient(CraftPlannerPayload.TYPE, CraftPlannerPayload.STREAM_CODEC,
-                CraftPlannerPayloads::handleCraftPlanner);
+                ClientPayloadHandlers.onMainThread(CraftPlannerPayloads::handleCraftPlanner));
     }
 
-    private static void handleRequestCraftPlanner(final RequestCraftPlannerPayload payload,
-                                                  final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player
-                    && player.level() instanceof ServerLevel level) {
-                final var host = niHost(player, level, payload.host(), payload.monitorPos());
-                if (host == null || host.networkUuid() == null) {
-                    return;
-                }
-                if (payload.target().isEmpty()) {
-                    dispatchCraftCatalog(player, host.networkUuid(), level);
-                } else {
-                    PacketDistributor.sendToPlayer(player, collectCraftPlanner(level, host.networkUuid(),
-                            StorageKey.of(payload.target()), Math.max(1, payload.quantity())));
-                }
-            }
-        });
+    private static void handleRequestCraftPlanner(final RequestCraftPlannerPayload payload, final ServerPlayer player,
+                                                  final ServerLevel level) {
+        final var host = niHost(player, level, payload.host(), payload.monitorPos());
+        if (host == null || host.networkUuid() == null) {
+            return;
+        }
+        if (payload.target().isEmpty()) {
+            dispatchCraftCatalog(player, host.networkUuid(), level);
+        } else {
+            PacketDistributor.sendToPlayer(player, collectCraftPlanner(level, host.networkUuid(),
+                    StorageKey.of(payload.target()), Math.max(1, payload.quantity())));
+        }
     }
 
-    private static void handleCraftPlanner(final CraftPlannerPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() ->
-                dev.jstech.computers.client.os.CraftPlannerApp.accept(payload));
+    private static void handleCraftPlanner(final CraftPlannerPayload payload, final Player player) {
+        dev.jstech.computers.client.os.CraftPlannerApp.accept(payload);
     }
 
     /** Runs the recursive planner for the Craft Planner: feasibility, the ordered stages, and the raw bill. */

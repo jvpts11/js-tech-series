@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload.automation;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.payload.AutomationPayload;
+import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.CreateAutomationJobPayload;
 import dev.jstech.computers.operation.payload.JobActionPayload;
@@ -17,9 +18,9 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ public final class AutomationPayloads {
         ComputerAccess.accept(registrar, RequestAutomationPayload.TYPE, RequestAutomationPayload.STREAM_CODEC,
                 ComputerAccess.machine(RequestAutomationPayload::host), AutomationPayloads::handleRequestAutomation);
         registrar.playToClient(AutomationPayload.TYPE, AutomationPayload.STREAM_CODEC,
-                AutomationPayloads::handleAutomation);
+                ClientPayloadHandlers.onMainThread(AutomationPayloads::handleAutomation));
         ComputerAccess.accept(registrar, CreateAutomationJobPayload.TYPE, CreateAutomationJobPayload.STREAM_CODEC,
                 ComputerAccess.machine(CreateAutomationJobPayload::host), AutomationPayloads::handleCreateAutomationJob);
         ComputerAccess.accept(registrar, JobActionPayload.TYPE, JobActionPayload.STREAM_CODEC,
@@ -51,23 +52,17 @@ public final class AutomationPayloads {
 
     // Automation Manager: the job list, engine status, create, and pause/resume/delete
 
-    private static void handleRequestAutomation(final RequestAutomationPayload payload,
-                                                final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player
-                    && player.level() instanceof ServerLevel level) {
-                final var host = niHost(player, level, payload.host(), payload.monitorPos());
-                if (host != null && host.networkUuid() != null) {
-                    PacketDistributor.sendToPlayer(player,
-                            buildAutomation(resolveMainframe(level, host.networkUuid())));
-                }
-            }
-        });
+    private static void handleRequestAutomation(final RequestAutomationPayload payload, final ServerPlayer player,
+                                                final ServerLevel level) {
+        final var host = niHost(player, level, payload.host(), payload.monitorPos());
+        if (host != null && host.networkUuid() != null) {
+            PacketDistributor.sendToPlayer(player,
+                    buildAutomation(resolveMainframe(level, host.networkUuid())));
+        }
     }
 
-    private static void handleAutomation(final AutomationPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() ->
-                dev.jstech.computers.client.os.AutomationManagerApp.accept(payload));
+    private static void handleAutomation(final AutomationPayload payload, final Player player) {
+        dev.jstech.computers.client.os.AutomationManagerApp.accept(payload);
     }
 
     private static AutomationPayload buildAutomation(final MainframeBlockEntity mf) {
@@ -123,29 +118,23 @@ public final class AutomationPayloads {
         };
     }
 
-    private static void handleCreateAutomationJob(final CreateAutomationJobPayload payload,
-                                                  final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)) {
-                return;
-            }
-            final var host = niHost(player, level, payload.host(), payload.monitorPos());
-            if (host == null || host.networkUuid() == null) {
-                return;
-            }
-            final MainframeBlockEntity mf = resolveMainframe(level, host.networkUuid());
-            if (mf == null) {
-                return;
-            }
-            final var def = compileJob(player, mf, payload);
-            if (def != null) {
-                mf.iqlCatalog().put(
-                        dev.jstech.computers.program.iql.IqlSavedObject.from(def));
-                mf.markIqlCatalogChanged();
-                PacketDistributor.sendToPlayer(player, buildAutomation(mf));
-            }
-        });
+    private static void handleCreateAutomationJob(final CreateAutomationJobPayload payload, final ServerPlayer player,
+                                                  final ServerLevel level) {
+        final var host = niHost(player, level, payload.host(), payload.monitorPos());
+        if (host == null || host.networkUuid() == null) {
+            return;
+        }
+        final MainframeBlockEntity mf = resolveMainframe(level, host.networkUuid());
+        if (mf == null) {
+            return;
+        }
+        final var def = compileJob(player, mf, payload);
+        if (def != null) {
+            mf.iqlCatalog().put(
+                    dev.jstech.computers.program.iql.IqlSavedObject.from(def));
+            mf.markIqlCatalogChanged();
+            PacketDistributor.sendToPlayer(player, buildAutomation(mf));
+        }
     }
 
     private static dev.jstech.computers.program.iql.IqlDefinition compileJob(
@@ -222,32 +211,27 @@ public final class AutomationPayloads {
         player.displayClientMessage(net.minecraft.network.chat.Component.literal(message), false);
     }
 
-    private static void handleJobAction(final JobActionPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)) {
-                return;
+    private static void handleJobAction(final JobActionPayload payload, final ServerPlayer player,
+                                        final ServerLevel level) {
+        final var host = niHost(player, level, payload.host(), payload.monitorPos());
+        if (host == null || host.networkUuid() == null) {
+            return;
+        }
+        final MainframeBlockEntity mf = resolveMainframe(level, host.networkUuid());
+        if (mf == null) {
+            return;
+        }
+        switch (payload.action()) {
+            case JobActionPayload.ACTION_PAUSE -> mf.pauseJob(payload.name());
+            case JobActionPayload.ACTION_RESUME -> mf.restartJob(payload.name());
+            case JobActionPayload.ACTION_DELETE -> {
+                mf.iqlCatalog().remove(
+                        dev.jstech.computers.program.iql.IqlDefinition.ObjectType.JOB,
+                        payload.name());
+                mf.markIqlCatalogChanged();
             }
-            final var host = niHost(player, level, payload.host(), payload.monitorPos());
-            if (host == null || host.networkUuid() == null) {
-                return;
-            }
-            final MainframeBlockEntity mf = resolveMainframe(level, host.networkUuid());
-            if (mf == null) {
-                return;
-            }
-            switch (payload.action()) {
-                case JobActionPayload.ACTION_PAUSE -> mf.pauseJob(payload.name());
-                case JobActionPayload.ACTION_RESUME -> mf.restartJob(payload.name());
-                case JobActionPayload.ACTION_DELETE -> {
-                    mf.iqlCatalog().remove(
-                            dev.jstech.computers.program.iql.IqlDefinition.ObjectType.JOB,
-                            payload.name());
-                    mf.markIqlCatalogChanged();
-                }
-                default -> { }
-            }
-            PacketDistributor.sendToPlayer(player, buildAutomation(mf));
-        });
+            default -> { }
+        }
+        PacketDistributor.sendToPlayer(player, buildAutomation(mf));
     }
 }

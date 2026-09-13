@@ -7,14 +7,15 @@
  */
 package dev.jstech.computers.operation.payload.gateway;
 
+import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.GatewayManagerActionPayload;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload;
 import dev.jstech.computers.operation.payload.RequestGatewayManagerPayload;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 /**
@@ -34,43 +35,33 @@ public final class GatewayManagerPayloads {
         ComputerAccess.accept(registrar, GatewayManagerActionPayload.TYPE, GatewayManagerActionPayload.STREAM_CODEC,
                 ComputerAccess.machine(GatewayManagerActionPayload::hostPos), GatewayManagerPayloads::handleGatewayManagerAction);
         registrar.playToClient(GatewayManagerStatePayload.TYPE, GatewayManagerStatePayload.STREAM_CODEC,
-                GatewayManagerPayloads::handleGatewayManagerState);
+                ClientPayloadHandlers.onMainThread(GatewayManagerPayloads::handleGatewayManagerState));
     }
 
     /** Routes the Cluster Manager state to the open window. */
     private static void handleRequestGatewayManager(final RequestGatewayManagerPayload payload,
-                                                     final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player) || !(player.level() instanceof ServerLevel level)) {
-                return;
-            }
-            final var host = level.getBlockEntity(payload.hostPos());
-            if (host == null) {
-                return;
-            }
-            PacketDistributor.sendToPlayer(player,
-                    dev.jstech.computers.gateway.GatewayManager.state(level, host, payload.selected(), ""));
-        });
+                                                    final ServerPlayer player, final ServerLevel level) {
+        final var host = level.getBlockEntity(payload.hostPos());
+        if (host == null) {
+            return;
+        }
+        PacketDistributor.sendToPlayer(player,
+                dev.jstech.computers.gateway.GatewayManager.state(level, host, payload.selected(), ""));
     }
 
     private static void handleGatewayManagerAction(final GatewayManagerActionPayload payload,
-                                                   final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player) || !(player.level() instanceof ServerLevel level)) {
-                return;
-            }
-            final var host = level.getBlockEntity(payload.hostPos());
-            if (host == null) {
-                return;
-            }
-            final String status = dev.jstech.computers.gateway.GatewayManager.act(level, host, payload.gatewayPos(),
-                    payload.action(), payload.value(), payload.text());
-            PacketDistributor.sendToPlayer(player,
-                    dev.jstech.computers.gateway.GatewayManager.state(level, host, payload.gatewayPos(), status));
-        });
+                                                   final ServerPlayer player, final ServerLevel level) {
+        final var host = level.getBlockEntity(payload.hostPos());
+        if (host == null) {
+            return;
+        }
+        final String status = dev.jstech.computers.gateway.GatewayManager.act(level, host, payload.gatewayPos(),
+                payload.action(), payload.value(), payload.text());
+        PacketDistributor.sendToPlayer(player,
+                dev.jstech.computers.gateway.GatewayManager.state(level, host, payload.gatewayPos(), status));
     }
 
-    private static void handleGatewayManagerState(final GatewayManagerStatePayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> dev.jstech.computers.client.os.GatewayManagerApp.accept(payload));
+    private static void handleGatewayManagerState(final GatewayManagerStatePayload payload, final Player player) {
+        dev.jstech.computers.client.os.GatewayManagerApp.accept(payload);
     }
 }

@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
 import dev.jstech.computers.datacenter.LoadBalancer;
 import dev.jstech.computers.operation.MoveLabels;
+import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ClusterManagerActionPayload;
 import dev.jstech.computers.operation.payload.ClusterManagerStatePayload;
 import dev.jstech.computers.operation.payload.ClusterMoveOutPayload;
@@ -27,9 +28,9 @@ import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import java.util.ArrayList;
@@ -59,7 +60,7 @@ public final class ClusterManagerPayloads {
         ComputerAccess.accept(registrar, ClusterRenamePayload.TYPE, ClusterRenamePayload.STREAM_CODEC,
                 ComputerAccess.machine(ClusterRenamePayload::hostPos), ClusterManagerPayloads::handleClusterRename);
         registrar.playToClient(ClusterManagerStatePayload.TYPE, ClusterManagerStatePayload.STREAM_CODEC,
-                ClusterManagerPayloads::handleClusterManagerState);
+                ClientPayloadHandlers.onMainThread(ClusterManagerPayloads::handleClusterManagerState));
     }
 
     static List<ServerStore> sectionStores(final ServerLevel level, final List<NodeUuid> servers) {
@@ -78,132 +79,118 @@ public final class ClusterManagerPayloads {
     // the Cluster Manager: the Cluster Management Computer's program
 
     private static void handleRequestClusterManager(final RequestClusterManagerPayload payload,
-                                                     final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity cmc)) {
-                return;
-            }
-            PacketDistributor.sendToPlayer(player, buildClusterManagerState(cmc, level, payload.selKind(), payload.selIndex(), ""));
-        });
+                                                    final ServerPlayer player, final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos())
+                instanceof dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity cmc)) {
+            return;
+        }
+        PacketDistributor.sendToPlayer(player, buildClusterManagerState(cmc, level, payload.selKind(), payload.selIndex(), ""));
     }
 
-    private static void handleClusterManagerState(final ClusterManagerStatePayload payload, final IPayloadContext context) {
-        context.enqueueWork(() ->
-                dev.jstech.computers.client.os.ClusterManagerApp.accept(payload));
+    private static void handleClusterManagerState(final ClusterManagerStatePayload payload, final Player player) {
+        dev.jstech.computers.client.os.ClusterManagerApp.accept(payload);
     }
 
-    private static void handleClusterManagerAction(final ClusterManagerActionPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity cmc)) {
-                return;
-            }
-            final var ref = clusterRef(cmc, payload.kind(), payload.index());
-            String status = "";
-            if (ref == null && payload.action() != ClusterManagerActionPayload.ACTION_REFRESH
-                    && payload.action() != ClusterManagerActionPayload.ACTION_CANCEL_JOB) {
-                status = "select a cluster first";
-            } else {
-                final var node = new dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity
-                        .NodeRef(BlockPos.of(payload.rackPos()), payload.row());
-                status = switch (payload.action()) {
-                    case ClusterManagerActionPayload.ACTION_INSTALL_SYSTEM_ALL -> cmc.startJob(ref,
-                            dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity.JobKind.SYSTEM);
-                    case ClusterManagerActionPayload.ACTION_INSTALL_PROGRAM_ALL -> cmc.startJob(ref,
-                            dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity.JobKind.PROGRAM);
-                    case ClusterManagerActionPayload.ACTION_INSTALL_SYSTEM_NODE -> cmc.startJob(ref,
-                            dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity.JobKind.SYSTEM,
-                            List.of(node));
-                    case ClusterManagerActionPayload.ACTION_INSTALL_PROGRAM_NODE -> cmc.startJob(ref,
-                            dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity.JobKind.PROGRAM,
-                            List.of(node));
-                    case ClusterManagerActionPayload.ACTION_POWER_ALL_ON -> cmc.powerAll(ref, true) + " bay(s) switched on";
-                    case ClusterManagerActionPayload.ACTION_POWER_ALL_OFF -> cmc.powerAll(ref, false) + " bay(s) switched off";
-                    case ClusterManagerActionPayload.ACTION_TOGGLE_NODE -> cmc.toggleNode(node.rack(), node.row())
-                            ? "" : "that row is not a node this card reaches";
-                    case ClusterManagerActionPayload.ACTION_CANCEL_JOB -> cmc.cancelJob() ? "job cancelled after the nodes being written" : "";
-                    case ClusterManagerActionPayload.ACTION_CYCLE_BALANCE -> {
-                        if (ref.face() != null && level.getBlockEntity(ref.anchor()) instanceof ServerRouterBlockEntity router) {
-                            router.cycleLoadBalanceMode(ref.face());
-                        }
-                        yield "";
+    private static void handleClusterManagerAction(final ClusterManagerActionPayload payload, final ServerPlayer player,
+                                                   final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos())
+                instanceof dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity cmc)) {
+            return;
+        }
+        final var ref = clusterRef(cmc, payload.kind(), payload.index());
+        String status = "";
+        if (ref == null && payload.action() != ClusterManagerActionPayload.ACTION_REFRESH
+                && payload.action() != ClusterManagerActionPayload.ACTION_CANCEL_JOB) {
+            status = "select a cluster first";
+        } else {
+            final var node = new dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity
+                    .NodeRef(BlockPos.of(payload.rackPos()), payload.row());
+            status = switch (payload.action()) {
+                case ClusterManagerActionPayload.ACTION_INSTALL_SYSTEM_ALL -> cmc.startJob(ref,
+                        dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity.JobKind.SYSTEM);
+                case ClusterManagerActionPayload.ACTION_INSTALL_PROGRAM_ALL -> cmc.startJob(ref,
+                        dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity.JobKind.PROGRAM);
+                case ClusterManagerActionPayload.ACTION_INSTALL_SYSTEM_NODE -> cmc.startJob(ref,
+                        dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity.JobKind.SYSTEM,
+                        List.of(node));
+                case ClusterManagerActionPayload.ACTION_INSTALL_PROGRAM_NODE -> cmc.startJob(ref,
+                        dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity.JobKind.PROGRAM,
+                        List.of(node));
+                case ClusterManagerActionPayload.ACTION_POWER_ALL_ON -> cmc.powerAll(ref, true) + " bay(s) switched on";
+                case ClusterManagerActionPayload.ACTION_POWER_ALL_OFF -> cmc.powerAll(ref, false) + " bay(s) switched off";
+                case ClusterManagerActionPayload.ACTION_TOGGLE_NODE -> cmc.toggleNode(node.rack(), node.row())
+                        ? "" : "that row is not a node this card reaches";
+                case ClusterManagerActionPayload.ACTION_CANCEL_JOB -> cmc.cancelJob() ? "job cancelled after the nodes being written" : "";
+                case ClusterManagerActionPayload.ACTION_CYCLE_BALANCE -> {
+                    if (ref.face() != null && level.getBlockEntity(ref.anchor()) instanceof ServerRouterBlockEntity router) {
+                        router.cycleLoadBalanceMode(ref.face());
                     }
-                    case ClusterManagerActionPayload.ACTION_DEPOSIT, ClusterManagerActionPayload.ACTION_DEPOSIT_ONE ->
-                            depositIntoSection(player, cmc, ref, payload.action() == ClusterManagerActionPayload.ACTION_DEPOSIT_ONE);
-                    default -> "";
-                };
-            }
-            PacketDistributor.sendToPlayer(player, buildClusterManagerState(cmc, level, payload.kind(), payload.index(), status));
-        });
-    }
-
-    private static void handleClusterRename(final ClusterRenamePayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity cmc)) {
-                return;
-            }
-            final var ref = clusterRef(cmc, payload.kind(), payload.index());
-            String status = "select a cluster first";
-            if (ref != null) {
-                final String typed = payload.name().strip().replaceAll("\\p{Cntrl}", "");
-                final String name = typed.length() > ClusterRenamePayload.MAX_NAME
-                        ? typed.substring(0, ClusterRenamePayload.MAX_NAME) : typed;
-                if (ref.face() != null && level.getBlockEntity(ref.anchor()) instanceof ServerRouterBlockEntity router) {
-                    router.setSectionName(ref.face(), name);
-                    status = name.isEmpty() ? "section name cleared" : "section renamed to " + name;
-                } else if (ref.face() == null && cmc.supercomputerAt(ref.anchor())
-                        instanceof dev.jstech.computers.blockentity.HbwInterfaceBlockEntity hub) {
-                    hub.setCustomName(name);
-                    status = name.isEmpty() ? "supercomputer name cleared" : "supercomputer renamed to " + name;
+                    yield "";
                 }
-            }
-            PacketDistributor.sendToPlayer(player, buildClusterManagerState(cmc, level, payload.kind(), payload.index(), status));
-        });
+                case ClusterManagerActionPayload.ACTION_DEPOSIT, ClusterManagerActionPayload.ACTION_DEPOSIT_ONE ->
+                        depositIntoSection(player, cmc, ref, payload.action() == ClusterManagerActionPayload.ACTION_DEPOSIT_ONE);
+                default -> "";
+            };
+        }
+        PacketDistributor.sendToPlayer(player, buildClusterManagerState(cmc, level, payload.kind(), payload.index(), status));
     }
 
-    private static void handleClusterMoveOut(final ClusterMoveOutPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (payload.quantity() <= 0L
-                    || !(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity cmc)) {
-                return;
+    private static void handleClusterRename(final ClusterRenamePayload payload, final ServerPlayer player,
+                                            final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos())
+                instanceof dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity cmc)) {
+            return;
+        }
+        final var ref = clusterRef(cmc, payload.kind(), payload.index());
+        String status = "select a cluster first";
+        if (ref != null) {
+            final String typed = payload.name().strip().replaceAll("\\p{Cntrl}", "");
+            final String name = typed.length() > ClusterRenamePayload.MAX_NAME
+                    ? typed.substring(0, ClusterRenamePayload.MAX_NAME) : typed;
+            if (ref.face() != null && level.getBlockEntity(ref.anchor()) instanceof ServerRouterBlockEntity router) {
+                router.setSectionName(ref.face(), name);
+                status = name.isEmpty() ? "section name cleared" : "section renamed to " + name;
+            } else if (ref.face() == null && cmc.supercomputerAt(ref.anchor())
+                    instanceof dev.jstech.computers.blockentity.HbwInterfaceBlockEntity hub) {
+                hub.setCustomName(name);
+                status = name.isEmpty() ? "supercomputer name cleared" : "supercomputer renamed to " + name;
             }
-            final var ref = clusterRef(cmc, ClusterManagerStatePayload.KIND_DATACENTER, payload.index());
-            final NetworkUuid net = cmc.networkUuid();
-            if (ref == null || net == null
-                    || !(level.getBlockEntity(BlockPos.of(payload.destPos())) instanceof IComputerTerminalHost dest)
-                    || !net.equals(dest.networkUuid())) {
-                return; // the destination must be on this machine's own network
-            }
-            final MainframeBlockEntity mainframe = resolveMainframe(level, net);
-            final java.util.Set<NodeUuid> sources = new java.util.HashSet<>();
-            final var section = cmc.sectionAt(ref.anchor(), ref.face());
-            if (mainframe == null || section == null) {
-                return;
-            }
-            sources.addAll(section.section().servers());
-            if (sources.isEmpty()) {
-                return;
-            }
-            final var op = mainframe.submitNetworkMove(payload.key(), payload.quantity(), dest.localStorage(),
-                    cmc.originLabel(MoveLabels.CLUSTER_MANAGER), sources);
-            if (op != null) {
-                op.onSettle(() -> PacketDistributor.sendToPlayer(player,
-                        buildClusterManagerState(cmc, level, ClusterManagerStatePayload.KIND_DATACENTER, payload.index(), "")));
-            }
-            PacketDistributor.sendToPlayer(player,
-                    buildClusterManagerState(cmc, level, ClusterManagerStatePayload.KIND_DATACENTER, payload.index(), "moving"));
-        });
+        }
+        PacketDistributor.sendToPlayer(player, buildClusterManagerState(cmc, level, payload.kind(), payload.index(), status));
+    }
+
+    private static void handleClusterMoveOut(final ClusterMoveOutPayload payload, final ServerPlayer player,
+                                             final ServerLevel level) {
+        if (payload.quantity() <= 0L
+                || !(level.getBlockEntity(payload.hostPos())
+                        instanceof dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity cmc)) {
+            return;
+        }
+        final var ref = clusterRef(cmc, ClusterManagerStatePayload.KIND_DATACENTER, payload.index());
+        final NetworkUuid net = cmc.networkUuid();
+        if (ref == null || net == null
+                || !(level.getBlockEntity(BlockPos.of(payload.destPos())) instanceof IComputerTerminalHost dest)
+                || !net.equals(dest.networkUuid())) {
+            return; // the destination must be on this machine's own network
+        }
+        final MainframeBlockEntity mainframe = resolveMainframe(level, net);
+        final java.util.Set<NodeUuid> sources = new java.util.HashSet<>();
+        final var section = cmc.sectionAt(ref.anchor(), ref.face());
+        if (mainframe == null || section == null) {
+            return;
+        }
+        sources.addAll(section.section().servers());
+        if (sources.isEmpty()) {
+            return;
+        }
+        final var op = mainframe.submitNetworkMove(payload.key(), payload.quantity(), dest.localStorage(),
+                cmc.originLabel(MoveLabels.CLUSTER_MANAGER), sources);
+        if (op != null) {
+            op.onSettle(() -> PacketDistributor.sendToPlayer(player,
+                    buildClusterManagerState(cmc, level, ClusterManagerStatePayload.KIND_DATACENTER, payload.index(), "")));
+        }
+        PacketDistributor.sendToPlayer(player,
+                buildClusterManagerState(cmc, level, ClusterManagerStatePayload.KIND_DATACENTER, payload.index(), "moving"));
     }
 
     /** The cluster a (kind, index) pair names in the state's own order, or null. */

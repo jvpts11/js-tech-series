@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.firmware;
 
+import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
@@ -28,7 +29,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +54,7 @@ public final class FirmwarePayloads {
                 ComputerAccess.screen(RequestFirmwareStatePayload::hostPos),
                 FirmwarePayloads::handleRequestFirmwareState);
         registrar.playToClient(FirmwareStatePayload.TYPE, FirmwareStatePayload.STREAM_CODEC,
-                (payload, context) -> context.enqueueWork(() -> {
+                ClientPayloadHandlers.onMainThread((payload, player) -> {
                     // The same hardware state feeds the setup screen and the POST's device-detection lines.
                     dev.jstech.computers.client.FirmwareScreen.accept(payload);
                     dev.jstech.computers.client.BootSequenceScreen.accept(payload);
@@ -71,14 +71,14 @@ public final class FirmwarePayloads {
          * (or that DEL asked for the setup) and the server opens the boot target.
          */
         registrar.playToClient(OpenPostPayload.TYPE, OpenPostPayload.STREAM_CODEC,
-                (payload, context) -> context.enqueueWork(() ->
+                ClientPayloadHandlers.onMainThread((payload, player) ->
                         dev.jstech.computers.block.IPostScreenOpener.Holder.open(
                                 payload.host(), payload.monitorPos(),
                                 dev.jstech.computers.os.FirmwareKind.values()[payload.firmwareKind()],
                                 payload.name())));
         // A finished installer still waiting for its reboot: the monitor comes back to that prompt.
         registrar.playToClient(OpenInstallDonePayload.TYPE, OpenInstallDonePayload.STREAM_CODEC,
-                (payload, context) -> context.enqueueWork(() ->
+                ClientPayloadHandlers.onMainThread((payload, player) ->
                         dev.jstech.computers.block.IInstallDoneScreenOpener.Holder.open(
                                 payload.host(), payload.monitorPos(),
                                 dev.jstech.computers.os.FirmwareKind.values()[payload.firmwareKind()],
@@ -91,15 +91,11 @@ public final class FirmwarePayloads {
 
     // Firmware boot manager
 
-    private static void handleRequestFirmwareState(final RequestFirmwareStatePayload payload,
-                                                   final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player
-                    && player.level() instanceof ServerLevel level
-                    && level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
-                PacketDistributor.sendToPlayer(player, buildFirmwareState(level, computer, payload.hostPos()));
-            }
-        });
+    private static void handleRequestFirmwareState(final RequestFirmwareStatePayload payload, final ServerPlayer player,
+                                                   final ServerLevel level) {
+        if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
+            PacketDistributor.sendToPlayer(player, buildFirmwareState(level, computer, payload.hostPos()));
+        }
     }
 
     /** Everything the boot manager lists for {@code computer}: disks, linked media, boot order, hardware. */
@@ -187,86 +183,83 @@ public final class FirmwarePayloads {
                 rack.raidMemberCount(slot), sizes.size(), capacities);
     }
 
-    private static void handleFirmwareAction(final FirmwareActionPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
-                return;
+    private static void handleFirmwareAction(final FirmwareActionPayload payload, final ServerPlayer player,
+                                             final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
+            return;
+        }
+        switch (payload.action()) {
+            case FirmwareActionPayload.ACTION_BOOT_DISK -> {
+                computer.setBootDiskSlot((int) payload.ref());
+                computer.setPendingInstallSlot(IOsHost.NO_PENDING_INSTALL); // the reboot the installer asked for
+                if (computer.hasOs()) {
+                    /*
+                     * Booting a disk from the firmware is a restart, so it replays POST like any
+                     * other. Handing straight over to the system skipped the self-test the machine
+                     * has to run, and left the session fixed on whatever it was before.
+                     */
+                    computer.setNeedsPost(true);
+                    dev.jstech.computers.block.MonitorBlock.openPost(
+                            player, level, payload.monitorPos(), payload.hostPos());
+                    return;
+                }
             }
-            switch (payload.action()) {
-                case FirmwareActionPayload.ACTION_BOOT_DISK -> {
-                    computer.setBootDiskSlot((int) payload.ref());
-                    computer.setPendingInstallSlot(IOsHost.NO_PENDING_INSTALL); // the reboot the installer asked for
-                    if (computer.hasOs()) {
-                        /*
-                         * Booting a disk from the firmware is a restart, so it replays POST like any
-                         * other. Handing straight over to the system skipped the self-test the machine
-                         * has to run, and left the session fixed on whatever it was before.
-                         */
-                        computer.setNeedsPost(true);
-                        dev.jstech.computers.block.MonitorBlock.openPost(
+            case FirmwareActionPayload.ACTION_SET_BOOT -> computer.setBootDiskSlot((int) payload.ref());
+            case FirmwareActionPayload.ACTION_RAID_MODE -> {
+                final var modes = dev.jstech.computers.rack.RaidMode.values();
+                final int mode = (int) payload.ref();
+                if (computer instanceof dev.jstech.computers.blockentity
+                        .ServerRackBlockEntity rack && mode >= 0 && mode < modes.length) {
+                    rack.setRaidMode(rack.soleComputerSlot(), modes[mode]);
+                }
+            }
+            case FirmwareActionPayload.ACTION_FORMAT -> computer.formatDisk((int) payload.ref());
+            case FirmwareActionPayload.ACTION_INSTALL -> {
+                final String failure = installFailure(level, computer, payload.ref(), payload.target());
+                if (failure != null) {
+                    /*
+                     * The client's installer has just played its progress to the end: end it on the
+                     * refusal, not on a "complete" the disk never saw.
+                     */
+                    final HardwareEra era = computer.displayEra();
+                    final int slot = payload.target();
+                    ScreenSessions.opened(player, payload.monitorPos(), payload.hostPos());
+                    PacketDistributor.sendToPlayer(player, new OpenInstallDonePayload(payload.hostPos(),
+                            payload.monitorPos(),
+                            dev.jstech.computers.os.FirmwareKind
+                                    .forEra(era != null ? era : HardwareEra.STANDARD).ordinal(),
+                            "", slot < 0 ? "the default disk" : "Disk " + slot, slot, failure));
+                }
+            }
+            case FirmwareActionPayload.ACTION_BOOT_MEDIA -> {
+                if (level.getBlockEntity(BlockPos.of(payload.ref())) instanceof MediaReaderBlockEntity reader
+                        && reader.insertedKind() == MediaKind.OS_INSTALL && reader.insertedPayload() != null) {
+                    final OsDef os = OsRegistry.getOs(reader.insertedPayload());
+                    if (os != null && os.installMode()
+                            != dev.jstech.computers.os.InstallMode.GUIDED) {
+                        // A live medium: boot its shell and let the player install the system by hand.
+                        computer.console().startLiveInstall(os.id().getPath().equals("arch")
+                                ? dev.jstech.computers.program.install.LiveInstallState.Distro.ARCH
+                                : dev.jstech.computers.program.install.LiveInstallState.Distro.GENTOO);
+                        computer.setChanged();
+                        dev.jstech.computers.block.MonitorBlock.openBootTarget(
                                 player, level, payload.monitorPos(), payload.hostPos());
                         return;
-                    }
-                }
-                case FirmwareActionPayload.ACTION_SET_BOOT -> computer.setBootDiskSlot((int) payload.ref());
-                case FirmwareActionPayload.ACTION_RAID_MODE -> {
-                    final var modes = dev.jstech.computers.rack.RaidMode.values();
-                    final int mode = (int) payload.ref();
-                    if (computer instanceof dev.jstech.computers.blockentity
-                            .ServerRackBlockEntity rack && mode >= 0 && mode < modes.length) {
-                        rack.setRaidMode(rack.soleComputerSlot(), modes[mode]);
-                    }
-                }
-                case FirmwareActionPayload.ACTION_FORMAT -> computer.formatDisk((int) payload.ref());
-                case FirmwareActionPayload.ACTION_INSTALL -> {
-                    final String failure = installFailure(level, computer, payload.ref(), payload.target());
-                    if (failure != null) {
-                        /*
-                         * The client's installer has just played its progress to the end: end it on the
-                         * refusal, not on a "complete" the disk never saw.
-                         */
-                        final HardwareEra era = computer.displayEra();
-                        final int slot = payload.target();
-                        ScreenSessions.opened(player, payload.monitorPos(), payload.hostPos());
-                        PacketDistributor.sendToPlayer(player, new OpenInstallDonePayload(payload.hostPos(),
-                                payload.monitorPos(),
-                                dev.jstech.computers.os.FirmwareKind
-                                        .forEra(era != null ? era : HardwareEra.STANDARD).ordinal(),
-                                "", slot < 0 ? "the default disk" : "Disk " + slot, slot, failure));
-                    }
-                }
-                case FirmwareActionPayload.ACTION_BOOT_MEDIA -> {
-                    if (level.getBlockEntity(BlockPos.of(payload.ref())) instanceof MediaReaderBlockEntity reader
-                            && reader.insertedKind() == MediaKind.OS_INSTALL && reader.insertedPayload() != null) {
-                        final OsDef os = OsRegistry.getOs(reader.insertedPayload());
-                        if (os != null && os.installMode()
-                                != dev.jstech.computers.os.InstallMode.GUIDED) {
-                            // A live medium: boot its shell and let the player install the system by hand.
-                            computer.console().startLiveInstall(os.id().getPath().equals("arch")
-                                    ? dev.jstech.computers.program.install.LiveInstallState.Distro.ARCH
-                                    : dev.jstech.computers.program.install.LiveInstallState.Distro.GENTOO);
-                            computer.setChanged();
+                    } else {
+                        final int target = payload.target() >= 0 ? payload.target() : computer.defaultInstallSlot();
+                        if (installOsFromReader(level, computer, payload.ref(), target)) {
+                            computer.setBootDiskSlot(target);
                             dev.jstech.computers.block.MonitorBlock.openBootTarget(
                                     player, level, payload.monitorPos(), payload.hostPos());
                             return;
-                        } else {
-                            final int target = payload.target() >= 0 ? payload.target() : computer.defaultInstallSlot();
-                            if (installOsFromReader(level, computer, payload.ref(), target)) {
-                                computer.setBootDiskSlot(target);
-                                dev.jstech.computers.block.MonitorBlock.openBootTarget(
-                                        player, level, payload.monitorPos(), payload.hostPos());
-                                return;
-                            }
                         }
                     }
                 }
-                default -> {
-                }
             }
-            PacketDistributor.sendToPlayer(player, buildFirmwareState(level, computer, payload.hostPos()));
-        });
+            default -> {
+            }
+        }
+        PacketDistributor.sendToPlayer(player, buildFirmwareState(level, computer, payload.hostPos()));
     }
 
     /**
@@ -338,44 +331,38 @@ public final class FirmwarePayloads {
         return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
     }
 
-    private static void handleRequestFirmware(final RequestFirmwarePayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player
-                    && player.level() instanceof ServerLevel level
-                    && level.getBlockEntity(payload.hostPos()) instanceof IOsHost) {
-                // Leave whatever screen the request came from (the desktop or the terminal) and enter setup.
-                player.closeContainer();
-                dev.jstech.computers.block.MonitorBlock.openFirmware(
-                        player, level, payload.monitorPos(), payload.hostPos());
-            }
-        });
+    private static void handleRequestFirmware(final RequestFirmwarePayload payload, final ServerPlayer player,
+                                              final ServerLevel level) {
+        if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost) {
+            // Leave whatever screen the request came from (the desktop or the terminal) and enter setup.
+            player.closeContainer();
+            dev.jstech.computers.block.MonitorBlock.openFirmware(
+                    player, level, payload.monitorPos(), payload.hostPos());
+        }
     }
 
-    private static void handlePostComplete(final PostCompletePayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
-                return;
-            }
-            if (!computer.isRunning()) {
-                return; // powered off mid-POST: the screen just stays dark
-            }
-            computer.setNeedsPost(false);
-            /*
-             * POST is the moment the machine decides what it is running. Fixing it here is what makes a
-             * freshly installed (or removed) desktop package wait for a restart instead of appearing the
-             * next time the monitor is opened.
-             */
-            computer.setBootedDesktopId(computer.installedDesktopId());
-            if (payload.enterSetup()) {
-                dev.jstech.computers.block.MonitorBlock.openFirmware(
-                        player, level, payload.monitorPos(), payload.hostPos());
-            } else {
-                dev.jstech.computers.block.MonitorBlock.openBootTarget(
-                        player, level, payload.monitorPos(), payload.hostPos());
-            }
-        });
+    private static void handlePostComplete(final PostCompletePayload payload, final ServerPlayer player,
+                                           final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
+            return;
+        }
+        if (!computer.isRunning()) {
+            return; // powered off mid-POST: the screen just stays dark
+        }
+        computer.setNeedsPost(false);
+        /*
+         * POST is the moment the machine decides what it is running. Fixing it here is what makes a
+         * freshly installed (or removed) desktop package wait for a restart instead of appearing the
+         * next time the monitor is opened.
+         */
+        computer.setBootedDesktopId(computer.installedDesktopId());
+        if (payload.enterSetup()) {
+            dev.jstech.computers.block.MonitorBlock.openFirmware(
+                    player, level, payload.monitorPos(), payload.hostPos());
+        } else {
+            dev.jstech.computers.block.MonitorBlock.openBootTarget(
+                    player, level, payload.monitorPos(), payload.hostPos());
+        }
     }
 
     /**

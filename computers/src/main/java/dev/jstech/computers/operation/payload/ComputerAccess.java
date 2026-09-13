@@ -62,22 +62,25 @@ public final class ComputerAccess {
         boolean admits(ServerPlayer player, P payload);
     }
 
-    /** Registers a payload a client sends, handled only for a sender its gate admits. */
+    /**
+     * Registers a payload a client sends, handled only for a sender its gate admits: on the server thread, with
+     * the sender and the level the sender is in.
+     */
     public static <P extends CustomPacketPayload> void accept(final PayloadRegistrar registrar,
                                                               final CustomPacketPayload.Type<P> type,
                                                               final StreamCodec<? super RegistryFriendlyByteBuf, P> codec,
                                                               final IGate<P> gate,
-                                                              final IPayloadHandler<P> handler) {
+                                                              final IServerPayloadHandler<P> handler) {
         registrar.playToServer(type, codec, guarded(type, gate, handler));
     }
 
     /** The same gate around a handler, for a payload registered some other way (one that travels both ways). */
     public static <P extends CustomPacketPayload> IPayloadHandler<P> guarded(final CustomPacketPayload.Type<P> type,
                                                                             final IGate<P> gate,
-                                                                            final IPayloadHandler<P> handler) {
+                                                                            final IServerPayloadHandler<P> handler) {
         return (payload, context) -> context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player && gate.admits(player, payload)) {
-                handler.handle(payload, context);
+                handler.handle(payload, player, player.serverLevel());
             } else {
                 refused(context.player(), type);
             }

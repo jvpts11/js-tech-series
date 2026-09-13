@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.program;
 
+import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.CommandOutputPayload;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.ConsoleInitPayload;
@@ -16,8 +17,8 @@ import dev.jstech.computers.operation.payload.RunCommandPayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import java.util.ArrayList;
@@ -36,11 +37,11 @@ public final class ConsolePayloads {
         ComputerAccess.accept(registrar, RunCommandPayload.TYPE, RunCommandPayload.STREAM_CODEC,
                 ComputerAccess.machine(RunCommandPayload::hostPos), ConsolePayloads::handleRunCommand);
         registrar.playToClient(CommandOutputPayload.TYPE, CommandOutputPayload.STREAM_CODEC,
-                ConsolePayloads::handleCommandOutput);
+                ClientPayloadHandlers.onMainThread(ConsolePayloads::handleCommandOutput));
         ComputerAccess.accept(registrar, RequestConsoleInitPayload.TYPE, RequestConsoleInitPayload.STREAM_CODEC,
                 ComputerAccess.machine(RequestConsoleInitPayload::hostPos), ConsolePayloads::handleRequestConsoleInit);
         registrar.playToClient(ConsoleInitPayload.TYPE, ConsoleInitPayload.STREAM_CODEC,
-                ConsolePayloads::handleConsoleInit);
+                ClientPayloadHandlers.onMainThread(ConsolePayloads::handleConsoleInit));
     }
 
     /*
@@ -50,80 +51,77 @@ public final class ConsolePayloads {
 
     static final int CLI_WIDTH = 50;
 
-    private static void handleRunCommand(final RunCommandPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.containerMenu instanceof dev.jstech.computers.menu.CommandPromptMenu menu)
-                    || !menu.hostPos().equals(payload.hostPos())
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)) {
-                return;
-            }
-            // "run/open <program>" launches another installed program from the prompt.
-            final String[] parts = payload.line().trim().split("\\s+", 2);
-            if (parts.length == 2 && (parts[0].equalsIgnoreCase("run") || parts[0].equalsIgnoreCase("open"))) {
-                if (host.console() != null && !payload.line().isBlank()) {
-                    host.console().pushHistory(payload.line().trim());
-                }
-                launchProgram(player, host, menu.monitorPos(), payload.hostPos(), parts[1].trim());
-                return;
-            }
-            /*
-             * An open ssh session runs the line on the remote machine, in its own shell family, the
-             * local terminal is only the window. Everything else (ssh itself, exit) stays local.
-             */
-            final var localComputer =
-                    new dev.jstech.computers.program.ServerCliComputer(host, level);
-            var computer = localComputer;
-            final var session = sshTargetOf(host, level, payload.line());
-            if (session != null) {
-                computer = new dev.jstech.computers.program.ServerCliComputer(
-                        session, level);
-            }
-            /*
-             * The shell speaks the installed OS kernel's family (DOS verbs on MC-DOS/Frames, POSIX on Linux), or
-             * the live installer's verbs while a live medium is booted.
-             */
-            final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(
-                    computer, CLI_WIDTH);
-            final var response = shell.run(payload.line(), computer);
-            final List<CommandOutputPayload.WireLine> wire = new ArrayList<>(response.lines().size());
-            for (final var cliLine : response.lines()) {
-                wire.add(new CommandOutputPayload.WireLine(cliLine.text(), cliLine.style().ordinal()));
-            }
-            final String prompt = computer.prompt();
-            final var handOver = response.handOver();
-            PacketDistributor.sendToPlayer(player, new CommandOutputPayload(response.clearScreen(), prompt, wire,
-                    handOver == null ? "" : handOver.editor(),
-                    handOver == null ? "" : handOver.path()));
-            if (computer.firmwareRebootRequested()) {
-                // "reboot --firmware": leave the terminal and enter the boot manager on the same monitor.
-                player.closeContainer();
-                dev.jstech.computers.block.MonitorBlock.openFirmware(
-                        player, level, menu.monitorPos(), payload.hostPos());
-                return;
-            }
-            if (computer.rebootRequested()) {
-                /*
-                 * A plain "reboot": the terminal closes and the POST replays on the same monitor, after
-                 * which whatever the boot target now is (a freshly installed OS included) comes up.
-                 */
-                if (level.getBlockEntity(payload.hostPos())
-                        instanceof dev.jstech.computers.os.IOsHost be) {
-                    be.setNeedsPost(true);
-                }
-                player.closeContainer();
-                dev.jstech.computers.block.MonitorBlock.openPost(
-                        player, level, menu.monitorPos(), payload.hostPos());
-                return;
-            }
-            // Persist the typed line on the computer so the history survives closing the prompt or Monitor.
+    private static void handleRunCommand(final RunCommandPayload payload, final ServerPlayer player,
+                                         final ServerLevel level) {
+        if (!(player.containerMenu instanceof dev.jstech.computers.menu.CommandPromptMenu menu)
+                || !menu.hostPos().equals(payload.hostPos())
+                || !(level.getBlockEntity(payload.hostPos())
+                        instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)) {
+            return;
+        }
+        // "run/open <program>" launches another installed program from the prompt.
+        final String[] parts = payload.line().trim().split("\\s+", 2);
+        if (parts.length == 2 && (parts[0].equalsIgnoreCase("run") || parts[0].equalsIgnoreCase("open"))) {
             if (host.console() != null && !payload.line().isBlank()) {
                 host.console().pushHistory(payload.line().trim());
-                ((net.minecraft.world.level.block.entity.BlockEntity) host).setChanged();
             }
-        });
+            launchProgram(player, host, menu.monitorPos(), payload.hostPos(), parts[1].trim());
+            return;
+        }
+        /*
+         * An open ssh session runs the line on the remote machine, in its own shell family, the
+         * local terminal is only the window. Everything else (ssh itself, exit) stays local.
+         */
+        final var localComputer =
+                new dev.jstech.computers.program.ServerCliComputer(host, level);
+        var computer = localComputer;
+        final var session = sshTargetOf(host, level, payload.line());
+        if (session != null) {
+            computer = new dev.jstech.computers.program.ServerCliComputer(
+                    session, level);
+        }
+        /*
+         * The shell speaks the installed OS kernel's family (DOS verbs on MC-DOS/Frames, POSIX on Linux), or
+         * the live installer's verbs while a live medium is booted.
+         */
+        final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(
+                computer, CLI_WIDTH);
+        final var response = shell.run(payload.line(), computer);
+        final List<CommandOutputPayload.WireLine> wire = new ArrayList<>(response.lines().size());
+        for (final var cliLine : response.lines()) {
+            wire.add(new CommandOutputPayload.WireLine(cliLine.text(), cliLine.style().ordinal()));
+        }
+        final String prompt = computer.prompt();
+        final var handOver = response.handOver();
+        PacketDistributor.sendToPlayer(player, new CommandOutputPayload(response.clearScreen(), prompt, wire,
+                handOver == null ? "" : handOver.editor(),
+                handOver == null ? "" : handOver.path()));
+        if (computer.firmwareRebootRequested()) {
+            // "reboot --firmware": leave the terminal and enter the boot manager on the same monitor.
+            player.closeContainer();
+            dev.jstech.computers.block.MonitorBlock.openFirmware(
+                    player, level, menu.monitorPos(), payload.hostPos());
+            return;
+        }
+        if (computer.rebootRequested()) {
+            /*
+             * A plain "reboot": the terminal closes and the POST replays on the same monitor, after
+             * which whatever the boot target now is (a freshly installed OS included) comes up.
+             */
+            if (level.getBlockEntity(payload.hostPos())
+                    instanceof dev.jstech.computers.os.IOsHost be) {
+                be.setNeedsPost(true);
+            }
+            player.closeContainer();
+            dev.jstech.computers.block.MonitorBlock.openPost(
+                    player, level, menu.monitorPos(), payload.hostPos());
+            return;
+        }
+        // Persist the typed line on the computer so the history survives closing the prompt or Monitor.
+        if (host.console() != null && !payload.line().isBlank()) {
+            host.console().pushHistory(payload.line().trim());
+            ((net.minecraft.world.level.block.entity.BlockEntity) host).setChanged();
+        }
     }
 
     static void launchProgram(final ServerPlayer player,
@@ -207,17 +205,14 @@ public final class ConsolePayloads {
         return lines;
     }
 
-    private static void handleRequestConsoleInit(final RequestConsoleInitPayload payload,
-                                                 final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player
-                    && player.containerMenu instanceof dev.jstech.computers.menu.CommandPromptMenu menu
-                    && menu.hostPos().equals(payload.hostPos())
-                    && player.level().getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.terminal.IComputerTerminalHost host) {
-                sendConsoleInit(player, host);
-            }
-        });
+    private static void handleRequestConsoleInit(final RequestConsoleInitPayload payload, final ServerPlayer player,
+                                                 final ServerLevel level) {
+        if (player.containerMenu instanceof dev.jstech.computers.menu.CommandPromptMenu menu
+                && menu.hostPos().equals(payload.hostPos())
+                && level.getBlockEntity(payload.hostPos())
+                        instanceof dev.jstech.computers.terminal.IComputerTerminalHost host) {
+            sendConsoleInit(player, host);
+        }
     }
 
     private static void sendConsoleInit(final ServerPlayer player,
@@ -276,14 +271,12 @@ public final class ConsolePayloads {
                 List.copyOf(history), commands, devices));
     }
 
-    private static void handleConsoleInit(final ConsoleInitPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() ->
-                dev.jstech.computers.client.CommandPromptScreen.acceptInit(payload));
+    private static void handleConsoleInit(final ConsoleInitPayload payload, final Player player) {
+        dev.jstech.computers.client.CommandPromptScreen.acceptInit(payload);
     }
 
-    private static void handleCommandOutput(final CommandOutputPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() ->
-                dev.jstech.computers.client.CommandPromptScreen.accept(payload));
+    private static void handleCommandOutput(final CommandOutputPayload payload, final Player player) {
+        dev.jstech.computers.client.CommandPromptScreen.accept(payload);
     }
 
     /**

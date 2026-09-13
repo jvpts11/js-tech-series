@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload.desktop;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.payload.CancelSetupPayload;
+import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.EjectMediaPayload;
 import dev.jstech.computers.operation.payload.InstallFromMediaPayload;
@@ -18,7 +19,8 @@ import dev.jstech.computers.operation.payload.ThisPcPayload;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.world.entity.player.Player;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import static dev.jstech.computers.operation.payload.network.NetworkLookup.networkLabel;
@@ -37,67 +39,64 @@ public final class ThisPcPayloads {
         ComputerAccess.accept(registrar, RequestThisPcPayload.TYPE, RequestThisPcPayload.STREAM_CODEC,
                 ComputerAccess.machine(RequestThisPcPayload::hostPos), ThisPcPayloads::handleRequestThisPc);
         registrar.playToClient(ThisPcPayload.TYPE, ThisPcPayload.STREAM_CODEC,
-                ThisPcPayloads::handleThisPc);
+                ClientPayloadHandlers.onMainThread(ThisPcPayloads::handleThisPc));
         ComputerAccess.accept(registrar, EjectMediaPayload.TYPE, EjectMediaPayload.STREAM_CODEC,
                 ComputerAccess.machine(EjectMediaPayload::hostPos), ThisPcPayloads::handleEjectMedia);
         ComputerAccess.accept(registrar, InstallFromMediaPayload.TYPE, InstallFromMediaPayload.STREAM_CODEC,
                 ComputerAccess.machine(InstallFromMediaPayload::hostPos), ThisPcPayloads::handleInstallFromMedia);
         registrar.playToClient(SetupProgressPayload.TYPE, SetupProgressPayload.STREAM_CODEC,
-                ThisPcPayloads::handleSetupProgress);
+                ClientPayloadHandlers.onMainThread(ThisPcPayloads::handleSetupProgress));
         ComputerAccess.accept(registrar, CancelSetupPayload.TYPE, CancelSetupPayload.STREAM_CODEC,
                 ComputerAccess.machine(CancelSetupPayload::hostPos), ThisPcPayloads::handleCancelSetup);
     }
 
-    private static void handleRequestThisPc(final RequestThisPcPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            final java.util.List<ThisPcPayload.WireDisk> disks = new java.util.ArrayList<>();
-            final java.util.List<ThisPcPayload.WireMedia> media = new java.util.ArrayList<>();
-            final java.util.List<String> installed = new java.util.ArrayList<>();
-            if (context.player() instanceof ServerPlayer player
-                    && player.level() instanceof ServerLevel level
-                    && level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.os
-                                    .IOsHost computer) {
-                final net.minecraft.world.item.ItemStack sys = computer.systemDisk();
-                int slot = 0;
-                for (final net.minecraft.world.item.ItemStack stack : computer.diskStacks()) {
-                    if (stack.getItem() instanceof dev.jstech.computers.item.DiskItem diskItem) {
-                        final long cap = diskItem.spec().capacityItems();
-                        final long storageW =
-                                dev.jstech.computers.storage.DriveVolumes.usedWeight(stack);
-                        final long fsW = dev.jstech.computers.os.fs.DiskFilesystem.filesWeight(stack);
-                        final net.minecraft.resources.ResourceLocation osId =
-                                stack.get(dev.jstech.computers.ComputingModule.SYSTEM_OS.get());
-                        final dev.jstech.computers.os.OsDef os =
-                                osId != null ? dev.jstech.computers.os.OsRegistry.getOs(osId) : null;
-                        final long osItems = os != null ? os.footprintItemsOn(diskItem.spec().era()) : 0L;
-                        final long mbEq = dev.jstech.computers.storage.StorageKey.MB_EQ_PER_ITEM;
-                        final long storeItems = storageW / mbEq;
-                        final long fileItems = fsW / mbEq;
-                        final long usedItems = storeItems + fileItems + osItems;
-                        /*
-                         * The three shares travel separately, so the disk can show where its space
-                         * actually went instead of one anonymous "used" number.
-                         */
-                        disks.add(new ThisPcPayload.WireDisk(slot, stack.getHoverName().getString(),
-                                cap, usedItems, stack == sys, osId != null ? osId.getPath() : "",
-                                osItems, storeItems, fileItems));
-                    }
-                    slot++;
+    private static void handleRequestThisPc(final RequestThisPcPayload payload, final ServerPlayer player,
+                                            final ServerLevel level) {
+        final java.util.List<ThisPcPayload.WireDisk> disks = new java.util.ArrayList<>();
+        final java.util.List<ThisPcPayload.WireMedia> media = new java.util.ArrayList<>();
+        final java.util.List<String> installed = new java.util.ArrayList<>();
+        if (level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost computer) {
+            final net.minecraft.world.item.ItemStack sys = computer.systemDisk();
+            int slot = 0;
+            for (final net.minecraft.world.item.ItemStack stack : computer.diskStacks()) {
+                if (stack.getItem() instanceof dev.jstech.computers.item.DiskItem diskItem) {
+                    final long cap = diskItem.spec().capacityItems();
+                    final long storageW =
+                            dev.jstech.computers.storage.DriveVolumes.usedWeight(stack);
+                    final long fsW = dev.jstech.computers.os.fs.DiskFilesystem.filesWeight(stack);
+                    final net.minecraft.resources.ResourceLocation osId =
+                            stack.get(dev.jstech.computers.ComputingModule.SYSTEM_OS.get());
+                    final dev.jstech.computers.os.OsDef os =
+                            osId != null ? dev.jstech.computers.os.OsRegistry.getOs(osId) : null;
+                    final long osItems = os != null ? os.footprintItemsOn(diskItem.spec().era()) : 0L;
+                    final long mbEq = dev.jstech.computers.storage.StorageKey.MB_EQ_PER_ITEM;
+                    final long storeItems = storageW / mbEq;
+                    final long fileItems = fsW / mbEq;
+                    final long usedItems = storeItems + fileItems + osItems;
+                    /*
+                     * The three shares travel separately, so the disk can show where its space
+                     * actually went instead of one anonymous "used" number.
+                     */
+                    disks.add(new ThisPcPayload.WireDisk(slot, stack.getHoverName().getString(),
+                            cap, usedItems, stack == sys, osId != null ? osId.getPath() : "",
+                            osItems, storeItems, fileItems));
                 }
-                for (final long endpoint : computer.linkedEndpoints()) {
-                    if (level.getBlockEntity(net.minecraft.core.BlockPos.of(endpoint))
-                            instanceof dev.jstech.computers.os.media
-                                    .MediaReaderBlockEntity reader) {
-                        media.add(mediaRow(computer, payload.hostPos(), endpoint, reader));
-                    }
-                }
-                installed.addAll(computer.console().installed());
-                context.reply(new ThisPcPayload(machineCard(level, computer, payload.hostPos()), disks, media, installed));
-                return;
+                slot++;
             }
-            context.reply(new ThisPcPayload(ThisPcPayload.WireMachine.EMPTY, disks, media, installed));
-        });
+            for (final long endpoint : computer.linkedEndpoints()) {
+                if (level.getBlockEntity(net.minecraft.core.BlockPos.of(endpoint))
+                        instanceof dev.jstech.computers.os.media
+                                .MediaReaderBlockEntity reader) {
+                    media.add(mediaRow(computer, payload.hostPos(), endpoint, reader));
+                }
+            }
+            installed.addAll(computer.console().installed());
+            PacketDistributor.sendToPlayer(player, new ThisPcPayload(machineCard(level, computer, payload.hostPos()),
+                    disks, media, installed));
+            return;
+        }
+        PacketDistributor.sendToPlayer(player,
+                new ThisPcPayload(ThisPcPayload.WireMachine.EMPTY, disks, media, installed));
     }
 
     /** One drive row for This PC: what is in the drive and, for an installer, what it would install. */
@@ -254,80 +253,66 @@ public final class ThisPcPayloads {
         return sb.length() > 190 ? sb.substring(0, 190) : sb.toString();
     }
 
-    private static void handleEjectMedia(final EjectMediaPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player
-                    && player.level() instanceof ServerLevel level
-                    && level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.os.IOsHost computer
-                    && computer.linkedEndpoints().contains(payload.readerPos())
-                    && level.getBlockEntity(net.minecraft.core.BlockPos.of(payload.readerPos()))
-                            instanceof dev.jstech.computers.os.media.MediaReaderBlockEntity reader) {
-                final net.minecraft.world.item.ItemStack ejected = reader.ejectMedia();
-                if (!ejected.isEmpty() && !player.addItem(ejected)) {
-                    final net.minecraft.core.BlockPos at = net.minecraft.core.BlockPos.of(payload.readerPos());
-                    net.minecraft.world.Containers.dropItemStack(level, at.getX() + 0.5, at.getY() + 1.0,
-                            at.getZ() + 0.5, ejected);
-                }
+    private static void handleEjectMedia(final EjectMediaPayload payload, final ServerPlayer player,
+                                         final ServerLevel level) {
+        if (level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost computer
+                && computer.linkedEndpoints().contains(payload.readerPos())
+                && level.getBlockEntity(net.minecraft.core.BlockPos.of(payload.readerPos()))
+                        instanceof dev.jstech.computers.os.media.MediaReaderBlockEntity reader) {
+            final net.minecraft.world.item.ItemStack ejected = reader.ejectMedia();
+            if (!ejected.isEmpty() && !player.addItem(ejected)) {
+                final net.minecraft.core.BlockPos at = net.minecraft.core.BlockPos.of(payload.readerPos());
+                net.minecraft.world.Containers.dropItemStack(level, at.getX() + 0.5, at.getY() + 1.0,
+                        at.getZ() + 0.5, ejected);
             }
-        });
+        }
     }
 
-    private static void handleThisPc(final ThisPcPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() ->
-                dev.jstech.computers.client.os.ThisPcApp.accept(payload));
+    private static void handleThisPc(final ThisPcPayload payload, final Player player) {
+        dev.jstech.computers.client.os.ThisPcApp.accept(payload);
     }
 
-    private static void handleInstallFromMedia(final InstallFromMediaPayload payload,
-                                               final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.os
-                                    .IOsHost computer)) {
-                return;
-            }
-            // The drive must be a media reader currently linked to this computer.
-            if (!computer.linkedEndpoints().contains(payload.readerPos())
-                    || !(level.getBlockEntity(net.minecraft.core.BlockPos.of(payload.readerPos()))
-                            instanceof dev.jstech.computers.os.media
-                                    .MediaReaderBlockEntity reader)) {
-                return;
-            }
-            if (reader.insertedKind()
-                    != dev.jstech.computers.os.media.MediaKind.PROGRAM_INSTALL) {
-                return;
-            }
-            final net.minecraft.resources.ResourceLocation pl = reader.insertedPayload();
-            final dev.jstech.computers.os.ProgramSpec spec =
-                    pl == null ? null : dev.jstech.computers.os.OsRegistry.getProgram(pl);
-            if (spec == null) {
-                return;
-            }
-            /*
-             * Whether the machine can take the program, and why not, is the machine's answer, given in
-             * the Setup window that opens for it. It used to be a line in the chat, or nothing at all
-             * when the program was already there, which is what made the disc's setup look inert.
-             */
-            dev.jstech.computers.os.install.SetupRunner.begin(computer, level, payload.hostPos(), spec,
-                    reader.insertedFormat(), false, dev.jstech.computers.os.install.SetupJob.VIA_SETUP);
-        });
+    private static void handleInstallFromMedia(final InstallFromMediaPayload payload, final ServerPlayer player,
+                                               final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost computer)) {
+            return;
+        }
+        // The drive must be a media reader currently linked to this computer.
+        if (!computer.linkedEndpoints().contains(payload.readerPos())
+                || !(level.getBlockEntity(net.minecraft.core.BlockPos.of(payload.readerPos()))
+                        instanceof dev.jstech.computers.os.media
+                                .MediaReaderBlockEntity reader)) {
+            return;
+        }
+        if (reader.insertedKind()
+                != dev.jstech.computers.os.media.MediaKind.PROGRAM_INSTALL) {
+            return;
+        }
+        final net.minecraft.resources.ResourceLocation pl = reader.insertedPayload();
+        final dev.jstech.computers.os.ProgramSpec spec =
+                pl == null ? null : dev.jstech.computers.os.OsRegistry.getProgram(pl);
+        if (spec == null) {
+            return;
+        }
+        /*
+         * Whether the machine can take the program, and why not, is the machine's answer, given in
+         * the Setup window that opens for it. It used to be a line in the chat, or nothing at all
+         * when the program was already there, which is what made the disc's setup look inert.
+         */
+        dev.jstech.computers.os.install.SetupRunner.begin(computer, level, payload.hostPos(), spec,
+                reader.insertedFormat(), false, dev.jstech.computers.os.install.SetupJob.VIA_SETUP);
     }
 
     /** A machine telling a desktop how its setup is going: the desktop's Setup window is a view of it. */
-    private static void handleSetupProgress(final SetupProgressPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> dev.jstech.computers.client.os.DesktopScreen.acceptSetup(payload));
+    private static void handleSetupProgress(final SetupProgressPayload payload, final Player player) {
+        dev.jstech.computers.client.os.DesktopScreen.acceptSetup(payload);
     }
 
     /** A player at the Setup window's Cancel: the machine stops and nothing is installed. */
-    private static void handleCancelSetup(final CancelSetupPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player
-                    && player.level() instanceof ServerLevel level
-                    && level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost host) {
-                dev.jstech.computers.os.install.SetupRunner.cancel(host, level, payload.hostPos());
-            }
-        });
+    private static void handleCancelSetup(final CancelSetupPayload payload, final ServerPlayer player,
+                                          final ServerLevel level) {
+        if (level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost host) {
+            dev.jstech.computers.os.install.SetupRunner.cancel(host, level, payload.hostPos());
+        }
     }
 }

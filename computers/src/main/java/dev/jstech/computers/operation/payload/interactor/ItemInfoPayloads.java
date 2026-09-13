@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload.interactor;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.ItemDetailPayload;
 import dev.jstech.computers.operation.payload.ItemRecipesPayload;
@@ -22,8 +23,8 @@ import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import java.util.ArrayList;
@@ -48,34 +49,29 @@ public final class ItemInfoPayloads {
         ComputerAccess.accept(registrar, RequestItemDetailPayload.TYPE, RequestItemDetailPayload.STREAM_CODEC,
                 ComputerAccess.machine(RequestItemDetailPayload::host), ItemInfoPayloads::handleRequestItemDetail);
         registrar.playToClient(ItemDetailPayload.TYPE, ItemDetailPayload.STREAM_CODEC,
-                ItemInfoPayloads::handleItemDetail);
+                ClientPayloadHandlers.onMainThread(ItemInfoPayloads::handleItemDetail));
         ComputerAccess.accept(registrar, RequestItemRecipesPayload.TYPE, RequestItemRecipesPayload.STREAM_CODEC,
                 ComputerAccess.machine(RequestItemRecipesPayload::hostPos), ItemInfoPayloads::handleRequestItemRecipes);
         registrar.playToClient(ItemRecipesPayload.TYPE, ItemRecipesPayload.STREAM_CODEC,
-                (payload, context) -> context.enqueueWork(
-                        () -> dev.jstech.computers.client.os.NetworkInteractorApp.acceptItemRecipes(payload)));
+                ClientPayloadHandlers.onMainThread((payload, player) ->
+                        dev.jstech.computers.client.os.NetworkInteractorApp.acceptItemRecipes(payload)));
     }
 
     /** The player-facing reason a program's host scope rejected this computer. */
 
-    private static void handleRequestItemDetail(final RequestItemDetailPayload payload,
-                                                final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player
-                    && player.level() instanceof ServerLevel level
-                    && !payload.item().isEmpty()) {
-                final var host = niHost(player, level, payload.host(), payload.monitorPos());
-                if (host != null && host.networkUuid() != null) {
-                    PacketDistributor.sendToPlayer(player,
-                            collectItemDetail(level, host.networkUuid(), StorageKey.of(payload.item())));
-                }
+    private static void handleRequestItemDetail(final RequestItemDetailPayload payload, final ServerPlayer player,
+                                                final ServerLevel level) {
+        if (!payload.item().isEmpty()) {
+            final var host = niHost(player, level, payload.host(), payload.monitorPos());
+            if (host != null && host.networkUuid() != null) {
+                PacketDistributor.sendToPlayer(player,
+                        collectItemDetail(level, host.networkUuid(), StorageKey.of(payload.item())));
             }
-        });
+        }
     }
 
-    private static void handleItemDetail(final ItemDetailPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() ->
-                dev.jstech.computers.client.os.StorageInsightsApp.acceptDetail(payload));
+    private static void handleItemDetail(final ItemDetailPayload payload, final Player player) {
+        dev.jstech.computers.client.os.StorageInsightsApp.acceptDetail(payload);
     }
 
     /** One item's detail: the network total, where it is stored, what it makes, and which buses filter it. */
@@ -156,41 +152,35 @@ public final class ItemInfoPayloads {
     }
 
     /** Answers the details panel: what makes the item on this network, and what uses it. */
-    private static void handleRequestItemRecipes(final RequestItemRecipesPayload payload,
-                                                 final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)) {
-                return;
-            }
-            final var host = niHost(player, level, payload.hostPos(), payload.monitorPos());
-            if (host == null || host.networkUuid() == null) {
-                return;
-            }
-            final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
-            final List<String> madeBy = new ArrayList<>();
-            final List<String> usedIn = new ArrayList<>();
-            if (mainframe != null) {
-                for (final var recipe : mainframe.recipesFor(payload.key())) {
-                    if (madeBy.size() >= ItemRecipesPayload.MAX_LINES) {
-                        break;
-                    }
-                    madeBy.add(wire(recipeLine(recipe), ItemRecipesPayload.MAX_TEXT));
+    private static void handleRequestItemRecipes(final RequestItemRecipesPayload payload, final ServerPlayer player,
+                                                 final ServerLevel level) {
+        final var host = niHost(player, level, payload.hostPos(), payload.monitorPos());
+        if (host == null || host.networkUuid() == null) {
+            return;
+        }
+        final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
+        final List<String> madeBy = new ArrayList<>();
+        final List<String> usedIn = new ArrayList<>();
+        if (mainframe != null) {
+            for (final var recipe : mainframe.recipesFor(payload.key())) {
+                if (madeBy.size() >= ItemRecipesPayload.MAX_LINES) {
+                    break;
                 }
-                for (final CraftingPattern pattern : mainframe.networkPatterns()) {
-                    if (pattern.ingredientTotals().containsKey(payload.key())) {
-                        addUse(usedIn, pattern.result().getHoverName().getString());
-                    }
-                }
-                for (final var recipe : mainframe.networkMachineRecipes()) {
-                    if (consumes(recipe, payload.key())) {
-                        final StorageKey made = recipe.resultKey();
-                        addUse(usedIn, made == null ? recipe.displayName() : made.displayName().getString());
-                    }
+                madeBy.add(wire(recipeLine(recipe), ItemRecipesPayload.MAX_TEXT));
+            }
+            for (final CraftingPattern pattern : mainframe.networkPatterns()) {
+                if (pattern.ingredientTotals().containsKey(payload.key())) {
+                    addUse(usedIn, pattern.result().getHoverName().getString());
                 }
             }
-            PacketDistributor.sendToPlayer(player, new ItemRecipesPayload(payload.key(), madeBy, usedIn));
-        });
+            for (final var recipe : mainframe.networkMachineRecipes()) {
+                if (consumes(recipe, payload.key())) {
+                    final StorageKey made = recipe.resultKey();
+                    addUse(usedIn, made == null ? recipe.displayName() : made.displayName().getString());
+                }
+            }
+        }
+        PacketDistributor.sendToPlayer(player, new ItemRecipesPayload(payload.key(), madeBy, usedIn));
     }
 
     /** "Blast · processing · Blast Furnace": how the details panel lists one recipe that makes an item. */

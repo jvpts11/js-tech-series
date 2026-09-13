@@ -15,6 +15,7 @@ import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
 import dev.jstech.computers.menu.AbstractBusMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.ServerRouterMenu;
+import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
 import dev.jstech.computers.operation.payload.NetworkManagerPayload;
@@ -38,8 +39,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import java.util.ArrayList;
@@ -67,14 +68,14 @@ public final class NetworkPayloads {
                 ComputerAccess.machine(RequestNetworkManagerPayload::hostPos),
                 NetworkPayloads::handleRequestNetworkManager);
         registrar.playToClient(NetworkManagerPayload.TYPE, NetworkManagerPayload.STREAM_CODEC,
-                NetworkPayloads::handleNetworkManager);
+                ClientPayloadHandlers.onMainThread(NetworkPayloads::handleNetworkManager));
         ComputerAccess.accept(registrar, RequestStorageInsightsPayload.TYPE, RequestStorageInsightsPayload.STREAM_CODEC,
                 ComputerAccess.machine(RequestStorageInsightsPayload::host),
                 NetworkPayloads::handleRequestStorageInsights);
         registrar.playToClient(StorageInsightsPayload.TYPE, StorageInsightsPayload.STREAM_CODEC,
-                NetworkPayloads::handleStorageInsights);
+                ClientPayloadHandlers.onMainThread(NetworkPayloads::handleStorageInsights));
         registrar.playToClient(NetworkServersPayload.TYPE, NetworkServersPayload.STREAM_CODEC,
-                NetworkPayloads::handleNetworkServers);
+                ClientPayloadHandlers.onMainThread(NetworkPayloads::handleNetworkServers));
         ComputerAccess.accept(registrar, RenameServerRouterPayload.TYPE, RenameServerRouterPayload.STREAM_CODEC,
                 ComputerAccess.menu(ServerRouterMenu.class, ServerRouterMenu::routerPos, RenameServerRouterPayload::routerPos),
                 NetworkPayloads::handleRenameServerRouter);
@@ -83,41 +84,33 @@ public final class NetworkPayloads {
                 NetworkPayloads::handleSetBusName);
     }
 
-    private static void handleRenameServerRouter(final RenameServerRouterPayload payload,
-                                                 final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player
-                    && player.level().getBlockEntity(payload.routerPos())
-                            instanceof ServerRouterBlockEntity router) {
-                router.setCustomName(payload.name());
-            }
-        });
+    private static void handleRenameServerRouter(final RenameServerRouterPayload payload, final ServerPlayer player,
+                                                 final ServerLevel level) {
+        if (level.getBlockEntity(payload.routerPos()) instanceof ServerRouterBlockEntity router) {
+            router.setCustomName(payload.name());
+        }
     }
 
-    private static void handleSetBusName(final SetBusNamePayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player
-                    && player.containerMenu instanceof AbstractBusMenu menu
-                    && menu.cablePos().equals(payload.cablePos())
-                    && menu.face().get3DDataValue() == payload.face()
-                    && player.level().getBlockEntity(payload.cablePos()) instanceof DataCableBlockEntity cable
-                    && cable.getPart(Direction.from3DDataValue(payload.face())) instanceof AbstractBusPart bus) {
-                bus.setName(payload.name());
-                menu.setBusNameLocal(bus.name());
-            }
-        });
+    private static void handleSetBusName(final SetBusNamePayload payload, final ServerPlayer player,
+                                         final ServerLevel level) {
+        if (player.containerMenu instanceof AbstractBusMenu menu
+                && menu.cablePos().equals(payload.cablePos())
+                && menu.face().get3DDataValue() == payload.face()
+                && level.getBlockEntity(payload.cablePos()) instanceof DataCableBlockEntity cable
+                && cable.getPart(Direction.from3DDataValue(payload.face())) instanceof AbstractBusPart bus) {
+            bus.setName(payload.name());
+            menu.setBusNameLocal(bus.name());
+        }
     }
 
-    private static void handleNetworkServers(final NetworkServersPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player().containerMenu instanceof ComputerTerminalMenu menu) {
-                menu.setNetworkServers(payload.servers());
-            } else {
-                // The Network Interactor desktop app (no container menu of its own) consumes the same list.
-                dev.jstech.computers.client.os.NetworkInteractorApp.acceptServers(
-                        payload.servers());
-            }
-        });
+    private static void handleNetworkServers(final NetworkServersPayload payload, final Player player) {
+        if (player.containerMenu instanceof ComputerTerminalMenu menu) {
+            menu.setNetworkServers(payload.servers());
+        } else {
+            // The Network Interactor desktop app (no container menu of its own) consumes the same list.
+            dev.jstech.computers.client.os.NetworkInteractorApp.acceptServers(
+                    payload.servers());
+        }
     }
 
     public static NetworkServersPayload collectComputers(final ServerLevel level, final NetworkUuid net) {
@@ -177,18 +170,14 @@ public final class NetworkPayloads {
     }
 
     private static void handleRequestNetworkManager(final RequestNetworkManagerPayload payload,
-                                                    final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player
-                    && player.level() instanceof ServerLevel level
-                    && level.getBlockEntity(payload.hostPos()) instanceof MainframeBlockEntity mf) {
-                final NetworkUuid net = mf.networkUuid();
-                final String netId = net != null ? ShortId.of(net.asString()) : "";
-                PacketDistributor.sendToPlayer(player,
-                        new NetworkManagerPayload(payload.hostPos(), netId, collectNodes(level, mf),
-                                collectHardware(level, mf), collectStatistics(level, mf)));
-            }
-        });
+                                                    final ServerPlayer player, final ServerLevel level) {
+        if (level.getBlockEntity(payload.hostPos()) instanceof MainframeBlockEntity mf) {
+            final NetworkUuid net = mf.networkUuid();
+            final String netId = net != null ? ShortId.of(net.asString()) : "";
+            PacketDistributor.sendToPlayer(player,
+                    new NetworkManagerPayload(payload.hostPos(), netId, collectNodes(level, mf),
+                            collectHardware(level, mf), collectStatistics(level, mf)));
+        }
     }
 
     /** The last hour's Operation statistics of a Mainframe, by type, for the Stats tab. */
@@ -206,9 +195,8 @@ public final class NetworkPayloads {
                 mf.statistics().movedLastHour(now));
     }
 
-    private static void handleNetworkManager(final NetworkManagerPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() ->
-                dev.jstech.computers.client.os.NetworkManagerApp.accept(payload));
+    private static void handleNetworkManager(final NetworkManagerPayload payload, final Player player) {
+        dev.jstech.computers.client.os.NetworkManagerApp.accept(payload);
     }
 
     private static List<NetworkNodeInfo> collectNodes(final ServerLevel level, final MainframeBlockEntity mf) {
@@ -332,21 +320,15 @@ public final class NetworkPayloads {
     }
 
     private static void handleRequestStorageInsights(final RequestStorageInsightsPayload payload,
-                                                     final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player
-                    && player.level() instanceof ServerLevel level) {
-                final var host = niHost(player, level, payload.host(), payload.monitorPos());
-                if (host != null && host.networkUuid() != null) {
-                    PacketDistributor.sendToPlayer(player, collectStorageInsights(level, host.networkUuid()));
-                }
-            }
-        });
+                                                     final ServerPlayer player, final ServerLevel level) {
+        final var host = niHost(player, level, payload.host(), payload.monitorPos());
+        if (host != null && host.networkUuid() != null) {
+            PacketDistributor.sendToPlayer(player, collectStorageInsights(level, host.networkUuid()));
+        }
     }
 
-    private static void handleStorageInsights(final StorageInsightsPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() ->
-                dev.jstech.computers.client.os.StorageInsightsApp.accept(payload));
+    private static void handleStorageInsights(final StorageInsightsPayload payload, final Player player) {
+        dev.jstech.computers.client.os.StorageInsightsApp.accept(payload);
     }
 
     /** Builds the Storage Insights dashboard: totals, the biggest and smallest types, and per-server usage. */

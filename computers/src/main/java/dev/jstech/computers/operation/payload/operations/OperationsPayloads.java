@@ -11,6 +11,7 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.ActiveOperationsPayload;
 import dev.jstech.computers.operation.payload.CancelOperationPayload;
+import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.OperationsLogPayload;
 import dev.jstech.computers.operation.payload.RequestNiOperationsPayload;
@@ -18,8 +19,8 @@ import dev.jstech.computers.operation.payload.SetOperationPriorityPayload;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import java.util.List;
@@ -39,9 +40,9 @@ public final class OperationsPayloads {
     /** Registers the payloads this class handles. */
     public static void register(final PayloadRegistrar registrar) {
         registrar.playToClient(OperationsLogPayload.TYPE, OperationsLogPayload.STREAM_CODEC,
-                OperationsPayloads::handleOpsLog);
+                ClientPayloadHandlers.onMainThread(OperationsPayloads::handleOpsLog));
         registrar.playToClient(ActiveOperationsPayload.TYPE, ActiveOperationsPayload.STREAM_CODEC,
-                OperationsPayloads::handleActiveOps);
+                ClientPayloadHandlers.onMainThread(OperationsPayloads::handleActiveOps));
         ComputerAccess.accept(registrar, RequestNiOperationsPayload.TYPE, RequestNiOperationsPayload.STREAM_CODEC,
                 ComputerAccess.machine(RequestNiOperationsPayload::host), OperationsPayloads::handleRequestNiOperations);
         ComputerAccess.accept(registrar, SetOperationPriorityPayload.TYPE, SetOperationPriorityPayload.STREAM_CODEC,
@@ -51,49 +52,38 @@ public final class OperationsPayloads {
     }
 
     private static void handleSetOperationPriority(final SetOperationPriorityPayload payload,
-                                                   final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)) {
-                return;
-            }
-            /*
-             * Any computer on the network may re-prioritise its Operations: the same proximity-to-a-linked-
-             * monitor check the other desktop requests use, so a player cannot drive a foreign network.
-             */
-            final var host = niHost(player, level, payload.host(), payload.monitorPos());
-            if (host == null || host.networkUuid() == null) {
-                return;
-            }
-            final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
-            if (mainframe == null) {
-                return;
-            }
-            mainframe.setOperationPriority(payload.operationId(), payload.priority());
-            dispatchActiveOperations(player, host.networkUuid(), level);
-        });
+                                                   final ServerPlayer player, final ServerLevel level) {
+        /*
+         * Any computer on the network may re-prioritise its Operations: the same proximity-to-a-linked-
+         * monitor check the other desktop requests use, so a player cannot drive a foreign network.
+         */
+        final var host = niHost(player, level, payload.host(), payload.monitorPos());
+        if (host == null || host.networkUuid() == null) {
+            return;
+        }
+        final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
+        if (mainframe == null) {
+            return;
+        }
+        mainframe.setOperationPriority(payload.operationId(), payload.priority());
+        dispatchActiveOperations(player, host.networkUuid(), level);
     }
 
-    private static void handleCancelOperation(final CancelOperationPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)) {
-                return;
-            }
-            final var host = niHost(player, level, payload.host(), payload.monitorPos());
-            if (host == null || host.networkUuid() == null) {
-                return;
-            }
-            final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
-            if (mainframe == null) {
-                return;
-            }
-            mainframe.cancelOperation(payload.operationId());
-            // The cancelled Operation is logged on the Mainframe's next tick: refresh both views then.
-            mainframe.runNextTick(() -> {
-                dispatchActiveOperations(player, host.networkUuid(), level);
-                dispatchTerminalOpsLog(player, host.networkUuid(), level);
-            });
+    private static void handleCancelOperation(final CancelOperationPayload payload, final ServerPlayer player,
+                                              final ServerLevel level) {
+        final var host = niHost(player, level, payload.host(), payload.monitorPos());
+        if (host == null || host.networkUuid() == null) {
+            return;
+        }
+        final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
+        if (mainframe == null) {
+            return;
+        }
+        mainframe.cancelOperation(payload.operationId());
+        // The cancelled Operation is logged on the Mainframe's next tick: refresh both views then.
+        mainframe.runNextTick(() -> {
+            dispatchActiveOperations(player, host.networkUuid(), level);
+            dispatchTerminalOpsLog(player, host.networkUuid(), level);
         });
     }
 
@@ -104,17 +94,15 @@ public final class OperationsPayloads {
                 mainframe != null ? mainframe.recentOperations() : List.of()));
     }
 
-    private static void handleOpsLog(final OperationsLogPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player().containerMenu instanceof ComputerTerminalMenu menu) {
-                menu.setOperationsLog(payload.operations());
-            } else {
-                dev.jstech.computers.client.os.NetworkInteractorApp
-                        .acceptOps(payload.operations());
-                dev.jstech.computers.client.os.NetworkManagerApp
-                        .acceptOpsLog(payload.operations());
-            }
-        });
+    private static void handleOpsLog(final OperationsLogPayload payload, final Player player) {
+        if (player.containerMenu instanceof ComputerTerminalMenu menu) {
+            menu.setOperationsLog(payload.operations());
+        } else {
+            dev.jstech.computers.client.os.NetworkInteractorApp
+                    .acceptOps(payload.operations());
+            dev.jstech.computers.client.os.NetworkManagerApp
+                    .acceptOpsLog(payload.operations());
+        }
     }
 
     public static void dispatchActiveOperations(final ServerPlayer player, final NetworkUuid net,
@@ -125,33 +113,25 @@ public final class OperationsPayloads {
                 mainframe != null ? mainframe.activeOperationRecords() : List.of(), slots[0], slots[1]));
     }
 
-    private static void handleActiveOps(final ActiveOperationsPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player().containerMenu instanceof ComputerTerminalMenu menu) {
-                menu.setActiveOps(payload.operations());
-            } else {
-                dev.jstech.computers.client.os.NetworkInteractorApp
-                        .acceptActiveOps(payload.operations(), payload.scSlotsUsed(), payload.scSlotsTotal());
-                dev.jstech.computers.client.os.NetworkManagerApp
-                        .acceptActiveOps(payload.operations(), payload.scSlotsUsed(), payload.scSlotsTotal());
-            }
-        });
+    private static void handleActiveOps(final ActiveOperationsPayload payload, final Player player) {
+        if (player.containerMenu instanceof ComputerTerminalMenu menu) {
+            menu.setActiveOps(payload.operations());
+        } else {
+            dev.jstech.computers.client.os.NetworkInteractorApp
+                    .acceptActiveOps(payload.operations(), payload.scSlotsUsed(), payload.scSlotsTotal());
+            dev.jstech.computers.client.os.NetworkManagerApp
+                    .acceptActiveOps(payload.operations(), payload.scSlotsUsed(), payload.scSlotsTotal());
+        }
     }
 
     /** The NI's Operations tab asks for the network's recent + active Operations; replies with both logs. */
     private static void handleRequestNiOperations(final RequestNiOperationsPayload payload,
-                                                  final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)) {
-                return;
-            }
-            final var host = niHost(player, level, payload.host(), payload.monitorPos());
-            if (host == null || host.networkUuid() == null) {
-                return;
-            }
-            dispatchTerminalOpsLog(player, host.networkUuid(), level);
-            dispatchActiveOperations(player, host.networkUuid(), level);
-        });
+                                                  final ServerPlayer player, final ServerLevel level) {
+        final var host = niHost(player, level, payload.host(), payload.monitorPos());
+        if (host == null || host.networkUuid() == null) {
+            return;
+        }
+        dispatchTerminalOpsLog(player, host.networkUuid(), level);
+        dispatchActiveOperations(player, host.networkUuid(), level);
     }
 }

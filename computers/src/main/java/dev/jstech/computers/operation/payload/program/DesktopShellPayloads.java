@@ -7,16 +7,16 @@
  */
 package dev.jstech.computers.operation.payload.program;
 
+import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.world.entity.player.Player;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-
-import java.util.Set;
 
 import static dev.jstech.computers.operation.payload.program.ConsolePayloads.CLI_WIDTH;
 
@@ -33,99 +33,95 @@ public final class DesktopShellPayloads {
         ComputerAccess.accept(registrar, DesktopShellRunPayload.TYPE, DesktopShellRunPayload.STREAM_CODEC,
                 ComputerAccess.machine(DesktopShellRunPayload::hostPos), DesktopShellPayloads::handleDesktopShellRun);
         registrar.playToClient(DesktopShellOutputPayload.TYPE, DesktopShellOutputPayload.STREAM_CODEC,
-                DesktopShellPayloads::handleDesktopShellOutput);
+                ClientPayloadHandlers.onMainThread(DesktopShellPayloads::handleDesktopShellOutput));
     }
 
-    private static void handleDesktopShellRun(final DesktopShellRunPayload payload,
-                                              final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            final java.util.List<DesktopShellOutputPayload.WireLine> wire = new java.util.ArrayList<>();
-            boolean clear = false;
-            boolean busy = false;
-            String prompt = "C:\\>";
-            /* Set when the command was one that gives the terminal to an editor. */
-            dev.jstech.computers.program.cli.CliShell.HandOver handOver = null;
-            if (context.player() instanceof ServerPlayer player
-                    && player.level() instanceof ServerLevel level
-                    && level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.terminal.IComputerTerminalHost host) {
-                final var computer =
-                        new dev.jstech.computers.program.ServerCliComputer(host, level);
-                // The window's own shell: its directory is its own, and so is the reply.
-                computer.useSession(payload.session());
-                /*
-                 * A program has the terminal: everything typed goes to it, not to the shell, and what it
-                 * printed since the last time keeps coming until it returns.
-                 */
-                final var running = computer.foreground();
-                if (running != null) {
-                    busy = drainForeground(running, payload.line(), wire);
-                    context.reply(new DesktopShellOutputPayload(false, busy, computer.prompt(), wire,
-                            payload.session()));
-                    return;
-                }
-                /*
-                 * A setup holds the prompt the way a running program does: the bar redraws until it is
-                 * done, and the one thing typed that means anything is the interrupt, which cancels it.
-                 */
-                final var console = host.console();
-                final var setup = console == null ? null : console.setup();
-                if (setup != null && host instanceof dev.jstech.computers.os.IOsHost machine) {
-                    if (INTERRUPT.equals(payload.line())) {
-                        dev.jstech.computers.os.install.SetupRunner.cancel(machine, level, payload.hostPos());
-                        context.reply(new DesktopShellOutputPayload(false, false, computer.prompt(), wire,
-                                payload.session()));
-                        return;
-                    }
-                    wire.add(new DesktopShellOutputPayload.WireLine(
-                            (setup.removing() ? "Removing " : "Setting up ") + setup.name() + "  "
-                                    + (setup.permille() / 10) + "%  (Ctrl+C to cancel)",
-                            dev.jstech.computers.program.cli.CliStyle.DIM.ordinal()));
-                    context.reply(new DesktopShellOutputPayload(false, true, computer.prompt(), wire,
-                            payload.session()));
-                    return;
-                }
-                final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(
-                        computer, CLI_WIDTH);
-                final var response = shell.run(payload.line(), computer);
-                clear = response.clearScreen();
-                handOver = response.handOver();
-                for (final var cliLine : response.lines()) {
-                    wire.add(new DesktopShellOutputPayload.WireLine(cliLine.text(), cliLine.style().ordinal()));
-                }
-                prompt = computer.prompt();
-                /*
-                 * The command just run may have been one that starts a program at this terminal, in
-                 * which case the prompt does not come back with this reply.
-                 */
-                busy = computer.foreground() != null;
-                /*
-                 * The reboot verbs work from the desktop's terminal window too: the desktop closes and the
-                 * monitor either replays the POST (plain reboot) or enters the firmware setup.
-                 */
-                final BlockPos monitorPos = player.containerMenu
-                        instanceof dev.jstech.computers.menu.DesktopMenu desktop
-                        ? desktop.monitorPos() : null;
-                if (monitorPos != null && computer.firmwareRebootRequested()) {
-                    player.closeContainer();
-                    dev.jstech.computers.block.MonitorBlock.openFirmware(
-                            player, level, monitorPos, payload.hostPos());
-                    return;
-                }
-                if (monitorPos != null && computer.rebootRequested()) {
-                    if (level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost be) {
-                        be.setNeedsPost(true);
-                    }
-                    player.closeContainer();
-                    dev.jstech.computers.block.MonitorBlock.openPost(
-                            player, level, monitorPos, payload.hostPos());
-                    return;
-                }
+    private static void handleDesktopShellRun(final DesktopShellRunPayload payload, final ServerPlayer player,
+                                              final ServerLevel level) {
+        final java.util.List<DesktopShellOutputPayload.WireLine> wire = new java.util.ArrayList<>();
+        boolean clear = false;
+        boolean busy = false;
+        String prompt = "C:\\>";
+        /* Set when the command was one that gives the terminal to an editor. */
+        dev.jstech.computers.program.cli.CliShell.HandOver handOver = null;
+        if (level.getBlockEntity(payload.hostPos())
+                instanceof dev.jstech.computers.terminal.IComputerTerminalHost host) {
+            final var computer =
+                    new dev.jstech.computers.program.ServerCliComputer(host, level);
+            // The window's own shell: its directory is its own, and so is the reply.
+            computer.useSession(payload.session());
+            /*
+             * A program has the terminal: everything typed goes to it, not to the shell, and what it
+             * printed since the last time keeps coming until it returns.
+             */
+            final var running = computer.foreground();
+            if (running != null) {
+                busy = drainForeground(running, payload.line(), wire);
+                PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(false, busy, computer.prompt(),
+                        wire, payload.session()));
+                return;
             }
-            context.reply(new DesktopShellOutputPayload(clear, busy, prompt, wire,
-                    handOver == null ? "" : handOver.editor(),
-                    handOver == null ? "" : handOver.path(), payload.session()));
-        });
+            /*
+             * A setup holds the prompt the way a running program does: the bar redraws until it is
+             * done, and the one thing typed that means anything is the interrupt, which cancels it.
+             */
+            final var console = host.console();
+            final var setup = console == null ? null : console.setup();
+            if (setup != null && host instanceof dev.jstech.computers.os.IOsHost machine) {
+                if (INTERRUPT.equals(payload.line())) {
+                    dev.jstech.computers.os.install.SetupRunner.cancel(machine, level, payload.hostPos());
+                    PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(false, false,
+                            computer.prompt(), wire, payload.session()));
+                    return;
+                }
+                wire.add(new DesktopShellOutputPayload.WireLine(
+                        (setup.removing() ? "Removing " : "Setting up ") + setup.name() + "  "
+                                + (setup.permille() / 10) + "%  (Ctrl+C to cancel)",
+                        dev.jstech.computers.program.cli.CliStyle.DIM.ordinal()));
+                PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(false, true, computer.prompt(),
+                        wire, payload.session()));
+                return;
+            }
+            final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(
+                    computer, CLI_WIDTH);
+            final var response = shell.run(payload.line(), computer);
+            clear = response.clearScreen();
+            handOver = response.handOver();
+            for (final var cliLine : response.lines()) {
+                wire.add(new DesktopShellOutputPayload.WireLine(cliLine.text(), cliLine.style().ordinal()));
+            }
+            prompt = computer.prompt();
+            /*
+             * The command just run may have been one that starts a program at this terminal, in
+             * which case the prompt does not come back with this reply.
+             */
+            busy = computer.foreground() != null;
+            /*
+             * The reboot verbs work from the desktop's terminal window too: the desktop closes and the
+             * monitor either replays the POST (plain reboot) or enters the firmware setup.
+             */
+            final BlockPos monitorPos = player.containerMenu
+                    instanceof dev.jstech.computers.menu.DesktopMenu desktop
+                    ? desktop.monitorPos() : null;
+            if (monitorPos != null && computer.firmwareRebootRequested()) {
+                player.closeContainer();
+                dev.jstech.computers.block.MonitorBlock.openFirmware(
+                        player, level, monitorPos, payload.hostPos());
+                return;
+            }
+            if (monitorPos != null && computer.rebootRequested()) {
+                if (level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost be) {
+                    be.setNeedsPost(true);
+                }
+                player.closeContainer();
+                dev.jstech.computers.block.MonitorBlock.openPost(
+                        player, level, monitorPos, payload.hostPos());
+                return;
+            }
+        }
+        PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(clear, busy, prompt, wire,
+                handOver == null ? "" : handOver.editor(),
+                handOver == null ? "" : handOver.path(), payload.session()));
     }
 
     /**
@@ -159,14 +155,11 @@ public final class DesktopShellPayloads {
         return false;
     }
 
-    private static void handleDesktopShellOutput(final DesktopShellOutputPayload payload,
-                                                 final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            /*
-             * A computer has one console and this is what it said, so it goes to every window looking at
-             * it: the terminal window and an editor's terminal panel. Each ignores it when it is not open.
-             */
-            dev.jstech.computers.client.os.ShellViews.accept(payload);
-        });
+    private static void handleDesktopShellOutput(final DesktopShellOutputPayload payload, final Player player) {
+        /*
+         * A computer has one console and this is what it said, so it goes to every window looking at
+         * it: the terminal window and an editor's terminal panel. Each ignores it when it is not open.
+         */
+        dev.jstech.computers.client.os.ShellViews.accept(payload);
     }
 }

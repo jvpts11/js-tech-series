@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.files;
 
+import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.FileContentPayload;
@@ -18,7 +19,8 @@ import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.storage.StorageKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.world.entity.player.Player;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import static dev.jstech.computers.operation.payload.files.FileAccess.NET_ROOT;
@@ -42,104 +44,98 @@ public final class FilePayloads {
         ComputerAccess.accept(registrar, RequestDiskFilesPayload.TYPE, RequestDiskFilesPayload.STREAM_CODEC,
                 ComputerAccess.machine(RequestDiskFilesPayload::hostPos), FilePayloads::handleRequestDiskFiles);
         registrar.playToClient(DiskFilesPayload.TYPE, DiskFilesPayload.STREAM_CODEC,
-                FilePayloads::handleDiskFiles);
+                ClientPayloadHandlers.onMainThread(FilePayloads::handleDiskFiles));
         ComputerAccess.accept(registrar, RequestFileContentPayload.TYPE, RequestFileContentPayload.STREAM_CODEC,
                 ComputerAccess.machine(RequestFileContentPayload::hostPos), FilePayloads::handleRequestFileContent);
         ComputerAccess.accept(registrar, RequestFolderContentPayload.TYPE, RequestFolderContentPayload.STREAM_CODEC,
                 ComputerAccess.machine(RequestFolderContentPayload::hostPos),
                 FilePayloads::handleRequestFolderContent);
         registrar.playToClient(FolderContentPayload.TYPE, FolderContentPayload.STREAM_CODEC,
-                FilePayloads::handleFolderContent);
+                ClientPayloadHandlers.onMainThread(FilePayloads::handleFolderContent));
         registrar.playToClient(FileContentPayload.TYPE, FileContentPayload.STREAM_CODEC,
-                FilePayloads::handleFileContent);
+                ClientPayloadHandlers.onMainThread(FilePayloads::handleFileContent));
     }
 
-    private static void handleRequestDiskFiles(final RequestDiskFilesPayload payload,
-                                               final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            final java.util.List<DiskFilesPayload.WireFile> wire = new java.util.ArrayList<>();
-            final java.util.List<DiskFilesPayload.WireVolume> volumes = new java.util.ArrayList<>();
-            if (context.player() instanceof ServerPlayer player
-                    && player.level() instanceof ServerLevel level
-                    && level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.os
-                                    .IOsHost computer) {
-                // The mountable volumes (drive tree): the system disk, then each linked drive with a medium.
-                if (!computer.systemDisk().isEmpty()
-                        && filesystemKindOf(computer)
-                                != dev.jstech.computers.os.FilesystemKind.NONE) {
-                    volumes.add(new DiskFilesPayload.WireVolume("",
-                            dev.jstech.computers.os.VolumeLabel.of(
-                                    computer.systemDisk(), "Local Disk")));
-                }
-                for (final long endpoint : computer.linkedEndpoints()) {
-                    if (level.getBlockEntity(net.minecraft.core.BlockPos.of(endpoint))
-                            instanceof MediaReaderBlockEntity reader
-                            && !reader.mediaSlot().getStackInSlot(0).isEmpty()) {
-                        /*
-                         * An installer's drive is named for what it installs ("Frames 11 Setup"), so the
-                         * tree says what is in the drive before it is opened.
-                         */
-                        final net.minecraft.world.item.ItemStack medium = reader.mediaSlot().getStackInSlot(0);
-                        final String fallback = dev.jstech.computers.os.media
-                                .InstallerProjection.facts(medium).map(f -> f.name() + " Setup").orElse("Removable Drive");
-                        volumes.add(new DiskFilesPayload.WireVolume("media:" + endpoint,
-                                dev.jstech.computers.os.VolumeLabel.of(medium, fallback)));
-                    }
-                }
-                // The other machines' shared folders, reached through this machine's own shell.
-                if (netShell(level, computer) != null) {
-                    volumes.add(new DiskFilesPayload.WireVolume(NET_ROOT, "Network"));
-                }
-                final String reqDir = payload.dir();
-                if (reqDir.startsWith(NET_ROOT)) {
-                    listNetworkInto(wire, level, computer, reqDir);
-                } else if (reqDir.startsWith("media:")) {
-                    // Browsing a removable medium in a linked drive.
-                    listMediaInto(wire, level, computer, reqDir);
-                } else {
-                    final net.minecraft.world.item.ItemStack disk = computer.systemDisk();
-                    final dev.jstech.computers.os.FilesystemKind kind =
-                            filesystemKindOf(computer);
-                    if (!disk.isEmpty()
-                            && kind != dev.jstech.computers.os.FilesystemKind.NONE) {
-                        // Subdirectories first (folders before files, Windows-style).
-                        for (final String d
-                                : dev.jstech.computers.os.fs.DiskFilesystem.listDirs(
-                                        disk, reqDir, kind)) {
-                            wire.add(new DiskFilesPayload.WireFile(d, "", 0L, false, true));
-                        }
-                        for (final dev.jstech.computers.os.fs.DiskFilesystem.FileEntry e
-                                : dev.jstech.computers.os.fs.DiskFilesystem.list(
-                                        disk, reqDir, kind)) {
-                            wire.add(wireFile(disk, e, ""));
-                        }
-                        /*
-                         * The system's own files and the installed programs' folders are generated, not
-                         * stored, and take their place among the real entries; a real one with the same
-                         * name (a folder the player made) wins.
-                         */
-                        final java.util.Set<String> seen = new java.util.HashSet<>();
-                        for (final DiskFilesPayload.WireFile f : wire) {
-                            seen.add(f.path());
-                        }
-                        for (final dev.jstech.computers.os.fs.InstallerLayout.Entry e
-                                : dev.jstech.computers.os.fs.ProgramFilesProjection.list(computer, reqDir)) {
-                            if (seen.add(e.path())) {
-                                wire.add(new DiskFilesPayload.WireFile(e.path(),
-                                        e.directory() ? "" : e.type().extension(), 0L, true, e.directory()));
-                            }
-                        }
-                    }
+    private static void handleRequestDiskFiles(final RequestDiskFilesPayload payload, final ServerPlayer player,
+                                               final ServerLevel level) {
+        final java.util.List<DiskFilesPayload.WireFile> wire = new java.util.ArrayList<>();
+        final java.util.List<DiskFilesPayload.WireVolume> volumes = new java.util.ArrayList<>();
+        if (level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost computer) {
+            // The mountable volumes (drive tree): the system disk, then each linked drive with a medium.
+            if (!computer.systemDisk().isEmpty()
+                    && filesystemKindOf(computer)
+                            != dev.jstech.computers.os.FilesystemKind.NONE) {
+                volumes.add(new DiskFilesPayload.WireVolume("",
+                        dev.jstech.computers.os.VolumeLabel.of(
+                                computer.systemDisk(), "Local Disk")));
+            }
+            for (final long endpoint : computer.linkedEndpoints()) {
+                if (level.getBlockEntity(net.minecraft.core.BlockPos.of(endpoint))
+                        instanceof MediaReaderBlockEntity reader
+                        && !reader.mediaSlot().getStackInSlot(0).isEmpty()) {
                     /*
-                     * A disc in a drive is a volume of its own, listed beside the disk under This PC and
-                     * in the explorer's tree; it is not a folder inside the disk, so the disk's root does
-                     * not list it.
+                     * An installer's drive is named for what it installs ("Frames 11 Setup"), so the
+                     * tree says what is in the drive before it is opened.
                      */
+                    final net.minecraft.world.item.ItemStack medium = reader.mediaSlot().getStackInSlot(0);
+                    final String fallback = dev.jstech.computers.os.media
+                            .InstallerProjection.facts(medium).map(f -> f.name() + " Setup").orElse("Removable Drive");
+                    volumes.add(new DiskFilesPayload.WireVolume("media:" + endpoint,
+                            dev.jstech.computers.os.VolumeLabel.of(medium, fallback)));
                 }
             }
-            context.reply(new DiskFilesPayload(payload.dir(), wire, volumes));
-        });
+            // The other machines' shared folders, reached through this machine's own shell.
+            if (netShell(level, computer) != null) {
+                volumes.add(new DiskFilesPayload.WireVolume(NET_ROOT, "Network"));
+            }
+            final String reqDir = payload.dir();
+            if (reqDir.startsWith(NET_ROOT)) {
+                listNetworkInto(wire, level, computer, reqDir);
+            } else if (reqDir.startsWith("media:")) {
+                // Browsing a removable medium in a linked drive.
+                listMediaInto(wire, level, computer, reqDir);
+            } else {
+                final net.minecraft.world.item.ItemStack disk = computer.systemDisk();
+                final dev.jstech.computers.os.FilesystemKind kind =
+                        filesystemKindOf(computer);
+                if (!disk.isEmpty()
+                        && kind != dev.jstech.computers.os.FilesystemKind.NONE) {
+                    // Subdirectories first (folders before files, Windows-style).
+                    for (final String d
+                            : dev.jstech.computers.os.fs.DiskFilesystem.listDirs(
+                                    disk, reqDir, kind)) {
+                        wire.add(new DiskFilesPayload.WireFile(d, "", 0L, false, true));
+                    }
+                    for (final dev.jstech.computers.os.fs.DiskFilesystem.FileEntry e
+                            : dev.jstech.computers.os.fs.DiskFilesystem.list(
+                                    disk, reqDir, kind)) {
+                        wire.add(wireFile(disk, e, ""));
+                    }
+                    /*
+                     * The system's own files and the installed programs' folders are generated, not
+                     * stored, and take their place among the real entries; a real one with the same
+                     * name (a folder the player made) wins.
+                     */
+                    final java.util.Set<String> seen = new java.util.HashSet<>();
+                    for (final DiskFilesPayload.WireFile f : wire) {
+                        seen.add(f.path());
+                    }
+                    for (final dev.jstech.computers.os.fs.InstallerLayout.Entry e
+                            : dev.jstech.computers.os.fs.ProgramFilesProjection.list(computer, reqDir)) {
+                        if (seen.add(e.path())) {
+                            wire.add(new DiskFilesPayload.WireFile(e.path(),
+                                    e.directory() ? "" : e.type().extension(), 0L, true, e.directory()));
+                        }
+                    }
+                }
+                /*
+                 * A disc in a drive is a volume of its own, listed beside the disk under This PC and
+                 * in the explorer's tree; it is not a folder inside the disk, so the disk's root does
+                 * not list it.
+                 */
+            }
+        }
+        PacketDistributor.sendToPlayer(player, new DiskFilesPayload(payload.dir(), wire, volumes));
     }
 
     /** Lists what a network path holds into {@code wire}: hosts, a host's shares, or a shared folder. */
@@ -218,12 +214,10 @@ public final class FilePayloads {
                 false, itemId, count);
     }
 
-    private static void handleDiskFiles(final DiskFilesPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!dev.jstech.computers.client.os.CodeFileReplies.listing(payload)) {
-                dev.jstech.computers.client.os.FilesApps.accept(payload);
-            }
-        });
+    private static void handleDiskFiles(final DiskFilesPayload payload, final Player player) {
+        if (!dev.jstech.computers.client.os.CodeFileReplies.listing(payload)) {
+            dev.jstech.computers.client.os.FilesApps.accept(payload);
+        }
     }
 
     /**
@@ -233,65 +227,53 @@ public final class FilePayloads {
      * a time is twenty round trips for what is really one question. Only the machine's own disk is read,
      * because a removable medium is browsed rather than compiled against.
      */
-    private static void handleRequestFolderContent(final RequestFolderContentPayload payload,
-                                                   final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            final java.util.List<FolderContentPayload.WireFile> files = new java.util.ArrayList<>();
-            if (context.player() instanceof ServerPlayer player
-                    && player.level() instanceof ServerLevel level
-                    && level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.os.IOsHost computer) {
-                final net.minecraft.world.item.ItemStack disk = computer.systemDisk();
-                final dev.jstech.computers.os.FilesystemKind kind = filesystemKindOf(computer);
-                if (!disk.isEmpty() && kind != dev.jstech.computers.os.FilesystemKind.NONE) {
-                    final String suffix = payload.extension().toLowerCase(java.util.Locale.ROOT);
-                    for (final dev.jstech.computers.os.fs.DiskFilesystem.FileEntry entry
-                            : dev.jstech.computers.os.fs.DiskFilesystem.list(disk, payload.dir(), kind)) {
-                        if (files.size() >= FolderContentPayload.MAX_FILES) {
-                            break;
-                        }
-                        if (!entry.path().toLowerCase(java.util.Locale.ROOT).endsWith(suffix)) {
-                            continue;
-                        }
-                        final String text = dev.jstech.computers.os.fs.DiskFilesystem
-                                .read(disk, entry.path()).orElse("");
-                        /*
-                         * A file too long for one reply is left out rather than cut: half a program
-                         * would compile to complaints that are the payload's fault, not the player's.
-                         */
-                        if (text.length() <= FolderContentPayload.MAX_TEXT) {
-                            files.add(new FolderContentPayload.WireFile(entry.path(), text));
-                        }
+    private static void handleRequestFolderContent(final RequestFolderContentPayload payload, final ServerPlayer player,
+                                                   final ServerLevel level) {
+        final java.util.List<FolderContentPayload.WireFile> files = new java.util.ArrayList<>();
+        if (level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost computer) {
+            final net.minecraft.world.item.ItemStack disk = computer.systemDisk();
+            final dev.jstech.computers.os.FilesystemKind kind = filesystemKindOf(computer);
+            if (!disk.isEmpty() && kind != dev.jstech.computers.os.FilesystemKind.NONE) {
+                final String suffix = payload.extension().toLowerCase(java.util.Locale.ROOT);
+                for (final dev.jstech.computers.os.fs.DiskFilesystem.FileEntry entry
+                        : dev.jstech.computers.os.fs.DiskFilesystem.list(disk, payload.dir(), kind)) {
+                    if (files.size() >= FolderContentPayload.MAX_FILES) {
+                        break;
+                    }
+                    if (!entry.path().toLowerCase(java.util.Locale.ROOT).endsWith(suffix)) {
+                        continue;
+                    }
+                    final String text = dev.jstech.computers.os.fs.DiskFilesystem
+                            .read(disk, entry.path()).orElse("");
+                    /*
+                     * A file too long for one reply is left out rather than cut: half a program
+                     * would compile to complaints that are the payload's fault, not the player's.
+                     */
+                    if (text.length() <= FolderContentPayload.MAX_TEXT) {
+                        files.add(new FolderContentPayload.WireFile(entry.path(), text));
                     }
                 }
             }
-            context.reply(new FolderContentPayload(payload.dir(), files));
-        });
+        }
+        PacketDistributor.sendToPlayer(player, new FolderContentPayload(payload.dir(), files));
     }
 
-    private static void handleFolderContent(final FolderContentPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() ->
-                dev.jstech.computers.client.os.CodeFileReplies.folder(payload));
+    private static void handleFolderContent(final FolderContentPayload payload, final Player player) {
+        dev.jstech.computers.client.os.CodeFileReplies.folder(payload);
     }
 
-    private static void handleRequestFileContent(final RequestFileContentPayload payload,
-                                                 final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            String content = "";
-            boolean exists = false;
-            if (context.player() instanceof ServerPlayer player
-                    && player.level() instanceof ServerLevel level
-                    && level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.os
-                                    .IOsHost computer) {
-                final java.util.Optional<String> read = readDiskFile(level, computer, payload.path());
-                if (read.isPresent()) {
-                    content = read.get();
-                    exists = true;
-                }
+    private static void handleRequestFileContent(final RequestFileContentPayload payload, final ServerPlayer player,
+                                                 final ServerLevel level) {
+        String content = "";
+        boolean exists = false;
+        if (level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost computer) {
+            final java.util.Optional<String> read = readDiskFile(level, computer, payload.path());
+            if (read.isPresent()) {
+                content = read.get();
+                exists = true;
             }
-            context.reply(new FileContentPayload(payload.path(), content, exists));
-        });
+        }
+        PacketDistributor.sendToPlayer(player, new FileContentPayload(payload.path(), content, exists));
     }
 
     /**
@@ -325,14 +307,12 @@ public final class FilePayloads {
                 : dev.jstech.computers.os.fs.DiskFilesystem.read(vol, media ? mediaSubPath(path) : path);
     }
 
-    private static void handleFileContent(final FileContentPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            /*
-             * Every window that opens a file says it is waiting for that file, by name, before it asks.
-             * An answer nobody is waiting for belongs to a window that has since closed, and is dropped.
-             */
-            dev.jstech.computers.client.os.CodeFileReplies.content(
-                    payload.path(), payload.content(), payload.exists());
-        });
+    private static void handleFileContent(final FileContentPayload payload, final Player player) {
+        /*
+         * Every window that opens a file says it is waiting for that file, by name, before it asks.
+         * An answer nobody is waiting for belongs to a window that has since closed, and is dropped.
+         */
+        dev.jstech.computers.client.os.CodeFileReplies.content(
+                payload.path(), payload.content(), payload.exists());
     }
 }

@@ -14,7 +14,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /**
  * Finds the computer a terminal payload is about from the monitor and host positions it names.
@@ -24,10 +23,9 @@ public final class TerminalHosts {
     private TerminalHosts() {
     }
 
-    static IComputerTerminalHost openTerminal(final IPayloadContext context,
-                                                     final BlockPos monitorPos, final BlockPos hostPos) {
-        if (context.player() instanceof ServerPlayer player
-                && player.containerMenu instanceof ComputerTerminalMenu menu
+    static IComputerTerminalHost openTerminal(final ServerPlayer player, final BlockPos monitorPos,
+                                              final BlockPos hostPos) {
+        if (player.containerMenu instanceof ComputerTerminalMenu menu
                 && menu.monitorPos().equals(monitorPos)
                 && menu.hostPos().equals(hostPos)
                 && player.level().getBlockEntity(hostPos) instanceof IComputerTerminalHost host) {
@@ -41,16 +39,13 @@ public final class TerminalHosts {
      * the desktop Network Interactor (no menu, authenticated by proximity to a linked monitor). Tries the
      * terminal first, then the NI host, so the shared craft flow works from both.
      */
-    public static IComputerTerminalHost craftHost(final IPayloadContext context, final BlockPos monitorPos,
-                                                   final BlockPos hostPos) {
-        final IComputerTerminalHost terminal = openTerminal(context, monitorPos, hostPos);
+    public static IComputerTerminalHost craftHost(final ServerPlayer player, final ServerLevel level,
+                                                  final BlockPos monitorPos, final BlockPos hostPos) {
+        final IComputerTerminalHost terminal = openTerminal(player, monitorPos, hostPos);
         if (terminal != null) {
             return terminal;
         }
-        if (context.player() instanceof ServerPlayer player && player.level() instanceof ServerLevel level) {
-            return niHost(player, level, hostPos, monitorPos);
-        }
-        return null;
+        return niHost(player, level, hostPos, monitorPos);
     }
 
     /**

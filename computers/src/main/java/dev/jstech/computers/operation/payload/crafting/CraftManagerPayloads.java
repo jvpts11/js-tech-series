@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload.crafting;
 
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.CraftManagerStatePayload;
 import dev.jstech.computers.operation.payload.DownloadToMediaPayload;
@@ -22,9 +23,9 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import java.util.ArrayList;
@@ -56,7 +57,7 @@ public final class CraftManagerPayloads {
         ComputerAccess.accept(registrar, SetMachineConfigPayload.TYPE, SetMachineConfigPayload.STREAM_CODEC,
                 ComputerAccess.machine(SetMachineConfigPayload::hostPos), CraftManagerPayloads::handleSetMachineConfig);
         registrar.playToClient(CraftManagerStatePayload.TYPE, CraftManagerStatePayload.STREAM_CODEC,
-                CraftManagerPayloads::handleCraftManagerState);
+                ClientPayloadHandlers.onMainThread(CraftManagerPayloads::handleCraftManagerState));
         ComputerAccess.accept(registrar, LoadFromMediaPayload.TYPE, LoadFromMediaPayload.STREAM_CODEC,
                 ComputerAccess.machine(LoadFromMediaPayload::hostPos), CraftManagerPayloads::handleLoadFromMedia);
         ComputerAccess.accept(registrar, DownloadToMediaPayload.TYPE, DownloadToMediaPayload.STREAM_CODEC,
@@ -86,142 +87,130 @@ public final class CraftManagerPayloads {
     // Crafting Manager (B2): media ↔ ROM transfer
 
     /** The Machines tab sets a machine's concurrency config on a Crafting Computer, then gets a fresh state. */
-    private static void handleSetMachineConfig(final SetMachineConfigPayload payload,
-                                               final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos()) instanceof CraftingComputerBlockEntity cc)) {
-                return;
-            }
-            cc.setMachineConfig(payload.machineKey(), new CraftingComputerBlockEntity.MachineConfig(
-                    payload.maxJobs(), payload.locked(), payload.feedMax()));
-            PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level));
-        });
+    private static void handleSetMachineConfig(final SetMachineConfigPayload payload, final ServerPlayer player,
+                                               final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos()) instanceof CraftingComputerBlockEntity cc)) {
+            return;
+        }
+        cc.setMachineConfig(payload.machineKey(), new CraftingComputerBlockEntity.MachineConfig(
+                payload.maxJobs(), payload.locked(), payload.feedMax()));
+        PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level));
     }
 
     /**
      * Returns the Crafting Manager state for a Crafting Computer: the first linked drive's medium
      * and its {@code .craft} files plus the computer's Recipe ROM with cross-reference flags.
      */
-    private static void handleRequestCraftManager(final RequestCraftManagerPayload payload,
-                                                   final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos()) instanceof CraftingComputerBlockEntity cc)) {
-                return;
-            }
-            // Self-heal the crafts/ mirror against the ROM before presenting the state.
-            reconcileCraftsFolder(cc, level);
-            PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level));
-        });
+    private static void handleRequestCraftManager(final RequestCraftManagerPayload payload, final ServerPlayer player,
+                                                  final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos()) instanceof CraftingComputerBlockEntity cc)) {
+            return;
+        }
+        // Self-heal the crafts/ mirror against the ROM before presenting the state.
+        reconcileCraftsFolder(cc, level);
+        PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level));
     }
 
     /** Routes the Crafting Manager state payload to the open {@link dev.jstech.computers.client.os.CraftingManagerApp}. */
-    private static void handleCraftManagerState(final CraftManagerStatePayload payload, final IPayloadContext context) {
-        context.enqueueWork(() ->
-                dev.jstech.computers.client.os.CraftingManagerApp.accept(payload));
+    private static void handleCraftManagerState(final CraftManagerStatePayload payload, final Player player) {
+        dev.jstech.computers.client.os.CraftingManagerApp.accept(payload);
     }
 
     /**
      * Loads {@code .craft} files from a removable medium into the Crafting Computer's Recipe ROM.
      * When {@code allMissing} is set, every file not already covered by a ROM pattern is loaded.
      */
-    private static void handleLoadFromMedia(final LoadFromMediaPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos()) instanceof CraftingComputerBlockEntity cc)) {
-                return;
+    private static void handleLoadFromMedia(final LoadFromMediaPayload payload, final ServerPlayer player,
+                                            final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos()) instanceof CraftingComputerBlockEntity cc)) {
+            return;
+        }
+        final String key = payload.mediaVolumeKey();
+        if (!key.startsWith("media:")) {
+            return;
+        }
+        final ItemStack media = mediaStackFor(level, cc, key);
+        if (media.isEmpty()) {
+            return;
+        }
+        final List<String> toLoad;
+        if (payload.allMissing()) {
+            // Collect every .craft file on the medium that is not already in the ROM.
+            final Set<String> romNames = new HashSet<>();
+            for (final CraftingPattern p : cc.romPatterns()) {
+                romNames.add(craftFileNameFor(p) + ".craft");
             }
-            final String key = payload.mediaVolumeKey();
-            if (!key.startsWith("media:")) {
-                return;
-            }
-            final ItemStack media = mediaStackFor(level, cc, key);
-            if (media.isEmpty()) {
-                return;
-            }
-            final List<String> toLoad;
-            if (payload.allMissing()) {
-                // Collect every .craft file on the medium that is not already in the ROM.
-                final Set<String> romNames = new HashSet<>();
-                for (final CraftingPattern p : cc.romPatterns()) {
-                    romNames.add(craftFileNameFor(p) + ".craft");
+            final List<DiskFilesystem.FileEntry> entries =
+                    DiskFilesystem.list(media, "", FilesystemKind.HIERARCHICAL);
+            toLoad = new ArrayList<>();
+            for (final DiskFilesystem.FileEntry e : entries) {
+                if (e.type() == FileType.CRAFT && !romNames.contains(e.path())) {
+                    toLoad.add(e.path());
                 }
-                final List<DiskFilesystem.FileEntry> entries =
-                        DiskFilesystem.list(media, "", FilesystemKind.HIERARCHICAL);
-                toLoad = new ArrayList<>();
-                for (final DiskFilesystem.FileEntry e : entries) {
-                    if (e.type() == FileType.CRAFT && !romNames.contains(e.path())) {
-                        toLoad.add(e.path());
-                    }
-                }
-            } else {
-                toLoad = payload.fileNames();
             }
-            int loaded = 0;
-            int parsed = 0;
-            boolean romFull = false;
-            for (final String fileName : toLoad) {
-                final java.util.Optional<String> content = DiskFilesystem.read(media, fileName);
-                if (content.isEmpty()) {
+        } else {
+            toLoad = payload.fileNames();
+        }
+        int loaded = 0;
+        int parsed = 0;
+        boolean romFull = false;
+        for (final String fileName : toLoad) {
+            final java.util.Optional<String> content = DiskFilesystem.read(media, fileName);
+            if (content.isEmpty()) {
+                continue;
+            }
+            final String kind = CraftFile.typeOf(content.get());
+            if (cc.romUsed() >= CraftingComputerBlockEntity.RECIPE_ROM_LIMIT) {
+                romFull = true; // bench, processing and multi-stage all share the one ROM budget
+                continue;
+            }
+            boolean added = false;
+            String diskName = fileName;
+            if ("proc".equals(kind)) {
+                final var p = CraftFile.parseProcessing(content.get(), level.registryAccess());
+                if (p.isEmpty()) {
                     continue;
                 }
-                final String kind = CraftFile.typeOf(content.get());
-                if (cc.romUsed() >= CraftingComputerBlockEntity.RECIPE_ROM_LIMIT) {
-                    romFull = true; // bench, processing and multi-stage all share the one ROM budget
+                parsed++;
+                added = cc.loadMachineRecipe(
+                        dev.jstech.computers.crafting.NetworkRecipe.ofProcessing(p.get()));
+            } else if ("multi".equals(kind)) {
+                final var p = CraftFile.parseMultiStage(content.get(), level.registryAccess());
+                if (p.isEmpty()) {
                     continue;
                 }
-                boolean added = false;
-                String diskName = fileName;
-                if ("proc".equals(kind)) {
-                    final var p = CraftFile.parseProcessing(content.get(), level.registryAccess());
-                    if (p.isEmpty()) {
-                        continue;
-                    }
-                    parsed++;
-                    added = cc.loadMachineRecipe(
-                            dev.jstech.computers.crafting.NetworkRecipe.ofProcessing(p.get()));
-                } else if ("multi".equals(kind)) {
-                    final var p = CraftFile.parseMultiStage(content.get(), level.registryAccess());
-                    if (p.isEmpty()) {
-                        continue;
-                    }
-                    parsed++;
-                    added = cc.loadMachineRecipe(
-                            dev.jstech.computers.crafting.NetworkRecipe.ofMultiStage(p.get()));
-                } else {
-                    final var p = CraftFile.parse(content.get(), level.registryAccess());
-                    if (p.isEmpty()) {
-                        continue;
-                    }
-                    parsed++;
-                    added = cc.loadPattern(p.get());
-                    diskName = craftFileNameFor(p.get()) + ".craft";
-                }
-                /*
-                 * The recipe registers in the ROM (what the network can craft) and the .craft is mirrored under
-                 * crafts/ on the system disk so it shows up in the Files app.
-                 */
-                if (added) {
-                    loaded++;
-                }
-                writeCraftToDisk(cc, diskName, content.get());
-            }
-            cc.setChanged();
-            final String status;
-            if (romFull) {
-                status = "Loaded " + loaded + " of " + parsed + " - ROM full ("
-                        + cc.romUsed() + "/" + CraftingComputerBlockEntity.RECIPE_ROM_LIMIT + ")";
-            } else if (loaded > 0) {
-                status = "Loaded " + loaded + " craft" + (loaded == 1 ? "" : "s");
+                parsed++;
+                added = cc.loadMachineRecipe(
+                        dev.jstech.computers.crafting.NetworkRecipe.ofMultiStage(p.get()));
             } else {
-                status = parsed > 0 ? "Already loaded" : "Nothing to load";
+                final var p = CraftFile.parse(content.get(), level.registryAccess());
+                if (p.isEmpty()) {
+                    continue;
+                }
+                parsed++;
+                added = cc.loadPattern(p.get());
+                diskName = craftFileNameFor(p.get()) + ".craft";
             }
-            PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level, status));
-        });
+            /*
+             * The recipe registers in the ROM (what the network can craft) and the .craft is mirrored under
+             * crafts/ on the system disk so it shows up in the Files app.
+             */
+            if (added) {
+                loaded++;
+            }
+            writeCraftToDisk(cc, diskName, content.get());
+        }
+        cc.setChanged();
+        final String status;
+        if (romFull) {
+            status = "Loaded " + loaded + " of " + parsed + " - ROM full ("
+                    + cc.romUsed() + "/" + CraftingComputerBlockEntity.RECIPE_ROM_LIMIT + ")";
+        } else if (loaded > 0) {
+            status = "Loaded " + loaded + " craft" + (loaded == 1 ? "" : "s");
+        } else {
+            status = parsed > 0 ? "Already loaded" : "Nothing to load";
+        }
+        PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level, status));
     }
 
     /**
@@ -229,106 +218,100 @@ public final class CraftManagerPayloads {
      * {@code .craft} file under {@code crafts/} on the system disk as well. Indices are applied
      * highest-first so an earlier removal does not shift a later index.
      */
-    private static void handleRemoveRomCraft(final RemoveRomCraftPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos()) instanceof CraftingComputerBlockEntity cc)) {
-                return;
+    private static void handleRemoveRomCraft(final RemoveRomCraftPayload payload, final ServerPlayer player,
+                                             final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos()) instanceof CraftingComputerBlockEntity cc)) {
+            return;
+        }
+        final List<Integer> indices = new ArrayList<>(payload.romIndices());
+        indices.sort(java.util.Comparator.reverseOrder());
+        for (final int idx : indices) {
+            if (idx >= CraftManagerStatePayload.MACHINE_ROM_BASE) {
+                // A machine recipe (processing/multi-stage): the offset index addresses that list.
+                cc.removeMachineRecipe(idx - CraftManagerStatePayload.MACHINE_ROM_BASE);
+                continue;
             }
-            final List<Integer> indices = new ArrayList<>(payload.romIndices());
-            indices.sort(java.util.Comparator.reverseOrder());
-            for (final int idx : indices) {
-                if (idx >= CraftManagerStatePayload.MACHINE_ROM_BASE) {
-                    // A machine recipe (processing/multi-stage): the offset index addresses that list.
-                    cc.removeMachineRecipe(idx - CraftManagerStatePayload.MACHINE_ROM_BASE);
-                    continue;
-                }
-                final List<CraftingPattern> rom = cc.romPatterns();
-                if (idx < 0 || idx >= rom.size()) {
-                    continue;
-                }
-                final String diskName = craftFileNameFor(rom.get(idx)) + ".craft";
-                cc.removePattern(idx);
-                deleteCraftFromDisk(cc, diskName);
+            final List<CraftingPattern> rom = cc.romPatterns();
+            if (idx < 0 || idx >= rom.size()) {
+                continue;
             }
-            cc.setChanged();
-            PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level));
-        });
+            final String diskName = craftFileNameFor(rom.get(idx)) + ".craft";
+            cc.removePattern(idx);
+            deleteCraftFromDisk(cc, diskName);
+        }
+        cc.setChanged();
+        PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level));
     }
 
     /**
      * Serializes selected Recipe ROM patterns as {@code .craft} files onto a removable medium.
      */
-    private static void handleDownloadToMedia(final DownloadToMediaPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos()) instanceof CraftingComputerBlockEntity cc)) {
-                return;
-            }
-            final String key = payload.mediaVolumeKey();
-            if (!key.startsWith("media:")) {
-                return;
-            }
-            final ItemStack media = mediaStackFor(level, cc, key);
-            if (media.isEmpty()) {
-                return;
-            }
-            final List<CraftingPattern> rom = cc.romPatterns();
-            for (final int idx : payload.romIndices()) {
-                final java.util.Optional<String> content;
-                final String base;
-                if (idx >= CraftManagerStatePayload.MACHINE_ROM_BASE) {
-                    // A machine recipe: serialize it back to its typed .craft form.
-                    final int mi = idx - CraftManagerStatePayload.MACHINE_ROM_BASE;
-                    final var recipes = cc.machineRecipes();
-                    if (mi < 0 || mi >= recipes.size()) {
-                        continue;
-                    }
-                    final var r = recipes.get(mi);
-                    if (r.proc().isPresent()) {
-                        content = CraftFile.serializeProcessing(r.proc().get(), level.registryAccess());
-                    } else if (r.multi().isPresent()) {
-                        content = CraftFile.serializeMultiStage(r.multi().get(), level.registryAccess());
-                    } else {
-                        continue;
-                    }
-                    base = sanitizeFileBase(r.displayName());
-                } else {
-                    if (idx < 0 || idx >= rom.size()) {
-                        continue;
-                    }
-                    final CraftingPattern pattern = rom.get(idx);
-                    content = CraftFile.serialize(pattern, level.registryAccess());
-                    base = craftFileNameFor(pattern);
-                }
-                if (content.isEmpty()) {
+    private static void handleDownloadToMedia(final DownloadToMediaPayload payload, final ServerPlayer player,
+                                              final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos()) instanceof CraftingComputerBlockEntity cc)) {
+            return;
+        }
+        final String key = payload.mediaVolumeKey();
+        if (!key.startsWith("media:")) {
+            return;
+        }
+        final ItemStack media = mediaStackFor(level, cc, key);
+        if (media.isEmpty()) {
+            return;
+        }
+        final List<CraftingPattern> rom = cc.romPatterns();
+        for (final int idx : payload.romIndices()) {
+            final java.util.Optional<String> content;
+            final String base;
+            if (idx >= CraftManagerStatePayload.MACHINE_ROM_BASE) {
+                // A machine recipe: serialize it back to its typed .craft form.
+                final int mi = idx - CraftManagerStatePayload.MACHINE_ROM_BASE;
+                final var recipes = cc.machineRecipes();
+                if (mi < 0 || mi >= recipes.size()) {
                     continue;
                 }
-                /*
-                 * A recipe already on the disc under this name is never overwritten: a different one gets the
-                 * next free suffix, the same one is simply there already. The encoder writes by the same rule.
-                 */
-                final String fileName = DiskFilesystem.uniquePath(media, base, ".craft", content.get());
-                final long freeWeight = mediaFreeWeightFor(media);
-                DiskFilesystem.write(media, fileName, FileType.CRAFT, content.get(),
-                        freeWeight, FilesystemKind.HIERARCHICAL, level.getGameTime());
-            }
-            // Propagate the updated filesystem component to the reader slot.
-            final String rest = key.substring("media:".length());
-            final int slash = rest.indexOf('/');
-            final String rawPos = slash < 0 ? rest : rest.substring(0, slash);
-            try {
-                final long encoded = Long.parseLong(rawPos);
-                if (level.getBlockEntity(net.minecraft.core.BlockPos.of(encoded))
-                        instanceof dev.jstech.computers.os.media.MediaReaderBlockEntity reader) {
-                    reader.setChanged();
+                final var r = recipes.get(mi);
+                if (r.proc().isPresent()) {
+                    content = CraftFile.serializeProcessing(r.proc().get(), level.registryAccess());
+                } else if (r.multi().isPresent()) {
+                    content = CraftFile.serializeMultiStage(r.multi().get(), level.registryAccess());
+                } else {
+                    continue;
                 }
-            } catch (final NumberFormatException ignored) {
+                base = sanitizeFileBase(r.displayName());
+            } else {
+                if (idx < 0 || idx >= rom.size()) {
+                    continue;
+                }
+                final CraftingPattern pattern = rom.get(idx);
+                content = CraftFile.serialize(pattern, level.registryAccess());
+                base = craftFileNameFor(pattern);
             }
-            PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level));
-        });
+            if (content.isEmpty()) {
+                continue;
+            }
+            /*
+             * A recipe already on the disc under this name is never overwritten: a different one gets the
+             * next free suffix, the same one is simply there already. The encoder writes by the same rule.
+             */
+            final String fileName = DiskFilesystem.uniquePath(media, base, ".craft", content.get());
+            final long freeWeight = mediaFreeWeightFor(media);
+            DiskFilesystem.write(media, fileName, FileType.CRAFT, content.get(),
+                    freeWeight, FilesystemKind.HIERARCHICAL, level.getGameTime());
+        }
+        // Propagate the updated filesystem component to the reader slot.
+        final String rest = key.substring("media:".length());
+        final int slash = rest.indexOf('/');
+        final String rawPos = slash < 0 ? rest : rest.substring(0, slash);
+        try {
+            final long encoded = Long.parseLong(rawPos);
+            if (level.getBlockEntity(net.minecraft.core.BlockPos.of(encoded))
+                    instanceof dev.jstech.computers.os.media.MediaReaderBlockEntity reader) {
+                reader.setChanged();
+            }
+        } catch (final NumberFormatException ignored) {
+        }
+        PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level));
     }
 
     /**

@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload.machine;
 
 import dev.jstech.computers.menu.CraftingComputerMenu;
 import dev.jstech.computers.menu.PersonalComputerMenu;
+import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.KvmSelectPayload;
 import dev.jstech.computers.operation.payload.MachinePowerPayload;
@@ -21,8 +22,8 @@ import dev.jstech.computers.operation.payload.RenameServerPayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import java.util.ArrayList;
@@ -46,11 +47,11 @@ public final class MachinePayloads {
         ComputerAccess.accept(registrar, MachinePowerPayload.TYPE, MachinePowerPayload.STREAM_CODEC,
                 ComputerAccess.machine(MachinePowerPayload::hostPos), MachinePayloads::handleMachinePower);
         registrar.playToClient(OpenKvmPayload.TYPE, OpenKvmPayload.STREAM_CODEC,
-                MachinePayloads::handleOpenKvm);
+                ClientPayloadHandlers.onMainThread(MachinePayloads::handleOpenKvm));
         ComputerAccess.accept(registrar, RemoteControlPayload.TYPE, RemoteControlPayload.STREAM_CODEC,
                 ComputerAccess.machine(RemoteControlPayload::hostPos), MachinePayloads::handleRemoteControl);
         registrar.playToClient(RemoteHostsPayload.TYPE, RemoteHostsPayload.STREAM_CODEC,
-                MachinePayloads::handleRemoteHosts);
+                ClientPayloadHandlers.onMainThread(MachinePayloads::handleRemoteHosts));
         ComputerAccess.accept(registrar, KvmSelectPayload.TYPE, KvmSelectPayload.STREAM_CODEC,
                 ComputerAccess.screen(KvmSelectPayload::rackPos), MachinePayloads::handleKvmSelect);
         ComputerAccess.accept(registrar, RenameServerPayload.TYPE, RenameServerPayload.STREAM_CODEC,
@@ -68,150 +69,126 @@ public final class MachinePayloads {
                 MachinePayloads::handleRenamePc);
     }
 
-    private static void handleRackBayPower(final RackBayPowerPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player
-                    && player.level() instanceof ServerLevel level
-                    && level.getBlockEntity(payload.rackPos())
-                            instanceof dev.jstech.computers.blockentity
-                                    .ServerRackBlockEntity rack) {
-                rack.toggleBayPower(payload.slot());
-            }
-        });
+    private static void handleRackBayPower(final RackBayPowerPayload payload, final ServerPlayer player,
+                                           final ServerLevel level) {
+        if (level.getBlockEntity(payload.rackPos())
+                instanceof dev.jstech.computers.blockentity.ServerRackBlockEntity rack) {
+            rack.toggleBayPower(payload.slot());
+        }
     }
 
-    private static void handleRemoteControl(final RemoteControlPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.terminal
-                                    .IComputerTerminalHost host)) {
-                return;
-            }
-            final var cli = new dev.jstech.computers.program.ServerCliComputer(host, level);
-            if (payload.action() == RemoteControlPayload.ACTION_LIST) {
-                final List<RemoteHostsPayload.Entry> entries = new ArrayList<>();
-                cli.remoteMachines().forEach((hostname, machine) -> {
-                    if (entries.size() >= RemoteHostsPayload.MAX_HOSTS) {
-                        return;
-                    }
-                    final var remote = new dev.jstech.computers.program
-                            .ServerCliComputer(
-                            (dev.jstech.computers.terminal.IComputerTerminalHost) machine,
-                            level);
-                    final var os = machine instanceof dev.jstech.computers.os.IOsHost h
-                            ? h.installedOs() : null;
-                    entries.add(new RemoteHostsPayload.Entry(machine.getBlockPos().asLong(), hostname,
-                            remote.type(), os == null ? "" : os.displayName(), remote.running()));
-                });
-                PacketDistributor.sendToPlayer(player, new RemoteHostsPayload(entries));
-                return;
-            }
-            /*
-             * Take over: put the chosen machine's own session on this monitor, exactly as walking to
-             * it would. Reachability is re-checked here so a stale window cannot reach off-network.
-             */
-            final BlockPos target = BlockPos.of(payload.targetPos());
-            final boolean reachable = cli.remoteMachines().values().stream()
-                    .anyMatch(machine -> machine.getBlockPos().equals(target));
-            if (!reachable) {
-                return;
-            }
-            /*
-             * Mark the screen as showing the remote machine BEFORE opening it: every menu validates
-             * through the monitor, and without this the new session is torn down on its first tick
-             * for showing a computer the cable does not link.
-             */
-            if (level.getBlockEntity(payload.monitorPos())
-                    instanceof dev.jstech.computers.blockentity.MonitorBlockEntity monitor) {
-                monitor.setRemoteSession(target);
-            }
-            player.closeContainer();
-            dev.jstech.computers.block.MonitorBlock.bootOrPost(
-                    player, level, payload.monitorPos(), target);
-        });
-    }
-
-    private static void handleRemoteHosts(final RemoteHostsPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() ->
-                dev.jstech.computers.client.os.RemoteControlApp.accept(payload));
-    }
-
-    private static void handleOpenKvm(final OpenKvmPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() ->
-                dev.jstech.computers.block.IKvmScreenOpener.Holder.open(payload));
-    }
-
-    private static void handleKvmSelect(final KvmSelectPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.rackPos())
-                            instanceof dev.jstech.computers.blockentity
-                                    .ServerRackBlockEntity rack)) {
-                return;
-            }
-            // The switch has to be there for the monitor to address a bay at all.
-            if (rack.computerSlots().size() > 1 && !rack.hasKvmSwitch()) {
-                return;
-            }
-            rack.setActiveChannel(payload.slot());
-            // With the channel set, the rack answers as that machine: start its session.
-            dev.jstech.computers.block.MonitorBlock.openSelectedChannel(
-                    player, level, payload.monitorPos(), payload.rackPos());
-        });
-    }
-
-    private static void handleMachinePower(final MachinePowerPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.os.IOsHost computer)) {
-                return;
-            }
-            /*
-             * The screen closes either way: a machine that just powered off has nothing to show, and
-             * a restart comes back through the power-on self-test like any other cold start.
-             */
-            player.closeContainer();
-            switch (payload.action()) {
-                case MachinePowerPayload.ACTION_SHUTDOWN -> computer.setPowered(false);
-                case MachinePowerPayload.ACTION_RESTART -> {
-                    computer.setPowered(false);
-                    computer.setPowered(true);
-                    dev.jstech.computers.block.MonitorBlock.openPost(
-                            player, level, payload.monitorPos(), payload.hostPos());
+    private static void handleRemoteControl(final RemoteControlPayload payload, final ServerPlayer player,
+                                            final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos())
+                instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)) {
+            return;
+        }
+        final var cli = new dev.jstech.computers.program.ServerCliComputer(host, level);
+        if (payload.action() == RemoteControlPayload.ACTION_LIST) {
+            final List<RemoteHostsPayload.Entry> entries = new ArrayList<>();
+            cli.remoteMachines().forEach((hostname, machine) -> {
+                if (entries.size() >= RemoteHostsPayload.MAX_HOSTS) {
+                    return;
                 }
-                default -> {
-                    // Logging off leaves the machine running; the screen is already closed.
-                }
+                final var remote = new dev.jstech.computers.program
+                        .ServerCliComputer(
+                        (dev.jstech.computers.terminal.IComputerTerminalHost) machine,
+                        level);
+                final var os = machine instanceof dev.jstech.computers.os.IOsHost h
+                        ? h.installedOs() : null;
+                entries.add(new RemoteHostsPayload.Entry(machine.getBlockPos().asLong(), hostname,
+                        remote.type(), os == null ? "" : os.displayName(), remote.running()));
+            });
+            PacketDistributor.sendToPlayer(player, new RemoteHostsPayload(entries));
+            return;
+        }
+        /*
+         * Take over: put the chosen machine's own session on this monitor, exactly as walking to
+         * it would. Reachability is re-checked here so a stale window cannot reach off-network.
+         */
+        final BlockPos target = BlockPos.of(payload.targetPos());
+        final boolean reachable = cli.remoteMachines().values().stream()
+                .anyMatch(machine -> machine.getBlockPos().equals(target));
+        if (!reachable) {
+            return;
+        }
+        /*
+         * Mark the screen as showing the remote machine BEFORE opening it: every menu validates
+         * through the monitor, and without this the new session is torn down on its first tick
+         * for showing a computer the cable does not link.
+         */
+        if (level.getBlockEntity(payload.monitorPos())
+                instanceof dev.jstech.computers.blockentity.MonitorBlockEntity monitor) {
+            monitor.setRemoteSession(target);
+        }
+        player.closeContainer();
+        dev.jstech.computers.block.MonitorBlock.bootOrPost(
+                player, level, payload.monitorPos(), target);
+    }
+
+    private static void handleRemoteHosts(final RemoteHostsPayload payload, final Player player) {
+        dev.jstech.computers.client.os.RemoteControlApp.accept(payload);
+    }
+
+    private static void handleOpenKvm(final OpenKvmPayload payload, final Player player) {
+        dev.jstech.computers.block.IKvmScreenOpener.Holder.open(payload);
+    }
+
+    private static void handleKvmSelect(final KvmSelectPayload payload, final ServerPlayer player,
+                                        final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.rackPos())
+                instanceof dev.jstech.computers.blockentity.ServerRackBlockEntity rack)) {
+            return;
+        }
+        // The switch has to be there for the monitor to address a bay at all.
+        if (rack.computerSlots().size() > 1 && !rack.hasKvmSwitch()) {
+            return;
+        }
+        rack.setActiveChannel(payload.slot());
+        // With the channel set, the rack answers as that machine: start its session.
+        dev.jstech.computers.block.MonitorBlock.openSelectedChannel(
+                player, level, payload.monitorPos(), payload.rackPos());
+    }
+
+    private static void handleMachinePower(final MachinePowerPayload payload, final ServerPlayer player,
+                                           final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost computer)) {
+            return;
+        }
+        /*
+         * The screen closes either way: a machine that just powered off has nothing to show, and
+         * a restart comes back through the power-on self-test like any other cold start.
+         */
+        player.closeContainer();
+        switch (payload.action()) {
+            case MachinePowerPayload.ACTION_SHUTDOWN -> computer.setPowered(false);
+            case MachinePowerPayload.ACTION_RESTART -> {
+                computer.setPowered(false);
+                computer.setPowered(true);
+                dev.jstech.computers.block.MonitorBlock.openPost(
+                        player, level, payload.monitorPos(), payload.hostPos());
             }
-        });
+            default -> {
+                // Logging off leaves the machine running; the screen is already closed.
+            }
+        }
     }
 
     /*
      * Its gate has already made sure the player is in that computer's assembly. A supercomputer node is a
      * rack computer: it is renamed through the Server assembly like any other server.
      */
-    private static void handleRenamePc(final RenamePcPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player
-                    && player.level().getBlockEntity(payload.pcPos())
-                            instanceof dev.jstech.computers.os.IOsHost computer) {
-                computer.setCustomName(payload.name());
-            }
-        });
+    private static void handleRenamePc(final RenamePcPayload payload, final ServerPlayer player,
+                                       final ServerLevel level) {
+        if (level.getBlockEntity(payload.pcPos()) instanceof dev.jstech.computers.os.IOsHost computer) {
+            computer.setCustomName(payload.name());
+        }
     }
 
-    private static void handleRenameServer(final RenameServerPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player
-                    && player.containerMenu
-                    instanceof dev.jstech.computers.menu.ServerAssemblyMenu menu) {
-                menu.setServerName(payload.name());
-            }
-        });
+    private static void handleRenameServer(final RenameServerPayload payload, final ServerPlayer player,
+                                           final ServerLevel level) {
+        if (player.containerMenu instanceof dev.jstech.computers.menu.ServerAssemblyMenu menu) {
+            menu.setServerName(payload.name());
+        }
     }
 }

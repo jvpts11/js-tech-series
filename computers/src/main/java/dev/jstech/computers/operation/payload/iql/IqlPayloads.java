@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload.iql;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.IqlFileContentPayload;
 import dev.jstech.computers.operation.payload.IqlFileListPayload;
@@ -27,9 +28,9 @@ import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import java.util.ArrayList;
@@ -54,21 +55,21 @@ public final class IqlPayloads {
         ComputerAccess.accept(registrar, RunIqlPayload.TYPE, RunIqlPayload.STREAM_CODEC,
                 ComputerAccess.machine(RunIqlPayload::hostPos), IqlPayloads::handleRunIql);
         registrar.playToClient(IqlResultPayload.TYPE, IqlResultPayload.STREAM_CODEC,
-                IqlPayloads::handleIqlResult);
+                ClientPayloadHandlers.onMainThread(IqlPayloads::handleIqlResult));
         ComputerAccess.accept(registrar, RequestNmsSchemaPayload.TYPE, RequestNmsSchemaPayload.STREAM_CODEC,
                 ComputerAccess.machine(RequestNmsSchemaPayload::hostPos), IqlPayloads::handleRequestNmsSchema);
         registrar.playToClient(NmsSchemaPayload.TYPE, NmsSchemaPayload.STREAM_CODEC,
-                IqlPayloads::handleNmsSchema);
+                ClientPayloadHandlers.onMainThread(IqlPayloads::handleNmsSchema));
         ComputerAccess.accept(registrar, SaveIqlFilePayload.TYPE, SaveIqlFilePayload.STREAM_CODEC,
                 ComputerAccess.machine(SaveIqlFilePayload::hostPos), IqlPayloads::handleSaveIqlFile);
         ComputerAccess.accept(registrar, RequestIqlFileListPayload.TYPE, RequestIqlFileListPayload.STREAM_CODEC,
                 ComputerAccess.machine(RequestIqlFileListPayload::hostPos), IqlPayloads::handleRequestIqlFileList);
         registrar.playToClient(IqlFileListPayload.TYPE, IqlFileListPayload.STREAM_CODEC,
-                IqlPayloads::handleIqlFileList);
+                ClientPayloadHandlers.onMainThread(IqlPayloads::handleIqlFileList));
         ComputerAccess.accept(registrar, OpenIqlFilePayload.TYPE, OpenIqlFilePayload.STREAM_CODEC,
                 ComputerAccess.machine(OpenIqlFilePayload::hostPos), IqlPayloads::handleOpenIqlFile);
         registrar.playToClient(IqlFileContentPayload.TYPE, IqlFileContentPayload.STREAM_CODEC,
-                IqlPayloads::handleIqlFileContent);
+                ClientPayloadHandlers.onMainThread(IqlPayloads::handleIqlFileContent));
     }
 
     /**
@@ -92,57 +93,48 @@ public final class IqlPayloads {
         return false;
     }
 
-    private static void handleRunIql(final RunIqlPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)
-                    || !nmsNear(player, payload.hostPos(), host)) {
-                return;
-            }
-            final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
-            if (mainframe == null) {
-                PacketDistributor.sendToPlayer(player,
-                        new IqlResultPayload(false, "the network has no running Mainframe", List.of()));
-                return;
-            }
-            final var computer = new dev.jstech.computers.program.ServerCliComputer(host, level);
-            final var engine = new dev.jstech.computers.program.IqlEngine(
-                    mainframe, computer, IqlResultPayload.MAX_ROWS);
-            final var outcome = engine.run(payload.statement());
-            final List<IqlResultPayload.Row> rows = new ArrayList<>(outcome.rows().size());
-            for (final var item : outcome.rows()) {
-                rows.add(new IqlResultPayload.Row(
-                        item.detail().isEmpty() ? item.name() : item.name() + "  ·  " + item.detail(),
-                        item.quantity()));
-            }
+    private static void handleRunIql(final RunIqlPayload payload, final ServerPlayer player, final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos())
+                instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)
+                || !nmsNear(player, payload.hostPos(), host)) {
+            return;
+        }
+        final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
+        if (mainframe == null) {
             PacketDistributor.sendToPlayer(player,
-                    new IqlResultPayload(outcome.ok(), outcome.message(), rows));
-        });
+                    new IqlResultPayload(false, "the network has no running Mainframe", List.of()));
+            return;
+        }
+        final var computer = new dev.jstech.computers.program.ServerCliComputer(host, level);
+        final var engine = new dev.jstech.computers.program.IqlEngine(
+                mainframe, computer, IqlResultPayload.MAX_ROWS);
+        final var outcome = engine.run(payload.statement());
+        final List<IqlResultPayload.Row> rows = new ArrayList<>(outcome.rows().size());
+        for (final var item : outcome.rows()) {
+            rows.add(new IqlResultPayload.Row(
+                    item.detail().isEmpty() ? item.name() : item.name() + "  ·  " + item.detail(),
+                    item.quantity()));
+        }
+        PacketDistributor.sendToPlayer(player,
+                new IqlResultPayload(outcome.ok(), outcome.message(), rows));
     }
 
-    private static void handleIqlResult(final IqlResultPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() ->
-                dev.jstech.computers.client.NmsApp.accept(payload));
+    private static void handleIqlResult(final IqlResultPayload payload, final Player player) {
+        dev.jstech.computers.client.NmsApp.accept(payload);
     }
 
-    private static void handleRequestNmsSchema(final RequestNmsSchemaPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)
-                    || !nmsNear(player, payload.hostPos(), host)) {
-                return;
-            }
-            PacketDistributor.sendToPlayer(player, nmsSchema(level, host));
-        });
+    private static void handleRequestNmsSchema(final RequestNmsSchemaPayload payload, final ServerPlayer player,
+                                               final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos())
+                instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)
+                || !nmsNear(player, payload.hostPos(), host)) {
+            return;
+        }
+        PacketDistributor.sendToPlayer(player, nmsSchema(level, host));
     }
 
-    private static void handleNmsSchema(final NmsSchemaPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() ->
-                dev.jstech.computers.client.NmsApp.acceptSchema(payload));
+    private static void handleNmsSchema(final NmsSchemaPayload payload, final Player player) {
+        dev.jstech.computers.client.NmsApp.acceptSchema(payload);
     }
 
     /**
@@ -225,125 +217,113 @@ public final class IqlPayloads {
      * {@code .iql} file on its system disk. Replies with a refreshed {@link IqlFileListPayload}
      * carrying a short outcome message in the status field.
      */
-    private static void handleSaveIqlFile(final SaveIqlFilePayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)
-                    || !nmsNear(player, payload.hostPos(), host)
-                    || host.networkUuid() == null) {
-                return;
-            }
-            final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
-            if (mainframe == null) {
-                PacketDistributor.sendToPlayer(player,
-                        new IqlFileListPayload(List.of(), "no Mainframe on network", false));
-                return;
-            }
-            final ItemStack sysDisk = mainframe.systemDisk();
-            if (sysDisk.isEmpty()) {
-                PacketDistributor.sendToPlayer(player,
-                        new IqlFileListPayload(List.of(), "Mainframe has no system disk", false));
-                return;
-            }
-            final FilesystemKind kind = filesystemKindOf(mainframe);
-            if (kind == FilesystemKind.NONE) {
-                PacketDistributor.sendToPlayer(player,
-                        new IqlFileListPayload(List.of(), "no OS installed on Mainframe disk", false));
-                return;
-            }
-            final String fileName = sanitizeIqlName(payload.fileName()) + ".iql";
-            final long freeWeight = computeDiskFreeWeight(mainframe, sysDisk);
-            final DiskFilesystem.WriteResult result =
-                    DiskFilesystem.write(sysDisk, fileName, FileType.IQL, payload.content(),
-                            freeWeight, kind, mainframe.getLevel() == null ? 0L : mainframe.getLevel().getGameTime());
-            final boolean ok = result == DiskFilesystem.WriteResult.OK;
-            if (ok) {
-                mainframe.setChanged();
-            }
-            final String status = switch (result) {
-                case OK -> "saved: " + fileName;
-                case DISK_FULL -> "disk full, free space on the Mainframe's system disk";
-                case INVALID_PATH -> "invalid file name";
-                case READ_ONLY -> "file type is read-only";
-            };
-            PacketDistributor.sendToPlayer(player, iqlFileList(sysDisk, kind, status, ok));
-        });
+    private static void handleSaveIqlFile(final SaveIqlFilePayload payload, final ServerPlayer player,
+                                          final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos())
+                instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)
+                || !nmsNear(player, payload.hostPos(), host)
+                || host.networkUuid() == null) {
+            return;
+        }
+        final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
+        if (mainframe == null) {
+            PacketDistributor.sendToPlayer(player,
+                    new IqlFileListPayload(List.of(), "no Mainframe on network", false));
+            return;
+        }
+        final ItemStack sysDisk = mainframe.systemDisk();
+        if (sysDisk.isEmpty()) {
+            PacketDistributor.sendToPlayer(player,
+                    new IqlFileListPayload(List.of(), "Mainframe has no system disk", false));
+            return;
+        }
+        final FilesystemKind kind = filesystemKindOf(mainframe);
+        if (kind == FilesystemKind.NONE) {
+            PacketDistributor.sendToPlayer(player,
+                    new IqlFileListPayload(List.of(), "no OS installed on Mainframe disk", false));
+            return;
+        }
+        final String fileName = sanitizeIqlName(payload.fileName()) + ".iql";
+        final long freeWeight = computeDiskFreeWeight(mainframe, sysDisk);
+        final DiskFilesystem.WriteResult result =
+                DiskFilesystem.write(sysDisk, fileName, FileType.IQL, payload.content(),
+                        freeWeight, kind, mainframe.getLevel() == null ? 0L : mainframe.getLevel().getGameTime());
+        final boolean ok = result == DiskFilesystem.WriteResult.OK;
+        if (ok) {
+            mainframe.setChanged();
+        }
+        final String status = switch (result) {
+            case OK -> "saved: " + fileName;
+            case DISK_FULL -> "disk full, free space on the Mainframe's system disk";
+            case INVALID_PATH -> "invalid file name";
+            case READ_ONLY -> "file type is read-only";
+        };
+        PacketDistributor.sendToPlayer(player, iqlFileList(sysDisk, kind, status, ok));
     }
 
     /** Sends the list of {@code .iql} files on the Mainframe's system disk to the NMS client. */
-    private static void handleRequestIqlFileList(final RequestIqlFileListPayload payload,
-                                                 final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)
-                    || !nmsNear(player, payload.hostPos(), host)
-                    || host.networkUuid() == null) {
-                return;
-            }
-            final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
-            if (mainframe == null) {
-                PacketDistributor.sendToPlayer(player,
-                        new IqlFileListPayload(List.of(), "", false));
-                return;
-            }
-            final ItemStack sysDisk = mainframe.systemDisk();
-            if (sysDisk.isEmpty()) {
-                PacketDistributor.sendToPlayer(player, new IqlFileListPayload(List.of(), "", true));
-                return;
-            }
-            final FilesystemKind kind = filesystemKindOf(mainframe);
-            PacketDistributor.sendToPlayer(player, iqlFileList(sysDisk, kind, "", true));
-        });
+    private static void handleRequestIqlFileList(final RequestIqlFileListPayload payload, final ServerPlayer player,
+                                                 final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos())
+                instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)
+                || !nmsNear(player, payload.hostPos(), host)
+                || host.networkUuid() == null) {
+            return;
+        }
+        final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
+        if (mainframe == null) {
+            PacketDistributor.sendToPlayer(player,
+                    new IqlFileListPayload(List.of(), "", false));
+            return;
+        }
+        final ItemStack sysDisk = mainframe.systemDisk();
+        if (sysDisk.isEmpty()) {
+            PacketDistributor.sendToPlayer(player, new IqlFileListPayload(List.of(), "", true));
+            return;
+        }
+        final FilesystemKind kind = filesystemKindOf(mainframe);
+        PacketDistributor.sendToPlayer(player, iqlFileList(sysDisk, kind, "", true));
     }
 
     /** Forwards the {@link IqlFileListPayload} to the open NMS screen. */
-    private static void handleIqlFileList(final IqlFileListPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() ->
-                dev.jstech.computers.client.NmsApp.acceptFileList(payload));
+    private static void handleIqlFileList(final IqlFileListPayload payload, final Player player) {
+        dev.jstech.computers.client.NmsApp.acceptFileList(payload);
     }
 
     /** Reads an {@code .iql} file from the Mainframe's disk and sends its content back. */
-    private static void handleOpenIqlFile(final OpenIqlFilePayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)
-                    || !(player.level() instanceof ServerLevel level)
-                    || !(level.getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)
-                    || !nmsNear(player, payload.hostPos(), host)
-                    || host.networkUuid() == null) {
-                return;
-            }
-            final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
-            if (mainframe == null) {
-                PacketDistributor.sendToPlayer(player,
-                        new IqlFileContentPayload("", "", false));
-                return;
-            }
-            final ItemStack sysDisk = mainframe.systemDisk();
-            if (sysDisk.isEmpty()) {
-                PacketDistributor.sendToPlayer(player,
-                        new IqlFileContentPayload("", "", false));
-                return;
-            }
-            final var content = DiskFilesystem.read(sysDisk, payload.fileName());
-            if (content.isEmpty()) {
-                PacketDistributor.sendToPlayer(player,
-                        new IqlFileContentPayload("", "", false));
-                return;
-            }
+    private static void handleOpenIqlFile(final OpenIqlFilePayload payload, final ServerPlayer player,
+                                          final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos())
+                instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)
+                || !nmsNear(player, payload.hostPos(), host)
+                || host.networkUuid() == null) {
+            return;
+        }
+        final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
+        if (mainframe == null) {
             PacketDistributor.sendToPlayer(player,
-                    new IqlFileContentPayload(payload.fileName(), content.get(), true));
-        });
+                    new IqlFileContentPayload("", "", false));
+            return;
+        }
+        final ItemStack sysDisk = mainframe.systemDisk();
+        if (sysDisk.isEmpty()) {
+            PacketDistributor.sendToPlayer(player,
+                    new IqlFileContentPayload("", "", false));
+            return;
+        }
+        final var content = DiskFilesystem.read(sysDisk, payload.fileName());
+        if (content.isEmpty()) {
+            PacketDistributor.sendToPlayer(player,
+                    new IqlFileContentPayload("", "", false));
+            return;
+        }
+        PacketDistributor.sendToPlayer(player,
+                new IqlFileContentPayload(payload.fileName(), content.get(), true));
     }
 
     /** Forwards the {@link IqlFileContentPayload} to the open NMS screen. */
-    private static void handleIqlFileContent(final IqlFileContentPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() ->
-                dev.jstech.computers.client.NmsApp.acceptFileContent(payload));
+    private static void handleIqlFileContent(final IqlFileContentPayload payload, final Player player) {
+        dev.jstech.computers.client.NmsApp.acceptFileContent(payload);
     }
 
     /** Builds the payload listing every {@code .iql} file on the given disk. */
