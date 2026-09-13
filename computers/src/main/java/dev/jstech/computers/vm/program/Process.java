@@ -185,7 +185,7 @@ public final class Process {
     private int nextThread = 2;
     private int turn;
     private final Map<Object, Monitor> monitors = new IdentityHashMap<>();
-    private final Deque<Frame> waiting = new ArrayDeque<>();
+    private final CallbackQueue waiting = new CallbackQueue();
     private final Map<String, Values.Obj> statics = new LinkedHashMap<>();
     private Values.Obj script;
     private final ProgramIdentity identity = new ProgramIdentity();
@@ -586,7 +586,6 @@ public final class Process {
         this.waiting.add(new Frame(found, null));
     }
 
-    /** Puts a call on that object in the queue, to be run by the slices that follow. */
     /**
      * Whether the program can be given another turn of that method right now.
      *
@@ -597,17 +596,10 @@ public final class Process {
      * something the machine can afford in one go.
      */
     public boolean readyForTurn(final String method) {
-        if (this.main.parked != Parked.NONE) {
-            return false;
-        }
-        for (final Frame frame : this.waiting) {
-            if (frame.method.name().equals(method)) {
-                return false;
-            }
-        }
-        return true;
+        return this.main.parked == Parked.NONE && !this.waiting.holds(method);
     }
 
+    /** Puts a call on that object in the queue, to be run by the slices that follow. */
     public void begin(final Values.Obj self, final String method) {
         final MethodImage found = this.program.method(self.type(), method, List.of());
         if (found == null) {
