@@ -509,6 +509,18 @@ class ProcessTest {
     }
 
     @Test
+    void readyForTurn_refusesATickWhileTheLastOneIsStillRunning() {
+        final ProgramImage program = load("", "        for (int i = 0; i < 1000; i++) { }");
+        final Process process = new Process(program, ROOM, IHost.still());
+        process.begin(process.create(program.entryPoint()), "OnTick");
+        process.step(5);
+        assertFalse(process.readyForTurn("OnTick"), "the tick still running has not ended");
+        process.step(PLENTY);
+        assertFinished(process);
+        assertTrue(process.readyForTurn("OnTick"));
+    }
+
+    @Test
     void run_runsWhatWasQueuedAfterTheWorkThatWasAlreadyThere() {
         final ProgramImage program = load("", "        Console.PrintLine(\"tick\");");
         final Process process = new Process(program, ROOM, IHost.still());

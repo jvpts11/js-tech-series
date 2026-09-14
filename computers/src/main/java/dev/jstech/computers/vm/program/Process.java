@@ -589,14 +589,14 @@ public final class Process {
     /**
      * Whether the program can be given another turn of that method right now.
      *
-     * <p>It cannot while one is already queued and has not had its chance, and it cannot while the
-     * thread those turns run on is waiting for something: a line to be typed, a lock, an answer from
-     * the other side of a Gateway. A tick that is missed while a program waits is missed, rather than
-     * piling up to be run all at once the moment the wait ends, which is neither what a tick means nor
-     * something the machine can afford in one go.
+     * <p>It cannot while one is already queued and has not had its chance, while the thread those turns
+     * run on is still busy with an earlier turn or a handler, and while that thread is waiting for
+     * something: a line to be typed, a lock, an answer from the other side of a Gateway. A tick that
+     * comes while a program works or waits is missed, rather than piling up to be run the moment it is
+     * free, which is neither what a tick means nor something the machine can afford in one go.
      */
     public boolean readyForTurn(final String method) {
-        return this.main.parked == Parked.NONE && !this.waiting.holds(method);
+        return this.main.parked == Parked.NONE && this.main.frames.isEmpty() && !this.waiting.holds(method);
     }
 
     /** Puts a call on that object in the queue, to be run by the slices that follow. */

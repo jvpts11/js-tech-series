@@ -51,6 +51,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - An event with several handlers joined to it with `+=` runs all of them, in the order they were joined, when a
   player clicks or closes a window, a message arrives or a watched stock changes. Only the first handler used to
   run.
+- A script whose `OnTick` runs longer than a tick, or that is still busy with a handler when the next tick comes,
+  skips that tick. It used to run one extra `OnTick` as soon as it was free.
 - The Cluster Manager shows a section balancing round-robin as round-robin. It used to say MANUAL.
 - A listing edited by hand in which a type stands on itself no longer sends the server into an endless loop
   when the program loads.
