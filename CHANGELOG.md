@@ -100,6 +100,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   of being saved with that part silently empty.
 - A machine that has started more than two billion programs numbers the next one from 1 again, passing over numbers
   still in use. The next program used to get a number below zero and be reported as not started while it ran.
+- A program run at the prompt from a path written with backslashes, such as `sigma run C:\progs\game.asm`, is
+  listed by its file. It used to be listed under the whole path.
 
 ## [0.3.0a] - 2026-09-13 - The Programming Update
 

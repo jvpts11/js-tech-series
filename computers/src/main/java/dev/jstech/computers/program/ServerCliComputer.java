@@ -3155,8 +3155,10 @@ public final class ServerCliComputer implements ICliComputer {
             return OpResult.fail("sigma: " + room + " MB will not fit in "
                     + computer.ramLedger().freeMb() + " MB of free memory");
         }
+        // A path typed at the prompt may be written with either slash; the program is listed by its file.
+        final int slash = Math.max(path.lastIndexOf('\\'), path.lastIndexOf('/'));
         final MachinePrograms.Started started = computer.programs()
-                .start(FsPaths.fileName(path), read.message(), room, computer, arguments,
+                .start(path.substring(slash + 1), read.message(), room, computer, arguments,
                         dev.jstech.computers.vm.program.IProgramParent.NONE,
                         dev.jstech.computers.vm.program.ProgramPriority.MEDIUM);
         if (!started.ok()) {

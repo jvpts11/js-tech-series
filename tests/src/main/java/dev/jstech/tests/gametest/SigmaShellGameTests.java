@@ -225,6 +225,32 @@ public final class SigmaShellGameTests {
     }
 
     /**
+     * A program run from a DOS path is listed by its file, as one run from a disk path is. The name was
+     * cut at the last forward slash only, so a path written with backslashes was listed whole.
+     */
+    @GameTest(template = ARENA)
+    public static void sigma_aProgramRunFromADosPathIsListedByItsFile(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2));
+        if (computer == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    DiskFilesystem.write(computer.systemDisk(), "progs/asks.sgs", FileType.SGS, ASKS,
+                            Long.MAX_VALUE, FilesystemKind.HIERARCHICAL);
+                    final ServerCliComputer cli = new ServerCliComputer(computer, helper.getLevel());
+                    final CliShell shell = CliCommands.shellFor(cli, 52);
+                    final String compiled = text(shell.run("sgsc progs/asks.sgs", cli));
+                    helper.assertTrue(compiled.contains("wrote"), "the program compiles; got " + compiled);
+                    final String ran = text(shell.run("sigma run C:\\progs\\asks.asm", cli));
+                    final var one = computer.programs().byId(computer.programs().held());
+                    helper.assertTrue(one != null, "the program starts at the terminal; got " + ran);
+                    helper.assertTrue("asks.asm".equals(one.file()), "it is listed by its file; got " + one.file());
+                })
+                .thenSucceed();
+    }
+
+    /**
      * A terminal program stopped on a read is stopped for good when it loses the terminal: another
      * program taking the terminal ends it there and then, and one found waiting with no terminal in
      * front of it is cleared by the machine's next tick. Either way it does not stay on the machine's
