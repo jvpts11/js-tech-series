@@ -81,6 +81,8 @@ public final class Process {
     private final ProgramImage program;
     /** What two values being the same means, which needs the program's own types to tell a struct from a class. */
     private final ValueSemantics values;
+    /** What a cast and a type test make of a value. */
+    private final TypeChecks types;
     private final Heap heap;
     private final Library library;
     /** The process's threads, whose turn it is, and which of the waiting ones may run again. */
@@ -168,6 +170,7 @@ public final class Process {
     private Process(final ProgramImage program, final long heapBytes, final IHost host, final boolean fresh) {
         this.program = program;
         this.values = new ValueSemantics(program);
+        this.types = new TypeChecks(program);
         this.heap = new Heap(heapBytes);
         this.library = new Library(this.heap, host, program.entryPoint());
         this.library.serves(this);
@@ -1574,8 +1577,10 @@ public final class Process {
             case DISPOSE -> this.heap.dispose(frame.pop(), line);
             case MONITOR_ENTER -> this.enterMonitor(frame, line);
             case MONITOR_EXIT -> this.exitMonitor(frame, line);
-            case CASTCLASS -> this.cast(frame, ((IOperand.Type) instruction.operand()).name(), line);
-            case ISINST -> this.isInstance(frame, ((IOperand.Type) instruction.operand()).name());
+            case CASTCLASS -> frame.push(this.types.cast(frame.pop(),
+                    ((IOperand.Type) instruction.operand()).name(), line));
+            case ISINST -> frame.push(this.types.isInstance(frame.pop(),
+                    ((IOperand.Type) instruction.operand()).name()));
             case LDFN -> this.handler(frame, (IOperand.Method) instruction.operand(), line);
             case CALL, CALLVIRT -> this.call(frame, frame.method.call(line - 1),
                     instruction.opcode() == Opcode.CALLVIRT, line);
@@ -1763,84 +1768,6 @@ public final class Process {
             return array;
         }
         throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no array here");
-    }
-
-    private void cast(final Frame frame, final String type, final int line) {
-        final Object value = frame.pop();
-        final PrimitiveKind primitive = PrimitiveKind.of(type);
-        if (primitive != null) {
-            // An object holding a number gives it back as the kind asked for, whichever kind it holds.
-            if (value instanceof Number || value instanceof Character) {
-                frame.push(primitive.convert(value));
-                return;
-            }
-            if (primitive == PrimitiveKind.BOOL && value instanceof Boolean) {
-                frame.push(value);
-                return;
-            }
-            throw new Halt(Halt.Reason.BAD_CAST, line, value == null ? "there is nothing here to make a " + type
-                    : "this is not a " + type);
-        }
-        if (value == null || this.isOfType(value, type)) {
-            frame.push(value);
-            return;
-        }
-        throw new Halt(Halt.Reason.BAD_CAST, line, "this is not a " + type);
-    }
-
-    private void isInstance(final Frame frame, final String type) {
-        final Object value = frame.pop();
-        frame.push(value != null && this.isOfType(value, type));
-    }
-
-    private boolean isOfType(final Object value, final String type) {
-        if (value instanceof Values.Obj object) {
-            return this.program.isA(object.type(), type);
-        }
-        if (value instanceof Values.DelegateValue delegate) {
-            return delegate.type().equals(type);
-        }
-        return switch (type) {
-            case "string" -> value instanceof String;
-            case "object" -> true;
-            case "int" -> value instanceof Integer;
-            case "long" -> value instanceof Long;
-            case "float" -> value instanceof Float;
-            case "double" -> value instanceof Double;
-            case "bool" -> value instanceof Boolean;
-            case "char" -> value instanceof Character;
-            default -> value instanceof Values.Arr array && type.equals(array.element() + "[]")
-                    || value instanceof Values.ListValue && type.startsWith("List<")
-                    || value instanceof Values.MapValue && type.startsWith("Map<");
-        };
-    }
-
-    /** The kinds of value a cast can take a number out of an object as. */
-    private enum PrimitiveKind {
-        INT, LONG, FLOAT, DOUBLE, CHAR, BOOL;
-
-        static PrimitiveKind of(final String written) {
-            return switch (written) {
-                case "int" -> INT;
-                case "long" -> LONG;
-                case "float" -> FLOAT;
-                case "double" -> DOUBLE;
-                case "char" -> CHAR;
-                case "bool" -> BOOL;
-                default -> null;
-            };
-        }
-
-        Object convert(final Object value) {
-            return switch (this) {
-                case INT -> Numbers.toInt(value);
-                case LONG -> Numbers.toLong(value);
-                case FLOAT -> Numbers.toFloat(value);
-                case DOUBLE -> Numbers.toDouble(value);
-                case CHAR -> (char) Numbers.toInt(value);
-                case BOOL -> value;
-            };
-        }
     }
 
     // calls
