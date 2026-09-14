@@ -201,6 +201,51 @@ public final class MekanismProcessingGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * A chamber burns oxygen at a rate that only averages what a pattern says a lot uses, so the request's nominal
+     * oxygen can run out before its last lot is done. A pattern that says 150 mB a lot, where the chamber burns about
+     * 200, used to leave it dry on the second lot until the operation timed out with half the clumps.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 900)
+    public static void purificationChamber_finishesWhenItBurnsMoreOxygenThanThePatternSays(
+            final GameTestHelper helper) {
+        final MekanismRig.Rig rig = MekanismRig.build(helper, PURIFICATION_CHAMBER);
+        final StorageKey oxygen = StorageKey.chemical(OXYGEN);
+        final StorageKey clump = StorageKey.of(BuiltInRegistries.ITEM.get(CLUMP_IRON));
+        final NetworkProcessingOperation[] op = new NetworkProcessingOperation[1];
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> MekanismRig.mountBuses(helper))
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    final NetworkStorage storage = rig.net().storage(helper.getLevel());
+                    rig.net().seed(Items.RAW_IRON, 8);
+                    helper.assertTrue(storage.insert(oxygen, 2000) == 2000, "2 000 mB of oxygen must go in as data");
+                    MekanismRig.assertDiscovered(helper, PURIFICATION_CHAMBER);
+                    final ProcessingPattern pattern = new ProcessingPattern(
+                            List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.RAW_IRON), 1),
+                                    new ProcessingPattern.ProcessingInput(oxygen, 150)),
+                            List.of(new ProcessingPattern.ProcessingOutput(clump, 2, 100)),
+                            PURIFICATION_CHAMBER.toString(), 400);
+                    op[0] = rig.net().mainframe().submitNetworkProcessing(pattern, 4, "battery");
+                    helper.assertTrue(op[0] != null, "the Mainframe must accept the processing operation");
+                })
+                .thenExecuteAfter(20, () -> MekanismRig.power(helper))
+                .thenWaitUntil(() -> {
+                    MekanismRig.power(helper);
+                    helper.assertTrue(op[0].isDone(), "the chamber is still working");
+                })
+                .thenExecute(() -> {
+                    final NetworkStorage storage = rig.net().storage(helper.getLevel());
+                    helper.assertTrue(op[0].toRecord().status() == OperationRecord.STATUS_COMPLETED,
+                            "the operation must finish whole, not partial; status " + op[0].toRecord().status()
+                                    + ", produced " + op[0].produced());
+                    helper.assertTrue(storage.count(clump) >= 4, "both lots' clumps land; got " + storage.count(clump));
+                    helper.assertTrue(storage.count(oxygen) < 1700,
+                            "the chamber took more than the nominal 300 mB it burned through; left "
+                                    + storage.count(oxygen));
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 600)
     public static void chemicalInfuser_makesFusionFuelFromDeuteriumAndTritiumData(final GameTestHelper helper) {
         /*

@@ -41,6 +41,8 @@ import java.util.UUID;
 public final class NetworkProcessingOperation implements IPersistentOperation {
 
     private static final int FEED_INTERVAL = 4;
+    /** How long a machine that has run dry of a gas or a fluid sits still before it is given another lot of it. */
+    private static final int STARVED_TICKS = 2 * FEED_INTERVAL;
     public static final String KIND = "processing";
 
     private final ServerLevel level;
@@ -201,6 +203,10 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
             for (int lot = 0; lot < maxLots && budgetLeft > 0L; lot++) {
                 if (fullyDelivered()) {
                     if (lotsFed >= lotsNeeded()) {
+                        // Every lot is in; only a machine that ran dry of a gas or a fluid can still be owed more.
+                        if (deliverOwed(inPort, budgetLeft) > 0) {
+                            progressed = true;
+                        }
                         break;
                     }
                     lotsFed++;
@@ -484,6 +490,12 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
      * returns the weight moved. Items are owed lot by lot. Fluids and chemicals are continuous: the machine is
      * kept topped up with as much as the whole request still needs, so a tank never starves a machine that
      * could run faster than one lot every few ticks, since the pattern's amount only sets the ratio.
+     *
+     * <p>That amount is what a lot is expected to use, not a ceiling: a machine burns a gas or a fluid at a rate
+     * that only averages it, so the whole request's worth can run out before the last lot is done. A machine that
+     * has run dry of one and made no progress for a couple of feed cycles while the request is still short gets
+     * another lot's worth of it, so it never stalls on its last lot; a machine that uses exactly what the pattern
+     * says never runs dry early and is never given more.
      */
     private long deliverOwed(final IDataPort inPort, final long budgetWeight) {
         final List<ProcessingPattern.ProcessingInput> inputs = pattern.inputs();
@@ -491,7 +503,11 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         for (int i = 0; i < inputs.size() && movedWeight < budgetWeight; i++) {
             final ProcessingPattern.ProcessingInput in = inputs.get(i);
             final long lots = in.key().isItem() ? lotsFed : Math.max(lotsFed, lotsNeeded());
-            final long owed = lots * in.amount() - delivered[i];
+            long owed = lots * in.amount() - delivered[i];
+            if (owed <= 0 && !in.key().isItem() && produced < requested && idleTicks >= STARVED_TICKS
+                    && inPort.count(in.key()) <= 0) {
+                owed = in.amount();
+            }
             if (owed <= 0) {
                 continue;
             }

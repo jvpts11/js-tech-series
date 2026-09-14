@@ -114,6 +114,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   to go nowhere until Ctrl+C.
 - A computer that a Gateway kept busy still owes that work after the world is saved and loaded, and goes on paying
   it back out of its programs' share of each tick. The debt used to vanish with the save.
+- A machine fed a gas or a fluid through the network, such as a Purification Chamber burning oxygen, no longer
+  stalls on the last lot of a request when it uses a little more than its pattern says, and no longer settles that
+  request as partial: when it runs dry while the request is short, the network gives it another lot's worth.
 
 ## [0.3.0a] - 2026-09-13 - The Programming Update
 
