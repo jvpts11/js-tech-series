@@ -50,6 +50,32 @@ class SchedulerTest {
         }
     }
 
+    /** A program with work for ever that writes its name down every time it is stepped. */
+    private static final class Named extends Greedy {
+        private final String name;
+        private final List<String> steps;
+
+        Named(final String name, final List<String> steps) {
+            this.name = name;
+            this.steps = steps;
+        }
+
+        @Override
+        public int step(final int budget) {
+            this.steps.add(this.name);
+            return super.step(budget);
+        }
+    }
+
+    /** A program whose every step reaches into the machine, so it uses more than it was offered. */
+    private static final class Reaching extends Greedy {
+        @Override
+        public int step(final int budget) {
+            super.step(budget);
+            return budget + 10;
+        }
+    }
+
     /** A clock that moves one unit every time it is read. */
     private static final class Ticking {
         long now;
@@ -111,23 +137,53 @@ class SchedulerTest {
 
     @Test
     void run_stopsAtTheDeadlineAndStartsWithTheUnservedNextTick() {
-        final Greedy one = new Greedy();
-        final Greedy two = new Greedy();
-        final Greedy three = new Greedy();
+        final List<String> steps = new ArrayList<>();
+        final Named one = new Named("one", steps);
+        final Named two = new Named("two", steps);
+        final Named three = new Named("three", steps);
         final Scheduler scheduler = new Scheduler();
         final Ticking clock = new Ticking();
-        // Read once on the way in (0) and once after each quantum (1, 2...): a deadline of 2 allows two.
-        final Scheduler.Outcome first = scheduler.run(List.of(one, two, three), 10_000, clock::read, 2);
+        /*
+         * Read once on the way in (0) and once a block has run (1): a deadline of 1 ends the tick at that first look,
+         * after eight quanta of 64, dealt one, two, three, one, two, three, one, two.
+         */
+        final Scheduler.Outcome first = scheduler.run(List.of(one, two, three), 10_000, clock::read, 1);
         assertTrue(first.cutShort());
-        assertEquals(2 * Scheduler.QUANTUM, first.spent());
-        assertEquals(0, three.total, "the third program went without");
+        assertEquals(Scheduler.CLOCK_BLOCK, first.spent(), "the tick ran one block before it looked");
+        assertEquals("two", steps.getLast(), "and the block ended on the second program");
 
+        steps.clear();
         clock.now = 0;
-        final Scheduler.Outcome second = scheduler.run(List.of(one, two, three), 10_000, clock::read, 2);
-        assertTrue(second.cutShort());
-        assertEquals(Scheduler.QUANTUM, three.total, "so it goes first next tick");
-        assertEquals(2 * Scheduler.QUANTUM, one.total, "and the first takes the second place");
-        assertEquals(Scheduler.QUANTUM, two.total);
+        scheduler.run(List.of(one, two, three), 10_000, clock::read, 1);
+        assertEquals("three", steps.getFirst(), "so the third goes first next tick");
+    }
+
+    @Test
+    void run_looksAtTheClockAtOnceAfterAStepThatReachedIntoTheMachine() {
+        final Reaching reaching = new Reaching();
+        final Ticking clock = new Ticking();
+        // In (0), then right after the first step, which used more than it was offered (1): past a deadline of 1.
+        final Scheduler.Outcome outcome = new Scheduler().run(List.of(reaching), 10_000, clock::read, 1);
+        assertTrue(outcome.cutShort());
+        assertEquals(1, reaching.offers.size(), "the tick ended after that step, not a block later");
+    }
+
+    @Test
+    void run_readsTheClockOncePerBlockOfInstructions() {
+        final Greedy one = new Greedy();
+        final Ticking clock = new Ticking();
+        new Scheduler().run(List.of(one), 4 * Scheduler.CLOCK_BLOCK, clock::read, Long.MAX_VALUE - 1);
+        assertEquals(5, clock.now, "once on the way in and once after each of the four blocks");
+    }
+
+    @Test
+    void run_neverReadsTheClockWhenTheTickHasNoDeadline() {
+        final Greedy one = new Greedy();
+        final Scheduler.Outcome outcome = new Scheduler().run(List.of(one), 5_000, () -> {
+            throw new AssertionError("the clock was read");
+        }, NO_DEADLINE);
+        assertEquals(5_000, outcome.spent());
+        assertFalse(outcome.cutShort());
     }
 
     @Test

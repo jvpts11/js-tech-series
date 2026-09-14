@@ -17,9 +17,10 @@ import java.util.function.LongSupplier;
  * deadline. The credits are dealt in quanta, going round the programs in turn so that no program
  * finishes its share before another has begun; a program that stops early (finished, parked, halted)
  * gives up its place for the rest of the tick and the others take what it left. The deadline is looked
- * at between quanta: when it passes, the tick ends where it stands and the next one starts with the
- * first program that went without, so a machine that is always short of time is short for everyone
- * on it in turn rather than always for the same one.
+ * at between quanta, once a block of instructions has run since the last look or at once after a
+ * program reached into the machine: when it has passed, the tick ends where it stands and the next one
+ * starts with the first program that went without, so a machine that is always short of time is short
+ * for everyone on it in turn rather than always for the same one.
  *
  * <p>Nothing here knows what a program is. It is given things that can be stepped and told how far each
  * got, which is what lets the whole of it be run against nothing at all.
@@ -28,6 +29,13 @@ public final class Scheduler {
 
     /** The most instructions one program runs before the next gets its turn. */
     public static final int QUANTUM = 64;
+
+    /**
+     * How many instructions run between two looks at the clock when no program reached into the machine. Reading the
+     * clock after every quantum cost more than the rest of the tick's own work; a machine short of time now runs at
+     * most this many instructions past its deadline.
+     */
+    public static final int CLOCK_BLOCK = 512;
 
     /** Something that can be given instructions and says how many it used. */
     @FunctionalInterface
@@ -62,7 +70,8 @@ public final class Scheduler {
      * @param slots    what is ready to run, in the order the machine lists it
      * @param credits  how many instructions the tick is worth
      * @param clock    the clock the deadline is read against, in the deadline's units
-     * @param deadline when the tick must end, on that clock; a deadline already passed runs nothing
+     * @param deadline when the tick must end, on that clock; a deadline already passed runs nothing, and
+     *                 {@link Long#MAX_VALUE} means there is none, so the clock is never read
      */
     public Outcome run(final List<? extends ISlot> slots, final int credits, final LongSupplier clock,
                        final long deadline) {
@@ -70,13 +79,15 @@ public final class Scheduler {
         if (count == 0 || credits <= 0) {
             return Outcome.NOTHING;
         }
-        if (clock.getAsLong() >= deadline) {
+        final boolean timed = deadline != Long.MAX_VALUE;
+        if (timed && clock.getAsLong() >= deadline) {
             return new Outcome(0, true);
         }
         final boolean[] done = new boolean[count];
         int remaining = count;
         int left = credits;
         int spent = 0;
+        int sinceLook = 0;
         final int first = Math.floorMod(this.start, count);
         for (int round = 0; left > 0 && remaining > 0; round++) {
             /*
@@ -100,9 +111,14 @@ public final class Scheduler {
                     done[at] = true;
                     remaining--;
                 }
-                if (clock.getAsLong() >= deadline) {
-                    this.start = (at + 1) % count;
-                    return new Outcome(spent, true);
+                sinceLook += used;
+                // A step that used more than it was offered reached into the machine, which may take real time.
+                if (timed && (sinceLook >= CLOCK_BLOCK || used > offered)) {
+                    sinceLook = 0;
+                    if (clock.getAsLong() >= deadline) {
+                        this.start = (at + 1) % count;
+                        return new Outcome(spent, true);
+                    }
                 }
             }
         }
