@@ -179,6 +179,34 @@ class UiWidgetsTest {
     }
 
     @Test
+    void click_reachesEveryHandlerJoinedToTheButtonInTheOrderTheyWereJoined() {
+        final Process process = start(load("""
+                class Panel : IScript {
+                    Window window;
+                    Button fire;
+                    public void OnInit() {
+                        fire = new Button("Fire");
+                        fire.OnClick += First;
+                        fire.OnClick += Second;
+                        Column page = new Column();
+                        page.Add(fire);
+                        window = new Window("Both", 200, 100);
+                        window.Content = page;
+                        window.Show();
+                    }
+                    void First() { Console.PrintLine("first"); }
+                    void Second() { Console.PrintLine("second"); }
+                    public void OnTick() { }
+                    public void OnDestroy() { }
+                }
+                """), desktop(true));
+        final Values.Obj button = widgetOf(process, UiWidgets.BUTTON);
+        assertTrue(process.deliverUiEvent(1L, (Long) button.get(UiWidgets.ID), "click", List.of()));
+        process.step(PLENTY);
+        assertEquals(List.of("first", "second"), process.console());
+    }
+
+    @Test
     void toggleAndSelect_changeTheWidgetBeforeTheProgramHearsOfThem() {
         final Process process = start(load(PANEL), desktop(true));
         final Values.Obj check = widgetOf(process, UiWidgets.CHECK_BOX);

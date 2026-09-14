@@ -48,6 +48,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Lines typed at a program's terminal before the program asked for them are still there after a save.
 - A line read with `Console.ReadLine` is still there after the world is saved and loaded, and it counts against the
   program's memory like any other text. It used to come back empty.
+- An event with several handlers joined to it with `+=` runs all of them, in the order they were joined, when a
+  player clicks or closes a window, a message arrives or a watched stock changes. Only the first handler used to
+  run.
 - The Cluster Manager shows a section balancing round-robin as round-robin. It used to say MANUAL.
 - A listing edited by hand in which a type stands on itself no longer sends the server into an endless loop
   when the program loads.

@@ -863,21 +863,24 @@ public final class Process {
      *
      * <p>Handlers run in the order they arrived, in the same slice as the work that was already
      * there, out of the same budget. So a process that fires a great many of them does not get more
-     * of the tick than one that fires none.
+     * of the tick than one that fires none. A delegate joined from several handlers queues each of
+     * them, in the order they were joined and with the same arguments, so every listener hears the
+     * event; one whose method cannot be found is passed over and the rest still run.
      */
     public void post(final Values.DelegateValue handler, final List<Object> arguments) {
-        if (handler == null || handler.chain().isEmpty()) {
+        if (handler == null) {
             return;
         }
-        final Values.Bound bound = handler.chain().getFirst();
-        final MethodImage method =
-                this.program.method(bound.owner(), bound.method(), bound.parameters());
-        if (method == null || !method.hasCode()) {
-            return;
+        for (final Values.Bound bound : handler.chain()) {
+            final MethodImage method =
+                    this.program.method(bound.owner(), bound.method(), bound.parameters());
+            if (method == null || !method.hasCode()) {
+                continue;
+            }
+            final Frame frame = new Frame(method, bound.target());
+            fill(frame, arguments);
+            this.waiting.add(frame);
         }
-        final Frame frame = new Frame(method, bound.target());
-        fill(frame, arguments);
-        this.waiting.add(frame);
     }
 
     /** How many calls are still waiting their turn, handlers among them. */
