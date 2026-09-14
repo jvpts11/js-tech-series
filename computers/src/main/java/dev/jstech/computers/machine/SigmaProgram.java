@@ -7,13 +7,16 @@
  */
 package dev.jstech.computers.machine;
 
+import com.mojang.logging.LogUtils;
 import dev.jstech.computers.vm.listing.Shape;
 import dev.jstech.computers.vm.program.Process;
+import dev.jstech.computers.vm.program.SnapshotException;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.core.language.ILanguageProcess;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.nbt.CompoundTag;
+import org.slf4j.Logger;
 
 /**
  * One running Σ# program, as a machine sees it.
@@ -26,6 +29,8 @@ final class SigmaProgram implements ILanguageProcess {
 
     /** What a program is allowed to spend on its farewell, out of nobody's tick. */
     private static final int FAREWELL = 4096;
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private final Process process;
 
@@ -139,7 +144,16 @@ final class SigmaProgram implements ILanguageProcess {
 
     @Override
     public void save(final CompoundTag tag) {
-        tag.put("Snapshot", SnapshotTag.write(this.process.save()));
+        try {
+            tag.put("Snapshot", SnapshotTag.write(this.process.save()));
+        } catch (final SnapshotException unwritable) {
+            /*
+             * A program is never saved with a part of it silently empty: it is left out of the save instead, the log
+             * says why, and it does not come back when the world loads.
+             */
+            LOGGER.error("The program '{}' could not be saved and will not come back after a load: {}",
+                    this.process.name(), unwritable.getMessage());
+        }
     }
 
     /** Where {@link #save} puts it, for the language to read back. */

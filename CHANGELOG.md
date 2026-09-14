@@ -36,6 +36,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Saves, network packets and menu data carry each setting by an id of its own instead of by its place in a
   list, so adding a setting never changes what an old one means. Machine states that 0.3.0a worlds stored the
   old way are not read back.
+- Programs that were running when a world was saved by an earlier version do not carry on when it loads: they are
+  left out, with a line in the server log, and can be started again.
 - Inside the mods, with no change to how anything behaves: the handlers behind the computers' screens and
   programs are split into feature packages; the virtual machine that runs programs has packages of its own,
   with nothing of Minecraft in them, and reads a listing's problems without the compiler; a running program
@@ -89,6 +91,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The Cluster Manager shows a section balancing round-robin as round-robin. It used to say MANUAL.
 - A listing edited by hand in which a type stands on itself no longer sends the server into an endless loop
   when the program loads.
+- A saved program whose state is damaged, or was taken from a listing that has changed since, is left out when the
+  world loads, with a line in the server log. It used to come back with parts of it wrong, or keep the computer
+  holding it from loading at all.
+- A program holding something its save cannot write is left out of the save, with a line in the server log, instead
+  of being saved with that part silently empty.
 
 ## [0.3.0a] - 2026-09-13 - The Programming Update
 

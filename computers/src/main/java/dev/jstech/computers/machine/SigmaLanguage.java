@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.machine;
 
+import com.mojang.logging.LogUtils;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.sigma.SigmaCompiler;
 import dev.jstech.computers.sigma.Diagnostic;
@@ -19,6 +20,7 @@ import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.Shape;
 import dev.jstech.computers.vm.program.Process;
 import dev.jstech.computers.vm.program.ProgramImage;
+import dev.jstech.computers.vm.program.SnapshotException;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.core.language.ILanguageProcess;
 import dev.jstech.core.language.IProgrammingLanguage;
@@ -30,6 +32,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 /**
  * Σ#, as the machines of the series know it.
@@ -46,6 +49,8 @@ public final class SigmaLanguage implements IProgrammingLanguage {
 
     private static final ResourceLocation ID =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "sigma");
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private SigmaLanguage() {
     }
@@ -169,8 +174,19 @@ public final class SigmaLanguage implements IProgrammingLanguage {
         if (program == null) {
             return null;
         }
-        return new SigmaProgram(Process.restore(program,
-                SnapshotTag.read(SigmaProgram.snapshotOf(saved)), new MachineHost(machine)));
+        try {
+            return new SigmaProgram(Process.restore(program,
+                    SnapshotTag.read(SigmaProgram.snapshotOf(saved)), new MachineHost(machine)));
+        } catch (final SnapshotException damaged) {
+            // One program that cannot come back is left out; the machine and the rest of its programs load.
+            LOGGER.warn("A saved program on the machine at {} was left out: {}", machine.getBlockPos(),
+                    damaged.getMessage());
+            return null;
+        } catch (final RuntimeException fault) {
+            LOGGER.error("A saved program on the machine at {} could not be brought back and was left out",
+                    machine.getBlockPos(), fault);
+            return null;
+        }
     }
 
     /** Reads a listing, or null when it is not one. */

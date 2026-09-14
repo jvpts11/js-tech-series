@@ -18,6 +18,11 @@ import java.util.Map;
  * <p>Every thing it had allocated is made first as an empty shell under its number, so two things that point at each
  * other can both be filled in afterwards; then its threads, locks, waiting calls, fields and the rest are put back
  * pointing at those shells.
+ *
+ * <p>Reading is strict. A snapshot of another format or taken from another listing, a number written down twice, a
+ * reference to nothing written down, a call in a method the listing does not have or past its end, and a wait, watch
+ * or state no snapshot writes each stop the reading with a {@link SnapshotException}: a program brought back from a
+ * save it does not match would carry on wrong, and nothing would say so.
  */
 final class ProcessSnapshotReader {
 
@@ -26,14 +31,24 @@ final class ProcessSnapshotReader {
 
     /** The process a snapshot wrote, for the program it was written from. */
     static Process read(final ProgramImage program, final Snapshot shot, final IHost host) {
+        if (shot.format() != Snapshot.FORMAT) {
+            throw new SnapshotException("the snapshot is of format " + shot.format() + ", and only format "
+                    + Snapshot.FORMAT + " is read");
+        }
+        if (!shot.listing().equals(program.checksum())) {
+            throw new SnapshotException("the snapshot was taken from another listing");
+        }
         final Snapshot.HeapShot heapShot = shot.heap();
         final Snapshot.IdentityShot identityShot = shot.identity();
+        final boolean halted = stateOf(identityShot.state()) == Process.State.HALTED;
         final Process process = new Process(program, heapShot.budget(), host, false);
         final ProgramIdentity identity = process.identity();
         identity.rename(identityShot.name());
         final Map<Integer, Object> byNumber = new LinkedHashMap<>();
         for (final Snapshot.IHeld written : heapShot.held()) {
-            byNumber.put(written.id(), shell(written));
+            if (byNumber.put(written.id(), shell(written)) != null) {
+                throw new SnapshotException("the number " + written.id() + " is written down twice");
+            }
         }
         /*
          * Handlers are settled before anything is filled in, because one cannot be changed after it is
@@ -58,13 +73,9 @@ final class ProcessSnapshotReader {
         for (final Snapshot.ThreadShot written : shot.threads().running()) {
             final ProgramThread thread = scheduler.restore(written.id());
             for (final Snapshot.FrameShot each : written.frames()) {
-                final Frame frame = thaw(program, each, byNumber);
-                if (frame != null) {
-                    thread.frames.push(frame);
-                }
+                thread.frames.push(thaw(program, each, byNumber));
             }
-            thread.wait = IWait.read(written.parked(), written.until(), value(written.on(), byNumber),
-                    written.onHost());
+            thread.wait = waitOf(written, byNumber);
             thread.restoreGivenUp(written.timedOut());
             if (value(written.token(), byNumber) instanceof Values.Obj token) {
                 thread.token = token;
@@ -74,18 +85,17 @@ final class ProcessSnapshotReader {
         final MonitorTable locks = process.locks();
         for (final Snapshot.MonitorShot written : shot.monitors()) {
             final Object target = value(written.target(), byNumber);
-            if (target != null) {
-                locks.restore(target, written.owner(), written.count());
+            if (target == null) {
+                throw new SnapshotException("a lock is held on nothing");
             }
+            locks.restore(target, written.owner(), written.count());
         }
         // The threads came back before the locks, so a thread waiting for a lock is queued for it only now.
         locks.requeue(scheduler.threads());
         final CallbackQueue callbacks = process.callbacks();
         for (final Snapshot.FrameShot written : shot.callbacks().waiting()) {
             final Frame frame = thaw(program, written, byNumber);
-            if (frame != null) {
-                callbacks.add(frame, process.weigh(frame));
-            }
+            callbacks.add(frame, process.weigh(frame));
         }
         for (final Map.Entry<String, Map<String, Snapshot.IValue>> entry : shot.statics().entrySet()) {
             final Values.Obj holder = process.fieldAccess().statics(entry.getKey());
@@ -97,25 +107,32 @@ final class ProcessSnapshotReader {
             process.restoreScript(script);
         }
         for (final Snapshot.WatchShot written : shot.watches()) {
-            if (value(written.handler(), byNumber) instanceof Values.DelegateValue handler
-                    && value(written.token(), byNumber) instanceof Values.Obj token) {
+            if (!(value(written.handler(), byNumber) instanceof Values.DelegateValue handler)) {
+                throw new SnapshotException("a watch on " + written.item() + " has no handler");
+            }
+            if (!(value(written.token(), byNumber) instanceof Values.Obj token)) {
+                throw new SnapshotException("a watch on " + written.item() + " has no token");
+            }
+            try {
                 process.watches().restore(written, handler, token);
+            } catch (final IllegalArgumentException unknown) {
+                throw new SnapshotException(unknown.getMessage());
             }
         }
         final Snapshot.ConsoleShot console = shot.console();
         process.library().restore(console.lines(), console.written(), console.random());
         process.input().restore(shot.input());
         callbacks.startFrom(shot.callbacks().dropped());
-        final boolean halted = Process.State.HALTED.serializedName().equals(identityShot.state());
         identity.restore(identityShot.args(), identityShot.machineId(), identityShot.spent(), identityShot.exited(),
                 identityShot.exitCode(), halted, identityShot.message().isEmpty() ? null : identityShot.message());
         // The windows the program had open come back open, with everything they were showing.
         final Snapshot.WindowsShot windowsShot = shot.windows();
         final ProgramWindows windows = process.windows0();
         for (final Snapshot.IValue written : windowsShot.open()) {
-            if (value(written, byNumber) instanceof Values.Obj window) {
-                windows.restoreOpen(window);
+            if (!(value(written, byNumber) instanceof Values.Obj window)) {
+                throw new SnapshotException("an open window is not an object");
             }
+            windows.restoreOpen(window);
         }
         windows.startFrom(windowsShot.nextWindow(), windowsShot.nextWidget());
         windows.restoreEnding(windowsShot.endWithWindows());
@@ -126,6 +143,25 @@ final class ProcessSnapshotReader {
                         ? listening : null,
                 listeners.gateway());
         return process;
+    }
+
+    /** The state a snapshot names, by the name each state is written under. */
+    private static Process.State stateOf(final String written) {
+        for (final Process.State state : Process.State.values()) {
+            if (state.serializedName().equals(written)) {
+                return state;
+            }
+        }
+        throw new SnapshotException("no process state is named '" + written + "'");
+    }
+
+    /** What a thread was waiting for, refusing a wait no snapshot writes. */
+    private static IWait waitOf(final Snapshot.ThreadShot written, final Map<Integer, Object> byNumber) {
+        try {
+            return IWait.read(written.parked(), written.until(), value(written.on(), byNumber), written.onHost());
+        } catch (final IllegalArgumentException unknown) {
+            throw new SnapshotException(unknown.getMessage());
+        }
     }
 
     private static Object shell(final Snapshot.IHeld written) {
@@ -171,14 +207,20 @@ final class ProcessSnapshotReader {
         }
     }
 
+    /** A call in progress put back, refusing one in a method the listing does not have or standing past its end. */
     private static Frame thaw(final ProgramImage program, final Snapshot.FrameShot written,
                               final Map<Integer, Object> byNumber) {
         final MethodImage method = found(program, written);
         if (method == null) {
-            return null;
+            throw new SnapshotException("a call in " + written.owner() + "." + written.name()
+                    + " has no method in this listing");
+        }
+        if (written.at() < 0 || written.at() > method.length() || written.slots().size() != method.slots()) {
+            throw new SnapshotException("a call in " + written.owner() + "." + written.name()
+                    + " does not fit its method");
         }
         final Frame frame = new Frame(method, value(written.self(), byNumber));
-        for (int i = 0; i < written.slots().size() && i < frame.slots.length; i++) {
+        for (int i = 0; i < written.slots().size(); i++) {
             frame.slots[i] = value(written.slots().get(i), byNumber);
         }
         for (final Snapshot.IValue held : written.stack()) {
@@ -220,7 +262,14 @@ final class ProcessSnapshotReader {
             case Snapshot.IValue.R8 number -> number.value();
             case Snapshot.IValue.Bool flag -> flag.value();
             case Snapshot.IValue.Ch letter -> letter.value();
-            case Snapshot.IValue.Ref reference -> byNumber.get(reference.id());
+            case Snapshot.IValue.Ref reference -> {
+                final Object found = byNumber.get(reference.id());
+                if (found == null) {
+                    throw new SnapshotException("a reference to the number " + reference.id()
+                            + ", under which nothing is written down");
+                }
+                yield found;
+            }
         };
     }
 }

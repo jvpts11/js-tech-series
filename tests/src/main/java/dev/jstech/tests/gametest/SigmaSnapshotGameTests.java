@@ -7,9 +7,11 @@
  */
 package dev.jstech.tests.gametest;
 
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.machine.SigmaLanguage;
+import dev.jstech.computers.machine.SnapshotTag;
 import dev.jstech.computers.sigma.SigmaCompiler;
 import dev.jstech.computers.sigma.SourceFile;
-import dev.jstech.computers.machine.SnapshotTag;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
@@ -17,12 +19,17 @@ import dev.jstech.computers.vm.program.IHost;
 import dev.jstech.computers.vm.program.Process;
 import dev.jstech.computers.vm.program.ProgramImage;
 import dev.jstech.computers.vm.program.Snapshot;
+import dev.jstech.computers.vm.program.SnapshotException;
+import dev.jstech.core.language.ILanguageProcess;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -48,7 +55,8 @@ public final class SigmaSnapshotGameTests {
 
     private static final int PATIENCE = 4000;
 
-    private static ProgramImage load(final String body) {
+    /** The listing a script whose tick runs {@code body} compiles to. */
+    private static String listing(final String body) {
         final String source = "using System.*; using System.IO.*; using System.Collections.*; using System.Utils.*; "
                 + "using System.Machine.*; using System.Network.*; using System.Operations.*; namespace Programs; "
                 + "class Monitor : IScript {\n"
@@ -60,13 +68,24 @@ public final class SigmaSnapshotGameTests {
         if (!built.ok()) {
             throw new IllegalStateException(String.join("\n", built.lines()));
         }
-        final AsmReader reader = new AsmReader(built.assembly());
+        return built.assembly();
+    }
+
+    private static ProgramImage load(final String body) {
+        final AsmReader reader = new AsmReader(listing(body));
         final AsmProgram program = reader.read();
         if (reader.hasProblems()) {
             throw new IllegalStateException(String.join("\n",
                     reader.problems().stream().map(ListingProblem::format).toList()));
         }
         return ProgramImage.of(program);
+    }
+
+    /** A program begun on its tick and not yet run, already holding its script object. */
+    private static Process started(final ProgramImage program) {
+        final Process process = new Process(program, ROOM, IHost.still());
+        process.begin(process.create(program.entryPoint()), "OnTick");
+        return process;
     }
 
     private static Process straight(final ProgramImage program) {
@@ -137,7 +156,7 @@ public final class SigmaSnapshotGameTests {
 
     @GameTest(template = ARENA)
     public static void snapshotTag_bringsBackEveryKindItWroteDown(final GameTestHelper helper) {
-        final Snapshot written = new Snapshot(
+        final Snapshot written = new Snapshot(Snapshot.FORMAT, "a listing's checksum",
                 new Snapshot.HeapShot(4096, List.of(new Snapshot.IHeld.Text(0, 26, 3, false, "hello"),
                         new Snapshot.IHeld.Object(1, 24, 4, false, "Tally",
                                 Map.of("count", new Snapshot.IValue.I4(7))),
@@ -174,6 +193,49 @@ public final class SigmaSnapshotGameTests {
                 new Snapshot.IValue.Ref(1));
         final Snapshot read = SnapshotTag.read(SnapshotTag.write(written));
         helper.assertTrue(read.equals(written), "what came back out of the tag is what went in; got " + read);
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void snapshotTag_refusesAKindNoSnapshotWrites(final GameTestHelper helper) {
+        final CompoundTag tag = SnapshotTag.write(started(load("        Console.PrintLine(\"hello\");")).save());
+        tag.getList("held", Tag.TAG_COMPOUND).getCompound(0).putString("kind", "gizmo");
+        try {
+            SnapshotTag.read(tag);
+            helper.fail("a held thing of a kind no snapshot writes was read back");
+        } catch (final SnapshotException refused) {
+            helper.succeed();
+        }
+    }
+
+    @GameTest(template = ARENA)
+    public static void snapshotTag_refusesASaveOfAnotherFormat(final GameTestHelper helper) {
+        final CompoundTag tag = SnapshotTag.write(started(load("        Console.PrintLine(\"hello\");")).save());
+        tag.putInt("format", 0);
+        try {
+            SnapshotTag.read(tag);
+            helper.fail("a save of another format was read back");
+        } catch (final SnapshotException refused) {
+            helper.succeed();
+        }
+    }
+
+    @GameTest(template = ARENA)
+    public static void sigmaLanguage_leavesOutAProgramSavedFromAnotherListing(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        final String kept = listing("        Console.PrintLine(\"kept\");");
+        final ILanguageProcess running = SigmaLanguage.INSTANCE.start(kept, ROOM, computer);
+        helper.assertTrue(running != null, "the program starts");
+        final CompoundTag saved = new CompoundTag();
+        running.save(saved);
+
+        helper.assertTrue(SigmaLanguage.INSTANCE.restore(kept, saved, computer) != null,
+                "a program saved whole comes back");
+        final String changed = listing("        Console.PrintLine(\"changed\");");
+        helper.assertTrue(SigmaLanguage.INSTANCE.restore(changed, saved, computer) == null,
+                "a program saved from a listing that has changed since is left out, and nothing is thrown");
         helper.succeed();
     }
 }

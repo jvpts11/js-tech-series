@@ -9,6 +9,7 @@ package dev.jstech.computers.vm.program;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.sigma.SigmaCompiler;
@@ -70,5 +71,24 @@ class ProcessSnapshotWriterTest {
 
         assertEquals(2, references.size(), () -> String.valueOf(shot.threads()));
         assertEquals(references.get(0), references.get(1));
+    }
+
+    @Test
+    void write_namesItsFormatAndTheListingItWasTakenFrom() {
+        final Snapshot shot = ProcessSnapshotWriter.write(running());
+
+        assertEquals(Snapshot.FORMAT, shot.format());
+        assertEquals(PROGRAM.checksum(), shot.listing());
+    }
+
+    @Test
+    void write_refusesAThingTheProgramHoldsThatIsNotOnItsHeap() {
+        final Process process = running();
+        process.restoreScript(new Values.Obj("Tests.Loose"));
+
+        final SnapshotException refused = assertThrows(SnapshotException.class,
+                () -> ProcessSnapshotWriter.write(process));
+
+        assertEquals("the program holds a value that is not on its heap (Obj)", refused.getMessage());
     }
 }

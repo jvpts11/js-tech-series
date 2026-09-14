@@ -24,13 +24,21 @@ import java.util.Map;
  * its own, and whatever writes it to a save file is a thin layer over records that already hold the
  * whole truth. References between allocated things become numbers, because two objects can point at
  * each other and a tree cannot say that.
+ *
+ * <p>A snapshot names the format it is written in and the listing it was taken from, by a checksum of that
+ * listing's text. A save of any other format is not read back, and neither is one taken from a listing that has
+ * changed since, because its calls in progress would point into a program that is no longer there.
  */
-public record Snapshot(HeapShot heap, IdentityShot identity, ConsoleShot console, List<String> input,
-                       CallbacksShot callbacks, WindowsShot windows, List<WatchShot> watches,
+public record Snapshot(int format, String listing, HeapShot heap, IdentityShot identity, ConsoleShot console,
+                       List<String> input, CallbacksShot callbacks, WindowsShot windows, List<WatchShot> watches,
                        ListenersShot listeners, ThreadsShot threads, List<MonitorShot> monitors,
                        Map<String, Map<String, IValue>> statics, IValue script) {
 
+    /** The format this runtime writes, and the only one it reads back: an older save is never migrated. */
+    public static final int FORMAT = 1;
+
     public Snapshot {
+        listing = listing == null ? "" : listing;
         input = input == null ? List.of() : List.copyOf(input);
         watches = List.copyOf(watches);
         monitors = List.copyOf(monitors);

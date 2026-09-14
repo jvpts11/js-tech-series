@@ -9,6 +9,7 @@ package dev.jstech.computers.vm.program;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
@@ -146,5 +147,17 @@ class ProgramImageTest {
         assertEquals("Tests.First", image.method("Tests.Second", "Only", List.of()).owner());
         assertTrue(image.isA("Tests.First", "Tests.Second"));
         assertTrue(image.isA("Tests.Second", "Tests.First"));
+    }
+
+    @Test
+    void checksum_staysWithTheListingAndChangesWhenTheListingDoes() {
+        final AsmProgram other = new AsmProgram();
+        final AsmType lone = new AsmType(AsmType.Kind.CLASS, "Tests.Lone");
+        lone.addMethod(body("Only", List.of(), false));
+        other.addType(lone);
+
+        assertEquals(shapes().checksum(), shapes().checksum());
+        assertNotEquals(shapes().checksum(), ProgramImage.of(other).checksum());
+        assertEquals(64, shapes().checksum().length(), "a SHA-256 written as hex");
     }
 }

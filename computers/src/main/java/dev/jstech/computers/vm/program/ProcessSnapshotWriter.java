@@ -21,6 +21,10 @@ import java.util.Map;
  * <p>Two names for one object come back as two names for one object, because everything still held, and anything
  * freed that something written still reaches, is written under a number and every reference is written as that
  * number.
+ *
+ * <p>Everything a program can hold is on its heap, so a thing it holds that is not has no number to be written under.
+ * Writing stops there with a {@link SnapshotException} rather than writing it as nothing, which would bring the
+ * program back quietly wrong.
  */
 final class ProcessSnapshotWriter {
 
@@ -68,7 +72,7 @@ final class ProcessSnapshotWriter {
         }
         final ProgramIdentity identity = process.identity();
         final Library library = process.library();
-        return new Snapshot(
+        return new Snapshot(Snapshot.FORMAT, process.program().checksum(),
                 new Snapshot.HeapShot(heap.budget(), held),
                 new Snapshot.IdentityShot(process.state().serializedName(),
                         identity.message() == null ? "" : identity.message(), identity.spent(), identity.name(),
@@ -108,7 +112,10 @@ final class ProcessSnapshotWriter {
                     values(new ArrayList<>(map.entries().keySet()), numbers),
                     values(new ArrayList<>(map.entries().values()), numbers));
         }
-        final Values.DelegateValue delegate = (Values.DelegateValue) thing;
+        if (!(thing instanceof Values.DelegateValue delegate)) {
+            throw new SnapshotException("the heap holds a value no snapshot writes ("
+                    + thing.getClass().getSimpleName() + ")");
+        }
         final List<Snapshot.BoundShot> chain = new ArrayList<>();
         for (final Values.Bound bound : delegate.chain()) {
             chain.add(new Snapshot.BoundShot(value(bound.target(), numbers), bound.owner(),
@@ -167,7 +174,11 @@ final class ProcessSnapshotWriter {
             case Character letter -> new Snapshot.IValue.Ch(letter);
             default -> {
                 final Integer number = numbers.numberOf(thing);
-                yield number == null ? new Snapshot.IValue.Nothing() : new Snapshot.IValue.Ref(number);
+                if (number == null) {
+                    throw new SnapshotException("the program holds a value that is not on its heap ("
+                            + thing.getClass().getSimpleName() + ")");
+                }
+                yield new Snapshot.IValue.Ref(number);
             }
         };
     }

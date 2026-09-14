@@ -10,11 +10,16 @@ package dev.jstech.computers.vm.program;
 import dev.jstech.computers.vm.listing.AsmMethod;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmType;
+import dev.jstech.computers.vm.listing.AsmWriter;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Shape;
 import dev.jstech.computers.vm.system.IntrinsicRegistry;
 import dev.jstech.computers.vm.system.IntrinsicSpec;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,11 +74,14 @@ public final class ProgramImage {
     private final IntrinsicRegistry registry;
     private final String entryPoint;
     private final Shape shape;
+    /** A checksum of the listing's text, so a snapshot can tell the listing it was taken from. */
+    private final String checksum;
 
     private ProgramImage(final AsmProgram program, final IntrinsicRegistry registry) {
         this.registry = registry;
         this.entryPoint = program.entryPoint();
         this.shape = program.shape();
+        this.checksum = checksumOf(AsmWriter.write(program));
         for (final AsmType type : program.types()) {
             this.types.put(type.name(), new TypeImage(type, this.signatures));
         }
@@ -111,6 +119,24 @@ public final class ProgramImage {
     /** Whether this is a program that runs at a terminal or one that stays up. */
     public Shape shape() {
         return this.shape;
+    }
+
+    /**
+     * A checksum of the listing, taken over the text it is written as, so two loads of one listing agree and a listing
+     * compiled again from a changed source does not.
+     */
+    public String checksum() {
+        return this.checksum;
+    }
+
+    private static String checksumOf(final String text) {
+        try {
+            final byte[] digest = MessageDigest.getInstance("SHA-256").digest(text.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(digest);
+        } catch (final NoSuchAlgorithmException missing) {
+            // Every Java runtime has to offer SHA-256, so this can only be a runtime that is not one.
+            throw new IllegalStateException("this Java runtime offers no SHA-256", missing);
+        }
     }
 
     /** Every type the program declares. */

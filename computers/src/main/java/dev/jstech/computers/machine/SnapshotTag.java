@@ -8,6 +8,7 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.vm.program.Snapshot;
+import dev.jstech.computers.vm.program.SnapshotException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,6 +28,9 @@ import net.minecraft.nbt.Tag;
  * <p>Every kind is written with its name beside it rather than guessed from the shape of what was
  * stored, because a whole number and a truth value look alike once written and a process that came
  * back with one in place of the other would be wrong in a way nothing would catch.
+ *
+ * <p>Reading is strict for the same reason: a save of another format, or holding a kind no snapshot writes, is
+ * refused with a {@link SnapshotException} rather than read as something else.
  */
 public final class SnapshotTag {
 
@@ -94,6 +98,8 @@ public final class SnapshotTag {
     private static final String NEXT_WINDOW = "nextWindow";
     private static final String NEXT_WIDGET = "nextWidget";
     private static final String END_WITH_WINDOWS = "endWithWindows";
+    private static final String FORMAT = "format";
+    private static final String LISTING = "listing";
 
     private SnapshotTag() {
     }
@@ -101,6 +107,8 @@ public final class SnapshotTag {
     /** Writes a frozen process down. */
     public static CompoundTag write(final Snapshot shot) {
         final CompoundTag tag = new CompoundTag();
+        tag.putInt(FORMAT, shot.format());
+        tag.putString(LISTING, shot.listing());
         tag.putLong(BUDGET, shot.heap().budget());
         final ListTag held = new ListTag();
         for (final Snapshot.IHeld one : shot.heap().held()) {
@@ -186,8 +194,13 @@ public final class SnapshotTag {
         return tag;
     }
 
-    /** Reads one back. */
+    /** Reads one back, refusing a save of another format or one holding a kind no snapshot writes. */
     public static Snapshot read(final CompoundTag tag) {
+        final int format = tag.getInt(FORMAT);
+        if (format != Snapshot.FORMAT) {
+            throw new SnapshotException("the saved program is of format " + format + ", and only format "
+                    + Snapshot.FORMAT + " is read");
+        }
         final List<Snapshot.IHeld> held = new ArrayList<>();
         final ListTag written = tag.getList(HELD, Tag.TAG_COMPOUND);
         for (int i = 0; i < written.size(); i++) {
@@ -229,7 +242,7 @@ public final class SnapshotTag {
             monitors.add(new Snapshot.MonitorShot(readValue(each.getCompound(TARGET)), each.getInt(OWNER),
                     each.getInt(COUNT)));
         }
-        return new Snapshot(
+        return new Snapshot(format, tag.getString(LISTING),
                 new Snapshot.HeapShot(tag.getLong(BUDGET), held),
                 new Snapshot.IdentityShot(tag.getString(STATE), tag.getString(MESSAGE), tag.getLong(SPENT),
                         tag.getString(PROGRAM_NAME), readNames(tag.getList(ARGS, Tag.TAG_STRING)),
@@ -315,7 +328,7 @@ public final class SnapshotTag {
             case "map" -> new Snapshot.IHeld.Keyed(id, bytes, line, freed,
                     readValues(tag.getList(KEYS, Tag.TAG_COMPOUND)),
                     readValues(tag.getList(VALUES, Tag.TAG_COMPOUND)));
-            default -> {
+            case "handler" -> {
                 final List<Snapshot.BoundShot> chain = new ArrayList<>();
                 final ListTag written = tag.getList(CHAIN, Tag.TAG_COMPOUND);
                 for (int i = 0; i < written.size(); i++) {
@@ -327,6 +340,8 @@ public final class SnapshotTag {
                 }
                 yield new Snapshot.IHeld.Handler(id, bytes, line, freed, tag.getString(TYPE), chain);
             }
+            default -> throw new SnapshotException("no snapshot writes a held thing of kind '"
+                    + tag.getString(KIND) + "'");
         };
     }
 
@@ -408,7 +423,9 @@ public final class SnapshotTag {
             case "bool" -> new Snapshot.IValue.Bool(tag.getBoolean(VALUE));
             case "char" -> new Snapshot.IValue.Ch((char) tag.getInt(VALUE));
             case "ref" -> new Snapshot.IValue.Ref(tag.getInt(VALUE));
-            default -> new Snapshot.IValue.Nothing();
+            case "none" -> new Snapshot.IValue.Nothing();
+            default -> throw new SnapshotException("no snapshot writes a value of kind '"
+                    + tag.getString(KIND) + "'");
         };
     }
 
