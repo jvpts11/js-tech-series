@@ -79,13 +79,16 @@ public final class ServerTickDeadline {
             this.starvedNow = gone;
             this.starvedNow.clear();
         }
-        final GlobalPos key = GlobalPos.of(dimension, at.immutable());
         final long own = now + this.machineNanos.getAsLong();
-        if (this.starvedBefore.remove(key)) {
+        /*
+         * Only a machine the server had no time for last tick is in this set, and on most ticks nobody is: the key is
+         * built only when there is someone to find, or someone to note down.
+         */
+        if (!this.starvedBefore.isEmpty() && this.starvedBefore.remove(GlobalPos.of(dimension, at.immutable()))) {
             return own;
         }
         if (now >= this.serverDeadline) {
-            this.starvedNow.add(key);
+            this.starvedNow.add(GlobalPos.of(dimension, at.immutable()));
             return NONE;
         }
         return Math.min(own, this.serverDeadline);
