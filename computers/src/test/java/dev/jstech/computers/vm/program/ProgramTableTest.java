@@ -99,4 +99,19 @@ class ProgramTableTest {
         assertEquals(1, running.size());
         assertThrows(UnsupportedOperationException.class, running::clear);
     }
+
+    @Test
+    void takeId_wrapsPastTheLargestNumberAndPassesOverNumbersStillHeld() {
+        final ProgramTable<Quiet> table = new ProgramTable<>();
+        table.restart(Integer.MAX_VALUE);
+        final ProgramEntry<Quiet> last = entry(table, "last", 1);
+        table.add(last);
+        table.add(new ProgramEntry<>(1, "first.asm", "", 1, new Quiet("first"), IProgramParent.NONE, List.of(),
+                ProgramPriority.MEDIUM));
+
+        final int next = table.takeId();
+
+        assertEquals(Integer.MAX_VALUE, last.id());
+        assertEquals(2, next, "past the largest number it wraps to one, which is still held, and takes two");
+    }
 }

@@ -98,6 +98,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   holding it from loading at all.
 - A program holding something its save cannot write is left out of the save, with a line in the server log, instead
   of being saved with that part silently empty.
+- A machine that has started more than two billion programs numbers the next one from 1 again, passing over numbers
+  still in use. The next program used to get a number below zero and be reported as not started while it ran.
 
 ## [0.3.0a] - 2026-09-13 - The Programming Update
 

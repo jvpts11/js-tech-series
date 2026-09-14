@@ -27,9 +27,17 @@ public final class ProgramTable<R extends IProgramRuntime> {
     private final Collection<ProgramEntry<R>> running = Collections.unmodifiableCollection(this.entries.values());
     private int next = 1;
 
-    /** Takes the number the next program is listed under. */
+    /**
+     * Takes the number the next program is listed under. Numbers count up, wrap past the largest back to one, and pass
+     * over any number a program still running holds, so no two programs share one and none is ever below one.
+     */
     public int takeId() {
-        return this.next++;
+        int id = this.next;
+        while (this.entries.containsKey(id)) {
+            id = id == Integer.MAX_VALUE ? 1 : id + 1;
+        }
+        this.next = id == Integer.MAX_VALUE ? 1 : id + 1;
+        return id;
     }
 
     /** Lists a program under its number, after every program already listed. */
