@@ -49,9 +49,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   their own, each of its threads holds what it is waiting for as one value, every change to a window or a widget
   goes through one place, a window marks each change to what it shows and a canvas each time it is cleared, and
   its heap takes in whatever the machine hands the program and checks what the program reaches into; a machine
-  keeps the programs it runs in a table of its own, which knows no language, starts every one of them in one place
-  and keeps which of them is in front of its terminal apart from the rest; every source file's header names the mod
-  it belongs to.
+  keeps the programs it runs in a table of its own, which knows no language, starts every one of them in one place,
+  keeps which of them is in front of its terminal apart from the rest and looks up what its programs watch only when
+  one of them watches something; every source file's header names the mod it belongs to.
 
 ### Fixed
 - Cutting the last data cable between a Mainframe and the rest of its network now takes the network away

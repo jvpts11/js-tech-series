@@ -1131,6 +1131,13 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     private final dev.jstech.computers.vm.program.IHost sigmaHost =
             new dev.jstech.computers.machine.MachineHost(this);
 
+    /** What the network holds of an item, as the programs' tick asks it; made once, not on every tick. */
+    private final java.util.function.ToLongFunction<String> stockLookup = this::networkStock;
+
+    /** Whether a program on another machine still waits, as the programs' tick asks it; made once, not per tick. */
+    private final java.util.function.Predicate<dev.jstech.computers.vm.program.IProgramParent.Remote> parentWaiting =
+            this::remoteParentWaiting;
+
     /** The Σ# programs this machine is running. */
     public dev.jstech.computers.machine.MachinePrograms programs() {
         return programs;
@@ -1210,7 +1217,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         final long deadline = level instanceof ServerLevel server
                 ? dev.jstech.computers.machine.ServerTickDeadline.shared().claim(server, worldPosition)
                 : Long.MAX_VALUE;
-        programs.tick(sigmaCredits(), deadline, this::networkStock, this::remoteParentWaiting);
+        programs.tick(sigmaCredits(), deadline, stockLookup, parentWaiting);
         if (level instanceof ServerLevel server) {
             pushSigmaOutput(server);
             pushWindows(server);

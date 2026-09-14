@@ -96,6 +96,8 @@ final class ProgramWatches {
     private final List<Watch> watches = new ArrayList<>();
     /** Each thing watched, once, in the order the watches kept first name it. */
     private final Set<String> items = new LinkedHashSet<>();
+    /** What {@link #watching} hands out until the things watched change; null when it has to be made again. */
+    private List<String> named = List.of();
     private int nextId = 1;
 
     /** The number the next watch set is known by. */
@@ -108,11 +110,19 @@ final class ProgramWatches {
              final Values.DelegateValue handler, final Values.Obj token) {
         this.watches.add(new Watch(this.nextId++, item, kind, threshold, handler, token));
         this.items.add(item);
+        this.named = null;
     }
 
-    /** Everything being watched, each once, in the order the watches kept first name it. */
+    /**
+     * Everything being watched, each once, in the order the watches kept first name it.
+     *
+     * <p>The machine asks on every tick, so the same unmodifiable list is handed out until a watch is set or dropped.
+     */
     List<String> watching() {
-        return new ArrayList<>(this.items);
+        if (this.named == null) {
+            this.named = List.copyOf(this.items);
+        }
+        return this.named;
     }
 
     /** The watches kept, in the order they were set, for the save. */
@@ -131,6 +141,7 @@ final class ProgramWatches {
     void deliver(final Map<String, Long> totals, final Predicate<Values.Obj> freed, final IFired fired) {
         if (this.watches.removeIf(watch -> freed.test(watch.token))) {
             this.items.clear();
+            this.named = null;
             for (final Watch watch : this.watches) {
                 this.items.add(watch.item);
             }
@@ -159,6 +170,7 @@ final class ProgramWatches {
         watch.seen = written.seen();
         this.watches.add(watch);
         this.items.add(watch.item);
+        this.named = null;
         this.nextId = Math.max(this.nextId, written.id() + 1);
     }
 
