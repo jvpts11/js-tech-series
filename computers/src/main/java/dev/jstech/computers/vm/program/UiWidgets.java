@@ -16,7 +16,8 @@ import java.util.List;
  * program holds and is written down and brought back with it. What it holds is what it is: a label holds
  * its text, a row holds its widgets and their weights, a canvas holds the drawing asked for. Nothing here
  * knows how wide a letter is or what a button looks like: where things land is worked out where they are
- * drawn, by the machine's own system, and this is only what the program said.
+ * drawn, by the machine's own system, and this is only what the program said. Changing one goes through
+ * {@link UiMutator}.
  */
 public final class UiWidgets {
 
@@ -164,146 +165,6 @@ public final class UiWidgets {
         return Heap.HEADER + (long) Heap.REFERENCE * widget.all().size();
     }
 
-    /**
-     * Answers a call on one of them, giving back what the call gives back or null.
-     *
-     * <p>Opening and closing a window are not here: those reach the machine, and the runtime makes them.
-     */
-    public static Object call(final Values.Obj self, final String member, final List<Object> arguments,
-                              final int line) {
-        return switch (self.type()) {
-            case ROW, COLUMN -> box(self, member, arguments, line);
-            case LIST_BOX -> list(self, member, arguments, line);
-            case CANVAS -> canvas(self, member, arguments, line);
-            case WINDOW -> window(self, member, arguments, line);
-            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, self.type() + " has no " + member);
-        };
-    }
-
-    private static Object window(final Values.Obj self, final String member, final List<Object> arguments,
-                                 final int line) {
-        if (!"Add".equals(member) || arguments.size() < 5) {
-            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, WINDOW + " has no " + member);
-        }
-        final Values.ListValue placed = listOf(self, PLACED, line);
-        if (placed.items().size() >= MOST_WIDGETS) {
-            throw new Halt(Halt.Reason.OUT_OF_RANGE, line,
-                    "a window holds at most " + MOST_WIDGETS + " widgets");
-        }
-        final Values.Obj where = new Values.Obj(PLACE);
-        where.set("Widget", widget(arguments.getFirst(), line));
-        where.set("X", Numbers.toInt(arguments.get(1)));
-        where.set("Y", Numbers.toInt(arguments.get(2)));
-        where.set(WIDTH, Numbers.toInt(arguments.get(3)));
-        where.set(HEIGHT, Numbers.toInt(arguments.get(4)));
-        placed.items().add(where);
-        return null;
-    }
-
-    private static Object box(final Values.Obj self, final String member, final List<Object> arguments,
-                              final int line) {
-        final Values.ListValue children = listOf(self, CHILDREN, line);
-        final Values.ListValue weights = listOf(self, WEIGHTS, line);
-        switch (member) {
-            case "Add" -> {
-                if (children.items().size() >= MOST_WIDGETS) {
-                    throw new Halt(Halt.Reason.OUT_OF_RANGE, line,
-                            "a row or a column holds at most " + MOST_WIDGETS + " widgets");
-                }
-                children.items().add(widget(arguments.isEmpty() ? null : arguments.getFirst(), line));
-                weights.items().add(arguments.size() > 1 ? Math.max(0, Numbers.toInt(arguments.get(1))) : 0);
-            }
-            case "Clear" -> {
-                children.items().clear();
-                weights.items().clear();
-            }
-            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, self.type() + " has no " + member);
-        }
-        return null;
-    }
-
-    private static Object list(final Values.Obj self, final String member, final List<Object> arguments,
-                               final int line) {
-        final Values.ListValue items = listOf(self, ITEMS, line);
-        final Values.ListValue rights = listOf(self, RIGHTS, line);
-        switch (member) {
-            case "Add" -> {
-                if (items.items().size() >= MOST_ROWS) {
-                    throw new Halt(Halt.Reason.OUT_OF_RANGE, line, "a list holds at most " + MOST_ROWS + " rows");
-                }
-                items.items().add(text(arguments, 0, ""));
-                rights.items().add(text(arguments, 1, ""));
-            }
-            case "Clear" -> {
-                items.items().clear();
-                rights.items().clear();
-                self.set(SELECTED, 0);
-            }
-            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, LIST_BOX + " has no " + member);
-        }
-        self.set(COUNT, items.items().size());
-        return null;
-    }
-
-    /*
-     * What a canvas is asked to draw is kept as it was asked, a stroke at a time, and drawn again
-     * whenever the window is: a picture is what the program said, not pixels the machine has to keep.
-     */
-    private static Object canvas(final Values.Obj self, final String member, final List<Object> arguments,
-                                 final int line) {
-        final Values.ListValue drawing = listOf(self, DRAWING, line);
-        if ("Clear".equals(member)) {
-            drawing.items().clear();
-            final Values.Obj stroke = new Values.Obj("Stroke");
-            stroke.set("Kind", "Clear");
-            stroke.set("Colour", Numbers.toInt(arguments.isEmpty() ? 0 : arguments.getFirst()));
-            drawing.items().add(stroke);
-            return null;
-        }
-        if (drawing.items().size() >= MOST_STROKES) {
-            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, "a canvas holds at most " + MOST_STROKES + " strokes");
-        }
-        final Values.Obj stroke = new Values.Obj("Stroke");
-        stroke.set("Kind", member);
-        switch (member) {
-            case "FillRect", "DrawLine" -> {
-                stroke.set("X", Numbers.toInt(arguments.get(0)));
-                stroke.set("Y", Numbers.toInt(arguments.get(1)));
-                stroke.set("X2", Numbers.toInt(arguments.get(2)));
-                stroke.set("Y2", Numbers.toInt(arguments.get(3)));
-                stroke.set("Colour", Numbers.toInt(arguments.get(4)));
-            }
-            case "DrawText" -> {
-                stroke.set(TEXT, text(arguments, 0, ""));
-                stroke.set("X", Numbers.toInt(arguments.get(1)));
-                stroke.set("Y", Numbers.toInt(arguments.get(2)));
-                stroke.set("Colour", Numbers.toInt(arguments.get(3)));
-            }
-            case "SetPixel" -> {
-                stroke.set("X", Numbers.toInt(arguments.get(0)));
-                stroke.set("Y", Numbers.toInt(arguments.get(1)));
-                stroke.set("Colour", Numbers.toInt(arguments.get(2)));
-            }
-            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, CANVAS + " has no " + member);
-        }
-        drawing.items().add(stroke);
-        return null;
-    }
-
-    /** What a program writes on a widget, kept as the widget holds it. */
-    public static void write(final Values.Obj self, final String name, final Object value, final int line) {
-        final int most = WIDTH.equals(name) ? MOST_WIDE : MOST_TALL;
-        switch (name) {
-            // A window has a size of its own; a widget asking for none takes whatever it needs.
-            case WIDTH, HEIGHT -> self.set(name, WINDOW.equals(self.type())
-                    ? Math.clamp(Numbers.toInt(value), LEAST_SIDE, most) : side(Numbers.toInt(value), most));
-            case CONTENT -> self.set(CONTENT, value == null ? null : widget(value, line));
-            case OPEN, ID, COUNT, PLACED, CHILDREN, WEIGHTS, ITEMS, RIGHTS, DRAWING ->
-                    throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, name + " is not a program's to write");
-            default -> self.set(name, value);
-        }
-    }
-
     /** The widget of that number inside a window, or null when the window holds no such widget. */
     public static Values.Obj widgetOf(final Values.Obj window, final long id) {
         for (final Values.Obj widget : inside(window)) {
@@ -344,62 +205,33 @@ public final class UiWidgets {
         }
     }
 
-    /**
-     * Takes what a player did to a widget: the widget is changed the way they changed it, and the name
-     * of the handler to tell comes back, or null when that is not something the widget answers.
-     */
-    public static String accept(final Values.Obj widget, final String kind, final List<Object> values) {
-        final Object first = values.isEmpty() ? null : values.getFirst();
-        return switch (widget.type() + "/" + kind) {
-            case BUTTON + "/click" -> "OnClick";
-            case TEXT_BOX + "/text", TEXT_BOX + "/submit" -> {
-                widget.set(TEXT, first == null ? "" : String.valueOf(first));
-                yield "text".equals(kind) ? "OnChange" : "OnSubmit";
-            }
-            case CHECK_BOX + "/toggle" -> {
-                widget.set(CHECKED, Boolean.TRUE.equals(first));
-                yield "OnToggle";
-            }
-            case LIST_BOX + "/select" -> {
-                widget.set(SELECTED, Math.max(0, Numbers.toInt(first)));
-                yield "OnSelect";
-            }
-            case CANVAS + "/click" -> {
-                widget.set(CLICK_X, Numbers.toInt(first));
-                widget.set(CLICK_Y, values.size() > 1 ? Numbers.toInt(values.get(1)) : 0);
-                yield "OnClick";
-            }
-            default -> null;
-        };
-    }
-
     /** The widget a value is, or a halt saying it is not one. */
-    private static Values.Obj widget(final Object value, final int line) {
+    static Values.Obj widget(final Object value, final int line) {
         if (value instanceof Values.Obj object && isWidget(object.type())) {
             return object;
         }
         throw new Halt(Halt.Reason.NO_OBJECT, line, "this is not a widget to put in a window");
     }
 
-    private static Values.ListValue listOf(final Values.Obj self, final String name, final int line) {
+    static Values.ListValue listOf(final Values.Obj self, final String name, final int line) {
         if (self.get(name) instanceof Values.ListValue list) {
             return list;
         }
         throw new Halt(Halt.Reason.NO_OBJECT, line, "this " + self.type() + " has no " + name);
     }
 
-    private static String text(final List<Object> arguments, final int index, final String fallback) {
+    static String text(final List<Object> arguments, final int index, final String fallback) {
         return arguments.size() > index && arguments.get(index) != null
                 ? String.valueOf(arguments.get(index)) : fallback;
     }
 
-    private static int whole(final List<Object> arguments, final int index, final int fallback) {
+    static int whole(final List<Object> arguments, final int index, final int fallback) {
         return arguments.size() > index && arguments.get(index) instanceof Number number
                 ? number.intValue() : fallback;
     }
 
     /** A size the machine can draw: nothing means whatever it needs, and nothing is past what fits. */
-    private static int side(final int asked, final int most) {
+    static int side(final int asked, final int most) {
         if (asked <= 0) {
             return 0;
         }

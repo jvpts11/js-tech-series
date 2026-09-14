@@ -1025,7 +1025,7 @@ public final class Process {
         if (found == null || !Boolean.TRUE.equals(found.get(UiWidgets.ENABLED))) {
             return false;
         }
-        final String handler = UiWidgets.accept(found, kind, values);
+        final String handler = this.library.ui().accept(found, kind, values);
         if (handler == null) {
             return false;
         }

@@ -236,7 +236,7 @@ public final class Library {
             }
         }
         this.owe(CannonCosts.DRAW);
-        return UiWidgets.call(object, named.name(), arguments, line);
+        return this.ui.call(object, named.name(), arguments, line);
     }
 
     /**
@@ -270,7 +270,7 @@ public final class Library {
     /** What a program writes on a widget, which the machine has to draw again. */
     public void uiWrite(final Values.Obj widget, final String name, final Object value, final int line) {
         this.owe(CannonCosts.DRAW);
-        UiWidgets.write(widget, name, value, line);
+        this.ui.write(widget, name, value, line);
     }
 
     private void open(final Values.Obj window, final int line) {
@@ -292,6 +292,14 @@ public final class Library {
 
     private static String second(final List<Object> arguments) {
         return arguments.size() < 2 ? "" : String.valueOf(arguments.get(1));
+    }
+
+    /** The one door every change to a window or a widget goes through. */
+    private final UiMutator ui = new UiMutator();
+
+    /** The same door, for what a player does to a widget. */
+    UiMutator ui() {
+        return this.ui;
     }
 
     /** The process this library serves, for the few calls that are about the program rather than the world. */
