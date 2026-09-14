@@ -19,14 +19,36 @@ final class ProgramThread {
     /** What the thread is waiting for; it is given budget only while this is an {@link IWait.None}. */
     IWait wait = IWait.NONE;
     /**
-     * Set when a timed join or wait on another program gave up, so the call that waited, asked again, answers that
-     * it gave up. It is the answer of a wait that is over, not a wait.
+     * Whether the last timed join or wait on another program gave up, which the call that waited answers when it is
+     * asked again. It is the answer of a wait that is over, not a wait, so it is kept apart from {@link #wait}.
      */
-    boolean timedOut;
+    private boolean timedOut;
     boolean yielded;
 
     ProgramThread(final int id) {
         this.id = id;
+    }
+
+    /** A timed wait ran out before what it waited for came. */
+    void gaveUp() {
+        this.timedOut = true;
+    }
+
+    /** Whether the last timed wait gave up; once asked, it is forgotten, so the answer is given only once. */
+    boolean takeGaveUp() {
+        final boolean was = this.timedOut;
+        this.timedOut = false;
+        return was;
+    }
+
+    /** Whether a timed wait gave up and the call that waited has still to hear it, for the save. */
+    boolean givenUp() {
+        return this.timedOut;
+    }
+
+    /** Puts back what the save wrote down. */
+    void restoreGivenUp(final boolean timedOut) {
+        this.timedOut = timedOut;
     }
 
     /** Whether the thread is waiting for something, and so is given no budget. */

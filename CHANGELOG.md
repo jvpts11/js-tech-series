@@ -40,11 +40,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   programs are split into feature packages; the virtual machine that runs programs has packages of its own,
   with nothing of Minecraft in them, and reads a listing's problems without the compiler; a running program
   keeps who it is, its console, its random numbers, the lines typed at it, the calls waiting their turn, the
-  windows it has open, the watches it has set and who it tells when something is said to it in parts of their
-  own, each of its threads holds what it is waiting for as one value, every change to a window or a widget
-  goes through one place, a window marks each change to what it shows and a canvas each time it is cleared,
-  and its heap takes in whatever the machine hands the program and checks what the program reaches into;
-  every source file's header names the mod it belongs to.
+  windows it has open, the watches it has set, who it tells when something is said to it and which of its
+  threads runs next in parts of their own, each of its threads holds what it is waiting for as one value, every
+  change to a window or a widget goes through one place, a window marks each change to what it shows and a
+  canvas each time it is cleared, and its heap takes in whatever the machine hands the program and checks what
+  the program reaches into; every source file's header names the mod it belongs to.
 
 ### Fixed
 - Cutting the last data cable between a Mainframe and the rest of its network now takes the network away
