@@ -56,7 +56,7 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
     }
 
     /** The extension a project file carries. */
-    public static final String EXTENSION = "canproj";
+    public static final String EXTENSION = "sgsproj";
 
     public ProjectFile {
         sources = List.copyOf(sources);

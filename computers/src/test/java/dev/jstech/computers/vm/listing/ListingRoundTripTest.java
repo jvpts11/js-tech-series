@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import dev.jstech.computers.cannon.CannonCompiler;
-import dev.jstech.computers.cannon.SourceFile;
+import dev.jstech.computers.sigma.SigmaCompiler;
+import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.vm.program.ProgramImage;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -79,9 +79,9 @@ class ListingRoundTripTest {
 
     @Test
     void compile_thenRead_findsTheEntryPointOfANamespaceNamedLikeItsClass() {
-        final CannonCompiler.Result built = CannonCompiler.compile(List.of(
-                new SourceFile("Hello_World.can", HELLO_WORLD),
-                new SourceFile("ClassToInherit.can", CLASS_TO_INHERIT)));
+        final SigmaCompiler.Result built = SigmaCompiler.compile(List.of(
+                new SourceFile("Hello_World.sgs", HELLO_WORLD),
+                new SourceFile("ClassToInherit.sgs", CLASS_TO_INHERIT)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
         final ProgramImage program = readBack(built.assembly());
         assertNotNull(program.entryPoint(), "the machine finds where to start");

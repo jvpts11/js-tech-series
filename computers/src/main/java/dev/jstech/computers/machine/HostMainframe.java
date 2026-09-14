@@ -23,8 +23,8 @@ import java.util.Locale;
  */
 public final class HostMainframe {
 
-    private static final int GLANCE = dev.jstech.computers.vm.system.CannonCosts.GLANCE_NETWORK;
-    private static final int READ = dev.jstech.computers.vm.system.CannonCosts.READ;
+    private static final int GLANCE = dev.jstech.computers.vm.system.SigmaCosts.GLANCE_NETWORK;
+    private static final int READ = dev.jstech.computers.vm.system.SigmaCosts.READ;
 
     private HostMainframe() {
     }

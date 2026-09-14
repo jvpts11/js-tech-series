@@ -1611,8 +1611,8 @@ public final class ServerCliComputer implements ICliComputer {
         final MainframeBlockEntity mirror = mirrorMainframe();
         if (mirror != null) {
             for (final var shelved : mirror.shelvedPackages().entrySet()) {
-                final dev.jstech.computers.cannon.pack.Packed packed =
-                        dev.jstech.computers.cannon.pack.Packed.read(shelved.getValue());
+                final dev.jstech.computers.sigma.pack.Packed packed =
+                        dev.jstech.computers.sigma.pack.Packed.read(shelved.getValue());
                 if (packed == null) {
                     continue;
                 }
@@ -1637,10 +1637,10 @@ public final class ServerCliComputer implements ICliComputer {
         if (!read.ok()) {
             return OpResult.fail(read.message());
         }
-        final dev.jstech.computers.cannon.pack.Packed packed =
-                dev.jstech.computers.cannon.pack.Packed.read(read.message());
+        final dev.jstech.computers.sigma.pack.Packed packed =
+                dev.jstech.computers.sigma.pack.Packed.read(read.message());
         if (packed == null) {
-            return OpResult.fail(path + ": this is not a package (build one with 'canpack build')");
+            return OpResult.fail(path + ": this is not a package (build one with 'sgpack build')");
         }
         final java.util.List<String> wrong = packed.problems();
         if (!wrong.isEmpty()) {
@@ -1687,14 +1687,14 @@ public final class ServerCliComputer implements ICliComputer {
         if (held == null) {
             return null;
         }
-        final dev.jstech.computers.cannon.pack.Packed packed =
-                dev.jstech.computers.cannon.pack.Packed.read(held);
+        final dev.jstech.computers.sigma.pack.Packed packed =
+                dev.jstech.computers.sigma.pack.Packed.read(held);
         if (packed == null || !packed.problems().isEmpty()) {
             return OpResult.fail(wanted + ": the Mirror's copy of this package is not readable");
         }
-        if (!dev.jstech.computers.program.cli.CannonCommands.installed(this,
-                dev.jstech.computers.program.cli.CannonCommands.RUNTIME)) {
-            return OpResult.fail(wanted + " is a Cannon program; install cannonrt first");
+        if (!dev.jstech.computers.program.cli.SigmaCommands.installed(this,
+                dev.jstech.computers.program.cli.SigmaCommands.RUNTIME)) {
+            return OpResult.fail(wanted + " is a Σ# program; install sigma first");
         }
         final dev.jstech.computers.program.ComputerConsoleState console = host.console();
         if (console == null) {
@@ -3111,7 +3111,7 @@ public final class ServerCliComputer implements ICliComputer {
                 : "";
     }
 
-    // Script processes: the Cannon programs this machine is running.
+    // Script processes: the Σ# programs this machine is running.
 
     /**
      * The machine's programs when one of them has the terminal, or null when the prompt is free.
@@ -3121,21 +3121,21 @@ public final class ServerCliComputer implements ICliComputer {
      */
     @org.jetbrains.annotations.Nullable
     public MachinePrograms foreground() {
-        if (hostBlock instanceof AbstractComputerBlockEntity computer && computer.cannon().held() != 0) {
-            return computer.cannon();
+        if (hostBlock instanceof AbstractComputerBlockEntity computer && computer.sigma().held() != 0) {
+            return computer.sigma();
         }
         return null;
     }
 
     @Override
-    public OpResult startCannon(final String path, final int heapMb) {
-        return this.startCannon(path, heapMb, List.of());
+    public OpResult startSigma(final String path, final int heapMb) {
+        return this.startSigma(path, heapMb, List.of());
     }
 
     @Override
-    public OpResult startCannon(final String path, final int heapMb, final List<String> arguments) {
+    public OpResult startSigma(final String path, final int heapMb, final List<String> arguments) {
         if (!(hostBlock instanceof AbstractComputerBlockEntity computer)) {
-            return OpResult.fail("cannon: this machine cannot run programs");
+            return OpResult.fail("sigma: this machine cannot run programs");
         }
         /*
          * Whether this can be run is a question for the languages the machines know, not for a list of
@@ -3152,48 +3152,48 @@ public final class ServerCliComputer implements ICliComputer {
         final int room = heapMb <= 0 ? MachinePrograms.DEFAULT_HEAP_MB
                 : Math.min(heapMb, MachinePrograms.MAX_HEAP_MB);
         if (!computer.ramLedger().fits(room)) {
-            return OpResult.fail("cannon: " + room + " MB will not fit in "
+            return OpResult.fail("sigma: " + room + " MB will not fit in "
                     + computer.ramLedger().freeMb() + " MB of free memory");
         }
-        final MachinePrograms.Started started = computer.cannon()
+        final MachinePrograms.Started started = computer.sigma()
                 .start(FsPaths.fileName(path), read.message(), room, computer, arguments, 0,
                         MachinePrograms.DEFAULT_PRIORITY);
         if (!started.ok()) {
             return OpResult.fail(started.message());
         }
         computer.setChanged();
-        final MachinePrograms.Live one = computer.cannon().byId(started.id());
+        final MachinePrograms.Live one = computer.sigma().byId(started.id());
         if (one != null && !one.process().isService()) {
             /*
              * A program that runs at a terminal takes the one that started it, the way it does on any
              * machine: the prompt is its, and comes back when it returns.
              */
-            computer.cannon().hold(started.id());
+            computer.sigma().hold(started.id());
             return OpResult.ok("");
         }
         return OpResult.ok(started.message());
     }
 
     @Override
-    public OpResult stopCannon(final int id) {
+    public OpResult stopSigma(final int id) {
         if (!(hostBlock instanceof AbstractComputerBlockEntity computer)) {
-            return OpResult.fail("cannon: this machine cannot run programs");
+            return OpResult.fail("sigma: this machine cannot run programs");
         }
-        if (!computer.cannon().stop(id)) {
-            return OpResult.fail("cannon: nothing is running as " + id);
+        if (!computer.sigma().stop(id)) {
+            return OpResult.fail("sigma: nothing is running as " + id);
         }
         computer.setChanged();
         return OpResult.ok("stopped " + id);
     }
 
     @Override
-    public List<CannonProcess> cannonProcesses() {
+    public List<SigmaProcess> sigmaProcesses() {
         if (!(hostBlock instanceof AbstractComputerBlockEntity computer)) {
             return List.of();
         }
-        final List<CannonProcess> running = new java.util.ArrayList<>();
-        for (final MachinePrograms.Live one : computer.cannon().all()) {
-            running.add(new CannonProcess(one.id(), one.name(), MachinePrograms.stateOf(one.process()),
+        final List<SigmaProcess> running = new java.util.ArrayList<>();
+        for (final MachinePrograms.Live one : computer.sigma().all()) {
+            running.add(new SigmaProcess(one.id(), one.name(), MachinePrograms.stateOf(one.process()),
                     one.process().heldBytes(), one.process().heapBytes(), one.file()));
         }
         return running;

@@ -205,19 +205,19 @@ class AsmRoundTripTest {
     @Test
     void read_refusesAListingWithNoVersionLine() {
         this.read(".class C\n");
-        assertEquals(List.of("C4001"), this.codes());
+        assertEquals(List.of("A4001"), this.codes());
     }
 
     @Test
     void read_refusesAListingFromALaterVersion() {
         this.read(".asm 99\n.class C\n");
-        assertEquals(List.of("C4002"), this.codes());
+        assertEquals(List.of("A4002"), this.codes());
     }
 
     @Test
     void read_refusesAListingFromAnEarlierVersion() {
         this.read(".asm " + (AsmProgram.VERSION - 1) + "\n.class C\n");
-        assertEquals(List.of("C4012"), this.codes());
+        assertEquals(List.of("A4012"), this.codes());
     }
 
     @Test
@@ -237,37 +237,37 @@ class AsmRoundTripTest {
     @Test
     void read_reportsALineItDoesNotKnow() {
         this.read(".asm 2\n.class C\n.method void M() slots 0\n    nonsense\n");
-        assertEquals(List.of("C4003"), this.codes());
+        assertEquals(List.of("A4003"), this.codes());
     }
 
     @Test
     void read_reportsAnInstructionGivenTheWrongThing() {
         this.read(".asm 2\n.class C\n.method void M() slots 0\n    ldc.i4\n    ret 7\n    br\n");
-        assertEquals(List.of("C4004", "C4005", "C4004"), this.codes());
+        assertEquals(List.of("A4004", "A4005", "A4004"), this.codes());
     }
 
     @Test
     void read_reportsANumberThatIsNotOne() {
         this.read(".asm 2\n.class C\n.method void M() slots 0\n    ldc.i4  nine\n");
-        assertEquals(List.of("C4006"), this.codes());
+        assertEquals(List.of("A4006"), this.codes());
     }
 
     @Test
     void read_reportsAnInstructionThatIsNotInAMethod() {
         this.read(".asm 2\n.class C\n    ret\n");
-        assertEquals(List.of("C4008"), this.codes());
+        assertEquals(List.of("A4008"), this.codes());
     }
 
     @Test
     void read_reportsADirectiveThatIsNotInAType() {
         this.read(".asm 2\n.field int x\n");
-        assertEquals(List.of("C4009"), this.codes());
+        assertEquals(List.of("A4009"), this.codes());
     }
 
     @Test
     void read_reportsABranchToALabelNothingCarries() {
         this.read(".asm 2\n.class C\n.method void M() slots 0\n    br      L9\n    ret\n");
-        assertEquals(List.of("C4010"), this.codes());
+        assertEquals(List.of("A4010"), this.codes());
         assertEquals(4, this.reader.problems().getFirst().line());
     }
 

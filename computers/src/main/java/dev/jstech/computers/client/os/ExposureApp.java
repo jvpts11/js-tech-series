@@ -7,10 +7,10 @@
  */
 package dev.jstech.computers.client.os;
 
-import dev.jstech.computers.cannon.CannonSemantics;
-import dev.jstech.computers.cannon.SourceFile;
-import dev.jstech.computers.cannon.sem.IMemberSymbol;
-import dev.jstech.computers.cannon.sem.NamedType;
+import dev.jstech.computers.sigma.SigmaSemantics;
+import dev.jstech.computers.sigma.SourceFile;
+import dev.jstech.computers.sigma.sem.IMemberSymbol;
+import dev.jstech.computers.sigma.sem.NamedType;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.os.edit.ProblemReport;
@@ -205,7 +205,7 @@ public final class ExposureApp implements IDesktopApp {
     /* The file actions */
 
     private void newFile() {
-        ask("New File", "untitled.can", name -> {
+        ask("New File", "untitled.sgs", name -> {
             if (!name.isEmpty()) {
                 createFile(name);
             }
@@ -319,7 +319,7 @@ public final class ExposureApp implements IDesktopApp {
         final String source = doc.path();
         final int dot = source.lastIndexOf('.');
         final String built = (dot > source.lastIndexOf('/') ? source.substring(0, dot) : source) + ".asm";
-        DesktopScreen.requestTypeAtTerminal(List.of("cannonc " + quote(source), "cannon run " + quote(built)));
+        DesktopScreen.requestTypeAtTerminal(List.of("sgsc " + quote(source), "sigma run " + quote(built)));
     }
 
     private static String quote(final String path) {
@@ -458,8 +458,8 @@ public final class ExposureApp implements IDesktopApp {
             return this.outlineRows;
         }
         final List<Outline> rows = new ArrayList<>();
-        if (doc.path().toLowerCase(java.util.Locale.ROOT).endsWith(".can")) {
-            for (final NamedType type : CannonSemantics.check(
+        if (doc.path().toLowerCase(java.util.Locale.ROOT).endsWith(".sgs")) {
+            for (final NamedType type : SigmaSemantics.check(
                     List.of(new SourceFile(doc.name(), text))).model().declaredTypes()) {
                 rows.add(new Outline(0, type.name(), 0));
                 for (final IMemberSymbol member : type.members()) {

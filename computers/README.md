@@ -43,10 +43,10 @@ across as many machines as the network has.
   Crafting Manager, the Craft Planner, Storage Insights, the Automation Manager, and a few small programs.
 - Machine autocrafting with multi-stage recipes, parallel stages and crafting-card threads; fluids and
   chemicals travel through the network like items.
-- Cannon, the computers' own programming language, with five editors to write it in: programs that run
+- Σ#, the computers' own programming language, with five editors to write it in: programs that run
   at the prompt or stay up, threads, programs starting programs on the same machine or on another one of
   the network, folders shared between machines, and the network's query language from inside a
-  program. The reference is in [docs/CANNON.md](../docs/CANNON.md).
+  program. The reference is in [docs/SIGMA.md](../docs/SIGMA.md).
 - The Network Gateway, a peripheral that puts the data network within reach of ComputerCraft's
   computers when CC: Tweaked is present: our cable on its back, CC's on its front, an item buffer between
   them, and the Gateway Manager on the host computer (or the `gateway` command) to name it, set what the

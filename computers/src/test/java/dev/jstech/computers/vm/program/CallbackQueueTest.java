@@ -13,8 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import dev.jstech.computers.cannon.CannonCompiler;
-import dev.jstech.computers.cannon.SourceFile;
+import dev.jstech.computers.sigma.SigmaCompiler;
+import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
@@ -31,7 +31,7 @@ class CallbackQueueTest {
             + "    public void OnDestroy() { }\n}\n";
 
     private static ProgramImage program() {
-        final CannonCompiler.Result built = CannonCompiler.compile(List.of(new SourceFile("Monitor.can", SOURCE)));
+        final SigmaCompiler.Result built = SigmaCompiler.compile(List.of(new SourceFile("Monitor.sgs", SOURCE)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
         final AsmReader reader = new AsmReader(built.assembly());
         final AsmProgram listing = reader.read();

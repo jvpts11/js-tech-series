@@ -23,7 +23,7 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.computers.vm.system.CannonCosts;
+import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -158,14 +158,14 @@ public final class GatewayService {
     public long capacity(final Caller caller) throws GatewayRefusedException {
         read(caller, "capacity");
         final long value = shell.networkUse().capacity();
-        charge(CannonCosts.GLANCE_NETWORK);
+        charge(SigmaCosts.GLANCE_NETWORK);
         return value;
     }
 
     public long used(final Caller caller) throws GatewayRefusedException {
         read(caller, "used");
         final long value = shell.networkUse().stored();
-        charge(CannonCosts.GLANCE_NETWORK);
+        charge(SigmaCosts.GLANCE_NETWORK);
         return value;
     }
 
@@ -185,7 +185,7 @@ public final class GatewayService {
     public long total(final Caller caller, final String name) throws GatewayRefusedException {
         read(caller, "total " + name);
         final long value = storage().count(resolve(name));
-        charge(CannonCosts.READ);
+        charge(SigmaCosts.READ);
         return value;
     }
 
@@ -244,7 +244,7 @@ public final class GatewayService {
         op.setPriority(priorityOf(priority));
         op.abortWhen(gateway::isRemoved);
         op.onSettle(() -> settled(caller, op));
-        return started(caller, what, op, CannonCosts.SUBMIT);
+        return started(caller, what, op, SigmaCosts.SUBMIT);
     }
 
     /** Pushes up to {@code quantity} of {@code name} from the buffer into the network; the operation's id. */
@@ -276,7 +276,7 @@ public final class GatewayService {
             returnToBuffer(key, op.leftover());
             settled(caller, op);
         });
-        return started(caller, what, op, CannonCosts.SUBMIT);
+        return started(caller, what, op, SigmaCosts.SUBMIT);
     }
 
     /** Asks the network to craft {@code quantity} of {@code name}; the operation's id. */
@@ -296,14 +296,14 @@ public final class GatewayService {
         }
         made[0] = op;
         op.setPriority(priorityOf(priority));
-        return started(caller, what, op, CannonCosts.SUBMIT);
+        return started(caller, what, op, SigmaCosts.SUBMIT);
     }
 
     /** One operation by id (or an unambiguous prefix), in flight or settled this past hour; null when unknown. */
     @Nullable
     public Map<String, Object> operation(final Caller caller, final String id) throws GatewayRefusedException {
         read(caller, "operation " + id);
-        charge(CannonCosts.READ);
+        charge(SigmaCosts.READ);
         final MainframeBlockEntity mainframe = mainframe();
         for (final INetworkOperation live : mainframe.liveOperations()) {
             if (matches(live.operationId(), id)) {
@@ -333,7 +333,7 @@ public final class GatewayService {
     public boolean cancel(final Caller caller, final String id) throws GatewayRefusedException {
         final String what = "cancel " + id;
         operations(caller, what);
-        charge(CannonCosts.SUBMIT);
+        charge(SigmaCosts.SUBMIT);
         final MainframeBlockEntity mainframe = mainframe();
         for (final INetworkOperation live : mainframe.liveOperations()) {
             if (matches(live.operationId(), id)) {
@@ -383,7 +383,7 @@ public final class GatewayService {
         final String name = slash < 0 ? program : program.substring(slash + 1);
         final String level = priority == null || priority.isBlank() ? MachinePrograms.DEFAULT_PRIORITY
                 : priority.toLowerCase(Locale.ROOT);
-        final MachinePrograms.Started started = machine.cannon().start(name, read.message(), room, machine,
+        final MachinePrograms.Started started = machine.sigma().start(name, read.message(), room, machine,
                 new ArrayList<>(args), 0, level);
         if (!started.ok()) {
             throw denied(caller, what, computer + ": " + started.message());
@@ -391,7 +391,7 @@ public final class GatewayService {
         machine.setChanged();
         gateway.stats().count(GatewayStats.Kind.OPERATION, now());
         gateway.logged(caller.label(), what, "process " + started.id(), GatewayLog.Tone.OK);
-        charge(CannonCosts.SUBMIT);
+        charge(SigmaCosts.SUBMIT);
         return started.id();
     }
 
@@ -404,7 +404,7 @@ public final class GatewayService {
         final long total = storage().count(key);
         gateway.watch(caller.id(), nameOf(key), total);
         gateway.logged(caller.label(), "watch " + nameOf(key), "ok", GatewayLog.Tone.OK);
-        charge(CannonCosts.READ);
+        charge(SigmaCosts.READ);
         return total;
     }
 
@@ -412,7 +412,7 @@ public final class GatewayService {
     public boolean unwatch(final Caller caller, final String name) throws GatewayRefusedException {
         admit(caller, "unwatch " + name);
         final boolean was = gateway.unwatch(caller.id(), nameOf(resolve(name)));
-        charge(CannonCosts.GLANCE_NETWORK);
+        charge(SigmaCosts.GLANCE_NETWORK);
         return was;
     }
 
@@ -424,7 +424,7 @@ public final class GatewayService {
                 : kind.startsWith("warn") ? GatewayLog.Tone.BUSY : GatewayLog.Tone.OK;
         final String line = text == null ? "" : text.length() > WHAT_LENGTH ? text.substring(0, WHAT_LENGTH) : text;
         gateway.logged(caller.label(), line, kind.isEmpty() ? "info" : kind, tone);
-        charge(CannonCosts.GLANCE_NETWORK);
+        charge(SigmaCosts.GLANCE_NETWORK);
     }
 
     // The gate every request goes through

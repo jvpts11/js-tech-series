@@ -729,37 +729,37 @@ public interface ICliComputer {
      * One program this computer is running: what it is called, how it is getting on, how much of the
      * room it was given it is holding, and the file it was started from, which says which runtime runs it.
      */
-    record CannonProcess(int id, String name, String state, long heldBytes, long heapBytes, String file) {
+    record SigmaProcess(int id, String name, String state, long heldBytes, long heapBytes, String file) {
 
-        public CannonProcess(final int id, final String name, final String state, final long heldBytes,
+        public SigmaProcess(final int id, final String name, final String state, final long heldBytes,
                              final long heapBytes) {
             this(id, name, state, heldBytes, heapBytes, name);
         }
     }
 
-    /** The Cannon programs running here, oldest first. */
-    default List<CannonProcess> cannonProcesses() {
+    /** The Σ# programs running here, oldest first. */
+    default List<SigmaProcess> sigmaProcesses() {
         return List.of();
     }
 
     /**
-     * Starts a compiled Cannon program from a file on this computer's disk.
+     * Starts a compiled Σ# program from a file on this computer's disk.
      *
      * @param path   the assembly file to run
      * @param heapMb how much room to give it, or 0 for what the computer decides
      */
-    default OpResult startCannon(final String path, final int heapMb) {
-        return OpResult.fail("cannon: not installed");
+    default OpResult startSigma(final String path, final int heapMb) {
+        return OpResult.fail("sigma: not installed");
     }
 
     /** The same, with what the program is started with, as its {@code Program.Args} will read them. */
-    default OpResult startCannon(final String path, final int heapMb, final List<String> arguments) {
-        return this.startCannon(path, heapMb);
+    default OpResult startSigma(final String path, final int heapMb, final List<String> arguments) {
+        return this.startSigma(path, heapMb);
     }
 
-    /** Stops one of the Cannon programs running here. */
-    default OpResult stopCannon(final int id) {
-        return OpResult.fail("cannon: not installed");
+    /** Stops one of the Σ# programs running here. */
+    default OpResult stopSigma(final int id) {
+        return OpResult.fail("sigma: not installed");
     }
 
     /** A service the computer hosts and its state, for the process/service manager (e.g. "running"). */

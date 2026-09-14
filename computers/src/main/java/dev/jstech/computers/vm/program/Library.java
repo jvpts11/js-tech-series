@@ -8,7 +8,7 @@
 package dev.jstech.computers.vm.program;
 
 import dev.jstech.computers.vm.listing.IOperand;
-import dev.jstech.computers.vm.system.CannonCosts;
+import dev.jstech.computers.vm.system.SigmaCosts;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -211,7 +211,7 @@ public final class Library {
     private Object ui(final IOperand.Method named, final Object self, final List<Object> arguments,
                       final int line) {
         if (UiWidgets.MESSAGE_BOX.equals(named.owner())) {
-            this.owe(CannonCosts.WRITE);
+            this.owe(SigmaCosts.WRITE);
             this.open(UiWidgets.message(first(arguments), second(arguments), line), line);
             return null;
         }
@@ -222,12 +222,12 @@ public final class Library {
         if (UiWidgets.WINDOW.equals(object.type())) {
             switch (named.name()) {
                 case "Show" -> {
-                    this.owe(CannonCosts.WRITE);
+                    this.owe(SigmaCosts.WRITE);
                     this.open(object, line);
                     return null;
                 }
                 case "Close" -> {
-                    this.owe(CannonCosts.DRAW);
+                    this.owe(SigmaCosts.DRAW);
                     this.owner().closeWindow(object);
                     return null;
                 }
@@ -236,7 +236,7 @@ public final class Library {
                 }
             }
         }
-        this.owe(CannonCosts.DRAW);
+        this.owe(SigmaCosts.DRAW);
         return this.ui.call(object, named.name(), arguments, line);
     }
 
@@ -270,7 +270,7 @@ public final class Library {
 
     /** What a program writes on a widget, which the machine has to draw again. */
     public void uiWrite(final Values.Obj widget, final String name, final Object value, final int line) {
-        this.owe(CannonCosts.DRAW);
+        this.owe(SigmaCosts.DRAW);
         this.ui.write(widget, name, value, line);
     }
 

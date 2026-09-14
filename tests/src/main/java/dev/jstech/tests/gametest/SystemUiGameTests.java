@@ -29,7 +29,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
- * A Cannon program with a window of its own on a real machine: it opens on a system with a desktop and
+ * A Σ# program with a window of its own on a real machine: it opens on a system with a desktop and
  * refuses on one without, what a player does reaches its handlers, the machine has it to send to whoever
  * is looking, and all of it comes back after a save.
  */
@@ -110,10 +110,10 @@ public final class SystemUiGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms.Started started = computer.cannon().start("panel.can", PANEL, 1, computer);
+                    final MachinePrograms.Started started = computer.sigma().start("panel.sgs", PANEL, 1, computer);
                     helper.assertTrue(started.ok(), "it starts: " + started.message());
-                    computer.cannon().tick(8192);
-                    final List<Values.Obj> windows = computer.cannon().windowsOf(started.id());
+                    computer.sigma().tick(8192);
+                    final List<Values.Obj> windows = computer.sigma().windowsOf(started.id());
                     helper.assertTrue(windows.size() == 1, "the program has a window; got " + windows.size());
                     final UiWindowPayload payload =
                             UiWindowPayload.of(computer.getBlockPos(), started.id(), windows.getFirst());
@@ -136,14 +136,14 @@ public final class SystemUiGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms.Started started = computer.cannon().start("panel.can", PANEL, 1, computer);
+                    final MachinePrograms.Started started = computer.sigma().start("panel.sgs", PANEL, 1, computer);
                     helper.assertTrue(started.ok(), started.message());
-                    computer.cannon().tick(8192);
-                    final Values.Obj window = computer.cannon().windowsOf(started.id()).getFirst();
+                    computer.sigma().tick(8192);
+                    final Values.Obj window = computer.sigma().windowsOf(started.id()).getFirst();
                     final Values.Obj button = widgetOf(window, UiWidgets.BUTTON);
-                    helper.assertTrue(computer.cannon().deliverUiEvent(started.id(), 1L,
+                    helper.assertTrue(computer.sigma().deliverUiEvent(started.id(), 1L,
                             (Long) button.get(UiWidgets.ID), "click", List.of()), "the click is taken");
-                    computer.cannon().tick(8192);
+                    computer.sigma().tick(8192);
                     final Values.Obj label = widgetOf(window, UiWidgets.LABEL);
                     helper.assertTrue("cold".equals(label.get(UiWidgets.TEXT)),
                             "the handler ran; the label says " + label.get(UiWidgets.TEXT));
@@ -163,15 +163,15 @@ public final class SystemUiGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms.Started started = computer.cannon().start("panel.can", PANEL, 1, computer);
+                    final MachinePrograms.Started started = computer.sigma().start("panel.sgs", PANEL, 1, computer);
                     helper.assertTrue(started.ok(), started.message());
-                    computer.cannon().tick(8192);
-                    final MachinePrograms.Live one = computer.cannon().byId(started.id());
+                    computer.sigma().tick(8192);
+                    final MachinePrograms.Live one = computer.sigma().byId(started.id());
                     helper.assertTrue(one.process().state() == dev.jstech.core.language.ILanguageProcess.State.HALTED,
                             "it stops; state " + one.process().state());
                     helper.assertTrue(one.process().message().contains("no desktop to open a window on"),
                             "with the reason; got " + one.process().message());
-                    helper.assertTrue(computer.cannon().windowsOf(started.id()).isEmpty(), "and opens nothing");
+                    helper.assertTrue(computer.sigma().windowsOf(started.id()).isEmpty(), "and opens nothing");
                 })
                 .thenSucceed();
     }
@@ -185,8 +185,8 @@ public final class SystemUiGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms before = computer.cannon();
-                    final MachinePrograms.Started started = before.start("panel.can", PANEL, 1, computer);
+                    final MachinePrograms before = computer.sigma();
+                    final MachinePrograms.Started started = before.start("panel.sgs", PANEL, 1, computer);
                     helper.assertTrue(started.ok(), started.message());
                     before.tick(8192);
                     final CompoundTag tag = new CompoundTag();

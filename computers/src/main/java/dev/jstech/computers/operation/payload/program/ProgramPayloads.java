@@ -202,7 +202,7 @@ public final class ProgramPayloads {
                         instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity computer)) {
             return;
         }
-        computer.cannon().deliverUiEvent(payload.program(), payload.window(), payload.widget(),
+        computer.sigma().deliverUiEvent(payload.program(), payload.window(), payload.widget(),
                 payload.kind(), payload.values());
     }
 
@@ -230,7 +230,7 @@ public final class ProgramPayloads {
                     new DesktopShellOutputPayload(false, false, "", wire, payload.session()));
             return;
         }
-        final var started = computer.cannon().start(name, listing.get(), room, computer, java.util.List.of(), 0,
+        final var started = computer.sigma().start(name, listing.get(), room, computer, java.util.List.of(), 0,
                 dev.jstech.computers.machine.MachinePrograms.DEFAULT_PRIORITY);
         if (!started.ok()) {
             wire.add(new DesktopShellOutputPayload.WireLine(started.message(),
@@ -240,10 +240,10 @@ public final class ProgramPayloads {
             return;
         }
         computer.setChanged();
-        final var one = computer.cannon().byId(started.id());
+        final var one = computer.sigma().byId(started.id());
         final boolean console = one != null && !one.process().isService();
         if (console) {
-            computer.cannon().hold(started.id());
+            computer.sigma().hold(started.id());
         } else {
             wire.add(new DesktopShellOutputPayload.WireLine(started.message(),
                     dev.jstech.computers.program.cli.CliStyle.OK.id()));

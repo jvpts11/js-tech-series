@@ -821,7 +821,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
          * would hand the keyboard back while a program was still using it.
          */
         final var desktop = new dev.jstech.computers.operation.payload.DesktopShellOutputPayload(
-                false, cannon.held() != 0, "", desktopWire);
+                false, sigma.held() != 0, "", desktopWire);
         for (final net.minecraft.server.level.ServerPlayer viewer : viewers) {
             if (viewer.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu) {
                 net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(viewer, desktop);
@@ -1029,7 +1029,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
 
     protected void tickNode(final ServerLevel level) {
         tickBuildProgress(level);
-        tickCannon();
+        tickSigma();
         dev.jstech.computers.os.install.SetupRunner.tick(this, level, worldPosition);
         final NetworkSystem system = NetworkSystem.get(level);
         NetworkUuid resolved = null;
@@ -1121,19 +1121,19 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
             new dev.jstech.computers.program.ComputerConsoleState();
 
     /*
-     * Script processes: the Cannon programs this machine is running, which live with the machine
+     * Script processes: the Σ# programs this machine is running, which live with the machine
      * rather than with its system disk: they are what it is doing, not what it has installed.
      */
 
-    private final dev.jstech.computers.machine.MachinePrograms cannon =
+    private final dev.jstech.computers.machine.MachinePrograms sigma =
             new dev.jstech.computers.machine.MachinePrograms();
 
-    private final dev.jstech.computers.vm.program.IHost cannonHost =
+    private final dev.jstech.computers.vm.program.IHost sigmaHost =
             new dev.jstech.computers.machine.MachineHost(this);
 
-    /** The Cannon programs this machine is running. */
-    public dev.jstech.computers.machine.MachinePrograms cannon() {
-        return cannon;
+    /** The Σ# programs this machine is running. */
+    public dev.jstech.computers.machine.MachinePrograms sigma() {
+        return sigma;
     }
 
     /**
@@ -1165,8 +1165,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     /** The clock those programs read, which is this machine's own world. */
-    public dev.jstech.computers.vm.program.IHost cannonHost() {
-        return cannonHost;
+    public dev.jstech.computers.vm.program.IHost sigmaHost() {
+        return sigmaHost;
     }
 
     /**
@@ -1175,7 +1175,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * <p>A machine with no build is worth nothing, which is the honest answer for one whose parts have
      * been taken out from under a running program.
      */
-    public int cannonCredits() {
+    public int sigmaCredits() {
         final ComputerBuild build = currentBuild();
         if (build == null) {
             return 0;
@@ -1193,13 +1193,13 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * <p>A computer that has been switched off is not running programs, so they are told so and given
      * their chance to say goodbye rather than being left frozen for whenever it comes back on.
      */
-    protected void tickCannon() {
+    protected void tickSigma() {
         // A machine running nothing still pays down what a Gateway spent on its behalf, tick by tick.
-        if (cannon.isEmpty() && cannon.owed() == 0) {
+        if (sigma.isEmpty() && sigma.owed() == 0) {
             return;
         }
         if (!isRunning()) {
-            cannon.stopAll();
+            sigma.stopAll();
             setChanged();
             return;
         }
@@ -1210,9 +1210,9 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         final long deadline = level instanceof ServerLevel server
                 ? dev.jstech.computers.machine.ServerTickDeadline.shared().claim(server, worldPosition)
                 : Long.MAX_VALUE;
-        cannon.tick(cannonCredits(), deadline, this::networkStock, this::remoteParentWaiting);
+        sigma.tick(sigmaCredits(), deadline, this::networkStock, this::remoteParentWaiting);
         if (level instanceof ServerLevel server) {
-            pushCannonOutput(server);
+            pushSigmaOutput(server);
             pushWindows(server);
             hearGateways();
         }
@@ -1235,7 +1235,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         }
         return server.getBlockEntity(parent.machine()) instanceof AbstractComputerBlockEntity machine
                 && parent.node().equals(machine.nodeUuid())
-                && machine.cannon().byId(parent.program()) != null;
+                && machine.sigma().byId(parent.program()) != null;
     }
 
     /**
@@ -1249,7 +1249,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
                 : dev.jstech.computers.machine.HostGateway.gatewaysOf(this)) {
             for (final dev.jstech.computers.blockentity.NetworkGatewayBlockEntity.Message said
                     : gateway.takeMessages()) {
-                cannon.deliverGatewayMessage(said.from(), said.text(), said.tick());
+                sigma.deliverGatewayMessage(said.from(), said.text(), said.tick());
             }
         }
     }
@@ -1273,8 +1273,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         }
         final java.util.Map<Long, dev.jstech.computers.operation.payload.UiWindowPayload> open =
                 new java.util.HashMap<>();
-        for (final dev.jstech.computers.machine.MachinePrograms.Live one : cannon.all()) {
-            for (final dev.jstech.computers.vm.program.Values.Obj window : cannon.windowsOf(one.id())) {
+        for (final dev.jstech.computers.machine.MachinePrograms.Live one : sigma.all()) {
+            for (final dev.jstech.computers.vm.program.Values.Obj window : sigma.windowsOf(one.id())) {
                 final var payload = dev.jstech.computers.operation.payload.UiWindowPayload.of(
                         worldPosition, one.id(), window);
                 if (payload != null) {
@@ -1321,23 +1321,23 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * it prints them rather than all at once when it is over, and the prompt comes back the moment it
      * returns. A program nobody is watching still runs; there is simply nowhere for its lines to go.
      */
-    private void pushCannonOutput(final ServerLevel level) {
-        if (cannon.held() == 0) {
+    private void pushSigmaOutput(final ServerLevel level) {
+        if (sigma.held() == 0) {
             return;
         }
-        final var one = cannon.byId(cannon.held());
+        final var one = sigma.byId(sigma.held());
         if (one == null) {
-            cannon.release();
+            sigma.release();
             return;
         }
         final var state = one.process().state();
         final boolean over = state != dev.jstech.core.language.ILanguageProcess.State.RUNNING
                 && state != dev.jstech.core.language.ILanguageProcess.State.PARKED;
-        final java.util.List<String> fresh = cannon.unseen();
+        final java.util.List<String> fresh = sigma.unseen();
         final String halt = over && state == dev.jstech.core.language.ILanguageProcess.State.HALTED
                 ? one.process().message() : null;
         if (over) {
-            cannon.release();
+            sigma.release();
             setChanged();
         }
         if (fresh.isEmpty() && halt == null && !over) {
@@ -1486,8 +1486,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (tag.contains("Studio")) {
             studio.load(tag.getCompound("Studio"), registries);
         }
-        if (tag.contains("Cannon")) {
-            cannon.load(tag.getCompound("Cannon"), this);
+        if (tag.contains("Σ#")) {
+            sigma.load(tag.getCompound("Σ#"), this);
         }
         /*
          * A world saved before the software moved onto the disk still carries the old block-level tag;
@@ -1537,10 +1537,10 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         final CompoundTag studioTag = new CompoundTag();
         studio.save(studioTag, registries);
         tag.put("Studio", studioTag);
-        if (!cannon.isEmpty()) {
-            final CompoundTag cannonTag = new CompoundTag();
-            cannon.save(cannonTag);
-            tag.put("Cannon", cannonTag);
+        if (!sigma.isEmpty()) {
+            final CompoundTag sigmaTag = new CompoundTag();
+            sigma.save(sigmaTag);
+            tag.put("Σ#", sigmaTag);
         }
         if (!linkedMonitors.isEmpty()) {
             tag.putLongArray("LinkedMonitors", linkedMonitors.stream().mapToLong(Long::longValue).toArray());

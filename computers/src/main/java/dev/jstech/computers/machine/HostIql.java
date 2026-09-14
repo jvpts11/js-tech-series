@@ -14,7 +14,7 @@ import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IHost;
 import dev.jstech.computers.vm.program.Values;
-import dev.jstech.computers.vm.system.CannonCosts;
+import dev.jstech.computers.vm.system.SigmaCosts;
 import java.util.List;
 
 /**
@@ -27,7 +27,7 @@ import java.util.List;
  */
 public final class HostIql {
 
-    private static final int STATEMENT = CannonCosts.WRITE;
+    private static final int STATEMENT = SigmaCosts.WRITE;
 
     /** How many rows one query may bring back, the same as the studio's default page. */
     private static final int ROW_LIMIT = 4096;

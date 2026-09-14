@@ -50,9 +50,9 @@ public record SoftwareHouse(String name, String legalName) {
     public static final SoftwareHouse VAULTIS = new SoftwareHouse("Vaultis", "Vaultis Storage Inc.");
     /** The hardware house's own network tools. */
     public static final SoftwareHouse JSC = new SoftwareHouse(Branding.HARDWARE_HOUSE, Branding.HARDWARE_HOUSE);
-    /** The open house behind the Cannon compiler and its runtime, owned by nobody who sells hardware. */
-    public static final SoftwareHouse CANNON_FOUNDATION =
-            new SoftwareHouse("Cannon Foundation", "the Cannon Foundation");
+    /** The open house behind the Σ# compiler and its runtime, owned by nobody who sells hardware. */
+    public static final SoftwareHouse SIGMA_FOUNDATION =
+            new SoftwareHouse("Sigma Foundation", "the Sigma Foundation");
     /** The house behind Exposure, the editor that shows you every complaint at once. */
     public static final SoftwareHouse DAYLIGHT_FOUNDATION =
             new SoftwareHouse("Daylight Foundation", "the Daylight Foundation");

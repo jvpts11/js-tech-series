@@ -18,7 +18,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * What a player did to a widget of a Cannon program's window: which window, which widget, and what it
+ * What a player did to a widget of a Σ# program's window: which window, which widget, and what it
  * was (a button pressed, a line typed, a box ticked, a row picked, a place on a canvas, a window closed).
  *
  * @param said   what the change was, for what carries words: a line typed

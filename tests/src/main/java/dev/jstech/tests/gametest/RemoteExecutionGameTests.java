@@ -10,8 +10,8 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.cannon.CannonCompiler;
-import dev.jstech.computers.cannon.SourceFile;
+import dev.jstech.computers.sigma.SigmaCompiler;
+import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.program.ServerCliComputer;
@@ -63,7 +63,7 @@ public final class RemoteExecutionGameTests {
     }
 
     private static String listing(final String source) {
-        final CannonCompiler.Result built = CannonCompiler.compile(List.of(new SourceFile("Program.can", source)));
+        final SigmaCompiler.Result built = SigmaCompiler.compile(List.of(new SourceFile("Program.sgs", source)));
         if (!built.ok()) {
             throw new IllegalStateException(String.join("\n", built.lines()));
         }
@@ -73,7 +73,7 @@ public final class RemoteExecutionGameTests {
     /** Starts a program and keeps it at the prompt, so what it printed stays readable after it returns. */
     private static ILanguageProcess held(final GameTestHelper helper, final PersonalComputerBlockEntity machine,
                                          final String name, final String source) {
-        final MachinePrograms programs = machine.cannon();
+        final MachinePrograms programs = machine.sigma();
         final MachinePrograms.Started started = programs.start(name, listing(source), 1, machine);
         helper.assertTrue(started.ok(), name + " starts: " + started.message());
         programs.hold(started.id());
@@ -181,7 +181,7 @@ public final class RemoteExecutionGameTests {
     }
 
     private static boolean hasTool(final PersonalComputerBlockEntity machine) {
-        return machine.cannon().all().stream().anyMatch(one -> "tool.asm".equals(one.file()));
+        return machine.sigma().all().stream().anyMatch(one -> "tool.asm".equals(one.file()));
     }
 
     private static final String REFUSED = """

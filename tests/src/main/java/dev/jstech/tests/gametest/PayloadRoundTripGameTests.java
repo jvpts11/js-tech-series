@@ -114,7 +114,7 @@ public final class PayloadRoundTripGameTests {
         final List<OperationRecord> records = new ArrayList<>();
         for (final OperationPriority priority : OperationPriority.values()) {
             records.add(new OperationRecord(new UUID(7L, priority.id()), (byte) 0, logs(), 64L, 32L, (byte) 1,
-                    priority, List.of(new OperationRecord.MoveRow("rack-1", 32L, "Cannon: Programs.Restock")),
+                    priority, List.of(new OperationRecord.MoveRow("rack-1", 32L, "Σ#: Programs.Restock")),
                     List.of(new OperationRecord.SubRow("rack-1", 64L, 32L, OperationRecord.SubRow.SUB_STREAMING)),
                     4, 12));
         }
@@ -153,7 +153,7 @@ public final class PayloadRoundTripGameTests {
     public static void cluster_stateRoundTrips(final GameTestHelper helper) {
         final ClusterManagerStatePayload.Detail detail = new ClusterManagerStatePayload.Detail(0, 0, "Kraken",
                 "8 nodes", true, 50,
-                List.of(new ClusterManagerStatePayload.WireNode(123L, 0, 1, "node-1", "Ubuntu", "cannonrt", 1, true, 0,
+                List.of(new ClusterManagerStatePayload.WireNode(123L, 0, 1, "node-1", "Ubuntu", "sigma", 1, true, 0,
                         0, 1024L, 2048L, 1)),
                 List.of(new ClusterManagerStatePayload.WireCraft("Iron Block x64", "desk", 2, false)));
         final ClusterManagerStatePayload.WireJob job = new ClusterManagerStatePayload.WireJob(true, 0, "Install Ubuntu",

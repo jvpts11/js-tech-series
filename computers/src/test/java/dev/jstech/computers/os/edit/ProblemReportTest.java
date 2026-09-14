@@ -29,24 +29,24 @@ class ProblemReportTest {
     @Test
     void of_returnsNothingForAFolderWithNothingWrong() {
         final Map<String, List<IProgrammingLanguage.Complaint>> byFile = new LinkedHashMap<>();
-        byFile.put("progs/a.can", List.of());
-        byFile.put("progs/b.can", List.of());
+        byFile.put("progs/a.sgs", List.of());
+        byFile.put("progs/b.sgs", List.of());
         assertTrue(ProblemReport.of(byFile).isEmpty());
     }
 
     @Test
     void of_putsTheWorstFileFirst() {
         final Map<String, List<IProgrammingLanguage.Complaint>> byFile = new LinkedHashMap<>();
-        byFile.put("progs/one.can", List.of(at(4, "one thing")));
-        byFile.put("progs/many.can", List.of(at(1, "a"), at(2, "b"), at(3, "c")));
-        assertEquals(List.of("many.can", "many.can", "many.can", "one.can"),
+        byFile.put("progs/one.sgs", List.of(at(4, "one thing")));
+        byFile.put("progs/many.sgs", List.of(at(1, "a"), at(2, "b"), at(3, "c")));
+        assertEquals(List.of("many.sgs", "many.sgs", "many.sgs", "one.sgs"),
                 names(ProblemReport.of(byFile)));
     }
 
     @Test
     void of_keepsTheCompilersOwnOrderWithinAFile() {
         final Map<String, List<IProgrammingLanguage.Complaint>> byFile = new LinkedHashMap<>();
-        byFile.put("progs/a.can", List.of(at(9, "later"), at(2, "earlier")));
+        byFile.put("progs/a.sgs", List.of(at(9, "later"), at(2, "earlier")));
         assertEquals(List.of(9, 2),
                 ProblemReport.of(byFile).stream().map(r -> r.complaint().line()).toList());
     }
@@ -54,33 +54,33 @@ class ProblemReportTest {
     @Test
     void of_breaksATieByNameSoTheOrderNeverWobbles() {
         final Map<String, List<IProgrammingLanguage.Complaint>> byFile = new LinkedHashMap<>();
-        byFile.put("progs/zeta.can", List.of(at(1, "x")));
-        byFile.put("progs/alpha.can", List.of(at(1, "x")));
-        assertEquals(List.of("alpha.can", "zeta.can"), names(ProblemReport.of(byFile)));
+        byFile.put("progs/zeta.sgs", List.of(at(1, "x")));
+        byFile.put("progs/alpha.sgs", List.of(at(1, "x")));
+        assertEquals(List.of("alpha.sgs", "zeta.sgs"), names(ProblemReport.of(byFile)));
     }
 
     @Test
     void of_carriesTheWholePathSoARowCanBeOpened() {
         final Map<String, List<IProgrammingLanguage.Complaint>> byFile = new LinkedHashMap<>();
-        byFile.put("progs/deep/a.can", List.of(at(1, "x")));
-        assertEquals("progs/deep/a.can", ProblemReport.of(byFile).get(0).path());
-        assertEquals("a.can", ProblemReport.of(byFile).get(0).name());
+        byFile.put("progs/deep/a.sgs", List.of(at(1, "x")));
+        assertEquals("progs/deep/a.sgs", ProblemReport.of(byFile).get(0).path());
+        assertEquals("a.sgs", ProblemReport.of(byFile).get(0).name());
     }
 
     @Test
     void of_leavesOutTheFilesThatCompiled() {
         final Map<String, List<IProgrammingLanguage.Complaint>> byFile = new LinkedHashMap<>();
-        byFile.put("progs/good.can", List.of());
-        byFile.put("progs/bad.can", List.of(at(1, "x")));
-        assertEquals(List.of("bad.can"), names(ProblemReport.of(byFile)));
+        byFile.put("progs/good.sgs", List.of());
+        byFile.put("progs/bad.sgs", List.of(at(1, "x")));
+        assertEquals(List.of("bad.sgs"), names(ProblemReport.of(byFile)));
     }
 
     @Test
     void brokenFiles_countsFilesRatherThanComplaints() {
         final Map<String, List<IProgrammingLanguage.Complaint>> byFile = new LinkedHashMap<>();
-        byFile.put("progs/a.can", List.of(at(1, "x"), at(2, "y"), at(3, "z")));
-        byFile.put("progs/b.can", List.of(at(1, "x")));
-        byFile.put("progs/c.can", List.of());
+        byFile.put("progs/a.sgs", List.of(at(1, "x"), at(2, "y"), at(3, "z")));
+        byFile.put("progs/b.sgs", List.of(at(1, "x")));
+        byFile.put("progs/c.sgs", List.of());
         assertEquals(2, ProblemReport.brokenFiles(byFile));
         assertEquals(4, ProblemReport.of(byFile).size());
     }
@@ -88,15 +88,15 @@ class ProblemReportTest {
     @Test
     void brokenFiles_isZeroForAFolderThatCompiles() {
         final Map<String, List<IProgrammingLanguage.Complaint>> byFile = new LinkedHashMap<>();
-        byFile.put("progs/a.can", List.of());
+        byFile.put("progs/a.sgs", List.of());
         assertEquals(0, ProblemReport.brokenFiles(byFile));
         assertEquals(0, ProblemReport.brokenFiles(new LinkedHashMap<>()));
     }
 
     @Test
     void nameOf_readsTheLastSegmentOfAPath() {
-        assertEquals("a.can", ProblemReport.nameOf("progs/a.can"));
-        assertEquals("a.can", ProblemReport.nameOf("a.can"));
+        assertEquals("a.sgs", ProblemReport.nameOf("progs/a.sgs"));
+        assertEquals("a.sgs", ProblemReport.nameOf("a.sgs"));
         assertEquals("progs/", ProblemReport.nameOf("progs/"));
     }
 }

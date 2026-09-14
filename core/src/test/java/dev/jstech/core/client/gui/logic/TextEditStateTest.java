@@ -161,7 +161,7 @@ public class TextEditStateTest {
     @Test
     public void caret_startsAfterTheTextAndMovesWithinIt() {
         final TextEditState state = new TextEditState(16);
-        state.sync("file.can");
+        state.sync("file.sgs");
         assertEquals(8, state.caret());
         state.left();
         state.left();
@@ -182,23 +182,23 @@ public class TextEditStateTest {
     @Test
     public void type_insertsAtTheCaretAndBackspaceDeleteWorkAroundIt() {
         final TextEditState state = new TextEditState(16);
-        state.sync("file.can");
+        state.sync("file.sgs");
         state.setCaret(4);
         state.type('s');
-        assertEquals("files.can", state.edit());
+        assertEquals("files.sgs", state.edit());
         assertEquals(5, state.caret());
         state.backspace();
-        assertEquals("file.can", state.edit());
+        assertEquals("file.sgs", state.edit());
         assertEquals(4, state.caret());
         state.delete();
-        assertEquals("filecan", state.edit());
+        assertEquals("filesgs", state.edit());
         assertEquals(4, state.caret(), "delete takes what is after the caret and leaves it where it was");
         state.home();
         state.backspace();
-        assertEquals("filecan", state.edit(), "nothing before the caret, nothing removed");
+        assertEquals("filesgs", state.edit(), "nothing before the caret, nothing removed");
         state.end();
         state.delete();
-        assertEquals("filecan", state.edit(), "nothing after the caret, nothing removed");
+        assertEquals("filesgs", state.edit(), "nothing after the caret, nothing removed");
     }
 
     @Test

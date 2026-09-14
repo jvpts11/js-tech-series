@@ -32,10 +32,10 @@ import java.util.Locale;
 public final class HostOperations {
 
     /** Reading what is in flight. */
-    private static final int READ = dev.jstech.computers.vm.system.CannonCosts.READ;
+    private static final int READ = dev.jstech.computers.vm.system.SigmaCosts.READ;
 
     /** Asking for work. Far dearer than reading, because it is the network's time being spent. */
-    private static final int SUBMIT = dev.jstech.computers.vm.system.CannonCosts.SUBMIT;
+    private static final int SUBMIT = dev.jstech.computers.vm.system.SigmaCosts.SUBMIT;
 
     private HostOperations() {
     }
@@ -55,7 +55,7 @@ public final class HostOperations {
         if (!computer.onNetwork()) {
             throw new Halt(Halt.Reason.NO_NETWORK, line, "this computer is not on a network");
         }
-        final String origin = MoveLabels.cannon(script);
+        final String origin = MoveLabels.sigma(script);
         return switch (member) {
             case "Pull" -> asked(computer.select(item(arguments), amount(arguments), origin));
             case "Push" -> asked(computer.insert(item(arguments), amount(arguments), origin));

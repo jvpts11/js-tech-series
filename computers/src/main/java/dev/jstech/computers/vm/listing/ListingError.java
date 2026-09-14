@@ -15,17 +15,17 @@ package dev.jstech.computers.vm.listing;
  */
 public enum ListingError {
 
-    MISSING_VERSION_LINE("C4001", "the listing has to begin with a version line"),
-    VERSION_TOO_NEW("C4002", "this runtime reads assembly version %s, and this listing is version %s"),
-    UNKNOWN_INSTRUCTION("C4003", "'%s' is not an instruction"),
-    MISSING_OPERAND("C4004", "'%s' needs something after it"),
-    UNEXPECTED_OPERAND("C4005", "'%s' takes nothing after it"),
-    MALFORMED_OPERAND("C4006", "'%s' is not what '%s' takes"),
-    UNKNOWN_DIRECTIVE("C4007", "'%s' is not a line this format has"),
-    INSTRUCTION_OUTSIDE_METHOD("C4008", "an instruction has to be inside a method"),
-    DIRECTIVE_OUTSIDE_TYPE("C4009", "'%s' has to be inside a type"),
-    UNKNOWN_LABEL("C4010", "nothing in this method is labelled '%s'"),
-    VERSION_TOO_OLD("C4012", "this listing is assembly version %s and this runtime reads version %s: compile its "
+    MISSING_VERSION_LINE("A4001", "the listing has to begin with a version line"),
+    VERSION_TOO_NEW("A4002", "this runtime reads assembly version %s, and this listing is version %s"),
+    UNKNOWN_INSTRUCTION("A4003", "'%s' is not an instruction"),
+    MISSING_OPERAND("A4004", "'%s' needs something after it"),
+    UNEXPECTED_OPERAND("A4005", "'%s' takes nothing after it"),
+    MALFORMED_OPERAND("A4006", "'%s' is not what '%s' takes"),
+    UNKNOWN_DIRECTIVE("A4007", "'%s' is not a line this format has"),
+    INSTRUCTION_OUTSIDE_METHOD("A4008", "an instruction has to be inside a method"),
+    DIRECTIVE_OUTSIDE_TYPE("A4009", "'%s' has to be inside a type"),
+    UNKNOWN_LABEL("A4010", "nothing in this method is labelled '%s'"),
+    VERSION_TOO_OLD("A4012", "this listing is assembly version %s and this runtime reads version %s: compile its "
             + "source again");
 
     private final String code;
@@ -36,7 +36,7 @@ public enum ListingError {
         this.template = template;
     }
 
-    /** The code as it appears in a message, for example {@code C4003}. */
+    /** The code as it appears in a message, for example {@code A4003}. */
     public String code() {
         return this.code;
     }

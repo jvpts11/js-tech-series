@@ -436,7 +436,7 @@ public final class OsFilesystemGameTests {
     }
 
     /**
-     * A file's kind follows its name: renamed from .txt to .can it is a program, since its kind is read
+     * A file's kind follows its name: renamed from .txt to .sgs it is a program, since its kind is read
      * off the extension everywhere else and a text file wearing a program's name would open in nothing.
      */
     @GameTest(template = ARENA)
@@ -447,17 +447,17 @@ public final class OsFilesystemGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     DiskFilesystem.write(disk, "progs/hello.txt", FileType.TXT, "class A {}", 1000L,
                             FilesystemKind.HIERARCHICAL);
-                    helper.assertTrue(DiskFilesystem.rename(disk, "progs/hello.txt", "progs/hello.can",
+                    helper.assertTrue(DiskFilesystem.rename(disk, "progs/hello.txt", "progs/hello.sgs",
                                     FilesystemKind.HIERARCHICAL), "renaming across kinds must succeed");
                     FileType kind = null;
                     for (final DiskFilesystem.FileEntry entry
                             : DiskFilesystem.list(disk, "progs", FilesystemKind.HIERARCHICAL)) {
-                        if (entry.path().equals("progs/hello.can")) {
+                        if (entry.path().equals("progs/hello.sgs")) {
                             kind = entry.type();
                         }
                     }
-                    helper.assertTrue(kind == FileType.CAN, "the renamed file must be a program, was " + kind);
-                    final Optional<String> content = DiskFilesystem.read(disk, "progs/hello.can");
+                    helper.assertTrue(kind == FileType.SGS, "the renamed file must be a program, was " + kind);
+                    final Optional<String> content = DiskFilesystem.read(disk, "progs/hello.sgs");
                     helper.assertTrue(content.isPresent() && "class A {}".equals(content.get()),
                             "the content must survive the change of kind");
                 })

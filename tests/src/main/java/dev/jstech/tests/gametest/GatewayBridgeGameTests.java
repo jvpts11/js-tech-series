@@ -20,8 +20,8 @@ import dev.jstech.computers.block.NetworkGatewayBlock;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.cannon.CannonCompiler;
-import dev.jstech.computers.cannon.SourceFile;
+import dev.jstech.computers.sigma.SigmaCompiler;
+import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.gateway.GatewayLog;
 import dev.jstech.computers.gateway.GatewayPermissions;
 import dev.jstech.computers.gateway.GatewayService;
@@ -263,7 +263,7 @@ public final class GatewayBridgeGameTests {
                             "computers lists the other machines of the network; got " + computers);
                     final String unknown = refusal(lua(() -> peripheral[0].total(cc, "minecraft:no_such_thing")));
                     helper.assertTrue(unknown.contains("unknown item"), "an unknown name is refused; got " + unknown);
-                    helper.assertTrue(fleet.host().cannon().owed() > 0, "the host is charged for the calls");
+                    helper.assertTrue(fleet.host().sigma().owed() > 0, "the host is charged for the calls");
                     helper.assertTrue(gateway(helper).stats().lastMinute(GatewayStats.Kind.CALL, helper.getLevel().getGameTime()) >= 7,
                             "the calls are counted");
                     helper.assertTrue(gateway(helper).attachedComputers().stream().anyMatch(c -> c.id() == CC_ID),
@@ -405,7 +405,7 @@ public final class GatewayBridgeGameTests {
             """;
 
     private static String listing(final String source) {
-        final CannonCompiler.Result built = CannonCompiler.compile(List.of(new SourceFile("Program.can", source)));
+        final SigmaCompiler.Result built = SigmaCompiler.compile(List.of(new SourceFile("Program.sgs", source)));
         if (!built.ok()) {
             throw new IllegalStateException(String.join("\n", built.lines()));
         }
@@ -426,7 +426,7 @@ public final class GatewayBridgeGameTests {
                     lua(() -> started[0] = peripheral.run(cc, new ObjectArguments("lab", "C:\\tool.asm", "x"))).run();
                     helper.assertTrue(started[0] > 0, "run hands back the process id; got " + started[0]);
                     // The process itself is kept: a returned program with nobody waiting on it leaves the machine's list.
-                    final MachinePrograms.Live live = fleet.lab().cannon().byId(started[0]);
+                    final MachinePrograms.Live live = fleet.lab().sigma().byId(started[0]);
                     helper.assertTrue(live != null, "lab lists the program it was asked to run");
                     tool[0] = live.process();
                     helper.assertTrue(lab.setConfig("remote", "off").ok(), "lab says no from now on");

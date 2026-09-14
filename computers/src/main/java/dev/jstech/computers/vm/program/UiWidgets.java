@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * The windows and widgets a Cannon program makes, as the runtime keeps them.
+ * The windows and widgets a Σ# program makes, as the runtime keeps them.
  *
  * <p>A widget is an ordinary object on the program's own heap, so it is counted like everything else the
  * program holds and is written down and brought back with it. What it holds is what it is: a label holds

@@ -414,7 +414,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
          * The Mainframe runs its own tick rather than the base's node tick, so the programs a player
          * wrote are ticked here as well, and told to stop when the cabinet is switched off.
          */
-        tickCannon();
+        tickSigma();
         if (!isRunning()) {
             leaveNetwork(level);
             closeDispatch();

@@ -7,8 +7,8 @@
  */
 package dev.jstech.computers.vm.program;
 
-import dev.jstech.computers.cannon.CannonCompiler;
-import dev.jstech.computers.cannon.SourceFile;
+import dev.jstech.computers.sigma.SigmaCompiler;
+import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
@@ -139,8 +139,8 @@ public class InstructionBenchmarks {
     }
 
     private static ProgramImage load(final String source) {
-        final CannonCompiler.Result built =
-                CannonCompiler.compile(List.of(new SourceFile("Benchmark.can", PRELUDE + source)));
+        final SigmaCompiler.Result built =
+                SigmaCompiler.compile(List.of(new SourceFile("Benchmark.sgs", PRELUDE + source)));
         if (!built.ok()) {
             throw new IllegalStateException(String.join("\n", built.lines()));
         }

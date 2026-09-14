@@ -624,7 +624,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         final java.util.Map<Integer, String> indentByClassLine = new java.util.HashMap<>();
         final TextDocument text = doc.area.document();
         for (final IProgrammingLanguage.Complaint complaint : doc.complaints) {
-            if (!"C3018".equals(complaint.code())) {
+            if (!"S3018".equals(complaint.code())) {
                 continue;
             }
             final java.util.regex.Matcher m = MISSING_MEMBER.matcher(complaint.message());
@@ -699,11 +699,11 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         String returnType = "void";
         String parameters = "";
         if (!face.equals("IScript")) {
-            final dev.jstech.computers.cannon.ast.IDecl.MethodDecl declared = declaredMethod(face, member);
+            final dev.jstech.computers.sigma.ast.IDecl.MethodDecl declared = declaredMethod(face, member);
             if (declared != null) {
                 returnType = declared.returnType().describe();
                 final StringBuilder params = new StringBuilder();
-                for (final dev.jstech.computers.cannon.ast.IDecl.Parameter p : declared.parameters()) {
+                for (final dev.jstech.computers.sigma.ast.IDecl.Parameter p : declared.parameters()) {
                     params.append(params.isEmpty() ? "" : ", ").append(p.outward() ? "out " : "")
                             .append(p.type().describe()).append(' ').append(p.name());
                 }
@@ -722,14 +722,14 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
     }
 
     /** The declaration of {@code face}'s method described as {@code member}, in any open file, or null. */
-    private dev.jstech.computers.cannon.ast.IDecl.MethodDecl declaredMethod(final String face, final String member) {
+    private dev.jstech.computers.sigma.ast.IDecl.MethodDecl declaredMethod(final String face, final String member) {
         for (final Doc open : this.docs) {
-            final dev.jstech.computers.cannon.CannonFrontEnd.Result parsed = dev.jstech.computers.cannon.CannonFrontEnd
-                    .parse(new dev.jstech.computers.cannon.SourceFile(open.name(), open.area.text()));
-            for (final dev.jstech.computers.cannon.ast.IDecl.ITypeDecl type : parsed.unit().types()) {
-                if (type instanceof dev.jstech.computers.cannon.ast.IDecl.InterfaceDecl declared
+            final dev.jstech.computers.sigma.SigmaFrontEnd.Result parsed = dev.jstech.computers.sigma.SigmaFrontEnd
+                    .parse(new dev.jstech.computers.sigma.SourceFile(open.name(), open.area.text()));
+            for (final dev.jstech.computers.sigma.ast.IDecl.ITypeDecl type : parsed.unit().types()) {
+                if (type instanceof dev.jstech.computers.sigma.ast.IDecl.InterfaceDecl declared
                         && declared.name().equals(face)) {
-                    for (final dev.jstech.computers.cannon.ast.IDecl.MethodDecl method : declared.methods()) {
+                    for (final dev.jstech.computers.sigma.ast.IDecl.MethodDecl method : declared.methods()) {
                         final StringBuilder described = new StringBuilder(method.name()).append('(');
                         for (int i = 0; i < method.parameters().size(); i++) {
                             described.append(i > 0 ? ", " : "").append(method.parameters().get(i).type().describe());
@@ -786,7 +786,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         CodeFileReplies.expectFolder(this, dir);
         PacketDistributor.sendToServer(
                 new dev.jstech.computers.operation.payload.RequestFolderContentPayload(
-                        this.host, dir, ".can"));
+                        this.host, dir, ".sgs"));
     }
 
     /** Saves the file being edited under another name, which then becomes the one being edited. */

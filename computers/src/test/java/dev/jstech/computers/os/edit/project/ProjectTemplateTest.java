@@ -21,7 +21,7 @@ class ProjectTemplateTest {
         final ProjectFile file = ProjectTemplate.CONSOLE_APP.project("Sorter");
         assertEquals("Sorter", file.name());
         assertEquals(ProjectFile.Kind.CONSOLE, file.kind());
-        assertEquals(List.of("Sorter.can"), file.sources());
+        assertEquals(List.of("Sorter.sgs"), file.sources());
         assertEquals("build/Sorter.asm", file.entry());
         assertEquals(ProjectTemplate.LANGUAGE, file.language());
     }
@@ -47,8 +47,8 @@ class ProjectTemplateTest {
 
     @Test
     void tags_carryTheLanguageThePlatformsAndTheKind() {
-        assertEquals(List.of("Cannon", "Frames", "Linux", "Console"), ProjectTemplate.CONSOLE_APP.tags());
-        assertEquals(List.of("Cannon", "Frames", "Linux"), ProjectTemplate.EMPTY_PROJECT.tags());
+        assertEquals(List.of("Σ#", "Frames", "Linux", "Console"), ProjectTemplate.CONSOLE_APP.tags());
+        assertEquals(List.of("Σ#", "Frames", "Linux"), ProjectTemplate.EMPTY_PROJECT.tags());
     }
 
     @Test

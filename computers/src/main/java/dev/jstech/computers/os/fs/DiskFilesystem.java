@@ -526,7 +526,7 @@ public final class DiskFilesystem {
             }
             /*
              * The kind follows the new name. A file's kind is read off its extension everywhere else,
-             * so one renamed from .txt to .can has to become a program rather than a text file wearing
+             * so one renamed from .txt to .sgs has to become a program rather than a text file wearing
              * a program's name. A name whose kind is one the machine writes by itself is refused, the
              * way writing such a file by hand is: renaming into it would make a file nothing can edit.
              */

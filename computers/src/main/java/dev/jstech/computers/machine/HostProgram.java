@@ -12,7 +12,7 @@ import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IHost;
 import dev.jstech.computers.vm.program.Values;
-import dev.jstech.computers.vm.system.CannonCosts;
+import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.core.language.ILanguageProcess;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,10 +29,10 @@ import java.util.Locale;
  */
 public final class HostProgram {
 
-    private static final int START = CannonCosts.SUBMIT;
-    private static final int LOOK = CannonCosts.GLANCE;
-    private static final int TOUCH = CannonCosts.GLANCE_NETWORK;
-    private static final int READ = CannonCosts.READ;
+    private static final int START = SigmaCosts.SUBMIT;
+    private static final int LOOK = SigmaCosts.GLANCE;
+    private static final int TOUCH = SigmaCosts.GLANCE_NETWORK;
+    private static final int READ = SigmaCosts.READ;
 
     /** What a program is started with when it does not say: the middle, like anything at the prompt. */
     private static final String DEFAULT_PRIORITY = "medium";
@@ -65,14 +65,14 @@ public final class HostProgram {
             case "ExitCode" -> IHost.Reply.of(where == null ? 0 : exitCode(where, id(arguments)), LOOK);
             case "Output" -> {
                 final Values.ListValue lines = new Values.ListValue();
-                final MachinePrograms.Live one = where == null ? null : where.cannon().byId(id(arguments));
+                final MachinePrograms.Live one = where == null ? null : where.sigma().byId(id(arguments));
                 if (one != null) {
                     lines.items().addAll(one.process().console());
                 }
                 yield IHost.Reply.of(lines, READ + lines.size());
             }
             case "Kill" -> {
-                final boolean stopped = where != null && where.cannon().stop(id(arguments));
+                final boolean stopped = where != null && where.sigma().stop(id(arguments));
                 if (stopped) {
                     where.setChanged();
                 }
@@ -81,7 +81,7 @@ public final class HostProgram {
             case "Send" -> {
                 final String text = arguments.size() > 1 ? String.valueOf(arguments.get(1)) : "";
                 final long tick = machine.getLevel() == null ? 0L : machine.getLevel().getGameTime();
-                yield IHost.Reply.of(machine.cannon().send(callerId, id(arguments), text, tick), TOUCH);
+                yield IHost.Reply.of(machine.sigma().send(callerId, id(arguments), text, tick), TOUCH);
             }
             default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "Program has no " + member);
         };
@@ -120,7 +120,7 @@ public final class HostProgram {
         final int slash = Math.max(path.lastIndexOf('\\'), path.lastIndexOf('/'));
         final String name = slash < 0 ? path : path.substring(slash + 1);
         final MachinePrograms.Started started =
-                machine.cannon().start(name, read.message(), room, machine, args, parent, priority);
+                machine.sigma().start(name, read.message(), room, machine, args, parent, priority);
         if (!started.ok()) {
             throw new Halt(Halt.Reason.CANNOT_START, line, started.message());
         }
@@ -130,7 +130,7 @@ public final class HostProgram {
     }
 
     private static boolean running(final AbstractComputerBlockEntity machine, final int id) {
-        final MachinePrograms.Live one = machine.cannon().byId(id);
+        final MachinePrograms.Live one = machine.sigma().byId(id);
         if (one == null) {
             return false;
         }
@@ -140,12 +140,12 @@ public final class HostProgram {
     }
 
     private static int exitCode(final AbstractComputerBlockEntity machine, final int id) {
-        final MachinePrograms.Live one = machine.cannon().byId(id);
+        final MachinePrograms.Live one = machine.sigma().byId(id);
         if (one == null) {
             return 0;
         }
-        if (one.process() instanceof CannonProgram cannon) {
-            return cannon.process().exitCode();
+        if (one.process() instanceof SigmaProgram sigma) {
+            return sigma.process().exitCode();
         }
         return one.process().state() == ILanguageProcess.State.HALTED ? 1 : 0;
     }

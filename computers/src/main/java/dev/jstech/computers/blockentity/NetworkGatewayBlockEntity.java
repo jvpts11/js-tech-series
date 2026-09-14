@@ -19,7 +19,7 @@ import dev.jstech.computers.gateway.IGatewayBridge;
 import dev.jstech.computers.gateway.NetworkGateways;
 import dev.jstech.computers.integration.computercraft.ComputerCraftIntegration;
 import dev.jstech.computers.os.IOsHost;
-import dev.jstech.computers.vm.system.CannonCosts;
+import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.core.peripheral.ILinkResult;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.peripheral.IPeripheralOwner;
@@ -390,7 +390,7 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
         rollTick();
         spentThisTick += Math.max(0, credits);
         if (owner() instanceof AbstractComputerBlockEntity host) {
-            host.cannon().owe(credits);
+            host.sigma().owe(credits);
         }
     }
 
@@ -410,7 +410,7 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
         if (!(owner() instanceof AbstractComputerBlockEntity host)) {
             return 0;
         }
-        final int credits = host.cannonCredits();
+        final int credits = host.sigmaCredits();
         if (credits <= 0) {
             return 0;
         }
@@ -454,7 +454,7 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
         for (final Map.Entry<Integer, Map<String, Long>> byComputer : watches.entrySet()) {
             for (final Map.Entry<String, Long> watched : byComputer.getValue().entrySet()) {
                 final long total = GatewayService.stockOf(this, watched.getKey());
-                charge(CannonCosts.READ);
+                charge(SigmaCosts.READ);
                 if (total != watched.getValue()) {
                     final long previous = watched.getValue();
                     watched.setValue(total);

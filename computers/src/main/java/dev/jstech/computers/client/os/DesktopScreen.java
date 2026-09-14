@@ -111,7 +111,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /**
-     * The windows the machine says its Cannon programs have open, waiting for the desktop to draw them.
+     * The windows the machine says its Σ# programs have open, waiting for the desktop to draw them.
      *
      * <p>A program's window is the machine's, not this screen's: it is opened when the machine first
      * mentions it, redrawn whenever the machine sends it again, and taken away when the machine says it is
@@ -120,7 +120,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private static final java.util.List<dev.jstech.computers.operation.payload.UiWindowPayload> PENDING_UI =
             new java.util.ArrayList<>();
 
-    /** Takes a window a Cannon program has open on the machine being looked at. */
+    /** Takes a window a Σ# program has open on the machine being looked at. */
     public static void acceptWindow(final dev.jstech.computers.operation.payload.UiWindowPayload payload) {
         PENDING_UI.add(payload);
     }
@@ -1263,8 +1263,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         final java.util.List<dev.jstech.computers.os.OpenWindow> out =
                 new java.util.ArrayList<>(windows.size());
         for (final DesktopWindow w : windows) {
-            // A Cannon program's window is the program's, not the desktop's: the machine says what it has.
-            if (!w.dialog() && !(w.app() instanceof CannonWindowApp)) {
+            // A Σ# program's window is the program's, not the desktop's: the machine says what it has.
+            if (!w.dialog() && !(w.app() instanceof SigmaWindowApp)) {
                 out.add(new dev.jstech.computers.os.OpenWindow(
                         w.appKey(), w.floatX(), w.floatY(), w.floatW(), w.floatH(), w.minimized(), w.maximized(),
                         w.app().saveState()));
@@ -1330,7 +1330,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         for (final CommunityLauncher one : communityPrograms) {
             launchers.add(new Launcher(one.name(),
                     net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
-                            dev.jstech.computers.JsComputers.MODID, "cannon_" + one.icon()),
+                            dev.jstech.computers.JsComputers.MODID, "sigma_" + one.icon()),
                     null, one.entry()));
         }
     }
@@ -1495,7 +1495,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
          * monitor from them (its plain screen-render hook skips container screens on purpose).
          */
         NeoForge.EVENT_BUS.post(new ContainerScreenEvent.Render.Background(this, g, mouseX, mouseY));
-        // Draw whatever the machine says its Cannon programs have open, opening and closing as it says.
+        // Draw whatever the machine says its Σ# programs have open, opening and closing as it says.
         if (!PENDING_UI.isEmpty()) {
             for (final var payload : PENDING_UI) {
                 acceptProgramWindow(payload);
@@ -5826,25 +5826,25 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         }
     }
 
-    /** The first window one of the machine's Cannon programs has open on this desktop, or null. */
+    /** The first window one of the machine's Σ# programs has open on this desktop, or null. */
     @org.jetbrains.annotations.Nullable
-    public CannonWindowApp programWindow() {
+    public SigmaWindowApp programWindow() {
         for (final DesktopWindow open : windows) {
-            if (open.app() instanceof CannonWindowApp app) {
+            if (open.app() instanceof SigmaWindowApp app) {
                 return app;
             }
         }
         return null;
     }
 
-    /** Opens, redraws or takes away a window one of the machine's Cannon programs has. */
+    /** Opens, redraws or takes away a window one of the machine's Σ# programs has. */
     private void acceptProgramWindow(final dev.jstech.computers.operation.payload.UiWindowPayload payload) {
         if (!payload.hostPos().equals(host)) {
             return;
         }
-        final String key = CannonWindowApp.keyFor(payload.program(), payload.window());
+        final String key = SigmaWindowApp.keyFor(payload.program(), payload.window());
         for (final DesktopWindow open : windows) {
-            if (open.appKey().equals(key) && open.app() instanceof CannonWindowApp app) {
+            if (open.appKey().equals(key) && open.app() instanceof SigmaWindowApp app) {
                 if (payload.open()) {
                     app.accept(payload);
                 } else {
@@ -5855,7 +5855,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             }
         }
         if (payload.open()) {
-            openApp(key, new CannonWindowApp(host, payload));
+            openApp(key, new SigmaWindowApp(host, payload));
         }
     }
 
@@ -6013,9 +6013,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         for (final DesktopWindow w : windows) {
             if (w.dialog()) {
                 w.app().onClosed(); // a question left unanswered is not kept; the program is
-            } else if (!(w.app() instanceof CannonWindowApp)) {
+            } else if (!(w.app() instanceof SigmaWindowApp)) {
                 /*
-                 * A Cannon program's window is not kept here either: the machine sends it again, as it
+                 * A Σ# program's window is not kept here either: the machine sends it again, as it
                  * stands, the moment anyone looks at that desktop.
                  */
                 apps.put(w.appKey(), w.app());

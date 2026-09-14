@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import dev.jstech.computers.cannon.CannonCompiler;
-import dev.jstech.computers.cannon.SourceFile;
+import dev.jstech.computers.sigma.SigmaCompiler;
+import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
@@ -51,8 +51,8 @@ class ProcessTest {
 
     /** Compiles a whole file, for the scripts that need a shape of their own. */
     private static ProgramImage loadSource(final String source) {
-        final CannonCompiler.Result built =
-                CannonCompiler.compile(List.of(new SourceFile("Monitor.can", PRELUDE + source)));
+        final SigmaCompiler.Result built =
+                SigmaCompiler.compile(List.of(new SourceFile("Monitor.sgs", PRELUDE + source)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
         final AsmReader reader = new AsmReader(built.assembly());
         final AsmProgram program = reader.read();
@@ -669,8 +669,8 @@ class ProcessTest {
 
     @Test
     void run_callsIntoANamespacedClassWrittenInAnotherFile() {
-        final CannonCompiler.Result built = CannonCompiler.compile(List.of(
-                new SourceFile("Tools.can", """
+        final SigmaCompiler.Result built = SigmaCompiler.compile(List.of(
+                new SourceFile("Tools.sgs", """
                         namespace Tools;
                         public class Counter {
                             private int n;
@@ -679,7 +679,7 @@ class ProcessTest {
                             public static int Twice(int x) { return x * 2; }
                         }
                         """),
-                new SourceFile("Monitor.can", """
+                new SourceFile("Monitor.sgs", """
                         using Tools.*;
                         using System.*;
                         using System.IO.*;

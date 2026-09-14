@@ -9,7 +9,7 @@ package dev.jstech.tests.clienttest;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
-import dev.jstech.computers.client.os.CannonWindowApp;
+import dev.jstech.computers.client.os.SigmaWindowApp;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.IDesktopApp;
 import dev.jstech.computers.client.os.ShellApp;
@@ -22,7 +22,7 @@ import net.minecraft.resources.ResourceLocation;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * A Cannon program's own window on the desktop: it opens when the program says so, is drawn by the
+ * A Σ# program's own window on the desktop: it opens when the program says so, is drawn by the
  * machine's system, hears what the player does to its widgets, and goes when the program or the player
  * closes it.
  */
@@ -90,7 +90,7 @@ public final class SystemUiClientTests {
         return app instanceof ShellApp s ? s : null;
     }
 
-    private static CannonWindowApp panel(final ClientTestContext ctx) {
+    private static SigmaWindowApp panel(final ClientTestContext ctx) {
         final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
         return desktop == null ? null : desktop.programWindow();
     }
@@ -111,10 +111,10 @@ public final class SystemUiClientTests {
         ctx.thenBuild(0, world -> {
                     final CraftingComputerBlockEntity computer = world.placeRunningCraftingComputer(COMPUTER);
                     computer.installOs(FRAMES_XP);
-                    for (final String id : new String[] {"cannonc", "cannonrt"}) {
+                    for (final String id : new String[] {"sgsc", "sigma"}) {
                         computer.console().install(program(id).toString());
                     }
-                    DiskFilesystem.write(computer.systemDisk(), "progs/panel.can", FileType.CAN, PANEL,
+                    DiskFilesystem.write(computer.systemDisk(), "progs/panel.sgs", FileType.SGS, PANEL,
                             Long.MAX_VALUE, FilesystemKind.HIERARCHICAL);
                     world.placeMonitor(MONITOR, Direction.EAST);
                 })
@@ -125,7 +125,7 @@ public final class SystemUiClientTests {
                         SCREEN_WAIT, "the terminal to be listed in Start")
                 .then(0, () -> launch(ctx, TERMINAL))
                 .thenWaitUntil(() -> shell(ctx) != null, SCREEN_WAIT, "the terminal window to open")
-                .then(SETTLE, () -> ctx.type("cannon run progs/panel.can"))
+                .then(SETTLE, () -> ctx.type("sigma run progs/panel.sgs"))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
                 .thenWaitUntil(() -> panel(ctx) != null, SCREEN_WAIT * 3, "the program's window to open")
                 .thenAssert(SETTLE, () -> "Reactor".equals(panel(ctx).title()), "it is called what the program said")

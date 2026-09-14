@@ -22,20 +22,20 @@ class FileOpenersTest {
 
     @Test
     void defaultFor_opensASourceFileInACodeEditorWhenThereIsOne() {
-        assertEquals("virtual_studio_code", FileOpeners.defaultFor("progs/a.can", EVERYTHING));
+        assertEquals("virtual_studio_code", FileOpeners.defaultFor("progs/a.sgs", EVERYTHING));
         assertEquals("virtual_studio_code", FileOpeners.defaultFor("progs/a.asm", EVERYTHING));
     }
 
     @Test
     void defaultFor_runsACompiledProgramWhenTheRuntimeIsThere() {
         // Opening a compiled program means running it; reading its listing is what "Open with" is for.
-        assertEquals(FileOpeners.RUNTIME, FileOpeners.defaultFor("progs/a.asm", List.of("cannonrt", "exposure")));
+        assertEquals(FileOpeners.RUNTIME, FileOpeners.defaultFor("progs/a.asm", List.of("sigma", "exposure")));
         assertEquals("exposure", FileOpeners.defaultFor("progs/a.asm", List.of("exposure")));
     }
 
     @Test
     void defaultFor_fallsBackToThePlainEditorOnAMachineWithNoCodeEditor() {
-        assertEquals(FileOpeners.EDITOR, FileOpeners.defaultFor("progs/a.can", NOTHING));
+        assertEquals(FileOpeners.EDITOR, FileOpeners.defaultFor("progs/a.sgs", NOTHING));
     }
 
     @Test
@@ -76,18 +76,18 @@ class FileOpenersTest {
     @Test
     void available_ordersTheCodeEditorsBestFirst() {
         assertEquals(List.of("virtual_studio_code", "virtual_studio", "exposure", FileOpeners.EDITOR),
-                FileOpeners.available("a.can", EVERYTHING));
+                FileOpeners.available("a.sgs", EVERYTHING));
     }
 
     @Test
     void available_keepsOnlyWhatTheMachineHas() {
         assertEquals(List.of("exposure", FileOpeners.EDITOR),
-                FileOpeners.available("a.can", List.of("exposure")));
+                FileOpeners.available("a.sgs", List.of("exposure")));
     }
 
     @Test
     void available_alwaysOffersThePlainEditorForSomethingReadable() {
-        for (final String path : List.of("a.can", "a.asm", "a.txt", "a.iql", "a.cfg", "a.csv", "a.cmd", "a.log")) {
+        for (final String path : List.of("a.sgs", "a.asm", "a.txt", "a.iql", "a.cfg", "a.csv", "a.cmd", "a.log")) {
             assertTrue(FileOpeners.available(path, NOTHING).contains(FileOpeners.EDITOR),
                     path + " should still be readable on a bare machine");
         }
@@ -95,14 +95,14 @@ class FileOpenersTest {
 
     @Test
     void available_readsTheExtensionWhateverItsCase() {
-        assertEquals(FileOpeners.available("A.CAN", EVERYTHING), FileOpeners.available("a.can", EVERYTHING));
+        assertEquals(FileOpeners.available("A.SGS", EVERYTHING), FileOpeners.available("a.sgs", EVERYTHING));
     }
 
     @Test
     void creatable_offersOnlyTheKindsWorthMakingEmpty() {
         final List<FileType> kinds = FileOpeners.creatable();
         assertTrue(kinds.contains(FileType.TXT), "a text file is the plain case");
-        assertTrue(kinds.contains(FileType.CAN), "a program has to be startable from nothing");
+        assertTrue(kinds.contains(FileType.SGS), "a program has to be startable from nothing");
         assertFalse(kinds.contains(FileType.CRAFT), "a pattern is written by the encoder, not by hand");
         assertFalse(kinds.contains(FileType.ASM), "assembly is what the compiler produces");
         assertFalse(kinds.contains(FileType.DAT), "a projection of stored items is not a file to create");

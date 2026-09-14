@@ -28,8 +28,8 @@ import java.util.Locale;
 public final class HostComputer {
 
     /** Reading a single number off the machine barely costs anything; gathering a list costs more. */
-    private static final int GLANCE = dev.jstech.computers.vm.system.CannonCosts.GLANCE;
-    private static final int GATHER = dev.jstech.computers.vm.system.CannonCosts.GATHER;
+    private static final int GLANCE = dev.jstech.computers.vm.system.SigmaCosts.GLANCE;
+    private static final int GATHER = dev.jstech.computers.vm.system.SigmaCosts.GATHER;
 
     /** How many different machine ids there are. */
     private static final long ID_RANGE = 100_000L;
@@ -130,7 +130,7 @@ public final class HostComputer {
 
     private static Values.ListValue processes(final AbstractComputerBlockEntity machine) {
         final Values.ListValue all = new Values.ListValue();
-        for (final MachinePrograms.Live one : machine.cannon().all()) {
+        for (final MachinePrograms.Live one : machine.sigma().all()) {
             final Values.Obj made = new Values.Obj("ProcessInfo");
             made.set("Id", one.id());
             made.set("Name", one.name());

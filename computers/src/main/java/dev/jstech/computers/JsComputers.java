@@ -31,11 +31,11 @@ public class JsComputers {
         dev.jstech.computers.operation.ComputingOperations.register();
 
         /*
-         * Cannon is a language like any other as far as the machines are concerned: it goes in the same
+         * Σ# is a language like any other as far as the machines are concerned: it goes in the same
          * registry an addon would use, and can be taken out of it by one.
          */
         dev.jstech.core.JsCore.languages().register(
-                dev.jstech.computers.machine.CannonLanguage.INSTANCE);
+                dev.jstech.computers.machine.SigmaLanguage.INSTANCE);
 
         ComputingModule.register(modEventBus);
         JscCreativeModeTabs.register(modEventBus);

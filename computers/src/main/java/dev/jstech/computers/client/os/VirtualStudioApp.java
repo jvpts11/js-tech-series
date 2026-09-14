@@ -817,7 +817,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         final String dir = this.foldersToRead.poll();
         if (dir != null) {
             CodeFileReplies.expectFolder(this, dir);
-            PacketDistributor.sendToServer(new RequestFolderContentPayload(this.host, dir, ".can"));
+            PacketDistributor.sendToServer(new RequestFolderContentPayload(this.host, dir, ".sgs"));
             return;
         }
         compileBuilding();
@@ -957,7 +957,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
      * from the root so it is found wherever the shell stands.
      */
     private void runListing(final String path) {
-        runInTerminal(List.of("cd \\", "cannon run \"" + path.replace('/', '\\') + "\""));
+        runInTerminal(List.of("cd \\", "sigma run \"" + path.replace('/', '\\') + "\""));
     }
 
     /** Clean: the listings every project built are deleted, and the tree stops showing them. */
@@ -974,7 +974,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         this.workspace.refresh();
     }
 
-    /** Package: the prompt's canpack does it, in the project's folder, at the terminal. */
+    /** Package: the prompt's sgpack does it, in the project's folder, at the terminal. */
     private void packageStartup() {
         final ProjectFile project = this.projects.get(startupName());
         if (project == null) {
@@ -983,8 +983,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         }
         runInTerminal(List.of(
                 "cd \\" + projectDir(project.name()).replace('/', '\\'),
-                "canpack init " + project.name(),
-                "canpack build"));
+                "sgpack init " + project.name(),
+                "sgpack build"));
     }
 
     /* The New Project wizard */
@@ -1051,7 +1051,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(template.title(), width - 16), x + 14, y + 1,
                 ctx.skin().listRowText(selected), false);
         final String kind = template.tags().isEmpty() ? "" : template.tags().getLast();
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth("Cannon  " + kind, width - 16), x + 14, y + 10,
+        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth("Σ#  " + kind, width - 16), x + 14, y + 10,
                 ctx.skin().dim(), false);
     }
 
@@ -1630,7 +1630,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     private List<ContextMenu.Item> helpMenu() {
         return List.of(item("About Virtual Studio", true,
-                () -> this.workspace.say("Virtual Studio, by Midsoft. Cannon 1.0.")));
+                () -> this.workspace.say("Virtual Studio, by Midsoft. Σ# 1.0.")));
     }
 
     /* What the menus do */
@@ -1677,7 +1677,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     private void newFile() {
         final String project = currentProject();
-        ask("New File", "untitled.can", name -> {
+        ask("New File", "untitled.sgs", name -> {
             if (name.isEmpty()) {
                 return;
             }
@@ -1696,7 +1696,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         if (project == null) {
             return;
         }
-        ask("Add New Item", "Class1.can", file -> {
+        ask("Add New Item", "Class1.sgs", file -> {
             if (file.isEmpty()) {
                 return;
             }
@@ -1717,7 +1717,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         final List<CommandPalette.Entry> entries = new ArrayList<>();
         for (final CodeWorkspace.TreeRow row : this.workspace.tree()) {
             final String path = row.file().path();
-            if (!row.file().directory() && path.startsWith(projectDir(name) + "/") && path.endsWith(".can")) {
+            if (!row.file().directory() && path.startsWith(projectDir(name) + "/") && path.endsWith(".sgs")) {
                 final String relative = path.substring(projectDir(name).length() + 1);
                 if (!project.sources().contains(relative)) {
                     entries.add(new CommandPalette.Entry(relative, "", () -> saveProject(project.withSource(relative))));
@@ -2176,7 +2176,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
                 this::openSolutionByPicker, palette);
         ry = card(g, font, rx, ry, cardW, "Open a local folder", "Any folder of programs",
                 this::openFolderByPicker, palette);
-        ry = card(g, font, rx, ry, cardW, "Open a file", "One .can, no project",
+        ry = card(g, font, rx, ry, cardW, "Open a file", "One .sgs, no project",
                 this::openFileFromStart, palette);
         card(g, font, rx, ry, cardW, "Create a new project", "Start from a template",
                 () -> newProject(false), palette);

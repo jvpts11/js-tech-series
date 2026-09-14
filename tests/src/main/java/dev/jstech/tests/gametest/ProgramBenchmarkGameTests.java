@@ -168,12 +168,12 @@ public final class ProgramBenchmarkGameTests {
                         final PersonalComputerBlockEntity pc = machines.get(i);
                         final int count = PROGRAM_COUNTS[i];
                         for (int p = 0; p < count; p++) {
-                            final MachinePrograms.Started started = pc.cannon().start("busy.can", BUSY, 1, pc);
+                            final MachinePrograms.Started started = pc.sigma().start("busy.sgs", BUSY, 1, pc);
                             helper.assertTrue(started.ok(), "busy program " + p + " starts: " + started.message());
                         }
-                        final int credits = pc.cannonCredits();
-                        final double ms = timeTicks(pc.cannon(), credits);
-                        assertAllAlive(helper, pc.cannon(), count);
+                        final int credits = pc.sigmaCredits();
+                        final double ms = timeTicks(pc.sigma(), credits);
+                        assertAllAlive(helper, pc.sigma(), count);
                         report.put("credits_per_tick", credits);
                         report.put("busy_" + count + "_tick_ms", ms);
                         report.put("busy_" + count + "_per_program_us", ms * 1000.0 / count);
@@ -197,11 +197,11 @@ public final class ProgramBenchmarkGameTests {
         report.put("build_ms", (System.nanoTime() - buildStart) / 1_000_000.0);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> guarded(() -> {
-                    final MachinePrograms cannon = pc.cannon();
-                    final MachinePrograms.Started live = cannon.start("live.can", LIVE, 1, pc);
-                    final MachinePrograms.Started still = cannon.start("still.can", STILL, 1, pc);
+                    final MachinePrograms sigma = pc.sigma();
+                    final MachinePrograms.Started live = sigma.start("live.sgs", LIVE, 1, pc);
+                    final MachinePrograms.Started still = sigma.start("still.sgs", STILL, 1, pc);
                     helper.assertTrue(live.ok() && still.ok(), "both start: " + live.message() + " / " + still.message());
-                    final int credits = pc.cannonCredits();
+                    final int credits = pc.sigmaCredits();
                     final ServerLevel level = helper.getLevel();
                     Map<Long, UiWindowPayload> sent = new HashMap<>();
                     long bytes = 0;
@@ -209,12 +209,12 @@ public final class ProgramBenchmarkGameTests {
                     long stillNanos = 0;
                     int widgets = 0;
                     for (int tick = 0; tick < WARMUP_CALLS + MEASURED_CALLS; tick++) {
-                        cannon.tick(credits);
+                        sigma.tick(credits);
                         final Map<Long, UiWindowPayload> open = new HashMap<>();
                         final long liveStart = System.nanoTime();
-                        collectWindows(cannon, live.id(), pc.getBlockPos(), open);
+                        collectWindows(sigma, live.id(), pc.getBlockPos(), open);
                         final long liveEnd = System.nanoTime();
-                        collectWindows(cannon, still.id(), pc.getBlockPos(), open);
+                        collectWindows(sigma, still.id(), pc.getBlockPos(), open);
                         final long stillEnd = System.nanoTime();
                         if (tick < WARMUP_CALLS) {
                             sent = open;
@@ -251,24 +251,24 @@ public final class ProgramBenchmarkGameTests {
         report.put("build_ms", (System.nanoTime() - buildStart) / 1_000_000.0);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> guarded(() -> {
-                    final MachinePrograms cannon = pc.cannon();
+                    final MachinePrograms sigma = pc.sigma();
                     for (int p = 0; p < SAVED_PROGRAMS; p++) {
-                        final MachinePrograms.Started started = cannon.start("holder.can", HOLDER, 1, pc);
+                        final MachinePrograms.Started started = sigma.start("holder.sgs", HOLDER, 1, pc);
                         helper.assertTrue(started.ok(), "holder " + p + " starts: " + started.message());
                     }
                     for (int tick = 0; tick < 20; tick++) {
-                        cannon.tick(pc.cannonCredits());
+                        sigma.tick(pc.sigmaCredits());
                     }
-                    assertAllAlive(helper, cannon, SAVED_PROGRAMS);
+                    assertAllAlive(helper, sigma, SAVED_PROGRAMS);
                     CompoundTag saved = new CompoundTag();
                     for (int i = 0; i < WARMUP_CALLS; i++) {
                         saved = new CompoundTag();
-                        cannon.save(saved);
+                        sigma.save(saved);
                     }
                     final long saveStart = System.nanoTime();
                     for (int i = 0; i < MEASURED_CALLS; i++) {
                         saved = new CompoundTag();
-                        cannon.save(saved);
+                        sigma.save(saved);
                     }
                     final double saveMs = (System.nanoTime() - saveStart) / 1_000_000.0 / MEASURED_CALLS;
                     MachinePrograms loaded = new MachinePrograms();
@@ -313,7 +313,7 @@ public final class ProgramBenchmarkGameTests {
                 .thenExecuteAfter(TICK_AVERAGE_WINDOW, () -> guarded(() -> {
                     report.put("idle_ms", Math.min(first[0], averageTickMs(server)));
                     for (final PersonalComputerBlockEntity pc : machines) {
-                        final MachinePrograms.Started started = pc.cannon().start("busy.can", BUSY, 1, pc);
+                        final MachinePrograms.Started started = pc.sigma().start("busy.sgs", BUSY, 1, pc);
                         helper.assertTrue(started.ok(), "a busy program starts on every machine: " + started.message());
                     }
                 }))
@@ -321,7 +321,7 @@ public final class ProgramBenchmarkGameTests {
                 .thenExecuteAfter(TICK_AVERAGE_WINDOW, () -> guarded(() -> {
                     final double busy = Math.min(first[0], averageTickMs(server));
                     for (final PersonalComputerBlockEntity pc : machines) {
-                        assertAllAlive(helper, pc.cannon(), 1);
+                        assertAllAlive(helper, pc.sigma(), 1);
                     }
                     report.put("busy_ms", busy);
                     report.put("busy_per_machine_us", busy * 1000.0 / MACHINES);
@@ -332,20 +332,20 @@ public final class ProgramBenchmarkGameTests {
     }
 
     /** Milliseconds a tick of these programs takes, timed straight on the machine's program table. */
-    private static double timeTicks(final MachinePrograms cannon, final int credits) {
+    private static double timeTicks(final MachinePrograms sigma, final int credits) {
         for (int i = 0; i < WARMUP_CALLS; i++) {
-            cannon.tick(credits);
+            sigma.tick(credits);
         }
         final long start = System.nanoTime();
         for (int i = 0; i < MEASURED_CALLS; i++) {
-            cannon.tick(credits);
+            sigma.tick(credits);
         }
         return (System.nanoTime() - start) / 1_000_000.0 / MEASURED_CALLS;
     }
 
-    private static void assertAllAlive(final GameTestHelper helper, final MachinePrograms cannon, final int expected) {
-        helper.assertTrue(cannon.all().size() == expected, "expected " + expected + " programs; got " + cannon.all().size());
-        for (final MachinePrograms.Live one : cannon.all()) {
+    private static void assertAllAlive(final GameTestHelper helper, final MachinePrograms sigma, final int expected) {
+        helper.assertTrue(sigma.all().size() == expected, "expected " + expected + " programs; got " + sigma.all().size());
+        for (final MachinePrograms.Live one : sigma.all()) {
             final ILanguageProcess.State state = one.process().state();
             helper.assertTrue(state != ILanguageProcess.State.HALTED,
                     "program " + one.id() + " halted: " + one.process().message());
@@ -353,9 +353,9 @@ public final class ProgramBenchmarkGameTests {
     }
 
     /** The windows one program has open, as the machine builds them for whoever is at its desktop. */
-    private static void collectWindows(final MachinePrograms cannon, final int program, final BlockPos host,
+    private static void collectWindows(final MachinePrograms sigma, final int program, final BlockPos host,
                                        final Map<Long, UiWindowPayload> into) {
-        for (final Values.Obj window : cannon.windowsOf(program)) {
+        for (final Values.Obj window : sigma.windowsOf(program)) {
             final UiWindowPayload payload = UiWindowPayload.of(host, program, window);
             if (payload != null) {
                 into.put(((long) payload.program() << 32) | (payload.window() & 0xFFFFFFFFL), payload);

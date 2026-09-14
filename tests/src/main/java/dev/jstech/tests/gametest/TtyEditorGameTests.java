@@ -38,7 +38,7 @@ public final class TtyEditorGameTests {
     private static final String ARENA = "empty";
 
     /** The longest a file's path may be on the wire, which is what an editor is opened on. */
-    private static final String LONG_PATH = "progs/" + "deep/".repeat(29) + "a.can";
+    private static final String LONG_PATH = "progs/" + "deep/".repeat(29) + "a.sgs";
 
     private static RegistryFriendlyByteBuf buffer(final GameTestHelper helper) {
         return new RegistryFriendlyByteBuf(Unpooled.buffer(), helper.getLevel().registryAccess());

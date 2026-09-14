@@ -33,7 +33,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * an addon add one. With one language shipped, nothing would prove that any more, so a toy language is
  * registered here and put through the whole of it: compiled on the way in, given a share of the tick,
  * listed by what it calls itself, written down and read back. What it does is deliberately unlike
- * Cannon, so an assumption about Cannon leaking into the machines shows up as a failure here.
+ * Σ#, so an assumption about Σ# leaking into the machines shows up as a failure here.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -58,13 +58,13 @@ public final class LanguageApiGameTests {
         JsCore.languages().register(new ToyLanguage());
         try {
             final MachinePrograms.Started started =
-                    computer.cannon().start("count.toy", SOURCE, 1, computer);
+                    computer.sigma().start("count.toy", SOURCE, 1, computer);
             helper.assertTrue(started.ok(), "the machine runs it without knowing the language: " + started.message());
-            final MachinePrograms.Live one = computer.cannon().byId(started.id());
+            final MachinePrograms.Live one = computer.sigma().byId(started.id());
             helper.assertTrue("counter".equals(one.name()),
                     "and lists it by the name the program gave itself; got " + one.name());
 
-            computer.cannon().tick(4096);
+            computer.sigma().tick(4096);
             helper.assertTrue(one.process().console().equals(List.of("1", "2", "3")),
                     "it got its share of the tick and printed; console " + one.process().console());
             helper.assertTrue(one.process().state() == ILanguageProcess.State.FINISHED,

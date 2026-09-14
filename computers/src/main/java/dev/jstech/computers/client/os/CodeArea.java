@@ -26,7 +26,7 @@ import org.lwjgl.glfw.GLFW;
  * a mark in the margin and a red line under the word where the compiler complained.
  *
  * <p>It knows no language. Something else says how a row is coloured and what the marks are, and this
- * draws the answer, so the same component serves Cannon today and whatever a pack registers tomorrow.
+ * draws the answer, so the same component serves Σ# today and whatever a pack registers tomorrow.
  * Colouring is asked for only when the text has actually changed, because reading a whole program to
  * paint one frame of a window nobody typed into is work for nothing.
  *

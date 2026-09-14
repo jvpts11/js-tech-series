@@ -74,8 +74,8 @@ public enum FileType {
     /** A font the system draws with. */
     FON("fon", false, true),
 
-    /** Cannon source, user-editable, and what the compiler reads. */
-    CAN("can", true, false),
+    /** Σ# source, user-editable, and what the compiler reads. */
+    SGS("sgs", true, false),
 
     /**
      * The assembly the compiler writes, user-editable, and meant to be read.
@@ -86,7 +86,7 @@ public enum FileType {
     ASM("asm", true, false),
 
     /**
-     * A Cannon package: its manifest and every file in it, in one piece of text.
+     * A Σ# package: its manifest and every file in it, in one piece of text.
      *
      * <p>Editable like the rest, because a package is something one player hands to another and the one
      * receiving it should be able to read every line before installing it. It is not {@code .pkg},
@@ -97,7 +97,7 @@ public enum FileType {
     /** A solution: the projects a studio works on together, and which starts. */
     SLN("sln", true, false),
     /** A project: what it is made of and what it builds. */
-    CANPROJ("canproj", true, false);
+    SGSPROJ("sgsproj", true, false);
 
     private final String extension;
     private final boolean userEditable;

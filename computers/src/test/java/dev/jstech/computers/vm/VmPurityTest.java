@@ -54,7 +54,7 @@ class VmPurityTest {
 
             import static net.minecraft.util.Mth.clamp;
 
-            import dev.jstech.computers.cannon.CannonError;
+            import dev.jstech.computers.sigma.SigmaError;
             import dev.jstech.core.network.NetworkUuid;
             import it.unimi.dsi.fastutil.ints.IntList;
 

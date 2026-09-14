@@ -51,7 +51,7 @@ public final class MachinePrograms {
      * What a program is listed as when it gave itself no name: the runtime that is running it, the
      * way an interpreted program shows up under its interpreter on any machine.
      */
-    public static final String RUNTIME_NAME = "cannonrt";
+    public static final String RUNTIME_NAME = "sigma";
 
     /** What a program runs at when nobody said otherwise: the middle, the same as anything at the prompt. */
     public static final String DEFAULT_PRIORITY = "medium";
@@ -276,7 +276,7 @@ public final class MachinePrograms {
     public int deliverGatewayMessage(final int from, final String text, final long tick) {
         int heard = 0;
         for (final Live one : List.copyOf(this.live)) {
-            if (one.process() instanceof CannonProgram program
+            if (one.process() instanceof SigmaProgram program
                     && program.process().deliverGatewayMessage(from, text, tick)) {
                 heard++;
             }
@@ -287,7 +287,7 @@ public final class MachinePrograms {
     /** The windows a program has open on the machine's desktop; empty for one that has none. */
     public List<dev.jstech.computers.vm.program.Values.Obj> windowsOf(final int id) {
         final Live one = this.byId(id);
-        return one != null && one.process() instanceof CannonProgram program
+        return one != null && one.process() instanceof SigmaProgram program
                 ? program.process().windows() : List.of();
     }
 
@@ -298,7 +298,7 @@ public final class MachinePrograms {
     public boolean deliverUiEvent(final int id, final long window, final long widget, final String kind,
                                   final List<Object> values) {
         final Live one = this.byId(id);
-        return one != null && one.process() instanceof CannonProgram program
+        return one != null && one.process() instanceof SigmaProgram program
                 && program.process().deliverUiEvent(window, widget, kind, values);
     }
 
@@ -352,8 +352,8 @@ public final class MachinePrograms {
         if (target == null || target.process().state() == ILanguageProcess.State.HALTED) {
             return false;
         }
-        if (target.process() instanceof CannonProgram cannon) {
-            return cannon.process().deliverMessage(from, text, tick);
+        if (target.process() instanceof SigmaProgram sigma) {
+            return sigma.process().deliverMessage(from, text, tick);
         }
         return true;
     }

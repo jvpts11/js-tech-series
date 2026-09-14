@@ -23,7 +23,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * One window a Cannon program has open on a machine, as the desktop draws it: what it is called, how big
+ * One window a Σ# program has open on a machine, as the desktop draws it: what it is called, how big
  * it asked to be, and every widget in it with what that widget holds.
  *
  * <p>The whole window goes over at once whenever anything in it changes, because a window is small: a

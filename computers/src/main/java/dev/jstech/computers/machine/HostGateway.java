@@ -14,7 +14,7 @@ import dev.jstech.computers.gateway.IGatewayBridge;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IHost;
 import dev.jstech.computers.vm.program.Values;
-import dev.jstech.computers.vm.system.CannonCosts;
+import dev.jstech.computers.vm.system.SigmaCosts;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,9 +36,9 @@ import org.jetbrains.annotations.Nullable;
 public final class HostGateway {
 
     /** A look at what Gateways there are, which the machine already knows. */
-    private static final int GLANCE = CannonCosts.GLANCE;
+    private static final int GLANCE = SigmaCosts.GLANCE;
     /** Gathering what is on the wire, which means asking the other side. */
-    private static final int GATHER = CannonCosts.GATHER;
+    private static final int GATHER = SigmaCosts.GATHER;
     /** Calling something on the other side, and what each thing handed over adds to it. */
     private static final int CALL = 100;
     private static final int PER_ARGUMENT = 5;

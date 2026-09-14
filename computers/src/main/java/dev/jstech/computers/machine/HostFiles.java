@@ -23,9 +23,9 @@ import java.util.List;
 public final class HostFiles {
 
     /** What each of these is worth in instructions. Reading is dear; writing is dearer. */
-    private static final int LOOK = dev.jstech.computers.vm.system.CannonCosts.GLANCE_NETWORK;
-    private static final int READ = dev.jstech.computers.vm.system.CannonCosts.READ;
-    private static final int WRITE = dev.jstech.computers.vm.system.CannonCosts.WRITE;
+    private static final int LOOK = dev.jstech.computers.vm.system.SigmaCosts.GLANCE_NETWORK;
+    private static final int READ = dev.jstech.computers.vm.system.SigmaCosts.READ;
+    private static final int WRITE = dev.jstech.computers.vm.system.SigmaCosts.WRITE;
 
     private HostFiles() {
     }

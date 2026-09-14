@@ -10,8 +10,8 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.cannon.CannonCompiler;
-import dev.jstech.computers.cannon.SourceFile;
+import dev.jstech.computers.sigma.SigmaCompiler;
+import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
@@ -138,10 +138,10 @@ public final class NetworkSharesGameTests {
                     helper.assertTrue(lab.writeFile("C:\\pub\\note.txt", "hi").ok(), "the file is on the computer");
                     helper.assertTrue(lab.setConfig("share", "C:\\pub write").ok(), "the folder is shared");
 
-                    final CannonCompiler.Result built =
-                            CannonCompiler.compile(List.of(new SourceFile("Reader.can", READER)));
+                    final SigmaCompiler.Result built =
+                            SigmaCompiler.compile(List.of(new SourceFile("Reader.sgs", READER)));
                     helper.assertTrue(built.ok(), "the program compiles: " + String.join("\n", built.lines()));
-                    final MachinePrograms programs = pair.mainframe().cannon();
+                    final MachinePrograms programs = pair.mainframe().sigma();
                     final MachinePrograms.Started started =
                             programs.start("reader.asm", built.assembly(), 1, pair.mainframe());
                     helper.assertTrue(started.ok(), "it starts on the Mainframe: " + started.message());

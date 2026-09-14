@@ -199,7 +199,7 @@ public final class DesktopPayloads {
                                          final ServerLevel level) {
         if (level.getBlockEntity(payload.hostPos())
                 instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity computer
-                && computer.cannon().stop(payload.id())) {
+                && computer.sigma().stop(payload.id())) {
             computer.setChanged();
             PacketDistributor.sendToPlayer(player, buildSettingsSnapshot(
                     (dev.jstech.computers.os.IOsHost) computer, payload.hostPos()));

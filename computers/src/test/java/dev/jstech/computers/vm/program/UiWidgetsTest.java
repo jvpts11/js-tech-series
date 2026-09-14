@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import dev.jstech.computers.cannon.CannonCompiler;
-import dev.jstech.computers.cannon.SourceFile;
+import dev.jstech.computers.sigma.SigmaCompiler;
+import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
@@ -21,7 +21,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * A Cannon program opening a window on the machine's desktop: what it builds is its own to hold, what a
+ * A Σ# program opening a window on the machine's desktop: what it builds is its own to hold, what a
  * player does with it reaches its handlers, and all of it comes back after a save.
  */
 class UiWidgetsTest {
@@ -64,8 +64,8 @@ class UiWidgetsTest {
             + "namespace Tests; ";
 
     private static ProgramImage load(final String source) {
-        final CannonCompiler.Result built =
-                CannonCompiler.compile(List.of(new SourceFile("Panel.can", PRELUDE + source)));
+        final SigmaCompiler.Result built =
+                SigmaCompiler.compile(List.of(new SourceFile("Panel.sgs", PRELUDE + source)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
         final AsmReader reader = new AsmReader(built.assembly());
         final AsmProgram program = reader.read();

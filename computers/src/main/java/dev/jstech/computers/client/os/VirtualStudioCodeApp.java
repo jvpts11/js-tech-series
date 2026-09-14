@@ -517,7 +517,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
                 item("Run File", hasDoc(), this::runFile),
                 item("Build File", hasDoc(), this::buildFile),
                 item("Build Folder", this.folderOpen && !this.workspace.files().isEmpty(), this::buildFolder),
-                item("Stop", true, () -> this.terminal.run("cannon stop")));
+                item("Stop", true, () -> this.terminal.run("sigma stop")));
     }
 
     private List<ContextMenu.Item> terminalMenu() {
@@ -530,16 +530,16 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         return List.of(
                 item("Welcome", true, this::closeFolder),
                 item("Keyboard Shortcuts", true, this::showShortcuts),
-                item("About", true, () -> this.workspace.say("Virtual Studio Code, by Midsoft. Cannon 1.0.")));
+                item("About", true, () -> this.workspace.say("Virtual Studio Code, by Midsoft. Σ# 1.0.")));
     }
 
     /** Every command there is, under the name its menu gives it, for the palette. */
     private List<CommandPalette.Entry> commands() {
         return List.of(
-                new CommandPalette.Entry("Cannon: Run File", "F5", this::runFile),
-                new CommandPalette.Entry("Cannon: Build File", "Ctrl+Shift+B", this::buildFile),
-                new CommandPalette.Entry("Cannon: Build Folder", "", this::buildFolder),
-                new CommandPalette.Entry("Cannon: Stop", "", () -> this.terminal.run("cannon stop")),
+                new CommandPalette.Entry("Σ#: Run File", "F5", this::runFile),
+                new CommandPalette.Entry("Σ#: Build File", "Ctrl+Shift+B", this::buildFile),
+                new CommandPalette.Entry("Σ#: Build Folder", "", this::buildFolder),
+                new CommandPalette.Entry("Σ#: Stop", "", () -> this.terminal.run("sigma stop")),
                 new CommandPalette.Entry("Terminal: New Terminal", "Ctrl+`", this::focusTerminal),
                 new CommandPalette.Entry("Terminal: Clear", "", () -> this.terminal.run("cls")),
                 new CommandPalette.Entry("File: New File", "", this::newFile),
@@ -651,7 +651,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     }
 
     private void newFile() {
-        ask("New File", "untitled.can", name -> {
+        ask("New File", "untitled.sgs", name -> {
             if (!name.isEmpty()) {
                 final String folder = this.workspace.folder();
                 this.workspace.newFile(folder.isEmpty() ? name : folder + "/" + name);
@@ -701,7 +701,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
             this.workspace.save();
         }
         focusTerminal();
-        enqueue("cannonc " + doc.path() + " -o " + outputFor(doc.path()));
+        enqueue("sgsc " + doc.path() + " -o " + outputFor(doc.path()));
     }
 
     private void runFile() {
@@ -710,7 +710,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
             return;
         }
         buildFile();
-        enqueue("cannon run " + outputFor(doc.path()));
+        enqueue("sigma run " + outputFor(doc.path()));
     }
 
     private void buildFolder() {
@@ -718,11 +718,11 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         if (files.isEmpty()) {
             return;
         }
-        final StringBuilder line = new StringBuilder("cannonc");
+        final StringBuilder line = new StringBuilder("sgsc");
         boolean any = false;
         for (final DiskFilesPayload.WireFile file : files) {
-            // A folder builds all of its Cannon sources into one program.
-            if (file.path().toLowerCase(java.util.Locale.ROOT).endsWith(".can")) {
+            // A folder builds all of its Σ# sources into one program.
+            if (file.path().toLowerCase(java.util.Locale.ROOT).endsWith(".sgs")) {
                 line.append(' ').append(file.path());
                 any = true;
             }
@@ -1028,7 +1028,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         int ry = y + 32;
         g.drawString(font, "Walkthroughs", rightX, ry, palette.plain(), false);
         ry += 10;
-        g.drawString(font, "Get started with Cannon:", rightX, ry, palette.gutterText(), false);
+        g.drawString(font, "Get started with Σ#:", rightX, ry, palette.gutterText(), false);
         ry += 9;
         g.drawString(font, "open a folder, write, press F5", rightX, ry, palette.gutterText(), false);
         ry += 14;

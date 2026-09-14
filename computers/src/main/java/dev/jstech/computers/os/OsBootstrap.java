@@ -309,14 +309,14 @@ public final class OsBootstrap {
             ProgramSpec.of(rl("screenfetch"), "screenfetch", "screenfetch", false, LINUX_ONLY, 4, ProgramKind.APP, 0, HostScope.ANY)
                     .withEra(LEGACY).withHouse(SoftwareHouse.ARCH_COLLECTIVE).withRam(1),
             /*
-             * The Cannon toolchain: the compiler and the runtime, two packages the Mirror serves to any
+             * The Σ# toolchain: the compiler and the runtime, two packages the Mirror serves to any
              * machine of the Legacy generation or later running Frames XP or a Linux. Neither has a window
              * of its own; both are verbs at the prompt, which is where a program is written and run from.
              */
-            ProgramSpec.of(rl("cannonc"), "cannonc", "Cannon Compiler", false, ALL_PLATFORMS, 8, ProgramKind.APP, 2, HostScope.ANY)
-                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.CANNON_FOUNDATION).withRam(16),
-            ProgramSpec.of(rl("cannonrt"), "cannon", "Cannon Runtime", false, ALL_PLATFORMS, 12, ProgramKind.SERVICE, 2, HostScope.ANY)
-                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.CANNON_FOUNDATION).withRam(24),
+            ProgramSpec.of(rl("sgsc"), "sgsc", "Σ# Compiler", false, ALL_PLATFORMS, 8, ProgramKind.APP, 2, HostScope.ANY)
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.SIGMA_FOUNDATION).withRam(16),
+            ProgramSpec.of(rl("sigma"), "sigma", "Sigma Runtime", false, ALL_PLATFORMS, 12, ProgramKind.SERVICE, 2, HostScope.ANY)
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.SIGMA_FOUNDATION).withRam(24),
             /*
              * Virtual Studio: the whole workshop in one window, and the only editor that says what a call
              * will cost the program before the line is written. Frames only, and it asks the machine to
@@ -326,7 +326,7 @@ public final class OsBootstrap {
             ProgramSpec.of(rl("virtual_studio"), "virtualstudio", "Virtual Studio", false, FRAMES_ONLY, 512, ProgramKind.APP, 2, HostScope.ANY)
                     .withMinEra(LEGACY).withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(256),
             /*
-             * Virtual Studio Code: the light editor for Cannon, with the machine's programs down the side
+             * Virtual Studio Code: the light editor for Σ#, with the machine's programs down the side
              * and its console welded into the bottom of the window, so a program is written, compiled and
              * run without leaving it. Frames XP or newer, and any Linux desktop.
              */

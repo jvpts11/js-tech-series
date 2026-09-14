@@ -54,7 +54,7 @@ public final class BuiltinCommands {
          * lists of the same commands is two lists that eventually disagree, and the one that loses is
          * always the one a player types into.
          */
-        out.addAll(CannonCommands.all());
+        out.addAll(SigmaCommands.all());
         return List.copyOf(out);
     }
 

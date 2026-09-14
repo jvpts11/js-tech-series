@@ -46,7 +46,7 @@ public final class FolderContentGameTests {
         final String longest = "x".repeat(FolderContentPayload.MAX_TEXT);
         final List<FolderContentPayload.WireFile> files = new ArrayList<>();
         for (int i = 0; i < FolderContentPayload.MAX_FILES; i++) {
-            files.add(new FolderContentPayload.WireFile("progs/program" + i + ".can", longest));
+            files.add(new FolderContentPayload.WireFile("progs/program" + i + ".sgs", longest));
         }
         final FolderContentPayload payload = new FolderContentPayload("progs", files);
         final RegistryFriendlyByteBuf buf = buffer(helper);
@@ -69,7 +69,7 @@ public final class FolderContentGameTests {
     @GameTest(template = ARENA)
     public static void requestFolderContent_encodesALongPath(final GameTestHelper helper) {
         final RequestFolderContentPayload payload =
-                new RequestFolderContentPayload(BlockPos.ZERO, "progs/" + "deep/".repeat(30), ".can");
+                new RequestFolderContentPayload(BlockPos.ZERO, "progs/" + "deep/".repeat(30), ".sgs");
         final RegistryFriendlyByteBuf buf = buffer(helper);
         try {
             RequestFolderContentPayload.STREAM_CODEC.encode(buf, payload);

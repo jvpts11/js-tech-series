@@ -41,7 +41,7 @@ if (withoutComputerCraft) {
     sourceSets.main.java {
         exclude '**/gametest/ComputerCraftGameTests.java'
         exclude '**/gametest/GatewayBridgeGameTests.java'
-        exclude '**/gametest/GatewayCannonGameTests.java'
+        exclude '**/gametest/GatewaySigmaGameTests.java'
         exclude '**/gametest/NetworkGatewayGameTests.java'
     }
 }

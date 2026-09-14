@@ -42,7 +42,7 @@ public final class SettingsPayloadGameTests {
         final SettingsSnapshotPayload snapshot = new SettingsSnapshotPayload(new BlockPos(1, 2, 3),
                 "win11", "A computer name that is also far longer than the cap allows it to be", 0, false, 75, 100,
                 "C", true, "", true, false, 0, "1 CPU", 100, 256, 0, "frames_11", "Frames",
-                List.of("jsc:cannonc"),
+                List.of("jsc:sgsc"),
                 List.of(new SettingsSnapshotPayload.DiskUse(longDisk, 500, 12, true)),
                 40, List.of(new SettingsSnapshotPayload.RamUse(longName, 12, "PROCESS", 7)),
                 List.of(new SettingsSnapshotPayload.ShareRow("pub", "C:\\pub", true)), false);
@@ -57,7 +57,7 @@ public final class SettingsPayloadGameTests {
                         && back.disks().get(0).capMb() == 500,
                 "the disk label is cut the same way; got " + back.disks());
         helper.assertTrue(back.computerName().length() == SettingsSnapshotPayload.LABEL_MAX
-                        && back.installed().equals(List.of("jsc:cannonc")) && back.guiScale() == 75,
+                        && back.installed().equals(List.of("jsc:sgsc")) && back.guiScale() == 75,
                 "everything else travels whole");
         helper.assertTrue(back.shares().size() == 1 && back.shares().get(0).path().equals("C:\\pub")
                         && back.shares().get(0).writable() && !back.remoteAllowed(),

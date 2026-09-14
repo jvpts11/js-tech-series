@@ -103,7 +103,7 @@ sourceSets.main.resources.srcDir generateModMetadata
 neoForge.ideSyncTask generateModMetadata
 
 /*
- * Benchmarks of the Cannon runtime, run on demand and never part of the build: gradlew :computers:jmh. Options for
+ * Benchmarks of the Σ# runtime, run on demand and never part of the build: gradlew :computers:jmh. Options for
  * JMH go through -PjmhArgs (-PjmhArgs="-bm thrpt -tu ms" reports instructions per millisecond); the results land in
  * build/reports/jmh/results.json.
  */
@@ -121,7 +121,7 @@ dependencies {
 }
 
 tasks.register('jmh', JavaExec) {
-    description = 'Runs the JMH benchmarks of the Cannon runtime.'
+    description = 'Runs the JMH benchmarks of the Σ# runtime.'
     group = 'verification'
     classpath = sourceSets.jmh.runtimeClasspath
     mainClass = 'org.openjdk.jmh.Main'

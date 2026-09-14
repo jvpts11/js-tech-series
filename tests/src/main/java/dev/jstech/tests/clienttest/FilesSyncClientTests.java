@@ -87,8 +87,8 @@ public final class FilesSyncClientTests {
                 .thenWaitUntil(() -> bothList(ctx, "first.txt"), SCREEN_WAIT, "both explorers to list the folder")
                 .thenScreenshot(2, "two-explorers")
                 // A file made in the first one.
-                .then(SETTLE, () -> explorers(ctx).get(0).newFile(FileType.CAN))
-                .thenWaitUntil(() -> bothList(ctx, "New File.can"), SCREEN_WAIT,
+                .then(SETTLE, () -> explorers(ctx).get(0).newFile(FileType.SGS))
+                .thenWaitUntil(() -> bothList(ctx, "New File.sgs"), SCREEN_WAIT,
                         "the file made in one explorer to show in the other")
                 .thenScreenshot(2, "file-in-both")
                 /*
@@ -98,10 +98,10 @@ public final class FilesSyncClientTests {
                 .then(SETTLE, () -> {
                     final var host = ctx.abs(COMPUTER);
                     PacketDistributor.sendToServer(new RenameFilePayload(host, FOLDER + "/first.txt",
-                            FOLDER + "/first.can"));
+                            FOLDER + "/first.sgs"));
                     FilesApps.diskChanged();
                 })
-                .thenWaitUntil(() -> bothList(ctx, "first.can"), SCREEN_WAIT,
+                .thenWaitUntil(() -> bothList(ctx, "first.sgs"), SCREEN_WAIT,
                         "the new name to show in both explorers")
                 .thenAssert(0, () -> !explorers(ctx).get(1).names().contains("first.txt"),
                         "the old name is gone from the other explorer")
@@ -111,11 +111,11 @@ public final class FilesSyncClientTests {
                     FileType kind = null;
                     for (final DiskFilesystem.FileEntry entry
                             : DiskFilesystem.list(disk, FOLDER, FilesystemKind.HIERARCHICAL)) {
-                        if (entry.path().equals(FOLDER + "/first.can")) {
+                        if (entry.path().equals(FOLDER + "/first.sgs")) {
                             kind = entry.type();
                         }
                     }
-                    ctx.assertTrue(kind == FileType.CAN, "the renamed file is a program on the disk, was " + kind);
+                    ctx.assertTrue(kind == FileType.SGS, "the renamed file is a program on the disk, was " + kind);
                 })
                 .thenScreenshot(2, "renamed-in-both");
     }

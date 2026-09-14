@@ -9,9 +9,9 @@ package dev.jstech.computers.vm.program;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import dev.jstech.computers.cannon.sem.BuiltIns;
-import dev.jstech.computers.cannon.sem.IMemberSymbol;
-import dev.jstech.computers.cannon.sem.NamedType;
+import dev.jstech.computers.sigma.sem.BuiltIns;
+import dev.jstech.computers.sigma.sem.IMemberSymbol;
+import dev.jstech.computers.sigma.sem.NamedType;
 import dev.jstech.computers.vm.system.IntrinsicSpec;
 import java.util.ArrayList;
 import java.util.HashSet;

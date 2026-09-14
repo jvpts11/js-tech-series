@@ -46,7 +46,7 @@ public record MachineHost(BlockEntity machine) implements IHost {
 
     @Override
     public void fault(final String process, final int line, final RuntimeException cause) {
-        LOGGER.error("Cannon program '{}' on the machine at {} failed inside the runtime at instruction {}",
+        LOGGER.error("Σ# program '{}' on the machine at {} failed inside the runtime at instruction {}",
                 process, this.machine.getBlockPos(), line, cause);
     }
 

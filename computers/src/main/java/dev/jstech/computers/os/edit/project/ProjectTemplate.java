@@ -34,7 +34,7 @@ public enum ProjectTemplate {
             List.of());
 
     /** The language every template here is for, by registry id. */
-    public static final String LANGUAGE = "jsc:cannon";
+    public static final String LANGUAGE = "jsc:sigma";
 
     /** The platforms every template here runs on, for the filter. */
     public static final List<String> PLATFORMS = List.of("Frames", "Linux");
@@ -67,7 +67,7 @@ public enum ProjectTemplate {
     /** The words the filters match: the language, the platforms, and the kind. */
     public List<String> tags() {
         final List<String> out = new java.util.ArrayList<>();
-        out.add("Cannon");
+        out.add("Σ#");
         out.addAll(PLATFORMS);
         out.addAll(this.tags);
         return out;
@@ -80,7 +80,7 @@ public enum ProjectTemplate {
 
     /** The name of the first source a project of this template starts with, or empty for none. */
     public String firstSource(final String projectName) {
-        return this == EMPTY_PROJECT ? "" : projectName + ".can";
+        return this == EMPTY_PROJECT ? "" : projectName + ".sgs";
     }
 
     /** The project file a new project of this template starts as. */

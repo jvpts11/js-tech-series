@@ -11,8 +11,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import dev.jstech.computers.cannon.CannonCompiler;
-import dev.jstech.computers.cannon.SourceFile;
+import dev.jstech.computers.sigma.SigmaCompiler;
+import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
@@ -27,7 +27,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * What a Cannon program sees of the machine's Gateways: which there are, which one it chose, what is on
+ * What a Σ# program sees of the machine's Gateways: which there are, which one it chose, what is on
  * the other side, and what a ComputerCraft computer says to it.
  */
 class HostGatewayTest {
@@ -116,8 +116,8 @@ class HostGatewayTest {
             "using System.*; using System.IO.*; using System.Collections.*; using System.Network.*; namespace Tests; ";
 
     private static ProgramImage load(final String source) {
-        final CannonCompiler.Result built =
-                CannonCompiler.compile(List.of(new SourceFile("Bridge.can", PRELUDE + source)));
+        final SigmaCompiler.Result built =
+                SigmaCompiler.compile(List.of(new SourceFile("Bridge.sgs", PRELUDE + source)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
         final AsmReader reader = new AsmReader(built.assembly());
         final AsmProgram program = reader.read();

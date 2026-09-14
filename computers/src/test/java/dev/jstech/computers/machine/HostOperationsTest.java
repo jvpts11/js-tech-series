@@ -11,8 +11,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import dev.jstech.computers.cannon.CannonCompiler;
-import dev.jstech.computers.cannon.SourceFile;
+import dev.jstech.computers.sigma.SigmaCompiler;
+import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
@@ -105,8 +105,8 @@ class HostOperationsTest {
                 + "    public void OnInit() { }\n"
                 + "    public void OnTick() {\n" + body + "\n    }\n"
                 + "    public void OnDestroy() { }\n}\n";
-        final CannonCompiler.Result built =
-                CannonCompiler.compile(List.of(new SourceFile(className + ".can", source)));
+        final SigmaCompiler.Result built =
+                SigmaCompiler.compile(List.of(new SourceFile(className + ".sgs", source)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
         final AsmReader reader = new AsmReader(built.assembly());
         final AsmProgram written = reader.read();
@@ -192,7 +192,7 @@ class HostOperationsTest {
     }
 
     private static ProgramImage compile() {
-        final CannonCompiler.Result built = CannonCompiler.compile(List.of(new SourceFile("Lonely.can", PRELUDE + """
+        final SigmaCompiler.Result built = SigmaCompiler.compile(List.of(new SourceFile("Lonely.sgs", PRELUDE + """
                 class Lonely : IScript {
                     public void OnInit() { }
                     public void OnTick() { Operations.Pull("minecraft:stone", 1); }

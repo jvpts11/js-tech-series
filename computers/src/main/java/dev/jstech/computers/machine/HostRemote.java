@@ -16,7 +16,7 @@ import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IHost;
 import dev.jstech.computers.vm.program.Values;
-import dev.jstech.computers.vm.system.CannonCosts;
+import dev.jstech.computers.vm.system.SigmaCosts;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -32,9 +32,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class HostRemote {
 
-    private static final int START = CannonCosts.SUBMIT;
-    private static final int TOUCH = CannonCosts.GLANCE_NETWORK;
-    private static final int READ = CannonCosts.READ;
+    private static final int START = SigmaCosts.SUBMIT;
+    private static final int TOUCH = SigmaCosts.GLANCE_NETWORK;
+    private static final int READ = SigmaCosts.READ;
 
     /** How wide the other machine's prompt is taken to be for a line run there. */
     private static final int SHELL_WIDTH = 80;
@@ -77,12 +77,12 @@ public final class HostRemote {
                 final long tick = remote.machine().getLevel() == null ? 0L
                         : remote.machine().getLevel().getGameTime();
                 yield IHost.Reply.of(remote.machine() instanceof AbstractComputerBlockEntity machine
-                        && machine.cannon().send(callerId, id, text, tick), TOUCH);
+                        && machine.sigma().send(callerId, id, text, tick), TOUCH);
             }
             case "Processes" -> {
                 final Values.ListValue all = new Values.ListValue();
                 if (remote.machine() instanceof AbstractComputerBlockEntity machine) {
-                    for (final MachinePrograms.Live one : machine.cannon().all()) {
+                    for (final MachinePrograms.Live one : machine.sigma().all()) {
                         all.items().add(handle(one.id(), one.file(), host));
                     }
                 }
@@ -146,8 +146,8 @@ public final class HostRemote {
         final int slash = Math.max(path.lastIndexOf('\\'), path.lastIndexOf('/'));
         final String name = slash < 0 ? path : path.substring(slash + 1);
         final MachinePrograms.Started started = parent == null
-                ? machine.cannon().start(name, read.message(), room, machine, args, 0, priority)
-                : machine.cannon().startFor(parent, name, read.message(), room, machine, args, priority);
+                ? machine.sigma().start(name, read.message(), room, machine, args, 0, priority)
+                : machine.sigma().startFor(parent, name, read.message(), room, machine, args, priority);
         if (!started.ok()) {
             throw new Halt(Halt.Reason.CANNOT_START, line, host + ": " + started.message());
         }

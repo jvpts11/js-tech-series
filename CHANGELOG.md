@@ -13,11 +13,16 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   already waiting.
 
 ### Changed
+- The programming language is now called Σ# (Sigma Sharp). Its sources end in `.sgs` and its projects in
+  `.sgsproj`; `sgsc` compiles, `sigma run` runs, and `sgpack` packs a program for the Mirror. The programs to
+  install are the Σ# Compiler and the Sigma Runtime, from the Sigma Foundation. The compiler's error codes start
+  with S (`S2001`) and a listing's with A (`A4012`), their numbers unchanged. Files saved as `.can` and projects
+  as `.canproj` are no longer taken for programs; renaming them brings them back.
 - Programs run faster. What a program's calls, branches and `new` reach is worked out once, when the program
   loads, instead of on every line it runs, and so is which of the language's own functions (text, `List`,
   `Map`, `Math`, `Convert`) a call means. Depending on what a program does, each instruction takes between 13
   and 34 percent less time.
-- Compiled listings use format version 2. A listing compiled by 0.3.0a is refused with C4012; compiling its
+- Compiled listings use format version 2. A listing compiled by 0.3.0a is refused with A4012; compiling its
   source again brings it up to date.
 - `Random` draws from a generator of its own, so a given `Random.Seed` draws different numbers than it did in
   0.3.0a.

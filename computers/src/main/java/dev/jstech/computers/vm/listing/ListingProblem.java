@@ -16,7 +16,7 @@ import java.util.Objects;
  *
  * @param line    the line the problem is on
  * @param column  the column it starts at
- * @param code    the code a player quotes, for example {@code C4003}
+ * @param code    the code a player quotes, for example {@code A4003}
  * @param message what is wrong, in words
  */
 public record ListingProblem(int line, int column, String code, String message) {
@@ -29,7 +29,7 @@ public record ListingProblem(int line, int column, String code, String message) 
         }
     }
 
-    /** The one-line form, for example {@code (4,1): error C4003: 'nonsense' is not an instruction}. */
+    /** The one-line form, for example {@code (4,1): error A4003: 'nonsense' is not an instruction}. */
     public String format() {
         return "(" + this.line + "," + this.column + "): error " + this.code + ": " + this.message;
     }

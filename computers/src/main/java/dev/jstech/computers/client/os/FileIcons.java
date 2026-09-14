@@ -44,7 +44,7 @@ public final class FileIcons {
             case "cfg" -> Kind.CFG;
             case "log" -> Kind.LOG;
             case "craft" -> Kind.CRAFT;
-            case "cpk", "sln", "canproj" -> Kind.BUNDLE;
+            case "cpk", "sln", "sgsproj" -> Kind.BUNDLE;
             default -> Kind.DOC;
         };
     }
