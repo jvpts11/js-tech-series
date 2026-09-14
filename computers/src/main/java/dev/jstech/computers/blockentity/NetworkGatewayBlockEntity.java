@@ -170,6 +170,9 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
     public void onOwnerLinked(final long ownerPos) {
         linkedOwner = ownerPos;
         setChanged();
+        if (!messages.isEmpty()) {
+            tellHostMailWaits();
+        }
     }
 
     @Override
@@ -326,6 +329,20 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
             messages.removeFirst();
         }
         messages.addLast(new Message(from, text == null ? "" : text, tick));
+        tellHostMailWaits();
+    }
+
+    /**
+     * Lets the linked host know something waits here, so it looks for its Gateways on its next tick instead of on
+     * every tick. A host whose chunk is not loaded looks once when it loads anyway.
+     */
+    private void tellHostMailWaits() {
+        if (level != null && linkedOwner != null) {
+            final BlockPos host = BlockPos.of(linkedOwner);
+            if (level.isLoaded(host) && level.getBlockEntity(host) instanceof AbstractComputerBlockEntity machine) {
+                machine.gatewayMailWaits();
+            }
+        }
     }
 
     /** Everything said to this side since the last time anyone asked, oldest first. */

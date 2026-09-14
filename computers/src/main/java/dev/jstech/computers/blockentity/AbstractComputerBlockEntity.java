@@ -1294,6 +1294,11 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * and a machine where no program listens simply lets it go.
      */
     private void hearGateways() {
+        // Nothing was said to a Gateway of this machine since the last look, so there is nothing to find.
+        if (!gatewayMail) {
+            return;
+        }
+        gatewayMail = false;
         for (final dev.jstech.computers.blockentity.NetworkGatewayBlockEntity gateway
                 : dev.jstech.computers.machine.HostGateway.gatewaysOf(this)) {
             for (final dev.jstech.computers.blockentity.NetworkGatewayBlockEntity.Message said
@@ -1301,6 +1306,17 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
                 programs.deliverGatewayMessage(said.from(), said.text(), said.tick());
             }
         }
+    }
+
+    /*
+     * Whether a Gateway of this machine may have something waiting. It starts true, so a machine that loads after
+     * a Gateway was spoken to still looks once; a Gateway sets it again whenever it is spoken to.
+     */
+    private boolean gatewayMail = true;
+
+    /** Says a Gateway linked to this machine has something waiting for its programs. */
+    public void gatewayMailWaits() {
+        gatewayMail = true;
     }
 
     /* Every window of a program that has been sent, by the program and the window, as it was sent. */
