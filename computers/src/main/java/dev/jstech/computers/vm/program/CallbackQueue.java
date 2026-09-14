@@ -22,7 +22,7 @@ import java.util.Iterator;
  * world sends it, and the machine would keep them with it; so a call from the world is offered only while there is
  * room for it and for what its arguments hold, and one that finds none is counted.
  */
-final class CallbackQueue implements Iterable<Process.Frame> {
+final class CallbackQueue implements Iterable<Frame> {
 
     /** The most calls the world may leave waiting at once. */
     static final int MOST_CALLS = 256;
@@ -31,7 +31,7 @@ final class CallbackQueue implements Iterable<Process.Frame> {
     static final long MOST_BYTES = 64L * 1024;
 
     /** A waiting call and what its arguments hold, which is given back when the call is taken. */
-    private record Waiting(Process.Frame call, long bytes) {
+    private record Waiting(Frame call, long bytes) {
     }
 
     private final Deque<Waiting> calls = new ArrayDeque<>();
@@ -44,19 +44,19 @@ final class CallbackQueue implements Iterable<Process.Frame> {
     }
 
     /** Puts a call at the back of the queue whether or not it fits; asking first is the caller's to do. */
-    void add(final Process.Frame call, final long bytes) {
+    void add(final Frame call, final long bytes) {
         this.calls.addLast(new Waiting(call, bytes));
         this.bytes += bytes;
     }
 
     /** Puts a call at the front, ahead of everything waiting. */
-    void addFirst(final Process.Frame call, final long bytes) {
+    void addFirst(final Frame call, final long bytes) {
         this.calls.addFirst(new Waiting(call, bytes));
         this.bytes += bytes;
     }
 
     /** Takes the call at the front, or null when none is waiting. */
-    Process.Frame poll() {
+    Frame poll() {
         final Waiting next = this.calls.pollFirst();
         if (next == null) {
             return null;
@@ -113,7 +113,7 @@ final class CallbackQueue implements Iterable<Process.Frame> {
 
     /** The waiting calls, front first, for the save. */
     @Override
-    public Iterator<Process.Frame> iterator() {
+    public Iterator<Frame> iterator() {
         final Iterator<Waiting> waiting = this.calls.iterator();
         return new Iterator<>() {
             @Override
@@ -122,7 +122,7 @@ final class CallbackQueue implements Iterable<Process.Frame> {
             }
 
             @Override
-            public Process.Frame next() {
+            public Frame next() {
                 return waiting.next().call();
             }
         };

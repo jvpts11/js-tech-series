@@ -15,7 +15,6 @@ import dev.jstech.computers.vm.listing.Shape;
 import dev.jstech.computers.vm.system.IntrinsicSpec;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
@@ -77,104 +76,6 @@ public final class Process {
     /** What an event handed to a handler holds before its text: a header and its three fields. */
     private static final long EVENT_BYTES = Heap.HEADER + 3L * Heap.REFERENCE;
 
-    /** What a thread is waiting for, if anything. A snapshot writes it by its name. */
-    enum Parked implements IStableName {
-        NONE("none"),
-        /** A line typed at the terminal. */
-        INPUT("input"),
-        /** A tick to come. */
-        SLEEP("sleep"),
-        /** Another thread to end. */
-        JOIN("join"),
-        /** An object's lock to be let go of. */
-        LOCK("lock"),
-        /** Another program on the machine to end. */
-        CHILD("child");
-
-        private static final StableNames<Parked> NAMES = StableNames.of(Parked.class);
-
-        private final String serializedName;
-
-        Parked(final String serializedName) {
-            this.serializedName = serializedName;
-        }
-
-        @Override
-        public String serializedName() {
-            return serializedName;
-        }
-
-        /**
-         * The wait a snapshot names.
-         *
-         * @throws IllegalArgumentException for a name no wait declares, which only a damaged snapshot holds
-         */
-        static Parked named(final String name) {
-            final Parked found = NAMES.find(name);
-            if (found == null) {
-                throw new IllegalArgumentException("no thread wait is named '" + name + "'");
-            }
-            return found;
-        }
-    }
-
-    /**
-     * One call in progress.
-     *
-     * <p>The stack holds nulls, because null is a value a program can have and hand around, so it is
-     * kept in something that allows one rather than in something that treats it as an absence.
-     */
-    static final class Frame {
-        final MethodImage method;
-        final Object[] slots;
-        final List<Object> stack = new ArrayList<>();
-        final Object self;
-        int at;
-        /** Set on all but the last handler of a run, whose answers nobody is waiting for. */
-        boolean discard;
-
-        Frame(final MethodImage method, final Object self) {
-            this.method = method;
-            this.slots = new Object[Math.max(method.slots(), method.parameters().size())];
-            this.self = self;
-        }
-
-        void push(final Object value) {
-            this.stack.add(value);
-        }
-
-        Object pop() {
-            return this.stack.isEmpty() ? null : this.stack.remove(this.stack.size() - 1);
-        }
-
-        Object peek() {
-            return this.stack.isEmpty() ? null : this.stack.getLast();
-        }
-    }
-
-    /**
-     * One flow of control: its own stack of calls over the process's shared heap.
-     *
-     * <p>{@code on} is the object whose lock it waits for, or the number of the thread it is joined to;
-     * {@code until} is the tick a sleep ends or a timed join gives up on, zero for never.
-     */
-    static final class Thread {
-        final int id;
-        final Deque<Frame> frames = new ArrayDeque<>();
-        Values.Obj token;
-        Parked parked = Parked.NONE;
-        long until;
-        Object on;
-        /** The machine the program waited on runs on, or {@code ""} for this one. */
-        String onHost = "";
-        boolean timedOut;
-        boolean yielded;
-
-        Thread(final int id) {
-            this.id = id;
-        }
-    }
-
     /** Who holds an object's lock, and how many times over it took it. */
     private static final class Monitor {
         private int owner;
@@ -184,9 +85,9 @@ public final class Process {
     private final ProgramImage program;
     private final Heap heap;
     private final Library library;
-    private final List<Thread> threads = new ArrayList<>();
-    private final Thread main = new Thread(1);
-    private Thread current = this.main;
+    private final List<ProgramThread> threads = new ArrayList<>();
+    private final ProgramThread main = new ProgramThread(1);
+    private ProgramThread current = this.main;
     private int nextThread = 2;
     private int turn;
     private final Map<Object, Monitor> monitors = new IdentityHashMap<>();
@@ -213,15 +114,15 @@ public final class Process {
         return this.library;
     }
 
-    Thread current() {
+    ProgramThread current() {
         return this.current;
     }
 
-    List<Thread> threads0() {
+    List<ProgramThread> threads0() {
         return this.threads;
     }
 
-    Thread mainThread() {
+    ProgramThread mainThread() {
         return this.main;
     }
 
@@ -238,7 +139,7 @@ public final class Process {
     }
 
     /** Ends a thread other than the main one, as the runtime's coroutines do when theirs is over. */
-    void endThread(final Thread thread) {
+    void endThread(final ProgramThread thread) {
         this.end(thread);
     }
 
@@ -280,7 +181,7 @@ public final class Process {
         if (this.main.frames.isEmpty() && this.waiting.isEmpty()) {
             return State.FINISHED;
         }
-        for (final Thread thread : this.threads) {
+        for (final ProgramThread thread : this.threads) {
             if (this.runnable(thread)) {
                 return State.RUNNING;
             }
@@ -425,7 +326,7 @@ public final class Process {
         this.identity.exit(code);
         this.main.frames.clear();
         this.waiting.clear();
-        for (final Thread other : List.copyOf(this.threads)) {
+        for (final ProgramThread other : List.copyOf(this.threads)) {
             if (other != this.main) {
                 this.end(other);
             }
@@ -529,10 +430,7 @@ public final class Process {
             return;
         }
         frame.at--;
-        this.current.parked = Parked.CHILD;
-        this.current.on = id;
-        this.current.onHost = host;
-        this.current.until = ticks > 0 ? this.library.now() + ticks : 0L;
+        this.current.wait = new IWait.Child(id, host, ticks > 0 ? this.library.now() + ticks : 0L);
     }
 
     /**
@@ -590,7 +488,7 @@ public final class Process {
      * free, which is neither what a tick means nor something the machine can afford in one go.
      */
     public boolean readyForTurn(final String method) {
-        return this.main.parked == Parked.NONE && this.main.frames.isEmpty() && !this.waiting.holds(method);
+        return !this.main.waiting() && this.main.frames.isEmpty() && !this.waiting.holds(method);
     }
 
     /** Puts a call on that object in the queue, to be run by the slices that follow. */
@@ -631,8 +529,8 @@ public final class Process {
         try {
             this.wake();
             while (used < budget && !this.identity.halted()) {
-                final List<Thread> ready = new ArrayList<>();
-                for (final Thread thread : this.threads) {
+                final List<ProgramThread> ready = new ArrayList<>();
+                for (final ProgramThread thread : this.threads) {
                     if (this.runnable(thread)) {
                         ready.add(thread);
                     }
@@ -671,20 +569,20 @@ public final class Process {
     }
 
     /** Whether a thread can be given instructions right now. */
-    private boolean runnable(final Thread thread) {
-        if (thread.parked != Parked.NONE) {
+    private boolean runnable(final ProgramThread thread) {
+        if (thread.waiting()) {
             return false;
         }
         return !thread.frames.isEmpty() || (thread == this.main && !this.waiting.isEmpty());
     }
 
     /** Runs one thread for up to {@code allowance} instructions, or until it stops on its own. */
-    private int run(final Thread thread, final int allowance) {
+    private int run(final ProgramThread thread, final int allowance) {
         this.current = thread;
         thread.yielded = false;
         int used = 0;
         try {
-            while (used < allowance && !this.identity.halted() && thread.parked == Parked.NONE && !thread.yielded) {
+            while (used < allowance && !this.identity.halted() && !thread.waiting() && !thread.yielded) {
                 if (thread.frames.isEmpty() && (thread != this.main || !this.take())) {
                     break;
                 }
@@ -740,13 +638,13 @@ public final class Process {
      * terminal returns, the program is over, and it takes its threads with it; a program that stays up
      * keeps its threads between ticks, since its main thread returns every tick by design.
      */
-    private void ended(final Thread thread) {
+    private void ended(final ProgramThread thread) {
         if (thread != this.main) {
             this.end(thread);
             return;
         }
         if (this.waiting.isEmpty() && this.program.shape() != Shape.SCRIPT) {
-            for (final Thread other : List.copyOf(this.threads)) {
+            for (final ProgramThread other : List.copyOf(this.threads)) {
                 if (other != this.main) {
                     this.end(other);
                 }
@@ -757,40 +655,40 @@ public final class Process {
     /** Lets every thread whose wait is over run again. */
     private void wake() {
         final long now = this.library.now();
-        for (final Thread thread : this.threads) {
-            switch (thread.parked) {
-                case SLEEP -> {
-                    if (now >= thread.until) {
-                        thread.parked = Parked.NONE;
+        for (final ProgramThread thread : this.threads) {
+            switch (thread.wait) {
+                case IWait.Sleep sleep -> {
+                    if (now >= sleep.until()) {
+                        thread.wait = IWait.NONE;
                     }
                 }
-                case JOIN -> {
-                    if (this.thread(thread.on) == null) {
-                        thread.parked = Parked.NONE;
-                    } else if (thread.until > 0 && now >= thread.until) {
-                        thread.parked = Parked.NONE;
+                case IWait.Join join -> {
+                    if (this.thread(join.thread()) == null) {
+                        thread.wait = IWait.NONE;
+                    } else if (join.until() > 0 && now >= join.until()) {
+                        thread.wait = IWait.NONE;
                         thread.timedOut = true;
                     }
                 }
-                case LOCK -> {
-                    if (!this.monitors.containsKey(thread.on)) {
-                        thread.parked = Parked.NONE;
+                case IWait.Lock lock -> {
+                    if (!this.monitors.containsKey(lock.target())) {
+                        thread.wait = IWait.NONE;
                     }
                 }
-                case CHILD -> {
-                    if (!this.library.programRunning(thread.on, thread.onHost)) {
-                        thread.parked = Parked.NONE;
-                    } else if (thread.until > 0 && now >= thread.until) {
-                        thread.parked = Parked.NONE;
+                case IWait.Child child -> {
+                    if (!this.library.programRunning(child.program(), child.host())) {
+                        thread.wait = IWait.NONE;
+                    } else if (child.until() > 0 && now >= child.until()) {
+                        thread.wait = IWait.NONE;
                         thread.timedOut = true;
                     }
                 }
-                case INPUT -> {
+                case IWait.Input typed -> {
                     if (this.input.has()) {
-                        thread.parked = Parked.NONE;
+                        thread.wait = IWait.NONE;
                     }
                 }
-                default -> { }
+                case IWait.None none -> { }
             }
         }
     }
@@ -802,14 +700,14 @@ public final class Process {
      * the rest of the program carries on without it.
      */
     public void park() {
-        this.current.parked = Parked.INPUT;
+        this.current.wait = IWait.INPUT;
     }
 
     /** Lets every thread waiting on a typed line have budget again. */
     public void resume() {
-        for (final Thread thread : this.threads) {
-            if (thread.parked == Parked.INPUT) {
-                thread.parked = Parked.NONE;
+        for (final ProgramThread thread : this.threads) {
+            if (thread.wait instanceof IWait.Input) {
+                thread.wait = IWait.NONE;
             }
         }
     }
@@ -826,13 +724,13 @@ public final class Process {
     }
 
     /**
-     * Whether the process is stopped on a read: a thread parked on a typed line, which is how a read that finds
-     * nothing typed waits. The parked state is written down with each thread, so a process put away mid-read and
-     * brought back is still seen to be waiting.
+     * Whether the process is stopped on a read: a thread waiting for a typed line, which is how a read that finds
+     * nothing typed waits. The wait is written down with each thread, so a process put away mid-read and brought
+     * back is still seen to be waiting.
      */
     public boolean waitingForInput() {
-        for (final Thread thread : this.threads) {
-            if (thread.parked == Parked.INPUT) {
+        for (final ProgramThread thread : this.threads) {
+            if (thread.wait instanceof IWait.Input) {
                 return true;
             }
         }
@@ -1045,11 +943,11 @@ public final class Process {
     // threads
 
     /** The thread of that number, or null once it is over. */
-    private Thread thread(final Object id) {
+    private ProgramThread thread(final Object id) {
         if (!(id instanceof Integer number)) {
             return null;
         }
-        for (final Thread thread : this.threads) {
+        for (final ProgramThread thread : this.threads) {
             if (thread.id == number) {
                 return thread;
             }
@@ -1058,7 +956,7 @@ public final class Process {
     }
 
     /** The thread of that number. */
-    Thread threadById(final Object id) {
+    ProgramThread threadById(final Object id) {
         return this.thread(id);
     }
 
@@ -1068,7 +966,7 @@ public final class Process {
      * <p>{@code Running} is kept true to life on the object itself, so reading it is reading a field
      * like any other and costs what that costs.
      */
-    private Values.Obj tokenFor(final Thread thread, final int line) {
+    private Values.Obj tokenFor(final ProgramThread thread, final int line) {
         if (thread.token == null) {
             final Values.Obj token = new Values.Obj("Thread");
             token.set("Id", thread.id);
@@ -1091,7 +989,7 @@ public final class Process {
             throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line,
                     "there is no " + bound.method() + " to run on the thread");
         }
-        final Thread made = new Thread(this.nextThread++);
+        final ProgramThread made = new ProgramThread(this.nextThread++);
         made.frames.push(new Frame(method, bound.target()));
         this.threads.add(made);
         this.library.owe(START_COST);
@@ -1099,17 +997,17 @@ public final class Process {
     }
 
     /** Ends a thread other than the main one: it lets go of what it locked and wakes whoever joined it. */
-    private void end(final Thread thread) {
+    private void end(final ProgramThread thread) {
         thread.frames.clear();
-        thread.parked = Parked.NONE;
+        thread.wait = IWait.NONE;
         if (thread.token != null) {
             thread.token.set("Running", false);
         }
         this.threads.remove(thread);
         this.release(thread.id);
-        for (final Thread other : this.threads) {
-            if (other.parked == Parked.JOIN && Integer.valueOf(thread.id).equals(other.on)) {
-                other.parked = Parked.NONE;
+        for (final ProgramThread other : this.threads) {
+            if (other.wait instanceof IWait.Join join && join.thread() == thread.id) {
+                other.wait = IWait.NONE;
             }
         }
     }
@@ -1124,8 +1022,7 @@ public final class Process {
             case "Sleep" -> {
                 final long ticks = Numbers.toLong(this.take(frame, named.parameters()).getFirst());
                 if (ticks > 0) {
-                    this.current.parked = Parked.SLEEP;
-                    this.current.until = this.library.now() + ticks;
+                    this.current.wait = new IWait.Sleep(this.library.now() + ticks);
                 }
             }
             case "Yield" -> {
@@ -1135,7 +1032,7 @@ public final class Process {
             case "Join" -> this.join(frame, named, line);
             case "Stop" -> {
                 this.take(frame, named.parameters());
-                final Thread target = this.thread(this.threadId(frame.pop(), line));
+                final ProgramThread target = this.thread(this.threadId(frame.pop(), line));
                 if (target == this.main) {
                     this.main.frames.clear();
                     this.waiting.clear();
@@ -1164,7 +1061,7 @@ public final class Process {
     private void join(final Frame frame, final IOperand.Method named, final int line) {
         final int count = named.parameters().size();
         final Object token = frame.stack.size() > count ? frame.stack.get(frame.stack.size() - 1 - count) : null;
-        final Thread target = this.thread(this.threadId(token, line));
+        final ProgramThread target = this.thread(this.threadId(token, line));
         final boolean over = target == null || target == this.current;
         final long ticks = count == 1 ? Numbers.toLong(frame.peek()) : 0L;
         if (over || this.current.timedOut || (count == 1 && ticks <= 0)) {
@@ -1177,9 +1074,7 @@ public final class Process {
             return;
         }
         frame.at--;
-        this.current.parked = Parked.JOIN;
-        this.current.on = target.id;
-        this.current.until = ticks > 0 ? this.library.now() + ticks : 0L;
+        this.current.wait = new IWait.Join(target.id, ticks > 0 ? this.library.now() + ticks : 0L);
     }
 
     // locks
@@ -1207,8 +1102,7 @@ public final class Process {
             return;
         }
         frame.at--;
-        this.current.parked = Parked.LOCK;
-        this.current.on = target;
+        this.current.wait = new IWait.Lock(target);
     }
 
     private void exitMonitor(final Frame frame, final int line) {
@@ -1236,9 +1130,9 @@ public final class Process {
     }
 
     private void wakeLocked(final Object target) {
-        for (final Thread thread : this.threads) {
-            if (thread.parked == Parked.LOCK && thread.on == target) {
-                thread.parked = Parked.NONE;
+        for (final ProgramThread thread : this.threads) {
+            if (thread.wait instanceof IWait.Lock lock && lock.target() == target) {
+                thread.wait = IWait.NONE;
             }
         }
     }
@@ -1363,14 +1257,14 @@ public final class Process {
     /**
      * A halt in a thread is the end of the process.
      */
-    private void fail(final Thread thread, final Halt first) {
+    private void fail(final ProgramThread thread, final Halt first) {
         this.halt(first);
     }
 
     private void halt(final Halt halt) {
         this.identity.halt(halt.getMessage());
         this.library.write(halt.getMessage());
-        for (final Thread thread : this.threads) {
+        for (final ProgramThread thread : this.threads) {
             thread.frames.clear();
         }
         this.monitors.clear();
@@ -1389,7 +1283,7 @@ public final class Process {
     public Snapshot save() {
         final HeldNumbers numbers = new HeldNumbers(this.heap);
         final List<Snapshot.ThreadShot> running = new ArrayList<>();
-        for (final Thread thread : this.threads) {
+        for (final ProgramThread thread : this.threads) {
             running.add(freeze(thread, numbers));
         }
         final List<Snapshot.FrameShot> queued = new ArrayList<>();
@@ -1461,7 +1355,8 @@ public final class Process {
                     written.freed());
         }
         for (final Snapshot.ThreadShot written : shot.threads()) {
-            final Thread thread = written.id() == process.main.id ? process.main : new Thread(written.id());
+            final ProgramThread thread =
+                    written.id() == process.main.id ? process.main : new ProgramThread(written.id());
             if (thread != process.main) {
                 process.threads.add(thread);
             }
@@ -1471,10 +1366,8 @@ public final class Process {
                     thread.frames.push(frame);
                 }
             }
-            thread.parked = Parked.named(written.parked());
-            thread.until = written.until();
-            thread.on = value(written.on(), byNumber);
-            thread.onHost = written.onHost();
+            thread.wait = IWait.read(written.parked(), written.until(), value(written.on(), byNumber),
+                    written.onHost());
             thread.timedOut = written.timedOut();
             if (value(written.token(), byNumber) instanceof Values.Obj token) {
                 thread.token = token;
@@ -1611,15 +1504,16 @@ public final class Process {
      * The frames are a stack, so they come out top first; they are written bottom first, which is the
      * order they have to be put back in.
      */
-    private static Snapshot.ThreadShot freeze(final Thread thread, final HeldNumbers numbers) {
+    private static Snapshot.ThreadShot freeze(final ProgramThread thread, final HeldNumbers numbers) {
         final List<Frame> stack = new ArrayList<>(thread.frames);
         java.util.Collections.reverse(stack);
         final List<Snapshot.FrameShot> frames = new ArrayList<>();
         for (final Frame frame : stack) {
             frames.add(freeze(frame, numbers));
         }
-        return new Snapshot.ThreadShot(thread.id, frames, thread.parked.serializedName(), thread.until,
-                value(thread.on, numbers), value(thread.token, numbers), thread.timedOut, thread.onHost);
+        return new Snapshot.ThreadShot(thread.id, frames, IWait.kindOf(thread.wait), IWait.untilOf(thread.wait),
+                value(IWait.onOf(thread.wait), numbers), value(thread.token, numbers), thread.timedOut,
+                IWait.hostOf(thread.wait));
     }
 
     private static Snapshot.FrameShot freeze(final Frame frame, final HeldNumbers numbers) {

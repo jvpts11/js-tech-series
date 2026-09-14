@@ -40,16 +40,16 @@ class CallbackQueueTest {
         return ProgramImage.of(listing);
     }
 
-    private static Process.Frame call(final ProgramImage program, final String method) {
-        return new Process.Frame(program.method(program.entryPoint(), method, List.of()), null);
+    private static Frame call(final ProgramImage program, final String method) {
+        return new Frame(program.method(program.entryPoint(), method, List.of()), null);
     }
 
     @Test
     void poll_givesTheCallsInTheOrderTheyCame() {
         final ProgramImage program = program();
         final CallbackQueue queue = new CallbackQueue();
-        final Process.Frame init = call(program, "OnInit");
-        final Process.Frame tick = call(program, "OnTick");
+        final Frame init = call(program, "OnInit");
+        final Frame tick = call(program, "OnTick");
         queue.add(init, 0);
         queue.add(tick, 0);
 
@@ -121,8 +121,8 @@ class CallbackQueueTest {
     void addFirst_putsTheCallAheadOfEverythingWaiting() {
         final ProgramImage program = program();
         final CallbackQueue queue = new CallbackQueue();
-        final Process.Frame tick = call(program, "OnTick");
-        final Process.Frame farewell = call(program, "OnDestroy");
+        final Frame tick = call(program, "OnTick");
+        final Frame farewell = call(program, "OnDestroy");
         queue.add(tick, 0);
 
         queue.addFirst(farewell, 0);
