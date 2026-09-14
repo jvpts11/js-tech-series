@@ -249,14 +249,20 @@ final class UiMutator {
     /**
      * Takes what a player did to a widget: the widget is changed the way they changed it, and the name
      * of the handler to tell comes back, or null when that is not something the widget answers. What a player
-     * types can run the program out of memory like anything the program holds, which halts it.
+     * types can run the program out of memory like anything the program holds, which halts it. Whatever the widget
+     * could not really have received (a row the list lacks, a point off the canvas, a line longer than a box takes)
+     * is refused the same way, since the server takes nothing on the client's word.
      */
     String accept(final Values.Obj widget, final String kind, final List<Object> values) {
         final Object first = values.isEmpty() ? null : values.getFirst();
         return switch (widget.type() + "/" + kind) {
             case UiWidgets.BUTTON + "/click" -> "OnClick";
             case UiWidgets.TEXT_BOX + "/text", UiWidgets.TEXT_BOX + "/submit" -> {
-                this.replace(widget, UiWidgets.TEXT, first == null ? "" : String.valueOf(first), 0);
+                final String said = first == null ? "" : String.valueOf(first);
+                if (said.length() > UiWidgets.MOST_TEXT) {
+                    yield null;
+                }
+                this.replace(widget, UiWidgets.TEXT, said, 0);
                 yield "text".equals(kind) ? "OnChange" : "OnSubmit";
             }
             case UiWidgets.CHECK_BOX + "/toggle" -> {
@@ -264,12 +270,23 @@ final class UiMutator {
                 yield "OnToggle";
             }
             case UiWidgets.LIST_BOX + "/select" -> {
-                widget.set(UiWidgets.SELECTED, Math.max(0, Numbers.toInt(first)));
+                // Counted from one as the list draws it, with none as zero: past the last row there is no row.
+                final int picked = first instanceof Number number ? number.intValue() : -1;
+                if (picked < 0 || picked > Numbers.toInt(widget.get(UiWidgets.COUNT))) {
+                    yield null;
+                }
+                widget.set(UiWidgets.SELECTED, picked);
                 yield "OnSelect";
             }
             case UiWidgets.CANVAS + "/click" -> {
-                widget.set(UiWidgets.CLICK_X, Numbers.toInt(first));
-                widget.set(UiWidgets.CLICK_Y, values.size() > 1 ? Numbers.toInt(values.get(1)) : 0);
+                final int x = Numbers.toInt(first);
+                final int y = values.size() > 1 ? Numbers.toInt(values.get(1)) : 0;
+                if (!onCanvas(x, Numbers.toInt(widget.get(UiWidgets.WIDTH)), UiWidgets.MOST_WIDE)
+                        || !onCanvas(y, Numbers.toInt(widget.get(UiWidgets.HEIGHT)), UiWidgets.MOST_TALL)) {
+                    yield null;
+                }
+                widget.set(UiWidgets.CLICK_X, x);
+                widget.set(UiWidgets.CLICK_Y, y);
                 yield "OnClick";
             }
             default -> null;
@@ -296,6 +313,11 @@ final class UiMutator {
                 this.heap.release(one);
             }
         }
+    }
+
+    /* Whether a point along one side falls on the canvas: its own length, or a window's most when it asked for none. */
+    private static boolean onCanvas(final int at, final int asked, final int most) {
+        return at >= 0 && at < (asked > 0 ? asked : most);
     }
 
     /* A list that grew or shrank weighs what it now holds. */

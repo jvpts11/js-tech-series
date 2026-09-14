@@ -70,6 +70,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   come back empty.
 - A row or a column can no longer be put inside itself, and a window holds at most 256 widgets however deep they sit
   in its rows and columns. A row inside itself used to fill its window with copies of the same widgets.
+- A program's widgets take from a player only what they could really receive: a row the list has, a point inside
+  the canvas, a line of up to 256 characters, and nothing at all while hidden. A forged request used to set a
+  selection past the last row or a click far outside the canvas.
 - The Cluster Manager shows a section balancing round-robin as round-robin. It used to say MANUAL.
 - A listing edited by hand in which a type stands on itself no longer sends the server into an endless loop
   when the program loads.

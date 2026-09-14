@@ -73,6 +73,8 @@ public final class UiWidgets {
     public static final int MOST_STROKES = 4096;
     /** The most widgets one window may hold, counting its rows and columns. */
     public static final int MOST_WIDGETS = 256;
+    /** The longest line a player can put in a program's text box. */
+    public static final int MOST_TEXT = 256;
 
     /** How wide and tall a window may be asked to be, in the desktop's own pixels. */
     public static final int LEAST_SIDE = 60;

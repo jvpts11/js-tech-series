@@ -1022,7 +1022,8 @@ public final class Process {
             return true;
         }
         final Values.Obj found = UiWidgets.widgetOf(open, widget);
-        if (found == null || !Boolean.TRUE.equals(found.get(UiWidgets.ENABLED))) {
+        if (found == null || !Boolean.TRUE.equals(found.get(UiWidgets.ENABLED))
+                || !Boolean.TRUE.equals(found.get(UiWidgets.VISIBLE))) {
             return false;
         }
         final String handler;

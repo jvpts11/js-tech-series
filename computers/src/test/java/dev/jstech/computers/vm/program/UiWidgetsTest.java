@@ -548,4 +548,69 @@ class UiWidgetsTest {
         assertEquals(Process.State.HALTED, process.state());
         assertTrue(process.message().contains("a window holds at most 256 widgets"), process.message());
     }
+
+    @Test
+    void select_takesOnlyARowTheListHas() {
+        final Process process = start(load(PANEL), desktop(true));
+        final Values.Obj list = widgetOf(process, UiWidgets.LIST_BOX);
+        final long id = (Long) list.get(UiWidgets.ID);
+
+        assertFalse(process.deliverUiEvent(1L, id, "select", List.of(2)), "the list has one row");
+        assertFalse(process.deliverUiEvent(1L, id, "select", List.of(-1)));
+        assertEquals(0, list.get(UiWidgets.SELECTED));
+        assertTrue(process.deliverUiEvent(1L, id, "select", List.of(1)));
+        assertEquals(1, list.get(UiWidgets.SELECTED));
+    }
+
+    @Test
+    void click_onACanvasTakesOnlyAPointInsideIt() {
+        final Process process = start(load(SKETCH), desktop(true));
+        final Values.Obj paper = widgetOf(process, UiWidgets.CANVAS);
+        final long id = (Long) paper.get(UiWidgets.ID);
+
+        assertFalse(process.deliverUiEvent(1L, id, "click", List.of(120, 10)), "the canvas is 120 wide");
+        assertFalse(process.deliverUiEvent(1L, id, "click", List.of(10, -1)));
+        assertTrue(process.deliverUiEvent(1L, id, "click", List.of(119, 79)));
+        assertEquals(119, paper.get(UiWidgets.CLICK_X));
+        assertEquals(79, paper.get(UiWidgets.CLICK_Y));
+    }
+
+    @Test
+    void text_longerThanABoxTakesIsRefused() {
+        final Process process = start(load(SKETCH), desktop(true));
+        final Values.Obj box = widgetOf(process, UiWidgets.TEXT_BOX);
+        final long id = (Long) box.get(UiWidgets.ID);
+
+        assertFalse(process.deliverUiEvent(1L, id, "text", List.of("x".repeat(UiWidgets.MOST_TEXT + 1))));
+        assertEquals("", box.get(UiWidgets.TEXT));
+        assertTrue(process.deliverUiEvent(1L, id, "text", List.of("x".repeat(UiWidgets.MOST_TEXT))));
+    }
+
+    @Test
+    void click_onAHiddenWidgetIsRefused() {
+        final Process process = start(load("""
+                class Panel : IScript {
+                    Window window;
+                    Button fire;
+                    public void OnInit() {
+                        fire = new Button("Fire");
+                        fire.OnClick += Fire;
+                        fire.Visible = false;
+                        Column page = new Column();
+                        page.Add(fire);
+                        window = new Window("Hidden", 200, 100);
+                        window.Content = page;
+                        window.Show();
+                    }
+                    void Fire() { Console.PrintLine("fired"); }
+                    public void OnTick() { }
+                    public void OnDestroy() { }
+                }
+                """), desktop(true));
+        final long button = (Long) widgetOf(process, UiWidgets.BUTTON).get(UiWidgets.ID);
+
+        assertFalse(process.deliverUiEvent(1L, button, "click", List.of()));
+        process.step(PLENTY);
+        assertEquals(List.of(), process.console());
+    }
 }
