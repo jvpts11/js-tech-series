@@ -1283,32 +1283,7 @@ public final class Process {
         }
     }
 
-    /** One thing a program asked to be told about. */
-    private static final class Watch {
-        private final int id;
-        private final String item;
-        private final Watching kind;
-        private final long threshold;
-        private final Values.DelegateValue handler;
-        private final Values.Obj token;
-        private long last;
-        private boolean armed;
-        private boolean seen;
-
-        Watch(final int id, final String item, final Watching kind, final long threshold,
-              final Values.DelegateValue handler, final Values.Obj token) {
-            this.id = id;
-            this.item = item;
-            this.kind = kind;
-            this.threshold = threshold;
-            this.handler = handler;
-            this.token = token;
-            this.armed = true;
-        }
-    }
-
-    private final List<Watch> watches = new ArrayList<>();
-    private int nextWatch = 1;
+    private final ProgramWatches watches = new ProgramWatches();
 
     /**
      * Asks to be told when what the network holds of something changes.
@@ -1323,10 +1298,10 @@ public final class Process {
             throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no handler to call for " + item);
         }
         final Values.Obj token = new Values.Obj("Subscription");
-        token.set("Id", this.nextWatch);
+        token.set("Id", this.watches.nextId());
         token.set("Item", item);
         this.heap.allocate(token, Heap.HEADER + 2L * Heap.REFERENCE, line);
-        this.watches.add(new Watch(this.nextWatch++, item, kind, threshold, handler, token));
+        this.watches.add(item, kind, threshold, handler, token);
         return token;
     }
 
@@ -1335,13 +1310,7 @@ public final class Process {
      * however many watches are waiting on the same thing.
      */
     public List<String> watching() {
-        final List<String> items = new ArrayList<>();
-        for (final Watch watch : this.watches) {
-            if (!items.contains(watch.item)) {
-                items.add(watch.item);
-            }
-        }
-        return items;
+        return this.watches.watching();
     }
 
     /**
@@ -1352,53 +1321,14 @@ public final class Process {
      * dropped and counted; the watch already holds the new number, so the next one to fire reads it.
      */
     public void deliver(final Map<String, Long> totals) {
-        this.watches.removeIf(watch -> this.heap.isFreed(watch.token));
-        for (final Watch watch : this.watches) {
-            final Long now = totals.get(watch.item);
-            if (now == null) {
-                continue;
-            }
-            final long before = watch.last;
-            final boolean first = !watch.seen;
-            watch.last = now;
-            watch.seen = true;
-            if (this.fires(watch, before, now, first) && !this.offer(watch.handler, EVENT_BYTES,
-                    () -> List.of(this.stockEvent(watch.item, before, now, first)))) {
-                this.waiting.drop();
-            }
-        }
+        this.watches.deliver(totals, this.heap::isFreed, this::fired);
     }
 
-    /**
-     * Whether that watch goes off.
-     *
-     * <p>A threshold watch fires on the crossing, not on the state: a program told once that the iron
-     * is low should not be told again every tick that it is still low. It rearms when the number goes
-     * back the other way. The first look is only ever a reading, never a crossing, because a program
-     * that starts up with the iron already low has not just seen it fall.
-     */
-    private boolean fires(final Watch watch, final long before, final long now, final boolean first) {
-        return switch (watch.kind) {
-            case CHANGE -> !first && before != now;
-            case BELOW -> {
-                if (now > watch.threshold) {
-                    watch.armed = true;
-                    yield false;
-                }
-                final boolean go = watch.armed && !first;
-                watch.armed = false;
-                yield go;
-            }
-            case ABOVE -> {
-                if (now < watch.threshold) {
-                    watch.armed = true;
-                    yield false;
-                }
-                final boolean go = watch.armed && !first;
-                watch.armed = false;
-                yield go;
-            }
-        };
+    private void fired(final ProgramWatches.Watch watch, final long before, final long now, final boolean first) {
+        if (!this.offer(watch.handler(), EVENT_BYTES,
+                () -> List.of(this.stockEvent(watch.item(), before, now, first)))) {
+            this.waiting.drop();
+        }
     }
 
     private Values.Obj stockEvent(final String item, final long before, final long now,
@@ -1473,10 +1403,10 @@ public final class Process {
             kept.put(entry.getKey(), fields(entry.getValue(), numbers));
         }
         final List<Snapshot.WatchShot> watching = new ArrayList<>();
-        for (final Watch watch : this.watches) {
-            watching.add(new Snapshot.WatchShot(watch.id, watch.item, watch.kind.serializedName(), watch.threshold,
-                    value(watch.handler, numbers), value(watch.token, numbers), watch.last, watch.armed,
-                    watch.seen));
+        for (final ProgramWatches.Watch watch : this.watches.all()) {
+            watching.add(new Snapshot.WatchShot(watch.id(), watch.item(), watch.kind().serializedName(),
+                    watch.threshold(), value(watch.handler(), numbers), value(watch.token(), numbers), watch.last(),
+                    watch.armed(), watch.seen()));
         }
         final List<Snapshot.MonitorShot> locked = new ArrayList<>();
         for (final Map.Entry<Object, Monitor> entry : this.monitors.entrySet()) {
@@ -1581,13 +1511,7 @@ public final class Process {
         for (final Snapshot.WatchShot written : shot.watches()) {
             if (value(written.handler(), byNumber) instanceof Values.DelegateValue handler
                     && value(written.token(), byNumber) instanceof Values.Obj token) {
-                final Watch watch = new Watch(written.id(), written.item(),
-                        Watching.named(written.kind()), written.threshold(), handler, token);
-                watch.last = written.last();
-                watch.armed = written.armed();
-                watch.seen = written.seen();
-                process.watches.add(watch);
-                process.nextWatch = Math.max(process.nextWatch, written.id() + 1);
+                process.watches.restore(written, handler, token);
             }
         }
         process.library.restore(shot.console(), shot.written(), shot.random());
