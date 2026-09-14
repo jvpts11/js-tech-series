@@ -214,39 +214,30 @@ public final class ProgramPayloads {
         }
         final String name = dev.jstech.computers.os.fs.FsPaths.fileName(payload.path());
         final java.util.List<DesktopShellOutputPayload.WireLine> wire = new java.util.ArrayList<>();
-        final java.util.Optional<String> listing = readDiskFile(level, computer, payload.path());
-        if (listing.isEmpty()) {
-            wire.add(new DesktopShellOutputPayload.WireLine(name + ": file not found",
-                    dev.jstech.computers.program.cli.CliStyle.ERROR.id()));
+        final java.util.function.Function<String, dev.jstech.computers.program.cli.ICliComputer.FsResult> disk =
+                path -> readDiskFile(level, computer, path)
+                        .map(dev.jstech.computers.program.cli.ICliComputer.FsResult::ok)
+                        .orElse(dev.jstech.computers.program.cli.ICliComputer.FsResult.fail("file not found"));
+        final var launch = dev.jstech.computers.machine.ProgramLauncher.launch(computer, payload.path(), disk,
+                java.util.List.of(), dev.jstech.computers.vm.program.IProgramParent.NONE,
+                dev.jstech.computers.vm.program.ProgramPriority.MEDIUM, 0);
+        if (!launch.ok()) {
+            final String why = switch (launch.refusal()) {
+                case UNREADABLE -> name + ": " + launch.message();
+                case NO_MEMORY -> name + ": not enough memory to run it";
+                case NO_RUNNER, NOT_STARTED -> launch.message();
+            };
+            wire.add(new DesktopShellOutputPayload.WireLine(why, dev.jstech.computers.program.cli.CliStyle.ERROR.id()));
             PacketDistributor.sendToPlayer(player,
                     new DesktopShellOutputPayload(false, false, "", wire, payload.session()));
             return;
         }
-        final int room = dev.jstech.computers.machine.MachinePrograms.DEFAULT_HEAP_MB;
-        if (!computer.ramLedger().fits(room)) {
-            wire.add(new DesktopShellOutputPayload.WireLine(name + ": not enough memory to run it",
-                    dev.jstech.computers.program.cli.CliStyle.ERROR.id()));
-            PacketDistributor.sendToPlayer(player,
-                    new DesktopShellOutputPayload(false, false, "", wire, payload.session()));
-            return;
-        }
-        final var started = computer.programs().start(name, listing.get(), room, computer, java.util.List.of(),
-                dev.jstech.computers.vm.program.IProgramParent.NONE,
-                dev.jstech.computers.vm.program.ProgramPriority.MEDIUM);
-        if (!started.ok()) {
-            wire.add(new DesktopShellOutputPayload.WireLine(started.message(),
-                    dev.jstech.computers.program.cli.CliStyle.ERROR.id()));
-            PacketDistributor.sendToPlayer(player,
-                    new DesktopShellOutputPayload(false, false, "", wire, payload.session()));
-            return;
-        }
-        computer.setChanged();
-        final var one = computer.programs().byId(started.id());
+        final var one = computer.programs().byId(launch.id());
         final boolean console = one != null && !one.process().isService();
         if (console) {
-            computer.programs().hold(started.id());
+            computer.programs().hold(launch.id());
         } else {
-            wire.add(new DesktopShellOutputPayload.WireLine(started.message(),
+            wire.add(new DesktopShellOutputPayload.WireLine(launch.message(),
                     dev.jstech.computers.program.cli.CliStyle.OK.id()));
         }
         PacketDistributor.sendToPlayer(player,

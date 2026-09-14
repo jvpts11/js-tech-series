@@ -19,7 +19,6 @@ import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.core.language.ILanguageProcess;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * The other programs on the machine, as a running program reaches them.
@@ -102,32 +101,21 @@ public final class HostProgram {
         }
         final ProgramPriority priority = ProgramPriority.named(arguments.size() > 2 && arguments.get(2) != null
                 ? String.valueOf(arguments.get(2)) : null);
-        final int dot = path.lastIndexOf('.');
-        final String extension = dot < 0 ? "" : path.substring(dot + 1).toLowerCase(Locale.ROOT);
-        if (dev.jstech.core.JsCore.languages().runnerOf(extension) == null) {
-            throw new Halt(Halt.Reason.CANNOT_START, line,
-                    path + ": nothing installed runs a program of this kind (compile a source file first)");
-        }
-        final ICliComputer.FsResult read = shell.readFile(path);
-        if (!read.ok()) {
-            throw new Halt(Halt.Reason.CANNOT_START, line, read.message());
-        }
-        final int room = MachinePrograms.DEFAULT_HEAP_MB;
-        if (!machine.ramLedger().fits(room)) {
-            throw new Halt(Halt.Reason.CANNOT_START, line, path + ": " + room + " MB will not fit in "
-                    + machine.ramLedger().freeMb() + " MB of free memory");
-        }
-        final int slash = Math.max(path.lastIndexOf('\\'), path.lastIndexOf('/'));
-        final String name = slash < 0 ? path : path.substring(slash + 1);
         final IProgramParent starter = parent > 0 ? new IProgramParent.Local(parent) : IProgramParent.NONE;
-        final MachinePrograms.Started started =
-                machine.programs().start(name, read.message(), room, machine, args, starter, priority);
-        if (!started.ok()) {
-            throw new Halt(Halt.Reason.CANNOT_START, line, started.message());
+        final ProgramLauncher.Launch launch =
+                ProgramLauncher.launch(machine, path, shell::readFile, args, starter, priority, 0);
+        if (!launch.ok()) {
+            final String why = switch (launch.refusal()) {
+                case NO_RUNNER -> path + ": nothing installed runs a program of this kind"
+                        + " (compile a source file first)";
+                case NO_MEMORY -> path + ": " + launch.roomMb() + " MB will not fit in " + launch.freeMb()
+                        + " MB of free memory";
+                case UNREADABLE, NOT_STARTED -> launch.message();
+            };
+            throw new Halt(Halt.Reason.CANNOT_START, line, why);
         }
-        machine.setChanged();
         // The handle carries the file the program came from; what the program calls itself is its own.
-        return HostRemote.handle(started.id(), name, "");
+        return HostRemote.handle(launch.id(), launch.name(), "");
     }
 
     private static boolean running(final AbstractComputerBlockEntity machine, final int id) {

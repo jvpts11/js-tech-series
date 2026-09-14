@@ -3137,44 +3137,28 @@ public final class ServerCliComputer implements ICliComputer {
         if (!(hostBlock instanceof AbstractComputerBlockEntity computer)) {
             return OpResult.fail("sigma: this machine cannot run programs");
         }
-        /*
-         * Whether this can be run is a question for the languages the machines know, not for a list of
-         * extensions kept here.
-         */
-        if (dev.jstech.core.JsCore.languages().runnerOf(extensionOf(path)) == null) {
-            return OpResult.fail(path + ": nothing installed runs a program of this kind"
-                    + " (compile a source file first)");
+        final var launch = dev.jstech.computers.machine.ProgramLauncher.launch(computer, path, this::readFile,
+                arguments, dev.jstech.computers.vm.program.IProgramParent.NONE,
+                dev.jstech.computers.vm.program.ProgramPriority.MEDIUM, heapMb);
+        if (!launch.ok()) {
+            return OpResult.fail(switch (launch.refusal()) {
+                case NO_RUNNER -> path + ": nothing installed runs a program of this kind"
+                        + " (compile a source file first)";
+                case NO_MEMORY -> "sigma: " + launch.roomMb() + " MB will not fit in " + launch.freeMb()
+                        + " MB of free memory";
+                case UNREADABLE, NOT_STARTED -> launch.message();
+            });
         }
-        final FsResult read = readFile(path);
-        if (!read.ok()) {
-            return OpResult.fail(read.message());
-        }
-        final int room = heapMb <= 0 ? MachinePrograms.DEFAULT_HEAP_MB
-                : Math.min(heapMb, MachinePrograms.MAX_HEAP_MB);
-        if (!computer.ramLedger().fits(room)) {
-            return OpResult.fail("sigma: " + room + " MB will not fit in "
-                    + computer.ramLedger().freeMb() + " MB of free memory");
-        }
-        // A path typed at the prompt may be written with either slash; the program is listed by its file.
-        final int slash = Math.max(path.lastIndexOf('\\'), path.lastIndexOf('/'));
-        final MachinePrograms.Started started = computer.programs()
-                .start(path.substring(slash + 1), read.message(), room, computer, arguments,
-                        dev.jstech.computers.vm.program.IProgramParent.NONE,
-                        dev.jstech.computers.vm.program.ProgramPriority.MEDIUM);
-        if (!started.ok()) {
-            return OpResult.fail(started.message());
-        }
-        computer.setChanged();
-        final var one = computer.programs().byId(started.id());
+        final var one = computer.programs().byId(launch.id());
         if (one != null && !one.process().isService()) {
             /*
              * A program that runs at a terminal takes the one that started it, the way it does on any
              * machine: the prompt is its, and comes back when it returns.
              */
-            computer.programs().hold(started.id());
+            computer.programs().hold(launch.id());
             return OpResult.ok("");
         }
-        return OpResult.ok(started.message());
+        return OpResult.ok(launch.message());
     }
 
     @Override

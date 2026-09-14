@@ -11,7 +11,7 @@ import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.machine.HostNetwork;
-import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.machine.ProgramLauncher;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.NetworkInsertOperation;
@@ -367,32 +367,20 @@ public final class GatewayService {
         if (!(remote.machine() instanceof AbstractComputerBlockEntity machine)) {
             throw denied(caller, what, computer + " cannot run programs");
         }
-        final int dot = program.lastIndexOf('.');
-        final String extension = dot < 0 ? "" : program.substring(dot + 1).toLowerCase(Locale.ROOT);
-        if (dev.jstech.core.JsCore.languages().runnerOf(extension) == null) {
-            throw denied(caller, what, program + ": nothing installed runs a program of this kind");
+        final ProgramLauncher.Launch launch = ProgramLauncher.launch(machine, program, remote::readFile,
+                new ArrayList<>(args), IProgramParent.NONE, ProgramPriority.named(priority), 0);
+        if (!launch.ok()) {
+            throw denied(caller, what, switch (launch.refusal()) {
+                case NO_RUNNER -> program + ": nothing installed runs a program of this kind";
+                case NO_MEMORY -> computer + ": " + launch.roomMb() + " MB will not fit in " + launch.freeMb()
+                        + " MB of free memory";
+                case UNREADABLE, NOT_STARTED -> computer + ": " + launch.message();
+            });
         }
-        final ICliComputer.FsResult read = remote.readFile(program);
-        if (!read.ok()) {
-            throw denied(caller, what, computer + ": " + read.message());
-        }
-        final int room = MachinePrograms.DEFAULT_HEAP_MB;
-        if (!machine.ramLedger().fits(room)) {
-            throw denied(caller, what, computer + ": " + room + " MB will not fit in " + machine.ramLedger().freeMb()
-                    + " MB of free memory");
-        }
-        final int slash = Math.max(program.lastIndexOf('\\'), program.lastIndexOf('/'));
-        final String name = slash < 0 ? program : program.substring(slash + 1);
-        final MachinePrograms.Started started = machine.programs().start(name, read.message(), room, machine,
-                new ArrayList<>(args), IProgramParent.NONE, ProgramPriority.named(priority));
-        if (!started.ok()) {
-            throw denied(caller, what, computer + ": " + started.message());
-        }
-        machine.setChanged();
         gateway.stats().count(GatewayStats.Kind.OPERATION, now());
-        gateway.logged(caller.label(), what, "process " + started.id(), GatewayLog.Tone.OK);
+        gateway.logged(caller.label(), what, "process " + launch.id(), GatewayLog.Tone.OK);
         charge(SigmaCosts.SUBMIT);
-        return started.id();
+        return launch.id();
     }
 
     // Watches and the log

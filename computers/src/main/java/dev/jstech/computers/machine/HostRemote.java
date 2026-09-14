@@ -12,7 +12,6 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
-import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IHost;
 import dev.jstech.computers.vm.program.IProgramParent;
@@ -22,7 +21,6 @@ import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.vm.system.SigmaCosts;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Another computer on the network, as a running program reaches it.
@@ -129,30 +127,19 @@ public final class HostRemote {
         }
         final ProgramPriority priority = ProgramPriority.named(arguments.size() > 3 && arguments.get(3) != null
                 ? String.valueOf(arguments.get(3)) : null);
-        final int dot = path.lastIndexOf('.');
-        final String extension = dot < 0 ? "" : path.substring(dot + 1).toLowerCase(Locale.ROOT);
-        if (dev.jstech.core.JsCore.languages().runnerOf(extension) == null) {
-            throw new Halt(Halt.Reason.CANNOT_START, line,
-                    path + ": nothing installed runs a program of this kind (compile a source file first)");
+        final ProgramLauncher.Launch launch =
+                ProgramLauncher.launch(machine, path, remote::readFile, args, parent, priority, 0);
+        if (!launch.ok()) {
+            final String why = switch (launch.refusal()) {
+                case NO_RUNNER -> path + ": nothing installed runs a program of this kind"
+                        + " (compile a source file first)";
+                case NO_MEMORY -> host + ": " + launch.roomMb() + " MB will not fit in " + launch.freeMb()
+                        + " MB of free memory";
+                case UNREADABLE, NOT_STARTED -> host + ": " + launch.message();
+            };
+            throw new Halt(Halt.Reason.CANNOT_START, line, why);
         }
-        final ICliComputer.FsResult read = remote.readFile(path);
-        if (!read.ok()) {
-            throw new Halt(Halt.Reason.CANNOT_START, line, host + ": " + read.message());
-        }
-        final int room = MachinePrograms.DEFAULT_HEAP_MB;
-        if (!machine.ramLedger().fits(room)) {
-            throw new Halt(Halt.Reason.CANNOT_START, line, host + ": " + room + " MB will not fit in "
-                    + machine.ramLedger().freeMb() + " MB of free memory");
-        }
-        final int slash = Math.max(path.lastIndexOf('\\'), path.lastIndexOf('/'));
-        final String name = slash < 0 ? path : path.substring(slash + 1);
-        final MachinePrograms.Started started =
-                machine.programs().start(name, read.message(), room, machine, args, parent, priority);
-        if (!started.ok()) {
-            throw new Halt(Halt.Reason.CANNOT_START, line, host + ": " + started.message());
-        }
-        machine.setChanged();
-        return handle(started.id(), name, host);
+        return handle(launch.id(), launch.name(), host);
     }
 
     /** Runs one line at the other machine's prompt and hands back what it printed. */
