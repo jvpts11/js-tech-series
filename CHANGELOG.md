@@ -36,8 +36,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   with nothing of Minecraft in them, and reads a listing's problems without the compiler; a running program
   keeps who it is, its console, its random numbers, the lines typed at it, the calls waiting their turn and
   the windows it has open in parts of their own, every change to a window or a widget goes through one
-  place, and its heap takes in whatever the machine hands the program and checks what the program reaches into;
-  every source file's header names the mod it belongs to.
+  place, a window marks each change to what it shows and a canvas each time it is cleared, and its heap takes
+  in whatever the machine hands the program and checks what the program reaches into; every source file's
+  header names the mod it belongs to.
 
 ### Fixed
 - Cutting the last data cable between a Mainframe and the rest of its network now takes the network away

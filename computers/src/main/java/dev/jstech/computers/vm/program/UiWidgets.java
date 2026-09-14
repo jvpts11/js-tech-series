@@ -67,6 +67,10 @@ public final class UiWidgets {
     public static final String ID = "Id";
     /** Set on a window that is only there to say something, which is what a message box is. */
     public static final String ASK = "Ask";
+    /** How many times what a window shows has changed, so whatever draws it can tell one it already has. */
+    public static final String REVISION = "Revision";
+    /** How many times a canvas was cleared; between two clears its strokes only grow. */
+    public static final String EPOCH = "Epoch";
 
     /** The most a program may keep in one list or draw on one canvas. */
     public static final int MOST_ROWS = 1024;
@@ -121,6 +125,7 @@ public final class UiWidgets {
                 made.set(PLACED, new Values.ListValue());
                 made.set(OPEN, Boolean.FALSE);
                 made.set(ID, 0L);
+                made.set(REVISION, 0L);
             }
             case ROW, COLUMN -> {
                 made.set(CHILDREN, new Values.ListValue());
@@ -147,6 +152,7 @@ public final class UiWidgets {
                 made.set(DRAWING, new Values.ListValue());
                 made.set(CLICK_X, 0);
                 made.set(CLICK_Y, 0);
+                made.set(EPOCH, 0);
                 if (!arguments.isEmpty()) {
                     made.set(WIDTH, side(whole(arguments, 0, 0), MOST_WIDE));
                     made.set(HEIGHT, side(whole(arguments, 1, 0), MOST_TALL));
@@ -210,6 +216,27 @@ public final class UiWidgets {
                 }
             }
         }
+    }
+
+    /** Moves a window's revision on, because something it shows has changed. */
+    static void touch(final Values.Obj window) {
+        window.set(REVISION, Numbers.toLong(window.get(REVISION)) + 1);
+    }
+
+    /** Whether a window shows that widget, in its content or among the widgets placed in it. */
+    static boolean shows(final Values.Obj window, final Values.Obj widget) {
+        if (window.get(CONTENT) instanceof Values.Obj content && holds(content, widget)) {
+            return true;
+        }
+        if (window.get(PLACED) instanceof Values.ListValue placed) {
+            for (final Object one : placed.items()) {
+                if (one instanceof Values.Obj where && where.get("Widget") instanceof Values.Obj child
+                        && holds(child, widget)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** Whether {@code widget} is {@code other} or holds it anywhere inside its rows and columns. */

@@ -39,12 +39,14 @@ final class ProgramWindows {
         }
         window.set(UiWidgets.ID, this.nextWindow++);
         window.set(UiWidgets.OPEN, Boolean.TRUE);
+        UiWidgets.touch(window);
         this.open.add(window);
     }
 
     /** Takes a window off the desktop; closing one that is not open is nothing at all. */
     void close(final Values.Obj window) {
         window.set(UiWidgets.OPEN, Boolean.FALSE);
+        UiWidgets.touch(window);
         this.open.remove(window);
     }
 

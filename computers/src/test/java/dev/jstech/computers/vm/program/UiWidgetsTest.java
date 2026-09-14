@@ -613,4 +613,72 @@ class UiWidgetsTest {
         process.step(PLENTY);
         assertEquals(List.of(), process.console());
     }
+
+    @Test
+    void revision_movesWhenWhatAWindowShowsChanges() {
+        final Process process = start(load(PANEL), desktop(true));
+        final Values.Obj window = process.windows().getFirst();
+        final long before = (Long) window.get(UiWidgets.REVISION);
+        final long button = (Long) widgetOf(process, UiWidgets.BUTTON).get(UiWidgets.ID);
+
+        assertTrue(process.deliverUiEvent(1L, button, "click", List.of()));
+        process.step(PLENTY);
+
+        assertTrue((Long) window.get(UiWidgets.REVISION) > before, "the handler wrote the label and the list");
+    }
+
+    @Test
+    void revision_standsWhenNothingTheWindowShowsChanges() {
+        final Process process = start(load("""
+                class Panel : IScript {
+                    Window window;
+                    Label far;
+                    public void OnInit() {
+                        window = new Window("Still", 200, 100);
+                        window.Content = new Label("here");
+                        window.Show();
+                        far = new Label("elsewhere");
+                    }
+                    public void OnTick() { far.Text = "moved"; }
+                    public void OnDestroy() { }
+                }
+                """), desktop(true));
+        final Values.Obj window = process.windows().getFirst();
+        final long before = (Long) window.get(UiWidgets.REVISION);
+
+        process.begin(process.script(), "OnTick");
+        process.step(PLENTY);
+
+        assertEquals(before, window.get(UiWidgets.REVISION), "a label in no window moves nothing");
+    }
+
+    @Test
+    void clear_startsACanvasOverUnderANewEpoch() {
+        final Process process = start(load("""
+                class Panel : IScript {
+                    Window window;
+                    Canvas paper;
+                    public void OnInit() {
+                        paper = new Canvas(50, 50);
+                        paper.SetPixel(1, 1, 1);
+                        window = new Window("Paper", 100, 100);
+                        window.Content = paper;
+                        window.Show();
+                    }
+                    public void OnTick() {
+                        paper.Clear(0);
+                        paper.SetPixel(2, 2, 1);
+                    }
+                    public void OnDestroy() { }
+                }
+                """), desktop(true));
+        final Values.Obj paper = widgetOf(process, UiWidgets.CANVAS);
+        assertEquals(0, paper.get(UiWidgets.EPOCH), "drawing alone starts no new epoch");
+
+        process.begin(process.script(), "OnTick");
+        process.step(PLENTY);
+
+        assertEquals(1, paper.get(UiWidgets.EPOCH));
+        assertEquals(2, ((Values.ListValue) paper.get(UiWidgets.DRAWING)).items().size());
+    }
 }

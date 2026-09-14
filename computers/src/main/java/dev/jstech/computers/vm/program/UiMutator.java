@@ -41,13 +41,28 @@ final class UiMutator {
      * <p>Opening and closing a window are not here: those reach the machine, and the runtime makes them.
      */
     Object call(final Values.Obj self, final String member, final List<Object> arguments, final int line) {
-        return switch (self.type()) {
+        final Object answer = switch (self.type()) {
             case UiWidgets.ROW, UiWidgets.COLUMN -> this.box(self, member, arguments, line);
             case UiWidgets.LIST_BOX -> this.list(self, member, arguments, line);
             case UiWidgets.CANVAS -> this.canvas(self, member, arguments, line);
             case UiWidgets.WINDOW -> this.window(self, member, arguments, line);
             default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, self.type() + " has no " + member);
         };
+        this.changed(self);
+        return answer;
+    }
+
+    /* Something shown has changed: the window's own revision moves, or that of every open window showing the widget. */
+    private void changed(final Values.Obj self) {
+        if (UiWidgets.WINDOW.equals(self.type())) {
+            UiWidgets.touch(self);
+            return;
+        }
+        for (final Values.Obj window : this.open.get()) {
+            if (UiWidgets.shows(window, self)) {
+                UiWidgets.touch(window);
+            }
+        }
     }
 
     private Object window(final Values.Obj self, final String member, final List<Object> arguments,
@@ -165,6 +180,7 @@ final class UiMutator {
                 }
             }
             drawing.items().clear();
+            self.set(UiWidgets.EPOCH, Numbers.toInt(self.get(UiWidgets.EPOCH)) + 1);
             final Values.Obj stroke = stroke("Clear");
             stroke.set("Colour", Numbers.toInt(arguments.isEmpty() ? 0 : arguments.getFirst()));
             this.draw(drawing, stroke, line);
@@ -224,7 +240,8 @@ final class UiMutator {
                     : UiWidgets.side(Numbers.toInt(value), most));
             case UiWidgets.CONTENT -> this.content(self, value, line);
             case UiWidgets.OPEN, UiWidgets.ID, UiWidgets.COUNT, UiWidgets.PLACED, UiWidgets.CHILDREN,
-                 UiWidgets.WEIGHTS, UiWidgets.ITEMS, UiWidgets.RIGHTS, UiWidgets.DRAWING ->
+                 UiWidgets.WEIGHTS, UiWidgets.ITEMS, UiWidgets.RIGHTS, UiWidgets.DRAWING, UiWidgets.REVISION,
+                 UiWidgets.EPOCH ->
                     throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, name + " is not a program's to write");
             default -> {
                 if (value instanceof String said) {
@@ -234,6 +251,7 @@ final class UiMutator {
                 }
             }
         }
+        this.changed(self);
     }
 
     /* What a window shows must fit with what is already placed in it; past the most, the old content stays. */
@@ -255,7 +273,7 @@ final class UiMutator {
      */
     String accept(final Values.Obj widget, final String kind, final List<Object> values) {
         final Object first = values.isEmpty() ? null : values.getFirst();
-        return switch (widget.type() + "/" + kind) {
+        final String handler = switch (widget.type() + "/" + kind) {
             case UiWidgets.BUTTON + "/click" -> "OnClick";
             case UiWidgets.TEXT_BOX + "/text", UiWidgets.TEXT_BOX + "/submit" -> {
                 final String said = first == null ? "" : String.valueOf(first);
@@ -291,6 +309,11 @@ final class UiMutator {
             }
             default -> null;
         };
+        // A button pressed changes nothing it shows; anything else the player took has.
+        if (handler != null && !UiWidgets.BUTTON.equals(widget.type())) {
+            this.changed(widget);
+        }
+        return handler;
     }
 
     /*
