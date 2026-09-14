@@ -200,24 +200,13 @@ public final class Process {
     /** The Gateway this program chose to reach through, or nothing for whichever the machine lists first. */
     private String gateway = "";
     private Values.Obj self;
-    /**
-     * The windows this program has open on the machine's desktop, in the order it opened them.
-     *
-     * <p>A window is the program's own object, so what it shows is written down and brought back with
-     * the program; this is the list of the ones that are open, which is what the machine draws.
-     */
-    private final Values.ListValue windows = new Values.ListValue();
-    /** The numbers the next window and the next widget get, so an event can name what it happened to. */
-    private long nextWindow = 1;
-    private long nextWidget = 1;
+    /** The windows this program has open on the machine's desktop, and the numbers its windows and widgets get. */
+    private final ProgramWindows windows = new ProgramWindows();
 
     /** The number the next widget this program makes is known by. */
     long nextWidgetId() {
-        return this.nextWidget++;
+        return this.windows.nextWidgetId();
     }
-
-    /** Set when a person shut the last window: the program ends once it has heard about it. */
-    private boolean endWithWindows;
 
     Heap heap0() {
         return this.heap;
@@ -671,8 +660,7 @@ public final class Process {
              * The last window was shut and the program has had its say about it: a program whose windows
              * are gone has nothing left to be looked at, and ends.
              */
-            if (this.endWithWindows && this.waiting.isEmpty() && this.windows.items().isEmpty()) {
-                this.endWithWindows = false;
+            if (this.waiting.isEmpty() && this.windows.endsNow()) {
                 this.exit(0);
             }
         } catch (final Halt halt) {
@@ -978,9 +966,6 @@ public final class Process {
 
     // windows
 
-    /** The most windows one program may have open at a time. */
-    public static final int MOST_WINDOWS = 8;
-
     /**
      * Opens a window on the machine's desktop.
      *
@@ -991,43 +976,22 @@ public final class Process {
         if (!Boolean.TRUE.equals(this.library.peek("Computer", "Desktop", List.of()))) {
             throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "this computer has no desktop to open a window on");
         }
-        if (Boolean.TRUE.equals(window.get(UiWidgets.OPEN))) {
-            return;
-        }
-        if (this.windows.items().size() >= MOST_WINDOWS) {
-            throw new Halt(Halt.Reason.OUT_OF_RANGE, line,
-                    "a program may have " + MOST_WINDOWS + " windows open at once");
-        }
-        window.set(UiWidgets.ID, this.nextWindow++);
-        window.set(UiWidgets.OPEN, Boolean.TRUE);
-        this.windows.items().add(window);
+        this.windows.open(window, line);
     }
 
     /** Closes a window, which takes it off the desktop; closing one that is not open is nothing at all. */
     void closeWindow(final Values.Obj window) {
-        window.set(UiWidgets.OPEN, Boolean.FALSE);
-        this.windows.items().remove(window);
+        this.windows.close(window);
     }
 
     /** The windows this program has open, in the order it opened them. */
     public List<Values.Obj> windows() {
-        final List<Values.Obj> open = new ArrayList<>();
-        for (final Object one : this.windows.items()) {
-            if (one instanceof Values.Obj window) {
-                open.add(window);
-            }
-        }
-        return open;
+        return this.windows.all();
     }
 
     /** The window of that number, or null when the program has no such window open. */
     public Values.Obj windowOf(final long id) {
-        for (final Values.Obj window : this.windows()) {
-            if (Numbers.toLong(window.get(UiWidgets.ID)) == id) {
-                return window;
-            }
-        }
-        return null;
+        return this.windows.of(id);
     }
 
     /**
@@ -1054,7 +1018,7 @@ public final class Process {
              * Shutting the last window of a program is how a person ends it, as it is on any desktop. The
              * program hears it first, and one that opens another window in its OnClose carries on.
              */
-            this.endWithWindows = this.windows.items().isEmpty();
+            this.windows.closedByPerson();
             return true;
         }
         final Values.Obj found = UiWidgets.widgetOf(open, widget);
@@ -1514,7 +1478,7 @@ public final class Process {
         }
         final Snapshot.IValue scriptShot = value(this.script, numbers);
         final Snapshot.IValue onMessageShot = value(this.onMessage, numbers);
-        final List<Snapshot.IValue> windowShots = values(this.windows.items(), numbers);
+        final List<Snapshot.IValue> windowShots = values(this.windows.held(), numbers);
         final Snapshot.IValue onGatewayShot = value(this.onGatewayMessage, numbers);
         /*
          * The objects are written last: writing anything else down can number a freed thing it still
@@ -1530,7 +1494,7 @@ public final class Process {
                 this.identity.message() == null ? "" : this.identity.message(),
                 this.identity.spent(), this.identity.name(), locked, this.nextThread, this.identity.args(),
                 this.identity.machineId(), this.identity.exited(), this.identity.givenExitCode(), onMessageShot,
-                windowShots, this.nextWindow, this.nextWidget, onGatewayShot, this.gateway);
+                windowShots, this.windows.nextWindow(), this.windows.nextWidget(), onGatewayShot, this.gateway);
     }
 
     /** Reads a process back out of what {@link #save()} wrote, ready to carry on where it stopped. */
@@ -1629,11 +1593,10 @@ public final class Process {
         // The windows the program had open come back open, with everything they were showing.
         for (final Snapshot.IValue written : shot.windows()) {
             if (value(written, byNumber) instanceof Values.Obj window) {
-                process.windows.items().add(window);
+                process.windows.restoreOpen(window);
             }
         }
-        process.nextWindow = Math.max(1, shot.nextWindow());
-        process.nextWidget = Math.max(1, shot.nextWidget());
+        process.windows.startFrom(shot.nextWindow(), shot.nextWidget());
         if (value(shot.onGatewayMessage(), byNumber) instanceof Values.DelegateValue listening) {
             process.onGatewayMessage = listening;
         }
