@@ -15,49 +15,86 @@ import java.util.Map;
  *
  * <p>A process that stopped because the world was put away should carry on where it left off when the
  * world comes back, which means everything it was holding has to be written down: what it had
- * allocated, what each frame was doing, and where each of them was in its method.
+ * allocated, what each frame was doing, and where each of them was in its method. It is written in the
+ * same parts the process keeps itself in: its heap, who it is, its console, the lines typed ahead, the
+ * calls waiting their turn, its windows, its watches, who it tells when something is said to it, its
+ * threads, the locks they hold, the fields its types keep, and the object its script runs on.
  *
  * <p>Everything here is plain data with no Minecraft in it, so freezing and thawing can be tested on
  * its own, and whatever writes it to a save file is a thin layer over records that already hold the
  * whole truth. References between allocated things become numbers, because two objects can point at
  * each other and a tree cannot say that.
  */
-public record Snapshot(long heapBudget, List<IHeld> held, List<ThreadShot> threads, List<FrameShot> waiting,
-                       Map<String, Map<String, IValue>> statics, IValue script, List<WatchShot> watches,
-                       List<String> console, long written, long random, List<String> input, long dropped,
-                       String state, String message, long spent, String name, List<MonitorShot> monitors,
-                       int nextThread, List<String> args, int machineId, boolean exited, int exitCode,
-                       IValue onMessage, List<IValue> windows, long nextWindow, long nextWidget,
-                       boolean endWithWindows, IValue onGatewayMessage, String gateway) {
+public record Snapshot(HeapShot heap, IdentityShot identity, ConsoleShot console, List<String> input,
+                       CallbacksShot callbacks, WindowsShot windows, List<WatchShot> watches,
+                       ListenersShot listeners, ThreadsShot threads, List<MonitorShot> monitors,
+                       Map<String, Map<String, IValue>> statics, IValue script) {
 
     public Snapshot {
-        held = List.copyOf(held);
-        threads = List.copyOf(threads);
-        waiting = List.copyOf(waiting);
-        statics = Map.copyOf(statics);
-        watches = List.copyOf(watches);
-        console = List.copyOf(console);
         input = input == null ? List.of() : List.copyOf(input);
-        name = name == null ? "" : name;
+        watches = List.copyOf(watches);
         monitors = List.copyOf(monitors);
-        args = args == null ? List.of() : List.copyOf(args);
-        onMessage = onMessage == null ? new IValue.Nothing() : onMessage;
-        windows = windows == null ? List.of() : List.copyOf(windows);
-        onGatewayMessage = onGatewayMessage == null ? new IValue.Nothing() : onGatewayMessage;
-        gateway = gateway == null ? "" : gateway;
+        statics = Map.copyOf(statics);
     }
 
-    /** The same, for a program of a kind that has no windows to write down. */
-    public Snapshot(final long heapBudget, final List<IHeld> held, final List<ThreadShot> threads,
-                    final List<FrameShot> waiting, final Map<String, Map<String, IValue>> statics,
-                    final IValue script, final List<WatchShot> watches, final List<String> console,
-                    final long written, final long random, final List<String> input, final long dropped,
-                    final String state, final String message, final long spent, final String name,
-                    final List<MonitorShot> monitors, final int nextThread, final List<String> args,
-                    final int machineId, final boolean exited, final int exitCode, final IValue onMessage) {
-        this(heapBudget, held, threads, waiting, statics, script, watches, console, written, random, input, dropped,
-                state, message, spent, name, monitors, nextThread, args, machineId, exited, exitCode, onMessage, null,
-                1, 1, false, null, "");
+    /** What the program had allocated, and the most it may allocate. */
+    public record HeapShot(long budget, List<IHeld> held) {
+
+        public HeapShot {
+            held = List.copyOf(held);
+        }
+    }
+
+    /** Who the program is, what it has spent, and how it ended if it did. */
+    public record IdentityShot(String state, String message, long spent, String name, List<String> args,
+                               int machineId, boolean exited, int exitCode) {
+
+        public IdentityShot {
+            name = name == null ? "" : name;
+            args = args == null ? List.of() : List.copyOf(args);
+        }
+    }
+
+    /** What the program printed, how much it has ever written, and where its random numbers stand. */
+    public record ConsoleShot(List<String> lines, long written, long random) {
+
+        public ConsoleShot {
+            lines = List.copyOf(lines);
+        }
+    }
+
+    /** The calls waiting their turn, and how many found no room among them. */
+    public record CallbacksShot(List<FrameShot> waiting, long dropped) {
+
+        public CallbacksShot {
+            waiting = List.copyOf(waiting);
+        }
+    }
+
+    /** The windows the program has open, the numbers the next window and widget get, and whether it ends with them. */
+    public record WindowsShot(List<IValue> open, long nextWindow, long nextWidget, boolean endWithWindows) {
+
+        public WindowsShot {
+            open = open == null ? List.of() : List.copyOf(open);
+        }
+    }
+
+    /** Who the program tells when something is said to it, and the Gateway it chose to reach through. */
+    public record ListenersShot(IValue onMessage, IValue onGatewayMessage, String gateway) {
+
+        public ListenersShot {
+            onMessage = onMessage == null ? new IValue.Nothing() : onMessage;
+            onGatewayMessage = onGatewayMessage == null ? new IValue.Nothing() : onGatewayMessage;
+            gateway = gateway == null ? "" : gateway;
+        }
+    }
+
+    /** The program's threads, and the number the next one it starts gets. */
+    public record ThreadsShot(List<ThreadShot> running, int nextThread) {
+
+        public ThreadsShot {
+            running = List.copyOf(running);
+        }
     }
 
     /**

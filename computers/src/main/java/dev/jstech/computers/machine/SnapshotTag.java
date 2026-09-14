@@ -101,14 +101,14 @@ public final class SnapshotTag {
     /** Writes a frozen process down. */
     public static CompoundTag write(final Snapshot shot) {
         final CompoundTag tag = new CompoundTag();
-        tag.putLong(BUDGET, shot.heapBudget());
+        tag.putLong(BUDGET, shot.heap().budget());
         final ListTag held = new ListTag();
-        for (final Snapshot.IHeld one : shot.held()) {
+        for (final Snapshot.IHeld one : shot.heap().held()) {
             held.add(write(one));
         }
         tag.put(HELD, held);
         final ListTag threads = new ListTag();
-        for (final Snapshot.ThreadShot thread : shot.threads()) {
+        for (final Snapshot.ThreadShot thread : shot.threads().running()) {
             final CompoundTag each = new CompoundTag();
             each.putInt(ID, thread.id());
             each.put(FRAMES, frames(thread.frames()));
@@ -130,19 +130,20 @@ public final class SnapshotTag {
             monitors.add(each);
         }
         tag.put(MONITORS, monitors);
-        tag.putInt(NEXT_THREAD, shot.nextThread());
-        tag.put(ARGS, names(shot.args()));
-        tag.putInt(MACHINE_ID, shot.machineId());
-        tag.putBoolean(EXITED, shot.exited());
-        tag.putInt(EXIT_CODE, shot.exitCode());
-        tag.put(ON_MESSAGE, write(shot.onMessage()));
-        tag.put(WINDOWS, values(shot.windows()));
-        tag.put(ON_GATEWAY_MESSAGE, write(shot.onGatewayMessage()));
-        tag.putString(GATEWAY, shot.gateway());
-        tag.putLong(NEXT_WINDOW, shot.nextWindow());
-        tag.putLong(NEXT_WIDGET, shot.nextWidget());
-        tag.putBoolean(END_WITH_WINDOWS, shot.endWithWindows());
-        tag.put(WAITING, frames(shot.waiting()));
+        tag.putInt(NEXT_THREAD, shot.threads().nextThread());
+        final Snapshot.IdentityShot identity = shot.identity();
+        tag.put(ARGS, names(identity.args()));
+        tag.putInt(MACHINE_ID, identity.machineId());
+        tag.putBoolean(EXITED, identity.exited());
+        tag.putInt(EXIT_CODE, identity.exitCode());
+        tag.put(ON_MESSAGE, write(shot.listeners().onMessage()));
+        tag.put(WINDOWS, values(shot.windows().open()));
+        tag.put(ON_GATEWAY_MESSAGE, write(shot.listeners().onGatewayMessage()));
+        tag.putString(GATEWAY, shot.listeners().gateway());
+        tag.putLong(NEXT_WINDOW, shot.windows().nextWindow());
+        tag.putLong(NEXT_WIDGET, shot.windows().nextWidget());
+        tag.putBoolean(END_WITH_WINDOWS, shot.windows().endWithWindows());
+        tag.put(WAITING, frames(shot.callbacks().waiting()));
         final ListTag statics = new ListTag();
         for (final Map.Entry<String, Map<String, Snapshot.IValue>> entry : shot.statics().entrySet()) {
             final CompoundTag owner = new CompoundTag();
@@ -168,19 +169,19 @@ public final class SnapshotTag {
         }
         tag.put(WATCHES, watches);
         final ListTag console = new ListTag();
-        for (final String line : shot.console()) {
+        for (final String line : shot.console().lines()) {
             console.add(StringTag.valueOf(line));
         }
         tag.put(CONSOLE, console);
-        tag.putLong(WRITTEN, shot.written());
-        tag.putLong(RANDOM, shot.random());
+        tag.putLong(WRITTEN, shot.console().written());
+        tag.putLong(RANDOM, shot.console().random());
         tag.put(INPUT, names(shot.input()));
-        tag.putLong(DROPPED, shot.dropped());
-        tag.putString(STATE, shot.state());
-        tag.putString(MESSAGE, shot.message());
-        tag.putLong(SPENT, shot.spent());
-        if (!shot.name().isEmpty()) {
-            tag.putString(PROGRAM_NAME, shot.name());
+        tag.putLong(DROPPED, shot.callbacks().dropped());
+        tag.putString(STATE, identity.state());
+        tag.putString(MESSAGE, identity.message());
+        tag.putLong(SPENT, identity.spent());
+        if (!identity.name().isEmpty()) {
+            tag.putString(PROGRAM_NAME, identity.name());
         }
         return tag;
     }
@@ -228,18 +229,23 @@ public final class SnapshotTag {
             monitors.add(new Snapshot.MonitorShot(readValue(each.getCompound(TARGET)), each.getInt(OWNER),
                     each.getInt(COUNT)));
         }
-        return new Snapshot(tag.getLong(BUDGET), held, threads,
-                readFrames(tag.getList(WAITING, Tag.TAG_COMPOUND)), statics,
-                readValue(tag.getCompound(SCRIPT)), watches, console, tag.getLong(WRITTEN), tag.getLong(RANDOM),
-                readNames(tag.getList(INPUT, Tag.TAG_STRING)), tag.getLong(DROPPED), tag.getString(STATE),
-                tag.getString(MESSAGE), tag.getLong(SPENT), tag.getString(PROGRAM_NAME), monitors,
-                tag.getInt(NEXT_THREAD),
-                readNames(tag.getList(ARGS, Tag.TAG_STRING)),
-                tag.getInt(MACHINE_ID), tag.getBoolean(EXITED), tag.getInt(EXIT_CODE),
-                readValue(tag.getCompound(ON_MESSAGE)), readValues(tag.getList(WINDOWS, Tag.TAG_COMPOUND)),
-                Math.max(1, tag.getLong(NEXT_WINDOW)), Math.max(1, tag.getLong(NEXT_WIDGET)),
-                tag.getBoolean(END_WITH_WINDOWS), readValue(tag.getCompound(ON_GATEWAY_MESSAGE)),
-                tag.getString(GATEWAY));
+        return new Snapshot(
+                new Snapshot.HeapShot(tag.getLong(BUDGET), held),
+                new Snapshot.IdentityShot(tag.getString(STATE), tag.getString(MESSAGE), tag.getLong(SPENT),
+                        tag.getString(PROGRAM_NAME), readNames(tag.getList(ARGS, Tag.TAG_STRING)),
+                        tag.getInt(MACHINE_ID), tag.getBoolean(EXITED), tag.getInt(EXIT_CODE)),
+                new Snapshot.ConsoleShot(console, tag.getLong(WRITTEN), tag.getLong(RANDOM)),
+                readNames(tag.getList(INPUT, Tag.TAG_STRING)),
+                new Snapshot.CallbacksShot(readFrames(tag.getList(WAITING, Tag.TAG_COMPOUND)),
+                        tag.getLong(DROPPED)),
+                new Snapshot.WindowsShot(readValues(tag.getList(WINDOWS, Tag.TAG_COMPOUND)),
+                        Math.max(1, tag.getLong(NEXT_WINDOW)), Math.max(1, tag.getLong(NEXT_WIDGET)),
+                        tag.getBoolean(END_WITH_WINDOWS)),
+                watches,
+                new Snapshot.ListenersShot(readValue(tag.getCompound(ON_MESSAGE)),
+                        readValue(tag.getCompound(ON_GATEWAY_MESSAGE)), tag.getString(GATEWAY)),
+                new Snapshot.ThreadsShot(threads, tag.getInt(NEXT_THREAD)),
+                monitors, statics, readValue(tag.getCompound(SCRIPT)));
     }
 
     // what the program allocated

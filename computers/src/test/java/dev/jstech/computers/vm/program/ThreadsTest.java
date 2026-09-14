@@ -297,7 +297,8 @@ class ThreadsTest {
         for (int i = 0; i < 10_000 && saved.state() == Process.State.RUNNING; i++) {
             saved.step(7);
             final Snapshot shot = saved.save();
-            assertTrue(shot.threads().size() >= 1 && shot.threads().size() <= 3, "the threads are written down");
+            final int written = shot.threads().running().size();
+            assertTrue(written >= 1 && written <= 3, "the threads are written down");
             saved = Process.restore(program, shot, IHost.still());
         }
         final Process back = saved;

@@ -322,8 +322,9 @@ class SnapshotTest {
 
         final Snapshot shot = process.save();
 
-        assertTrue(shot.held().size() < 10,
-                "a save writes what is still reached, not everything ever freed; it wrote " + shot.held().size());
+        final int written = shot.heap().held().size();
+        assertTrue(written < 10,
+                "a save writes what is still reached, not everything ever freed; it wrote " + written);
     }
 
     @Test

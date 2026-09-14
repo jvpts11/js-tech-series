@@ -26,18 +26,20 @@ final class ProcessSnapshotReader {
 
     /** The process a snapshot wrote, for the program it was written from. */
     static Process read(final ProgramImage program, final Snapshot shot, final IHost host) {
-        final Process process = new Process(program, shot.heapBudget(), host, false);
+        final Snapshot.HeapShot heapShot = shot.heap();
+        final Snapshot.IdentityShot identityShot = shot.identity();
+        final Process process = new Process(program, heapShot.budget(), host, false);
         final ProgramIdentity identity = process.identity();
-        identity.rename(shot.name());
+        identity.rename(identityShot.name());
         final Map<Integer, Object> byNumber = new LinkedHashMap<>();
-        for (final Snapshot.IHeld written : shot.held()) {
+        for (final Snapshot.IHeld written : heapShot.held()) {
             byNumber.put(written.id(), shell(written));
         }
         /*
          * Handlers are settled before anything is filled in, because one cannot be changed after it is
          * made and whatever points at one has to point at the one that stays.
          */
-        for (final Snapshot.IHeld written : shot.held()) {
+        for (final Snapshot.IHeld written : heapShot.held()) {
             if (written instanceof Snapshot.IHeld.Handler handler) {
                 final List<Values.Bound> chain = new ArrayList<>();
                 for (final Snapshot.BoundShot bound : handler.chain()) {
@@ -48,12 +50,12 @@ final class ProcessSnapshotReader {
             }
         }
         final Heap heap = process.heap0();
-        for (final Snapshot.IHeld written : shot.held()) {
+        for (final Snapshot.IHeld written : heapShot.held()) {
             fill(written, byNumber);
             heap.restore(byNumber.get(written.id()), written.bytes(), written.line(), written.freed());
         }
         final ThreadScheduler scheduler = process.scheduler();
-        for (final Snapshot.ThreadShot written : shot.threads()) {
+        for (final Snapshot.ThreadShot written : shot.threads().running()) {
             final ProgramThread thread = scheduler.restore(written.id());
             for (final Snapshot.FrameShot each : written.frames()) {
                 final Frame frame = thaw(program, each, byNumber);
@@ -68,7 +70,7 @@ final class ProcessSnapshotReader {
                 thread.token = token;
             }
         }
-        scheduler.startFrom(shot.nextThread());
+        scheduler.startFrom(shot.threads().nextThread());
         final MonitorTable locks = process.locks();
         for (final Snapshot.MonitorShot written : shot.monitors()) {
             final Object target = value(written.target(), byNumber);
@@ -79,7 +81,7 @@ final class ProcessSnapshotReader {
         // The threads came back before the locks, so a thread waiting for a lock is queued for it only now.
         locks.requeue(scheduler.threads());
         final CallbackQueue callbacks = process.callbacks();
-        for (final Snapshot.FrameShot written : shot.waiting()) {
+        for (final Snapshot.FrameShot written : shot.callbacks().waiting()) {
             final Frame frame = thaw(program, written, byNumber);
             if (frame != null) {
                 callbacks.add(frame, process.weigh(frame));
@@ -100,25 +102,29 @@ final class ProcessSnapshotReader {
                 process.watches().restore(written, handler, token);
             }
         }
-        process.library().restore(shot.console(), shot.written(), shot.random());
+        final Snapshot.ConsoleShot console = shot.console();
+        process.library().restore(console.lines(), console.written(), console.random());
         process.input().restore(shot.input());
-        callbacks.startFrom(shot.dropped());
-        final boolean halted = Process.State.HALTED.serializedName().equals(shot.state());
-        identity.restore(shot.args(), shot.machineId(), shot.spent(), shot.exited(), shot.exitCode(), halted,
-                shot.message().isEmpty() ? null : shot.message());
+        callbacks.startFrom(shot.callbacks().dropped());
+        final boolean halted = Process.State.HALTED.serializedName().equals(identityShot.state());
+        identity.restore(identityShot.args(), identityShot.machineId(), identityShot.spent(), identityShot.exited(),
+                identityShot.exitCode(), halted, identityShot.message().isEmpty() ? null : identityShot.message());
         // The windows the program had open come back open, with everything they were showing.
+        final Snapshot.WindowsShot windowsShot = shot.windows();
         final ProgramWindows windows = process.windows0();
-        for (final Snapshot.IValue written : shot.windows()) {
+        for (final Snapshot.IValue written : windowsShot.open()) {
             if (value(written, byNumber) instanceof Values.Obj window) {
                 windows.restoreOpen(window);
             }
         }
-        windows.startFrom(shot.nextWindow(), shot.nextWidget());
-        windows.restoreEnding(shot.endWithWindows());
+        windows.startFrom(windowsShot.nextWindow(), windowsShot.nextWidget());
+        windows.restoreEnding(windowsShot.endWithWindows());
+        final Snapshot.ListenersShot listeners = shot.listeners();
         process.listeners().restore(
-                value(shot.onMessage(), byNumber) instanceof Values.DelegateValue handler ? handler : null,
-                value(shot.onGatewayMessage(), byNumber) instanceof Values.DelegateValue listening ? listening : null,
-                shot.gateway());
+                value(listeners.onMessage(), byNumber) instanceof Values.DelegateValue handler ? handler : null,
+                value(listeners.onGatewayMessage(), byNumber) instanceof Values.DelegateValue listening
+                        ? listening : null,
+                listeners.gateway());
         return process;
     }
 

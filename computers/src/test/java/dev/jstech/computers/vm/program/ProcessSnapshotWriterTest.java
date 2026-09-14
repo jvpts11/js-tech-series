@@ -54,7 +54,7 @@ class ProcessSnapshotWriterTest {
     void write_writesAThreadsCallsBottomFirst() {
         final Snapshot shot = ProcessSnapshotWriter.write(running());
 
-        final List<String> called = shot.threads().getFirst().frames().stream()
+        final List<String> called = shot.threads().running().getFirst().frames().stream()
                 .map(Snapshot.FrameShot::name).toList();
 
         assertEquals(List.of("OnTick", "Inner"), called);
@@ -64,7 +64,8 @@ class ProcessSnapshotWriterTest {
     void write_writesTwoNamesForOneObjectUnderOneNumber() {
         final Snapshot shot = ProcessSnapshotWriter.write(running());
 
-        final List<Snapshot.IValue> references = shot.threads().getFirst().frames().getFirst().slots().stream()
+        final Snapshot.FrameShot tick = shot.threads().running().getFirst().frames().getFirst();
+        final List<Snapshot.IValue> references = tick.slots().stream()
                 .filter(Snapshot.IValue.Ref.class::isInstance).toList();
 
         assertEquals(2, references.size(), () -> String.valueOf(shot.threads()));

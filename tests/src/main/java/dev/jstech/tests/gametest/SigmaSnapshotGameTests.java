@@ -137,8 +137,8 @@ public final class SigmaSnapshotGameTests {
 
     @GameTest(template = ARENA)
     public static void snapshotTag_bringsBackEveryKindItWroteDown(final GameTestHelper helper) {
-        final Snapshot written = new Snapshot(4096,
-                List.of(new Snapshot.IHeld.Text(0, 26, 3, false, "hello"),
+        final Snapshot written = new Snapshot(
+                new Snapshot.HeapShot(4096, List.of(new Snapshot.IHeld.Text(0, 26, 3, false, "hello"),
                         new Snapshot.IHeld.Object(1, 24, 4, false, "Tally",
                                 Map.of("count", new Snapshot.IValue.I4(7))),
                         new Snapshot.IHeld.Array(2, 32, 5, true, "int",
@@ -150,26 +150,28 @@ public final class SigmaSnapshotGameTests {
                                 List.of(new Snapshot.IValue.R8(2.25))),
                         new Snapshot.IHeld.Handler(5, 32, 8, false, "Note",
                                 List.of(new Snapshot.BoundShot(new Snapshot.IValue.Ref(1), "Monitor",
-                                        "First", List.of("int"), "void")))),
-                List.of(new Snapshot.ThreadShot(1, List.of(new Snapshot.FrameShot("Monitor", "OnTick",
-                                List.of(), 12, new Snapshot.IValue.Ref(1),
+                                        "First", List.of("int"), "void"))))),
+                new Snapshot.IdentityShot("running", "", 91, "Sorter", List.of("a", "b"), 7, false, 0),
+                new Snapshot.ConsoleShot(List.of("first", "second"), 7, 0x2545F4914F6CDD1DL),
+                List.of("typed ahead"),
+                new Snapshot.CallbacksShot(List.of(new Snapshot.FrameShot("Counter", "Counter", List.of(), 0,
+                        new Snapshot.IValue.Nothing(), List.of(), List.of(), true)), 3L),
+                new Snapshot.WindowsShot(List.of(), 1, 1, false),
+                List.of(new Snapshot.WatchShot(1, "minecraft:iron_ingot", "below", 1000L,
+                        new Snapshot.IValue.Ref(5), new Snapshot.IValue.Ref(1), 640L, false, true)),
+                new Snapshot.ListenersShot(new Snapshot.IValue.Ref(5), new Snapshot.IValue.Nothing(), ""),
+                new Snapshot.ThreadsShot(List.of(new Snapshot.ThreadShot(1, List.of(new Snapshot.FrameShot("Monitor",
+                                "OnTick", List.of(), 12, new Snapshot.IValue.Ref(1),
                                 List.of(new Snapshot.IValue.Bool(true)), List.of(new Snapshot.IValue.I4(3)),
                                 false)), "none", 0L, new Snapshot.IValue.Nothing(),
                                 new Snapshot.IValue.Nothing(), false, ""),
                         new Snapshot.ThreadShot(2, List.of(), "join", 700L, new Snapshot.IValue.I4(1),
                                 new Snapshot.IValue.Ref(1), true, ""),
                         new Snapshot.ThreadShot(3, List.of(), "child", 0L, new Snapshot.IValue.I4(4),
-                                new Snapshot.IValue.Nothing(), false, "lab")),
-                List.of(new Snapshot.FrameShot("Counter", "Counter", List.of(), 0,
-                        new Snapshot.IValue.Nothing(), List.of(), List.of(), true)),
+                                new Snapshot.IValue.Nothing(), false, "lab")), 4),
+                List.of(new Snapshot.MonitorShot(new Snapshot.IValue.Ref(3), 2, 2)),
                 Map.of("Counter", Map.of("seen", new Snapshot.IValue.I4(2))),
-                new Snapshot.IValue.Ref(1),
-                List.of(new Snapshot.WatchShot(1, "minecraft:iron_ingot", "below", 1000L,
-                        new Snapshot.IValue.Ref(5), new Snapshot.IValue.Ref(1), 640L, false, true)),
-                List.of("first", "second"), 7, 0x2545F4914F6CDD1DL, List.of("typed ahead"), 3L, "running", "", 91,
-                "Sorter",
-                List.of(new Snapshot.MonitorShot(new Snapshot.IValue.Ref(3), 2, 2)), 4,
-                List.of("a", "b"), 7, false, 0, new Snapshot.IValue.Ref(5));
+                new Snapshot.IValue.Ref(1));
         final Snapshot read = SnapshotTag.read(SnapshotTag.write(written));
         helper.assertTrue(read.equals(written), "what came back out of the tag is what went in; got " + read);
         helper.succeed();

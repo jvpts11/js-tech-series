@@ -68,14 +68,20 @@ final class ProcessSnapshotWriter {
         }
         final ProgramIdentity identity = process.identity();
         final Library library = process.library();
-        return new Snapshot(heap.budget(), held, running, queued, kept, scriptShot,
-                watching, library.console(), library.written(), library.randomState(),
-                process.input().lines(), process.callbacks().dropped(), process.state().serializedName(),
-                identity.message() == null ? "" : identity.message(),
-                identity.spent(), identity.name(), locked, process.scheduler().nextId(), identity.args(),
-                identity.machineId(), identity.exited(), identity.givenExitCode(), onMessageShot,
-                windowShots, windows.nextWindow(), windows.nextWidget(), windows.endWithWindows(),
-                onGatewayShot, listeners.gateway());
+        return new Snapshot(
+                new Snapshot.HeapShot(heap.budget(), held),
+                new Snapshot.IdentityShot(process.state().serializedName(),
+                        identity.message() == null ? "" : identity.message(), identity.spent(), identity.name(),
+                        identity.args(), identity.machineId(), identity.exited(), identity.givenExitCode()),
+                new Snapshot.ConsoleShot(library.console(), library.written(), library.randomState()),
+                process.input().lines(),
+                new Snapshot.CallbacksShot(queued, process.callbacks().dropped()),
+                new Snapshot.WindowsShot(windowShots, windows.nextWindow(), windows.nextWidget(),
+                        windows.endWithWindows()),
+                watching,
+                new Snapshot.ListenersShot(onMessageShot, onGatewayShot, listeners.gateway()),
+                new Snapshot.ThreadsShot(running, process.scheduler().nextId()),
+                locked, kept, scriptShot);
     }
 
     private static Snapshot.IHeld freeze(final Heap heap, final Object thing, final int number,
