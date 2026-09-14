@@ -435,6 +435,28 @@ class ProcessTest {
     }
 
     @Test
+    void run_stopsAMethodThatCallsItselfWithoutEnd() {
+        final Process process = run("class Deep { public int Down(int n) { return Down(n + 1); } }\n", """
+                        Deep deep = new Deep();
+                        deep.Down(0);
+                """, ROOM);
+        assertEquals(Process.State.HALTED, process.state());
+        assertTrue(process.message().contains("calls went 1024 deep"), process.message());
+        assertTrue(process.message().contains("Down"), "it names the method being called: " + process.message());
+    }
+
+    @Test
+    void run_letsCallsGoAsDeepAsAProgramThatEndsNeeds() {
+        final Process process = run(
+                "class Deep { public int Down(int n) { if (n == 0) { return 0; } return Down(n - 1) + 1; } }\n", """
+                        Deep deep = new Deep();
+                        Console.PrintLine("depth " + deep.Down(1000));
+                """, ROOM);
+        assertFinished(process);
+        assertEquals(List.of("depth 1000"), process.console());
+    }
+
+    @Test
     void run_stopsWhenAnotherNameForSomethingFreedIsUsed() {
         /*
          * Disposing leaves the name that did it holding nothing, so the way to reach a freed object

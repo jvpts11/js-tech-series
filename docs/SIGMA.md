@@ -45,9 +45,10 @@ back rows costs one more per row. The editors show the price of a line as you wr
 ## Errors
 
 There are no exceptions. A mistake (dividing by zero, reaching into nothing, using what was disposed,
-running out of memory, asking for what is not there) halts the program where it stands, and the
-message is what the console shows. Calls that can fail for ordinary reasons answer instead of halting:
-`File.Write` returns false on a full disk, `Convert.TryInt` says whether the text was a number.
+running out of memory, asking for what is not there, calls going more than 1,024 deep) halts the
+program where it stands, and the message is what the console shows. Calls that can fail for ordinary
+reasons answer instead of halting: `File.Write` returns false on a full disk, `Convert.TryInt` says
+whether the text was a number.
 
 ## Namespaces
 

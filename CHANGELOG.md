@@ -68,6 +68,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - An event with several handlers joined to it with `+=` runs all of them, in the order they were joined, when a
   player clicks or closes a window, a message arrives or a watched stock changes. Only the first handler used to
   run.
+- A program that calls itself without end halts with a message once its calls go more than 1,024 deep. It used to
+  keep adding calls, held in the server's memory, for as long as it ran.
 - A script whose `OnTick` runs longer than a tick, or that is still busy with a handler when the next tick comes,
   skips that tick. It used to run one extra `OnTick` as soon as it was free.
 - A program whose last window a player closed ends even when the world is saved before the program has heard about

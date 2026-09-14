@@ -76,6 +76,9 @@ public final class Process {
     /** What an event handed to a handler holds before its text: a header and its three fields. */
     private static final long EVENT_BYTES = Heap.HEADER + 3L * Heap.REFERENCE;
 
+    /** The most calls one thread may have in progress at once; one call more halts the program. */
+    private static final int DEEPEST = 1_024;
+
     /** Who holds an object's lock, and how many times over it took it. */
     private static final class Monitor {
         private int owner;
@@ -2055,7 +2058,7 @@ public final class Process {
             final Frame made = new Frame(method, bound.target());
             fill(made, arguments);
             made.discard = i < chain.size() - 1;
-            this.current.frames.push(made);
+            this.pushCall(made, line);
         }
     }
 
@@ -2066,6 +2069,20 @@ public final class Process {
         }
         final Frame frame = new Frame(method, self);
         fill(frame, arguments);
+        this.pushCall(frame, line);
+    }
+
+    /**
+     * Starts a call the running thread makes, unless its calls already go as deep as a thread's may.
+     *
+     * <p>A method that calls itself without end would otherwise keep adding calls, each held in the server's
+     * memory, for as long as the program runs; no program that ends is anywhere near this deep.
+     */
+    private void pushCall(final Frame frame, final int line) {
+        if (this.current.frames.size() >= DEEPEST) {
+            throw new Halt(Halt.Reason.STACK_DEPTH, line, "calls went " + DEEPEST + " deep calling "
+                    + frame.method.describe() + ": a method may be calling itself without end");
+        }
         this.current.frames.push(frame);
     }
 

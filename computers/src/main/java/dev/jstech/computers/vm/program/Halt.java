@@ -31,6 +31,8 @@ public final class Halt extends RuntimeException {
         NOT_LOCKED("not holding the lock"),
         CANNOT_START("could not start"),
         REFUSED("refused"),
+        /** A thread's calls went deeper than they may: most often a method that calls itself without end. */
+        STACK_DEPTH("called too deep"),
         /** The runtime itself failed on an instruction: a fault of the machine, kept to the one process. */
         FAULT("failed inside the runtime");
 
