@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.language.ILanguageProcess;
 import dev.jstech.core.language.IProgrammingLanguage;
@@ -79,6 +80,38 @@ public final class LanguageApiGameTests {
             final ILanguageProcess again = new ToyLanguage().restore(SOURCE, saved, computer);
             helper.assertTrue(again != null && again.spent() == 3,
                     "a program comes back where it was; got " + (again == null ? "nothing" : again.spent()));
+            helper.succeed();
+        } finally {
+            JsCore.languages().unregister(TOY);
+        }
+    }
+
+    /**
+     * A machine whose terminal was holding a program that does not come back after a load, because its language is
+     * gone, lets the terminal go. It used to keep pointing at the missing program, so every line typed at the prompt
+     * went nowhere until Ctrl+C.
+     */
+    @GameTest(template = ARENA)
+    public static void load_letsTheTerminalGoWhenItsProgramDoesNotComeBack(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        JsCore.languages().register(new ToyLanguage());
+        try {
+            final MachinePrograms.Started started =
+                    computer.programs().start("count.toy", "count 100000", 1, computer);
+            helper.assertTrue(started.ok(), "the program starts: " + started.message());
+            computer.programs().hold(started.id());
+            final var registries = helper.getLevel().registryAccess();
+            final CompoundTag saved = computer.saveWithFullMetadata(registries);
+            JsCore.languages().unregister(TOY);
+            computer.loadWithComponents(saved, registries);
+            helper.assertTrue(computer.programs().byId(started.id()) == null,
+                    "the program does not come back without its language");
+            helper.assertTrue(computer.programs().held() == 0,
+                    "and the terminal holds nothing; got " + computer.programs().held());
+            helper.assertTrue(new ServerCliComputer(computer, helper.getLevel()).foreground() == null,
+                    "so the prompt takes what is typed again");
             helper.succeed();
         } finally {
             JsCore.languages().unregister(TOY);

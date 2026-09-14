@@ -111,6 +111,17 @@ final class TerminalFocus {
         }
     }
 
+    /**
+     * Lets go of a held program the machine does not have, as after a load that could not bring it back: its
+     * language gone, or its saved state refused. Held, it would take every line typed at the prompt into nothing.
+     */
+    void letGoOfMissing() {
+        if (this.held != 0 && this.table.byId(this.held) == null) {
+            this.held = 0;
+            this.shown = 0;
+        }
+    }
+
     /** Writes the terminal's place down beside the machine's programs. */
     void save(final CompoundTag tag) {
         tag.putInt(HELD, this.held);

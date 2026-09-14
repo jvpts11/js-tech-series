@@ -103,6 +103,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   still in use. The next program used to get a number below zero and be reported as not started while it ran.
 - A program run at the prompt from a path written with backslashes, such as `sigma run C:\progs\game.asm`, is
   listed by its file. It used to be listed under the whole path.
+- A computer whose terminal had a program in front of it that could not be loaded back, because its language is no
+  longer installed or its saved state was refused, gives its prompt back after the load. Every line typed there used
+  to go nowhere until Ctrl+C.
 
 ## [0.3.0a] - 2026-09-13 - The Programming Update
 

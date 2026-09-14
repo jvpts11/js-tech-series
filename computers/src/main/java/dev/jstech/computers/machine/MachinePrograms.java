@@ -469,6 +469,8 @@ public final class MachinePrograms {
                         ProgramPriority.named(each.getString(PRIORITY))));
             }
         }
+        // The program the terminal held may not have come back, and the terminal cannot stay pointed at nothing.
+        this.focus.letGoOfMissing();
     }
 
     /** The program that started this one: on another machine, on this one, or none. */
