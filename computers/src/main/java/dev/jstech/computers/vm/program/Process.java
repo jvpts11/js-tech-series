@@ -8,8 +8,6 @@
 package dev.jstech.computers.vm.program;
 
 import dev.jstech.computers.vm.listing.IOperand;
-import dev.jstech.computers.vm.listing.Instruction;
-import dev.jstech.computers.vm.listing.Opcode;
 import dev.jstech.computers.vm.listing.Shape;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
@@ -73,10 +71,6 @@ public final class Process {
     private static final long EVENT_BYTES = Heap.HEADER + 3L * Heap.REFERENCE;
 
     private final ProgramImage program;
-    /** What two values being the same means, which needs the program's own types to tell a struct from a class. */
-    private final ValueSemantics values;
-    /** What a cast and a type test make of a value. */
-    private final TypeChecks types;
     private final Heap heap;
     private final Library library;
     /** The process's threads, whose turn it is, and which of the waiting ones may run again. */
@@ -116,6 +110,8 @@ public final class Process {
     private final CallDispatch calls;
     /** The program's objects, arrays and struct copies. */
     private final ObjectMaking objects;
+    /** What each instruction does, carried out on the thread whose turn it is. */
+    private final InstructionExecutor executor;
     private Values.Obj script;
     private final ProgramIdentity identity = new ProgramIdentity();
     /** Who the program tells when something is said to it, and the Gateway it chose to reach through. */
@@ -168,14 +164,14 @@ public final class Process {
 
     private Process(final ProgramImage program, final long heapBytes, final IHost host, final boolean fresh) {
         this.program = program;
-        this.values = new ValueSemantics(program);
-        this.types = new TypeChecks(program);
         this.heap = new Heap(heapBytes);
         this.library = new Library(this.heap, host, program.entryPoint());
         this.library.serves(this);
         this.fieldAccess = new FieldAccess(this, this.heap, this.library, program);
         this.calls = new CallDispatch(this, this.heap, this.library, program);
         this.objects = new ObjectMaking(this.heap, this.library, program, this.calls);
+        this.executor = new InstructionExecutor(program, this.heap, this.scheduler, this.locks, this.fieldAccess,
+                this.calls, this.objects);
         if (!fresh) {
             return;
         }
@@ -607,7 +603,7 @@ public final class Process {
                 }
                 used++;
                 try {
-                    this.one();
+                    this.executor.one(thread);
                 } catch (final Halt halt) {
                     this.fail(thread, halt);
                 } catch (final RuntimeException fault) {
@@ -1036,31 +1032,6 @@ public final class Process {
         }
         frame.at--;
         this.scheduler.await(this.current, new IWait.Join(target.id, ticks > 0 ? this.library.now() + ticks : 0L));
-    }
-
-    // locks
-
-    /**
-     * Takes the lock of the object on top of the stack.
-     *
-     * <p>A thread that already holds it takes it once more, and has to let go as many times. One that
-     * finds it held by another leaves the object where it is and waits, to ask again when it is free.
-     */
-    private void enterMonitor(final Frame frame, final int line) {
-        final Object target = this.heap.alive(frame.peek(), line);
-        if (this.locks.enter(this.current, target)) {
-            frame.pop();
-            return;
-        }
-        frame.at--;
-        this.scheduler.await(this.current, new IWait.Lock(target));
-    }
-
-    private void exitMonitor(final Frame frame, final int line) {
-        final Object target = this.heap.alive(frame.pop(), line);
-        if (!this.locks.exit(this.current, target)) {
-            throw new Halt(Halt.Reason.NOT_LOCKED, line, "this thread is letting go of a lock it does not hold");
-        }
     }
 
     // watching the world
@@ -1525,109 +1496,6 @@ public final class Process {
             case Snapshot.IValue.Ch letter -> letter.value();
             case Snapshot.IValue.Ref reference -> byNumber.get(reference.id());
         };
-    }
-
-    // one instruction
-
-    private void one() {
-        final Frame frame = this.current.frames.peek();
-        if (frame.at >= frame.method.length()) {
-            this.calls.leave(frame, null);
-            return;
-        }
-        final Instruction instruction = frame.method.instruction(frame.at);
-        frame.at++;
-        this.run(frame, instruction, frame.at);
-    }
-
-    private void run(final Frame frame, final Instruction instruction, final int line) {
-        switch (instruction.opcode()) {
-            case LDC_I4 -> frame.push(((IOperand.I4) instruction.operand()).value());
-            case LDC_I8 -> frame.push(((IOperand.I8) instruction.operand()).value());
-            case LDC_R4 -> frame.push(((IOperand.R4) instruction.operand()).value());
-            case LDC_R8 -> frame.push(((IOperand.R8) instruction.operand()).value());
-            case LDNULL -> frame.push(null);
-            case LDSTR -> frame.push(this.text(((IOperand.Text) instruction.operand()).value(), line));
-            case LDTHIS -> frame.push(frame.self);
-            case LDLOC -> frame.push(frame.slots[((IOperand.Slot) instruction.operand()).index()]);
-            case STLOC -> frame.slots[((IOperand.Slot) instruction.operand()).index()] = frame.pop();
-            case POP -> frame.pop();
-            case COPY -> frame.push(this.objects.copyOf(frame.pop(), line));
-            case DUP -> frame.push(frame.peek());
-            case LDFLD -> this.fieldAccess.load(frame, (IOperand.Field) instruction.operand(), line);
-            case STFLD -> this.fieldAccess.store(frame, (IOperand.Field) instruction.operand(), line);
-            case LDSFLD -> this.fieldAccess.loadStatic(frame, (IOperand.Field) instruction.operand(), line);
-            case STSFLD -> this.fieldAccess.storeStatic(frame, (IOperand.Field) instruction.operand(), line);
-            case ADD, SUB, MUL, DIV, REM, AND, OR, XOR, SHL, SHR ->
-                    this.arithmetic(frame, instruction.opcode(), line);
-            case NEG -> frame.push(Numbers.negate(frame.pop()));
-            case NOT -> frame.push(Numbers.complement(frame.pop()));
-            case CONV_I4 -> frame.push(Numbers.toInt(frame.pop()));
-            case CONV_I8 -> frame.push(Numbers.toLong(frame.pop()));
-            case CONV_R4 -> frame.push(Numbers.toFloat(frame.pop()));
-            case CONV_R8 -> frame.push(Numbers.toDouble(frame.pop()));
-            case CEQ, CLT, CGT -> this.compare(frame, instruction.opcode());
-            case BR -> frame.at = frame.method.jump(line - 1);
-            case BRTRUE -> this.jumpIf(frame, line, ValueSemantics.truth(frame.pop()));
-            case BRFALSE -> this.jumpIf(frame, line, !ValueSemantics.truth(frame.pop()));
-            case BEQ, BNE, BLT, BLE, BGT, BGE -> this.jumpCompare(frame, instruction.opcode(), line);
-            case NEWOBJ -> this.objects.newObject(frame, frame.method.creation(line - 1), line);
-            case NEWARR -> this.objects.newArray(frame, (IOperand.Type) instruction.operand(), line);
-            case LDELEM -> this.objects.loadElement(frame, line);
-            case STELEM -> this.objects.storeElement(frame, line);
-            case LDLEN -> frame.push(this.objects.array(frame.pop(), line).length());
-            case DISPOSE -> this.heap.dispose(frame.pop(), line);
-            case MONITOR_ENTER -> this.enterMonitor(frame, line);
-            case MONITOR_EXIT -> this.exitMonitor(frame, line);
-            case CASTCLASS -> frame.push(this.types.cast(frame.pop(),
-                    ((IOperand.Type) instruction.operand()).name(), line));
-            case ISINST -> frame.push(this.types.isInstance(frame.pop(),
-                    ((IOperand.Type) instruction.operand()).name()));
-            case LDFN -> this.calls.handler(frame, (IOperand.Method) instruction.operand(), line);
-            case CALL, CALLVIRT -> this.calls.call(frame, frame.method.call(line - 1),
-                    instruction.opcode() == Opcode.CALLVIRT, line);
-            case SYS -> throw new Halt(Halt.Reason.NO_NETWORK, line,
-                    "this computer is not on a network");
-            case RET -> this.calls.leave(frame, frame.method.gives() ? frame.pop() : null);
-            default -> { }
-        }
-    }
-
-    /** Branches when {@code go}; {@code line} is where the frame already stands, one past the branch. */
-    private void jumpIf(final Frame frame, final int line, final boolean go) {
-        if (go) {
-            frame.at = frame.method.jump(line - 1);
-        }
-    }
-
-    private void jumpCompare(final Frame frame, final Opcode opcode, final int line) {
-        final Object right = frame.pop();
-        final Object left = frame.pop();
-        final boolean go = switch (opcode) {
-            case BEQ -> this.values.same(left, right);
-            case BNE -> !this.values.same(left, right);
-            case BLT -> Numbers.compare(left, right) < 0;
-            case BLE -> Numbers.compare(left, right) <= 0;
-            case BGT -> Numbers.compare(left, right) > 0;
-            default -> Numbers.compare(left, right) >= 0;
-        };
-        this.jumpIf(frame, line, go);
-    }
-
-    private void compare(final Frame frame, final Opcode opcode) {
-        final Object right = frame.pop();
-        final Object left = frame.pop();
-        frame.push(switch (opcode) {
-            case CEQ -> this.values.same(left, right);
-            case CLT -> Numbers.compare(left, right) < 0;
-            default -> Numbers.compare(left, right) > 0;
-        });
-    }
-
-    private void arithmetic(final Frame frame, final Opcode opcode, final int line) {
-        final Object right = frame.pop();
-        final Object left = frame.pop();
-        frame.push(Numbers.apply(opcode, left, right, line));
     }
 
     // odds and ends
