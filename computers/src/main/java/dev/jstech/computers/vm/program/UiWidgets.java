@@ -8,6 +8,7 @@
 package dev.jstech.computers.vm.program;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * The windows and widgets a Cannon program makes, as the runtime keeps them.
@@ -74,7 +75,7 @@ public final class UiWidgets {
     public static final int MOST_WIDE = 640;
     public static final int MOST_TALL = 360;
 
-    private static final List<String> KINDS = List.of(WINDOW, ROW, COLUMN, LABEL, BUTTON, TEXT_BOX, CHECK_BOX,
+    private static final Set<String> KINDS = Set.of(WINDOW, ROW, COLUMN, LABEL, BUTTON, TEXT_BOX, CHECK_BOX,
             PROGRESS_BAR, LIST_BOX, CANVAS, MESSAGE_BOX);
 
     private UiWidgets() {
@@ -220,9 +221,14 @@ public final class UiWidgets {
         throw new Halt(Halt.Reason.NO_OBJECT, line, "this " + self.type() + " has no " + name);
     }
 
+    /*
+     * A copy of its own of the text at that place, never the object the program passed: a widget lets go of its texts
+     * when they change, and must never take one the program still holds.
+     */
     static String text(final List<Object> arguments, final int index, final String fallback) {
-        return arguments.size() > index && arguments.get(index) != null
+        final String said = arguments.size() > index && arguments.get(index) != null
                 ? String.valueOf(arguments.get(index)) : fallback;
+        return new String(said.toCharArray());
     }
 
     static int whole(final List<Object> arguments, final int index, final int fallback) {

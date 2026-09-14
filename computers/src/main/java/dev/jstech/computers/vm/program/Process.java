@@ -1025,7 +1025,13 @@ public final class Process {
         if (found == null || !Boolean.TRUE.equals(found.get(UiWidgets.ENABLED))) {
             return false;
         }
-        final String handler = this.library.ui().accept(found, kind, values);
+        final String handler;
+        try {
+            handler = this.library.ui().accept(found, kind, values);
+        } catch (final Halt halt) {
+            this.halt(halt);
+            return false;
+        }
         if (handler == null) {
             return false;
         }
@@ -1901,7 +1907,10 @@ public final class Process {
                 frame.push(this.library.programField(object.get("Id"), processHost(object), field.name(), line));
                 return;
             }
-            frame.push(object.get(field.name()));
+            final Object held = object.get(field.name());
+            // A widget's texts are its own, so the program is handed a copy that stays the program's.
+            frame.push(held instanceof String said && UiWidgets.handles(object.type())
+                    ? this.heap.text(said, line) : held);
             return;
         }
         frame.push(this.library.read(target, field.name(), line));

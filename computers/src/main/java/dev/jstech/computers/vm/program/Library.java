@@ -50,6 +50,7 @@ public final class Library {
         this.heap = heap;
         this.host = host;
         this.caller = caller == null ? "" : caller;
+        this.ui = new UiMutator(heap);
     }
 
     /** What the process has written, line by line, oldest of the ones it still keeps first. */
@@ -295,7 +296,7 @@ public final class Library {
     }
 
     /** The one door every change to a window or a widget goes through. */
-    private final UiMutator ui = new UiMutator();
+    private final UiMutator ui;
 
     /** The same door, for what a player does to a widget. */
     UiMutator ui() {

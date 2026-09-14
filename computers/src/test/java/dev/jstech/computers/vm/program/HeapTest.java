@@ -37,6 +37,18 @@ class HeapTest {
     }
 
     @Test
+    void release_givesTheBytesBackAndKeepsNothingToCatchALaterUse() {
+        final Heap heap = new Heap(ROOM);
+        final String copy = heap.allocate(new String("own".toCharArray()), Heap.sizeOfText("own"), 1);
+
+        heap.release(copy);
+
+        assertEquals(0, heap.used());
+        assertFalse(heap.isFreed(copy));
+        assertEquals(0, heap.bytesOf(copy));
+    }
+
+    @Test
     void dispose_ofWhatWasAlreadyFreedChangesNothing() {
         final Heap heap = new Heap(ROOM);
         final Values.ListValue kept = heap.allocate(new Values.ListValue(), LIST, 1);

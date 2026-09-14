@@ -369,4 +369,108 @@ class UiWidgetsTest {
         assertEquals("FillRect", ((Values.Obj) drawing.items().get(1)).get("Kind"));
         assertEquals(120, paper.get(UiWidgets.WIDTH));
     }
+
+    /** A panel the save tests share: a canvas drawn on, a text box, a list and a label placed by hand. */
+    private static final String SKETCH = """
+            class Panel : IScript {
+                Window window;
+                Canvas paper;
+                TextBox name;
+                ListBox log;
+                public string seen = "";
+                public void OnInit() {
+                    paper = new Canvas(120, 80);
+                    paper.FillRect(2, 2, 40, 20, 3);
+                    paper.DrawText("hot", 4, 24, 1);
+                    name = new TextBox("");
+                    name.OnChange += Changed;
+                    log = new ListBox();
+                    log.Add("first", "1 s");
+                    Column page = new Column();
+                    page.Add(paper);
+                    page.Add(name);
+                    page.Add(log);
+                    window = new Window("Sketch", 300, 200);
+                    window.Content = page;
+                    window.Add(new Label("placed"), 4, 4, 60, 12);
+                    window.Show();
+                }
+                void Changed() { seen = name.Text; }
+                public void OnTick() { }
+                public void OnDestroy() { }
+            }
+            """;
+
+    @Test
+    void save_bringsBackWhatWasDrawnPlacedAndListed() {
+        final ProgramImage program = load(SKETCH);
+        final Process process = start(program, desktop(true));
+
+        final Process restored = Process.restore(program, process.save(), desktop(true));
+
+        final Values.ListValue drawing =
+                (Values.ListValue) widgetOf(restored, UiWidgets.CANVAS).get(UiWidgets.DRAWING);
+        assertEquals("FillRect", ((Values.Obj) drawing.items().get(0)).get("Kind"));
+        assertEquals("hot", ((Values.Obj) drawing.items().get(1)).get(UiWidgets.TEXT));
+        assertTrue(UiWidgets.inside(restored.windows().getFirst()).stream()
+                        .anyMatch(widget -> "placed".equals(widget.get(UiWidgets.TEXT))),
+                "the label placed by hand comes back");
+        assertEquals(List.of("first"),
+                ((Values.ListValue) widgetOf(restored, UiWidgets.LIST_BOX).get(UiWidgets.ITEMS)).items());
+    }
+
+    @Test
+    void save_keepsWhatAPlayerTypedAndWhatTheProgramReadFromIt() {
+        final ProgramImage program = load(SKETCH);
+        final Process process = start(program, desktop(true));
+        final long box = (Long) widgetOf(process, UiWidgets.TEXT_BOX).get(UiWidgets.ID);
+        assertTrue(process.deliverUiEvent(1L, box, "text", List.of("Ada")));
+        process.step(PLENTY);
+        assertTrue(process.deliverUiEvent(1L, box, "text", List.of("Ada L")));
+
+        final Process restored = Process.restore(program, process.save(), desktop(true));
+
+        assertEquals("Ada L", widgetOf(restored, UiWidgets.TEXT_BOX).get(UiWidgets.TEXT));
+        assertEquals("Ada", restored.script().get("seen"), "what the program read stays the program's");
+    }
+
+    @Test
+    void clearingACanvasAndTypingTakeNoMoreMemoryTickAfterTick() {
+        final Process process = start(load("""
+                class Panel : IScript {
+                    Window window;
+                    Canvas paper;
+                    TextBox name;
+                    public void OnInit() {
+                        paper = new Canvas(120, 80);
+                        name = new TextBox("");
+                        Column page = new Column();
+                        page.Add(paper);
+                        page.Add(name);
+                        window = new Window("Busy", 200, 150);
+                        window.Content = page;
+                        window.Show();
+                    }
+                    public void OnTick() {
+                        paper.Clear(0);
+                        paper.FillRect(1, 1, 10, 10, 2);
+                        paper.SetPixel(5, 5, 1);
+                    }
+                    public void OnDestroy() { }
+                }
+                """), desktop(true));
+        final long box = (Long) widgetOf(process, UiWidgets.TEXT_BOX).get(UiWidgets.ID);
+        assertTrue(process.deliverUiEvent(1L, box, "text", List.of("x")));
+        process.begin(process.script(), "OnTick");
+        process.step(PLENTY);
+        final long used = process.heap().used();
+
+        for (int i = 0; i < 20; i++) {
+            assertTrue(process.deliverUiEvent(1L, box, "text", List.of("y")));
+            process.begin(process.script(), "OnTick");
+            process.step(PLENTY);
+        }
+
+        assertEquals(used, process.heap().used());
+    }
 }

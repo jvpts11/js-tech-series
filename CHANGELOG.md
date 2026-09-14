@@ -25,6 +25,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   alert that finds no room is dropped and counted in `Program.DroppedEvents`; a message that finds no room is
   refused, and `Process.Send` returns false. Closing a window and stopping a script always get in, ahead of
   everything already waiting.
+- A program's windows count against its memory as they grow: rows added to a list, strokes drawn on a canvas and
+  widgets placed by hand. Clearing a canvas or a list gives that memory back, and a text box keeps only its latest
+  text however much a player types.
 - Saves, network packets and menu data carry each setting by an id of its own instead of by its place in a
   list, so adding a setting never changes what an old one means. Machine states that 0.3.0a worlds stored the
   old way are not read back.
@@ -62,6 +65,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   skips that tick. It used to run one extra `OnTick` as soon as it was free.
 - A program whose last window a player closed ends even when the world is saved before the program has heard about
   it. It used to keep running with no window after the load.
+- What a program drew on a canvas and the widgets it placed in a window by hand come back after the world is saved
+  and loaded, and so do what a player typed into a text box and any text the program read from one. They used to
+  come back empty.
 - The Cluster Manager shows a section balancing round-robin as round-robin. It used to say MANUAL.
 - A listing edited by hand in which a type stands on itself no longer sends the server into an endless loop
   when the program loads.

@@ -180,6 +180,18 @@ public final class Heap implements IPureContext {
         this.freed.add(value);
     }
 
+    /**
+     * Lets go of something only the runtime ever held, such as a widget's own copy of a text it has replaced or a
+     * stroke a cleared canvas no longer draws. Unlike {@link #dispose}, nothing is kept to catch a later use, because
+     * nothing the program holds can reach it.
+     */
+    void release(final Object value) {
+        final Entry entry = this.live.remove(value);
+        if (entry != null) {
+            this.used -= entry.bytes;
+        }
+    }
+
     /** Whether this was freed and may no longer be read. */
     public boolean isFreed(final Object value) {
         return this.freed.contains(value);
