@@ -269,6 +269,19 @@ class ThreadsTest {
     }
 
     @Test
+    void stop_letsGoOfTheLocksTheStoppedThreadHeld() {
+        final Process process = run("", """
+                object gate = new List<int>();
+                Thread t = Thread.Start(() => { lock (gate) { Thread.Sleep(1000); } });
+                Thread.Yield();
+                t.Stop();
+                lock (gate) { Console.PrintLine("got it"); }
+                """);
+        assertEquals(Process.State.FINISHED, process.state(), () -> String.valueOf(process.message()));
+        assertEquals(List.of("got it"), process.console());
+    }
+
+    @Test
     void save_bringsBackThreadsLocksAndWaits() {
         final ProgramImage program = load(COUNTER, """
                 Thread a = Thread.Start(() => { Bump(30); });

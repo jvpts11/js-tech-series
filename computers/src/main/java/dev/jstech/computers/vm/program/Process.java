@@ -1083,8 +1083,10 @@ public final class Process {
         while (each.hasNext()) {
             final Map.Entry<Object, Monitor> entry = each.next();
             if (entry.getValue().owner == owner) {
+                // An entry the iterator has removed can no longer be read, so the locked object is taken first.
+                final Object target = entry.getKey();
                 each.remove();
-                this.scheduler.wakeLocked(entry.getKey());
+                this.scheduler.wakeLocked(target);
             }
         }
     }
