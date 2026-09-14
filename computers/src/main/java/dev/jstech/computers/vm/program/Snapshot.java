@@ -28,7 +28,7 @@ public record Snapshot(long heapBudget, List<IHeld> held, List<ThreadShot> threa
                        String state, String message, long spent, String name, List<MonitorShot> monitors,
                        int nextThread, List<String> args, int machineId, boolean exited, int exitCode,
                        IValue onMessage, List<IValue> windows, long nextWindow, long nextWidget,
-                       IValue onGatewayMessage, String gateway) {
+                       boolean endWithWindows, IValue onGatewayMessage, String gateway) {
 
     public Snapshot {
         held = List.copyOf(held);
@@ -57,7 +57,7 @@ public record Snapshot(long heapBudget, List<IHeld> held, List<ThreadShot> threa
                     final int machineId, final boolean exited, final int exitCode, final IValue onMessage) {
         this(heapBudget, held, threads, waiting, statics, script, watches, console, written, random, input, dropped,
                 state, message, spent, name, monitors, nextThread, args, machineId, exited, exitCode, onMessage, null,
-                1, 1, null, "");
+                1, 1, false, null, "");
     }
 
     /**

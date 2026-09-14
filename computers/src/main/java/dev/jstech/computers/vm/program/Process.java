@@ -1494,7 +1494,8 @@ public final class Process {
                 this.identity.message() == null ? "" : this.identity.message(),
                 this.identity.spent(), this.identity.name(), locked, this.nextThread, this.identity.args(),
                 this.identity.machineId(), this.identity.exited(), this.identity.givenExitCode(), onMessageShot,
-                windowShots, this.windows.nextWindow(), this.windows.nextWidget(), onGatewayShot, this.gateway);
+                windowShots, this.windows.nextWindow(), this.windows.nextWidget(), this.windows.endWithWindows(),
+                onGatewayShot, this.gateway);
     }
 
     /** Reads a process back out of what {@link #save()} wrote, ready to carry on where it stopped. */
@@ -1597,6 +1598,7 @@ public final class Process {
             }
         }
         process.windows.startFrom(shot.nextWindow(), shot.nextWidget());
+        process.windows.restoreEnding(shot.endWithWindows());
         if (value(shot.onGatewayMessage(), byNumber) instanceof Values.DelegateValue listening) {
             process.onGatewayMessage = listening;
         }

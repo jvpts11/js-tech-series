@@ -294,6 +294,18 @@ class UiWidgetsTest {
     }
 
     @Test
+    void save_keepsThatClosingTheLastWindowEndsTheProgram() {
+        final ProgramImage program = load(PANEL);
+        final Process process = start(program, desktop(true));
+        assertTrue(process.deliverUiEvent(1L, 0L, "close", List.of()));
+
+        final Process restored = Process.restore(program, process.save(), desktop(true));
+        restored.step(PLENTY);
+
+        assertTrue(restored.exited(), "the last window was shut before the save, so the program ends after it");
+    }
+
+    @Test
     void show_saysSoOnAMachineWithNoDesktop() {
         final Process process = start(load(PANEL), desktop(false));
         assertEquals(Process.State.HALTED, process.state());

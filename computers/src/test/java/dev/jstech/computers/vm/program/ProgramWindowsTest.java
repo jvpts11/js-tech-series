@@ -100,6 +100,20 @@ class ProgramWindowsTest {
     }
 
     @Test
+    void restoreEnding_bringsBackThatAPersonShutTheLastWindow() {
+        final ProgramWindows windows = new ProgramWindows();
+        final Values.Obj first = window("first");
+        windows.open(first, 1);
+        windows.close(first);
+        windows.closedByPerson();
+
+        final ProgramWindows restored = new ProgramWindows();
+        restored.restoreEnding(windows.endWithWindows());
+
+        assertTrue(restored.endsNow());
+    }
+
+    @Test
     void startFrom_carriesOnNumberingFromASave() {
         final ProgramWindows windows = new ProgramWindows();
         windows.startFrom(5, 9);

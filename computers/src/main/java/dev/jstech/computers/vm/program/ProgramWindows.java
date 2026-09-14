@@ -90,6 +90,16 @@ final class ProgramWindows {
         return false;
     }
 
+    /** Whether a person shut the last window and the program has still to hear about it, for the save. */
+    boolean endWithWindows() {
+        return this.endWithWindows;
+    }
+
+    /** Puts back whether a person had shut the last window when the program was saved. */
+    void restoreEnding(final boolean endWithWindows) {
+        this.endWithWindows = endWithWindows;
+    }
+
     /** The open windows, for the save. */
     List<Object> held() {
         return new ArrayList<>(this.open);

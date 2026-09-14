@@ -93,6 +93,7 @@ public final class SnapshotTag {
     private static final String GATEWAY = "gateway";
     private static final String NEXT_WINDOW = "nextWindow";
     private static final String NEXT_WIDGET = "nextWidget";
+    private static final String END_WITH_WINDOWS = "endWithWindows";
 
     private SnapshotTag() {
     }
@@ -140,6 +141,7 @@ public final class SnapshotTag {
         tag.putString(GATEWAY, shot.gateway());
         tag.putLong(NEXT_WINDOW, shot.nextWindow());
         tag.putLong(NEXT_WIDGET, shot.nextWidget());
+        tag.putBoolean(END_WITH_WINDOWS, shot.endWithWindows());
         tag.put(WAITING, frames(shot.waiting()));
         final ListTag statics = new ListTag();
         for (final Map.Entry<String, Map<String, Snapshot.IValue>> entry : shot.statics().entrySet()) {
@@ -236,7 +238,8 @@ public final class SnapshotTag {
                 tag.getInt(MACHINE_ID), tag.getBoolean(EXITED), tag.getInt(EXIT_CODE),
                 readValue(tag.getCompound(ON_MESSAGE)), readValues(tag.getList(WINDOWS, Tag.TAG_COMPOUND)),
                 Math.max(1, tag.getLong(NEXT_WINDOW)), Math.max(1, tag.getLong(NEXT_WIDGET)),
-                readValue(tag.getCompound(ON_GATEWAY_MESSAGE)), tag.getString(GATEWAY));
+                tag.getBoolean(END_WITH_WINDOWS), readValue(tag.getCompound(ON_GATEWAY_MESSAGE)),
+                tag.getString(GATEWAY));
     }
 
     // what the program allocated
