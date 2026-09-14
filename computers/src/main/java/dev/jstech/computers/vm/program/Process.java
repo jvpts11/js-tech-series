@@ -116,7 +116,8 @@ public final class Process {
     /** The locks the threads hold, and the threads waiting for each. */
     private final MonitorTable locks = new MonitorTable();
     private final CallbackQueue waiting = new CallbackQueue();
-    private final Map<String, Values.Obj> statics = new LinkedHashMap<>();
+    /** An object's fields and the fields each type keeps for itself. */
+    private final FieldAccess fieldAccess;
     private Values.Obj script;
     private final ProgramIdentity identity = new ProgramIdentity();
     /** Who the program tells when something is said to it, and the Gateway it chose to reach through. */
@@ -151,7 +152,7 @@ public final class Process {
     }
 
     Values.Obj staticsOf(final String owner) {
-        return this.statics(owner);
+        return this.fieldAccess.statics(owner);
     }
 
     void charge(final int more) {
@@ -174,6 +175,7 @@ public final class Process {
         this.heap = new Heap(heapBytes);
         this.library = new Library(this.heap, host, program.entryPoint());
         this.library.serves(this);
+        this.fieldAccess = new FieldAccess(this, this.heap, this.library, program);
         if (!fresh) {
             return;
         }
@@ -355,7 +357,7 @@ public final class Process {
     }
 
     /** What the program holds itself by: its number on the machine and its name, made on first use. */
-    private Values.Obj selfToken(final int line) {
+    Values.Obj selfToken(final int line) {
         if (this.self == null) {
             final Values.Obj token = new Values.Obj("Process");
             token.set("Id", this.identity.machineId());
@@ -368,7 +370,7 @@ public final class Process {
     }
 
     /** A fresh list of the arguments, the program's to hold and to free like anything else. */
-    private Values.ListValue argsList(final int line) {
+    Values.ListValue argsList(final int line) {
         final Values.ListValue made = new Values.ListValue();
         for (final String arg : this.identity.args()) {
             made.items().add(this.text(arg, line));
@@ -429,7 +431,7 @@ public final class Process {
     }
 
     /** The machine a process handle points at: what its {@code Host} says, or this one when it says nothing. */
-    private static String processHost(final Object token) {
+    static String processHost(final Object token) {
         return token instanceof Values.Obj object && object.get("Host") instanceof String host ? host : "";
     }
 
@@ -930,7 +932,7 @@ public final class Process {
      * <p>{@code Running} is kept true to life on the object itself, so reading it is reading a field
      * like any other and costs what that costs.
      */
-    private Values.Obj tokenFor(final ProgramThread thread, final int line) {
+    Values.Obj tokenFor(final ProgramThread thread, final int line) {
         if (thread.token == null) {
             final Values.Obj token = new Values.Obj("Thread");
             token.set("Id", thread.id);
@@ -1215,7 +1217,7 @@ public final class Process {
             queued.add(freeze(frame, numbers));
         }
         final Map<String, Map<String, Snapshot.IValue>> kept = new LinkedHashMap<>();
-        for (final Map.Entry<String, Values.Obj> entry : this.statics.entrySet()) {
+        for (final Map.Entry<String, Values.Obj> entry : this.fieldAccess.statics().entrySet()) {
             kept.put(entry.getKey(), fields(entry.getValue(), numbers));
         }
         final List<Snapshot.WatchShot> watching = new ArrayList<>();
@@ -1307,7 +1309,7 @@ public final class Process {
             }
         }
         for (final Map.Entry<String, Map<String, Snapshot.IValue>> entry : shot.statics().entrySet()) {
-            final Values.Obj holder = process.statics(entry.getKey());
+            final Values.Obj holder = process.fieldAccess.statics(entry.getKey());
             for (final Map.Entry<String, Snapshot.IValue> field : entry.getValue().entrySet()) {
                 holder.set(field.getKey(), value(field.getValue(), byNumber));
             }
@@ -1552,10 +1554,10 @@ public final class Process {
             case POP -> frame.pop();
             case COPY -> frame.push(this.copyOf(frame.pop(), line));
             case DUP -> frame.push(frame.peek());
-            case LDFLD -> this.loadField(frame, (IOperand.Field) instruction.operand(), line);
-            case STFLD -> this.storeField(frame, (IOperand.Field) instruction.operand(), line);
-            case LDSFLD -> this.loadStatic(frame, (IOperand.Field) instruction.operand(), line);
-            case STSFLD -> this.storeStatic(frame, (IOperand.Field) instruction.operand(), line);
+            case LDFLD -> this.fieldAccess.load(frame, (IOperand.Field) instruction.operand(), line);
+            case STFLD -> this.fieldAccess.store(frame, (IOperand.Field) instruction.operand(), line);
+            case LDSFLD -> this.fieldAccess.loadStatic(frame, (IOperand.Field) instruction.operand(), line);
+            case STSFLD -> this.fieldAccess.storeStatic(frame, (IOperand.Field) instruction.operand(), line);
             case ADD, SUB, MUL, DIV, REM, AND, OR, XOR, SHL, SHR ->
                     this.arithmetic(frame, instruction.opcode(), line);
             case NEG -> frame.push(Numbers.negate(frame.pop()));
@@ -1626,73 +1628,6 @@ public final class Process {
         final Object right = frame.pop();
         final Object left = frame.pop();
         frame.push(Numbers.apply(opcode, left, right, line));
-    }
-
-    // fields
-
-    private void loadField(final Frame frame, final IOperand.Field field, final int line) {
-        final Object target = this.heap.alive(frame.pop(), line);
-        if (target instanceof Values.Obj object) {
-            if ("Process".equals(object.type())
-                    && ("Running".equals(field.name()) || "ExitCode".equals(field.name()))) {
-                // Whether another program still runs is the machine's to say, not a field to go stale.
-                frame.push(this.library.programField(object.get("Id"), processHost(object), field.name(), line));
-                return;
-            }
-            final Object held = object.get(field.name());
-            // A widget's texts are its own, so the program is handed a copy that stays the program's.
-            frame.push(held instanceof String said && UiWidgets.handles(object.type())
-                    ? this.heap.text(said, line) : held);
-            return;
-        }
-        frame.push(this.library.read(target, field.name(), line));
-    }
-
-    private void storeField(final Frame frame, final IOperand.Field field, final int line) {
-        final Object value = frame.pop();
-        final Object target = this.heap.alive(frame.pop(), line);
-        if (!(target instanceof Values.Obj object)) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no object to write " + field.name() + " on");
-        }
-        if (UiWidgets.handles(object.type())) {
-            // What a window shows is the machine's to draw again, so writing on a widget is paid for.
-            this.library.uiWrite(object, field.name(), value, line);
-            return;
-        }
-        object.set(field.name(), value);
-    }
-
-    private void loadStatic(final Frame frame, final IOperand.Field field, final int line) {
-        if ("Thread".equals(field.owner()) && "Current".equals(field.name())) {
-            frame.push(this.tokenFor(this.current, line));
-            return;
-        }
-        if ("Program".equals(field.owner()) && "Args".equals(field.name())) {
-            frame.push(this.argsList(line));
-            return;
-        }
-        if ("Program".equals(field.owner()) && "Current".equals(field.name())) {
-            frame.push(this.selfToken(line));
-            return;
-        }
-        final TypeImage type = this.program.type(field.owner());
-        if (type == null) {
-            frame.push(this.library.readStatic(field.owner(), field.name(), line));
-            return;
-        }
-        if (type.kind() == AsmType.Kind.ENUM) {
-            frame.push(type.values().get(field.name()));
-            return;
-        }
-        frame.push(this.statics(field.owner()).get(field.name()));
-    }
-
-    private void storeStatic(final Frame frame, final IOperand.Field field, final int line) {
-        this.statics(field.owner()).set(field.name(), frame.pop());
-    }
-
-    private Values.Obj statics(final String owner) {
-        return this.statics.computeIfAbsent(owner, Values.Obj::new);
     }
 
     // objects
