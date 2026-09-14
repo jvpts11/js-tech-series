@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.vm.program;
 
-import dev.jstech.computers.vm.listing.AsmType;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Instruction;
 import dev.jstech.computers.vm.listing.Opcode;
@@ -115,6 +114,8 @@ public final class Process {
     private final FieldAccess fieldAccess;
     /** Calls to the program's methods, to the system and through delegates, and coming back from them. */
     private final CallDispatch calls;
+    /** The program's objects, arrays and struct copies. */
+    private final ObjectMaking objects;
     private Values.Obj script;
     private final ProgramIdentity identity = new ProgramIdentity();
     /** Who the program tells when something is said to it, and the Gateway it chose to reach through. */
@@ -174,6 +175,7 @@ public final class Process {
         this.library.serves(this);
         this.fieldAccess = new FieldAccess(this, this.heap, this.library, program);
         this.calls = new CallDispatch(this, this.heap, this.library, program);
+        this.objects = new ObjectMaking(this.heap, this.library, program, this.calls);
         if (!fresh) {
             return;
         }
@@ -406,14 +408,14 @@ public final class Process {
             case "Wait" -> this.waitFor(frame, named, line);
             case "Send" -> {
                 final List<Object> arguments = CallDispatch.take(frame, named.parameters());
-                CallDispatch.push(frame, named,this.library.call(new IOperand.Method("Program", "Send",
+                CallDispatch.push(frame, named, this.library.call(new IOperand.Method("Program", "Send",
                         named.parameters(), named.returns()), null, arguments, line));
             }
             case "Kill", "Output" -> {
                 CallDispatch.take(frame, named.parameters());
                 final Object token = frame.pop();
                 final Integer id = this.processId(token, line);
-                CallDispatch.push(frame, named,this.library.call(new IOperand.Method("Program", named.name(),
+                CallDispatch.push(frame, named, this.library.call(new IOperand.Method("Program", named.name(),
                         List.of("int", "string"), named.returns()), null,
                         Library.whereabouts(id, processHost(token)), line));
             }
@@ -462,7 +464,7 @@ public final class Process {
      * budget like everything else and a constructor that never ends cannot hold up the tick.
      */
     public Values.Obj create(final String type) {
-        final Object made = this.instance(type, List.of(), 0);
+        final Object made = this.objects.instance(type, List.of(), 0);
         if (!(made instanceof Values.Obj object)) {
             return null;
         }
@@ -1550,7 +1552,7 @@ public final class Process {
             case LDLOC -> frame.push(frame.slots[((IOperand.Slot) instruction.operand()).index()]);
             case STLOC -> frame.slots[((IOperand.Slot) instruction.operand()).index()] = frame.pop();
             case POP -> frame.pop();
-            case COPY -> frame.push(this.copyOf(frame.pop(), line));
+            case COPY -> frame.push(this.objects.copyOf(frame.pop(), line));
             case DUP -> frame.push(frame.peek());
             case LDFLD -> this.fieldAccess.load(frame, (IOperand.Field) instruction.operand(), line);
             case STFLD -> this.fieldAccess.store(frame, (IOperand.Field) instruction.operand(), line);
@@ -1569,11 +1571,11 @@ public final class Process {
             case BRTRUE -> this.jumpIf(frame, line, ValueSemantics.truth(frame.pop()));
             case BRFALSE -> this.jumpIf(frame, line, !ValueSemantics.truth(frame.pop()));
             case BEQ, BNE, BLT, BLE, BGT, BGE -> this.jumpCompare(frame, instruction.opcode(), line);
-            case NEWOBJ -> this.newObject(frame, frame.method.creation(line - 1), line);
-            case NEWARR -> this.newArray(frame, (IOperand.Type) instruction.operand(), line);
-            case LDELEM -> this.loadElement(frame, line);
-            case STELEM -> this.storeElement(frame, line);
-            case LDLEN -> frame.push(this.array(frame.pop(), line).length());
+            case NEWOBJ -> this.objects.newObject(frame, frame.method.creation(line - 1), line);
+            case NEWARR -> this.objects.newArray(frame, (IOperand.Type) instruction.operand(), line);
+            case LDELEM -> this.objects.loadElement(frame, line);
+            case STELEM -> this.objects.storeElement(frame, line);
+            case LDLEN -> frame.push(this.objects.array(frame.pop(), line).length());
             case DISPOSE -> this.heap.dispose(frame.pop(), line);
             case MONITOR_ENTER -> this.enterMonitor(frame, line);
             case MONITOR_EXIT -> this.exitMonitor(frame, line);
@@ -1626,81 +1628,6 @@ public final class Process {
         final Object right = frame.pop();
         final Object left = frame.pop();
         frame.push(Numbers.apply(opcode, left, right, line));
-    }
-
-    // objects
-
-    private void newObject(final Frame frame, final ProgramImage.Creation creation, final int line) {
-        final List<Object> arguments = CallDispatch.take(frame, creation.outs());
-        frame.push(creation.type() == null
-                ? this.library.create(creation.made().owner(), arguments, line)
-                : this.instance(creation.type(), creation.constructor(), arguments, line));
-    }
-
-    /**
-     * A copy of a struct: a new object holding what the old one holds, counted like any other. A value
-     * that is not a struct, null included, is handed back as it is, since there is nothing to copy.
-     */
-    private Object copyOf(final Object value, final int line) {
-        if (!(value instanceof Values.Obj original)) {
-            return value;
-        }
-        final TypeImage known = this.program.type(original.type());
-        if (known == null || known.kind() != AsmType.Kind.STRUCT) {
-            return value;
-        }
-        final Values.Obj made = new Values.Obj(original.type());
-        this.heap.allocate(made, known.instanceSize(), line);
-        for (final Map.Entry<String, Object> field : original.all().entrySet()) {
-            made.set(field.getKey(), this.copyOf(field.getValue(), line));
-        }
-        return made;
-    }
-
-    private Object instance(final String type, final List<Object> arguments, final int line) {
-        final TypeImage known = this.program.type(type);
-        if (known == null) {
-            return this.library.create(type, arguments, line);
-        }
-        return this.instance(known, known.constructor(arguments.size()), arguments, line);
-    }
-
-    private Values.Obj instance(final TypeImage type, final MethodImage constructor, final List<Object> arguments,
-                                final int line) {
-        final Values.Obj made = new Values.Obj(type.name());
-        this.heap.allocate(made, type.instanceSize(), line);
-        if (constructor != null) {
-            this.calls.enter(constructor, made, arguments, line);
-        }
-        return made;
-    }
-
-    private void newArray(final Frame frame, final IOperand.Type element, final int line) {
-        final int length = Numbers.toInt(frame.pop());
-        if (length < 0) {
-            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, "an array cannot have " + length + " places");
-        }
-        final Values.Arr made = new Values.Arr(element.name(), length);
-        this.heap.allocate(made, Heap.HEADER + (long) Heap.sizeOf(element.name()) * length, line);
-        frame.push(made);
-    }
-
-    private void loadElement(final Frame frame, final int line) {
-        final int index = Numbers.toInt(frame.pop());
-        frame.push(this.array(frame.pop(), line).get(index, line));
-    }
-
-    private void storeElement(final Frame frame, final int line) {
-        final Object value = frame.pop();
-        final int index = Numbers.toInt(frame.pop());
-        this.array(frame.pop(), line).set(index, value, line);
-    }
-
-    private Values.Arr array(final Object value, final int line) {
-        if (this.heap.alive(value, line) instanceof Values.Arr array) {
-            return array;
-        }
-        throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no array here");
     }
 
     // odds and ends
