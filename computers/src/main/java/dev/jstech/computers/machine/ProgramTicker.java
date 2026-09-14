@@ -38,6 +38,8 @@ final class ProgramTicker {
     private final Scheduler scheduler = new Scheduler();
     /** What the machine still owes for work done on its behalf outside its programs. */
     private int owed;
+    /** What is left of this tick's farewell budget, shared by the programs stopped in it. */
+    private int farewellLeft = MachinePrograms.FAREWELL_PER_TICK;
 
     ProgramTicker(final ProgramTable<IMachineRuntime> table, final TerminalFocus focus) {
         this.table = table;
@@ -64,9 +66,36 @@ final class ProgramTicker {
         this.owed = Math.max(0, tag.getInt(OWED));
     }
 
+    /** Lets one program say goodbye out of what is left of this tick's farewell budget. */
+    void farewell(final IMachineRuntime process) {
+        this.farewell(process, this.farewellLeft);
+    }
+
+    /**
+     * Lets one program say goodbye out of at most {@code grant} instructions, and charges what it used to this tick's
+     * farewell budget. Nothing is left, nothing runs: the program is stopped without a farewell.
+     */
+    void farewell(final IMachineRuntime process, final int grant) {
+        final int budget = Math.min(grant, this.farewellLeft);
+        if (budget <= 0) {
+            return;
+        }
+        this.farewellLeft = Math.max(0, this.farewellLeft - process.farewell(budget));
+    }
+
+    /**
+     * The share of a whole tick's farewell budget each of {@code count} programs stopped at once gets, as when the
+     * machine is switched off or broken: the budget starts over for that one stop.
+     */
+    int farewellShare(final int count) {
+        this.farewellLeft = MachinePrograms.FAREWELL_PER_TICK;
+        return count <= 0 ? 0 : this.farewellLeft / count;
+    }
+
     /** Runs one tick; see {@link MachinePrograms#tick(int, long, ToLongFunction, Predicate)}. */
     void tick(final int credits, final long deadline, final ToLongFunction<String> stock,
               final Predicate<IProgramParent.Remote> waiting) {
+        this.farewellLeft = MachinePrograms.FAREWELL_PER_TICK;
         if (stock != null && !this.table.isEmpty()) {
             this.deliverWatched(stock);
         }
@@ -128,7 +157,7 @@ final class ProgramTicker {
                  * in front gets what is typed, so nothing can ever reach this one. However it came to be
                  * here, it is stopped rather than kept for ever as something the machine is running.
                  */
-                one.process().onStop(MachinePrograms.FAREWELL);
+                this.farewell(one.process());
                 done.add(one);
                 continue;
             }

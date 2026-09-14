@@ -23,6 +23,15 @@ public interface IMachineRuntime extends ILanguageProcess, IProgramRuntime {
     @Override
     String name();
 
+    /**
+     * Lets the program say goodbye out of at most {@code budget} instructions, and says how many it used. A runtime
+     * that cannot tell is charged the whole budget.
+     */
+    default int farewell(final int budget) {
+        this.onStop(budget);
+        return budget;
+    }
+
     /** What runs a program a language started or brought back. */
     static IMachineRuntime of(final ILanguageProcess process) {
         return process instanceof IMachineRuntime runtime ? runtime : new HostedRuntime(process);

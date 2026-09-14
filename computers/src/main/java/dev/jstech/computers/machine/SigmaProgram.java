@@ -26,9 +26,6 @@ import org.slf4j.Logger;
  */
 final class SigmaProgram implements IMachineRuntime {
 
-    /** What a program is allowed to spend on its farewell, out of nobody's tick. */
-    private static final int FAREWELL = 4096;
-
     private static final Logger LOGGER = LogUtils.getLogger();
 
     private final Process process;
@@ -108,12 +105,17 @@ final class SigmaProgram implements IMachineRuntime {
 
     @Override
     public void onStop(final int budget) {
+        this.farewell(budget);
+    }
+
+    @Override
+    public int farewell(final int budget) {
         final Values.Obj script = this.process.script();
-        if (script == null || this.process.state() == Process.State.HALTED) {
-            return;
+        if (budget <= 0 || script == null || this.process.state() == Process.State.HALTED) {
+            return 0;
         }
         this.process.beginFirst(script, "OnDestroy");
-        this.process.step(budget > 0 ? budget : FAREWELL);
+        return this.process.step(budget);
     }
 
     @Override

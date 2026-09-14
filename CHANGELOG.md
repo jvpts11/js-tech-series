@@ -38,6 +38,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   old way are not read back.
 - Programs that were running when a world was saved by an earlier version do not carry on when it loads: they are
   left out, with a line in the server log, and can be started again.
+- The programs a computer stops in one tick share 4,096 instructions of farewell (`OnDestroy`) between them, where
+  each used to get 4,096 of its own. A computer switched off or broken shares that budget evenly among its programs,
+  and a program stopped after the tick's budget is spent is stopped without its farewell.
 - A computer checks the server's clock once every 512 instructions its programs run, or at once after a call into the
   machine, instead of after every 64. A computer that runs out of time in a tick can go that much further before it
   stops, and running its programs costs the server less.

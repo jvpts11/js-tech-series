@@ -47,8 +47,11 @@ public final class MachinePrograms {
     /** The most a program may ask for, because a script is not what a machine's memory is for. */
     public static final int MAX_HEAP_MB = 64;
 
-    /** What a program is allowed to spend on its farewell before the machine stops waiting. */
-    static final int FAREWELL = 4096;
+    /**
+     * What every farewell on one machine may spend between them in one tick: the programs stopped in a tick share
+     * it, and a program that has not finished its farewell by the end of its share is stopped anyway.
+     */
+    static final int FAREWELL_PER_TICK = 4096;
 
     /** Who is waiting on a machine with no world to ask: nobody that can be found. */
     private static final Predicate<IProgramParent.Remote> NO_WORLD = parent -> false;
@@ -241,25 +244,29 @@ public final class MachinePrograms {
     /**
      * Stops a program, letting it say goodbye first.
      *
-     * <p>The farewell is paid for out of a budget of its own rather than the machine's, because a machine
-     * that is being taken apart cannot be asked to wait several ticks for it, and a program that spends
-     * more than that has forfeited the chance to finish.
+     * <p>The farewell is paid for out of the machine's farewell budget for the tick rather than its programs'
+     * credits, because a machine that is being taken apart cannot be asked to wait several ticks for it; a program
+     * stopped once that budget is spent is stopped without one.
      */
     public boolean stop(final int id) {
         final ProgramEntry<IMachineRuntime> one = this.byId(id);
         if (one == null) {
             return false;
         }
-        one.process().onStop(FAREWELL);
+        this.ticker.farewell(one.process());
         this.table.remove(id);
         this.focus.forget(id);
         return true;
     }
 
-    /** Stops everything, as a machine being turned off or broken does. */
+    /** Stops everything, as a machine being turned off or broken does, sharing a tick's farewell budget evenly. */
     public void stopAll() {
-        for (final ProgramEntry<IMachineRuntime> one : this.table.all()) {
-            this.stop(one.id());
+        final List<ProgramEntry<IMachineRuntime>> all = this.table.all();
+        final int share = this.ticker.farewellShare(all.size());
+        for (final ProgramEntry<IMachineRuntime> one : all) {
+            this.ticker.farewell(one.process(), share);
+            this.table.remove(one.id());
+            this.focus.forget(one.id());
         }
     }
 
