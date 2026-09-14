@@ -194,11 +194,8 @@ public final class Process {
     private final Map<String, Values.Obj> statics = new LinkedHashMap<>();
     private Values.Obj script;
     private final ProgramIdentity identity = new ProgramIdentity();
-    private Values.DelegateValue onMessage;
-    /** Who to tell when a ComputerCraft computer says something through a Gateway, if anyone. */
-    private Values.DelegateValue onGatewayMessage;
-    /** The Gateway this program chose to reach through, or nothing for whichever the machine lists first. */
-    private String gateway = "";
+    /** Who the program tells when something is said to it, and the Gateway it chose to reach through. */
+    private final ProgramListeners listeners = new ProgramListeners();
     private Values.Obj self;
     /** The windows this program has open on the machine's desktop, and the numbers its windows and widgets get. */
     private final ProgramWindows windows = new ProgramWindows();
@@ -348,17 +345,17 @@ public final class Process {
 
     /** Which Gateway this program's calls go through; empty for whichever the machine lists first. */
     public String gatewayName() {
-        return this.gateway;
+        return this.listeners.gateway();
     }
 
     /** Remembers the Gateway the program chose, which it keeps across a reload like anything else. */
     public void chooseGateway(final String name) {
-        this.gateway = name == null ? "" : name;
+        this.listeners.chooseGateway(name);
     }
 
     /** Who to tell when a ComputerCraft computer says something; null takes the listener away. */
     public void hearGateway(@org.jetbrains.annotations.Nullable final Values.DelegateValue handler) {
-        this.onGatewayMessage = handler;
+        this.listeners.hearGateway(handler);
     }
 
     /**
@@ -369,11 +366,12 @@ public final class Process {
      * already waiting to take it; false says so.
      */
     public boolean deliverGatewayMessage(final int from, final String text, final long tick) {
-        if (this.identity.over() || this.onGatewayMessage == null) {
+        final Values.DelegateValue handler = this.listeners.onGatewayMessage();
+        if (this.identity.over() || handler == null) {
             return false;
         }
         final String said = text == null ? "" : text;
-        return this.offer(this.onGatewayMessage, EVENT_BYTES + Heap.sizeOfText(said),
+        return this.offer(handler, EVENT_BYTES + Heap.sizeOfText(said),
                 () -> List.of(this.gatewayMessageOf(from, said, tick)));
     }
 
@@ -409,7 +407,7 @@ public final class Process {
             return false;
         }
         final String said = text == null ? "" : text;
-        return this.offer(this.onMessage, EVENT_BYTES + Heap.sizeOfText(said),
+        return this.offer(this.listeners.onMessage(), EVENT_BYTES + Heap.sizeOfText(said),
                 () -> List.of(this.messageOf(from, said, tick)));
     }
 
@@ -467,8 +465,8 @@ public final class Process {
             }
             case "OnMessage" -> {
                 final List<Object> arguments = this.take(frame, named.parameters());
-                this.onMessage = arguments.isEmpty() || !(arguments.getFirst() instanceof Values.DelegateValue handler)
-                        ? null : handler;
+                this.listeners.hearMessages(arguments.isEmpty()
+                        || !(arguments.getFirst() instanceof Values.DelegateValue handler) ? null : handler);
                 return true;
             }
             default -> {
@@ -1414,9 +1412,9 @@ public final class Process {
                     entry.getValue().count));
         }
         final Snapshot.IValue scriptShot = value(this.script, numbers);
-        final Snapshot.IValue onMessageShot = value(this.onMessage, numbers);
+        final Snapshot.IValue onMessageShot = value(this.listeners.onMessage(), numbers);
         final List<Snapshot.IValue> windowShots = values(this.windows.held(), numbers);
-        final Snapshot.IValue onGatewayShot = value(this.onGatewayMessage, numbers);
+        final Snapshot.IValue onGatewayShot = value(this.listeners.onGatewayMessage(), numbers);
         /*
          * The objects are written last: writing anything else down can number a freed thing it still
          * reaches, and so can writing an object, so the numbers are walked while they grow.
@@ -1432,7 +1430,7 @@ public final class Process {
                 this.identity.spent(), this.identity.name(), locked, this.nextThread, this.identity.args(),
                 this.identity.machineId(), this.identity.exited(), this.identity.givenExitCode(), onMessageShot,
                 windowShots, this.windows.nextWindow(), this.windows.nextWidget(), this.windows.endWithWindows(),
-                onGatewayShot, this.gateway);
+                onGatewayShot, this.listeners.gateway());
     }
 
     /** Reads a process back out of what {@link #save()} wrote, ready to carry on where it stopped. */
@@ -1519,9 +1517,6 @@ public final class Process {
         process.waiting.startFrom(shot.dropped());
         process.identity.restore(shot.args(), shot.machineId(), shot.spent(), shot.exited(), shot.exitCode(),
                 State.HALTED.serializedName().equals(shot.state()), shot.message().isEmpty() ? null : shot.message());
-        if (value(shot.onMessage(), byNumber) instanceof Values.DelegateValue handler) {
-            process.onMessage = handler;
-        }
         // The windows the program had open come back open, with everything they were showing.
         for (final Snapshot.IValue written : shot.windows()) {
             if (value(written, byNumber) instanceof Values.Obj window) {
@@ -1530,10 +1525,10 @@ public final class Process {
         }
         process.windows.startFrom(shot.nextWindow(), shot.nextWidget());
         process.windows.restoreEnding(shot.endWithWindows());
-        if (value(shot.onGatewayMessage(), byNumber) instanceof Values.DelegateValue listening) {
-            process.onGatewayMessage = listening;
-        }
-        process.gateway = shot.gateway();
+        process.listeners.restore(
+                value(shot.onMessage(), byNumber) instanceof Values.DelegateValue handler ? handler : null,
+                value(shot.onGatewayMessage(), byNumber) instanceof Values.DelegateValue listening ? listening : null,
+                shot.gateway());
         return process;
     }
 
