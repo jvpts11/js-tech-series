@@ -349,12 +349,14 @@ public final class MachinePrograms {
         tag.put(PROGRAMS, written);
         tag.putInt(NEXT, this.table.nextId());
         this.focus.save(tag);
+        this.ticker.save(tag);
     }
 
     /** Reads them back, each one carrying on from where it stopped. */
     public void load(final CompoundTag tag, final BlockEntity machine) {
         this.table.restart(tag.getInt(NEXT));
         this.focus.load(tag);
+        this.ticker.load(tag);
         final ListTag written = tag.getList(PROGRAMS, Tag.TAG_COMPOUND);
         for (int i = 0; i < written.size(); i++) {
             final CompoundTag each = written.getCompound(i);

@@ -106,6 +106,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A computer whose terminal had a program in front of it that could not be loaded back, because its language is no
   longer installed or its saved state was refused, gives its prompt back after the load. Every line typed there used
   to go nowhere until Ctrl+C.
+- A computer that a Gateway kept busy still owes that work after the world is saved and loaded, and goes on paying
+  it back out of its programs' share of each tick. The debt used to vanish with the save.
 
 ## [0.3.0a] - 2026-09-13 - The Programming Update
 

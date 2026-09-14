@@ -416,6 +416,21 @@ public final class HostileSaveGameTests {
     }
 
     /** Writes the machine to its block entity's tag and reads it back in place, the way a chunk comes back. */
+    /**
+     * What a Gateway spent on a machine's behalf is still owed after the world is saved and loaded, so the machine's
+     * next ticks still pay it back. The save used to forget it.
+     */
+    @GameTest(template = ARENA)
+    public static void save_keepsWhatAGatewayLeftTheMachineOwing(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = TestWorldBuilder.forGameTest(helper)
+                .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        pc.programs().owe(5000);
+        reload(helper, pc);
+        helper.assertTrue(pc.programs().owed() == 5000,
+                "the debt is still there after the save; owed " + pc.programs().owed());
+        helper.succeed();
+    }
+
     private static void reload(final GameTestHelper helper, final BlockEntity machine) {
         final var registries = helper.getLevel().registryAccess();
         final CompoundTag saved = machine.saveWithFullMetadata(registries);

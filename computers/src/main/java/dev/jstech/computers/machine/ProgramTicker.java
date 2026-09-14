@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.ToLongFunction;
+import net.minecraft.nbt.CompoundTag;
 
 /**
  * One machine's tick, handed out to its programs.
@@ -29,6 +30,8 @@ import java.util.function.ToLongFunction;
  * everything still going is stepped by the {@link Scheduler}.
  */
 final class ProgramTicker {
+
+    private static final String OWED = "owed";
 
     private final ProgramTable<IMachineRuntime> table;
     private final TerminalFocus focus;
@@ -49,6 +52,16 @@ final class ProgramTicker {
     /** What the machine still owes for work done outside its programs. */
     int owed() {
         return this.owed;
+    }
+
+    /** Writes what the machine still owes beside its programs. */
+    void save(final CompoundTag tag) {
+        tag.putInt(OWED, this.owed);
+    }
+
+    /** Reads back what the machine still owes. */
+    void load(final CompoundTag tag) {
+        this.owed = Math.max(0, tag.getInt(OWED));
     }
 
     /** Runs one tick; see {@link MachinePrograms#tick(int, long, ToLongFunction, Predicate)}. */
