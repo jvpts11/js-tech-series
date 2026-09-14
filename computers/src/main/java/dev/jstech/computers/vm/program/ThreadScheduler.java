@@ -214,15 +214,6 @@ final class ThreadScheduler {
         this.asking = children;
     }
 
-    /** Lets every thread waiting for the lock of {@code target} ask for it again. */
-    void wakeLocked(final Object target) {
-        for (final ProgramThread thread : this.threads) {
-            if (thread.wait instanceof IWait.Lock lock && lock.target() == target) {
-                thread.wait = IWait.NONE;
-            }
-        }
-    }
-
     /** Lets every thread waiting for a typed line run again. */
     void wakeReaders() {
         for (final ProgramThread thread : this.threads) {

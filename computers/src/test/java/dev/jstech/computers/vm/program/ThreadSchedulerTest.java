@@ -247,8 +247,7 @@ class ThreadSchedulerTest {
         final ThreadScheduler scheduler = new ThreadScheduler();
         final ProgramThread locker = scheduler.start();
         final ProgramThread reader = scheduler.start();
-        final Object gate = new Object();
-        scheduler.await(locker, new IWait.Lock(gate));
+        scheduler.await(locker, new IWait.Lock(new Object()));
         scheduler.await(reader, IWait.INPUT);
         final World world = new World();
         scheduler.wake(world);
@@ -256,27 +255,10 @@ class ThreadSchedulerTest {
         world.locked = false;
         world.typed = true;
         scheduler.wake(world);
-        assertTrue(locker.waiting());
+        assertTrue(locker.waiting(), "a released lock tells its own queue, in the lock table");
         assertTrue(reader.waiting());
-        scheduler.wakeLocked(gate);
         scheduler.wakeReaders();
-        assertFalse(locker.waiting());
         assertFalse(reader.waiting());
-    }
-
-    @Test
-    void wakeLocked_wakesOnlyTheThreadsWaitingForThatVeryObject() {
-        final ThreadScheduler scheduler = new ThreadScheduler();
-        final ProgramThread atGate = scheduler.start();
-        final ProgramThread atDoor = scheduler.start();
-        final Object gate = new Object();
-        scheduler.await(atGate, new IWait.Lock(gate));
-        scheduler.await(atDoor, new IWait.Lock(new Object()));
-
-        scheduler.wakeLocked(gate);
-
-        assertFalse(atGate.waiting());
-        assertTrue(atDoor.waiting());
     }
 
     @Test

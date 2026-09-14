@@ -18,8 +18,6 @@ import dev.jstech.core.id.StableNames;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,12 +78,6 @@ public final class Process {
     /** The most calls one thread may have in progress at once; one call more halts the program. */
     private static final int DEEPEST = 1_024;
 
-    /** Who holds an object's lock, and how many times over it took it. */
-    private static final class Monitor {
-        private int owner;
-        private int count;
-    }
-
     private final ProgramImage program;
     private final Heap heap;
     private final Library library;
@@ -104,7 +96,7 @@ public final class Process {
 
         @Override
         public boolean locked(final Object target) {
-            return Process.this.monitors.containsKey(target);
+            return Process.this.locks.held(target);
         }
 
         @Override
@@ -117,7 +109,8 @@ public final class Process {
             return Process.this.input.has();
         }
     };
-    private final Map<Object, Monitor> monitors = new IdentityHashMap<>();
+    /** The locks the threads hold, and the threads waiting for each. */
+    private final MonitorTable locks = new MonitorTable();
     private final CallbackQueue waiting = new CallbackQueue();
     private final Map<String, Values.Obj> statics = new LinkedHashMap<>();
     private Values.Obj script;
@@ -968,7 +961,7 @@ public final class Process {
             thread.token.set("Running", false);
         }
         this.scheduler.remove(thread);
-        this.release(thread.id);
+        this.locks.releaseAll(thread.id);
     }
 
     /** Answers a call on {@code Thread}, which is the process's own business rather than the library's. */
@@ -1047,17 +1040,7 @@ public final class Process {
      */
     private void enterMonitor(final Frame frame, final int line) {
         final Object target = this.heap.alive(frame.peek(), line);
-        final Monitor held = this.monitors.get(target);
-        if (held == null) {
-            final Monitor made = new Monitor();
-            made.owner = this.current.id;
-            made.count = 1;
-            this.monitors.put(target, made);
-            frame.pop();
-            return;
-        }
-        if (held.owner == this.current.id) {
-            held.count++;
+        if (this.locks.enter(this.current, target)) {
             frame.pop();
             return;
         }
@@ -1067,27 +1050,8 @@ public final class Process {
 
     private void exitMonitor(final Frame frame, final int line) {
         final Object target = this.heap.alive(frame.pop(), line);
-        final Monitor held = this.monitors.get(target);
-        if (held == null || held.owner != this.current.id) {
+        if (!this.locks.exit(this.current, target)) {
             throw new Halt(Halt.Reason.NOT_LOCKED, line, "this thread is letting go of a lock it does not hold");
-        }
-        if (--held.count == 0) {
-            this.monitors.remove(target);
-            this.scheduler.wakeLocked(target);
-        }
-    }
-
-    /** Lets go of every lock a thread holds, as its end does. */
-    private void release(final int owner) {
-        final Iterator<Map.Entry<Object, Monitor>> each = this.monitors.entrySet().iterator();
-        while (each.hasNext()) {
-            final Map.Entry<Object, Monitor> entry = each.next();
-            if (entry.getValue().owner == owner) {
-                // An entry the iterator has removed can no longer be read, so the locked object is taken first.
-                final Object target = entry.getKey();
-                each.remove();
-                this.scheduler.wakeLocked(target);
-            }
         }
     }
 
@@ -1221,7 +1185,7 @@ public final class Process {
         for (final ProgramThread thread : this.scheduler.threads()) {
             thread.frames.clear();
         }
-        this.monitors.clear();
+        this.locks.clear();
     }
 
     // putting it away and back
@@ -1255,10 +1219,8 @@ public final class Process {
                     watch.armed(), watch.seen()));
         }
         final List<Snapshot.MonitorShot> locked = new ArrayList<>();
-        for (final Map.Entry<Object, Monitor> entry : this.monitors.entrySet()) {
-            locked.add(new Snapshot.MonitorShot(value(entry.getKey(), numbers), entry.getValue().owner,
-                    entry.getValue().count));
-        }
+        this.locks.forEach((target, owner, count) ->
+                locked.add(new Snapshot.MonitorShot(value(target, numbers), owner, count)));
         final Snapshot.IValue scriptShot = value(this.script, numbers);
         final Snapshot.IValue onMessageShot = value(this.listeners.onMessage(), numbers);
         final List<Snapshot.IValue> windowShots = values(this.windows.held(), numbers);
@@ -1327,12 +1289,11 @@ public final class Process {
         for (final Snapshot.MonitorShot written : shot.monitors()) {
             final Object target = value(written.target(), byNumber);
             if (target != null) {
-                final Monitor held = new Monitor();
-                held.owner = written.owner();
-                held.count = written.count();
-                process.monitors.put(target, held);
+                process.locks.restore(target, written.owner(), written.count());
             }
         }
+        // The threads came back before the locks, so a thread waiting for a lock is queued for it only now.
+        process.locks.requeue(process.scheduler.threads());
         for (final Snapshot.FrameShot written : shot.waiting()) {
             final Frame frame = thaw(program, written, byNumber);
             if (frame != null) {
