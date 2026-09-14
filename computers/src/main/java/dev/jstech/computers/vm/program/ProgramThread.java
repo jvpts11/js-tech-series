@@ -31,6 +31,6 @@ final class ProgramThread {
 
     /** Whether the thread is waiting for something, and so is given no budget. */
     boolean waiting() {
-        return !(this.wait instanceof IWait.None);
+        return this.wait != IWait.NONE;
     }
 }

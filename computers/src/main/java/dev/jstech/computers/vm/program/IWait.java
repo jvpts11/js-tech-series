@@ -17,13 +17,17 @@ package dev.jstech.computers.vm.program;
 sealed interface IWait {
 
     /** Not waiting. */
-    None NONE = new None();
+    None NONE = None.INSTANCE;
 
     /** Waiting for a line to be typed at the terminal. */
     Input INPUT = new Input();
 
-    /** Not waiting: the thread runs when it is given budget. */
-    record None() implements IWait {
+    /**
+     * Not waiting: the thread runs when it is given budget. There is only ever the one, so asking whether a thread
+     * waits is a comparison with it, the cheapest test there is, on a path taken once per instruction.
+     */
+    enum None implements IWait {
+        INSTANCE
     }
 
     /** Waiting for a line to be typed at the terminal. */
