@@ -68,6 +68,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - What a program drew on a canvas and the widgets it placed in a window by hand come back after the world is saved
   and loaded, and so do what a player typed into a text box and any text the program read from one. They used to
   come back empty.
+- A row or a column can no longer be put inside itself, and a window holds at most 256 widgets however deep they sit
+  in its rows and columns. A row inside itself used to fill its window with copies of the same widgets.
 - The Cluster Manager shows a section balancing round-robin as round-robin. It used to say MANUAL.
 - A listing edited by hand in which a type stands on itself no longer sends the server into an endless loop
   when the program loads.

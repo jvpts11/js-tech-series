@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.vm.program;
 
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -201,6 +205,65 @@ public final class UiWidgets {
             for (final Object child : children.items()) {
                 if (child instanceof Values.Obj one) {
                     gather(one, into);
+                }
+            }
+        }
+    }
+
+    /** Whether {@code widget} is {@code other} or holds it anywhere inside its rows and columns. */
+    static boolean holds(final Values.Obj widget, final Values.Obj other) {
+        final Set<Values.Obj> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+        final Deque<Values.Obj> left = new ArrayDeque<>();
+        left.push(widget);
+        while (!left.isEmpty()) {
+            final Values.Obj at = left.pop();
+            if (at == other) {
+                return true;
+            }
+            if (seen.add(at) && at.get(CHILDREN) instanceof Values.ListValue children) {
+                for (final Object child : children.items()) {
+                    if (child instanceof Values.Obj one) {
+                        left.push(one);
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /** How many widgets a window holds, rows and columns counted, stopping once it is past the most it may hold. */
+    static int count(final Values.Obj window) {
+        final Set<Values.Obj> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+        if (window.get(CONTENT) instanceof Values.Obj content) {
+            tally(content, seen);
+        }
+        if (window.get(PLACED) instanceof Values.ListValue placed) {
+            for (final Object one : placed.items()) {
+                if (one instanceof Values.Obj where && where.get("Widget") instanceof Values.Obj widget) {
+                    tally(widget, seen);
+                }
+            }
+        }
+        return seen.size();
+    }
+
+    /** How many widgets that one is with everything inside it, stopping past the most a window may hold. */
+    static int size(final Values.Obj widget) {
+        final Set<Values.Obj> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+        tally(widget, seen);
+        return seen.size();
+    }
+
+    private static void tally(final Values.Obj widget, final Set<Values.Obj> seen) {
+        final Deque<Values.Obj> left = new ArrayDeque<>();
+        left.push(widget);
+        while (!left.isEmpty() && seen.size() <= MOST_WIDGETS) {
+            final Values.Obj at = left.pop();
+            if (seen.add(at) && at.get(CHILDREN) instanceof Values.ListValue children) {
+                for (final Object child : children.items()) {
+                    if (child instanceof Values.Obj one) {
+                        left.push(one);
+                    }
                 }
             }
         }

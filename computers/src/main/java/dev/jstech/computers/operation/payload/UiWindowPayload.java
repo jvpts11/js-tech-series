@@ -11,7 +11,10 @@ import dev.jstech.computers.vm.program.Numbers;
 import dev.jstech.computers.vm.program.UiWidgets;
 import dev.jstech.computers.vm.program.Values;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -96,15 +99,16 @@ public record UiWindowPayload(BlockPos hostPos, int program, long window, String
             return null;
         }
         final List<Widget> widgets = new ArrayList<>();
+        final Set<Values.Obj> seen = Collections.newSetFromMap(new IdentityHashMap<>());
         if (window.get(UiWidgets.CONTENT) instanceof Values.Obj content) {
-            flatten(content, 0, 0, LAID_OUT, LAID_OUT, 0, 0, widgets);
+            flatten(content, 0, 0, LAID_OUT, LAID_OUT, 0, 0, widgets, seen);
         }
         if (window.get(UiWidgets.PLACED) instanceof Values.ListValue placed) {
             for (final Object one : placed.items()) {
                 if (one instanceof Values.Obj where && where.get("Widget") instanceof Values.Obj widget) {
                     flatten(widget, 0, 0, Numbers.toInt(where.get("X")), Numbers.toInt(where.get("Y")),
                             Numbers.toInt(where.get(UiWidgets.WIDTH)), Numbers.toInt(where.get(UiWidgets.HEIGHT)),
-                            widgets);
+                            widgets, seen);
                 }
             }
         }
@@ -120,8 +124,10 @@ public record UiWindowPayload(BlockPos hostPos, int program, long window, String
     }
 
     private static void flatten(final Values.Obj widget, final long parent, final int weight, final int x,
-                                final int y, final int placedW, final int placedH, final List<Widget> into) {
-        if (into.size() >= MOST_WIDGETS) {
+                                final int y, final int placedW, final int placedH, final List<Widget> into,
+                                final Set<Values.Obj> seen) {
+        // A widget reached a second time is sent once, as the runtime counts it once.
+        if (into.size() >= MOST_WIDGETS || !seen.add(widget)) {
             return;
         }
         int flags = Boolean.TRUE.equals(widget.get(UiWidgets.VISIBLE)) ? SHOWS : 0;
@@ -146,7 +152,7 @@ public record UiWindowPayload(BlockPos hostPos, int program, long window, String
         for (int i = 0; i < children.items().size(); i++) {
             if (children.items().get(i) instanceof Values.Obj child) {
                 flatten(child, id, i < weights.size() ? Numbers.toInt(weights.get(i)) : 0, LAID_OUT, LAID_OUT,
-                        0, 0, into);
+                        0, 0, into, seen);
             }
         }
     }

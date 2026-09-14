@@ -473,4 +473,79 @@ class UiWidgetsTest {
 
         assertEquals(used, process.heap().used());
     }
+
+    @Test
+    void add_refusesARowInsideItself() {
+        final Process process = start(load("""
+                class Panel : IScript {
+                    public void OnInit() {
+                        Row row = new Row();
+                        row.Add(row);
+                    }
+                    public void OnTick() { }
+                    public void OnDestroy() { }
+                }
+                """), desktop(true));
+        assertEquals(Process.State.HALTED, process.state());
+        assertTrue(process.message().contains("cannot hold itself"), process.message());
+    }
+
+    @Test
+    void add_refusesARowInsideAColumnItHolds() {
+        final Process process = start(load("""
+                class Panel : IScript {
+                    public void OnInit() {
+                        Row outer = new Row();
+                        Column inner = new Column();
+                        outer.Add(inner);
+                        inner.Add(outer);
+                    }
+                    public void OnTick() { }
+                    public void OnDestroy() { }
+                }
+                """), desktop(true));
+        assertEquals(Process.State.HALTED, process.state());
+        assertTrue(process.message().contains("cannot hold itself"), process.message());
+    }
+
+    @Test
+    void add_refusesATreeBiggerThanAWindowHolds() {
+        final Process process = start(load("""
+                class Panel : IScript {
+                    public void OnInit() {
+                        Column top = new Column();
+                        Column low = new Column();
+                        for (int i = 0; i < 200; i++) { top.Add(new Label("a")); }
+                        for (int i = 0; i < 100; i++) { low.Add(new Label("b")); }
+                        top.Add(low);
+                    }
+                    public void OnTick() { }
+                    public void OnDestroy() { }
+                }
+                """), desktop(true));
+        assertEquals(Process.State.HALTED, process.state());
+        assertTrue(process.message().contains("a window holds at most 256 widgets"), process.message());
+    }
+
+    @Test
+    void add_refusesMoreWidgetsThanAnOpenWindowHolds() {
+        final Process process = start(load("""
+                class Panel : IScript {
+                    Window window;
+                    public void OnInit() {
+                        Column page = new Column();
+                        window = new Window("Full", 300, 300);
+                        window.Content = page;
+                        window.Show();
+                        Column inner = new Column();
+                        page.Add(inner);
+                        for (int i = 0; i < 300; i++) { inner.Add(new Label("row")); }
+                    }
+                    public void OnTick() { }
+                    public void OnDestroy() { }
+                }
+                """), desktop(true));
+        assertEquals(Process.State.HALTED, process.state());
+        assertTrue(process.message().contains("a window holds at most 256 widgets"), process.message());
+    }
 }

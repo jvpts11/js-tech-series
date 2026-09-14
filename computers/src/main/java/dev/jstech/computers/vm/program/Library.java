@@ -50,7 +50,7 @@ public final class Library {
         this.heap = heap;
         this.host = host;
         this.caller = caller == null ? "" : caller;
-        this.ui = new UiMutator(heap);
+        this.ui = new UiMutator(heap, () -> this.owner == null ? List.<Values.Obj>of() : this.owner.windows());
     }
 
     /** What the process has written, line by line, oldest of the ones it still keeps first. */

@@ -8,6 +8,7 @@
 package dev.jstech.computers.vm.program;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Every change a window or a widget goes through, whether the program makes it or a player does: the one door, so what
@@ -21,10 +22,17 @@ import java.util.List;
  */
 final class UiMutator {
 
-    private final Heap heap;
+    /** What a window may not hold more of, counting every widget inside its rows and columns. */
+    private static final String TOO_MANY =
+            "a window holds at most " + UiWidgets.MOST_WIDGETS + " widgets, counting the ones inside rows and columns";
 
-    UiMutator(final Heap heap) {
+    private final Heap heap;
+    /** The windows the program has open, which a row or a column growing inside one must still fit. */
+    private final Supplier<List<Values.Obj>> open;
+
+    UiMutator(final Heap heap, final Supplier<List<Values.Obj>> open) {
         this.heap = heap;
+        this.open = open;
     }
 
     /**
@@ -60,6 +68,11 @@ final class UiMutator {
         where.set(UiWidgets.HEIGHT, Numbers.toInt(arguments.get(4)));
         this.heap.adopt(where, line);
         placed.items().add(where);
+        if (UiWidgets.count(self) > UiWidgets.MOST_WIDGETS) {
+            placed.items().removeLast();
+            this.heap.release(where);
+            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, TOO_MANY);
+        }
         this.fit(placed, line);
         return null;
     }
@@ -73,8 +86,14 @@ final class UiMutator {
                     throw new Halt(Halt.Reason.OUT_OF_RANGE, line,
                             "a row or a column holds at most " + UiWidgets.MOST_WIDGETS + " widgets");
                 }
-                children.items().add(UiWidgets.widget(arguments.isEmpty() ? null : arguments.getFirst(), line));
+                final Values.Obj child = UiWidgets.widget(arguments.isEmpty() ? null : arguments.getFirst(), line);
+                if (UiWidgets.holds(child, self)) {
+                    throw new Halt(Halt.Reason.REFUSED, line,
+                            "a row or a column cannot hold itself or a row or a column it is inside");
+                }
+                children.items().add(child);
                 weights.items().add(arguments.size() > 1 ? Math.max(0, Numbers.toInt(arguments.get(1))) : 0);
+                this.stillFits(self, children, weights, line);
             }
             case "Clear" -> {
                 children.items().clear();
@@ -85,6 +104,23 @@ final class UiMutator {
         this.fit(children, line);
         this.fit(weights, line);
         return null;
+    }
+
+    /*
+     * A row or a column that grew must still fit a window, whether it is already inside an open one or on its way into
+     * one: past the most, the widget just added comes back out and the program halts.
+     */
+    private void stillFits(final Values.Obj self, final Values.ListValue children, final Values.ListValue weights,
+                           final int line) {
+        boolean over = UiWidgets.size(self) > UiWidgets.MOST_WIDGETS;
+        for (final Values.Obj window : this.open.get()) {
+            over = over || UiWidgets.count(window) > UiWidgets.MOST_WIDGETS;
+        }
+        if (over) {
+            children.items().removeLast();
+            weights.items().removeLast();
+            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, TOO_MANY);
+        }
     }
 
     private Object list(final Values.Obj self, final String member, final List<Object> arguments, final int line) {
@@ -186,7 +222,7 @@ final class UiMutator {
             case UiWidgets.WIDTH, UiWidgets.HEIGHT -> self.set(name, UiWidgets.WINDOW.equals(self.type())
                     ? Math.clamp(Numbers.toInt(value), UiWidgets.LEAST_SIDE, most)
                     : UiWidgets.side(Numbers.toInt(value), most));
-            case UiWidgets.CONTENT -> self.set(UiWidgets.CONTENT, value == null ? null : UiWidgets.widget(value, line));
+            case UiWidgets.CONTENT -> this.content(self, value, line);
             case UiWidgets.OPEN, UiWidgets.ID, UiWidgets.COUNT, UiWidgets.PLACED, UiWidgets.CHILDREN,
                  UiWidgets.WEIGHTS, UiWidgets.ITEMS, UiWidgets.RIGHTS, UiWidgets.DRAWING ->
                     throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, name + " is not a program's to write");
@@ -197,6 +233,16 @@ final class UiMutator {
                     self.set(name, value);
                 }
             }
+        }
+    }
+
+    /* What a window shows must fit with what is already placed in it; past the most, the old content stays. */
+    private void content(final Values.Obj self, final Object value, final int line) {
+        final Object before = self.get(UiWidgets.CONTENT);
+        self.set(UiWidgets.CONTENT, value == null ? null : UiWidgets.widget(value, line));
+        if (UiWidgets.WINDOW.equals(self.type()) && UiWidgets.count(self) > UiWidgets.MOST_WIDGETS) {
+            self.set(UiWidgets.CONTENT, before);
+            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, TOO_MANY);
         }
     }
 
