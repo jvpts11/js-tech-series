@@ -60,7 +60,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   apart from the rest, looks up what its programs watch only when one of them watches something, as one count for
   each item, knows who is looking at it from the screens they open and close instead of going through every player
   on every tick, looks for its Gateways only after one of them is spoken to and claims its time in each tick
-  without building anything; every source file's header names the mod it belongs to.
+  without building anything, hands its programs what a Gateway heard without copying their list and decides in
+  one place whether a program is still going; every source file's header names the mod it belongs to.
 
 ### Fixed
 - Cutting the last data cable between a Mainframe and the rest of its network now takes the network away

@@ -16,7 +16,6 @@ import dev.jstech.computers.vm.program.ProgramEntry;
 import dev.jstech.computers.vm.program.ProgramPriority;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.vm.system.SigmaCosts;
-import dev.jstech.core.language.ILanguageProcess;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -120,12 +119,7 @@ public final class HostProgram {
 
     private static boolean running(final AbstractComputerBlockEntity machine, final int id) {
         final ProgramEntry<IMachineRuntime> one = machine.programs().byId(id);
-        if (one == null) {
-            return false;
-        }
-        final ILanguageProcess.State state = one.process().state();
-        return state == ILanguageProcess.State.RUNNING || state == ILanguageProcess.State.PARKED
-                || (state == ILanguageProcess.State.FINISHED && one.process().isService());
+        return one != null && MachinePrograms.running(one.process());
     }
 
     private static int exitCode(final AbstractComputerBlockEntity machine, final int id) {

@@ -121,6 +121,17 @@ public final class MachinePrograms {
         return this.focus.offerInput(line);
     }
 
+    /**
+     * Whether a program is still going: running, or parked until something it waits for, or a script that has
+     * finished its turn and is asked again next tick. A program that returned or halted is not, even while it stays
+     * listed for its terminal or its parent to read.
+     */
+    public static boolean running(final ILanguageProcess process) {
+        final ILanguageProcess.State state = process.state();
+        return state == ILanguageProcess.State.RUNNING || state == ILanguageProcess.State.PARKED
+                || (state == ILanguageProcess.State.FINISHED && process.isService());
+    }
+
     /** How a program's state reads to a person: a program stopped on a read is waiting for input. */
     public static String stateOf(final ILanguageProcess process) {
         return process.waitingForInput() ? "input"
@@ -202,7 +213,8 @@ public final class MachinePrograms {
      */
     public int deliverGatewayMessage(final int from, final String text, final long tick) {
         int heard = 0;
-        for (final ProgramEntry<IMachineRuntime> one : this.table.all()) {
+        // Hearing a message only queues a call, so the table cannot change under this walk.
+        for (final ProgramEntry<IMachineRuntime> one : this.table.running()) {
             if (one.process().deliverGatewayMessage(from, text, tick)) {
                 heard++;
             }
