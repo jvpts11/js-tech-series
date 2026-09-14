@@ -131,7 +131,7 @@ public final class HostComputer {
 
     private static Values.ListValue processes(final AbstractComputerBlockEntity machine) {
         final Values.ListValue all = new Values.ListValue();
-        for (final ProgramEntry<IMachineRuntime> one : machine.sigma().all()) {
+        for (final ProgramEntry<IMachineRuntime> one : machine.programs().all()) {
             final Values.Obj made = new Values.Obj("ProcessInfo");
             made.set("Id", one.id());
             made.set("Name", one.name());

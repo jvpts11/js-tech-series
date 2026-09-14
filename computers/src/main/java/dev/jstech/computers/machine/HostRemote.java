@@ -79,12 +79,12 @@ public final class HostRemote {
                 final long tick = remote.machine().getLevel() == null ? 0L
                         : remote.machine().getLevel().getGameTime();
                 yield IHost.Reply.of(remote.machine() instanceof AbstractComputerBlockEntity machine
-                        && machine.sigma().send(callerId, id, text, tick), TOUCH);
+                        && machine.programs().send(callerId, id, text, tick), TOUCH);
             }
             case "Processes" -> {
                 final Values.ListValue all = new Values.ListValue();
                 if (remote.machine() instanceof AbstractComputerBlockEntity machine) {
-                    for (final ProgramEntry<IMachineRuntime> one : machine.sigma().all()) {
+                    for (final ProgramEntry<IMachineRuntime> one : machine.programs().all()) {
                         all.items().add(handle(one.id(), one.file(), host));
                     }
                 }
@@ -147,7 +147,7 @@ public final class HostRemote {
         final int slash = Math.max(path.lastIndexOf('\\'), path.lastIndexOf('/'));
         final String name = slash < 0 ? path : path.substring(slash + 1);
         final MachinePrograms.Started started =
-                machine.sigma().start(name, read.message(), room, machine, args, parent, priority);
+                machine.programs().start(name, read.message(), room, machine, args, parent, priority);
         if (!started.ok()) {
             throw new Halt(Halt.Reason.CANNOT_START, line, host + ": " + started.message());
         }

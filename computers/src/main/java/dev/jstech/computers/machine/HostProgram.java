@@ -65,14 +65,14 @@ public final class HostProgram {
             case "ExitCode" -> IHost.Reply.of(where == null ? 0 : exitCode(where, id(arguments)), LOOK);
             case "Output" -> {
                 final Values.ListValue lines = new Values.ListValue();
-                final ProgramEntry<IMachineRuntime> one = where == null ? null : where.sigma().byId(id(arguments));
+                final ProgramEntry<IMachineRuntime> one = where == null ? null : where.programs().byId(id(arguments));
                 if (one != null) {
                     lines.items().addAll(one.process().console());
                 }
                 yield IHost.Reply.of(lines, READ + lines.size());
             }
             case "Kill" -> {
-                final boolean stopped = where != null && where.sigma().stop(id(arguments));
+                final boolean stopped = where != null && where.programs().stop(id(arguments));
                 if (stopped) {
                     where.setChanged();
                 }
@@ -81,7 +81,7 @@ public final class HostProgram {
             case "Send" -> {
                 final String text = arguments.size() > 1 ? String.valueOf(arguments.get(1)) : "";
                 final long tick = machine.getLevel() == null ? 0L : machine.getLevel().getGameTime();
-                yield IHost.Reply.of(machine.sigma().send(callerId, id(arguments), text, tick), TOUCH);
+                yield IHost.Reply.of(machine.programs().send(callerId, id(arguments), text, tick), TOUCH);
             }
             default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "Program has no " + member);
         };
@@ -121,7 +121,7 @@ public final class HostProgram {
         final String name = slash < 0 ? path : path.substring(slash + 1);
         final IProgramParent starter = parent > 0 ? new IProgramParent.Local(parent) : IProgramParent.NONE;
         final MachinePrograms.Started started =
-                machine.sigma().start(name, read.message(), room, machine, args, starter, priority);
+                machine.programs().start(name, read.message(), room, machine, args, starter, priority);
         if (!started.ok()) {
             throw new Halt(Halt.Reason.CANNOT_START, line, started.message());
         }
@@ -131,7 +131,7 @@ public final class HostProgram {
     }
 
     private static boolean running(final AbstractComputerBlockEntity machine, final int id) {
-        final ProgramEntry<IMachineRuntime> one = machine.sigma().byId(id);
+        final ProgramEntry<IMachineRuntime> one = machine.programs().byId(id);
         if (one == null) {
             return false;
         }
@@ -141,7 +141,7 @@ public final class HostProgram {
     }
 
     private static int exitCode(final AbstractComputerBlockEntity machine, final int id) {
-        final ProgramEntry<IMachineRuntime> one = machine.sigma().byId(id);
+        final ProgramEntry<IMachineRuntime> one = machine.programs().byId(id);
         return one == null ? 0 : one.process().exitCode();
     }
 

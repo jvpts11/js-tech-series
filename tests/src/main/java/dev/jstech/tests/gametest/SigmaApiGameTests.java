@@ -103,7 +103,7 @@ public final class SigmaApiGameTests {
                     final var direct = new dev.jstech.computers.program.ServerCliComputer(
                             computer, helper.getLevel()).writeFile("direct.txt", "by the shell");
                     helper.assertTrue(direct.ok(), "the shell itself can write here: " + direct.message());
-                    final MachinePrograms.Started started = computer.sigma().start("writer.asm", listing("""
+                    final MachinePrograms.Started started = computer.programs().start("writer.asm", listing("""
                             class Writer {
                                 static void Main() {
                                     if (File.Write("stock.txt", "iron 64")) {
@@ -115,8 +115,8 @@ public final class SigmaApiGameTests {
                             }
                             """), 1, computer);
                     helper.assertTrue(started.ok(), "the program starts: " + started.message());
-                    computer.sigma().tick(100000);
-                    final List<String> said = computer.sigma().byId(started.id()).process().console();
+                    computer.programs().tick(100000);
+                    final List<String> said = computer.programs().byId(started.id()).process().console();
                     helper.assertTrue(said.equals(List.of("wrote")),
                             "the drive takes the write; it said " + said);
                     final Optional<String> read =
@@ -144,7 +144,7 @@ public final class SigmaApiGameTests {
                     DiskFilesystem.write(computer.systemDisk(), "note.txt",
                             dev.jstech.computers.os.fs.FileType.TXT, "written by hand", Long.MAX_VALUE,
                             dev.jstech.computers.os.FilesystemKind.FLAT);
-                    final MachinePrograms.Started started = computer.sigma().start("reader.asm", listing("""
+                    final MachinePrograms.Started started = computer.programs().start("reader.asm", listing("""
                             class Reader {
                                 static void Main() {
                                     if (File.TryRead("note.txt", out string held)) {
@@ -156,8 +156,8 @@ public final class SigmaApiGameTests {
                             }
                             """), 1, computer);
                     helper.assertTrue(started.ok(), "the program starts: " + started.message());
-                    computer.sigma().tick(100000);
-                    final List<String> said = computer.sigma().byId(started.id()).process().console();
+                    computer.programs().tick(100000);
+                    final List<String> said = computer.programs().byId(started.id()).process().console();
                     helper.assertTrue(said.equals(List.of("read written by hand")),
                             "the program reads what is on the disk; got " + said);
                 })
@@ -180,7 +180,7 @@ public final class SigmaApiGameTests {
                      * A name that comes back from a listing has to be the name that opens the file. It
                      * is the only thing a program can do with it.
                      */
-                    final MachinePrograms.Started started = computer.sigma().start("ls.asm", listing("""
+                    final MachinePrograms.Started started = computer.programs().start("ls.asm", listing("""
                             class Ls {
                                 static void Main() {
                                     foreach (string name in File.List("C:\\\\")) {
@@ -196,8 +196,8 @@ public final class SigmaApiGameTests {
                             }
                             """), 1, computer);
                     helper.assertTrue(started.ok(), "the program starts: " + started.message());
-                    computer.sigma().tick(100000);
-                    final List<String> said = computer.sigma().byId(started.id()).process().console();
+                    computer.programs().tick(100000);
+                    final List<String> said = computer.programs().byId(started.id()).process().console();
                     helper.assertFalse(said.isEmpty(), "it lists something");
                     boolean sawFile = false;
                     for (final String line : said) {
@@ -238,7 +238,7 @@ public final class SigmaApiGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms.Started started = computer.sigma().start("look.asm", listing("""
+                    final MachinePrograms.Started started = computer.programs().start("look.asm", listing("""
                             class Look {
                                 static void Main() {
                                     CpuInfo cpu = Computer.Cpu;
@@ -249,8 +249,8 @@ public final class SigmaApiGameTests {
                             }
                             """), 1, computer);
                     helper.assertTrue(started.ok(), "the program starts: " + started.message());
-                    computer.sigma().tick(100000);
-                    final List<String> said = computer.sigma().byId(started.id()).process().console();
+                    computer.programs().tick(100000);
+                    final List<String> said = computer.programs().byId(started.id()).process().console();
                     /*
                      * The socket holds a four-core Ascent X4 965 at 3400 on a Standard board, with 8 GB
                      * in the slot and Frames XP on the disk: what the machine reports has to be that.
@@ -276,7 +276,7 @@ public final class SigmaApiGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     // It is listed by the name it gives itself, not by the file it was started from.
-                    final MachinePrograms.Started started = computer.sigma().start("ps.asm", listing("""
+                    final MachinePrograms.Started started = computer.programs().start("ps.asm", listing("""
                             class Ps {
                                 static void Main() {
                                     Program.SetName("Ps");
@@ -287,8 +287,8 @@ public final class SigmaApiGameTests {
                             }
                             """), 1, computer);
                     helper.assertTrue(started.ok(), "the program starts: " + started.message());
-                    computer.sigma().tick(100000);
-                    final List<String> said = computer.sigma().byId(started.id()).process().console();
+                    computer.programs().tick(100000);
+                    final List<String> said = computer.programs().byId(started.id()).process().console();
                     helper.assertTrue(said.equals(List.of(started.id() + " Ps running")),
                             "a program listing the machine's programs finds itself, running; got " + said);
                 })
@@ -303,7 +303,7 @@ public final class SigmaApiGameTests {
         wired.rack().getServerStorage(0).insert(net.minecraft.world.item.Items.OAK_LOG, 640);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms.Started started = computer.sigma().start("stock.asm", listing("""
+                    final MachinePrograms.Started started = computer.programs().start("stock.asm", listing("""
                             class Stock {
                                 static void Main() {
                                     if (!Network.Online) { Console.PrintLine("standalone"); return; }
@@ -315,8 +315,8 @@ public final class SigmaApiGameTests {
                             }
                             """), 1, computer);
                     helper.assertTrue(started.ok(), "the program starts: " + started.message());
-                    computer.sigma().tick(100000);
-                    final List<String> said = computer.sigma().byId(started.id()).process().console();
+                    computer.programs().tick(100000);
+                    final List<String> said = computer.programs().byId(started.id()).process().console();
                     helper.assertTrue(said.size() == 2, "it reads the network and who holds it; got " + said);
                     helper.assertTrue("logs 640".equals(said.getFirst()),
                             "the total is what was put in; got " + said.getFirst());
@@ -337,7 +337,7 @@ public final class SigmaApiGameTests {
                     final long capacity = dev.jstech.computers.operation.NetworkStorage.of(
                             helper.getLevel(), wired.mainframe().networkUuid()).capacity();
                     helper.assertTrue(capacity > 0, "the network has drives to fill; got " + capacity);
-                    final MachinePrograms.Started started = computer.sigma().start("room.asm", listing("""
+                    final MachinePrograms.Started started = computer.programs().start("room.asm", listing("""
                             class Room {
                                 static void Main() {
                                     Console.PrintLine(Network.Used + " of " + Network.Capacity);
@@ -348,8 +348,8 @@ public final class SigmaApiGameTests {
                             }
                             """), 1, computer);
                     helper.assertTrue(started.ok(), "the program starts: " + started.message());
-                    computer.sigma().tick(100000);
-                    final List<String> said = computer.sigma().byId(started.id()).process().console();
+                    computer.programs().tick(100000);
+                    final List<String> said = computer.programs().byId(started.id()).process().console();
                     helper.assertTrue(said.getFirst().equals("640 of " + capacity),
                             "the program reads what the network holds and could hold; got " + said.getFirst());
                     helper.assertTrue(said.size() > 1 && said.get(1).startsWith("640/"),
@@ -365,7 +365,7 @@ public final class SigmaApiGameTests {
         final CraftingComputerBlockEntity computer = wired.cc();
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms.Started started = computer.sigma().start("watch.asm", listing("""
+                    final MachinePrograms.Started started = computer.programs().start("watch.asm", listing("""
                             class Watch {
                                 static void Main() {
                                     Console.PrintLine(Mainframe.Online ? "orchestrated" : "headless");
@@ -375,8 +375,8 @@ public final class SigmaApiGameTests {
                             }
                             """), 1, computer);
                     helper.assertTrue(started.ok(), "the program starts: " + started.message());
-                    computer.sigma().tick(100000);
-                    final List<String> said = computer.sigma().byId(started.id()).process().console();
+                    computer.programs().tick(100000);
+                    final List<String> said = computer.programs().byId(started.id()).process().console();
                     helper.assertTrue(said.size() == 2 && "orchestrated".equals(said.getFirst()),
                             "it finds the Mainframe on its network; got " + said);
                     helper.assertTrue(said.get(1).startsWith("selects "),
@@ -393,7 +393,7 @@ public final class SigmaApiGameTests {
         wired.rack().getServerStorage(0).insert(net.minecraft.world.item.Items.OAK_LOG, 640);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms.Started started = computer.sigma().start("restock.asm", listing("""
+                    final MachinePrograms.Started started = computer.programs().start("restock.asm", listing("""
                             class Restock : IScript {
                                 public void OnInit() {
                                     AskResult asked = Operations.Pull("minecraft:oak_log", 64);
@@ -404,8 +404,8 @@ public final class SigmaApiGameTests {
                             }
                             """), 1, computer);
                     helper.assertTrue(started.ok(), "the program starts: " + started.message());
-                    computer.sigma().tick(100000);
-                    final List<String> said = computer.sigma().byId(started.id()).process().console();
+                    computer.programs().tick(100000);
+                    final List<String> said = computer.programs().byId(started.id()).process().console();
                     helper.assertTrue(said.equals(List.of("asked")),
                             "the network takes the ask; got " + said);
                 })
@@ -439,7 +439,7 @@ public final class SigmaApiGameTests {
         final int[] id = new int[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms.Started started = computer.sigma().start("low.asm", listing("""
+                    final MachinePrograms.Started started = computer.programs().start("low.asm", listing("""
                             class Low : IScript {
                                 public void OnInit() {
                                     Network.WatchBelow("minecraft:oak_log", 100, Told);
@@ -454,8 +454,8 @@ public final class SigmaApiGameTests {
                     helper.assertTrue(started.ok(), "the program starts: " + started.message());
                     id[0] = started.id();
                     // The watch is set up, and the machine now knows to look this one up each tick.
-                    computer.sigma().tick(100000, item -> 640L);
-                    helper.assertTrue(computer.sigma().byId(id[0]).process().console().isEmpty(),
+                    computer.programs().tick(100000, item -> 640L);
+                    helper.assertTrue(computer.programs().byId(id[0]).process().console().isEmpty(),
                             "nothing has happened yet");
                 })
                 .thenExecuteAfter(2, () -> {
@@ -465,9 +465,9 @@ public final class SigmaApiGameTests {
                                     new net.minecraft.world.item.ItemStack(
                                             net.minecraft.world.item.Items.OAK_LOG)), 600);
                     for (int i = 0; i < 4; i++) {
-                        computer.sigma().tick(100000, computer::networkStock);
+                        computer.programs().tick(100000, computer::networkStock);
                     }
-                    final List<String> said = computer.sigma().byId(id[0]).process().console();
+                    final List<String> said = computer.programs().byId(id[0]).process().console();
                     helper.assertTrue(said.size() == 1 && said.getFirst().startsWith("low: "),
                             "the script is woken once, when it crosses; got " + said);
                 })
@@ -557,7 +557,7 @@ public final class SigmaApiGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms.Started started = computer.sigma().start("alone.asm", listing("""
+                    final MachinePrograms.Started started = computer.programs().start("alone.asm", listing("""
                             class Alone {
                                 static void Main() {
                                     Console.PrintLine(Network.Online ? "networked" : "standalone");
@@ -565,8 +565,8 @@ public final class SigmaApiGameTests {
                             }
                             """), 1, computer);
                     helper.assertTrue(started.ok(), "the program starts: " + started.message());
-                    computer.sigma().tick(100000);
-                    final List<String> said = computer.sigma().byId(started.id()).process().console();
+                    computer.programs().tick(100000);
+                    final List<String> said = computer.programs().byId(started.id()).process().console();
                     helper.assertTrue(said.equals(List.of("standalone")),
                             "a machine with no cable knows it; got " + said);
                 })
@@ -576,11 +576,11 @@ public final class SigmaApiGameTests {
     /** Runs a program to the end on that machine and says what it spent. */
     private static long spend(final CraftingComputerBlockEntity computer, final String source) {
         final MachinePrograms.Started started =
-                computer.sigma().start("one.asm", listing(source), 1, computer);
-        computer.sigma().tick(100000);
-        final var one = computer.sigma().byId(started.id());
+                computer.programs().start("one.asm", listing(source), 1, computer);
+        computer.programs().tick(100000);
+        final var one = computer.programs().byId(started.id());
         final long spent = one == null ? 0 : one.process().spent();
-        computer.sigma().stop(started.id());
+        computer.programs().stop(started.id());
         return spent;
     }
 }

@@ -821,7 +821,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
          * would hand the keyboard back while a program was still using it.
          */
         final var desktop = new dev.jstech.computers.operation.payload.DesktopShellOutputPayload(
-                false, sigma.held() != 0, "", desktopWire);
+                false, programs.held() != 0, "", desktopWire);
         for (final net.minecraft.server.level.ServerPlayer viewer : viewers) {
             if (viewer.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu) {
                 net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(viewer, desktop);
@@ -1125,15 +1125,15 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * rather than with its system disk: they are what it is doing, not what it has installed.
      */
 
-    private final dev.jstech.computers.machine.MachinePrograms sigma =
+    private final dev.jstech.computers.machine.MachinePrograms programs =
             new dev.jstech.computers.machine.MachinePrograms();
 
     private final dev.jstech.computers.vm.program.IHost sigmaHost =
             new dev.jstech.computers.machine.MachineHost(this);
 
     /** The Σ# programs this machine is running. */
-    public dev.jstech.computers.machine.MachinePrograms sigma() {
-        return sigma;
+    public dev.jstech.computers.machine.MachinePrograms programs() {
+        return programs;
     }
 
     /**
@@ -1195,11 +1195,11 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
     protected void tickSigma() {
         // A machine running nothing still pays down what a Gateway spent on its behalf, tick by tick.
-        if (sigma.isEmpty() && sigma.owed() == 0) {
+        if (programs.isEmpty() && programs.owed() == 0) {
             return;
         }
         if (!isRunning()) {
-            sigma.stopAll();
+            programs.stopAll();
             setChanged();
             return;
         }
@@ -1210,7 +1210,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         final long deadline = level instanceof ServerLevel server
                 ? dev.jstech.computers.machine.ServerTickDeadline.shared().claim(server, worldPosition)
                 : Long.MAX_VALUE;
-        sigma.tick(sigmaCredits(), deadline, this::networkStock, this::remoteParentWaiting);
+        programs.tick(sigmaCredits(), deadline, this::networkStock, this::remoteParentWaiting);
         if (level instanceof ServerLevel server) {
             pushSigmaOutput(server);
             pushWindows(server);
@@ -1236,7 +1236,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         }
         return server.getBlockEntity(where) instanceof AbstractComputerBlockEntity machine
                 && machine.nodeUuid() != null && parent.node().equals(machine.nodeUuid().value())
-                && machine.sigma().byId(parent.program()) != null;
+                && machine.programs().byId(parent.program()) != null;
     }
 
     /**
@@ -1250,7 +1250,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
                 : dev.jstech.computers.machine.HostGateway.gatewaysOf(this)) {
             for (final dev.jstech.computers.blockentity.NetworkGatewayBlockEntity.Message said
                     : gateway.takeMessages()) {
-                sigma.deliverGatewayMessage(said.from(), said.text(), said.tick());
+                programs.deliverGatewayMessage(said.from(), said.text(), said.tick());
             }
         }
     }
@@ -1274,8 +1274,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         }
         final java.util.Map<Long, dev.jstech.computers.operation.payload.UiWindowPayload> open =
                 new java.util.HashMap<>();
-        for (final var one : sigma.all()) {
-            for (final dev.jstech.computers.vm.program.Values.Obj window : sigma.windowsOf(one.id())) {
+        for (final var one : programs.all()) {
+            for (final dev.jstech.computers.vm.program.Values.Obj window : programs.windowsOf(one.id())) {
                 final var payload = dev.jstech.computers.operation.payload.UiWindowPayload.of(
                         worldPosition, one.id(), window);
                 if (payload != null) {
@@ -1323,22 +1323,22 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * returns. A program nobody is watching still runs; there is simply nowhere for its lines to go.
      */
     private void pushSigmaOutput(final ServerLevel level) {
-        if (sigma.held() == 0) {
+        if (programs.held() == 0) {
             return;
         }
-        final var one = sigma.byId(sigma.held());
+        final var one = programs.byId(programs.held());
         if (one == null) {
-            sigma.release();
+            programs.release();
             return;
         }
         final var state = one.process().state();
         final boolean over = state != dev.jstech.core.language.ILanguageProcess.State.RUNNING
                 && state != dev.jstech.core.language.ILanguageProcess.State.PARKED;
-        final java.util.List<String> fresh = sigma.unseen();
+        final java.util.List<String> fresh = programs.unseen();
         final String halt = over && state == dev.jstech.core.language.ILanguageProcess.State.HALTED
                 ? one.process().message() : null;
         if (over) {
-            sigma.release();
+            programs.release();
             setChanged();
         }
         if (fresh.isEmpty() && halt == null && !over) {
@@ -1488,7 +1488,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
             studio.load(tag.getCompound("Studio"), registries);
         }
         if (tag.contains("Σ#")) {
-            sigma.load(tag.getCompound("Σ#"), this);
+            programs.load(tag.getCompound("Σ#"), this);
         }
         /*
          * A world saved before the software moved onto the disk still carries the old block-level tag;
@@ -1538,9 +1538,9 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         final CompoundTag studioTag = new CompoundTag();
         studio.save(studioTag, registries);
         tag.put("Studio", studioTag);
-        if (!sigma.isEmpty()) {
+        if (!programs.isEmpty()) {
             final CompoundTag sigmaTag = new CompoundTag();
-            sigma.save(sigmaTag);
+            programs.save(sigmaTag);
             tag.put("Σ#", sigmaTag);
         }
         if (!linkedMonitors.isEmpty()) {

@@ -3121,8 +3121,8 @@ public final class ServerCliComputer implements ICliComputer {
      */
     @org.jetbrains.annotations.Nullable
     public MachinePrograms foreground() {
-        if (hostBlock instanceof AbstractComputerBlockEntity computer && computer.sigma().held() != 0) {
-            return computer.sigma();
+        if (hostBlock instanceof AbstractComputerBlockEntity computer && computer.programs().held() != 0) {
+            return computer.programs();
         }
         return null;
     }
@@ -3155,7 +3155,7 @@ public final class ServerCliComputer implements ICliComputer {
             return OpResult.fail("sigma: " + room + " MB will not fit in "
                     + computer.ramLedger().freeMb() + " MB of free memory");
         }
-        final MachinePrograms.Started started = computer.sigma()
+        final MachinePrograms.Started started = computer.programs()
                 .start(FsPaths.fileName(path), read.message(), room, computer, arguments,
                         dev.jstech.computers.vm.program.IProgramParent.NONE,
                         dev.jstech.computers.vm.program.ProgramPriority.MEDIUM);
@@ -3163,13 +3163,13 @@ public final class ServerCliComputer implements ICliComputer {
             return OpResult.fail(started.message());
         }
         computer.setChanged();
-        final var one = computer.sigma().byId(started.id());
+        final var one = computer.programs().byId(started.id());
         if (one != null && !one.process().isService()) {
             /*
              * A program that runs at a terminal takes the one that started it, the way it does on any
              * machine: the prompt is its, and comes back when it returns.
              */
-            computer.sigma().hold(started.id());
+            computer.programs().hold(started.id());
             return OpResult.ok("");
         }
         return OpResult.ok(started.message());
@@ -3180,7 +3180,7 @@ public final class ServerCliComputer implements ICliComputer {
         if (!(hostBlock instanceof AbstractComputerBlockEntity computer)) {
             return OpResult.fail("sigma: this machine cannot run programs");
         }
-        if (!computer.sigma().stop(id)) {
+        if (!computer.programs().stop(id)) {
             return OpResult.fail("sigma: nothing is running as " + id);
         }
         computer.setChanged();
@@ -3193,7 +3193,7 @@ public final class ServerCliComputer implements ICliComputer {
             return List.of();
         }
         final List<SigmaProcess> running = new java.util.ArrayList<>();
-        for (final var one : computer.sigma().all()) {
+        for (final var one : computer.programs().all()) {
             running.add(new SigmaProcess(one.id(), one.name(), MachinePrograms.stateOf(one.process()),
                     one.process().heldBytes(), one.process().heapBytes(), one.file()));
         }

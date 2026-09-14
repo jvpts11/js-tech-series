@@ -73,7 +73,7 @@ public final class RemoteExecutionGameTests {
     /** Starts a program and keeps it at the prompt, so what it printed stays readable after it returns. */
     private static ILanguageProcess held(final GameTestHelper helper, final PersonalComputerBlockEntity machine,
                                          final String name, final String source) {
-        final MachinePrograms programs = machine.sigma();
+        final MachinePrograms programs = machine.programs();
         final MachinePrograms.Started started = programs.start(name, listing(source), 1, machine);
         helper.assertTrue(started.ok(), name + " starts: " + started.message());
         programs.hold(started.id());
@@ -181,7 +181,7 @@ public final class RemoteExecutionGameTests {
     }
 
     private static boolean hasTool(final PersonalComputerBlockEntity machine) {
-        return machine.sigma().all().stream().anyMatch(one -> "tool.asm".equals(one.file()));
+        return machine.programs().all().stream().anyMatch(one -> "tool.asm".equals(one.file()));
     }
 
     private static final String REFUSED = """

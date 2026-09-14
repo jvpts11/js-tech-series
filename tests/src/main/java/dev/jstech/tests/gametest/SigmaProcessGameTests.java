@@ -157,11 +157,11 @@ public final class SigmaProcessGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 4, () -> {
                     final MachinePrograms.Started started =
-                            mainframe.sigma().start("counter.asm", listing(COUNTER), 1, mainframe);
+                            mainframe.programs().start("counter.asm", listing(COUNTER), 1, mainframe);
                     helper.assertTrue(started.ok(), "it starts on the Mainframe: " + started.message());
                 })
                 .thenExecuteAfter(6, () -> {
-                    final List<String> said = only(mainframe.sigma()).console();
+                    final List<String> said = only(mainframe.programs()).console();
                     helper.assertTrue(said.size() >= 4 && said.get(0).equals("up") && said.get(1).equals("tick 1"),
                             "the world ticks the script without anybody asking; got " + said);
                 })
@@ -169,7 +169,7 @@ public final class SigmaProcessGameTests {
                     mainframe.togglePower();
                 })
                 .thenExecuteAfter(4, () -> {
-                    helper.assertTrue(mainframe.sigma().isEmpty(),
+                    helper.assertTrue(mainframe.programs().isEmpty(),
                             "switching the cabinet off stops what it was running");
                 })
                 .thenSucceed();
@@ -183,7 +183,7 @@ public final class SigmaProcessGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms programs = computer.sigma();
+                    final MachinePrograms programs = computer.programs();
                     final MachinePrograms.Started started =
                             programs.start("counter.asm", listing(COUNTER), 1, computer);
                     helper.assertTrue(started.ok(), "it starts: " + started.message());
@@ -205,7 +205,7 @@ public final class SigmaProcessGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms programs = computer.sigma();
+                    final MachinePrograms programs = computer.programs();
                     final String listing = listing(COUNTER);
                     programs.start("one.asm", listing, 1, computer);
                     programs.start("two.asm", listing, 1, computer);
@@ -228,7 +228,7 @@ public final class SigmaProcessGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms before = computer.sigma();
+                    final MachinePrograms before = computer.programs();
                     before.start("counter.asm", listing(COUNTER), 2, computer);
                     before.tick(512);
                     before.tick(512);
@@ -257,7 +257,7 @@ public final class SigmaProcessGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms programs = computer.sigma();
+                    final MachinePrograms programs = computer.programs();
                     final int id = programs.start("counter.asm", listing(COUNTER), 1, computer).id();
                     programs.tick(512);
                     final ILanguageProcess running = only(programs);
@@ -277,7 +277,7 @@ public final class SigmaProcessGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms programs = computer.sigma();
+                    final MachinePrograms programs = computer.programs();
                     final MachinePrograms.Started started =
                             programs.start("hello.asm", listing(HELLO), 1, computer);
                     helper.assertTrue(started.ok(), "it starts: " + started.message());
@@ -300,7 +300,7 @@ public final class SigmaProcessGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms programs = computer.sigma();
+                    final MachinePrograms programs = computer.programs();
                     final int id = programs.start("hello.asm", listing(HELLO), 1, computer).id();
                     programs.hold(id);
                     programs.tick(512);
@@ -322,7 +322,7 @@ public final class SigmaProcessGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms programs = computer.sigma();
+                    final MachinePrograms programs = computer.programs();
                     final int id = programs.start("hello.asm", listing(HELLO), 1, computer).id();
                     programs.hold(id);
                     helper.assertTrue(programs.unseen().isEmpty(), "nothing has been printed yet");
@@ -344,7 +344,7 @@ public final class SigmaProcessGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms programs = computer.sigma();
+                    final MachinePrograms programs = computer.programs();
                     final int id = programs.start("loud.asm", listing("""
                             class Loud {
                                 static void Main() {
@@ -377,7 +377,7 @@ public final class SigmaProcessGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms programs = computer.sigma();
+                    final MachinePrograms programs = computer.programs();
                     helper.assertFalse(
                             programs.start("broken.asm", "this is not an assembly", 1, computer).ok(),
                             "it does not start");
@@ -487,7 +487,7 @@ public final class SigmaProcessGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms before = computer.sigma();
+                    final MachinePrograms before = computer.programs();
                     final MachinePrograms.Started started =
                             before.start("counting.asm", listing(COUNTING_THREAD), 1, computer);
                     helper.assertTrue(started.ok(), "it starts: " + started.message());
@@ -554,7 +554,7 @@ public final class SigmaProcessGameTests {
                             new dev.jstech.computers.program.ServerCliComputer(computer, helper.getLevel());
                     helper.assertTrue(shell.writeFile("C:\\child.asm", listing(CHILD)).ok(),
                             "the child is on the disk");
-                    final MachinePrograms programs = computer.sigma();
+                    final MachinePrograms programs = computer.programs();
                     final MachinePrograms.Started started =
                             programs.start("parent.asm", listing(PARENT), 1, computer);
                     helper.assertTrue(started.ok(), "the parent starts: " + started.message());
@@ -612,7 +612,7 @@ public final class SigmaProcessGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms programs = computer.sigma();
+                    final MachinePrograms programs = computer.programs();
                     final int listener = programs.start("listener.asm", listing(LISTENER), 1, computer).id();
                     programs.tick(2048);
                     final MachinePrograms.Started sender = programs.start("sender.asm", listing(SENDER), 1,

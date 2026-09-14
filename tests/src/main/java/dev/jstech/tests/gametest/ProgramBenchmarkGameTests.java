@@ -168,12 +168,12 @@ public final class ProgramBenchmarkGameTests {
                         final PersonalComputerBlockEntity pc = machines.get(i);
                         final int count = PROGRAM_COUNTS[i];
                         for (int p = 0; p < count; p++) {
-                            final MachinePrograms.Started started = pc.sigma().start("busy.sgs", BUSY, 1, pc);
+                            final MachinePrograms.Started started = pc.programs().start("busy.sgs", BUSY, 1, pc);
                             helper.assertTrue(started.ok(), "busy program " + p + " starts: " + started.message());
                         }
                         final int credits = pc.sigmaCredits();
-                        final double ms = timeTicks(pc.sigma(), credits);
-                        assertAllAlive(helper, pc.sigma(), count);
+                        final double ms = timeTicks(pc.programs(), credits);
+                        assertAllAlive(helper, pc.programs(), count);
                         report.put("credits_per_tick", credits);
                         report.put("busy_" + count + "_tick_ms", ms);
                         report.put("busy_" + count + "_per_program_us", ms * 1000.0 / count);
@@ -197,7 +197,7 @@ public final class ProgramBenchmarkGameTests {
         report.put("build_ms", (System.nanoTime() - buildStart) / 1_000_000.0);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> guarded(() -> {
-                    final MachinePrograms sigma = pc.sigma();
+                    final MachinePrograms sigma = pc.programs();
                     final MachinePrograms.Started live = sigma.start("live.sgs", LIVE, 1, pc);
                     final MachinePrograms.Started still = sigma.start("still.sgs", STILL, 1, pc);
                     helper.assertTrue(live.ok() && still.ok(), "both start: " + live.message() + " / " + still.message());
@@ -251,7 +251,7 @@ public final class ProgramBenchmarkGameTests {
         report.put("build_ms", (System.nanoTime() - buildStart) / 1_000_000.0);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> guarded(() -> {
-                    final MachinePrograms sigma = pc.sigma();
+                    final MachinePrograms sigma = pc.programs();
                     for (int p = 0; p < SAVED_PROGRAMS; p++) {
                         final MachinePrograms.Started started = sigma.start("holder.sgs", HOLDER, 1, pc);
                         helper.assertTrue(started.ok(), "holder " + p + " starts: " + started.message());
@@ -313,7 +313,7 @@ public final class ProgramBenchmarkGameTests {
                 .thenExecuteAfter(TICK_AVERAGE_WINDOW, () -> guarded(() -> {
                     report.put("idle_ms", Math.min(first[0], averageTickMs(server)));
                     for (final PersonalComputerBlockEntity pc : machines) {
-                        final MachinePrograms.Started started = pc.sigma().start("busy.sgs", BUSY, 1, pc);
+                        final MachinePrograms.Started started = pc.programs().start("busy.sgs", BUSY, 1, pc);
                         helper.assertTrue(started.ok(), "a busy program starts on every machine: " + started.message());
                     }
                 }))
@@ -321,7 +321,7 @@ public final class ProgramBenchmarkGameTests {
                 .thenExecuteAfter(TICK_AVERAGE_WINDOW, () -> guarded(() -> {
                     final double busy = Math.min(first[0], averageTickMs(server));
                     for (final PersonalComputerBlockEntity pc : machines) {
-                        assertAllAlive(helper, pc.sigma(), 1);
+                        assertAllAlive(helper, pc.programs(), 1);
                     }
                     report.put("busy_ms", busy);
                     report.put("busy_per_machine_us", busy * 1000.0 / MACHINES);

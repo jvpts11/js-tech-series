@@ -94,12 +94,12 @@ public final class ComputerBlockEntityGameTests {
         pc.console().setComputerName("desk");
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms.Started started = pc.sigma().start("counter.sgs", COUNTER, 1, pc);
+                    final MachinePrograms.Started started = pc.programs().start("counter.sgs", COUNTER, 1, pc);
                     helper.assertTrue(started.ok(), "the counter starts: " + started.message());
                     for (int i = 0; i < 3; i++) {
-                        pc.sigma().tick(PLENTY);
+                        pc.programs().tick(PLENTY);
                     }
-                    final List<String> said = pc.sigma().byId(started.id()).process().console();
+                    final List<String> said = pc.programs().byId(started.id()).process().console();
                     helper.assertTrue(!said.isEmpty(), "the counter has said something before the save");
 
                     final var registries = helper.getLevel().registryAccess();
@@ -120,10 +120,10 @@ public final class ComputerBlockEntityGameTests {
                                         pc.getHardware().getStackInSlot(slot)),
                                 "the part in slot " + slot + " comes back as it was");
                     }
-                    helper.assertTrue(fresh.sigma().all().size() == 1, "the program comes back; got "
-                            + fresh.sigma().all().size());
-                    helper.assertTrue(fresh.sigma().all().getFirst().process().console().equals(said),
-                            "with what it had said; got " + fresh.sigma().all().getFirst().process().console());
+                    helper.assertTrue(fresh.programs().all().size() == 1, "the program comes back; got "
+                            + fresh.programs().all().size());
+                    helper.assertTrue(fresh.programs().all().getFirst().process().console().equals(said),
+                            "with what it had said; got " + fresh.programs().all().getFirst().process().console());
 
                     pc.loadWithComponents(saved, registries);
                     helper.assertTrue(pc.isRunning(), "read back in the world, the computer is still switched on");

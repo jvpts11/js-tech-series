@@ -216,18 +216,18 @@ public final class HostileSaveGameTests {
                 .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms.Started started = pc.sigma().start("reader.sgs", READER, 1, pc);
+                    final MachinePrograms.Started started = pc.programs().start("reader.sgs", READER, 1, pc);
                     helper.assertTrue(started.ok(), "the reader starts: " + started.message());
-                    pc.sigma().hold(started.id());
-                    pc.sigma().tick(PLENTY);
+                    pc.programs().hold(started.id());
+                    pc.programs().tick(PLENTY);
                     helper.assertTrue(process(pc, started.id()).waitingForInput(), "it waits for a line before the save");
 
                     reload(helper, pc);
                     final ILanguageProcess after = process(pc, started.id());
                     helper.assertTrue(after.waitingForInput(), "and still waits for one after it; state " + after.state());
-                    helper.assertTrue(pc.sigma().held() == started.id(), "the terminal still holds it");
-                    helper.assertTrue(pc.sigma().offerInput("Ada"), "the line typed after the save reaches it");
-                    pc.sigma().tick(PLENTY);
+                    helper.assertTrue(pc.programs().held() == started.id(), "the terminal still holds it");
+                    helper.assertTrue(pc.programs().offerInput("Ada"), "the line typed after the save reaches it");
+                    pc.programs().tick(PLENTY);
                     helper.assertTrue(after.console().equals(List.of("name?", "got Ada")),
                             "it reads the line and goes on; got " + after.console() + " (" + after.message() + ")");
                 })
@@ -241,14 +241,14 @@ public final class HostileSaveGameTests {
         final ILanguageProcess[] after = new ILanguageProcess[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms.Started started = pc.sigma().start("gate.sgs", GATEKEEPER, 1, pc);
+                    final MachinePrograms.Started started = pc.programs().start("gate.sgs", GATEKEEPER, 1, pc);
                     helper.assertTrue(started.ok(), "the program starts: " + started.message());
                     /*
                      * All within one game tick, so the holder's sleep never runs out: the thread started at init takes
                      * the lock and sleeps, and the script's second tick then waits for that lock.
                      */
                     for (int i = 0; i < 4; i++) {
-                        pc.sigma().tick(PLENTY);
+                        pc.programs().tick(PLENTY);
                     }
                     final ILanguageProcess before = process(pc, started.id());
                     helper.assertTrue(before.console().isEmpty() && before.state() == ILanguageProcess.State.PARKED,
@@ -273,13 +273,13 @@ public final class HostileSaveGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     helper.assertTrue(new ServerCliComputer(pc, helper.getLevel())
                             .writeFile("C:\\child.asm", listing(SLOW_CHILD)).ok(), "the child is on the disk");
-                    final MachinePrograms.Started started = pc.sigma().start("parent.sgs", PARENT, 1, pc);
+                    final MachinePrograms.Started started = pc.programs().start("parent.sgs", PARENT, 1, pc);
                     helper.assertTrue(started.ok(), "the parent starts: " + started.message());
-                    pc.sigma().tick(PLENTY);
-                    pc.sigma().tick(PLENTY);
-                    helper.assertTrue(pc.sigma().all().size() == 2
+                    pc.programs().tick(PLENTY);
+                    pc.programs().tick(PLENTY);
+                    helper.assertTrue(pc.programs().all().size() == 2
                                     && process(pc, started.id()).console().equals(List.of("started child.asm")),
-                            "the parent started the child and waits for it; programs " + pc.sigma().all().size()
+                            "the parent started the child and waits for it; programs " + pc.programs().all().size()
                                     + ", said " + process(pc, started.id()).console());
                     reload(helper, pc);
                     parent[0] = process(pc, started.id());
@@ -310,13 +310,14 @@ public final class HostileSaveGameTests {
                 .thenExecuteAfter(SETTLE + 4, () -> {
                     helper.assertTrue(new ServerCliComputer(desk, helper.getLevel())
                             .writeFile("C:\\tool.asm", listing(SLOW_TOOL)).ok(), "the tool is on desk");
-                    final MachinePrograms.Started started = lab.sigma().start("patient.asm", listing(PATIENT), 1, lab);
+                    final MachinePrograms.Started started =
+                            lab.programs().start("patient.asm", listing(PATIENT), 1, lab);
                     helper.assertTrue(started.ok(), "the patient starts on lab: " + started.message());
-                    lab.sigma().hold(started.id());
+                    lab.programs().hold(started.id());
                     id[0] = started.id();
                 })
                 .thenExecuteAfter(4, () -> {
-                    helper.assertTrue(desk.sigma().all().stream().anyMatch(one -> "tool.asm".equals(one.file())),
+                    helper.assertTrue(desk.programs().all().stream().anyMatch(one -> "tool.asm".equals(one.file())),
                             "lab started the tool on desk, which is still sleeping");
                     helper.assertTrue(process(lab, id[0]).console().isEmpty(), "and lab waits for it");
                     reload(helper, desk);
@@ -335,17 +336,17 @@ public final class HostileSaveGameTests {
                 .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms.Started started = pc.sigma().start("panel.sgs", PANEL, 1, pc);
+                    final MachinePrograms.Started started = pc.programs().start("panel.sgs", PANEL, 1, pc);
                     helper.assertTrue(started.ok(), "the panel starts: " + started.message());
-                    pc.sigma().tick(PLENTY);
-                    final Values.Obj window = pc.sigma().windowsOf(started.id()).getFirst();
+                    pc.programs().tick(PLENTY);
+                    final Values.Obj window = pc.programs().windowsOf(started.id()).getFirst();
                     final Values.Obj button = widgetOf(window, UiWidgets.BUTTON);
-                    helper.assertTrue(pc.sigma().deliverUiEvent(started.id(), 1L, (Long) button.get(UiWidgets.ID),
+                    helper.assertTrue(pc.programs().deliverUiEvent(started.id(), 1L, (Long) button.get(UiWidgets.ID),
                             "click", List.of()), "the click is taken");
 
                     reload(helper, pc);
-                    pc.sigma().tick(PLENTY);
-                    final List<Values.Obj> windows = pc.sigma().windowsOf(started.id());
+                    pc.programs().tick(PLENTY);
+                    final List<Values.Obj> windows = pc.programs().windowsOf(started.id());
                     helper.assertTrue(windows.size() == 1, "the window comes back; got " + windows.size());
                     final Values.Obj label = widgetOf(windows.getFirst(), UiWidgets.LABEL);
                     helper.assertTrue(label != null && "cold".equals(label.get(UiWidgets.TEXT)),
@@ -363,9 +364,10 @@ public final class HostileSaveGameTests {
         final ILanguageProcess[] after = new ILanguageProcess[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms.Started started = computer.sigma().start("restock.sgs", RESTOCK, 1, computer);
+                    final MachinePrograms.Started started =
+                            computer.programs().start("restock.sgs", RESTOCK, 1, computer);
                     helper.assertTrue(started.ok(), "the program starts: " + started.message());
-                    computer.sigma().tick(PLENTY);
+                    computer.programs().tick(PLENTY);
                     helper.assertTrue(process(computer, started.id()).console().equals(List.of("asked")),
                             "the network takes the ask; got " + process(computer, started.id()).console());
                     reload(helper, computer);
@@ -387,23 +389,23 @@ public final class HostileSaveGameTests {
                 .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms.Started started = pc.sigma().start("listener.sgs", LISTENER, 1, pc);
+                    final MachinePrograms.Started started = pc.programs().start("listener.sgs", LISTENER, 1, pc);
                     helper.assertTrue(started.ok(), "the listener starts: " + started.message());
-                    pc.sigma().tick(PLENTY);
+                    pc.programs().tick(PLENTY);
                     final long now = helper.getLevel().getGameTime();
                     for (int i = 0; i < MESSAGES; i++) {
-                        helper.assertTrue(pc.sigma().send(0, started.id(), "m" + i, now),
+                        helper.assertTrue(pc.programs().send(0, started.id(), "m" + i, now),
                                 "message " + i + " is taken");
                     }
-                    helper.assertTrue(!pc.sigma().send(0, started.id(), "one too many", now),
+                    helper.assertTrue(!pc.programs().send(0, started.id(), "one too many", now),
                             "a program with " + MESSAGES + " messages waiting takes no more");
 
                     reload(helper, pc);
-                    helper.assertTrue(!pc.sigma().send(0, started.id(), "one too many", now),
+                    helper.assertTrue(!pc.programs().send(0, started.id(), "one too many", now),
                             "the pile comes back whole from the save, so there is still no room");
                     final ILanguageProcess after = process(pc, started.id());
                     for (int i = 0; i < 20 && after.console().size() < MESSAGES / 64; i++) {
-                        pc.sigma().tick(PLENTY);
+                        pc.programs().tick(PLENTY);
                     }
                     helper.assertTrue(after.console().equals(List.of("got 64 m63", "got 128 m127", "got 192 m191",
                                     "got 256 m255")),
@@ -421,7 +423,7 @@ public final class HostileSaveGameTests {
     }
 
     private static ILanguageProcess process(final PersonalComputerBlockEntity machine, final int id) {
-        final var one = machine.sigma().byId(id);
+        final var one = machine.programs().byId(id);
         if (one == null) {
             throw new IllegalStateException("no program " + id + " on the machine");
         }
@@ -429,7 +431,7 @@ public final class HostileSaveGameTests {
     }
 
     private static ILanguageProcess process(final CraftingComputerBlockEntity machine, final int id) {
-        final var one = machine.sigma().byId(id);
+        final var one = machine.programs().byId(id);
         if (one == null) {
             throw new IllegalStateException("no program " + id + " on the machine");
         }

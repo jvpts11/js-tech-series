@@ -194,7 +194,7 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
      * <p>They hold memory like anything else the machine is doing, which is why the ledger asks for them.
      */
     @Nullable
-    default dev.jstech.computers.machine.MachinePrograms sigma() {
+    default dev.jstech.computers.machine.MachinePrograms programs() {
         return null;
     }
 
@@ -233,7 +233,7 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
                 }
             }
         }
-        final dev.jstech.computers.machine.MachinePrograms scripts = sigma();
+        final dev.jstech.computers.machine.MachinePrograms scripts = programs();
         if (scripts != null) {
             for (final var one : scripts.all()) {
                 ledger.add(one.name(), one.heapMb(), RamLedger.Kind.PROCESS, one.id());

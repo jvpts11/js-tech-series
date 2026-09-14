@@ -383,7 +383,7 @@ public final class GatewayService {
         }
         final int slash = Math.max(program.lastIndexOf('\\'), program.lastIndexOf('/'));
         final String name = slash < 0 ? program : program.substring(slash + 1);
-        final MachinePrograms.Started started = machine.sigma().start(name, read.message(), room, machine,
+        final MachinePrograms.Started started = machine.programs().start(name, read.message(), room, machine,
                 new ArrayList<>(args), IProgramParent.NONE, ProgramPriority.named(priority));
         if (!started.ok()) {
             throw denied(caller, what, computer + ": " + started.message());

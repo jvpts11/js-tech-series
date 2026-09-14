@@ -110,10 +110,10 @@ public final class SystemUiGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms.Started started = computer.sigma().start("panel.sgs", PANEL, 1, computer);
+                    final MachinePrograms.Started started = computer.programs().start("panel.sgs", PANEL, 1, computer);
                     helper.assertTrue(started.ok(), "it starts: " + started.message());
-                    computer.sigma().tick(8192);
-                    final List<Values.Obj> windows = computer.sigma().windowsOf(started.id());
+                    computer.programs().tick(8192);
+                    final List<Values.Obj> windows = computer.programs().windowsOf(started.id());
                     helper.assertTrue(windows.size() == 1, "the program has a window; got " + windows.size());
                     final UiWindowPayload payload =
                             UiWindowPayload.of(computer.getBlockPos(), started.id(), windows.getFirst());
@@ -136,14 +136,14 @@ public final class SystemUiGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms.Started started = computer.sigma().start("panel.sgs", PANEL, 1, computer);
+                    final MachinePrograms.Started started = computer.programs().start("panel.sgs", PANEL, 1, computer);
                     helper.assertTrue(started.ok(), started.message());
-                    computer.sigma().tick(8192);
-                    final Values.Obj window = computer.sigma().windowsOf(started.id()).getFirst();
+                    computer.programs().tick(8192);
+                    final Values.Obj window = computer.programs().windowsOf(started.id()).getFirst();
                     final Values.Obj button = widgetOf(window, UiWidgets.BUTTON);
-                    helper.assertTrue(computer.sigma().deliverUiEvent(started.id(), 1L,
+                    helper.assertTrue(computer.programs().deliverUiEvent(started.id(), 1L,
                             (Long) button.get(UiWidgets.ID), "click", List.of()), "the click is taken");
-                    computer.sigma().tick(8192);
+                    computer.programs().tick(8192);
                     final Values.Obj label = widgetOf(window, UiWidgets.LABEL);
                     helper.assertTrue("cold".equals(label.get(UiWidgets.TEXT)),
                             "the handler ran; the label says " + label.get(UiWidgets.TEXT));
@@ -163,15 +163,15 @@ public final class SystemUiGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms.Started started = computer.sigma().start("panel.sgs", PANEL, 1, computer);
+                    final MachinePrograms.Started started = computer.programs().start("panel.sgs", PANEL, 1, computer);
                     helper.assertTrue(started.ok(), started.message());
-                    computer.sigma().tick(8192);
-                    final var one = computer.sigma().byId(started.id());
+                    computer.programs().tick(8192);
+                    final var one = computer.programs().byId(started.id());
                     helper.assertTrue(one.process().state() == dev.jstech.core.language.ILanguageProcess.State.HALTED,
                             "it stops; state " + one.process().state());
                     helper.assertTrue(one.process().message().contains("no desktop to open a window on"),
                             "with the reason; got " + one.process().message());
-                    helper.assertTrue(computer.sigma().windowsOf(started.id()).isEmpty(), "and opens nothing");
+                    helper.assertTrue(computer.programs().windowsOf(started.id()).isEmpty(), "and opens nothing");
                 })
                 .thenSucceed();
     }
@@ -185,7 +185,7 @@ public final class SystemUiGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachinePrograms before = computer.sigma();
+                    final MachinePrograms before = computer.programs();
                     final MachinePrograms.Started started = before.start("panel.sgs", PANEL, 1, computer);
                     helper.assertTrue(started.ok(), started.message());
                     before.tick(8192);

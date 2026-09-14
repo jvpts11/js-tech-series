@@ -164,10 +164,10 @@ public final class GatewaySigmaGameTests {
                     final List<NetworkGatewayBlockEntity> mine = HostGateway.gatewaysOf(computer);
                     helper.assertTrue(mine.size() == 1, "the computer has its Gateway; got " + mine.size());
                     final MachinePrograms.Started started =
-                            computer.sigma().start("bridge.sgs", BRIDGE, 1, computer);
+                            computer.programs().start("bridge.sgs", BRIDGE, 1, computer);
                     helper.assertTrue(started.ok(), "the program starts: " + started.message());
-                    computer.sigma().tick(8192);
-                    final List<String> said = computer.sigma().byId(started.id()).process().console();
+                    computer.programs().tick(8192);
+                    final List<String> said = computer.programs().byId(started.id()).process().console();
                     helper.assertTrue(said.size() >= 3, "it asked its three questions; got " + said);
                     helper.assertTrue("online true".equals(said.get(0)), "the Gateway is there; got " + said.get(0));
                     helper.assertTrue("names 1".equals(said.get(1)), "one Gateway; got " + said.get(1));
@@ -185,10 +185,10 @@ public final class GatewaySigmaGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE * 2, () -> {
                     final MachinePrograms.Started started =
-                            computer.sigma().start("bridge.sgs", BRIDGE, 1, computer);
+                            computer.programs().start("bridge.sgs", BRIDGE, 1, computer);
                     helper.assertTrue(started.ok(), started.message());
                     program[0] = started.id();
-                    computer.sigma().tick(8192);
+                    computer.programs().tick(8192);
                     final FakeComputer cc = new FakeComputer(9);
                     try {
                         attach(helper, cc).send(cc, "from the other side");
@@ -197,7 +197,7 @@ public final class GatewaySigmaGameTests {
                     }
                 })
                 .thenExecuteAfter(SETTLE, () -> {
-                    final List<String> said = computer.sigma().byId(program[0]).process().console();
+                    final List<String> said = computer.programs().byId(program[0]).process().console();
                     helper.assertTrue(said.getLast().equals("heard 9 from the other side"),
                             "the program heard what the computer said; console " + said);
                 })
@@ -212,14 +212,14 @@ public final class GatewaySigmaGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE * 2, () -> {
                     final MachinePrograms.Started started =
-                            computer.sigma().start("bridge.sgs", BRIDGE, 1, computer);
+                            computer.programs().start("bridge.sgs", BRIDGE, 1, computer);
                     helper.assertTrue(started.ok(), started.message());
                     program[0] = started.id();
-                    computer.sigma().tick(8192);
+                    computer.programs().tick(8192);
                     gateway(helper).said(7, "hello", helper.getLevel().getGameTime());
                 })
                 .thenExecuteAfter(SETTLE, () -> {
-                    final List<String> said = computer.sigma().byId(program[0]).process().console();
+                    final List<String> said = computer.programs().byId(program[0]).process().console();
                     helper.assertTrue(said.getLast().equals("heard 7 hello"),
                             "the program heard it; console " + said);
                 })

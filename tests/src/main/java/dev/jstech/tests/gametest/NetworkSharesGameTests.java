@@ -141,7 +141,7 @@ public final class NetworkSharesGameTests {
                     final SigmaCompiler.Result built =
                             SigmaCompiler.compile(List.of(new SourceFile("Reader.sgs", READER)));
                     helper.assertTrue(built.ok(), "the program compiles: " + String.join("\n", built.lines()));
-                    final MachinePrograms programs = pair.mainframe().sigma();
+                    final MachinePrograms programs = pair.mainframe().programs();
                     final MachinePrograms.Started started =
                             programs.start("reader.asm", built.assembly(), 1, pair.mainframe());
                     helper.assertTrue(started.ok(), "it starts on the Mainframe: " + started.message());

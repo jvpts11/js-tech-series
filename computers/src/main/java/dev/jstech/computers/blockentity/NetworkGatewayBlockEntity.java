@@ -390,7 +390,7 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
         rollTick();
         spentThisTick += Math.max(0, credits);
         if (owner() instanceof AbstractComputerBlockEntity host) {
-            host.sigma().owe(credits);
+            host.programs().owe(credits);
         }
     }
 
