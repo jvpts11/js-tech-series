@@ -54,8 +54,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   its heap takes in whatever the machine hands the program and checks what the program reaches into; a machine
   keeps the programs it runs in a table of its own, which knows no language and finds a program by its number
   without building anything, starts every one of them in one place, keeps which of them is in front of its terminal
-  apart from the rest and looks up what its programs watch only when one of them watches something, as one count for
-  each item; every source file's header names the mod it belongs to.
+  apart from the rest, looks up what its programs watch only when one of them watches something, as one count for
+  each item, and knows who is looking at it from the screens they open and close instead of going through every
+  player on every tick; every source file's header names the mod it belongs to.
 
 ### Fixed
 - Cutting the last data cable between a Mainframe and the rest of its network now takes the network away

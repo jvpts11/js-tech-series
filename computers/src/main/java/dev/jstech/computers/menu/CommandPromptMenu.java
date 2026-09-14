@@ -8,6 +8,7 @@
 package dev.jstech.computers.menu;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
@@ -67,6 +68,13 @@ public class CommandPromptMenu extends AbstractContainerMenu {
         this.hostname = hostname == null ? "" : hostname;
         this.osLabel = osLabel == null ? "" : osLabel;
         this.access = ContainerLevelAccess.create(playerInventory.player.level(), hostPos);
+        AbstractComputerBlockEntity.screenOpened(playerInventory.player, hostPos);
+    }
+
+    @Override
+    public void removed(final Player player) {
+        super.removed(player);
+        AbstractComputerBlockEntity.screenClosed(player, hostPos);
     }
 
     public static CommandPromptMenu fromNetwork(final int containerId, final Inventory playerInventory,

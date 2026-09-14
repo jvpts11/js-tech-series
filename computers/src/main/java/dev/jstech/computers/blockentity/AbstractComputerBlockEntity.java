@@ -831,21 +831,63 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         }
     }
 
-    /** Every player with this computer's console on screen: its terminal menus, or its open desktop. */
-    private java.util.List<net.minecraft.server.level.ServerPlayer> consoleViewers(
+    /*
+     * The players looking at this machine through a desktop or a prompt. Their menus say when they open and close,
+     * so a tick never goes through the level's players to find them; the first look after the machine loads does,
+     * once.
+     */
+    private final java.util.List<net.minecraft.server.level.ServerPlayer> viewers = new java.util.ArrayList<>();
+    private boolean viewersKnown;
+
+    /**
+     * Every player with this computer's console on screen: its terminal menus, or its open desktop.
+     *
+     * <p>The list is the machine's own, kept on the server thread: read it, do not keep it.
+     */
+    public java.util.List<net.minecraft.server.level.ServerPlayer> consoleViewers(
             final net.minecraft.server.level.ServerLevel level) {
-        final java.util.List<net.minecraft.server.level.ServerPlayer> out = new java.util.ArrayList<>();
-        for (final net.minecraft.server.level.ServerPlayer player : level.players()) {
-            final boolean viewing = (player.containerMenu
-                    instanceof dev.jstech.computers.menu.CommandPromptMenu prompt
-                    && worldPosition.equals(prompt.hostPos()))
-                    || (player.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu desk
-                            && worldPosition.equals(desk.hostPos()));
-            if (viewing) {
-                out.add(player);
+        if (!viewersKnown) {
+            viewersKnown = true;
+            for (final net.minecraft.server.level.ServerPlayer player : level.players()) {
+                if (!(player instanceof net.neoforged.neoforge.common.util.FakePlayer) && !viewers.contains(player)) {
+                    viewers.add(player);
+                }
             }
         }
-        return out;
+        for (int i = viewers.size() - 1; i >= 0; i--) {
+            final net.minecraft.server.level.ServerPlayer player = viewers.get(i);
+            if (player.isRemoved() || player.level() != level || !showsThisMachine(player)) {
+                viewers.remove(i);
+            }
+        }
+        return viewers;
+    }
+
+    /** Whether that player's open menu is this machine's prompt or desktop. */
+    private boolean showsThisMachine(final net.minecraft.server.level.ServerPlayer player) {
+        return (player.containerMenu instanceof dev.jstech.computers.menu.CommandPromptMenu prompt
+                && worldPosition.equals(prompt.hostPos()))
+                || (player.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu desk
+                        && worldPosition.equals(desk.hostPos()));
+    }
+
+    /** Tells the machine at {@code host} that this player opened its desktop or prompt; nothing on the client. */
+    public static void screenOpened(final net.minecraft.world.entity.player.Player player, final BlockPos host) {
+        if (player instanceof net.minecraft.server.level.ServerPlayer viewer
+                && !(player instanceof net.neoforged.neoforge.common.util.FakePlayer)
+                && viewer.level().isLoaded(host)
+                && viewer.level().getBlockEntity(host) instanceof AbstractComputerBlockEntity machine
+                && !machine.viewers.contains(viewer)) {
+            machine.viewers.add(viewer);
+        }
+    }
+
+    /** Tells the machine at {@code host} that this player closed its desktop or prompt. */
+    public static void screenClosed(final net.minecraft.world.entity.player.Player player, final BlockPos host) {
+        if (player instanceof net.minecraft.server.level.ServerPlayer viewer && viewer.level().isLoaded(host)
+                && viewer.level().getBlockEntity(host) instanceof AbstractComputerBlockEntity machine) {
+            machine.viewers.remove(viewer);
+        }
     }
 
     private static String buildDisplayName(final String programId) {

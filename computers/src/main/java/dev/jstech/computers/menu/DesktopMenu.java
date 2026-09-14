@@ -8,6 +8,7 @@
 package dev.jstech.computers.menu;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -85,6 +86,13 @@ public class DesktopMenu extends AbstractContainerMenu {
         for (int i = 0; i < INVENTORY_SLOTS; i++) {
             addSlot(new NetworkInteractorSlot(playerInventory, inventoryIndexFor(i), 0, 0, this::slotsActive, true));
         }
+        AbstractComputerBlockEntity.screenOpened(playerInventory.player, hostPos);
+    }
+
+    @Override
+    public void removed(final Player player) {
+        super.removed(player);
+        AbstractComputerBlockEntity.screenClosed(player, hostPos);
     }
 
     /** Whether the inventory slots are currently live; the desktop screen sets this each tick. */
