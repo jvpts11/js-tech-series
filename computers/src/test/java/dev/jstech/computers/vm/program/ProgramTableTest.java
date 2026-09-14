@@ -14,7 +14,10 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -113,5 +116,79 @@ class ProgramTableTest {
 
         assertEquals(Integer.MAX_VALUE, last.id());
         assertEquals(2, next, "past the largest number it wraps to one, which is still held, and takes two");
+    }
+
+    @Test
+    void byId_findsProgramsByNumberAfterTheNumbersWrap() {
+        final ProgramTable<Quiet> table = new ProgramTable<>();
+        table.restart(Integer.MAX_VALUE - 1);
+        final ProgramEntry<Quiet> high = entry(table, "high", 1);
+        table.add(high);
+        final ProgramEntry<Quiet> top = entry(table, "top", 1);
+        table.add(top);
+        final ProgramEntry<Quiet> low = entry(table, "low", 1);
+        table.add(low);
+
+        assertEquals(1, low.id(), "the third number wrapped");
+        assertSame(high, table.byId(Integer.MAX_VALUE - 1));
+        assertSame(top, table.byId(Integer.MAX_VALUE));
+        assertSame(low, table.byId(1));
+        assertEquals(List.of(high, top, low), table.all(), "listed in the order they started, not by number");
+    }
+
+    @Test
+    void remove_fromTheMiddleKeepsTheOthersInTheOrderTheyStarted() {
+        final ProgramTable<Quiet> table = new ProgramTable<>();
+        final ProgramEntry<Quiet> first = entry(table, "first", 1);
+        final ProgramEntry<Quiet> middle = entry(table, "middle", 1);
+        final ProgramEntry<Quiet> last = entry(table, "last", 1);
+        table.add(first);
+        table.add(middle);
+        table.add(last);
+
+        assertTrue(table.remove(middle.id()));
+
+        assertEquals(List.of(first, last), table.all());
+        assertNull(table.byId(middle.id()));
+        assertSame(last, table.byId(last.id()));
+    }
+
+    @Test
+    void byId_findsEveryOneOfAHundredProgramsWithHalfOfThemGone() {
+        final ProgramTable<Quiet> table = new ProgramTable<>();
+        final List<ProgramEntry<Quiet>> started = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            final ProgramEntry<Quiet> one = entry(table, "program" + i, 1);
+            table.add(one);
+            started.add(one);
+        }
+
+        for (int i = 0; i < 100; i += 2) {
+            assertTrue(table.remove(started.get(i).id()));
+        }
+
+        for (int i = 0; i < 100; i++) {
+            final ProgramEntry<Quiet> one = started.get(i);
+            if (i % 2 == 0) {
+                assertNull(table.byId(one.id()), "program " + one.id() + " is gone");
+            } else {
+                assertSame(one, table.byId(one.id()), "program " + one.id() + " is still there");
+            }
+        }
+        assertEquals(50, table.size());
+        assertEquals(started.stream().filter(one -> one.id() % 2 == 0).toList(), table.all());
+    }
+
+    @Test
+    void running_stopsAWalkWhenTheTableChangesUnderIt() {
+        final ProgramTable<Quiet> table = new ProgramTable<>();
+        table.add(entry(table, "first", 1));
+        table.add(entry(table, "second", 1));
+        final Iterator<ProgramEntry<Quiet>> walk = table.running().iterator();
+        walk.next();
+
+        table.add(entry(table, "third", 1));
+
+        assertThrows(ConcurrentModificationException.class, walk::next);
     }
 }
