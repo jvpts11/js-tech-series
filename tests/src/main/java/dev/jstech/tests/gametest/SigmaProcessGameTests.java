@@ -17,7 +17,9 @@ import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.ServerTickDeadline;
+import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramConsole;
+import dev.jstech.computers.vm.program.ProgramPriority;
 import dev.jstech.core.language.ILanguageProcess;
 import dev.jstech.tests.JsTests;
 import java.util.List;
@@ -614,7 +616,7 @@ public final class SigmaProcessGameTests {
                     final int listener = programs.start("listener.asm", listing(LISTENER), 1, computer).id();
                     programs.tick(2048);
                     final MachinePrograms.Started sender = programs.start("sender.asm", listing(SENDER), 1,
-                            computer, List.of(String.valueOf(listener)), 0, MachinePrograms.DEFAULT_PRIORITY);
+                            computer, List.of(String.valueOf(listener)), IProgramParent.NONE, ProgramPriority.MEDIUM);
                     helper.assertTrue(sender.ok(), "the sender starts: " + sender.message());
                     for (int i = 0; i < 3; i++) {
                         programs.tick(2048);
@@ -622,7 +624,7 @@ public final class SigmaProcessGameTests {
                     final List<String> heard = programs.byId(listener).process().console();
                     helper.assertTrue(heard.equals(List.of(sender.id() + ":ping")),
                             "the listener heard the line and who sent it; got " + heard);
-                    final MachinePrograms.Live sent = programs.byId(sender.id());
+                    final var sent = programs.byId(sender.id());
                     helper.assertTrue(sent == null || sent.process().console().equals(List.of("sent true")),
                             "the sender was told it was taken; got "
                                     + (sent == null ? "gone" : sent.process().console()));

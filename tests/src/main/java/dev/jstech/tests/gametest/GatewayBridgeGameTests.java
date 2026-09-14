@@ -27,7 +27,6 @@ import dev.jstech.computers.gateway.GatewayPermissions;
 import dev.jstech.computers.gateway.GatewayService;
 import dev.jstech.computers.gateway.GatewayStats;
 import dev.jstech.computers.integration.computercraft.GatewayPeripheral;
-import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.storage.StorageKey;
@@ -426,7 +425,7 @@ public final class GatewayBridgeGameTests {
                     lua(() -> started[0] = peripheral.run(cc, new ObjectArguments("lab", "C:\\tool.asm", "x"))).run();
                     helper.assertTrue(started[0] > 0, "run hands back the process id; got " + started[0]);
                     // The process itself is kept: a returned program with nobody waiting on it leaves the machine's list.
-                    final MachinePrograms.Live live = fleet.lab().sigma().byId(started[0]);
+                    final var live = fleet.lab().sigma().byId(started[0]);
                     helper.assertTrue(live != null, "lab lists the program it was asked to run");
                     tool[0] = live.process();
                     helper.assertTrue(lab.setConfig("remote", "off").ok(), "lab says no from now on");

@@ -1226,15 +1226,16 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * tick never looks. A machine whose chunk is not loaded is not known to be gone: its programs come back
      * with it, so what was started for them is kept until it can be asked.
      */
-    private boolean remoteParentWaiting(final dev.jstech.computers.machine.MachinePrograms.RemoteParent parent) {
+    private boolean remoteParentWaiting(final dev.jstech.computers.vm.program.IProgramParent.Remote parent) {
         if (!(level instanceof ServerLevel server)) {
             return false;
         }
-        if (!server.isLoaded(parent.machine())) {
+        final net.minecraft.core.BlockPos where = net.minecraft.core.BlockPos.of(parent.machine());
+        if (!server.isLoaded(where)) {
             return true;
         }
-        return server.getBlockEntity(parent.machine()) instanceof AbstractComputerBlockEntity machine
-                && parent.node().equals(machine.nodeUuid())
+        return server.getBlockEntity(where) instanceof AbstractComputerBlockEntity machine
+                && machine.nodeUuid() != null && parent.node().equals(machine.nodeUuid().value())
                 && machine.sigma().byId(parent.program()) != null;
     }
 
@@ -1273,7 +1274,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         }
         final java.util.Map<Long, dev.jstech.computers.operation.payload.UiWindowPayload> open =
                 new java.util.HashMap<>();
-        for (final dev.jstech.computers.machine.MachinePrograms.Live one : sigma.all()) {
+        for (final var one : sigma.all()) {
             for (final dev.jstech.computers.vm.program.Values.Obj window : sigma.windowsOf(one.id())) {
                 final var payload = dev.jstech.computers.operation.payload.UiWindowPayload.of(
                         worldPosition, one.id(), window);

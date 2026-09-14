@@ -60,7 +60,7 @@ public final class LanguageApiGameTests {
             final MachinePrograms.Started started =
                     computer.sigma().start("count.toy", SOURCE, 1, computer);
             helper.assertTrue(started.ok(), "the machine runs it without knowing the language: " + started.message());
-            final MachinePrograms.Live one = computer.sigma().byId(started.id());
+            final var one = computer.sigma().byId(started.id());
             helper.assertTrue("counter".equals(one.name()),
                     "and lists it by the name the program gave itself; got " + one.name());
 

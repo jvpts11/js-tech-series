@@ -166,7 +166,7 @@ public final class SystemUiGameTests {
                     final MachinePrograms.Started started = computer.sigma().start("panel.sgs", PANEL, 1, computer);
                     helper.assertTrue(started.ok(), started.message());
                     computer.sigma().tick(8192);
-                    final MachinePrograms.Live one = computer.sigma().byId(started.id());
+                    final var one = computer.sigma().byId(started.id());
                     helper.assertTrue(one.process().state() == dev.jstech.core.language.ILanguageProcess.State.HALTED,
                             "it stops; state " + one.process().state());
                     helper.assertTrue(one.process().message().contains("no desktop to open a window on"),

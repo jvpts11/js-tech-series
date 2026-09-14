@@ -3156,13 +3156,14 @@ public final class ServerCliComputer implements ICliComputer {
                     + computer.ramLedger().freeMb() + " MB of free memory");
         }
         final MachinePrograms.Started started = computer.sigma()
-                .start(FsPaths.fileName(path), read.message(), room, computer, arguments, 0,
-                        MachinePrograms.DEFAULT_PRIORITY);
+                .start(FsPaths.fileName(path), read.message(), room, computer, arguments,
+                        dev.jstech.computers.vm.program.IProgramParent.NONE,
+                        dev.jstech.computers.vm.program.ProgramPriority.MEDIUM);
         if (!started.ok()) {
             return OpResult.fail(started.message());
         }
         computer.setChanged();
-        final MachinePrograms.Live one = computer.sigma().byId(started.id());
+        final var one = computer.sigma().byId(started.id());
         if (one != null && !one.process().isService()) {
             /*
              * A program that runs at a terminal takes the one that started it, the way it does on any
@@ -3192,7 +3193,7 @@ public final class ServerCliComputer implements ICliComputer {
             return List.of();
         }
         final List<SigmaProcess> running = new java.util.ArrayList<>();
-        for (final MachinePrograms.Live one : computer.sigma().all()) {
+        for (final var one : computer.sigma().all()) {
             running.add(new SigmaProcess(one.id(), one.name(), MachinePrograms.stateOf(one.process()),
                     one.process().heldBytes(), one.process().heapBytes(), one.file()));
         }

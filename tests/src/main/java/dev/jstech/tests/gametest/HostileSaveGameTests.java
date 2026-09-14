@@ -421,7 +421,7 @@ public final class HostileSaveGameTests {
     }
 
     private static ILanguageProcess process(final PersonalComputerBlockEntity machine, final int id) {
-        final MachinePrograms.Live one = machine.sigma().byId(id);
+        final var one = machine.sigma().byId(id);
         if (one == null) {
             throw new IllegalStateException("no program " + id + " on the machine");
         }
@@ -429,7 +429,7 @@ public final class HostileSaveGameTests {
     }
 
     private static ILanguageProcess process(final CraftingComputerBlockEntity machine, final int id) {
-        final MachinePrograms.Live one = machine.sigma().byId(id);
+        final var one = machine.sigma().byId(id);
         if (one == null) {
             throw new IllegalStateException("no program " + id + " on the machine");
         }

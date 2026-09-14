@@ -197,7 +197,7 @@ public final class SigmaShellGameTests {
                 .thenExecuteAfter(SETTLE * 4, () -> {
                     final int id = computer.sigma().held();
                     helper.assertTrue(id > 0, "the terminal is holding the program");
-                    final dev.jstech.computers.machine.MachinePrograms.Live one = computer.sigma().byId(id);
+                    final var one = computer.sigma().byId(id);
                     helper.assertTrue(one != null && one.process().waitingForInput(),
                             "the program stops on its read; state " + (one == null ? "gone" : one.process().state()));
                     helper.assertTrue("input".equals(dev.jstech.computers.machine.MachinePrograms.stateOf(one.process())),
@@ -320,7 +320,7 @@ public final class SigmaShellGameTests {
                     helper.assertTrue(listed.contains("sigma"), "the nameless one is listed by the runtime; got " + listed);
                     helper.assertFalse(listed.contains("asks.asm") || listed.contains("progs"),
                             "no path stands in for a name; got " + listed);
-                    for (final dev.jstech.computers.machine.MachinePrograms.Live one : computer.sigma().all()) {
+                    for (final var one : computer.sigma().all()) {
                         helper.assertTrue("Sorter".equals(one.name()) || "sigma".equals(one.name()),
                                 "the machine's own list agrees; got " + one.name());
                     }

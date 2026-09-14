@@ -230,8 +230,9 @@ public final class ProgramPayloads {
                     new DesktopShellOutputPayload(false, false, "", wire, payload.session()));
             return;
         }
-        final var started = computer.sigma().start(name, listing.get(), room, computer, java.util.List.of(), 0,
-                dev.jstech.computers.machine.MachinePrograms.DEFAULT_PRIORITY);
+        final var started = computer.sigma().start(name, listing.get(), room, computer, java.util.List.of(),
+                dev.jstech.computers.vm.program.IProgramParent.NONE,
+                dev.jstech.computers.vm.program.ProgramPriority.MEDIUM);
         if (!started.ok()) {
             wire.add(new DesktopShellOutputPayload.WireLine(started.message(),
                     dev.jstech.computers.program.cli.CliStyle.ERROR.id()));

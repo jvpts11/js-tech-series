@@ -23,6 +23,8 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.computers.vm.program.IProgramParent;
+import dev.jstech.computers.vm.program.ProgramPriority;
 import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.peripheral.IPeripheralOwner;
@@ -381,10 +383,8 @@ public final class GatewayService {
         }
         final int slash = Math.max(program.lastIndexOf('\\'), program.lastIndexOf('/'));
         final String name = slash < 0 ? program : program.substring(slash + 1);
-        final String level = priority == null || priority.isBlank() ? MachinePrograms.DEFAULT_PRIORITY
-                : priority.toLowerCase(Locale.ROOT);
         final MachinePrograms.Started started = machine.sigma().start(name, read.message(), room, machine,
-                new ArrayList<>(args), 0, level);
+                new ArrayList<>(args), IProgramParent.NONE, ProgramPriority.named(priority));
         if (!started.ok()) {
             throw denied(caller, what, computer + ": " + started.message());
         }

@@ -12,7 +12,6 @@ import dev.jstech.computers.vm.listing.Shape;
 import dev.jstech.computers.vm.program.Process;
 import dev.jstech.computers.vm.program.SnapshotException;
 import dev.jstech.computers.vm.program.Values;
-import dev.jstech.core.language.ILanguageProcess;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.nbt.CompoundTag;
@@ -25,7 +24,7 @@ import org.slf4j.Logger;
  * and everything on the other side is the language's. The three lifecycle calls are the translation:
  * a machine says "another tick has come", and only here does that mean {@code OnTick}.
  */
-final class SigmaProgram implements ILanguageProcess {
+final class SigmaProgram implements IMachineRuntime {
 
     /** What a program is allowed to spend on its farewell, out of nobody's tick. */
     private static final int FAREWELL = 4096;
@@ -140,6 +139,32 @@ final class SigmaProgram implements ILanguageProcess {
     @Override
     public void deliver(final Map<String, Long> totals) {
         this.process.deliver(totals);
+    }
+
+    @Override
+    public int exitCode() {
+        return this.process.exitCode();
+    }
+
+    @Override
+    public boolean deliverMessage(final int from, final String text, final long tick) {
+        return this.process.deliverMessage(from, text, tick);
+    }
+
+    @Override
+    public boolean deliverGatewayMessage(final int from, final String text, final long tick) {
+        return this.process.deliverGatewayMessage(from, text, tick);
+    }
+
+    @Override
+    public boolean deliverUiEvent(final long window, final long widget, final String kind,
+                                  final List<Object> values) {
+        return this.process.deliverUiEvent(window, widget, kind, values);
+    }
+
+    @Override
+    public List<Values.Obj> windows() {
+        return this.process.windows();
     }
 
     @Override

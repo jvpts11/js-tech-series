@@ -578,7 +578,7 @@ public final class SigmaApiGameTests {
         final MachinePrograms.Started started =
                 computer.sigma().start("one.asm", listing(source), 1, computer);
         computer.sigma().tick(100000);
-        final MachinePrograms.Live one = computer.sigma().byId(started.id());
+        final var one = computer.sigma().byId(started.id());
         final long spent = one == null ? 0 : one.process().spent();
         computer.sigma().stop(started.id());
         return spent;

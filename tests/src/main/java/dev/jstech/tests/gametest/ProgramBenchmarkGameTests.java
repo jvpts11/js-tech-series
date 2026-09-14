@@ -345,7 +345,7 @@ public final class ProgramBenchmarkGameTests {
 
     private static void assertAllAlive(final GameTestHelper helper, final MachinePrograms sigma, final int expected) {
         helper.assertTrue(sigma.all().size() == expected, "expected " + expected + " programs; got " + sigma.all().size());
-        for (final MachinePrograms.Live one : sigma.all()) {
+        for (final var one : sigma.all()) {
             final ILanguageProcess.State state = one.process().state();
             helper.assertTrue(state != ILanguageProcess.State.HALTED,
                     "program " + one.id() + " halted: " + one.process().message());

@@ -11,6 +11,9 @@ import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IHost;
+import dev.jstech.computers.vm.program.IProgramParent;
+import dev.jstech.computers.vm.program.ProgramEntry;
+import dev.jstech.computers.vm.program.ProgramPriority;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.core.language.ILanguageProcess;
@@ -33,9 +36,6 @@ public final class HostProgram {
     private static final int LOOK = SigmaCosts.GLANCE;
     private static final int TOUCH = SigmaCosts.GLANCE_NETWORK;
     private static final int READ = SigmaCosts.READ;
-
-    /** What a program is started with when it does not say: the middle, like anything at the prompt. */
-    private static final String DEFAULT_PRIORITY = "medium";
 
     private HostProgram() {
     }
@@ -65,7 +65,7 @@ public final class HostProgram {
             case "ExitCode" -> IHost.Reply.of(where == null ? 0 : exitCode(where, id(arguments)), LOOK);
             case "Output" -> {
                 final Values.ListValue lines = new Values.ListValue();
-                final MachinePrograms.Live one = where == null ? null : where.sigma().byId(id(arguments));
+                final ProgramEntry<IMachineRuntime> one = where == null ? null : where.sigma().byId(id(arguments));
                 if (one != null) {
                     lines.items().addAll(one.process().console());
                 }
@@ -100,8 +100,8 @@ public final class HostProgram {
                 args.add(String.valueOf(each));
             }
         }
-        final String priority = arguments.size() > 2 && arguments.get(2) != null
-                ? String.valueOf(arguments.get(2)).toLowerCase(Locale.ROOT) : DEFAULT_PRIORITY;
+        final ProgramPriority priority = ProgramPriority.named(arguments.size() > 2 && arguments.get(2) != null
+                ? String.valueOf(arguments.get(2)) : null);
         final int dot = path.lastIndexOf('.');
         final String extension = dot < 0 ? "" : path.substring(dot + 1).toLowerCase(Locale.ROOT);
         if (dev.jstech.core.JsCore.languages().runnerOf(extension) == null) {
@@ -119,8 +119,9 @@ public final class HostProgram {
         }
         final int slash = Math.max(path.lastIndexOf('\\'), path.lastIndexOf('/'));
         final String name = slash < 0 ? path : path.substring(slash + 1);
+        final IProgramParent starter = parent > 0 ? new IProgramParent.Local(parent) : IProgramParent.NONE;
         final MachinePrograms.Started started =
-                machine.sigma().start(name, read.message(), room, machine, args, parent, priority);
+                machine.sigma().start(name, read.message(), room, machine, args, starter, priority);
         if (!started.ok()) {
             throw new Halt(Halt.Reason.CANNOT_START, line, started.message());
         }
@@ -130,7 +131,7 @@ public final class HostProgram {
     }
 
     private static boolean running(final AbstractComputerBlockEntity machine, final int id) {
-        final MachinePrograms.Live one = machine.sigma().byId(id);
+        final ProgramEntry<IMachineRuntime> one = machine.sigma().byId(id);
         if (one == null) {
             return false;
         }
@@ -140,14 +141,8 @@ public final class HostProgram {
     }
 
     private static int exitCode(final AbstractComputerBlockEntity machine, final int id) {
-        final MachinePrograms.Live one = machine.sigma().byId(id);
-        if (one == null) {
-            return 0;
-        }
-        if (one.process() instanceof SigmaProgram sigma) {
-            return sigma.process().exitCode();
-        }
-        return one.process().state() == ILanguageProcess.State.HALTED ? 1 : 0;
+        final ProgramEntry<IMachineRuntime> one = machine.sigma().byId(id);
+        return one == null ? 0 : one.process().exitCode();
     }
 
     private static int id(final List<Object> arguments) {

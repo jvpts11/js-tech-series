@@ -15,12 +15,14 @@ import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IHost;
+import dev.jstech.computers.vm.program.IProgramParent;
+import dev.jstech.computers.vm.program.ProgramEntry;
+import dev.jstech.computers.vm.program.ProgramPriority;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.vm.system.SigmaCosts;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Another computer on the network, as a running program reaches it.
@@ -82,7 +84,7 @@ public final class HostRemote {
             case "Processes" -> {
                 final Values.ListValue all = new Values.ListValue();
                 if (remote.machine() instanceof AbstractComputerBlockEntity machine) {
-                    for (final MachinePrograms.Live one : machine.sigma().all()) {
+                    for (final ProgramEntry<IMachineRuntime> one : machine.sigma().all()) {
                         all.items().add(handle(one.id(), one.file(), host));
                     }
                 }
@@ -103,18 +105,17 @@ public final class HostRemote {
 
     /**
      * The asking program as the other machine will know it, so that what it starts there is kept for it
-     * to read; null for a caller that is not a numbered program on a computer.
+     * to read; none for a caller that is not a numbered program on a computer of the network.
      */
-    @Nullable
-    private static MachinePrograms.RemoteParent parentOf(final ServerCliComputer caller, final int callerId) {
+    private static IProgramParent parentOf(final ServerCliComputer caller, final int callerId) {
         return callerId > 0 && caller.machine() instanceof AbstractComputerBlockEntity machine
-                ? new MachinePrograms.RemoteParent(machine.getBlockPos(), machine.nodeUuid(), callerId)
-                : null;
+                && machine.nodeUuid() != null
+                ? new IProgramParent.Remote(machine.getBlockPos().asLong(), machine.nodeUuid().value(), callerId)
+                : IProgramParent.NONE;
     }
 
     /** Starts a compiled program from the other machine's disks, on that machine, as the prompt would. */
-    private static Values.Obj start(@Nullable final MachinePrograms.RemoteParent parent,
-                                    final ServerCliComputer remote, final String host,
+    private static Values.Obj start(final IProgramParent parent, final ServerCliComputer remote, final String host,
                                     final List<Object> arguments, final int line) {
         if (!(remote.machine() instanceof AbstractComputerBlockEntity machine)) {
             throw new Halt(Halt.Reason.CANNOT_START, line, host + " cannot run programs");
@@ -126,8 +127,8 @@ public final class HostRemote {
                 args.add(String.valueOf(each));
             }
         }
-        final String priority = arguments.size() > 3 && arguments.get(3) != null
-                ? String.valueOf(arguments.get(3)).toLowerCase(Locale.ROOT) : MachinePrograms.DEFAULT_PRIORITY;
+        final ProgramPriority priority = ProgramPriority.named(arguments.size() > 3 && arguments.get(3) != null
+                ? String.valueOf(arguments.get(3)) : null);
         final int dot = path.lastIndexOf('.');
         final String extension = dot < 0 ? "" : path.substring(dot + 1).toLowerCase(Locale.ROOT);
         if (dev.jstech.core.JsCore.languages().runnerOf(extension) == null) {
@@ -145,9 +146,8 @@ public final class HostRemote {
         }
         final int slash = Math.max(path.lastIndexOf('\\'), path.lastIndexOf('/'));
         final String name = slash < 0 ? path : path.substring(slash + 1);
-        final MachinePrograms.Started started = parent == null
-                ? machine.sigma().start(name, read.message(), room, machine, args, 0, priority)
-                : machine.sigma().startFor(parent, name, read.message(), room, machine, args, priority);
+        final MachinePrograms.Started started =
+                machine.sigma().start(name, read.message(), room, machine, args, parent, priority);
         if (!started.ok()) {
             throw new Halt(Halt.Reason.CANNOT_START, line, host + ": " + started.message());
         }
