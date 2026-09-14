@@ -13,6 +13,7 @@ import dev.jstech.computers.vm.program.ProgramPriority;
 import dev.jstech.computers.vm.program.ProgramTable;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.core.JsCore;
+import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.language.ILanguageProcess;
 import dev.jstech.core.language.IProgrammingLanguage;
 import java.util.ArrayList;
@@ -420,9 +421,6 @@ public final class MachinePrograms {
 
     // what the machine is worth
 
-    /** The fewest instructions a tick, so even the oldest processor that can run this gets somewhere. */
-    public static final int LEAST_PER_TICK = 32;
-
     /**
      * What a machine's processors are worth in a tick, given their cores times their megahertz added up.
      *
@@ -435,6 +433,8 @@ public final class MachinePrograms {
         if (coreMegahertz <= 0) {
             return 0;
         }
-        return (int) Math.min(Integer.MAX_VALUE, Math.max(coreMegahertz / 8, LEAST_PER_TICK));
+        return (int) Math.min(Integer.MAX_VALUE,
+                Math.max(coreMegahertz / ExecutionBalance.MEGAHERTZ_PER_INSTRUCTION,
+                        ExecutionBalance.LEAST_INSTRUCTIONS_PER_TICK));
     }
 }

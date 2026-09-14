@@ -20,6 +20,7 @@ import dev.jstech.computers.machine.ServerTickDeadline;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramConsole;
 import dev.jstech.computers.vm.program.ProgramPriority;
+import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.language.ILanguageProcess;
 import dev.jstech.tests.JsTests;
 import java.util.List;
@@ -412,7 +413,7 @@ public final class SigmaProcessGameTests {
     @GameTest(template = ARENA)
     public static void programs_creditsFollowTheClockWithNoCeiling(final GameTestHelper helper) {
         helper.assertTrue(MachinePrograms.creditsFor(0) == 0, "no processor is worth nothing");
-        helper.assertTrue(MachinePrograms.creditsFor(100) == MachinePrograms.LEAST_PER_TICK,
+        helper.assertTrue(MachinePrograms.creditsFor(100) == ExecutionBalance.LEAST_INSTRUCTIONS_PER_TICK,
                 "the slowest machine still moves; got " + MachinePrograms.creditsFor(100));
         helper.assertTrue(MachinePrograms.creditsFor(700) == 87,
                 "an early one follows its clock; got " + MachinePrograms.creditsFor(700));
