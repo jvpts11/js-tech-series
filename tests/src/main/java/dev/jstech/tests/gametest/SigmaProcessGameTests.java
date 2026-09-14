@@ -315,6 +315,26 @@ public final class SigmaProcessGameTests {
     }
 
     @GameTest(template = ARENA)
+    public static void send_turnsAwayALineForAProgramThatHasReturned(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2));
+        if (computer == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final MachinePrograms programs = computer.programs();
+                    final int id = programs.start("hello.asm", listing(HELLO), 1, computer).id();
+                    programs.hold(id);
+                    programs.tick(512);
+                    helper.assertTrue(only(programs).state() == ILanguageProcess.State.FINISHED,
+                            "it has returned, and the terminal still lists it");
+                    helper.assertTrue(!programs.send(0, id, "anyone there?", helper.getLevel().getGameTime()),
+                            "a line sent to it is turned away, since nothing will ever read it");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
     public static void programs_handTheTerminalEachLineOnceAndOnlyOnce(final GameTestHelper helper) {
         final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2));
         if (computer == null) {

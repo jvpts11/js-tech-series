@@ -121,6 +121,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A machine fed a gas or a fluid through the network, such as a Purification Chamber burning oxygen, no longer
   stalls on the last lot of a request when it uses a little more than its pattern says, and no longer settles that
   request as partial: when it runs dry while the request is short, the network gives it another lot's worth.
+- `Program.Send` answers false for a program that has already returned. It used to answer true while the
+  program was still listed for its terminal or its parent to read, though nothing ever read the line.
 
 ## [0.3.0a] - 2026-09-13 - The Programming Update
 

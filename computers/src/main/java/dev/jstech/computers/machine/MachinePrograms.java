@@ -242,15 +242,12 @@ public final class MachinePrograms {
      * Hands a line from one program to another on this machine.
      *
      * <p>True when the other program is there to take it, whether or not it does anything with it; a
-     * program that has stopped, or was never here, is not there, and one with too many calls already
-     * waiting cannot take it.
+     * program that has returned or stopped, or was never here, is not there even while it stays listed for its
+     * terminal or its parent to read, and one with too many calls already waiting cannot take it.
      */
     public boolean send(final int from, final int to, final String text, final long tick) {
         final ProgramEntry<IMachineRuntime> target = this.byId(to);
-        if (target == null || target.process().state() == ILanguageProcess.State.HALTED) {
-            return false;
-        }
-        return target.process().deliverMessage(from, text, tick);
+        return target != null && running(target.process()) && target.process().deliverMessage(from, text, tick);
     }
 
     /**
