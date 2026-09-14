@@ -1152,12 +1152,11 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     public long networkStock(final String item) {
         if (this instanceof dev.jstech.computers.terminal.IComputerTerminalHost terminal
                 && level instanceof ServerLevel server) {
-            long sum = 0;
-            for (final var holding
-                    : new dev.jstech.computers.program.ServerCliComputer(terminal, server).find(item)) {
-                sum += holding.quantity();
-            }
-            return sum;
+            final NetworkUuid net = terminal.networkUuid();
+            final StorageKey key = dev.jstech.computers.program.ServerCliComputer.itemKey(item);
+            // One total across the network's stores: nothing is built for a number that is only added up.
+            return net == null || key == null ? 0L
+                    : dev.jstech.computers.operation.NetworkStorage.of(server, net).count(key);
         }
         return 0L;
     }

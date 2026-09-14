@@ -1283,12 +1283,17 @@ public final class ServerCliComputer implements ICliComputer {
                 .orElse(null);
     }
 
-    private StorageKey resolveKey(final String name) {
+    /** The storage key an item name stands for, as the shell reads names, or null for one it does not know. */
+    public static StorageKey itemKey(final String name) {
+        return resolveKey(name);
+    }
+
+    private static StorageKey resolveKey(final String name) {
         final Item item = resolveItem(name);
         return item == null ? null : StorageKey.of(item);
     }
 
-    private Item resolveItem(final String name) {
+    private static Item resolveItem(final String name) {
         if (name == null || name.isBlank()) {
             return null;
         }
