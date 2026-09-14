@@ -79,6 +79,8 @@ public final class Process {
     private static final int DEEPEST = 1_024;
 
     private final ProgramImage program;
+    /** What two values being the same means, which needs the program's own types to tell a struct from a class. */
+    private final ValueSemantics values;
     private final Heap heap;
     private final Library library;
     /** The process's threads, whose turn it is, and which of the waiting ones may run again. */
@@ -165,6 +167,7 @@ public final class Process {
 
     private Process(final ProgramImage program, final long heapBytes, final IHost host, final boolean fresh) {
         this.program = program;
+        this.values = new ValueSemantics(program);
         this.heap = new Heap(heapBytes);
         this.library = new Library(this.heap, host, program.entryPoint());
         this.library.serves(this);
@@ -1560,8 +1563,8 @@ public final class Process {
             case CONV_R8 -> frame.push(Numbers.toDouble(frame.pop()));
             case CEQ, CLT, CGT -> this.compare(frame, instruction.opcode());
             case BR -> frame.at = frame.method.jump(line - 1);
-            case BRTRUE -> this.jumpIf(frame, line, truth(frame.pop()));
-            case BRFALSE -> this.jumpIf(frame, line, !truth(frame.pop()));
+            case BRTRUE -> this.jumpIf(frame, line, ValueSemantics.truth(frame.pop()));
+            case BRFALSE -> this.jumpIf(frame, line, !ValueSemantics.truth(frame.pop()));
             case BEQ, BNE, BLT, BLE, BGT, BGE -> this.jumpCompare(frame, instruction.opcode(), line);
             case NEWOBJ -> this.newObject(frame, frame.method.creation(line - 1), line);
             case NEWARR -> this.newArray(frame, (IOperand.Type) instruction.operand(), line);
@@ -1594,8 +1597,8 @@ public final class Process {
         final Object right = frame.pop();
         final Object left = frame.pop();
         final boolean go = switch (opcode) {
-            case BEQ -> same(left, right);
-            case BNE -> !same(left, right);
+            case BEQ -> this.values.same(left, right);
+            case BNE -> !this.values.same(left, right);
             case BLT -> Numbers.compare(left, right) < 0;
             case BLE -> Numbers.compare(left, right) <= 0;
             case BGT -> Numbers.compare(left, right) > 0;
@@ -1608,7 +1611,7 @@ public final class Process {
         final Object right = frame.pop();
         final Object left = frame.pop();
         frame.push(switch (opcode) {
-            case CEQ -> this.same(left, right);
+            case CEQ -> this.values.same(left, right);
             case CLT -> Numbers.compare(left, right) < 0;
             default -> Numbers.compare(left, right) > 0;
         });
@@ -2069,58 +2072,5 @@ public final class Process {
 
     private String text(final String value, final int line) {
         return this.heap.text(value, line);
-    }
-
-    /**
-     * Whether a value counts as true where a branch asks.
-     *
-     * <p>The assembly has no constant for a bool: true and false are written as a one and a zero, so
-     * a number stands for a bool wherever one was meant, and zero is the false one.
-     */
-    private static boolean truth(final Object value) {
-        if (value instanceof Boolean flag) {
-            return flag;
-        }
-        if (value instanceof Number number) {
-            return number.longValue() != 0;
-        }
-        return value != null;
-    }
-
-    /*
-     * Two values are the same when they say the same thing, which for a bool and the number that
-     * stands for it means comparing what they both mean rather than what they are. Two structs or two
-     * records are the same when everything they hold is, field by field, however far down that goes.
-     */
-    private boolean same(final Object left, final Object right) {
-        if (left == null || right == null) {
-            return left == right;
-        }
-        if (left instanceof Boolean || right instanceof Boolean) {
-            return truth(left) == truth(right);
-        }
-        if (left instanceof String || right instanceof String) {
-            return left.equals(right);
-        }
-        if (left instanceof Values.Obj one && right instanceof Values.Obj other && one.type().equals(other.type())) {
-            final TypeImage kind = this.program.type(one.type());
-            if (kind != null && kind.kind().byValue()) {
-                final Map<String, Object> mine = one.all();
-                final Map<String, Object> theirs = other.all();
-                if (!mine.keySet().equals(theirs.keySet())) {
-                    return false;
-                }
-                for (final Map.Entry<String, Object> field : mine.entrySet()) {
-                    if (!this.same(field.getValue(), theirs.get(field.getKey()))) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        }
-        if (left instanceof Number && right instanceof Number) {
-            return Numbers.compare(left, right) == 0;
-        }
-        return left.equals(right);
     }
 }

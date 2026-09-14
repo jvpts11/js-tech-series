@@ -54,6 +54,11 @@ public final class Values {
             return new LinkedHashMap<>(this.fields);
         }
 
+        /** The fields where they are, for the runtime's own reading without a copy; nothing is changed through it. */
+        Map<String, Object> fields() {
+            return this.fields;
+        }
+
         @Override
         public String toString() {
             return this.type;
