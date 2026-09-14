@@ -12,12 +12,10 @@ import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Instruction;
 import dev.jstech.computers.vm.listing.Opcode;
 import dev.jstech.computers.vm.listing.Shape;
-import dev.jstech.computers.vm.system.IntrinsicSpec;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,9 +73,6 @@ public final class Process {
     /** What an event handed to a handler holds before its text: a header and its three fields. */
     private static final long EVENT_BYTES = Heap.HEADER + 3L * Heap.REFERENCE;
 
-    /** The most calls one thread may have in progress at once; one call more halts the program. */
-    private static final int DEEPEST = 1_024;
-
     private final ProgramImage program;
     /** What two values being the same means, which needs the program's own types to tell a struct from a class. */
     private final ValueSemantics values;
@@ -118,6 +113,8 @@ public final class Process {
     private final CallbackQueue waiting = new CallbackQueue();
     /** An object's fields and the fields each type keeps for itself. */
     private final FieldAccess fieldAccess;
+    /** Calls to the program's methods, to the system and through delegates, and coming back from them. */
+    private final CallDispatch calls;
     private Values.Obj script;
     private final ProgramIdentity identity = new ProgramIdentity();
     /** Who the program tells when something is said to it, and the Gateway it chose to reach through. */
@@ -176,6 +173,7 @@ public final class Process {
         this.library = new Library(this.heap, host, program.entryPoint());
         this.library.serves(this);
         this.fieldAccess = new FieldAccess(this, this.heap, this.library, program);
+        this.calls = new CallDispatch(this, this.heap, this.library, program);
         if (!fresh) {
             return;
         }
@@ -380,15 +378,15 @@ public final class Process {
     }
 
     /** The calls on {@code Program} the process answers itself: the ones about this very program. */
-    private boolean programCall(final Frame frame, final IOperand.Method named, final int line) {
+    boolean programCall(final Frame frame, final IOperand.Method named, final int line) {
         switch (named.name()) {
             case "Exit" -> {
-                final List<Object> arguments = this.take(frame, named.parameters());
+                final List<Object> arguments = CallDispatch.take(frame, named.parameters());
                 this.exit(arguments.isEmpty() ? 0 : Numbers.toInt(arguments.getFirst()));
                 return true;
             }
             case "OnMessage" -> {
-                final List<Object> arguments = this.take(frame, named.parameters());
+                final List<Object> arguments = CallDispatch.take(frame, named.parameters());
                 this.listeners.hearMessages(arguments.isEmpty()
                         || !(arguments.getFirst() instanceof Values.DelegateValue handler) ? null : handler);
                 return true;
@@ -403,19 +401,19 @@ public final class Process {
      * The calls on a {@code Process}: waiting is the process's own business, the rest is the machine's,
      * asked under {@code Program} with the other program's number.
      */
-    private void processCall(final Frame frame, final IOperand.Method named, final int line) {
+    void processCall(final Frame frame, final IOperand.Method named, final int line) {
         switch (named.name()) {
             case "Wait" -> this.waitFor(frame, named, line);
             case "Send" -> {
-                final List<Object> arguments = this.take(frame, named.parameters());
-                this.push(frame, named, this.library.call(new IOperand.Method("Program", "Send",
+                final List<Object> arguments = CallDispatch.take(frame, named.parameters());
+                CallDispatch.push(frame, named,this.library.call(new IOperand.Method("Program", "Send",
                         named.parameters(), named.returns()), null, arguments, line));
             }
             case "Kill", "Output" -> {
-                this.take(frame, named.parameters());
+                CallDispatch.take(frame, named.parameters());
                 final Object token = frame.pop();
                 final Integer id = this.processId(token, line);
-                this.push(frame, named, this.library.call(new IOperand.Method("Program", named.name(),
+                CallDispatch.push(frame, named,this.library.call(new IOperand.Method("Program", named.name(),
                         List.of("int", "string"), named.returns()), null,
                         Library.whereabouts(id, processHost(token)), line));
             }
@@ -446,7 +444,7 @@ public final class Process {
         // Read before the test, so it is forgotten whenever the call answers, as it always was.
         final boolean gaveUp = this.current.takeGaveUp();
         if (over || gaveUp || (count == 1 && ticks <= 0)) {
-            this.take(frame, named.parameters());
+            CallDispatch.take(frame, named.parameters());
             frame.pop();
             if (count == 1) {
                 frame.push(over);
@@ -774,7 +772,7 @@ public final class Process {
         }
         final List<Object> handed = arguments.get();
         for (final Frame call : calls) {
-            fill(call, handed);
+            CallDispatch.fill(call, handed);
             this.waiting.add(call, bytes);
         }
         return true;
@@ -973,25 +971,25 @@ public final class Process {
     }
 
     /** Answers a call on {@code Thread}, which is the process's own business rather than the library's. */
-    private void threadCall(final Frame frame, final IOperand.Method named, final int line) {
+    void threadCall(final Frame frame, final IOperand.Method named, final int line) {
         switch (named.name()) {
             case "Start" -> {
-                final List<Object> arguments = this.take(frame, named.parameters());
+                final List<Object> arguments = CallDispatch.take(frame, named.parameters());
                 frame.push(this.spawn(arguments.isEmpty() ? null : arguments.getFirst(), line));
             }
             case "Sleep" -> {
-                final long ticks = Numbers.toLong(this.take(frame, named.parameters()).getFirst());
+                final long ticks = Numbers.toLong(CallDispatch.take(frame, named.parameters()).getFirst());
                 if (ticks > 0) {
                     this.scheduler.await(this.current, new IWait.Sleep(this.library.now() + ticks));
                 }
             }
             case "Yield" -> {
-                this.take(frame, named.parameters());
+                CallDispatch.take(frame, named.parameters());
                 this.current.yielded = true;
             }
             case "Join" -> this.join(frame, named, line);
             case "Stop" -> {
-                this.take(frame, named.parameters());
+                CallDispatch.take(frame, named.parameters());
                 final ProgramThread target = this.thread(this.threadId(frame.pop(), line));
                 if (target == this.main) {
                     this.main.frames.clear();
@@ -1027,7 +1025,7 @@ public final class Process {
         // Read before the test, so it is forgotten whenever the call answers, as it always was.
         final boolean gaveUp = this.current.takeGaveUp();
         if (over || gaveUp || (count == 1 && ticks <= 0)) {
-            this.take(frame, named.parameters());
+            CallDispatch.take(frame, named.parameters());
             frame.pop();
             if (count == 1) {
                 frame.push(over);
@@ -1532,7 +1530,7 @@ public final class Process {
     private void one() {
         final Frame frame = this.current.frames.peek();
         if (frame.at >= frame.method.length()) {
-            this.leave(frame, null);
+            this.calls.leave(frame, null);
             return;
         }
         final Instruction instruction = frame.method.instruction(frame.at);
@@ -1583,12 +1581,12 @@ public final class Process {
                     ((IOperand.Type) instruction.operand()).name(), line));
             case ISINST -> frame.push(this.types.isInstance(frame.pop(),
                     ((IOperand.Type) instruction.operand()).name()));
-            case LDFN -> this.handler(frame, (IOperand.Method) instruction.operand(), line);
-            case CALL, CALLVIRT -> this.call(frame, frame.method.call(line - 1),
+            case LDFN -> this.calls.handler(frame, (IOperand.Method) instruction.operand(), line);
+            case CALL, CALLVIRT -> this.calls.call(frame, frame.method.call(line - 1),
                     instruction.opcode() == Opcode.CALLVIRT, line);
             case SYS -> throw new Halt(Halt.Reason.NO_NETWORK, line,
                     "this computer is not on a network");
-            case RET -> this.leave(frame, frame.method.gives() ? frame.pop() : null);
+            case RET -> this.calls.leave(frame, frame.method.gives() ? frame.pop() : null);
             default -> { }
         }
     }
@@ -1633,7 +1631,7 @@ public final class Process {
     // objects
 
     private void newObject(final Frame frame, final ProgramImage.Creation creation, final int line) {
-        final List<Object> arguments = this.take(frame, creation.outs());
+        final List<Object> arguments = CallDispatch.take(frame, creation.outs());
         frame.push(creation.type() == null
                 ? this.library.create(creation.made().owner(), arguments, line)
                 : this.instance(creation.type(), creation.constructor(), arguments, line));
@@ -1672,7 +1670,7 @@ public final class Process {
         final Values.Obj made = new Values.Obj(type.name());
         this.heap.allocate(made, type.instanceSize(), line);
         if (constructor != null) {
-            this.enter(constructor, made, arguments, line);
+            this.calls.enter(constructor, made, arguments, line);
         }
         return made;
     }
@@ -1703,231 +1701,6 @@ public final class Process {
             return array;
         }
         throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no array here");
-    }
-
-    // calls
-
-    private void handler(final Frame frame, final IOperand.Method method, final int line) {
-        final Object target = frame.pop();
-        final Values.Bound bound = new Values.Bound(target, method.owner(), method.name(),
-                method.parameters(), method.returns());
-        final Values.DelegateValue made = new Values.DelegateValue(method.owner(), List.of(bound));
-        this.heap.allocate(made, made.bytes(), line);
-        frame.push(made);
-    }
-
-    /**
-     * Puts a question to a computer on the other side of a Gateway and waits for its answer.
-     *
-     * <p>Nothing comes off the stack while the question is out: the instruction is rewound, so when the
-     * answer lands the call simply runs again, finds it, and takes its arguments off then. That is what
-     * makes the wait free (a parked thread is given no budget) and what makes it survive a save.
-     */
-    private void call(final Frame frame, final ProgramImage.CallSite site, final boolean through, final int line) {
-        final IOperand.Method named = site.named();
-        if (through) {
-            this.invoke(frame, this.take(frame, site.outs()), line);
-            return;
-        }
-        final MethodImage direct = site.direct();
-        if (direct == null) {
-            if (site.intrinsic() != null) {
-                this.answer(frame, site, line);
-                return;
-            }
-            if ("Thread".equals(named.owner())) {
-                this.threadCall(frame, named, line);
-                return;
-            }
-            if ("Program".equals(named.owner()) && this.programCall(frame, named, line)) {
-                return;
-            }
-            if ("Process".equals(named.owner())) {
-                this.processCall(frame, named, line);
-                return;
-            }
-            if (Library.readsLine(named) && !this.input.has()) {
-                /*
-                 * Nothing has been typed: the call is put back so it is asked again once a line comes,
-                 * and the thread waits without spending anything. The read takes nothing off the
-                 * stack, which is what makes asking it again the same as asking it once.
-                 */
-                frame.at--;
-                this.park();
-                return;
-            }
-            final List<Object> arguments = this.take(frame, site.outs());
-            final Object self = this.library.takesTarget(named.owner(), named.name())
-                    ? this.heap.alive(frame.pop(), line) : null;
-            this.push(frame, named, this.library.call(named, self, arguments, line));
-            return;
-        }
-        final List<Object> arguments = this.take(frame, site.outs());
-        final Object self = direct.isStatic() ? null : this.heap.alive(frame.pop(), line);
-        this.enter(this.onItsOwnType(site, self), self, arguments, line);
-    }
-
-    /**
-     * Answers a call the system takes in Java: the arguments come off the stack, then the object the call is made on
-     * when it is made on one, and the answer goes back on followed by whatever the call filled in.
-     */
-    private void answer(final Frame frame, final ProgramImage.CallSite site, final int line) {
-        final IntrinsicSpec intrinsic = site.intrinsic();
-        final boolean[] outs = site.outs();
-        final Object[] arguments = takeArray(frame, outs);
-        final Object target = intrinsic.onTarget() ? this.heap.alive(frame.pop(), line) : null;
-        final Object answer = intrinsic.function().call(this.heap, target, arguments, line);
-        if (site.gives()) {
-            frame.push(answer);
-        }
-        for (int i = 0; i < outs.length; i++) {
-            if (outs[i]) {
-                frame.push(arguments[i] == null ? site.defaults()[i] : arguments[i]);
-            }
-        }
-    }
-
-    /*
-     * A call through an interface names the interface, but the object knows which class it is, and
-     * that is the one whose lines should run.
-     */
-    private MethodImage onItsOwnType(final ProgramImage.CallSite site, final Object self) {
-        // A constructor runs on the type it names: a class chaining to its base must not land in one of its own.
-        if (site.constructs() || !(self instanceof Values.Obj object) || object.type().equals(site.named().owner())) {
-            return site.direct();
-        }
-        final TypeImage own = this.program.type(object.type());
-        final MethodImage found = own == null ? null : own.method(site.signature());
-        return found != null && found.hasCode() ? found : site.direct();
-    }
-
-    /**
-     * Calls what a delegate holds.
-     *
-     * <p>A delegate can hold a run of handlers, and all of them are called, in the order they were
-     * joined. They are stacked up rather than run one after another on the spot, so a run of a
-     * hundred handlers costs the budget the same as a hundred calls written out and cannot take the
-     * tick away from anything else. Only the last of them leaves an answer, which is what the caller
-     * is waiting for.
-     */
-    private void invoke(final Frame frame, final List<Object> arguments, final int line) {
-        final Object value = this.heap.alive(frame.pop(), line);
-        if (!(value instanceof Values.DelegateValue delegate) || delegate.chain().isEmpty()) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no handler to call");
-        }
-        final List<Values.Bound> chain = delegate.chain();
-        for (int i = chain.size() - 1; i >= 0; i--) {
-            final Values.Bound bound = chain.get(i);
-            final MethodImage method =
-                    this.program.method(bound.owner(), bound.method(), bound.parameters());
-            if (method == null || !method.hasCode()) {
-                if (i == chain.size() - 1) {
-                    throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line,
-                            "there is no " + bound.method() + " to call");
-                }
-                continue;
-            }
-            final Frame made = new Frame(method, bound.target());
-            fill(made, arguments);
-            made.discard = i < chain.size() - 1;
-            this.pushCall(made, line);
-        }
-    }
-
-    private void enter(final MethodImage method, final Object self, final List<Object> arguments,
-                       final int line) {
-        if (!method.hasCode()) {
-            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, method.describe() + " has no body to run");
-        }
-        final Frame frame = new Frame(method, self);
-        fill(frame, arguments);
-        this.pushCall(frame, line);
-    }
-
-    /**
-     * Starts a call the running thread makes, unless its calls already go as deep as a thread's may.
-     *
-     * <p>A method that calls itself without end would otherwise keep adding calls, each held in the server's
-     * memory, for as long as the program runs; no program that ends is anywhere near this deep.
-     */
-    private void pushCall(final Frame frame, final int line) {
-        if (this.current.frames.size() >= DEEPEST) {
-            throw new Halt(Halt.Reason.STACK_DEPTH, line, "calls went " + DEEPEST + " deep calling "
-                    + frame.method.describe() + ": a method may be calling itself without end");
-        }
-        this.current.frames.push(frame);
-    }
-
-    private static void fill(final Frame frame, final List<Object> arguments) {
-        for (int i = 0; i < arguments.size() && i < frame.slots.length; i++) {
-            frame.slots[i] = arguments.get(i);
-        }
-    }
-
-    /**
-     * Leaves a method, putting back what it gives and then what it filled in, the last of those on
-     * top, which is the order the caller stores them in.
-     */
-    private void leave(final Frame frame, final Object answer) {
-        final Deque<Frame> frames = this.current.frames;
-        frames.pop();
-        if (frames.isEmpty()) {
-            return;
-        }
-        if (frame.discard) {
-            return;
-        }
-        final Frame caller = frames.peek();
-        if (frame.method.gives()) {
-            caller.push(answer);
-        }
-        for (int i = 0; i < frame.method.parameters().size(); i++) {
-            if (frame.method.fillsIn(i)) {
-                caller.push(frame.slots[i]);
-            }
-        }
-    }
-
-    private void push(final Frame frame, final IOperand.Method named, final Library.Answer answer) {
-        if (!"void".equals(named.returns())) {
-            frame.push(answer.value());
-        }
-        for (final Object filled : answer.filled()) {
-            frame.push(filled);
-        }
-    }
-
-    /**
-     * Takes the arguments off the stack. They were pushed in order, so they come off backwards, and
-     * they may be null, which is why the list is one that allows it.
-     *
-     * <p>A place the method fills in was never pushed: the caller hands over somewhere to write, not
-     * a value, so that place is left empty here and holds what the method put there when it returns.
-     */
-    private List<Object> take(final Frame frame, final List<String> parameters) {
-        final List<Object> taken = new ArrayList<>(java.util.Collections.nCopies(parameters.size(), null));
-        for (int i = parameters.size() - 1; i >= 0; i--) {
-            if (parameters.get(i).startsWith("out ")) {
-                continue;
-            }
-            taken.set(i, frame.pop());
-        }
-        return taken;
-    }
-
-    /** The same, for a call whose shape was worked out when the program loaded. */
-    private List<Object> take(final Frame frame, final boolean[] outs) {
-        return java.util.Arrays.asList(takeArray(frame, outs));
-    }
-
-    private static Object[] takeArray(final Frame frame, final boolean[] outs) {
-        final Object[] taken = new Object[outs.length];
-        for (int i = outs.length - 1; i >= 0; i--) {
-            if (!outs[i]) {
-                taken[i] = frame.pop();
-            }
-        }
-        return taken;
     }
 
     // odds and ends
