@@ -453,7 +453,7 @@ public final class Process {
             return;
         }
         frame.at--;
-        this.current.wait = new IWait.Child(id, host, ticks > 0 ? this.library.now() + ticks : 0L);
+        this.scheduler.await(this.current, new IWait.Child(id, host, ticks > 0 ? this.library.now() + ticks : 0L));
     }
 
     /**
@@ -682,7 +682,7 @@ public final class Process {
      * the rest of the program carries on without it.
      */
     public void park() {
-        this.current.wait = IWait.INPUT;
+        this.scheduler.await(this.current, IWait.INPUT);
     }
 
     /** Lets every thread waiting on a typed line have budget again. */
@@ -981,7 +981,7 @@ public final class Process {
             case "Sleep" -> {
                 final long ticks = Numbers.toLong(this.take(frame, named.parameters()).getFirst());
                 if (ticks > 0) {
-                    this.current.wait = new IWait.Sleep(this.library.now() + ticks);
+                    this.scheduler.await(this.current, new IWait.Sleep(this.library.now() + ticks));
                 }
             }
             case "Yield" -> {
@@ -1034,7 +1034,7 @@ public final class Process {
             return;
         }
         frame.at--;
-        this.current.wait = new IWait.Join(target.id, ticks > 0 ? this.library.now() + ticks : 0L);
+        this.scheduler.await(this.current, new IWait.Join(target.id, ticks > 0 ? this.library.now() + ticks : 0L));
     }
 
     // locks
@@ -1062,7 +1062,7 @@ public final class Process {
             return;
         }
         frame.at--;
-        this.current.wait = new IWait.Lock(target);
+        this.scheduler.await(this.current, new IWait.Lock(target));
     }
 
     private void exitMonitor(final Frame frame, final int line) {
@@ -1073,7 +1073,7 @@ public final class Process {
         }
         if (--held.count == 0) {
             this.monitors.remove(target);
-            this.wakeLocked(target);
+            this.scheduler.wakeLocked(target);
         }
     }
 
@@ -1084,13 +1084,9 @@ public final class Process {
             final Map.Entry<Object, Monitor> entry = each.next();
             if (entry.getValue().owner == owner) {
                 each.remove();
-                this.wakeLocked(entry.getKey());
+                this.scheduler.wakeLocked(entry.getKey());
             }
         }
-    }
-
-    private void wakeLocked(final Object target) {
-        this.scheduler.wakeLocked(target);
     }
 
     // watching the world

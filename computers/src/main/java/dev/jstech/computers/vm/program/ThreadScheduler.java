@@ -18,6 +18,12 @@ import java.util.function.Predicate;
  *
  * <p>The main thread is always there and is always number one. Running the instructions is the process's business;
  * this only chooses who runs.
+ *
+ * <p>A machine steps a program many times a tick, so looking over the waiting threads before every step would be paid
+ * many times over. It is not needed: a thread's end, a released lock and a typed line wake whoever waits on them the
+ * moment they happen. What only a look can find is a deadline passing and another program ending, so the look is
+ * taken when the tick reaches the earliest deadline, while a thread waits on another program, and once at the start,
+ * for waits a save brought back.
  */
 final class ThreadScheduler {
 
@@ -44,6 +50,10 @@ final class ThreadScheduler {
     private final List<ProgramThread> ready = new ArrayList<>();
     private int nextId = 2;
     private int turn;
+    /** The earliest tick a waiting thread's deadline falls on; the smallest long until the first look works it out. */
+    private long due = Long.MIN_VALUE;
+    /** Whether a thread waits on another program, whose end only asking the machine can tell. */
+    private boolean asking;
 
     ThreadScheduler() {
         this.threads.add(this.main);
@@ -123,14 +133,45 @@ final class ThreadScheduler {
         this.turn = first + 1;
     }
 
-    /** Lets every thread whose wait is over run again. */
+    /**
+     * Sets what a thread waits for. A wait with a deadline brings the next look forward to it; a wait on another
+     * program keeps the looks coming until it ends.
+     */
+    void await(final ProgramThread thread, final IWait wait) {
+        thread.wait = wait;
+        switch (wait) {
+            case IWait.Sleep sleep -> this.due = Math.min(this.due, sleep.until());
+            case IWait.Join join -> {
+                if (join.until() > 0) {
+                    this.due = Math.min(this.due, join.until());
+                }
+            }
+            case IWait.Child child -> this.asking = true;
+            case IWait.Lock lock -> { }
+            case IWait.Input typed -> { }
+            case IWait.None none -> { }
+        }
+    }
+
+    /**
+     * Lets every thread whose wait is over run again, when one may be: once the tick reaches the earliest deadline,
+     * while a thread waits on another program, and on the first look. Each look works out both again from the waits
+     * still standing, so a wait that ended by its own event only costs one look more at most.
+     */
     void wake(final IWorld world) {
         final long now = world.now();
+        if (!this.asking && now < this.due) {
+            return;
+        }
+        long next = Long.MAX_VALUE;
+        boolean children = false;
         for (final ProgramThread thread : this.threads) {
             switch (thread.wait) {
                 case IWait.Sleep sleep -> {
                     if (now >= sleep.until()) {
                         thread.wait = IWait.NONE;
+                    } else {
+                        next = Math.min(next, sleep.until());
                     }
                 }
                 case IWait.Join join -> {
@@ -139,6 +180,8 @@ final class ThreadScheduler {
                     } else if (join.until() > 0 && now >= join.until()) {
                         thread.wait = IWait.NONE;
                         thread.gaveUp();
+                    } else if (join.until() > 0) {
+                        next = Math.min(next, join.until());
                     }
                 }
                 case IWait.Lock lock -> {
@@ -152,6 +195,11 @@ final class ThreadScheduler {
                     } else if (child.until() > 0 && now >= child.until()) {
                         thread.wait = IWait.NONE;
                         thread.gaveUp();
+                    } else {
+                        children = true;
+                        if (child.until() > 0) {
+                            next = Math.min(next, child.until());
+                        }
                     }
                 }
                 case IWait.Input typed -> {
@@ -162,6 +210,8 @@ final class ThreadScheduler {
                 case IWait.None none -> { }
             }
         }
+        this.due = next;
+        this.asking = children;
     }
 
     /** Lets every thread waiting for the lock of {@code target} ask for it again. */

@@ -18,12 +18,13 @@ import org.junit.jupiter.api.Test;
 
 class ThreadSchedulerTest {
 
-    /** A world the test sets by hand. */
+    /** A world the test sets by hand, counting the questions waking asks of it. */
     private static final class World implements ThreadScheduler.IWorld {
         long now;
         boolean locked = true;
         boolean running = true;
         boolean typed;
+        int asked;
 
         @Override
         public long now() {
@@ -32,16 +33,19 @@ class ThreadSchedulerTest {
 
         @Override
         public boolean locked(final Object target) {
+            this.asked++;
             return this.locked;
         }
 
         @Override
         public boolean running(final int program, final String host) {
+            this.asked++;
             return this.running;
         }
 
         @Override
         public boolean typed() {
+            this.asked++;
             return this.typed;
         }
     }
@@ -76,8 +80,8 @@ class ThreadSchedulerTest {
         final ProgramThread other = scheduler.start();
         final ProgramThread joined = scheduler.start();
         final ProgramThread elsewhere = scheduler.start();
-        joined.wait = new IWait.Join(target.id, 0);
-        elsewhere.wait = new IWait.Join(other.id, 0);
+        scheduler.await(joined, new IWait.Join(target.id, 0));
+        scheduler.await(elsewhere, new IWait.Join(other.id, 0));
 
         scheduler.remove(target);
 
@@ -102,7 +106,7 @@ class ThreadSchedulerTest {
         final ThreadScheduler scheduler = new ThreadScheduler();
         final ProgramThread second = scheduler.start();
         final ProgramThread third = scheduler.start();
-        second.wait = IWait.INPUT;
+        scheduler.await(second, IWait.INPUT);
 
         assertEquals(List.of(scheduler.main(), third), scheduler.ready(thread -> !thread.waiting()));
     }
@@ -122,7 +126,7 @@ class ThreadSchedulerTest {
     void wake_endsASleepAtItsTickAndNotBefore() {
         final ThreadScheduler scheduler = new ThreadScheduler();
         final ProgramThread sleeper = scheduler.start();
-        sleeper.wait = new IWait.Sleep(10);
+        scheduler.await(sleeper, new IWait.Sleep(10));
         final World world = new World();
 
         world.now = 9;
@@ -138,7 +142,7 @@ class ThreadSchedulerTest {
         final ThreadScheduler scheduler = new ThreadScheduler();
         final ProgramThread target = scheduler.start();
         final ProgramThread joiner = scheduler.start();
-        joiner.wait = new IWait.Join(target.id, 5);
+        scheduler.await(joiner, new IWait.Join(target.id, 5));
         final World world = new World();
 
         world.now = 4;
@@ -155,7 +159,7 @@ class ThreadSchedulerTest {
     void wake_endsAJoinWhoseThreadIsGoneWithoutGivingUp() {
         final ThreadScheduler scheduler = new ThreadScheduler();
         final ProgramThread joiner = scheduler.start();
-        joiner.wait = new IWait.Join(42, 100);
+        scheduler.await(joiner, new IWait.Join(42, 100));
 
         scheduler.wake(new World());
 
@@ -164,26 +168,12 @@ class ThreadSchedulerTest {
     }
 
     @Test
-    void wake_endsALockWaitOnceNobodyHoldsTheLock() {
-        final ThreadScheduler scheduler = new ThreadScheduler();
-        final ProgramThread waiter = scheduler.start();
-        waiter.wait = new IWait.Lock(new Object());
-        final World world = new World();
-
-        scheduler.wake(world);
-        assertTrue(waiter.waiting());
-        world.locked = false;
-        scheduler.wake(world);
-        assertFalse(waiter.waiting());
-    }
-
-    @Test
     void wake_endsAWaitOnAProgramThatStoppedAndGivesUpOneThatOutlastsItsDeadline() {
         final ThreadScheduler scheduler = new ThreadScheduler();
         final ProgramThread patient = scheduler.start();
         final ProgramThread hurried = scheduler.start();
-        patient.wait = new IWait.Child(10, "", 0);
-        hurried.wait = new IWait.Child(11, "lab", 3);
+        scheduler.await(patient, new IWait.Child(10, "", 0));
+        scheduler.await(hurried, new IWait.Child(11, "lab", 3));
         final World world = new World();
 
         world.now = 3;
@@ -198,16 +188,79 @@ class ThreadSchedulerTest {
     }
 
     @Test
-    void wake_endsAReadOnceALineIsTyped() {
+    void wake_asksNothingUntilTheTickReachesTheEarliestDeadline() {
         final ThreadScheduler scheduler = new ThreadScheduler();
-        final ProgramThread reader = scheduler.start();
-        reader.wait = IWait.INPUT;
+        final ProgramThread sleeper = scheduler.start();
+        final ProgramThread locker = scheduler.start();
+        scheduler.await(sleeper, new IWait.Sleep(10));
+        scheduler.await(locker, new IWait.Lock(new Object()));
+        final World world = new World();
+        scheduler.wake(world);
+        final int firstLook = world.asked;
+
+        world.now = 5;
+        scheduler.wake(world);
+        scheduler.wake(world);
+        assertEquals(firstLook, world.asked, "nothing can be over before the deadline, so nothing is asked");
+        world.now = 10;
+        scheduler.wake(world);
+        assertTrue(world.asked > firstLook);
+        assertFalse(sleeper.waiting());
+    }
+
+    @Test
+    void wake_asksAboutAnotherProgramEveryTimeUntilItEnds() {
+        final ThreadScheduler scheduler = new ThreadScheduler();
+        final ProgramThread waiter = scheduler.start();
+        scheduler.await(waiter, new IWait.Child(10, "", 0));
         final World world = new World();
 
         scheduler.wake(world);
-        assertTrue(reader.waiting());
+        scheduler.wake(world);
+        assertEquals(2, world.asked);
+        world.running = false;
+        scheduler.wake(world);
+        assertFalse(waiter.waiting());
+        scheduler.wake(world);
+        assertEquals(3, world.asked, "once nobody waits on a program, the machine is not asked again");
+    }
+
+    @Test
+    void wake_seesOnItsFirstLookAWaitSetWithoutTheSchedulerAsARestoreDoes() {
+        final ThreadScheduler scheduler = new ThreadScheduler();
+        final ProgramThread locker = scheduler.start();
+        final ProgramThread reader = scheduler.start();
+        locker.wait = new IWait.Lock(new Object());
+        reader.wait = IWait.INPUT;
+        final World world = new World();
+        world.locked = false;
+        world.typed = true;
+
+        scheduler.wake(world);
+
+        assertFalse(locker.waiting(), "a lock nobody held when the world came back");
+        assertFalse(reader.waiting(), "a line typed before the save");
+    }
+
+    @Test
+    void wake_leavesALockOrAReadToItsOwnEventOnceItHasLooked() {
+        final ThreadScheduler scheduler = new ThreadScheduler();
+        final ProgramThread locker = scheduler.start();
+        final ProgramThread reader = scheduler.start();
+        final Object gate = new Object();
+        scheduler.await(locker, new IWait.Lock(gate));
+        scheduler.await(reader, IWait.INPUT);
+        final World world = new World();
+        scheduler.wake(world);
+
+        world.locked = false;
         world.typed = true;
         scheduler.wake(world);
+        assertTrue(locker.waiting());
+        assertTrue(reader.waiting());
+        scheduler.wakeLocked(gate);
+        scheduler.wakeReaders();
+        assertFalse(locker.waiting());
         assertFalse(reader.waiting());
     }
 
@@ -217,8 +270,8 @@ class ThreadSchedulerTest {
         final ProgramThread atGate = scheduler.start();
         final ProgramThread atDoor = scheduler.start();
         final Object gate = new Object();
-        atGate.wait = new IWait.Lock(gate);
-        atDoor.wait = new IWait.Lock(new Object());
+        scheduler.await(atGate, new IWait.Lock(gate));
+        scheduler.await(atDoor, new IWait.Lock(new Object()));
 
         scheduler.wakeLocked(gate);
 
@@ -232,9 +285,9 @@ class ThreadSchedulerTest {
         final ProgramThread first = scheduler.start();
         final ProgramThread second = scheduler.start();
         final ProgramThread sleeper = scheduler.start();
-        first.wait = IWait.INPUT;
-        second.wait = IWait.INPUT;
-        sleeper.wait = new IWait.Sleep(50);
+        scheduler.await(first, IWait.INPUT);
+        scheduler.await(second, IWait.INPUT);
+        scheduler.await(sleeper, new IWait.Sleep(50));
 
         assertTrue(scheduler.anyReader());
         scheduler.wakeReaders();
