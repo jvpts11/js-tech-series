@@ -11,12 +11,9 @@ import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Shape;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 /**
  * One running program.
@@ -66,9 +63,6 @@ public final class Process {
     /** What starting a thread costs beyond the call itself: a stack of its own is not a small thing. */
     private static final int START_COST = 49;
 
-    /** What an event handed to a handler holds before its text: a header and its three fields. */
-    private static final long EVENT_BYTES = Heap.HEADER + 3L * Heap.REFERENCE;
-
     private final ProgramImage program;
     private final Heap heap;
     private final Library library;
@@ -111,6 +105,8 @@ public final class Process {
     private final ObjectMaking objects;
     /** What each instruction does, carried out on the thread whose turn it is. */
     private final InstructionExecutor executor;
+    /** What the world says to the program, turned into calls waiting their turn. */
+    private final ProgramEvents events;
     private Values.Obj script;
     private final ProgramIdentity identity = new ProgramIdentity();
     /** Who the program tells when something is said to it, and the Gateway it chose to reach through. */
@@ -180,6 +176,10 @@ public final class Process {
         return this.input;
     }
 
+    ProgramEvents events() {
+        return this.events;
+    }
+
     /** Puts back the object the script runs on, for a process read out of a save. */
     void restoreScript(final Values.Obj restored) {
         this.script = restored;
@@ -212,6 +212,7 @@ public final class Process {
         this.objects = new ObjectMaking(this.heap, this.library, program, this.calls);
         this.executor = new InstructionExecutor(program, this.heap, this.scheduler, this.locks, this.fieldAccess,
                 this.calls, this.objects);
+        this.events = new ProgramEvents(this);
         if (!fresh) {
             return;
         }
@@ -314,35 +315,13 @@ public final class Process {
     }
 
     /** Who to tell when a ComputerCraft computer says something; null takes the listener away. */
-    public void hearGateway(@org.jetbrains.annotations.Nullable final Values.DelegateValue handler) {
+    public void hearGateway(final Values.DelegateValue handler) {
         this.listeners.hearGateway(handler);
     }
 
-    /**
-     * Hands the program what a ComputerCraft computer said through a Gateway.
-     *
-     * <p>It is queued for the handler the program gave {@code Gateway.OnMessage}, on the main thread, in
-     * its turn. A program that gave none does not hear it, and neither does one with too many calls
-     * already waiting to take it; false says so.
-     */
+    /** Hands the program what a ComputerCraft computer said through a Gateway; false when it was not heard. */
     public boolean deliverGatewayMessage(final int from, final String text, final long tick) {
-        final Values.DelegateValue handler = this.listeners.onGatewayMessage();
-        if (this.identity.over() || handler == null) {
-            return false;
-        }
-        final String said = text == null ? "" : text;
-        return this.offer(handler, EVENT_BYTES + Heap.sizeOfText(said),
-                () -> List.of(this.gatewayMessageOf(from, said, tick)));
-    }
-
-    /** What a Gateway message is as a value the program holds. */
-    private Values.Obj gatewayMessageOf(final int from, final String text, final long tick) {
-        final Values.Obj made = new Values.Obj("GatewayMessage");
-        made.set("From", (long) from);
-        made.set("Text", this.text(text == null ? "" : text, 0));
-        made.set("Tick", tick);
-        this.heap.allocate(made, EVENT_BYTES, 0);
-        return made;
+        return this.events.deliverGatewayMessage(from, text, tick);
     }
 
     /** Whether the program ended itself with {@code Program.Exit}. */
@@ -355,29 +334,9 @@ public final class Process {
         return this.identity.exitCode();
     }
 
-    /**
-     * Hands the process a line from another program.
-     *
-     * <p>It is queued for the handler the program gave {@code Program.OnMessage}, on the main thread,
-     * in its turn; a program that gave none simply does not hear it. False when the program is over, or
-     * when it has too many calls already waiting to take this one, so the sender knows it was not heard.
-     */
+    /** Hands the process a line from another program; false when the program is over or has no room for it. */
     public boolean deliverMessage(final int from, final String text, final long tick) {
-        if (this.identity.over()) {
-            return false;
-        }
-        final String said = text == null ? "" : text;
-        return this.offer(this.listeners.onMessage(), EVENT_BYTES + Heap.sizeOfText(said),
-                () -> List.of(this.messageOf(from, said, tick)));
-    }
-
-    private Values.Obj messageOf(final int from, final String text, final long tick) {
-        final Values.Obj made = new Values.Obj("ProcessMessage");
-        made.set("From", from);
-        made.set("Text", this.text(text == null ? "" : text, 0));
-        made.set("Tick", tick);
-        this.heap.allocate(made, EVENT_BYTES, 0);
-        return made;
+        return this.events.deliverMessage(from, text, tick);
     }
 
     /** Ends the program where it stands with that code: every thread stops and nothing is asked again. */
@@ -774,90 +733,11 @@ public final class Process {
     }
 
     /**
-     * Puts a handler in the queue, to run on the main thread when it next has nothing else to do.
-     *
-     * <p>Handlers run in the order they arrived, in the same slice as the work that was already
-     * there, out of the same budget. So a process that fires a great many of them does not get more
-     * of the tick than one that fires none. A delegate joined from several handlers queues each of
-     * them, in the order they were joined and with the same arguments, so every listener hears the
-     * event; one whose method cannot be found is passed over and the rest still run.
-     *
-     * <p>An event that finds no room for its calls, or for what their arguments hold, is dropped and
-     * counted, which is what false says: the widget or the watch behind it already holds the latest
-     * value, so the next handler that runs reads what is true now.
+     * Puts a handler in the queue, to run on the main thread when it next has nothing else to do; false when the event
+     * found no room and was dropped.
      */
     public boolean post(final Values.DelegateValue handler, final List<Object> arguments) {
-        if (this.offer(handler, this.weigh(arguments), () -> arguments)) {
-            return true;
-        }
-        this.waiting.drop();
-        return false;
-    }
-
-    /**
-     * Queues a handler's calls when there is room for them and for what their arguments hold, each call
-     * counted with all of them, and only then builds the arguments, so a call turned away leaves nothing
-     * behind on the heap. False when there was no room; a handler with nothing to call always fits.
-     */
-    private boolean offer(final Values.DelegateValue handler, final long bytes,
-                          final Supplier<List<Object>> arguments) {
-        final List<Frame> calls = this.callsOf(handler);
-        if (calls.isEmpty()) {
-            return true;
-        }
-        if (!this.waiting.fits(calls.size(), bytes * calls.size())) {
-            return false;
-        }
-        final List<Object> handed = arguments.get();
-        for (final Frame call : calls) {
-            CallDispatch.fill(call, handed);
-            this.waiting.add(call, bytes);
-        }
-        return true;
-    }
-
-    /** Puts a handler's calls ahead of everything waiting, in their own order; nothing turns these away. */
-    private void ahead(final Values.DelegateValue handler) {
-        final List<Frame> calls = this.callsOf(handler);
-        for (int i = calls.size() - 1; i >= 0; i--) {
-            this.waiting.addFirst(calls.get(i), 0);
-        }
-    }
-
-    /* One call for each method joined to the handler, in order, passing over any that cannot be found. */
-    private List<Frame> callsOf(final Values.DelegateValue handler) {
-        if (handler == null) {
-            return List.of();
-        }
-        final List<Frame> calls = new ArrayList<>(handler.chain().size());
-        for (final Values.Bound bound : handler.chain()) {
-            final MethodImage method =
-                    this.program.method(bound.owner(), bound.method(), bound.parameters());
-            if (method != null && method.hasCode()) {
-                calls.add(new Frame(method, bound.target()));
-            }
-        }
-        return calls;
-    }
-
-    /* What the arguments handed to a call hold on the heap: each one, and whatever its fields hold. */
-    private long weigh(final List<Object> arguments) {
-        long bytes = 0;
-        for (final Object argument : arguments) {
-            bytes += this.heap.bytesOf(argument);
-            if (argument instanceof Values.Obj object) {
-                for (final Object field : object.all().values()) {
-                    bytes += this.heap.bytesOf(field);
-                }
-            }
-        }
-        return bytes;
-    }
-
-    /* The same, for a call read back out of a save: what it was handed sits in the first slots of its frame. */
-    long weigh(final Frame call) {
-        final int handed = Math.min(call.method.parameters().size(), call.slots.length);
-        return this.weigh(Arrays.asList(call.slots).subList(0, handed));
+        return this.events.post(handler, arguments);
     }
 
     /** How many calls are still waiting their turn, handlers among them. */
@@ -900,54 +780,10 @@ public final class Process {
         return this.windows.of(id);
     }
 
-    /**
-     * Tells the program what a player did to one of its widgets.
-     *
-     * <p>What the widget holds is changed first, the way the player changed it (a box is ticked, a line
-     * is typed), and only then is the program's handler queued: a handler that reads the widget reads
-     * what the player sees. A widget with no handler still changes, and so does one whose handler finds
-     * no room among the calls waiting and is dropped. Closing a window always gets in, ahead of the rest.
-     */
+    /** Tells the program what a player did to one of its widgets; false when no part of the program heard it. */
     public boolean deliverUiEvent(final long window, final long widget, final String kind,
                                   final List<Object> values) {
-        if (this.identity.over()) {
-            return false;
-        }
-        final Values.Obj open = this.windowOf(window);
-        if (open == null) {
-            return false;
-        }
-        if ("close".equals(kind)) {
-            this.closeWindow(open);
-            this.ahead(handlerOf(open, "OnClose"));
-            /*
-             * Shutting the last window of a program is how a person ends it, as it is on any desktop. The
-             * program hears it first, and one that opens another window in its OnClose carries on.
-             */
-            this.windows.closedByPerson();
-            return true;
-        }
-        final Values.Obj found = UiWidgets.widgetOf(open, widget);
-        if (found == null || !Boolean.TRUE.equals(found.get(UiWidgets.ENABLED))
-                || !Boolean.TRUE.equals(found.get(UiWidgets.VISIBLE))) {
-            return false;
-        }
-        final String handler;
-        try {
-            handler = this.library.ui().accept(found, kind, values);
-        } catch (final Halt halt) {
-            this.halt(halt);
-            return false;
-        }
-        if (handler == null) {
-            return false;
-        }
-        this.post(handlerOf(found, handler), List.of());
-        return true;
-    }
-
-    private static Values.DelegateValue handlerOf(final Values.Obj widget, final String name) {
-        return widget.get(name) instanceof Values.DelegateValue handler ? handler : null;
+        return this.events.deliverUiEvent(window, widget, kind, values);
     }
 
     // threads
@@ -955,11 +791,6 @@ public final class Process {
     /** The thread of that number, or null once it is over. */
     private ProgramThread thread(final Object id) {
         return this.scheduler.thread(id);
-    }
-
-    /** The thread of that number. */
-    ProgramThread threadById(final Object id) {
-        return this.thread(id);
     }
 
     /**
@@ -1150,35 +981,12 @@ public final class Process {
      * dropped and counted; the watch already holds the new number, so the next one to fire reads it.
      */
     public void deliver(final Map<String, Long> totals) {
-        this.watches.deliver(totals, this.heap::isFreed, this::fired);
+        this.events.deliver(totals);
     }
 
-    private void fired(final ProgramWatches.Watch watch, final long before, final long now, final boolean first) {
-        if (!this.offer(watch.handler(), EVENT_BYTES,
-                () -> List.of(this.stockEvent(watch.item(), before, now, first)))) {
-            this.waiting.drop();
-        }
-    }
-
-    private Values.Obj stockEvent(final String item, final long before, final long now,
-                                  final boolean first) {
-        final Values.Obj made = new Values.Obj("StockEvent");
-        made.set("Item", item);
-        made.set("Total", now);
-        made.set("Previous", first ? now : before);
-        this.heap.allocate(made, EVENT_BYTES, 0);
-        return made;
-    }
-
+    /** The program's method of that name bound to {@code self}, as a handler, or null when its type has none. */
     public Values.DelegateValue handlerFor(final Values.Obj self, final String name) {
-        final TypeImage type = this.program.type(self.type());
-        for (final MethodImage method : type.methods().values()) {
-            if (method.name().equals(name)) {
-                return new Values.DelegateValue(self.type(), List.of(new Values.Bound(self,
-                        method.owner(), method.name(), method.parameters(), method.returns())));
-            }
-        }
-        return null;
+        return this.events.handlerFor(self, name);
     }
 
     // Starts the next call that was waiting on the main thread, if there is one and it has nothing else to do.
@@ -1198,7 +1006,7 @@ public final class Process {
         this.halt(first);
     }
 
-    private void halt(final Halt halt) {
+    void halt(final Halt halt) {
         this.identity.halt(halt.getMessage());
         this.library.write(halt.getMessage());
         for (final ProgramThread thread : this.scheduler.threads()) {

@@ -95,7 +95,7 @@ final class ProcessSnapshotReader {
         final CallbackQueue callbacks = process.callbacks();
         for (final Snapshot.FrameShot written : shot.callbacks().waiting()) {
             final Frame frame = thaw(program, written, byNumber);
-            callbacks.add(frame, process.weigh(frame));
+            callbacks.add(frame, process.events().weigh(frame));
         }
         for (final Map.Entry<String, Map<String, Snapshot.IValue>> entry : shot.statics().entrySet()) {
             final Values.Obj holder = process.fieldAccess().statics(entry.getKey());

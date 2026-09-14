@@ -28,7 +28,8 @@ import org.junit.jupiter.api.Test;
  * The virtual machine runs a program with nothing of the game around it: no Minecraft, no NeoForge, no ComputerCraft,
  * no network library, none of the machines that host it and none of the language that compiles for it. These read
  * every source under {@code vm} and hold that line: an import comes from the JDK, from the Core's stable ids or from
- * the vm itself, and no other package of the series or of the game is named anywhere in the text.
+ * the vm itself, and no other package of the series, of the game or of a library the game brings along is named
+ * anywhere in the text.
  *
  * <p>The whole text is read, comments and strings included: a class named in a string can still be loaded by
  * reflection, and a comment that has to name the machine or the language describes something the vm should not know.
@@ -46,6 +47,9 @@ class VmPurityTest {
     private static final Pattern HEADER_LINE = Pattern.compile("(?m)^[ \\t]*(?:package|import)\\s[^\\n]*");
     private static final Pattern GAME_PACKAGE =
             Pattern.compile("\\b(?:net\\.minecraft|net\\.neoforged|com\\.mojang|dan200|io\\.netty)");
+    /** The libraries that come with the game: an annotation or a logger written out in full reaches them too. */
+    private static final Pattern LIBRARY_PACKAGE =
+            Pattern.compile("\\b(?:org\\.jetbrains|org\\.slf4j|com\\.google|it\\.unimi)");
     private static final Pattern SERIES_PACKAGE = Pattern.compile("\\bdev\\.jstech(?:\\.\\w+)*");
 
     /** A source that reaches out of the vm once per form, with how many findings each rule owes it. */
@@ -69,6 +73,9 @@ class VmPurityTest {
 
                 Object loaded() throws ReflectiveOperationException {
                     return Class.forName("net.neoforged.fml.ModList");
+                }
+
+                void heard(@org.jetbrains.annotations.Nullable final Object handler) {
                 }
 
                 // Written the way io.netty would, and kept where dev.jstech.core.idle keeps it.
@@ -121,7 +128,7 @@ class VmPurityTest {
     void rules_findEveryReachOutOfTheVm() {
         final Map<String, String> sample = Map.of("sample/Sample.java", FORBIDDEN);
         assertEquals(4, outsideImports(sample).size(), () -> "imports: " + outsideImports(sample));
-        assertEquals(5, outsideNames(sample).size(), () -> "names: " + outsideNames(sample));
+        assertEquals(6, outsideNames(sample).size(), () -> "names: " + outsideNames(sample));
     }
 
     @Test
@@ -153,6 +160,10 @@ class VmPurityTest {
             final Matcher game = GAME_PACKAGE.matcher(text);
             while (game.find()) {
                 found.add(where(file.getKey(), text, game.start()) + " " + game.group());
+            }
+            final Matcher library = LIBRARY_PACKAGE.matcher(text);
+            while (library.find()) {
+                found.add(where(file.getKey(), text, library.start()) + " " + library.group());
             }
             final Matcher series = SERIES_PACKAGE.matcher(text);
             while (series.find()) {
