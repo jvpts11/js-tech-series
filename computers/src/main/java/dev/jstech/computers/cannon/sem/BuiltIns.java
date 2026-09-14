@@ -404,6 +404,7 @@ public final class BuiltIns {
         this.property(program, "Name", this.stringType, PUBLIC_STATIC);
         this.property(program, "Args", strings, PUBLIC_STATIC);
         this.method(program, "Exit", nothing, PUBLIC_STATIC, integer);
+        this.property(program, "DroppedEvents", ITypeSymbol.Primitive.LONG, PUBLIC_STATIC);
 
         /*
          * Another program on the same machine, as the one that started it holds it: a number, a name,

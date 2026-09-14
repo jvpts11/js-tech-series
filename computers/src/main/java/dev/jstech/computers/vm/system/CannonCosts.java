@@ -126,7 +126,7 @@ public final class CannonCosts {
          * after one is a glance; its output is a list, priced by its length. What a program says about
          * itself costs nothing.
          */
-        put("Program", 0, false, "SetName", "Name", "Args", "Current", "Exit", "OnMessage");
+        put("Program", 0, false, "SetName", "Name", "Args", "Current", "Exit", "OnMessage", "DroppedEvents");
         put("Program", SUBMIT, false, "Start");
         // A line at the machine's own prompt is a program started and waited for, priced as one.
         put("Program", SUBMIT, true, "Shell");

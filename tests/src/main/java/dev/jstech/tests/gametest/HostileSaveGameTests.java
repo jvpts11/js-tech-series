@@ -199,7 +199,7 @@ public final class HostileSaveGameTests {
                 public void OnInit() {
                     Program.OnMessage(m => {
                         count = count + 1;
-                        if (count % 100 == 0) { Console.PrintLine("got " + count + " " + m.Text); }
+                        if (count % 64 == 0) { Console.PrintLine("got " + count + " " + m.Text); }
                     });
                 }
                 public void OnTick() { }
@@ -207,7 +207,8 @@ public final class HostileSaveGameTests {
             }
             """;
 
-    private static final int MESSAGES = 500;
+    /** As many messages as a program keeps waiting at once; the next one is turned away. */
+    private static final int MESSAGES = 256;
 
     @GameTest(template = ARENA)
     public static void save_whileAProgramWaitsForALine(final GameTestHelper helper) {
@@ -394,14 +395,18 @@ public final class HostileSaveGameTests {
                         helper.assertTrue(pc.cannon().send(0, started.id(), "m" + i, now),
                                 "message " + i + " is taken");
                     }
+                    helper.assertTrue(!pc.cannon().send(0, started.id(), "one too many", now),
+                            "a program with " + MESSAGES + " messages waiting takes no more");
 
                     reload(helper, pc);
+                    helper.assertTrue(!pc.cannon().send(0, started.id(), "one too many", now),
+                            "the pile comes back whole from the save, so there is still no room");
                     final ILanguageProcess after = process(pc, started.id());
-                    for (int i = 0; i < 20 && after.console().size() < MESSAGES / 100; i++) {
+                    for (int i = 0; i < 20 && after.console().size() < MESSAGES / 64; i++) {
                         pc.cannon().tick(PLENTY);
                     }
-                    helper.assertTrue(after.console().equals(List.of("got 100 m99", "got 200 m199", "got 300 m299",
-                                    "got 400 m399", "got 500 m499")),
+                    helper.assertTrue(after.console().equals(List.of("got 64 m63", "got 128 m127", "got 192 m191",
+                                    "got 256 m255")),
                             "every message waiting at the save is handled after it, in order; got " + after.console()
                                     + " (" + after.message() + ")");
                 })

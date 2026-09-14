@@ -50,8 +50,8 @@ class CallbackQueueTest {
         final CallbackQueue queue = new CallbackQueue();
         final Process.Frame init = call(program, "OnInit");
         final Process.Frame tick = call(program, "OnTick");
-        queue.add(init);
-        queue.add(tick);
+        queue.add(init, 0);
+        queue.add(tick, 0);
 
         assertSame(init, queue.poll());
         assertSame(tick, queue.poll());
@@ -62,7 +62,7 @@ class CallbackQueueTest {
     void holds_saysWhetherACallOfThatMethodIsWaiting() {
         final ProgramImage program = program();
         final CallbackQueue queue = new CallbackQueue();
-        queue.add(call(program, "OnTick"));
+        queue.add(call(program, "OnTick"), 0);
 
         assertTrue(queue.holds("OnTick"));
         assertFalse(queue.holds("OnDestroy"));
@@ -72,13 +72,75 @@ class CallbackQueueTest {
     void clear_leavesNothingWaiting() {
         final ProgramImage program = program();
         final CallbackQueue queue = new CallbackQueue();
-        queue.add(call(program, "OnInit"));
-        queue.add(call(program, "OnTick"));
+        queue.add(call(program, "OnInit"), 40);
+        queue.add(call(program, "OnTick"), 40);
         assertEquals(2, queue.size());
 
         queue.clear();
 
         assertTrue(queue.isEmpty());
         assertEquals(0, queue.size());
+        assertEquals(0, queue.bytes());
+    }
+
+    @Test
+    void fits_turnsAwayACallPastTheMostThatMayWait() {
+        final ProgramImage program = program();
+        final CallbackQueue queue = new CallbackQueue();
+        for (int i = 0; i < CallbackQueue.MOST_CALLS; i++) {
+            assertTrue(queue.fits(1, 0), "call " + i + " still fits");
+            queue.add(call(program, "OnTick"), 0);
+        }
+
+        assertFalse(queue.fits(1, 0));
+        assertTrue(queue.fits(0, 0), "nothing more always fits");
+    }
+
+    @Test
+    void fits_turnsAwayArgumentsPastTheMostBytes() {
+        final CallbackQueue queue = new CallbackQueue();
+        queue.add(call(program(), "OnTick"), CallbackQueue.MOST_BYTES - 10);
+
+        assertTrue(queue.fits(1, 10));
+        assertFalse(queue.fits(1, 11));
+    }
+
+    @Test
+    void poll_givesBackWhatTheCallTakenHeld() {
+        final ProgramImage program = program();
+        final CallbackQueue queue = new CallbackQueue();
+        queue.add(call(program, "OnInit"), 100);
+        queue.add(call(program, "OnTick"), 30);
+
+        queue.poll();
+
+        assertEquals(30, queue.bytes());
+    }
+
+    @Test
+    void addFirst_putsTheCallAheadOfEverythingWaiting() {
+        final ProgramImage program = program();
+        final CallbackQueue queue = new CallbackQueue();
+        final Process.Frame tick = call(program, "OnTick");
+        final Process.Frame farewell = call(program, "OnDestroy");
+        queue.add(tick, 0);
+
+        queue.addFirst(farewell, 0);
+
+        assertSame(farewell, queue.poll());
+        assertSame(tick, queue.poll());
+    }
+
+    @Test
+    void drop_countsWhatWasLetGoAndClearingDoesNotForgetIt() {
+        final CallbackQueue queue = new CallbackQueue();
+        queue.drop();
+        queue.drop();
+
+        queue.clear();
+
+        assertEquals(2, queue.dropped());
+        queue.startFrom(7);
+        assertEquals(7, queue.dropped());
     }
 }

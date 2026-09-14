@@ -166,7 +166,7 @@ public final class CannonSnapshotGameTests {
                 new Snapshot.IValue.Ref(1),
                 List.of(new Snapshot.WatchShot(1, "minecraft:iron_ingot", "below", 1000L,
                         new Snapshot.IValue.Ref(5), new Snapshot.IValue.Ref(1), 640L, false, true)),
-                List.of("first", "second"), 7, 0x2545F4914F6CDD1DL, List.of("typed ahead"), "running", "", 91,
+                List.of("first", "second"), 7, 0x2545F4914F6CDD1DL, List.of("typed ahead"), 3L, "running", "", 91,
                 "Sorter",
                 List.of(new Snapshot.MonitorShot(new Snapshot.IValue.Ref(3), 2, 2)), 4,
                 List.of("a", "b"), 7, false, 0, new Snapshot.IValue.Ref(5));

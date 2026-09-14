@@ -153,6 +153,30 @@ class SnapshotTest {
     }
 
     @Test
+    void save_keepsTheCountOfEventsThatFoundNoRoom() {
+        final ProgramImage program = loadSource("""
+                class Monitor : IScript {
+                    void Hear(int n) { }
+
+                    public void OnInit() { }
+                    public void OnTick() { Console.PrintLine("dropped " + Program.DroppedEvents); }
+                    public void OnDestroy() { }
+                }
+                """);
+        final Process process = new Process(program, ROOM, IHost.still());
+        final Values.Obj self = process.create(program.entryPoint());
+        for (int i = 0; i < CallbackQueue.MOST_CALLS + 3; i++) {
+            process.post(process.handlerFor(self, "Hear"), List.of(i));
+        }
+        final Process restored = Process.restore(program, process.save(), IHost.still());
+        assertEquals(CallbackQueue.MOST_CALLS, restored.waiting());
+        restored.step(PLENTY);
+        restored.begin(restored.script(), "OnTick");
+        restored.step(PLENTY);
+        assertEquals(List.of("dropped 3"), restored.console(), () -> String.valueOf(restored.message()));
+    }
+
+    @Test
     void save_keepsTwoNamesForOneThingAsOneThing() {
         final Process process = bothWays(load("", """
                         List<string> names = new List<string>();

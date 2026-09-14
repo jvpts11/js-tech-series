@@ -207,6 +207,48 @@ class UiWidgetsTest {
     }
 
     @Test
+    void click_thatFindsNoRoomIsDroppedAndCounted() {
+        final Process process = start(load(PANEL), desktop(true));
+        final long button = (Long) widgetOf(process, UiWidgets.BUTTON).get(UiWidgets.ID);
+        for (int i = 0; i < CallbackQueue.MOST_CALLS + 4; i++) {
+            assertTrue(process.deliverUiEvent(1L, button, "click", List.of()), "the button is pressed either way");
+        }
+        process.step(PLENTY);
+        assertEquals(CallbackQueue.MOST_CALLS, process.script().get("scrams"));
+        assertEquals(4, process.droppedEvents());
+    }
+
+    @Test
+    void close_isHeardAheadOfTheClicksStillWaiting() {
+        final Process process = start(load("""
+                class Panel : IScript {
+                    Window window;
+                    Button fire;
+                    public void OnInit() {
+                        fire = new Button("Fire");
+                        fire.OnClick += Fire;
+                        Column page = new Column();
+                        page.Add(fire);
+                        window = new Window("Late", 200, 100);
+                        window.Content = page;
+                        window.OnClose += Closed;
+                        window.Show();
+                    }
+                    void Fire() { Console.PrintLine("click"); }
+                    void Closed() { Console.PrintLine("closed"); }
+                    public void OnTick() { }
+                    public void OnDestroy() { }
+                }
+                """), desktop(true));
+        final long button = (Long) widgetOf(process, UiWidgets.BUTTON).get(UiWidgets.ID);
+        assertTrue(process.deliverUiEvent(1L, button, "click", List.of()));
+        assertTrue(process.deliverUiEvent(1L, button, "click", List.of()));
+        assertTrue(process.deliverUiEvent(1L, 0L, "close", List.of()));
+        process.step(PLENTY);
+        assertEquals(List.of("closed", "click", "click"), process.console());
+    }
+
+    @Test
     void toggleAndSelect_changeTheWidgetBeforeTheProgramHearsOfThem() {
         final Process process = start(load(PANEL), desktop(true));
         final Values.Obj check = widgetOf(process, UiWidgets.CHECK_BOX);

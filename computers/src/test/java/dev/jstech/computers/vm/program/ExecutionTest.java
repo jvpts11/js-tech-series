@@ -236,6 +236,30 @@ class ExecutionTest {
     }
 
     @Test
+    void onMessage_refusesAMessageWhenTooManyCallsAreWaiting() {
+        final Process process = start(load("", """
+                Program.OnMessage(m => Console.PrintLine(m.Text));
+                """), IHost.still());
+        process.step(PLENTY);
+        for (int i = 0; i < CallbackQueue.MOST_CALLS; i++) {
+            assertTrue(process.deliverMessage(4, "hi", 20L), "message " + i + " still fits");
+        }
+        assertFalse(process.deliverMessage(4, "one too many", 20L), "the sender hears it was not taken");
+        assertEquals(0, process.droppedEvents(), "a refused message is the sender's to know about");
+    }
+
+    @Test
+    void onMessage_refusesAMessageTooBigForTheQueueAndLeavesNothingBehind() {
+        final Process process = start(load("", """
+                Program.OnMessage(m => Console.PrintLine(m.Text));
+                """), IHost.still());
+        process.step(PLENTY);
+        final long held = process.heap().used();
+        assertFalse(process.deliverMessage(4, "x".repeat(40_000), 20L));
+        assertEquals(held, process.heap().used());
+    }
+
+    @Test
     void send_namesTheSenderToTheMachine() {
         final Machine machine = new Machine();
         final Process process = start(load("", """

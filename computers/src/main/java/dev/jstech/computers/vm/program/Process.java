@@ -17,12 +17,14 @@ import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * One running program.
@@ -71,6 +73,9 @@ public final class Process {
 
     /** What starting a thread costs beyond the call itself: a stack of its own is not a small thing. */
     private static final int START_COST = 49;
+
+    /** What an event handed to a handler holds before its text: a header and its three fields. */
+    private static final long EVENT_BYTES = Heap.HEADER + 3L * Heap.REFERENCE;
 
     /** What a thread is waiting for, if anything. A snapshot writes it by its name. */
     enum Parked implements IStableName {
@@ -270,7 +275,7 @@ public final class Process {
          */
         for (final TypeImage type : program.types()) {
             if (type.setUp() != null) {
-                this.waiting.add(new Frame(type.setUp(), null));
+                this.waiting.add(new Frame(type.setUp(), null), 0);
             }
         }
     }
@@ -371,14 +376,16 @@ public final class Process {
      * Hands the program what a ComputerCraft computer said through a Gateway.
      *
      * <p>It is queued for the handler the program gave {@code Gateway.OnMessage}, on the main thread, in
-     * its turn. A program that gave none does not hear it, which is what false says.
+     * its turn. A program that gave none does not hear it, and neither does one with too many calls
+     * already waiting to take it; false says so.
      */
     public boolean deliverGatewayMessage(final int from, final String text, final long tick) {
         if (this.identity.over() || this.onGatewayMessage == null) {
             return false;
         }
-        this.post(this.onGatewayMessage, List.of(this.gatewayMessageOf(from, text, tick)));
-        return true;
+        final String said = text == null ? "" : text;
+        return this.offer(this.onGatewayMessage, EVENT_BYTES + Heap.sizeOfText(said),
+                () -> List.of(this.gatewayMessageOf(from, said, tick)));
     }
 
     /** What a Gateway message is as a value the program holds. */
@@ -387,7 +394,7 @@ public final class Process {
         made.set("From", (long) from);
         made.set("Text", this.text(text == null ? "" : text, 0));
         made.set("Tick", tick);
-        this.heap.allocate(made, Heap.HEADER + 3L * Heap.REFERENCE, 0);
+        this.heap.allocate(made, EVENT_BYTES, 0);
         return made;
     }
 
@@ -405,16 +412,16 @@ public final class Process {
      * Hands the process a line from another program.
      *
      * <p>It is queued for the handler the program gave {@code Program.OnMessage}, on the main thread,
-     * in its turn; a program that gave none simply does not hear it. False when the program is over.
+     * in its turn; a program that gave none simply does not hear it. False when the program is over, or
+     * when it has too many calls already waiting to take this one, so the sender knows it was not heard.
      */
     public boolean deliverMessage(final int from, final String text, final long tick) {
         if (this.identity.over()) {
             return false;
         }
-        if (this.onMessage != null) {
-            this.post(this.onMessage, List.of(this.messageOf(from, text, tick)));
-        }
-        return true;
+        final String said = text == null ? "" : text;
+        return this.offer(this.onMessage, EVENT_BYTES + Heap.sizeOfText(said),
+                () -> List.of(this.messageOf(from, said, tick)));
     }
 
     private Values.Obj messageOf(final int from, final String text, final long tick) {
@@ -422,7 +429,7 @@ public final class Process {
         made.set("From", from);
         made.set("Text", this.text(text == null ? "" : text, 0));
         made.set("Tick", tick);
-        this.heap.allocate(made, Heap.HEADER + 3L * Heap.REFERENCE, 0);
+        this.heap.allocate(made, EVENT_BYTES, 0);
         return made;
     }
 
@@ -583,7 +590,7 @@ public final class Process {
             this.halt(new Halt(Halt.Reason.NO_SUCH_MEMBER, 0, owner + " has no " + method + " to run"));
             return;
         }
-        this.waiting.add(new Frame(found, null));
+        this.waiting.add(new Frame(found, null), 0);
     }
 
     /**
@@ -607,7 +614,21 @@ public final class Process {
                     self.type() + " has no " + method + " to run"));
             return;
         }
-        this.waiting.add(new Frame(found, self));
+        this.waiting.add(new Frame(found, self), 0);
+    }
+
+    /**
+     * Puts a call on that object ahead of everything waiting, for a script being stopped: its farewell has
+     * the little time left to itself before any handler still queued.
+     */
+    public void beginFirst(final Values.Obj self, final String method) {
+        final MethodImage found = this.program.method(self.type(), method, List.of());
+        if (found == null) {
+            this.halt(new Halt(Halt.Reason.NO_SUCH_MEMBER, 0,
+                    self.type() + " has no " + method + " to run"));
+            return;
+        }
+        this.waiting.addFirst(new Frame(found, self), 0);
     }
 
     /**
@@ -866,26 +887,93 @@ public final class Process {
      * of the tick than one that fires none. A delegate joined from several handlers queues each of
      * them, in the order they were joined and with the same arguments, so every listener hears the
      * event; one whose method cannot be found is passed over and the rest still run.
+     *
+     * <p>An event that finds no room for its calls, or for what their arguments hold, is dropped and
+     * counted, which is what false says: the widget or the watch behind it already holds the latest
+     * value, so the next handler that runs reads what is true now.
      */
-    public void post(final Values.DelegateValue handler, final List<Object> arguments) {
-        if (handler == null) {
-            return;
+    public boolean post(final Values.DelegateValue handler, final List<Object> arguments) {
+        if (this.offer(handler, this.weigh(arguments), () -> arguments)) {
+            return true;
         }
+        this.waiting.drop();
+        return false;
+    }
+
+    /**
+     * Queues a handler's calls when there is room for them and for what their arguments hold, each call
+     * counted with all of them, and only then builds the arguments, so a call turned away leaves nothing
+     * behind on the heap. False when there was no room; a handler with nothing to call always fits.
+     */
+    private boolean offer(final Values.DelegateValue handler, final long bytes,
+                          final Supplier<List<Object>> arguments) {
+        final List<Frame> calls = this.callsOf(handler);
+        if (calls.isEmpty()) {
+            return true;
+        }
+        if (!this.waiting.fits(calls.size(), bytes * calls.size())) {
+            return false;
+        }
+        final List<Object> handed = arguments.get();
+        for (final Frame call : calls) {
+            fill(call, handed);
+            this.waiting.add(call, bytes);
+        }
+        return true;
+    }
+
+    /** Puts a handler's calls ahead of everything waiting, in their own order; nothing turns these away. */
+    private void ahead(final Values.DelegateValue handler) {
+        final List<Frame> calls = this.callsOf(handler);
+        for (int i = calls.size() - 1; i >= 0; i--) {
+            this.waiting.addFirst(calls.get(i), 0);
+        }
+    }
+
+    /* One call for each method joined to the handler, in order, passing over any that cannot be found. */
+    private List<Frame> callsOf(final Values.DelegateValue handler) {
+        if (handler == null) {
+            return List.of();
+        }
+        final List<Frame> calls = new ArrayList<>(handler.chain().size());
         for (final Values.Bound bound : handler.chain()) {
             final MethodImage method =
                     this.program.method(bound.owner(), bound.method(), bound.parameters());
-            if (method == null || !method.hasCode()) {
-                continue;
+            if (method != null && method.hasCode()) {
+                calls.add(new Frame(method, bound.target()));
             }
-            final Frame frame = new Frame(method, bound.target());
-            fill(frame, arguments);
-            this.waiting.add(frame);
         }
+        return calls;
+    }
+
+    /* What the arguments handed to a call hold on the heap: each one, and whatever its fields hold. */
+    private long weigh(final List<Object> arguments) {
+        long bytes = 0;
+        for (final Object argument : arguments) {
+            bytes += this.heap.bytesOf(argument);
+            if (argument instanceof Values.Obj object) {
+                for (final Object field : object.all().values()) {
+                    bytes += this.heap.bytesOf(field);
+                }
+            }
+        }
+        return bytes;
+    }
+
+    /* The same, for a call read back out of a save: what it was handed sits in the first slots of its frame. */
+    private long weigh(final Frame call) {
+        final int handed = Math.min(call.method.parameters().size(), call.slots.length);
+        return this.weigh(Arrays.asList(call.slots).subList(0, handed));
     }
 
     /** How many calls are still waiting their turn, handlers among them. */
     public int waiting() {
         return this.waiting.size();
+    }
+
+    /** How many clicks and watch alerts found no room among the calls waiting and were let go. */
+    long droppedEvents() {
+        return this.waiting.dropped();
     }
 
     // windows
@@ -947,7 +1035,8 @@ public final class Process {
      *
      * <p>What the widget holds is changed first, the way the player changed it (a box is ticked, a line
      * is typed), and only then is the program's handler queued: a handler that reads the widget reads
-     * what the player sees. A widget with no handler still changes.
+     * what the player sees. A widget with no handler still changes, and so does one whose handler finds
+     * no room among the calls waiting and is dropped. Closing a window always gets in, ahead of the rest.
      */
     public boolean deliverUiEvent(final long window, final long widget, final String kind,
                                   final List<Object> values) {
@@ -960,7 +1049,7 @@ public final class Process {
         }
         if ("close".equals(kind)) {
             this.closeWindow(open);
-            this.post(handlerOf(open, "OnClose"), List.of());
+            this.ahead(handlerOf(open, "OnClose"));
             /*
              * Shutting the last window of a program is how a person ends it, as it is on any desktop. The
              * program hears it first, and one that opens another window in its OnClose carries on.
@@ -1288,7 +1377,8 @@ public final class Process {
      * Hands in what the world now holds, and queues a call for every watch that was waiting for it.
      *
      * <p>A watch whose token the program has thrown away is dropped here rather than fired: stopping is
-     * the program's to decide, and it decided.
+     * the program's to decide, and it decided. A call that finds no room among the calls waiting is
+     * dropped and counted; the watch already holds the new number, so the next one to fire reads it.
      */
     public void deliver(final Map<String, Long> totals) {
         this.watches.removeIf(watch -> this.heap.isFreed(watch.token));
@@ -1301,8 +1391,9 @@ public final class Process {
             final boolean first = !watch.seen;
             watch.last = now;
             watch.seen = true;
-            if (this.fires(watch, before, now, first)) {
-                this.post(watch.handler, List.of(this.stockEvent(watch.item, before, now, first)));
+            if (this.fires(watch, before, now, first) && !this.offer(watch.handler, EVENT_BYTES,
+                    () -> List.of(this.stockEvent(watch.item, before, now, first)))) {
+                this.waiting.drop();
             }
         }
     }
@@ -1345,7 +1436,7 @@ public final class Process {
         made.set("Item", item);
         made.set("Total", now);
         made.set("Previous", first ? now : before);
-        this.heap.allocate(made, Heap.HEADER + 3L * Heap.REFERENCE, 0);
+        this.heap.allocate(made, EVENT_BYTES, 0);
         return made;
     }
 
@@ -1435,7 +1526,7 @@ public final class Process {
         }
         return new Snapshot(this.heap.budget(), held, running, queued, kept, scriptShot,
                 watching, this.library.console(), this.library.written(), this.library.randomState(),
-                this.input.lines(), this.state().serializedName(),
+                this.input.lines(), this.waiting.dropped(), this.state().serializedName(),
                 this.identity.message() == null ? "" : this.identity.message(),
                 this.identity.spent(), this.identity.name(), locked, this.nextThread, this.identity.args(),
                 this.identity.machineId(), this.identity.exited(), this.identity.givenExitCode(), onMessageShot,
@@ -1503,7 +1594,7 @@ public final class Process {
         for (final Snapshot.FrameShot written : shot.waiting()) {
             final Frame frame = thaw(program, written, byNumber);
             if (frame != null) {
-                process.waiting.add(frame);
+                process.waiting.add(frame, process.weigh(frame));
             }
         }
         for (final Map.Entry<String, Map<String, Snapshot.IValue>> entry : shot.statics().entrySet()) {
@@ -1529,6 +1620,7 @@ public final class Process {
         }
         process.library.restore(shot.console(), shot.written(), shot.random());
         process.input.restore(shot.input());
+        process.waiting.startFrom(shot.dropped());
         process.identity.restore(shot.args(), shot.machineId(), shot.spent(), shot.exited(), shot.exitCode(),
                 State.HALTED.serializedName().equals(shot.state()), shot.message().isEmpty() ? null : shot.message());
         if (value(shot.onMessage(), byNumber) instanceof Values.DelegateValue handler) {

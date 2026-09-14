@@ -62,6 +62,7 @@ public final class SnapshotTag {
     private static final String WRITTEN = "written";
     private static final String RANDOM = "random";
     private static final String INPUT = "input";
+    private static final String DROPPED = "dropped";
     private static final String WATCHES = "watches";
     private static final String THRESHOLD = "threshold";
     private static final String LAST = "last";
@@ -172,6 +173,7 @@ public final class SnapshotTag {
         tag.putLong(WRITTEN, shot.written());
         tag.putLong(RANDOM, shot.random());
         tag.put(INPUT, names(shot.input()));
+        tag.putLong(DROPPED, shot.dropped());
         tag.putString(STATE, shot.state());
         tag.putString(MESSAGE, shot.message());
         tag.putLong(SPENT, shot.spent());
@@ -227,8 +229,9 @@ public final class SnapshotTag {
         return new Snapshot(tag.getLong(BUDGET), held, threads,
                 readFrames(tag.getList(WAITING, Tag.TAG_COMPOUND)), statics,
                 readValue(tag.getCompound(SCRIPT)), watches, console, tag.getLong(WRITTEN), tag.getLong(RANDOM),
-                readNames(tag.getList(INPUT, Tag.TAG_STRING)), tag.getString(STATE), tag.getString(MESSAGE),
-                tag.getLong(SPENT), tag.getString(PROGRAM_NAME), monitors, tag.getInt(NEXT_THREAD),
+                readNames(tag.getList(INPUT, Tag.TAG_STRING)), tag.getLong(DROPPED), tag.getString(STATE),
+                tag.getString(MESSAGE), tag.getLong(SPENT), tag.getString(PROGRAM_NAME), monitors,
+                tag.getInt(NEXT_THREAD),
                 readNames(tag.getList(ARGS, Tag.TAG_STRING)),
                 tag.getInt(MACHINE_ID), tag.getBoolean(EXITED), tag.getInt(EXIT_CODE),
                 readValue(tag.getCompound(ON_MESSAGE)), readValues(tag.getList(WINDOWS, Tag.TAG_COMPOUND)),

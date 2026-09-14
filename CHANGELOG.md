@@ -9,6 +9,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ### Added
 - Every mod's jar now carries its licence texts under `META-INF`: the GNU LGPL 3.0 the series is licensed
   under, and the GNU GPL 3.0 it builds on.
+- `Program.DroppedEvents` counts the clicks and watch alerts a program missed because too many of its calls were
+  already waiting.
 
 ### Changed
 - Programs run faster. What a program's calls, branches and `new` reach is worked out once, when the program
@@ -19,6 +21,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   source again brings it up to date.
 - `Random` draws from a generator of its own, so a given `Random.Seed` draws different numbers than it did in
   0.3.0a.
+- A program keeps at most 256 calls waiting for their turn, holding at most 64 KB between them. A click or a watch
+  alert that finds no room is dropped and counted in `Program.DroppedEvents`; a message that finds no room is
+  refused, and `Process.Send` returns false. Closing a window and stopping a script always get in, ahead of
+  everything already waiting.
 - Saves, network packets and menu data carry each setting by an id of its own instead of by its place in a
   list, so adding a setting never changes what an old one means. Machine states that 0.3.0a worlds stored the
   old way are not read back.

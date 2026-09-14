@@ -521,6 +521,54 @@ class ProcessTest {
     }
 
     @Test
+    void post_dropsAnEventThatFindsNoRoomAndTheProgramCanCountIt() {
+        final ProgramImage program = loadSource("""
+                class Monitor : IScript {
+                    int heard = 0;
+
+                    void Hear(int n) { heard = heard + 1; }
+
+                    public void OnInit() { }
+                    public void OnTick() { Console.PrintLine(heard + " heard, dropped " + Program.DroppedEvents); }
+                    public void OnDestroy() { }
+                }
+                """);
+        final Process process = new Process(program, ROOM, IHost.still());
+        final Values.Obj self = process.create(program.entryPoint());
+        final Values.DelegateValue hear = process.handlerFor(self, "Hear");
+        for (int i = 0; i < CallbackQueue.MOST_CALLS; i++) {
+            assertTrue(process.post(hear, List.of(i)), "call " + i + " still fits");
+        }
+        assertFalse(process.post(hear, List.of(-1)), "the queue is full");
+        process.step(PLENTY);
+        process.begin(self, "OnTick");
+        process.step(PLENTY);
+        assertFinished(process);
+        assertEquals(List.of("256 heard, dropped 1"), process.console());
+    }
+
+    @Test
+    void beginFirst_putsTheFarewellAheadOfTheHandlersWaiting() {
+        final ProgramImage program = loadSource("""
+                class Monitor : IScript {
+                    void Note(int n) { Console.PrintLine("note " + n); }
+
+                    public void OnInit() { }
+                    public void OnTick() { }
+                    public void OnDestroy() { Console.PrintLine("bye"); }
+                }
+                """);
+        final Process process = new Process(program, ROOM, IHost.still());
+        final Values.Obj self = process.create(program.entryPoint());
+        process.post(process.handlerFor(self, "Note"), List.of(1));
+        process.post(process.handlerFor(self, "Note"), List.of(2));
+        process.beginFirst(self, "OnDestroy");
+        process.step(PLENTY);
+        assertFinished(process);
+        assertEquals(List.of("bye", "note 1", "note 2"), process.console());
+    }
+
+    @Test
     void run_runsWhatWasQueuedAfterTheWorkThatWasAlreadyThere() {
         final ProgramImage program = load("", "        Console.PrintLine(\"tick\");");
         final Process process = new Process(program, ROOM, IHost.still());

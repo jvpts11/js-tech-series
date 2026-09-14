@@ -108,7 +108,7 @@ final class CannonProgram implements ILanguageProcess {
         if (script == null || this.process.state() == Process.State.HALTED) {
             return;
         }
-        this.process.begin(script, "OnDestroy");
+        this.process.beginFirst(script, "OnDestroy");
         this.process.step(budget > 0 ? budget : FAREWELL);
     }
 

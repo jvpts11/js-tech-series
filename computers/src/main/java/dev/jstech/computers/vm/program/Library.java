@@ -158,6 +158,9 @@ public final class Library {
             if ("Name".equals(name)) {
                 return this.heap.text(this.owner == null ? "" : this.owner.name(), line);
             }
+            if ("DroppedEvents".equals(name)) {
+                return this.owner == null ? 0L : this.owner.droppedEvents();
+            }
             throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "Program has no " + name);
         }
         if ("Time".equals(owner)) {

@@ -344,7 +344,8 @@ public final class MachinePrograms {
      * Hands a line from one program to another on this machine.
      *
      * <p>True when the other program is there to take it, whether or not it does anything with it; a
-     * program that has stopped, or was never here, is not there.
+     * program that has stopped, or was never here, is not there, and one with too many calls already
+     * waiting cannot take it.
      */
     public boolean send(final int from, final int to, final String text, final long tick) {
         final Live target = this.byId(to);

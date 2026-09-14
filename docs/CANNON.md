@@ -74,13 +74,14 @@ Program.Start(string path) -> Process
 Program.Start(string path, List<string> args) -> Process
 Program.Start(string path, List<string> args, string priority) -> Process
 Program.OnMessage(Action<ProcessMessage>)  hears lines other programs send
+Program.DroppedEvents -> long              clicks and watch alerts missed while too many calls waited
 
 Process { Id, Name, Host, Running, ExitCode }
 Process.Wait()                             parks until the program ends
 Process.Wait(long ticks) -> bool           the same, giving up after so many ticks (false)
 Process.Kill()
 Process.Output() -> List<string>           what it printed
-Process.Send(int id, string text) -> bool  a line to a program on this machine
+Process.Send(int id, string text) -> bool  a line to a program on this machine; false when it cannot take it
 
 ProcessMessage { From, Text, Tick }
 ```
@@ -177,7 +178,9 @@ Every widget is an object the program holds, on the program's own heap, and is s
 that is loaded back opens the same windows with the same words in them. `Window`, `Row`, `Column`,
 `Label`, `Button`, `TextBox`, `CheckBox`, `ProgressBar`, `ListBox`, `Canvas` and `MessageBox` are what
 there is. What a player does reaches the program as a handler, on the program's own thread and in turn
-with everything else it does. A window is a thing of the machine, not of the screen: closing the desktop
+with everything else it does. At most 256 calls wait their turn at once, holding at most 64 KB between
+them: a click that finds no room is dropped and counted in `Program.DroppedEvents`, while closing a window
+always gets in, ahead of the rest. A window is a thing of the machine, not of the screen: closing the desktop
 does not close it, and a program that ends with a window open ends.
 
 ## The ComputerCraft side: `Gateway`
