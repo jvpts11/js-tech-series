@@ -13,7 +13,6 @@ import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -145,6 +144,47 @@ public final class Process {
         return this.main;
     }
 
+    ThreadScheduler scheduler() {
+        return this.scheduler;
+    }
+
+    MonitorTable locks() {
+        return this.locks;
+    }
+
+    CallbackQueue callbacks() {
+        return this.waiting;
+    }
+
+    FieldAccess fieldAccess() {
+        return this.fieldAccess;
+    }
+
+    ProgramWatches watches() {
+        return this.watches;
+    }
+
+    ProgramListeners listeners() {
+        return this.listeners;
+    }
+
+    ProgramWindows windows0() {
+        return this.windows;
+    }
+
+    ProgramIdentity identity() {
+        return this.identity;
+    }
+
+    ProgramInput input() {
+        return this.input;
+    }
+
+    /** Puts back the object the script runs on, for a process read out of a save. */
+    void restoreScript(final Values.Obj restored) {
+        this.script = restored;
+    }
+
     Values.Obj staticsOf(final String owner) {
         return this.fieldAccess.statics(owner);
     }
@@ -162,7 +202,7 @@ public final class Process {
         this(program, heapBytes, host, true);
     }
 
-    private Process(final ProgramImage program, final long heapBytes, final IHost host, final boolean fresh) {
+    Process(final ProgramImage program, final long heapBytes, final IHost host, final boolean fresh) {
         this.program = program;
         this.heap = new Heap(heapBytes);
         this.library = new Library(this.heap, host, program.entryPoint());
@@ -815,7 +855,7 @@ public final class Process {
     }
 
     /* The same, for a call read back out of a save: what it was handed sits in the first slots of its frame. */
-    private long weigh(final Frame call) {
+    long weigh(final Frame call) {
         final int handed = Math.min(call.method.parameters().size(), call.slots.length);
         return this.weigh(Arrays.asList(call.slots).subList(0, handed));
     }
@@ -1178,324 +1218,12 @@ public final class Process {
      * reference is written as that number.
      */
     public Snapshot save() {
-        final HeldNumbers numbers = new HeldNumbers(this.heap);
-        final List<Snapshot.ThreadShot> running = new ArrayList<>();
-        for (final ProgramThread thread : this.scheduler.threads()) {
-            running.add(freeze(thread, numbers));
-        }
-        final List<Snapshot.FrameShot> queued = new ArrayList<>();
-        for (final Frame frame : this.waiting) {
-            queued.add(freeze(frame, numbers));
-        }
-        final Map<String, Map<String, Snapshot.IValue>> kept = new LinkedHashMap<>();
-        for (final Map.Entry<String, Values.Obj> entry : this.fieldAccess.statics().entrySet()) {
-            kept.put(entry.getKey(), fields(entry.getValue(), numbers));
-        }
-        final List<Snapshot.WatchShot> watching = new ArrayList<>();
-        for (final ProgramWatches.Watch watch : this.watches.all()) {
-            watching.add(new Snapshot.WatchShot(watch.id(), watch.item(), watch.kind().serializedName(),
-                    watch.threshold(), value(watch.handler(), numbers), value(watch.token(), numbers), watch.last(),
-                    watch.armed(), watch.seen()));
-        }
-        final List<Snapshot.MonitorShot> locked = new ArrayList<>();
-        this.locks.forEach((target, owner, count) ->
-                locked.add(new Snapshot.MonitorShot(value(target, numbers), owner, count)));
-        final Snapshot.IValue scriptShot = value(this.script, numbers);
-        final Snapshot.IValue onMessageShot = value(this.listeners.onMessage(), numbers);
-        final List<Snapshot.IValue> windowShots = values(this.windows.held(), numbers);
-        final Snapshot.IValue onGatewayShot = value(this.listeners.onGatewayMessage(), numbers);
-        /*
-         * The objects are written last: writing anything else down can number a freed thing it still
-         * reaches, and so can writing an object, so the numbers are walked while they grow.
-         */
-        final List<Snapshot.IHeld> held = new ArrayList<>();
-        for (int number = 0; number < numbers.size(); number++) {
-            held.add(this.freeze(numbers.thing(number), number, numbers));
-        }
-        return new Snapshot(this.heap.budget(), held, running, queued, kept, scriptShot,
-                watching, this.library.console(), this.library.written(), this.library.randomState(),
-                this.input.lines(), this.waiting.dropped(), this.state().serializedName(),
-                this.identity.message() == null ? "" : this.identity.message(),
-                this.identity.spent(), this.identity.name(), locked, this.scheduler.nextId(), this.identity.args(),
-                this.identity.machineId(), this.identity.exited(), this.identity.givenExitCode(), onMessageShot,
-                windowShots, this.windows.nextWindow(), this.windows.nextWidget(), this.windows.endWithWindows(),
-                onGatewayShot, this.listeners.gateway());
+        return ProcessSnapshotWriter.write(this);
     }
 
     /** Reads a process back out of what {@link #save()} wrote, ready to carry on where it stopped. */
     public static Process restore(final ProgramImage program, final Snapshot shot, final IHost host) {
-        final Process process = new Process(program, shot.heapBudget(), host, false);
-        process.identity.rename(shot.name());
-        final Map<Integer, Object> byNumber = new LinkedHashMap<>();
-        for (final Snapshot.IHeld written : shot.held()) {
-            byNumber.put(written.id(), shell(written));
-        }
-        /*
-         * Handlers are settled before anything is filled in, because one cannot be changed after it is
-         * made and whatever points at one has to point at the one that stays.
-         */
-        for (final Snapshot.IHeld written : shot.held()) {
-            if (written instanceof Snapshot.IHeld.Handler handler) {
-                final List<Values.Bound> chain = new ArrayList<>();
-                for (final Snapshot.BoundShot bound : handler.chain()) {
-                    chain.add(new Values.Bound(value(bound.target(), byNumber), bound.owner(),
-                            bound.method(), bound.parameters(), bound.returns()));
-                }
-                byNumber.put(handler.id(), new Values.DelegateValue(handler.type(), chain));
-            }
-        }
-        for (final Snapshot.IHeld written : shot.held()) {
-            fill(written, byNumber);
-            process.heap.restore(byNumber.get(written.id()), written.bytes(), written.line(),
-                    written.freed());
-        }
-        for (final Snapshot.ThreadShot written : shot.threads()) {
-            final ProgramThread thread = process.scheduler.restore(written.id());
-            for (final Snapshot.FrameShot each : written.frames()) {
-                final Frame frame = thaw(program, each, byNumber);
-                if (frame != null) {
-                    thread.frames.push(frame);
-                }
-            }
-            thread.wait = IWait.read(written.parked(), written.until(), value(written.on(), byNumber),
-                    written.onHost());
-            thread.restoreGivenUp(written.timedOut());
-            if (value(written.token(), byNumber) instanceof Values.Obj token) {
-                thread.token = token;
-            }
-        }
-        process.scheduler.startFrom(shot.nextThread());
-        for (final Snapshot.MonitorShot written : shot.monitors()) {
-            final Object target = value(written.target(), byNumber);
-            if (target != null) {
-                process.locks.restore(target, written.owner(), written.count());
-            }
-        }
-        // The threads came back before the locks, so a thread waiting for a lock is queued for it only now.
-        process.locks.requeue(process.scheduler.threads());
-        for (final Snapshot.FrameShot written : shot.waiting()) {
-            final Frame frame = thaw(program, written, byNumber);
-            if (frame != null) {
-                process.waiting.add(frame, process.weigh(frame));
-            }
-        }
-        for (final Map.Entry<String, Map<String, Snapshot.IValue>> entry : shot.statics().entrySet()) {
-            final Values.Obj holder = process.fieldAccess.statics(entry.getKey());
-            for (final Map.Entry<String, Snapshot.IValue> field : entry.getValue().entrySet()) {
-                holder.set(field.getKey(), value(field.getValue(), byNumber));
-            }
-        }
-        if (value(shot.script(), byNumber) instanceof Values.Obj script) {
-            process.script = script;
-        }
-        for (final Snapshot.WatchShot written : shot.watches()) {
-            if (value(written.handler(), byNumber) instanceof Values.DelegateValue handler
-                    && value(written.token(), byNumber) instanceof Values.Obj token) {
-                process.watches.restore(written, handler, token);
-            }
-        }
-        process.library.restore(shot.console(), shot.written(), shot.random());
-        process.input.restore(shot.input());
-        process.waiting.startFrom(shot.dropped());
-        process.identity.restore(shot.args(), shot.machineId(), shot.spent(), shot.exited(), shot.exitCode(),
-                State.HALTED.serializedName().equals(shot.state()), shot.message().isEmpty() ? null : shot.message());
-        // The windows the program had open come back open, with everything they were showing.
-        for (final Snapshot.IValue written : shot.windows()) {
-            if (value(written, byNumber) instanceof Values.Obj window) {
-                process.windows.restoreOpen(window);
-            }
-        }
-        process.windows.startFrom(shot.nextWindow(), shot.nextWidget());
-        process.windows.restoreEnding(shot.endWithWindows());
-        process.listeners.restore(
-                value(shot.onMessage(), byNumber) instanceof Values.DelegateValue handler ? handler : null,
-                value(shot.onGatewayMessage(), byNumber) instanceof Values.DelegateValue listening ? listening : null,
-                shot.gateway());
-        return process;
-    }
-
-    private Snapshot.IHeld freeze(final Object thing, final int number, final HeldNumbers numbers) {
-        final long bytes = this.heap.bytesOf(thing);
-        final int line = this.heap.lineOf(thing);
-        final boolean freed = this.heap.isFreed(thing);
-        if (thing instanceof String text) {
-            return new Snapshot.IHeld.Text(number, bytes, line, freed, text);
-        }
-        if (thing instanceof Values.Obj object) {
-            return new Snapshot.IHeld.Object(number, bytes, line, freed, object.type(),
-                    fields(object, numbers));
-        }
-        if (thing instanceof Values.Arr array) {
-            return new Snapshot.IHeld.Array(number, bytes, line, freed, array.element(),
-                    values(array.all(), numbers));
-        }
-        if (thing instanceof Values.ListValue list) {
-            return new Snapshot.IHeld.Listing(number, bytes, line, freed, values(list.items(), numbers));
-        }
-        if (thing instanceof Values.MapValue map) {
-            return new Snapshot.IHeld.Keyed(number, bytes, line, freed,
-                    values(new ArrayList<>(map.entries().keySet()), numbers),
-                    values(new ArrayList<>(map.entries().values()), numbers));
-        }
-        final Values.DelegateValue delegate = (Values.DelegateValue) thing;
-        final List<Snapshot.BoundShot> chain = new ArrayList<>();
-        for (final Values.Bound bound : delegate.chain()) {
-            chain.add(new Snapshot.BoundShot(value(bound.target(), numbers), bound.owner(),
-                    bound.method(), bound.parameters(), bound.returns()));
-        }
-        return new Snapshot.IHeld.Handler(number, bytes, line, freed, delegate.type(), chain);
-    }
-
-    private static Object shell(final Snapshot.IHeld written) {
-        return switch (written) {
-            case Snapshot.IHeld.Text text -> new String(text.value().toCharArray());
-            case Snapshot.IHeld.Object object -> new Values.Obj(object.type());
-            case Snapshot.IHeld.Array array -> new Values.Arr(array.element(), array.values().size());
-            case Snapshot.IHeld.Listing ignored -> new Values.ListValue();
-            case Snapshot.IHeld.Keyed ignored -> new Values.MapValue();
-            case Snapshot.IHeld.Handler handler -> new Values.DelegateValue(handler.type(), List.of());
-        };
-    }
-
-    /*
-     * A later pass, because two things can point at each other and neither can be filled in until both
-     * exist.
-     */
-    private static void fill(final Snapshot.IHeld written, final Map<Integer, Object> byNumber) {
-        final Object thing = byNumber.get(written.id());
-        switch (written) {
-            case Snapshot.IHeld.Object object -> {
-                for (final Map.Entry<String, Snapshot.IValue> field : object.fields().entrySet()) {
-                    ((Values.Obj) thing).set(field.getKey(), value(field.getValue(), byNumber));
-                }
-            }
-            case Snapshot.IHeld.Array array -> {
-                for (int i = 0; i < array.values().size(); i++) {
-                    ((Values.Arr) thing).set(i, value(array.values().get(i), byNumber), 0);
-                }
-            }
-            case Snapshot.IHeld.Listing list -> {
-                for (final Snapshot.IValue item : list.items()) {
-                    ((Values.ListValue) thing).items().add(value(item, byNumber));
-                }
-            }
-            case Snapshot.IHeld.Keyed keyed -> {
-                for (int i = 0; i < keyed.keys().size(); i++) {
-                    ((Values.MapValue) thing).entries().put(value(keyed.keys().get(i), byNumber),
-                            value(keyed.values().get(i), byNumber));
-                }
-            }
-            default -> { }
-        }
-    }
-
-    /*
-     * The frames are a stack, so they come out top first; they are written bottom first, which is the
-     * order they have to be put back in.
-     */
-    private static Snapshot.ThreadShot freeze(final ProgramThread thread, final HeldNumbers numbers) {
-        final List<Frame> stack = new ArrayList<>(thread.frames);
-        java.util.Collections.reverse(stack);
-        final List<Snapshot.FrameShot> frames = new ArrayList<>();
-        for (final Frame frame : stack) {
-            frames.add(freeze(frame, numbers));
-        }
-        return new Snapshot.ThreadShot(thread.id, frames, IWait.kindOf(thread.wait), IWait.untilOf(thread.wait),
-                value(IWait.onOf(thread.wait), numbers), value(thread.token, numbers), thread.givenUp(),
-                IWait.hostOf(thread.wait));
-    }
-
-    private static Snapshot.FrameShot freeze(final Frame frame, final HeldNumbers numbers) {
-        return new Snapshot.FrameShot(frame.method.owner(), frame.method.name(),
-                frame.method.parameters(), frame.at, value(frame.self, numbers),
-                values(java.util.Arrays.asList(frame.slots), numbers), values(frame.stack, numbers),
-                frame.discard);
-    }
-
-    private static Frame thaw(final ProgramImage program, final Snapshot.FrameShot written,
-                              final Map<Integer, Object> byNumber) {
-        final MethodImage method = found(program, written);
-        if (method == null) {
-            return null;
-        }
-        final Frame frame = new Frame(method, value(written.self(), byNumber));
-        for (int i = 0; i < written.slots().size() && i < frame.slots.length; i++) {
-            frame.slots[i] = value(written.slots().get(i), byNumber);
-        }
-        for (final Snapshot.IValue held : written.stack()) {
-            frame.push(value(held, byNumber));
-        }
-        frame.at = written.at();
-        frame.discard = written.discard();
-        return frame;
-    }
-
-    /**
-     * The method a frame was in.
-     *
-     * <p>The one that puts a type's own starting values in place is not among the methods that can be
-     * called by name, so it is asked for separately: a process put away before it ran would otherwise
-     * come back without it.
-     */
-    private static MethodImage found(final ProgramImage program, final Snapshot.FrameShot written) {
-        final MethodImage named =
-                program.method(written.owner(), written.name(), written.parameters());
-        if (named != null) {
-            return named;
-        }
-        final TypeImage type = program.type(written.owner());
-        if (type == null || type.setUp() == null) {
-            return null;
-        }
-        final MethodImage setUp = type.setUp();
-        return setUp.name().equals(written.name()) && setUp.parameters().equals(written.parameters())
-                ? setUp : null;
-    }
-
-    private static Map<String, Snapshot.IValue> fields(final Values.Obj object, final HeldNumbers numbers) {
-        final Map<String, Snapshot.IValue> written = new LinkedHashMap<>();
-        for (final Map.Entry<String, Object> field : object.all().entrySet()) {
-            written.put(field.getKey(), value(field.getValue(), numbers));
-        }
-        return written;
-    }
-
-    private static List<Snapshot.IValue> values(final List<Object> things, final HeldNumbers numbers) {
-        final List<Snapshot.IValue> written = new ArrayList<>();
-        for (final Object thing : things) {
-            written.add(value(thing, numbers));
-        }
-        return written;
-    }
-
-    private static Snapshot.IValue value(final Object thing, final HeldNumbers numbers) {
-        return switch (thing) {
-            case null -> new Snapshot.IValue.Nothing();
-            case Integer number -> new Snapshot.IValue.I4(number);
-            case Long number -> new Snapshot.IValue.I8(number);
-            case Float number -> new Snapshot.IValue.R4(number);
-            case Double number -> new Snapshot.IValue.R8(number);
-            case Boolean flag -> new Snapshot.IValue.Bool(flag);
-            case Character letter -> new Snapshot.IValue.Ch(letter);
-            default -> {
-                final Integer number = numbers.numberOf(thing);
-                yield number == null ? new Snapshot.IValue.Nothing() : new Snapshot.IValue.Ref(number);
-            }
-        };
-    }
-
-    private static Object value(final Snapshot.IValue written,
-                                          final Map<Integer, Object> byNumber) {
-        return switch (written) {
-            case Snapshot.IValue.Nothing ignored -> null;
-            case Snapshot.IValue.I4 number -> number.value();
-            case Snapshot.IValue.I8 number -> number.value();
-            case Snapshot.IValue.R4 number -> number.value();
-            case Snapshot.IValue.R8 number -> number.value();
-            case Snapshot.IValue.Bool flag -> flag.value();
-            case Snapshot.IValue.Ch letter -> letter.value();
-            case Snapshot.IValue.Ref reference -> byNumber.get(reference.id());
-        };
+        return ProcessSnapshotReader.read(program, shot, host);
     }
 
     // odds and ends
