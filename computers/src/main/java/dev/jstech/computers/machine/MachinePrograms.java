@@ -69,8 +69,7 @@ public final class MachinePrograms {
 
     private final ProgramTable<IMachineRuntime> table = new ProgramTable<>();
     private final Scheduler scheduler = new Scheduler();
-    private int held;
-    private long shown;
+    private final TerminalFocus focus = new TerminalFocus(this.table, this::stop);
     /** What the machine still owes for work done on its behalf outside its programs. */
     private int owed;
 
@@ -108,40 +107,19 @@ public final class MachinePrograms {
         return this.table.heapMb();
     }
 
-    /**
-     * The program the terminal is holding, or 0.
-     *
-     * <p>A machine has one prompt, so it has at most one program in front of it. That program keeps its
-     * place in the list after it returns, because what it printed last is not read until the terminal
-     * has had its turn; every other finished program is cleared away as soon as it is done.
-     */
+    /** The program the terminal is holding, or 0; see {@link TerminalFocus}. */
     public int held() {
-        return this.held;
+        return this.focus.held();
     }
 
     /** Says the terminal is now waiting on that program. */
     public void hold(final int id) {
-        final ProgramEntry<IMachineRuntime> before = this.byId(this.held);
-        if (before != null && before.id() != id && !before.process().isService()) {
-            /*
-             * The terminal is one, and a program that loses it can never read from it again: what is
-             * typed goes to the program in front. Left alone it would wait for ever at no cost and some
-             * memory, listed as running, so it is stopped the moment the terminal moves on.
-             */
-            this.stop(before.id());
-        }
-        this.held = id;
-        this.shown = 0;
+        this.focus.hold(id);
     }
 
     /** Hands a line typed at the terminal to the program it is holding; false when it holds none. */
     public boolean offerInput(final String line) {
-        final ProgramEntry<IMachineRuntime> one = this.byId(this.held);
-        if (one == null) {
-            return false;
-        }
-        one.process().offerInput(line);
-        return true;
+        return this.focus.offerInput(line);
     }
 
     /** How a program's state reads to a person: a program stopped on a read is waiting for input. */
@@ -152,30 +130,12 @@ public final class MachinePrograms {
 
     /** Lets the terminal go, clearing the program away if it had already finished. */
     public void release() {
-        final ProgramEntry<IMachineRuntime> one = this.byId(this.held);
-        this.held = 0;
-        if (one != null && one.process().state() != ILanguageProcess.State.RUNNING
-                && one.process().state() != ILanguageProcess.State.PARKED) {
-            this.table.remove(one.id());
-        }
+        this.focus.release();
     }
 
-    /**
-     * What the held program has printed since this was last asked, and never the same line twice.
-     *
-     * <p>A program that printed more than its console keeps while nobody was looking has scrolled: what
-     * fell off the end is gone, the way it is gone from any terminal nobody was watching.
-     */
+    /** What the held program has printed since this was last asked, and never the same line twice. */
     public List<String> unseen() {
-        final ProgramEntry<IMachineRuntime> one = this.byId(this.held);
-        if (one == null) {
-            return List.of();
-        }
-        final List<String> kept = one.process().console();
-        final long written = one.process().written();
-        final int fresh = (int) Math.min(written - this.shown, kept.size());
-        this.shown = written;
-        return fresh <= 0 ? List.of() : List.copyOf(kept.subList(kept.size() - fresh, kept.size()));
+        return this.focus.unseen();
     }
 
     /**
@@ -305,9 +265,7 @@ public final class MachinePrograms {
         }
         one.process().onStop(FAREWELL);
         this.table.remove(id);
-        if (this.held == id) {
-            this.held = 0;
-        }
+        this.focus.forget(id);
         return true;
     }
 
@@ -377,7 +335,7 @@ public final class MachinePrograms {
         final List<ProgramEntry<IMachineRuntime>> done = new ArrayList<>();
         for (final ProgramEntry<IMachineRuntime> one : this.table.running()) {
             final ILanguageProcess.State state = one.process().state();
-            if (!one.process().isService() && one.id() != this.held && one.process().waitingForInput()) {
+            if (!one.process().isService() && !this.focus.holds(one.id()) && one.process().waitingForInput()) {
                 /*
                  * A terminal program stopped on a read with no terminal in front of it: only the program
                  * in front gets what is typed, so nothing can ever reach this one. However it came to be
@@ -393,7 +351,7 @@ public final class MachinePrograms {
                  * one that stays up is asked again. Either way, a finished terminal program only leaves
                  * once whoever was waiting on it has read it.
                  */
-                if (!one.process().isService() && one.id() != this.held) {
+                if (!one.process().isService() && !this.focus.holds(one.id())) {
                     /*
                      * One started by another program, on this machine or on another, keeps its output and
                      * its exit code for that program to read, and goes when it goes.
@@ -438,8 +396,6 @@ public final class MachinePrograms {
     private static final String BINARY = "binary";
     private static final String HEAP = "heap";
     private static final String STATE = "state";
-    private static final String HELD = "held";
-    private static final String SHOWN = "shown";
     private static final String PARENT = "parent";
     private static final String REMOTE_PARENT = "remoteParent";
     private static final String MACHINE = "machine";
@@ -477,15 +433,13 @@ public final class MachinePrograms {
         }
         tag.put(PROGRAMS, written);
         tag.putInt(NEXT, this.table.nextId());
-        tag.putInt(HELD, this.held);
-        tag.putLong(SHOWN, this.shown);
+        this.focus.save(tag);
     }
 
     /** Reads them back, each one carrying on from where it stopped. */
     public void load(final CompoundTag tag, final BlockEntity machine) {
         this.table.restart(tag.getInt(NEXT));
-        this.held = tag.getInt(HELD);
-        this.shown = tag.getLong(SHOWN);
+        this.focus.load(tag);
         final ListTag written = tag.getList(PROGRAMS, Tag.TAG_COMPOUND);
         for (int i = 0; i < written.size(); i++) {
             final CompoundTag each = written.getCompound(i);
