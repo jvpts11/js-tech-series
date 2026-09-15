@@ -483,10 +483,11 @@ public final class DiskFilesystem {
     }
 
     /**
-     * The kind a path's extension names, or {@code fallback} when it names none.
+     * The kind a path's extension names, or {@code fallback} when it has none.
      *
-     * <p>A name with no extension, or one nobody claims, keeps the kind it had: a text file renamed to
-     * {@code notes} is still text, which is what lets it still be opened.
+     * <p>A name with no extension keeps the kind it had: a text file renamed to {@code notes} is still text. An
+     * extension the machines do not know makes the file one of a kind they do not know, so a file renamed to
+     * {@code thing.fk} is not text wearing another name.
      */
     private static FileType typeOfPath(final String path, final FileType fallback) {
         final int slash = path.lastIndexOf('/');
@@ -495,8 +496,7 @@ public final class DiskFilesystem {
         if (dot <= 0 || dot == name.length() - 1) {
             return fallback;
         }
-        return FileType.fromExtension(name.substring(dot + 1).toLowerCase(java.util.Locale.ROOT))
-                .orElse(fallback);
+        return FileType.of(name.substring(dot + 1));
     }
 
     /**

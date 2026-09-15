@@ -23,6 +23,20 @@ class FileTypeTest {
     }
 
     @Test
+    void of_givesTheKnownKindOrOtherForAnyOtherExtension() {
+        assertEquals(FileType.SGS, FileType.of("SGS"));
+        assertEquals(FileType.OTHER, FileType.of("fk"));
+        assertEquals(FileType.OTHER, FileType.of(""));
+        assertEquals(FileType.OTHER, FileType.of(null));
+        assertTrue(FileType.OTHER.userEditable(), "a file of an unknown kind is text like any other");
+    }
+
+    @Test
+    void fromExtension_neverAnswersOtherForAMissingExtension() {
+        assertEquals(java.util.Optional.empty(), FileType.fromExtension(""));
+    }
+
+    @Test
     void virtualProjectionsAreTheDatAndTheInstallerFiles() {
         /*
          * A projection is generated, never stored: the .dat from a disk's storage, what an installer

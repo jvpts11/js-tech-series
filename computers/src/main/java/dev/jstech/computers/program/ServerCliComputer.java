@@ -2482,10 +2482,8 @@ public final class ServerCliComputer implements ICliComputer {
         }
         final DiskCtx ctx = r.ctx();
         final String real = r.path();
-        final FileType type = FileType.fromExtension(extensionOf(path)).orElse(null);
-        if (type == null) {
-            return FsResult.fail(path + ": unknown file type (use .txt/.iql/.cfg/.csv/.cmd)");
-        }
+        // Any extension will do: a kind the machine does not know is kept as text under the name it was given.
+        final FileType type = FileType.of(extensionOf(path));
         if (!type.userEditable()) {
             return FsResult.fail(path + ": ." + type.extension() + " files cannot be edited");
         }
@@ -2657,7 +2655,7 @@ public final class ServerCliComputer implements ICliComputer {
         if (content.isEmpty()) {
             return FsResult.fail(src + ": file not found (cross-drive copy supports files only)");
         }
-        final FileType type = FileType.fromExtension(extensionOf(realDest)).orElse(FileType.TXT);
+        final FileType type = FileType.of(extensionOf(realDest));
         final DiskFilesystem.WriteResult wr = DiskFilesystem.write(d.ctx().disk(), realDest, type,
                 content.get(), freeWeightOf(d.ctx().disk()), d.ctx().kind(), level.getGameTime());
         return switch (wr) {
@@ -2734,7 +2732,7 @@ public final class ServerCliComputer implements ICliComputer {
             return FsResult.fail(src + ": file not found (cross-drive move supports files only)");
         }
         final String destPath = FsPaths.join(d.path(), FsPaths.fileName(s.path()));
-        final FileType type = FileType.fromExtension(extensionOf(destPath)).orElse(FileType.TXT);
+        final FileType type = FileType.of(extensionOf(destPath));
         final DiskFilesystem.WriteResult wr = DiskFilesystem.write(d.ctx().disk(), destPath, type,
                 content.get(), freeWeightOf(d.ctx().disk()), d.ctx().kind(), level.getGameTime());
         if (wr != DiskFilesystem.WriteResult.OK) {

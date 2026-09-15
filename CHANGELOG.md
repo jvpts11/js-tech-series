@@ -44,6 +44,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A computer checks the server's clock once every 512 instructions its programs run, or at once after a call into the
   machine, instead of after every 64. A computer that runs out of time in a tick can go that much further before it
   stops, and running its programs costs the server less.
+- A file can have any extension. One of a kind the computer does not know, such as `thing.fk` written by a
+  program, is saved, copied, moved and renamed like any other. The prompt, programs and the editor used to refuse
+  it, and copying or renaming a file to such a name turned it into a text file.
 - A language an addon registers is refused, with a line in the log, when it claims a file extension another
   language already has. Registering one again under the same id replaces the one before, and the log says so.
   Languages can be added or removed only while the game loads.

@@ -76,13 +76,10 @@ public final class FileEditPayloads {
             final int dot = real.lastIndexOf('.');
             final String ext = dot >= 0 && dot < real.length() - 1
                     ? real.substring(dot + 1).toLowerCase(java.util.Locale.ROOT) : "";
-            final dev.jstech.computers.os.fs.FileType type =
-                    dev.jstech.computers.os.fs.FileType.fromExtension(ext).orElse(null);
+            final dev.jstech.computers.os.fs.FileType type = dev.jstech.computers.os.fs.FileType.of(ext);
             if (vol.isEmpty()
                     || kind == dev.jstech.computers.os.FilesystemKind.NONE) {
                 msg = media ? "No medium" : "No system disk";
-            } else if (type == null) {
-                msg = "Unknown type (.txt/.iql/.cfg/.csv/.cmd)";
             } else if (!type.userEditable()) {
                 msg = "." + type.extension() + " is read-only";
             } else {

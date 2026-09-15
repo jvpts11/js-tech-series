@@ -9,9 +9,6 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.machine.MachinePrograms;
-import dev.jstech.computers.os.FilesystemKind;
-import dev.jstech.computers.os.fs.DiskFilesystem;
-import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.language.ILanguageProcess;
@@ -144,14 +141,9 @@ public final class LanguageApiGameTests {
                         .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    /*
-                     * The shell writes only the kinds of file the machines know, so the toy program goes on the
-                     * disk directly; starting a program reads it back under any name.
-                     */
-                    DiskFilesystem.write(computer.systemDisk(), "count.toy", FileType.TXT, SOURCE,
-                            Long.MAX_VALUE, FilesystemKind.HIERARCHICAL);
                     final ServerCliComputer shell = new ServerCliComputer(computer, helper.getLevel());
-                    helper.assertTrue(shell.readFile("C:\\count.toy").ok(), "the toy program is on the disk");
+                    helper.assertTrue(shell.writeFile("C:\\count.toy", SOURCE).ok(),
+                            "the toy program is on the disk, whatever the machine makes of its kind");
                     final MachinePrograms.Started started =
                             computer.programs().start("patient.sgs", PATIENT, 1, computer);
                     helper.assertTrue(started.ok(), "the patient starts: " + started.message());

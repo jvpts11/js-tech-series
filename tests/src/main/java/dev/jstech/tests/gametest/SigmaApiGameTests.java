@@ -132,6 +132,44 @@ public final class SigmaApiGameTests {
     }
 
     @GameTest(template = ARENA)
+    public static void file_aProgramWritesAFileOfAKindTheMachineDoesNotKnow(final GameTestHelper helper) {
+        final BlockPos at = new BlockPos(2, 2, 2);
+        final CraftingComputerBlockEntity computer = computer(helper, at);
+        if (computer == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final MachinePrograms.Started started = computer.programs().start("maker.asm", listing("""
+                            class Maker {
+                                static void Main() {
+                                    Console.PrintLine(File.Write("thing.fk", "one of mine") ? "wrote" : "refused");
+                                }
+                            }
+                            """), 1, computer);
+                    helper.assertTrue(started.ok(), "the program starts: " + started.message());
+                    computer.programs().tick(100000);
+                    final List<String> said = computer.programs().byId(started.id()).process().console();
+                    helper.assertTrue(said.equals(List.of("wrote")),
+                            "a file of a kind of its own is written; it said " + said);
+
+                    // Written down with the machine and read back: the file keeps its name and its unknown kind.
+                    final var registries = helper.getLevel().registryAccess();
+                    final var saved = computer.saveWithFullMetadata(registries);
+                    computer.loadWithComponents(saved, registries);
+                    final var entry = DiskFilesystem.list(computer.systemDisk(), "",
+                                    dev.jstech.computers.os.FilesystemKind.FLAT).stream()
+                            .filter(one -> "thing.fk".equals(one.path())).findFirst().orElse(null);
+                    helper.assertTrue(entry != null && entry.type() == dev.jstech.computers.os.fs.FileType.OTHER,
+                            "it comes back from the save as a file of an unknown kind; got " + entry);
+                    final Optional<String> kept = DiskFilesystem.read(computer.systemDisk(), "thing.fk");
+                    helper.assertTrue("one of mine".equals(kept.orElse("")),
+                            "with what the program wrote; got " + kept.orElse(""));
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
     public static void file_aProgramReadsBackWhatTheShellWouldSee(final GameTestHelper helper) {
         final BlockPos at = new BlockPos(2, 2, 2);
         final CraftingComputerBlockEntity computer = computer(helper, at);

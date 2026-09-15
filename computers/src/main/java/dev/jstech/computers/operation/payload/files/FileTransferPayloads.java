@@ -98,9 +98,7 @@ public final class FileTransferPayloads {
         final String stem = dot > 0 ? name.substring(0, dot) : name;
         final String ext = dot >= 0 && dot < name.length() - 1
                 ? name.substring(dot + 1).toLowerCase(java.util.Locale.ROOT) : "";
-        final dev.jstech.computers.os.fs.FileType type =
-                dev.jstech.computers.os.fs.FileType.fromExtension(ext)
-                        .orElse(dev.jstech.computers.os.fs.FileType.TXT);
+        final dev.jstech.computers.os.fs.FileType type = dev.jstech.computers.os.fs.FileType.of(ext);
         final dev.jstech.computers.os.FilesystemKind dstKind = dstMedia
                 ? dev.jstech.computers.os.FilesystemKind.HIERARCHICAL
                 : filesystemKindOf(computer);
@@ -177,9 +175,7 @@ public final class FileTransferPayloads {
         final int dot = name.lastIndexOf('.');
         final String ext = dot >= 0 && dot < name.length() - 1
                 ? name.substring(dot + 1).toLowerCase(java.util.Locale.ROOT) : "";
-        final dev.jstech.computers.os.fs.FileType type =
-                dev.jstech.computers.os.fs.FileType.fromExtension(ext)
-                        .orElse(dev.jstech.computers.os.fs.FileType.TXT);
+        final dev.jstech.computers.os.fs.FileType type = dev.jstech.computers.os.fs.FileType.of(ext);
         final dev.jstech.computers.os.FilesystemKind dstKind = dstMedia
                 ? dev.jstech.computers.os.FilesystemKind.HIERARCHICAL
                 : filesystemKindOf(computer);

@@ -373,6 +373,51 @@ public final class OsCliGameTests {
     }
 
     /**
+     * {@code write} takes a file whatever its extension: one of a kind the machine does not know is kept under the
+     * name it was given, and reads back like any other.
+     */
+    @GameTest(template = ARENA)
+    public static void cliWrite_takesAFileOfAKindTheMachineDoesNotKnow(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = placeMainframeWithMcDos(helper, pos);
+
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
+                    final ICliComputer.FsResult write = cli.writeFile("thing.fk", "made by a program");
+                    helper.assertTrue(write.ok(), "writeFile takes a .fk; got: " + write.message());
+                    final ICliComputer.FsResult read = cli.readFile("thing.fk");
+                    helper.assertTrue(read.ok() && "made by a program".equals(read.message()),
+                            "and reads it back; got: " + read.message());
+                })
+                .thenSucceed();
+    }
+
+    /** Renaming a text file to an extension the machine does not know makes it a file of that unknown kind. */
+    @GameTest(template = ARENA)
+    public static void rename_toAnUnknownExtensionMakesAFileOfAnUnknownKind(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = placeMainframeWithMcDos(helper, pos);
+
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
+                    helper.assertTrue(cli.writeFile("notes.txt", "hi").ok(), "the text file is written");
+                    final var disk = mainframe.systemDisk();
+                    final boolean renamed = dev.jstech.computers.os.fs.DiskFilesystem.rename(disk, "notes.txt",
+                            "notes.fk", dev.jstech.computers.os.FilesystemKind.HIERARCHICAL);
+                    helper.assertTrue(renamed, "and renamed");
+                    final var entry = dev.jstech.computers.os.fs.DiskFilesystem.list(disk, "",
+                                    dev.jstech.computers.os.FilesystemKind.HIERARCHICAL).stream()
+                            .filter(one -> "notes.fk".equals(one.path())).findFirst().orElse(null);
+                    helper.assertTrue(entry != null && entry.type() == dev.jstech.computers.os.fs.FileType.OTHER,
+                            "it is a file of a kind the machine does not know; got " + entry);
+                    helper.assertTrue("hi".equals(cli.readFile("notes.fk").message()), "with what it held");
+                })
+                .thenSucceed();
+    }
+
+    /**
      * {@code write} without an installed OS (no system disk) must fail, not throw.
      */
     @GameTest(template = ARENA)

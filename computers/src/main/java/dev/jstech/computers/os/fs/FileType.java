@@ -10,7 +10,8 @@ package dev.jstech.computers.os.fs;
 import java.util.Optional;
 
 /**
- * The file types the filesystem recognises, each bound to a lowercase extension.
+ * The file types the filesystem recognises, each bound to a lowercase extension, and {@link #OTHER} for a file of
+ * any other extension.
  *
  * <p>Two flags describe how a type is handled:
  * <ul>
@@ -97,7 +98,16 @@ public enum FileType {
     /** A solution: the projects a studio works on together, and which starts. */
     SLN("sln", true, false),
     /** A project: what it is made of and what it builds. */
-    SGSPROJ("sgsproj", true, false);
+    SGSPROJ("sgsproj", true, false),
+
+    /**
+     * A file of a kind the machines do not know: whatever a player or a program chose to call it, such as
+     * {@code thing.fk}.
+     *
+     * <p>It is stored and edited like text, because text is what every file here holds. It has no extension of its
+     * own: the one it was given lives in its name, and nothing needs to know what that extension means.
+     */
+    OTHER("", true, false);
 
     private final String extension;
     private final boolean userEditable;
@@ -142,10 +152,20 @@ public enum FileType {
             return Optional.empty();
         }
         for (final FileType type : values()) {
-            if (type.extension.equalsIgnoreCase(ext)) {
+            if (type != OTHER && type.extension.equalsIgnoreCase(ext)) {
                 return Optional.of(type);
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * The kind a file with that extension is: the one the machines know, or {@link #OTHER} for any other extension,
+     * a name without one included.
+     *
+     * @param ext the file extension (e.g. {@code "iql"} or {@code "fk"}), in any case, without the dot
+     */
+    public static FileType of(final String ext) {
+        return fromExtension(ext).orElse(OTHER);
     }
 }
