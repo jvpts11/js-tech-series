@@ -5,7 +5,7 @@
  *
  * This file is part of J's Computers.
  */
-package dev.jstech.computers.machine;
+package dev.jstech.computers.vm.program;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -16,30 +16,28 @@ import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
-import dev.jstech.computers.vm.program.Halt;
-import dev.jstech.computers.vm.program.IHost;
-import dev.jstech.computers.vm.program.Process;
-import dev.jstech.computers.vm.program.ProgramImage;
-import dev.jstech.computers.vm.program.Snapshot;
-import dev.jstech.computers.vm.program.Values;
+import dev.jstech.computers.vm.system.MemberId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * What a Σ# program sees of the machine's Gateways: which there are, which one it chose, what is on
- * the other side, and what a ComputerCraft computer says to it.
+ * What a Σ# program sees of the machine's Gateways: which there are, which one it chose, what is on the other side, and
+ * what a ComputerCraft computer says to it. The choice and the listening are the program's own and come back with it
+ * from a save; the rest the machine answers.
  */
-class HostGatewayTest {
+class ProcessGatewayTest {
 
     private static final long ROOM = 256L * 1024;
     private static final int PLENTY = 1_000_000;
+    private static final List<String> NAMES = List.of("north", "west");
 
-    /** A machine with two Gateways, which writes down every question it was asked. */
+    /** A machine with two Gateways, which writes down every question it was asked and the Gateway it went through. */
     private static final class Machine implements IHost {
 
         private final List<String> asked = new ArrayList<>();
-        /** Whether this machine has Gateways at all; one without answers for none. */
+        /** Whether this machine has Gateways at all; one without answers none of their calls. */
         private final boolean has;
 
         Machine() {
@@ -66,24 +64,35 @@ class HostGatewayTest {
         }
 
         @Override
-        public boolean provides(final String owner) {
-            return this.has && "Gateway".equals(owner);
+        public IWorldFunction bind(final MemberId id) {
+            if (!this.has || !"Gateway".equals(id.owner())) {
+                return null;
+            }
+            return (call, target, arguments, line) -> {
+                this.asked.add(id.name() + ":" + call.gateway() + Arrays.asList(arguments));
+                return answer(id.name(), call, arguments, line);
+            };
         }
 
-        @Override
-        public Reply call(final String owner, final String member, final List<Object> arguments,
-                          final String caller, final int line) {
-            this.asked.add(member + arguments);
-            final String chosen = arguments.isEmpty() ? "" : String.valueOf(arguments.getFirst());
-            return switch (member) {
-                case "Online" -> Reply.of(true, 1);
-                case "Current" -> Reply.of(chosen.isEmpty() ? "north" : chosen, 1);
+        private static Object answer(final String name, final IWorldCall call, final Object[] arguments,
+                                     final int line) {
+            return switch (name) {
+                case "Online", "TurnOn", "Shutdown", "Reboot", "Send" -> true;
+                case "Current" -> call.gateway().isEmpty() ? NAMES.getFirst() : call.gateway();
                 case "Names" -> {
                     final Values.ListValue names = new Values.ListValue();
-                    names.items().addAll(List.of("north", "west"));
-                    yield Reply.of(names, 1);
+                    names.items().addAll(NAMES);
+                    yield names;
                 }
-                case "Select" -> Reply.of("west".equals(chosen), 1);
+                case "Select" -> {
+                    final String named = String.valueOf(arguments[0]);
+                    if (!NAMES.contains(named)) {
+                        throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line,
+                                "this computer has no Gateway called " + named);
+                    }
+                    call.chooseGateway(named);
+                    yield true;
+                }
                 case "Computers" -> {
                     final Values.Obj one = new Values.Obj("CcComputer");
                     one.set("Id", 3L);
@@ -92,7 +101,7 @@ class HostGatewayTest {
                     one.set("Online", true);
                     final Values.ListValue all = new Values.ListValue();
                     all.items().add(one);
-                    yield Reply.of(all, 1);
+                    yield all;
                 }
                 case "Peripherals" -> {
                     final Values.Obj one = new Values.Obj("CcPeripheral");
@@ -103,11 +112,10 @@ class HostGatewayTest {
                     one.set("Methods", methods);
                     final Values.ListValue all = new Values.ListValue();
                     all.items().add(one);
-                    yield Reply.of(all, 1);
+                    yield all;
                 }
-                case "Call" -> Reply.of("done", 1);
-                case "TurnOn", "Shutdown", "Reboot", "Send" -> Reply.of(true, 1);
-                default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "Gateway has no " + member);
+                case "Call" -> "done";
+                default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "Gateway has no " + name);
             };
         }
     }
@@ -172,14 +180,15 @@ class HostGatewayTest {
     }
 
     @Test
-    void select_makesEveryCallAfterwardsNameThatGateway() {
+    void select_makesEveryCallAfterwardsGoThroughThatGateway() {
         final Machine machine = new Machine();
-        start(load(BRIDGE), machine);
-        assertTrue(machine.asked.contains("Select[west, west]"), machine.asked.toString());
-        assertTrue(machine.asked.contains("Current[]"), "the first question is about whichever comes first");
-        assertTrue(machine.asked.contains("Current[west]"), "and afterwards about the one it chose");
-        assertTrue(machine.asked.contains("Call[west, monitor_0, setCursorPos, 1, 2]"),
-                "a call carries the chosen Gateway and everything the method takes");
+        final Process process = start(load(BRIDGE), machine);
+        assertEquals("west", process.gatewayName());
+        assertTrue(machine.asked.contains("Select:[west]"), machine.asked.toString());
+        assertTrue(machine.asked.contains("Current:[]"), "the first question is about whichever comes first");
+        assertTrue(machine.asked.contains("Current:west[]"), "and afterwards about the one it chose");
+        assertTrue(machine.asked.contains("Call:west[monitor_0, setCursorPos, 1, 2]"),
+                "a call goes through the chosen Gateway with everything the method takes");
     }
 
     @Test

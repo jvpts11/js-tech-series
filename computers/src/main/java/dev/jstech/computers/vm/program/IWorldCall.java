@@ -8,8 +8,9 @@
 package dev.jstech.computers.vm.program;
 
 /**
- * What a call to the world tells the runtime about itself while it is answered, for what it is charged: a call priced
- * by how much it reads or writes says how much that was.
+ * What a call to the world tells the runtime about itself while it is answered, and what it may ask of the program
+ * making it: a call priced by how much it reads or writes says how much that was, and a call through a Gateway asks
+ * which one the program chose.
  */
 @FunctionalInterface
 public interface IWorldCall {
@@ -38,5 +39,17 @@ public interface IWorldCall {
      */
     default int callerId() {
         return 0;
+    }
+
+    /**
+     * The name of the Gateway the asking program chose to reach the ComputerCraft side through, or empty for whichever
+     * its machine lists first.
+     */
+    default String gateway() {
+        return "";
+    }
+
+    /** Makes that the Gateway the asking program's calls go through from now on, which it keeps across a reload. */
+    default void chooseGateway(final String name) {
     }
 }

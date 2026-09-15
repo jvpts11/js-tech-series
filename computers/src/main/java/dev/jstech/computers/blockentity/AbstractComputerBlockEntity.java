@@ -1318,8 +1318,11 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
             return;
         }
         gatewayMail = false;
+        if (!(level instanceof ServerLevel server)) {
+            return;
+        }
         for (final dev.jstech.computers.blockentity.NetworkGatewayBlockEntity gateway
-                : dev.jstech.computers.machine.HostGateway.gatewaysOf(this)) {
+                : dev.jstech.computers.gateway.GatewayManager.gatewaysOf(server, this)) {
             for (final dev.jstech.computers.blockentity.NetworkGatewayBlockEntity.Message said
                     : gateway.takeMessages()) {
                 programs.deliverGatewayMessage(said.from(), said.text(), said.tick());

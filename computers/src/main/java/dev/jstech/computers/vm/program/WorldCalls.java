@@ -84,4 +84,14 @@ final class WorldCalls implements IWorldCall {
     public int callerId() {
         return this.process.machineId();
     }
+
+    @Override
+    public String gateway() {
+        return this.process.gatewayName();
+    }
+
+    @Override
+    public void chooseGateway(final String name) {
+        this.process.chooseGateway(name);
+    }
 }

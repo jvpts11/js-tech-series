@@ -59,6 +59,9 @@ public final class MachineServices {
     @Nullable
     private RemoteComputerService remotes;
 
+    @Nullable
+    private GatewayBridgeService gateways;
+
     public MachineServices(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
     }
@@ -166,6 +169,17 @@ public final class MachineServices {
         return this.remotes;
     }
 
+    /**
+     * The Gateways linked to the machine, through which its programs reach the ComputerCraft side.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public GatewayBridgeService gateways() {
+        this.follow();
+        return this.gateways;
+    }
+
     /** Makes the shell and what goes through it again when the machine is in another world than before. */
     private void follow() {
         final Level level = this.machine.getLevel();
@@ -183,6 +197,7 @@ public final class MachineServices {
             this.iql = new IqlService(this.shell);
             this.programs = new ProgramService(this.machine, terminal, server, this.shell);
             this.remotes = new RemoteComputerService(this.shell);
+            this.gateways = new GatewayBridgeService(this.machine, server);
         } else {
             this.shell = null;
             this.files = null;
@@ -193,6 +208,7 @@ public final class MachineServices {
             this.iql = null;
             this.programs = null;
             this.remotes = null;
+            this.gateways = null;
         }
     }
 }

@@ -116,9 +116,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   and widgets and what they hold, the values it reads of itself and of the language's own text and collections, the
   widgets, lists and maps it makes, the watches it sets on the network, its calls on the computer's drives, what it
   reads of the computer itself, its network and its Mainframe, the Operations it asks the network for, the IQL
-  statements it runs, and the programs it starts and asks after, on its own computer or another of its network,
-  which services the computer keeps answer. A computer keeps the shell its programs reach its drives and its
-  network through, instead of making one for each call.
+  statements it runs, the programs it starts and asks after, on its own computer or another of its network, and
+  its calls through the computer's Gateways, which services the computer keeps answer. A computer keeps the shell
+  its programs reach its drives and its network through, instead of making one for each call.
 - Every source file's header names the mod it belongs to.
 
 ### Fixed

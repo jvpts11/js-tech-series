@@ -72,6 +72,7 @@ final class ProcessCalls {
         thread(bindings);
         program(bindings);
         network(bindings);
+        gateway(bindings);
         ui(bindings);
         return Map.copyOf(bindings);
     }
@@ -190,6 +191,17 @@ final class ProcessCalls {
         final Object last = arguments[arguments.length - 1];
         return process.watch(item, kind, threshold, last instanceof Values.DelegateValue handler ? handler : null,
                 line);
+    }
+
+    /*
+     * Who hears what a ComputerCraft computer says through a Gateway. The listener is the program's, like who hears the
+     * lines other programs send it, and comes back with it from a save; the Gateway's own calls are the machine's.
+     */
+    private static void gateway(final Map<MemberId, Binding> bindings) {
+        bind(bindings, "Gateway", "OnMessage", null, (process, target, arguments, line) -> {
+            process.hearGateway(arguments[0] instanceof Values.DelegateValue handler ? handler : null);
+            return null;
+        }, "Action<GatewayMessage>");
     }
 
     /*

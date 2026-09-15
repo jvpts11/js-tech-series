@@ -14,10 +14,10 @@ import java.util.List;
 /**
  * The part of the library the runtime answers for itself that needs more than a call's arguments.
  *
- * <p>These are the calls that touch the machine: its Gateway, and handing everything else to the machine. It also
- * keeps the console the process writes to and its random numbers, whose calls {@link ProcessCalls} answer, as it
- * does the calls on the program's windows and its watches on the network. The calls that need nothing but their
- * arguments (text, the two collections, numbers) are {@link PureFunctions}.
+ * <p>These are the calls a machine answers by their names, handed to it as they are. It also keeps the console the
+ * process writes to and its random numbers, whose calls {@link ProcessCalls} answer, as it does the calls on the
+ * program's windows and its watches on the network. The calls that need nothing but their arguments (text, the two
+ * collections, numbers) are {@link PureFunctions}.
  */
 public final class Library {
 
@@ -151,53 +151,19 @@ public final class Library {
         if (this.host.provides(owner)) {
             /*
              * To the machine, being asked for a value and being asked to do something are the same
-             * question with different names, so a property goes out as a call that takes nothing. A
-             * Gateway is the one thing that takes something even so: which Gateway the program chose.
+             * question with different names, so a property goes out as a call that takes nothing.
              */
-            final List<Object> asked = UiWidgets.WINDOW.equals(owner) || !"Gateway".equals(owner) ? List.of()
-                    : List.of(this.owner == null ? "" : this.owner.gatewayName());
-            final IHost.Reply reply = this.host.call(owner, name, asked, this.caller, this.callerId(), line);
+            final IHost.Reply reply = this.host.call(owner, name, List.of(), this.caller, this.callerId(), line);
             this.owed += Math.max(0, reply.cost());
             return this.heap.adopt(reply.value(), line);
         }
         throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, owner + " has no " + name);
     }
 
-    /** Runs one of the calls the runtime answers for. */
+    /** Runs one of the calls the runtime answers for, by handing it to the machine. */
     public Answer call(final IOperand.Method named, final Object self, final List<Object> arguments,
                        final int line) {
-        return switch (named.owner()) {
-            case "Gateway" -> this.gateway(named, arguments, line);
-            default -> this.outwardOn(named, self, arguments, line);
-        };
-    }
-
-    /**
-     * A call on one of the machine's Gateways.
-     *
-     * <p>Which Gateway is the program's own choice and stays with the program, so every call carries it
-     * to the machine in front of whatever else it takes. Listening for what the other side says is the
-     * program's too, and is kept here rather than asked of the machine.
-     */
-    private Answer gateway(final IOperand.Method named, final List<Object> arguments, final int line) {
-        if ("OnMessage".equals(named.name())) {
-            if (this.owner != null) {
-                this.owner.hearGateway(arguments.isEmpty()
-                        || !(arguments.getFirst() instanceof Values.DelegateValue handler) ? null : handler);
-            }
-            return Answer.of(null);
-        }
-        final boolean choosing = "Select".equals(named.name());
-        final String chosen = choosing && !arguments.isEmpty() ? String.valueOf(arguments.getFirst())
-                : (this.owner == null ? "" : this.owner.gatewayName());
-        final List<Object> passed = new ArrayList<>();
-        passed.add(chosen);
-        passed.addAll(arguments);
-        final Answer answered = this.outward(named, passed, line);
-        if (choosing && this.owner != null && Boolean.TRUE.equals(answered.value())) {
-            this.owner.chooseGateway(chosen);
-        }
-        return answered;
+        return this.outwardOn(named, self, arguments, line);
     }
 
     private Process owner() {

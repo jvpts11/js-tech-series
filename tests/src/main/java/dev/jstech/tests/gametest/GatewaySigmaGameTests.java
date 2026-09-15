@@ -11,7 +11,6 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.NetworkGatewayBlock;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.machine.HostGateway;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -161,7 +160,7 @@ public final class GatewaySigmaGameTests {
         final PersonalComputerBlockEntity computer = fleet(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE * 2, () -> {
-                    final List<NetworkGatewayBlockEntity> mine = HostGateway.gatewaysOf(computer);
+                    final List<NetworkGatewayBlockEntity> mine = computer.services().gateways().all();
                     helper.assertTrue(mine.size() == 1, "the computer has its Gateway; got " + mine.size());
                     final MachinePrograms.Started started =
                             computer.programs().start("bridge.sgs", BRIDGE, 1, computer);

@@ -77,6 +77,7 @@ final class MachineCalls {
         IqlCalls.bind(bindings);
         ProgramCalls.bind(bindings);
         RemoteComputerCalls.bind(bindings);
+        GatewayCalls.bind(bindings);
         return Map.copyOf(bindings);
     }
 

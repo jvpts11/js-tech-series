@@ -24,12 +24,9 @@ import org.junit.jupiter.api.Test;
 
 class ProcessCallsTest {
 
-    /*
-     * The types whose calls the process answers through bindings so far. A Gateway's listener is the process's too,
-     * but it is still answered on the machine's side until the Gateway's service takes it.
-     */
+    /** The types whose calls the process answers through bindings. */
     private static final List<String> BOUND_OWNERS = List.of("Console", "Random", "Thread", "Program", "Process",
-            "Network", "Window", "Row", "Column", "ListBox", "Canvas", "MessageBox");
+            "Network", "Gateway", "Window", "Row", "Column", "ListBox", "Canvas", "MessageBox");
 
     @Test
     void bindings_answerEveryCallTheSystemLeavesToTheProcess() {

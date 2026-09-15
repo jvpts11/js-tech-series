@@ -60,11 +60,6 @@ public record MachineHost(BlockEntity machine) implements IHost {
         }
     }
 
-    @Override
-    public boolean provides(final String owner) {
-        return HostGateway.handles(owner);
-    }
-
     /**
      * The calls the machine answers with one of its services, bound to this machine's; a block entity that runs no
      * programs of its own answers none of them this way.
@@ -94,42 +89,5 @@ public record MachineHost(BlockEntity machine) implements IHost {
         }
         final ProgramService programs = self.services().programs();
         return programs != null && programs.running(program, host);
-    }
-
-    @Override
-    public Reply call(final String owner, final String member, final java.util.List<Object> arguments,
-                      final String caller, final int line) {
-        return this.call(owner, member, arguments, caller, 0, line);
-    }
-
-    @Override
-    public Reply call(final String owner, final String member, final java.util.List<Object> arguments,
-                      final String caller, final int callerId, final int line) {
-        final dev.jstech.computers.program.cli.ICliComputer computer = this.asComputer();
-        if (computer == null) {
-            throw new dev.jstech.computers.vm.program.Halt(
-                    dev.jstech.computers.vm.program.Halt.Reason.NO_SUCH_MEMBER, line,
-                    "this machine cannot reach " + owner);
-        }
-        if (HostGateway.handles(owner)) {
-            // The asking program is named because a question put across waits for an answer addressed to it.
-            return HostGateway.call(this.machine, callerId, member, arguments, line);
-        }
-        throw new dev.jstech.computers.vm.program.Halt(
-                dev.jstech.computers.vm.program.Halt.Reason.NO_SUCH_MEMBER, line,
-                "this machine cannot reach " + owner);
-    }
-
-    /**
-     * The machine as the shell sees it, which is how a program reaches its drives and its network. The machine keeps
-     * it, so every call reaches the same one instead of making its own.
-     *
-     * <p>Null when this block entity is not one a person could sit at, or when it has been read out of a
-     * save and not yet placed in a world.
-     */
-    @org.jetbrains.annotations.Nullable
-    private dev.jstech.computers.program.cli.ICliComputer asComputer() {
-        return this.machine instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity self
-                ? self.services().shell() : null;
     }
 }
