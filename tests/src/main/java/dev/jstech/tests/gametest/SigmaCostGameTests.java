@@ -12,8 +12,8 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
-import dev.jstech.computers.machine.MachineHost;
 import dev.jstech.computers.vm.system.CallCost;
+import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.SystemApi;
 import dev.jstech.tests.JsTests;
 import java.util.List;
@@ -76,15 +76,14 @@ public final class SigmaCostGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     for (final String member : List.of("Watch", "WatchBelow", "WatchAbove")) {
-                        helper.assertTrue(
-                                CallCost.FREE.equals(SystemApi.members("Network", member).getFirst().cost()),
-                                member + " should cost nothing to arm");
+                        final IMemberSpec watch = SystemApi.members("Network", member).getFirst();
+                        helper.assertTrue(CallCost.FREE.equals(watch.cost()), member + " should cost nothing to arm");
                         /*
                          * The machine is never asked: a watch is answered inside the runtime, which is
-                         * what makes it free. If that ever changes, the host starts answering for it and
+                         * what makes it free. If that ever changes, the machine starts answering for it and
                          * this stops being true.
                          */
-                        helper.assertTrue(!new MachineHost(computer).provides("Watch"),
+                        helper.assertTrue(computer.services().bind(watch.id()) == null,
                                 "a watch is the runtime's to answer, not the machine's");
                     }
                 })

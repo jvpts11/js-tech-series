@@ -1170,9 +1170,6 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     private final dev.jstech.computers.machine.MachinePrograms programs =
             new dev.jstech.computers.machine.MachinePrograms(this::tellRemoteParent);
 
-    private final dev.jstech.computers.vm.program.IHost sigmaHost =
-            new dev.jstech.computers.machine.MachineHost(this);
-
     /** What the programs on this machine reach through it, kept here so a call finds it ready. */
     private final dev.jstech.computers.machine.MachineServices services =
             new dev.jstech.computers.machine.MachineServices(this);
@@ -1212,11 +1209,6 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
             return new dev.jstech.computers.program.ServerCliComputer(host, server).prompt();
         }
         return "";
-    }
-
-    /** The clock those programs read, which is this machine's own world. */
-    public dev.jstech.computers.vm.program.IHost sigmaHost() {
-        return sigmaHost;
     }
 
     /**

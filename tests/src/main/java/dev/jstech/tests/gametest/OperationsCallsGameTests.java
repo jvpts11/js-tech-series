@@ -9,7 +9,7 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.machine.MachineHost;
+import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IWorldCall;
 import dev.jstech.computers.vm.program.IWorldFunction;
@@ -53,7 +53,7 @@ public final class OperationsCallsGameTests {
     }
 
     /** Makes one of the calls the way a program's line does, straight to what the machine bound for it. */
-    private static Object ask(final MachineHost host, final MemberId id, final Object... arguments) {
+    private static Object ask(final MachineServices host, final MemberId id, final Object... arguments) {
         final IWorldFunction bound = host.bind(id);
         if (bound == null) {
             throw new IllegalStateException(id.describe() + " is not answered by the machine");
@@ -74,8 +74,8 @@ public final class OperationsCallsGameTests {
 
     @GameTest(template = ARENA)
     public static void bind_answersEveryCallTheSystemDeclaresOnTheOperations(final GameTestHelper helper) {
-        final MachineHost host = new MachineHost(TestWorldBuilder.forGameTest(helper)
-                .placeRunningPersonalComputer(new BlockPos(2, 2, 2)));
+        final MachineServices host = TestWorldBuilder.forGameTest(helper)
+                .placeRunningPersonalComputer(new BlockPos(2, 2, 2)).services();
 
         for (final IMemberSpec member : SystemApi.type("Operations").members()) {
             helper.assertTrue(host.bind(member.id()) != null, member.id().describe() + " is answered by the machine");
@@ -90,7 +90,7 @@ public final class OperationsCallsGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     try {
-                        ask(new MachineHost(pc), operation("List"));
+                        ask(pc.services(), operation("List"));
                         helper.fail("asking a network for work stops a program on a machine with none");
                     } catch (final Halt halt) {
                         helper.assertTrue(halt.reason() == Halt.Reason.NO_NETWORK
@@ -107,7 +107,7 @@ public final class OperationsCallsGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + PROPAGATE, () -> {
                     helper.assertTrue(pc.networkUuid() != null, "the computer joined the Mainframe's network");
-                    final MachineHost host = new MachineHost(pc);
+                    final MachineServices host = pc.services();
 
                     helper.assertTrue(ask(host, operation("List")) instanceof Values.ListValue,
                             "it lists what is in flight");
@@ -129,7 +129,7 @@ public final class OperationsCallsGameTests {
                 new PersonalComputerBlockEntity(placed.getBlockPos(), placed.getBlockState());
 
         try {
-            ask(new MachineHost(loose), operation("List"));
+            ask(loose.services(), operation("List"));
             helper.fail("a computer in no world cannot ask a network for work");
         } catch (final Halt halt) {
             helper.assertTrue("this machine cannot reach Operations".equals(halt.getMessage()),

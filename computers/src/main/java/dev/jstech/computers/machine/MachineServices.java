@@ -7,21 +7,34 @@
  */
 package dev.jstech.computers.machine;
 
+import com.mojang.logging.LogUtils;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.computers.vm.program.IHost;
+import dev.jstech.computers.vm.program.IWorldFunction;
+import dev.jstech.computers.vm.system.MemberId;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 /**
- * What the programs on a machine reach through it, kept with the machine so a call finds it ready.
+ * What the programs on a machine reach through it, kept with the machine so a call finds it ready. It is the host
+ * those programs run on: their clock is the machine's world, and their calls to the world are answered with what it
+ * keeps.
  *
  * <p>Each thing is kept with what it was made from and made again only when that has changed, which costs less to
  * check than to make. Nothing has to tell it the machine changed: a machine read out of a save and then placed in a
- * world, or put in another one, is noticed the next time a program asks.
+ * world, or put in another one, is noticed the next time a program asks. The clock asks the machine for its world
+ * every time for the same reason.
  */
-public final class MachineServices {
+public final class MachineServices implements IHost {
+
+    /** The length of a Minecraft day in ticks. */
+    static final long DAY = 24_000L;
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private final AbstractComputerBlockEntity machine;
 
@@ -64,6 +77,59 @@ public final class MachineServices {
 
     public MachineServices(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
+    }
+
+    @Override
+    public long tick() {
+        final Level level = this.machine.getLevel();
+        return level == null ? 0 : level.getGameTime();
+    }
+
+    @Override
+    public long dayTime() {
+        final Level level = this.machine.getLevel();
+        return level == null ? 0 : level.getDayTime() % DAY;
+    }
+
+    @Override
+    public long day() {
+        final Level level = this.machine.getLevel();
+        return level == null ? 0 : level.getDayTime() / DAY;
+    }
+
+    /**
+     * The calls the machine answers with one of these services, bound to them; a call on a service the machine cannot
+     * reach stops the program when it is made.
+     */
+    @Override
+    public IWorldFunction bind(final MemberId id) {
+        final MachineCalls.Binding<?> binding = MachineCalls.find(id);
+        return binding == null ? null : binding.on(this);
+    }
+
+    /** Whether the machine boots to a desktop; one in no world, or no person could sit at, has none to open on. */
+    @Override
+    public boolean hasDesktop() {
+        final ComputerInfoService info = this.computer();
+        return info != null && info.hasDesktop();
+    }
+
+    /** Whether a program this machine, or a computer of its network, lists under that number is still going. */
+    @Override
+    public boolean programRunning(final int program, final String host) {
+        final ProgramService running = this.programs();
+        return running != null && running.running(program, host);
+    }
+
+    @Override
+    public void fault(final String process, final int line, final RuntimeException cause) {
+        LOGGER.error("Σ# program '{}' on the machine at {} failed inside the runtime at instruction {}",
+                process, this.machine.getBlockPos(), line, cause);
+    }
+
+    @Override
+    public void programEnded(final int program) {
+        this.machine.programs().ended(program);
     }
 
     /**

@@ -64,7 +64,7 @@ class VmPurityTest {
 
             final class Sample {
                 Object host() {
-                    return dev.jstech.computers.machine.MachineHost.class;
+                    return dev.jstech.computers.machine.MachineServices.class;
                 }
 
                 Object nearby() {

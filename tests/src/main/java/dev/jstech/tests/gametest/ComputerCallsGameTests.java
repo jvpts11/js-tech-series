@@ -12,7 +12,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
-import dev.jstech.computers.machine.MachineHost;
+import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IWorldCall;
 import dev.jstech.computers.vm.program.IWorldFunction;
@@ -75,7 +75,7 @@ public final class ComputerCallsGameTests {
     /**
      * Reads one of the computer's values, or makes one of its calls that takes nothing, the way a program's line does.
      */
-    private static Object ask(final MachineHost host, final String name) {
+    private static Object ask(final MachineServices host, final String name) {
         final MemberId id = new MemberId("Computer", name, List.of());
         final IWorldFunction bound = host.bind(id);
         if (bound == null) {
@@ -90,7 +90,7 @@ public final class ComputerCallsGameTests {
         if (computer == null) {
             return;
         }
-        final MachineHost host = new MachineHost(computer);
+        final MachineServices host = computer.services();
 
         for (final IMemberSpec member : SystemApi.type("Computer").members()) {
             helper.assertTrue(host.bind(member.id()) != null, member.id().describe() + " is answered by the machine");
@@ -106,7 +106,7 @@ public final class ComputerCallsGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachineHost host = new MachineHost(computer);
+                    final MachineServices host = computer.services();
 
                     final Object name = ask(host, "Name");
                     helper.assertTrue(name instanceof String said && !said.isEmpty(), "it has a name; got " + name);
@@ -137,7 +137,7 @@ public final class ComputerCallsGameTests {
         }
         final CraftingComputerBlockEntity loose =
                 new CraftingComputerBlockEntity(placed.getBlockPos(), placed.getBlockState());
-        final MachineHost host = new MachineHost(loose);
+        final MachineServices host = loose.services();
 
         try {
             ask(host, "Name");

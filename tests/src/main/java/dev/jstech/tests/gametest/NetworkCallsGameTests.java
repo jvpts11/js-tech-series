@@ -9,7 +9,7 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.machine.MachineHost;
+import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IWorldCall;
 import dev.jstech.computers.vm.program.IWorldFunction;
@@ -51,7 +51,7 @@ public final class NetworkCallsGameTests {
     };
 
     /** Makes a call on the network, or reads one of its values, the way a program's line does. */
-    private static Object ask(final MachineHost host, final String name, final String... arguments) {
+    private static Object ask(final MachineServices host, final String name, final String... arguments) {
         final List<String> parameters = new ArrayList<>();
         for (int i = 0; i < arguments.length; i++) {
             parameters.add("string");
@@ -68,7 +68,7 @@ public final class NetworkCallsGameTests {
     public static void bind_answersEveryCallAndValueTheSystemDeclaresOnTheNetwork(final GameTestHelper helper) {
         final PersonalComputerBlockEntity pc = TestWorldBuilder.forGameTest(helper)
                 .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
-        final MachineHost host = new MachineHost(pc);
+        final MachineServices host = pc.services();
 
         for (final IMemberSpec member : SystemApi.type("Network").members()) {
             if (member.kind() == MemberKind.WORLD) {
@@ -85,7 +85,7 @@ public final class NetworkCallsGameTests {
                 .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachineHost host = new MachineHost(pc);
+                    final MachineServices host = pc.services();
 
                     helper.assertTrue(Boolean.FALSE.equals(ask(host, "Online")), "it says it is on no network");
                     helper.assertTrue(ask(host, "Current") == null, "and names none");
@@ -114,7 +114,7 @@ public final class NetworkCallsGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + PROPAGATE, () -> {
                     helper.assertTrue(pc.networkUuid() != null, "the computer joined the Mainframe's network");
-                    final MachineHost host = new MachineHost(pc);
+                    final MachineServices host = pc.services();
 
                     helper.assertTrue(Boolean.TRUE.equals(ask(host, "Online")), "it says it is on a network");
                     final Object current = ask(host, "Current");
@@ -137,7 +137,7 @@ public final class NetworkCallsGameTests {
                 new PersonalComputerBlockEntity(placed.getBlockPos(), placed.getBlockState());
 
         try {
-            ask(new MachineHost(loose), "Online");
+            ask(loose.services(), "Online");
             helper.fail("a computer in no world cannot read a network");
         } catch (final Halt halt) {
             helper.assertTrue("this machine cannot reach Network".equals(halt.getMessage()),

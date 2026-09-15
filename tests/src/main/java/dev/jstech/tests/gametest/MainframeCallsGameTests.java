@@ -9,7 +9,7 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.machine.MachineHost;
+import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IWorldCall;
 import dev.jstech.computers.vm.program.IWorldFunction;
@@ -49,7 +49,7 @@ public final class MainframeCallsGameTests {
     };
 
     /** Makes a call on the Mainframe, or reads one of its values, the way a program's line does. */
-    private static Object ask(final MachineHost host, final String name, final String... arguments) {
+    private static Object ask(final MachineServices host, final String name, final String... arguments) {
         final List<String> parameters = new ArrayList<>();
         for (int i = 0; i < arguments.length; i++) {
             parameters.add("string");
@@ -75,8 +75,8 @@ public final class MainframeCallsGameTests {
 
     @GameTest(template = ARENA)
     public static void bind_answersEveryCallAndValueTheSystemDeclaresOnTheMainframe(final GameTestHelper helper) {
-        final MachineHost host = new MachineHost(TestWorldBuilder.forGameTest(helper)
-                .placeRunningPersonalComputer(new BlockPos(2, 2, 2)));
+        final MachineServices host = TestWorldBuilder.forGameTest(helper)
+                .placeRunningPersonalComputer(new BlockPos(2, 2, 2)).services();
 
         for (final IMemberSpec member : SystemApi.type("Mainframe").members()) {
             helper.assertTrue(host.bind(member.id()) != null, member.id().describe() + " is answered by the machine");
@@ -90,7 +90,7 @@ public final class MainframeCallsGameTests {
                 .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachineHost host = new MachineHost(pc);
+                    final MachineServices host = pc.services();
 
                     helper.assertTrue(Boolean.FALSE.equals(ask(host, "Online")), "it has no Mainframe to read");
                     try {
@@ -110,7 +110,7 @@ public final class MainframeCallsGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + PROPAGATE, () -> {
                     helper.assertTrue(pc.networkUuid() != null, "the computer joined the Mainframe's network");
-                    final MachineHost host = new MachineHost(pc);
+                    final MachineServices host = pc.services();
 
                     helper.assertTrue(Boolean.TRUE.equals(ask(host, "Online")), "it finds the Mainframe running");
                     helper.assertTrue(ask(host, "PeakToday") instanceof Integer, "it reads the day's peak");

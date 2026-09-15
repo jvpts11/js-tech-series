@@ -8,7 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.machine.MachineHost;
+import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IWorldCall;
 import dev.jstech.computers.vm.program.IWorldFunction;
@@ -48,7 +48,7 @@ public final class ProgramCallsGameTests {
     };
 
     /** Makes one of the calls, or reads one of the values, the way a program's line does. */
-    private static Object ask(final MachineHost host, final MemberId id, final Object target,
+    private static Object ask(final MachineServices host, final MemberId id, final Object target,
                               final Object... arguments) {
         final IWorldFunction bound = host.bind(id);
         if (bound == null) {
@@ -72,8 +72,8 @@ public final class ProgramCallsGameTests {
 
     @GameTest(template = ARENA)
     public static void bind_answersEveryWorldCallAndValueOnProgramsAndOtherComputers(final GameTestHelper helper) {
-        final MachineHost host = new MachineHost(TestWorldBuilder.forGameTest(helper)
-                .placeRunningPersonalComputer(new BlockPos(2, 2, 2)));
+        final MachineServices host = TestWorldBuilder.forGameTest(helper)
+                .placeRunningPersonalComputer(new BlockPos(2, 2, 2)).services();
 
         for (final String owner : List.of("Program", "Process", "RemoteComputer")) {
             for (final IMemberSpec member : SystemApi.type(owner).members()) {
@@ -92,7 +92,7 @@ public final class ProgramCallsGameTests {
                 .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachineHost host = new MachineHost(pc);
+                    final MachineServices host = pc.services();
 
                     helper.assertTrue(Boolean.FALSE.equals(ask(host, member("Process", "Running"), ghost())),
                             "it is not running");
@@ -116,7 +116,7 @@ public final class ProgramCallsGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final Object said =
-                            ask(new MachineHost(pc), member("Program", "Shell", "string"), null, "echo hello");
+                            ask(pc.services(), member("Program", "Shell", "string"), null, "echo hello");
                     helper.assertTrue(said instanceof Values.ListValue lines && lines.items().contains("hello"),
                             "the line ran at the computer's own prompt and what it printed came back");
                 })
@@ -132,7 +132,7 @@ public final class ProgramCallsGameTests {
                     final Values.Obj nowhere = new Values.Obj("RemoteComputer");
                     nowhere.set("Host", "nowhere");
                     try {
-                        ask(new MachineHost(pc), member("RemoteComputer", "Processes"), nowhere);
+                        ask(pc.services(), member("RemoteComputer", "Processes"), nowhere);
                         helper.fail("reaching for a computer that is not there stops the program");
                     } catch (final Halt halt) {
                         helper.assertTrue(halt.reason() == Halt.Reason.NO_OBJECT
@@ -149,7 +149,7 @@ public final class ProgramCallsGameTests {
                 .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
         final PersonalComputerBlockEntity loose =
                 new PersonalComputerBlockEntity(placed.getBlockPos(), placed.getBlockState());
-        final MachineHost host = new MachineHost(loose);
+        final MachineServices host = loose.services();
 
         try {
             ask(host, member("Program", "Start", "string"), null, "tool.asm");

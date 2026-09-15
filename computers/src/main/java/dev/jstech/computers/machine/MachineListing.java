@@ -8,10 +8,12 @@
 package dev.jstech.computers.machine;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
 import dev.jstech.computers.vm.listing.Shape;
+import dev.jstech.computers.vm.program.IHost;
 import dev.jstech.computers.vm.program.Process;
 import dev.jstech.computers.vm.program.ProgramImage;
 import dev.jstech.computers.vm.program.SnapshotException;
@@ -62,7 +64,7 @@ public final class MachineListing {
         if (program == null || program.entryPoint() == null) {
             return null;
         }
-        final Process process = new Process(program, heapBytes, new MachineHost(machine));
+        final Process process = new Process(program, heapBytes, hostOf(machine));
         process.setArgs(arguments);
         if (program.shape() == Shape.CONSOLE) {
             process.beginStatic(program.entryPoint(), "Main");
@@ -90,7 +92,7 @@ public final class MachineListing {
         }
         try {
             return new SigmaProgram(Process.restore(program,
-                    SnapshotTag.read(SigmaProgram.snapshotOf(saved)), new MachineHost(machine)));
+                    SnapshotTag.read(SigmaProgram.snapshotOf(saved)), hostOf(machine)));
         } catch (final SnapshotException damaged) {
             // One program that cannot come back is left out; the machine and the rest of its programs load.
             LOGGER.warn("A saved program on the machine at {} was left out: {}", machine.getBlockPos(),
@@ -111,6 +113,11 @@ public final class MachineListing {
     public static ListingProblem firstProblem(final String listing) {
         final List<ListingProblem> problems = load(listing).problems();
         return problems.isEmpty() ? null : problems.getFirst();
+    }
+
+    /** The host a program on that machine runs on: a computer's own services, or a clock that never moves off one. */
+    private static IHost hostOf(@Nullable final BlockEntity machine) {
+        return machine instanceof AbstractComputerBlockEntity computer ? computer.services() : IHost.still();
     }
 
     /** Reads a listing, or null when it is not one or something in it has nothing to answer it. */

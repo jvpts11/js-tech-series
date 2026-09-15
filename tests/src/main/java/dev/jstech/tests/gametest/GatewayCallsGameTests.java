@@ -11,7 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.NetworkGatewayBlock;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.machine.MachineHost;
+import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IWorldCall;
 import dev.jstech.computers.vm.program.IWorldFunction;
@@ -75,7 +75,7 @@ public final class GatewayCallsGameTests {
     }
 
     /** Makes one of the calls, or reads one of the values, the way a program's line does. */
-    private static Object ask(final MachineHost host, final IWorldCall call, final MemberId id,
+    private static Object ask(final MachineServices host, final IWorldCall call, final MemberId id,
                               final Object... arguments) {
         final IWorldFunction bound = host.bind(id);
         if (bound == null) {
@@ -116,8 +116,8 @@ public final class GatewayCallsGameTests {
 
     @GameTest(template = ARENA)
     public static void bind_answersEveryWorldCallAndValueOfTheGateway(final GameTestHelper helper) {
-        final MachineHost host =
-                new MachineHost(TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(COMPUTER));
+        final MachineServices host =
+                TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(COMPUTER).services();
 
         for (final IMemberSpec member : SystemApi.type("Gateway").members()) {
             if (member.kind() == MemberKind.WORLD) {
@@ -134,7 +134,7 @@ public final class GatewayCallsGameTests {
                 TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(COMPUTER);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachineHost host = new MachineHost(pc);
+                    final MachineServices host = pc.services();
                     final Choosing call = new Choosing("");
 
                     helper.assertTrue(Boolean.FALSE.equals(ask(host, call, member("Online"))),
@@ -154,7 +154,7 @@ public final class GatewayCallsGameTests {
         final PersonalComputerBlockEntity pc = fleet(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE * 2, () -> {
-                    final MachineHost host = new MachineHost(pc);
+                    final MachineServices host = pc.services();
                     final String name = gateway(helper).name();
                     final String typed = name.toUpperCase(Locale.ROOT);
                     final Choosing call = new Choosing("");
@@ -176,7 +176,7 @@ public final class GatewayCallsGameTests {
         final PersonalComputerBlockEntity pc = fleet(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE * 2, () -> {
-                    final MachineHost host = new MachineHost(pc);
+                    final MachineServices host = pc.services();
                     final Choosing call = new Choosing("elsewhere");
 
                     helper.assertTrue(Boolean.FALSE.equals(ask(host, call, member("Online"))),
@@ -197,7 +197,7 @@ public final class GatewayCallsGameTests {
                 new PersonalComputerBlockEntity(placed.getBlockPos(), placed.getBlockState());
 
         halts(helper, "this machine cannot reach Gateway",
-                () -> ask(new MachineHost(loose), new Choosing(""), member("Online")));
+                () -> ask(loose.services(), new Choosing(""), member("Online")));
         helper.succeed();
     }
 }

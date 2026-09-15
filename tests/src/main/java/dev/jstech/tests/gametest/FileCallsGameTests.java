@@ -12,7 +12,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
-import dev.jstech.computers.machine.MachineHost;
+import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IWorldCall;
 import dev.jstech.computers.vm.program.IWorldFunction;
@@ -79,7 +79,7 @@ public final class FileCallsGameTests {
     }
 
     /** Makes a call on the drives the way a program's line would, straight to what the machine bound for it. */
-    private static Object call(final MachineHost host, final IWorldCall told, final MemberId id,
+    private static Object call(final MachineServices host, final IWorldCall told, final MemberId id,
                                final Object... arguments) {
         final IWorldFunction bound = host.bind(id);
         if (bound == null) {
@@ -94,7 +94,7 @@ public final class FileCallsGameTests {
         if (computer == null) {
             return;
         }
-        final MachineHost host = new MachineHost(computer);
+        final MachineServices host = computer.services();
 
         for (final IMemberSpec member : SystemApi.type("File").members()) {
             helper.assertTrue(host.bind(member.id()) != null, member.id().describe() + " is answered by the machine");
@@ -110,7 +110,7 @@ public final class FileCallsGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachineHost host = new MachineHost(computer);
+                    final MachineServices host = computer.services();
                     final long[] moved = {0};
                     final IWorldCall counted = bytes -> moved[0] += bytes;
 
@@ -145,7 +145,7 @@ public final class FileCallsGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final MachineHost host = new MachineHost(computer);
+                    final MachineServices host = computer.services();
 
                     helper.assertTrue(Boolean.TRUE.equals(call(host, UNCOUNTED, file("Append", TEXT, TEXT),
                             "fresh.txt", "first")), "adding to a file that is not there makes it");
@@ -163,7 +163,7 @@ public final class FileCallsGameTests {
         }
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final IWorldFunction tryRead = new MachineHost(computer).bind(file("TryRead", TEXT, "out " + TEXT));
+                    final IWorldFunction tryRead = computer.services().bind(file("TryRead", TEXT, "out " + TEXT));
                     final Object[] asked = {"missing.txt", null};
 
                     final Object found = tryRead.call(UNCOUNTED, null, asked, 1);
@@ -183,7 +183,7 @@ public final class FileCallsGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     try {
-                        call(new MachineHost(computer), UNCOUNTED, file("Read", TEXT), "nothing.txt");
+                        call(computer.services(), UNCOUNTED, file("Read", TEXT), "nothing.txt");
                         helper.fail("reading a file that is not there stops the program");
                     } catch (final Halt halt) {
                         helper.assertTrue(halt.reason() == Halt.Reason.NO_SUCH_MEMBER && !halt.getMessage().isBlank(),
@@ -203,7 +203,7 @@ public final class FileCallsGameTests {
                 new CraftingComputerBlockEntity(placed.getBlockPos(), placed.getBlockState());
 
         try {
-            call(new MachineHost(loose), UNCOUNTED, file("Exists", TEXT), "a.txt");
+            call(loose.services(), UNCOUNTED, file("Exists", TEXT), "a.txt");
             helper.fail("a computer in no world has no drives to reach");
         } catch (final Halt halt) {
             helper.assertTrue("this machine cannot reach File".equals(halt.getMessage()),

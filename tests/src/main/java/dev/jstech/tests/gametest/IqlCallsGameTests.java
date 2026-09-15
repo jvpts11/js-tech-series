@@ -10,7 +10,7 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.machine.IqlService;
-import dev.jstech.computers.machine.MachineHost;
+import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IWorldCall;
 import dev.jstech.computers.vm.program.IWorldFunction;
@@ -55,7 +55,7 @@ public final class IqlCallsGameTests {
     }
 
     /** Makes one of the calls the way a program's line does, straight to what the machine bound for it. */
-    private static Object ask(final MachineHost host, final MemberId id, final Object... arguments) {
+    private static Object ask(final MachineServices host, final MemberId id, final Object... arguments) {
         final IWorldFunction bound = host.bind(id);
         if (bound == null) {
             throw new IllegalStateException(id.describe() + " is not answered by the machine");
@@ -76,8 +76,8 @@ public final class IqlCallsGameTests {
 
     @GameTest(template = ARENA)
     public static void bind_answersEveryCallTheSystemDeclaresOnIql(final GameTestHelper helper) {
-        final MachineHost host = new MachineHost(TestWorldBuilder.forGameTest(helper)
-                .placeRunningPersonalComputer(new BlockPos(2, 2, 2)));
+        final MachineServices host = TestWorldBuilder.forGameTest(helper)
+                .placeRunningPersonalComputer(new BlockPos(2, 2, 2)).services();
 
         for (final IMemberSpec member : SystemApi.type("Iql").members()) {
             helper.assertTrue(host.bind(member.id()) != null, member.id().describe() + " is answered by the machine");
@@ -92,7 +92,7 @@ public final class IqlCallsGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     try {
-                        ask(new MachineHost(pc), statement("Run", TEXT), "QUERY items");
+                        ask(pc.services(), statement("Run", TEXT), "QUERY items");
                         helper.fail("a statement stops a program on a machine with no Mainframe to run it");
                     } catch (final Halt halt) {
                         helper.assertTrue(halt.reason() == Halt.Reason.NO_NETWORK
@@ -109,7 +109,7 @@ public final class IqlCallsGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + PROPAGATE, () -> {
                     helper.assertTrue(pc.networkUuid() != null, "the computer joined the Mainframe's network");
-                    final MachineHost host = new MachineHost(pc);
+                    final MachineServices host = pc.services();
 
                     helper.assertTrue(ask(host, statement("Query", TEXT), "QUERY items") instanceof Values.ListValue,
                             "a query comes back as the rows it read");
@@ -143,7 +143,7 @@ public final class IqlCallsGameTests {
                 new PersonalComputerBlockEntity(placed.getBlockPos(), placed.getBlockState());
 
         try {
-            ask(new MachineHost(loose), statement("Run", TEXT), "QUERY items");
+            ask(loose.services(), statement("Run", TEXT), "QUERY items");
             helper.fail("a computer in no world cannot run a statement");
         } catch (final Halt halt) {
             helper.assertTrue("this machine cannot reach Iql".equals(halt.getMessage()),

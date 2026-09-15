@@ -18,9 +18,9 @@ import org.jetbrains.annotations.Nullable;
  * What a program of another language sees of the machine it runs on: the machine's clock, the console the machine keeps
  * for it, and how much memory it may hold.
  *
- * <p>The clock asks the machine for its world every time, as {@link MachineHost} does, because a machine read out of a
- * save comes back before it is placed in a world. The console keeps a program's lines to the same limits as any other
- * program's.
+ * <p>The clock asks the machine for its world every time, as {@link MachineServices} does, because a machine read out
+ * of a save comes back before it is placed in a world. The console keeps a program's lines to the same limits as any
+ * other program's.
  */
 final class HostedView implements IMachineView {
 
@@ -47,13 +47,13 @@ final class HostedView implements IMachineView {
     @Override
     public long dayTime() {
         final Level level = this.level();
-        return level == null ? 0 : level.getDayTime() % MachineHost.DAY;
+        return level == null ? 0 : level.getDayTime() % MachineServices.DAY;
     }
 
     @Override
     public long day() {
         final Level level = this.level();
-        return level == null ? 0 : level.getDayTime() / MachineHost.DAY;
+        return level == null ? 0 : level.getDayTime() / MachineServices.DAY;
     }
 
     @Override
