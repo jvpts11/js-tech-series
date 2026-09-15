@@ -201,6 +201,41 @@ public final class OperationsService {
         return ICliComputer.OpResult.ok("UNLOCK released " + released + " " + key.displayName().getString());
     }
 
+    /**
+     * Runs one of the Mainframe's own jobs on its index: {@code analyze} reconciles the catalog against the disks,
+     * {@code reindex} rebuilds it from them, and {@code vacuum} clears the entries nothing stands behind any more.
+     *
+     * <p>Only the Mainframe runs these, because they are what it keeps.
+     */
+    public ICliComputer.OpResult maintenance(final String action) {
+        if (!this.terminal.isMainframeHost()) {
+            return ICliComputer.OpResult.fail("maintenance runs on the Mainframe only");
+        }
+        final NetworkUuid net = this.terminal.networkUuid();
+        final MainframeBlockEntity mainframe = this.mainframe();
+        if (mainframe == null || net == null) {
+            return ICliComputer.OpResult.fail("the network has no running Mainframe");
+        }
+        final var index = mainframe.networkIndex();
+        return switch (action) {
+            case "analyze" -> {
+                index.analyzeIncremental(this.level, net);
+                yield ICliComputer.OpResult.ok("ANALYZE complete - " + index.catalogSize() + " types reconciled");
+            }
+            case "reindex" -> {
+                // The disks are read now; the catalog is built off the tick and swapped in a tick or two later.
+                mainframe.reindexAsync(null);
+                yield ICliComputer.OpResult.ok("REINDEX started - rebuilding the catalog from disks");
+            }
+            case "vacuum" -> {
+                final int freed = index.vacuum(this.level, net);
+                yield ICliComputer.OpResult.ok("VACUUM freed " + freed
+                        + (freed == 1 ? " ghost entry" : " ghost entries"));
+            }
+            default -> ICliComputer.OpResult.fail("unknown maintenance action: " + action);
+        };
+    }
+
     /** What is being held by hand, and how much of each. */
     public List<ICliComputer.StoredItem> locks() {
         final MainframeBlockEntity mainframe = this.mainframe();

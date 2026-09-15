@@ -123,6 +123,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   network for, the IQL statements it runs, the programs it starts and asks after, on its own computer or another of
   its network, and its calls through the computer's Gateways, which services the computer keeps answer. A computer
   keeps the shell its programs reach its drives and its network through, instead of making one for each call.
+- A computer asks its network for work in one place, whether the prompt or a program asks: pulling an item in, pushing
+  one out, asking for a craft, holding an item where it is and letting it go again, listing what is in flight and
+  stopping or hurrying one of them, and the Mainframe's own jobs on its index. What the Mainframe measured of that
+  work is read beside it, from the Mainframe itself.
 - A computer reads its data network in one place, whether the prompt or a program asks: whether it is on a network and
   which, what it holds and where, its servers, and the rows a query brings back about items, servers, operations,
   computers and recipes. The verb and the state of an Operation are now named by the record that carries them, so the

@@ -262,7 +262,7 @@ public final class MachineServices implements IHost {
             // Operations first: the network hands their rows back when a query asks for them.
             this.operations = new OperationsService(terminal, server, this.shell);
             this.network = new NetworkReadService(terminal, server, this.shell, this.operations);
-            this.mainframe = new MainframeStatsService(this.shell, this.shell);
+            this.mainframe = new MainframeStatsService(terminal, server);
             this.iql = new IqlService(this.shell);
             this.programs = new ProgramService(this.machine, terminal, server, this.shell);
             this.remotes = new RemoteComputerService(this.shell);

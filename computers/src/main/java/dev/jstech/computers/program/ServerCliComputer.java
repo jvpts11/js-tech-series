@@ -16,7 +16,6 @@ import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.NetworkPathResolver;
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.NetworkStorage;
-import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.KernelDef;
@@ -316,23 +315,12 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public List<OperationStat> operationStats() {
-        final MainframeBlockEntity mainframe = mainframe(host.networkUuid());
-        if (mainframe == null) {
-            return List.of();
-        }
-        final List<OperationStat> rows = new ArrayList<>();
-        for (final var summary : mainframe.statistics().summaries(level.getGameTime())) {
-            rows.add(new OperationStat(OperationRecord.typeName((byte) summary.type()), summary.count(),
-                    summary.averageWait(),
-                    summary.averageRun(), summary.shortfallPercent(), summary.moved()));
-        }
-        return rows;
+        return mainframeStats().work();
     }
 
     @Override
     public int peakOperationsToday() {
-        final MainframeBlockEntity mainframe = mainframe(host.networkUuid());
-        return mainframe == null ? 0 : mainframe.statistics().peakConcurrentLastDay(level.getGameTime());
+        return mainframeStats().peakToday();
     }
 
     @Override
@@ -398,31 +386,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public OpResult maintenance(final String action) {
-        if (!host.isMainframeHost()) {
-            return OpResult.fail("maintenance runs on the Mainframe only");
-        }
-        final NetworkUuid net = host.networkUuid();
-        final MainframeBlockEntity mainframe = mainframe(net);
-        if (mainframe == null || net == null) {
-            return OpResult.fail("the network has no running Mainframe");
-        }
-        final var index = mainframe.networkIndex();
-        return switch (action) {
-            case "analyze" -> {
-                index.analyzeIncremental(level, net);
-                yield OpResult.ok("ANALYZE complete - " + index.catalogSize() + " types reconciled");
-            }
-            case "reindex" -> {
-                // The disks are read now; the catalog is built off the tick and swapped in a tick or two later.
-                mainframe.reindexAsync(null);
-                yield OpResult.ok("REINDEX started - rebuilding the catalog from disks");
-            }
-            case "vacuum" -> {
-                final int freed = index.vacuum(level, net);
-                yield OpResult.ok("VACUUM freed " + freed + (freed == 1 ? " ghost entry" : " ghost entries"));
-            }
-            default -> OpResult.fail("unknown maintenance action: " + action);
-        };
+        return operations().maintenance(action);
     }
 
     @Override
@@ -1990,6 +1954,11 @@ public final class ServerCliComputer implements ICliComputer {
     /** The machines of this network that name picks out, by host name, for whoever follows a network path. */
     public Map<String, BlockEntity> machinesNamed(final String name) {
         return matchMachines(name);
+    }
+
+    /** What the Mainframe of this machine's network keeps about the work it has done. */
+    private dev.jstech.computers.machine.MainframeStatsService mainframeStats() {
+        return new dev.jstech.computers.machine.MainframeStatsService(host, level);
     }
 
     /** The work this machine asks of its network, as this shell asks for it. */
