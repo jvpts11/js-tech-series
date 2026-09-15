@@ -102,7 +102,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   system's own declarations, where they are written once, and a program's calls are matched to those declarations
   when it loads, its console, its random numbers, its threads, what it says about itself, its waits on other
   programs, the calls on its windows and widgets and what they hold, the values it reads of itself and of the
-  language's own text and collections, and the widgets, lists and maps it makes being answered through them; a
+  language's own text and collections, the widgets, lists and maps it makes, and its calls on the machine's drives
+  (answered by a file service the machine keeps) being answered through them; a
   machine keeps the shell its programs reach its drives and its network through, instead of making one for each
   call; every source file's header names the mod it belongs to.
 

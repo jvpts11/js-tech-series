@@ -25,12 +25,18 @@ public final class MachineServices {
 
     private final BlockEntity machine;
 
-    /** The world the shell was made for; null until a program first asks, and while the machine is in none. */
+    /**
+     * The world the shell and the services over it were made for; null until one is first asked for, and while the
+     * machine is in none.
+     */
     @Nullable
     private Level shellLevel;
 
     @Nullable
     private ServerCliComputer shell;
+
+    @Nullable
+    private FileService files;
 
     public MachineServices(final BlockEntity machine) {
         this.machine = machine;
@@ -47,12 +53,29 @@ public final class MachineServices {
      */
     @Nullable
     public ServerCliComputer shell() {
+        this.follow();
+        return this.shell;
+    }
+
+    /**
+     * The machine's drives, reached through the shell's own door.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public FileService files() {
+        this.follow();
+        return this.files;
+    }
+
+    /** Makes the shell and what goes through it again when the machine is in another world than before. */
+    private void follow() {
         final Level level = this.machine.getLevel();
         if (level != this.shellLevel) {
             this.shellLevel = level;
             this.shell = this.machine instanceof IComputerTerminalHost terminal
                     && level instanceof ServerLevel server ? new ServerCliComputer(terminal, server) : null;
+            this.files = this.shell == null ? null : new FileService(this.shell);
         }
-        return this.shell;
     }
 }

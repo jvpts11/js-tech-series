@@ -58,12 +58,9 @@ database. Operations can also be used with the mod's own query language, IQL, wh
 a dialect of SQL created specifically for this mod. So, besides the classic SELECT, INSERT, WHERE, ORDER BY, DELETE
 and so on, you also have some specifics, like CRAFT, which starts a crafting operation; IQL is defined and explained
 in the mod's own documentation. Operations take time that depends on the hardware doing them, and the mainframe's
-task manager shows the queue while the network works through it. The command prompt speaks IQL, a small query
-language that compiles to the same Operations the graphical programs use. Operations are logged, so they can be
-checked to see if they have failed or if they are running, so nothing is hidden from the player: every single thing
-that happens in the network can be checked.
+task manager shows the queue while the network works through it.
 
-Crafting is machine work. A Crafting Computer runs recipes from its Recipe ROM; recipes are authored on the
+Even crafting is machine work. A Crafting Computer runs recipes from its Recipe ROM; recipes are authored on the
 Pattern Studio, burned onto media by a Pattern Encoder, and loaded through the Crafting Manager. A
 crafting cable, a switch and buses connect the computer to the machines that do the processing, other mods'
 machines included, and a request for an item plans every step, from raw stock to the finished product,

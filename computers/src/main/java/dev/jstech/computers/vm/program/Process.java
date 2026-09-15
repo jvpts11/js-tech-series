@@ -9,6 +9,7 @@ package dev.jstech.computers.vm.program;
 
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Shape;
+import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
 import java.util.List;
@@ -111,6 +112,8 @@ public final class Process {
     private final ProgramIdentity identity = new ProgramIdentity();
     /** The machine around the program, told once when the program has ended for good. */
     private final IHost host;
+    /** What the host answers each of the program's calls to the world with, at the places the program gave them. */
+    private final IWorldFunction[] reaches;
     /** Whether the host has been told the program ended, so it is told once. */
     private boolean told;
     /** Who the program tells when something is said to it, and the Gateway it chose to reach through. */
@@ -197,6 +200,21 @@ public final class Process {
         this.library.owe(more);
     }
 
+    /** What the host answers the call to the world at that place with, or null when it answers it by its name. */
+    IWorldFunction reach(final int place) {
+        return this.reaches[place];
+    }
+
+    /** Asks the host, once, what answers each call to the world the program makes. */
+    private static IWorldFunction[] bound(final ProgramImage program, final IHost host) {
+        final List<IMemberSpec> calls = program.worldCalls();
+        final IWorldFunction[] bound = new IWorldFunction[calls.size()];
+        for (int i = 0; i < bound.length; i++) {
+            bound[i] = host.bind(calls.get(i).id());
+        }
+        return bound;
+    }
+
     /** Ends a thread other than the main one, as the runtime's coroutines do when theirs is over. */
     void endThread(final ProgramThread thread) {
         this.end(thread);
@@ -209,6 +227,7 @@ public final class Process {
     Process(final ProgramImage program, final long heapBytes, final IHost host, final boolean fresh) {
         this.program = program;
         this.host = host;
+        this.reaches = bound(program, host);
         this.heap = new Heap(heapBytes);
         this.windows = new ProgramWindows(this.heap);
         this.library = new Library(this.heap, host, program.entryPoint());

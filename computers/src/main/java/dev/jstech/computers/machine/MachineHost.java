@@ -8,7 +8,10 @@
 package dev.jstech.computers.machine;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.vm.program.IHost;
+import dev.jstech.computers.vm.program.IWorldFunction;
+import dev.jstech.computers.vm.system.MemberId;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.slf4j.Logger;
@@ -59,7 +62,7 @@ public record MachineHost(BlockEntity machine) implements IHost {
 
     @Override
     public boolean provides(final String owner) {
-        return HostFiles.handles(owner) || HostComputer.handles(owner)
+        return HostComputer.handles(owner)
                 || HostNetwork.handles(owner) || HostMainframe.handles(owner)
                 || HostOperations.handles(owner) || HostProgram.handles(owner)
                 || HostRemote.handles(owner) || HostIql.handles(owner)
@@ -70,6 +73,17 @@ public record MachineHost(BlockEntity machine) implements IHost {
     public boolean takesTarget(final String owner, final String member) {
         // Another computer is a thing the program holds; every call on it names which one.
         return HostRemote.handles(owner);
+    }
+
+    /**
+     * The calls the machine answers with one of its services, bound to this machine's; a block entity that runs no
+     * programs of its own answers none of them this way.
+     */
+    @Override
+    public IWorldFunction bind(final MemberId id) {
+        final MachineCalls.Binding<?> binding = MachineCalls.find(id);
+        return binding != null && this.machine instanceof AbstractComputerBlockEntity self
+                ? binding.on(self.services()) : null;
     }
 
     @Override
@@ -86,9 +100,6 @@ public record MachineHost(BlockEntity machine) implements IHost {
             throw new dev.jstech.computers.vm.program.Halt(
                     dev.jstech.computers.vm.program.Halt.Reason.NO_SUCH_MEMBER, line,
                     "this machine cannot reach " + owner);
-        }
-        if (HostFiles.handles(owner)) {
-            return HostFiles.call(computer, member, arguments, line);
         }
         if (HostProgram.handles(owner)
                 && this.machine instanceof dev.jstech.computers.blockentity

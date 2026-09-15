@@ -17,6 +17,7 @@ import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
+import dev.jstech.computers.vm.system.MemberId;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -104,6 +105,43 @@ class ProcessTest {
                 told.add(program);
             }
         };
+    }
+
+    @Test
+    void new_asksItsHostOnceForWhatAnswersEachCallToTheWorldItMakes() {
+        final ProgramImage program = load("", """
+                        File.Read("a");
+                        File.Write("a", "b");
+                        File.Read("c");
+                """);
+        final List<String> asked = new ArrayList<>();
+        final IHost host = new IHost() {
+            @Override
+            public long tick() {
+                return 0;
+            }
+
+            @Override
+            public long dayTime() {
+                return 0;
+            }
+
+            @Override
+            public long day() {
+                return 0;
+            }
+
+            @Override
+            public IWorldFunction bind(final MemberId id) {
+                asked.add(id.describe());
+                return null;
+            }
+        };
+
+        new Process(program, ROOM, host);
+
+        assertEquals(List.of("File.Read(string)", "File.Write(string, string)"), asked,
+                "one question for each call, however many lines make it, and none while it runs");
     }
 
     @Test

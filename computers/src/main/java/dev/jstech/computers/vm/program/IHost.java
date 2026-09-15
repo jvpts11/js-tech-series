@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.vm.program;
 
+import dev.jstech.computers.vm.system.MemberId;
+
 /**
  * Everything a running program asks of the world outside it.
  *
@@ -61,6 +63,16 @@ public interface IHost {
      */
     default boolean takesTarget(final String owner, final String member) {
         return false;
+    }
+
+    /**
+     * What answers a call the system declares as the world's, or null when this host answers it through {@link #call}
+     * or not at all.
+     *
+     * <p>Asked once for each such call a program makes, when its process is made or read back, never while it runs.
+     */
+    default IWorldFunction bind(final MemberId id) {
+        return null;
     }
 
     /**

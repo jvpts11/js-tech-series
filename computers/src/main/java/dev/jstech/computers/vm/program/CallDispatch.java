@@ -8,6 +8,7 @@
 package dev.jstech.computers.vm.program;
 
 import dev.jstech.computers.vm.listing.IOperand;
+import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.IntrinsicSpec;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,6 +74,13 @@ final class CallDispatch {
                 this.handle(frame, site, line);
                 return;
             }
+            if (site.world() >= 0) {
+                final IWorldFunction reach = this.process.reach(site.world());
+                if (reach != null) {
+                    this.reach(frame, site, reach, line);
+                    return;
+                }
+            }
             if ("Process".equals(named.owner())) {
                 this.process.processCall(frame, named, line);
                 return;
@@ -129,6 +137,37 @@ final class CallDispatch {
         final Object answer = handled.function().call(this.process, target, arguments, line);
         if (site.gives()) {
             frame.push(answer);
+        }
+    }
+
+    /**
+     * Answers a call the machine takes: the arguments come off the stack, then the object the call is made on when it
+     * is made on one. The machine answers with plain values, which become the program's to hold, and the call is
+     * charged what the system declares it costs, counted by the rows it gives back.
+     */
+    private void reach(final Frame frame, final ProgramImage.CallSite site, final IWorldFunction function,
+                       final int line) {
+        final IMemberSpec declared = site.declared();
+        final boolean[] outs = site.outs();
+        final Object[] arguments = takeArray(frame, outs);
+        final Object target = declared.isStatic() ? null : this.heap.alive(frame.pop(), line);
+        final Object answer = function.call(target, arguments, line);
+        final int rows = answer instanceof Values.ListValue list ? list.size() : 0;
+        // A call to the machine has always counted the instruction making it as part of what it is declared to cost.
+        this.process.charge(declared.cost().at(rows, 0) - 1);
+        for (int i = 0; i < outs.length; i++) {
+            if (outs[i]) {
+                arguments[i] = this.heap.adopt(arguments[i] == null ? site.defaults()[i] : arguments[i], line);
+            }
+        }
+        final Object held = this.heap.adopt(answer, line);
+        if (site.gives()) {
+            frame.push(held);
+        }
+        for (int i = 0; i < outs.length; i++) {
+            if (outs[i]) {
+                frame.push(arguments[i]);
+            }
         }
     }
 

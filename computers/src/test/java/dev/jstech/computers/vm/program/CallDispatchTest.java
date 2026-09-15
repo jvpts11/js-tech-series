@@ -20,8 +20,12 @@ import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.ListingProblem;
+import dev.jstech.computers.vm.system.MemberId;
+import dev.jstech.computers.vm.system.SigmaCosts;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class CallDispatchTest {
@@ -34,16 +38,83 @@ class CallDispatchTest {
             + "    public bool Find(out int value) { value = 42; return true; }\n"
             + "}\n";
 
-    private static final ProgramImage PROGRAM = load();
+    private static final ProgramImage PROGRAM = load(SOURCE);
 
-    private static ProgramImage load() {
-        final SigmaCompiler.Result built = SigmaCompiler.compile(List.of(new SourceFile("Monitor.sgs", SOURCE)));
+    private static final long ROOM = 64L * 1024;
+    private static final int PLENTY = 1_000_000;
+
+    /**
+     * A machine whose whole world is a handful of files. It answers the calls on them with functions it binds, which
+     * say nothing of what the calls cost: whatever a program is charged for them comes from what the system declares.
+     */
+    private static final class Drive implements IHost {
+
+        private final Map<String, String> files = new LinkedHashMap<>();
+
+        @Override
+        public long tick() {
+            return 0;
+        }
+
+        @Override
+        public long dayTime() {
+            return 0;
+        }
+
+        @Override
+        public long day() {
+            return 0;
+        }
+
+        @Override
+        public IWorldFunction bind(final MemberId id) {
+            if (!"File".equals(id.owner())) {
+                return null;
+            }
+            return switch (id.name()) {
+                case "Exists" -> (target, arguments, line) -> this.files.containsKey(String.valueOf(arguments[0]));
+                case "Read" -> (target, arguments, line) -> {
+                    final String held = this.files.get(String.valueOf(arguments[0]));
+                    if (held == null) {
+                        throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, arguments[0] + ": file not found");
+                    }
+                    return held;
+                };
+                case "TryRead" -> (target, arguments, line) -> {
+                    final String held = this.files.get(String.valueOf(arguments[0]));
+                    arguments[1] = held;
+                    return held != null;
+                };
+                case "Write" -> (target, arguments, line) -> {
+                    this.files.put(String.valueOf(arguments[0]), String.valueOf(arguments[1]));
+                    return true;
+                };
+                default -> null;
+            };
+        }
+    }
+
+    private static ProgramImage load(final String source) {
+        final SigmaCompiler.Result built = SigmaCompiler.compile(List.of(new SourceFile("Monitor.sgs", source)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
         final AsmReader reader = new AsmReader(built.assembly());
         final AsmProgram listing = reader.read();
         assertFalse(reader.hasProblems(), () -> String.join("\n",
                 reader.problems().stream().map(ListingProblem::format).toList()));
         return ProgramImage.of(listing);
+    }
+
+    /** Runs a script whose tick is those lines through on that machine, with the machine's drives in reach. */
+    private static Process run(final IHost host, final String tick) {
+        final ProgramImage program = load("using System.*; using System.IO.*; namespace Tests; "
+                + "class Monitor : IScript {\n"
+                + "    public void OnInit() { }\n"
+                + "    public void OnTick() {\n" + tick + "\n    }\n"
+                + "    public void OnDestroy() { }\n}\n");
+        final Process process = new Process(program, ROOM, host);
+        process.begin(process.create(program.entryPoint()), "OnTick");
+        process.step(PLENTY);
+        return process;
     }
 
     private static MethodImage method(final String name, final List<String> parameters) {
@@ -53,7 +124,7 @@ class CallDispatchTest {
     }
 
     private static Process process() {
-        return new Process(PROGRAM, 64L * 1024, IHost.still());
+        return new Process(PROGRAM, ROOM, IHost.still());
     }
 
     private static CallDispatch dispatch(final Process process) {
@@ -138,5 +209,77 @@ class CallDispatchTest {
 
         assertEquals(Halt.Reason.STACK_DEPTH, halt.reason());
         assertEquals(CallDispatch.DEEPEST, process.mainThread().frames.size());
+    }
+
+    @Test
+    void call_handsACallToTheWorldToWhatTheHostBoundAndGivesBackItsAnswer() {
+        final Drive drive = new Drive();
+
+        final Process process = run(drive, """
+                        File.Write("log.txt", "first line");
+                        Console.PrintLine(File.Read("log.txt"));
+                """);
+
+        assertEquals(Process.State.FINISHED, process.state(), String.valueOf(process.message()));
+        assertEquals(List.of("first line"), process.console());
+        assertEquals("first line", drive.files.get("log.txt"));
+    }
+
+    @Test
+    void call_putsWhatACallToTheWorldFillsInBesideItsAnswer() {
+        final Drive drive = new Drive();
+        drive.files.put("stock.csv", "iron,64");
+
+        final Process process = run(drive, """
+                        if (File.TryRead("stock.csv", out string held)) { Console.PrintLine("got " + held); }
+                        if (!File.TryRead("gone.csv", out string missing)) { Console.PrintLine("no file"); }
+                """);
+
+        assertEquals(Process.State.FINISHED, process.state(), String.valueOf(process.message()));
+        assertEquals(List.of("got iron,64", "no file"), process.console());
+    }
+
+    @Test
+    void call_chargesACallToTheWorldWhatTheSystemDeclaresForIt() {
+        final Drive drive = new Drive();
+        drive.files.put("a", "x");
+
+        final long look = run(drive, "        File.Exists(\"a\");").spent();
+        final long read = run(drive, "        File.Read(\"a\");").spent();
+
+        // The drive says nothing of prices, so the two runs can only differ by what the two calls are declared to cost.
+        assertEquals((long) SigmaCosts.READ - SigmaCosts.GLANCE_NETWORK, read - look);
+    }
+
+    @Test
+    void call_makesWhatTheWorldHandsBackTheProgramsToHold() {
+        final Drive drive = new Drive();
+        drive.files.put("stock.csv", "iron,64");
+
+        final Process process = run(drive, """
+                        string held = File.Read("stock.csv");
+                        Console.PrintLine("holding " + held.Length);
+                """);
+
+        assertEquals(Process.State.FINISHED, process.state(), String.valueOf(process.message()));
+        // The text came from outside, but it weighs on this program's heap like anything else it holds.
+        assertTrue(process.heap().used() >= 16 + 2L * "iron,64".length(),
+                "the file's text is counted; used " + process.heap().used());
+    }
+
+    @Test
+    void call_letsWhatAnswersACallToTheWorldStopTheProgram() {
+        final Process process = run(new Drive(), "        string s = File.Read(\"gone\");");
+
+        assertEquals(Process.State.HALTED, process.state());
+        assertTrue(process.message().contains("file not found"), process.message());
+    }
+
+    @Test
+    void call_leavesACallToTheWorldNoHostBindsToTheHostsOtherDoor() {
+        final Process process = run(IHost.still(), "        File.Write(\"log\", \"x\");");
+
+        assertEquals(Process.State.HALTED, process.state());
+        assertTrue(process.message().contains("File"), process.message());
     }
 }

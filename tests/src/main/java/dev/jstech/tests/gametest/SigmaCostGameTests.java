@@ -98,9 +98,10 @@ public final class SigmaCostGameTests {
     /**
      * Every call a program can make that only needs the machine itself, priced as its declaration promises.
      *
-     * <p>The ones left out are the ones that would change the world to ask them: writing to the drive
-     * and asking the network for work. Their prices are fixed rather than counted, and the host charges
-     * them with the same level the declaration names.
+     * <p>The ones left out are the ones that would change the world to ask them, such as asking the
+     * network for work, whose prices are fixed rather than counted and charged with the same level the
+     * declaration names, and the calls on the drives, which the runtime charges straight from their
+     * declarations rather than asking the machine what they cost.
      */
     @GameTest(template = ARENA)
     public static void costs_areWhatTheEditorsPromise(final GameTestHelper helper) {
@@ -120,10 +121,6 @@ public final class SigmaCostGameTests {
                     for (final String member : List.of("Disks", "Programs", "Processes")) {
                         charges(helper, host, "Computer", member, List.of());
                     }
-
-                    // The drive, asked about but not written to.
-                    charges(helper, host, "File", "Exists", List.of("nothing.txt"));
-                    charges(helper, host, "File", "List", List.of(""));
 
                     /*
                      * The network, with none attached: whether there is one is still a question the

@@ -22,6 +22,7 @@ import dev.jstech.computers.vm.system.EventSpec;
 import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.IntrinsicRegistry;
 import dev.jstech.computers.vm.system.IntrinsicSpec;
+import dev.jstech.computers.vm.system.MemberId;
 import dev.jstech.computers.vm.system.MemberKind;
 import dev.jstech.computers.vm.system.PropertySpec;
 import dev.jstech.computers.vm.system.SystemApi;
@@ -65,13 +66,15 @@ public final class ProgramImage {
      * @param declared   the system's declaration of the call when neither the program nor a function answers it, or
      *                   null when the system declares no such call
      * @param handled    what answers the call when the program's own process does, or null when something else does
+     * @param world      the place the process keeps what the machine answers the call with, when the system declares
+     *                   the call as the world's, or -1 when it does not
      * @param gives      whether the call leaves an answer on the stack
      * @param defaults   for each parameter the call fills in, what it holds when the function left it empty: what a
      *                   variable of the type the call is written with starts with
      */
     record CallSite(IOperand.Method named, MethodImage direct, Integer signature, boolean[] outs, boolean constructs,
-                    IntrinsicSpec intrinsic, IMemberSpec declared, ProcessCalls.Binding handled, boolean gives,
-                    Object[] defaults) {
+                    IntrinsicSpec intrinsic, IMemberSpec declared, ProcessCalls.Binding handled, int world,
+                    boolean gives, Object[] defaults) {
     }
 
     /**
@@ -112,6 +115,9 @@ public final class ProgramImage {
     private final Shape shape;
     /** A checksum of the listing's text, so a snapshot can tell the listing it was taken from. */
     private final String checksum;
+    /** Each call to the world the program makes, once, in the order of the places the calls were given. */
+    private final List<IMemberSpec> worldCalls = new ArrayList<>();
+    private final Map<MemberId, Integer> worldPlaces = new HashMap<>();
 
     private ProgramImage(final AsmProgram program, final IntrinsicRegistry registry) {
         this.registry = registry;
@@ -182,6 +188,14 @@ public final class ProgramImage {
     }
 
     /**
+     * Each call the program makes that the system declares as the world's, once, at the place {@link CallSite#world}
+     * gives it: what a process asks its host to answer them with, when it is made.
+     */
+    List<IMemberSpec> worldCalls() {
+        return List.copyOf(this.worldCalls);
+    }
+
+    /**
      * The method of that shape on that type or on one it stands on, or null.
      *
      * <p>For what is named at run time rather than written on a line: a handler, a thread's body, a frame read back
@@ -214,9 +228,24 @@ public final class ProgramImage {
                 ? SystemApi.member(called.owner(), called.name(), called.parameters()) : null;
         final ProcessCalls.Binding handled = declared != null && declared.kind() == MemberKind.PROCESS
                 ? ProcessCalls.find(declared.id()) : null;
+        final int world = declared != null && declared.kind() == MemberKind.WORLD ? this.worldPlace(declared) : -1;
         return new CallSite(called, direct, signature, MethodImage.outsOf(called.parameters()),
-                AsmMethod.CONSTRUCTOR.equals(called.name()), intrinsic, declared, handled,
+                AsmMethod.CONSTRUCTOR.equals(called.name()), intrinsic, declared, handled, world,
                 !"void".equals(called.returns()), defaultsOf(called.parameters()));
+    }
+
+    /**
+     * The place a call to the world is kept in: one for each call the system declares, shared by every line of the
+     * program that makes it.
+     */
+    private int worldPlace(final IMemberSpec declared) {
+        final Integer known = this.worldPlaces.get(declared.id());
+        if (known != null) {
+            return known;
+        }
+        this.worldPlaces.put(declared.id(), this.worldCalls.size());
+        this.worldCalls.add(declared);
+        return this.worldCalls.size() - 1;
     }
 
     /** For each outward parameter, what a variable of its type starts with: nothing, or zero or false. */

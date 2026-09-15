@@ -77,6 +77,31 @@ class ProgramImageTest {
     }
 
     @Test
+    void resolve_givesEveryLineMakingTheSameCallToTheWorldOnePlace() {
+        final IOperand.Method read = new IOperand.Method("File", "Read", List.of("string"), "string");
+        final IOperand.Method write = new IOperand.Method("File", "Write", List.of("string", "string"), "bool");
+        final AsmType disk = new AsmType(AsmType.Kind.CLASS, "Tests.Disk");
+        disk.addMethod(new AsmMethod("Use", "void", List.of(), false, 0, List.of(
+                Instruction.of(Opcode.CALL, read),
+                Instruction.of(Opcode.CALL, write),
+                Instruction.of(Opcode.CALL, read),
+                Instruction.of(Opcode.CALL, new IOperand.Method("Console", "PrintLine", List.of("string"), "void")),
+                Instruction.of(Opcode.RET))));
+        final AsmProgram program = new AsmProgram();
+        program.addType(disk);
+
+        final ProgramImage image = ProgramImage.of(program);
+        final MethodImage use = image.type("Tests.Disk").methods().get("Use()");
+
+        assertEquals(0, use.call(0).world());
+        assertEquals(1, use.call(1).world());
+        assertEquals(0, use.call(2).world(), "a second line making the same call shares its place");
+        assertEquals(-1, use.call(3).world(), "the console is the process's to answer, not the world's");
+        assertEquals(List.of("File.Read(string)", "File.Write(string, string)"),
+                image.worldCalls().stream().map(call -> call.id().describe()).toList());
+    }
+
+    @Test
     void method_findsWhatATypeInheritsAsWellAsWhatItDeclares() {
         final ProgramImage image = shapes();
         assertEquals("Tests.Shape", image.method("Tests.Square", "Name", List.of()).owner());
