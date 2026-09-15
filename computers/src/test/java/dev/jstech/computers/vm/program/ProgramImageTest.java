@@ -129,6 +129,23 @@ class ProgramImageTest {
     }
 
     @Test
+    void resolve_givesANewOfTheCoresCollectionsWhatMakesThem() {
+        final AsmProgram program = new AsmProgram();
+        final AsmType shelf = new AsmType(AsmType.Kind.CLASS, "Tests.Shelf");
+        shelf.addMethod(new AsmMethod("Fill", "void", List.of(), true, 0, List.of(
+                Instruction.of(Opcode.NEWOBJ, new IOperand.Constructor("List<string>", List.of())),
+                Instruction.of(Opcode.NEWOBJ, new IOperand.Constructor("Map<string, int>", List.of())),
+                Instruction.of(Opcode.NEWOBJ, new IOperand.Constructor("Window", List.of("string", "int", "int"))),
+                Instruction.of(Opcode.RET))));
+        program.addType(shelf);
+        final MethodImage fill = ProgramImage.of(program).type("Tests.Shelf").methods().get("Fill()");
+        assertNotNull(fill.creation(0).handled(), "a list is the core's to make");
+        assertNotNull(fill.creation(1).handled(), "and so is a map");
+        assertNull(fill.creation(2).handled(), "a window is not");
+        assertNull(squareArea(shapes()).creation(1).handled(), "nor is the program's own type");
+    }
+
+    @Test
     void problems_nameWhatNothingAnswersOnTheLineItIsWrittenOn() {
         final String listing = """
                 .asm 2

@@ -33,6 +33,10 @@ final class ObjectMaking {
     /** Makes what a {@code new} line names, taking its arguments off the stack, and puts it on. */
     void newObject(final Frame frame, final ProgramImage.Creation creation, final int line) {
         final List<Object> arguments = CallDispatch.take(frame, creation.outs());
+        if (creation.handled() != null) {
+            frame.push(creation.handled().make(this.heap, line));
+            return;
+        }
         frame.push(creation.type() == null
                 ? this.library.create(creation.made().owner(), arguments, line)
                 : this.instance(creation.type(), creation.constructor(), arguments, line));

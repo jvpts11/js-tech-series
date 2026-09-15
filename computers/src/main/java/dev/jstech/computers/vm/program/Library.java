@@ -142,12 +142,8 @@ public final class Library {
             this.heap.adopt(made, line);
             return made;
         }
-        if ("Map".equals(bare)) {
-            final Values.MapValue made = new Values.MapValue();
-            return this.heap.allocate(made, made.bytes(), line);
-        }
-        final Values.ListValue made = new Values.ListValue();
-        return this.heap.allocate(made, made.bytes(), line);
+        // Anything else the runtime is asked to make by name is one of the core's collections: a list unless a map.
+        return CoreObjects.find("Map".equals(bare) ? "Map" : "List").make(this.heap, line);
     }
 
     /** Reads one of the values the runtime keeps on a type of its own rather than on an object. */

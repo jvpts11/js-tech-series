@@ -83,9 +83,11 @@ public final class ProgramImage {
      * @param outs        which of its arguments are filled in rather than handed over
      * @param declared    the system's declaration of the constructor when the runtime brings the type, or null when
      *                    the program makes it or the system declares no such constructor
+     * @param handled     what makes the object when it is one of the language's core collections, or null when
+     *                    something else makes it
      */
     record Creation(IOperand.Constructor made, TypeImage type, MethodImage constructor, boolean[] outs,
-                    ConstructorSpec declared) {
+                    ConstructorSpec declared, IObjectMaker handled) {
     }
 
     /**
@@ -101,8 +103,6 @@ public final class ProgramImage {
 
     /** The values of the language's own core a listing may read, which the system does not declare. */
     static final Set<String> CORE_VALUES = Set.of("string.Length", "List.Count", "Map.Count");
-    /** The collections of the language's own core a listing may make, which the system does not declare. */
-    private static final Set<String> CORE_MADE = Set.of("List", "Map");
 
     private final Map<String, TypeImage> types = new LinkedHashMap<>();
     /** Every method shape a type of the program declares, numbered in the order they were first met. */
@@ -246,8 +246,9 @@ public final class ProgramImage {
                 instanceof ConstructorSpec found) {
             declared = found;
         }
+        final IObjectMaker handled = type == null ? CoreObjects.find(bare(made.owner())) : null;
         return new Creation(made, type, type == null ? null : type.constructor(made.parameters().size()),
-                MethodImage.outsOf(made.parameters()), declared);
+                MethodImage.outsOf(made.parameters()), declared, handled);
     }
 
     ValueSite valueSite(final IOperand.Field field, final Opcode opcode) {
@@ -302,8 +303,7 @@ public final class ProgramImage {
 
     /** Whether something makes what a new names: the program, the system, or one of the language's collections. */
     private static boolean made(final Creation creation) {
-        return creation.type() != null || creation.declared() != null
-                || CORE_MADE.contains(bare(creation.made().owner()));
+        return creation.type() != null || creation.declared() != null || creation.handled() != null;
     }
 
     /**
