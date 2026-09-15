@@ -100,8 +100,10 @@ public final class ProgramImage {
      * @param own     whether it is a field of the program's own, read and written on its object with nothing to look up
      * @param handled what reads the value when the program's own process or the language's core answers it, or null
      *                when something else does
+     * @param world   the place the process keeps what the machine answers the value with, when it is read from its
+     *                type and the system declares it as the world's, or -1 when it is not
      */
-    record ValueSite(IOperand.Field field, boolean own, ProcessValues.Binding handled) {
+    record ValueSite(IOperand.Field field, boolean own, ProcessValues.Binding handled, int world) {
     }
 
     /** The values of the language's own core a listing may read, which the system does not declare. */
@@ -289,7 +291,17 @@ public final class ProgramImage {
     ValueSite valueSite(final IOperand.Field field, final Opcode opcode) {
         final boolean own = field.owner() == null || this.types.containsKey(field.owner());
         final boolean onType = opcode == Opcode.LDSFLD || opcode == Opcode.STSFLD;
-        return new ValueSite(field, own, own ? null : ProcessValues.find(bare(field.owner()), field.name(), onType));
+        final ProcessValues.Binding handled =
+                own ? null : ProcessValues.find(bare(field.owner()), field.name(), onType);
+        final int world = own || handled != null || opcode != Opcode.LDSFLD ? -1 : this.worldValuePlace(field);
+        return new ValueSite(field, own, handled, world);
+    }
+
+    /** The place a value of the world read from its type is kept in, or -1 when the system declares no such value. */
+    private int worldValuePlace(final IOperand.Field field) {
+        final IMemberSpec declared = SystemApi.member(field.owner(), field.name(), List.of());
+        return declared instanceof PropertySpec value && value.isStatic() && value.kind() == MemberKind.WORLD
+                ? this.worldPlace(value) : -1;
     }
 
     /**

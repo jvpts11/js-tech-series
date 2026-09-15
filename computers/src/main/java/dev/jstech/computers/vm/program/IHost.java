@@ -75,6 +75,11 @@ public interface IHost {
         return null;
     }
 
+    /** Whether the machine has a desktop a program can open its windows on. */
+    default boolean hasDesktop() {
+        return false;
+    }
+
     /**
      * Answers a call on one of the host's objects.
      *

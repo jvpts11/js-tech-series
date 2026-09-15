@@ -70,6 +70,7 @@ final class MachineCalls {
     private static Map<MemberId, Binding<?>> build() {
         final Map<MemberId, Binding<?>> bindings = new HashMap<>();
         FileCalls.bind(bindings);
+        ComputerCalls.bind(bindings);
         return Map.copyOf(bindings);
     }
 

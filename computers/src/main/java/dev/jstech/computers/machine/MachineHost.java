@@ -62,8 +62,7 @@ public record MachineHost(BlockEntity machine) implements IHost {
 
     @Override
     public boolean provides(final String owner) {
-        return HostComputer.handles(owner)
-                || HostNetwork.handles(owner) || HostMainframe.handles(owner)
+        return HostNetwork.handles(owner) || HostMainframe.handles(owner)
                 || HostOperations.handles(owner) || HostProgram.handles(owner)
                 || HostRemote.handles(owner) || HostIql.handles(owner)
                 || HostGateway.handles(owner);
@@ -84,6 +83,16 @@ public record MachineHost(BlockEntity machine) implements IHost {
         final MachineCalls.Binding<?> binding = MachineCalls.find(id);
         return binding != null && this.machine instanceof AbstractComputerBlockEntity self
                 ? binding.on(self.services()) : null;
+    }
+
+    /** Whether the machine boots to a desktop; one in no world, or no person could sit at, has none to open on. */
+    @Override
+    public boolean hasDesktop() {
+        if (!(this.machine instanceof AbstractComputerBlockEntity self)) {
+            return false;
+        }
+        final ComputerInfoService computer = self.services().computer();
+        return computer != null && computer.hasDesktop();
     }
 
     @Override
@@ -113,11 +122,6 @@ public record MachineHost(BlockEntity machine) implements IHost {
         if (HostIql.handles(owner)
                 && computer instanceof dev.jstech.computers.program.ServerCliComputer shell) {
             return HostIql.call(shell, member, arguments, line);
-        }
-        if (HostComputer.handles(owner)
-                && this.machine instanceof dev.jstech.computers.blockentity
-                        .AbstractComputerBlockEntity self) {
-            return HostComputer.call(self, computer, member, line);
         }
         if (HostGateway.handles(owner)) {
             // The asking program is named because a question put across waits for an answer addressed to it.

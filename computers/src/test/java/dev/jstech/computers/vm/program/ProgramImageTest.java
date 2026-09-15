@@ -102,6 +102,30 @@ class ProgramImageTest {
     }
 
     @Test
+    void resolve_givesAValueOfTheWorldReadFromItsTypeAPlaceBesideTheCalls() {
+        final IOperand.Field name = new IOperand.Field("Computer", "Name");
+        final AsmType desk = new AsmType(AsmType.Kind.CLASS, "Tests.Desk");
+        desk.addMethod(new AsmMethod("Look", "void", List.of(), false, 0, List.of(
+                Instruction.of(Opcode.LDSFLD, name),
+                Instruction.of(Opcode.CALL, new IOperand.Method("Computer", "Disks", List.of(), "List<DiskInfo>")),
+                Instruction.of(Opcode.LDSFLD, name),
+                Instruction.of(Opcode.LDSFLD, new IOperand.Field("Program", "Name")),
+                Instruction.of(Opcode.RET))));
+        final AsmProgram program = new AsmProgram();
+        program.addType(desk);
+
+        final ProgramImage image = ProgramImage.of(program);
+        final MethodImage look = image.type("Tests.Desk").methods().get("Look()");
+
+        assertEquals(0, look.value(0).world());
+        assertEquals(1, look.call(1).world());
+        assertEquals(0, look.value(2).world(), "a second read of the same value shares its place");
+        assertEquals(-1, look.value(3).world(), "the program's own name is the process's to answer");
+        assertEquals(List.of("Computer.Name()", "Computer.Disks()"),
+                image.worldCalls().stream().map(call -> call.id().describe()).toList());
+    }
+
+    @Test
     void method_findsWhatATypeInheritsAsWellAsWhatItDeclares() {
         final ProgramImage image = shapes();
         assertEquals("Tests.Shape", image.method("Tests.Square", "Name", List.of()).owner());

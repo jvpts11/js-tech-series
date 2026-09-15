@@ -83,6 +83,11 @@ final class FieldAccess {
             frame.push(site.handled().read().read(this.process, null, line));
             return;
         }
+        if (site.world() >= 0 && this.process.worldCalls().binds(site.world())) {
+            final Object answer = this.process.worldCalls().answer(site.world(), null, WorldCalls.NOTHING, line);
+            frame.push(this.heap.adopt(answer, line));
+            return;
+        }
         final TypeImage type = this.program.type(field.owner());
         if (type == null) {
             frame.push(this.library.readStatic(field.owner(), field.name(), line));

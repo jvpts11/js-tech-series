@@ -8,7 +8,6 @@
 package dev.jstech.computers.vm.program;
 
 import dev.jstech.computers.vm.listing.IOperand;
-import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.IntrinsicSpec;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,7 +22,7 @@ import java.util.List;
  * <p>A call to one of the program's methods is a new frame on the running thread, never a Java call, so a program
  * that calls deep costs frames, not the server's stack, and a thread's calls stop at {@link #DEEPEST}.
  */
-final class CallDispatch implements IWorldCall {
+final class CallDispatch {
 
     /** The most calls one thread may have in progress at once; one call more halts the program. */
     static final int DEEPEST = 1_024;
@@ -32,8 +31,6 @@ final class CallDispatch implements IWorldCall {
     private final Heap heap;
     private final Library library;
     private final ProgramImage program;
-    /** How many bytes the call to the world being answered has said it read or wrote. */
-    private long moved;
 
     CallDispatch(final Process process, final Heap heap, final Library library, final ProgramImage program) {
         this.process = process;
@@ -76,12 +73,9 @@ final class CallDispatch implements IWorldCall {
                 this.handle(frame, site, line);
                 return;
             }
-            if (site.world() >= 0) {
-                final IWorldFunction reach = this.process.reach(site.world());
-                if (reach != null) {
-                    this.reach(frame, site, reach, line);
-                    return;
-                }
+            if (site.world() >= 0 && this.process.worldCalls().binds(site.world())) {
+                this.reach(frame, site, line);
+                return;
             }
             if ("Process".equals(named.owner())) {
                 this.process.processCall(frame, named, line);
@@ -142,28 +136,15 @@ final class CallDispatch implements IWorldCall {
         }
     }
 
-    /** Counts what the call to the world being answered read or wrote, towards its price. */
-    @Override
-    public void moved(final long bytes) {
-        this.moved += Math.max(0, bytes);
-    }
-
     /**
      * Answers a call the machine takes: the arguments come off the stack, then the object the call is made on when it
-     * is made on one. The machine answers with plain values, which become the program's to hold, and the call is
-     * charged what the system declares it costs, counted by the rows it gives back and the bytes it says it moved.
+     * is made on one. The machine answers with plain values, which become the program's to hold.
      */
-    private void reach(final Frame frame, final ProgramImage.CallSite site, final IWorldFunction function,
-                       final int line) {
-        final IMemberSpec declared = site.declared();
+    private void reach(final Frame frame, final ProgramImage.CallSite site, final int line) {
         final boolean[] outs = site.outs();
         final Object[] arguments = takeArray(frame, outs);
-        final Object target = declared.isStatic() ? null : this.heap.alive(frame.pop(), line);
-        this.moved = 0;
-        final Object answer = function.call(this, target, arguments, line);
-        final int rows = answer instanceof Values.ListValue list ? list.size() : 0;
-        // What a call is declared to cost comes on top of the instruction that makes it, as for every other call.
-        this.process.charge(declared.cost().at(rows, this.moved));
+        final Object target = site.declared().isStatic() ? null : this.heap.alive(frame.pop(), line);
+        final Object answer = this.process.worldCalls().answer(site.world(), target, arguments, line);
         for (int i = 0; i < outs.length; i++) {
             if (outs[i]) {
                 arguments[i] = this.heap.adopt(arguments[i] == null ? site.defaults()[i] : arguments[i], line);

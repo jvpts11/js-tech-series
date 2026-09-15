@@ -20,6 +20,8 @@ import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.ListingProblem;
 import dev.jstech.computers.vm.listing.Opcode;
+import dev.jstech.computers.vm.system.MemberId;
+import dev.jstech.computers.vm.system.SystemApi;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -62,6 +64,67 @@ class FieldAccessTest {
 
     private static Frame frame() {
         return new Frame(PROGRAM.method(PROGRAM.entryPoint(), "OnTick", List.of()), null);
+    }
+
+    /**
+     * A machine that answers what a program reads of it with functions it binds. The functions say nothing of prices,
+     * so whatever a program is charged for a read comes from what the system declares.
+     */
+    private static final class Machine implements IHost {
+
+        @Override
+        public long tick() {
+            return 0;
+        }
+
+        @Override
+        public long dayTime() {
+            return 0;
+        }
+
+        @Override
+        public long day() {
+            return 0;
+        }
+
+        @Override
+        public IWorldFunction bind(final MemberId id) {
+            if (!"Computer".equals(id.owner())) {
+                return null;
+            }
+            return switch (id.name()) {
+                case "Name" -> (call, target, arguments, line) -> "Workshop";
+                case "RamMb" -> (call, target, arguments, line) -> 4096;
+                case "Cpu" -> (call, target, arguments, line) -> {
+                    final Values.Obj cpu = new Values.Obj("CpuInfo");
+                    cpu.set("Mhz", 2400);
+                    cpu.set("Cores", 2);
+                    cpu.set("Era", "legacy");
+                    return cpu;
+                };
+                default -> null;
+            };
+        }
+    }
+
+    /** Runs a script whose tick is those lines through on that machine, with the machine in reach. */
+    private static Process run(final IHost host, final String tick) {
+        final SigmaCompiler.Result built = SigmaCompiler.compile(List.of(new SourceFile("Monitor.sgs",
+                "using System.*; using System.Machine.*; namespace Tests; enum Tint { Red }\n"
+                        + "class Monitor : IScript {\n"
+                        + "    public void OnInit() { }\n"
+                        + "    public void OnTick() {\n" + tick + "\n    }\n"
+                        + "    public void OnDestroy() { }\n}\n")));
+        assertTrue(built.ok(), () -> String.join("\n", built.lines()));
+        final AsmReader reader = new AsmReader(built.assembly());
+        final AsmProgram listing = reader.read();
+        assertFalse(reader.hasProblems(), () -> String.join("\n",
+                reader.problems().stream().map(ListingProblem::format).toList()));
+        final ProgramImage program = ProgramImage.of(listing);
+        final Process process = new Process(program, 64L * 1024, host);
+        process.begin(process.create(program.entryPoint()), "OnTick");
+        process.step(1_000_000);
+        return process;
     }
 
     @Test
@@ -165,6 +228,44 @@ class FieldAccessTest {
 
         assertEquals(Halt.Reason.NO_SUCH_MEMBER, halt.reason());
         assertEquals("there is no Length to read here", halt.getMessage());
+    }
+
+    @Test
+    void loadStatic_readsAValueOfTheWorldThroughWhatTheHostBound() {
+        final Process process = run(new Machine(), """
+                        Console.PrintLine(Computer.Name + " has " + Computer.RamMb + " MB");
+                """);
+
+        assertEquals(Process.State.FINISHED, process.state(), String.valueOf(process.message()));
+        assertEquals(List.of("Workshop has 4096 MB"), process.console());
+    }
+
+    @Test
+    void loadStatic_handsTheProgramTheRecordAValueOfTheWorldIs() {
+        final Process process = run(new Machine(), """
+                        CpuInfo cpu = Computer.Cpu;
+                        Console.PrintLine(cpu.Cores + " cores at " + cpu.Mhz + " (" + cpu.Era + ")");
+                """);
+
+        assertEquals(Process.State.FINISHED, process.state(), String.valueOf(process.message()));
+        assertEquals(List.of("2 cores at 2400 (legacy)"), process.console());
+    }
+
+    @Test
+    void loadStatic_chargesAValueOfTheWorldWhatTheSystemDeclares() {
+        final long own = run(new Machine(), "        Tint tint = Tint.Red;").spent();
+        final long world = run(new Machine(), "        int ram = Computer.RamMb;").spent();
+
+        // Both lines read a value from a type and keep it, and a value of the program's own costs nothing beyond that.
+        assertEquals(SystemApi.member("Computer", "RamMb", List.of()).cost().at(0, 0), world - own);
+    }
+
+    @Test
+    void loadStatic_leavesAValueOfTheWorldNoHostBindsToTheHostsOtherDoor() {
+        final Process process = run(IHost.still(), "        string name = Computer.Name;");
+
+        assertEquals(Process.State.HALTED, process.state());
+        assertTrue(process.message().contains("Computer"), process.message());
     }
 
     @Test

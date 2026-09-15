@@ -7,11 +7,11 @@
  */
 package dev.jstech.computers.machine;
 
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class MachineServices {
 
-    private final BlockEntity machine;
+    private final AbstractComputerBlockEntity machine;
 
     /**
      * The world the shell and the services over it were made for; null until one is first asked for, and while the
@@ -38,7 +38,10 @@ public final class MachineServices {
     @Nullable
     private FileService files;
 
-    public MachineServices(final BlockEntity machine) {
+    @Nullable
+    private ComputerInfoService computer;
+
+    public MachineServices(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
     }
 
@@ -68,6 +71,17 @@ public final class MachineServices {
         return this.files;
     }
 
+    /**
+     * What the machine is and what it holds, as what runs on it reads it.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public ComputerInfoService computer() {
+        this.follow();
+        return this.computer;
+    }
+
     /** Makes the shell and what goes through it again when the machine is in another world than before. */
     private void follow() {
         final Level level = this.machine.getLevel();
@@ -76,6 +90,7 @@ public final class MachineServices {
             this.shell = this.machine instanceof IComputerTerminalHost terminal
                     && level instanceof ServerLevel server ? new ServerCliComputer(terminal, server) : null;
             this.files = this.shell == null ? null : new FileService(this.shell);
+            this.computer = this.shell == null ? null : new ComputerInfoService(this.machine, this.shell);
         }
     }
 }

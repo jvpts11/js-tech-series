@@ -48,14 +48,8 @@ class UiWidgetsTest {
             }
 
             @Override
-            public boolean provides(final String owner) {
-                return "Computer".equals(owner);
-            }
-
-            @Override
-            public Reply call(final String owner, final String member, final List<Object> arguments,
-                              final String caller, final int line) {
-                return Reply.of("Desktop".equals(member) ? has : "a machine", 1);
+            public boolean hasDesktop() {
+                return has;
             }
         };
     }
