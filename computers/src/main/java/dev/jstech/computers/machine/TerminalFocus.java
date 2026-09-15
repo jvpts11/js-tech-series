@@ -9,7 +9,6 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.vm.program.ProgramEntry;
 import dev.jstech.computers.vm.program.ProgramTable;
-import dev.jstech.core.language.ILanguageProcess;
 import java.util.List;
 import java.util.function.IntPredicate;
 import net.minecraft.nbt.CompoundTag;
@@ -80,8 +79,7 @@ final class TerminalFocus {
     void release() {
         final ProgramEntry<IMachineRuntime> one = this.table.byId(this.held);
         this.held = 0;
-        if (one != null && one.process().state() != ILanguageProcess.State.RUNNING
-                && one.process().state() != ILanguageProcess.State.PARKED) {
+        if (one != null && !MachinePrograms.running(one.process())) {
             this.table.remove(one.id());
         }
     }
