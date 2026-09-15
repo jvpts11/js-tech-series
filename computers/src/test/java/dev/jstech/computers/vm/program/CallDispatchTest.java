@@ -20,8 +20,11 @@ import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.ListingProblem;
+import dev.jstech.computers.vm.system.CallCost;
 import dev.jstech.computers.vm.system.MemberId;
 import dev.jstech.computers.vm.system.SigmaCosts;
+import dev.jstech.computers.vm.system.SystemApi;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -72,20 +75,22 @@ class CallDispatchTest {
                 return null;
             }
             return switch (id.name()) {
-                case "Exists" -> (target, arguments, line) -> this.files.containsKey(String.valueOf(arguments[0]));
-                case "Read" -> (target, arguments, line) -> {
+                case "Exists" -> (call, target, arguments, line) ->
+                        this.files.containsKey(String.valueOf(arguments[0]));
+                case "Read" -> (call, target, arguments, line) -> {
                     final String held = this.files.get(String.valueOf(arguments[0]));
                     if (held == null) {
                         throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, arguments[0] + ": file not found");
                     }
+                    call.moved(held.getBytes(StandardCharsets.UTF_8).length);
                     return held;
                 };
-                case "TryRead" -> (target, arguments, line) -> {
+                case "TryRead" -> (call, target, arguments, line) -> {
                     final String held = this.files.get(String.valueOf(arguments[0]));
                     arguments[1] = held;
                     return held != null;
                 };
-                case "Write" -> (target, arguments, line) -> {
+                case "Write" -> (call, target, arguments, line) -> {
                     this.files.put(String.valueOf(arguments[0]), String.valueOf(arguments[1]));
                     return true;
                 };
@@ -248,7 +253,21 @@ class CallDispatchTest {
         final long read = run(drive, "        File.Read(\"a\");").spent();
 
         // The drive says nothing of prices, so the two runs can only differ by what the two calls are declared to cost.
-        assertEquals((long) SigmaCosts.READ - SigmaCosts.GLANCE_NETWORK, read - look);
+        final int declared = SystemApi.member("File", "Read", List.of("string")).cost().at(0, 1)
+                - SystemApi.member("File", "Exists", List.of("string")).cost().at(0, 0);
+        assertEquals(declared, read - look);
+    }
+
+    @Test
+    void call_chargesACallToTheWorldForTheBytesItSaysItMoved() {
+        final Drive drive = new Drive();
+        drive.files.put("small", "x");
+        drive.files.put("large", "x".repeat(CallCost.BLOCK_BYTES + 1));
+
+        final long small = run(drive, "        File.Read(\"small\");").spent();
+        final long large = run(drive, "        File.Read(\"large\");").spent();
+
+        assertEquals(SigmaCosts.READ_PER_BLOCK, large - small, "a second block read costs a block's price more");
     }
 
     @Test

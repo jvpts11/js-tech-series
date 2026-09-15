@@ -40,10 +40,12 @@ public final class FileService {
         return this.door.writeFile(path, text).ok();
     }
 
-    /** Adds that text at the end of the file at that path, which starts out empty when there is none. */
+    /**
+     * Adds that text at the end of the file at that path, making the file when there is none, without reading what it
+     * already holds; false when it could not be written.
+     */
     public boolean append(final String path, final String text) {
-        final ICliComputer.FsResult had = this.door.readFile(path);
-        return this.door.writeFile(path, (had.ok() ? had.message() : "") + text).ok();
+        return this.door.appendFile(path, text).ok();
     }
 
     /** Deletes the file at that path; false when it could not be deleted. */
@@ -72,5 +74,31 @@ public final class FileService {
             }
         }
         return names;
+    }
+
+    /**
+     * How many bytes a text takes on a disk, which is what reading and writing it are priced by: counted the way the
+     * disk stores it, in UTF-8, without making the bytes to count them.
+     */
+    static long bytesOf(final String text) {
+        long bytes = 0;
+        final int length = text.length();
+        for (int i = 0; i < length; i++) {
+            final char c = text.charAt(i);
+            if (c < 0x80) {
+                bytes++;
+            } else if (c < 0x800) {
+                bytes += 2;
+            } else if (!Character.isSurrogate(c)) {
+                bytes += 3;
+            } else if (Character.isHighSurrogate(c) && i + 1 < length && Character.isLowSurrogate(text.charAt(i + 1))) {
+                bytes += 4;
+                i++;
+            } else {
+                // A half of a pair without its other half is written as a single replacement byte.
+                bytes++;
+            }
+        }
+        return bytes;
     }
 }

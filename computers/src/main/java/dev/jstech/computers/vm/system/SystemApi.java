@@ -259,15 +259,18 @@ public final class SystemApi {
      * <p>Writing can fail without the program being wrong: a disk fills up. So the writes answer whether they happened
      * rather than stopping the program, and reading something that is not there is asked for with the try form. Asking
      * whether something is there is cheap; reading costs a read, and writing twice that, because a write is a thing the
-     * machine cannot take back.
+     * machine cannot take back. Both grow with how much they move, a block at a time, so a large file costs more than a
+     * small one.
      */
     private static TypeSpec file() {
         final Members file = new Members("File");
+        final CallCost read = CallCost.perBlock(SigmaCosts.READ, SigmaCosts.READ_PER_BLOCK);
+        final CallCost write = CallCost.perBlock(SigmaCosts.WRITE, SigmaCosts.WRITE_PER_BLOCK);
         file.onType(BOOL, "Exists", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), STRING);
-        file.onType(STRING, "Read", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
-        file.onType(BOOL, "TryRead", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING, "out " + STRING);
-        file.onType(BOOL, "Write", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING, STRING);
-        file.onType(BOOL, "Append", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING, STRING);
+        file.onType(STRING, "Read", MemberKind.WORLD, read, STRING);
+        file.onType(BOOL, "TryRead", MemberKind.WORLD, read, STRING, "out " + STRING);
+        file.onType(BOOL, "Write", MemberKind.WORLD, write, STRING, STRING);
+        file.onType(BOOL, "Append", MemberKind.WORLD, write, STRING, STRING);
         file.onType(BOOL, "Delete", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING);
         file.onType(BOOL, "MkDir", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING);
         file.onType(STRINGS, "List", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);

@@ -428,6 +428,19 @@ public interface ICliComputer {
     }
 
     /**
+     * Adds text at the end of a user file on the host computer's system disk, making the file when there is none,
+     * without reading what it already holds.
+     *
+     * <p>Fails as {@link #writeFile} does, except that only what the file grows by has to fit on the disk.
+     *
+     * @param path    the file path to add to
+     * @param content the UTF-8 text to add
+     */
+    default FsResult appendFile(final String path, final String content) {
+        return FsResult.noOs();
+    }
+
+    /**
      * Runs the content of an {@code .iql} file from the host computer's system disk as an IQL
      * statement, routing it through the same dispatch path as the {@code operation} command.
      *

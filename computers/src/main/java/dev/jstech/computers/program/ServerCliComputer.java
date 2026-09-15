@@ -2508,6 +2508,44 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     @Override
+    public FsResult appendFile(final String path, final String content) {
+        final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
+        if (net != null) {
+            final Reached reached = reach(net);
+            if (!reached.ok()) {
+                return reached.error();
+            }
+            if (!reached.share().writable()) {
+                return FsResult.fail(net.display() + ": " + net.share() + " is shared read-only");
+            }
+            return reached.remote().appendFile(reached.path(), content);
+        }
+        final Resolved r = resolve(path);
+        if (r.ctx() == null) {
+            return driveError(r.drive());
+        }
+        if (r.ctx().disk().isEmpty()) {
+            return notReady(r.drive());
+        }
+        final DiskCtx ctx = r.ctx();
+        final FileType type = FileType.of(extensionOf(path));
+        if (!type.userEditable()) {
+            return FsResult.fail(path + ": ." + type.extension() + " files cannot be edited");
+        }
+        final DiskFilesystem.WriteResult result = DiskFilesystem.append(
+                ctx.disk(), r.path(), type, content, freeWeightOf(ctx.disk()), ctx.kind(), level.getGameTime());
+        return switch (result) {
+            case OK -> {
+                ctx.commit().run();
+                yield FsResult.ok("wrote " + path);
+            }
+            case INVALID_PATH -> FsResult.fail(path + ": invalid file name for this filesystem");
+            case DISK_FULL -> FsResult.fail(path + ": not enough free space on the disk");
+            case READ_ONLY -> FsResult.fail(path + ": ." + type.extension() + " is read-only");
+        };
+    }
+
+    @Override
     public FsResult changeDir(final String input) {
         final DosPath.Location target = DosPath.resolve(currentLocation(), input);
         final DiskCtx ctx = diskFor(target.drive());

@@ -23,7 +23,7 @@ import java.util.List;
  * <p>A call to one of the program's methods is a new frame on the running thread, never a Java call, so a program
  * that calls deep costs frames, not the server's stack, and a thread's calls stop at {@link #DEEPEST}.
  */
-final class CallDispatch {
+final class CallDispatch implements IWorldCall {
 
     /** The most calls one thread may have in progress at once; one call more halts the program. */
     static final int DEEPEST = 1_024;
@@ -32,6 +32,8 @@ final class CallDispatch {
     private final Heap heap;
     private final Library library;
     private final ProgramImage program;
+    /** How many bytes the call to the world being answered has said it read or wrote. */
+    private long moved;
 
     CallDispatch(final Process process, final Heap heap, final Library library, final ProgramImage program) {
         this.process = process;
@@ -140,10 +142,16 @@ final class CallDispatch {
         }
     }
 
+    /** Counts what the call to the world being answered read or wrote, towards its price. */
+    @Override
+    public void moved(final long bytes) {
+        this.moved += Math.max(0, bytes);
+    }
+
     /**
      * Answers a call the machine takes: the arguments come off the stack, then the object the call is made on when it
      * is made on one. The machine answers with plain values, which become the program's to hold, and the call is
-     * charged what the system declares it costs, counted by the rows it gives back.
+     * charged what the system declares it costs, counted by the rows it gives back and the bytes it says it moved.
      */
     private void reach(final Frame frame, final ProgramImage.CallSite site, final IWorldFunction function,
                        final int line) {
@@ -151,10 +159,11 @@ final class CallDispatch {
         final boolean[] outs = site.outs();
         final Object[] arguments = takeArray(frame, outs);
         final Object target = declared.isStatic() ? null : this.heap.alive(frame.pop(), line);
-        final Object answer = function.call(target, arguments, line);
+        this.moved = 0;
+        final Object answer = function.call(this, target, arguments, line);
         final int rows = answer instanceof Values.ListValue list ? list.size() : 0;
         // A call to the machine has always counted the instruction making it as part of what it is declared to cost.
-        this.process.charge(declared.cost().at(rows, 0) - 1);
+        this.process.charge(declared.cost().at(rows, this.moved) - 1);
         for (int i = 0; i < outs.length; i++) {
             if (outs[i]) {
                 arguments[i] = this.heap.adopt(arguments[i] == null ? site.defaults()[i] : arguments[i], line);

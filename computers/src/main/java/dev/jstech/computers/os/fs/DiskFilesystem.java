@@ -249,6 +249,39 @@ public final class DiskFilesystem {
         return WriteResult.OK;
     }
 
+    /**
+     * Adds {@code addition} at the end of the file at {@code path}, making the file when there is none, with the same
+     * checks as {@link #write(ItemStack, String, FileType, String, long, FilesystemKind, long)}, except that only what
+     * the file grows by has to fit in {@code freeWeight}.
+     *
+     * @param now the world game time in ticks the file is stamped with, or {@code 0} for an unknown time
+     */
+    public static WriteResult append(final ItemStack disk, final String path, final FileType type,
+                                     final String addition, final long freeWeight,
+                                     final FilesystemKind kind, final long now) {
+        if (!FsPaths.isValidPath(path, kind)) {
+            return WriteResult.INVALID_PATH;
+        }
+        if (type.virtualProjection() || installerLocked(disk)) {
+            return WriteResult.READ_ONLY;
+        }
+        final FilesystemContents current = disk.getOrDefault(
+                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+        final StoredFile had = current.files().get(path);
+        if (had != null && had.type().virtualProjection()) {
+            return WriteResult.READ_ONLY;
+        }
+        final int held = had == null ? 0 : had.byteSize();
+        final int added = addition.getBytes(StandardCharsets.UTF_8).length;
+        final long grows = FsPaths.sizeMbEq(held + added, eraOf(disk)) - FsPaths.sizeMbEq(held, eraOf(disk));
+        if (grows > freeWeight) {
+            return WriteResult.DISK_FULL;
+        }
+        final String content = had == null ? addition : had.content() + addition;
+        disk.set(ComputingModule.FILESYSTEM.get(), current.with(new StoredFile(path, type, content, now)));
+        return WriteResult.OK;
+    }
+
     // delete
 
     /**

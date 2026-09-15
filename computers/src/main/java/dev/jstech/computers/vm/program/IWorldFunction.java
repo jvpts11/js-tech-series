@@ -21,10 +21,11 @@ public interface IWorldFunction {
     /**
      * Answers the call. Throw {@link Halt} for anything the program did wrong.
      *
+     * @param call      where the function says how much it read or wrote, for a call priced by that
      * @param target    the object the call is made on, or null for a call on a type
      * @param arguments what the call was handed, in order; a place the call fills in is empty, and is where the
      *                  function puts what it fills in
      * @return the answer, or null for a call that gives nothing
      */
-    Object call(Object target, Object[] arguments, int line);
+    Object call(IWorldCall call, Object target, Object[] arguments, int line);
 }

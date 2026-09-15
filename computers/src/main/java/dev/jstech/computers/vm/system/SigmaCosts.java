@@ -32,6 +32,10 @@ public final class SigmaCosts {
     public static final int READ = 50;
     /** Writing, which the machine cannot take back. */
     public static final int WRITE = 100;
+    /** What every block of {@link CallCost#BLOCK_BYTES} a read brings back adds to it. */
+    public static final int READ_PER_BLOCK = 1;
+    /** What every block of {@link CallCost#BLOCK_BYTES} a write puts on a disk adds to it. */
+    public static final int WRITE_PER_BLOCK = 2;
     /** Changing what a window shows, which the machine has to draw again for whoever is looking at it. */
     public static final int DRAW = 50;
     /** Asking the network to do something, which becomes work for the whole base. */

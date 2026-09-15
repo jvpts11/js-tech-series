@@ -8,6 +8,7 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.vm.program.Halt;
+import dev.jstech.computers.vm.program.IWorldCall;
 import dev.jstech.computers.vm.program.IWorldFunction;
 import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.MemberId;
@@ -31,7 +32,7 @@ final class MachineCalls {
     /** The Java that answers a call with one of the machine's services. */
     @FunctionalInterface
     interface IServiceFunction<S> {
-        Object call(S service, Object target, Object[] arguments, int line);
+        Object call(S service, IWorldCall call, Object target, Object[] arguments, int line);
     }
 
     /**
@@ -45,13 +46,13 @@ final class MachineCalls {
 
         /** The call as that machine answers it, which stops the program when the machine cannot reach the service. */
         IWorldFunction on(final MachineServices services) {
-            return (target, arguments, line) -> {
+            return (call, target, arguments, line) -> {
                 final S reached = this.service.apply(services);
                 if (reached == null) {
                     throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line,
                             "this machine cannot reach " + this.id.owner());
                 }
-                return this.function.call(reached, target, arguments, line);
+                return this.function.call(reached, call, target, arguments, line);
             };
         }
     }

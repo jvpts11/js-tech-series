@@ -14,6 +14,7 @@ import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.machine.MachineHost;
 import dev.jstech.computers.vm.program.Halt;
+import dev.jstech.computers.vm.program.IWorldCall;
 import dev.jstech.computers.vm.program.IWorldFunction;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.vm.system.IMemberSpec;
@@ -32,7 +33,8 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
  * The calls a program makes on a machine's drives, as a real computer with a real disk answers them: every one the
- * system declares is answered, each does to the disk what it says, and a computer in no world cannot be reached.
+ * system declares is answered, each does to the disk what it says and tells how many bytes it moved, and a computer in
+ * no world cannot be reached.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -45,6 +47,10 @@ public final class FileCallsGameTests {
     private static final int SETTLE = 2;
     private static final BlockPos AT = new BlockPos(2, 2, 2);
     private static final String TEXT = "string";
+
+    /** Where a call says what it moved, for the calls whose bytes the test does not look at. */
+    private static final IWorldCall UNCOUNTED = bytes -> {
+    };
 
     /** A computer with enough hardware to run, a system on it, and a drive to write to. */
     private static CraftingComputerBlockEntity computer(final GameTestHelper helper) {
@@ -73,12 +79,13 @@ public final class FileCallsGameTests {
     }
 
     /** Makes a call on the drives the way a program's line would, straight to what the machine bound for it. */
-    private static Object call(final MachineHost host, final MemberId id, final Object... arguments) {
+    private static Object call(final MachineHost host, final IWorldCall told, final MemberId id,
+                               final Object... arguments) {
         final IWorldFunction bound = host.bind(id);
         if (bound == null) {
             throw new IllegalStateException(id.describe() + " is not answered by the machine");
         }
-        return bound.call(null, arguments, 1);
+        return bound.call(told, null, arguments, 1);
     }
 
     @GameTest(template = ARENA)
@@ -104,22 +111,46 @@ public final class FileCallsGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final MachineHost host = new MachineHost(computer);
+                    final long[] moved = {0};
+                    final IWorldCall counted = bytes -> moved[0] += bytes;
 
-                    helper.assertTrue(Boolean.TRUE.equals(call(host, file("Write", TEXT, TEXT), "log.txt", "one")),
-                            "the file is written");
-                    helper.assertTrue(Boolean.TRUE.equals(call(host, file("Append", TEXT, TEXT), "log.txt", ";two")),
-                            "and added to");
-                    final Object read = call(host, file("Read", TEXT), "log.txt");
+                    helper.assertTrue(Boolean.TRUE.equals(call(host, UNCOUNTED, file("Write", TEXT, TEXT),
+                            "log.txt", "one")), "the file is written");
+                    helper.assertTrue(Boolean.TRUE.equals(call(host, counted, file("Append", TEXT, TEXT),
+                            "log.txt", ";two")), "and added to");
+                    helper.assertTrue(moved[0] == 4, "adding to it moves only what is added; moved " + moved[0]);
+                    moved[0] = 0;
+                    final Object read = call(host, counted, file("Read", TEXT), "log.txt");
                     helper.assertTrue("one;two".equals(read), "it holds both; got " + read);
-                    helper.assertTrue(Boolean.TRUE.equals(call(host, file("MkDir", TEXT), "logs")), "a folder is made");
-                    final Object listed = call(host, file("List", TEXT), "");
+                    helper.assertTrue(moved[0] == 7, "reading it moves the whole file; moved " + moved[0]);
+                    helper.assertTrue(Boolean.TRUE.equals(call(host, UNCOUNTED, file("MkDir", TEXT), "logs")),
+                            "a folder is made");
+                    final Object listed = call(host, UNCOUNTED, file("List", TEXT), "");
                     helper.assertTrue(listed instanceof Values.ListValue names && names.items().contains("log.txt")
                                     && names.items().contains("logs/"),
                             "the folder is listed with a slash beside the file");
-                    helper.assertTrue(Boolean.TRUE.equals(call(host, file("Delete", TEXT), "log.txt")),
+                    helper.assertTrue(Boolean.TRUE.equals(call(host, UNCOUNTED, file("Delete", TEXT), "log.txt")),
                             "the file is deleted");
-                    helper.assertTrue(Boolean.FALSE.equals(call(host, file("Exists", TEXT), "log.txt")),
+                    helper.assertTrue(Boolean.FALSE.equals(call(host, UNCOUNTED, file("Exists", TEXT), "log.txt")),
                             "and is not there any more");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void append_makesTheFileWhenThereIsNone(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper);
+        if (computer == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final MachineHost host = new MachineHost(computer);
+
+                    helper.assertTrue(Boolean.TRUE.equals(call(host, UNCOUNTED, file("Append", TEXT, TEXT),
+                            "fresh.txt", "first")), "adding to a file that is not there makes it");
+                    final Object read = call(host, UNCOUNTED, file("Read", TEXT), "fresh.txt");
+                    helper.assertTrue("first".equals(read), "holding only what was added; got " + read);
                 })
                 .thenSucceed();
     }
@@ -135,7 +166,7 @@ public final class FileCallsGameTests {
                     final IWorldFunction tryRead = new MachineHost(computer).bind(file("TryRead", TEXT, "out " + TEXT));
                     final Object[] asked = {"missing.txt", null};
 
-                    final Object found = tryRead.call(null, asked, 1);
+                    final Object found = tryRead.call(UNCOUNTED, null, asked, 1);
 
                     helper.assertTrue(Boolean.FALSE.equals(found) && "".equals(asked[1]),
                             "nothing found and nothing filled in; got " + found + " and " + asked[1]);
@@ -152,7 +183,7 @@ public final class FileCallsGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     try {
-                        call(new MachineHost(computer), file("Read", TEXT), "nothing.txt");
+                        call(new MachineHost(computer), UNCOUNTED, file("Read", TEXT), "nothing.txt");
                         helper.fail("reading a file that is not there stops the program");
                     } catch (final Halt halt) {
                         helper.assertTrue(halt.reason() == Halt.Reason.NO_SUCH_MEMBER && !halt.getMessage().isBlank(),
@@ -172,7 +203,7 @@ public final class FileCallsGameTests {
                 new CraftingComputerBlockEntity(placed.getBlockPos(), placed.getBlockState());
 
         try {
-            call(new MachineHost(loose), file("Exists", TEXT), "a.txt");
+            call(new MachineHost(loose), UNCOUNTED, file("Exists", TEXT), "a.txt");
             helper.fail("a computer in no world has no drives to reach");
         } catch (final Halt halt) {
             helper.assertTrue("this machine cannot reach File".equals(halt.getMessage()),
