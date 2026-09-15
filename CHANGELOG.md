@@ -84,35 +84,40 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A language an addon registers is refused, with a line in the log, when it claims a file extension another
   language already has. Registering one again under the same id replaces the one before, and the log says so.
   Languages can be added or removed only while the game loads.
-- Inside the mods, with no change to how anything behaves: the handlers behind the computers' screens and
-  programs are split into feature packages; the virtual machine that runs programs has packages of its own,
-  with nothing of Minecraft in them, and reads a listing's problems without the compiler; a running program
-  keeps who it is, its console, its random numbers, the lines typed at it, the calls waiting their turn, the
-  windows it has open, the watches it has set, who it tells when something is said to it, which of its threads
-  runs next, the locks they hold, what makes two of its values the same, how it checks a value's type, how it
-  reads and writes fields, how it makes calls, how it makes objects, how it carries out its instructions, how it
-  is written to a save and read back, and how what is said to it becomes calls waiting their turn in parts of
-  their own, each of its threads holds what it is waiting for as one value, every change to a window or a widget
-  goes through one place, a window marks each change to what it shows and a canvas each time it is cleared, and
-  its heap takes in whatever the machine hands the program and checks what the program reaches into; a machine
-  keeps the programs it runs in a table of its own, which knows no language and finds a program by its number
-  without building anything, starts every one of them in one place, keeps which of them is in front of its terminal
-  apart from the rest, looks up what its programs watch only when one of them watches something, as one count for
-  each item, knows who is looking at it from the screens they open and close instead of going through every player
-  on every tick, looks for its Gateways only after one of them is spoken to and claims its time in each tick
-  without building anything, hands its programs what a Gateway heard without copying their list and decides in
-  one place, for its terminal too, whether a program is still going; the rate at which a processor's clock buys
-  instructions is named beside the time the server lends its programs, and screens list a machine's programs
-  without reaching them; a program waiting on another one is told when it ends, or asks at most once a tick when
-  it is on another machine; each call the system answers says who answers it (the language, the program's own
-  process or the machine) and what it costs, and the compiler takes the types of the language's library from the
-  system's own declarations, where they are written once, and a program's calls are matched to those declarations
-  when it loads, its console, its random numbers, its threads, what it says about itself, its waits on other
-  programs, the calls on its windows and widgets and what they hold, the values it reads of itself and of the
-  language's own text and collections, the widgets, lists and maps it makes, and its calls on the machine's drives
-  (answered by a file service the machine keeps) being answered through them; a
-  machine keeps the shell its programs reach its drives and its network through, instead of making one for each
-  call; every source file's header names the mod it belongs to.
+- The handlers behind the computers' screens and programs are split into packages by feature, with nothing changing
+  in how they behave.
+- The virtual machine that runs programs lives in packages of its own, with nothing of Minecraft in them, and reads
+  what is wrong with a listing without the compiler.
+- A running program is made of parts that each do one job: who it is, its console, its random numbers, the lines
+  typed at it, the calls waiting their turn, its windows, its watches, who it tells when something is said to it,
+  which of its threads runs next, the locks they hold, comparing its values, checking their types, reading and
+  writing its fields, making its calls and its objects, carrying out its instructions, saving it and reading it
+  back, and turning what is said to it into calls waiting their turn. Nothing a program does changes.
+- Each of a program's threads holds what it is waiting for as one value. Every change to a window or a widget goes
+  through one place, a window marks each change to what it shows and a canvas each time it is cleared, and a
+  program's memory takes in whatever the computer hands the program and checks what the program reaches into.
+- A computer keeps the programs it runs in a table of its own, which knows no language and finds a program by its
+  number without building anything. It starts every program in one place, keeps the one in front of its terminal
+  apart from the rest, and decides in one place, for its terminal too, whether a program is still going; screens
+  list a computer's programs without reaching into them.
+- Running programs costs the server less. A computer looks up what its programs watch only when one of them watches
+  something, as one count for each item; it knows who is looking at it from the screens they open and close, instead
+  of going through every player on every tick; it looks for its Gateways only after one of them is spoken to, and
+  hands its programs what a Gateway heard without copying their list; and it claims its share of each tick without
+  building anything. A program waiting on another one is told when that one ends, or asks at most once a tick when
+  the other is on another computer.
+- The rate at which a processor's clock buys instructions is named beside the time the server lends a computer's
+  programs.
+- Each call the system answers says who answers it (the language, the program's own process or the computer) and
+  what it costs, and the compiler takes the types of the language's library from those declarations, where they are
+  written once.
+- A program's calls are matched to the system's declarations when it loads, and answered through them: its console,
+  its random numbers, its threads, what it says about itself, its waits on other programs, the calls on its windows
+  and widgets and what they hold, the values it reads of itself and of the language's own text and collections, the
+  widgets, lists and maps it makes, and its calls on the computer's drives, which a file service the computer keeps
+  answers. A computer keeps the shell its programs reach its drives and its network through, instead of making one
+  for each call.
+- Every source file's header names the mod it belongs to.
 
 ### Fixed
 - A program can no longer be compiled with the Gateway calls that reached into a ComputerCraft computer
