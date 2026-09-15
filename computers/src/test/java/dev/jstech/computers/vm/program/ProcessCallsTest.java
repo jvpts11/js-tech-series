@@ -25,9 +25,9 @@ import org.junit.jupiter.api.Test;
 class ProcessCallsTest {
 
     @Test
-    void bindings_answerEveryCallTheConsoleChanceAndThreadsLeaveToTheProcess() {
+    void bindings_answerEveryCallTheSystemLeavesToTheProcess() {
         final List<String> unbound = new ArrayList<>();
-        for (final String owner : List.of("Console", "Random", "Thread")) {
+        for (final String owner : List.of("Console", "Random", "Thread", "Program", "Process")) {
             for (final IMemberSpec member : SystemApi.type(owner).members()) {
                 // A value the process keeps, such as the running thread, is read rather than called.
                 final boolean called = !(member instanceof PropertySpec);
@@ -40,7 +40,7 @@ class ProcessCallsTest {
     }
 
     @Test
-    void bindings_waitOnlyInTheCallsThatReadALineOrJoinAThread() {
+    void bindings_waitOnlyInTheCallsThatReadALineOrWaitForAThreadOrAProgram() {
         final Set<String> waiting = new HashSet<>();
         for (final ProcessCalls.Binding binding : ProcessCalls.all()) {
             if (binding.waiting() != null) {
@@ -48,7 +48,8 @@ class ProcessCallsTest {
             }
         }
         assertEquals(Set.of("Console.ReadLine()", "Console.ReadInt()", "Console.ReadLong()", "Console.ReadDouble()",
-                "Console.ReadBool()", "Thread.Join()", "Thread.Join(long)"), waiting);
+                "Console.ReadBool()", "Thread.Join()", "Thread.Join(long)", "Process.Wait()", "Process.Wait(long)"),
+                waiting);
     }
 
     @Test
@@ -59,7 +60,8 @@ class ProcessCallsTest {
                 onTarget.add(binding.id().describe());
             }
         }
-        assertEquals(Set.of("Thread.Join()", "Thread.Join(long)", "Thread.Stop()"), onTarget);
+        assertEquals(Set.of("Thread.Join()", "Thread.Join(long)", "Thread.Stop()", "Process.Wait()",
+                "Process.Wait(long)"), onTarget);
     }
 
     @Test

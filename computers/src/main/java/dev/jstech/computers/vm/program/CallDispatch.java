@@ -73,9 +73,6 @@ final class CallDispatch {
                 this.handle(frame, site, line);
                 return;
             }
-            if ("Program".equals(named.owner()) && this.process.programCall(frame, named, line)) {
-                return;
-            }
             if ("Process".equals(named.owner())) {
                 this.process.processCall(frame, named, line);
                 return;

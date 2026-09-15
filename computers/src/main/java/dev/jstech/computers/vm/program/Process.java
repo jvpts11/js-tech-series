@@ -324,6 +324,11 @@ public final class Process {
         this.listeners.hearGateway(handler);
     }
 
+    /** Who to tell when another program sends this one a line; null takes the listener away. */
+    void hearMessages(final Values.DelegateValue handler) {
+        this.listeners.hearMessages(handler);
+    }
+
     /** Hands the program what a ComputerCraft computer said through a Gateway; false when it was not heard. */
     public boolean deliverGatewayMessage(final int from, final String text, final long tick) {
         return this.events.deliverGatewayMessage(from, text, tick);
@@ -350,7 +355,7 @@ public final class Process {
     }
 
     /** Ends the program where it stands with that code: every thread stops and nothing is asked again. */
-    private void exit(final int code) {
+    void exit(final int code) {
         this.identity.exit(code);
         this.main.frames.clear();
         this.waiting.clear();
@@ -384,33 +389,12 @@ public final class Process {
         return made;
     }
 
-    /** The calls on {@code Program} the process answers itself: the ones about this very program. */
-    boolean programCall(final Frame frame, final IOperand.Method named, final int line) {
-        switch (named.name()) {
-            case "Exit" -> {
-                final List<Object> arguments = CallDispatch.take(frame, named.parameters());
-                this.exit(arguments.isEmpty() ? 0 : Numbers.toInt(arguments.getFirst()));
-                return true;
-            }
-            case "OnMessage" -> {
-                final List<Object> arguments = CallDispatch.take(frame, named.parameters());
-                this.listeners.hearMessages(arguments.isEmpty()
-                        || !(arguments.getFirst() instanceof Values.DelegateValue handler) ? null : handler);
-                return true;
-            }
-            default -> {
-                return false;
-            }
-        }
-    }
-
     /**
-     * The calls on a {@code Process}: waiting is the process's own business, the rest is the machine's,
-     * asked under {@code Program} with the other program's number.
+     * The calls on a {@code Process} the machine answers, asked under {@code Program} with the other program's number.
+     * Waiting for one is the process's own business, and is bound with its other calls.
      */
     void processCall(final Frame frame, final IOperand.Method named, final int line) {
         switch (named.name()) {
-            case "Wait" -> this.waitFor(frame, named, line);
             case "Send" -> {
                 final List<Object> arguments = CallDispatch.take(frame, named.parameters());
                 CallDispatch.push(frame, named, this.library.call(new IOperand.Method("Program", "Send",
@@ -440,9 +424,14 @@ public final class Process {
         return token instanceof Values.Obj object && object.get("Host") instanceof String host ? host : "";
     }
 
-    /** Waits for another program to end, the way a join waits for a thread. */
-    private void waitFor(final Frame frame, final IOperand.Method named, final int line) {
-        final int count = named.parameters().size();
+    /**
+     * Whether a wait for another program has to go on, setting up what wakes it when that program ends, the way a join
+     * waits for a thread.
+     *
+     * <p>Nothing is taken off the stack until the wait is over, so asking it again is the same as asking it once. It
+     * does not wait for a program that has ended, nor once its time has run out or when it was given none.
+     */
+    boolean waitForWaits(final Frame frame, final int count, final int line) {
         final Object token = frame.stack.size() > count ? frame.stack.get(frame.stack.size() - 1 - count) : null;
         final Integer id = this.processId(token, line);
         final String host = processHost(token);
@@ -451,15 +440,15 @@ public final class Process {
         // Read before the test, so it is forgotten whenever the call answers, as it always was.
         final boolean gaveUp = this.current.takeGaveUp();
         if (over || gaveUp || (count == 1 && ticks <= 0)) {
-            CallDispatch.take(frame, named.parameters());
-            frame.pop();
-            if (count == 1) {
-                frame.push(over);
-            }
-            return;
+            return false;
         }
-        frame.at--;
         this.scheduler.await(this.current, new IWait.Child(id, host, ticks > 0 ? this.library.now() + ticks : 0L));
+        return true;
+    }
+
+    /** Whether the program a wait asked about has ended, which is what a wait given time answers. */
+    boolean waitForOver(final Object token, final int line) {
+        return !this.library.programRunning(this.processId(token, line), processHost(token));
     }
 
     /**

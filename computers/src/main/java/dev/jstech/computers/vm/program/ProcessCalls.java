@@ -66,6 +66,7 @@ final class ProcessCalls {
         console(bindings);
         random(bindings);
         thread(bindings);
+        program(bindings);
         return Map.copyOf(bindings);
     }
 
@@ -135,6 +136,30 @@ final class ProcessCalls {
             process.stop(target, line);
             return null;
         });
+    }
+
+    /*
+     * What a program says about itself (its name, its end, who hears the lines sent to it) and waiting for another
+     * program to end, which takes nothing off the stack until it is over, the way a join does. Everything else a
+     * program asks about other programs is the machine's to answer.
+     */
+    private static void program(final Map<MemberId, Binding> bindings) {
+        bind(bindings, "Program", "SetName", null, (process, target, arguments, line) -> {
+            process.setName(String.valueOf(arguments[0]), line);
+            return null;
+        }, STRING);
+        bind(bindings, "Program", "Exit", null, (process, target, arguments, line) -> {
+            process.exit(Numbers.toInt(arguments[0]));
+            return null;
+        }, "int");
+        bind(bindings, "Program", "OnMessage", null, (process, target, arguments, line) -> {
+            process.hearMessages(arguments[0] instanceof Values.DelegateValue handler ? handler : null);
+            return null;
+        }, "Action<ProcessMessage>");
+        bind(bindings, "Process", "Wait", Process::waitForWaits,
+                (process, target, arguments, line) -> process.waitForOver(target, line));
+        bind(bindings, "Process", "Wait", Process::waitForWaits,
+                (process, target, arguments, line) -> process.waitForOver(target, line), "long");
     }
 
     private static void bind(final Map<MemberId, Binding> bindings, final String owner, final String name,

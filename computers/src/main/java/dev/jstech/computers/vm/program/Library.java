@@ -382,18 +382,13 @@ public final class Library {
     }
 
     /**
-     * What a program says about itself, and what it asks of the machine about the other programs on it.
+     * What a program asks of the machine about the other programs on it: starting one, or running a line at the
+     * machine's own prompt.
      *
-     * <p>Its name is its own business. Starting another program, or speaking to one, is the machine's,
-     * and a machine that has no other programs to speak of (there is none around the tests) says so.
+     * <p>That is the machine's business, and a machine that has no other programs to speak of (there is none around the
+     * tests) says so. What a program says about itself is the process's, and is bound with its other calls.
      */
     private Answer program(final IOperand.Method named, final List<Object> arguments, final int line) {
-        if ("SetName".equals(named.name())) {
-            if (this.owner != null) {
-                this.owner.setName(String.valueOf(arguments.getFirst()), line);
-            }
-            return Answer.of(null);
-        }
         if (this.host.provides(named.owner())) {
             return this.outward(named, arguments, line);
         }
