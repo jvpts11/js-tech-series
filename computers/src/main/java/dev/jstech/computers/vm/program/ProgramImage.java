@@ -12,20 +12,29 @@ import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmType;
 import dev.jstech.computers.vm.listing.AsmWriter;
 import dev.jstech.computers.vm.listing.IOperand;
+import dev.jstech.computers.vm.listing.Instruction;
+import dev.jstech.computers.vm.listing.ListingError;
+import dev.jstech.computers.vm.listing.ListingProblem;
+import dev.jstech.computers.vm.listing.Opcode;
 import dev.jstech.computers.vm.listing.Shape;
 import dev.jstech.computers.vm.system.ConstructorSpec;
+import dev.jstech.computers.vm.system.EventSpec;
 import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.IntrinsicRegistry;
 import dev.jstech.computers.vm.system.IntrinsicSpec;
+import dev.jstech.computers.vm.system.PropertySpec;
 import dev.jstech.computers.vm.system.SystemApi;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A program made ready to run.
@@ -75,6 +84,11 @@ public final class ProgramImage {
     record Creation(IOperand.Constructor made, TypeImage type, MethodImage constructor, boolean[] outs,
                     ConstructorSpec declared) {
     }
+
+    /** The values of the language's own core a listing may read, which the system does not declare. */
+    static final Set<String> CORE_VALUES = Set.of("string.Length", "List.Count", "Map.Count");
+    /** The collections of the language's own core a listing may make, which the system does not declare. */
+    private static final Set<String> CORE_MADE = Set.of("List", "Map");
 
     private final Map<String, TypeImage> types = new LinkedHashMap<>();
     /** Every method shape a type of the program declares, numbered in the order they were first met. */
@@ -218,6 +232,90 @@ public final class ProgramImage {
         }
         return new Creation(made, type, type == null ? null : type.constructor(made.parameters().size()),
                 MethodImage.outsOf(made.parameters()), declared);
+    }
+
+    /**
+     * What in the program nothing answers, in the order it is written: a call, a new or a value that neither the
+     * program, a function of the language, the language's own core nor a declaration of the system accounts for, and a
+     * value written that can only be read.
+     *
+     * <p>A program with any of these would run until that line and stop there, so a machine refuses to start it and
+     * says where. Loading never refuses by itself, so a runtime handed a host of its own can still run what it likes.
+     */
+    public List<ListingProblem> problems() {
+        final List<ListingProblem> found = new ArrayList<>();
+        for (final TypeImage type : this.types.values()) {
+            for (final MethodImage method : type.methods().values()) {
+                this.problemsOf(method, found);
+            }
+            if (type.setUp() != null) {
+                this.problemsOf(type.setUp(), found);
+            }
+        }
+        found.sort(Comparator.comparingInt(ListingProblem::line));
+        return List.copyOf(found);
+    }
+
+    private void problemsOf(final MethodImage method, final List<ListingProblem> found) {
+        for (int i = 0; i < method.length(); i++) {
+            final Instruction instruction = method.instruction(i);
+            final ListingError error = switch (instruction.opcode()) {
+                case CALL -> answered(method.call(i)) ? null : ListingError.UNKNOWN_MEMBER;
+                case NEWOBJ -> made(method.creation(i)) ? null : ListingError.UNKNOWN_MEMBER;
+                case LDFLD, STFLD, LDSFLD, STSFLD -> this.valueProblem(instruction.opcode(),
+                        (IOperand.Field) instruction.operand());
+                default -> null;
+            };
+            if (error != null) {
+                found.add(new ListingProblem(Math.max(1, method.lineOf(i)), 1, error.code(),
+                        error.message(instruction.operand().write())));
+            }
+        }
+    }
+
+    /** Whether something answers a call: the program, a function of the language or a declaration of the system. */
+    private static boolean answered(final CallSite site) {
+        return site.direct() != null || site.intrinsic() != null || site.declared() != null;
+    }
+
+    /** Whether something makes what a new names: the program, the system, or one of the language's collections. */
+    private static boolean made(final Creation creation) {
+        return creation.type() != null || creation.declared() != null
+                || CORE_MADE.contains(bare(creation.made().owner()));
+    }
+
+    /**
+     * What is wrong with reading or writing a value of a type the program does not declare, or null when nothing is:
+     * the value has to be one the system declares on that side of the type, or one of the core's, and a write needs a
+     * value that can be written or an event to join.
+     */
+    private ListingError valueProblem(final Opcode opcode, final IOperand.Field field) {
+        if (field.owner() == null || this.types.containsKey(field.owner())) {
+            return null;
+        }
+        final boolean onType = opcode == Opcode.LDSFLD || opcode == Opcode.STSFLD;
+        final boolean writes = opcode == Opcode.STFLD || opcode == Opcode.STSFLD;
+        if (!onType && !writes && CORE_VALUES.contains(bare(field.owner()) + "." + field.name())) {
+            return null;
+        }
+        for (final IMemberSpec member : SystemApi.members(field.owner(), field.name())) {
+            if (member.isStatic() != onType) {
+                continue;
+            }
+            if (member instanceof PropertySpec value) {
+                return !writes || value.writable() ? null : ListingError.READ_ONLY_VALUE;
+            }
+            if (member instanceof EventSpec) {
+                return null;
+            }
+        }
+        return ListingError.UNKNOWN_MEMBER;
+    }
+
+    /** A type's name without the types it is given: {@code List} for {@code List<string>}. */
+    private static String bare(final String type) {
+        final int open = type.indexOf('<');
+        return open < 0 ? type : type.substring(0, open);
     }
 
     /** How a method shape is written, which is what tells two overloads apart. */

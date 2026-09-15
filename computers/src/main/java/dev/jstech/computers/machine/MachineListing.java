@@ -10,6 +10,7 @@ package dev.jstech.computers.machine;
 import com.mojang.logging.LogUtils;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
+import dev.jstech.computers.vm.listing.ListingProblem;
 import dev.jstech.computers.vm.listing.Shape;
 import dev.jstech.computers.vm.program.Process;
 import dev.jstech.computers.vm.program.ProgramImage;
@@ -102,11 +103,34 @@ public final class MachineListing {
         }
     }
 
-    /** Reads a listing, or null when it is not one. */
+    /**
+     * The first thing wrong with a listing, or null when nothing is: what a person is told when the listing does not
+     * start. Only asked once a listing has been refused, so reading it again costs a start that failed anyway.
+     */
+    @Nullable
+    public static ListingProblem firstProblem(final String listing) {
+        final List<ListingProblem> problems = load(listing).problems();
+        return problems.isEmpty() ? null : problems.getFirst();
+    }
+
+    /** Reads a listing, or null when it is not one or something in it has nothing to answer it. */
     @Nullable
     private static ProgramImage read(final String listing) {
+        final Loaded loaded = load(listing);
+        return loaded.problems().isEmpty() ? loaded.image() : null;
+    }
+
+    private static Loaded load(final String listing) {
         final AsmReader reader = new AsmReader(listing);
         final AsmProgram program = reader.read();
-        return reader.hasProblems() ? null : ProgramImage.of(program);
+        if (reader.hasProblems()) {
+            return new Loaded(null, reader.problems());
+        }
+        final ProgramImage image = ProgramImage.of(program);
+        return new Loaded(image, image.problems());
+    }
+
+    /** A listing made ready, with everything wrong with it; there is no image when the text could not be read. */
+    private record Loaded(@Nullable ProgramImage image, List<ListingProblem> problems) {
     }
 }

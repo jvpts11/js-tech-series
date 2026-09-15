@@ -15,15 +15,21 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.computers.sigma.sem.BuiltIns;
+import dev.jstech.computers.sigma.sem.IMemberSymbol;
 import dev.jstech.computers.vm.listing.AsmMethod;
 import dev.jstech.computers.vm.listing.AsmProgram;
+import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.AsmType;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Instruction;
+import dev.jstech.computers.vm.listing.ListingProblem;
 import dev.jstech.computers.vm.listing.Opcode;
 import dev.jstech.computers.vm.system.MemberKind;
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class ProgramImageTest {
@@ -120,6 +126,57 @@ class ProgramImageTest {
         assertNull(area.call(2).declared(), "the program's own method is not the system's");
         assertNull(area.call(3).declared(), "nor is a call a pure function answers");
         assertNull(area.creation(1).declared(), "nor is a new of the program's own type");
+    }
+
+    @Test
+    void problems_nameWhatNothingAnswersOnTheLineItIsWrittenOn() {
+        final String listing = """
+                .asm 2
+                .start Tests.Main console
+
+                .class Tests.Main
+
+                .method static void Main() slots 1
+                    call    Computer.Disks() -> List<DiskInfo>
+                    stloc   0
+                    ldloc   0
+                    ldfld   List.Count
+                    pop
+                    call    Computer.Nowhere() -> void
+                    newobj  Nowhere()
+                    pop
+                    ldsfld  Time.Tick
+                    pop
+                    ldc.i4  1
+                    stsfld  Time.Tick
+                    ret
+                """;
+        final AsmReader reader = new AsmReader(listing);
+        final AsmProgram program = reader.read();
+        assertTrue(reader.problems().isEmpty(), () -> "the listing reads: " + reader.problems());
+        assertEquals(List.of("(12,1): error A4013: nothing answers 'Computer.Nowhere() -> void'",
+                        "(13,1): error A4013: nothing answers 'Nowhere()'",
+                        "(18,1): error A4014: 'Time.Tick' can be read but not written"),
+                ProgramImage.of(program).problems().stream().map(ListingProblem::format).toList());
+    }
+
+    @Test
+    void problems_findNothingInAProgramThatOnlyReachesWhatItDeclares() {
+        assertTrue(shapes().problems().isEmpty(), () -> "found " + shapes().problems());
+    }
+
+    @Test
+    void coreValues_areTheValuesTheLanguagesOwnCoreDeclares() {
+        final BuiltIns builtIns = new BuiltIns();
+        final Set<String> declared = new HashSet<>();
+        for (final String core : List.of("object", "string", "List", "Map", "Action", "Func", "IScript")) {
+            for (final IMemberSymbol member : builtIns.type(core, 0).members()) {
+                if (member instanceof IMemberSymbol.PropertySymbol property) {
+                    declared.add(core + "." + property.name());
+                }
+            }
+        }
+        assertEquals(declared, ProgramImage.CORE_VALUES);
     }
 
     @Test

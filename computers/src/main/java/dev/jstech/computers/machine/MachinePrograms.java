@@ -274,7 +274,10 @@ public final class MachinePrograms {
         if (runner == null) {
             process = MachineListing.start(runnable, heapBytes, machine, given);
             if (process == null) {
-                return Started.failed(name + ": this is not a " + MachineListing.LABEL);
+                // A listing that says what is wrong with it is worth more than being told it is not one.
+                final var problem = MachineListing.firstProblem(runnable);
+                return Started.failed(name + ": "
+                        + (problem == null ? "this is not a " + MachineListing.LABEL : problem.format()));
             }
         } else {
             final HostedView view = new HostedView(machine, heapBytes);

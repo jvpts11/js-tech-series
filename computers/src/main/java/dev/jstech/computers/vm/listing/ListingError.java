@@ -8,10 +8,12 @@
 package dev.jstech.computers.vm.listing;
 
 /**
- * Every problem a listing can have when it is read back, with the code a player quotes when asking for help.
+ * Every problem a listing can have when it is read back or made ready to run, with the code a player quotes when asking
+ * for help.
  *
  * <p>These belong to the listing format, not to a language: a listing is what the machine runs, whichever compiler
- * wrote it, so reading one reports its own problems.
+ * wrote it, so reading one reports its own problems, and so does finding that something it names has nothing to
+ * answer it.
  */
 public enum ListingError {
 
@@ -26,7 +28,9 @@ public enum ListingError {
     DIRECTIVE_OUTSIDE_TYPE("A4009", "'%s' has to be inside a type"),
     UNKNOWN_LABEL("A4010", "nothing in this method is labelled '%s'"),
     VERSION_TOO_OLD("A4012", "this listing is assembly version %s and this runtime reads version %s: compile its "
-            + "source again");
+            + "source again"),
+    UNKNOWN_MEMBER("A4013", "nothing answers '%s'"),
+    READ_ONLY_VALUE("A4014", "'%s' can be read but not written");
 
     private final String code;
     private final String template;

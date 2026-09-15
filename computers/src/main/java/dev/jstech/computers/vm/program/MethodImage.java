@@ -39,6 +39,8 @@ public final class MethodImage {
     private final int[] jumps;
     /** For each line, the call or the creation it makes, as the program loaded it. */
     private final Object[] sites;
+    /** For each line, the line of the listing it was read from, when the method was read from one. */
+    private final AsmMethod written;
 
     MethodImage(final String owner, final AsmMethod method) {
         this.owner = owner;
@@ -52,6 +54,7 @@ public final class MethodImage {
         this.gives = !"void".equals(this.returns);
         this.jumps = new int[this.code.length];
         this.sites = new Object[this.code.length];
+        this.written = method;
     }
 
     /** Works out what every line reaches, once every type of the program knows its methods. */
@@ -132,6 +135,11 @@ public final class MethodImage {
     /** How the method is written where it is called. */
     public String describe() {
         return this.owner + "." + this.name + "(" + String.join(", ", this.parameters) + ")";
+    }
+
+    /** The line of the listing the line at {@code index} was read from, or 0 when the method was not read from one. */
+    int lineOf(final int index) {
+        return this.written.lineOf(index);
     }
 
     /** Where a branch on the line at {@code index} lands. */

@@ -13,6 +13,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import dev.jstech.computers.sigma.sem.BuiltIns;
 import dev.jstech.computers.sigma.sem.IMemberSymbol;
 import dev.jstech.computers.sigma.sem.NamedType;
+import dev.jstech.computers.vm.listing.AsmProgram;
+import dev.jstech.computers.vm.listing.AsmReader;
+import dev.jstech.computers.vm.listing.ListingProblem;
+import dev.jstech.computers.vm.program.ProgramImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -79,6 +83,27 @@ class SigmaCorpusTest {
             }
         }
         assertTrue(missing.isEmpty(), () -> "the corpus never uses " + missing);
+    }
+
+    /*
+     * A machine refuses a listing that reaches for something nothing answers, so everything the compiler writes has
+     * to be answered: every call, new and value of the corpus loads with no problem at all.
+     */
+    @Test
+    void corpus_loadsWithNothingAMachineWouldRefuse() {
+        final List<String> refused = new ArrayList<>();
+        for (final String name : PROGRAMS) {
+            final AsmReader reader = new AsmReader(source(name + ".asm"));
+            final AsmProgram program = reader.read();
+            final List<ListingProblem> problems = new ArrayList<>(reader.problems());
+            if (!reader.hasProblems()) {
+                problems.addAll(ProgramImage.of(program).problems());
+            }
+            for (final ListingProblem problem : problems) {
+                refused.add(name + ".asm " + problem.format());
+            }
+        }
+        assertTrue(refused.isEmpty(), () -> String.join("\n", refused));
     }
 
     private static String source(final String file) {

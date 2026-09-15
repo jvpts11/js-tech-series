@@ -77,6 +77,18 @@ public final class SigmaProcessGameTests {
             }
             """;
 
+    /** A listing that reads well but calls something no computer has, on its seventh line. */
+    private static final String GHOST = """
+            .asm 2
+            .start Programs.Ghost console
+
+            .class Programs.Ghost
+
+            .method static void Main() slots 0
+                call    Computer.Nowhere() -> void
+                ret
+            """;
+
     /**
      * What a script starts with when it does not say so itself: the whole library brought in and a
      * namespace, on one line so the source keeps its line numbers.
@@ -411,6 +423,25 @@ public final class SigmaProcessGameTests {
                     // And a file no registered language claims is refused by name, not by guessing.
                     helper.assertFalse(programs.start("thing.zz", "whatever", 1, computer).ok(),
                             "nothing runs a .zz");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void programs_refuseAListingThatCallsWhatNothingAnswers(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2));
+        if (computer == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final MachinePrograms.Started started =
+                            computer.programs().start("ghost.asm", GHOST, 1, computer);
+                    helper.assertFalse(started.ok(), "it does not start, rather than stopping at the call");
+                    helper.assertTrue(started.message().contains("(7,1): error A4013")
+                                    && started.message().contains("Computer.Nowhere()"),
+                            "and says what nothing answers, and where; got " + started.message());
+                    helper.assertTrue(computer.programs().isEmpty(), "and nothing is left running");
                 })
                 .thenSucceed();
     }

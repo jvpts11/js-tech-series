@@ -20,9 +20,13 @@ import java.util.Objects;
  * once, which is what the runtime allocates when the method is entered.
  *
  * <p>A method with no body is a signature an interface asks for, or the shape a delegate stands for.
+ *
+ * <p>A method read from a listing remembers the line each instruction was written on, so a problem found once the
+ * program is made ready to run can still say where it was written. Where the lines were written says nothing about
+ * what the method is, so two methods with the same lines are equal wherever they came from.
  */
 public record AsmMethod(String name, String returns, List<String> parameters, boolean isStatic,
-                        int slots, List<Instruction> body) {
+                        int slots, List<Instruction> body, List<Integer> lines) {
 
     /**
      * The name every constructor is written under. It starts with a dot, which no name in a source can, so it is never
@@ -39,9 +43,16 @@ public record AsmMethod(String name, String returns, List<String> parameters, bo
         Objects.requireNonNull(returns, "returns");
         parameters = List.copyOf(parameters);
         body = body == null ? null : List.copyOf(body);
+        lines = lines == null ? List.of() : List.copyOf(lines);
         if (slots < 0) {
             throw new IllegalArgumentException("a method cannot need a negative number of places");
         }
+    }
+
+    /** A method that was not read from a listing, as a compiler makes one, with no lines to remember. */
+    public AsmMethod(final String name, final String returns, final List<String> parameters, final boolean isStatic,
+                     final int slots, final List<Instruction> body) {
+        this(name, returns, parameters, isStatic, slots, body, List.of());
     }
 
     /** Whether the method has lines of its own. */
@@ -52,6 +63,23 @@ public record AsmMethod(String name, String returns, List<String> parameters, bo
     /** How the method is written on its own line, without the places or the body. */
     public String signature() {
         return this.returns + " " + this.name + "(" + String.join(", ", this.parameters) + ")";
+    }
+
+    /** The line of the listing instruction {@code index} was read from, or 0 when the method was not read from one. */
+    public int lineOf(final int index) {
+        return index >= 0 && index < this.lines.size() ? this.lines.get(index) : 0;
+    }
+
+    @Override
+    public boolean equals(final Object other) {
+        return other instanceof AsmMethod method && this.isStatic == method.isStatic && this.slots == method.slots
+                && this.name.equals(method.name) && this.returns.equals(method.returns)
+                && this.parameters.equals(method.parameters) && Objects.equals(this.body, method.body);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.name, this.returns, this.parameters, this.isStatic, this.slots, this.body);
     }
 
     /**
@@ -98,7 +126,7 @@ public record AsmMethod(String name, String returns, List<String> parameters, bo
         /** The finished method. */
         public AsmMethod build() {
             return new AsmMethod(this.name, this.returns, this.parameters, this.isStatic,
-                    this.slots, this.hasBody ? this.body : null);
+                    this.slots, this.hasBody ? this.body : null, this.hasBody ? this.lines : List.of());
         }
     }
 }
