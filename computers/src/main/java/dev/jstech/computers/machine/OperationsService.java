@@ -160,6 +160,60 @@ public final class OperationsService {
     }
 
     /**
+     * Holds an item where it is, so that whatever else asks for it waits instead of taking it.
+     *
+     * @param quantity how much to hold; none given holds everything the network has free of it
+     */
+    public ICliComputer.OpResult lock(final String item, final long quantity) {
+        final StorageKey key = ServerCliComputer.itemKey(item);
+        if (key == null) {
+            return ICliComputer.OpResult.fail("unknown item: " + item);
+        }
+        final MainframeBlockEntity mainframe = this.mainframe();
+        if (mainframe == null) {
+            return ICliComputer.OpResult.fail("the network has no running Mainframe");
+        }
+        final long demand = quantity > 0L ? quantity : Long.MAX_VALUE; // 0 locks everything available
+        final long held = mainframe.lockType(key, demand, null);
+        if (held <= 0L) {
+            return ICliComputer.OpResult.fail(mainframe.networkIndex().isManuallyLocked(key)
+                    ? key.displayName().getString() + " is already locked"
+                    : "nothing to lock: the network holds no free " + key.displayName().getString());
+        }
+        return ICliComputer.OpResult.ok("LOCK held " + held + " " + key.displayName().getString()
+                + " (concurrent operations will wait)");
+    }
+
+    /** Lets an item go again, so that what was waiting on it can have it. */
+    public ICliComputer.OpResult unlock(final String item) {
+        final StorageKey key = ServerCliComputer.itemKey(item);
+        if (key == null) {
+            return ICliComputer.OpResult.fail("unknown item: " + item);
+        }
+        final MainframeBlockEntity mainframe = this.mainframe();
+        if (mainframe == null) {
+            return ICliComputer.OpResult.fail("the network has no running Mainframe");
+        }
+        final long released = mainframe.unlockType(key);
+        if (released <= 0L) {
+            return ICliComputer.OpResult.fail(key.displayName().getString() + " is not locked");
+        }
+        return ICliComputer.OpResult.ok("UNLOCK released " + released + " " + key.displayName().getString());
+    }
+
+    /** What is being held by hand, and how much of each. */
+    public List<ICliComputer.StoredItem> locks() {
+        final MainframeBlockEntity mainframe = this.mainframe();
+        if (mainframe == null) {
+            return List.of();
+        }
+        final List<ICliComputer.StoredItem> rows = new ArrayList<>();
+        mainframe.lockedTypes().forEach((key, amount) ->
+                rows.add(new ICliComputer.StoredItem(key.displayName().getString(), amount)));
+        return rows;
+    }
+
+    /**
      * Asks the network to stop an Operation in flight, named by its id.
      *
      * <p>The id is the short one everything shows, or any longer prefix of the full one, so whoever reads a list can
