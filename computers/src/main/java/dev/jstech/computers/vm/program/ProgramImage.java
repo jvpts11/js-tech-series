@@ -100,8 +100,8 @@ public final class ProgramImage {
      * @param own     whether it is a field of the program's own, read and written on its object with nothing to look up
      * @param handled what reads the value when the program's own process or the language's core answers it, or null
      *                when something else does
-     * @param world   the place the process keeps what the machine answers the value with, when it is read from its
-     *                type and the system declares it as the world's, or -1 when it is not
+     * @param world   the place the process keeps what the machine answers the value with, when the system declares it
+     *                as the world's on the side of its type it is read from, or -1 when it does not
      */
     record ValueSite(IOperand.Field field, boolean own, ProcessValues.Binding handled, int world) {
     }
@@ -293,14 +293,18 @@ public final class ProgramImage {
         final boolean onType = opcode == Opcode.LDSFLD || opcode == Opcode.STSFLD;
         final ProcessValues.Binding handled =
                 own ? null : ProcessValues.find(bare(field.owner()), field.name(), onType);
-        final int world = own || handled != null || opcode != Opcode.LDSFLD ? -1 : this.worldValuePlace(field);
+        final boolean reads = opcode == Opcode.LDSFLD || opcode == Opcode.LDFLD;
+        final int world = own || handled != null || !reads ? -1 : this.worldValuePlace(field, onType);
         return new ValueSite(field, own, handled, world);
     }
 
-    /** The place a value of the world read from its type is kept in, or -1 when the system declares no such value. */
-    private int worldValuePlace(final IOperand.Field field) {
-        final IMemberSpec declared = SystemApi.member(field.owner(), field.name(), List.of());
-        return declared instanceof PropertySpec value && value.isStatic() && value.kind() == MemberKind.WORLD
+    /**
+     * The place a value of the world is kept in, when the system declares it on the side of its type it is read from,
+     * or -1 when it declares no such value there.
+     */
+    private int worldValuePlace(final IOperand.Field field, final boolean onType) {
+        final IMemberSpec declared = SystemApi.member(bare(field.owner()), field.name(), List.of());
+        return declared instanceof PropertySpec value && value.isStatic() == onType && value.kind() == MemberKind.WORLD
                 ? this.worldPlace(value) : -1;
     }
 

@@ -62,13 +62,7 @@ public record MachineHost(BlockEntity machine) implements IHost {
 
     @Override
     public boolean provides(final String owner) {
-        return HostProgram.handles(owner) || HostRemote.handles(owner) || HostGateway.handles(owner);
-    }
-
-    @Override
-    public boolean takesTarget(final String owner, final String member) {
-        // Another computer is a thing the program holds; every call on it names which one.
-        return HostRemote.handles(owner);
+        return HostGateway.handles(owner);
     }
 
     /**
@@ -92,6 +86,16 @@ public record MachineHost(BlockEntity machine) implements IHost {
         return computer != null && computer.hasDesktop();
     }
 
+    /** Whether a program this machine, or a computer of its network, lists under that number is still going. */
+    @Override
+    public boolean programRunning(final int program, final String host) {
+        if (!(this.machine instanceof AbstractComputerBlockEntity self)) {
+            return false;
+        }
+        final ProgramService programs = self.services().programs();
+        return programs != null && programs.running(program, host);
+    }
+
     @Override
     public Reply call(final String owner, final String member, final java.util.List<Object> arguments,
                       final String caller, final int line) {
@@ -106,15 +110,6 @@ public record MachineHost(BlockEntity machine) implements IHost {
             throw new dev.jstech.computers.vm.program.Halt(
                     dev.jstech.computers.vm.program.Halt.Reason.NO_SUCH_MEMBER, line,
                     "this machine cannot reach " + owner);
-        }
-        if (HostProgram.handles(owner)
-                && this.machine instanceof dev.jstech.computers.blockentity
-                        .AbstractComputerBlockEntity self) {
-            return HostProgram.call(self, computer, callerId, member, arguments, line);
-        }
-        if (HostRemote.handles(owner)
-                && computer instanceof dev.jstech.computers.program.ServerCliComputer shell) {
-            return HostRemote.call(shell, callerId, member, arguments, line);
         }
         if (HostGateway.handles(owner)) {
             // The asking program is named because a question put across waits for an answer addressed to it.

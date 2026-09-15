@@ -167,7 +167,6 @@ public final class Library {
     public Answer call(final IOperand.Method named, final Object self, final List<Object> arguments,
                        final int line) {
         return switch (named.owner()) {
-            case "Program" -> this.program(named, arguments, line);
             case "Gateway" -> this.gateway(named, arguments, line);
             default -> this.outwardOn(named, self, arguments, line);
         };
@@ -254,68 +253,8 @@ public final class Library {
         this.host.fault(process, line, cause);
     }
 
-    /**
-     * What a program asks of the machine about the other programs on it: starting one, or running a line at the
-     * machine's own prompt.
-     *
-     * <p>That is the machine's business, and a machine that has no other programs to speak of (there is none around the
-     * tests) says so. What a program says about itself is the process's, and is bound with its other calls.
-     */
-    private Answer program(final IOperand.Method named, final List<Object> arguments, final int line) {
-        if (this.host.provides(named.owner())) {
-            return this.outward(named, arguments, line);
-        }
-        throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "this computer cannot reach other programs");
-    }
-
     /** The number the machine lists the served process under, or 0 off any machine. */
     private int callerId() {
         return this.owner == null ? 0 : this.owner.machineId();
-    }
-
-    /**
-     * Asks the machine something without charging for it, for what the process checks on its own
-     * account between slices; nothing when the machine does not answer for it.
-     */
-    Object peek(final String owner, final String member, final List<Object> arguments) {
-        if (!this.host.provides(owner)) {
-            return null;
-        }
-        try {
-            return this.host.call(owner, member, arguments, this.caller, this.callerId(), 0).value();
-        } catch (final Halt refused) {
-            return null;
-        }
-    }
-
-    /**
-     * Whether the program listed under that number, on this machine or on the named one, is still
-     * going.
-     */
-    boolean programRunning(final Object id, final Object host) {
-        return Boolean.TRUE.equals(this.peek("Program", "Running", whereabouts(id, host)));
-    }
-
-    /**
-     * Reads one of the things only the machine knows about another program: whether it still runs
-     * and how it ended. Off any machine the only program there is is this one.
-     */
-    Object programField(final Object id, final Object host, final String name, final int line) {
-        if (this.host.provides("Program")) {
-            return this.outward(new IOperand.Method("Program", name, List.of("int", "string"),
-                    "Running".equals(name) ? "bool" : "int"), whereabouts(id, host), line).value();
-        }
-        if ("Running".equals(name)) {
-            return this.owner != null && Integer.valueOf(this.owner.machineId()).equals(id);
-        }
-        return 0;
-    }
-
-    /** A program's number and the machine it is on ({@code ""} for this one), as the machine is asked. */
-    static List<Object> whereabouts(final Object id, final Object host) {
-        final List<Object> where = new ArrayList<>();
-        where.add(id);
-        where.add(host == null ? "" : String.valueOf(host));
-        return where;
     }
 }

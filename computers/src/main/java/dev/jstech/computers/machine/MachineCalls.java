@@ -75,6 +75,8 @@ final class MachineCalls {
         MainframeCalls.bind(bindings);
         OperationsCalls.bind(bindings);
         IqlCalls.bind(bindings);
+        ProgramCalls.bind(bindings);
+        RemoteComputerCalls.bind(bindings);
         return Map.copyOf(bindings);
     }
 

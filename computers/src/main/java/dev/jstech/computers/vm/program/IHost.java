@@ -81,6 +81,15 @@ public interface IHost {
     }
 
     /**
+     * Whether the program the machine lists under that number is still going: on this machine when {@code host} is
+     * empty, or on the computer of the network it names. Asked for nothing, between slices, by a program waiting on
+     * it; a host with no programs to speak of knows of none.
+     */
+    default boolean programRunning(final int program, final String host) {
+        return false;
+    }
+
+    /**
      * Answers a call on one of the host's objects.
      *
      * <p>Only ever asked for an owner {@link #provides} said yes to. Throw {@link Halt} for anything the

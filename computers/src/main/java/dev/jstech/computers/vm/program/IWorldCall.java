@@ -31,4 +31,12 @@ public interface IWorldCall {
     default String caller() {
         return "";
     }
+
+    /**
+     * The number the machine lists the asking program under, or 0 for a program it never numbered: the parent of what
+     * the program starts, and the sender of what it sends.
+     */
+    default int callerId() {
+        return 0;
+    }
 }

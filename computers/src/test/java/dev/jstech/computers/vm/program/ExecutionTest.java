@@ -17,6 +17,7 @@ import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
+import dev.jstech.computers.vm.system.MemberId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -63,43 +64,46 @@ class ExecutionTest {
         }
 
         @Override
-        public boolean provides(final String owner) {
-            return "Program".equals(owner);
+        public boolean programRunning(final int program, final String host) {
+            return this.running.getOrDefault(program, false);
         }
 
         @Override
-        public Reply call(final String owner, final String member, final List<Object> arguments,
-                          final String caller, final int callerId, final int line) {
-            final int id = arguments.isEmpty() || !(arguments.getFirst() instanceof Integer number) ? 0 : number;
-            return switch (member) {
-                case "Start" -> {
+        public IWorldFunction bind(final MemberId id) {
+            return switch (id.owner() + "." + id.name()) {
+                case "Program.Start" -> (call, target, arguments, line) -> {
                     final int made = this.next++;
                     this.running.put(made, true);
-                    this.started.add(callerId + ">" + arguments.getFirst()
-                            + (arguments.size() > 1 && arguments.get(1) instanceof Values.ListValue list
+                    this.started.add(call.callerId() + ">" + arguments[0]
+                            + (arguments.length > 1 && arguments[1] instanceof Values.ListValue list
                                     ? list.items().toString() : ""));
                     final Values.Obj token = new Values.Obj("Process");
                     token.set("Id", made);
-                    token.set("Name", String.valueOf(arguments.getFirst()));
-                    yield Reply.of(token, 200);
-                }
-                case "Running" -> Reply.of(this.running.getOrDefault(id, false), 5);
-                case "ExitCode" -> Reply.of(this.codes.getOrDefault(id, 0), 5);
-                case "Output" -> {
+                    token.set("Name", String.valueOf(arguments[0]));
+                    return token;
+                };
+                case "Process.Running" ->
+                        (call, target, arguments, line) -> this.running.getOrDefault(idOf(target), false);
+                case "Process.ExitCode" -> (call, target, arguments, line) -> this.codes.getOrDefault(idOf(target), 0);
+                case "Process.Output" -> (call, target, arguments, line) -> {
                     final Values.ListValue lines = new Values.ListValue();
-                    lines.items().add("out " + id);
-                    yield Reply.of(lines, 51);
-                }
-                case "Kill" -> {
-                    this.running.put(id, false);
-                    yield Reply.of(true, 10);
-                }
-                case "Send" -> {
-                    this.sent.add(callerId + ">" + id + ":" + arguments.get(1));
-                    yield Reply.of(true, 10);
-                }
-                default -> throw new IllegalArgumentException(member);
+                    lines.items().add("out " + idOf(target));
+                    return lines;
+                };
+                case "Process.Kill" -> (call, target, arguments, line) -> {
+                    this.running.put(idOf(target), false);
+                    return true;
+                };
+                case "Process.Send" -> (call, target, arguments, line) -> {
+                    this.sent.add(call.callerId() + ">" + arguments[0] + ":" + arguments[1]);
+                    return true;
+                };
+                default -> null;
             };
+        }
+
+        private static int idOf(final Object target) {
+            return target instanceof Values.Obj handle && handle.get("Id") instanceof Integer id ? id : 0;
         }
     }
 

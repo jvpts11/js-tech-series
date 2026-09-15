@@ -53,6 +53,12 @@ public final class MachineServices {
     @Nullable
     private IqlService iql;
 
+    @Nullable
+    private ProgramService programs;
+
+    @Nullable
+    private RemoteComputerService remotes;
+
     public MachineServices(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
     }
@@ -138,6 +144,28 @@ public final class MachineServices {
         return this.iql;
     }
 
+    /**
+     * The programs on the machine, and what another program started on a computer of its network.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public ProgramService programs() {
+        this.follow();
+        return this.programs;
+    }
+
+    /**
+     * The other computers of the machine's network.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public RemoteComputerService remotes() {
+        this.follow();
+        return this.remotes;
+    }
+
     /** Makes the shell and what goes through it again when the machine is in another world than before. */
     private void follow() {
         final Level level = this.machine.getLevel();
@@ -153,6 +181,8 @@ public final class MachineServices {
             this.mainframe = new MainframeStatsService(this.shell);
             this.operations = new OperationsService(this.shell);
             this.iql = new IqlService(this.shell);
+            this.programs = new ProgramService(this.machine, this.shell);
+            this.remotes = new RemoteComputerService(this.shell);
         } else {
             this.shell = null;
             this.files = null;
@@ -161,6 +191,8 @@ public final class MachineServices {
             this.mainframe = null;
             this.operations = null;
             this.iql = null;
+            this.programs = null;
+            this.remotes = null;
         }
     }
 }

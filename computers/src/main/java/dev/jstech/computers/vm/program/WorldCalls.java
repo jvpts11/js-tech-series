@@ -79,4 +79,9 @@ final class WorldCalls implements IWorldCall {
     public String caller() {
         return this.caller;
     }
+
+    @Override
+    public int callerId() {
+        return this.process.machineId();
+    }
 }

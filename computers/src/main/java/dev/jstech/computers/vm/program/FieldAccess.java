@@ -46,6 +46,12 @@ final class FieldAccess {
             frame.push(site.handled().read().read(this.process, target, line));
             return;
         }
+        if (site.world() >= 0 && this.process.worldCalls().binds(site.world())) {
+            // Whether another program still runs is the machine's to say, not a field to go stale.
+            final Object answer = this.process.worldCalls().answer(site.world(), target, WorldCalls.NOTHING, line);
+            frame.push(this.heap.adopt(answer, line));
+            return;
+        }
         if (!(target instanceof Values.Obj object)) {
             throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "there is no " + name + " to read here");
         }
@@ -53,9 +59,10 @@ final class FieldAccess {
             frame.push(object.get(name));
             return;
         }
-        if ("Process".equals(object.type()) && ("Running".equals(name) || "ExitCode".equals(name))) {
-            // Whether another program still runs is the machine's to say, not a field to go stale.
-            frame.push(this.library.programField(object.get("Id"), Process.processHost(object), name, line));
+        if (site.world() >= 0 && "Process".equals(object.type())) {
+            // Off any machine, the one program a program knows is going is itself, and none has ended with a code.
+            final boolean itself = Integer.valueOf(this.process.machineId()).equals(object.get("Id"));
+            frame.push("Running".equals(name) ? itself : 0);
             return;
         }
         frame.push(object.get(name));

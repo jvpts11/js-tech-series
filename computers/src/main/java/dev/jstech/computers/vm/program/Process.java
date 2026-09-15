@@ -86,7 +86,7 @@ public final class Process {
 
         @Override
         public boolean running(final int program, final String host) {
-            return Process.this.library.programRunning(program, host);
+            return Process.this.host.programRunning(program, host);
         }
 
         @Override
@@ -398,29 +398,6 @@ public final class Process {
         return made;
     }
 
-    /**
-     * The calls on a {@code Process} the machine answers, asked under {@code Program} with the other program's number.
-     * Waiting for one is the process's own business, and is bound with its other calls.
-     */
-    void processCall(final Frame frame, final IOperand.Method named, final int line) {
-        switch (named.name()) {
-            case "Send" -> {
-                final List<Object> arguments = CallDispatch.take(frame, named.parameters());
-                CallDispatch.push(frame, named, this.library.call(new IOperand.Method("Program", "Send",
-                        named.parameters(), named.returns()), null, arguments, line));
-            }
-            case "Kill", "Output" -> {
-                CallDispatch.take(frame, named.parameters());
-                final Object token = frame.pop();
-                final Integer id = this.processId(token, line);
-                CallDispatch.push(frame, named, this.library.call(new IOperand.Method("Program", named.name(),
-                        List.of("int", "string"), named.returns()), null,
-                        Library.whereabouts(id, processHost(token)), line));
-            }
-            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "a process has no " + named.name());
-        }
-    }
-
     private Integer processId(final Object token, final int line) {
         if (this.heap.alive(token, line) instanceof Values.Obj object && object.get("Id") instanceof Integer id) {
             return id;
@@ -444,7 +421,7 @@ public final class Process {
         final Object token = frame.stack.size() > count ? frame.stack.get(frame.stack.size() - 1 - count) : null;
         final Integer id = this.processId(token, line);
         final String host = processHost(token);
-        final boolean over = !this.library.programRunning(id, host);
+        final boolean over = !this.host.programRunning(id, host);
         final long ticks = count == 1 ? Numbers.toLong(frame.peek()) : 0L;
         // Read before the test, so it is forgotten whenever the call answers, as it always was.
         final boolean gaveUp = this.current.takeGaveUp();
@@ -457,7 +434,7 @@ public final class Process {
 
     /** Whether the program a wait asked about has ended, which is what a wait given time answers. */
     boolean waitForOver(final Object token, final int line) {
-        return !this.library.programRunning(this.processId(token, line), processHost(token));
+        return !this.host.programRunning(this.processId(token, line), processHost(token));
     }
 
     /**

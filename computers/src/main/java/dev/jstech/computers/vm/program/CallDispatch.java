@@ -77,10 +77,6 @@ final class CallDispatch {
                 this.reach(frame, site, line);
                 return;
             }
-            if ("Process".equals(named.owner())) {
-                this.process.processCall(frame, named, line);
-                return;
-            }
             final List<Object> arguments = take(frame, site.outs());
             final Object self = this.library.takesTarget(named.owner(), named.name())
                     ? this.heap.alive(frame.pop(), line) : null;
