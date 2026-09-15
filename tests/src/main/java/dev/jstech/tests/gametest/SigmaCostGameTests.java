@@ -100,8 +100,8 @@ public final class SigmaCostGameTests {
      *
      * <p>The ones left out are the ones that would change the world to ask them, such as asking the
      * network for work, whose prices are fixed rather than counted and charged with the same level the
-     * declaration names, and the calls on the drives and on the computer itself, which the runtime
-     * charges straight from their declarations rather than asking the machine what they cost.
+     * declaration names, and the calls on the drives, the computer itself and its network, which the
+     * runtime charges straight from their declarations rather than asking the machine what they cost.
      */
     @GameTest(template = ARENA)
     public static void costs_areWhatTheEditorsPromise(final GameTestHelper helper) {
@@ -115,11 +115,9 @@ public final class SigmaCostGameTests {
                     final MachineHost host = new MachineHost(computer);
 
                     /*
-                     * The network, with none attached: whether there is one is still a question the
-                     * machine answers, and it charges for answering it.
+                     * The Mainframe, with no network attached: whether there is one is still a question
+                     * the machine answers, and it charges for answering it.
                      */
-                    charges(helper, host, "Network", "Online", List.of());
-                    charges(helper, host, "Network", "Current", List.of());
                     charges(helper, host, "Mainframe", "Online", List.of());
                 })
                 .thenSucceed();

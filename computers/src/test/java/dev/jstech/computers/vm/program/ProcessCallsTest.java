@@ -25,11 +25,11 @@ import org.junit.jupiter.api.Test;
 class ProcessCallsTest {
 
     /*
-     * The types whose calls the process answers through bindings so far. A network watch and a Gateway's listener are
-     * the process's too, but they are still answered on the machine's side until the machine's services take them.
+     * The types whose calls the process answers through bindings so far. A Gateway's listener is the process's too,
+     * but it is still answered on the machine's side until the Gateway's service takes it.
      */
     private static final List<String> BOUND_OWNERS = List.of("Console", "Random", "Thread", "Program", "Process",
-            "Window", "Row", "Column", "ListBox", "Canvas", "MessageBox");
+            "Network", "Window", "Row", "Column", "ListBox", "Canvas", "MessageBox");
 
     @Test
     void bindings_answerEveryCallTheSystemLeavesToTheProcess() {

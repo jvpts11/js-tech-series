@@ -38,6 +38,8 @@ final class ProcessCalls {
     }
 
     private static final String STRING = "string";
+    /** What a watch on the network calls when it goes off. */
+    private static final String STOCK_HANDLER = "Action<StockEvent>";
 
     /** A read has to wait while nothing has been typed at the terminal the program is in front of. */
     private static final IProcessWait LINE = (process, frame, count, line) -> {
@@ -69,6 +71,7 @@ final class ProcessCalls {
         random(bindings);
         thread(bindings);
         program(bindings);
+        network(bindings);
         ui(bindings);
         return Map.copyOf(bindings);
     }
@@ -163,6 +166,30 @@ final class ProcessCalls {
                 (process, target, arguments, line) -> process.waitForOver(target, line));
         bind(bindings, "Process", "Wait", Process::waitForWaits,
                 (process, target, arguments, line) -> process.waitForOver(target, line), "long");
+    }
+
+    /*
+     * Asking to be told when what the network holds of something changes, or crosses a line. The watch is the
+     * program's: it holds it, is woken by it and takes it across a reload, and the machine is only asked the totals,
+     * once a tick, for everything being watched at all. Asking to be told costs nothing, and is meant to.
+     */
+    private static void network(final Map<MemberId, Binding> bindings) {
+        bind(bindings, "Network", "Watch", null, (process, target, arguments, line) ->
+                watch(process, Process.Watching.CHANGE, arguments, line), STRING, STOCK_HANDLER);
+        bind(bindings, "Network", "WatchBelow", null, (process, target, arguments, line) ->
+                watch(process, Process.Watching.BELOW, arguments, line), STRING, "long", STOCK_HANDLER);
+        bind(bindings, "Network", "WatchAbove", null, (process, target, arguments, line) ->
+                watch(process, Process.Watching.ABOVE, arguments, line), STRING, "long", STOCK_HANDLER);
+    }
+
+    /** Sets a watch on an item, the handler being the last thing the call is handed. */
+    private static Object watch(final Process process, final Process.Watching kind, final Object[] arguments,
+                                final int line) {
+        final String item = String.valueOf(arguments[0]);
+        final long threshold = kind == Process.Watching.CHANGE ? 0L : Numbers.toLong(arguments[1]);
+        final Object last = arguments[arguments.length - 1];
+        return process.watch(item, kind, threshold, last instanceof Values.DelegateValue handler ? handler : null,
+                line);
     }
 
     /*

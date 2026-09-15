@@ -71,6 +71,7 @@ final class MachineCalls {
         final Map<MemberId, Binding<?>> bindings = new HashMap<>();
         FileCalls.bind(bindings);
         ComputerCalls.bind(bindings);
+        NetworkCalls.bind(bindings);
         return Map.copyOf(bindings);
     }
 

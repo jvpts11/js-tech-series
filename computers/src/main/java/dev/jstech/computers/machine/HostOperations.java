@@ -37,6 +37,10 @@ public final class HostOperations {
     /** Asking for work. Far dearer than reading, because it is the network's time being spent. */
     private static final int SUBMIT = dev.jstech.computers.vm.system.SigmaCosts.SUBMIT;
 
+    /** Reading a list of what is in flight, priced by how long it is. */
+    private static final dev.jstech.computers.vm.system.CallCost ROWS =
+            dev.jstech.computers.vm.system.CallCost.perRow(READ);
+
     private HostOperations() {
     }
 
@@ -68,7 +72,7 @@ public final class HostOperations {
                 for (final ICliComputer.ActiveOp op : computer.activeOps()) {
                     all.items().add(shot(op));
                 }
-                yield IHost.Reply.of(all, HostNetwork.priceOf(all.size()));
+                yield IHost.Reply.of(all, ROWS.at(all.size(), 0));
             }
             case "Get" -> {
                 final String id = item(arguments);

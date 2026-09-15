@@ -41,6 +41,9 @@ public final class MachineServices {
     @Nullable
     private ComputerInfoService computer;
 
+    @Nullable
+    private NetworkReadService network;
+
     public MachineServices(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
     }
@@ -82,15 +85,34 @@ public final class MachineServices {
         return this.computer;
     }
 
+    /**
+     * The data network the machine is on, as what runs on it reads it.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public NetworkReadService network() {
+        this.follow();
+        return this.network;
+    }
+
     /** Makes the shell and what goes through it again when the machine is in another world than before. */
     private void follow() {
         final Level level = this.machine.getLevel();
-        if (level != this.shellLevel) {
-            this.shellLevel = level;
-            this.shell = this.machine instanceof IComputerTerminalHost terminal
-                    && level instanceof ServerLevel server ? new ServerCliComputer(terminal, server) : null;
-            this.files = this.shell == null ? null : new FileService(this.shell);
-            this.computer = this.shell == null ? null : new ComputerInfoService(this.machine, this.shell);
+        if (level == this.shellLevel) {
+            return;
+        }
+        this.shellLevel = level;
+        if (this.machine instanceof IComputerTerminalHost terminal && level instanceof ServerLevel server) {
+            this.shell = new ServerCliComputer(terminal, server);
+            this.files = new FileService(this.shell);
+            this.computer = new ComputerInfoService(this.machine, this.shell);
+            this.network = new NetworkReadService(terminal, server, this.shell);
+        } else {
+            this.shell = null;
+            this.files = null;
+            this.computer = null;
+            this.network = null;
         }
     }
 }

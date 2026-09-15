@@ -1201,15 +1201,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * off, which is the truthful answer and not an error.
      */
     public long networkStock(final String item) {
-        if (this instanceof dev.jstech.computers.terminal.IComputerTerminalHost terminal
-                && level instanceof ServerLevel server) {
-            final NetworkUuid net = terminal.networkUuid();
-            final StorageKey key = dev.jstech.computers.program.ServerCliComputer.itemKey(item);
-            // One total across the network's stores: nothing is built for a number that is only added up.
-            return net == null || key == null ? 0L
-                    : dev.jstech.computers.operation.NetworkStorage.of(server, net).count(key);
-        }
-        return 0L;
+        final dev.jstech.computers.machine.NetworkReadService network = services.network();
+        return network == null ? 0L : network.stock(item);
     }
 
     /** The prompt this machine's shell would show, for giving it back when a program lets go. */

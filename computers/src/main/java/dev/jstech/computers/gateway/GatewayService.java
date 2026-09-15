@@ -10,7 +10,6 @@ package dev.jstech.computers.gateway;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
-import dev.jstech.computers.machine.HostNetwork;
 import dev.jstech.computers.machine.ProgramLauncher;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.MoveLabels;
@@ -25,6 +24,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramPriority;
+import dev.jstech.computers.vm.system.CallCost;
 import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.peripheral.IPeripheralOwner;
@@ -71,6 +71,9 @@ public final class GatewayService {
     /** The file calls that change what is on a disk rather than only reading it. */
     private static final List<String> WRITES_FILES =
             List.of("Write", "Append", "Delete", "MkDir", "Put", "MakeDir", "Remove");
+
+    /** A list the other side asks for, priced as a program's read is, by how many rows it brings back. */
+    private static final CallCost ROWS = CallCost.perRow(SigmaCosts.READ);
 
     /** Who is asking, from the other side: a ComputerCraft computer by its id. */
     public record Caller(int id) {
@@ -180,7 +183,7 @@ public final class GatewayService {
                 out.put(nameOf(entry.getKey()), entry.getValue());
             }
         }
-        charge(HostNetwork.priceOf(out.size()));
+        charge(ROWS.at(out.size(), 0));
         return out;
     }
 
@@ -200,7 +203,7 @@ public final class GatewayService {
                 rows.add(row("server", NetworkLookup.serverLabel(level, entry.getKey()), "quantity", entry.getValue()));
             }
         }
-        charge(HostNetwork.priceOf(rows.size()));
+        charge(ROWS.at(rows.size(), 0));
         return rows;
     }
 
@@ -210,7 +213,7 @@ public final class GatewayService {
         for (final ICliComputer.ServerUse server : shell.servers()) {
             rows.add(row("name", server.name(), "used", server.stored(), "capacity", server.capacity(), "online", true));
         }
-        charge(HostNetwork.priceOf(rows.size()));
+        charge(ROWS.at(rows.size(), 0));
         return rows;
     }
 
@@ -226,7 +229,7 @@ public final class GatewayService {
             rows.add(row("name", host.hostname(), "label", host.name(), "os", host.os(), "type", host.type(),
                     "online", host.running(), "shares", sharesByHost.getOrDefault(host.hostname(), List.of())));
         }
-        charge(HostNetwork.priceOf(rows.size()));
+        charge(ROWS.at(rows.size(), 0));
         return rows;
     }
 
@@ -327,7 +330,7 @@ public final class GatewayService {
         for (final OperationRecord record : mainframe().activeOperationRecords()) {
             rows.add(row(record));
         }
-        charge(HostNetwork.priceOf(rows.size()));
+        charge(ROWS.at(rows.size(), 0));
         return rows;
     }
 

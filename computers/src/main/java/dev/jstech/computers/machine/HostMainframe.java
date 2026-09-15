@@ -26,6 +26,10 @@ public final class HostMainframe {
     private static final int GLANCE = dev.jstech.computers.vm.system.SigmaCosts.GLANCE_NETWORK;
     private static final int READ = dev.jstech.computers.vm.system.SigmaCosts.READ;
 
+    /** Reading a list of the work the network has done, priced by how long it is. */
+    private static final dev.jstech.computers.vm.system.CallCost ROWS =
+            dev.jstech.computers.vm.system.CallCost.perRow(READ);
+
     private HostMainframe() {
     }
 
@@ -51,7 +55,7 @@ public final class HostMainframe {
                 for (final ICliComputer.OperationStat stat : computer.operationStats()) {
                     all.items().add(shot(stat));
                 }
-                yield IHost.Reply.of(all, HostNetwork.priceOf(all.size()));
+                yield IHost.Reply.of(all, ROWS.at(all.size(), 0));
             }
             default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "Mainframe has no " + member);
         };
