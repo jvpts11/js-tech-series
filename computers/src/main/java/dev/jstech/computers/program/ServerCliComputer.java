@@ -13,6 +13,7 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.machine.DriveTable;
 import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.machine.NetworkPathResolver;
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
@@ -2222,7 +2223,7 @@ public final class ServerCliComputer implements ICliComputer {
     public FsResult readFile(final String path) {
         final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
         if (net != null) {
-            final Reached reached = reach(net);
+            final NetworkPathResolver.Reached reached = reach(net);
             return reached.ok() ? reached.remote().readFile(reached.path()) : reached.error();
         }
         final Resolved r = resolve(path);
@@ -2266,7 +2267,7 @@ public final class ServerCliComputer implements ICliComputer {
     public FsResult deleteFile(final String path) {
         final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
         if (net != null) {
-            final Reached reached = reach(net);
+            final NetworkPathResolver.Reached reached = reach(net);
             if (!reached.ok()) {
                 return reached.error();
             }
@@ -2340,7 +2341,7 @@ public final class ServerCliComputer implements ICliComputer {
     public FsResult writeFile(final String path, final String content) {
         final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
         if (net != null) {
-            final Reached reached = reach(net);
+            final NetworkPathResolver.Reached reached = reach(net);
             if (!reached.ok()) {
                 return reached.error();
             }
@@ -2385,7 +2386,7 @@ public final class ServerCliComputer implements ICliComputer {
     public FsResult appendFile(final String path, final String content) {
         final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
         if (net != null) {
-            final Reached reached = reach(net);
+            final NetworkPathResolver.Reached reached = reach(net);
             if (!reached.ok()) {
                 return reached.error();
             }
@@ -2459,7 +2460,7 @@ public final class ServerCliComputer implements ICliComputer {
         }
         final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
         if (net != null) {
-            final Reached reached = reach(net);
+            final NetworkPathResolver.Reached reached = reach(net);
             if (!reached.ok()) {
                 return reached.error();
             }
@@ -2839,108 +2840,24 @@ public final class ServerCliComputer implements ICliComputer {
         return out;
     }
 
-    /** Where a network path leads: the other machine's shell, the share, and the path on that machine. */
-    private record Reached(ServerCliComputer remote, ShareInfo share, String path, FsResult error) {
-
-        static Reached failed(final String message) {
-            return new Reached(null, null, "", FsResult.fail(message));
-        }
-
-        boolean ok() {
-            return this.error == null;
-        }
+    /** Where a path on another machine of the network leads, followed on that machine's own shell. */
+    private NetworkPathResolver networkPaths() {
+        return new NetworkPathResolver(level, this::matchMachines, this::networkShares);
     }
 
-    /**
-     * Follows a network path to the machine and the share it names.
-     *
-     * <p>The other machine answers for its own disks: what comes back is its shell, so a path below
-     * the share resolves there exactly as it would at that machine's own prompt.
-     */
-    private Reached reach(final dev.jstech.computers.program.cli.NetPath net) {
-        if (net.isNetwork() || net.isHost()) {
-            return Reached.failed(net.display() + ": a share has to be named (\\\\host\\share)");
-        }
-        final Map<String, BlockEntity> matches = matchMachines(net.host());
-        if (matches.isEmpty()) {
-            return Reached.failed("\\\\" + net.host() + ": host not found on this network");
-        }
-        if (matches.size() > 1) {
-            return Reached.failed("\\\\" + net.host() + " matches " + matches.size() + " machines ("
-                    + String.join(", ", matches.keySet()) + ") - use the host name or node id");
-        }
-        final BlockEntity target = matches.values().iterator().next();
-        final ServerCliComputer remote = new ServerCliComputer((IComputerTerminalHost) target, level);
-        if (!remote.running()) {
-            return Reached.failed("\\\\" + net.host() + ": machine is powered off");
-        }
-        for (final ShareInfo share : remote.shares()) {
-            if (share.name().equalsIgnoreCase(net.share())) {
-                return new Reached(remote, share, net.remotePath(share.path()), null);
-            }
-        }
-        return Reached.failed("\\\\" + net.host() + "\\" + net.share() + ": no such share on " + net.host());
+    /** Follows a network path to the machine and the share it names. */
+    private NetworkPathResolver.Reached reach(final dev.jstech.computers.program.cli.NetPath net) {
+        return networkPaths().reach(net);
     }
 
     /** Lists what a network path holds: the hosts sharing something, a host's shares, or a shared folder. */
     private FsResult listNetwork(final dev.jstech.computers.program.cli.NetPath net) {
-        final List<FsEntry> entries = new ArrayList<>();
-        if (net.isNetwork()) {
-            final java.util.Set<String> hosts = new java.util.LinkedHashSet<>();
-            for (final NetworkShare share : networkShares()) {
-                hosts.add(share.hostname());
-            }
-            for (final String hostname : hosts) {
-                entries.add(new FsEntry(hostname, "", 0L, true, true, 0L));
-            }
-            return FsResult.listing(entries);
-        }
-        if (net.isHost()) {
-            boolean found = false;
-            for (final NetworkShare share : networkShares()) {
-                if (net.onHost(share.hostname())) {
-                    found = true;
-                    entries.add(new FsEntry(share.share().name(), "", 0L, !share.share().writable(), true, 0L));
-                }
-            }
-            if (!found && matchMachines(net.host()).isEmpty()) {
-                return FsResult.fail("\\\\" + net.host() + ": host not found on this network");
-            }
-            return FsResult.listing(entries);
-        }
-        final Reached reached = reach(net);
-        if (!reached.ok()) {
-            return reached.error();
-        }
-        final FsResult listing = reached.remote().listDisk(reached.path());
-        if (!listing.ok() || reached.share().writable() || listing.entries() == null) {
-            return listing;
-        }
-        // Everything under a read-only share reads as read-only, whatever the other machine says of it.
-        final List<FsEntry> kept = new ArrayList<>();
-        for (final FsEntry entry : listing.entries()) {
-            kept.add(new FsEntry(entry.name(), entry.ext(), entry.weightMbEq(), true, entry.isDir(),
-                    entry.modified()));
-        }
-        return FsResult.listing(kept);
+        return networkPaths().list(net);
     }
 
     /** Whether a network path names a folder that exists, for a copy that lands "into" it. */
     private boolean networkDirExists(final dev.jstech.computers.program.cli.NetPath net) {
-        if (net.isNetwork() || net.isHost()) {
-            return false;
-        }
-        if (net.rest().isEmpty()) {
-            return reach(net).ok();
-        }
-        // A listing of a path that is not there comes back empty rather than failed, so ask the parent.
-        final Reached above = reach(net.parent());
-        if (!above.ok()) {
-            return false;
-        }
-        final FsResult listing = above.remote().listDisk(above.path());
-        return listing.ok() && listing.entries() != null && listing.entries().stream()
-                .anyMatch(entry -> entry.isDir() && entry.name().equalsIgnoreCase(net.name()));
+        return networkPaths().dirExists(net);
     }
 
     /** The machine on this network that {@code name} picks out, as its own shell; null when none or several. */
