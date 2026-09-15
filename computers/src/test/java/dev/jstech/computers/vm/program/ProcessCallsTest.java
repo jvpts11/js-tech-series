@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.MemberId;
 import dev.jstech.computers.vm.system.MemberKind;
+import dev.jstech.computers.vm.system.PropertySpec;
 import dev.jstech.computers.vm.system.SystemApi;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -24,11 +25,13 @@ import org.junit.jupiter.api.Test;
 class ProcessCallsTest {
 
     @Test
-    void bindings_answerEveryCallTheConsoleAndChanceLeaveToTheProcess() {
+    void bindings_answerEveryCallTheConsoleChanceAndThreadsLeaveToTheProcess() {
         final List<String> unbound = new ArrayList<>();
-        for (final String owner : List.of("Console", "Random")) {
+        for (final String owner : List.of("Console", "Random", "Thread")) {
             for (final IMemberSpec member : SystemApi.type(owner).members()) {
-                if (member.kind() == MemberKind.PROCESS && ProcessCalls.find(member.id()) == null) {
+                // A value the process keeps, such as the running thread, is read rather than called.
+                final boolean called = !(member instanceof PropertySpec);
+                if (called && member.kind() == MemberKind.PROCESS && ProcessCalls.find(member.id()) == null) {
                     unbound.add(member.id().describe());
                 }
             }
@@ -37,15 +40,26 @@ class ProcessCallsTest {
     }
 
     @Test
-    void bindings_waitForALineOnlyInTheCallsThatReadOne() {
+    void bindings_waitOnlyInTheCallsThatReadALineOrJoinAThread() {
         final Set<String> waiting = new HashSet<>();
         for (final ProcessCalls.Binding binding : ProcessCalls.all()) {
-            if (binding.waitsForLine()) {
+            if (binding.waiting() != null) {
                 waiting.add(binding.id().describe());
             }
         }
         assertEquals(Set.of("Console.ReadLine()", "Console.ReadInt()", "Console.ReadLong()", "Console.ReadDouble()",
-                "Console.ReadBool()"), waiting);
+                "Console.ReadBool()", "Thread.Join()", "Thread.Join(long)"), waiting);
+    }
+
+    @Test
+    void bindings_takeTheObjectOnlyForTheCallsMadeOnOne() {
+        final Set<String> onTarget = new HashSet<>();
+        for (final ProcessCalls.Binding binding : ProcessCalls.all()) {
+            if (binding.onTarget()) {
+                onTarget.add(binding.id().describe());
+            }
+        }
+        assertEquals(Set.of("Thread.Join()", "Thread.Join(long)", "Thread.Stop()"), onTarget);
     }
 
     @Test

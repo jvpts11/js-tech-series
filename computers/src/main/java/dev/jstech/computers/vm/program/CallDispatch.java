@@ -73,10 +73,6 @@ final class CallDispatch {
                 this.handle(frame, site, line);
                 return;
             }
-            if ("Thread".equals(named.owner())) {
-                this.process.threadCall(frame, named, line);
-                return;
-            }
             if ("Program".equals(named.owner()) && this.process.programCall(frame, named, line)) {
                 return;
             }
@@ -115,20 +111,25 @@ final class CallDispatch {
         }
     }
 
-    /** Answers a call the program's own process takes, the arguments coming off the stack as a function's do. */
+    /**
+     * Answers a call the program's own process takes: the arguments come off the stack as a function's do, then the
+     * object the call is made on when it is made on one.
+     */
     private void handle(final Frame frame, final ProgramImage.CallSite site, final int line) {
         final ProcessCalls.Binding handled = site.handled();
-        if (handled.waitsForLine() && !this.process.hasInput()) {
+        final boolean[] outs = site.outs();
+        if (handled.waiting() != null && handled.waiting().waits(this.process, frame, outs.length, line)) {
             /*
-             * Nothing has been typed: the call is put back so it is asked again once a line comes, and the thread
-             * waits without spending anything. The read takes nothing off the stack, which is what makes asking it
-             * again the same as asking it once.
+             * The call cannot be answered yet (nothing has been typed, the thread it joins still runs): it is put back
+             * so it is asked again once what it waits for comes, and the thread waits without spending anything. It
+             * took nothing off the stack, which is what makes asking it again the same as asking it once.
              */
             frame.at--;
-            this.process.park();
             return;
         }
-        final Object answer = handled.function().call(this.process, takeArray(frame, site.outs()), line);
+        final Object[] arguments = takeArray(frame, outs);
+        final Object target = handled.onTarget() ? this.heap.alive(frame.pop(), line) : null;
+        final Object answer = handled.function().call(this.process, target, arguments, line);
         if (site.gives()) {
             frame.push(answer);
         }

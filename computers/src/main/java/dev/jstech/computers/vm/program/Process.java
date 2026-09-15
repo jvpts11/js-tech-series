@@ -61,7 +61,7 @@ public final class Process {
     public static final int SLICE = 64;
 
     /** What starting a thread costs beyond the call itself: a stack of its own is not a small thing. */
-    private static final int START_COST = 49;
+    private static final int START_COST = dev.jstech.computers.vm.system.SigmaCosts.THREAD_START;
 
     private final ProgramImage program;
     private final Heap heap;
@@ -834,7 +834,7 @@ public final class Process {
     }
 
     /** Starts a thread on the body a delegate holds, and hands back what the program holds it by. */
-    private Values.Obj spawn(final Object body, final int line) {
+    Values.Obj spawn(final Object body, final int line) {
         if (!(body instanceof Values.DelegateValue delegate) || delegate.chain().isEmpty()) {
             throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no body to run on the thread");
         }
@@ -862,36 +862,27 @@ public final class Process {
         this.locks.releaseAll(thread.id);
     }
 
-    /** Answers a call on {@code Thread}, which is the process's own business rather than the library's. */
-    void threadCall(final Frame frame, final IOperand.Method named, final int line) {
-        switch (named.name()) {
-            case "Start" -> {
-                final List<Object> arguments = CallDispatch.take(frame, named.parameters());
-                frame.push(this.spawn(arguments.isEmpty() ? null : arguments.getFirst(), line));
-            }
-            case "Sleep" -> {
-                final long ticks = Numbers.toLong(CallDispatch.take(frame, named.parameters()).getFirst());
-                if (ticks > 0) {
-                    this.scheduler.await(this.current, new IWait.Sleep(this.library.now() + ticks));
-                }
-            }
-            case "Yield" -> {
-                CallDispatch.take(frame, named.parameters());
-                this.current.yielded = true;
-            }
-            case "Join" -> this.join(frame, named, line);
-            case "Stop" -> {
-                CallDispatch.take(frame, named.parameters());
-                final ProgramThread target = this.thread(this.threadId(frame.pop(), line));
-                if (target == this.main) {
-                    this.main.frames.clear();
-                    this.waiting.clear();
-                    this.ended(this.main);
-                } else if (target != null) {
-                    this.end(target);
-                }
-            }
-            default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "Thread has no " + named.name());
+    /** Puts the running thread to sleep for that many ticks; asking for none is asking for nothing. */
+    void sleep(final long ticks) {
+        if (ticks > 0) {
+            this.scheduler.await(this.current, new IWait.Sleep(this.library.now() + ticks));
+        }
+    }
+
+    /** Gives up the rest of the running thread's turn, so another thread has one sooner. */
+    void yieldTurn() {
+        this.current.yielded = true;
+    }
+
+    /** Stops the thread a program holds: stopping the main one ends the program's run, another one simply ends. */
+    void stop(final Object token, final int line) {
+        final ProgramThread target = this.thread(this.threadId(token, line));
+        if (target == this.main) {
+            this.main.frames.clear();
+            this.waiting.clear();
+            this.ended(this.main);
+        } else if (target != null) {
+            this.end(target);
         }
     }
 
@@ -903,29 +894,29 @@ public final class Process {
     }
 
     /**
-     * Waits for another thread to end.
+     * Whether a join has to wait for another thread to end, setting up what wakes it when it does.
      *
-     * <p>Nothing is taken off the stack until the wait is over, so the call can be asked again once the
-     * thread has ended or the time given has run out, and asking it again is the same as asking it once.
+     * <p>Nothing is taken off the stack until the wait is over, so the call can be asked again once the thread has
+     * ended or the time given has run out, and asking it again is the same as asking it once. It does not wait for a
+     * thread that is over or is the one asking, nor once its time has run out or when it was given none.
      */
-    private void join(final Frame frame, final IOperand.Method named, final int line) {
-        final int count = named.parameters().size();
+    boolean joinWaits(final Frame frame, final int count, final int line) {
         final Object token = frame.stack.size() > count ? frame.stack.get(frame.stack.size() - 1 - count) : null;
         final ProgramThread target = this.thread(this.threadId(token, line));
-        final boolean over = target == null || target == this.current;
         final long ticks = count == 1 ? Numbers.toLong(frame.peek()) : 0L;
         // Read before the test, so it is forgotten whenever the call answers, as it always was.
         final boolean gaveUp = this.current.takeGaveUp();
-        if (over || gaveUp || (count == 1 && ticks <= 0)) {
-            CallDispatch.take(frame, named.parameters());
-            frame.pop();
-            if (count == 1) {
-                frame.push(over);
-            }
-            return;
+        if (target == null || target == this.current || gaveUp || (count == 1 && ticks <= 0)) {
+            return false;
         }
-        frame.at--;
         this.scheduler.await(this.current, new IWait.Join(target.id, ticks > 0 ? this.library.now() + ticks : 0L));
+        return true;
+    }
+
+    /** Whether the thread a join asked about is over or is the one asking, which is what a join given time answers. */
+    boolean joinOver(final Object token, final int line) {
+        final ProgramThread target = this.thread(this.threadId(token, line));
+        return target == null || target == this.current;
     }
 
     // watching the world

@@ -36,6 +36,8 @@ public final class SigmaCosts {
     public static final int DRAW = 50;
     /** Asking the network to do something, which becomes work for the whole base. */
     public static final int SUBMIT = 200;
+    /** Starting a thread, beside the call itself: a stack of its own is not a small thing. */
+    public static final int THREAD_START = 49;
     /** Calling something on a computer of another mod, across a Gateway. */
     public static final int CALL_ACROSS = 100;
     /** What each thing handed to a call across a Gateway adds to it. */

@@ -222,7 +222,7 @@ public final class SystemApi {
      */
     private static TypeSpec thread() {
         final Members thread = new Members("Thread");
-        thread.onType("Thread", "Start", MemberKind.PROCESS, CallCost.FREE, "Action");
+        thread.onType("Thread", "Start", MemberKind.PROCESS, CallCost.of(SigmaCosts.THREAD_START), "Action");
         thread.valueOnType("Thread", "Current", MemberKind.PROCESS, CallCost.FREE);
         thread.onType(VOID, "Sleep", MemberKind.PROCESS, CallCost.FREE, LONG);
         thread.onType(VOID, "Yield", MemberKind.PROCESS, CallCost.FREE);
