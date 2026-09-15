@@ -8,7 +8,7 @@
 package dev.jstech.computers.vm.system;
 
 /** A member of one of the system's types: which call it is, where it is called, who answers it and what it costs. */
-public sealed interface IMemberSpec permits MethodSpec, PropertySpec {
+public sealed interface IMemberSpec permits MethodSpec, PropertySpec, ConstructorSpec, EventSpec {
 
     /** Which call it is; reading a value is a call that takes nothing. */
     MemberId id();

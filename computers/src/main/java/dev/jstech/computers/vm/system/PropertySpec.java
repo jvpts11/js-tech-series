@@ -14,24 +14,31 @@ import java.util.Objects;
  * editors know it.
  *
  * <p>To the machine, being asked for a value is a call that takes nothing, so a value is named the way that call is.
+ * Reading and writing are priced apart: a widget's text is read for nothing, and written at the price of drawing the
+ * widget again.
  *
- * @param id       which value it is, taking nothing
- * @param type     the type it holds, written as a listing writes it
- * @param isStatic whether it is read from the type rather than from an object of it
- * @param writable whether a program may write it as well as read it
- * @param kind     who answers it
- * @param cost     what reading or writing it costs beyond the instruction that makes it
+ * @param id        which value it is, taking nothing
+ * @param type      the type it holds, written as a listing writes it
+ * @param isStatic  whether it is read from the type rather than from an object of it
+ * @param writable  whether a program may write it as well as read it
+ * @param kind      who answers it
+ * @param cost      what reading it costs beyond the instruction that reads it
+ * @param writeCost what writing it costs beyond the instruction that writes it, free for a value nobody can write
  */
 public record PropertySpec(MemberId id, String type, boolean isStatic, boolean writable, MemberKind kind,
-                           CallCost cost) implements IMemberSpec {
+                           CallCost cost, CallCost writeCost) implements IMemberSpec {
 
     public PropertySpec {
         Objects.requireNonNull(id, "id");
         Objects.requireNonNull(type, "type");
         Objects.requireNonNull(kind, "kind");
         Objects.requireNonNull(cost, "cost");
+        Objects.requireNonNull(writeCost, "writeCost");
         if (!id.parameters().isEmpty()) {
             throw new IllegalArgumentException(id.describe() + " is a value, so it takes nothing");
+        }
+        if (!writable && !CallCost.FREE.equals(writeCost)) {
+            throw new IllegalArgumentException(id.describe() + " cannot be written, so writing it has no price");
         }
     }
 }

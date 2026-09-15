@@ -27,6 +27,7 @@ public final class SystemApi {
     private static final String MACHINE = "System.Machine";
     private static final String NETWORK = "System.Network";
     private static final String OPERATIONS = "System.Operations";
+    private static final String UI = "System.UI";
 
     private static final String VOID = "void";
     private static final String INT = "int";
@@ -38,12 +39,14 @@ public final class SystemApi {
     private static final String OBJECT = "object";
     private static final String STRINGS = "List<string>";
     private static final String ROWS = "List<Map<string, object>>";
+    private static final String WIDGET = "Widget";
 
     private static final List<TypeSpec> TYPES = List.of(math(), convert(), console(), program(), process(),
             processMessage(), thread(), time(), random(), file(), cpuInfo(), diskInfo(), osInfo(), processInfo(),
             computer(), holdingInfo(), serverInfo(), network(), stockEvent(), subscription(), remoteComputer(),
             iqlResult(), iql(), workStat(), mainframe(), askResult(), operationInfo(), operations(), ccComputer(),
-            ccPeripheral(), gatewayMessage(), gateway());
+            ccPeripheral(), gatewayMessage(), gateway(), widget(), window(), box("Row"), box("Column"), label(),
+            button(), textBox(), checkBox(), progressBar(), listBox(), canvas(), messageBox());
 
     private SystemApi() {
     }
@@ -539,6 +542,134 @@ public final class SystemApi {
         return new TypeSpec(NETWORK, "Gateway", gateway.members);
     }
 
+    /*
+     * The windows a program can open on the desktop of the machine it runs on. A widget asks for the size it needs and
+     * the machine's own system draws it, so the same program looks like whichever system it is running under. Rows and
+     * columns share out the room; a weight of one or more takes a share of what is left over, and nothing else takes
+     * any.
+     *
+     * All of it is the program's own. Making a widget and reading one cost nothing; changing what a window shows costs
+     * a draw, since the machine has to draw it again for whoever is looking. Opening a window is dearer: it goes on the
+     * machine's desktop and its taskbar, and it outlives the tick that asked for it.
+     */
+
+    /** What every widget has: whether it shows, whether it answers, and a size of its own if it wants one. */
+    private static TypeSpec widget() {
+        final Members widget = new Members(WIDGET);
+        widget.drawnValue(BOOL, "Visible");
+        widget.drawnValue(BOOL, "Enabled");
+        widget.drawnValue(INT, "Width");
+        widget.drawnValue(INT, "Height");
+        return new TypeSpec(UI, WIDGET, widget.members);
+    }
+
+    private static TypeSpec window() {
+        final Members window = new Members("Window");
+        window.made(STRING, INT, INT);
+        window.drawnValue(STRING, "Title");
+        window.drawnValue(WIDGET, "Content");
+        window.valueOnObject(BOOL, "Open", MemberKind.PROCESS, CallCost.FREE);
+        window.onObject(VOID, "Show", MemberKind.PROCESS, CallCost.of(SigmaCosts.WRITE));
+        window.drawn("Close");
+        // A widget put exactly where the program says, for one that lays itself out.
+        window.drawn("Add", WIDGET, INT, INT, INT, INT);
+        window.told("OnClose");
+        return new TypeSpec(UI, "Window", window.members);
+    }
+
+    /** A row or a column, which shares out its room among the widgets put in it. */
+    private static TypeSpec box(final String name) {
+        final Members box = new Members(name);
+        box.made();
+        box.drawn("Add", WIDGET);
+        box.drawn("Add", WIDGET, INT);
+        box.drawnValue(INT, "Spacing");
+        box.drawn("Clear");
+        return new TypeSpec(UI, name, WIDGET, box.members);
+    }
+
+    private static TypeSpec label() {
+        final Members label = new Members("Label");
+        label.made();
+        label.made(STRING);
+        label.drawnValue(STRING, "Text");
+        return new TypeSpec(UI, "Label", WIDGET, label.members);
+    }
+
+    private static TypeSpec button() {
+        final Members button = new Members("Button");
+        button.made();
+        button.made(STRING);
+        button.drawnValue(STRING, "Text");
+        button.told("OnClick");
+        return new TypeSpec(UI, "Button", WIDGET, button.members);
+    }
+
+    private static TypeSpec textBox() {
+        final Members textBox = new Members("TextBox");
+        textBox.made();
+        textBox.made(STRING);
+        textBox.drawnValue(STRING, "Text");
+        textBox.told("OnChange");
+        textBox.told("OnSubmit");
+        return new TypeSpec(UI, "TextBox", WIDGET, textBox.members);
+    }
+
+    private static TypeSpec checkBox() {
+        final Members checkBox = new Members("CheckBox");
+        checkBox.made();
+        checkBox.made(STRING);
+        checkBox.made(STRING, BOOL);
+        checkBox.drawnValue(STRING, "Text");
+        checkBox.drawnValue(BOOL, "Checked");
+        checkBox.told("OnToggle");
+        return new TypeSpec(UI, "CheckBox", WIDGET, checkBox.members);
+    }
+
+    private static TypeSpec progressBar() {
+        final Members progress = new Members("ProgressBar");
+        progress.made();
+        progress.made(INT, INT);
+        progress.drawnValue(INT, "Value");
+        progress.drawnValue(INT, "Least");
+        progress.drawnValue(INT, "Most");
+        return new TypeSpec(UI, "ProgressBar", WIDGET, progress.members);
+    }
+
+    private static TypeSpec listBox() {
+        final Members listBox = new Members("ListBox");
+        listBox.made();
+        listBox.drawn("Add", STRING);
+        listBox.drawn("Add", STRING, STRING);
+        listBox.drawn("Clear");
+        listBox.valueOnObject(INT, "Count", MemberKind.PROCESS, CallCost.FREE);
+        listBox.drawnValue(INT, "Selected");
+        listBox.told("OnSelect");
+        return new TypeSpec(UI, "ListBox", WIDGET, listBox.members);
+    }
+
+    private static TypeSpec canvas() {
+        final Members canvas = new Members("Canvas");
+        canvas.made();
+        canvas.made(INT, INT);
+        canvas.drawn("Clear", INT);
+        canvas.drawn("FillRect", INT, INT, INT, INT, INT);
+        canvas.drawn("DrawLine", INT, INT, INT, INT, INT);
+        canvas.drawn("DrawText", STRING, INT, INT, INT);
+        canvas.drawn("SetPixel", INT, INT, INT);
+        canvas.valueOnObject(INT, "ClickX", MemberKind.PROCESS, CallCost.FREE);
+        canvas.valueOnObject(INT, "ClickY", MemberKind.PROCESS, CallCost.FREE);
+        canvas.told("OnClick");
+        return new TypeSpec(UI, "Canvas", WIDGET, canvas.members);
+    }
+
+    /** A window the machine makes for a program with nothing but a title and a line to show. */
+    private static TypeSpec messageBox() {
+        final Members messageBox = new Members("MessageBox");
+        messageBox.onType(VOID, "Show", MemberKind.PROCESS, CallCost.of(SigmaCosts.WRITE), STRING, STRING);
+        return new TypeSpec(UI, "MessageBox", messageBox.members);
+    }
+
     /** Gathers the members of one type, in the order they are declared. */
     private static final class Members {
 
@@ -568,17 +699,40 @@ public final class SystemApi {
 
         /** A value read from the type. */
         void valueOnType(final String type, final String name, final MemberKind kind, final CallCost cost) {
-            this.members.add(new PropertySpec(this.id(name), type, true, false, kind, cost));
+            this.members.add(new PropertySpec(this.id(name), type, true, false, kind, cost, CallCost.FREE));
         }
 
         /** A value read from an object of the type. */
         void valueOnObject(final String type, final String name, final MemberKind kind, final CallCost cost) {
-            this.members.add(new PropertySpec(this.id(name), type, false, false, kind, cost));
+            this.members.add(new PropertySpec(this.id(name), type, false, false, kind, cost, CallCost.FREE));
         }
 
         /** A value on a record the program was handed, which it reads from its own copy for nothing. */
         void recordValue(final String type, final String name) {
             this.valueOnObject(type, name, MemberKind.PROCESS, CallCost.FREE);
+        }
+
+        /** A value on a widget, read for nothing and written at the price of drawing the widget again. */
+        void drawnValue(final String type, final String name) {
+            this.members.add(new PropertySpec(this.id(name), type, false, true, MemberKind.PROCESS, CallCost.FREE,
+                    CallCost.of(SigmaCosts.DRAW)));
+        }
+
+        /** A call on a widget, which changes what it shows and so costs drawing it again. */
+        void drawn(final String name, final String... parameters) {
+            this.onObject(VOID, name, MemberKind.PROCESS, CallCost.of(SigmaCosts.DRAW), parameters);
+        }
+
+        /** A way of making one of these, which is the program's own and costs nothing. */
+        void made(final String... parameters) {
+            this.members.add(new ConstructorSpec(this.id(ConstructorSpec.NAME, parameters), MemberKind.PROCESS,
+                    CallCost.FREE));
+        }
+
+        /** Something a widget is told, which a program hears by joining a handler, a write on the widget. */
+        void told(final String name) {
+            this.members.add(new EventSpec(this.id(name), "Action", false, MemberKind.PROCESS,
+                    CallCost.of(SigmaCosts.DRAW)));
         }
 
         private MemberId id(final String name, final String... parameters) {
