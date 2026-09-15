@@ -48,12 +48,9 @@ final class CallDispatch {
     }
 
     /**
-     * Makes the call the line names.
-     *
-     * <p>A call that puts a question to a computer on the other side of a Gateway takes nothing off the stack while the
-     * question is out: the instruction is rewound, so when the answer lands the call simply runs again, finds it, and
-     * takes its arguments off then. That is what makes the wait free (a parked thread is given no budget) and what
-     * makes it survive a save.
+     * Makes the call the line names: through a delegate, to a method of the program on the type of the object it is
+     * made on, or to what the program loaded with for it (a function of the language, its own process or the machine).
+     * A call to the world that the machine the program runs on does not answer stops the program.
      */
     void call(final Frame frame, final ProgramImage.CallSite site, final boolean through, final int line) {
         final IOperand.Method named = site.named();
