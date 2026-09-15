@@ -141,7 +141,7 @@ class ProgramImageTest {
         final MethodImage fill = ProgramImage.of(program).type("Tests.Shelf").methods().get("Fill()");
         assertNotNull(fill.creation(0).handled(), "a list is the core's to make");
         assertNotNull(fill.creation(1).handled(), "and so is a map");
-        assertNull(fill.creation(2).handled(), "a window is not");
+        assertNotNull(fill.creation(2).handled(), "and a window is made the way the runtime makes a widget");
         assertNull(squareArea(shapes()).creation(1).handled(), "nor is the program's own type");
     }
 

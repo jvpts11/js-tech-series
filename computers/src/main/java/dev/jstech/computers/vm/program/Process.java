@@ -215,7 +215,7 @@ public final class Process {
         this.library.serves(this);
         this.fieldAccess = new FieldAccess(this, this.heap, this.library, program);
         this.calls = new CallDispatch(this, this.heap, this.library, program);
-        this.objects = new ObjectMaking(this.heap, this.library, program, this.calls);
+        this.objects = new ObjectMaking(this, this.heap, this.library, program, this.calls);
         this.executor = new InstructionExecutor(program, this.heap, this.scheduler, this.locks, this.fieldAccess,
                 this.calls, this.objects);
         this.events = new ProgramEvents(this);

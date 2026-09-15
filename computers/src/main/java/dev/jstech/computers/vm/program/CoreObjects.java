@@ -18,13 +18,13 @@ import java.util.Map;
 final class CoreObjects {
 
     private static final Map<String, IObjectMaker> MAKERS = Map.of(
-            "List", (heap, line) -> {
+            "List", (process, arguments, line) -> {
                 final Values.ListValue made = new Values.ListValue();
-                return heap.allocate(made, made.bytes(), line);
+                return process.heap().allocate(made, made.bytes(), line);
             },
-            "Map", (heap, line) -> {
+            "Map", (process, arguments, line) -> {
                 final Values.MapValue made = new Values.MapValue();
-                return heap.allocate(made, made.bytes(), line);
+                return process.heap().allocate(made, made.bytes(), line);
             });
 
     private CoreObjects() {

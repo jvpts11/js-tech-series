@@ -7,16 +7,19 @@
  */
 package dev.jstech.computers.vm.program;
 
-/** The Java that makes one of the objects the language's core brings, on the heap of the program making it. */
+import java.util.List;
+
+/** The Java that makes one of the objects the runtime brings: a list, a map, a window or a widget. */
 @FunctionalInterface
 interface IObjectMaker {
 
     /**
      * Makes one.
      *
-     * @param heap the heap of the program making it, which what is made is counted against
-     * @param line the line making it, for what the program is told when it goes wrong
+     * @param process   the process making it, whose heap what is made is counted against
+     * @param arguments what its constructor is handed, in order
+     * @param line      the line making it, for what the program is told when it goes wrong
      * @return what was made
      */
-    Object make(Heap heap, int line);
+    Object make(Process process, List<Object> arguments, int line);
 }

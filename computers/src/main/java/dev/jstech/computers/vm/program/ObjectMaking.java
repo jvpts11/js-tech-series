@@ -18,12 +18,15 @@ import java.util.Map;
  */
 final class ObjectMaking {
 
+    private final Process process;
     private final Heap heap;
     private final Library library;
     private final ProgramImage program;
     private final CallDispatch calls;
 
-    ObjectMaking(final Heap heap, final Library library, final ProgramImage program, final CallDispatch calls) {
+    ObjectMaking(final Process process, final Heap heap, final Library library, final ProgramImage program,
+                 final CallDispatch calls) {
+        this.process = process;
         this.heap = heap;
         this.library = library;
         this.program = program;
@@ -34,7 +37,7 @@ final class ObjectMaking {
     void newObject(final Frame frame, final ProgramImage.Creation creation, final int line) {
         final List<Object> arguments = CallDispatch.take(frame, creation.outs());
         if (creation.handled() != null) {
-            frame.push(creation.handled().make(this.heap, line));
+            frame.push(creation.handled().make(this.process, arguments, line));
             return;
         }
         frame.push(creation.type() == null

@@ -62,7 +62,7 @@ class InstructionExecutorTest {
         final Process process = new Process(PROGRAM, 64L * 1024, IHost.still());
         final CallDispatch calls = new CallDispatch(process, process.heap0(), process.library(), PROGRAM);
         final FieldAccess fields = new FieldAccess(process, process.heap0(), process.library(), PROGRAM);
-        final ObjectMaking objects = new ObjectMaking(process.heap0(), process.library(), PROGRAM, calls);
+        final ObjectMaking objects = new ObjectMaking(process, process.heap0(), process.library(), PROGRAM, calls);
         final MonitorTable locks = new MonitorTable();
         final ThreadScheduler scheduler = new ThreadScheduler();
         return new Parts(process, calls, locks, scheduler,

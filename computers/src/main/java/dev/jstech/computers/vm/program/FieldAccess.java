@@ -19,8 +19,8 @@ import java.util.Map;
  * <p>A type's static fields live here, one holder per type, made the first time the type is touched, and are written
  * down with the program. A field of the program's own is read and written on its object with nothing looked up, which
  * was settled when the program loaded. A value the process or the language's core answers (the thread asking, the
- * program's arguments, the length of a text) is read through what the program loaded with, and what the machine or a
- * window keeps is asked of them.
+ * program's arguments, the length of a text, what a widget shows) is read and written through what the program loaded
+ * with, and what the machine keeps is asked of it.
  */
 final class FieldAccess {
 
@@ -58,9 +58,7 @@ final class FieldAccess {
             frame.push(this.library.programField(object.get("Id"), Process.processHost(object), name, line));
             return;
         }
-        final Object held = object.get(name);
-        // A widget's texts are its own, so the program is handed a copy that stays the program's.
-        frame.push(held instanceof String said && UiWidgets.handles(object.type()) ? this.heap.text(said, line) : held);
+        frame.push(object.get(name));
     }
 
     /** Writes the value on top of the stack into a field of the object beneath it. */
@@ -68,13 +66,12 @@ final class FieldAccess {
         final String name = site.field().name();
         final Object value = frame.pop();
         final Object target = this.heap.alive(frame.pop(), line);
+        if (site.handled() != null && site.handled().write() != null) {
+            site.handled().write().write(this.process, target, value, line);
+            return;
+        }
         if (!(target instanceof Values.Obj object)) {
             throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no object to write " + name + " on");
-        }
-        if (!site.own() && UiWidgets.handles(object.type())) {
-            // What a window shows is the machine's to draw again, so writing on a widget is paid for.
-            this.library.uiWrite(object, name, value, line);
-            return;
         }
         object.set(name, value);
     }

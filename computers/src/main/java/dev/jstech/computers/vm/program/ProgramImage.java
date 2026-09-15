@@ -83,8 +83,8 @@ public final class ProgramImage {
      * @param outs        which of its arguments are filled in rather than handed over
      * @param declared    the system's declaration of the constructor when the runtime brings the type, or null when
      *                    the program makes it or the system declares no such constructor
-     * @param handled     what makes the object when it is one of the language's core collections, or null when
-     *                    something else makes it
+     * @param handled     what makes the object when the runtime brings its type (a collection of the language's
+     *                    core, a window, a widget), or null when something else makes it
      */
     record Creation(IOperand.Constructor made, TypeImage type, MethodImage constructor, boolean[] outs,
                     ConstructorSpec declared, IObjectMaker handled) {
@@ -246,7 +246,13 @@ public final class ProgramImage {
                 instanceof ConstructorSpec found) {
             declared = found;
         }
-        final IObjectMaker handled = type == null ? CoreObjects.find(bare(made.owner())) : null;
+        IObjectMaker handled = null;
+        if (type == null) {
+            handled = CoreObjects.find(bare(made.owner()));
+            if (handled == null) {
+                handled = WidgetObjects.find(made.owner());
+            }
+        }
         return new Creation(made, type, type == null ? null : type.constructor(made.parameters().size()),
                 MethodImage.outsOf(made.parameters()), declared, handled);
     }

@@ -8,17 +8,16 @@
 package dev.jstech.computers.vm.program;
 
 import dev.jstech.computers.vm.listing.IOperand;
-import dev.jstech.computers.vm.system.SigmaCosts;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * The part of the library the runtime answers for itself that needs more than a call's arguments.
  *
- * <p>These are the calls that touch the machine: its Gateway, the watches a program sets on the network, what is
- * written on a widget, and handing everything else to the machine. It also keeps the console the process writes to and
- * its random numbers, whose calls {@link ProcessCalls} answer, as it does the calls on the program's windows. The calls
- * that need nothing but their arguments (text, the two collections, numbers) are {@link PureFunctions}.
+ * <p>These are the calls that touch the machine: its Gateway, the watches a program sets on the network, and handing
+ * everything else to the machine. It also keeps the console the process writes to and its random numbers, whose calls
+ * {@link ProcessCalls} answer, as it does the calls on the program's windows. The calls that need nothing but their
+ * arguments (text, the two collections, numbers) are {@link PureFunctions}.
  */
 public final class Library {
 
@@ -131,18 +130,12 @@ public final class Library {
     /** Makes one of the things the language brings with it: a collection, a window, a widget. */
     public Object create(final String type, final List<Object> arguments, final int line) {
         final String bare = type.contains("<") ? type.substring(0, type.indexOf('<')) : type;
-        if (UiWidgets.handles(bare)) {
-            final Values.Obj made = UiWidgets.create(bare, arguments, line);
-            if (UiWidgets.isWidget(bare) && this.owner != null) {
-                // Every widget is known by a number, so an event can say which one it happened to.
-                made.set(UiWidgets.ID, this.owner.nextWidgetId());
-            }
-            // What it holds (the widgets in a row, the rows of a list) is the program's, and weighs as much.
-            this.heap.adopt(made, line);
-            return made;
+        final IObjectMaker widget = WidgetObjects.find(bare);
+        if (widget != null) {
+            return widget.make(this.owner(), arguments, line);
         }
         // Anything else the runtime is asked to make by name is one of the core's collections: a list unless a map.
-        return CoreObjects.find("Map".equals(bare) ? "Map" : "List").make(this.heap, line);
+        return CoreObjects.find("Map".equals(bare) ? "Map" : "List").make(this.owner(), arguments, line);
     }
 
     /** Reads one of the values the runtime keeps on a type of its own rather than on an object. */
@@ -206,12 +199,6 @@ public final class Library {
             this.owner.chooseGateway(chosen);
         }
         return answered;
-    }
-
-    /** What a program writes on a widget, which the machine has to draw again. */
-    public void uiWrite(final Values.Obj widget, final String name, final Object value, final int line) {
-        this.owe(SigmaCosts.DRAW);
-        this.owner().windows0().mutator().write(widget, name, value, line);
     }
 
     private Process owner() {

@@ -59,7 +59,7 @@ class ObjectMakingTest {
 
     private static ObjectMaking objects(final Process process) {
         final CallDispatch calls = new CallDispatch(process, process.heap0(), process.library(), PROGRAM);
-        return new ObjectMaking(process.heap0(), process.library(), PROGRAM, calls);
+        return new ObjectMaking(process, process.heap0(), process.library(), PROGRAM, calls);
     }
 
     private static Process process() {
