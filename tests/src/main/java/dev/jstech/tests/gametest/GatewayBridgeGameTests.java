@@ -30,7 +30,7 @@ import dev.jstech.computers.integration.computercraft.GatewayPeripheral;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.computers.machine.IMachineRuntime;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.ArrayList;
@@ -416,7 +416,7 @@ public final class GatewayBridgeGameTests {
         final Fleet fleet = wire(helper);
         final FakeComputer cc = new FakeComputer(CC_ID);
         final int[] started = new int[1];
-        final ILanguageProcess[] tool = new ILanguageProcess[1];
+        final IMachineRuntime[] tool = new IMachineRuntime[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 6, () -> {
                     final ServerCliComputer lab = new ServerCliComputer(fleet.lab(), helper.getLevel());

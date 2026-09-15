@@ -8,11 +8,13 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.machine.IMachineRuntime;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.SigmaLanguage;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.core.language.IMachineView;
 import dev.jstech.core.language.IProgrammingLanguage;
 import dev.jstech.core.language.LanguageRegistry;
 import dev.jstech.tests.JsTests;
@@ -78,7 +80,7 @@ public final class LanguageApiGameTests {
          */
         final CompoundTag saved = new CompoundTag();
         one.process().save(saved);
-        final ILanguageProcess again = new ToyLanguage().restore(SOURCE, saved, computer);
+        final ILanguageProcess again = new ToyLanguage().restore(SOURCE, saved, nowhere());
         helper.assertTrue(again != null && again.spent() == 3,
                 "a program comes back where it was; got " + (again == null ? "nothing" : again.spent()));
         helper.succeed();
@@ -149,7 +151,7 @@ public final class LanguageApiGameTests {
                     final MachinePrograms.Started started =
                             computer.programs().start("patient.sgs", PATIENT, 1, computer);
                     helper.assertTrue(started.ok(), "the patient starts: " + started.message());
-                    final ILanguageProcess patient = computer.programs().byId(started.id()).process();
+                    final IMachineRuntime patient = computer.programs().byId(started.id()).process();
                     for (int i = 0; i < 6 && patient.console().size() < 2; i++) {
                         computer.programs().tick(4096);
                     }
@@ -158,6 +160,60 @@ public final class LanguageApiGameTests {
                                     + patient.message() + ")");
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * A program of another language reads the machine's clock and its memory quota through the view it is given, and
+     * what it prints there is the machine's to keep and count.
+     */
+    @GameTest(template = ARENA)
+    public static void machineView_givesAProgramTheClockAndItsMemory(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        final MachinePrograms.Started clock = computer.programs().start("clock.toy", ToyLanguage.CLOCK, 1, computer);
+        final MachinePrograms.Started quota = computer.programs().start("quota.toy", ToyLanguage.QUOTA, 2, computer);
+        helper.assertTrue(clock.ok() && quota.ok(), "both start: " + clock.message() + " / " + quota.message());
+        final IMachineRuntime told = computer.programs().byId(clock.id()).process();
+        final IMachineRuntime room = computer.programs().byId(quota.id()).process();
+        final long now = helper.getLevel().getGameTime();
+        computer.programs().tick(4096);
+        helper.assertTrue(told.console().equals(List.of(Long.toString(now))),
+                "the program reads the world's clock; got " + told.console() + " with the world at " + now);
+        helper.assertTrue(room.console().equals(List.of(Long.toString(2L * 1024 * 1024)))
+                        && room.heapBytes() == 2L * 1024 * 1024,
+                "and the memory it was given; got " + room.console() + ", quota " + room.heapBytes());
+        helper.assertTrue(told.written() == 1, "the machine counts the line it kept; got " + told.written());
+        helper.succeed();
+    }
+
+    /** A machine that is nowhere: no time has passed on it, it gives no memory, and nothing printed on it is kept. */
+    private static IMachineView nowhere() {
+        return new IMachineView() {
+            @Override
+            public long tick() {
+                return 0L;
+            }
+
+            @Override
+            public long dayTime() {
+                return 0L;
+            }
+
+            @Override
+            public long day() {
+                return 0L;
+            }
+
+            @Override
+            public void print(final String line) {
+            }
+
+            @Override
+            public long memoryQuota() {
+                return 0L;
+            }
+        };
     }
 
     /** A Σ# program that says one line. */

@@ -29,6 +29,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   run. No language may claim `.asm`; `LanguageRegistry.reserve` keeps an extension back from every language, and
   `sourceOf` finds the language a file is written in. A listing opened in a terminal editor is coloured the way the
   desktop editors colour it.
+- For addon authors, a language that runs its own files is handed a view of the machine: `start(binary, view,
+  arguments)` and `restore(binary, saved, view)` take an `IMachineView` in place of the block entity and the memory
+  size. The view tells the machine's time and how much memory the program may hold, and takes the lines the program
+  prints, which the machine keeps; a language's processes no longer report `console()`, `written()` or `heapBytes()`.
 - Programs run faster. What a program's calls, branches and `new` reach is worked out once, when the program
   loads, instead of on every line it runs, and so is which of the language's own functions (text, `List`,
   `Map`, `Math`, `Convert`) a call means. Depending on what a program does, each instruction takes between 13

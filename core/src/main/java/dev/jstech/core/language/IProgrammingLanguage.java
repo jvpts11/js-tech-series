@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Set;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -115,39 +114,27 @@ public interface IProgrammingLanguage {
     List<Token> tokenize(String text);
 
     /**
-     * Starts a program on a machine.
+     * Starts a program.
      *
-     * <p>The machine is handed over whole: what a language may reach through it is the language's own
-     * business, and putting that in this contract would tie every language to what the first one needed. Only
-     * asked of a language with binary extensions; one that only compiles leaves this alone.
+     * <p>Only asked of a language with binary extensions; one that only compiles leaves this alone. The program reaches
+     * the machine through the view it is given, which stays its own for as long as it runs.
      *
-     * @param binary   the compiled text
-     * @param heapBytes how much memory the program may hold at once
+     * @param binary    the compiled text
+     * @param machine   the program's view of the machine it runs on
+     * @param arguments what the program was started with; a language whose programs take none ignores them
      * @return the running program, or null when the text cannot be run at all
      */
     @Nullable
-    default ILanguageProcess start(final String binary, final long heapBytes, final BlockEntity machine) {
+    default ILanguageProcess start(final String binary, final IMachineView machine, final List<String> arguments) {
         return null;
     }
 
     /**
-     * The same, with what the program was started with.
-     *
-     * <p>A language whose programs take no arguments may leave this alone; the arguments are then
-     * simply not handed on.
+     * Reads a program back out of what {@link ILanguageProcess#save} wrote, with a view of the machine of its own.
+     * Only asked of a language with binary extensions, like {@link #start}.
      */
     @Nullable
-    default ILanguageProcess start(final String binary, final long heapBytes, final BlockEntity machine,
-                                   final List<String> arguments) {
-        return this.start(binary, heapBytes, machine);
-    }
-
-    /**
-     * Reads a program back out of what {@link ILanguageProcess#save} wrote. Only asked of a language with binary
-     * extensions, like {@link #start}.
-     */
-    @Nullable
-    default ILanguageProcess restore(final String binary, final CompoundTag saved, final BlockEntity machine) {
+    default ILanguageProcess restore(final String binary, final CompoundTag saved, final IMachineView machine) {
         return null;
     }
 }

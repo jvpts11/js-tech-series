@@ -15,18 +15,21 @@ import net.minecraft.nbt.CompoundTag;
 /**
  * A program of a language other than the machine's own, as the machine runs it.
  *
- * <p>Everything a language gives a machine is passed straight through. What only the machine's own language can do
- * takes the table's answers for a language that has none of it, and the program ends with one for a halt and zero
- * otherwise.
+ * <p>Everything a language gives a machine is passed straight through, and what the program wrote and the memory it may
+ * hold come from the view its language was given. What only the machine's own programs can do takes the table's answers
+ * for a language that has none of it, and the program ends with one for a halt and zero otherwise.
  */
 final class HostedRuntime implements IMachineRuntime {
 
     private final ILanguageProcess process;
+    /** The program's view of the machine, which keeps what it writes and knows how much it may hold. */
+    private final HostedView view;
     /** Whether the machine has been told the program ended, which its language has no way to say itself. */
     private boolean told;
 
-    HostedRuntime(final ILanguageProcess process) {
+    HostedRuntime(final ILanguageProcess process, final HostedView view) {
         this.process = process;
+        this.view = view;
     }
 
     @Override
@@ -61,12 +64,12 @@ final class HostedRuntime implements IMachineRuntime {
 
     @Override
     public List<String> console() {
-        return this.process.console();
+        return this.view.lines();
     }
 
     @Override
     public long written() {
-        return this.process.written();
+        return this.view.written();
     }
 
     @Override
@@ -81,7 +84,7 @@ final class HostedRuntime implements IMachineRuntime {
 
     @Override
     public long heapBytes() {
-        return this.process.heapBytes();
+        return this.view.memoryQuota();
     }
 
     @Override

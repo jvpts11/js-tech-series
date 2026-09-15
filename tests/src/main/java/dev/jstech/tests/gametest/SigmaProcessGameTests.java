@@ -15,6 +15,7 @@ import dev.jstech.computers.sigma.SigmaCompiler;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.machine.IMachineRuntime;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.ServerTickDeadline;
 import dev.jstech.computers.vm.program.IProgramParent;
@@ -116,11 +117,11 @@ public final class SigmaProcessGameTests {
         return computer;
     }
 
-    private static ILanguageProcess only(final MachinePrograms programs) {
+    private static IMachineRuntime only(final MachinePrograms programs) {
         return nth(programs, 0);
     }
 
-    private static ILanguageProcess nth(final MachinePrograms programs, final int index) {
+    private static IMachineRuntime nth(final MachinePrograms programs, final int index) {
         return programs.byId(programs.view().get(index).id()).process();
     }
 
@@ -265,7 +266,7 @@ public final class SigmaProcessGameTests {
                     final MachinePrograms programs = computer.programs();
                     final int id = programs.start("counter.asm", listing(COUNTER), 1, computer).id();
                     programs.tick(512);
-                    final ILanguageProcess running = only(programs);
+                    final IMachineRuntime running = only(programs);
                     helper.assertTrue(programs.stop(id), "it stops");
                     helper.assertTrue(programs.isEmpty(), "and is gone from the list");
                     helper.assertTrue(running.console().contains("down"),
@@ -286,7 +287,7 @@ public final class SigmaProcessGameTests {
                     final MachinePrograms.Started started =
                             programs.start("hello.asm", listing(HELLO), 1, computer);
                     helper.assertTrue(started.ok(), "it starts: " + started.message());
-                    final ILanguageProcess running = only(programs);
+                    final IMachineRuntime running = only(programs);
                     programs.tick(512);
                     helper.assertTrue(running.console().equals(List.of("hi 0", "hi 1", "hi 2")),
                             "it says its piece; got " + running.console());
@@ -583,7 +584,7 @@ public final class SigmaProcessGameTests {
                     final MachinePrograms.Started started =
                             programs.start("parent.asm", listing(PARENT), 1, computer);
                     helper.assertTrue(started.ok(), "the parent starts: " + started.message());
-                    final ILanguageProcess parent = programs.byId(started.id()).process();
+                    final IMachineRuntime parent = programs.byId(started.id()).process();
                     int ticks = 0;
                     while (parent.console().size() < 3 && ticks++ < 12) {
                         programs.tick(2048);
@@ -655,7 +656,7 @@ public final class SigmaProcessGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final MachinePrograms programs = computer.programs();
-                    final ILanguageProcess parent = startWaiting(helper, computer, "forever.asm", FOREVER);
+                    final IMachineRuntime parent = startWaiting(helper, computer, "forever.asm", FOREVER);
                     final int child = programs.view().stream().filter(one -> "forever.asm".equals(one.file()))
                             .findFirst().map(one -> one.id()).orElse(0);
                     helper.assertTrue(child > 0, "the child runs");
@@ -677,7 +678,7 @@ public final class SigmaProcessGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final MachinePrograms programs = computer.programs();
-                    final ILanguageProcess parent = startWaiting(helper, computer, "asker.asm", ASKER);
+                    final IMachineRuntime parent = startWaiting(helper, computer, "asker.asm", ASKER);
                     for (int i = 0; i < 4 && parent.console().size() < 2; i++) {
                         programs.tick(2048);
                     }
@@ -692,16 +693,16 @@ public final class SigmaProcessGameTests {
      * Puts that child on the disk, starts a parent that waits on it, and ticks until the parent is waiting; the parent
      * comes back.
      */
-    private static ILanguageProcess startWaiting(final GameTestHelper helper,
-                                                 final CraftingComputerBlockEntity computer, final String file,
-                                                 final String source) {
+    private static IMachineRuntime startWaiting(final GameTestHelper helper,
+                                                final CraftingComputerBlockEntity computer, final String file,
+                                                final String source) {
         final dev.jstech.computers.program.ServerCliComputer shell =
                 new dev.jstech.computers.program.ServerCliComputer(computer, helper.getLevel());
         helper.assertTrue(shell.writeFile("C:\\" + file, listing(source)).ok(), "the child is on the disk");
         final MachinePrograms programs = computer.programs();
         final MachinePrograms.Started started = programs.start("patient.asm", listing(waitingOn(file)), 1, computer);
         helper.assertTrue(started.ok(), "the parent starts: " + started.message());
-        final ILanguageProcess parent = programs.byId(started.id()).process();
+        final IMachineRuntime parent = programs.byId(started.id()).process();
         programs.tick(2048);
         programs.tick(2048);
         helper.assertTrue(parent.console().equals(List.of("started " + file)),

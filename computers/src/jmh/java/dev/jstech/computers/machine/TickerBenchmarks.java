@@ -9,13 +9,13 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.core.language.IMachineView;
 import dev.jstech.core.language.IProgrammingLanguage;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -115,12 +115,12 @@ public class TickerBenchmarks {
         }
 
         @Override
-        public ILanguageProcess start(final String binary, final long heapBytes, final BlockEntity machine) {
+        public ILanguageProcess start(final String binary, final IMachineView machine, final List<String> arguments) {
             return new BusyProcess();
         }
 
         @Override
-        public ILanguageProcess restore(final String binary, final CompoundTag saved, final BlockEntity machine) {
+        public ILanguageProcess restore(final String binary, final CompoundTag saved, final IMachineView machine) {
             return new BusyProcess();
         }
     }
@@ -147,27 +147,12 @@ public class TickerBenchmarks {
         }
 
         @Override
-        public List<String> console() {
-            return List.of();
-        }
-
-        @Override
-        public long written() {
-            return 0L;
-        }
-
-        @Override
         public long spent() {
             return this.spent;
         }
 
         @Override
         public long heldBytes() {
-            return 0L;
-        }
-
-        @Override
-        public long heapBytes() {
             return 0L;
         }
 

@@ -180,6 +180,11 @@ public final class MachinePrograms {
         return language != null && language.binaryExtensions().isEmpty() ? language : null;
     }
 
+    /** What runs a program a language started or brought back, keeping what it writes in the view it was given. */
+    private static IMachineRuntime runtimeOf(final ILanguageProcess process, final HostedView view) {
+        return process instanceof IMachineRuntime runtime ? runtime : new HostedRuntime(process, view);
+    }
+
     /** Lets the terminal go, clearing the program away if it had already finished. */
     public void release() {
         this.focus.release();
@@ -251,11 +256,12 @@ public final class MachinePrograms {
                 return Started.failed(name + ": this is not a " + MachineListing.LABEL);
             }
         } else {
-            final ILanguageProcess started = runner.start(runnable, heapBytes, machine, given);
+            final HostedView view = new HostedView(machine, heapBytes);
+            final ILanguageProcess started = runner.start(runnable, view, given);
             if (started == null) {
                 return Started.failed(name + ": this is not something " + runner.displayName() + " can run");
             }
-            process = IMachineRuntime.of(started);
+            process = runtimeOf(started, view);
         }
         final int id = this.table.takeId();
         process.identify(id);
@@ -479,9 +485,10 @@ public final class MachinePrograms {
                     MachineListing.claims(extension) ? null : JsCore.languages().runnerOf(extension);
             final IMachineRuntime process;
             if (runner != null) {
-                final ILanguageProcess restored =
-                        runner.restore(each.getString(BINARY), each.getCompound(STATE), machine);
-                process = restored == null ? null : IMachineRuntime.of(restored);
+                final HostedView view =
+                        new HostedView(machine, (long) Math.clamp(each.getInt(HEAP), 1, MAX_HEAP_MB) * 1024 * 1024);
+                final ILanguageProcess restored = runner.restore(each.getString(BINARY), each.getCompound(STATE), view);
+                process = restored == null ? null : runtimeOf(restored, view);
             } else {
                 /*
                  * What no language runs was the machine's own: a listing, or source compiled on the way in, which was

@@ -13,6 +13,7 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.sigma.SigmaCompiler;
 import dev.jstech.computers.sigma.SourceFile;
+import dev.jstech.computers.machine.IMachineRuntime;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.program.ServerCliComputer;
@@ -223,7 +224,7 @@ public final class HostileSaveGameTests {
                     helper.assertTrue(process(pc, started.id()).waitingForInput(), "it waits for a line before the save");
 
                     reload(helper, pc);
-                    final ILanguageProcess after = process(pc, started.id());
+                    final IMachineRuntime after = process(pc, started.id());
                     helper.assertTrue(after.waitingForInput(), "and still waits for one after it; state " + after.state());
                     helper.assertTrue(pc.programs().held() == started.id(), "the terminal still holds it");
                     helper.assertTrue(pc.programs().offerInput("Ada"), "the line typed after the save reaches it");
@@ -238,7 +239,7 @@ public final class HostileSaveGameTests {
     public static void save_whileAThreadWaitsForALock(final GameTestHelper helper) {
         final PersonalComputerBlockEntity pc = TestWorldBuilder.forGameTest(helper)
                 .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
-        final ILanguageProcess[] after = new ILanguageProcess[1];
+        final IMachineRuntime[] after = new IMachineRuntime[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final MachinePrograms.Started started = pc.programs().start("gate.sgs", GATEKEEPER, 1, pc);
@@ -250,7 +251,7 @@ public final class HostileSaveGameTests {
                     for (int i = 0; i < 4; i++) {
                         pc.programs().tick(PLENTY);
                     }
-                    final ILanguageProcess before = process(pc, started.id());
+                    final IMachineRuntime before = process(pc, started.id());
                     helper.assertTrue(before.console().isEmpty() && before.state() == ILanguageProcess.State.PARKED,
                             "one thread sleeps holding the lock and the other waits for it; state " + before.state()
                                     + ", said " + before.console());
@@ -268,7 +269,7 @@ public final class HostileSaveGameTests {
     public static void save_whileAParentWaitsForAChildOnTheSameMachine(final GameTestHelper helper) {
         final PersonalComputerBlockEntity pc = TestWorldBuilder.forGameTest(helper)
                 .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
-        final ILanguageProcess[] parent = new ILanguageProcess[1];
+        final IMachineRuntime[] parent = new IMachineRuntime[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     helper.assertTrue(new ServerCliComputer(pc, helper.getLevel())
@@ -305,7 +306,7 @@ public final class HostileSaveGameTests {
         lab.console().setComputerName("lab");
         desk.console().setComputerName("desk");
         final int[] id = new int[1];
-        final ILanguageProcess[] patient = new ILanguageProcess[1];
+        final IMachineRuntime[] patient = new IMachineRuntime[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 4, () -> {
                     helper.assertTrue(new ServerCliComputer(desk, helper.getLevel())
@@ -361,7 +362,7 @@ public final class HostileSaveGameTests {
         final TestWorldBuilder.CraftingNetwork wired = TestWorldBuilder.forGameTest(helper).buildCraftingNetwork();
         final CraftingComputerBlockEntity computer = wired.cc();
         wired.rack().getServerStorage(0).insert(Items.OAK_LOG, 640);
-        final ILanguageProcess[] after = new ILanguageProcess[1];
+        final IMachineRuntime[] after = new IMachineRuntime[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     final MachinePrograms.Started started =
@@ -403,7 +404,7 @@ public final class HostileSaveGameTests {
                     reload(helper, pc);
                     helper.assertTrue(!pc.programs().send(0, started.id(), "one too many", now),
                             "the pile comes back whole from the save, so there is still no room");
-                    final ILanguageProcess after = process(pc, started.id());
+                    final IMachineRuntime after = process(pc, started.id());
                     for (int i = 0; i < 20 && after.console().size() < MESSAGES / 64; i++) {
                         pc.programs().tick(PLENTY);
                     }
@@ -437,7 +438,7 @@ public final class HostileSaveGameTests {
         machine.loadWithComponents(saved, registries);
     }
 
-    private static ILanguageProcess process(final PersonalComputerBlockEntity machine, final int id) {
+    private static IMachineRuntime process(final PersonalComputerBlockEntity machine, final int id) {
         final var one = machine.programs().byId(id);
         if (one == null) {
             throw new IllegalStateException("no program " + id + " on the machine");
@@ -445,7 +446,7 @@ public final class HostileSaveGameTests {
         return one.process();
     }
 
-    private static ILanguageProcess process(final CraftingComputerBlockEntity machine, final int id) {
+    private static IMachineRuntime process(final CraftingComputerBlockEntity machine, final int id) {
         final var one = machine.programs().byId(id);
         if (one == null) {
             throw new IllegalStateException("no program " + id + " on the machine");

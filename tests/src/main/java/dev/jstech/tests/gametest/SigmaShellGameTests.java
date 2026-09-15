@@ -181,7 +181,8 @@ public final class SigmaShellGameTests {
          * The process is kept from one step to the next: once it has returned with nobody watching the
          * terminal, the terminal lets it go, and what it printed is only on the process itself.
          */
-        final dev.jstech.core.language.ILanguageProcess[] asked = new dev.jstech.core.language.ILanguageProcess[1];
+        final dev.jstech.computers.machine.IMachineRuntime[] asked =
+                new dev.jstech.computers.machine.IMachineRuntime[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     DiskFilesystem.write(computer.systemDisk(), "progs/asks.sgs", FileType.SGS, ASKS,

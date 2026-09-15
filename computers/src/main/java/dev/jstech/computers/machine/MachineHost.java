@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 public record MachineHost(BlockEntity machine) implements IHost {
 
     /** The length of a Minecraft day in ticks. */
-    private static final long DAY = 24_000L;
+    static final long DAY = 24_000L;
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
