@@ -117,7 +117,7 @@ public final class Process {
     private final ProgramListeners listeners = new ProgramListeners();
     private Values.Obj self;
     /** The windows this program has open on the machine's desktop, and the numbers its windows and widgets get. */
-    private final ProgramWindows windows = new ProgramWindows();
+    private final ProgramWindows windows;
 
     /** The number the next widget this program makes is known by. */
     long nextWidgetId() {
@@ -210,6 +210,7 @@ public final class Process {
         this.program = program;
         this.host = host;
         this.heap = new Heap(heapBytes);
+        this.windows = new ProgramWindows(this.heap);
         this.library = new Library(this.heap, host, program.entryPoint());
         this.library.serves(this);
         this.fieldAccess = new FieldAccess(this, this.heap, this.library, program);

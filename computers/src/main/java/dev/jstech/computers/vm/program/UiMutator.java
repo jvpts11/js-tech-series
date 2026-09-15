@@ -8,7 +8,6 @@
 package dev.jstech.computers.vm.program;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * Every change a window or a widget goes through, whether the program makes it or a player does: the one door, so what
@@ -27,10 +26,10 @@ final class UiMutator {
             "a window holds at most " + UiWidgets.MOST_WIDGETS + " widgets, counting the ones inside rows and columns";
 
     private final Heap heap;
-    /** The windows the program has open, which a row or a column growing inside one must still fit. */
-    private final Supplier<List<Values.Obj>> open;
+    /** The windows the program has open, as they are now, which a row or a column growing inside one must still fit. */
+    private final List<Values.Obj> open;
 
-    UiMutator(final Heap heap, final Supplier<List<Values.Obj>> open) {
+    UiMutator(final Heap heap, final List<Values.Obj> open) {
         this.heap = heap;
         this.open = open;
     }
@@ -58,7 +57,7 @@ final class UiMutator {
             UiWidgets.touch(self);
             return;
         }
-        for (final Values.Obj window : this.open.get()) {
+        for (final Values.Obj window : this.open) {
             if (UiWidgets.shows(window, self)) {
                 UiWidgets.touch(window);
             }
@@ -128,7 +127,7 @@ final class UiMutator {
     private void stillFits(final Values.Obj self, final Values.ListValue children, final Values.ListValue weights,
                            final int line) {
         boolean over = UiWidgets.size(self) > UiWidgets.MOST_WIDGETS;
-        for (final Values.Obj window : this.open.get()) {
+        for (final Values.Obj window : this.open) {
             over = over || UiWidgets.count(window) > UiWidgets.MOST_WIDGETS;
         }
         if (over) {

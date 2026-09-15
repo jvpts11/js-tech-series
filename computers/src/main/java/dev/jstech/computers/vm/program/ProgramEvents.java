@@ -130,7 +130,7 @@ final class ProgramEvents {
         }
         final String handler;
         try {
-            handler = this.library.ui().accept(found, kind, values);
+            handler = this.windows.mutator().accept(found, kind, values);
         } catch (final Halt halt) {
             this.process.halt(halt);
             return false;

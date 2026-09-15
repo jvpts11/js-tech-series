@@ -23,9 +23,14 @@ class ProgramWindowsTest {
         return UiWidgets.create(UiWidgets.WINDOW, List.of(title, 200, 100), 0);
     }
 
+    /** A program's windows, with a heap of their own for what their widgets hold. */
+    private static ProgramWindows desktop() {
+        return new ProgramWindows(new Heap(64L * 1024));
+    }
+
     @Test
     void open_numbersTheWindowsInTheOrderTheyOpen() {
-        final ProgramWindows windows = new ProgramWindows();
+        final ProgramWindows windows = desktop();
         final Values.Obj first = window("first");
         final Values.Obj second = window("second");
 
@@ -40,7 +45,7 @@ class ProgramWindowsTest {
 
     @Test
     void open_leavesAWindowAlreadyOpenAsItIs() {
-        final ProgramWindows windows = new ProgramWindows();
+        final ProgramWindows windows = desktop();
         final Values.Obj first = window("first");
         windows.open(first, 1);
 
@@ -52,7 +57,7 @@ class ProgramWindowsTest {
 
     @Test
     void open_haltsPastTheMostWindows() {
-        final ProgramWindows windows = new ProgramWindows();
+        final ProgramWindows windows = desktop();
         for (int i = 0; i < ProgramWindows.MOST_WINDOWS; i++) {
             windows.open(window("window " + i), 1);
         }
@@ -62,7 +67,7 @@ class ProgramWindowsTest {
 
     @Test
     void close_takesTheWindowOffTheDesktop() {
-        final ProgramWindows windows = new ProgramWindows();
+        final ProgramWindows windows = desktop();
         final Values.Obj first = window("first");
         windows.open(first, 1);
 
@@ -75,7 +80,7 @@ class ProgramWindowsTest {
 
     @Test
     void endsNow_onceAPersonShutTheLastWindow() {
-        final ProgramWindows windows = new ProgramWindows();
+        final ProgramWindows windows = desktop();
         final Values.Obj first = window("first");
         windows.open(first, 1);
         windows.close(first);
@@ -88,7 +93,7 @@ class ProgramWindowsTest {
 
     @Test
     void endsNow_notWhenTheProgramOpenedAnotherWindowOnHearingIt() {
-        final ProgramWindows windows = new ProgramWindows();
+        final ProgramWindows windows = desktop();
         final Values.Obj first = window("first");
         windows.open(first, 1);
         windows.close(first);
@@ -101,13 +106,13 @@ class ProgramWindowsTest {
 
     @Test
     void restoreEnding_bringsBackThatAPersonShutTheLastWindow() {
-        final ProgramWindows windows = new ProgramWindows();
+        final ProgramWindows windows = desktop();
         final Values.Obj first = window("first");
         windows.open(first, 1);
         windows.close(first);
         windows.closedByPerson();
 
-        final ProgramWindows restored = new ProgramWindows();
+        final ProgramWindows restored = desktop();
         restored.restoreEnding(windows.endWithWindows());
 
         assertTrue(restored.endsNow());
@@ -115,7 +120,7 @@ class ProgramWindowsTest {
 
     @Test
     void startFrom_carriesOnNumberingFromASave() {
-        final ProgramWindows windows = new ProgramWindows();
+        final ProgramWindows windows = desktop();
         windows.startFrom(5, 9);
         final Values.Obj first = window("first");
 

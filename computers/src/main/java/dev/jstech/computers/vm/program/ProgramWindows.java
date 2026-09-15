@@ -8,13 +8,16 @@
 package dev.jstech.computers.vm.program;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * The windows a process has open on its machine's desktop, and the numbers its windows and widgets are known by.
  *
  * <p>A window is the program's own object, so what it shows is written down and brought back with the program; this
- * is the list of the ones that are open, which is what the machine draws, in the order the program opened them.
+ * is the list of the ones that are open, which is what the machine draws, in the order the program opened them. Every
+ * change to a window or a widget, the program's or a player's, goes through the one {@link UiMutator} kept here, which
+ * sees these windows as they are.
  */
 final class ProgramWindows {
 
@@ -27,6 +30,17 @@ final class ProgramWindows {
     private long nextWidget = 1;
     /** Set when a person shut the last window: the program ends once it has heard about it. */
     private boolean endWithWindows;
+    /** The one door every change to a window or a widget goes through. */
+    private final UiMutator mutator;
+
+    ProgramWindows(final Heap heap) {
+        this.mutator = new UiMutator(heap, Collections.unmodifiableList(this.open));
+    }
+
+    /** The one door every change to a window or a widget goes through, whether the program or a player makes it. */
+    UiMutator mutator() {
+        return this.mutator;
+    }
 
     /** Puts a window on the desktop under the next number; one already open stays as it is. */
     void open(final Values.Obj window, final int line) {
