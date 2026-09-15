@@ -8,6 +8,9 @@
 package dev.jstech.computers.sigma.sem;
 
 import dev.jstech.computers.sigma.ast.IDecl;
+import dev.jstech.computers.vm.system.MethodSpec;
+import dev.jstech.computers.vm.system.SystemApi;
+import dev.jstech.computers.vm.system.TypeSpec;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,6 +29,8 @@ public final class BuiltIns {
 
     private static final Set<IDecl.Modifier> PUBLIC = Set.of(IDecl.Modifier.PUBLIC);
     private static final Set<IDecl.Modifier> PUBLIC_STATIC = Set.of(IDecl.Modifier.PUBLIC, IDecl.Modifier.STATIC);
+    /** How a declaration marks a parameter the method fills in. */
+    private static final String OUT = "out ";
 
     private final Map<String, NamedType> types = new LinkedHashMap<>();
 
@@ -53,9 +58,8 @@ public final class BuiltIns {
         this.fillMap();
         this.fillDelegates();
         this.fillScript();
-        this.fillMath();
+        this.fillDeclared();
         this.fillConsole();
-        this.fillConvert();
         this.fillProgram();
         this.fillThreading();
         this.fillTime();
@@ -145,7 +149,7 @@ public final class BuiltIns {
             Map.entry("ProcessMessage", EXECUTION), Map.entry("Thread", THREADING),
             Map.entry("List", COLLECTIONS), Map.entry("Map", COLLECTIONS),
             Map.entry("Console", IO), Map.entry("File", IO),
-            Map.entry("Math", UTILS), Map.entry("Convert", UTILS), Map.entry("Random", UTILS), Map.entry("Time", UTILS),
+            Map.entry("Random", UTILS), Map.entry("Time", UTILS),
             Map.entry("Computer", MACHINE), Map.entry("CpuInfo", MACHINE), Map.entry("DiskInfo", MACHINE),
             Map.entry("OsInfo", MACHINE), Map.entry("ProcessInfo", MACHINE),
             Map.entry("Network", NETWORK), Map.entry("ServerInfo", NETWORK), Map.entry("HoldingInfo", NETWORK),
@@ -189,12 +193,22 @@ public final class BuiltIns {
                 return true;
             }
         }
+        for (final TypeSpec declared : SystemApi.types()) {
+            if (declared.namespace().equals(prefix) || declared.namespace().startsWith(prefix + ".")) {
+                return true;
+            }
+        }
         return false;
     }
 
     /** The namespace a bare name would be found in, or null when the language has no type of that name there. */
     public String homeOf(final String name) {
-        return HOMES.get(name);
+        final String home = HOMES.get(name);
+        if (home != null) {
+            return home;
+        }
+        final TypeSpec declared = SystemApi.type(name);
+        return declared == null ? null : declared.namespace();
     }
 
     /** Every namespace the language has, System first, for a list that offers them. */
@@ -323,23 +337,69 @@ public final class BuiltIns {
         this.method(this.scriptType, "OnDestroy", ITypeSymbol.Primitive.VOID, PUBLIC);
     }
 
-    private void fillMath() {
-        final NamedType math = this.declare("Math", NamedType.Kind.CLASS);
-        final ITypeSymbol integer = ITypeSymbol.Primitive.INT;
-        final ITypeSymbol real = ITypeSymbol.Primitive.DOUBLE;
-        this.method(math, "Abs", integer, PUBLIC_STATIC, integer);
-        this.method(math, "Abs", real, PUBLIC_STATIC, real);
-        this.method(math, "Min", integer, PUBLIC_STATIC, integer, integer);
-        this.method(math, "Min", real, PUBLIC_STATIC, real, real);
-        this.method(math, "Max", integer, PUBLIC_STATIC, integer, integer);
-        this.method(math, "Max", real, PUBLIC_STATIC, real, real);
-        this.method(math, "Clamp", integer, PUBLIC_STATIC, integer, integer, integer);
-        this.method(math, "Clamp", real, PUBLIC_STATIC, real, real, real);
-        this.method(math, "Floor", real, PUBLIC_STATIC, real);
-        this.method(math, "Ceil", real, PUBLIC_STATIC, real);
-        this.method(math, "Round", real, PUBLIC_STATIC, real);
-        this.method(math, "Sqrt", real, PUBLIC_STATIC, real);
-        this.method(math, "Pow", real, PUBLIC_STATIC, real, real);
+    /**
+     * The library's and the machine's types, as the system declares them. Every one is named before any is filled in,
+     * so a member may speak of a type declared after its own.
+     */
+    private void fillDeclared() {
+        final List<TypeSpec> specs = SystemApi.types();
+        final List<NamedType> named = new ArrayList<>(specs.size());
+        for (final TypeSpec spec : specs) {
+            final NamedType type = this.declare(spec.name(), NamedType.Kind.CLASS);
+            type.setNamespace(spec.namespace());
+            named.add(type);
+        }
+        for (int i = 0; i < specs.size(); i++) {
+            final NamedType type = named.get(i);
+            for (final MethodSpec method : specs.get(i).methods()) {
+                final List<IMemberSymbol.ParameterSymbol> parameters = new ArrayList<>();
+                for (final String written : method.id().parameters()) {
+                    final boolean outward = written.startsWith(OUT);
+                    parameters.add(new IMemberSymbol.ParameterSymbol("a" + parameters.size(),
+                            this.resolve(outward ? written.substring(OUT.length()) : written), outward));
+                }
+                type.addMember(new IMemberSymbol.MethodSymbol(type, method.id().name(), this.resolve(method.returns()),
+                        parameters, method.isStatic() ? PUBLIC_STATIC : PUBLIC));
+            }
+        }
+    }
+
+    /**
+     * The type a declaration names, written as a listing writes it: {@code int}, {@code string},
+     * {@code List<DiskInfo>}, {@code Action<StockEvent>}.
+     */
+    private ITypeSymbol resolve(final String written) {
+        final String text = written.strip();
+        final int open = text.indexOf('<');
+        if (open > 0 && text.endsWith(">")) {
+            final List<ITypeSymbol> arguments = new ArrayList<>();
+            int depth = 0;
+            int from = open + 1;
+            for (int i = from; i < text.length() - 1; i++) {
+                final char c = text.charAt(i);
+                if (c == '<') {
+                    depth++;
+                } else if (c == '>') {
+                    depth--;
+                } else if (c == ',' && depth == 0) {
+                    arguments.add(this.resolve(text.substring(from, i)));
+                    from = i + 1;
+                }
+            }
+            arguments.add(this.resolve(text.substring(from, text.length() - 1)));
+            return new ITypeSymbol.GenericType(this.known(text.substring(0, open), arguments.size()), arguments);
+        }
+        final ITypeSymbol.Primitive primitive = ITypeSymbol.Primitive.written(text);
+        return primitive != null ? primitive : this.known(text, 0);
+    }
+
+    /** The type of that name and arity, which a declaration may only name once it exists. */
+    private NamedType known(final String name, final int arity) {
+        final NamedType type = this.type(name, arity);
+        if (type == null) {
+            throw new IllegalStateException("the system declares a member with the unknown type " + name);
+        }
+        return type;
     }
 
     private void fillConsole() {
@@ -361,32 +421,6 @@ public final class BuiltIns {
         this.method(console, "ReadLong", ITypeSymbol.Primitive.LONG, PUBLIC_STATIC);
         this.method(console, "ReadDouble", ITypeSymbol.Primitive.DOUBLE, PUBLIC_STATIC);
         this.method(console, "ReadBool", ITypeSymbol.Primitive.BOOL, PUBLIC_STATIC);
-    }
-
-    private void fillConvert() {
-        final NamedType convert = this.declare("Convert", NamedType.Kind.CLASS);
-        this.method(convert, "ToInt", ITypeSymbol.Primitive.INT, PUBLIC_STATIC, this.stringType);
-        this.method(convert, "ToLong", ITypeSymbol.Primitive.LONG, PUBLIC_STATIC, this.stringType);
-        this.method(convert, "ToFloat", ITypeSymbol.Primitive.FLOAT, PUBLIC_STATIC, this.stringType);
-        this.method(convert, "ToDouble", ITypeSymbol.Primitive.DOUBLE, PUBLIC_STATIC, this.stringType);
-        this.method(convert, "ToBool", ITypeSymbol.Primitive.BOOL, PUBLIC_STATIC, this.stringType);
-        this.method(convert, "ToString", this.stringType, PUBLIC_STATIC, this.objectType);
-        /*
-         * The Try forms answer whether the text was a value and hand the value out sideways, for a
-         * program that would rather ask again than stop on a line somebody mistyped.
-         */
-        this.tries(convert, "TryInt", ITypeSymbol.Primitive.INT);
-        this.tries(convert, "TryLong", ITypeSymbol.Primitive.LONG);
-        this.tries(convert, "TryDouble", ITypeSymbol.Primitive.DOUBLE);
-        this.tries(convert, "TryBool", ITypeSymbol.Primitive.BOOL);
-    }
-
-    /** Declares {@code bool Name(string text, out T value)} on the converter. */
-    private void tries(final NamedType convert, final String name, final ITypeSymbol value) {
-        convert.addMember(new IMemberSymbol.MethodSymbol(convert, name, ITypeSymbol.Primitive.BOOL,
-                List.of(IMemberSymbol.ParameterSymbol.of("text", this.stringType),
-                        new IMemberSymbol.ParameterSymbol("value", value, true)),
-                PUBLIC_STATIC));
     }
 
     /**
