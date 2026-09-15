@@ -33,6 +33,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   arguments)` and `restore(binary, saved, view)` take an `IMachineView` in place of the block entity and the memory
   size. The view tells the machine's time and how much memory the program may hold, and takes the lines the program
   prints, which the machine keeps; a language's processes no longer report `console()`, `written()` or `heapBytes()`.
+- A computer saves its running programs in a new form: a listing several programs run is saved once, and a program in
+  an addon's language is saved with the language's id and the version of what it wrote. A program whose language is
+  no longer installed is left out alone, and a save the computer cannot read brings no program back, which its
+  terminal says the next time it is used. Programs running in a world saved before this version do not come back.
+  For addon authors, `restore` is given the `stateVersion()` the program was saved with.
 - Programs run faster. What a program's calls, branches and `new` reach is worked out once, when the program
   loads, instead of on every line it runs, and so is which of the language's own functions (text, `List`,
   `Map`, `Math`, `Convert`) a call means. Depending on what a program does, each instruction takes between 13

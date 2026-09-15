@@ -120,7 +120,8 @@ public class TickerBenchmarks {
         }
 
         @Override
-        public ILanguageProcess restore(final String binary, final CompoundTag saved, final IMachineView machine) {
+        public ILanguageProcess restore(final String binary, final CompoundTag saved, final int version,
+                                        final IMachineView machine) {
             return new BusyProcess();
         }
     }

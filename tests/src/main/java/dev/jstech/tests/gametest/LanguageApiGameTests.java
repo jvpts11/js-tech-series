@@ -80,7 +80,7 @@ public final class LanguageApiGameTests {
          */
         final CompoundTag saved = new CompoundTag();
         one.process().save(saved);
-        final ILanguageProcess again = new ToyLanguage().restore(SOURCE, saved, nowhere());
+        final ILanguageProcess again = new ToyLanguage().restore(SOURCE, saved, ToyLanguage.STATE_VERSION, nowhere());
         helper.assertTrue(again != null && again.spent() == 3,
                 "a program comes back where it was; got " + (again == null ? "nothing" : again.spent()));
         helper.succeed();
@@ -100,20 +100,49 @@ public final class LanguageApiGameTests {
                 computer.programs().start("count.toy", "count 100000", 1, computer);
         helper.assertTrue(started.ok(), "the program starts: " + started.message());
         computer.programs().hold(started.id());
+        final MachinePrograms.Started other = computer.programs().start("hello.sgs", HELLO, 1, computer);
+        helper.assertTrue(other.ok(), "a Σ# program starts beside it: " + other.message());
         final var registries = helper.getLevel().registryAccess();
         final CompoundTag saved = computer.saveWithFullMetadata(registries);
         /*
-         * The registry is closed while the game runs, so the language cannot be taken away; the save names a kind
-         * of file nothing runs instead, which is what a machine finds when the language that ran a program is gone.
+         * The registry is closed while the game runs, so the language cannot be taken away; the save names a language
+         * nothing installed is called instead, which is what a machine finds when the language of a program is gone.
          */
-        saved.getCompound("Σ#").getList("programs", Tag.TAG_COMPOUND).getCompound(0).putString("name", "count.gone");
+        saved.getCompound("Σ#").getList("programs", Tag.TAG_COMPOUND).getCompound(0).getCompound("hosted")
+                .putString("language", JsTests.MODID + ":gone");
         computer.loadWithComponents(saved, registries);
         helper.assertTrue(computer.programs().byId(started.id()) == null,
                 "the program does not come back without its language");
+        helper.assertTrue(computer.programs().byId(other.id()) != null,
+                "the program whose language is there comes back all the same");
         helper.assertTrue(computer.programs().held() == 0,
                 "and the terminal holds nothing; got " + computer.programs().held());
         helper.assertTrue(new ServerCliComputer(computer, helper.getLevel()).foreground() == null,
                 "so the prompt takes what is typed again");
+        helper.succeed();
+    }
+
+    /**
+     * A language is told the version of itself its program was saved by, so it can refuse what a later version wrote;
+     * the program it refuses is left out alone.
+     */
+    @GameTest(template = ARENA)
+    public static void load_tellsALanguageTheVersionItsProgramWasSavedBy(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        final MachinePrograms.Started kept = computer.programs().start("kept.toy", "count 100000", 1, computer);
+        final MachinePrograms.Started later = computer.programs().start("later.toy", "count 100000", 1, computer);
+        helper.assertTrue(kept.ok() && later.ok(), "both start: " + kept.message() + " / " + later.message());
+        final var registries = helper.getLevel().registryAccess();
+        final CompoundTag saved = computer.saveWithFullMetadata(registries);
+        saved.getCompound("Σ#").getList("programs", Tag.TAG_COMPOUND).getCompound(1).getCompound("hosted")
+                .putInt("version", ToyLanguage.STATE_VERSION + 1);
+        computer.loadWithComponents(saved, registries);
+        helper.assertTrue(computer.programs().byId(kept.id()) != null,
+                "a program saved by the version of the language that is installed comes back");
+        helper.assertTrue(computer.programs().byId(later.id()) == null,
+                "one saved by a later version of it is left out");
         helper.succeed();
     }
 

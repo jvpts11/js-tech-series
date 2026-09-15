@@ -1540,16 +1540,18 @@ public final class ServerCliComputer implements ICliComputer {
     @Override
     public java.util.List<String> drainBuildNotices() {
         settleBuilds();
+        final java.util.List<String> out = new ArrayList<>();
+        // What the machine itself has to say goes first: it happened as the world loaded, before any build finished.
+        if (hostBlock instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity computer) {
+            for (final String notice : computer.programs().drainNotices()) {
+                out.add(">>> " + notice);
+            }
+        }
         final dev.jstech.computers.program.ComputerConsoleState console = host.console();
-        if (console == null) {
-            return java.util.List.of();
+        final java.util.List<String> finished = console == null ? java.util.List.of() : console.drainFinishedBuilds();
+        if (!finished.isEmpty()) {
+            hostBlock.setChanged();
         }
-        final java.util.List<String> finished = console.drainFinishedBuilds();
-        if (finished.isEmpty()) {
-            return java.util.List.of();
-        }
-        hostBlock.setChanged();
-        final java.util.List<String> out = new ArrayList<>(finished.size());
         for (final String id : finished) {
             final dev.jstech.computers.os.ProgramSpec spec =
                     OsRegistry.getProgram(net.minecraft.resources.ResourceLocation.tryParse(id));

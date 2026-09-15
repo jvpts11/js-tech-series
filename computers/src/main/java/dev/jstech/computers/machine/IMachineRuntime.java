@@ -9,7 +9,9 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.vm.program.IProgramRuntime;
 import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.core.language.IProgrammingLanguage;
 import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A program as a machine runs it: what every language gives a machine, what the machine keeps of every program (what it
@@ -32,6 +34,12 @@ public interface IMachineRuntime extends ILanguageProcess, IProgramRuntime {
 
     /** How many bytes it may hold at once. */
     long heapBytes();
+
+    /** The language that runs the program, or null for one the machine runs from a listing itself. */
+    @Nullable
+    default IProgrammingLanguage language() {
+        return null;
+    }
 
     /**
      * Lets the program say goodbye out of at most {@code budget} instructions, and says how many it used. A runtime

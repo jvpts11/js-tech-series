@@ -8,6 +8,7 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.core.language.IProgrammingLanguage;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.nbt.CompoundTag;
@@ -24,12 +25,20 @@ final class HostedRuntime implements IMachineRuntime {
     private final ILanguageProcess process;
     /** The program's view of the machine, which keeps what it writes and knows how much it may hold. */
     private final HostedView view;
+    /** The language that started or brought the program back, which a save names beside it. */
+    private final IProgrammingLanguage language;
     /** Whether the machine has been told the program ended, which its language has no way to say itself. */
     private boolean told;
 
-    HostedRuntime(final ILanguageProcess process, final HostedView view) {
+    HostedRuntime(final ILanguageProcess process, final HostedView view, final IProgrammingLanguage language) {
         this.process = process;
         this.view = view;
+        this.language = language;
+    }
+
+    @Override
+    public IProgrammingLanguage language() {
+        return this.language;
     }
 
     @Override

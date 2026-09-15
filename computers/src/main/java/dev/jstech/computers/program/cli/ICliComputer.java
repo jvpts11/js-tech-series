@@ -329,8 +329,9 @@ public interface ICliComputer {
     }
 
     /**
-     * One notice per source build that finished since the shell last asked (returned once, then forgotten):
-     * a build completes while the player is elsewhere, so the shell prints these ahead of the next command.
+     * What the shell prints ahead of the next command, each returned once and then forgotten: what the machine itself
+     * has to say (programs a save could not bring back), and one notice per source build that finished since the shell
+     * last asked, since a build completes while the player is elsewhere.
      */
     default java.util.List<String> drainBuildNotices() {
         return java.util.List.of();

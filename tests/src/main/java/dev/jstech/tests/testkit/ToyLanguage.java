@@ -35,6 +35,9 @@ public final class ToyLanguage implements IProgrammingLanguage {
     /** A program that prints how many bytes it may hold, once. */
     public static final String QUOTA = "quota";
 
+    /** The version of what a toy program writes when saved; a state written by a later version is not read. */
+    public static final int STATE_VERSION = 1;
+
     /** How a program that counts starts: {@code count 3} prints 1, 2 and 3, a line a step. */
     private static final String COUNT = "count ";
 
@@ -95,8 +98,15 @@ public final class ToyLanguage implements IProgrammingLanguage {
     }
 
     @Override
-    public ILanguageProcess restore(final String binary, final CompoundTag saved, final IMachineView machine) {
-        return new ToyProcess(binary.trim(), machine, saved.getInt("Counted"));
+    public int stateVersion() {
+        return STATE_VERSION;
+    }
+
+    @Override
+    public ILanguageProcess restore(final String binary, final CompoundTag saved, final int version,
+                                    final IMachineView machine) {
+        // What a later version of the language wrote is not something this one can read.
+        return version > STATE_VERSION ? null : new ToyProcess(binary.trim(), machine, saved.getInt("Counted"));
     }
 
     /** How many lines a program prints: as many as it counts to, or one for the time or the memory. */

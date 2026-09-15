@@ -130,11 +130,24 @@ public interface IProgrammingLanguage {
     }
 
     /**
+     * The version of what this language's programs write when they are saved. A machine keeps it beside each saved
+     * program and hands it back to {@link #restore}, so a language that changed what it writes can still read, or
+     * refuse, what an earlier version of it wrote.
+     */
+    default int stateVersion() {
+        return 1;
+    }
+
+    /**
      * Reads a program back out of what {@link ILanguageProcess#save} wrote, with a view of the machine of its own.
      * Only asked of a language with binary extensions, like {@link #start}.
+     *
+     * @param version the {@link #stateVersion()} of the language that saved the program
+     * @return the program carrying on, or null to leave it out; the machine and its other programs load either way
      */
     @Nullable
-    default ILanguageProcess restore(final String binary, final CompoundTag saved, final IMachineView machine) {
+    default ILanguageProcess restore(final String binary, final CompoundTag saved, final int version,
+                                     final IMachineView machine) {
         return null;
     }
 }

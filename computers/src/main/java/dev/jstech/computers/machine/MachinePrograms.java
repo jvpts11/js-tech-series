@@ -7,8 +7,10 @@
  */
 package dev.jstech.computers.machine;
 
+import com.mojang.logging.LogUtils;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramEntry;
+import dev.jstech.computers.vm.program.ProgramImage;
 import dev.jstech.computers.vm.program.ProgramPriority;
 import dev.jstech.computers.vm.program.ProgramTable;
 import dev.jstech.computers.vm.program.Values;
@@ -17,8 +19,10 @@ import dev.jstech.core.language.ExecutionBalance;
 import dev.jstech.core.language.ILanguageProcess;
 import dev.jstech.core.language.IProgrammingLanguage;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Predicate;
 import java.util.function.ToLongFunction;
@@ -26,8 +30,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 /**
  * The programs one computer is running, in whatever languages are registered.
@@ -59,6 +65,8 @@ public final class MachinePrograms {
     /** Who is waiting on a machine with no world to ask: nobody that can be found. */
     private static final Predicate<IProgramParent.Remote> NO_WORLD = parent -> false;
 
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     /** What came of asking for a program to start: its number, or why it did not. */
     public record Started(int id, String message) {
 
@@ -76,6 +84,8 @@ public final class MachinePrograms {
     private final ProgramTicker ticker = new ProgramTicker(this.table, this.focus, this::ended);
     /** How the machine tells a program on another machine that one it started here has ended. */
     private final ObjIntConsumer<IProgramParent.Remote> remoteEnded;
+    /** What the machine has to tell its terminal the next time it is used, such as programs a save left out. */
+    private final List<String> notices = new ArrayList<>();
 
     /** Programs with no machine around them, where nothing on another machine can be told anything. */
     public MachinePrograms() {
@@ -181,8 +191,19 @@ public final class MachinePrograms {
     }
 
     /** What runs a program a language started or brought back, keeping what it writes in the view it was given. */
-    private static IMachineRuntime runtimeOf(final ILanguageProcess process, final HostedView view) {
-        return process instanceof IMachineRuntime runtime ? runtime : new HostedRuntime(process, view);
+    private static IMachineRuntime runtimeOf(final ILanguageProcess process, final HostedView view,
+                                             final IProgrammingLanguage language) {
+        return process instanceof IMachineRuntime runtime ? runtime : new HostedRuntime(process, view, language);
+    }
+
+    /** What the machine has to tell its terminal, oldest first; each is handed over once. */
+    public List<String> drainNotices() {
+        if (this.notices.isEmpty()) {
+            return List.of();
+        }
+        final List<String> told = List.copyOf(this.notices);
+        this.notices.clear();
+        return told;
     }
 
     /** Lets the terminal go, clearing the program away if it had already finished. */
@@ -261,7 +282,7 @@ public final class MachinePrograms {
             if (started == null) {
                 return Started.failed(name + ": this is not something " + runner.displayName() + " can run");
             }
-            process = runtimeOf(started, view);
+            process = runtimeOf(started, view, runner);
         }
         final int id = this.table.takeId();
         process.identify(id);
@@ -422,6 +443,20 @@ public final class MachinePrograms {
 
     // across a reload
 
+    /**
+     * The form a machine's programs are written in. A save in any other form is not read and never converted: the
+     * programs in it are left out, and the machine says so.
+     */
+    private static final int FORMAT = 1;
+
+    private static final String FORMAT_KEY = "format";
+    private static final String LISTINGS = "listings";
+    private static final String CHECKSUM = "checksum";
+    private static final String TEXT = "text";
+    private static final String LISTING = "listing";
+    private static final String HOSTED = "hosted";
+    private static final String LANGUAGE = "language";
+    private static final String VERSION = "version";
     private static final String PROGRAMS = "programs";
     private static final String NEXT = "next";
     private static final String ID = "id";
@@ -436,14 +471,31 @@ public final class MachinePrograms {
     private static final String ARGS = "args";
     private static final String PRIORITY = "priority";
 
-    /** Writes every running program down. */
+    /**
+     * Writes every running program down.
+     *
+     * <p>A listing is written once however many programs run it, and each of them names it by its checksum. A program
+     * of another language is written inside an envelope naming that language and the version of what it wrote.
+     */
     public void save(final CompoundTag tag) {
         final ListTag written = new ListTag();
+        final Map<String, String> listings = new LinkedHashMap<>();
         for (final ProgramEntry<IMachineRuntime> one : this.table.running()) {
             final CompoundTag each = new CompoundTag();
             each.putInt(ID, one.id());
             each.putString(NAME, one.file());
-            each.putString(BINARY, one.binary());
+            final IProgrammingLanguage language = one.process().language();
+            if (language == null) {
+                final String checksum = ProgramImage.checksumOf(one.binary());
+                listings.putIfAbsent(checksum, one.binary());
+                each.putString(LISTING, checksum);
+            } else {
+                final CompoundTag envelope = new CompoundTag();
+                envelope.putString(LANGUAGE, language.id().toString());
+                envelope.putInt(VERSION, language.stateVersion());
+                envelope.putString(BINARY, one.binary());
+                each.put(HOSTED, envelope);
+            }
             each.putInt(HEAP, one.heapMb());
             each.putInt(PARENT, one.parent() instanceof IProgramParent.Local local ? local.program() : 0);
             if (one.parent() instanceof IProgramParent.Remote remote) {
@@ -464,39 +516,50 @@ public final class MachinePrograms {
             each.put(STATE, state);
             written.add(each);
         }
+        final ListTag kept = new ListTag();
+        for (final Map.Entry<String, String> listing : listings.entrySet()) {
+            final CompoundTag each = new CompoundTag();
+            each.putString(CHECKSUM, listing.getKey());
+            each.putString(TEXT, listing.getValue());
+            kept.add(each);
+        }
+        tag.putInt(FORMAT_KEY, FORMAT);
+        tag.put(LISTINGS, kept);
         tag.put(PROGRAMS, written);
         tag.putInt(NEXT, this.table.nextId());
         this.focus.save(tag);
         this.ticker.save(tag);
     }
 
-    /** Reads them back, each one carrying on from where it stopped. */
+    /**
+     * Reads them back, each one carrying on from where it stopped.
+     *
+     * <p>A save in another form, or one naming a listing it does not hold, brings nothing back: every program in it is
+     * left out, with a line in the log and a notice for the machine's terminal. A program whose language is not
+     * installed, or whose language does not take what it wrote, is left out alone.
+     */
     public void load(final CompoundTag tag, final BlockEntity machine) {
+        final ListTag written = tag.getList(PROGRAMS, Tag.TAG_COMPOUND);
+        final Map<String, String> listings = tag.getInt(FORMAT_KEY) == FORMAT ? listingsOf(tag) : null;
+        if (listings == null || !namesOnlyWhatItHolds(written, listings)) {
+            this.discard(machine);
+            return;
+        }
         this.table.restart(tag.getInt(NEXT));
         this.focus.load(tag);
         this.ticker.load(tag);
-        final ListTag written = tag.getList(PROGRAMS, Tag.TAG_COMPOUND);
         for (int i = 0; i < written.size(); i++) {
             final CompoundTag each = written.getCompound(i);
             final String name = each.getString(NAME);
-            final int dot = name.lastIndexOf('.');
-            final String extension = dot < 0 ? "" : name.substring(dot + 1).toLowerCase(Locale.ROOT);
-            final IProgrammingLanguage runner =
-                    MachineListing.claims(extension) ? null : JsCore.languages().runnerOf(extension);
+            final String binary;
             final IMachineRuntime process;
-            if (runner != null) {
-                final HostedView view =
-                        new HostedView(machine, (long) Math.clamp(each.getInt(HEAP), 1, MAX_HEAP_MB) * 1024 * 1024);
-                final ILanguageProcess restored = runner.restore(each.getString(BINARY), each.getCompound(STATE), view);
-                process = restored == null ? null : runtimeOf(restored, view);
+            if (each.contains(HOSTED, Tag.TAG_COMPOUND)) {
+                final CompoundTag envelope = each.getCompound(HOSTED);
+                binary = envelope.getString(BINARY);
+                process = restoreHosted(name, envelope, each.getCompound(STATE), each.getInt(HEAP), machine);
             } else {
-                /*
-                 * What no language runs was the machine's own: a listing, or source compiled on the way in, which was
-                 * kept as its listing, whether or not the language it was written in is still installed. What is not
-                 * a listing belonged to a language that is gone, and dropping the program is better than refusing to
-                 * load the machine it was on.
-                 */
-                process = MachineListing.restore(each.getString(BINARY), each.getCompound(STATE), machine);
+                binary = listings.get(each.getString(LISTING));
+                process = MachineListing.restore(binary, each.getCompound(STATE), machine);
             }
             if (process != null) {
                 final List<String> args = new ArrayList<>();
@@ -505,13 +568,86 @@ public final class MachinePrograms {
                     args.add(given.getString(j));
                 }
                 process.identify(each.getInt(ID));
-                this.table.add(new ProgramEntry<>(each.getInt(ID), name, each.getString(BINARY),
+                this.table.add(new ProgramEntry<>(each.getInt(ID), name, binary,
                         each.getInt(HEAP), process, parentOf(each), args,
                         ProgramPriority.named(each.getString(PRIORITY))));
             }
         }
         // The program the terminal held may not have come back, and the terminal cannot stay pointed at nothing.
         this.focus.letGoOfMissing();
+    }
+
+    /** The listings a save holds, by checksum, or null when one of them is not the text its checksum names. */
+    @Nullable
+    private static Map<String, String> listingsOf(final CompoundTag tag) {
+        final ListTag kept = tag.getList(LISTINGS, Tag.TAG_COMPOUND);
+        final Map<String, String> listings = new LinkedHashMap<>();
+        for (int i = 0; i < kept.size(); i++) {
+            final CompoundTag each = kept.getCompound(i);
+            final String text = each.getString(TEXT);
+            if (!ProgramImage.checksumOf(text).equals(each.getString(CHECKSUM))) {
+                return null;
+            }
+            listings.put(each.getString(CHECKSUM), text);
+        }
+        return listings;
+    }
+
+    /** Whether every program in a save names a listing the save holds, or sits in an envelope naming its language. */
+    private static boolean namesOnlyWhatItHolds(final ListTag written, final Map<String, String> listings) {
+        for (int i = 0; i < written.size(); i++) {
+            final CompoundTag each = written.getCompound(i);
+            final boolean hosted = each.contains(HOSTED, Tag.TAG_COMPOUND)
+                    && !each.getCompound(HOSTED).getString(LANGUAGE).isBlank();
+            if (!hosted && !listings.containsKey(each.getString(LISTING))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Brings a program of another language back out of its envelope, or null when that language is not installed or
+     * does not take what the program wrote; either way the log says which program was left out.
+     */
+    @Nullable
+    private static IMachineRuntime restoreHosted(final String name, final CompoundTag envelope, final CompoundTag state,
+                                                 final int heapMb, final BlockEntity machine) {
+        final String named = envelope.getString(LANGUAGE);
+        final ResourceLocation id = ResourceLocation.tryParse(named);
+        final IProgrammingLanguage language = id == null ? null : JsCore.languages().get(id);
+        if (language == null) {
+            LOGGER.warn("The program '{}' on the machine at {} was left out: no language called {} is installed", name,
+                    where(machine), named);
+            return null;
+        }
+        final HostedView view = new HostedView(machine, (long) Math.clamp(heapMb, 1, MAX_HEAP_MB) * 1024 * 1024);
+        final ILanguageProcess restored =
+                language.restore(envelope.getString(BINARY), state, envelope.getInt(VERSION), view);
+        if (restored == null) {
+            LOGGER.warn("The program '{}' on the machine at {} was left out: {} did not bring it back", name,
+                    where(machine), named);
+            return null;
+        }
+        return runtimeOf(restored, view, language);
+    }
+
+    /**
+     * Forgets all a save held of the machine's programs, as a machine does with a save it cannot read: nothing written
+     * in another form is guessed at. The log says so, and so does the machine's terminal the next time it is used.
+     */
+    private void discard(@Nullable final BlockEntity machine) {
+        this.table.restart(0);
+        this.focus.load(new CompoundTag());
+        this.ticker.load(new CompoundTag());
+        LOGGER.warn("The programs saved on the machine at {} were left out: the save is not in a form this version "
+                + "reads", where(machine));
+        this.notices.add("the programs that were running could not be brought back from the save");
+    }
+
+    /** Where a machine is, for the log. */
+    private static Object where(@Nullable final BlockEntity machine) {
+        return machine == null ? "no place" : machine.getBlockPos();
     }
 
     /** The program that started this one: on another machine, on this one, or none. */

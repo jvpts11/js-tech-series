@@ -129,7 +129,8 @@ public final class ProgramImage {
         return this.checksum;
     }
 
-    private static String checksumOf(final String text) {
+    /** A checksum of a text: the same text always gives the same checksum, and a changed text a different one. */
+    public static String checksumOf(final String text) {
         try {
             final byte[] digest = MessageDigest.getInstance("SHA-256").digest(text.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(digest);
