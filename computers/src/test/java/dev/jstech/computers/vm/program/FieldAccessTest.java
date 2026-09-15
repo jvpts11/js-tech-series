@@ -59,7 +59,7 @@ class FieldAccessTest {
 
     private static FieldAccess access() {
         final Process process = new Process(PROGRAM, 64L * 1024, IHost.still());
-        return new FieldAccess(process, process.heap0(), process.library(), PROGRAM);
+        return new FieldAccess(process, process.heap0(), PROGRAM);
     }
 
     private static Frame frame() {

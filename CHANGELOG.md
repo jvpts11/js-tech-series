@@ -113,12 +113,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   written once.
 - A program's calls are matched to the system's declarations when it loads, and answered through them: its console,
   its random numbers, its threads, what it says about itself, its waits on other programs, the calls on its windows
-  and widgets and what they hold, the values it reads of itself and of the language's own text and collections, the
-  widgets, lists and maps it makes, the watches it sets on the network, its calls on the computer's drives, what it
-  reads of the computer itself, its network and its Mainframe, the Operations it asks the network for, the IQL
-  statements it runs, the programs it starts and asks after, on its own computer or another of its network, and
-  its calls through the computer's Gateways, which services the computer keeps answer. A computer keeps the shell
-  its programs reach its drives and its network through, instead of making one for each call.
+  and widgets and what they hold, the values it reads of itself, of the world's clock and of the language's own text
+  and collections, the widgets, lists and maps it makes, the watches it sets on the network, its calls on the
+  computer's drives, what it reads of the computer itself, its network and its Mainframe, the Operations it asks the
+  network for, the IQL statements it runs, the programs it starts and asks after, on its own computer or another of
+  its network, and its calls through the computer's Gateways, which services the computer keeps answer. A computer
+  keeps the shell its programs reach its drives and its network through, instead of making one for each call.
 - Every source file's header names the mod it belongs to.
 
 ### Fixed

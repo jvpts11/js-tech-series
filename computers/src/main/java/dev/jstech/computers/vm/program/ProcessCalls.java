@@ -84,15 +84,15 @@ final class ProcessCalls {
      */
     private static void console(final Map<MemberId, Binding> bindings) {
         bind(bindings, "Console", "Print", null, (process, target, arguments, line) -> {
-            process.library().write(String.valueOf(arguments[0]));
+            process.console0().write(String.valueOf(arguments[0]));
             return null;
         }, STRING);
         bind(bindings, "Console", "PrintLine", null, (process, target, arguments, line) -> {
-            process.library().write(String.valueOf(arguments[0]));
+            process.console0().write(String.valueOf(arguments[0]));
             return null;
         }, STRING);
         bind(bindings, "Console", "Clear", null, (process, target, arguments, line) -> {
-            process.library().clearConsole();
+            process.console0().clear();
             return null;
         });
         bind(bindings, "Console", "ReadLine", LINE,
@@ -111,11 +111,11 @@ final class ProcessCalls {
     /** The program's own random numbers, which a program may start again from a number of its choosing. */
     private static void random(final Map<MemberId, Binding> bindings) {
         bind(bindings, "Random", "Next", null, (process, target, arguments, line) ->
-                process.library().random().next(Numbers.toInt(arguments[0])), "int");
+                process.random().next(Numbers.toInt(arguments[0])), "int");
         bind(bindings, "Random", "NextDouble", null,
-                (process, target, arguments, line) -> process.library().random().nextDouble());
+                (process, target, arguments, line) -> process.random().nextDouble());
         bind(bindings, "Random", "Seed", null, (process, target, arguments, line) -> {
-            process.library().random().startFrom(Numbers.toLong(arguments[0]));
+            process.random().startFrom(Numbers.toLong(arguments[0]));
             return null;
         }, "long");
     }

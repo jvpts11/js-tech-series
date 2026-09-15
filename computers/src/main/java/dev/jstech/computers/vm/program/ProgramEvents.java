@@ -37,7 +37,6 @@ final class ProgramEvents {
     private final Process process;
     private final Heap heap;
     private final ProgramImage program;
-    private final Library library;
     private final CallbackQueue callbacks;
     private final ProgramListeners listeners;
     private final ProgramWindows windows;
@@ -48,7 +47,6 @@ final class ProgramEvents {
         this.process = process;
         this.heap = process.heap0();
         this.program = process.program();
-        this.library = process.library();
         this.callbacks = process.callbacks();
         this.listeners = process.listeners();
         this.windows = process.windows0();

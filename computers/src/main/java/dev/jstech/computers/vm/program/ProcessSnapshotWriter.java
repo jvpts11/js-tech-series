@@ -71,13 +71,12 @@ final class ProcessSnapshotWriter {
             held.add(freeze(heap, numbers.thing(number), number, numbers));
         }
         final ProgramIdentity identity = process.identity();
-        final Library library = process.library();
         return new Snapshot(Snapshot.FORMAT, process.program().checksum(),
                 new Snapshot.HeapShot(heap.budget(), held),
                 new Snapshot.IdentityShot(process.state().serializedName(),
                         identity.message() == null ? "" : identity.message(), identity.spent(), identity.name(),
                         identity.args(), identity.machineId(), identity.exited(), identity.givenExitCode()),
-                new Snapshot.ConsoleShot(library.console(), library.written(), library.randomState()),
+                new Snapshot.ConsoleShot(process.console(), process.written(), process.random().state()),
                 process.input().lines(),
                 new Snapshot.CallbacksShot(queued, process.callbacks().dropped()),
                 new Snapshot.WindowsShot(windowShots, windows.nextWindow(), windows.nextWidget(),

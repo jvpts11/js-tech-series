@@ -65,7 +65,12 @@ public final class Process {
 
     private final ProgramImage program;
     private final Heap heap;
-    private final Library library;
+    /** What the program has written to its console, within the limits of what the console keeps. */
+    private final ProgramConsole console = new ProgramConsole();
+    /** The program's own random numbers. */
+    private final ProgramRandom random = new ProgramRandom();
+    /** What the instruction being carried out costs beyond itself, charged to the turn once it is done. */
+    private int owed;
     /** The process's threads, whose turn it is, and which of the waiting ones may run again. */
     private final ThreadScheduler scheduler = new ThreadScheduler();
     private final ProgramThread main = this.scheduler.main();
@@ -76,7 +81,7 @@ public final class Process {
     private final ThreadScheduler.IWorld world = new ThreadScheduler.IWorld() {
         @Override
         public long now() {
-            return Process.this.library.now();
+            return Process.this.host.tick();
         }
 
         @Override
@@ -130,8 +135,17 @@ public final class Process {
         return this.heap;
     }
 
-    Library library() {
-        return this.library;
+    ProgramConsole console0() {
+        return this.console;
+    }
+
+    ProgramRandom random() {
+        return this.random;
+    }
+
+    /** The machine around the program, which the process reads the world's clock from. */
+    IHost host() {
+        return this.host;
     }
 
     ProgramThread current() {
@@ -195,8 +209,9 @@ public final class Process {
         return this.fieldAccess.statics(owner);
     }
 
+    /** Charges the instruction being carried out that much more, for what it asks beyond itself. */
     void charge(final int more) {
-        this.library.owe(more);
+        this.owed += Math.max(0, more);
     }
 
     /** The calls and values the program reaches in the world. */
@@ -219,11 +234,9 @@ public final class Process {
         this.worldCalls = new WorldCalls(this, program, host);
         this.heap = new Heap(heapBytes);
         this.windows = new ProgramWindows(this.heap);
-        this.library = new Library(this.heap, host, program.entryPoint());
-        this.library.serves(this);
-        this.fieldAccess = new FieldAccess(this, this.heap, this.library, program);
-        this.calls = new CallDispatch(this, this.heap, this.library, program);
-        this.objects = new ObjectMaking(this, this.heap, this.library, program, this.calls);
+        this.fieldAccess = new FieldAccess(this, this.heap, program);
+        this.calls = new CallDispatch(this, this.heap, program);
+        this.objects = new ObjectMaking(this, this.heap, program, this.calls);
         this.executor = new InstructionExecutor(program, this.heap, this.scheduler, this.locks, this.fieldAccess,
                 this.calls, this.objects);
         this.events = new ProgramEvents(this);
@@ -275,12 +288,12 @@ public final class Process {
 
     /** What it has written to its own console. */
     public List<String> console() {
-        return this.library.console();
+        return this.console.lines();
     }
 
     /** How many lines it has written since it started, the ones no longer kept included. */
     public long written() {
-        return this.library.written();
+        return this.console.written();
     }
 
     /** What it is holding, to the byte. */
@@ -428,7 +441,7 @@ public final class Process {
         if (over || gaveUp || (count == 1 && ticks <= 0)) {
             return false;
         }
-        this.scheduler.await(this.current, new IWait.Child(id, host, ticks > 0 ? this.library.now() + ticks : 0L));
+        this.scheduler.await(this.current, new IWait.Child(id, host, ticks > 0 ? this.host.tick() + ticks : 0L));
         return true;
     }
 
@@ -612,7 +625,8 @@ public final class Process {
                  * charged to this tick rather than hidden, so a program that talks to the world all the time
                  * gets through less of itself than one that does its own arithmetic.
                  */
-                used += this.library.drawCost();
+                used += this.owed;
+                this.owed = 0;
                 if (thread.frames.isEmpty()) {
                     this.ended(thread);
                 }
@@ -638,7 +652,7 @@ public final class Process {
      * the fault.
      */
     private Halt fault(final RuntimeException cause, final int line) {
-        this.library.fault(this.name(), line, cause);
+        this.host.fault(this.name(), line, cause);
         return new Halt(Halt.Reason.FAULT, line,
                 "the runtime could not carry this out (" + cause.getClass().getSimpleName() + ")");
     }
@@ -822,7 +836,7 @@ public final class Process {
         }
         final ProgramThread made = this.scheduler.start();
         made.frames.push(new Frame(method, bound.target()));
-        this.library.owe(START_COST);
+        this.charge(START_COST);
         return this.tokenFor(made, line);
     }
 
@@ -840,7 +854,7 @@ public final class Process {
     /** Puts the running thread to sleep for that many ticks; asking for none is asking for nothing. */
     void sleep(final long ticks) {
         if (ticks > 0) {
-            this.scheduler.await(this.current, new IWait.Sleep(this.library.now() + ticks));
+            this.scheduler.await(this.current, new IWait.Sleep(this.host.tick() + ticks));
         }
     }
 
@@ -884,7 +898,7 @@ public final class Process {
         if (target == null || target == this.current || gaveUp || (count == 1 && ticks <= 0)) {
             return false;
         }
-        this.scheduler.await(this.current, new IWait.Join(target.id, ticks > 0 ? this.library.now() + ticks : 0L));
+        this.scheduler.await(this.current, new IWait.Join(target.id, ticks > 0 ? this.host.tick() + ticks : 0L));
         return true;
     }
 
@@ -997,7 +1011,7 @@ public final class Process {
 
     void halt(final Halt halt) {
         this.identity.halt(halt.getMessage());
-        this.library.write(halt.getMessage());
+        this.console.write(halt.getMessage());
         for (final ProgramThread thread : this.scheduler.threads()) {
             thread.frames.clear();
         }

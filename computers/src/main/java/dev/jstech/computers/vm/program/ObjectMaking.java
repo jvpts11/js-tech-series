@@ -20,15 +20,12 @@ final class ObjectMaking {
 
     private final Process process;
     private final Heap heap;
-    private final Library library;
     private final ProgramImage program;
     private final CallDispatch calls;
 
-    ObjectMaking(final Process process, final Heap heap, final Library library, final ProgramImage program,
-                 final CallDispatch calls) {
+    ObjectMaking(final Process process, final Heap heap, final ProgramImage program, final CallDispatch calls) {
         this.process = process;
         this.heap = heap;
-        this.library = library;
         this.program = program;
         this.calls = calls;
     }
@@ -41,7 +38,7 @@ final class ObjectMaking {
             return;
         }
         frame.push(creation.type() == null
-                ? this.library.create(creation.made().owner(), arguments, line)
+                ? this.brought(creation.made().owner(), arguments, line)
                 : this.instance(creation.type(), creation.constructor(), arguments, line));
     }
 
@@ -72,7 +69,7 @@ final class ObjectMaking {
     Object instance(final String type, final List<Object> arguments, final int line) {
         final TypeImage known = this.program.type(type);
         if (known == null) {
-            return this.library.create(type, arguments, line);
+            return this.brought(type, arguments, line);
         }
         return this.instance(known, known.constructor(arguments.size()), arguments, line);
     }
@@ -85,6 +82,19 @@ final class ObjectMaking {
             this.calls.enter(constructor, made, arguments, line);
         }
         return made;
+    }
+
+    /**
+     * One of the things the runtime brings, made by the name of its type: a window or a widget, and anything else one
+     * of the core's collections, a list unless a map.
+     */
+    private Object brought(final String type, final List<Object> arguments, final int line) {
+        final String bare = type.contains("<") ? type.substring(0, type.indexOf('<')) : type;
+        final IObjectMaker widget = WidgetObjects.find(bare);
+        if (widget != null) {
+            return widget.make(this.process, arguments, line);
+        }
+        return CoreObjects.find("Map".equals(bare) ? "Map" : "List").make(this.process, arguments, line);
     }
 
     /** Makes an array of the element type, as long as the number on top of the stack says, and puts it on. */

@@ -26,15 +26,13 @@ final class FieldAccess {
 
     private final Process process;
     private final Heap heap;
-    private final Library library;
     private final ProgramImage program;
     private final Map<String, Values.Obj> statics = new LinkedHashMap<>();
     private final Map<String, Values.Obj> view = Collections.unmodifiableMap(this.statics);
 
-    FieldAccess(final Process process, final Heap heap, final Library library, final ProgramImage program) {
+    FieldAccess(final Process process, final Heap heap, final ProgramImage program) {
         this.process = process;
         this.heap = heap;
-        this.library = library;
         this.program = program;
     }
 
@@ -97,8 +95,8 @@ final class FieldAccess {
         }
         final TypeImage type = this.program.type(field.owner());
         if (type == null) {
-            frame.push(this.library.readStatic(field.owner(), field.name(), line));
-            return;
+            // A value of the world that the machine the program runs on does not answer.
+            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, field.owner() + " has no " + field.name());
         }
         if (type.kind() == AsmType.Kind.ENUM) {
             frame.push(type.values().get(field.name()));

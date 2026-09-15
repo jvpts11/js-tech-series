@@ -21,7 +21,7 @@ import java.util.Map;
 
 /**
  * The values a program reads that its own process or the language's core answers: the program's name and arguments,
- * the thread asking, the length of a text and the size of a collection.
+ * the thread asking, the world's clock, the length of a text and the size of a collection.
  *
  * <p>A program reaches them through the field it loaded with, never by their names while it runs. Every binding names a
  * value the system declares as the process's on the side of the type it is read from, or one of the core's, and that is
@@ -67,6 +67,10 @@ final class ProcessValues {
         onType(bindings, "Program", "DroppedEvents", (process, target, line) -> process.droppedEvents());
         onType(bindings, "Program", "Current", (process, target, line) -> process.selfToken(line));
         onType(bindings, "Thread", "Current", (process, target, line) -> process.tokenFor(process.current(), line));
+        // The world's clock, which the process reads from the machine it runs on.
+        onType(bindings, "Time", "Tick", (process, target, line) -> process.host().tick());
+        onType(bindings, "Time", "DayTime", (process, target, line) -> process.host().dayTime());
+        onType(bindings, "Time", "Day", (process, target, line) -> process.host().day());
         // What the language's core keeps on a text and on the two collections.
         core(bindings, "string", "Length",
                 (process, target, line) -> target instanceof String text ? text.length() : nothing("Length", line));

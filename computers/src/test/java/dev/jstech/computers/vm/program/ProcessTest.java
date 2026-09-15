@@ -862,14 +862,10 @@ class ProcessTest {
         }
 
         @Override
-        public boolean provides(final String owner) {
-            return "Operations".equals(owner);
-        }
-
-        @Override
-        public Reply call(final String owner, final String member, final List<Object> arguments,
-                          final String caller, final int line) {
-            throw new IllegalStateException("the network broke");
+        public IWorldFunction bind(final MemberId id) {
+            return (call, target, arguments, line) -> {
+                throw new IllegalStateException("the network broke");
+            };
         }
     }
 

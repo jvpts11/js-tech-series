@@ -18,7 +18,6 @@ import dev.jstech.computers.sigma.SigmaCompiler;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
-import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.ListingProblem;
 import dev.jstech.computers.vm.system.CallCost;
 import dev.jstech.computers.vm.system.MemberId;
@@ -146,7 +145,7 @@ class CallDispatchTest {
     }
 
     private static CallDispatch dispatch(final Process process) {
-        return new CallDispatch(process, process.heap0(), process.library(), PROGRAM);
+        return new CallDispatch(process, process.heap0(), PROGRAM);
     }
 
     @Test
@@ -160,27 +159,6 @@ class CallDispatchTest {
 
         assertEquals(Arrays.asList(1, null, 2), CallDispatch.take(written, List.of("int", "out int", "int")));
         assertEquals(Arrays.asList(1, null, 2), CallDispatch.take(loaded, new boolean[]{false, true, false}));
-    }
-
-    @Test
-    void push_putsBackTheAnswerThenWhatWasFilledIn() {
-        final Frame frame = new Frame(method("OnTick", List.of()), null);
-
-        CallDispatch.push(frame, new IOperand.Method("Console", "Find", List.of("out int"), "bool"),
-                new Library.Answer(true, List.of(7)));
-
-        assertEquals(7, frame.pop());
-        assertEquals(true, frame.pop());
-    }
-
-    @Test
-    void push_putsBackNoAnswerForACallThatGivesNothing() {
-        final Frame frame = new Frame(method("OnTick", List.of()), null);
-
-        CallDispatch.push(frame, new IOperand.Method("Console", "PrintLine", List.of("string"), "void"),
-                Library.Answer.of(99));
-
-        assertTrue(frame.stack.isEmpty());
     }
 
     @Test

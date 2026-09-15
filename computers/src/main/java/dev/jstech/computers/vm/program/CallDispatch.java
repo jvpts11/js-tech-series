@@ -29,13 +29,11 @@ final class CallDispatch {
 
     private final Process process;
     private final Heap heap;
-    private final Library library;
     private final ProgramImage program;
 
-    CallDispatch(final Process process, final Heap heap, final Library library, final ProgramImage program) {
+    CallDispatch(final Process process, final Heap heap, final ProgramImage program) {
         this.process = process;
         this.heap = heap;
-        this.library = library;
         this.program = program;
     }
 
@@ -77,11 +75,8 @@ final class CallDispatch {
                 this.reach(frame, site, line);
                 return;
             }
-            final List<Object> arguments = take(frame, site.outs());
-            final Object self = this.library.takesTarget(named.owner(), named.name())
-                    ? this.heap.alive(frame.pop(), line) : null;
-            push(frame, named, this.library.call(named, self, arguments, line));
-            return;
+            // A call to the world that the machine the program runs on does not answer.
+            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "the runtime does not answer for " + named.owner());
         }
         final List<Object> arguments = take(frame, site.outs());
         final Object self = direct.isStatic() ? null : this.heap.alive(frame.pop(), line);
@@ -250,16 +245,6 @@ final class CallDispatch {
             if (frame.method.fillsIn(i)) {
                 caller.push(frame.slots[i]);
             }
-        }
-    }
-
-    /** Puts back what a call the machine answered gives, then what it filled in. */
-    static void push(final Frame frame, final IOperand.Method named, final Library.Answer answer) {
-        if (!"void".equals(named.returns())) {
-            frame.push(answer.value());
-        }
-        for (final Object filled : answer.filled()) {
-            frame.push(filled);
         }
     }
 

@@ -228,12 +228,15 @@ public final class SystemApi {
         return new TypeSpec(THREADING, "Thread", thread.members);
     }
 
-    /** The world's clock as the machine reads it, and the one sum on it that needs no machine at all. */
+    /**
+     * The world's clock, which the program's own process reads from its machine for nothing, and the one sum on it that
+     * needs no machine at all.
+     */
     private static TypeSpec time() {
         final Members time = new Members("Time");
-        time.valueOnType(LONG, "Tick", MemberKind.WORLD, CallCost.FREE);
-        time.valueOnType(LONG, "DayTime", MemberKind.WORLD, CallCost.FREE);
-        time.valueOnType(LONG, "Day", MemberKind.WORLD, CallCost.FREE);
+        time.valueOnType(LONG, "Tick", MemberKind.PROCESS, CallCost.FREE);
+        time.valueOnType(LONG, "DayTime", MemberKind.PROCESS, CallCost.FREE);
+        time.valueOnType(LONG, "Day", MemberKind.PROCESS, CallCost.FREE);
         time.pure(LONG, "Ticks", INT);
         return new TypeSpec(UTILS, "Time", time.members);
     }
