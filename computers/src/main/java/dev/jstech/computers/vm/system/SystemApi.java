@@ -42,7 +42,8 @@ public final class SystemApi {
     private static final List<TypeSpec> TYPES = List.of(math(), convert(), console(), program(), process(),
             processMessage(), thread(), time(), random(), file(), cpuInfo(), diskInfo(), osInfo(), processInfo(),
             computer(), holdingInfo(), serverInfo(), network(), stockEvent(), subscription(), remoteComputer(),
-            iqlResult(), iql(), workStat(), mainframe(), askResult(), operationInfo(), operations());
+            iqlResult(), iql(), workStat(), mainframe(), askResult(), operationInfo(), operations(), ccComputer(),
+            ccPeripheral(), gatewayMessage(), gateway());
 
     private SystemApi() {
     }
@@ -475,6 +476,67 @@ public final class SystemApi {
         operations.onType("OperationInfo", "Get", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
         operations.onType("List<OperationInfo>", "List", MemberKind.WORLD, CallCost.perRow(SigmaCosts.READ));
         return new TypeSpec(OPERATIONS, "Operations", operations.members);
+    }
+
+    private static TypeSpec ccComputer() {
+        final Members computer = new Members("CcComputer");
+        computer.recordValue(LONG, "Id");
+        computer.recordValue(STRING, "Name");
+        computer.recordValue(STRING, "Label");
+        computer.recordValue(BOOL, "Online");
+        return new TypeSpec(NETWORK, "CcComputer", computer.members);
+    }
+
+    private static TypeSpec ccPeripheral() {
+        final Members device = new Members("CcPeripheral");
+        device.recordValue(STRING, "Name");
+        device.recordValue(STRING, "Type");
+        device.recordValue(STRINGS, "Methods");
+        return new TypeSpec(NETWORK, "CcPeripheral", device.members);
+    }
+
+    private static TypeSpec gatewayMessage() {
+        final Members message = new Members("GatewayMessage");
+        message.recordValue(LONG, "From");
+        message.recordValue(STRING, "Text");
+        message.recordValue(LONG, "Tick");
+        return new TypeSpec(NETWORK, "GatewayMessage", message.members);
+    }
+
+    /**
+     * The Gateways this machine has, and through them the ComputerCraft computers and devices on the wire.
+     *
+     * <p>{@code Online} answers anywhere, because whether there is a Gateway at all is a fair question on any machine.
+     * Everything else needs one, and a machine with none says so rather than pretending. Reaching across to another
+     * mod's computer is the dearest thing a program can do short of asking the network for work, and the prices say
+     * so.
+     */
+    private static TypeSpec gateway() {
+        final Members gateway = new Members("Gateway");
+        gateway.valueOnType(BOOL, "Online", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        gateway.valueOnType(STRING, "Current", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        gateway.onType(STRINGS, "Names", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        gateway.onType(BOOL, "Select", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), STRING);
+        gateway.onType("List<CcComputer>", "Computers", MemberKind.WORLD, CallCost.perRow(SigmaCosts.GATHER));
+        gateway.onType("List<CcPeripheral>", "Peripherals", MemberKind.WORLD, CallCost.perRow(SigmaCosts.GATHER));
+        /*
+         * A call takes whatever that peripheral's method takes, which is a different number of things for every one of
+         * them, so there is a way of writing it for each count rather than one that takes a list the program has to
+         * build first. Each thing handed over adds to what the call costs.
+         */
+        final int call = SigmaCosts.CALL_ACROSS;
+        final int each = SigmaCosts.PER_ARGUMENT_ACROSS;
+        gateway.onType(OBJECT, "Call", MemberKind.WORLD, CallCost.of(call), STRING, STRING);
+        gateway.onType(OBJECT, "Call", MemberKind.WORLD, CallCost.of(call + each), STRING, STRING, OBJECT);
+        gateway.onType(OBJECT, "Call", MemberKind.WORLD, CallCost.of(call + 2 * each), STRING, STRING, OBJECT, OBJECT);
+        gateway.onType(OBJECT, "Call", MemberKind.WORLD, CallCost.of(call + 3 * each), STRING, STRING, OBJECT, OBJECT,
+                OBJECT);
+        gateway.onType(BOOL, "TurnOn", MemberKind.WORLD, CallCost.of(SigmaCosts.SEND_ACROSS), LONG);
+        gateway.onType(BOOL, "Shutdown", MemberKind.WORLD, CallCost.of(SigmaCosts.SEND_ACROSS), LONG);
+        gateway.onType(BOOL, "Reboot", MemberKind.WORLD, CallCost.of(SigmaCosts.SEND_ACROSS), LONG);
+        gateway.onType(BOOL, "Send", MemberKind.WORLD, CallCost.of(SigmaCosts.SEND_ACROSS), LONG, STRING);
+        gateway.onType(VOID, "OnMessage", MemberKind.PROCESS, CallCost.FREE, "Action<GatewayMessage>");
+        return new TypeSpec(NETWORK, "Gateway", gateway.members);
     }
 
     /** Gathers the members of one type, in the order they are declared. */

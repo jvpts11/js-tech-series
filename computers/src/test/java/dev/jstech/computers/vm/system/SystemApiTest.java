@@ -54,12 +54,16 @@ class SystemApiTest {
 
     /*
      * The machine still charges from its own table. Until it reads what these declarations say, the two have to agree,
-     * or an editor would quote one price and the machine charge another.
+     * or an editor would quote one price and the machine charge another. A Gateway's prices are worked out where the
+     * machine answers it, from the same numbers the declarations use, so the table has nothing to say about them.
      */
     @Test
     void members_costWhatTheMachineCharges() {
         final List<String> wrong = new ArrayList<>();
         for (final TypeSpec type : SystemApi.types()) {
+            if ("Gateway".equals(type.name())) {
+                continue;
+            }
             for (final IMemberSpec member : type.members()) {
                 final SigmaCosts.Cost charged = SigmaCosts.of(type.name(), member.id().name());
                 final CallCost expected = new CallCost(charged.fixed(), charged.perRow() ? 1 : 0, 0);

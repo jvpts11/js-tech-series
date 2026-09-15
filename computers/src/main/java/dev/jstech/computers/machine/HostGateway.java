@@ -40,10 +40,10 @@ public final class HostGateway {
     /** Gathering what is on the wire, which means asking the other side. */
     private static final int GATHER = SigmaCosts.GATHER;
     /** Calling something on the other side, and what each thing handed over adds to it. */
-    private static final int CALL = 100;
-    private static final int PER_ARGUMENT = 5;
+    private static final int CALL = SigmaCosts.CALL_ACROSS;
+    private static final int PER_ARGUMENT = SigmaCosts.PER_ARGUMENT_ACROSS;
     /** Saying something to a computer over there, or turning one on and off. */
-    private static final int SEND = 20;
+    private static final int SEND = SigmaCosts.SEND_ACROSS;
     /**
      * How long the Gateway keeps a question alive, in ticks.
      *
