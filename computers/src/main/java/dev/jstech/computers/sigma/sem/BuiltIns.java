@@ -62,8 +62,6 @@ public final class BuiltIns {
         this.fillDelegates();
         this.fillScript();
         this.fillDeclared();
-        this.fillFile();
-        this.fillComputer();
         this.fillNetwork();
         this.fillMainframe();
         this.fillOperations();
@@ -143,9 +141,6 @@ public final class BuiltIns {
     private static final Map<String, String> HOMES = Map.ofEntries(
             Map.entry("IScript", SYSTEM), Map.entry("Action", SYSTEM), Map.entry("Func", SYSTEM),
             Map.entry("List", COLLECTIONS), Map.entry("Map", COLLECTIONS),
-            Map.entry("File", IO),
-            Map.entry("Computer", MACHINE), Map.entry("CpuInfo", MACHINE), Map.entry("DiskInfo", MACHINE),
-            Map.entry("OsInfo", MACHINE), Map.entry("ProcessInfo", MACHINE),
             Map.entry("Network", NETWORK), Map.entry("ServerInfo", NETWORK), Map.entry("HoldingInfo", NETWORK),
             Map.entry("StockEvent", NETWORK), Map.entry("Subscription", NETWORK), Map.entry("WorkStat", NETWORK),
             Map.entry("Mainframe", NETWORK), Map.entry("RemoteComputer", NETWORK), Map.entry("Iql", NETWORK),
@@ -409,73 +404,6 @@ public final class BuiltIns {
             throw new IllegalStateException("the system declares a member with the unknown type " + name);
         }
         return type;
-    }
-
-    /**
-     * The machine's own drives, reached with the paths the shell uses.
-     *
-     * <p>Writing can fail without the program being wrong: a disk fills up. So the writes answer whether
-     * they happened rather than stopping the program, and reading something that is not there is asked
-     * for with the try form.
-     */
-    private void fillFile() {
-        final NamedType file = this.declare("File", NamedType.Kind.CLASS);
-        this.method(file, "Exists", ITypeSymbol.Primitive.BOOL, PUBLIC_STATIC, this.stringType);
-        this.method(file, "Read", this.stringType, PUBLIC_STATIC, this.stringType);
-        file.addMember(new IMemberSymbol.MethodSymbol(file, "TryRead", ITypeSymbol.Primitive.BOOL,
-                List.of(IMemberSymbol.ParameterSymbol.of("path", this.stringType),
-                        new IMemberSymbol.ParameterSymbol("text", this.stringType, true)),
-                PUBLIC_STATIC));
-        this.method(file, "Write", ITypeSymbol.Primitive.BOOL, PUBLIC_STATIC, this.stringType, this.stringType);
-        this.method(file, "Append", ITypeSymbol.Primitive.BOOL, PUBLIC_STATIC, this.stringType, this.stringType);
-        this.method(file, "Delete", ITypeSymbol.Primitive.BOOL, PUBLIC_STATIC, this.stringType);
-        this.method(file, "MkDir", ITypeSymbol.Primitive.BOOL, PUBLIC_STATIC, this.stringType);
-        this.method(file, "List", new ITypeSymbol.GenericType(this.listType, List.of(this.stringType)),
-                PUBLIC_STATIC, this.stringType);
-    }
-
-    /**
-     * The machine the program is running on, and the little records it answers with.
-     *
-     * <p>These are read-only pictures taken when they are asked for, not live views: a program holds
-     * what it was told, and asks again when it wants to know again.
-     */
-    private void fillComputer() {
-        final ITypeSymbol integer = ITypeSymbol.Primitive.INT;
-        final ITypeSymbol whole = ITypeSymbol.Primitive.LONG;
-
-        final NamedType cpu = this.declare("CpuInfo", NamedType.Kind.CLASS);
-        this.property(cpu, "Mhz", integer, PUBLIC);
-        this.property(cpu, "Cores", integer, PUBLIC);
-        this.property(cpu, "Era", this.stringType, PUBLIC);
-
-        final NamedType disk = this.declare("DiskInfo", NamedType.Kind.CLASS);
-        this.property(disk, "Mount", this.stringType, PUBLIC);
-        this.property(disk, "UsedMb", whole, PUBLIC);
-        this.property(disk, "CapacityMb", whole, PUBLIC);
-
-        final NamedType os = this.declare("OsInfo", NamedType.Kind.CLASS);
-        this.property(os, "Id", this.stringType, PUBLIC);
-        this.property(os, "Name", this.stringType, PUBLIC);
-
-        final NamedType process = this.declare("ProcessInfo", NamedType.Kind.CLASS);
-        this.property(process, "Id", integer, PUBLIC);
-        this.property(process, "Name", this.stringType, PUBLIC);
-        this.property(process, "State", this.stringType, PUBLIC);
-        this.property(process, "HeldBytes", whole, PUBLIC);
-
-        final NamedType computer = this.declare("Computer", NamedType.Kind.CLASS);
-        this.property(computer, "Name", this.stringType, PUBLIC_STATIC);
-        this.property(computer, "Cpu", cpu, PUBLIC_STATIC);
-        this.property(computer, "Os", os, PUBLIC_STATIC);
-        this.property(computer, "RamMb", integer, PUBLIC_STATIC);
-        this.property(computer, "FreeRamMb", integer, PUBLIC_STATIC);
-        this.property(computer, "Online", ITypeSymbol.Primitive.BOOL, PUBLIC_STATIC);
-        this.method(computer, "Disks", new ITypeSymbol.GenericType(this.listType, List.of(disk)), PUBLIC_STATIC);
-        this.method(computer, "Programs", new ITypeSymbol.GenericType(this.listType, List.of(this.stringType)),
-                PUBLIC_STATIC);
-        this.method(computer, "Processes", new ITypeSymbol.GenericType(this.listType, List.of(process)),
-                PUBLIC_STATIC);
     }
 
     /**

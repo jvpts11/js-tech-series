@@ -24,6 +24,7 @@ public final class SystemApi {
     private static final String UTILS = "System.Utils";
     private static final String EXECUTION = "System.Execution";
     private static final String THREADING = "System.Threading";
+    private static final String MACHINE = "System.Machine";
 
     private static final String VOID = "void";
     private static final String INT = "int";
@@ -36,7 +37,8 @@ public final class SystemApi {
     private static final String STRINGS = "List<string>";
 
     private static final List<TypeSpec> TYPES = List.of(math(), convert(), console(), program(), process(),
-            processMessage(), thread(), time(), random());
+            processMessage(), thread(), time(), random(), file(), cpuInfo(), diskInfo(), osInfo(), processInfo(),
+            computer());
 
     private SystemApi() {
     }
@@ -171,9 +173,9 @@ public final class SystemApi {
     /** A line another program sent this one: who sent it, what it said, and when. */
     private static TypeSpec processMessage() {
         final Members message = new Members("ProcessMessage");
-        message.valueOnObject(INT, "From", MemberKind.PROCESS, CallCost.FREE);
-        message.valueOnObject(STRING, "Text", MemberKind.PROCESS, CallCost.FREE);
-        message.valueOnObject(LONG, "Tick", MemberKind.PROCESS, CallCost.FREE);
+        message.recordValue(INT, "From");
+        message.recordValue(STRING, "Text");
+        message.recordValue(LONG, "Tick");
         return new TypeSpec(EXECUTION, "ProcessMessage", message.members);
     }
 
@@ -217,6 +219,82 @@ public final class SystemApi {
         return new TypeSpec(UTILS, "Random", random.members);
     }
 
+    /**
+     * The machine's own drives, reached with the paths the shell uses.
+     *
+     * <p>Writing can fail without the program being wrong: a disk fills up. So the writes answer whether they happened
+     * rather than stopping the program, and reading something that is not there is asked for with the try form. Asking
+     * whether something is there is cheap; reading costs a read, and writing twice that, because a write is a thing the
+     * machine cannot take back.
+     */
+    private static TypeSpec file() {
+        final Members file = new Members("File");
+        file.onType(BOOL, "Exists", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), STRING);
+        file.onType(STRING, "Read", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
+        file.onType(BOOL, "TryRead", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING, "out " + STRING);
+        file.onType(BOOL, "Write", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING, STRING);
+        file.onType(BOOL, "Append", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING, STRING);
+        file.onType(BOOL, "Delete", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING);
+        file.onType(BOOL, "MkDir", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING);
+        file.onType(STRINGS, "List", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
+        return new TypeSpec(IO, "File", file.members);
+    }
+
+    /*
+     * The little records the machine answers with. They are pictures taken when they were asked for, not live views: a
+     * program holds what it was told, and asks again when it wants to know again.
+     */
+
+    private static TypeSpec cpuInfo() {
+        final Members cpu = new Members("CpuInfo");
+        cpu.recordValue(INT, "Mhz");
+        cpu.recordValue(INT, "Cores");
+        cpu.recordValue(STRING, "Era");
+        return new TypeSpec(MACHINE, "CpuInfo", cpu.members);
+    }
+
+    private static TypeSpec diskInfo() {
+        final Members disk = new Members("DiskInfo");
+        disk.recordValue(STRING, "Mount");
+        disk.recordValue(LONG, "UsedMb");
+        disk.recordValue(LONG, "CapacityMb");
+        return new TypeSpec(MACHINE, "DiskInfo", disk.members);
+    }
+
+    private static TypeSpec osInfo() {
+        final Members os = new Members("OsInfo");
+        os.recordValue(STRING, "Id");
+        os.recordValue(STRING, "Name");
+        return new TypeSpec(MACHINE, "OsInfo", os.members);
+    }
+
+    private static TypeSpec processInfo() {
+        final Members process = new Members("ProcessInfo");
+        process.recordValue(INT, "Id");
+        process.recordValue(STRING, "Name");
+        process.recordValue(STRING, "State");
+        process.recordValue(LONG, "HeldBytes");
+        return new TypeSpec(MACHINE, "ProcessInfo", process.members);
+    }
+
+    /**
+     * The machine the program is running on. What it is costs a glance; what it holds has to be gathered, because the
+     * answer is a list the machine has to walk to build.
+     */
+    private static TypeSpec computer() {
+        final Members computer = new Members("Computer");
+        computer.valueOnType(STRING, "Name", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        computer.valueOnType("CpuInfo", "Cpu", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        computer.valueOnType("OsInfo", "Os", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        computer.valueOnType(INT, "RamMb", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        computer.valueOnType(INT, "FreeRamMb", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        computer.valueOnType(BOOL, "Online", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        computer.onType("List<DiskInfo>", "Disks", MemberKind.WORLD, CallCost.of(SigmaCosts.GATHER));
+        computer.onType(STRINGS, "Programs", MemberKind.WORLD, CallCost.of(SigmaCosts.GATHER));
+        computer.onType("List<ProcessInfo>", "Processes", MemberKind.WORLD, CallCost.of(SigmaCosts.GATHER));
+        return new TypeSpec(MACHINE, "Computer", computer.members);
+    }
+
     /** Gathers the members of one type, in the order they are declared. */
     private static final class Members {
 
@@ -252,6 +330,11 @@ public final class SystemApi {
         /** A value read from an object of the type. */
         void valueOnObject(final String type, final String name, final MemberKind kind, final CallCost cost) {
             this.members.add(new PropertySpec(this.id(name), type, false, false, kind, cost));
+        }
+
+        /** A value on a record the program was handed, which it reads from its own copy for nothing. */
+        void recordValue(final String type, final String name) {
+            this.valueOnObject(type, name, MemberKind.PROCESS, CallCost.FREE);
         }
 
         private MemberId id(final String name, final String... parameters) {
