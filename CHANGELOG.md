@@ -44,6 +44,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A computer checks the server's clock once every 512 instructions its programs run, or at once after a call into the
   machine, instead of after every 64. A computer that runs out of time in a tick can go that much further before it
   stops, and running its programs costs the server less.
+- A language an addon registers is refused, with a line in the log, when it claims a file extension another
+  language already has. Registering one again under the same id replaces the one before, and the log says so.
+  Languages can be added or removed only while the game loads.
 - Inside the mods, with no change to how anything behaves: the handlers behind the computers' screens and
   programs are split into feature packages; the virtual machine that runs programs has packages of its own,
   with nothing of Minecraft in them, and reads a listing's problems without the compiler; a running program

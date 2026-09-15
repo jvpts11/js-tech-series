@@ -7,69 +7,114 @@
  */
 package dev.jstech.core.language;
 
+import com.mojang.logging.LogUtils;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 /**
  * Every language the computers of this world know.
  *
- * <p>An addon may add one, and may take one away, including the one this series ships with. That is
- * deliberate: a pack that wants its computers programmed in something else entirely should not have to
- * live beside a language nobody in it uses.
+ * <p>An addon may add one, and may take one away, including the one this series ships with, while the game loads.
+ * That is deliberate: a pack that wants its computers programmed in something else entirely should not have to
+ * live beside a language nobody in it uses. Once every mod has loaded, the registry is closed, so the languages a
+ * world runs with cannot change under it.
  *
- * <p>Everything that deals in programs resolves through here by extension rather than by naming a
- * language, so the prompt, the editor and the file explorer work with whatever happens to be registered.
+ * <p>Everything that deals in programs resolves through here by extension rather than by naming a language, so the
+ * prompt, the editor and the file explorer work with whatever happens to be registered. An extension belongs to one
+ * language: a second language that claims one already taken is refused, because otherwise which of the two answers
+ * for a file would depend on the order the mods loaded in.
  */
 public final class LanguageRegistry {
 
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     private final Map<ResourceLocation, IProgrammingLanguage> byId = new LinkedHashMap<>();
+    /** Every extension a language writes or builds, to that language; worked out again whenever one comes or goes. */
+    private final Map<String, IProgrammingLanguage> byExtension = new HashMap<>();
+    /** Every extension a language runs, to that language. */
+    private final Map<String, IProgrammingLanguage> runners = new HashMap<>();
+    private volatile boolean frozen;
 
     /**
      * Adds one, replacing any already registered under that id.
      *
-     * <p>Replacing rather than refusing lets an addon improve a language in place, which is the same
-     * gesture as adding one and needs no separate ceremony.
+     * <p>Replacing lets an addon improve a language in place, which is the same gesture as adding one; the log says
+     * so, so a pack can see it happened. A language that claims an extension another language already has is
+     * refused, and so is every change once the registry is closed.
+     *
+     * @return whether the language is now registered
      */
-    public void register(final IProgrammingLanguage language) {
-        if (language != null && language.id() != null) {
-            byId.put(language.id(), language);
+    public synchronized boolean register(final IProgrammingLanguage language) {
+        if (language == null || language.id() == null) {
+            return false;
         }
+        if (this.frozen) {
+            LOGGER.warn("The language {} was not registered: languages can only be added while the game loads",
+                    language.id());
+            return false;
+        }
+        for (final String extension : extensionsOf(language)) {
+            final IProgrammingLanguage owner = this.byExtension.get(extension);
+            if (owner != null && !owner.id().equals(language.id())) {
+                LOGGER.warn("The language {} was not registered: .{} already belongs to {}", language.id(), extension,
+                        owner.id());
+                return false;
+            }
+        }
+        if (this.byId.put(language.id(), language) != null) {
+            LOGGER.info("The language {} replaces the one registered under that id before it", language.id());
+        }
+        this.index();
+        return true;
     }
 
-    /** Takes one away; false when it was not there. */
-    public boolean unregister(final ResourceLocation id) {
-        return byId.remove(id) != null;
+    /** Takes one away while the game loads; false when it was not there, or when the registry is closed. */
+    public synchronized boolean unregister(final ResourceLocation id) {
+        if (this.frozen) {
+            LOGGER.warn("The language {} was not removed: languages can only be removed while the game loads", id);
+            return false;
+        }
+        if (this.byId.remove(id) == null) {
+            return false;
+        }
+        this.index();
+        return true;
+    }
+
+    /** Closes the registry, as the core does once every mod has loaded: nothing is added or taken away after. */
+    public void freeze() {
+        this.frozen = true;
+    }
+
+    /** Whether the registry has been closed. */
+    public boolean isFrozen() {
+        return this.frozen;
     }
 
     /** The one with that id, or null. */
     @Nullable
     public IProgrammingLanguage get(final ResourceLocation id) {
-        return byId.get(id);
+        return this.byId.get(id);
     }
 
     /**
      * The language whose files end in that extension, or null.
      *
-     * <p>Both what a person writes and what a compiler produces count, so this answers for a source file
-     * and for the thing built from it alike.
+     * <p>Both what a person writes and what a compiler produces count, so this answers for a source file and for
+     * the thing built from it alike.
      */
     @Nullable
     public IProgrammingLanguage byExtension(final String extension) {
         if (extension == null || extension.isBlank()) {
             return null;
         }
-        final String wanted = extension.toLowerCase(Locale.ROOT);
-        for (final IProgrammingLanguage language : byId.values()) {
-            if (language.sourceExtensions().contains(wanted)
-                    || language.binaryExtensions().contains(wanted)) {
-                return language;
-            }
-        }
-        return null;
+        return this.byExtension.get(extension.toLowerCase(Locale.ROOT));
     }
 
     /** The language that RUNS files ending in that extension, or null. */
@@ -78,17 +123,37 @@ public final class LanguageRegistry {
         if (extension == null || extension.isBlank()) {
             return null;
         }
-        final String wanted = extension.toLowerCase(Locale.ROOT);
-        for (final IProgrammingLanguage language : byId.values()) {
-            if (language.binaryExtensions().contains(wanted)) {
-                return language;
-            }
-        }
-        return null;
+        return this.runners.get(extension.toLowerCase(Locale.ROOT));
     }
 
     /** Every language there is, in the order they were registered. */
     public List<IProgrammingLanguage> all() {
-        return List.copyOf(byId.values());
+        return List.copyOf(this.byId.values());
+    }
+
+    /** Works the extension lookups out again from the languages registered. */
+    private void index() {
+        this.byExtension.clear();
+        this.runners.clear();
+        for (final IProgrammingLanguage language : this.byId.values()) {
+            for (final String extension : extensionsOf(language)) {
+                this.byExtension.put(extension, language);
+            }
+            for (final String extension : language.binaryExtensions()) {
+                this.runners.put(extension.toLowerCase(Locale.ROOT), language);
+            }
+        }
+    }
+
+    /** Every extension a language claims, as a person writes it or as its compiler produces it, in lower case. */
+    private static List<String> extensionsOf(final IProgrammingLanguage language) {
+        final List<String> all = new java.util.ArrayList<>();
+        for (final String extension : language.sourceExtensions()) {
+            all.add(extension.toLowerCase(Locale.ROOT));
+        }
+        for (final String extension : language.binaryExtensions()) {
+            all.add(extension.toLowerCase(Locale.ROOT));
+        }
+        return all;
     }
 }
