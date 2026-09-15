@@ -13,6 +13,7 @@ import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.boot.BootController;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.cli.ICliFiles;
 import dev.jstech.computers.storage.StorageKey;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,11 +44,12 @@ public final class ComputerInfoService {
     }
 
     private final AbstractComputerBlockEntity machine;
-    private final ICliComputer shell;
+    /** The machine's drives as its shell sees them, which is how they are measured. */
+    private final ICliFiles drives;
 
-    ComputerInfoService(final AbstractComputerBlockEntity machine, final ICliComputer shell) {
+    ComputerInfoService(final AbstractComputerBlockEntity machine, final ICliFiles drives) {
         this.machine = machine;
-        this.shell = shell;
+        this.drives = drives;
     }
 
     /** What the machine is called: the name its owner gave it, or what kind of machine it is. */
@@ -101,7 +103,7 @@ public final class ComputerInfoService {
     /** The machine's drives, each measured the way the shell measures it. */
     public List<Disk> disks() {
         final List<Disk> all = new ArrayList<>();
-        for (final ICliComputer.MountInfo mount : this.shell.mounts()) {
+        for (final ICliComputer.MountInfo mount : this.drives.mounts()) {
             all.add(new Disk(String.valueOf(mount.drive()),
                     (mount.capacityMbEq() - mount.freeMbEq()) / StorageKey.MB_EQ_PER_ITEM,
                     mount.capacityMbEq() / StorageKey.MB_EQ_PER_ITEM));

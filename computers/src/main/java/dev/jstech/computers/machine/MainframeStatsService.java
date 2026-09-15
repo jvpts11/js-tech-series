@@ -8,6 +8,8 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.cli.ICliNetwork;
+import dev.jstech.computers.program.cli.ICliOperations;
 import java.util.List;
 
 /**
@@ -18,25 +20,29 @@ import java.util.List;
  */
 public final class MainframeStatsService {
 
-    private final ICliComputer shell;
+    /** The network as the machine's shell reads it. */
+    private final ICliNetwork network;
+    /** The network's work as the machine's shell reads it. */
+    private final ICliOperations operations;
 
-    MainframeStatsService(final ICliComputer shell) {
-        this.shell = shell;
+    MainframeStatsService(final ICliNetwork network, final ICliOperations operations) {
+        this.network = network;
+        this.operations = operations;
     }
 
     /** Whether the machine is on a network at all. */
     public boolean onNetwork() {
-        return this.shell.onNetwork();
+        return this.network.onNetwork();
     }
 
     /** Whether the machine's network has a Mainframe running it. */
     public boolean online() {
-        return this.shell.onNetwork() && this.shell.network().mainframePresent();
+        return this.network.onNetwork() && this.network.network().mainframePresent();
     }
 
     /** The most Operations the network has had running at once today. */
     public int peakToday() {
-        return this.shell.peakOperationsToday();
+        return this.operations.peakOperationsToday();
     }
 
     /**
@@ -44,7 +50,7 @@ public final class MainframeStatsService {
      * than as nothing, so whoever reads it can add up and compare without first asking whether there is anything.
      */
     public ICliComputer.OperationStat stats(final String kind) {
-        for (final ICliComputer.OperationStat stat : this.shell.operationStats()) {
+        for (final ICliComputer.OperationStat stat : this.operations.operationStats()) {
             if (stat.type().equalsIgnoreCase(kind)) {
                 return stat;
             }
@@ -54,6 +60,6 @@ public final class MainframeStatsService {
 
     /** What the network did with every kind of Operation it ran in the last hour. */
     public List<ICliComputer.OperationStat> work() {
-        return this.shell.operationStats();
+        return this.operations.operationStats();
     }
 }

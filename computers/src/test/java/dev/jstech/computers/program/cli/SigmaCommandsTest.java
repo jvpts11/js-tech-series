@@ -241,7 +241,10 @@ class SigmaCommandsTest {
         assertTrue(this.run("sigma frobnicate").contains("usage: sigma"));
     }
 
-    /** A computer with a disk, a list of installed packages, and a note of what it was asked to run. */
+    /**
+     * A computer with only the parts the Σ# commands reach: a name to sign a package with, a disk, the programs it has
+     * installed, and a note of what it was asked to run.
+     */
     private static final class Fake implements ICliComputer {
 
         private final Map<String, String> files = new LinkedHashMap<>();
@@ -259,103 +262,8 @@ class SigmaCommandsTest {
             return "TEST-PC";
         }
 
-        @Override public String type() {
-            return "Personal Computer";
-        }
-
-        @Override public String nodeId() {
-            return "abc123";
-        }
-
-        @Override public boolean running() {
-            return true;
-        }
-
-        @Override public long cpuCapacity() {
-            return 500;
-        }
-
-        @Override public long ramBuffer() {
-            return 256;
-        }
-
-        @Override public boolean onNetwork() {
-            return false;
-        }
-
-        @Override public String networkId() {
-            return "";
-        }
-
-        @Override public boolean isMainframe() {
-            return false;
-        }
-
-        @Override public NetSummary network() {
-            return new NetSummary(false, 0, 0, 0, 0, false);
-        }
-
-        @Override public List<Holding> find(final String item) {
-            return List.of();
-        }
-
-        @Override public OpResult select(final String item, final long quantity) {
-            return OpResult.fail("no network");
-        }
-
-        @Override public OpResult insert(final String item, final long quantity) {
-            return OpResult.fail("no network");
-        }
-
-        @Override public OpResult craft(final String item, final long quantity) {
-            return OpResult.fail("no network");
-        }
-
-        @Override public OpResult lock(final String item, final long quantity) {
-            return OpResult.fail("no network");
-        }
-
-        @Override public OpResult unlock(final String item) {
-            return OpResult.fail("no network");
-        }
-
-        @Override public List<StoredItem> locks() {
-            return List.of();
-        }
-
-        @Override public List<ActiveOp> activeOps() {
-            return List.of();
-        }
-
-        @Override public OpResult maintenance(final String action) {
-            return OpResult.fail("no network");
-        }
-
-        @Override public List<String> peripherals() {
-            return List.of();
-        }
-
         @Override public List<ProgramInfo> programs() {
             return List.copyOf(this.installed);
-        }
-
-        @Override public OpResult install(final String programId) {
-            return OpResult.fail("nothing to install from");
-        }
-
-        @Override public OpResult execute(final dev.jstech.computers.program.iql.IqlOperation operation) {
-            return OpResult.fail("no network");
-        }
-
-        @Override public List<StoredItem> query(final dev.jstech.computers.program.iql.IIqlCondition where,
-                final String server, final int limit) {
-            return List.of();
-        }
-
-        @Override public List<StoredItem> queryObject(final String object,
-                final dev.jstech.computers.program.iql.IIqlCondition where, final String server,
-                final int limit) {
-            return List.of();
         }
 
         @Override public FsResult readFile(final String path) {

@@ -156,7 +156,10 @@ class CliShellTest {
         assertTrue(response.lines().stream().anyMatch(l -> l.style() == CliStyle.ERROR));
     }
 
-    /** An in-memory ICliComputer that records the last effecting call so tests can assert on it. */
+    /**
+     * An in-memory computer holding only the parts these commands reach: what it is, the network it reads, the work it
+     * is asked for and the programs it has. It records the last effecting call so tests can assert on it.
+     */
     private static final class FakeComputer implements ICliComputer {
         boolean running;
         boolean onNetwork = true;
@@ -199,10 +202,6 @@ class CliShellTest {
             return "net7f3a";
         }
 
-        @Override public boolean isMainframe() {
-            return false;
-        }
-
         @Override public NetSummary network() {
             return new NetSummary(onNetwork, 2, 1, 0, stock.size(), true);
         }
@@ -227,50 +226,9 @@ class CliShellTest {
             return object.equalsIgnoreCase("items") ? query(where, server, limit) : List.of();
         }
 
-        @Override public List<Holding> find(final String item) {
-            return List.of();
-        }
-
-        @Override public OpResult select(final String item, final long quantity) {
-            lastCall = "select(" + item + ", " + quantity + ")";
-            return OpResult.ok("ok - pulling " + quantity + " " + item);
-        }
-
-        @Override public OpResult insert(final String item, final long quantity) {
-            lastCall = "insert(" + item + ", " + quantity + ")";
-            return OpResult.ok("ok");
-        }
-
-        @Override public OpResult craft(final String item, final long quantity) {
-            lastCall = "craft(" + item + ", " + quantity + ")";
-            return OpResult.ok("ok");
-        }
-
-        @Override public OpResult lock(final String item, final long quantity) {
-            lastCall = "lock(" + item + ", " + quantity + ")";
-            return OpResult.ok("ok");
-        }
-
-        @Override public OpResult unlock(final String item) {
-            lastCall = "unlock(" + item + ")";
-            return OpResult.ok("ok");
-        }
-
-        @Override public List<StoredItem> locks() {
-            return List.of();
-        }
-
-        @Override public List<ActiveOp> activeOps() {
-            return List.of();
-        }
-
         @Override public OpResult maintenance(final String action) {
             lastCall = "maintenance(" + action + ")";
             return OpResult.ok("done");
-        }
-
-        @Override public List<String> peripherals() {
-            return List.of();
         }
 
         @Override public List<ProgramInfo> programs() {

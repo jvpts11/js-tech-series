@@ -47,6 +47,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   arguments)` and `restore(binary, saved, view)` take an `IMachineView` in place of the block entity and the memory
   size. The view tells the machine's time and how much memory the program may hold, and takes the lines the program
   prints, which the machine keeps; a language's processes no longer report `console()`, `written()` or `heapBytes()`.
+- For addon authors, `ICliComputer`, the computer a shell command is handed, is made of one smaller interface for each
+  thing a command reaches: `ICliMachine`, `ICliFiles`, `ICliNetwork`, `ICliOperations`, `ICliPackages`,
+  `ICliInstallation`, `ICliConfig`, `ICliRemote` and `ICliProcesses`. Every member answers as a computer without that
+  part does unless the computer answers it, so a computer made to test a command writes only what the command uses.
 - A computer saves its running programs in a new form: a listing several programs run is saved once, and a program in
   an addon's language is saved with the language's id and the version of what it wrote. A program whose language is
   no longer installed is left out alone, and a save the computer cannot read brings no program back, which its

@@ -10,6 +10,8 @@ package dev.jstech.computers.machine;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.cli.ICliNetwork;
+import dev.jstech.computers.program.cli.ICliRemote;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -35,39 +37,44 @@ public final class NetworkReadService {
 
     private final IComputerTerminalHost terminal;
     private final ServerLevel level;
-    private final ICliComputer shell;
+    /** The network as the machine's shell reads it. */
+    private final ICliNetwork network;
+    /** The other machines of the network as the machine's shell reaches them. */
+    private final ICliRemote remote;
 
-    NetworkReadService(final IComputerTerminalHost terminal, final ServerLevel level, final ICliComputer shell) {
+    NetworkReadService(final IComputerTerminalHost terminal, final ServerLevel level, final ICliNetwork network,
+                       final ICliRemote remote) {
         this.terminal = terminal;
         this.level = level;
-        this.shell = shell;
+        this.network = network;
+        this.remote = remote;
     }
 
     /** Whether the machine is on a network at all. */
     public boolean online() {
-        return this.shell.onNetwork();
+        return this.network.onNetwork();
     }
 
     /** The network the machine is on, by its short id, or null when it is on none. */
     @Nullable
     public String current() {
-        return this.shell.onNetwork() ? this.shell.networkId() : null;
+        return this.network.onNetwork() ? this.network.networkId() : null;
     }
 
     /** How much the network's servers can hold in all. */
     public long capacity() {
-        return this.shell.networkUse().capacity();
+        return this.network.networkUse().capacity();
     }
 
     /** How much the network's servers hold. */
     public long used() {
-        return this.shell.networkUse().stored();
+        return this.network.networkUse().stored();
     }
 
     /** How much of an item the whole network holds, counting every server that has any. */
     public long total(final String item) {
         long sum = 0;
-        for (final ICliComputer.Holding holding : this.shell.find(item)) {
+        for (final ICliComputer.Holding holding : this.network.find(item)) {
             sum += holding.quantity();
         }
         return sum;
@@ -76,7 +83,7 @@ public final class NetworkReadService {
     /** Every kind of thing the network holds. */
     public List<String> types() {
         final List<String> names = new ArrayList<>();
-        for (final ICliComputer.StoredItem item : this.shell.query(null, "", EVERYTHING)) {
+        for (final ICliComputer.StoredItem item : this.network.query(null, "", EVERYTHING)) {
             names.add(item.name());
         }
         return names;
@@ -84,23 +91,23 @@ public final class NetworkReadService {
 
     /** Which servers hold an item, and how much each holds. */
     public List<ICliComputer.Holding> find(final String item) {
-        return this.shell.find(item);
+        return this.network.find(item);
     }
 
     /** The network's servers, with what each holds and can hold. */
     public List<ICliComputer.ServerUse> servers() {
-        return this.shell.servers();
+        return this.network.servers();
     }
 
     /** The other computers the machine can reach on its network. */
     public List<ICliComputer.RemoteHost> computers() {
-        return this.shell.reachableHosts();
+        return this.remote.reachableHosts();
     }
 
     /** The computer that name picks out, by its host name or by the name its owner gave it, or null. */
     @Nullable
     public ICliComputer.RemoteHost computer(final String name) {
-        for (final ICliComputer.RemoteHost host : this.shell.reachableHosts()) {
+        for (final ICliComputer.RemoteHost host : this.remote.reachableHosts()) {
             if (host.hostname().equalsIgnoreCase(name) || host.name().equalsIgnoreCase(name)) {
                 return host;
             }

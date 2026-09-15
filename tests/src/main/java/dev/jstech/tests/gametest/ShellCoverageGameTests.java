@@ -14,8 +14,11 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -29,7 +32,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * The shell commands whose machine side nothing else exercised, run on a real network the way a player types them:
  * finding and holding stock, describing the machine and the network, the Mainframe's services, the other machines
- * a remote shell reaches, and the Frames package manager's update.
+ * a remote shell reaches, and the Frames package manager's update; and the machine's shell answering every member of
+ * what a command reaches itself.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -60,6 +64,31 @@ public final class ShellCoverageGameTests {
         lab.console().setComputerName("lab");
         desk.console().setComputerName("desk");
         return new Fleet(mainframe, lab, desk);
+    }
+
+    /*
+     * Every member of what a command reaches has a default that answers as a computer without that part would, so a
+     * computer made for a test writes only what its commands use. The machine's own shell must never be one that
+     * leans on such a default, or a command would quietly be told the machine has nothing.
+     */
+    @GameTest(template = ARENA)
+    public static void serverShell_answersEveryMemberOfWhatACommandReachesItself(final GameTestHelper helper) {
+        final List<String> leaning = new ArrayList<>();
+        for (final Method member : ICliComputer.class.getMethods()) {
+            if (Modifier.isStatic(member.getModifiers())) {
+                continue;
+            }
+            try {
+                final Method answered = ServerCliComputer.class.getMethod(member.getName(), member.getParameterTypes());
+                if (answered.getDeclaringClass() != ServerCliComputer.class) {
+                    leaning.add(member.getName());
+                }
+            } catch (final NoSuchMethodException missing) {
+                leaning.add(member.getName());
+            }
+        }
+        helper.assertTrue(leaning.isEmpty(), "the machine's shell answers every member itself; it leans on " + leaning);
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)

@@ -8,6 +8,7 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.cli.ICliFiles;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,9 +20,9 @@ import java.util.List;
  */
 public final class FileService {
 
-    private final ICliComputer door;
+    private final ICliFiles door;
 
-    FileService(final ICliComputer door) {
+    FileService(final ICliFiles door) {
         this.door = door;
     }
 
