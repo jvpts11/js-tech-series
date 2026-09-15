@@ -13,7 +13,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -63,28 +62,44 @@ class SystemApiTest {
         assertNull(SystemApi.type("Nothing"));
     }
 
-    /*
-     * The machine still charges from its own table. Until it reads what these declarations say, the two have to agree,
-     * or an editor would quote one price and the machine charge another. The Gateway and the windows are priced where
-     * the machine answers them, from the same numbers the declarations use, so the table names neither.
-     */
     @Test
-    void members_costWhatTheMachineCharges() {
-        final List<String> wrong = new ArrayList<>();
+    void members_findEveryWayACallIsWritten() {
+        assertEquals(4, SystemApi.members("Gateway", "Call").size());
+        assertEquals(CallCost.of(105),
+                SystemApi.member("Gateway", "Call", List.of("string", "string", "object")).cost());
+        assertNull(SystemApi.member("Gateway", "Call", List.of("int")));
+        assertTrue(SystemApi.members("Gateway", "Nothing").isEmpty());
+    }
+
+    @Test
+    void pureMembers_costNothing() {
         for (final TypeSpec type : SystemApi.types()) {
-            if (!namedByTheTable(type.name())) {
-                continue;
-            }
             for (final IMemberSpec member : type.members()) {
-                final SigmaCosts.Cost charged = SigmaCosts.of(type.name(), member.id().name());
-                final CallCost expected = new CallCost(charged.fixed(), charged.perRow() ? 1 : 0, 0);
-                if (!expected.equals(member.cost())) {
-                    wrong.add(member.id().describe() + " declares " + member.cost().describe()
-                            + " but the machine charges " + expected.describe());
+                if (member.kind() == MemberKind.PURE) {
+                    assertEquals(CallCost.FREE, member.cost(), () -> member.id().describe() + " needs no machine");
                 }
             }
         }
-        assertTrue(wrong.isEmpty(), () -> String.join("\n", wrong));
+    }
+
+    /*
+     * Asking to be told costs nothing on purpose: a program that says once that it wants to know when the iron runs
+     * low is doing the cheap thing, and one that asks every tick is not.
+     */
+    @Test
+    void watches_costNothingToArm() {
+        for (final String name : List.of("Watch", "WatchBelow", "WatchAbove")) {
+            final IMemberSpec watch = SystemApi.members("Network", name).getFirst();
+            assertEquals(CallCost.FREE, watch.cost(), () -> name + " should cost nothing to arm");
+            assertEquals(MemberKind.PROCESS, watch.kind(), () -> name + " is kept by the program's own process");
+        }
+    }
+
+    @Test
+    void members_makeAskingForWorkDearerThanReadingIt() {
+        assertTrue(price("Operations", "Craft") > price("Operations", "Get"));
+        assertTrue(price("File", "Write") > price("File", "Read"));
+        assertTrue(price("Computer", "Disks") > price("Computer", "Name"));
     }
 
     @Test
@@ -122,12 +137,8 @@ class SystemApiTest {
                 () -> new EventSpec(clicked, "Action<int>", false, MemberKind.PROCESS, CallCost.FREE));
     }
 
-    private static boolean namedByTheTable(final String owner) {
-        for (final String call : SigmaCosts.all()) {
-            if (call.startsWith(owner + ".")) {
-                return true;
-            }
-        }
-        return false;
+    /** What the first way of writing {@code owner.name} costs when it brings nothing back. */
+    private static int price(final String owner, final String name) {
+        return SystemApi.members(owner, name).getFirst().cost().at(0, 0);
     }
 }

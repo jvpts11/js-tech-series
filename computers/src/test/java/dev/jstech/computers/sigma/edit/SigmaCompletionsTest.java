@@ -367,4 +367,32 @@ class SigmaCompletionsTest {
         assertTrue(matching.contains("IScript"), () -> "the types that match follow it; got " + matching);
         assertTrue(labels(SigmaCompletions.namespaces(this.builtIns, null, "System", "zz")).isEmpty());
     }
+
+    @Test
+    void costOf_pricesACallTheWayTheListWritesIt() {
+        final List<SigmaCompletions.Item> calls =
+                SigmaCompletions.members(this.builtIns, null, "Gateway", "Call", true);
+        assertEquals(4, calls.size());
+        final SigmaCompletions.Item handingOne = calls.stream()
+                .filter(item -> item.signature().equals("Call(string, string, object) : object"))
+                .findFirst().orElseThrow();
+        assertEquals("costs 105", SigmaCompletions.costOf(handingOne));
+    }
+
+    @Test
+    void costOf_saysWhatWritingAWidgetsValueCosts() {
+        final SigmaCompletions.Item text =
+                named(SigmaCompletions.members(this.builtIns, null, "Button", "Text", false), "Text");
+        assertEquals("costs free to read and 50 to write", SigmaCompletions.costOf(text));
+    }
+
+    @Test
+    void costOf_pricesTheFreeCallsTooAndLeavesTheLanguagesOwnMembersUnpriced() {
+        final SigmaCompletions.Item floor =
+                named(SigmaCompletions.members(this.builtIns, null, "Math", "Floor", true), "Floor");
+        assertEquals("costs free", SigmaCompletions.costOf(floor));
+        final SigmaCompletions.Item length =
+                named(SigmaCompletions.members(this.builtIns, null, "string", "Length", false), "Length");
+        assertNull(SigmaCompletions.costOf(length));
+    }
 }

@@ -8,7 +8,9 @@
 package dev.jstech.computers.vm.system;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The types of the language's library and of the machine a program runs on, declared once: what the compiler lets a
@@ -48,6 +50,20 @@ public final class SystemApi {
             ccPeripheral(), gatewayMessage(), gateway(), widget(), window(), box("Row"), box("Column"), label(),
             button(), textBox(), checkBox(), progressBar(), listBox(), canvas(), messageBox());
 
+    private static final Map<String, TypeSpec> BY_TYPE = new HashMap<>();
+    /** Every way of writing a call, under its owner and name, so a lookup does not walk the whole system. */
+    private static final Map<String, List<IMemberSpec>> BY_NAME = new HashMap<>();
+
+    static {
+        for (final TypeSpec type : TYPES) {
+            BY_TYPE.put(type.name(), type);
+            for (final IMemberSpec member : type.members()) {
+                BY_NAME.computeIfAbsent(type.name() + "." + member.id().name(), key -> new ArrayList<>()).add(member);
+            }
+        }
+        BY_NAME.replaceAll((key, ways) -> List.copyOf(ways));
+    }
+
     private SystemApi() {
     }
 
@@ -58,9 +74,19 @@ public final class SystemApi {
 
     /** The type of that name, or null when the system declares none. */
     public static TypeSpec type(final String name) {
-        for (final TypeSpec type : TYPES) {
-            if (type.name().equals(name)) {
-                return type;
+        return BY_TYPE.get(name);
+    }
+
+    /** Every way of writing the call {@code owner.name}, in the order they were declared; empty when there is none. */
+    public static List<IMemberSpec> members(final String owner, final String name) {
+        return BY_NAME.getOrDefault(owner + "." + name, List.of());
+    }
+
+    /** The call {@code owner.name} that takes exactly {@code parameters}, or null when the system has no such call. */
+    public static IMemberSpec member(final String owner, final String name, final List<String> parameters) {
+        for (final IMemberSpec member : members(owner, name)) {
+            if (member.id().parameters().equals(parameters)) {
+                return member;
             }
         }
         return null;

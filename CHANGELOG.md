@@ -23,6 +23,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   install are the Σ# Compiler and the Sigma Runtime, from the Sigma Foundation. The compiler's error codes start
   with S (`S2001`) and a listing's with A (`A4012`), their numbers unchanged. Files saved as `.can` and projects
   as `.canproj` are no longer taken for programs; renaming them brings them back.
+- The strip under an editor's completion list now prices every call of the library and the machine, the free ones
+  included, and the Gateway's and the windows' calls as well. A call written several ways, such as `Gateway.Call`,
+  shows the price of the way the list is on, and a value a program may write says what writing it costs.
 - A compiled `.asm` listing belongs to the computers rather than to Σ#: the machines run listings themselves, and Σ#
   only compiles. For addon authors, a language may now only compile (no binary extensions, and `start` and `restore`
   left alone): the machine runs the listing it compiles to, and compiles a source file on the way in when one is

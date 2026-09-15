@@ -14,7 +14,6 @@ import dev.jstech.computers.sigma.edit.SigmaCompletions;
 import dev.jstech.computers.sigma.edit.CompletionContext;
 import dev.jstech.computers.sigma.sem.BuiltIns;
 import dev.jstech.computers.sigma.sem.SemanticModel;
-import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.core.client.gui.component.ContextMenu;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.logic.TextDocument;
@@ -46,7 +45,7 @@ public final class CodeCompletions {
     /** Whether the strip under the list says what the call on it will cost the program. */
     private boolean showCosts;
     /** What each offered call is, kept beside the list so the strip can price the one being looked at. */
-    private final List<String> offered = new ArrayList<>();
+    private final List<SigmaCompletions.Item> offered = new ArrayList<>();
     /** The names on the list, in its order, for a test asking what an editor offered. */
     private final List<String> labels = new ArrayList<>();
 
@@ -107,7 +106,7 @@ public final class CodeCompletions {
         for (final SigmaCompletions.Item item : found.subList(0, Math.min(found.size(), MAX_ITEMS))) {
             entries.add(new ContextMenu.Item(item.signature(), true,
                     () -> take(doc, where, item.label())));
-            this.offered.add(item.owner() + "." + item.label());
+            this.offered.add(item);
             this.labels.add(item.label());
         }
         this.menu.open(entries, caret[0], caret[1] + CodeArea.lineHeight(),
@@ -184,19 +183,18 @@ public final class CodeCompletions {
     /**
      * The strip under the list: what the call the keyboard is on will cost the program.
      *
-     * <p>A call that never reaches the machine says so, because "free" is the useful thing to know
-     * about the calls that are free on purpose.
+     * <p>Every call of the library and the machine is priced, the free ones too, because "free" is the
+     * useful thing to know about the calls that are free on purpose.
      */
     private void drawCost(final GuiGraphics g, final UiContext ctx) {
         final int at = this.menu.selected();
         if (at < 0 || at >= this.offered.size()) {
             return;
         }
-        final String[] call = this.offered.get(at).split("\\.", 2);
-        if (call.length < 2 || !SigmaCosts.known(call[0], call[1])) {
+        final String text = SigmaCompletions.costOf(this.offered.get(at));
+        if (text == null) {
             return;
         }
-        final String text = "costs " + SigmaCosts.of(call[0], call[1]).describe();
         final int y = this.menu.bottom();
         g.fill(this.menu.x() - 1, y, this.menu.right() + 1, y + ROW_H + 1, 0xFF000000);
         g.fill(this.menu.x(), y, this.menu.right(), y + ROW_H, ctx.skin().fieldBg());

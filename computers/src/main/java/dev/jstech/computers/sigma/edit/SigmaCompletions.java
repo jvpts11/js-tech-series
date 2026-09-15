@@ -15,6 +15,9 @@ import dev.jstech.computers.sigma.sem.IMemberSymbol;
 import dev.jstech.computers.sigma.sem.ITypeSymbol;
 import dev.jstech.computers.sigma.sem.NamedType;
 import dev.jstech.computers.sigma.sem.SemanticModel;
+import dev.jstech.computers.vm.system.IMemberSpec;
+import dev.jstech.computers.vm.system.PropertySpec;
+import dev.jstech.computers.vm.system.SystemApi;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -407,5 +410,36 @@ public final class SigmaCompletions {
                     event.name() + " : " + event.delegateType().name();
             case IMemberSymbol.ConstructorSymbol constructor -> constructor.name() + "()";
         };
+    }
+
+    /**
+     * What the call an item names costs a program, the way the strip under the list says it, or null when the
+     * item is not a call of the library or the machine.
+     *
+     * <p>A call written several ways may cost something different each way, as a call across a Gateway does for
+     * every thing it hands over, so the price is the one for the way this item writes it.
+     */
+    public static String costOf(final Item item) {
+        final List<IMemberSpec> ways = SystemApi.members(item.owner(), item.label());
+        IMemberSpec chosen = ways.size() == 1 ? ways.getFirst() : null;
+        final String taken = takenBy(item.signature());
+        for (int i = 0; chosen == null && i < ways.size(); i++) {
+            if (String.join(", ", ways.get(i).id().parameters()).equals(taken)) {
+                chosen = ways.get(i);
+            }
+        }
+        if (chosen == null) {
+            return null;
+        }
+        return chosen instanceof PropertySpec value && value.writable()
+                ? "costs " + value.cost().describe() + " to read and " + value.writeCost().describe() + " to write"
+                : "costs " + chosen.cost().describe();
+    }
+
+    /** What a signature says its member takes: the text between its brackets, or nothing for a value. */
+    private static String takenBy(final String signature) {
+        final int open = signature.indexOf('(');
+        final int close = signature.lastIndexOf(')');
+        return open < 0 || close < open ? "" : signature.substring(open + 1, close);
     }
 }

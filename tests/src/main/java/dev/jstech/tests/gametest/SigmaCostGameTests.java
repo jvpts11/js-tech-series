@@ -15,7 +15,9 @@ import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.machine.MachineHost;
 import dev.jstech.computers.vm.program.IHost;
 import dev.jstech.computers.vm.program.Values;
-import dev.jstech.computers.vm.system.SigmaCosts;
+import dev.jstech.computers.vm.system.CallCost;
+import dev.jstech.computers.vm.system.IMemberSpec;
+import dev.jstech.computers.vm.system.SystemApi;
 import dev.jstech.tests.JsTests;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -30,8 +32,8 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 /**
  * What the machine charges a program, against what the editors tell the player it will charge.
  *
- * <p>The cost of every call is written down in one place so an editor can show it before the line is
- * even run. That table is only worth anything if it is the truth, and the truth is what a real computer
+ * <p>The cost of every call is declared beside the call so an editor can show it before the line is even
+ * run. That declaration is only worth anything if it is the truth, and the truth is what a real computer
  * actually takes off a program's budget. So this asks a real machine, one call at a time, and compares.
  */
 @GameTestHolder(JsTests.MODID)
@@ -67,7 +69,7 @@ public final class SigmaCostGameTests {
     }
 
     /**
-     * Asks the machine for one member and checks it charged what the table says.
+     * Asks the machine for one member and checks it charged what its declaration says.
      *
      * <p>A call that brings back rows is charged by how many, so the reply itself says how many there
      * were and the expected price is worked out from that rather than guessed.
@@ -81,19 +83,24 @@ public final class SigmaCostGameTests {
             helper.fail(owner + "." + member + " could not be asked at all: " + refused.getMessage());
             return;
         }
+        final List<IMemberSpec> declared = SystemApi.members(owner, member);
+        if (declared.size() != 1) {
+            helper.fail(owner + "." + member + " is declared " + declared.size() + " ways, not one");
+            return;
+        }
         final int rows = reply.value() instanceof Values.ListValue list ? list.size() : 0;
-        final int expected = SigmaCosts.of(owner, member).at(rows);
+        final int expected = declared.getFirst().cost().at(rows, 0);
         helper.assertTrue(reply.cost() == expected,
-                owner + "." + member + " charged " + reply.cost() + ", the table says " + expected
+                owner + "." + member + " charged " + reply.cost() + ", its declaration says " + expected
                         + " (" + rows + " rows)");
     }
 
     /**
-     * Every call a program can make that only needs the machine itself, priced as the table promises.
+     * Every call a program can make that only needs the machine itself, priced as its declaration promises.
      *
      * <p>The ones left out are the ones that would change the world to ask them: writing to the drive
-     * and asking the network for work. Their prices are fixed rather than counted, and a reader can see
-     * the constant in the host beside the one in the table.
+     * and asking the network for work. Their prices are fixed rather than counted, and the host charges
+     * them with the same level the declaration names.
      */
     @GameTest(template = ARENA)
     public static void costs_areWhatTheEditorsPromise(final GameTestHelper helper) {
@@ -140,7 +147,8 @@ public final class SigmaCostGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     for (final String member : List.of("Watch", "WatchBelow", "WatchAbove")) {
-                        helper.assertTrue(SigmaCosts.of("Network", member).at(0) == 0,
+                        helper.assertTrue(
+                                CallCost.FREE.equals(SystemApi.members("Network", member).getFirst().cost()),
                                 member + " should cost nothing to arm");
                         /*
                          * The machine is never asked: a watch is answered inside the runtime, which is
