@@ -1173,6 +1173,10 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     private final dev.jstech.computers.vm.program.IHost sigmaHost =
             new dev.jstech.computers.machine.MachineHost(this);
 
+    /** What the programs on this machine reach through it, kept here so a call finds it ready. */
+    private final dev.jstech.computers.machine.MachineServices services =
+            new dev.jstech.computers.machine.MachineServices(this);
+
     /** What the network holds of an item, as the programs' tick asks it; made once, not on every tick. */
     private final java.util.function.ToLongFunction<String> stockLookup = this::networkStock;
 
@@ -1183,6 +1187,11 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     /** The Σ# programs this machine is running. */
     public dev.jstech.computers.machine.MachinePrograms programs() {
         return programs;
+    }
+
+    /** What the Σ# programs on this machine reach through it. */
+    public dev.jstech.computers.machine.MachineServices services() {
+        return services;
     }
 
     /**

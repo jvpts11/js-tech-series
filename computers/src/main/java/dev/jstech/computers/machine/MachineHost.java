@@ -127,17 +127,15 @@ public record MachineHost(BlockEntity machine) implements IHost {
     }
 
     /**
-     * The machine as the shell sees it, which is how a program reaches its drives and its network.
+     * The machine as the shell sees it, which is how a program reaches its drives and its network. The machine keeps
+     * it, so every call reaches the same one instead of making its own.
      *
      * <p>Null when this block entity is not one a person could sit at, or when it has been read out of a
      * save and not yet placed in a world.
      */
     @org.jetbrains.annotations.Nullable
     private dev.jstech.computers.program.cli.ICliComputer asComputer() {
-        if (this.machine instanceof dev.jstech.computers.terminal.IComputerTerminalHost terminal
-                && this.machine.getLevel() instanceof net.minecraft.server.level.ServerLevel level) {
-            return new dev.jstech.computers.program.ServerCliComputer(terminal, level);
-        }
-        return null;
+        return this.machine instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity self
+                ? self.services().shell() : null;
     }
 }
