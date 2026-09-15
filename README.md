@@ -1,8 +1,17 @@
 # J's Tech Series
 
-Technology mods for Minecraft 1.21.1 on NeoForge, one mod per area, on top of a shared core library. The
-computer network of J's Computers is the backbone that ties the areas together: the machines of every
-other mod end up as data on that network, stored, moved and driven by the computers you build.
+A series of technology mods for Minecraft 1.21.1 on NeoForge, one mod per area, on top of a shared core library.
+The objective of this project is to provide a full series of tech mods that are fully compatible and completely
+integrated with each other, without all the known problems when making modpacks for personal use or multiple use.
+Each mod can also be used as an independent one in a normal modpack that does not use any of them, with the only
+real dependency being J's Core for all of them. They are also fully modifiable and can have addons that fully add
+new things to them. This project is a personal passion project to, in the end, have a full series of tech mods
+fully playable, and with a fun experience.
+
+Currently, the series only has three mods: J's Core, J's Industrial and J's Computers. And the most developed one
+currently is J's Computers, which has the backbone for every other mod that comes in the future, which is the mod's
+own network and the operations system. After J's Computers reaches a good level of readiness, J's Industrial will
+be the next one in the list.
 
 The series is in alpha. See [what a version means](docs/RELEASING.md), [what changed](CHANGELOG.md) and the
 [releases page](https://github.com/jvpts11/js-tech-series/releases) for the builds.
@@ -13,7 +22,7 @@ The series is in alpha. See [what a version means](docs/RELEASING.md), [what cha
 |---|---|---|
 | [J's Core](core/README.md) | `jscore` | The shared library. Every mod of the series requires it. No gameplay of its own beyond the material items the others share. |
 | [J's Computers](computers/README.md) | `jsc` | Computers, the data network, the systems and programs, storage and autocrafting. |
-| [J's Industrial](industrial/README.md) | `jsindustrial` | Energy, machines and the processing chains that feed the network. |
+| [J's Industrial](industrial/README.md) | `jsindustrial` | Energy, machines and the processing chains that feed the network and the other ones in the future. |
 
 Planned, in the order the series grows: Space, Warfare, Transport, Agriculture, Civil Works, Robotics,
 Geology and Oceanics. The phases the series goes through, and what each phase needs before it starts, are
