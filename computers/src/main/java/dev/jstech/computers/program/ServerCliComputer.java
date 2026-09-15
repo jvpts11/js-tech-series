@@ -337,51 +337,11 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public OpResult repriorityOperation(final String id, final String priority) {
-        final MainframeBlockEntity mainframe = mainframe(host.networkUuid());
-        if (mainframe == null) {
-            return OpResult.fail("the network has no running Mainframe");
-        }
-        final dev.jstech.core.operation.OperationPriority wanted =
-                dev.jstech.core.operation.OperationPriority.fromKeyword(priority).orElse(null);
-        if (wanted == null) {
-            return OpResult.fail("no such priority: " + priority);
-        }
-        final String prefix = id.trim().toLowerCase(java.util.Locale.ROOT);
-        if (prefix.isEmpty()) {
-            return OpResult.fail("which operation?");
-        }
-        for (final dev.jstech.computers.operation.INetworkOperation operation : mainframe.liveOperations()) {
-            final String full = operation.operationId().toString();
-            if (full.startsWith(prefix) && prefix.length() >= ShortId.of(full).length()) {
-                operation.setPriority(wanted);
-                return OpResult.ok(ShortId.of(full) + " is now " + wanted.serializedName());
-            }
-        }
-        return OpResult.fail("no operation " + id + " is still running");
+        return operations().reprioritise(id, priority);
     }
 
     public OpResult cancelOperation(final String id) {
-        final MainframeBlockEntity mainframe = mainframe(host.networkUuid());
-        if (mainframe == null) {
-            return OpResult.fail("the network has no running Mainframe");
-        }
-        final String wanted = id.trim().toLowerCase(java.util.Locale.ROOT);
-        if (wanted.isEmpty()) {
-            return OpResult.fail("usage: cancel <id>   (see 'ops')");
-        }
-        for (final dev.jstech.computers.operation.INetworkOperation operation : mainframe.liveOperations()) {
-            final String full = operation.operationId().toString();
-            // The prompt shows the short id; accept it, or any longer prefix of the full id.
-            if (full.startsWith(wanted) && wanted.length() >= ShortId.of(full).length()) {
-                final OperationRecord record = operation.liveRecord();
-                if (!mainframe.cancelOperation(operation.operationId())) {
-                    return OpResult.fail("operation " + ShortId.of(full) + " has already settled");
-                }
-                return OpResult.ok("cancelled " + OperationRecord.typeName(record.type()) + " "
-                        + record.name().getString());
-            }
-        }
-        return OpResult.fail("no operation " + wanted + " in flight (see 'ops')");
+        return operations().cancel(id);
     }
 
     @Override
@@ -468,17 +428,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public List<ActiveOp> activeOps() {
-        final MainframeBlockEntity mainframe = mainframe(host.networkUuid());
-        if (mainframe == null) {
-            return List.of();
-        }
-        final List<ActiveOp> rows = new ArrayList<>();
-        for (final OperationRecord record : mainframe.activeOperationRecords()) {
-            rows.add(new ActiveOp(ShortId.of(record.id().toString()), OperationRecord.typeName(record.type()),
-                    record.name().getString(), record.moved(), record.requested(),
-                    OperationRecord.statusName(record.status()), record.priority().label()));
-        }
-        return rows;
+        return operations().list();
     }
 
     @Override
@@ -2079,7 +2029,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     /** The work this machine asks of its network, as this shell asks for it. */
     private dev.jstech.computers.machine.OperationsService operations() {
-        return new dev.jstech.computers.machine.OperationsService(host, level, this, this);
+        return new dev.jstech.computers.machine.OperationsService(host, level, this);
     }
 
     /** The data network this machine is on, as this shell reads it. */

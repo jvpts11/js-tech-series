@@ -8,17 +8,21 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.MoveLabels;
+import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.ICliNetwork;
-import dev.jstech.computers.program.cli.ICliOperations;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.BooleanSupplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -37,16 +41,13 @@ public final class OperationsService {
 
     private final IComputerTerminalHost terminal;
     private final ServerLevel level;
-    /** The network's work as the machine's shell asks for it, for what this service does not do itself yet. */
-    private final ICliOperations operations;
     /** The network as the machine's shell reads it. */
     private final ICliNetwork network;
 
     public OperationsService(final IComputerTerminalHost terminal, final ServerLevel level,
-                             final ICliOperations operations, final ICliNetwork network) {
+                             final ICliNetwork network) {
         this.terminal = terminal;
         this.level = level;
-        this.operations = operations;
         this.network = network;
     }
 
@@ -158,20 +159,63 @@ public final class OperationsService {
                 + key.displayName().getString());
     }
 
-    /** Asks the network to stop an Operation in flight, named by its id. */
+    /**
+     * Asks the network to stop an Operation in flight, named by its id.
+     *
+     * <p>The id is the short one everything shows, or any longer prefix of the full one, so whoever reads a list can
+     * name what they see.
+     */
     public ICliComputer.OpResult cancel(final String id) {
-        return this.operations.cancelOperation(id);
+        final MainframeBlockEntity mainframe = this.mainframe();
+        if (mainframe == null) {
+            return ICliComputer.OpResult.fail("the network has no running Mainframe");
+        }
+        final String wanted = id.trim().toLowerCase(Locale.ROOT);
+        if (wanted.isEmpty()) {
+            return ICliComputer.OpResult.fail("usage: cancel <id>   (see 'ops')");
+        }
+        for (final INetworkOperation operation : mainframe.liveOperations()) {
+            final String full = operation.operationId().toString();
+            if (full.startsWith(wanted) && wanted.length() >= ShortId.of(full).length()) {
+                final OperationRecord record = operation.liveRecord();
+                if (!mainframe.cancelOperation(operation.operationId())) {
+                    return ICliComputer.OpResult.fail("operation " + ShortId.of(full) + " has already settled");
+                }
+                return ICliComputer.OpResult.ok("cancelled " + OperationRecord.typeName(record.type()) + " "
+                        + record.name().getString());
+            }
+        }
+        return ICliComputer.OpResult.fail("no operation " + wanted + " in flight (see 'ops')");
     }
 
-    /** Asks the network to move an Operation in flight to another priority. */
+    /** Asks the network to move an Operation in flight to another priority; one that has settled cannot be hurried. */
     public ICliComputer.OpResult reprioritise(final String id, final String priority) {
-        return this.operations.repriorityOperation(id, priority);
+        final MainframeBlockEntity mainframe = this.mainframe();
+        if (mainframe == null) {
+            return ICliComputer.OpResult.fail("the network has no running Mainframe");
+        }
+        final OperationPriority wanted = OperationPriority.fromKeyword(priority).orElse(null);
+        if (wanted == null) {
+            return ICliComputer.OpResult.fail("no such priority: " + priority);
+        }
+        final String prefix = id.trim().toLowerCase(Locale.ROOT);
+        if (prefix.isEmpty()) {
+            return ICliComputer.OpResult.fail("which operation?");
+        }
+        for (final INetworkOperation operation : mainframe.liveOperations()) {
+            final String full = operation.operationId().toString();
+            if (full.startsWith(prefix) && prefix.length() >= ShortId.of(full).length()) {
+                operation.setPriority(wanted);
+                return ICliComputer.OpResult.ok(ShortId.of(full) + " is now " + wanted.serializedName());
+            }
+        }
+        return ICliComputer.OpResult.fail("no operation " + id + " is still running");
     }
 
     /** The Operation in flight with that id, or null when none is, which includes one that has settled. */
     @Nullable
     public ICliComputer.ActiveOp get(final String id) {
-        for (final ICliComputer.ActiveOp op : this.operations.activeOps()) {
+        for (final ICliComputer.ActiveOp op : this.list()) {
             if (op.id().equalsIgnoreCase(id)) {
                 return op;
             }
@@ -179,9 +223,19 @@ public final class OperationsService {
         return null;
     }
 
-    /** Every Operation in flight. */
+    /** Every Operation in flight, as whoever reads a list of them sees it. */
     public List<ICliComputer.ActiveOp> list() {
-        return this.operations.activeOps();
+        final MainframeBlockEntity mainframe = this.mainframe();
+        if (mainframe == null) {
+            return List.of();
+        }
+        final List<ICliComputer.ActiveOp> rows = new ArrayList<>();
+        for (final OperationRecord record : mainframe.activeOperationRecords()) {
+            rows.add(new ICliComputer.ActiveOp(ShortId.of(record.id().toString()),
+                    OperationRecord.typeName(record.type()), record.name().getString(), record.moved(),
+                    record.requested(), OperationRecord.statusName(record.status()), record.priority().label()));
+        }
+        return rows;
     }
 
     /** A parsed quantity as a concrete demand: ALL, or none given, means "as much as possible". */
