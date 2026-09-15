@@ -62,9 +62,6 @@ public final class BuiltIns {
         this.fillDelegates();
         this.fillScript();
         this.fillDeclared();
-        this.fillNetwork();
-        this.fillMainframe();
-        this.fillOperations();
         this.fillGateway();
         this.fillUi();
     }
@@ -141,12 +138,6 @@ public final class BuiltIns {
     private static final Map<String, String> HOMES = Map.ofEntries(
             Map.entry("IScript", SYSTEM), Map.entry("Action", SYSTEM), Map.entry("Func", SYSTEM),
             Map.entry("List", COLLECTIONS), Map.entry("Map", COLLECTIONS),
-            Map.entry("Network", NETWORK), Map.entry("ServerInfo", NETWORK), Map.entry("HoldingInfo", NETWORK),
-            Map.entry("StockEvent", NETWORK), Map.entry("Subscription", NETWORK), Map.entry("WorkStat", NETWORK),
-            Map.entry("Mainframe", NETWORK), Map.entry("RemoteComputer", NETWORK), Map.entry("Iql", NETWORK),
-            Map.entry("IqlResult", NETWORK),
-            Map.entry("Operations", OPERATIONS), Map.entry("OperationInfo", OPERATIONS),
-            Map.entry("AskResult", OPERATIONS),
             Map.entry("Gateway", NETWORK), Map.entry("CcComputer", NETWORK), Map.entry("CcPeripheral", NETWORK),
             Map.entry("GatewayMessage", NETWORK),
             Map.entry("Widget", UI), Map.entry("Window", UI), Map.entry("Row", UI), Map.entry("Column", UI),
@@ -458,159 +449,6 @@ public final class BuiltIns {
         this.method(gateway, "Send", flag, PUBLIC_STATIC, whole, text);
         this.method(gateway, "OnMessage", ITypeSymbol.Primitive.VOID, PUBLIC_STATIC,
                 new ITypeSymbol.GenericType(this.actionOfType, List.of(message)));
-    }
-
-    /**
-     * The data network the machine is on.
-     *
-     * <p>{@code Online} and {@code Current} answer on any machine, because whether there is a network is
-     * a fair question anywhere. Everything else needs one, and says so if there is none.
-     */
-    private void fillNetwork() {
-        final ITypeSymbol whole = ITypeSymbol.Primitive.LONG;
-
-        final NamedType holding = this.declare("HoldingInfo", NamedType.Kind.CLASS);
-        this.property(holding, "Server", this.stringType, PUBLIC);
-        this.property(holding, "Quantity", whole, PUBLIC);
-
-        final NamedType server = this.declare("ServerInfo", NamedType.Kind.CLASS);
-        this.property(server, "Name", this.stringType, PUBLIC);
-        this.property(server, "Stored", whole, PUBLIC);
-        this.property(server, "Capacity", whole, PUBLIC);
-
-        final NamedType network = this.declare("Network", NamedType.Kind.CLASS);
-        this.property(network, "Online", ITypeSymbol.Primitive.BOOL, PUBLIC_STATIC);
-        this.property(network, "Current", this.stringType, PUBLIC_STATIC);
-        this.property(network, "Capacity", whole, PUBLIC_STATIC);
-        this.property(network, "Used", whole, PUBLIC_STATIC);
-        this.method(network, "Total", whole, PUBLIC_STATIC, this.stringType);
-        this.method(network, "Types", new ITypeSymbol.GenericType(this.listType, List.of(this.stringType)),
-                PUBLIC_STATIC);
-        this.method(network, "Find", new ITypeSymbol.GenericType(this.listType, List.of(holding)),
-                PUBLIC_STATIC, this.stringType);
-        this.method(network, "Servers", new ITypeSymbol.GenericType(this.listType, List.of(server)),
-                PUBLIC_STATIC);
-
-        /*
-         * Being told beats asking. A program that wants to know when the iron runs low says so once and
-         * is called when it happens, instead of asking every tick for the rest of the world's life.
-         */
-        final NamedType event = this.declare("StockEvent", NamedType.Kind.CLASS);
-        this.property(event, "Item", this.stringType, PUBLIC);
-        this.property(event, "Total", whole, PUBLIC);
-        this.property(event, "Previous", whole, PUBLIC);
-
-        final NamedType subscription = this.declare("Subscription", NamedType.Kind.CLASS);
-        this.property(subscription, "Id", ITypeSymbol.Primitive.INT, PUBLIC);
-        this.property(subscription, "Item", this.stringType, PUBLIC);
-
-        final ITypeSymbol told = new ITypeSymbol.GenericType(this.actionOfType, List.of(event));
-        this.method(network, "Watch", subscription, PUBLIC_STATIC, this.stringType, told);
-        this.method(network, "WatchBelow", subscription, PUBLIC_STATIC, this.stringType, whole, told);
-        this.method(network, "WatchAbove", subscription, PUBLIC_STATIC, this.stringType, whole, told);
-
-        /*
-         * The other computers on the network, and what a program may do on them: start a program
-         * there (a handle like a local one comes back), run a line at their prompt, send a line to a
-         * program of theirs. The other machine says whether it takes any of that.
-         */
-        final NamedType process = this.type("Process", 0);
-        final ITypeSymbol strings = new ITypeSymbol.GenericType(this.listType, List.of(this.stringType));
-        final NamedType remote = this.declare("RemoteComputer", NamedType.Kind.CLASS);
-        this.property(remote, "Host", this.stringType, PUBLIC);
-        this.property(remote, "Name", this.stringType, PUBLIC);
-        this.property(remote, "Type", this.stringType, PUBLIC);
-        this.property(remote, "Os", this.stringType, PUBLIC);
-        this.property(remote, "Online", ITypeSymbol.Primitive.BOOL, PUBLIC);
-        this.method(remote, "Start", process, PUBLIC, this.stringType);
-        this.method(remote, "Start", process, PUBLIC, this.stringType, strings);
-        this.method(remote, "Start", process, PUBLIC, this.stringType, strings, this.stringType);
-        this.method(remote, "Shell", strings, PUBLIC, this.stringType);
-        this.method(remote, "Send", ITypeSymbol.Primitive.BOOL, PUBLIC, ITypeSymbol.Primitive.INT, this.stringType);
-        this.method(remote, "Processes", new ITypeSymbol.GenericType(this.listType, List.of(process)), PUBLIC);
-        this.method(network, "Computers", new ITypeSymbol.GenericType(this.listType, List.of(remote)),
-                PUBLIC_STATIC);
-        this.method(network, "Computer", remote, PUBLIC_STATIC, this.stringType);
-
-        /*
-         * The network's own language, from a program: a statement goes to the Mainframe's engine as it
-         * would from the prompt, and what it answers comes back as rows a program can walk.
-         */
-        final ITypeSymbol row = new ITypeSymbol.GenericType(this.mapType, List.of(this.stringType, this.objectType));
-        final ITypeSymbol rows = new ITypeSymbol.GenericType(this.listType, List.of(row));
-        final NamedType result = this.declare("IqlResult", NamedType.Kind.CLASS);
-        this.property(result, "Ok", ITypeSymbol.Primitive.BOOL, PUBLIC);
-        this.property(result, "Message", this.stringType, PUBLIC);
-        this.property(result, "Rows", rows, PUBLIC);
-        final NamedType iql = this.declare("Iql", NamedType.Kind.CLASS);
-        this.method(iql, "Run", result, PUBLIC_STATIC, this.stringType);
-        this.method(iql, "Query", rows, PUBLIC_STATIC, this.stringType);
-        this.method(iql, "Exec", result, PUBLIC_STATIC, this.stringType);
-        this.method(iql, "Exec", result, PUBLIC_STATIC, this.stringType, strings);
-        this.method(iql, "RunFile", result, PUBLIC_STATIC, this.stringType);
-    }
-
-    /**
-     * The machine that orchestrates the network, and what it remembers of the work it has done.
-     *
-     * <p>A kind of work the network has not done reads as zeroes, so a script can add up and compare
-     * without first asking whether there is anything to add up.
-     */
-    private void fillMainframe() {
-        final ITypeSymbol integer = ITypeSymbol.Primitive.INT;
-
-        final NamedType stat = this.declare("WorkStat", NamedType.Kind.CLASS);
-        this.property(stat, "Type", this.stringType, PUBLIC);
-        this.property(stat, "Count", integer, PUBLIC);
-        this.property(stat, "AverageWait", integer, PUBLIC);
-        this.property(stat, "AverageRun", integer, PUBLIC);
-        this.property(stat, "ShortfallPercent", integer, PUBLIC);
-        this.property(stat, "Moved", ITypeSymbol.Primitive.LONG, PUBLIC);
-
-        final NamedType mainframe = this.declare("Mainframe", NamedType.Kind.CLASS);
-        this.property(mainframe, "Online", ITypeSymbol.Primitive.BOOL, PUBLIC_STATIC);
-        this.property(mainframe, "PeakToday", integer, PUBLIC_STATIC);
-        this.method(mainframe, "Stats", stat, PUBLIC_STATIC, this.stringType);
-        this.method(mainframe, "Work", new ITypeSymbol.GenericType(this.listType, List.of(stat)),
-                PUBLIC_STATIC);
-    }
-
-    /**
-     * Asking the network to move things.
-     *
-     * <p>Asking can fail without the program being wrong: there may be no Mainframe running, or nothing
-     * that crafts the thing. So an ask answers whether it was taken and why not, and a script carries on
-     * and tries something else rather than stopping.
-     */
-    private void fillOperations() {
-        final ITypeSymbol whole = ITypeSymbol.Primitive.LONG;
-
-        final NamedType asked = this.declare("AskResult", NamedType.Kind.CLASS);
-        this.property(asked, "Ok", ITypeSymbol.Primitive.BOOL, PUBLIC);
-        this.property(asked, "Message", this.stringType, PUBLIC);
-
-        final NamedType operation = this.declare("OperationInfo", NamedType.Kind.CLASS);
-        this.property(operation, "Id", this.stringType, PUBLIC);
-        this.property(operation, "Type", this.stringType, PUBLIC);
-        this.property(operation, "Item", this.stringType, PUBLIC);
-        this.property(operation, "Moved", whole, PUBLIC);
-        this.property(operation, "Requested", whole, PUBLIC);
-        this.property(operation, "Status", this.stringType, PUBLIC);
-        this.property(operation, "Priority", this.stringType, PUBLIC);
-
-        final NamedType operations = this.declare("Operations", NamedType.Kind.CLASS);
-        this.method(operations, "Pull", asked, PUBLIC_STATIC, this.stringType, whole);
-        this.method(operations, "Push", asked, PUBLIC_STATIC, this.stringType, whole);
-        this.method(operations, "Craft", asked, PUBLIC_STATIC, this.stringType, whole);
-        this.method(operations, "Cancel", asked, PUBLIC_STATIC, this.stringType);
-        /*
-         * Moving one up the queue is asked for, not written into the record a program was handed: what
-         * it holds is a picture of how things were, and painting over a picture changes nothing.
-         */
-        this.method(operations, "Reprioritise", asked, PUBLIC_STATIC, this.stringType, this.stringType);
-        this.method(operations, "Get", operation, PUBLIC_STATIC, this.stringType);
-        this.method(operations, "List", new ITypeSymbol.GenericType(this.listType, List.of(operation)),
-                PUBLIC_STATIC);
     }
 
     /**

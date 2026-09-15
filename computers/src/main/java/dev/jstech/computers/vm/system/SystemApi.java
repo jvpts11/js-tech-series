@@ -25,6 +25,8 @@ public final class SystemApi {
     private static final String EXECUTION = "System.Execution";
     private static final String THREADING = "System.Threading";
     private static final String MACHINE = "System.Machine";
+    private static final String NETWORK = "System.Network";
+    private static final String OPERATIONS = "System.Operations";
 
     private static final String VOID = "void";
     private static final String INT = "int";
@@ -35,10 +37,12 @@ public final class SystemApi {
     private static final String STRING = "string";
     private static final String OBJECT = "object";
     private static final String STRINGS = "List<string>";
+    private static final String ROWS = "List<Map<string, object>>";
 
     private static final List<TypeSpec> TYPES = List.of(math(), convert(), console(), program(), process(),
             processMessage(), thread(), time(), random(), file(), cpuInfo(), diskInfo(), osInfo(), processInfo(),
-            computer());
+            computer(), holdingInfo(), serverInfo(), network(), stockEvent(), subscription(), remoteComputer(),
+            iqlResult(), iql(), workStat(), mainframe(), askResult(), operationInfo(), operations());
 
     private SystemApi() {
     }
@@ -293,6 +297,184 @@ public final class SystemApi {
         computer.onType(STRINGS, "Programs", MemberKind.WORLD, CallCost.of(SigmaCosts.GATHER));
         computer.onType("List<ProcessInfo>", "Processes", MemberKind.WORLD, CallCost.of(SigmaCosts.GATHER));
         return new TypeSpec(MACHINE, "Computer", computer.members);
+    }
+
+    private static TypeSpec holdingInfo() {
+        final Members holding = new Members("HoldingInfo");
+        holding.recordValue(STRING, "Server");
+        holding.recordValue(LONG, "Quantity");
+        return new TypeSpec(NETWORK, "HoldingInfo", holding.members);
+    }
+
+    private static TypeSpec serverInfo() {
+        final Members server = new Members("ServerInfo");
+        server.recordValue(STRING, "Name");
+        server.recordValue(LONG, "Stored");
+        server.recordValue(LONG, "Capacity");
+        return new TypeSpec(NETWORK, "ServerInfo", server.members);
+    }
+
+    /**
+     * The data network the machine is on.
+     *
+     * <p>{@code Online} and {@code Current} answer on any machine, because whether there is a network is a fair
+     * question anywhere. Everything else needs one, and says so if there is none. Whether there is one is a glance;
+     * what is on it is a read, and a read that brings back rows is priced by how many.
+     */
+    private static TypeSpec network() {
+        final Members network = new Members("Network");
+        network.valueOnType(BOOL, "Online", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK));
+        network.valueOnType(STRING, "Current", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK));
+        network.valueOnType(LONG, "Capacity", MemberKind.WORLD, CallCost.of(SigmaCosts.READ));
+        network.valueOnType(LONG, "Used", MemberKind.WORLD, CallCost.of(SigmaCosts.READ));
+        network.onType(LONG, "Total", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
+        network.onType(STRINGS, "Types", MemberKind.WORLD, CallCost.perRow(SigmaCosts.READ));
+        network.onType("List<HoldingInfo>", "Find", MemberKind.WORLD, CallCost.perRow(SigmaCosts.READ), STRING);
+        network.onType("List<ServerInfo>", "Servers", MemberKind.WORLD, CallCost.perRow(SigmaCosts.READ));
+        /*
+         * Being told beats asking. A program that wants to know when the iron runs low says so once and is called when
+         * it happens, instead of asking every tick for the rest of the world's life. The program keeps what it asked to
+         * be told about, and asking costs nothing, and is meant to.
+         */
+        network.onType("Subscription", "Watch", MemberKind.PROCESS, CallCost.FREE, STRING, "Action<StockEvent>");
+        network.onType("Subscription", "WatchBelow", MemberKind.PROCESS, CallCost.FREE, STRING, LONG,
+                "Action<StockEvent>");
+        network.onType("Subscription", "WatchAbove", MemberKind.PROCESS, CallCost.FREE, STRING, LONG,
+                "Action<StockEvent>");
+        network.onType("List<RemoteComputer>", "Computers", MemberKind.WORLD, CallCost.perRow(SigmaCosts.READ));
+        network.onType("RemoteComputer", "Computer", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), STRING);
+        return new TypeSpec(NETWORK, "Network", network.members);
+    }
+
+    private static TypeSpec stockEvent() {
+        final Members event = new Members("StockEvent");
+        event.recordValue(STRING, "Item");
+        event.recordValue(LONG, "Total");
+        event.recordValue(LONG, "Previous");
+        return new TypeSpec(NETWORK, "StockEvent", event.members);
+    }
+
+    private static TypeSpec subscription() {
+        final Members subscription = new Members("Subscription");
+        subscription.recordValue(INT, "Id");
+        subscription.recordValue(STRING, "Item");
+        return new TypeSpec(NETWORK, "Subscription", subscription.members);
+    }
+
+    /**
+     * Another computer on the network, and what a program may do on it: start a program there (a handle like a local
+     * one comes back), run a line at its prompt, send a line to a program of its. The other machine says whether it
+     * takes any of that. What it is costs nothing once it is in hand; starting a program there or running a line at
+     * its prompt is work for that machine and priced like a submission; a line sent to it is a touch; its process list
+     * is a list.
+     */
+    private static TypeSpec remoteComputer() {
+        final Members remote = new Members("RemoteComputer");
+        remote.recordValue(STRING, "Host");
+        remote.recordValue(STRING, "Name");
+        remote.recordValue(STRING, "Type");
+        remote.recordValue(STRING, "Os");
+        remote.recordValue(BOOL, "Online");
+        remote.onObject("Process", "Start", MemberKind.WORLD, CallCost.of(SigmaCosts.SUBMIT), STRING);
+        remote.onObject("Process", "Start", MemberKind.WORLD, CallCost.of(SigmaCosts.SUBMIT), STRING, STRINGS);
+        remote.onObject("Process", "Start", MemberKind.WORLD, CallCost.of(SigmaCosts.SUBMIT), STRING, STRINGS,
+                STRING);
+        remote.onObject(STRINGS, "Shell", MemberKind.WORLD, CallCost.of(SigmaCosts.SUBMIT), STRING);
+        remote.onObject(BOOL, "Send", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), INT, STRING);
+        remote.onObject("List<Process>", "Processes", MemberKind.WORLD, CallCost.perRow(SigmaCosts.READ));
+        return new TypeSpec(NETWORK, "RemoteComputer", remote.members);
+    }
+
+    private static TypeSpec iqlResult() {
+        final Members result = new Members("IqlResult");
+        result.recordValue(BOOL, "Ok");
+        result.recordValue(STRING, "Message");
+        result.recordValue(ROWS, "Rows");
+        return new TypeSpec(NETWORK, "IqlResult", result.members);
+    }
+
+    /**
+     * The network's own language, from a program: a statement goes to the Mainframe's engine as it would from the
+     * prompt, and what it answers comes back as rows a program can walk. Every statement is work for the Mainframe,
+     * and rows are rows.
+     */
+    private static TypeSpec iql() {
+        final Members iql = new Members("Iql");
+        iql.onType("IqlResult", "Run", MemberKind.WORLD, CallCost.perRow(SigmaCosts.WRITE), STRING);
+        iql.onType(ROWS, "Query", MemberKind.WORLD, CallCost.perRow(SigmaCosts.WRITE), STRING);
+        iql.onType("IqlResult", "Exec", MemberKind.WORLD, CallCost.perRow(SigmaCosts.WRITE), STRING);
+        iql.onType("IqlResult", "Exec", MemberKind.WORLD, CallCost.perRow(SigmaCosts.WRITE), STRING, STRINGS);
+        iql.onType("IqlResult", "RunFile", MemberKind.WORLD, CallCost.perRow(SigmaCosts.WRITE), STRING);
+        return new TypeSpec(NETWORK, "Iql", iql.members);
+    }
+
+    private static TypeSpec workStat() {
+        final Members stat = new Members("WorkStat");
+        stat.recordValue(STRING, "Type");
+        stat.recordValue(INT, "Count");
+        stat.recordValue(INT, "AverageWait");
+        stat.recordValue(INT, "AverageRun");
+        stat.recordValue(INT, "ShortfallPercent");
+        stat.recordValue(LONG, "Moved");
+        return new TypeSpec(NETWORK, "WorkStat", stat.members);
+    }
+
+    /**
+     * The machine that orchestrates the network, and what it remembers of the work it has done.
+     *
+     * <p>A kind of work the network has not done reads as zeroes, so a script can add up and compare without first
+     * asking whether there is anything to add up. What it has done is a list, and a list is priced by its length.
+     */
+    private static TypeSpec mainframe() {
+        final Members mainframe = new Members("Mainframe");
+        mainframe.valueOnType(BOOL, "Online", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK));
+        mainframe.valueOnType(INT, "PeakToday", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK));
+        mainframe.onType("WorkStat", "Stats", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
+        mainframe.onType("List<WorkStat>", "Work", MemberKind.WORLD, CallCost.perRow(SigmaCosts.READ));
+        return new TypeSpec(NETWORK, "Mainframe", mainframe.members);
+    }
+
+    private static TypeSpec askResult() {
+        final Members asked = new Members("AskResult");
+        asked.recordValue(BOOL, "Ok");
+        asked.recordValue(STRING, "Message");
+        return new TypeSpec(OPERATIONS, "AskResult", asked.members);
+    }
+
+    private static TypeSpec operationInfo() {
+        final Members operation = new Members("OperationInfo");
+        operation.recordValue(STRING, "Id");
+        operation.recordValue(STRING, "Type");
+        operation.recordValue(STRING, "Item");
+        operation.recordValue(LONG, "Moved");
+        operation.recordValue(LONG, "Requested");
+        operation.recordValue(STRING, "Status");
+        operation.recordValue(STRING, "Priority");
+        return new TypeSpec(OPERATIONS, "OperationInfo", operation.members);
+    }
+
+    /**
+     * Asking the network to move things.
+     *
+     * <p>Asking can fail without the program being wrong: there may be no Mainframe running, or nothing that crafts
+     * the thing. So an ask answers whether it was taken and why not, and a script carries on and tries something else
+     * rather than stopping. Asking the network to move or make something is work for the whole base.
+     */
+    private static TypeSpec operations() {
+        final Members operations = new Members("Operations");
+        operations.onType("AskResult", "Pull", MemberKind.WORLD, CallCost.of(SigmaCosts.SUBMIT), STRING, LONG);
+        operations.onType("AskResult", "Push", MemberKind.WORLD, CallCost.of(SigmaCosts.SUBMIT), STRING, LONG);
+        operations.onType("AskResult", "Craft", MemberKind.WORLD, CallCost.of(SigmaCosts.SUBMIT), STRING, LONG);
+        operations.onType("AskResult", "Cancel", MemberKind.WORLD, CallCost.of(SigmaCosts.SUBMIT), STRING);
+        /*
+         * Moving one up the queue is asked for, not written into the record a program was handed: what it holds is a
+         * picture of how things were, and painting over a picture changes nothing.
+         */
+        operations.onType("AskResult", "Reprioritise", MemberKind.WORLD, CallCost.of(SigmaCosts.SUBMIT), STRING,
+                STRING);
+        operations.onType("OperationInfo", "Get", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
+        operations.onType("List<OperationInfo>", "List", MemberKind.WORLD, CallCost.perRow(SigmaCosts.READ));
+        return new TypeSpec(OPERATIONS, "Operations", operations.members);
     }
 
     /** Gathers the members of one type, in the order they are declared. */
