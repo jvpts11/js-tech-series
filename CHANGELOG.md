@@ -90,7 +90,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   one place, for its terminal too, whether a program is still going; the rate at which a processor's clock buys
   instructions is named beside the time the server lends its programs, and screens list a machine's programs
   without reaching them; a program waiting on another one is told when it ends, or asks at most once a tick when
-  it is on another machine; every source file's header names the mod it belongs to.
+  it is on another machine; each call the system answers says who answers it (the language, the program's own
+  process or the machine) and what it costs; every source file's header names the mod it belongs to.
 
 ### Fixed
 - Cutting the last data cable between a Mainframe and the rest of its network now takes the network away

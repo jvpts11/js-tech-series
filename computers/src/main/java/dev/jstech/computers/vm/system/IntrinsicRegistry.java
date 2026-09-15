@@ -15,7 +15,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Every call the system answers, found by the type it is on, its name and the types a listing writes it with.
+ * Every call the system answers, found by the type it is on, its name and the types a listing writes it with, each one
+ * saying who answers it and what it costs.
  *
  * <p>Built once and never changed afterwards: a program resolves its calls against it when it loads, and a registry
  * that could change under a running program would make the same listing mean two things. The same call registered
@@ -30,7 +31,7 @@ public final class IntrinsicRegistry {
     private IntrinsicRegistry(final List<IntrinsicSpec> entries) {
         this.all = List.copyOf(entries);
         for (final IntrinsicSpec entry : this.all) {
-            this.byShape.computeIfAbsent(shape(entry.owner(), entry.name(), entry.parameters().size()),
+            this.byShape.computeIfAbsent(MemberId.shape(entry.owner(), entry.name(), entry.parameters().size()),
                     ignored -> new ArrayList<>()).add(entry);
         }
     }
@@ -45,7 +46,7 @@ public final class IntrinsicRegistry {
      * those types wins over one that takes them through a type parameter.
      */
     public IntrinsicSpec find(final String owner, final String name, final List<String> written) {
-        final List<IntrinsicSpec> candidates = this.byShape.get(shape(owner, name, written.size()));
+        final List<IntrinsicSpec> candidates = this.byShape.get(MemberId.shape(owner, name, written.size()));
         if (candidates == null) {
             return null;
         }
@@ -67,10 +68,6 @@ public final class IntrinsicRegistry {
         return this.all;
     }
 
-    private static String shape(final String owner, final String name, final int parameters) {
-        return owner + "." + name + "/" + parameters;
-    }
-
     /** Gathers the entries of a registry, which can be built once. */
     public static final class Builder {
 
@@ -81,16 +78,16 @@ public final class IntrinsicRegistry {
         private Builder() {
         }
 
-        /** Registers a call made on the type itself. */
+        /** Registers a pure call made on the type itself. */
         public Builder onType(final String owner, final String name, final String returns, final IPureFunction function,
                               final String... parameters) {
-            return this.add(new IntrinsicSpec(owner, name, List.of(parameters), returns, false, function));
+            return this.add(IntrinsicSpec.pure(owner, name, List.of(parameters), returns, false, function));
         }
 
-        /** Registers a call made on an object of the type, handed over ahead of the arguments. */
+        /** Registers a pure call made on an object of the type, handed over ahead of the arguments. */
         public Builder onObject(final String owner, final String name, final String returns,
                                 final IPureFunction function, final String... parameters) {
-            return this.add(new IntrinsicSpec(owner, name, List.of(parameters), returns, true, function));
+            return this.add(IntrinsicSpec.pure(owner, name, List.of(parameters), returns, true, function));
         }
 
         /** The registry, with nothing more to be added to it. */
