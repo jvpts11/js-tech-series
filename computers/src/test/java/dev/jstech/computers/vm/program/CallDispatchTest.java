@@ -53,6 +53,8 @@ class CallDispatchTest {
     private static final class Drive implements IHost {
 
         private final Map<String, String> files = new LinkedHashMap<>();
+        /** Which program the drive was last told asked. */
+        private String askedBy;
 
         @Override
         public long tick() {
@@ -75,8 +77,10 @@ class CallDispatchTest {
                 return null;
             }
             return switch (id.name()) {
-                case "Exists" -> (call, target, arguments, line) ->
-                        this.files.containsKey(String.valueOf(arguments[0]));
+                case "Exists" -> (call, target, arguments, line) -> {
+                    this.askedBy = call.caller();
+                    return this.files.containsKey(String.valueOf(arguments[0]));
+                };
                 case "Read" -> (call, target, arguments, line) -> {
                     final String held = this.files.get(String.valueOf(arguments[0]));
                     if (held == null) {
@@ -296,6 +300,15 @@ class CallDispatchTest {
         // The text came from outside, but it weighs on this program's heap like anything else it holds.
         assertTrue(process.heap().used() >= 16 + 2L * "iron,64".length(),
                 "the file's text is counted; used " + process.heap().used());
+    }
+
+    @Test
+    void call_tellsWhatAnswersACallToTheWorldWhichProgramAsked() {
+        final Drive drive = new Drive();
+
+        run(drive, "        File.Exists(\"a\");");
+
+        assertEquals("Tests.Monitor", drive.askedBy, "the class the program was started from");
     }
 
     @Test

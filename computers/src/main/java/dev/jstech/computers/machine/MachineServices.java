@@ -44,6 +44,12 @@ public final class MachineServices {
     @Nullable
     private NetworkReadService network;
 
+    @Nullable
+    private MainframeStatsService mainframe;
+
+    @Nullable
+    private OperationsService operations;
+
     public MachineServices(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
     }
@@ -96,6 +102,28 @@ public final class MachineServices {
         return this.network;
     }
 
+    /**
+     * The Mainframe of the machine's network, and what it remembers of the work it has done.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public MainframeStatsService mainframe() {
+        this.follow();
+        return this.mainframe;
+    }
+
+    /**
+     * Asking the machine's network to move and make things.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public OperationsService operations() {
+        this.follow();
+        return this.operations;
+    }
+
     /** Makes the shell and what goes through it again when the machine is in another world than before. */
     private void follow() {
         final Level level = this.machine.getLevel();
@@ -108,11 +136,15 @@ public final class MachineServices {
             this.files = new FileService(this.shell);
             this.computer = new ComputerInfoService(this.machine, this.shell);
             this.network = new NetworkReadService(terminal, server, this.shell);
+            this.mainframe = new MainframeStatsService(this.shell);
+            this.operations = new OperationsService(this.shell);
         } else {
             this.shell = null;
             this.files = null;
             this.computer = null;
             this.network = null;
+            this.mainframe = null;
+            this.operations = null;
         }
     }
 }

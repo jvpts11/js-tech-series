@@ -16,4 +16,12 @@ public interface IWorldCall {
 
     /** Counts that many bytes read or written towards what the call is charged. */
     void moved(long bytes);
+
+    /**
+     * The name of the class the asking program was started from, for what the world writes down of who asked: a base
+     * runs many programs at once, and a record that only says "a program" is one a player cannot act on.
+     */
+    default String caller() {
+        return "";
+    }
 }

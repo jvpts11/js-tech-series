@@ -24,6 +24,8 @@ final class WorldCalls implements IWorldCall {
     static final Object[] NOTHING = new Object[0];
 
     private final Process process;
+    /** The class the program was started from, which is who the world is told asked. */
+    private final String caller;
     private final IMemberSpec[] declared;
     private final IWorldFunction[] bound;
     /** How many bytes the call being answered has said it read or wrote. */
@@ -31,6 +33,7 @@ final class WorldCalls implements IWorldCall {
 
     WorldCalls(final Process process, final ProgramImage program, final IHost host) {
         this.process = process;
+        this.caller = program.entryPoint() == null ? "" : program.entryPoint();
         final List<IMemberSpec> calls = program.worldCalls();
         this.declared = calls.toArray(new IMemberSpec[0]);
         this.bound = new IWorldFunction[this.declared.length];
@@ -61,5 +64,10 @@ final class WorldCalls implements IWorldCall {
     @Override
     public void moved(final long bytes) {
         this.moved += Math.max(0, bytes);
+    }
+
+    @Override
+    public String caller() {
+        return this.caller;
     }
 }

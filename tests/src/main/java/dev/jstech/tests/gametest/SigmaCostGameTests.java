@@ -13,10 +13,7 @@ import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.machine.MachineHost;
-import dev.jstech.computers.vm.program.IHost;
-import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.vm.system.CallCost;
-import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.SystemApi;
 import dev.jstech.tests.JsTests;
 import java.util.List;
@@ -32,9 +29,9 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 /**
  * What the machine charges a program, against what the editors tell the player it will charge.
  *
- * <p>The cost of every call is declared beside the call so an editor can show it before the line is even
- * run. That declaration is only worth anything if it is the truth, and the truth is what a real computer
- * actually takes off a program's budget. So this asks a real machine, one call at a time, and compares.
+ * <p>Every call a program makes of the machine is charged by the runtime straight from its declaration, which the
+ * tests of each of the machine's services cover. What is left here is the promise a real computer keeps by never
+ * being asked at all: being told about something costs nothing.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -66,61 +63,6 @@ public final class SigmaCostGameTests {
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         computer.installOs(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp"));
         return computer;
-    }
-
-    /**
-     * Asks the machine for one member and checks it charged what its declaration says.
-     *
-     * <p>A call that brings back rows is charged by how many, so the reply itself says how many there
-     * were and the expected price is worked out from that rather than guessed.
-     */
-    private static void charges(final GameTestHelper helper, final MachineHost host,
-                                final String owner, final String member, final List<Object> arguments) {
-        final IHost.Reply reply;
-        try {
-            reply = host.call(owner, member, arguments, "costs.asm", 1);
-        } catch (final RuntimeException refused) {
-            helper.fail(owner + "." + member + " could not be asked at all: " + refused.getMessage());
-            return;
-        }
-        final List<IMemberSpec> declared = SystemApi.members(owner, member);
-        if (declared.size() != 1) {
-            helper.fail(owner + "." + member + " is declared " + declared.size() + " ways, not one");
-            return;
-        }
-        final int rows = reply.value() instanceof Values.ListValue list ? list.size() : 0;
-        final int expected = declared.getFirst().cost().at(rows, 0);
-        helper.assertTrue(reply.cost() == expected,
-                owner + "." + member + " charged " + reply.cost() + ", its declaration says " + expected
-                        + " (" + rows + " rows)");
-    }
-
-    /**
-     * Every call a program can make that only needs the machine itself, priced as its declaration promises.
-     *
-     * <p>The ones left out are the ones that would change the world to ask them, such as asking the
-     * network for work, whose prices are fixed rather than counted and charged with the same level the
-     * declaration names, and the calls on the drives, the computer itself and its network, which the
-     * runtime charges straight from their declarations rather than asking the machine what they cost.
-     */
-    @GameTest(template = ARENA)
-    public static void costs_areWhatTheEditorsPromise(final GameTestHelper helper) {
-        final BlockPos at = new BlockPos(2, 2, 2);
-        final CraftingComputerBlockEntity computer = computer(helper, at);
-        if (computer == null) {
-            return;
-        }
-        helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> {
-                    final MachineHost host = new MachineHost(computer);
-
-                    /*
-                     * The Mainframe, with no network attached: whether there is one is still a question
-                     * the machine answers, and it charges for answering it.
-                     */
-                    charges(helper, host, "Mainframe", "Online", List.of());
-                })
-                .thenSucceed();
     }
 
     /** Being told about something costs nothing, which is the whole reason to prefer it to asking. */
