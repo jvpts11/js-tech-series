@@ -36,6 +36,16 @@ class ComputerSettingsTest {
     }
 
     @Test
+    void setDefaultApp_forgetsTheOldestChoicePastTheCap() {
+        for (int i = 0; i <= ComputerSettings.MAX_DEFAULT_APPS; i++) {
+            settings.setDefaultApp("x" + i, "editor");
+        }
+        assertEquals(ComputerSettings.MAX_DEFAULT_APPS, settings.defaultApps().size());
+        assertEquals("", settings.defaultApp("x0"), "the first choice made room");
+        assertEquals("editor", settings.defaultApp("x" + ComputerSettings.MAX_DEFAULT_APPS));
+    }
+
+    @Test
     void setBrightness_clampsBelowZeroToZero() {
         settings.setBrightness(-40);
         assertEquals(0, settings.brightness());

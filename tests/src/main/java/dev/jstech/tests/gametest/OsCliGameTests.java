@@ -393,6 +393,25 @@ public final class OsCliGameTests {
                 .thenSucceed();
     }
 
+    /** The program chosen with Always for an extension is kept by the computer, across a save, as Open with sets it. */
+    @GameTest(template = ARENA)
+    public static void config_keepsTheProgramChosenForAnExtensionAcrossASave(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = placeMainframeWithMcDos(helper, pos);
+
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    // The same call Open with's Always makes through the setting payload.
+                    cliFor(mainframe, helper.getLevel()).setConfig("defaultapp:fk", "editor");
+                    final var registries = helper.getLevel().registryAccess();
+                    mainframe.loadWithComponents(mainframe.saveWithFullMetadata(registries), registries);
+                    helper.assertTrue("editor".equals(mainframe.console().settings().defaultApp("fk")),
+                            "the computer still opens .fk files in the Editor after the save; it keeps "
+                                    + mainframe.console().settings().defaultApps());
+                })
+                .thenSucceed();
+    }
+
     /** Renaming a text file to an extension the machine does not know makes it a file of that unknown kind. */
     @GameTest(template = ARENA)
     public static void rename_toAnUnknownExtensionMakesAFileOfAnUnknownKind(final GameTestHelper helper) {

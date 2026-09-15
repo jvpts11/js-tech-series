@@ -53,6 +53,16 @@ public final class JSComputersAPI {
     }
 
     /**
+     * Registers a program that can open a file of any kind, so Open with offers it for files the computers have no
+     * program for, and among the others for a text file. Its desktop app is handed the file the way the Editor is.
+     *
+     * @param programId the program's id path, as registered with {@link #registerProgram}
+     */
+    public static void registerFileOpener(String programId) {
+        dev.jstech.computers.os.fs.FileOpeners.registerAnyFileOpener(programId);
+    }
+
+    /**
      * Registers a desktop environment so a Linux computer can install it as a package and boot into its
      * chrome, or an OS can bundle it.
      *

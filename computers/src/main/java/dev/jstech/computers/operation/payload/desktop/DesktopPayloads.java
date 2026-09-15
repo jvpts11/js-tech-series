@@ -78,6 +78,7 @@ public final class DesktopPayloads {
         final java.util.List<String> programs = new java.util.ArrayList<>();
         final java.util.List<DesktopFilesPayload.WireIconCell> iconCells = new java.util.ArrayList<>();
         final java.util.List<String> pinned = new java.util.ArrayList<>();
+        final java.util.Map<String, String> defaultApps = new java.util.LinkedHashMap<>();
         if (level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost computer) {
             final net.minecraft.world.item.ItemStack disk = computer.systemDisk();
             final dev.jstech.computers.os.FilesystemKind kind =
@@ -85,6 +86,7 @@ public final class DesktopPayloads {
             prefs[0] = computer.console().wallpaper();
             prefs[1] = computer.console().computerName();
             pinned.addAll(computer.console().settings().pinned());
+            defaultApps.putAll(computer.console().settings().defaultApps());
             deskPrefs[0] = computer.console().settings().accent();
             deskPrefs[1] = computer.console().settings().brightness();
             deskPrefs[2] = computer.console().settings().clock12h() ? 1 : 0;
@@ -176,7 +178,7 @@ public final class DesktopPayloads {
         }
         PacketDistributor.sendToPlayer(player, new DesktopFilesPayload(wire, prefs[0], prefs[1], programs, iconCells,
                 new DesktopFilesPayload.Prefs(deskPrefs[0], deskPrefs[1], deskPrefs[2] != 0,
-                        deskPrefs[3] != 0, deskPrefs[4] != 0, deskPrefs[5]), community, pinned));
+                        deskPrefs[3] != 0, deskPrefs[4] != 0, deskPrefs[5]), community, pinned, defaultApps));
     }
 
     private static void handleSetDesktopPrefs(final SetDesktopPrefsPayload payload, final ServerPlayer player,

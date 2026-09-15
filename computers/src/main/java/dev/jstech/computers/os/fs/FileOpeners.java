@@ -69,6 +69,15 @@ public final class FileOpeners {
     private static final List<FileType> CREATABLE =
             List.of(FileType.TXT, FileType.SGS, FileType.IQL, FileType.CFG, FileType.CSV, FileType.CMD);
 
+    /**
+     * The programs that open a file of any kind that is text, best first: the plain editor, which reads anything,
+     * then the code editors. They are what Open with offers for a kind nobody claims, and the others it can offer
+     * for a kind that is text. A program an addon brings that opens files adds itself with
+     * {@link #registerAnyFileOpener}.
+     */
+    private static final List<String> ANY_FILE = new java.util.concurrent.CopyOnWriteArrayList<>(
+            List.of(EDITOR, "virtual_studio_code", "virtual_studio", "exposure"));
+
     private FileOpeners() {
     }
 
@@ -80,13 +89,42 @@ public final class FileOpeners {
     /**
      * Every program that could open {@code path}, best first, whether or not the machine has it.
      *
-     * <p>A kind nobody claims opens in nothing rather than falling back to the text editor. That is not
-     * a gap: a {@code .dat} is a read-only view of what a drive is holding and a {@code .exe} is a
-     * program, and handing either to an editor would offer to edit something that cannot be edited.
+     * <p>A kind the machines know but give no program opens in nothing rather than falling back to the text
+     * editor. That is not a gap: a {@code .dat} is a read-only view of what a drive is holding and a {@code .exe}
+     * is a program, and handing either to an editor would offer to edit something that cannot be edited. A kind
+     * the machines do not know at all is text, so everything that opens any file can open it.
      */
     public static List<String> forPath(final String path) {
         final FileType type = typeOf(path);
-        return type == null ? List.of() : BY_TYPE.getOrDefault(type, List.of());
+        if (type == null) {
+            return List.of();
+        }
+        return type == FileType.OTHER ? List.copyOf(ANY_FILE) : BY_TYPE.getOrDefault(type, List.of());
+    }
+
+    /**
+     * Every program the player can pick for {@code path} on a machine that has {@code installed}, best first: the
+     * ones for its kind, then, for a kind that is text, the rest of the ones that open any file. It is what Choose
+     * another program offers, so a text file can go to a code editor as well as to the plain one.
+     */
+    public static List<String> choices(final String path, final List<String> installed) {
+        final List<String> out = new ArrayList<>(available(path, installed));
+        final FileType type = typeOf(path);
+        if (type != null && type.userEditable()) {
+            for (final String program : ANY_FILE) {
+                if (!out.contains(program) && (program.equals(EDITOR) || installed.contains(program))) {
+                    out.add(program);
+                }
+            }
+        }
+        return out;
+    }
+
+    /** Adds a program that opens a file of any kind to the ones Open with offers; nothing when it is there already. */
+    public static void registerAnyFileOpener(final String programId) {
+        if (programId != null && !programId.isBlank() && !ANY_FILE.contains(programId)) {
+            ANY_FILE.add(programId);
+        }
     }
 
     /**
@@ -106,18 +144,57 @@ public final class FileOpeners {
         return out;
     }
 
-    /** The program that opens {@code path} by default on such a machine, or empty when none can. */
+    /**
+     * The program that opens {@code path} by default on such a machine, or empty when none can. A kind the
+     * machines do not know has no default: the player is asked which program to use.
+     */
     public static String defaultFor(final String path, final List<String> installed) {
+        if (isUnknownKind(path)) {
+            return "";
+        }
         final List<String> can = available(path, installed);
         return can.isEmpty() ? "" : can.getFirst();
     }
 
-    /** The type of a path, or null when nothing claims its extension. */
-    private static FileType typeOf(final String path) {
-        final int dot = path == null ? -1 : path.lastIndexOf('.');
-        if (dot < 0 || dot == path.length() - 1) {
-            return null;
+    /**
+     * The program that opens {@code path} on such a machine, given {@code chosen}, the program picked with Always for
+     * each extension: that one while the machine can still open the file with it, otherwise the default for the
+     * file's kind.
+     */
+    public static String defaultFor(final String path, final List<String> installed,
+                                    final Map<String, String> chosen) {
+        final String picked = chosen == null ? "" : programOf(chosen.get(extensionOf(path)));
+        if (!picked.isEmpty() && choices(path, installed).contains(picked)) {
+            return picked;
         }
-        return FileType.fromExtension(path.substring(dot + 1).toLowerCase(Locale.ROOT)).orElse(null);
+        return defaultFor(path, installed);
+    }
+
+    /** Whether {@code path} is a file of a kind the machines do not know, which a double-click asks about. */
+    public static boolean isUnknownKind(final String path) {
+        return typeOf(path) == FileType.OTHER;
+    }
+
+    /** The extension of a path's file name, in lower case and without the dot; empty when it has none. */
+    public static String extensionOf(final String path) {
+        if (path == null) {
+            return "";
+        }
+        final String name = path.substring(Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1);
+        final int dot = name.lastIndexOf('.');
+        return dot < 0 || dot == name.length() - 1 ? "" : name.substring(dot + 1).toLowerCase(Locale.ROOT);
+    }
+
+    /** A program id as the desktop names programs, from one written down with or without the series' namespace. */
+    private static String programOf(final String saved) {
+        if (saved == null) {
+            return "";
+        }
+        return saved.startsWith("jsc:") ? saved.substring("jsc:".length()) : saved;
+    }
+
+    /** The type of a path, or null when there is no path at all. */
+    private static FileType typeOf(final String path) {
+        return path == null ? null : FileType.of(extensionOf(path));
     }
 }

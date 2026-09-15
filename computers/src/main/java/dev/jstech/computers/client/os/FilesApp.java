@@ -1397,14 +1397,26 @@ public final class FilesApp implements IDesktopApp {
             items.add(new ContextMenu.Item(setup || program ? "Run" : "Open", true, () -> open(target)));
             if (target.kind() == Kind.FILE && !dat && !setup) {
                 /*
-                 * One entry per program on this machine that can open the kind, so a player picks the
-                 * one they want rather than getting whichever the desktop would have chosen.
+                 * One entry per program on this machine that can open the kind, so a player picks the one they
+                 * want rather than getting whichever the desktop would have chosen, and a last one asks which
+                 * program should open files like it for good.
                  */
                 final String path = target.file().path();
-                for (final String programId : dev.jstech.computers.os.fs.FileOpeners.available(
-                        path, DesktopScreen.installedProgramIds())) {
-                    items.add(new ContextMenu.Item("Open with " + DesktopScreen.openerName(programId), true,
+                final List<String> installed = DesktopScreen.installedProgramIds();
+                final List<ContextMenu.Item> openWith = new ArrayList<>();
+                for (final String programId : dev.jstech.computers.os.fs.FileOpeners.available(path, installed)) {
+                    openWith.add(new ContextMenu.Item(DesktopScreen.openerName(programId), true,
                             () -> DesktopScreen.requestOpenFileWith(programId, path)));
+                }
+                if (!dev.jstech.computers.os.fs.FileOpeners.choices(path, installed).isEmpty()) {
+                    if (!openWith.isEmpty()) {
+                        openWith.add(ContextMenu.Item.separator());
+                    }
+                    openWith.add(new ContextMenu.Item("Choose another program...", true,
+                            () -> DesktopScreen.requestChooseOpener(path)));
+                }
+                if (!openWith.isEmpty()) {
+                    items.add(ContextMenu.Item.submenu("Open with", openWith));
                 }
             }
             items.add(ContextMenu.Item.separator());

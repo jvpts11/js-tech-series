@@ -11,6 +11,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   under, and the GNU GPL 3.0 it builds on.
 - `Program.DroppedEvents` counts the clicks and watch alerts a program missed because too many of its calls were
   already waiting.
+- Open with: a double-click on a file of a kind the computer does not know asks which program opens it, among the
+  programs on the computer that open files. Only this time opens it once; Always makes that program open every file
+  with the same extension on that computer. Choose another program..., at the end of Open with on the desktop and
+  in Files (where Open with is now a submenu), brings the same choice up for any file. An addon registers a program
+  that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Changed
 - The programming language is now called Σ# (Sigma Sharp). Its sources end in `.sgs` and its projects in

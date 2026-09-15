@@ -33,6 +33,7 @@ public final class ClientTestSuite {
             MekanismClientTests.class,
             NetworkInteractorClientTests.class,
             NetworkSharesClientTests.class,
+            OpenWithClientTests.class,
             SettingsSharingClientTests.class,
             SystemUiClientTests.class,
             UiSweepClientTests.class);

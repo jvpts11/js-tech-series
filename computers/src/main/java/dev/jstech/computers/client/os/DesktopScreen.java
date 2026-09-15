@@ -205,6 +205,20 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         PENDING_OPEN.add(OPEN_FILE + programId + "\0" + path);
     }
 
+    /** A queued request to ask the player which program opens a file, kept apart like the others. */
+    private static final String CHOOSE_OPENER = "Choose\0";
+
+    /** Lets a running app ask the player which program opens a file, as Choose another program does. */
+    public static void requestChooseOpener(final String path) {
+        PENDING_OPEN.add(CHOOSE_OPENER + path);
+    }
+
+    /** The Open with chooser the open desktop is showing, or null when none is up. */
+    @org.jetbrains.annotations.Nullable
+    public static OpenWithPopup openWithChooser() {
+        return active != null && active.popup instanceof OpenWithPopup chooser && chooser.isOpen() ? chooser : null;
+    }
+
     /** The ids of the programs the open desktop's machine has, for a window offering what can open a file. */
     public static java.util.List<String> installedProgramIds() {
         return active == null ? java.util.List.of() : java.util.List.copyOf(active.installedPrograms);
@@ -395,9 +409,15 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             "This file is impossible to modify, create, delete or change manually, "
                     + "use the network interactor for it.";
 
-    /** The modal error dialog currently shown over the desktop, or {@code null} when none. */
+    /** The modal dialog currently shown over the desktop (an error, or Open with), or {@code null} when none. */
     @org.jetbrains.annotations.Nullable
-    private DesktopPopup popup;
+    private dev.jstech.core.client.gui.component.Popup popup;
+
+    /**
+     * The program chosen with Always for each extension on this machine, as the desktop listing brings it. A choice
+     * made here goes in at once, before the server has sent the listing again.
+     */
+    private final java.util.Map<String, String> defaultApps = new java.util.HashMap<>();
 
     /** Files and folders living in the desktop folder ({@link SystemLayout#DESKTOP_DIR}), drawn as icons. */
     private final List<DiskFilesPayload.WireFile> desktopItems = new ArrayList<>();
@@ -1449,6 +1469,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         active.desktopScale = payload.prefs().scale();
         active.pinnedPrograms.clear();
         active.pinnedPrograms.addAll(payload.pinned());
+        active.defaultApps.clear();
+        active.defaultApps.putAll(payload.defaultApps());
         active.rebuildSkin();
         active.iconCells.clear();
         for (final DesktopFilesPayload.WireIconCell cell : payload.iconCells()) {
@@ -1538,9 +1560,15 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                     final int split = rest.indexOf('\0');
                     final String programId = rest.substring(0, split);
                     final String path = rest.substring(split + 1);
-                    openIn(programId.isEmpty()
-                            ? dev.jstech.computers.os.fs.FileOpeners.defaultFor(path, installedPrograms)
-                            : programId, path);
+                    if (programId.isEmpty()) {
+                        openFile(path);
+                    } else {
+                        openIn(programId, path);
+                    }
+                    continue;
+                }
+                if (key.startsWith(CHOOSE_OPENER)) {
+                    chooseOpener(key.substring(CHOOSE_OPENER.length()));
                     continue;
                 }
                 final IDesktopApp app = factoryFor(key);
@@ -1957,7 +1985,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             g.pose().popPose();
         }
 
-        // A modal error dialog sits over the whole desktop: dim the surface, then draw it on top.
+        // A modal dialog sits over the whole desktop: dim the surface, then draw it on top.
+        if (popup != null && !popup.isOpen()) {
+            // Closed by its own choice rather than by a click the desktop saw, as Open with can be.
+            popup = null;
+        }
         if (popup != null) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.POPUP);
@@ -2217,7 +2249,54 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             openApp("Files", new FilesApp(host, desktopId.getPath(), f.path(), monitorPos));
             return;
         }
-        openIn(dev.jstech.computers.os.fs.FileOpeners.defaultFor(f.path(), installedPrograms), f.path());
+        openFile(f.path());
+    }
+
+    /**
+     * Opens a file the way a double-click does: in the program chosen with Always for its extension on this
+     * computer, else in the one that opens its kind. A file of a kind nothing here knows, and that no language
+     * runs, asks the player which program to use.
+     */
+    private void openFile(final String path) {
+        final String program =
+                dev.jstech.computers.os.fs.FileOpeners.defaultFor(path, installedPrograms, defaultApps);
+        if (program.isEmpty() && dev.jstech.computers.os.fs.FileOpeners.isUnknownKind(path)
+                && !runsAsProgram(path)) {
+            chooseOpener(path);
+            return;
+        }
+        openIn(program, path);
+    }
+
+    /** Whether a language on this computer runs files like this one, so opening it means running it. */
+    private static boolean runsAsProgram(final String path) {
+        final String extension = dev.jstech.computers.os.fs.FileOpeners.extensionOf(path);
+        return !extension.isEmpty() && dev.jstech.core.JsCore.languages().runnerOf(extension) != null;
+    }
+
+    /**
+     * Asks the player which program opens a file, with the Open with chooser over the whole desktop. Always makes
+     * the choice this computer's program for the file's extension, written down on the machine.
+     */
+    private void chooseOpener(final String path) {
+        final List<String> programs = dev.jstech.computers.os.fs.FileOpeners.choices(path, installedPrograms);
+        if (programs.isEmpty()) {
+            showBalloon("Cannot open", "No program on this computer opens " + FsPaths.fileName(path));
+            return;
+        }
+        final String extension = dev.jstech.computers.os.fs.FileOpeners.extensionOf(path);
+        final String current =
+                dev.jstech.computers.os.fs.FileOpeners.defaultFor(path, installedPrograms, defaultApps);
+        final String opener = current.isEmpty() ? "" : openerName(current);
+        popup = new OpenWithPopup(path, extension, programs, opener, skin.iconSet(), font, (program, always) -> {
+            if (always) {
+                defaultApps.put(extension, program);
+                net.neoforged.neoforge.network.PacketDistributor.sendToServer(
+                        new dev.jstech.computers.operation.payload.SetSettingPayload(host, "defaultapp:" + extension,
+                                program));
+            }
+            openIn(program, path);
+        });
     }
 
     /**
@@ -2232,9 +2311,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
              * Nothing here claims the kind, but a language an addon brought may: its compiled programs
              * have an extension of their own, and opening one of those means running it.
              */
-            final int dot = path.lastIndexOf('.');
-            final String extension = dot >= 0 ? path.substring(dot + 1).toLowerCase(java.util.Locale.ROOT) : "";
-            if (!extension.isEmpty() && dev.jstech.core.JsCore.languages().runnerOf(extension) != null) {
+            if (runsAsProgram(path)) {
                 runAtTerminal(path);
                 return;
             }
@@ -2345,6 +2422,13 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                     net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("jsc", programId));
             final String label = spec == null ? programId : spec.displayName();
             entries.add(new dev.jstech.core.client.gui.component.ContextMenu.Item(label, true, () -> openIn(programId, path)));
+        }
+        if (!dev.jstech.computers.os.fs.FileOpeners.choices(path, installedPrograms).isEmpty()) {
+            if (!entries.isEmpty()) {
+                entries.add(dev.jstech.core.client.gui.component.ContextMenu.Item.separator());
+            }
+            entries.add(new dev.jstech.core.client.gui.component.ContextMenu.Item("Choose another program...", true,
+                    () -> chooseOpener(path)));
         }
         if (entries.isEmpty()) {
             entries.add(new dev.jstech.core.client.gui.component.ContextMenu.Item("No program opens this", false, () -> { }));

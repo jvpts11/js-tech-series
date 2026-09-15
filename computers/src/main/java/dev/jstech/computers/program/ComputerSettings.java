@@ -34,6 +34,8 @@ public final class ComputerSettings {
     public static final int MAX_FAVOURITES = 64;
     /** The most items whose recipe choice one machine remembers; the oldest choice makes room past that. */
     public static final int MAX_RECIPE_CHOICES = 64;
+    /** The most extensions one machine remembers a program for; the oldest choice makes room past that. */
+    public static final int MAX_DEFAULT_APPS = 64;
     /** The most folders one machine opens to the others on its network. */
     public static final int MAX_SHARES = 16;
     /** What a fresh machine pins: its file explorer. */
@@ -382,16 +384,23 @@ public final class ComputerSettings {
         return defaultApps.getOrDefault(ext == null ? "" : ext.toLowerCase(Locale.ROOT), "");
     }
 
+    /**
+     * Makes {@code programId} the program that opens files ending in {@code ext} on this machine; a blank id forgets
+     * the choice. The choice made longest ago goes past the cap.
+     */
     public void setDefaultApp(final String ext, final String programId) {
         if (ext == null || ext.isBlank()) {
             return;
         }
         final String key = ext.toLowerCase(Locale.ROOT);
+        defaultApps.remove(key);
         if (programId == null || programId.isBlank()) {
-            defaultApps.remove(key);
-        } else {
-            defaultApps.put(key, programId);
+            return;
         }
+        while (defaultApps.size() >= MAX_DEFAULT_APPS) {
+            defaultApps.remove(defaultApps.keySet().iterator().next());
+        }
+        defaultApps.put(key, programId.trim());
     }
 
     /** An unmodifiable view of the default-app map for serialisation and display. */

@@ -14,6 +14,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Server to client: the listing of the desktop folder for the Frames desktop background. Each entry
@@ -23,18 +24,20 @@ import java.util.List;
  * <p>{@code iconCells} carries every free-positioned desktop icon's pinned grid cell, so the client
  * places those icons exactly where the player dropped them; an icon with no entry flows into the next
  * free auto-layout cell. {@code pinned} names the programs pinned to the panel, by program id path, in
- * the order they sit there.
+ * the order they sit there. {@code defaultApps} holds the program chosen with Always for each extension.
  */
 public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String wallpaper,
                                   String computerName, List<String> programs,
                                   List<WireIconCell> iconCells, Prefs prefs,
-                                  List<WireCommunity> community, List<String> pinned)
+                                  List<WireCommunity> community, List<String> pinned,
+                                  Map<String, String> defaultApps)
         implements CustomPacketPayload {
 
     public static final int MAX_FILES = 256;
     public static final int MAX_PROGRAMS = 16;
     public static final int MAX_ICON_CELLS = 256;
     public static final int MAX_PINNED = dev.jstech.computers.program.ComputerSettings.MAX_PINNED;
+    public static final int MAX_DEFAULT_APPS = dev.jstech.computers.program.ComputerSettings.MAX_DEFAULT_APPS;
 
     /** How many player-written programs one desktop shows; the same cap the Mirror's shelf has. */
     public static final int MAX_COMMUNITY = 64;
@@ -80,7 +83,7 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "desktop_files"));
 
     /*
-     * Written out by hand: composite takes six pairs and this carries seven things. The alternative was
+     * Written out by hand: composite takes six pairs and this carries nine things. The alternative was
      * to bundle two of them into a record nobody else wants, which would have cost a reader more than
      * these two short methods do.
      */
@@ -104,6 +107,15 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             buf.writeUtf(clip(one.entry(), 128), 128);
         }
         ByteBufCodecs.stringUtf8(32).apply(ByteBufCodecs.list(MAX_PINNED)).encode(buf, payload.pinned);
+        buf.writeVarInt(Math.min(payload.defaultApps.size(), MAX_DEFAULT_APPS));
+        int written = 0;
+        for (final Map.Entry<String, String> one : payload.defaultApps.entrySet()) {
+            if (written++ == MAX_DEFAULT_APPS) {
+                break;
+            }
+            buf.writeUtf(clip(one.getKey(), 32), 32);
+            buf.writeUtf(clip(one.getValue(), 64), 64);
+        }
     }
 
     private static String clip(final String text, final int max) {
@@ -127,7 +139,13 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             community.add(new WireCommunity(buf.readUtf(32), buf.readUtf(16), buf.readUtf(128)));
         }
         final List<String> pinned = ByteBufCodecs.stringUtf8(32).apply(ByteBufCodecs.list(MAX_PINNED)).decode(buf);
-        return new DesktopFilesPayload(files, wallpaper, computerName, programs, cells, prefs, community, pinned);
+        final int apps = Math.min(buf.readVarInt(), MAX_DEFAULT_APPS);
+        final Map<String, String> defaultApps = new java.util.LinkedHashMap<>();
+        for (int i = 0; i < apps; i++) {
+            defaultApps.put(buf.readUtf(32), buf.readUtf(64));
+        }
+        return new DesktopFilesPayload(files, wallpaper, computerName, programs, cells, prefs, community, pinned,
+                defaultApps);
     }
 
     @Override

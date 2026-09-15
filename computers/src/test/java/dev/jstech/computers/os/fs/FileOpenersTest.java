@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class FileOpenersTest {
@@ -113,5 +114,61 @@ class FileOpenersTest {
         for (final FileType type : FileOpeners.creatable()) {
             assertTrue(type.userEditable(), type + " is offered for creation but cannot be edited");
         }
+    }
+
+    @Test
+    void available_offersEveryProgramThatOpensAnyFileForAKindNobodyClaims() {
+        assertEquals(List.of(FileOpeners.EDITOR, "virtual_studio_code", "virtual_studio", "exposure"),
+                FileOpeners.available("thing.fk", EVERYTHING).subList(0, 4));
+        assertEquals(List.of(FileOpeners.EDITOR), FileOpeners.available("thing.fk", NOTHING));
+    }
+
+    @Test
+    void defaultFor_leavesAKindNobodyClaimsToThePlayer() {
+        assertEquals("", FileOpeners.defaultFor("thing.fk", EVERYTHING));
+        assertTrue(FileOpeners.isUnknownKind("thing.fk"));
+        assertFalse(FileOpeners.isUnknownKind("notes.txt"));
+    }
+
+    @Test
+    void defaultFor_opensAFileInTheProgramChosenForItsExtension() {
+        assertEquals("virtual_studio",
+                FileOpeners.defaultFor("thing.fk", EVERYTHING, Map.of("fk", "virtual_studio")));
+        assertEquals(FileOpeners.EDITOR, FileOpeners.defaultFor("THING.FK", EVERYTHING, Map.of("fk", "jsc:editor")));
+        assertEquals("virtual_studio_code",
+                FileOpeners.defaultFor("notes.txt", EVERYTHING, Map.of("txt", "virtual_studio_code")),
+                "a kind the machines know can be given another program too");
+    }
+
+    @Test
+    void defaultFor_setsAsideAChoiceTheMachineCannotOpenTheFileWith() {
+        assertEquals("", FileOpeners.defaultFor("thing.fk", NOTHING, Map.of("fk", "virtual_studio")),
+                "a program that is not on the machine any more leaves the player to choose again");
+        assertEquals("", FileOpeners.defaultFor("items.dat", EVERYTHING, Map.of("dat", FileOpeners.EDITOR)),
+                "and a read-only view is never handed to an editor");
+    }
+
+    @Test
+    void choices_addTheProgramsThatOpenAnyFileToAKindThatIsText() {
+        assertEquals(List.of(FileOpeners.EDITOR, "virtual_studio_code", "virtual_studio", "exposure"),
+                FileOpeners.choices("notes.txt", EVERYTHING).subList(0, 4));
+        assertEquals(List.of(), FileOpeners.choices("items.dat", EVERYTHING));
+        assertEquals(List.of("crafting_manager"), FileOpeners.choices("iron.craft", EVERYTHING));
+    }
+
+    @Test
+    void registerAnyFileOpener_addsAProgramOnce() {
+        FileOpeners.registerAnyFileOpener("test_viewer");
+        FileOpeners.registerAnyFileOpener("test_viewer");
+        assertEquals(1, FileOpeners.forPath("thing.fk").stream().filter("test_viewer"::equals).count());
+        assertTrue(FileOpeners.available("thing.fk", List.of("test_viewer")).contains("test_viewer"));
+    }
+
+    @Test
+    void extensionOf_readsTheFileNameOnly() {
+        assertEquals("fk", FileOpeners.extensionOf("my.folder/Thing.FK"));
+        assertEquals("", FileOpeners.extensionOf("my.folder/notes"));
+        assertEquals("", FileOpeners.extensionOf("trailing."));
+        assertEquals("", FileOpeners.extensionOf(null));
     }
 }
