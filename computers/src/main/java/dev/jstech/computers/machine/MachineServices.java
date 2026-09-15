@@ -50,6 +50,9 @@ public final class MachineServices {
     @Nullable
     private OperationsService operations;
 
+    @Nullable
+    private IqlService iql;
+
     public MachineServices(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
     }
@@ -124,6 +127,17 @@ public final class MachineServices {
         return this.operations;
     }
 
+    /**
+     * The network's own language, run on its Mainframe.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public IqlService iql() {
+        this.follow();
+        return this.iql;
+    }
+
     /** Makes the shell and what goes through it again when the machine is in another world than before. */
     private void follow() {
         final Level level = this.machine.getLevel();
@@ -138,6 +152,7 @@ public final class MachineServices {
             this.network = new NetworkReadService(terminal, server, this.shell);
             this.mainframe = new MainframeStatsService(this.shell);
             this.operations = new OperationsService(this.shell);
+            this.iql = new IqlService(this.shell);
         } else {
             this.shell = null;
             this.files = null;
@@ -145,6 +160,7 @@ public final class MachineServices {
             this.network = null;
             this.mainframe = null;
             this.operations = null;
+            this.iql = null;
         }
     }
 }

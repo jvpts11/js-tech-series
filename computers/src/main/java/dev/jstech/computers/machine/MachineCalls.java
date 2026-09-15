@@ -74,6 +74,7 @@ final class MachineCalls {
         NetworkCalls.bind(bindings);
         MainframeCalls.bind(bindings);
         OperationsCalls.bind(bindings);
+        IqlCalls.bind(bindings);
         return Map.copyOf(bindings);
     }
 

@@ -62,9 +62,7 @@ public record MachineHost(BlockEntity machine) implements IHost {
 
     @Override
     public boolean provides(final String owner) {
-        return HostProgram.handles(owner)
-                || HostRemote.handles(owner) || HostIql.handles(owner)
-                || HostGateway.handles(owner);
+        return HostProgram.handles(owner) || HostRemote.handles(owner) || HostGateway.handles(owner);
     }
 
     @Override
@@ -117,10 +115,6 @@ public record MachineHost(BlockEntity machine) implements IHost {
         if (HostRemote.handles(owner)
                 && computer instanceof dev.jstech.computers.program.ServerCliComputer shell) {
             return HostRemote.call(shell, callerId, member, arguments, line);
-        }
-        if (HostIql.handles(owner)
-                && computer instanceof dev.jstech.computers.program.ServerCliComputer shell) {
-            return HostIql.call(shell, member, arguments, line);
         }
         if (HostGateway.handles(owner)) {
             // The asking program is named because a question put across waits for an answer addressed to it.

@@ -18,6 +18,13 @@ public interface IWorldCall {
     void moved(long bytes);
 
     /**
+     * Counts the rows a call brought back inside what it answers towards what it is charged, for a call whose answer
+     * is a record holding them rather than the list of them itself.
+     */
+    default void rows(final int count) {
+    }
+
+    /**
      * The name of the class the asking program was started from, for what the world writes down of who asked: a base
      * runs many programs at once, and a record that only says "a program" is one a player cannot act on.
      */

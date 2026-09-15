@@ -30,6 +30,8 @@ final class WorldCalls implements IWorldCall {
     private final IWorldFunction[] bound;
     /** How many bytes the call being answered has said it read or wrote. */
     private long moved;
+    /** How many rows the call being answered has said it brought back inside its answer. */
+    private int rows;
 
     WorldCalls(final Process process, final ProgramImage program, final IHost host) {
         this.process = process;
@@ -53,8 +55,9 @@ final class WorldCalls implements IWorldCall {
      */
     Object answer(final int place, final Object target, final Object[] arguments, final int line) {
         this.moved = 0;
+        this.rows = 0;
         final Object answer = this.bound[place].call(this, target, arguments, line);
-        final int rows = answer instanceof Values.ListValue list ? list.size() : 0;
+        final int rows = answer instanceof Values.ListValue list ? list.size() : this.rows;
         // What a call is declared to cost comes on top of the instruction that makes it, as for every other call.
         this.process.charge(this.declared[place].cost().at(rows, this.moved));
         return answer;
@@ -64,6 +67,12 @@ final class WorldCalls implements IWorldCall {
     @Override
     public void moved(final long bytes) {
         this.moved += Math.max(0, bytes);
+    }
+
+    /** Counts the rows the call being answered brought back inside a record, towards its price. */
+    @Override
+    public void rows(final int count) {
+        this.rows += Math.max(0, count);
     }
 
     @Override

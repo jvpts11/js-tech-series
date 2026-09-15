@@ -73,6 +73,15 @@ class CallDispatchTest {
 
         @Override
         public IWorldFunction bind(final MemberId id) {
+            if ("Iql".equals(id.owner()) && "Run".equals(id.name())) {
+                // A statement whose rows are held in the record it answers, one row for every letter it was given.
+                return (call, target, arguments, line) -> {
+                    call.rows(String.valueOf(arguments[0]).length());
+                    final Values.Obj result = new Values.Obj("IqlResult");
+                    result.set("Ok", true);
+                    return result;
+                };
+            }
             if (!"File".equals(id.owner())) {
                 return null;
             }
@@ -115,7 +124,7 @@ class CallDispatchTest {
 
     /** Runs a script whose tick is those lines through on that machine, with the machine's drives in reach. */
     private static Process run(final IHost host, final String tick) {
-        final ProgramImage program = load("using System.*; using System.IO.*; namespace Tests; "
+        final ProgramImage program = load("using System.*; using System.IO.*; using System.Network.*; namespace Tests; "
                 + "class Monitor : IScript {\n"
                 + "    public void OnInit() { }\n"
                 + "    public void OnTick() {\n" + tick + "\n    }\n"
@@ -300,6 +309,17 @@ class CallDispatchTest {
         // The text came from outside, but it weighs on this program's heap like anything else it holds.
         assertTrue(process.heap().used() >= 16 + 2L * "iron,64".length(),
                 "the file's text is counted; used " + process.heap().used());
+    }
+
+    @Test
+    void call_chargesACallToTheWorldForTheRowsItSaysItBroughtBackInARecord() {
+        final Drive drive = new Drive();
+
+        final long one = run(drive, "        Iql.Run(\"a\");").spent();
+        final long three = run(drive, "        Iql.Run(\"abc\");").spent();
+
+        final int perRow = SystemApi.member("Iql", "Run", List.of("string")).cost().perRow();
+        assertEquals(2L * perRow, three - one, "two more rows cost two rows' price more");
     }
 
     @Test
