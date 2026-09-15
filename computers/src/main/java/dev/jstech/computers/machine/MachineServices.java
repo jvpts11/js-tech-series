@@ -255,7 +255,9 @@ public final class MachineServices implements IHost {
         this.shellLevel = level;
         if (this.machine instanceof IComputerTerminalHost terminal && level instanceof ServerLevel server) {
             this.shell = new ServerCliComputer(terminal, server);
-            this.files = new FileService(this.shell);
+            this.files = new FileService(this.machine, server,
+                    new NetworkPathResolver(server, this.shell::machinesNamed, this.shell::networkShares),
+                    this.shell::currentLocation, this.shell);
             this.computer = new ComputerInfoService(this.machine, this.shell);
             this.network = new NetworkReadService(terminal, server, this.shell, this.shell);
             this.mainframe = new MainframeStatsService(this.shell, this.shell);

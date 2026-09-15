@@ -2093,25 +2093,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public java.util.List<MountInfo> mounts() {
-        final java.util.List<MountInfo> out = new ArrayList<>();
-        int index = 0;
-        for (final DriveTable.Drive ctx : driveTable()) {
-            final ItemStack stack = ctx.disk();
-            final boolean ready = !stack.isEmpty();
-            final long capacity;
-            if (stack.getItem() instanceof dev.jstech.computers.item.DiskItem diskItem) {
-                capacity = diskItem.spec().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
-            } else if (stack.getItem()
-                    instanceof dev.jstech.computers.os.media.FormattedMediaItem mediaItem) {
-                capacity = mediaItem.format().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
-            } else {
-                capacity = 0L;
-            }
-            final String device = ctx.drive() == 'C' ? "sda1" : "sd" + (char) ('a' + index);
-            out.add(new MountInfo(ctx.drive(), device, capacity, ready ? freeWeightOf(stack) : 0L, ready));
-            index++;
-        }
-        return out;
+        return files().mounts();
     }
 
     /** The terminal window's shell session this prompt speaks for, or 0 for the machine's own prompt. */
@@ -2169,98 +2151,12 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public FsResult listDisk(final String dir) {
-        final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(dir);
-        if (net != null) {
-            return listNetwork(net);
-        }
-        final Resolved r = resolve(dir == null ? "" : dir);
-        if (r.ctx() == null) {
-            return driveError(r.drive());
-        }
-        if (r.ctx().disk().isEmpty()) {
-            return notReady(r.drive());
-        }
-        final DriveTable.Drive ctx = r.ctx();
-        final String target = r.path();
-        final List<FsEntry> entries = new ArrayList<>();
-        // Subdirectories first, then files, matching DOS DIR ordering.
-        for (final String sub : DiskFilesystem.listDirs(ctx.disk(), target, ctx.kind())) {
-            entries.add(new FsEntry(FsPaths.fileName(sub), "", 0L, false, true, 0L));
-        }
-        for (final DiskFilesystem.FileEntry e : DiskFilesystem.list(ctx.disk(), target, ctx.kind())) {
-            entries.add(new FsEntry(FsPaths.fileName(e.path()), e.type().extension(),
-                    e.weight(), e.readOnly(), false, e.modified()));
-        }
-        /*
-         * An install disc stores nothing: its setup, readme and licence are generated from what it
-         * installs, and the explorer has always shown them. The prompt showed an empty disc instead,
-         * so the same projection is listed here, dirs with the dirs and files with the files.
-         */
-        for (final dev.jstech.computers.os.fs.InstallerLayout.Entry e
-                : dev.jstech.computers.os.media.InstallerProjection.list(ctx.disk(), target)) {
-            entries.add(new FsEntry(FsPaths.fileName(e.path()),
-                    e.directory() ? "" : e.type().extension(), 0L, true, e.directory(), 0L));
-        }
-        // The system's files and the installed programs' folders, generated the same way, on the system disk.
-        final dev.jstech.computers.os.IOsHost machine = osHost();
-        if (machine != null && ctx.drive() == 'C') {
-            final java.util.Set<String> seen = new java.util.HashSet<>();
-            for (final FsEntry entry : entries) {
-                seen.add(entry.name());
-            }
-            for (final dev.jstech.computers.os.fs.InstallerLayout.Entry e
-                    : dev.jstech.computers.os.fs.ProgramFilesProjection.list(machine, target)) {
-                if (seen.add(FsPaths.fileName(e.path()))) {
-                    entries.add(new FsEntry(FsPaths.fileName(e.path()),
-                            e.directory() ? "" : e.type().extension(), 0L, true, e.directory(), 0L));
-                }
-            }
-        }
-        return FsResult.listing(entries);
+        return files().listDisk(dir);
     }
 
     @Override
     public FsResult readFile(final String path) {
-        final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
-        if (net != null) {
-            final NetworkPathResolver.Reached reached = reach(net);
-            return reached.ok() ? reached.remote().readFile(reached.path()) : reached.error();
-        }
-        final Resolved r = resolve(path);
-        if (r.ctx() == null) {
-            return driveError(r.drive());
-        }
-        if (r.ctx().disk().isEmpty()) {
-            return notReady(r.drive());
-        }
-        final DriveTable.Drive ctx = r.ctx();
-        final String real = r.path();
-        // A file on an install disc has no stored bytes: its text is generated from the disc's stamp.
-        final java.util.Optional<String> projected =
-                dev.jstech.computers.os.media.InstallerProjection.text(ctx.disk(), real);
-        if (projected.isPresent()) {
-            return FsResult.content(projected.get());
-        }
-        // So is a file of the system's own, or of an installed program's folder, on the system disk.
-        final dev.jstech.computers.os.IOsHost machine = osHost();
-        if (machine != null && ctx.drive() == 'C') {
-            final java.util.Optional<String> system =
-                    dev.jstech.computers.os.fs.ProgramFilesProjection.text(machine, real);
-            if (system.isPresent()) {
-                return FsResult.content(system.get());
-            }
-        }
-        final java.util.Optional<String> content = DiskFilesystem.read(ctx.disk(), real);
-        if (content.isEmpty()) {
-            // Distinguish a .dat rejection from a plain missing file for a cleaner error.
-            final List<DiskFilesystem.FileEntry> all = DiskFilesystem.list(ctx.disk(), FsPaths.parentDir(real), ctx.kind());
-            final boolean isDat = all.stream().anyMatch(e -> e.path().equals(real) && e.readOnly());
-            if (isDat) {
-                return FsResult.fail(path + ": .dat files are read-only (use the Network Interactor to access items)");
-            }
-            return FsResult.fail(path + ": file not found");
-        }
-        return FsResult.content(content.get());
+        return files().readFile(path);
     }
 
     @Override
@@ -2422,35 +2318,17 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public FsResult changeDir(final String input) {
-        final DosPath.Location target = DosPath.resolve(currentLocation(), input);
-        final DriveTable.Drive ctx = diskFor(target.drive());
-        if (ctx == null) {
-            return driveError(target.drive());
-        }
-        if (ctx.disk().isEmpty()) {
-            return notReady(target.drive());
-        }
-        if (!dirExists(ctx, target.storagePath())) {
-            return FsResult.fail("The system cannot find the path specified.");
-        }
-        setCurrentLocation(target);
-        return FsResult.ok("");
+        return files().changeDir(input, this::setCurrentLocation);
     }
 
     @Override
     public FsResult changeDrive(final char drive) {
-        final DriveTable.Drive ctx = diskFor(drive);
-        if (ctx == null) {
-            return driveError(drive);
-        }
-        if (ctx.disk().isEmpty()) {
-            return notReady(drive);
-        }
-        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
-        if (console != null) {
-            console.setTerminalDrive(Character.toUpperCase(drive));
-        }
-        return FsResult.ok("");
+        return files().changeDrive(drive, letter -> {
+            final dev.jstech.computers.program.ComputerConsoleState console = host.console();
+            if (console != null) {
+                console.setTerminalDrive(letter);
+            }
+        });
     }
 
     @Override
@@ -2843,6 +2721,17 @@ public final class ServerCliComputer implements ICliComputer {
     /** Where a path on another machine of the network leads, followed on that machine's own shell. */
     private NetworkPathResolver networkPaths() {
         return new NetworkPathResolver(level, this::matchMachines, this::networkShares);
+    }
+
+    /** The machines of this network that name picks out, by host name, for whoever follows a network path. */
+    public Map<String, BlockEntity> machinesNamed(final String name) {
+        return matchMachines(name);
+    }
+
+    /** This machine's drives as this shell reaches them, from where this shell's window stands. */
+    private dev.jstech.computers.machine.FileService files() {
+        return new dev.jstech.computers.machine.FileService(hostBlock, level, networkPaths(),
+                this::currentLocation, this);
     }
 
     /** Follows a network path to the machine and the share it names. */
