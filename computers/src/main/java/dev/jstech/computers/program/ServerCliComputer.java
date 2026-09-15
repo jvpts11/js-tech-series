@@ -306,27 +306,12 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public OpResult select(final String item, final long quantity, final String origin) {
-        final StorageKey key = resolveKey(item);
-        if (key == null) {
-            return OpResult.fail("unknown item: " + item);
-        }
-        final MainframeBlockEntity mainframe = mainframe(host.networkUuid());
-        if (mainframe == null) {
-            return OpResult.fail("the network has no running Mainframe");
-        }
-        final var op = mainframe.submitNetworkSelect(key, demand(quantity), host.localStorage(),
-                host.originLabel(origin));
-        if (op == null) {
-            return OpResult.fail("could not start the SELECT");
-        }
-        op.abortWhen(hostGone());
-        return OpResult.ok("SELECT queued: " + qtyLabel(quantity) + " " + key.displayName().getString()
-                + " -> local storage");
+        return operations().select(item, quantity, origin);
     }
 
     /** True once this computer has left the world: a pull into its storage stops there instead of feeding a ghost. */
     private java.util.function.BooleanSupplier hostGone() {
-        return host instanceof BlockEntity be ? be::isRemoved : () -> false;
+        return operations().hostGone();
     }
 
     @Override
@@ -412,34 +397,7 @@ public final class ServerCliComputer implements ICliComputer {
     private OpResult insert(final String item, final long quantity,
                             final dev.jstech.core.operation.OperationPriority priority,
                             final String origin) {
-        final StorageKey key = resolveKey(item);
-        if (key == null) {
-            return OpResult.fail("unknown item: " + item);
-        }
-        final long held = host.localStore().count(key);
-        if (held <= 0L) {
-            return OpResult.fail("this computer holds no " + key.displayName().getString());
-        }
-        final long take = Math.min(demand(quantity), held);
-        final long taken = host.localStore().extract(key, take);
-        if (taken <= 0L) {
-            return OpResult.fail("nothing to push");
-        }
-        final MainframeBlockEntity mainframe = mainframe(host.networkUuid());
-        final var op = mainframe == null ? null
-                : mainframe.submitNetworkInsert(key, taken, host.originLabel(origin));
-        if (op == null) {
-            host.localStore().insert(key, taken); // no dispatcher: put it straight back, never lose it
-            return OpResult.fail("the network has no running Mainframe");
-        }
-        op.setPriority(priority);
-        op.onSettle(() -> {
-            final long leftover = op.leftover();
-            if (leftover > 0L) {
-                host.localStore().insert(key, leftover);
-            }
-        });
-        return OpResult.ok("INSERT queued: " + taken + " " + key.displayName().getString() + " -> network");
+        return operations().insert(item, quantity, priority, origin);
     }
 
     @Override
@@ -455,25 +413,7 @@ public final class ServerCliComputer implements ICliComputer {
     private OpResult craft(final String item, final long quantity,
                            final dev.jstech.core.operation.OperationPriority priority,
                            final String origin) {
-        final StorageKey key = resolveKey(item);
-        if (key == null) {
-            return OpResult.fail("unknown item: " + item);
-        }
-        final MainframeBlockEntity mainframe = mainframe(host.networkUuid());
-        if (mainframe == null) {
-            return OpResult.fail("the network has no running Mainframe");
-        }
-        /*
-         * Route through the shared entry point so the CLI and IQL craft a machine or multi-stage recipe
-         * directly (not only a bench-planned tree), exactly as the terminal and Network Interactor do.
-         */
-        final var op = mainframe.submitCraftRequest(key, demand(quantity), true,
-                host.originLabel(origin), null);
-        if (op == null) {
-            return OpResult.fail("no pattern crafts " + key.displayName().getString());
-        }
-        op.setPriority(priority);
-        return OpResult.ok("CRAFT queued: " + qtyLabel(quantity) + " " + key.displayName().getString());
+        return operations().craft(item, quantity, priority, origin);
     }
 
     @Override
@@ -1094,12 +1034,12 @@ public final class ServerCliComputer implements ICliComputer {
 
     /** Resolves a parsed quantity to a concrete demand: ALL or unspecified means "as much as possible". */
     private static long demand(final long quantity) {
-        return quantity <= 0L ? Long.MAX_VALUE : quantity;
+        return dev.jstech.computers.machine.OperationsService.demand(quantity);
     }
 
     /** How a quantity reads back to the player: a real count, or {@code "all"} for ALL/unspecified. */
     private static String qtyLabel(final long quantity) {
-        return quantity <= 0L ? "all" : Long.toString(quantity);
+        return dev.jstech.computers.machine.OperationsService.qtyLabel(quantity);
     }
 
     // filesystem
@@ -2137,10 +2077,14 @@ public final class ServerCliComputer implements ICliComputer {
         return matchMachines(name);
     }
 
+    /** The work this machine asks of its network, as this shell asks for it. */
+    private dev.jstech.computers.machine.OperationsService operations() {
+        return new dev.jstech.computers.machine.OperationsService(host, level, this, this);
+    }
+
     /** The data network this machine is on, as this shell reads it. */
     private dev.jstech.computers.machine.NetworkReadService networkReads() {
-        return new dev.jstech.computers.machine.NetworkReadService(host, level, this,
-                new dev.jstech.computers.machine.OperationsService(this, this));
+        return new dev.jstech.computers.machine.NetworkReadService(host, level, this, operations());
     }
 
     /** This machine's drives as this shell reaches them, from where this shell's window stands. */
