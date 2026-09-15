@@ -181,7 +181,7 @@ public final class RemoteExecutionGameTests {
     }
 
     private static boolean hasTool(final PersonalComputerBlockEntity machine) {
-        return machine.programs().all().stream().anyMatch(one -> "tool.asm".equals(one.file()));
+        return machine.programs().view().stream().anyMatch(one -> "tool.asm".equals(one.file()));
     }
 
     private static final String REFUSED = """

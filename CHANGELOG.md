@@ -62,7 +62,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   on every tick, looks for its Gateways only after one of them is spoken to and claims its time in each tick
   without building anything, hands its programs what a Gateway heard without copying their list and decides in
   one place whether a program is still going; the rate at which a processor's clock buys instructions is named
-  beside the time the server lends its programs; every source file's header names the mod it belongs to.
+  beside the time the server lends its programs, and screens list a machine's programs without reaching them;
+  every source file's header names the mod it belongs to.
 
 ### Fixed
 - Cutting the last data cable between a Mainframe and the rest of its network now takes the network away

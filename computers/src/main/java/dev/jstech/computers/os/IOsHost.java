@@ -235,7 +235,7 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
         }
         final dev.jstech.computers.machine.MachinePrograms scripts = programs();
         if (scripts != null) {
-            for (final var one : scripts.all()) {
+            for (final var one : scripts.view()) {
                 ledger.add(one.name(), one.heapMb(), RamLedger.Kind.PROCESS, one.id());
             }
         }

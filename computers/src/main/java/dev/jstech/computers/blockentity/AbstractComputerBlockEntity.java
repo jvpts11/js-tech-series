@@ -1338,15 +1338,13 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         }
         final java.util.Map<Long, dev.jstech.computers.operation.payload.UiWindowPayload> open =
                 new java.util.HashMap<>();
-        for (final var one : programs.all()) {
-            for (final dev.jstech.computers.vm.program.Values.Obj window : programs.windowsOf(one.id())) {
-                final var payload = dev.jstech.computers.operation.payload.UiWindowPayload.of(
-                        worldPosition, one.id(), window);
-                if (payload != null) {
-                    open.put(key(payload.program(), payload.window()), payload);
-                }
+        programs.eachWindow((window, program) -> {
+            final var payload = dev.jstech.computers.operation.payload.UiWindowPayload.of(
+                    worldPosition, program, window);
+            if (payload != null) {
+                open.put(key(payload.program(), payload.window()), payload);
             }
-        }
+        });
         final java.util.List<dev.jstech.computers.operation.payload.UiWindowPayload> send =
                 new java.util.ArrayList<>();
         for (final var entry : open.entrySet()) {

@@ -216,10 +216,10 @@ public final class SigmaShellGameTests {
                 })
                 .thenExecuteAfter(SETTLE * 2, () -> {
                     // A program that returned is not something the machine is running any more.
-                    helper.assertTrue(computer.programs().all().isEmpty(),
+                    helper.assertTrue(computer.programs().view().isEmpty(),
                             "a program that returned leaves the machine's list; still there: "
-                                    + computer.programs().all().stream().map(one -> one.name() + "/"
-                                    + dev.jstech.computers.machine.MachinePrograms.stateOf(one.process())).toList());
+                                    + computer.programs().view().stream().map(one -> one.name() + "/"
+                                    + one.state()).toList());
                 })
                 .thenSucceed();
     }
@@ -286,18 +286,18 @@ public final class SigmaShellGameTests {
                             "the second run holds the terminal");
                     helper.assertTrue(computer.programs().byId(first[0]) == null,
                             "the first run is gone the moment the terminal moves on");
-                    helper.assertTrue(computer.programs().all().size() == 1, "one program is left running");
+                    helper.assertTrue(computer.programs().view().size() == 1, "one program is left running");
                 })
                 .thenExecuteAfter(SETTLE * 4, () -> {
                     // The terminal lets the second go while it is still waiting: the tick clears it.
                     computer.programs().release();
-                    helper.assertTrue(computer.programs().all().size() == 1,
+                    helper.assertTrue(computer.programs().view().size() == 1,
                             "letting go leaves a waiting program in place for the tick to judge");
                 })
                 .thenExecuteAfter(SETTLE * 4, () -> {
-                    helper.assertTrue(computer.programs().all().isEmpty(),
+                    helper.assertTrue(computer.programs().view().isEmpty(),
                             "a program waiting on a keyboard nobody can reach is cleared; still there: "
-                                    + computer.programs().all().stream().map(one -> one.name()).toList());
+                                    + computer.programs().view().stream().map(one -> one.name()).toList());
                 })
                 .thenSucceed();
     }
@@ -347,7 +347,7 @@ public final class SigmaShellGameTests {
                     helper.assertTrue(listed.contains("sigma"), "the nameless one is listed by the runtime; got " + listed);
                     helper.assertFalse(listed.contains("asks.asm") || listed.contains("progs"),
                             "no path stands in for a name; got " + listed);
-                    for (final var one : computer.programs().all()) {
+                    for (final var one : computer.programs().view()) {
                         helper.assertTrue("Sorter".equals(one.name()) || "sigma".equals(one.name()),
                                 "the machine's own list agrees; got " + one.name());
                     }

@@ -120,10 +120,10 @@ public final class ComputerBlockEntityGameTests {
                                         pc.getHardware().getStackInSlot(slot)),
                                 "the part in slot " + slot + " comes back as it was");
                     }
-                    helper.assertTrue(fresh.programs().all().size() == 1, "the program comes back; got "
-                            + fresh.programs().all().size());
-                    helper.assertTrue(fresh.programs().all().getFirst().process().console().equals(said),
-                            "with what it had said; got " + fresh.programs().all().getFirst().process().console());
+                    helper.assertTrue(fresh.programs().view().size() == 1, "the program comes back; got "
+                            + fresh.programs().view().size());
+                    final var kept = fresh.programs().byId(fresh.programs().view().getFirst().id()).process().console();
+                    helper.assertTrue(kept.equals(said), "with what it had said; got " + kept);
 
                     pc.loadWithComponents(saved, registries);
                     helper.assertTrue(pc.isRunning(), "read back in the world, the computer is still switched on");

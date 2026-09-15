@@ -15,7 +15,6 @@ import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IHost;
 import dev.jstech.computers.vm.program.IProgramParent;
-import dev.jstech.computers.vm.program.ProgramEntry;
 import dev.jstech.computers.vm.program.ProgramPriority;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.vm.system.SigmaCosts;
@@ -82,7 +81,7 @@ public final class HostRemote {
             case "Processes" -> {
                 final Values.ListValue all = new Values.ListValue();
                 if (remote.machine() instanceof AbstractComputerBlockEntity machine) {
-                    for (final ProgramEntry<IMachineRuntime> one : machine.programs().all()) {
+                    for (final ProgramView one : machine.programs().view()) {
                         all.items().add(handle(one.id(), one.file(), host));
                     }
                 }

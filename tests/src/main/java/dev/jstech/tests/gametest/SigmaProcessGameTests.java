@@ -117,7 +117,11 @@ public final class SigmaProcessGameTests {
     }
 
     private static ILanguageProcess only(final MachinePrograms programs) {
-        return programs.all().getFirst().process();
+        return nth(programs, 0);
+    }
+
+    private static ILanguageProcess nth(final MachinePrograms programs, final int index) {
+        return programs.byId(programs.view().get(index).id()).process();
     }
 
     /** A Mainframe up and running Frames 95, since it ticks itself rather than the way other computers do. */
@@ -211,8 +215,8 @@ public final class SigmaProcessGameTests {
                     programs.start("one.asm", listing, 1, computer);
                     programs.start("two.asm", listing, 1, computer);
                     programs.tick(9);
-                    final long first = programs.all().getFirst().process().spent();
-                    final long second = programs.all().get(1).process().spent();
+                    final long first = nth(programs, 0).spent();
+                    final long second = nth(programs, 1).spent();
                     helper.assertTrue(first + second == 9,
                             "the whole tick is spent; got " + first + " and " + second);
                     helper.assertTrue(Math.abs(first - second) <= 1,
@@ -238,10 +242,10 @@ public final class SigmaProcessGameTests {
 
                     final MachinePrograms after = new MachinePrograms();
                     after.load(tag, computer);
-                    helper.assertTrue(after.all().size() == 1,
-                            "one program comes back; got " + after.all().size());
-                    helper.assertTrue(after.all().getFirst().heapMb() == 2,
-                            "with the memory it was given; got " + after.all().getFirst().heapMb());
+                    helper.assertTrue(after.view().size() == 1,
+                            "one program comes back; got " + after.view().size());
+                    helper.assertTrue(after.view().getFirst().heapMb() == 2,
+                            "with the memory it was given; got " + after.view().getFirst().heapMb());
                     after.tick(512);
                     final List<String> said = only(after).console();
                     helper.assertTrue(said.equals(List.of("up", "tick 1", "tick 2")),
@@ -288,7 +292,7 @@ public final class SigmaProcessGameTests {
                             "it says its piece; got " + running.console());
                     programs.tick(512);
                     helper.assertTrue(programs.isEmpty(),
-                            "and is gone, not asked again; " + programs.all().size() + " left");
+                            "and is gone, not asked again; " + programs.view().size() + " left");
                 })
                 .thenSucceed();
     }
@@ -306,7 +310,7 @@ public final class SigmaProcessGameTests {
                     programs.hold(id);
                     programs.tick(512);
                     programs.tick(512);
-                    helper.assertTrue(programs.all().size() == 1, "it waits to be read");
+                    helper.assertTrue(programs.view().size() == 1, "it waits to be read");
                     helper.assertTrue(only(programs).state() == ILanguageProcess.State.FINISHED,
                             "having finished");
                     programs.release();
@@ -520,7 +524,7 @@ public final class SigmaProcessGameTests {
                     before.save(tag);
                     final MachinePrograms after = new MachinePrograms();
                     after.load(tag, computer);
-                    helper.assertTrue(after.all().size() == 1, "the program comes back");
+                    helper.assertTrue(after.view().size() == 1, "the program comes back");
                     after.tick(512);
                     final List<String> more = only(after).console();
                     helper.assertTrue(more.size() > said.size() && countsUp(more)
@@ -587,12 +591,12 @@ public final class SigmaProcessGameTests {
                     helper.assertTrue(parent.console().equals(List.of("started child.asm", "child: hello a", "code 4")),
                             "the parent started the child, waited, and read it; got " + parent.console()
                                     + " (" + parent.message() + ")");
-                    helper.assertTrue(programs.all().size() == 2,
-                            "the finished child stays for the parent to read; got " + programs.all().size());
+                    helper.assertTrue(programs.view().size() == 2,
+                            "the finished child stays for the parent to read; got " + programs.view().size());
                     programs.tick(2048);
                     programs.tick(2048);
                     helper.assertTrue(programs.isEmpty(),
-                            "and both are gone once the parent is; " + programs.all().size() + " left");
+                            "and both are gone once the parent is; " + programs.view().size() + " left");
                 })
                 .thenSucceed();
     }

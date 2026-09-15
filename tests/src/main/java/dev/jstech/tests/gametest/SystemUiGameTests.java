@@ -194,7 +194,7 @@ public final class SystemUiGameTests {
 
                     final MachinePrograms after = new MachinePrograms();
                     after.load(tag, computer);
-                    final int id = after.all().getFirst().id();
+                    final int id = after.view().getFirst().id();
                     final List<Values.Obj> windows = after.windowsOf(id);
                     helper.assertTrue(windows.size() == 1, "the window comes back; got " + windows.size());
                     final Values.Obj button = widgetOf(windows.getFirst(), UiWidgets.BUTTON);

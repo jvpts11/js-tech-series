@@ -19,6 +19,7 @@ import dev.jstech.core.language.IProgrammingLanguage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.ObjIntConsumer;
 import java.util.function.Predicate;
 import java.util.function.ToLongFunction;
 import net.minecraft.nbt.CompoundTag;
@@ -73,9 +74,16 @@ public final class MachinePrograms {
     private final TerminalFocus focus = new TerminalFocus(this.table, this::stop);
     private final ProgramTicker ticker = new ProgramTicker(this.table, this.focus);
 
-    /** Everything running, in the order it was started. */
-    public List<ProgramEntry<IMachineRuntime>> all() {
-        return this.table.all();
+    /**
+     * Every program the machine lists, in the order they started, as screens read them: a list of its own, built
+     * when asked, whose programs cannot be reached through it.
+     */
+    public List<ProgramView> view() {
+        final List<ProgramView> listed = new ArrayList<>(this.table.running().size());
+        for (final ProgramEntry<IMachineRuntime> one : this.table.running()) {
+            listed.add(new ProgramView(one));
+        }
+        return listed;
     }
 
     /** The program of that number, or null. */
@@ -227,6 +235,16 @@ public final class MachinePrograms {
     public List<Values.Obj> windowsOf(final int id) {
         final ProgramEntry<IMachineRuntime> one = this.byId(id);
         return one == null ? List.of() : one.process().windows();
+    }
+
+    /** Hands over every window the machine's programs have open, with the number of the program that owns it. */
+    public void eachWindow(final ObjIntConsumer<Values.Obj> each) {
+        // Reading a window changes nothing in the table, so the table is walked without a copy.
+        for (final ProgramEntry<IMachineRuntime> one : this.table.running()) {
+            for (final Values.Obj window : one.process().windows()) {
+                each.accept(window, one.id());
+            }
+        }
     }
 
     /**

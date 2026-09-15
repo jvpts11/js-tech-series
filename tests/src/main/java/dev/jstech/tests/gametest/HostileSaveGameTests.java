@@ -277,9 +277,9 @@ public final class HostileSaveGameTests {
                     helper.assertTrue(started.ok(), "the parent starts: " + started.message());
                     pc.programs().tick(PLENTY);
                     pc.programs().tick(PLENTY);
-                    helper.assertTrue(pc.programs().all().size() == 2
+                    helper.assertTrue(pc.programs().view().size() == 2
                                     && process(pc, started.id()).console().equals(List.of("started child.asm")),
-                            "the parent started the child and waits for it; programs " + pc.programs().all().size()
+                            "the parent started the child and waits for it; programs " + pc.programs().view().size()
                                     + ", said " + process(pc, started.id()).console());
                     reload(helper, pc);
                     parent[0] = process(pc, started.id());
@@ -317,7 +317,7 @@ public final class HostileSaveGameTests {
                     id[0] = started.id();
                 })
                 .thenExecuteAfter(4, () -> {
-                    helper.assertTrue(desk.programs().all().stream().anyMatch(one -> "tool.asm".equals(one.file())),
+                    helper.assertTrue(desk.programs().view().stream().anyMatch(one -> "tool.asm".equals(one.file())),
                             "lab started the tool on desk, which is still sleeping");
                     helper.assertTrue(process(lab, id[0]).console().isEmpty(), "and lab waits for it");
                     reload(helper, desk);

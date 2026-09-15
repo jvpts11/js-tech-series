@@ -3184,9 +3184,9 @@ public final class ServerCliComputer implements ICliComputer {
             return List.of();
         }
         final List<SigmaProcess> running = new java.util.ArrayList<>();
-        for (final var one : computer.programs().all()) {
-            running.add(new SigmaProcess(one.id(), one.name(), MachinePrograms.stateOf(one.process()),
-                    one.process().heldBytes(), one.process().heapBytes(), one.file()));
+        for (final var one : computer.programs().view()) {
+            running.add(new SigmaProcess(one.id(), one.name(), one.state(), one.heldBytes(), one.heapBytes(),
+                    one.file()));
         }
         return running;
     }

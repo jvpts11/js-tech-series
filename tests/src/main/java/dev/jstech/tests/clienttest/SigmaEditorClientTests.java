@@ -473,10 +473,10 @@ public final class SigmaEditorClientTests {
                         "no terminal window opened for it")
                 .thenScreenshot(2, "started")
                 // Once it has returned, the machine is not running it any more: the Task Manager must not list it.
-                .thenWaitUntilServer(level -> computerOf(ctx, level).programs().all().isEmpty(), SCREEN_WAIT,
+                .thenWaitUntilServer(level -> computerOf(ctx, level).programs().view().isEmpty(), SCREEN_WAIT,
                         "the finished program to leave the machine's process list",
-                        level -> "still listed: " + computerOf(ctx, level).programs().all().stream()
-                                .map(one -> one.name() + "/" + one.process().state()).toList())
+                        level -> "still listed: " + computerOf(ctx, level).programs().view().stream()
+                                .map(one -> one.name() + "/" + one.state()).toList())
                 // The system's file window, opened for a solution: the folder is entered, the file picked, Open opens it.
                 .then(SETTLE, () -> studio(ctx).showOpenSolutionDialog())
                 .thenWaitUntil(() -> studio(ctx).dialog().isOpen() && studio(ctx).dialog().rowNames().contains("Hello"),

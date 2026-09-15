@@ -282,8 +282,8 @@ public final class ProgramBenchmarkGameTests {
                         loaded.load(saved, pc);
                     }
                     final double loadMs = (System.nanoTime() - loadStart) / 1_000_000.0 / MEASURED_CALLS;
-                    helper.assertTrue(loaded.all().size() == SAVED_PROGRAMS,
-                            "every program comes back; got " + loaded.all().size());
+                    helper.assertTrue(loaded.view().size() == SAVED_PROGRAMS,
+                            "every program comes back; got " + loaded.view().size());
                     report.put("programs", SAVED_PROGRAMS);
                     report.put("save_ms", saveMs);
                     report.put("save_bytes", nbtBytes(saved));
@@ -344,11 +344,12 @@ public final class ProgramBenchmarkGameTests {
     }
 
     private static void assertAllAlive(final GameTestHelper helper, final MachinePrograms sigma, final int expected) {
-        helper.assertTrue(sigma.all().size() == expected, "expected " + expected + " programs; got " + sigma.all().size());
-        for (final var one : sigma.all()) {
-            final ILanguageProcess.State state = one.process().state();
-            helper.assertTrue(state != ILanguageProcess.State.HALTED,
-                    "program " + one.id() + " halted: " + one.process().message());
+        helper.assertTrue(sigma.view().size() == expected,
+                "expected " + expected + " programs; got " + sigma.view().size());
+        for (final var one : sigma.view()) {
+            final ILanguageProcess process = sigma.byId(one.id()).process();
+            helper.assertTrue(process.state() != ILanguageProcess.State.HALTED,
+                    "program " + one.id() + " halted: " + process.message());
         }
     }
 

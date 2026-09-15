@@ -72,7 +72,7 @@ public final class FarewellBudgetGameTests {
         final PersonalComputerBlockEntity pc = computer(helper);
         final List<ILanguageProcess> processes = start(helper, pc, 3);
         final List<Integer> ids = new ArrayList<>();
-        pc.programs().all().forEach(one -> ids.add(one.id()));
+        pc.programs().view().forEach(one -> ids.add(one.id()));
         final long[] before = spent(processes);
 
         pc.programs().stop(ids.get(0));
