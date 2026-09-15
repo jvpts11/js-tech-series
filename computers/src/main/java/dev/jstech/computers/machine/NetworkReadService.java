@@ -9,6 +9,7 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
@@ -51,12 +52,15 @@ public final class NetworkReadService {
     private final ServerLevel level;
     /** The other machines of the network as the machine's shell reaches them. */
     private final ICliRemote remote;
+    /** The network's work, for the rows a query asks of it: they belong to whoever owns the Operations. */
+    private final OperationsService operations;
 
     public NetworkReadService(final IComputerTerminalHost terminal, final ServerLevel level,
-                              final ICliRemote remote) {
+                              final ICliRemote remote, final OperationsService operations) {
         this.terminal = terminal;
         this.level = level;
         this.remote = remote;
+        this.operations = operations;
     }
 
     /** Whether the machine is on a network at all. */
@@ -230,6 +234,124 @@ public final class NetworkReadService {
         }
         return Long.toString(Math.round(
                 100.0 * (stack.getMaxDamage() - stack.getDamageValue()) / stack.getMaxDamage()));
+    }
+
+    /**
+     * The rows a {@code QUERY <object>} asks of the network: {@code items} (what it holds), {@code servers},
+     * {@code operations}, {@code computers} and {@code recipes}. An object nothing answers yet reads as no rows.
+     *
+     * @param object the name of what is being asked about
+     * @param where  the condition a row has to meet, or null for every row
+     * @param server a server name to scope the read to, or {@code ""} for the whole network
+     * @param limit  the largest number of rows to hand back
+     */
+    public List<ICliComputer.StoredItem> queryObject(final String object, @Nullable final IIqlCondition where,
+                                                     final String server, final int limit) {
+        return switch (object.toLowerCase(Locale.ROOT)) {
+            case "items", "*" -> this.query(where, server, limit); // '*' means every item, like SELECT *
+            case "servers" -> this.queryServers(limit);
+            case "operations" -> this.queryOperations(limit);
+            case "computers" -> this.queryComputers(limit);
+            case "recipes" -> this.queryRecipes(limit);
+            // disks: the schema object exists, the per-disk live data is not wired yet.
+            default -> List.of();
+        };
+    }
+
+    /** One row per network node: the Mainframe, then servers, personal computers, and crafting computers. */
+    private List<ICliComputer.StoredItem> queryComputers(final int limit) {
+        final NetworkUuid net = this.terminal.networkUuid();
+        if (net == null) {
+            return List.of();
+        }
+        final NetworkSystem system = NetworkSystem.get(this.level);
+        final List<ICliComputer.StoredItem> out = new ArrayList<>();
+        if (this.mainframe(net) != null) {
+            out.add(new ICliComputer.StoredItem("Mainframe", 1L));
+        }
+        for (final ServerNode server : system.serversOf(net)) {
+            if (out.size() >= limit) {
+                break;
+            }
+            out.add(new ICliComputer.StoredItem(
+                    NetworkLookup.serverLabel(this.level, server.nodeUuid()) + " (server)", 1L));
+        }
+        for (final var pc : system.personalComputersOf(net)) {
+            if (out.size() >= limit) {
+                break;
+            }
+            out.add(new ICliComputer.StoredItem("PC-" + ShortId.of(pc.nodeUuid().asString()) + " (pc)", 1L));
+        }
+        for (final var cc : system.craftingComputersOf(net)) {
+            if (out.size() >= limit) {
+                break;
+            }
+            out.add(new ICliComputer.StoredItem("CC-" + ShortId.of(cc.nodeUuid().asString()) + " (crafting)", 1L));
+        }
+        return out;
+    }
+
+    /** One row per craftable recipe known to the network: the result item and its output count. */
+    private List<ICliComputer.StoredItem> queryRecipes(final int limit) {
+        final MainframeBlockEntity mainframe = this.mainframe(this.terminal.networkUuid());
+        if (mainframe == null) {
+            return List.of();
+        }
+        final List<ICliComputer.StoredItem> out = new ArrayList<>();
+        for (final var pattern : mainframe.networkPatterns()) {
+            if (out.size() >= limit) {
+                break;
+            }
+            final ItemStack result = pattern.result();
+            out.add(new ICliComputer.StoredItem(result.getHoverName().getString(), result.getCount()));
+        }
+        return out;
+    }
+
+    /** One row per server: its label and the total item count it stores. */
+    private List<ICliComputer.StoredItem> queryServers(final int limit) {
+        final NetworkUuid net = this.terminal.networkUuid();
+        if (net == null) {
+            return List.of();
+        }
+        final List<ICliComputer.StoredItem> out = new ArrayList<>();
+        for (final ServerNode srv : NetworkSystem.get(this.level).serversOf(net)) {
+            final long used = NetworkStorage.ofServers(this.level, List.of(srv.nodeUuid()))
+                    .query().values().stream().mapToLong(Long::longValue).sum();
+            out.add(new ICliComputer.StoredItem(NetworkLookup.serverLabel(this.level, srv.nodeUuid()), used));
+            if (out.size() >= limit) {
+                break;
+            }
+        }
+        return out;
+    }
+
+    /**
+     * One row per operation: the in-flight ones first ("VERB item [STATUS]" and how much moved so far), then
+     * the settled ones from the Mainframe's log, newest first, so a craft that finished a moment ago is still
+     * there to be read. The ones in flight are the Operations service's to hand over, because they are its own.
+     */
+    private List<ICliComputer.StoredItem> queryOperations(final int limit) {
+        final List<ICliComputer.StoredItem> out = new ArrayList<>();
+        for (final ICliComputer.ActiveOp op : this.operations.list()) {
+            out.add(new ICliComputer.StoredItem(op.type() + " " + op.item() + " [" + op.status() + "]",
+                    op.progress()));
+            if (out.size() >= limit) {
+                return out;
+            }
+        }
+        final MainframeBlockEntity mainframe = this.mainframe(this.terminal.networkUuid());
+        if (mainframe != null) {
+            for (final OperationRecord record : mainframe.recentOperations()) {
+                out.add(new ICliComputer.StoredItem(OperationRecord.typeName(record.type()) + " "
+                        + record.name().getString() + " [" + OperationRecord.statusName(record.status()) + "]",
+                        record.moved()));
+                if (out.size() >= limit) {
+                    break;
+                }
+            }
+        }
+        return out;
     }
 
     /** Which servers hold an item, and how much each holds; a server holding none of it is left out. */

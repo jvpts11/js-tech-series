@@ -123,6 +123,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   network for, the IQL statements it runs, the programs it starts and asks after, on its own computer or another of
   its network, and its calls through the computer's Gateways, which services the computer keeps answer. A computer
   keeps the shell its programs reach its drives and its network through, instead of making one for each call.
+- A computer reads its data network in one place, whether the prompt or a program asks: whether it is on a network and
+  which, what it holds and where, its servers, and the rows a query brings back about items, servers, operations,
+  computers and recipes. The verb and the state of an Operation are now named by the record that carries them, so the
+  prompt, the terminal and a program's queries all read them the same way.
 - A computer reads and writes its drives in one place, whether the prompt or a program asks. The drives it can see are
   gathered from the machine itself, a path that leads to another machine of the network is followed by one resolver,
   and opening, listing, writing, moving and formatting all go through one service over both.

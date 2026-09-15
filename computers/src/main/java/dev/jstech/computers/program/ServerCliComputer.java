@@ -281,111 +281,7 @@ public final class ServerCliComputer implements ICliComputer {
     public List<StoredItem> queryObject(final String object,
                                         final dev.jstech.computers.program.iql.IIqlCondition where,
                                         final String server, final int limit) {
-        return switch (object.toLowerCase(java.util.Locale.ROOT)) {
-            case "items", "*" -> query(where, server, limit); // '*' means every item, like SELECT *
-            case "servers" -> queryServers(limit);
-            case "operations" -> queryOperations(limit);
-            case "computers" -> queryComputers(limit);
-            case "recipes" -> queryRecipes(limit);
-            // disks: the schema object exists, the per-disk live data is not wired yet.
-            default -> List.of();
-        };
-    }
-
-    /** One row per network node: the Mainframe, then servers, personal computers, and crafting computers. */
-    private List<StoredItem> queryComputers(final int limit) {
-        final NetworkUuid net = host.networkUuid();
-        if (net == null) {
-            return List.of();
-        }
-        final NetworkSystem system = NetworkSystem.get(level);
-        final List<StoredItem> out = new ArrayList<>();
-        if (mainframe(net) != null) {
-            out.add(new StoredItem("Mainframe", 1L));
-        }
-        for (final dev.jstech.core.network.ServerNode server : system.serversOf(net)) {
-            if (out.size() >= limit) {
-                break;
-            }
-            out.add(new StoredItem(NetworkLookup.serverLabel(level, server.nodeUuid()) + " (server)", 1L));
-        }
-        for (final var pc : system.personalComputersOf(net)) {
-            if (out.size() >= limit) {
-                break;
-            }
-            out.add(new StoredItem("PC-"
-                    + dev.jstech.core.util.ShortId.of(pc.nodeUuid().asString()) + " (pc)", 1L));
-        }
-        for (final var cc : system.craftingComputersOf(net)) {
-            if (out.size() >= limit) {
-                break;
-            }
-            out.add(new StoredItem("CC-"
-                    + dev.jstech.core.util.ShortId.of(cc.nodeUuid().asString()) + " (crafting)", 1L));
-        }
-        return out;
-    }
-
-    /** One row per craftable recipe known to the network: the result item and its output count. */
-    private List<StoredItem> queryRecipes(final int limit) {
-        final MainframeBlockEntity mainframe = mainframe(host.networkUuid());
-        if (mainframe == null) {
-            return List.of();
-        }
-        final List<StoredItem> out = new ArrayList<>();
-        for (final var pattern : mainframe.networkPatterns()) {
-            if (out.size() >= limit) {
-                break;
-            }
-            final net.minecraft.world.item.ItemStack result = pattern.result();
-            out.add(new StoredItem(result.getHoverName().getString(), result.getCount()));
-        }
-        return out;
-    }
-
-    /** One row per server: its label and the total item count it stores. */
-    private List<StoredItem> queryServers(final int limit) {
-        final NetworkUuid net = host.networkUuid();
-        if (net == null) {
-            return List.of();
-        }
-        final List<StoredItem> out = new ArrayList<>();
-        for (final dev.jstech.core.network.ServerNode srv
-                : NetworkSystem.get(level).serversOf(net)) {
-            final long used = NetworkStorage.ofServers(level, java.util.List.of(srv.nodeUuid()))
-                    .query().values().stream().mapToLong(Long::longValue).sum();
-            out.add(new StoredItem(NetworkLookup.serverLabel(level, srv.nodeUuid()), used));
-            if (out.size() >= limit) {
-                break;
-            }
-        }
-        return out;
-    }
-
-    /**
-     * One row per operation: the in-flight ones first ("VERB item [STATUS]" and how much moved so far), then
-     * the settled ones from the Mainframe's log, newest first, so a craft that finished a moment ago is still
-     * there to be read.
-     */
-    private List<StoredItem> queryOperations(final int limit) {
-        final List<StoredItem> out = new ArrayList<>();
-        for (final ActiveOp op : activeOps()) {
-            out.add(new StoredItem(op.type() + " " + op.item() + " [" + op.status() + "]", op.progress()));
-            if (out.size() >= limit) {
-                return out;
-            }
-        }
-        final MainframeBlockEntity mainframe = mainframe(host.networkUuid());
-        if (mainframe != null) {
-            for (final OperationRecord record : mainframe.recentOperations()) {
-                out.add(new StoredItem(opType(record.type()) + " " + record.name().getString()
-                        + " [" + opStatus(record.status()) + "]", record.moved()));
-                if (out.size() >= limit) {
-                    break;
-                }
-            }
-        }
-        return out;
+        return networkReads().queryObject(object, where, server, limit);
     }
 
     @Override
@@ -441,7 +337,8 @@ public final class ServerCliComputer implements ICliComputer {
         }
         final List<OperationStat> rows = new ArrayList<>();
         for (final var summary : mainframe.statistics().summaries(level.getGameTime())) {
-            rows.add(new OperationStat(opType((byte) summary.type()), summary.count(), summary.averageWait(),
+            rows.add(new OperationStat(OperationRecord.typeName((byte) summary.type()), summary.count(),
+                    summary.averageWait(),
                     summary.averageRun(), summary.shortfallPercent(), summary.moved()));
         }
         return rows;
@@ -495,7 +392,8 @@ public final class ServerCliComputer implements ICliComputer {
                 if (!mainframe.cancelOperation(operation.operationId())) {
                     return OpResult.fail("operation " + ShortId.of(full) + " has already settled");
                 }
-                return OpResult.ok("cancelled " + opType(record.type()) + " " + record.name().getString());
+                return OpResult.ok("cancelled " + OperationRecord.typeName(record.type()) + " "
+                        + record.name().getString());
             }
         }
         return OpResult.fail("no operation " + wanted + " in flight (see 'ops')");
@@ -636,9 +534,9 @@ public final class ServerCliComputer implements ICliComputer {
         }
         final List<ActiveOp> rows = new ArrayList<>();
         for (final OperationRecord record : mainframe.activeOperationRecords()) {
-            rows.add(new ActiveOp(ShortId.of(record.id().toString()), opType(record.type()),
-                    record.name().getString(), record.moved(), record.requested(), opStatus(record.status()),
-                    record.priority().label()));
+            rows.add(new ActiveOp(ShortId.of(record.id().toString()), OperationRecord.typeName(record.type()),
+                    record.name().getString(), record.moved(), record.requested(),
+                    OperationRecord.statusName(record.status()), record.priority().label()));
         }
         return rows;
     }
@@ -1202,35 +1100,6 @@ public final class ServerCliComputer implements ICliComputer {
     /** How a quantity reads back to the player: a real count, or {@code "all"} for ALL/unspecified. */
     private static String qtyLabel(final long quantity) {
         return quantity <= 0L ? "all" : Long.toString(quantity);
-    }
-
-    private static String opType(final byte type) {
-        return switch (type) {
-            case OperationRecord.TYPE_SELECT -> "SELECT";
-            case OperationRecord.TYPE_INSERT -> "INSERT";
-            case OperationRecord.TYPE_DELETE -> "DELETE";
-            case OperationRecord.TYPE_MOVE -> "MOVE";
-            case OperationRecord.TYPE_CRAFT -> "CRAFT";
-            case OperationRecord.TYPE_ANALYZE -> "ANALYZE";
-            case OperationRecord.TYPE_REINDEX -> "REINDEX";
-            case OperationRecord.TYPE_VACUUM -> "VACUUM";
-            case OperationRecord.TYPE_DROP -> "DROP";
-            default -> "OP";
-        };
-    }
-
-    private static String opStatus(final byte status) {
-        return switch (status) {
-            case OperationRecord.STATUS_COMPLETED -> "done";
-            case OperationRecord.STATUS_PARTIAL -> "partial";
-            case OperationRecord.STATUS_FAILED -> "failed";
-            case OperationRecord.STATUS_PROCESSING -> "running";
-            case OperationRecord.STATUS_WAITING -> "waiting";
-            case OperationRecord.STATUS_RESOURCE_LOCKED -> "locked";
-            case OperationRecord.STATUS_PENDING -> "pending";
-            case OperationRecord.STATUS_DISCARDED -> "discarded";
-            default -> "?";
-        };
     }
 
     // filesystem
@@ -2270,7 +2139,8 @@ public final class ServerCliComputer implements ICliComputer {
 
     /** The data network this machine is on, as this shell reads it. */
     private dev.jstech.computers.machine.NetworkReadService networkReads() {
-        return new dev.jstech.computers.machine.NetworkReadService(host, level, this);
+        return new dev.jstech.computers.machine.NetworkReadService(host, level, this,
+                new dev.jstech.computers.machine.OperationsService(this, this));
     }
 
     /** This machine's drives as this shell reaches them, from where this shell's window stands. */

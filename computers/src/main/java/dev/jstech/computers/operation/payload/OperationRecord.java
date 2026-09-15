@@ -27,7 +27,9 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * One entry in a network's Operations log, with provenance: what was moved, how much was requested vs actually moved, the final status, and the per-source moves (from which Server, how much, to where) so the terminal can show exactly where the data came from and went.
+ * One entry in a network's Operations log, with provenance: what was moved, how much was requested vs actually
+ * moved, the final status, and the per-source moves (from which Server, how much, to where) so the terminal can
+ * show exactly where the data came from and went.
  *
  * <p>{@code id} is the Operation's identity while it is in flight, so a view can address it (change its
  * priority, cancel it); an instant Operation that was never queued carries {@link #NO_ID}. {@code priority}
@@ -66,6 +68,43 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
 
     public static final int MAX_MOVES = 32;
     public static final int MAX_SUBS = 32;
+
+    /**
+     * The verb a record's type reads by, as the prompt, the terminal and a program's queries all show it, or
+     * {@code "OP"} for a type this version does not know.
+     */
+    public static String typeName(final byte type) {
+        return switch (type) {
+            case TYPE_SELECT -> "SELECT";
+            case TYPE_INSERT -> "INSERT";
+            case TYPE_DELETE -> "DELETE";
+            case TYPE_MOVE -> "MOVE";
+            case TYPE_CRAFT -> "CRAFT";
+            case TYPE_ANALYZE -> "ANALYZE";
+            case TYPE_REINDEX -> "REINDEX";
+            case TYPE_VACUUM -> "VACUUM";
+            case TYPE_DROP -> "DROP";
+            default -> "OP";
+        };
+    }
+
+    /**
+     * The word a record's status reads by, as the prompt, the terminal and a program's queries all show it, or
+     * {@code "?"} for a status this version does not know.
+     */
+    public static String statusName(final byte status) {
+        return switch (status) {
+            case STATUS_COMPLETED -> "done";
+            case STATUS_PARTIAL -> "partial";
+            case STATUS_FAILED -> "failed";
+            case STATUS_PROCESSING -> "running";
+            case STATUS_WAITING -> "waiting";
+            case STATUS_RESOURCE_LOCKED -> "locked";
+            case STATUS_PENDING -> "pending";
+            case STATUS_DISCARDED -> "discarded";
+            default -> "?";
+        };
+    }
 
     /** An instant Operation's record: no live identity, the default priority, no SubOperation rows, no time. */
     public OperationRecord(final byte type, final StorageKey key, final long requested, final long moved,

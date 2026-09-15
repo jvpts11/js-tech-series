@@ -28,7 +28,7 @@ public final class OperationsService {
     /** The network as the machine's shell reads it. */
     private final ICliNetwork network;
 
-    OperationsService(final ICliOperations operations, final ICliNetwork network) {
+    public OperationsService(final ICliOperations operations, final ICliNetwork network) {
         this.operations = operations;
         this.network = network;
     }
