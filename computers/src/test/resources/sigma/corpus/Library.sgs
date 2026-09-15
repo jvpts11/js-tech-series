@@ -1,0 +1,49 @@
+using System.*;
+using System.IO.*;
+using System.Collections.*;
+using System.Utils.*;
+namespace Corpus;
+class LibraryCorpus {
+    static void Main() {
+        int whole = Math.Abs(-3);
+        double real = Math.Abs(-2.5);
+        int least = Math.Min(1, 2);
+        double leastReal = Math.Min(1.5, 2.5);
+        int most = Math.Max(1, 2);
+        double mostReal = Math.Max(1.5, 2.5);
+        int held = Math.Clamp(5, 0, 3);
+        double heldReal = Math.Clamp(5.5, 0.5, 3.5);
+        double rounded = Math.Floor(2.7) + Math.Ceil(2.1) + Math.Round(2.5) + Math.Sqrt(9.0) + Math.Pow(2.0, 3.0);
+        Console.PrintLine("" + whole + real + least + leastReal + most + mostReal + held + heldReal + rounded);
+
+        int parsed = Convert.ToInt("4");
+        long big = Convert.ToLong("5");
+        float small = Convert.ToFloat("1.5");
+        double exact = Convert.ToDouble("2.5");
+        bool truth = Convert.ToBool("true");
+        string back = Convert.ToString(parsed);
+        Console.PrintLine("" + parsed + big + small + exact + truth + back);
+        if (Convert.TryInt("6", out int six) && Convert.TryLong("7", out long seven)) {
+            Console.PrintLine("" + six + seven);
+        }
+        if (Convert.TryDouble("8.5", out double eight) && Convert.TryBool("false", out bool no)) {
+            Console.PrintLine("" + eight + no);
+        }
+
+        Random.Seed(42);
+        int roll = Random.Next(6);
+        double chance = Random.NextDouble();
+        long now = Time.Tick + Time.DayTime + Time.Day + Time.Ticks(20);
+        Console.Print("" + roll + chance + now);
+
+        Console.Clear();
+        if (Console.HasLine()) {
+            string line = Console.ReadLine();
+            int count = Console.ReadInt();
+            long total = Console.ReadLong();
+            double share = Console.ReadDouble();
+            bool sure = Console.ReadBool();
+            Console.PrintLine(line + count + total + share + sure);
+        }
+    }
+}

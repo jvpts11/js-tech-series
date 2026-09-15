@@ -1,0 +1,84 @@
+using System.*;
+using System.IO.*;
+using System.UI.*;
+namespace Corpus;
+class UiCorpus {
+    static void Main() {
+        Window window = new Window("Corpus", 240, 150);
+        window.Title = "Corpus";
+        Row row = new Row();
+        Column column = new Column();
+        row.Spacing = 2;
+        column.Spacing = 2;
+
+        Label label = new Label();
+        Label named = new Label("name");
+        named.Text = "name";
+        named.Visible = true;
+        named.Enabled = true;
+        named.Width = 40;
+        named.Height = 10;
+
+        Button button = new Button();
+        Button pressed = new Button("press");
+        pressed.Text = "press";
+        pressed.OnClick += Clicked;
+
+        TextBox box = new TextBox();
+        TextBox typed = new TextBox("x");
+        typed.Text = "y";
+        typed.OnChange += Clicked;
+        typed.OnSubmit += Clicked;
+
+        CheckBox check = new CheckBox();
+        CheckBox labelled = new CheckBox("on");
+        CheckBox ticked = new CheckBox("on", true);
+        ticked.Text = "on";
+        ticked.Checked = false;
+        ticked.OnToggle += Clicked;
+
+        ProgressBar bar = new ProgressBar();
+        ProgressBar ranged = new ProgressBar(0, 10);
+        ranged.Value = 5;
+        ranged.Least = 0;
+        ranged.Most = 10;
+
+        ListBox listBox = new ListBox();
+        listBox.Add("one");
+        listBox.Add("two", "second");
+        listBox.Selected = 0;
+        listBox.OnSelect += Clicked;
+
+        Canvas canvas = new Canvas();
+        Canvas sized = new Canvas(100, 50);
+        sized.Clear(0);
+        sized.FillRect(0, 0, 10, 10, 1);
+        sized.DrawLine(0, 0, 10, 10, 2);
+        sized.DrawText("hi", 1, 1, 3);
+        sized.SetPixel(2, 2, 4);
+        sized.OnClick += Clicked;
+
+        row.Add(label);
+        row.Add(named, 1);
+        column.Add(row);
+        column.Add(sized, 1);
+        column.Add(box);
+        column.Add(check);
+        column.Add(labelled);
+        column.Add(bar);
+        column.Add(canvas);
+        window.Content = column;
+        window.Add(button, 0, 0, 20, 10);
+        window.OnClose += Clicked;
+        window.Show();
+        Console.PrintLine("" + window.Open + listBox.Count + sized.ClickX + sized.ClickY);
+        row.Clear();
+        column.Clear();
+        listBox.Clear();
+        window.Close();
+        MessageBox.Show("title", "text");
+    }
+
+    static void Clicked() {
+    }
+}

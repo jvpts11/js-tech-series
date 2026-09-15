@@ -1,0 +1,49 @@
+using System.*;
+using System.IO.*;
+using System.Collections.*;
+using System.Execution.*;
+using System.Threading.*;
+namespace Corpus;
+class ProgramsCorpus {
+    static void Main() {
+        Program.SetName("corpus");
+        string name = Program.Name;
+        List<string> args = Program.Args;
+        long dropped = Program.DroppedEvents;
+        Process self = Program.Current;
+        Process one = Program.Start("C:\\tool.asm");
+        Process two = Program.Start("C:\\tool.asm", args);
+        Process three = Program.Start("C:\\tool.asm", args, "lab");
+        Process run = Program.RunSource("class A {}", args, "a.sgs");
+        List<string> said = Program.Shell("dir");
+        Program.OnMessage(m => Console.PrintLine(m.Text + m.From + m.Tick));
+        Console.PrintLine(name + dropped + self.Id + said.Count);
+
+        int id = one.Id;
+        string oneName = one.Name;
+        string host = one.Host;
+        if (one.Running) {
+            one.Wait();
+        }
+        bool done = two.Wait(20);
+        int code = two.ExitCode;
+        three.Kill();
+        List<string> output = run.Output();
+        bool sent = Process.Send(id, "hello");
+        Console.PrintLine(oneName + host + done + code + output.Count + sent);
+
+        Thread worker = Thread.Start(() => {
+            Thread.Sleep(5);
+            Thread.Yield();
+        });
+        Thread current = Thread.Current;
+        int threadId = worker.Id;
+        if (worker.Running) {
+            worker.Join();
+        }
+        bool joined = worker.Join(10);
+        worker.Stop();
+        Console.PrintLine("" + current.Id + threadId + joined);
+        Program.Exit(0);
+    }
+}
