@@ -56,7 +56,7 @@ final class FileCalls {
             return files.append(path(arguments), text);
         }, STRING, STRING);
         file(bindings, "Delete", (files, call, target, arguments, line) -> files.delete(path(arguments)), STRING);
-        file(bindings, "MkDir", (files, call, target, arguments, line) -> files.makeDir(path(arguments)), STRING);
+        file(bindings, "MkDir", (files, call, target, arguments, line) -> files.makeFolder(path(arguments)), STRING);
         file(bindings, "List", (files, call, target, arguments, line) -> {
             final Values.ListValue names = new Values.ListValue();
             names.items().addAll(files.list(path(arguments)));

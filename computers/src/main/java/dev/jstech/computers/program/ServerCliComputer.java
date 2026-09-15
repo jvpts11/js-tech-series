@@ -18,14 +18,11 @@ import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.network.NetworkLookup;
-import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.fs.DiskFilesystem;
-import dev.jstech.computers.os.fs.FileType;
-import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.program.cli.DosPath;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.iql.IqlOperation;
@@ -51,7 +48,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Backs the Command Prompt's {@link ICliComputer} facade with a real computer and its network. Every command the shell runs ultimately calls one of these methods on the server; effecting verbs route through the same Mainframe operation dispatch the graphical terminal uses, so the CLI is a true alternative interface, not a parallel code path.
+ * Backs the Command Prompt's {@link ICliComputer} facade with a real computer and its network. Every command the shell
+ * runs ultimately calls one of these methods on the server; effecting verbs route through the same Mainframe operation
+ * dispatch the graphical terminal uses, so the CLI is a true alternative interface, not a parallel code path.
  */
 public final class ServerCliComputer implements ICliComputer {
 
@@ -1351,11 +1350,6 @@ public final class ServerCliComputer implements ICliComputer {
     /** A path resolved against the current location: its drive letter, that drive, and the path on it. */
     private record Resolved(char drive, DriveTable.Drive ctx, String path) {}
 
-    /** The machine's drives as they are now, for the operation asking. */
-    private java.util.List<DriveTable.Drive> driveTable() {
-        return DriveTable.of(hostBlock, level).all();
-    }
-
     /** The drive with that letter, or {@code null} when the letter is not mapped. */
     private DriveTable.Drive diskFor(final char drive) {
         return DriveTable.of(hostBlock, level).find(drive);
@@ -1377,10 +1371,6 @@ public final class ServerCliComputer implements ICliComputer {
         return DriveTable.notReady(drive);
     }
 
-    /** Free space in mB-equivalents on a disk or medium stack. */
-    private static long freeWeightOf(final ItemStack stack) {
-        return DriveTable.freeWeightOf(stack);
-    }
 
     /** The shell family of the OS installed on {@code host} (DOS when it has no OS or is not a computer). */
     public static dev.jstech.computers.os.ShellFamily shellFamilyOf(final Object host) {
@@ -1916,33 +1906,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public OpResult formatDrive(final char letterRaw) {
-        final char letter = Character.toUpperCase(letterRaw);
-        for (final DriveTable.Drive ctx : driveTable()) {
-            if (ctx.drive() != letter) {
-                continue;
-            }
-            final ItemStack target = ctx.disk();
-            if (target.isEmpty()) {
-                return OpResult.fail("format: drive " + letter + ": drive not ready");
-            }
-            if (letter == 'C' && hostBlock instanceof IOsHost computer && computer.hasOs()) {
-                return OpResult.fail("format: cannot format drive C: - the running system lives on it");
-            }
-            /*
-             * Formatting erases everything the volume carries: the system, the filesystem, the item
-             * storage, and (on removable media) the stamped installer identity, so a blank volume remains.
-             */
-            target.remove(dev.jstech.computers.ComputingModule.SYSTEM_OS.get());
-            target.remove(dev.jstech.computers.ComputingModule.FILESYSTEM.get());
-            dev.jstech.computers.storage.DriveVolumes.erase(target);
-            target.remove(dev.jstech.computers.ComputingModule.DISK_PUBLIC_PERMILLE.get());
-            target.remove(dev.jstech.computers.ComputingModule.MEDIA_KIND.get());
-            target.remove(dev.jstech.computers.ComputingModule.MEDIA_PAYLOAD.get());
-            target.remove(dev.jstech.computers.ComputingModule.MEDIA_DATA.get());
-            ctx.commit().run();
-            return OpResult.ok("Formatting drive " + letter + ": ... done\nAll data on the volume was erased.");
-        }
-        return OpResult.fail("format: drive " + letter + ": not found");
+        return files().formatDrive(letterRaw);
     }
 
     @Override
@@ -2161,39 +2125,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public FsResult deleteFile(final String path) {
-        final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
-        if (net != null) {
-            final NetworkPathResolver.Reached reached = reach(net);
-            if (!reached.ok()) {
-                return reached.error();
-            }
-            if (!reached.share().writable()) {
-                return FsResult.fail(net.display() + ": " + net.share() + " is shared read-only");
-            }
-            return reached.remote().deleteFile(reached.path());
-        }
-        final Resolved r = resolve(path);
-        if (r.ctx() == null) {
-            return driveError(r.drive());
-        }
-        if (r.ctx().disk().isEmpty()) {
-            return notReady(r.drive());
-        }
-        final DriveTable.Drive ctx = r.ctx();
-        final String real = r.path();
-        // Reject .dat entries before attempting deletion so we surface a clear message.
-        final List<DiskFilesystem.FileEntry> all = DiskFilesystem.list(ctx.disk(), FsPaths.parentDir(real), ctx.kind());
-        final boolean isDat = all.stream().anyMatch(e -> e.path().equals(real) && e.readOnly());
-        if (isDat) {
-            return FsResult.fail(path + ": .dat files cannot be deleted (use the Network Interactor)");
-        }
-        final boolean deleted = DiskFilesystem.delete(ctx.disk(), real);
-        if (!deleted) {
-            return FsResult.fail(path + ": file not found");
-        }
-        // DiskFilesystem.delete mutated the component in-place on the drive's stack; persist the owner.
-        ctx.commit().run();
-        return FsResult.ok("deleted " + path);
+        return files().deleteFile(path);
     }
 
     @Override
@@ -2235,85 +2167,12 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public FsResult writeFile(final String path, final String content) {
-        final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
-        if (net != null) {
-            final NetworkPathResolver.Reached reached = reach(net);
-            if (!reached.ok()) {
-                return reached.error();
-            }
-            if (!reached.share().writable()) {
-                return FsResult.fail(net.display() + ": " + net.share() + " is shared read-only");
-            }
-            return reached.remote().writeFile(reached.path(), content);
-        }
-        final Resolved r = resolve(path);
-        if (r.ctx() == null) {
-            return driveError(r.drive());
-        }
-        if (r.ctx().disk().isEmpty()) {
-            return notReady(r.drive());
-        }
-        final DriveTable.Drive ctx = r.ctx();
-        final String real = r.path();
-        // Any extension will do: a kind the machine does not know is kept as text under the name it was given.
-        final FileType type = FileType.of(extensionOf(path));
-        if (!type.userEditable()) {
-            return FsResult.fail(path + ": ." + type.extension() + " files cannot be edited");
-        }
-        // Free space available, crediting back the file being overwritten so a same-size rewrite fits.
-        final long oldWeight = DiskFilesystem.read(ctx.disk(), real)
-                .map(c -> FsPaths.sizeMbEq(c.getBytes(java.nio.charset.StandardCharsets.UTF_8).length,
-                        DiskFilesystem.eraOf(ctx.disk())))
-                .orElse(0L);
-        final DiskFilesystem.WriteResult result = DiskFilesystem.write(
-                ctx.disk(), real, type, content, freeWeightOf(ctx.disk()) + oldWeight, ctx.kind(), level.getGameTime());
-        return switch (result) {
-            case OK -> {
-                ctx.commit().run();
-                yield FsResult.ok("wrote " + path);
-            }
-            case INVALID_PATH -> FsResult.fail(path + ": invalid file name for this filesystem");
-            case DISK_FULL -> FsResult.fail(path + ": not enough free space on the disk");
-            case READ_ONLY -> FsResult.fail(path + ": ." + type.extension() + " is read-only");
-        };
+        return files().writeFile(path, content);
     }
 
     @Override
     public FsResult appendFile(final String path, final String content) {
-        final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
-        if (net != null) {
-            final NetworkPathResolver.Reached reached = reach(net);
-            if (!reached.ok()) {
-                return reached.error();
-            }
-            if (!reached.share().writable()) {
-                return FsResult.fail(net.display() + ": " + net.share() + " is shared read-only");
-            }
-            return reached.remote().appendFile(reached.path(), content);
-        }
-        final Resolved r = resolve(path);
-        if (r.ctx() == null) {
-            return driveError(r.drive());
-        }
-        if (r.ctx().disk().isEmpty()) {
-            return notReady(r.drive());
-        }
-        final DriveTable.Drive ctx = r.ctx();
-        final FileType type = FileType.of(extensionOf(path));
-        if (!type.userEditable()) {
-            return FsResult.fail(path + ": ." + type.extension() + " files cannot be edited");
-        }
-        final DiskFilesystem.WriteResult result = DiskFilesystem.append(
-                ctx.disk(), r.path(), type, content, freeWeightOf(ctx.disk()), ctx.kind(), level.getGameTime());
-        return switch (result) {
-            case OK -> {
-                ctx.commit().run();
-                yield FsResult.ok("wrote " + path);
-            }
-            case INVALID_PATH -> FsResult.fail(path + ": invalid file name for this filesystem");
-            case DISK_FULL -> FsResult.fail(path + ": not enough free space on the disk");
-            case READ_ONLY -> FsResult.fail(path + ": ." + type.extension() + " is read-only");
-        };
+        return files().appendFile(path, content);
     }
 
     @Override
@@ -2333,234 +2192,27 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public FsResult makeDir(final String path) {
-        if (path == null || path.isBlank()) {
-            return FsResult.fail("The syntax of the command is incorrect.");
-        }
-        final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
-        if (net != null) {
-            final NetworkPathResolver.Reached reached = reach(net);
-            if (!reached.ok()) {
-                return reached.error();
-            }
-            if (!reached.share().writable()) {
-                return FsResult.fail(net.display() + ": " + net.share() + " is shared read-only");
-            }
-            return reached.remote().makeDir(reached.path());
-        }
-        final Resolved r = resolve(path);
-        if (r.ctx() == null) {
-            return driveError(r.drive());
-        }
-        if (r.ctx().disk().isEmpty()) {
-            return notReady(r.drive());
-        }
-        final DriveTable.Drive ctx = r.ctx();
-        final String real = r.path();
-        if (ctx.kind() != FilesystemKind.HIERARCHICAL) {
-            return FsResult.fail("Directories are not supported on this drive.");
-        }
-        if (real.isEmpty()) {
-            return FsResult.fail("The syntax of the command is incorrect.");
-        }
-        if (dirExists(ctx, real) || DiskFilesystem.exists(ctx.disk(), real)) {
-            return FsResult.fail("A subdirectory or file " + path + " already exists.");
-        }
-        if (DiskFilesystem.mkdir(ctx.disk(), real, ctx.kind())) {
-            ctx.commit().run();
-            return FsResult.ok("");
-        }
-        return FsResult.fail(path + ": unable to create directory");
+        return files().makeDir(path);
     }
 
     @Override
     public FsResult removeDir(final String path) {
-        final Resolved r = resolve(path);
-        if (r.ctx() == null) {
-            return driveError(r.drive());
-        }
-        if (r.ctx().disk().isEmpty()) {
-            return notReady(r.drive());
-        }
-        final DriveTable.Drive ctx = r.ctx();
-        final String real = r.path();
-        if (ctx.kind() != FilesystemKind.HIERARCHICAL) {
-            return FsResult.fail("Directories are not supported on this drive.");
-        }
-        if (real.isEmpty()) {
-            return FsResult.fail("The syntax of the command is incorrect.");
-        }
-        final DosPath.Location cwd = currentLocation();
-        if (r.drive() == cwd.drive() && real.equals(cwd.storagePath())) {
-            return FsResult.fail("The process cannot access the directory because it is in use.");
-        }
-        if (!dirExists(ctx, real)) {
-            return FsResult.fail("The system cannot find the path specified.");
-        }
-        // DOS 'rd' refuses a non-empty directory; there is no implicit recursive delete.
-        final boolean hasChildren = !DiskFilesystem.listDirs(ctx.disk(), real, ctx.kind()).isEmpty()
-                || !DiskFilesystem.list(ctx.disk(), real, ctx.kind()).isEmpty();
-        if (hasChildren) {
-            return FsResult.fail("The directory is not empty.");
-        }
-        if (DiskFilesystem.rmdir(ctx.disk(), real, ctx.kind())) {
-            ctx.commit().run();
-            return FsResult.ok("");
-        }
-        return FsResult.fail("The system cannot find the path specified.");
+        return files().removeDir(path);
     }
 
     @Override
     public FsResult copyPath(final String src, final String dest) {
-        final dev.jstech.computers.program.cli.NetPath fromNet = dev.jstech.computers.program.cli.NetPath.parse(src);
-        final dev.jstech.computers.program.cli.NetPath toNet = dev.jstech.computers.program.cli.NetPath.parse(dest);
-        if (fromNet != null || toNet != null) {
-            return copyAcrossNetwork(src, fromNet, dest, toNet);
-        }
-        final Resolved s = resolve(src);
-        if (s.ctx() == null) {
-            return driveError(s.drive());
-        }
-        if (s.ctx().disk().isEmpty()) {
-            return notReady(s.drive());
-        }
-        final Resolved d = resolve(dest);
-        if (d.ctx() == null) {
-            return driveError(d.drive());
-        }
-        if (d.ctx().disk().isEmpty()) {
-            return notReady(d.drive());
-        }
-        // A destination that is an existing directory means "copy into it", keeping the source name.
-        String realDest = d.path();
-        if (dirExists(d.ctx(), realDest)) {
-            realDest = FsPaths.join(realDest, FsPaths.fileName(s.path()));
-        }
-        if (s.drive() == d.drive()) {
-            // Same drive: DiskFilesystem.copy handles both a single file and a whole directory subtree.
-            if (DiskFilesystem.copy(s.ctx().disk(), s.path(), realDest, freeWeightOf(d.ctx().disk()), s.ctx().kind())) {
-                s.ctx().commit().run();
-                return FsResult.ok("        1 file(s) copied.");
-            }
-            return FsResult.fail("The system cannot find the file specified.");
-        }
-        // Cross-drive: copy a single file by reading the source and writing it to the destination drive.
-        final java.util.Optional<String> content = DiskFilesystem.read(s.ctx().disk(), s.path());
-        if (content.isEmpty()) {
-            return FsResult.fail(src + ": file not found (cross-drive copy supports files only)");
-        }
-        final FileType type = FileType.of(extensionOf(realDest));
-        final DiskFilesystem.WriteResult wr = DiskFilesystem.write(d.ctx().disk(), realDest, type,
-                content.get(), freeWeightOf(d.ctx().disk()), d.ctx().kind(), level.getGameTime());
-        return switch (wr) {
-            case OK -> {
-                d.ctx().commit().run();
-                yield FsResult.ok("        1 file(s) copied.");
-            }
-            case DISK_FULL -> FsResult.fail(dest + ": not enough free space on the disk");
-            case INVALID_PATH -> FsResult.fail(dest + ": invalid file name for this filesystem");
-            case READ_ONLY -> FsResult.fail(dest + ": the destination is read-only");
-        };
-    }
-
-    /**
-     * A copy with a shared folder at either end: the file is read where it is and written where it
-     * goes, through each machine's own shell, so a read-only share refuses the write the same way its
-     * owner's prompt would. Files only; a folder is copied one file at a time.
-     */
-    private FsResult copyAcrossNetwork(final String src, final dev.jstech.computers.program.cli.NetPath fromNet,
-                                       final String dest, final dev.jstech.computers.program.cli.NetPath toNet) {
-        final FsResult content = readFile(src);
-        if (!content.ok()) {
-            return content;
-        }
-        String target = dest;
-        final String name = fromNet != null ? fromNet.name() : FsPaths.fileName(resolve(src).path());
-        if (toNet != null) {
-            if (networkDirExists(toNet)) {
-                target = toNet.display() + "\\" + name;
-            }
-        } else {
-            final Resolved d = resolve(dest);
-            if (d.ctx() != null && !d.ctx().disk().isEmpty() && dirExists(d.ctx(), d.path())) {
-                target = d.drive() + ":\\" + FsPaths.join(d.path(), name).replace('/', '\\');
-            }
-        }
-        final FsResult written = writeFile(target, content.message());
-        return written.ok() ? FsResult.ok("        1 file(s) copied.") : written;
+        return files().copyPath(src, dest);
     }
 
     @Override
     public FsResult movePath(final String src, final String destDir) {
-        if (dev.jstech.computers.program.cli.NetPath.looksLike(src)
-                || dev.jstech.computers.program.cli.NetPath.looksLike(destDir)) {
-            return FsResult.fail("a file on another machine is copied, not moved: copy it and delete the original");
-        }
-        final Resolved s = resolve(src);
-        if (s.ctx() == null) {
-            return driveError(s.drive());
-        }
-        if (s.ctx().disk().isEmpty()) {
-            return notReady(s.drive());
-        }
-        final Resolved d = resolve(destDir);
-        if (d.ctx() == null) {
-            return driveError(d.drive());
-        }
-        if (d.ctx().disk().isEmpty()) {
-            return notReady(d.drive());
-        }
-        if (!d.path().isEmpty() && !dirExists(d.ctx(), d.path())) {
-            return FsResult.fail("The system cannot find the path specified.");
-        }
-        if (s.drive() == d.drive()) {
-            if (DiskFilesystem.move(s.ctx().disk(), s.path(), d.path(), s.ctx().kind())) {
-                s.ctx().commit().run();
-                return FsResult.ok("        1 file(s) moved.");
-            }
-            return FsResult.fail("The system cannot find the file specified.");
-        }
-        // Cross-drive move = copy the file onto the destination drive, then delete the source.
-        final java.util.Optional<String> content = DiskFilesystem.read(s.ctx().disk(), s.path());
-        if (content.isEmpty()) {
-            return FsResult.fail(src + ": file not found (cross-drive move supports files only)");
-        }
-        final String destPath = FsPaths.join(d.path(), FsPaths.fileName(s.path()));
-        final FileType type = FileType.of(extensionOf(destPath));
-        final DiskFilesystem.WriteResult wr = DiskFilesystem.write(d.ctx().disk(), destPath, type,
-                content.get(), freeWeightOf(d.ctx().disk()), d.ctx().kind(), level.getGameTime());
-        if (wr != DiskFilesystem.WriteResult.OK) {
-            return switch (wr) {
-                case DISK_FULL -> FsResult.fail(destDir + ": not enough free space on the disk");
-                case INVALID_PATH -> FsResult.fail(destDir + ": invalid file name for this filesystem");
-                case READ_ONLY -> FsResult.fail(destDir + ": the destination is read-only");
-                case OK -> FsResult.ok("");
-            };
-        }
-        DiskFilesystem.delete(s.ctx().disk(), s.path());
-        s.ctx().commit().run();
-        d.ctx().commit().run();
-        return FsResult.ok("        1 file(s) moved.");
+        return files().movePath(src, destDir);
     }
 
     @Override
     public FsResult renamePath(final String src, final String newName) {
-        if (newName == null || newName.isBlank() || newName.contains("/") || newName.contains("\\")) {
-            return FsResult.fail("The syntax of the command is incorrect.");
-        }
-        final Resolved s = resolve(src);
-        if (s.ctx() == null) {
-            return driveError(s.drive());
-        }
-        if (s.ctx().disk().isEmpty()) {
-            return notReady(s.drive());
-        }
-        final DriveTable.Drive ctx = s.ctx();
-        final String dest = FsPaths.join(FsPaths.parentDir(s.path()), newName);
-        if (DiskFilesystem.rename(ctx.disk(), s.path(), dest, ctx.kind())) {
-            ctx.commit().run();
-            return FsResult.ok("");
-        }
-        return FsResult.fail("The system cannot find the file specified.");
+        return files().renamePath(src, newName);
     }
 
     @Override
@@ -2730,23 +2382,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     /** This machine's drives as this shell reaches them, from where this shell's window stands. */
     private dev.jstech.computers.machine.FileService files() {
-        return new dev.jstech.computers.machine.FileService(hostBlock, level, networkPaths(),
-                this::currentLocation, this);
-    }
-
-    /** Follows a network path to the machine and the share it names. */
-    private NetworkPathResolver.Reached reach(final dev.jstech.computers.program.cli.NetPath net) {
-        return networkPaths().reach(net);
-    }
-
-    /** Lists what a network path holds: the hosts sharing something, a host's shares, or a shared folder. */
-    private FsResult listNetwork(final dev.jstech.computers.program.cli.NetPath net) {
-        return networkPaths().list(net);
-    }
-
-    /** Whether a network path names a folder that exists, for a copy that lands "into" it. */
-    private boolean networkDirExists(final dev.jstech.computers.program.cli.NetPath net) {
-        return networkPaths().dirExists(net);
+        return new dev.jstech.computers.machine.FileService(hostBlock, level, networkPaths(), this::currentLocation);
     }
 
     /** The machine on this network that {@code name} picks out, as its own shell; null when none or several. */
