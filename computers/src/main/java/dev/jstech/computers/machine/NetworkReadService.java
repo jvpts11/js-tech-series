@@ -12,8 +12,8 @@ import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
-import dev.jstech.computers.program.cli.ICliNetwork;
 import dev.jstech.computers.program.cli.ICliRemote;
+import dev.jstech.computers.program.iql.IIqlCondition;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
@@ -23,9 +23,13 @@ import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -45,19 +49,13 @@ public final class NetworkReadService {
 
     private final IComputerTerminalHost terminal;
     private final ServerLevel level;
-    /**
-     * The network as the machine's shell reads it, for what this service does not read itself yet: the rows of a
-     * query, which are answered here in their own right from the next step on.
-     */
-    private final ICliNetwork network;
     /** The other machines of the network as the machine's shell reaches them. */
     private final ICliRemote remote;
 
     public NetworkReadService(final IComputerTerminalHost terminal, final ServerLevel level,
-                              final ICliNetwork network, final ICliRemote remote) {
+                              final ICliRemote remote) {
         this.terminal = terminal;
         this.level = level;
-        this.network = network;
         this.remote = remote;
     }
 
@@ -129,10 +127,109 @@ public final class NetworkReadService {
     /** Every kind of thing the network holds. */
     public List<String> types() {
         final List<String> names = new ArrayList<>();
-        for (final ICliComputer.StoredItem item : this.network.query(null, "", EVERYTHING)) {
+        for (final ICliComputer.StoredItem item : this.query(null, "", EVERYTHING)) {
             names.add(item.name());
         }
         return names;
+    }
+
+    /**
+     * What the network holds, item by item, filtered by a condition and scoped to one server by name.
+     *
+     * @param where  the condition an item has to meet, or null for every item
+     * @param server a server name to scope the read to, or {@code ""} for the whole network
+     * @param limit  the largest number of rows to hand back
+     */
+    public List<ICliComputer.StoredItem> query(@Nullable final IIqlCondition where, final String server,
+                                               final int limit) {
+        final NetworkUuid net = this.terminal.networkUuid();
+        if (net == null) {
+            return List.of();
+        }
+        /*
+         * WHERE server=X scopes the read to that server; every other field is evaluated per item, so the
+         * full condition (qty < 100, name contains "ore", damaged = true, ...) really filters now.
+         */
+        final String serverName = (server == null || server.isBlank())
+                ? IIqlCondition.firstValue(where, "server")
+                : server;
+        final NetworkStorage storage;
+        final String scopedServer;
+        if (serverName == null || serverName.isBlank()) {
+            storage = NetworkStorage.of(this.level, net);
+            scopedServer = "";
+        } else {
+            final NodeUuid scoped = this.serverNamed(net, serverName);
+            if (scoped == null) {
+                return List.of(); // a WHERE server that names no server yields nothing
+            }
+            storage = NetworkStorage.ofServers(this.level, List.of(scoped));
+            scopedServer = serverName;
+        }
+        /*
+         * Filter by the condition, then sort by quantity and take the top rows: the limit applies after the
+         * sort so the result is the largest holdings, not an arbitrary slice.
+         */
+        return storage.query().entrySet().stream()
+                .filter(entry -> where == null
+                        || where.matches(rowOf(entry.getKey(), entry.getValue(), scopedServer)))
+                .sorted((a, b) -> Long.compare(b.getValue(), a.getValue()))
+                .limit(Math.max(limit, 0))
+                .map(entry -> new ICliComputer.StoredItem(entry.getKey().displayName().getString(), entry.getValue(),
+                        this.location(net, entry.getKey(), scopedServer)))
+                .toList();
+    }
+
+    /** Where an item lives: the scoped server, the single server holding it, or "N servers" across the net. */
+    private String location(final NetworkUuid net, final StorageKey key, final String scopedServer) {
+        if (!scopedServer.isEmpty()) {
+            return scopedServer;
+        }
+        final Map<NodeUuid, Long> breakdown = NetworkStorage.of(this.level, net).breakdown(key);
+        if (breakdown.size() == 1) {
+            return NetworkLookup.serverLabel(this.level, breakdown.keySet().iterator().next());
+        }
+        return breakdown.size() + " servers";
+    }
+
+    /** The server of this network that a name picks out, or null when no server carries that label. */
+    @Nullable
+    private NodeUuid serverNamed(final NetworkUuid net, final String name) {
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+        for (final ServerNode server : NetworkSystem.get(this.level).serversOf(net)) {
+            if (NetworkLookup.serverLabel(this.level, server.nodeUuid()).equalsIgnoreCase(name)) {
+                return server.nodeUuid();
+            }
+        }
+        return null;
+    }
+
+    /** The fields a WHERE can test on an item row: item id, name, qty, server (scoped), damaged, durability. */
+    private static Function<String, String> rowOf(final StorageKey key, final long qty, final String scopedServer) {
+        return field -> switch (field.toLowerCase(Locale.ROOT)) {
+            case "item" -> itemPath(key);
+            case "name" -> key.displayName().getString();
+            case "qty", "count", "amount" -> Long.toString(qty);
+            case "server" -> scopedServer;
+            case "damaged" -> Boolean.toString(key.stack(1).isDamaged());
+            case "durability" -> durabilityPercent(key);
+            default -> null; // an unknown field makes its comparison false, so the row is excluded
+        };
+    }
+
+    private static String itemPath(final StorageKey key) {
+        return BuiltInRegistries.ITEM.getKey(key.item()).getPath();
+    }
+
+    private static String durabilityPercent(final StorageKey key) {
+        final ItemStack stack = key.stack(1);
+        if (!stack.isDamageableItem() || stack.getMaxDamage() == 0) {
+            return "100";
+        }
+        return Long.toString(Math.round(
+                100.0 * (stack.getMaxDamage() - stack.getDamageValue()) / stack.getMaxDamage()));
     }
 
     /** Which servers hold an item, and how much each holds; a server holding none of it is left out. */

@@ -259,7 +259,7 @@ public final class MachineServices implements IHost {
                     new NetworkPathResolver(server, this.shell::machinesNamed, this.shell::networkShares),
                     this.shell::currentLocation);
             this.computer = new ComputerInfoService(this.machine, this.shell);
-            this.network = new NetworkReadService(terminal, server, this.shell, this.shell);
+            this.network = new NetworkReadService(terminal, server, this.shell);
             this.mainframe = new MainframeStatsService(this.shell, this.shell);
             this.operations = new OperationsService(this.shell, this.shell);
             this.iql = new IqlService(this.shell);

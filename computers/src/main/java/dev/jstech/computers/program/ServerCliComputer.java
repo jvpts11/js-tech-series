@@ -274,81 +274,7 @@ public final class ServerCliComputer implements ICliComputer {
     @Override
     public List<StoredItem> query(final dev.jstech.computers.program.iql.IIqlCondition where,
                                   final String server, final int limit) {
-        final NetworkUuid net = host.networkUuid();
-        if (net == null) {
-            return List.of();
-        }
-        /*
-         * WHERE server=X scopes the read to that server; every other field is evaluated per item, so the
-         * full condition (qty < 100, name contains "ore", damaged = true, ...) really filters now.
-         */
-        final String serverName = (server == null || server.isBlank())
-                ? dev.jstech.computers.program.iql.IIqlCondition.firstValue(where, "server")
-                : server;
-        final NetworkStorage storage;
-        final String scopedServer;
-        if (serverName == null || serverName.isBlank()) {
-            storage = NetworkStorage.of(level, net);
-            scopedServer = "";
-        } else {
-            final NodeUuid scoped = resolveServer(net, serverName);
-            if (scoped == null) {
-                return List.of(); // a WHERE server that names no server yields nothing
-            }
-            storage = NetworkStorage.ofServers(level, java.util.List.of(scoped));
-            scopedServer = serverName;
-        }
-        /*
-         * Filter by the condition, then sort by quantity and take the top rows: the limit applies after the
-         * sort so the result is the largest holdings, not an arbitrary slice.
-         */
-        return storage.query().entrySet().stream()
-                .filter(entry -> where == null
-                        || where.matches(rowOf(entry.getKey(), entry.getValue(), scopedServer)))
-                .sorted((a, b) -> Long.compare(b.getValue(), a.getValue()))
-                .limit(Math.max(limit, 0))
-                .map(entry -> new StoredItem(entry.getKey().displayName().getString(), entry.getValue(),
-                        location(net, entry.getKey(), scopedServer)))
-                .toList();
-    }
-
-    /** Where an item lives: the scoped server, the single server holding it, or "N servers" across the net. */
-    private String location(final NetworkUuid net, final StorageKey key, final String scopedServer) {
-        if (!scopedServer.isEmpty()) {
-            return scopedServer;
-        }
-        final java.util.Map<NodeUuid, Long> breakdown = NetworkStorage.of(level, net).breakdown(key);
-        if (breakdown.size() == 1) {
-            return NetworkLookup.serverLabel(level, breakdown.keySet().iterator().next());
-        }
-        return breakdown.size() + " servers";
-    }
-
-    /** The fields a WHERE can test on an item row: item id, name, qty, server (scoped), damaged, durability. */
-    private static java.util.function.Function<String, String> rowOf(final StorageKey key, final long qty,
-                                                                     final String scopedServer) {
-        return field -> switch (field.toLowerCase(java.util.Locale.ROOT)) {
-            case "item" -> itemPath(key);
-            case "name" -> key.displayName().getString();
-            case "qty", "count", "amount" -> Long.toString(qty);
-            case "server" -> scopedServer;
-            case "damaged" -> Boolean.toString(key.stack(1).isDamaged());
-            case "durability" -> durabilityPercent(key);
-            default -> null; // an unknown field makes its comparison false, so the row is excluded
-        };
-    }
-
-    private static String itemPath(final StorageKey key) {
-        return net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(key.item()).getPath();
-    }
-
-    private static String durabilityPercent(final StorageKey key) {
-        final net.minecraft.world.item.ItemStack stack = key.stack(1);
-        if (!stack.isDamageableItem() || stack.getMaxDamage() == 0) {
-            return "100";
-        }
-        return Long.toString(Math.round(
-                100.0 * (stack.getMaxDamage() - stack.getDamageValue()) / stack.getMaxDamage()));
+        return networkReads().query(where, server, limit);
     }
 
     @Override
@@ -2344,7 +2270,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     /** The data network this machine is on, as this shell reads it. */
     private dev.jstech.computers.machine.NetworkReadService networkReads() {
-        return new dev.jstech.computers.machine.NetworkReadService(host, level, this, this);
+        return new dev.jstech.computers.machine.NetworkReadService(host, level, this);
     }
 
     /** This machine's drives as this shell reaches them, from where this shell's window stands. */
