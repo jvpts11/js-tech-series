@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.machine;
 
-import com.mojang.logging.LogUtils;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.sigma.SigmaCompiler;
 import dev.jstech.computers.sigma.Diagnostic;
@@ -15,32 +14,20 @@ import dev.jstech.computers.sigma.DiagnosticBag;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.sigma.edit.CommentSpans;
 import dev.jstech.computers.sigma.lex.Lexer;
-import dev.jstech.computers.vm.listing.AsmProgram;
-import dev.jstech.computers.vm.listing.AsmReader;
-import dev.jstech.computers.vm.listing.Shape;
-import dev.jstech.computers.vm.program.Process;
-import dev.jstech.computers.vm.program.ProgramImage;
-import dev.jstech.computers.vm.program.SnapshotException;
-import dev.jstech.computers.vm.program.Values;
-import dev.jstech.core.language.ILanguageProcess;
 import dev.jstech.core.language.IProgrammingLanguage;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
 
 /**
  * Σ#, as the machines of the series know it.
  *
- * <p>Everything specific to the language stays behind this: the machine asks for a program and gets
- * something it can give a share of the tick to, and knows nothing of scripts, heaps or instructions. A
- * pack that would rather its computers spoke something else takes this out of the registry and puts its
- * own in, and every part of the machines carries on working.
+ * <p>The language compiles and nothing else. What it compiles to is a listing, and a listing belongs to the machine
+ * ({@link MachineListing}): the machine runs it, saves it and brings it back, so a machine knows nothing of scripts,
+ * heaps or instructions through this. A pack that would rather its computers were written in something else takes
+ * this out of the registry and puts its own in, and every part of the machines carries on working.
  */
 public final class SigmaLanguage implements IProgrammingLanguage {
 
@@ -49,8 +36,6 @@ public final class SigmaLanguage implements IProgrammingLanguage {
 
     private static final ResourceLocation ID =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "sigma");
-
-    private static final Logger LOGGER = LogUtils.getLogger();
 
     private SigmaLanguage() {
     }
@@ -72,8 +57,8 @@ public final class SigmaLanguage implements IProgrammingLanguage {
 
     @Override
     public Set<String> binaryExtensions() {
-        // A source file runs too: the machine compiles it on the way in.
-        return Set.of("asm", "sgs");
+        // It runs nothing itself: a listing is the machine's, and the machine compiles a source file on the way in.
+        return Set.of();
     }
 
     @Override
@@ -137,63 +122,5 @@ public final class SigmaLanguage implements IProgrammingLanguage {
             case INT_LITERAL, LONG_LITERAL, FLOAT_LITERAL, DOUBLE_LITERAL -> Kind.NUMBER;
             default -> Kind.SYMBOL;
         };
-    }
-
-    @Override
-    @Nullable
-    public ILanguageProcess start(final String binary, final long heapBytes, final BlockEntity machine) {
-        return this.start(binary, heapBytes, machine, java.util.List.of());
-    }
-
-    @Override
-    @Nullable
-    public ILanguageProcess start(final String binary, final long heapBytes, final BlockEntity machine,
-                                  final java.util.List<String> arguments) {
-        final ProgramImage program = read(binary);
-        if (program == null || program.entryPoint() == null) {
-            return null;
-        }
-        final Process process = new Process(program, heapBytes, new MachineHost(machine));
-        process.setArgs(arguments);
-        if (program.shape() == Shape.CONSOLE) {
-            process.beginStatic(program.entryPoint(), "Main");
-        } else {
-            final Values.Obj script = process.create(program.entryPoint());
-            if (script == null) {
-                return null;
-            }
-            process.begin(script, "OnInit");
-        }
-        return new SigmaProgram(process);
-    }
-
-    @Override
-    @Nullable
-    public ILanguageProcess restore(final String binary, final CompoundTag saved, final BlockEntity machine) {
-        final ProgramImage program = read(binary);
-        if (program == null) {
-            return null;
-        }
-        try {
-            return new SigmaProgram(Process.restore(program,
-                    SnapshotTag.read(SigmaProgram.snapshotOf(saved)), new MachineHost(machine)));
-        } catch (final SnapshotException damaged) {
-            // One program that cannot come back is left out; the machine and the rest of its programs load.
-            LOGGER.warn("A saved program on the machine at {} was left out: {}", machine.getBlockPos(),
-                    damaged.getMessage());
-            return null;
-        } catch (final RuntimeException fault) {
-            LOGGER.error("A saved program on the machine at {} could not be brought back and was left out",
-                    machine.getBlockPos(), fault);
-            return null;
-        }
-    }
-
-    /** Reads a listing, or null when it is not one. */
-    @Nullable
-    private static ProgramImage read(final String binary) {
-        final AsmReader reader = new AsmReader(binary);
-        final AsmProgram program = reader.read();
-        return reader.hasProblems() ? null : ProgramImage.of(program);
     }
 }

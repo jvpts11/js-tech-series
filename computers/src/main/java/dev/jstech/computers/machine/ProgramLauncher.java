@@ -12,7 +12,6 @@ import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramPriority;
-import dev.jstech.core.JsCore;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Function;
@@ -69,7 +68,7 @@ public final class ProgramLauncher {
         final String name = slash < 0 ? path : path.substring(slash + 1);
         final int dot = path.lastIndexOf('.');
         final String extension = dot < 0 ? "" : path.substring(dot + 1).toLowerCase(Locale.ROOT);
-        if (JsCore.languages().runnerOf(extension) == null) {
+        if (!MachinePrograms.runs(extension)) {
             return new Launch(0, name, Refusal.NO_RUNNER, name + ": nothing installed runs a ." + extension, 0, 0);
         }
         final ICliComputer.FsResult file = reader.apply(path);

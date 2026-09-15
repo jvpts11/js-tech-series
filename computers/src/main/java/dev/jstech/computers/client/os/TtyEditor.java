@@ -285,7 +285,7 @@ public final class TtyEditor {
         }
     }
 
-    /** The rows, coloured by whichever language claims the file, or plain when none does. */
+    /** The rows, coloured as a listing or by whichever language claims the file, or plain when none does. */
     private List<List<CodeRuns.Run>> runs() {
         final String text = this.doc.text();
         if (text.equals(this.colouredText)) {
@@ -296,7 +296,9 @@ public final class TtyEditor {
             lines.add(this.doc.line(i));
         }
         final IProgrammingLanguage language = CodeWorkspace.languageOf(this.path);
-        if (language == null) {
+        if (CodeWorkspace.isListing(this.path)) {
+            this.cached = CodeWorkspace.colourListing(lines);
+        } else if (language == null) {
             this.cached = List.of();
         } else {
             final List<CodeRuns.Span> spans = new ArrayList<>();

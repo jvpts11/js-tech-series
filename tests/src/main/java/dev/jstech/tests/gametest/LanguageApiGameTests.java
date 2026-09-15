@@ -9,9 +9,11 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.machine.SigmaLanguage;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.language.ILanguageProcess;
+import dev.jstech.core.language.IProgrammingLanguage;
 import dev.jstech.core.language.LanguageRegistry;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -156,6 +158,58 @@ public final class LanguageApiGameTests {
                                     + patient.message() + ")");
                 })
                 .thenSucceed();
+    }
+
+    /** A Σ# program that says one line. */
+    private static final String HELLO = """
+            using System.*;
+            namespace Programs;
+            class Hello {
+                static void Main() {
+                    Console.PrintLine("hello");
+                }
+            }
+            """;
+
+    /**
+     * A listing belongs to the machine: no language claims {@code .asm} and Σ# runs nothing itself, yet the machine
+     * runs a listing, and a Σ# source file it compiles on the way in.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void machine_runsListingsNoLanguageClaims(final GameTestHelper helper) {
+        helper.assertTrue(JsCore.languages().isReserved("asm") && JsCore.languages().byExtension("asm") == null,
+                "no language claims .asm");
+        helper.assertTrue(SigmaLanguage.INSTANCE.binaryExtensions().isEmpty()
+                && JsCore.languages().runnerOf("sgs") == null, "and Σ# runs nothing itself");
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        final IProgrammingLanguage.CompileResult built = SigmaLanguage.INSTANCE.compile(
+                List.of(new IProgrammingLanguage.SourceText("hello.sgs", HELLO)));
+        helper.assertTrue(built.ok(), "the program compiles: " + built.complaints());
+        final MachinePrograms.Started listing = computer.programs().start("hello.asm", built.binary(), 1, computer);
+        final MachinePrograms.Started source = computer.programs().start("hello.sgs", HELLO, 1, computer);
+        helper.assertTrue(listing.ok() && source.ok(),
+                "the machine runs the listing and the source: " + listing.message() + " / " + source.message());
+        computer.programs().tick(4096);
+        helper.assertTrue(computer.programs().byId(listing.id()).process().console().equals(List.of("hello"))
+                        && computer.programs().byId(source.id()).process().console().equals(List.of("hello")),
+                "and both say hello");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void languageRegistry_keepsAnExtensionBackForTheMachines(final GameTestHelper helper) {
+        final LanguageRegistry registry = new LanguageRegistry();
+        helper.assertTrue(registry.reserve("asm"), "the machines keep .asm back");
+        helper.assertTrue(!registry.register(new ToyLanguage(OTHER, Set.of("other"), Set.of("asm"))),
+                "a language claiming it is refused");
+        helper.assertTrue(registry.get(OTHER) == null && registry.byExtension("other") == null, "and is not there");
+        helper.assertTrue(registry.register(new ToyLanguage()), "a language that leaves it alone is taken");
+        helper.assertTrue(!registry.reserve("toyb"), "an extension a language already has cannot be kept back");
+        helper.assertTrue(registry.sourceOf("toy") != null && registry.sourceOf("toyb") == null,
+                "and the files written in a language are told apart from the ones it only runs");
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)

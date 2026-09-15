@@ -25,6 +25,10 @@ import org.jetbrains.annotations.Nullable;
  * <p>What it does NOT include is how the language works. Nothing here says anything about types,
  * memory or instructions: a language that compiles to something else entirely, or interprets its source
  * directly, fits this just as well.
+ *
+ * <p>A language may do nothing but compile. Its binary extensions are then empty, and what it compiles to is a listing
+ * the machines run themselves: listings belong to the machines, and no language may claim their extension. A language
+ * that runs its own files instead names their extensions and starts and restores its programs.
  */
 public interface IProgrammingLanguage {
 
@@ -37,7 +41,11 @@ public interface IProgrammingLanguage {
     /** The extensions a person writes in, without the dot. */
     Set<String> sourceExtensions();
 
-    /** The extensions the compiler produces, without the dot; what a machine can be asked to run. */
+    /**
+     * The extensions of the files this language runs itself, without the dot: what a machine hands to {@link #start}.
+     *
+     * <p>Empty for a language that only compiles, whose output is a listing the machine runs.
+     */
     Set<String> binaryExtensions();
 
     /** One file handed to a compiler: what it is called, and what is in it. */
@@ -110,14 +118,17 @@ public interface IProgrammingLanguage {
      * Starts a program on a machine.
      *
      * <p>The machine is handed over whole: what a language may reach through it is the language's own
-     * business, and putting that in this contract would tie every language to what the first one needed.
+     * business, and putting that in this contract would tie every language to what the first one needed. Only
+     * asked of a language with binary extensions; one that only compiles leaves this alone.
      *
      * @param binary   the compiled text
      * @param heapBytes how much memory the program may hold at once
      * @return the running program, or null when the text cannot be run at all
      */
     @Nullable
-    ILanguageProcess start(String binary, long heapBytes, BlockEntity machine);
+    default ILanguageProcess start(final String binary, final long heapBytes, final BlockEntity machine) {
+        return null;
+    }
 
     /**
      * The same, with what the program was started with.
@@ -131,7 +142,12 @@ public interface IProgrammingLanguage {
         return this.start(binary, heapBytes, machine);
     }
 
-    /** Reads a program back out of what {@link ILanguageProcess#save} wrote. */
+    /**
+     * Reads a program back out of what {@link ILanguageProcess#save} wrote. Only asked of a language with binary
+     * extensions, like {@link #start}.
+     */
     @Nullable
-    ILanguageProcess restore(String binary, CompoundTag saved, BlockEntity machine);
+    default ILanguageProcess restore(final String binary, final CompoundTag saved, final BlockEntity machine) {
+        return null;
+    }
 }

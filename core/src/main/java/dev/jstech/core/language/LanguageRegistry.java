@@ -9,10 +9,12 @@ package dev.jstech.core.language;
 
 import com.mojang.logging.LogUtils;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -28,7 +30,8 @@ import org.slf4j.Logger;
  * <p>Everything that deals in programs resolves through here by extension rather than by naming a language, so the
  * prompt, the editor and the file explorer work with whatever happens to be registered. An extension belongs to one
  * language: a second language that claims one already taken is refused, because otherwise which of the two answers
- * for a file would depend on the order the mods loaded in.
+ * for a file would depend on the order the mods loaded in. An extension the machines keep for themselves, such as
+ * that of the listings they run, belongs to no language at all.
  */
 public final class LanguageRegistry {
 
@@ -39,6 +42,8 @@ public final class LanguageRegistry {
     private final Map<String, IProgrammingLanguage> byExtension = new HashMap<>();
     /** Every extension a language runs, to that language. */
     private final Map<String, IProgrammingLanguage> runners = new HashMap<>();
+    /** The extensions kept back from every language. */
+    private final Set<String> reserved = new HashSet<>();
     private volatile boolean frozen;
 
     /**
@@ -60,6 +65,11 @@ public final class LanguageRegistry {
             return false;
         }
         for (final String extension : extensionsOf(language)) {
+            if (this.reserved.contains(extension)) {
+                LOGGER.warn("The language {} was not registered: .{} belongs to the machines", language.id(),
+                        extension);
+                return false;
+            }
             final IProgrammingLanguage owner = this.byExtension.get(extension);
             if (owner != null && !owner.id().equals(language.id())) {
                 LOGGER.warn("The language {} was not registered: .{} already belongs to {}", language.id(), extension,
@@ -85,6 +95,34 @@ public final class LanguageRegistry {
         }
         this.index();
         return true;
+    }
+
+    /**
+     * Keeps an extension back from every language, as the machines do for the listings they run themselves.
+     *
+     * @return whether it is now kept back; false once the registry is closed, or when a language already claims it
+     */
+    public synchronized boolean reserve(final String extension) {
+        if (extension == null || extension.isBlank()) {
+            return false;
+        }
+        final String lower = extension.toLowerCase(Locale.ROOT);
+        if (this.frozen) {
+            LOGGER.warn("The extension .{} was not kept back: the registry is closed", lower);
+            return false;
+        }
+        final IProgrammingLanguage owner = this.byExtension.get(lower);
+        if (owner != null) {
+            LOGGER.warn("The extension .{} was not kept back: it already belongs to {}", lower, owner.id());
+            return false;
+        }
+        this.reserved.add(lower);
+        return true;
+    }
+
+    /** Whether an extension is kept back from every language. */
+    public boolean isReserved(final String extension) {
+        return extension != null && this.reserved.contains(extension.toLowerCase(Locale.ROOT));
     }
 
     /** Closes the registry, as the core does once every mod has loaded: nothing is added or taken away after. */
@@ -124,6 +162,14 @@ public final class LanguageRegistry {
             return null;
         }
         return this.runners.get(extension.toLowerCase(Locale.ROOT));
+    }
+
+    /** The language whose SOURCE files end in that extension, the files a person writes in it, or null. */
+    @Nullable
+    public IProgrammingLanguage sourceOf(final String extension) {
+        final IProgrammingLanguage language = this.byExtension(extension);
+        return language != null && language.sourceExtensions().contains(extension.toLowerCase(Locale.ROOT))
+                ? language : null;
     }
 
     /** Every language there is, in the order they were registered. */

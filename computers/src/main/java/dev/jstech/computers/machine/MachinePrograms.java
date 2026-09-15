@@ -27,6 +27,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The programs one computer is running, in whatever languages are registered.
@@ -36,10 +37,10 @@ import net.minecraft.world.level.block.entity.BlockEntity;
  * instructions its processor is worth and every program spends its share and stops where it stands, so
  * one that loops forever costs the same tick as one that does nothing.
  *
- * <p>Nothing here knows any language. The programs are kept in a {@link ProgramTable}, and the text a
- * program was started from is kept beside it and handed back to whichever language claims its extension,
- * so a program that came back after a reload is the program that was running even if the file has been
- * deleted or edited since.
+ * <p>Nothing here knows any language. The programs are kept in a {@link ProgramTable}, and what a program was started
+ * from is kept beside it: a listing, which the machine runs itself, or what a language runs, handed back to the
+ * language that runs its extension. So a program that came back after a reload is the program that was running even
+ * if the file has been deleted or edited since.
  */
 public final class MachinePrograms {
 
@@ -163,6 +164,22 @@ public final class MachinePrograms {
                 : process.state().name().toLowerCase(java.util.Locale.ROOT);
     }
 
+    /**
+     * Whether a machine runs files with that extension: its own listings, the files a language runs, and the source
+     * of a language that only compiles, which the machine compiles on the way in.
+     */
+    public static boolean runs(final String extension) {
+        return MachineListing.claims(extension) || JsCore.languages().runnerOf(extension) != null
+                || compilerOnly(extension) != null;
+    }
+
+    /** The language that only compiles and is written in files with that extension, or null. */
+    @Nullable
+    private static IProgrammingLanguage compilerOnly(final String extension) {
+        final IProgrammingLanguage language = JsCore.languages().sourceOf(extension);
+        return language != null && language.binaryExtensions().isEmpty() ? language : null;
+    }
+
     /** Lets the terminal go, clearing the program away if it had already finished. */
     public void release() {
         this.focus.release();
@@ -198,19 +215,24 @@ public final class MachinePrograms {
                          final ProgramPriority priority) {
         final int dot = name.lastIndexOf('.');
         final String extension = dot < 0 ? "" : name.substring(dot + 1).toLowerCase(Locale.ROOT);
-        final IProgrammingLanguage language = JsCore.languages().runnerOf(extension);
-        if (language == null) {
+        final boolean listing = MachineListing.claims(extension);
+        final IProgrammingLanguage runner = listing ? null : JsCore.languages().runnerOf(extension);
+        final IProgrammingLanguage compiler = listing || runner != null ? null : compilerOnly(extension);
+        if (!listing && runner == null && compiler == null) {
             return Started.failed(name + ": nothing installed runs a ." + extension);
         }
         /*
-         * A language that runs its own source files compiles them here, on the way in, under the
-         * file's own name so the program's errors quote it; what the machine keeps is the listing.
+         * A file of source is compiled here, on the way in, under the file's own name so the program's errors quote
+         * it: a language that only compiles gives back a listing the machine runs itself, and one that runs its own
+         * source gives back what it runs. What the machine keeps is what came out.
          */
+        final IProgrammingLanguage writtenIn = compiler != null ? compiler
+                : runner != null && runner.sourceExtensions().contains(extension) ? runner : null;
         String runnable = binary;
-        if (language.sourceExtensions().contains(extension)) {
+        if (writtenIn != null) {
             final List<IProgrammingLanguage.SourceText> sources = new ArrayList<>();
             sources.add(new IProgrammingLanguage.SourceText(name, binary));
-            final IProgrammingLanguage.CompileResult built = language.compile(sources);
+            final IProgrammingLanguage.CompileResult built = writtenIn.compile(sources);
             if (!built.ok()) {
                 final List<IProgrammingLanguage.Complaint> complaints = built.complaints();
                 return Started.failed(complaints.isEmpty() ? name + " does not compile"
@@ -220,12 +242,21 @@ public final class MachinePrograms {
             runnable = built.binary();
         }
         final int room = Math.clamp(heapMb <= 0 ? DEFAULT_HEAP_MB : heapMb, 1, MAX_HEAP_MB);
-        final ILanguageProcess started =
-                language.start(runnable, (long) room * 1024 * 1024, machine, args == null ? List.of() : args);
-        if (started == null) {
-            return Started.failed(name + ": this is not something " + language.displayName() + " can run");
+        final long heapBytes = (long) room * 1024 * 1024;
+        final List<String> given = args == null ? List.of() : args;
+        final IMachineRuntime process;
+        if (runner == null) {
+            process = MachineListing.start(runnable, heapBytes, machine, given);
+            if (process == null) {
+                return Started.failed(name + ": this is not a " + MachineListing.LABEL);
+            }
+        } else {
+            final ILanguageProcess started = runner.start(runnable, heapBytes, machine, given);
+            if (started == null) {
+                return Started.failed(name + ": this is not something " + runner.displayName() + " can run");
+            }
+            process = IMachineRuntime.of(started);
         }
-        final IMachineRuntime process = IMachineRuntime.of(started);
         final int id = this.table.takeId();
         process.identify(id);
         this.table.add(new ProgramEntry<>(id, name, runnable, room, process, parent, args, priority));
@@ -443,24 +474,29 @@ public final class MachinePrograms {
             final CompoundTag each = written.getCompound(i);
             final String name = each.getString(NAME);
             final int dot = name.lastIndexOf('.');
-            final IProgrammingLanguage language = JsCore.languages()
-                    .runnerOf(dot < 0 ? "" : name.substring(dot + 1).toLowerCase(Locale.ROOT));
-            if (language == null) {
+            final String extension = dot < 0 ? "" : name.substring(dot + 1).toLowerCase(Locale.ROOT);
+            final IProgrammingLanguage runner =
+                    MachineListing.claims(extension) ? null : JsCore.languages().runnerOf(extension);
+            final IMachineRuntime process;
+            if (runner != null) {
+                final ILanguageProcess restored =
+                        runner.restore(each.getString(BINARY), each.getCompound(STATE), machine);
+                process = restored == null ? null : IMachineRuntime.of(restored);
+            } else {
                 /*
-                 * The language that ran this is no longer installed. Dropping the program is better
-                 * than refusing to load the machine it was on.
+                 * What no language runs was the machine's own: a listing, or source compiled on the way in, which was
+                 * kept as its listing, whether or not the language it was written in is still installed. What is not
+                 * a listing belonged to a language that is gone, and dropping the program is better than refusing to
+                 * load the machine it was on.
                  */
-                continue;
+                process = MachineListing.restore(each.getString(BINARY), each.getCompound(STATE), machine);
             }
-            final ILanguageProcess restored = language.restore(each.getString(BINARY),
-                    each.getCompound(STATE), machine);
-            if (restored != null) {
+            if (process != null) {
                 final List<String> args = new ArrayList<>();
                 final ListTag given = each.getList(ARGS, Tag.TAG_STRING);
                 for (int j = 0; j < given.size(); j++) {
                     args.add(given.getString(j));
                 }
-                final IMachineRuntime process = IMachineRuntime.of(restored);
                 process.identify(each.getInt(ID));
                 this.table.add(new ProgramEntry<>(each.getInt(ID), name, each.getString(BINARY),
                         each.getInt(HEAP), process, parentOf(each), args,

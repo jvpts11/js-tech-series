@@ -23,6 +23,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   install are the Σ# Compiler and the Sigma Runtime, from the Sigma Foundation. The compiler's error codes start
   with S (`S2001`) and a listing's with A (`A4012`), their numbers unchanged. Files saved as `.can` and projects
   as `.canproj` are no longer taken for programs; renaming them brings them back.
+- A compiled `.asm` listing belongs to the computers rather than to Σ#: the machines run listings themselves, and Σ#
+  only compiles. For addon authors, a language may now only compile (no binary extensions, and `start` and `restore`
+  left alone): the machine runs the listing it compiles to, and compiles a source file on the way in when one is
+  run. No language may claim `.asm`; `LanguageRegistry.reserve` keeps an extension back from every language, and
+  `sourceOf` finds the language a file is written in. A listing opened in a terminal editor is coloured the way the
+  desktop editors colour it.
 - Programs run faster. What a program's calls, branches and `new` reach is worked out once, when the program
   loads, instead of on every line it runs, and so is which of the language's own functions (text, `List`,
   `Map`, `Math`, `Convert`) a call means. Depending on what a program does, each instruction takes between 13

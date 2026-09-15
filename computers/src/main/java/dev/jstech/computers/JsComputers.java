@@ -32,8 +32,10 @@ public class JsComputers {
 
         /*
          * Σ# is a language like any other as far as the machines are concerned: it goes in the same
-         * registry an addon would use, and can be taken out of it by one.
+         * registry an addon would use, and can be taken out of it by one. What it compiles to is not its own:
+         * the machines run listings themselves, so that extension is kept back from every language first.
          */
+        dev.jstech.core.JsCore.languages().reserve(dev.jstech.computers.machine.MachineListing.EXTENSION);
         dev.jstech.core.JsCore.languages().register(
                 dev.jstech.computers.machine.SigmaLanguage.INSTANCE);
 

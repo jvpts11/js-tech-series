@@ -1459,6 +1459,9 @@ public final class FilesApp implements IDesktopApp {
      */
     private static boolean isProgram(final DiskFilesPayload.WireFile f) {
         final String extension = f.ext().toLowerCase(Locale.ROOT);
+        if (dev.jstech.computers.machine.MachineListing.claims(extension)) {
+            return true;
+        }
         final var runner = dev.jstech.core.JsCore.languages().runnerOf(extension);
         // A source file can be run too, but opening one means reading it, so it is not offered as "Run".
         return runner != null && !runner.sourceExtensions().contains(extension);
@@ -2057,9 +2060,12 @@ public final class FilesApp implements IDesktopApp {
 
     // icons and helpers
 
-    /** What to call a file of a language the machines know, or a plain description when they know none. */
+    /** What to call a listing, a file of a language the machines know, or a plain description when they know none. */
     private static String languageLabel(final String ext) {
         final String lower = ext.toLowerCase(Locale.ROOT);
+        if (dev.jstech.computers.machine.MachineListing.claims(lower)) {
+            return dev.jstech.computers.machine.MachineListing.LABEL;
+        }
         final var language = dev.jstech.core.JsCore.languages().byExtension(lower);
         if (language != null) {
             return language.displayName()

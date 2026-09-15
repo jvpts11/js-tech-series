@@ -183,7 +183,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         }
     }
 
-    /** The programs in the folder: the files some language in the registry claims. */
+    /** The programs in the folder: the files some language in the registry claims, and the machine's listings. */
     public List<DiskFilesPayload.WireFile> files() {
         return this.files;
     }
@@ -194,7 +194,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         if (listing.dir().equals(this.folder)) {
             this.files.clear();
             for (final DiskFilesPayload.WireFile file : listing.files()) {
-                if (!file.directory() && languageOf(file.path()) != null) {
+                if (!file.directory() && (languageOf(file.path()) != null || isListing(file.path()))) {
                     this.files.add(file);
                 }
             }
@@ -432,8 +432,18 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         return language != null && language.sourceExtensions().contains(ext) ? language : null;
     }
 
-    /** The rows of a file, coloured by whichever language owns it. */
+    /** Whether a file is a listing, which the machine runs itself and no language claims. */
+    public static boolean isListing(final String path) {
+        final int dot = path.lastIndexOf('.');
+        return dot >= 0 && dot < path.length() - 1
+                && dev.jstech.computers.machine.MachineListing.claims(path.substring(dot + 1));
+    }
+
+    /** The rows of a file, coloured as a listing or by whichever language owns it. */
     private static List<List<CodeRuns.Run>> colour(final String path, final List<String> lines) {
+        if (isListing(path)) {
+            return colourListing(lines);
+        }
         final IProgrammingLanguage language = languageOf(path);
         if (language == null) {
             return List.of();
@@ -455,7 +465,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
      * lexer: a word starting with a dot is a directive, a word ending in a colon is a label, and the
      * rest is left as it is. It is what lets a player follow their program a line at a time.
      */
-    private static List<List<CodeRuns.Run>> colourListing(final List<String> lines) {
+    static List<List<CodeRuns.Run>> colourListing(final List<String> lines) {
         final List<CodeRuns.Span> spans = new ArrayList<>();
         for (int i = 0; i < lines.size(); i++) {
             final String text = lines.get(i);

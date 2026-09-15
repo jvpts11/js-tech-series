@@ -27,9 +27,15 @@ public final class FileIcons {
     private FileIcons() {
     }
 
-    /** The icon for a file with that extension; a language's own files get the source and program pages. */
+    /**
+     * The icon for a file with that extension: the machine's listings get the program page, and a language's own files
+     * the source and program pages.
+     */
     public static Kind kindOf(final String ext) {
         final String lower = ext == null ? "" : ext.toLowerCase(Locale.ROOT);
+        if (dev.jstech.computers.machine.MachineListing.claims(lower)) {
+            return Kind.PROGRAM;
+        }
         final var language = dev.jstech.core.JsCore.languages().byExtension(lower);
         if (language != null) {
             return language.sourceExtensions().contains(lower) ? Kind.SOURCE : Kind.PROGRAM;

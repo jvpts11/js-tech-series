@@ -8,7 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.machine.SigmaLanguage;
+import dev.jstech.computers.machine.MachineListing;
 import dev.jstech.computers.machine.SnapshotTag;
 import dev.jstech.computers.sigma.SigmaCompiler;
 import dev.jstech.computers.sigma.SourceFile;
@@ -221,20 +221,20 @@ public final class SigmaSnapshotGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void sigmaLanguage_leavesOutAProgramSavedFromAnotherListing(final GameTestHelper helper) {
+    public static void machineListing_leavesOutAProgramSavedFromAnotherListing(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer =
                 TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
                         .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
         final String kept = listing("        Console.PrintLine(\"kept\");");
-        final ILanguageProcess running = SigmaLanguage.INSTANCE.start(kept, ROOM, computer);
+        final ILanguageProcess running = MachineListing.start(kept, ROOM, computer, List.of());
         helper.assertTrue(running != null, "the program starts");
         final CompoundTag saved = new CompoundTag();
         running.save(saved);
 
-        helper.assertTrue(SigmaLanguage.INSTANCE.restore(kept, saved, computer) != null,
+        helper.assertTrue(MachineListing.restore(kept, saved, computer) != null,
                 "a program saved whole comes back");
         final String changed = listing("        Console.PrintLine(\"changed\");");
-        helper.assertTrue(SigmaLanguage.INSTANCE.restore(changed, saved, computer) == null,
+        helper.assertTrue(MachineListing.restore(changed, saved, computer) == null,
                 "a program saved from a listing that has changed since is left out, and nothing is thrown");
         helper.succeed();
     }
