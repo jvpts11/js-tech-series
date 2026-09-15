@@ -71,10 +71,10 @@ final class InstructionExecutor {
             case POP -> frame.pop();
             case COPY -> frame.push(this.objects.copyOf(frame.pop(), line));
             case DUP -> frame.push(frame.peek());
-            case LDFLD -> this.fieldAccess.load(frame, (IOperand.Field) instruction.operand(), line);
-            case STFLD -> this.fieldAccess.store(frame, (IOperand.Field) instruction.operand(), line);
-            case LDSFLD -> this.fieldAccess.loadStatic(frame, (IOperand.Field) instruction.operand(), line);
-            case STSFLD -> this.fieldAccess.storeStatic(frame, (IOperand.Field) instruction.operand(), line);
+            case LDFLD -> this.fieldAccess.load(frame, frame.method.value(line - 1), line);
+            case STFLD -> this.fieldAccess.store(frame, frame.method.value(line - 1), line);
+            case LDSFLD -> this.fieldAccess.loadStatic(frame, frame.method.value(line - 1), line);
+            case STSFLD -> this.fieldAccess.storeStatic(frame, frame.method.value(line - 1), line);
             case ADD, SUB, MUL, DIV, REM, AND, OR, XOR, SHL, SHR ->
                     this.arithmetic(frame, instruction.opcode(), line);
             case NEG -> frame.push(Numbers.negate(frame.pop()));

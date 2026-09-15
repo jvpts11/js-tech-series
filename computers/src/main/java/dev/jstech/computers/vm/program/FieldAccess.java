@@ -17,8 +17,10 @@ import java.util.Map;
  * Reading and writing a program's fields: an object's own, and the ones a type keeps for itself.
  *
  * <p>A type's static fields live here, one holder per type, made the first time the type is touched, and are written
- * down with the program. A few fields belong to the process rather than to an object (the thread asking, the program's
- * arguments, the program itself, whether another program still runs), and those are asked of the process.
+ * down with the program. A field of the program's own is read and written on its object with nothing looked up, which
+ * was settled when the program loaded. A value the process or the language's core answers (the thread asking, the
+ * program's arguments, the length of a text) is read through what the program loaded with, and what the machine or a
+ * window keeps is asked of them.
  */
 final class FieldAccess {
 
@@ -37,52 +39,51 @@ final class FieldAccess {
     }
 
     /** Reads a field of the object on top of the stack and puts what it holds there instead. */
-    void load(final Frame frame, final IOperand.Field field, final int line) {
+    void load(final Frame frame, final ProgramImage.ValueSite site, final int line) {
         final Object target = this.heap.alive(frame.pop(), line);
-        if (target instanceof Values.Obj object) {
-            if ("Process".equals(object.type())
-                    && ("Running".equals(field.name()) || "ExitCode".equals(field.name()))) {
-                // Whether another program still runs is the machine's to say, not a field to go stale.
-                frame.push(this.library.programField(object.get("Id"), Process.processHost(object), field.name(),
-                        line));
-                return;
-            }
-            final Object held = object.get(field.name());
-            // A widget's texts are its own, so the program is handed a copy that stays the program's.
-            frame.push(held instanceof String said && UiWidgets.handles(object.type())
-                    ? this.heap.text(said, line) : held);
+        final String name = site.field().name();
+        if (site.handled() != null) {
+            frame.push(site.handled().read().read(this.process, target, line));
             return;
         }
-        frame.push(this.library.read(target, field.name(), line));
+        if (!(target instanceof Values.Obj object)) {
+            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "there is no " + name + " to read here");
+        }
+        if (site.own()) {
+            frame.push(object.get(name));
+            return;
+        }
+        if ("Process".equals(object.type()) && ("Running".equals(name) || "ExitCode".equals(name))) {
+            // Whether another program still runs is the machine's to say, not a field to go stale.
+            frame.push(this.library.programField(object.get("Id"), Process.processHost(object), name, line));
+            return;
+        }
+        final Object held = object.get(name);
+        // A widget's texts are its own, so the program is handed a copy that stays the program's.
+        frame.push(held instanceof String said && UiWidgets.handles(object.type()) ? this.heap.text(said, line) : held);
     }
 
     /** Writes the value on top of the stack into a field of the object beneath it. */
-    void store(final Frame frame, final IOperand.Field field, final int line) {
+    void store(final Frame frame, final ProgramImage.ValueSite site, final int line) {
+        final String name = site.field().name();
         final Object value = frame.pop();
         final Object target = this.heap.alive(frame.pop(), line);
         if (!(target instanceof Values.Obj object)) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no object to write " + field.name() + " on");
+            throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no object to write " + name + " on");
         }
-        if (UiWidgets.handles(object.type())) {
+        if (!site.own() && UiWidgets.handles(object.type())) {
             // What a window shows is the machine's to draw again, so writing on a widget is paid for.
-            this.library.uiWrite(object, field.name(), value, line);
+            this.library.uiWrite(object, name, value, line);
             return;
         }
-        object.set(field.name(), value);
+        object.set(name, value);
     }
 
     /** Reads a field a type keeps for itself, one of an enum's values, or one the runtime answers. */
-    void loadStatic(final Frame frame, final IOperand.Field field, final int line) {
-        if ("Thread".equals(field.owner()) && "Current".equals(field.name())) {
-            frame.push(this.process.tokenFor(this.process.current(), line));
-            return;
-        }
-        if ("Program".equals(field.owner()) && "Args".equals(field.name())) {
-            frame.push(this.process.argsList(line));
-            return;
-        }
-        if ("Program".equals(field.owner()) && "Current".equals(field.name())) {
-            frame.push(this.process.selfToken(line));
+    void loadStatic(final Frame frame, final ProgramImage.ValueSite site, final int line) {
+        final IOperand.Field field = site.field();
+        if (site.handled() != null) {
+            frame.push(site.handled().read().read(this.process, null, line));
             return;
         }
         final TypeImage type = this.program.type(field.owner());
@@ -98,8 +99,8 @@ final class FieldAccess {
     }
 
     /** Writes the value on top of the stack into a field a type keeps for itself. */
-    void storeStatic(final Frame frame, final IOperand.Field field, final int line) {
-        this.statics(field.owner()).set(field.name(), frame.pop());
+    void storeStatic(final Frame frame, final ProgramImage.ValueSite site, final int line) {
+        this.statics(site.field().owner()).set(site.field().name(), frame.pop());
     }
 
     /** The holder of a type's static fields, made the first time the type is touched. */

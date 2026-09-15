@@ -100,8 +100,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   it is on another machine; each call the system answers says who answers it (the language, the program's own
   process or the machine) and what it costs, and the compiler takes the types of the language's library from the
   system's own declarations, where they are written once, and a program's calls are matched to those declarations
-  when it loads, its console, its random numbers, its threads, what it says about itself and its waits on other
-  programs being answered through them; every source file's header names the mod it belongs to.
+  when it loads, its console, its random numbers, its threads, what it says about itself, its waits on other
+  programs and the values it reads of itself and of the language's own text and collections being answered through
+  them; every source file's header names the mod it belongs to.
 
 ### Fixed
 - A program can no longer be compiled with the Gateway calls that reached into a ComputerCraft computer

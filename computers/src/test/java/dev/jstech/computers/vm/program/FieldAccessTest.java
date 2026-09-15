@@ -19,6 +19,7 @@ import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.ListingProblem;
+import dev.jstech.computers.vm.listing.Opcode;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -72,9 +73,9 @@ class FieldAccessTest {
 
         frame.push(counter);
         frame.push(5);
-        access.store(frame, count, 1);
+        access.store(frame, PROGRAM.valueSite(count, Opcode.STFLD), 1);
         frame.push(counter);
-        access.load(frame, count, 2);
+        access.load(frame, PROGRAM.valueSite(count, Opcode.LDFLD), 2);
 
         assertEquals(5, frame.pop());
         assertEquals(5, counter.get("Count"));
@@ -88,7 +89,8 @@ class FieldAccessTest {
         frame.push("iron");
         frame.push(1);
 
-        final Halt halt = assertThrows(Halt.class, () -> access.store(frame, count, 3));
+        final ProgramImage.ValueSite site = PROGRAM.valueSite(count, Opcode.STFLD);
+        final Halt halt = assertThrows(Halt.class, () -> access.store(frame, site, 3));
 
         assertEquals(Halt.Reason.NO_OBJECT, halt.reason());
         assertEquals("there is no object to write Count on", halt.getMessage());
@@ -101,8 +103,8 @@ class FieldAccessTest {
         final IOperand.Field made = new IOperand.Field(typeNamed("Counter"), "Made");
 
         frame.push(3);
-        access.storeStatic(frame, made, 1);
-        access.loadStatic(frame, made, 2);
+        access.storeStatic(frame, PROGRAM.valueSite(made, Opcode.STSFLD), 1);
+        access.loadStatic(frame, PROGRAM.valueSite(made, Opcode.LDSFLD), 2);
 
         assertEquals(3, frame.pop());
         assertEquals(List.of(typeNamed("Counter")), List.copyOf(access.statics().keySet()));
@@ -114,7 +116,7 @@ class FieldAccessTest {
         final FieldAccess access = access();
         final Frame frame = frame();
 
-        access.loadStatic(frame, new IOperand.Field(typeNamed("Tint"), "Red"), 1);
+        access.loadStatic(frame, PROGRAM.valueSite(new IOperand.Field(typeNamed("Tint"), "Red"), Opcode.LDSFLD), 1);
 
         assertEquals(PROGRAM.type(typeNamed("Tint")).values().get("Red"), frame.pop());
     }
@@ -124,11 +126,45 @@ class FieldAccessTest {
         final FieldAccess access = access();
         final Frame frame = frame();
 
-        access.loadStatic(frame, new IOperand.Field("Thread", "Current"), 1);
+        access.loadStatic(frame, PROGRAM.valueSite(new IOperand.Field("Thread", "Current"), Opcode.LDSFLD), 1);
 
         final Object token = frame.pop();
         assertTrue(token instanceof Values.Obj thread && "Thread".equals(thread.type())
                 && Integer.valueOf(1).equals(thread.get("Id")), () -> String.valueOf(token));
+    }
+
+    @Test
+    void loadStatic_asksTheProcessForTheProgramsName() {
+        final FieldAccess access = access();
+        final Frame frame = frame();
+
+        access.loadStatic(frame, PROGRAM.valueSite(new IOperand.Field("Program", "Name"), Opcode.LDSFLD), 1);
+
+        assertEquals("", frame.pop());
+    }
+
+    @Test
+    void load_readsWhatTheLanguagesCoreKeepsOnAText() {
+        final FieldAccess access = access();
+        final Frame frame = frame();
+        frame.push("iron");
+
+        access.load(frame, PROGRAM.valueSite(new IOperand.Field("string", "Length"), Opcode.LDFLD), 1);
+
+        assertEquals(4, frame.pop());
+    }
+
+    @Test
+    void load_haltsOnACoreValueAskedOfSomethingThatDoesNotKeepIt() {
+        final FieldAccess access = access();
+        final Frame frame = frame();
+        frame.push(7);
+        final ProgramImage.ValueSite length = PROGRAM.valueSite(new IOperand.Field("string", "Length"), Opcode.LDFLD);
+
+        final Halt halt = assertThrows(Halt.class, () -> access.load(frame, length, 2));
+
+        assertEquals(Halt.Reason.NO_SUCH_MEMBER, halt.reason());
+        assertEquals("there is no Length to read here", halt.getMessage());
     }
 
     @Test

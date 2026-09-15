@@ -150,31 +150,8 @@ public final class Library {
         return this.heap.allocate(made, made.bytes(), line);
     }
 
-    /** Reads one of the things the runtime keeps rather than the program: a length, a count, a tick. */
-    public Object read(final Object target, final String name, final int line) {
-        if (target instanceof String text && "Length".equals(name)) {
-            return text.length();
-        }
-        if (target instanceof Values.ListValue list && "Count".equals(name)) {
-            return list.size();
-        }
-        if (target instanceof Values.MapValue map && "Count".equals(name)) {
-            return map.entries().size();
-        }
-        throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "there is no " + name + " to read here");
-    }
-
     /** Reads one of the values the runtime keeps on a type of its own rather than on an object. */
     public Object readStatic(final String owner, final String name, final int line) {
-        if ("Program".equals(owner)) {
-            if ("Name".equals(name)) {
-                return this.heap.text(this.owner == null ? "" : this.owner.name(), line);
-            }
-            if ("DroppedEvents".equals(name)) {
-                return this.owner == null ? 0L : this.owner.droppedEvents();
-            }
-            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "Program has no " + name);
-        }
         if ("Time".equals(owner)) {
             return switch (name) {
                 case "Tick" -> this.host.tick();

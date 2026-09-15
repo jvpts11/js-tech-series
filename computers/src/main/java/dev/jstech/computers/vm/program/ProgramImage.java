@@ -88,6 +88,17 @@ public final class ProgramImage {
                     ConstructorSpec declared) {
     }
 
+    /**
+     * A field read or written as the program loaded it.
+     *
+     * @param field   the field as the listing writes it
+     * @param own     whether it is a field of the program's own, read and written on its object with nothing to look up
+     * @param handled what reads the value when the program's own process or the language's core answers it, or null
+     *                when something else does
+     */
+    record ValueSite(IOperand.Field field, boolean own, ProcessValues.Binding handled) {
+    }
+
     /** The values of the language's own core a listing may read, which the system does not declare. */
     static final Set<String> CORE_VALUES = Set.of("string.Length", "List.Count", "Map.Count");
     /** The collections of the language's own core a listing may make, which the system does not declare. */
@@ -237,6 +248,12 @@ public final class ProgramImage {
         }
         return new Creation(made, type, type == null ? null : type.constructor(made.parameters().size()),
                 MethodImage.outsOf(made.parameters()), declared);
+    }
+
+    ValueSite valueSite(final IOperand.Field field, final Opcode opcode) {
+        final boolean own = field.owner() == null || this.types.containsKey(field.owner());
+        final boolean onType = opcode == Opcode.LDSFLD || opcode == Opcode.STSFLD;
+        return new ValueSite(field, own, own ? null : ProcessValues.find(bare(field.owner()), field.name(), onType));
     }
 
     /**

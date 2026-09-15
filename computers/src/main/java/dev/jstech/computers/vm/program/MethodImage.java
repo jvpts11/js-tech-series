@@ -19,8 +19,8 @@ import java.util.Map;
  * while it runs.
  *
  * <p>A branch holds the line it lands on, a call holds what it reaches and which of its arguments are filled in rather
- * than handed over, and a {@code new} holds the constructor it runs. All of it is worked out once, when the program
- * loads, so running a line is reading it.
+ * than handed over, a {@code new} holds the constructor it runs, and a field holds whether it is the program's own and
+ * what reads it when it is not. All of it is worked out once, when the program loads, so running a line is reading it.
  */
 public final class MethodImage {
 
@@ -37,7 +37,7 @@ public final class MethodImage {
     private final boolean gives;
     /** For each line, where a branch on it lands. */
     private final int[] jumps;
-    /** For each line, the call or the creation it makes, as the program loaded it. */
+    /** For each line, the call, the creation or the field it reaches, as the program loaded it. */
     private final Object[] sites;
     /** For each line, the line of the listing it was read from, when the method was read from one. */
     private final AsmMethod written;
@@ -71,6 +71,7 @@ public final class MethodImage {
                 case IOperand.Label label -> this.jumps[i] = labels.getOrDefault(label.name(), this.code.length);
                 case IOperand.Method called -> this.sites[i] = program.callSite(called);
                 case IOperand.Constructor made -> this.sites[i] = program.creation(made);
+                case IOperand.Field field -> this.sites[i] = program.valueSite(field, this.code[i].opcode());
                 case null, default -> {
                 }
             }
@@ -155,6 +156,11 @@ public final class MethodImage {
     /** The object the line at {@code index} makes. */
     ProgramImage.Creation creation(final int index) {
         return (ProgramImage.Creation) this.sites[index];
+    }
+
+    /** The field the line at {@code index} reads or writes. */
+    ProgramImage.ValueSite value(final int index) {
+        return (ProgramImage.ValueSite) this.sites[index];
     }
 
     /** Which of those parameters a call fills in rather than hands over. */
