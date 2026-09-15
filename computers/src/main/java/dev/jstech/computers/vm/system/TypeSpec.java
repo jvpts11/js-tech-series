@@ -12,21 +12,21 @@ import java.util.Objects;
 
 /**
  * One of the types the system brings, as the compiler and the editors know it: the namespace a program brings it in
- * from, what it is called, and its methods in the order they were declared.
+ * from, what it is called, and its members in the order they were declared.
  *
  * @param namespace where a program brings it in from, {@code System.Utils}
  * @param name      what it is called, which is also how a listing names it
- * @param methods   its methods, every one of them on this type
+ * @param members   its methods and values, every one of them on this type
  */
-public record TypeSpec(String namespace, String name, List<MethodSpec> methods) {
+public record TypeSpec(String namespace, String name, List<IMemberSpec> members) {
 
     public TypeSpec {
         Objects.requireNonNull(namespace, "namespace");
         Objects.requireNonNull(name, "name");
-        methods = List.copyOf(methods);
-        for (final MethodSpec method : methods) {
-            if (!method.id().owner().equals(name)) {
-                throw new IllegalArgumentException(method.id().describe() + " is not a method of " + name);
+        members = List.copyOf(members);
+        for (final IMemberSpec member : members) {
+            if (!member.id().owner().equals(name)) {
+                throw new IllegalArgumentException(member.id().describe() + " is not a member of " + name);
             }
         }
     }

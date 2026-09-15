@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,11 +29,11 @@ class SystemApiTest {
     }
 
     @Test
-    void methods_areEachDeclaredOnce() {
+    void members_areEachDeclaredOnce() {
         final Set<MemberId> ids = new HashSet<>();
         for (final TypeSpec type : SystemApi.types()) {
-            for (final MethodSpec method : type.methods()) {
-                assertTrue(ids.add(method.id()), () -> method.id().describe() + " is declared twice");
+            for (final IMemberSpec member : type.members()) {
+                assertTrue(ids.add(member.id()), () -> member.id().describe() + " is declared twice");
             }
         }
     }
@@ -47,14 +48,41 @@ class SystemApiTest {
     @Test
     void type_findsATypeByItsName() {
         assertEquals("System.Utils", SystemApi.type("Math").namespace());
+        assertEquals("System.Execution", SystemApi.type("Process").namespace());
         assertNull(SystemApi.type("Nothing"));
     }
 
+    /*
+     * The machine still charges from its own table. Until it reads what these declarations say, the two have to agree,
+     * or an editor would quote one price and the machine charge another.
+     */
     @Test
-    void new_refusesAMethodOfAnotherType() {
+    void members_costWhatTheMachineCharges() {
+        final List<String> wrong = new ArrayList<>();
+        for (final TypeSpec type : SystemApi.types()) {
+            for (final IMemberSpec member : type.members()) {
+                final SigmaCosts.Cost charged = SigmaCosts.of(type.name(), member.id().name());
+                final CallCost expected = new CallCost(charged.fixed(), charged.perRow() ? 1 : 0, 0);
+                if (!expected.equals(member.cost())) {
+                    wrong.add(member.id().describe() + " declares " + member.cost().describe()
+                            + " but the machine charges " + expected.describe());
+                }
+            }
+        }
+        assertTrue(wrong.isEmpty(), () -> String.join("\n", wrong));
+    }
+
+    @Test
+    void new_refusesAMemberOfAnotherType() {
         final MethodSpec abs = new MethodSpec(new MemberId("Math", "Abs", List.of("int")), "int", true,
                 MemberKind.PURE, CallCost.FREE);
+        assertThrows(IllegalArgumentException.class, () -> new TypeSpec("System.Utils", "Convert", List.of(abs)));
+    }
+
+    @Test
+    void property_refusesToTakeAnything() {
+        final MemberId taking = new MemberId("Time", "Tick", List.of("int"));
         assertThrows(IllegalArgumentException.class,
-                () -> new TypeSpec("System.Utils", "Convert", List.of(abs)));
+                () -> new PropertySpec(taking, "long", true, false, MemberKind.WORLD, CallCost.FREE));
     }
 }

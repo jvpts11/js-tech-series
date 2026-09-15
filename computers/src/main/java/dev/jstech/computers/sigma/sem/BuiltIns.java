@@ -8,7 +8,10 @@
 package dev.jstech.computers.sigma.sem;
 
 import dev.jstech.computers.sigma.ast.IDecl;
+import dev.jstech.computers.vm.system.IMemberSpec;
+import dev.jstech.computers.vm.system.MemberId;
 import dev.jstech.computers.vm.system.MethodSpec;
+import dev.jstech.computers.vm.system.PropertySpec;
 import dev.jstech.computers.vm.system.SystemApi;
 import dev.jstech.computers.vm.system.TypeSpec;
 import java.util.ArrayList;
@@ -59,11 +62,6 @@ public final class BuiltIns {
         this.fillDelegates();
         this.fillScript();
         this.fillDeclared();
-        this.fillConsole();
-        this.fillProgram();
-        this.fillThreading();
-        this.fillTime();
-        this.fillRandom();
         this.fillFile();
         this.fillComputer();
         this.fillNetwork();
@@ -140,16 +138,12 @@ public final class BuiltIns {
     private static final String NETWORK = "System.Network";
     private static final String OPERATIONS = "System.Operations";
     private static final String EXECUTION = "System.Execution";
-    private static final String THREADING = "System.Threading";
     private static final String UI = "System.UI";
 
     private static final Map<String, String> HOMES = Map.ofEntries(
             Map.entry("IScript", SYSTEM), Map.entry("Action", SYSTEM), Map.entry("Func", SYSTEM),
-            Map.entry("Program", EXECUTION), Map.entry("Process", EXECUTION),
-            Map.entry("ProcessMessage", EXECUTION), Map.entry("Thread", THREADING),
             Map.entry("List", COLLECTIONS), Map.entry("Map", COLLECTIONS),
-            Map.entry("Console", IO), Map.entry("File", IO),
-            Map.entry("Random", UTILS), Map.entry("Time", UTILS),
+            Map.entry("File", IO),
             Map.entry("Computer", MACHINE), Map.entry("CpuInfo", MACHINE), Map.entry("DiskInfo", MACHINE),
             Map.entry("OsInfo", MACHINE), Map.entry("ProcessInfo", MACHINE),
             Map.entry("Network", NETWORK), Map.entry("ServerInfo", NETWORK), Map.entry("HoldingInfo", NETWORK),
@@ -351,17 +345,32 @@ public final class BuiltIns {
         }
         for (int i = 0; i < specs.size(); i++) {
             final NamedType type = named.get(i);
-            for (final MethodSpec method : specs.get(i).methods()) {
-                final List<IMemberSymbol.ParameterSymbol> parameters = new ArrayList<>();
-                for (final String written : method.id().parameters()) {
-                    final boolean outward = written.startsWith(OUT);
-                    parameters.add(new IMemberSymbol.ParameterSymbol("a" + parameters.size(),
-                            this.resolve(outward ? written.substring(OUT.length()) : written), outward));
-                }
-                type.addMember(new IMemberSymbol.MethodSymbol(type, method.id().name(), this.resolve(method.returns()),
-                        parameters, method.isStatic() ? PUBLIC_STATIC : PUBLIC));
+            for (final IMemberSpec member : specs.get(i).members()) {
+                type.addMember(this.member(type, member));
             }
         }
+    }
+
+    /** The compiler's picture of one declared member. */
+    private IMemberSymbol member(final NamedType owner, final IMemberSpec member) {
+        final Set<IDecl.Modifier> modifiers = member.isStatic() ? PUBLIC_STATIC : PUBLIC;
+        return switch (member) {
+            case MethodSpec method -> new IMemberSymbol.MethodSymbol(owner, method.id().name(),
+                    this.resolve(method.returns()), this.parameters(method.id()), modifiers);
+            case PropertySpec property -> new IMemberSymbol.PropertySymbol(owner, property.id().name(),
+                    this.resolve(property.type()), true, property.writable(), modifiers, Set.of());
+        };
+    }
+
+    /** What a declared call takes, each named by where it stands, since nothing ever shows a built-in's names. */
+    private List<IMemberSymbol.ParameterSymbol> parameters(final MemberId id) {
+        final List<IMemberSymbol.ParameterSymbol> parameters = new ArrayList<>();
+        for (final String written : id.parameters()) {
+            final boolean outward = written.startsWith(OUT);
+            parameters.add(new IMemberSymbol.ParameterSymbol("a" + parameters.size(),
+                    this.resolve(outward ? written.substring(OUT.length()) : written), outward));
+        }
+        return parameters;
     }
 
     /**
@@ -400,115 +409,6 @@ public final class BuiltIns {
             throw new IllegalStateException("the system declares a member with the unknown type " + name);
         }
         return type;
-    }
-
-    private void fillConsole() {
-        final NamedType console = this.declare("Console", NamedType.Kind.CLASS);
-        this.method(console, "Print", ITypeSymbol.Primitive.VOID, PUBLIC_STATIC, this.stringType);
-        this.method(console, "PrintLine", ITypeSymbol.Primitive.VOID, PUBLIC_STATIC, this.stringType);
-        this.method(console, "Clear", ITypeSymbol.Primitive.VOID, PUBLIC_STATIC);
-        /*
-         * Reading waits: a program that asks for a line stops until one is typed at the terminal it is
-         * in front of. HasLine asks without waiting, for a program that has other things to do meanwhile.
-         */
-        this.method(console, "ReadLine", this.stringType, PUBLIC_STATIC);
-        this.method(console, "HasLine", ITypeSymbol.Primitive.BOOL, PUBLIC_STATIC);
-        /*
-         * The same wait, with the line read as a value: a program asking for a number gets one, and a
-         * line that is not one stops the program with the text it could not read, as Convert would.
-         */
-        this.method(console, "ReadInt", ITypeSymbol.Primitive.INT, PUBLIC_STATIC);
-        this.method(console, "ReadLong", ITypeSymbol.Primitive.LONG, PUBLIC_STATIC);
-        this.method(console, "ReadDouble", ITypeSymbol.Primitive.DOUBLE, PUBLIC_STATIC);
-        this.method(console, "ReadBool", ITypeSymbol.Primitive.BOOL, PUBLIC_STATIC);
-    }
-
-    /**
-     * The program itself, as a thing it can speak about. A program that says what it is called is
-     * listed by that name on the machine's process list; one that does not is listed by the runtime.
-     */
-    private void fillProgram() {
-        final ITypeSymbol nothing = ITypeSymbol.Primitive.VOID;
-        final ITypeSymbol integer = ITypeSymbol.Primitive.INT;
-        final ITypeSymbol flag = ITypeSymbol.Primitive.BOOL;
-        final ITypeSymbol strings = new ITypeSymbol.GenericType(this.listType, List.of(this.stringType));
-
-        final NamedType program = this.declare("Program", NamedType.Kind.CLASS);
-        this.method(program, "SetName", nothing, PUBLIC_STATIC, this.stringType);
-        this.property(program, "Name", this.stringType, PUBLIC_STATIC);
-        this.property(program, "Args", strings, PUBLIC_STATIC);
-        this.method(program, "Exit", nothing, PUBLIC_STATIC, integer);
-        this.property(program, "DroppedEvents", ITypeSymbol.Primitive.LONG, PUBLIC_STATIC);
-
-        /*
-         * Another program on the same machine, as the one that started it holds it: a number, a name,
-         * and the machine's word on how it is getting on. Reading its output or its exit code is
-         * asking the machine, which is why they cost what a look at the machine costs.
-         */
-        final NamedType process = this.declare("Process", NamedType.Kind.CLASS);
-        this.property(process, "Id", integer, PUBLIC);
-        this.property(process, "Name", this.stringType, PUBLIC);
-        this.property(process, "Host", this.stringType, PUBLIC);
-        this.property(process, "Running", flag, PUBLIC);
-        this.property(process, "ExitCode", integer, PUBLIC);
-        this.method(process, "Wait", nothing, PUBLIC);
-        this.method(process, "Wait", flag, PUBLIC, ITypeSymbol.Primitive.LONG);
-        this.method(process, "Kill", nothing, PUBLIC);
-        this.method(process, "Output", strings, PUBLIC);
-        this.method(process, "Send", flag, PUBLIC_STATIC, integer, this.stringType);
-
-        this.method(program, "Start", process, PUBLIC_STATIC, this.stringType);
-        this.method(program, "Start", process, PUBLIC_STATIC, this.stringType, strings);
-        this.method(program, "Start", process, PUBLIC_STATIC, this.stringType, strings, this.stringType);
-        this.property(program, "Current", process, PUBLIC_STATIC);
-        /*
-         * A line at this machine's own prompt, run to the end, and what it printed. It is the same thing
-         * a remote computer is asked for, asked of the machine the program is standing on instead.
-         */
-        this.method(program, "Shell", strings, PUBLIC_STATIC, this.stringType);
-        /*
-         * A program handed over as text rather than named on a disk: it is read, run to its end, and
-         * says how it went, the same as one started by name.
-         */
-        this.method(program, "RunSource", process, PUBLIC_STATIC, this.stringType, strings, this.stringType);
-
-        final NamedType message = this.declare("ProcessMessage", NamedType.Kind.CLASS);
-        this.property(message, "From", integer, PUBLIC);
-        this.property(message, "Text", this.stringType, PUBLIC);
-        this.property(message, "Tick", ITypeSymbol.Primitive.LONG, PUBLIC);
-        this.method(program, "OnMessage", nothing, PUBLIC_STATIC,
-                new ITypeSymbol.GenericType(this.actionOfType, List.of(message)));
-    }
-
-    /**
-     * More than one thing at once inside one program.
-     *
-     * <p>A thread runs a body of its own beside the rest of the program, taking turns with it a few
-     * instructions at a time, over the same memory. Nothing runs at the same instant, so a single
-     * expression is never torn; a run of them can be, which is what {@code lock} is for.
-     */
-    private void fillThreading() {
-        final NamedType thread = this.declare("Thread", NamedType.Kind.CLASS);
-        final ITypeSymbol nothing = ITypeSymbol.Primitive.VOID;
-        final ITypeSymbol ticks = ITypeSymbol.Primitive.LONG;
-        this.method(thread, "Start", thread, PUBLIC_STATIC, this.actionType);
-        this.property(thread, "Current", thread, PUBLIC_STATIC);
-        this.method(thread, "Sleep", nothing, PUBLIC_STATIC, ticks);
-        this.method(thread, "Yield", nothing, PUBLIC_STATIC);
-        this.property(thread, "Id", ITypeSymbol.Primitive.INT, PUBLIC);
-        this.property(thread, "Running", ITypeSymbol.Primitive.BOOL, PUBLIC);
-        this.method(thread, "Join", nothing, PUBLIC);
-        this.method(thread, "Join", ITypeSymbol.Primitive.BOOL, PUBLIC, ticks);
-        this.method(thread, "Stop", nothing, PUBLIC);
-    }
-
-    private void fillTime() {
-        final NamedType time = this.declare("Time", NamedType.Kind.CLASS);
-        final ITypeSymbol ticks = ITypeSymbol.Primitive.LONG;
-        this.property(time, "Tick", ticks, PUBLIC_STATIC);
-        this.property(time, "DayTime", ticks, PUBLIC_STATIC);
-        this.property(time, "Day", ticks, PUBLIC_STATIC);
-        this.method(time, "Ticks", ticks, PUBLIC_STATIC, ITypeSymbol.Primitive.INT);
     }
 
     /**
@@ -916,12 +816,5 @@ public final class BuiltIns {
         this.event(canvas, "OnClick", this.actionType);
 
         this.method(messageBox, "Show", nothing, PUBLIC_STATIC, text, text);
-    }
-
-    private void fillRandom() {
-        final NamedType random = this.declare("Random", NamedType.Kind.CLASS);
-        this.method(random, "Next", ITypeSymbol.Primitive.INT, PUBLIC_STATIC, ITypeSymbol.Primitive.INT);
-        this.method(random, "NextDouble", ITypeSymbol.Primitive.DOUBLE, PUBLIC_STATIC);
-        this.method(random, "Seed", ITypeSymbol.Primitive.VOID, PUBLIC_STATIC, ITypeSymbol.Primitive.LONG);
     }
 }

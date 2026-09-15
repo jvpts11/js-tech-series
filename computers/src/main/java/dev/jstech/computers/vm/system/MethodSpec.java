@@ -19,7 +19,8 @@ import java.util.Objects;
  * @param kind     who answers it
  * @param cost     what it costs beyond the instruction that makes it
  */
-public record MethodSpec(MemberId id, String returns, boolean isStatic, MemberKind kind, CallCost cost) {
+public record MethodSpec(MemberId id, String returns, boolean isStatic, MemberKind kind, CallCost cost)
+        implements IMemberSpec {
 
     public MethodSpec {
         Objects.requireNonNull(id, "id");
