@@ -22,6 +22,7 @@ import dev.jstech.computers.vm.system.EventSpec;
 import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.IntrinsicRegistry;
 import dev.jstech.computers.vm.system.IntrinsicSpec;
+import dev.jstech.computers.vm.system.MemberKind;
 import dev.jstech.computers.vm.system.PropertySpec;
 import dev.jstech.computers.vm.system.SystemApi;
 import java.nio.charset.StandardCharsets;
@@ -63,12 +64,14 @@ public final class ProgramImage {
      *                   when the runtime answers it by name
      * @param declared   the system's declaration of the call when neither the program nor a function answers it, or
      *                   null when the system declares no such call
+     * @param handled    what answers the call when the program's own process does, or null when something else does
      * @param gives      whether the call leaves an answer on the stack
      * @param defaults   for each parameter the call fills in, what it holds when the function left it empty: what a
      *                   variable of the type the call is written with starts with
      */
     record CallSite(IOperand.Method named, MethodImage direct, Integer signature, boolean[] outs, boolean constructs,
-                    IntrinsicSpec intrinsic, IMemberSpec declared, boolean gives, Object[] defaults) {
+                    IntrinsicSpec intrinsic, IMemberSpec declared, ProcessCalls.Binding handled, boolean gives,
+                    Object[] defaults) {
     }
 
     /**
@@ -198,9 +201,11 @@ public final class ProgramImage {
                 ? this.registry.find(called.owner(), called.name(), called.parameters()) : null;
         final IMemberSpec declared = direct == null && intrinsic == null
                 ? SystemApi.member(called.owner(), called.name(), called.parameters()) : null;
+        final ProcessCalls.Binding handled = declared != null && declared.kind() == MemberKind.PROCESS
+                ? ProcessCalls.find(declared.id()) : null;
         return new CallSite(called, direct, signature, MethodImage.outsOf(called.parameters()),
-                AsmMethod.CONSTRUCTOR.equals(called.name()), intrinsic, declared, !"void".equals(called.returns()),
-                defaultsOf(called.parameters()));
+                AsmMethod.CONSTRUCTOR.equals(called.name()), intrinsic, declared, handled,
+                !"void".equals(called.returns()), defaultsOf(called.parameters()));
     }
 
     /** For each outward parameter, what a variable of its type starts with: nothing, or zero or false. */

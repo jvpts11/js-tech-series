@@ -69,6 +69,10 @@ final class CallDispatch {
                 this.answer(frame, site, line);
                 return;
             }
+            if (site.handled() != null) {
+                this.handle(frame, site, line);
+                return;
+            }
             if ("Thread".equals(named.owner())) {
                 this.process.threadCall(frame, named, line);
                 return;
@@ -78,16 +82,6 @@ final class CallDispatch {
             }
             if ("Process".equals(named.owner())) {
                 this.process.processCall(frame, named, line);
-                return;
-            }
-            if (Library.readsLine(named) && !this.process.hasInput()) {
-                /*
-                 * Nothing has been typed: the call is put back so it is asked again once a line comes,
-                 * and the thread waits without spending anything. The read takes nothing off the
-                 * stack, which is what makes asking it again the same as asking it once.
-                 */
-                frame.at--;
-                this.process.park();
                 return;
             }
             final List<Object> arguments = take(frame, site.outs());
@@ -118,6 +112,25 @@ final class CallDispatch {
             if (outs[i]) {
                 frame.push(arguments[i] == null ? site.defaults()[i] : arguments[i]);
             }
+        }
+    }
+
+    /** Answers a call the program's own process takes, the arguments coming off the stack as a function's do. */
+    private void handle(final Frame frame, final ProgramImage.CallSite site, final int line) {
+        final ProcessCalls.Binding handled = site.handled();
+        if (handled.waitsForLine() && !this.process.hasInput()) {
+            /*
+             * Nothing has been typed: the call is put back so it is asked again once a line comes, and the thread
+             * waits without spending anything. The read takes nothing off the stack, which is what makes asking it
+             * again the same as asking it once.
+             */
+            frame.at--;
+            this.process.park();
+            return;
+        }
+        final Object answer = handled.function().call(this.process, takeArray(frame, site.outs()), line);
+        if (site.gives()) {
+            frame.push(answer);
         }
     }
 

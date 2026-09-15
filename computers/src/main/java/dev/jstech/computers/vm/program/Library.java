@@ -15,9 +15,10 @@ import java.util.List;
 /**
  * The part of the library the runtime answers for itself that needs more than a call's arguments.
  *
- * <p>These are the calls that touch the process or the machine: the console it writes to and reads from, its name,
- * its random numbers, its windows, its Gateway and its watches, and handing everything else to the machine. The calls
- * that need nothing but their arguments (text, the two collections, numbers) are {@link PureFunctions}.
+ * <p>These are the calls that touch the process or the machine: its name, its windows, its Gateway and its watches,
+ * and handing everything else to the machine. It also keeps the console the process writes to and its random numbers,
+ * whose calls {@link ProcessCalls} answer. The calls that need nothing but their arguments (text, the two
+ * collections, numbers) are {@link PureFunctions}.
  */
 public final class Library {
 
@@ -66,6 +67,16 @@ public final class Library {
     /** Writes a line to the process's console, which keeps what it holds within its limits. */
     public void write(final String line) {
         this.console.write(line);
+    }
+
+    /** Empties the process's console, as a program clearing its screen does. */
+    void clearConsole() {
+        this.console.clear();
+    }
+
+    /** The process's own random numbers. */
+    ProgramRandom random() {
+        return this.random;
     }
 
     /** Where the process's random numbers have got to, for the save. */
@@ -191,9 +202,7 @@ public final class Library {
     public Answer call(final IOperand.Method named, final Object self, final List<Object> arguments,
                        final int line) {
         return switch (named.owner()) {
-            case "Console" -> this.console(named.name(), arguments, line);
             case "Program" -> this.program(named, arguments, line);
-            case "Random" -> Answer.of(this.chance(named.name(), arguments));
             case "Window", "Row", "Column", "Label", "Button", "TextBox", "CheckBox", "ProgressBar",
                  "ListBox", "Canvas", "MessageBox" -> Answer.of(this.ui(named, self, arguments, line));
             case "Gateway" -> this.gateway(named, arguments, line);
@@ -372,32 +381,6 @@ public final class Library {
         this.host.fault(process, line, cause);
     }
 
-    private Answer console(final String name, final List<Object> arguments, final int line) {
-        switch (name) {
-            case "Print", "PrintLine" -> this.write(String.valueOf(arguments.getFirst()));
-            case "ReadLine" -> {
-                return Answer.of(this.heap.adopt(this.typed(), line));
-            }
-            case "ReadInt" -> {
-                return Answer.of(NumberFunctions.number("ToInt", this.typed(), line));
-            }
-            case "ReadLong" -> {
-                return Answer.of(NumberFunctions.number("ToLong", this.typed(), line));
-            }
-            case "ReadDouble" -> {
-                return Answer.of(NumberFunctions.number("ToDouble", this.typed(), line));
-            }
-            case "ReadBool" -> {
-                return Answer.of(NumberFunctions.truth(this.typed(), line));
-            }
-            case "HasLine" -> {
-                return Answer.of(this.owner != null && this.owner.hasInput());
-            }
-            default -> this.console.clear();
-        }
-        return Answer.of(null);
-    }
-
     /**
      * What a program says about itself, and what it asks of the machine about the other programs on it.
      *
@@ -466,26 +449,5 @@ public final class Library {
         where.add(id);
         where.add(host == null ? "" : String.valueOf(host));
         return where;
-    }
-
-    /** The next line typed at the terminal this program is in front of, or nothing when it has none. */
-    private String typed() {
-        return this.owner == null ? "" : this.owner.takeInput();
-    }
-
-    /** Whether that call reads a line, and so has to wait for one when none has been typed. */
-    public static boolean readsLine(final IOperand.Method named) {
-        return "Console".equals(named.owner()) && named.name().startsWith("Read");
-    }
-
-    private Object chance(final String name, final List<Object> arguments) {
-        return switch (name) {
-            case "Next" -> this.random.next(Numbers.toInt(arguments.getFirst()));
-            case "NextDouble" -> this.random.nextDouble();
-            default -> {
-                this.random.startFrom(Numbers.toLong(arguments.getFirst()));
-                yield null;
-            }
-        };
     }
 }
