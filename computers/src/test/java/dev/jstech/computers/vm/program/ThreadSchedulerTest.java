@@ -172,7 +172,7 @@ class ThreadSchedulerTest {
         final ThreadScheduler scheduler = new ThreadScheduler();
         final ProgramThread patient = scheduler.start();
         final ProgramThread hurried = scheduler.start();
-        scheduler.await(patient, new IWait.Child(10, "", 0));
+        scheduler.await(patient, new IWait.Child(10, "lab", 0));
         scheduler.await(hurried, new IWait.Child(11, "lab", 3));
         final World world = new World();
 
@@ -182,6 +182,7 @@ class ThreadSchedulerTest {
         assertFalse(hurried.waiting());
         assertTrue(hurried.takeGaveUp());
         world.running = false;
+        world.now = 4;
         scheduler.wake(world);
         assertFalse(patient.waiting());
         assertFalse(patient.takeGaveUp());
@@ -209,18 +210,63 @@ class ThreadSchedulerTest {
     }
 
     @Test
-    void wake_asksAboutAnotherProgramEveryTimeUntilItEnds() {
+    void wake_asksAboutAProgramOnThisMachineOnceAndThenWaitsToBeTold() {
         final ThreadScheduler scheduler = new ThreadScheduler();
         final ProgramThread waiter = scheduler.start();
+        final ProgramThread other = scheduler.start();
         scheduler.await(waiter, new IWait.Child(10, "", 0));
+        scheduler.await(other, new IWait.Child(11, "", 0));
         final World world = new World();
 
         scheduler.wake(world);
+        final int firstLook = world.asked;
+        world.now = 1;
+        scheduler.wake(world);
+        world.now = 2;
+        scheduler.wake(world);
+        assertEquals(firstLook, world.asked, "the machine says when a program ends, so nothing more is asked");
+        scheduler.programEnded(10);
+        assertFalse(waiter.waiting());
+        assertFalse(waiter.takeGaveUp());
+        assertTrue(other.waiting(), "a wait on another program stays");
+    }
+
+    @Test
+    void wake_givesUpAWaitOnAProgramOnThisMachineAtItsDeadline() {
+        final ThreadScheduler scheduler = new ThreadScheduler();
+        final ProgramThread waiter = scheduler.start();
+        final World world = new World();
+        scheduler.wake(world);
+        scheduler.await(waiter, new IWait.Child(10, "", 3));
+
+        world.now = 2;
+        scheduler.wake(world);
+        assertTrue(waiter.waiting(), "not before its deadline");
+        world.now = 3;
+        scheduler.wake(world);
+        assertFalse(waiter.waiting(), "a deadline brings a look even though the machine tells when a program ends");
+        assertTrue(waiter.takeGaveUp());
+    }
+
+    @Test
+    void wake_asksAboutAProgramOnAnotherMachineAtMostOnceATick() {
+        final ThreadScheduler scheduler = new ThreadScheduler();
+        final ProgramThread waiter = scheduler.start();
+        scheduler.await(waiter, new IWait.Child(10, "lab", 0));
+        final World world = new World();
+
+        world.now = 1;
+        scheduler.wake(world);
+        scheduler.wake(world);
+        assertEquals(1, world.asked, "twice in one tick is asked once");
+        world.now = 2;
         scheduler.wake(world);
         assertEquals(2, world.asked);
         world.running = false;
+        world.now = 3;
         scheduler.wake(world);
         assertFalse(waiter.waiting());
+        world.now = 4;
         scheduler.wake(world);
         assertEquals(3, world.asked, "once nobody waits on a program, the machine is not asked again");
     }

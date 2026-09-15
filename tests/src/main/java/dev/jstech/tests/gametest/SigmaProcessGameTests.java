@@ -601,6 +601,114 @@ public final class SigmaProcessGameTests {
                 .thenSucceed();
     }
 
+    /** A program that never returns, so only something outside it can end it. */
+    private static final String FOREVER = """
+            using System.*;
+            using System.IO.*;
+            namespace Programs;
+            class Forever {
+                static void Main() {
+                    int turns = 0;
+                    while (true) { turns = turns + 1; }
+                }
+            }
+            """;
+
+    /** A program that asks for a line it will never get, because nothing holds a terminal for it. */
+    private static final String ASKER = """
+            using System.*;
+            using System.IO.*;
+            namespace Programs;
+            class Asker {
+                static void Main() {
+                    Console.PrintLine("name?");
+                    Console.PrintLine(Console.ReadLine());
+                }
+            }
+            """;
+
+    /** A parent that starts the program in that file on the system disk, waits for it, and says how it ended. */
+    private static String waitingOn(final String file) {
+        return """
+                using System.*;
+                using System.IO.*;
+                using System.Collections.*;
+                using System.Execution.*;
+                namespace Programs;
+                class Patient {
+                    static void Main() {
+                        Process p = Program.Start("C:\\\\%s", new List<string>());
+                        Console.PrintLine("started " + p.Name);
+                        p.Wait();
+                        Console.PrintLine("code " + p.ExitCode);
+                    }
+                }
+                """.formatted(file);
+    }
+
+    @GameTest(template = ARENA)
+    public static void programs_wakeAParentWhoseChildIsStopped(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2));
+        if (computer == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final MachinePrograms programs = computer.programs();
+                    final ILanguageProcess parent = startWaiting(helper, computer, "forever.asm", FOREVER);
+                    final int child = programs.view().stream().filter(one -> "forever.asm".equals(one.file()))
+                            .findFirst().map(one -> one.id()).orElse(0);
+                    helper.assertTrue(child > 0, "the child runs");
+                    helper.assertTrue(programs.stop(child), "and is stopped from outside");
+                    programs.tick(2048);
+                    helper.assertTrue(parent.console().equals(List.of("started forever.asm", "code 0")),
+                            "the parent is told and carries on; got " + parent.console() + " (" + parent.message()
+                                    + ")");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void programs_wakeAParentWhoseChildWaitedOnAKeyboardNobodyHas(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2));
+        if (computer == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final MachinePrograms programs = computer.programs();
+                    final ILanguageProcess parent = startWaiting(helper, computer, "asker.asm", ASKER);
+                    for (int i = 0; i < 4 && parent.console().size() < 2; i++) {
+                        programs.tick(2048);
+                    }
+                    helper.assertTrue(parent.console().equals(List.of("started asker.asm", "code 0")),
+                            "the child the machine clears away wakes its parent; got " + parent.console() + " ("
+                                    + parent.message() + ")");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * Puts that child on the disk, starts a parent that waits on it, and ticks until the parent is waiting; the parent
+     * comes back.
+     */
+    private static ILanguageProcess startWaiting(final GameTestHelper helper,
+                                                 final CraftingComputerBlockEntity computer, final String file,
+                                                 final String source) {
+        final dev.jstech.computers.program.ServerCliComputer shell =
+                new dev.jstech.computers.program.ServerCliComputer(computer, helper.getLevel());
+        helper.assertTrue(shell.writeFile("C:\\" + file, listing(source)).ok(), "the child is on the disk");
+        final MachinePrograms programs = computer.programs();
+        final MachinePrograms.Started started = programs.start("patient.asm", listing(waitingOn(file)), 1, computer);
+        helper.assertTrue(started.ok(), "the parent starts: " + started.message());
+        final ILanguageProcess parent = programs.byId(started.id()).process();
+        programs.tick(2048);
+        programs.tick(2048);
+        helper.assertTrue(parent.console().equals(List.of("started " + file)),
+                "the parent waits on its child; got " + parent.console() + " (" + parent.message() + ")");
+        return parent;
+    }
+
     private static final String LISTENER = """
             using System.*;
             using System.IO.*;

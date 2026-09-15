@@ -1168,7 +1168,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
 
     private final dev.jstech.computers.machine.MachinePrograms programs =
-            new dev.jstech.computers.machine.MachinePrograms();
+            new dev.jstech.computers.machine.MachinePrograms(this::tellRemoteParent);
 
     private final dev.jstech.computers.vm.program.IHost sigmaHost =
             new dev.jstech.computers.machine.MachineHost(this);
@@ -1285,6 +1285,23 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return server.getBlockEntity(where) instanceof AbstractComputerBlockEntity machine
                 && machine.nodeUuid() != null && parent.node().equals(machine.nodeUuid().value())
                 && machine.programs().byId(parent.program()) != null;
+    }
+
+    /**
+     * Tells the program on another machine that started one of this machine's programs that the program has ended, so
+     * a wait on it runs again at once. A machine that is not loaded is not told: its programs look again when they
+     * come back.
+     */
+    private void tellRemoteParent(final dev.jstech.computers.vm.program.IProgramParent.Remote parent,
+                                  final int child) {
+        if (!(level instanceof ServerLevel server)) {
+            return;
+        }
+        final net.minecraft.core.BlockPos where = net.minecraft.core.BlockPos.of(parent.machine());
+        if (server.isLoaded(where) && server.getBlockEntity(where) instanceof AbstractComputerBlockEntity machine
+                && machine.nodeUuid() != null && parent.node().equals(machine.nodeUuid().value())) {
+            machine.programs().tellEnded(parent.program(), child);
+        }
     }
 
     /**

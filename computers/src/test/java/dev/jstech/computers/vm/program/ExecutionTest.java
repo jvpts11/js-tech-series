@@ -191,6 +191,8 @@ class ExecutionTest {
         assertTrue(process.console().isEmpty());
         machine.running.put(10, false);
         machine.codes.put(10, 9);
+        // A machine tells the programs on it when one of them ends, rather than being asked all the time.
+        process.programEnded(10);
         process.step(PLENTY);
         assertEquals(List.of("code 9"), process.console());
         assertEquals(Process.State.FINISHED, process.state());

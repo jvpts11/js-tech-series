@@ -106,6 +106,15 @@ public interface IHost {
     default void fault(final String process, final int line, final RuntimeException cause) {
     }
 
+    /**
+     * Told once when one of this host's programs has ended for good: returned, exited or halted. A host that runs
+     * several programs tells the others, so whatever of them waits on that program runs again.
+     *
+     * @param program the machine's number for the program that ended
+     */
+    default void programEnded(final int program) {
+    }
+
     /** A host for a program that has no world around it, whose clock never moves. */
     static IHost still() {
         return new IHost() {

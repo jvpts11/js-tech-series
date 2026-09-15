@@ -9,6 +9,9 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.os.FilesystemKind;
+import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.language.ILanguageProcess;
@@ -116,6 +119,61 @@ public final class LanguageApiGameTests {
         } finally {
             JsCore.languages().unregister(TOY);
         }
+    }
+
+    /** A Σ# program that starts a toy program from the disk and waits for it to end. */
+    private static final String PATIENT = """
+            using System.*;
+            using System.IO.*;
+            using System.Collections.*;
+            using System.Execution.*;
+            namespace Programs;
+            class Patient {
+                static void Main() {
+                    Process p = Program.Start("C:\\\\count.toy", new List<string>());
+                    Console.PrintLine("started " + p.Name);
+                    p.Wait();
+                    Console.PrintLine("code " + p.ExitCode);
+                }
+            }
+            """;
+
+    /**
+     * A program waiting on one in a language that is not the machine's own is woken when that one ends, although
+     * such a language has no way to say so itself.
+     */
+    @GameTest(template = ARENA)
+    public static void wait_wakesWhenAProgramInAnotherLanguageEnds(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    JsCore.languages().register(new ToyLanguage());
+                    try {
+                        /*
+                         * The shell writes only the kinds of file the machines know, so the toy program goes on
+                         * the disk directly; starting a program reads it back under any name.
+                         */
+                        DiskFilesystem.write(computer.systemDisk(), "count.toy", FileType.TXT, SOURCE,
+                                Long.MAX_VALUE, FilesystemKind.HIERARCHICAL);
+                        final ServerCliComputer shell = new ServerCliComputer(computer, helper.getLevel());
+                        helper.assertTrue(shell.readFile("C:\\count.toy").ok(), "the toy program is on the disk");
+                        final MachinePrograms.Started started =
+                                computer.programs().start("patient.sgs", PATIENT, 1, computer);
+                        helper.assertTrue(started.ok(), "the patient starts: " + started.message());
+                        final ILanguageProcess patient = computer.programs().byId(started.id()).process();
+                        for (int i = 0; i < 6 && patient.console().size() < 2; i++) {
+                            computer.programs().tick(4096);
+                        }
+                        helper.assertTrue(patient.console().equals(List.of("started count.toy", "code 0")),
+                                "the patient is woken when the toy program ends; got " + patient.console() + " ("
+                                        + patient.message() + ")");
+                    } finally {
+                        JsCore.languages().unregister(TOY);
+                    }
+                })
+                .thenSucceed();
     }
 
     /** A language of two files and no ceremony: source counts, compiled text counts louder. */

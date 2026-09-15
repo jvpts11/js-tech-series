@@ -72,7 +72,23 @@ public final class MachinePrograms {
 
     private final ProgramTable<IMachineRuntime> table = new ProgramTable<>();
     private final TerminalFocus focus = new TerminalFocus(this.table, this::stop);
-    private final ProgramTicker ticker = new ProgramTicker(this.table, this.focus);
+    private final ProgramTicker ticker = new ProgramTicker(this.table, this.focus, this::ended);
+    /** How the machine tells a program on another machine that one it started here has ended. */
+    private final ObjIntConsumer<IProgramParent.Remote> remoteEnded;
+
+    /** Programs with no machine around them, where nothing on another machine can be told anything. */
+    public MachinePrograms() {
+        this((parent, program) -> {
+        });
+    }
+
+    /**
+     * @param remoteEnded how the machine tells a program on another machine that one it started here has ended, given
+     *                    that program and the number of the one that ended
+     */
+    public MachinePrograms(final ObjIntConsumer<IProgramParent.Remote> remoteEnded) {
+        this.remoteEnded = remoteEnded;
+    }
 
     /**
      * Every program the machine lists, in the order they started, as screens read them: a list of its own, built
@@ -270,6 +286,31 @@ public final class MachinePrograms {
     }
 
     /**
+     * Tells whoever may be waiting on a program that it has ended: every other program on this machine, and the program
+     * on another machine that started it. A wait on a program of the same number elsewhere wakes too, and asks again.
+     */
+    void ended(final int id) {
+        final ProgramEntry<IMachineRuntime> one = this.table.byId(id);
+        // Being told only wakes a wait, so the table cannot change under this walk.
+        for (final ProgramEntry<IMachineRuntime> other : this.table.running()) {
+            if (other.id() != id) {
+                other.process().programEnded(id);
+            }
+        }
+        if (one != null && one.parent() instanceof IProgramParent.Remote remote) {
+            this.remoteEnded.accept(remote, id);
+        }
+    }
+
+    /** Tells one program here that a program it started on another machine has ended; nothing when it is gone. */
+    public void tellEnded(final int program, final int ended) {
+        final ProgramEntry<IMachineRuntime> one = this.byId(program);
+        if (one != null) {
+            one.process().programEnded(ended);
+        }
+    }
+
+    /**
      * Stops a program, letting it say goodbye first.
      *
      * <p>The farewell is paid for out of the machine's farewell budget for the tick rather than its programs'
@@ -282,6 +323,7 @@ public final class MachinePrograms {
             return false;
         }
         this.ticker.farewell(one.process());
+        this.ended(id);
         this.table.remove(id);
         this.focus.forget(id);
         return true;
@@ -293,6 +335,10 @@ public final class MachinePrograms {
         final int share = this.ticker.farewellShare(all.size());
         for (final ProgramEntry<IMachineRuntime> one : all) {
             this.ticker.farewell(one.process(), share);
+            // Everything here is going, so only a program on another machine that started one of these is told.
+            if (one.parent() instanceof IProgramParent.Remote remote) {
+                this.remoteEnded.accept(remote, one.id());
+            }
             this.table.remove(one.id());
             this.focus.forget(one.id());
         }

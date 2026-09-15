@@ -45,4 +45,8 @@ public interface IProgramRuntime {
     default List<Values.Obj> windows() {
         return List.of();
     }
+
+    /** Tells the program that another program has ended, so whatever of it waits on that one runs again. */
+    default void programEnded(final int program) {
+    }
 }

@@ -159,6 +159,11 @@ final class SigmaProgram implements IMachineRuntime {
     }
 
     @Override
+    public void programEnded(final int program) {
+        this.process.programEnded(program);
+    }
+
+    @Override
     public boolean deliverUiEvent(final long window, final long widget, final String kind,
                                   final List<Object> values) {
         return this.process.deliverUiEvent(window, widget, kind, values);

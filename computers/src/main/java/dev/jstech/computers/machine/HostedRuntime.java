@@ -22,9 +22,21 @@ import net.minecraft.nbt.CompoundTag;
 final class HostedRuntime implements IMachineRuntime {
 
     private final ILanguageProcess process;
+    /** Whether the machine has been told the program ended, which its language has no way to say itself. */
+    private boolean told;
 
     HostedRuntime(final ILanguageProcess process) {
         this.process = process;
+    }
+
+    @Override
+    public boolean endedUnannounced() {
+        if (this.told) {
+            return false;
+        }
+        final State state = this.process.state();
+        this.told = state == State.HALTED || (state == State.FINISHED && !this.process.isService());
+        return this.told;
     }
 
     @Override

@@ -17,6 +17,7 @@ import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingProblem;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -78,6 +79,55 @@ class ProcessTest {
 
     private static void assertFinished(final Process process) {
         assertEquals(Process.State.FINISHED, process.state(), () -> String.valueOf(process.message()));
+    }
+
+    /** A host with no world around it that writes down every program it is told has ended. */
+    private static IHost telling(final List<Integer> told) {
+        return new IHost() {
+            @Override
+            public long tick() {
+                return 0;
+            }
+
+            @Override
+            public long dayTime() {
+                return 0;
+            }
+
+            @Override
+            public long day() {
+                return 0;
+            }
+
+            @Override
+            public void programEnded(final int program) {
+                told.add(program);
+            }
+        };
+    }
+
+    @Test
+    void step_tellsTheHostOnceWhenAProgramThatRunsAtATerminalEnds() {
+        final ProgramImage program = loadSource("class Hello { static void Main() { Console.PrintLine(\"hi\"); } }");
+        final List<Integer> told = new ArrayList<>();
+        final Process process = new Process(program, ROOM, telling(told));
+        process.identify(7);
+        process.beginStatic(program.entryPoint(), "Main");
+        process.step(PLENTY);
+        process.step(PLENTY);
+        assertFinished(process);
+        assertEquals(List.of(7), told, "told once, with the number the machine lists it under");
+    }
+
+    @Test
+    void step_tellsTheHostNothingWhileAScriptStaysUp() {
+        final ProgramImage program = load("", "        Console.PrintLine(\"tick\");");
+        final List<Integer> told = new ArrayList<>();
+        final Process process = new Process(program, ROOM, telling(told));
+        process.begin(process.create(program.entryPoint()), "OnTick");
+        process.step(PLENTY);
+        assertFinished(process);
+        assertEquals(List.of(), told, "a script between its turns has not ended");
     }
 
     @Test

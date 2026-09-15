@@ -32,6 +32,15 @@ public interface IMachineRuntime extends ILanguageProcess, IProgramRuntime {
         return budget;
     }
 
+    /**
+     * Whether the program has ended for good without saying so, answered true once. A program of the machine's own
+     * language tells the machine the moment it ends; one of another language cannot, so the tick asks when it finds
+     * the program over.
+     */
+    default boolean endedUnannounced() {
+        return false;
+    }
+
     /** What runs a program a language started or brought back. */
     static IMachineRuntime of(final ILanguageProcess process) {
         return process instanceof IMachineRuntime runtime ? runtime : new HostedRuntime(process);

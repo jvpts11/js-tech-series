@@ -52,8 +52,13 @@ final class ThreadScheduler {
     private int turn;
     /** The earliest tick a waiting thread's deadline falls on; the smallest long until the first look works it out. */
     private long due = Long.MIN_VALUE;
-    /** Whether a thread waits on another program, whose end only asking the machine can tell. */
-    private boolean asking;
+    /**
+     * Whether a thread waits on a program on another machine. That machine tells only the program that started it when
+     * it ends, so such a wait is asked about, but no more than once a tick.
+     */
+    private boolean remote;
+    /** The tick the last look was taken on, so a wait on another machine is asked about once a tick at most. */
+    private long lookedAt = Long.MIN_VALUE;
 
     ThreadScheduler() {
         this.threads.add(this.main);
@@ -134,8 +139,8 @@ final class ThreadScheduler {
     }
 
     /**
-     * Sets what a thread waits for. A wait with a deadline brings the next look forward to it; a wait on another
-     * program keeps the looks coming until it ends.
+     * Sets what a thread waits for. A wait with a deadline brings the next look forward to it; a wait on a program on
+     * another machine brings a look each tick until it ends, and one on a program on this machine waits to be told.
      */
     void await(final ProgramThread thread, final IWait wait) {
         thread.wait = wait;
@@ -146,7 +151,12 @@ final class ThreadScheduler {
                     this.due = Math.min(this.due, join.until());
                 }
             }
-            case IWait.Child child -> this.asking = true;
+            case IWait.Child child -> {
+                this.remote |= !child.host().isEmpty();
+                if (child.until() > 0) {
+                    this.due = Math.min(this.due, child.until());
+                }
+            }
             case IWait.Lock lock -> { }
             case IWait.Input typed -> { }
             case IWait.None none -> { }
@@ -154,17 +164,20 @@ final class ThreadScheduler {
     }
 
     /**
-     * Lets every thread whose wait is over run again, when one may be: once the tick reaches the earliest deadline,
-     * while a thread waits on another program, and on the first look. Each look works out both again from the waits
-     * still standing, so a wait that ended by its own event only costs one look more at most.
+     * Lets every thread whose wait is over run again, when one may be: once the tick reaches the earliest
+     * deadline, once a tick while a thread waits on a program on another machine, and on the first look. A wait on a
+     * program on this machine is asked about when a look is taken but never brings one on, because the machine tells
+     * the process when that program ends ({@link #programEnded}). Each look works this out again from the waits still
+     * standing, so a wait that ended by its own event only costs one look more at most.
      */
     void wake(final IWorld world) {
         final long now = world.now();
-        if (!this.asking && now < this.due) {
+        if (now < this.due && !(this.remote && now != this.lookedAt)) {
             return;
         }
+        this.lookedAt = now;
         long next = Long.MAX_VALUE;
-        boolean children = false;
+        boolean remoteChildren = false;
         for (final ProgramThread thread : this.threads) {
             switch (thread.wait) {
                 case IWait.Sleep sleep -> {
@@ -196,7 +209,7 @@ final class ThreadScheduler {
                         thread.wait = IWait.NONE;
                         thread.gaveUp();
                     } else {
-                        children = true;
+                        remoteChildren |= !child.host().isEmpty();
                         if (child.until() > 0) {
                             next = Math.min(next, child.until());
                         }
@@ -211,7 +224,19 @@ final class ThreadScheduler {
             }
         }
         this.due = next;
-        this.asking = children;
+        this.remote = remoteChildren;
+    }
+
+    /**
+     * Lets every thread waiting on that program run again, as the machine says when it ends. A thread whose wait was on
+     * a program of the same number on another machine wakes too, and simply asks again when it runs.
+     */
+    void programEnded(final int program) {
+        for (final ProgramThread thread : this.threads) {
+            if (thread.wait instanceof IWait.Child child && child.program() == program) {
+                thread.wait = IWait.NONE;
+            }
+        }
     }
 
     /** Lets every thread waiting for a typed line run again. */

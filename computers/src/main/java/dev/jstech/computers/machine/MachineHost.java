@@ -51,6 +51,13 @@ public record MachineHost(BlockEntity machine) implements IHost {
     }
 
     @Override
+    public void programEnded(final int program) {
+        if (this.machine instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity self) {
+            self.programs().ended(program);
+        }
+    }
+
+    @Override
     public boolean provides(final String owner) {
         return HostFiles.handles(owner) || HostComputer.handles(owner)
                 || HostNetwork.handles(owner) || HostMainframe.handles(owner)

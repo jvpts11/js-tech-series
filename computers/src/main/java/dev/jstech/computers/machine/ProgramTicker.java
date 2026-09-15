@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.IntConsumer;
 import java.util.function.Predicate;
 import java.util.function.ToLongFunction;
 import net.minecraft.nbt.CompoundTag;
@@ -35,15 +36,18 @@ final class ProgramTicker {
 
     private final ProgramTable<IMachineRuntime> table;
     private final TerminalFocus focus;
+    /** How the machine tells whoever waits on a program that it has ended. */
+    private final IntConsumer ended;
     private final Scheduler scheduler = new Scheduler();
     /** What the machine still owes for work done on its behalf outside its programs. */
     private int owed;
     /** What is left of this tick's farewell budget, shared by the programs stopped in it. */
     private int farewellLeft = MachinePrograms.FAREWELL_PER_TICK;
 
-    ProgramTicker(final ProgramTable<IMachineRuntime> table, final TerminalFocus focus) {
+    ProgramTicker(final ProgramTable<IMachineRuntime> table, final TerminalFocus focus, final IntConsumer ended) {
         this.table = table;
         this.focus = focus;
+        this.ended = ended;
     }
 
     /** Adds to what the machine owes; see {@link MachinePrograms#owe}. */
@@ -158,10 +162,15 @@ final class ProgramTicker {
                  * here, it is stopped rather than kept for ever as something the machine is running.
                  */
                 this.farewell(one.process());
+                this.ended.accept(one.id());
                 done.add(one);
                 continue;
             }
             if (state == ILanguageProcess.State.HALTED || state == ILanguageProcess.State.FINISHED) {
+                if (one.process().endedUnannounced()) {
+                    // A language other than the machine's own cannot say its program ended, so the tick says so.
+                    this.ended.accept(one.id());
+                }
                 /*
                  * A program that runs at a terminal is done when it returns, and is asked nothing more;
                  * one that stays up is asked again. Either way, a finished terminal program only leaves

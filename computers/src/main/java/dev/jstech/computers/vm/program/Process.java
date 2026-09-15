@@ -109,6 +109,10 @@ public final class Process {
     private final ProgramEvents events;
     private Values.Obj script;
     private final ProgramIdentity identity = new ProgramIdentity();
+    /** The machine around the program, told once when the program has ended for good. */
+    private final IHost host;
+    /** Whether the host has been told the program ended, so it is told once. */
+    private boolean told;
     /** Who the program tells when something is said to it, and the Gateway it chose to reach through. */
     private final ProgramListeners listeners = new ProgramListeners();
     private Values.Obj self;
@@ -204,6 +208,7 @@ public final class Process {
 
     Process(final ProgramImage program, final long heapBytes, final IHost host, final boolean fresh) {
         this.program = program;
+        this.host = host;
         this.heap = new Heap(heapBytes);
         this.library = new Library(this.heap, host, program.entryPoint());
         this.library.serves(this);
@@ -322,6 +327,11 @@ public final class Process {
     /** Hands the program what a ComputerCraft computer said through a Gateway; false when it was not heard. */
     public boolean deliverGatewayMessage(final int from, final String text, final long tick) {
         return this.events.deliverGatewayMessage(from, text, tick);
+    }
+
+    /** Tells the process that another program has ended, so whatever of it waits on that program runs again. */
+    public void programEnded(final int program) {
+        this.scheduler.programEnded(program);
     }
 
     /** Whether the program ended itself with {@code Program.Exit}. */
@@ -579,7 +589,20 @@ public final class Process {
             // What goes wrong between instructions (waking a thread, asking the machine) ends here too.
             this.halt(this.fault(fault, 0));
         }
+        if (!this.told && this.endedForGood()) {
+            this.told = true;
+            this.host.programEnded(this.machineId());
+        }
         return used;
+    }
+
+    /**
+     * Whether the program is over for good: halted, exited, or a program that runs at a terminal whose main thread has
+     * returned with nothing left waiting. A script between its turns is not; it is asked again next tick.
+     */
+    private boolean endedForGood() {
+        return this.identity.over() || (this.program.shape() != Shape.SCRIPT && this.main.frames.isEmpty()
+                && this.waiting.isEmpty());
     }
 
     /** Whether a thread can be given instructions right now. */
