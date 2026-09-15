@@ -13,8 +13,11 @@ import dev.jstech.computers.vm.listing.AsmType;
 import dev.jstech.computers.vm.listing.AsmWriter;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Shape;
+import dev.jstech.computers.vm.system.ConstructorSpec;
+import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.IntrinsicRegistry;
 import dev.jstech.computers.vm.system.IntrinsicSpec;
+import dev.jstech.computers.vm.system.SystemApi;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -29,9 +32,9 @@ import java.util.Map;
  *
  * <p>The listing is text, and text is what a player reads, not what a machine should chase down a line at a time. So
  * it is worked out once, when the program loads: every branch knows the line it lands on, every call knows the method
- * of the program it reaches (or that the runtime answers it), every {@code new} knows its constructor and what the
- * object weighs, and every type knows the methods it inherits and every type it is. From then on a line looks nothing
- * up by its name.
+ * of the program it reaches (or the function or the declaration the system answers it with), every {@code new} knows
+ * its constructor and what the object weighs, and every type knows the methods it inherits and every type it is. From
+ * then on a line looks nothing up by its name.
  *
  * <p>Nothing in it changes once it is made, so every process running the same program could share one.
  */
@@ -49,12 +52,14 @@ public final class ProgramImage {
      * @param constructs whether the call runs a constructor, which always runs on the type it names
      * @param intrinsic  the function the system answers the call with when the program has no method for it, or null
      *                   when the runtime answers it by name
+     * @param declared   the system's declaration of the call when neither the program nor a function answers it, or
+     *                   null when the system declares no such call
      * @param gives      whether the call leaves an answer on the stack
      * @param defaults   for each parameter the call fills in, what it holds when the function left it empty: what a
      *                   variable of the type the call is written with starts with
      */
     record CallSite(IOperand.Method named, MethodImage direct, Integer signature, boolean[] outs, boolean constructs,
-                    IntrinsicSpec intrinsic, boolean gives, Object[] defaults) {
+                    IntrinsicSpec intrinsic, IMemberSpec declared, boolean gives, Object[] defaults) {
     }
 
     /**
@@ -64,8 +69,11 @@ public final class ProgramImage {
      * @param type        the type of the program it makes, or null when the runtime brings that type
      * @param constructor the constructor that runs, or null when the type has none taking those arguments
      * @param outs        which of its arguments are filled in rather than handed over
+     * @param declared    the system's declaration of the constructor when the runtime brings the type, or null when
+     *                    the program makes it or the system declares no such constructor
      */
-    record Creation(IOperand.Constructor made, TypeImage type, MethodImage constructor, boolean[] outs) {
+    record Creation(IOperand.Constructor made, TypeImage type, MethodImage constructor, boolean[] outs,
+                    ConstructorSpec declared) {
     }
 
     private final Map<String, TypeImage> types = new LinkedHashMap<>();
@@ -174,8 +182,10 @@ public final class ProgramImage {
         final MethodImage direct = owner == null ? null : owner.method(signature);
         final IntrinsicSpec intrinsic = direct == null
                 ? this.registry.find(called.owner(), called.name(), called.parameters()) : null;
+        final IMemberSpec declared = direct == null && intrinsic == null
+                ? SystemApi.member(called.owner(), called.name(), called.parameters()) : null;
         return new CallSite(called, direct, signature, MethodImage.outsOf(called.parameters()),
-                AsmMethod.CONSTRUCTOR.equals(called.name()), intrinsic, !"void".equals(called.returns()),
+                AsmMethod.CONSTRUCTOR.equals(called.name()), intrinsic, declared, !"void".equals(called.returns()),
                 defaultsOf(called.parameters()));
     }
 
@@ -201,8 +211,13 @@ public final class ProgramImage {
 
     Creation creation(final IOperand.Constructor made) {
         final TypeImage type = this.types.get(made.owner());
+        ConstructorSpec declared = null;
+        if (type == null && SystemApi.member(made.owner(), ConstructorSpec.NAME, made.parameters())
+                instanceof ConstructorSpec found) {
+            declared = found;
+        }
         return new Creation(made, type, type == null ? null : type.constructor(made.parameters().size()),
-                MethodImage.outsOf(made.parameters()));
+                MethodImage.outsOf(made.parameters()), declared);
     }
 
     /** How a method shape is written, which is what tells two overloads apart. */

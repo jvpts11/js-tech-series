@@ -21,6 +21,7 @@ import dev.jstech.computers.vm.listing.AsmType;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Instruction;
 import dev.jstech.computers.vm.listing.Opcode;
+import dev.jstech.computers.vm.system.MemberKind;
 import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -97,6 +98,28 @@ class ProgramImageTest {
         assertNull(pure.signature());
         assertEquals("Math.Abs(double)", pure.intrinsic().describe());
         assertEquals(1, pure.outs().length);
+    }
+
+    @Test
+    void resolve_givesACallAndANewTheSystemAnswersTheirDeclarations() {
+        final AsmProgram program = new AsmProgram();
+        final AsmType desk = new AsmType(AsmType.Kind.CLASS, "Tests.Desk");
+        desk.addMethod(new AsmMethod("Open", "void", List.of(), true, 0, List.of(
+                Instruction.of(Opcode.CALL, new IOperand.Method("Computer", "Disks", List.of(), "List<DiskInfo>")),
+                Instruction.of(Opcode.NEWOBJ, new IOperand.Constructor("Window", List.of("string", "int", "int"))),
+                Instruction.of(Opcode.CALL, new IOperand.Method("Computer", "Nowhere", List.of(), "void")),
+                Instruction.of(Opcode.RET))));
+        program.addType(desk);
+        final MethodImage open = ProgramImage.of(program).type("Tests.Desk").methods().get("Open()");
+        assertEquals("Computer.Disks()", open.call(0).declared().id().describe());
+        assertEquals(MemberKind.WORLD, open.call(0).declared().kind());
+        assertEquals("Window.new(string, int, int)", open.creation(1).declared().id().describe());
+        assertNull(open.call(2).declared(), "a call the system does not declare is matched to nothing");
+
+        final MethodImage area = squareArea(shapes());
+        assertNull(area.call(2).declared(), "the program's own method is not the system's");
+        assertNull(area.call(3).declared(), "nor is a call a pure function answers");
+        assertNull(area.creation(1).declared(), "nor is a new of the program's own type");
     }
 
     @Test
