@@ -35,8 +35,8 @@ public interface IHost {
      * down with: a number, a piece of text, or one of the kinds in {@link Values}. Nothing opaque, ever,
      * because a program stopped in the middle of one of these has to come back after a reload.
      *
-     * <p>{@code cost} is what the call is worth in instructions. Reaching into the world is not free,
-     * and this is the knob that says how much it is not free by.
+     * <p>{@code cost} is what the call is worth in instructions beyond the one that makes it. Reaching
+     * into the world is not free, and this is the knob that says how much it is not free by.
      */
     record Reply(Object value, java.util.List<Object> filled, int cost) {
 

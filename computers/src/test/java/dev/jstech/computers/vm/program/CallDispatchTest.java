@@ -271,6 +271,18 @@ class CallDispatchTest {
     }
 
     @Test
+    void call_chargesACallToTheWorldItsDeclaredPriceOnTopOfItsInstruction() {
+        final Drive drive = new Drive();
+        drive.files.put("a", "x");
+
+        final long pure = run(drive, "        Convert.ToInt(\"1\");").spent();
+        final long look = run(drive, "        File.Exists(\"a\");").spent();
+
+        // Both lines are the same three instructions, and a function of the language costs nothing beyond its own.
+        assertEquals(SystemApi.member("File", "Exists", List.of("string")).cost().at(0, 0), look - pure);
+    }
+
+    @Test
     void call_makesWhatTheWorldHandsBackTheProgramsToHold() {
         final Drive drive = new Drive();
         drive.files.put("stock.csv", "iron,64");

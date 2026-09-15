@@ -162,8 +162,8 @@ final class CallDispatch implements IWorldCall {
         this.moved = 0;
         final Object answer = function.call(this, target, arguments, line);
         final int rows = answer instanceof Values.ListValue list ? list.size() : 0;
-        // A call to the machine has always counted the instruction making it as part of what it is declared to cost.
-        this.process.charge(declared.cost().at(rows, this.moved) - 1);
+        // What a call is declared to cost comes on top of the instruction that makes it, as for every other call.
+        this.process.charge(declared.cost().at(rows, this.moved));
         for (int i = 0; i < outs.length; i++) {
             if (outs[i]) {
                 arguments[i] = this.heap.adopt(arguments[i] == null ? site.defaults()[i] : arguments[i], line);

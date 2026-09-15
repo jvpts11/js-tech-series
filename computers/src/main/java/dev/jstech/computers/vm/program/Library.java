@@ -157,7 +157,7 @@ public final class Library {
             final List<Object> asked = UiWidgets.WINDOW.equals(owner) || !"Gateway".equals(owner) ? List.of()
                     : List.of(this.owner == null ? "" : this.owner.gatewayName());
             final IHost.Reply reply = this.host.call(owner, name, asked, this.caller, this.callerId(), line);
-            this.owed += Math.max(0, reply.cost() - 1);
+            this.owed += Math.max(0, reply.cost());
             return this.heap.adopt(reply.value(), line);
         }
         throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, owner + " has no " + name);
@@ -264,7 +264,7 @@ public final class Library {
         }
         final IHost.Reply reply =
                 this.host.call(named.owner(), named.name(), arguments, this.caller, this.callerId(), line);
-        this.owed += Math.max(0, reply.cost() - 1);
+        this.owed += Math.max(0, reply.cost());
         final List<Object> filled = new ArrayList<>();
         for (final Object one : reply.filled()) {
             filled.add(this.heap.adopt(one, line));

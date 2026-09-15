@@ -34,6 +34,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   every 4 KB they read, and `File.Write` and `File.Append` 100 plus two for every 4 KB they write, where each used to
   cost the same for any size. `File.Append` adds to the end of a file without reading it first and is priced on what it
   adds; it used to read the whole file back and write all of it again.
+- Every call a program makes to the machine costs one instruction more than it did. The price a call is given is now
+  what it costs on top of the instruction that makes it, for the machine's calls as it already was for a program's
+  own, so a price in the strip under an editor's completion list means the same thing for every call.
 - A compiled `.asm` listing belongs to the computers rather than to Σ#: the machines run listings themselves, and Σ#
   only compiles. For addon authors, a language may now only compile (no binary extensions, and `start` and `restore`
   left alone): the machine runs the listing it compiles to, and compiles a source file on the way in when one is
