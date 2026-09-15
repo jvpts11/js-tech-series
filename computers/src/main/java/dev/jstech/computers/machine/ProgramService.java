@@ -9,10 +9,16 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.CliCommands;
+import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.computers.program.cli.CliShell;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramEntry;
 import dev.jstech.computers.vm.program.ProgramPriority;
+import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -25,11 +31,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class ProgramService {
 
+    /** How wide a prompt is taken to be for a line run there. */
+    private static final int SHELL_WIDTH = 80;
+
     private final AbstractComputerBlockEntity machine;
+    private final IComputerTerminalHost terminal;
+    private final ServerLevel level;
     private final ServerCliComputer shell;
 
-    ProgramService(final AbstractComputerBlockEntity machine, final ServerCliComputer shell) {
+    ProgramService(final AbstractComputerBlockEntity machine, final IComputerTerminalHost terminal,
+                   final ServerLevel level, final ServerCliComputer shell) {
         this.machine = machine;
+        this.terminal = terminal;
+        this.level = level;
         this.shell = shell;
     }
 
@@ -40,6 +54,17 @@ public final class ProgramService {
     public ProgramLauncher.Launch start(final String path, final List<String> arguments, final IProgramParent parent,
                                         final ProgramPriority priority) {
         return ProgramLauncher.launch(this.machine, path, this.shell::readFile, arguments, parent, priority, 0);
+    }
+
+    /**
+     * Runs one line at the machine's own prompt and hands back what it printed.
+     *
+     * <p>The line runs on a shell made for it. What a command sets on a shell, a reboot asked for or the terminal
+     * window it speaks for, belongs to whoever sits at that shell, and the one the machine keeps for its programs is
+     * one no command ever touches.
+     */
+    public List<String> shell(final String command) {
+        return run(new ServerCliComputer(this.terminal, this.level), command);
     }
 
     /** Whether the program under that number, on this machine or on the computer host names, is still going. */
@@ -74,6 +99,16 @@ public final class ProgramService {
     public boolean send(final int from, final int to, final String text) {
         final long tick = this.machine.getLevel() == null ? 0L : this.machine.getLevel().getGameTime();
         return this.machine.programs().send(from, to, text, tick);
+    }
+
+    /** Runs one line at a computer's prompt, as that shell sees it, and hands back what it printed. */
+    static List<String> run(final ServerCliComputer on, final String command) {
+        final CliShell prompt = CliCommands.newShell(SHELL_WIDTH);
+        final List<String> lines = new ArrayList<>();
+        for (final CliLine printed : prompt.run(command, on).lines()) {
+            lines.add(printed.text());
+        }
+        return lines;
     }
 
     @Nullable

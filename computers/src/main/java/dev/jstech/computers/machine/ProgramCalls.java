@@ -48,6 +48,11 @@ final class ProgramCalls {
         program(bindings, "Start", start, STRING);
         program(bindings, "Start", start, STRING, STRINGS);
         program(bindings, "Start", start, STRING, STRINGS, STRING);
+        program(bindings, "Shell", (programs, call, target, arguments, line) -> {
+            final Values.ListValue lines = new Values.ListValue();
+            lines.items().addAll(programs.shell(text(arguments, 0)));
+            return lines;
+        }, STRING);
         process(bindings, "Running",
                 (programs, call, target, arguments, line) -> programs.running(idOf(target, line), hostOf(target)));
         process(bindings, "ExitCode",

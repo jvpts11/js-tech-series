@@ -9,12 +9,8 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.program.ServerCliComputer;
-import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliLine;
-import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramPriority;
-import java.util.ArrayList;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
  * takes any of this at all is the other computer's to say.
  */
 public final class RemoteComputerService {
-
-    /** How wide the other computer's prompt is taken to be for a line run there. */
-    private static final int SHELL_WIDTH = 80;
 
     private final ServerCliComputer shell;
 
@@ -63,12 +56,7 @@ public final class RemoteComputerService {
 
     /** Runs one line at the other computer's prompt and hands back what it printed. */
     public List<String> shell(final ServerCliComputer remote, final String command) {
-        final CliShell prompt = CliCommands.newShell(SHELL_WIDTH);
-        final List<String> lines = new ArrayList<>();
-        for (final CliLine printed : prompt.run(command, remote).lines()) {
-            lines.add(printed.text());
-        }
-        return lines;
+        return ProgramService.run(remote, command);
     }
 
     /** Sends a line to a program on the other computer; false when it has no such program or no room for it. */

@@ -77,8 +77,7 @@ public final class ProgramCallsGameTests {
 
         for (final String owner : List.of("Program", "Process", "RemoteComputer")) {
             for (final IMemberSpec member : SystemApi.type(owner).members()) {
-                // Program.Shell is declared but no computer answers it yet.
-                if (member.kind() == MemberKind.WORLD && !"Program.Shell(string)".equals(member.id().describe())) {
+                if (member.kind() == MemberKind.WORLD) {
                     helper.assertTrue(host.bind(member.id()) != null,
                             member.id().describe() + " is answered by the machine");
                 }
@@ -106,6 +105,20 @@ public final class ProgramCallsGameTests {
                     helper.assertTrue(Boolean.FALSE.equals(ask(host, member("Process", "Send", "int", "string"), null,
                             GHOST, "hello")), "a line sent to it is not taken");
                     helper.assertTrue(!host.programRunning(GHOST, ""), "a wait on it would not wait");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void shell_runsALineAtTheComputersOwnPromptAndHandsBackWhatItPrinted(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = TestWorldBuilder.forGameTest(helper)
+                .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final Object said =
+                            ask(new MachineHost(pc), member("Program", "Shell", "string"), null, "echo hello");
+                    helper.assertTrue(said instanceof Values.ListValue lines && lines.items().contains("hello"),
+                            "the line ran at the computer's own prompt and what it printed came back");
                 })
                 .thenSucceed();
     }

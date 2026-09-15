@@ -181,7 +181,7 @@ public final class MachineServices {
             this.mainframe = new MainframeStatsService(this.shell);
             this.operations = new OperationsService(this.shell);
             this.iql = new IqlService(this.shell);
-            this.programs = new ProgramService(this.machine, this.shell);
+            this.programs = new ProgramService(this.machine, terminal, server, this.shell);
             this.remotes = new RemoteComputerService(this.shell);
         } else {
             this.shell = null;
