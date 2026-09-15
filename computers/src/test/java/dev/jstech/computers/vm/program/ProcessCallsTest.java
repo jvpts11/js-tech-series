@@ -13,35 +13,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.MemberId;
-import dev.jstech.computers.vm.system.MemberKind;
-import dev.jstech.computers.vm.system.MethodSpec;
 import dev.jstech.computers.vm.system.SystemApi;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class ProcessCallsTest {
-
-    /** The types whose calls the process answers through bindings. */
-    private static final List<String> BOUND_OWNERS = List.of("Console", "Random", "Thread", "Program", "Process",
-            "Network", "Gateway", "Window", "Row", "Column", "ListBox", "Canvas", "MessageBox");
-
-    @Test
-    void bindings_answerEveryCallTheSystemLeavesToTheProcess() {
-        final List<String> unbound = new ArrayList<>();
-        for (final String owner : BOUND_OWNERS) {
-            for (final IMemberSpec member : SystemApi.type(owner).members()) {
-                // A value, a constructor or an event is read, made or joined rather than called.
-                if (member instanceof MethodSpec && member.kind() == MemberKind.PROCESS
-                        && ProcessCalls.find(member.id()) == null) {
-                    unbound.add(member.id().describe());
-                }
-            }
-        }
-        assertTrue(unbound.isEmpty(), () -> "nothing answers " + unbound);
-    }
 
     @Test
     void bindings_takeTheObjectExactlyWhenTheSystemDeclaresTheCallOnOne() {

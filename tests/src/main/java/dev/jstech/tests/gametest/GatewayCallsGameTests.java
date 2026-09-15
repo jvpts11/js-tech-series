@@ -16,10 +16,7 @@ import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IWorldCall;
 import dev.jstech.computers.vm.program.IWorldFunction;
 import dev.jstech.computers.vm.program.Values;
-import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.MemberId;
-import dev.jstech.computers.vm.system.MemberKind;
-import dev.jstech.computers.vm.system.SystemApi;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
@@ -32,10 +29,9 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * What a program asks of its computer's Gateways, as a real computer answers it: every call and value the system
- * declares as the world's is answered, the Gateway a program chooses is the one its later calls go through, a computer
- * without that Gateway stops the program, and a computer in no world cannot be reached. What crosses to a ComputerCraft
- * computer and back is the Σ# Gateway tests' to run.
+ * What a program asks of its computer's Gateways, as a real computer answers it: the Gateway a program chooses is the
+ * one its later calls go through, a computer without that Gateway stops the program, and a computer in no world
+ * cannot be reached. What crosses to a ComputerCraft computer and back is the Σ# Gateway tests' to run.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -112,20 +108,6 @@ public final class GatewayCallsGameTests {
             return be;
         }
         throw new IllegalStateException("no Gateway at " + GATEWAY);
-    }
-
-    @GameTest(template = ARENA)
-    public static void bind_answersEveryWorldCallAndValueOfTheGateway(final GameTestHelper helper) {
-        final MachineServices host =
-                TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(COMPUTER).services();
-
-        for (final IMemberSpec member : SystemApi.type("Gateway").members()) {
-            if (member.kind() == MemberKind.WORLD) {
-                helper.assertTrue(host.bind(member.id()) != null,
-                        member.id().describe() + " is answered by the machine");
-            }
-        }
-        helper.succeed();
     }
 
     @GameTest(template = ARENA)

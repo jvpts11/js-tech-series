@@ -14,9 +14,7 @@ import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IWorldCall;
 import dev.jstech.computers.vm.program.IWorldFunction;
 import dev.jstech.computers.vm.program.Values;
-import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.MemberId;
-import dev.jstech.computers.vm.system.SystemApi;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.ArrayList;
@@ -28,9 +26,9 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * What a program reads of its network's Mainframe, as a real computer answers it: every call and value the system
- * declares is answered, a computer with no cable has no Mainframe and stops a program that asks for more, and a
- * cabled one reads the work of the Mainframe running its network.
+ * What a program reads of its network's Mainframe, as a real computer answers it: a computer with no cable has no
+ * Mainframe and stops a program that asks for more, and a cabled one reads the work of the Mainframe running its
+ * network.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -71,17 +69,6 @@ public final class MainframeCallsGameTests {
         world.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
         world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE.get());
         return world.placeRunningPersonalComputer(new BlockPos(5, 2, 2));
-    }
-
-    @GameTest(template = ARENA)
-    public static void bind_answersEveryCallAndValueTheSystemDeclaresOnTheMainframe(final GameTestHelper helper) {
-        final MachineServices host = TestWorldBuilder.forGameTest(helper)
-                .placeRunningPersonalComputer(new BlockPos(2, 2, 2)).services();
-
-        for (final IMemberSpec member : SystemApi.type("Mainframe").members()) {
-            helper.assertTrue(host.bind(member.id()) != null, member.id().describe() + " is answered by the machine");
-        }
-        helper.succeed();
     }
 
     @GameTest(template = ARENA)

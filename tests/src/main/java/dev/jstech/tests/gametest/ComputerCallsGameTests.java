@@ -17,9 +17,7 @@ import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IWorldCall;
 import dev.jstech.computers.vm.program.IWorldFunction;
 import dev.jstech.computers.vm.program.Values;
-import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.MemberId;
-import dev.jstech.computers.vm.system.SystemApi;
 import dev.jstech.tests.JsTests;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -32,8 +30,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
- * What a program reads of the computer it runs on, as a real computer answers it: every call and value the system
- * declares is answered, each tells something true of the computer, and a computer in no world cannot be reached.
+ * What a program reads of the computer it runs on, as a real computer answers it: each call and value tells something
+ * true of the computer, and a computer in no world cannot be reached.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -82,20 +80,6 @@ public final class ComputerCallsGameTests {
             throw new IllegalStateException(id.describe() + " is not answered by the machine");
         }
         return bound.call(UNCOUNTED, null, new Object[0], 1);
-    }
-
-    @GameTest(template = ARENA)
-    public static void bind_answersEveryCallAndValueTheSystemDeclaresOnTheComputer(final GameTestHelper helper) {
-        final CraftingComputerBlockEntity computer = computer(helper);
-        if (computer == null) {
-            return;
-        }
-        final MachineServices host = computer.services();
-
-        for (final IMemberSpec member : SystemApi.type("Computer").members()) {
-            helper.assertTrue(host.bind(member.id()) != null, member.id().describe() + " is answered by the machine");
-        }
-        helper.succeed();
     }
 
     @GameTest(template = ARENA)

@@ -17,9 +17,7 @@ import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IWorldCall;
 import dev.jstech.computers.vm.program.IWorldFunction;
 import dev.jstech.computers.vm.program.Values;
-import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.MemberId;
-import dev.jstech.computers.vm.system.SystemApi;
 import dev.jstech.tests.JsTests;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -32,9 +30,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
- * The calls a program makes on a machine's drives, as a real computer with a real disk answers them: every one the
- * system declares is answered, each does to the disk what it says and tells how many bytes it moved, and a computer in
- * no world cannot be reached.
+ * The calls a program makes on a machine's drives, as a real computer with a real disk answers them: each does to the
+ * disk what it says and tells how many bytes it moved, and a computer in no world cannot be reached.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -86,20 +83,6 @@ public final class FileCallsGameTests {
             throw new IllegalStateException(id.describe() + " is not answered by the machine");
         }
         return bound.call(told, null, arguments, 1);
-    }
-
-    @GameTest(template = ARENA)
-    public static void bind_answersEveryCallTheSystemDeclaresOnTheDrives(final GameTestHelper helper) {
-        final CraftingComputerBlockEntity computer = computer(helper);
-        if (computer == null) {
-            return;
-        }
-        final MachineServices host = computer.services();
-
-        for (final IMemberSpec member : SystemApi.type("File").members()) {
-            helper.assertTrue(host.bind(member.id()) != null, member.id().describe() + " is answered by the machine");
-        }
-        helper.succeed();
     }
 
     @GameTest(template = ARENA)

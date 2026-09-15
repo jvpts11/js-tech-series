@@ -8,9 +8,16 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.vm.system.IMemberSpec;
+import dev.jstech.computers.vm.system.MemberKind;
+import dev.jstech.computers.vm.system.SystemApi;
+import dev.jstech.computers.vm.system.TypeSpec;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -18,8 +25,9 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * What a computer's programs reach through it: kept with the computer, the same for every call while the computer
- * stays in its world, and made once the computer is in one.
+ * What a computer's programs reach through it: every call and value the system declares as the world's, answered by
+ * services kept with the computer, the same for every call while the computer stays in its world, and made once the
+ * computer is in one. What each of those calls does is the tests of its own service's to hold.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -28,6 +36,24 @@ public final class MachineServicesGameTests {
     private static final String ARENA = "empty";
 
     private MachineServicesGameTests() {
+    }
+
+    @GameTest(template = ARENA)
+    public static void bind_answersEveryCallAndValueTheSystemDeclaresAsTheWorlds(final GameTestHelper helper) {
+        final MachineServices services = TestWorldBuilder.forGameTest(helper)
+                .placeRunningPersonalComputer(new BlockPos(2, 2, 2)).services();
+
+        final List<String> unbound = new ArrayList<>();
+        for (final TypeSpec type : SystemApi.types()) {
+            for (final IMemberSpec member : type.members()) {
+                if (member.kind() == MemberKind.WORLD && services.bind(member.id()) == null) {
+                    unbound.add(member.id().describe());
+                }
+            }
+        }
+        helper.assertTrue(unbound.isEmpty(),
+                "a real computer answers every call and value of the world; nothing answers " + unbound);
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)

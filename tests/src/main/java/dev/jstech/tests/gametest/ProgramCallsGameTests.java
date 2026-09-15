@@ -13,10 +13,7 @@ import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IWorldCall;
 import dev.jstech.computers.vm.program.IWorldFunction;
 import dev.jstech.computers.vm.program.Values;
-import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.MemberId;
-import dev.jstech.computers.vm.system.MemberKind;
-import dev.jstech.computers.vm.system.SystemApi;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.List;
@@ -28,9 +25,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * What a program asks of the other programs on its computer and of the other computers of its network, as a real
- * computer answers it: every call and value the system declares as the world's is answered, a program the machine
- * does not have reads as gone, a computer the network does not have stops the program, and a computer in no world
- * cannot be reached. The programs actually started, waited on, read and stopped are the Σ# process tests' to run.
+ * computer answers it: a program the machine does not have reads as gone, a line runs at the computer's own prompt, a
+ * computer the network does not have stops the program, and a computer in no world cannot be reached. The programs
+ * actually started, waited on, read and stopped are the Σ# process tests' to run.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -68,22 +65,6 @@ public final class ProgramCallsGameTests {
         handle.set("Name", "ghost.asm");
         handle.set("Host", "");
         return handle;
-    }
-
-    @GameTest(template = ARENA)
-    public static void bind_answersEveryWorldCallAndValueOnProgramsAndOtherComputers(final GameTestHelper helper) {
-        final MachineServices host = TestWorldBuilder.forGameTest(helper)
-                .placeRunningPersonalComputer(new BlockPos(2, 2, 2)).services();
-
-        for (final String owner : List.of("Program", "Process", "RemoteComputer")) {
-            for (final IMemberSpec member : SystemApi.type(owner).members()) {
-                if (member.kind() == MemberKind.WORLD) {
-                    helper.assertTrue(host.bind(member.id()) != null,
-                            member.id().describe() + " is answered by the machine");
-                }
-            }
-        }
-        helper.succeed();
     }
 
     @GameTest(template = ARENA)

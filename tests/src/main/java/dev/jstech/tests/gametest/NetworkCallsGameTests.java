@@ -14,10 +14,7 @@ import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IWorldCall;
 import dev.jstech.computers.vm.program.IWorldFunction;
 import dev.jstech.computers.vm.program.Values;
-import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.MemberId;
-import dev.jstech.computers.vm.system.MemberKind;
-import dev.jstech.computers.vm.system.SystemApi;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.ArrayList;
@@ -29,9 +26,9 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * What a program reads of the data network, as a real computer answers it: every call and value the system declares
- * as the world's is answered, a computer with no cable says it is on none and stops a program that asks for more, a
- * cabled one reads its Mainframe's network, and a computer in no world cannot be reached.
+ * What a program reads of the data network, as a real computer answers it: a computer with no cable says it is on
+ * none and stops a program that asks for more, a cabled one reads its Mainframe's network, and a computer in no world
+ * cannot be reached.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -62,21 +59,6 @@ public final class NetworkCallsGameTests {
             throw new IllegalStateException(id.describe() + " is not answered by the machine");
         }
         return bound.call(UNCOUNTED, null, arguments.clone(), 1);
-    }
-
-    @GameTest(template = ARENA)
-    public static void bind_answersEveryCallAndValueTheSystemDeclaresOnTheNetwork(final GameTestHelper helper) {
-        final PersonalComputerBlockEntity pc = TestWorldBuilder.forGameTest(helper)
-                .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
-        final MachineServices host = pc.services();
-
-        for (final IMemberSpec member : SystemApi.type("Network").members()) {
-            if (member.kind() == MemberKind.WORLD) {
-                helper.assertTrue(host.bind(member.id()) != null,
-                        member.id().describe() + " is answered by the machine");
-            }
-        }
-        helper.succeed();
     }
 
     @GameTest(template = ARENA)
