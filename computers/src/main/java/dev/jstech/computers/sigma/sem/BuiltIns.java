@@ -411,7 +411,6 @@ public final class BuiltIns {
      *
      * <p>{@code Online} answers anywhere, because whether there is a Gateway at all is a fair question on
      * any machine. Everything else needs one, and a machine with none says so rather than pretending.
-     * Running a program on the other side is not here: that needs the agent, and is its own thing.
      */
     private void fillGateway() {
         final ITypeSymbol whole = ITypeSymbol.Primitive.LONG;
@@ -459,34 +458,6 @@ public final class BuiltIns {
         this.method(gateway, "Send", flag, PUBLIC_STATIC, whole, text);
         this.method(gateway, "OnMessage", ITypeSymbol.Primitive.VOID, PUBLIC_STATIC,
                 new ITypeSymbol.GenericType(this.actionOfType, List.of(message)));
-
-        /*
-         * What a computer over there does for us, which needs the agent running on it. Every one of these
-         * waits for that computer to answer: the program stops where it stands and costs nothing while it
-         * waits, the same as a program waiting for a line to be typed, and gives up after a few seconds
-         * rather than hanging on a computer that was turned off in the meantime.
-         */
-        final ITypeSymbol lines = new ITypeSymbol.GenericType(this.listType, List.of(text));
-        this.method(gateway, "HasAgent", flag, PUBLIC_STATIC, whole);
-        this.method(gateway, "Run", flag, PUBLIC_STATIC, whole, text);
-        this.method(gateway, "Run", flag, PUBLIC_STATIC, whole, text, lines);
-        this.method(gateway, "Shell", lines, PUBLIC_STATIC, whole, text);
-        this.method(gateway, "Read", text, PUBLIC_STATIC, whole, text);
-        this.method(gateway, "Write", flag, PUBLIC_STATIC, whole, text, text);
-        this.method(gateway, "List", lines, PUBLIC_STATIC, whole, text);
-        /*
-         * The other side of all that: a program that says it will answer those questions rather than ask
-         * them. It is what the agent is, and it only means anything on a machine a Gateway reaches into.
-         */
-        this.method(gateway, "Serve", ITypeSymbol.Primitive.VOID, PUBLIC_STATIC,
-                new ITypeSymbol.GenericType(this.funcType, List.of(lines, this.objectType)));
-        /*
-         * One of the network's own programs, handed over ready to run on the machine asking for it. A
-         * program of ours goes to a computer over there already turned into what that computer runs, so
-         * there is never a switch to throw or a form to choose: it is translated because it is going.
-         */
-        this.method(gateway, "Program", text, PUBLIC_STATIC, text);
-        this.method(gateway, "Programs", lines, PUBLIC_STATIC);
     }
 
     /**

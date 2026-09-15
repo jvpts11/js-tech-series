@@ -95,6 +95,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   system's own declarations, where they are written once; every source file's header names the mod it belongs to.
 
 ### Fixed
+- A program can no longer be compiled with the Gateway calls that reached into a ComputerCraft computer
+  (`HasAgent`, `Run`, `Shell`, `Read`, `Write`, `List`, `Serve`, `Program` and `Programs`). They went away with
+  the agent that answered them, but the compiler still accepted them, so the program stopped at the call.
 - Cutting the last data cable between a Mainframe and the rest of its network now takes the network away
   from everything past the cut. The computers there no longer keep working through a Mainframe they are not
   connected to, and the network does not come back when the world is loaded again.

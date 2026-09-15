@@ -25,25 +25,9 @@ class GatewayCorpus {
         bool sent = Gateway.Send(1, "hello");
         Gateway.OnMessage(Heard);
         Console.PrintLine("" + none + one + two + three + powered + sent);
-
-        List<string> args = new List<string>();
-        bool agent = Gateway.HasAgent(1);
-        bool ran = Gateway.Run(1, "tool") && Gateway.Run(1, "tool", args);
-        List<string> shell = Gateway.Shell(1, "ls");
-        string read = Gateway.Read(1, "a.txt");
-        bool wrote = Gateway.Write(1, "a.txt", "x");
-        List<string> listed = Gateway.List(1, "/");
-        string program = Gateway.Program("tool");
-        List<string> programs = Gateway.Programs();
-        Gateway.Serve(Answer);
-        Console.PrintLine("" + agent + ran + shell.Count + read + wrote + listed.Count + program + programs.Count);
     }
 
     static void Heard(GatewayMessage message) {
         Console.PrintLine("" + message.From + message.Text + message.Tick);
-    }
-
-    static object Answer(List<string> asked) {
-        return asked.Count;
     }
 }

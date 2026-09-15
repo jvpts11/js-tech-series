@@ -3,7 +3,7 @@
 
 .class Corpus.GatewayCorpus
 
-.method static void Main() slots 25
+.method static void Main() slots 16
     ldsfld  Gateway.Online
     stloc   0
     ldsfld  Gateway.Current
@@ -142,75 +142,6 @@ L8: stloc   14
     ldloc   15
     call    string.Concat(string, bool) -> string
     call    Console.PrintLine(string) -> void
-    newobj  List<string>()
-    stloc   16
-    ldc.i4  1
-    conv.i8
-    call    Gateway.HasAgent(long) -> bool
-    stloc   17
-    ldc.i4  1
-    conv.i8
-    ldstr   "tool"
-    call    Gateway.Run(long, string) -> bool
-    brfalse L11
-    ldc.i4  1
-    conv.i8
-    ldstr   "tool"
-    ldloc   16
-    call    Gateway.Run(long, string, List<string>) -> bool
-    br      L12
-L11: ldc.i4  0
-L12: stloc   18
-    ldc.i4  1
-    conv.i8
-    ldstr   "ls"
-    call    Gateway.Shell(long, string) -> List<string>
-    stloc   19
-    ldc.i4  1
-    conv.i8
-    ldstr   "a.txt"
-    call    Gateway.Read(long, string) -> string
-    stloc   20
-    ldc.i4  1
-    conv.i8
-    ldstr   "a.txt"
-    ldstr   "x"
-    call    Gateway.Write(long, string, string) -> bool
-    stloc   21
-    ldc.i4  1
-    conv.i8
-    ldstr   "/"
-    call    Gateway.List(long, string) -> List<string>
-    stloc   22
-    ldstr   "tool"
-    call    Gateway.Program(string) -> string
-    stloc   23
-    call    Gateway.Programs() -> List<string>
-    stloc   24
-    ldnull
-    ldfn    Corpus.GatewayCorpus.Answer(List<string>) -> object
-    call    Gateway.Serve(Func<List<string>, object>) -> void
-    ldstr   ""
-    ldloc   17
-    call    string.Concat(string, bool) -> string
-    ldloc   18
-    call    string.Concat(string, bool) -> string
-    ldloc   19
-    ldfld   List.Count
-    call    string.Concat(string, int) -> string
-    ldloc   20
-    call    string.Concat(string, string) -> string
-    ldloc   21
-    call    string.Concat(string, bool) -> string
-    ldloc   22
-    ldfld   List.Count
-    call    string.Concat(string, int) -> string
-    ldloc   23
-    call    string.Concat(string, string) -> string
-    ldloc   24
-    ldfld   List.Count
-    call    string.Concat(string, int) -> string
-    call    Console.PrintLine(string) -> void
     ret
 
 .method static void Heard(GatewayMessage) slots 1
@@ -225,9 +156,4 @@ L12: stloc   18
     ldfld   GatewayMessage.Tick
     call    string.Concat(string, long) -> string
     call    Console.PrintLine(string) -> void
-    ret
-
-.method static object Answer(List<string>) slots 1
-    ldloc   0
-    ldfld   List.Count
     ret
