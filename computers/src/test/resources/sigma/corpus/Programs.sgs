@@ -14,7 +14,6 @@ class ProgramsCorpus {
         Process one = Program.Start("C:\\tool.asm");
         Process two = Program.Start("C:\\tool.asm", args);
         Process three = Program.Start("C:\\tool.asm", args, "lab");
-        Process run = Program.RunSource("class A {}", args, "a.sgs");
         List<string> said = Program.Shell("dir");
         Program.OnMessage(m => Console.PrintLine(m.Text + m.From + m.Tick));
         Console.PrintLine(name + dropped + self.Id + said.Count);
@@ -28,7 +27,7 @@ class ProgramsCorpus {
         bool done = two.Wait(20);
         int code = two.ExitCode;
         three.Kill();
-        List<string> output = run.Output();
+        List<string> output = two.Output();
         bool sent = Process.Send(id, "hello");
         Console.PrintLine(oneName + host + done + code + output.Count + sent);
 

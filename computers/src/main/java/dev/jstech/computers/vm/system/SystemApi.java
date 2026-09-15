@@ -174,12 +174,6 @@ public final class SystemApi {
          * started and waited for.
          */
         program.onType(STRINGS, "Shell", MemberKind.WORLD, CallCost.perRow(SigmaCosts.SUBMIT), STRING);
-        /*
-         * A program handed over as text rather than named on a disk: it is read, run to its end, and says how it
-         * went, the same as one started by name. That is a start and a read together.
-         */
-        program.onType("Process", "RunSource", MemberKind.WORLD, CallCost.of(SigmaCosts.SUBMIT + SigmaCosts.READ),
-                STRING, STRINGS, STRING);
         program.onType(VOID, "OnMessage", MemberKind.PROCESS, CallCost.FREE, "Action<ProcessMessage>");
         return new TypeSpec(EXECUTION, "Program", program.members);
     }

@@ -71,6 +71,16 @@ class SystemApiTest {
         assertTrue(SystemApi.members("Gateway", "Nothing").isEmpty());
     }
 
+    /*
+     * A call the compiler lets a program write has to be one a computer answers, or the program stops at the line
+     * instead of being told when it loads. Running source text handed over as a string was only ever answered by the
+     * translation for ComputerCraft computers, which is gone.
+     */
+    @Test
+    void members_declareNoRunningOfSourceTextNoComputerAnswers() {
+        assertTrue(SystemApi.members("Program", "RunSource").isEmpty());
+    }
+
     @Test
     void pureMembers_costNothing() {
         for (final TypeSpec type : SystemApi.types()) {

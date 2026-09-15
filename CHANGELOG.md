@@ -121,6 +121,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- A program can no longer be compiled with `Program.RunSource`, which no computer answered, so the program stopped at
+  the call. A listing that still uses it is refused when it loads, and the terminal says so (`A4013`).
 - A program can no longer be compiled with the Gateway calls that reached into a ComputerCraft computer
   (`HasAgent`, `Run`, `Shell`, `Read`, `Write`, `List`, `Serve`, `Program` and `Programs`). They went away with
   the agent that answered them, but the compiler still accepted them, so the program stopped at the call.
