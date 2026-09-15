@@ -125,18 +125,17 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public boolean onNetwork() {
-        return host.networkUuid() != null;
+        return networkReads().online();
     }
 
     @Override
     public String networkId() {
-        final NetworkUuid net = host.networkUuid();
-        return net == null ? "" : ShortId.of(net.asString());
+        return networkReads().id();
     }
 
     @Override
     public boolean isMainframe() {
-        return host.isMainframeHost();
+        return networkReads().isMainframe();
     }
 
     // Remote shells
@@ -269,17 +268,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public NetSummary network() {
-        final NetworkUuid net = host.networkUuid();
-        if (net == null) {
-            return new NetSummary(false, 0, 0, 0, 0, false);
-        }
-        final NetworkSystem system = NetworkSystem.get(level);
-        final int servers = system.serversOf(net).size();
-        final int pcs = system.personalComputersOf(net).size();
-        final int subframes = system.subframesOf(net).size();
-        final MainframeBlockEntity mainframe = mainframe(net);
-        final int types = mainframe == null ? 0 : mainframe.networkIndex().catalogSize();
-        return new NetSummary(true, servers, pcs, subframes, types, mainframe != null);
+        return networkReads().summary();
     }
 
     @Override
@@ -475,44 +464,17 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public List<ServerUse> servers() {
-        final NetworkUuid net = host.networkUuid();
-        if (net == null) {
-            return List.of();
-        }
-        final NetworkStorage storage = NetworkStorage.of(level, net);
-        final List<ServerUse> rows = new ArrayList<>();
-        for (final dev.jstech.core.network.ServerNode server : NetworkSystem.get(level).serversOf(net)) {
-            rows.add(new ServerUse(NetworkLookup.serverLabel(level, server.nodeUuid()),
-                    storage.usedOf(server.nodeUuid()), storage.capacityOf(server.nodeUuid())));
-        }
-        return rows;
+        return networkReads().servers();
     }
 
     @Override
     public ServerUse networkUse() {
-        final NetworkUuid net = host.networkUuid();
-        if (net == null) {
-            return new ServerUse("", 0L, 0L);
-        }
-        final NetworkStorage storage = NetworkStorage.of(level, net);
-        return new ServerUse(networkId(), storage.used(), storage.capacity());
+        return networkReads().use();
     }
 
     @Override
     public List<Holding> find(final String item) {
-        final NetworkUuid net = host.networkUuid();
-        final StorageKey key = resolveKey(item);
-        if (net == null || key == null) {
-            return List.of();
-        }
-        final Map<NodeUuid, Long> perServer = NetworkStorage.of(level, net).breakdown(key);
-        final List<Holding> rows = new ArrayList<>();
-        for (final Map.Entry<NodeUuid, Long> entry : perServer.entrySet()) {
-            if (entry.getValue() > 0L) {
-                rows.add(new Holding(NetworkLookup.serverLabel(level, entry.getKey()), entry.getValue()));
-            }
-        }
-        return rows;
+        return networkReads().find(item);
     }
 
     @Override
@@ -2378,6 +2340,11 @@ public final class ServerCliComputer implements ICliComputer {
     /** The machines of this network that name picks out, by host name, for whoever follows a network path. */
     public Map<String, BlockEntity> machinesNamed(final String name) {
         return matchMachines(name);
+    }
+
+    /** The data network this machine is on, as this shell reads it. */
+    private dev.jstech.computers.machine.NetworkReadService networkReads() {
+        return new dev.jstech.computers.machine.NetworkReadService(host, level, this, this);
     }
 
     /** This machine's drives as this shell reaches them, from where this shell's window stands. */
