@@ -11,6 +11,7 @@ import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.machine.DriveTable;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.NetworkStorage;
@@ -1346,74 +1347,17 @@ public final class ServerCliComputer implements ICliComputer {
 
     // filesystem
 
-    /**
-     * Resolved system-disk context: the disk {@link ItemStack} held by the hardware inventory and
-     * the filesystem kind derived from the installed OS kernel.
-     */
-    /** A resolved drive: its letter, the backing disk/medium stack, its filesystem kind, and how to persist a mutation. */
-    private record DiskCtx(char drive, ItemStack disk, FilesystemKind kind, Runnable commit) {}
+    /** A path resolved against the current location: its drive letter, that drive, and the path on it. */
+    private record Resolved(char drive, DriveTable.Drive ctx, String path) {}
 
-    /** A path argument resolved against the current location: the target drive letter, its context, and the storage path. */
-    private record Resolved(char drive, DiskCtx ctx, String path) {}
-
-    /**
-     * Builds the ordered drive table for the host computer: {@code C:} is the bootable system disk;
-     * then {@code D:}, {@code E:} ... are the remaining data-disk slots (in slot order) followed by
-     * the linked media readers (in ascending position order, so the assignment is stable). An empty
-     * media reader still gets a letter but a disk that is {@link ItemStack#EMPTY} (a not-ready drive).
-     * Returns an empty list when the host is not a computer.
-     */
-    private java.util.List<DiskCtx> driveTable() {
-        if (!(hostBlock instanceof IOsHost computer)) {
-            return java.util.List.of();
-        }
-        final java.util.List<DiskCtx> table = new ArrayList<>();
-        final ItemStack system = computer.systemDisk();
-        char letter = 'C';
-        if (!system.isEmpty()) {
-            final OsDef os = computer.installedOs();
-            final KernelDef kernel = os != null ? OsRegistry.getKernel(os.kernelId()) : null;
-            final FilesystemKind kind = kernel != null ? kernel.filesystem() : FilesystemKind.NONE;
-            table.add(new DiskCtx('C', system, kind, computer::setChanged));
-            letter = 'D';
-        }
-        // Data disks: every disk slot holding a real disk other than the boot disk.
-        for (int i = 0; i < computer.diskSlots() && letter <= 'Z'; i++) {
-            final ItemStack disk = computer.diskInSlot(i);
-            if (disk.isEmpty() || disk == system
-                    || !(disk.getItem() instanceof dev.jstech.computers.item.DiskItem)) {
-                continue;
-            }
-            table.add(new DiskCtx(letter, disk, FilesystemKind.HIERARCHICAL, computer::setChanged));
-            letter++;
-        }
-        // Linked media readers, in ascending packed-position order for a stable letter assignment.
-        final java.util.List<Long> readers = new ArrayList<>(computer.linkedEndpoints());
-        java.util.Collections.sort(readers);
-        for (final long pos : readers) {
-            if (letter > 'Z') {
-                break;
-            }
-            if (!(level.getBlockEntity(BlockPos.of(pos))
-                    instanceof dev.jstech.computers.os.media.MediaReaderBlockEntity reader)) {
-                continue;
-            }
-            final ItemStack media = reader.mediaSlot().getStackInSlot(0);
-            table.add(new DiskCtx(letter, media, FilesystemKind.HIERARCHICAL, () -> syncReader(reader)));
-            letter++;
-        }
-        return table;
+    /** The machine's drives as they are now, for the operation asking. */
+    private java.util.List<DriveTable.Drive> driveTable() {
+        return DriveTable.of(hostBlock, level).all();
     }
 
-    /** Resolves a drive letter to its context, or {@code null} when the letter is not mapped. */
-    private DiskCtx diskFor(final char drive) {
-        final char upper = Character.toUpperCase(drive);
-        for (final DiskCtx ctx : driveTable()) {
-            if (ctx.drive() == upper) {
-                return ctx;
-            }
-        }
-        return null;
+    /** The drive with that letter, or {@code null} when the letter is not mapped. */
+    private DriveTable.Drive diskFor(final char drive) {
+        return DriveTable.of(hostBlock, level).find(drive);
     }
 
     /** Resolves a DOS path argument against the current location, mapping it to the target drive's context. */
@@ -1422,47 +1366,19 @@ public final class ServerCliComputer implements ICliComputer {
         return new Resolved(loc.drive(), diskFor(loc.drive()), loc.storagePath());
     }
 
-    /** The error for an unmapped drive: a friendly no-OS message for {@code C:}, generic otherwise. */
+    /** The error for an unmapped drive. */
     private FsResult driveError(final char drive) {
-        if (Character.toUpperCase(drive) == 'C') {
-            return FsResult.noOs();
-        }
-        return FsResult.fail(Character.toUpperCase(drive) + ":\\ The system cannot find the drive specified.");
+        return DriveTable.missing(drive);
     }
 
     /** The error for a mapped but empty drive (a media reader with no medium inserted). */
     private static FsResult notReady(final char drive) {
-        return FsResult.fail(Character.toUpperCase(drive) + ":\\ The device is not ready.");
+        return DriveTable.notReady(drive);
     }
 
-    /** Pushes a block update so clients see a medium whose filesystem the shell just mutated. */
-    private void syncReader(final dev.jstech.computers.os.media.MediaReaderBlockEntity reader) {
-        reader.setChanged();
-        if (reader.getLevel() != null) {
-            reader.getLevel().sendBlockUpdated(reader.getBlockPos(), reader.getBlockState(),
-                    reader.getBlockState(), net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
-        }
-    }
-
-    /** Free space in mB-equivalents on a disk or medium stack: capacity minus stored items, files, and OS. */
+    /** Free space in mB-equivalents on a disk or medium stack. */
     private static long freeWeightOf(final ItemStack stack) {
-        final long capacityItems;
-        if (stack.getItem() instanceof dev.jstech.computers.item.DiskItem diskItem) {
-            capacityItems = diskItem.spec().capacityItems();
-        } else if (stack.getItem()
-                instanceof dev.jstech.computers.os.media.FormattedMediaItem mediaItem) {
-            capacityItems = mediaItem.format().capacityItems();
-        } else {
-            return 0L;
-        }
-        final long capacity = capacityItems * StorageKey.MB_EQ_PER_ITEM;
-        final long storageUsed = dev.jstech.computers.storage.DriveVolumes.usedWeight(stack);
-        final long fsUsed = DiskFilesystem.filesWeight(stack);
-        final ResourceLocation osId = stack.get(dev.jstech.computers.ComputingModule.SYSTEM_OS.get());
-        final OsDef os = osId != null ? OsRegistry.getOs(osId) : null;
-        final long osReserved = os != null
-                ? os.footprintItemsOn(DiskFilesystem.eraOf(stack)) * StorageKey.MB_EQ_PER_ITEM : 0L;
-        return Math.max(0L, capacity - storageUsed - fsUsed - osReserved);
+        return DriveTable.freeWeightOf(stack);
     }
 
     /** The shell family of the OS installed on {@code host} (DOS when it has no OS or is not a computer). */
@@ -2000,7 +1916,7 @@ public final class ServerCliComputer implements ICliComputer {
     @Override
     public OpResult formatDrive(final char letterRaw) {
         final char letter = Character.toUpperCase(letterRaw);
-        for (final DiskCtx ctx : driveTable()) {
+        for (final DriveTable.Drive ctx : driveTable()) {
             if (ctx.drive() != letter) {
                 continue;
             }
@@ -2178,7 +2094,7 @@ public final class ServerCliComputer implements ICliComputer {
     public java.util.List<MountInfo> mounts() {
         final java.util.List<MountInfo> out = new ArrayList<>();
         int index = 0;
-        for (final DiskCtx ctx : driveTable()) {
+        for (final DriveTable.Drive ctx : driveTable()) {
             final ItemStack stack = ctx.disk();
             final boolean ready = !stack.isEmpty();
             final long capacity;
@@ -2263,7 +2179,7 @@ public final class ServerCliComputer implements ICliComputer {
         if (r.ctx().disk().isEmpty()) {
             return notReady(r.drive());
         }
-        final DiskCtx ctx = r.ctx();
+        final DriveTable.Drive ctx = r.ctx();
         final String target = r.path();
         final List<FsEntry> entries = new ArrayList<>();
         // Subdirectories first, then files, matching DOS DIR ordering.
@@ -2316,7 +2232,7 @@ public final class ServerCliComputer implements ICliComputer {
         if (r.ctx().disk().isEmpty()) {
             return notReady(r.drive());
         }
-        final DiskCtx ctx = r.ctx();
+        final DriveTable.Drive ctx = r.ctx();
         final String real = r.path();
         // A file on an install disc has no stored bytes: its text is generated from the disc's stamp.
         final java.util.Optional<String> projected =
@@ -2346,48 +2262,6 @@ public final class ServerCliComputer implements ICliComputer {
         return FsResult.content(content.get());
     }
 
-    /**
-     * How many bytes the disk behind {@code path} can still take: what a mount on the other side of a
-     * Gateway reports as free space. A network path asks the machine that shares the folder.
-     */
-    public long freeBytes(final String path) {
-        final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
-        if (net != null) {
-            final Reached reached = reach(net);
-            return reached.ok() ? reached.remote().freeBytes(reached.path()) : 0L;
-        }
-        final Resolved r = resolve(path);
-        if (r.ctx() == null || r.ctx().disk().isEmpty()) {
-            return 0L;
-        }
-        return freeWeightOf(r.ctx().disk()) * DiskFilesystem.eraOf(r.ctx().disk()).bytesPerMbEq();
-    }
-
-    /** How many bytes the disk behind {@code path} holds in all; see {@link #freeBytes}. */
-    public long capacityBytes(final String path) {
-        final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
-        if (net != null) {
-            final Reached reached = reach(net);
-            return reached.ok() ? reached.remote().capacityBytes(reached.path()) : 0L;
-        }
-        final Resolved r = resolve(path);
-        if (r.ctx() == null || r.ctx().disk().isEmpty()) {
-            return 0L;
-        }
-        return capacityWeightOf(r.ctx().disk()) * DiskFilesystem.eraOf(r.ctx().disk()).bytesPerMbEq();
-    }
-
-    /** The whole of a disk or medium stack in mB-equivalents, before anything is stored on it. */
-    private static long capacityWeightOf(final ItemStack stack) {
-        if (stack.getItem() instanceof dev.jstech.computers.item.DiskItem diskItem) {
-            return diskItem.spec().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
-        }
-        if (stack.getItem() instanceof dev.jstech.computers.os.media.FormattedMediaItem mediaItem) {
-            return mediaItem.format().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
-        }
-        return 0L;
-    }
-
     @Override
     public FsResult deleteFile(final String path) {
         final dev.jstech.computers.program.cli.NetPath net = dev.jstech.computers.program.cli.NetPath.parse(path);
@@ -2408,7 +2282,7 @@ public final class ServerCliComputer implements ICliComputer {
         if (r.ctx().disk().isEmpty()) {
             return notReady(r.drive());
         }
-        final DiskCtx ctx = r.ctx();
+        final DriveTable.Drive ctx = r.ctx();
         final String real = r.path();
         // Reject .dat entries before attempting deletion so we surface a clear message.
         final List<DiskFilesystem.FileEntry> all = DiskFilesystem.list(ctx.disk(), FsPaths.parentDir(real), ctx.kind());
@@ -2439,7 +2313,7 @@ public final class ServerCliComputer implements ICliComputer {
         if (r.ctx().disk().isEmpty()) {
             return notReady(r.drive());
         }
-        final DiskCtx ctx = r.ctx();
+        final DriveTable.Drive ctx = r.ctx();
         final String real = r.path();
         final java.util.Optional<String> content = DiskFilesystem.read(ctx.disk(), real);
         if (content.isEmpty()) {
@@ -2482,7 +2356,7 @@ public final class ServerCliComputer implements ICliComputer {
         if (r.ctx().disk().isEmpty()) {
             return notReady(r.drive());
         }
-        final DiskCtx ctx = r.ctx();
+        final DriveTable.Drive ctx = r.ctx();
         final String real = r.path();
         // Any extension will do: a kind the machine does not know is kept as text under the name it was given.
         final FileType type = FileType.of(extensionOf(path));
@@ -2527,7 +2401,7 @@ public final class ServerCliComputer implements ICliComputer {
         if (r.ctx().disk().isEmpty()) {
             return notReady(r.drive());
         }
-        final DiskCtx ctx = r.ctx();
+        final DriveTable.Drive ctx = r.ctx();
         final FileType type = FileType.of(extensionOf(path));
         if (!type.userEditable()) {
             return FsResult.fail(path + ": ." + type.extension() + " files cannot be edited");
@@ -2548,7 +2422,7 @@ public final class ServerCliComputer implements ICliComputer {
     @Override
     public FsResult changeDir(final String input) {
         final DosPath.Location target = DosPath.resolve(currentLocation(), input);
-        final DiskCtx ctx = diskFor(target.drive());
+        final DriveTable.Drive ctx = diskFor(target.drive());
         if (ctx == null) {
             return driveError(target.drive());
         }
@@ -2564,7 +2438,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public FsResult changeDrive(final char drive) {
-        final DiskCtx ctx = diskFor(drive);
+        final DriveTable.Drive ctx = diskFor(drive);
         if (ctx == null) {
             return driveError(drive);
         }
@@ -2601,7 +2475,7 @@ public final class ServerCliComputer implements ICliComputer {
         if (r.ctx().disk().isEmpty()) {
             return notReady(r.drive());
         }
-        final DiskCtx ctx = r.ctx();
+        final DriveTable.Drive ctx = r.ctx();
         final String real = r.path();
         if (ctx.kind() != FilesystemKind.HIERARCHICAL) {
             return FsResult.fail("Directories are not supported on this drive.");
@@ -2628,7 +2502,7 @@ public final class ServerCliComputer implements ICliComputer {
         if (r.ctx().disk().isEmpty()) {
             return notReady(r.drive());
         }
-        final DiskCtx ctx = r.ctx();
+        final DriveTable.Drive ctx = r.ctx();
         final String real = r.path();
         if (ctx.kind() != FilesystemKind.HIERARCHICAL) {
             return FsResult.fail("Directories are not supported on this drive.");
@@ -2801,7 +2675,7 @@ public final class ServerCliComputer implements ICliComputer {
         if (s.ctx().disk().isEmpty()) {
             return notReady(s.drive());
         }
-        final DiskCtx ctx = s.ctx();
+        final DriveTable.Drive ctx = s.ctx();
         final String dest = FsPaths.join(FsPaths.parentDir(s.path()), newName);
         if (DiskFilesystem.rename(ctx.disk(), s.path(), dest, ctx.kind())) {
             ctx.commit().run();
@@ -3098,14 +2972,14 @@ public final class ServerCliComputer implements ICliComputer {
 
     /** The system disk's public-share permille (0 when there is no system disk). */
     private int systemDiskPermille() {
-        final DiskCtx ctx = diskFor('C');
+        final DriveTable.Drive ctx = diskFor('C');
         return ctx == null || ctx.disk().isEmpty() ? 0
                 : dev.jstech.computers.item.DiskItem.publicPermille(ctx.disk());
     }
 
     /** Writes a clamped public-share permille onto the system disk; false when there is none. */
     private boolean setSystemDiskPermille(final int permille) {
-        final DiskCtx ctx = diskFor('C');
+        final DriveTable.Drive ctx = diskFor('C');
         if (ctx == null || ctx.disk().isEmpty()) {
             return false;
         }
@@ -3122,28 +2996,8 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     /** True if {@code storagePath} is the drive root or an existing (explicit or implicit) directory. */
-    private boolean dirExists(final DiskCtx ctx, final String storagePath) {
-        if (storagePath.isEmpty()) {
-            return true;
-        }
-        if (ctx.kind() != FilesystemKind.HIERARCHICAL) {
-            return false;
-        }
-        final String parent = FsPaths.parentDir(storagePath);
-        if (DiskFilesystem.listDirs(ctx.disk(), parent, ctx.kind()).contains(storagePath)) {
-            return true;
-        }
-        // A folder on an install disc is projected, not stored, and can still be entered.
-        for (final dev.jstech.computers.os.fs.InstallerLayout.Entry e
-                : dev.jstech.computers.os.media.InstallerProjection.list(ctx.disk(), parent)) {
-            if (e.directory() && e.path().equals(storagePath)) {
-                return true;
-            }
-        }
-        // And so is the system's own folder, and an installed program's.
-        final dev.jstech.computers.os.IOsHost machine = osHost();
-        return machine != null && ctx.drive() == 'C'
-                && dev.jstech.computers.os.fs.ProgramFilesProjection.isDir(machine, storagePath);
+    private boolean dirExists(final DriveTable.Drive ctx, final String storagePath) {
+        return DriveTable.dirExists(osHost(), ctx, storagePath);
     }
 
     /** Returns the lowercase extension of a file path (after the last dot), or {@code ""} if none. */
