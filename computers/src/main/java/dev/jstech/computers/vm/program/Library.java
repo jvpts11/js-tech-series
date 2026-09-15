@@ -15,10 +15,10 @@ import java.util.List;
 /**
  * The part of the library the runtime answers for itself that needs more than a call's arguments.
  *
- * <p>These are the calls that touch the process or the machine: its name, its windows, its Gateway and its watches,
- * and handing everything else to the machine. It also keeps the console the process writes to and its random numbers,
- * whose calls {@link ProcessCalls} answer. The calls that need nothing but their arguments (text, the two
- * collections, numbers) are {@link PureFunctions}.
+ * <p>These are the calls that touch the machine: its Gateway, the watches a program sets on the network, what is
+ * written on a widget, and handing everything else to the machine. It also keeps the console the process writes to and
+ * its random numbers, whose calls {@link ProcessCalls} answer, as it does the calls on the program's windows. The calls
+ * that need nothing but their arguments (text, the two collections, numbers) are {@link PureFunctions}.
  */
 public final class Library {
 
@@ -121,11 +121,11 @@ public final class Library {
     }
 
     /**
-     * Whether a call of this needs the thing it is called on to be on the stack under its arguments: a widget's calls
-     * do, and so do the calls on the machine's own objects. A pure function says so for itself.
+     * Whether a call of this needs the thing it is called on to be on the stack under its arguments: the calls on the
+     * machine's own objects do. A pure function and a call the process answers say so for themselves.
      */
     public boolean takesTarget(final String owner, final String name) {
-        return UiWidgets.takesTarget(owner) || this.host.takesTarget(owner, name);
+        return this.host.takesTarget(owner, name);
     }
 
     /** Makes one of the things the language brings with it: a collection, a window, a widget. */
@@ -175,50 +175,9 @@ public final class Library {
                        final int line) {
         return switch (named.owner()) {
             case "Program" -> this.program(named, arguments, line);
-            case "Window", "Row", "Column", "Label", "Button", "TextBox", "CheckBox", "ProgressBar",
-                 "ListBox", "Canvas", "MessageBox" -> Answer.of(this.ui(named, self, arguments, line));
             case "Gateway" -> this.gateway(named, arguments, line);
             default -> this.watchOrOutward(named, self, arguments, line);
         };
-    }
-
-    /**
-     * A call on a window or on one of the widgets in it.
-     *
-     * <p>Changing what a window shows is made here and costs what drawing costs, since the machine has to
-     * draw it again for whoever is looking. Opening and closing a window is dearer: a window is the
-     * machine's, it goes on its desktop and its taskbar, and it outlives the tick that asked for it.
-     */
-    private Object ui(final IOperand.Method named, final Object self, final List<Object> arguments,
-                      final int line) {
-        if (UiWidgets.MESSAGE_BOX.equals(named.owner())) {
-            this.owe(SigmaCosts.WRITE);
-            this.open(UiWidgets.message(first(arguments), second(arguments), line), line);
-            return null;
-        }
-        if (!(self instanceof Values.Obj object) || !UiWidgets.handles(object.type())) {
-            throw new Halt(Halt.Reason.NO_OBJECT, line,
-                    "there is no " + named.owner() + " here to " + named.name());
-        }
-        if (UiWidgets.WINDOW.equals(object.type())) {
-            switch (named.name()) {
-                case "Show" -> {
-                    this.owe(SigmaCosts.WRITE);
-                    this.open(object, line);
-                    return null;
-                }
-                case "Close" -> {
-                    this.owe(SigmaCosts.DRAW);
-                    this.owner().closeWindow(object);
-                    return null;
-                }
-                default -> {
-                    // Anything else a window is asked is one of its own, and is answered below.
-                }
-            }
-        }
-        this.owe(SigmaCosts.DRAW);
-        return this.owner().windows0().mutator().call(object, named.name(), arguments, line);
     }
 
     /**
@@ -255,25 +214,11 @@ public final class Library {
         this.owner().windows0().mutator().write(widget, name, value, line);
     }
 
-    private void open(final Values.Obj window, final int line) {
-        // A window the runtime made itself (a message box) is the program's to hold like any other.
-        this.heap.adopt(window, line);
-        this.owner().openWindow(window, line);
-    }
-
     private Process owner() {
         if (this.owner == null) {
             throw new Halt(Halt.Reason.CANNOT_START, 0, "this program has no machine to open a window on");
         }
         return this.owner;
-    }
-
-    private static String first(final List<Object> arguments) {
-        return arguments.isEmpty() ? "" : String.valueOf(arguments.getFirst());
-    }
-
-    private static String second(final List<Object> arguments) {
-        return arguments.size() < 2 ? "" : String.valueOf(arguments.get(1));
     }
 
     /** The process this library serves, for the few calls that are about the program rather than the world. */

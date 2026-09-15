@@ -10,7 +10,9 @@ package dev.jstech.computers.vm.program;
 import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.MemberId;
 import dev.jstech.computers.vm.system.MemberKind;
+import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.computers.vm.system.SystemApi;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +69,7 @@ final class ProcessCalls {
         random(bindings);
         thread(bindings);
         program(bindings);
+        ui(bindings);
         return Map.copyOf(bindings);
     }
 
@@ -160,6 +163,70 @@ final class ProcessCalls {
                 (process, target, arguments, line) -> process.waitForOver(target, line));
         bind(bindings, "Process", "Wait", Process::waitForWaits,
                 (process, target, arguments, line) -> process.waitForOver(target, line), "long");
+    }
+
+    /*
+     * The windows a program opens and the widgets in them. Changing what a window shows costs a draw, since the machine
+     * has to draw it again for whoever is looking; opening a window or a message box is dearer, since it goes on the
+     * machine's desktop and outlives the tick that asked for it. The price is charged before anything changes.
+     */
+    private static void ui(final Map<MemberId, Binding> bindings) {
+        bind(bindings, "Window", "Show", null, (process, target, arguments, line) -> {
+            final Values.Obj window = widget(target, "Window", "Show", line);
+            process.charge(SigmaCosts.WRITE);
+            open(process, window, line);
+            return null;
+        });
+        bind(bindings, "Window", "Close", null, (process, target, arguments, line) -> {
+            final Values.Obj window = widget(target, "Window", "Close", line);
+            process.charge(SigmaCosts.DRAW);
+            process.closeWindow(window);
+            return null;
+        });
+        // A widget put exactly where the program says, for one that lays itself out.
+        drawn(bindings, "Window", "Add", "Widget", "int", "int", "int", "int");
+        for (final String box : List.of("Row", "Column")) {
+            drawn(bindings, box, "Add", "Widget");
+            drawn(bindings, box, "Add", "Widget", "int");
+            drawn(bindings, box, "Clear");
+        }
+        drawn(bindings, "ListBox", "Add", STRING);
+        drawn(bindings, "ListBox", "Add", STRING, STRING);
+        drawn(bindings, "ListBox", "Clear");
+        drawn(bindings, "Canvas", "Clear", "int");
+        drawn(bindings, "Canvas", "FillRect", "int", "int", "int", "int", "int");
+        drawn(bindings, "Canvas", "DrawLine", "int", "int", "int", "int", "int");
+        drawn(bindings, "Canvas", "DrawText", STRING, "int", "int", "int");
+        drawn(bindings, "Canvas", "SetPixel", "int", "int", "int");
+        bind(bindings, "MessageBox", "Show", null, (process, target, arguments, line) -> {
+            process.charge(SigmaCosts.WRITE);
+            open(process, UiWidgets.message(String.valueOf(arguments[0]), String.valueOf(arguments[1]), line), line);
+            return null;
+        }, STRING, STRING);
+    }
+
+    /** Binds a call on a widget that changes what it shows, charged a draw and made through the windows' one door. */
+    private static void drawn(final Map<MemberId, Binding> bindings, final String owner, final String name,
+                              final String... parameters) {
+        bind(bindings, owner, name, null, (process, target, arguments, line) -> {
+            final Values.Obj widget = widget(target, owner, name, line);
+            process.charge(SigmaCosts.DRAW);
+            return process.windows0().mutator().call(widget, name, Arrays.asList(arguments), line);
+        }, parameters);
+    }
+
+    /** The window or widget a call is made on, or a halt when what it is made on is none. */
+    private static Values.Obj widget(final Object target, final String owner, final String name, final int line) {
+        if (target instanceof Values.Obj object && UiWidgets.handles(object.type())) {
+            return object;
+        }
+        throw new Halt(Halt.Reason.NO_OBJECT, line, "there is no " + owner + " here to " + name);
+    }
+
+    /** Puts a window on the machine's desktop; one the runtime made itself is the program's to hold like any other. */
+    private static void open(final Process process, final Values.Obj window, final int line) {
+        process.heap().adopt(window, line);
+        process.openWindow(window, line);
     }
 
     private static void bind(final Map<MemberId, Binding> bindings, final String owner, final String name,

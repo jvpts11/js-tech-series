@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.MemberId;
 import dev.jstech.computers.vm.system.MemberKind;
-import dev.jstech.computers.vm.system.PropertySpec;
+import dev.jstech.computers.vm.system.MethodSpec;
 import dev.jstech.computers.vm.system.SystemApi;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -24,19 +24,35 @@ import org.junit.jupiter.api.Test;
 
 class ProcessCallsTest {
 
+    /*
+     * The types whose calls the process answers through bindings so far. A network watch and a Gateway's listener are
+     * the process's too, but they are still answered on the machine's side until the machine's services take them.
+     */
+    private static final List<String> BOUND_OWNERS = List.of("Console", "Random", "Thread", "Program", "Process",
+            "Window", "Row", "Column", "ListBox", "Canvas", "MessageBox");
+
     @Test
     void bindings_answerEveryCallTheSystemLeavesToTheProcess() {
         final List<String> unbound = new ArrayList<>();
-        for (final String owner : List.of("Console", "Random", "Thread", "Program", "Process")) {
+        for (final String owner : BOUND_OWNERS) {
             for (final IMemberSpec member : SystemApi.type(owner).members()) {
-                // A value the process keeps, such as the running thread, is read rather than called.
-                final boolean called = !(member instanceof PropertySpec);
-                if (called && member.kind() == MemberKind.PROCESS && ProcessCalls.find(member.id()) == null) {
+                // A value, a constructor or an event is read, made or joined rather than called.
+                if (member instanceof MethodSpec && member.kind() == MemberKind.PROCESS
+                        && ProcessCalls.find(member.id()) == null) {
                     unbound.add(member.id().describe());
                 }
             }
         }
         assertTrue(unbound.isEmpty(), () -> "nothing answers " + unbound);
+    }
+
+    @Test
+    void bindings_takeTheObjectExactlyWhenTheSystemDeclaresTheCallOnOne() {
+        for (final ProcessCalls.Binding binding : ProcessCalls.all()) {
+            final IMemberSpec declared =
+                    SystemApi.member(binding.id().owner(), binding.id().name(), binding.id().parameters());
+            assertEquals(!declared.isStatic(), binding.onTarget(), () -> binding.id().describe());
+        }
     }
 
     @Test
@@ -53,15 +69,10 @@ class ProcessCallsTest {
     }
 
     @Test
-    void bindings_takeTheObjectOnlyForTheCallsMadeOnOne() {
-        final Set<String> onTarget = new HashSet<>();
-        for (final ProcessCalls.Binding binding : ProcessCalls.all()) {
-            if (binding.onTarget()) {
-                onTarget.add(binding.id().describe());
-            }
-        }
-        assertEquals(Set.of("Thread.Join()", "Thread.Join(long)", "Thread.Stop()", "Process.Wait()",
-                "Process.Wait(long)"), onTarget);
+    void bindings_takeTheObjectForAThreadOrAWidgetButNotForAMessageBox() {
+        assertTrue(ProcessCalls.find(new MemberId("Thread", "Stop", List.of())).onTarget());
+        assertTrue(ProcessCalls.find(new MemberId("Canvas", "SetPixel", List.of("int", "int", "int"))).onTarget());
+        assertTrue(!ProcessCalls.find(new MemberId("MessageBox", "Show", List.of("string", "string"))).onTarget());
     }
 
     @Test
