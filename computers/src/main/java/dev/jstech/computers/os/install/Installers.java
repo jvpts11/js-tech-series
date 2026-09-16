@@ -90,16 +90,35 @@ public final class Installers {
 
     /** The Mirror serving this machine, by the name its Mainframe goes by; empty when none answers. */
     public static String mirrorHost(final IOsHost machine, final ServerLevel level) {
+        final MainframeBlockEntity mainframe = mainframeOf(machine, level);
+        return mainframe == null || !mainframe.isMirrorActive() ? "" : nameOf(mainframe);
+    }
+
+    /**
+     * The Mainframe of the network this machine is on, by the name it goes by; empty when it is on none.
+     *
+     * <p>Being on a network and being served by a Mirror are two different things, and a machine can be the
+     * first without the second: the Mainframe may simply not be running one.
+     */
+    public static String networkHost(final IOsHost machine, final ServerLevel level) {
+        final MainframeBlockEntity mainframe = mainframeOf(machine, level);
+        return mainframe == null ? "" : nameOf(mainframe);
+    }
+
+    /** The Mainframe orchestrating this machine's network, or null when it belongs to none. */
+    @Nullable
+    private static MainframeBlockEntity mainframeOf(final IOsHost machine, final ServerLevel level) {
         final NetworkUuid net = machine.networkUuid();
         if (net == null) {
-            return "";
+            return null;
         }
-        final MainframeBlockEntity mainframe = NetworkSystem.get(level).mainframePositionOf(net)
+        return NetworkSystem.get(level).mainframePositionOf(net)
                 .map(pos -> level.getBlockEntity(BlockPos.of(pos)) instanceof MainframeBlockEntity mf ? mf : null)
                 .orElse(null);
-        if (mainframe == null || !mainframe.isMirrorActive()) {
-            return "";
-        }
+    }
+
+    /** A Mainframe by the name it goes by, or the plain word when it was never given one. */
+    private static String nameOf(final MainframeBlockEntity mainframe) {
         final String name = mainframe.console() == null ? "" : mainframe.console().computerName();
         return name == null || name.isBlank() ? "mainframe" : name;
     }
@@ -117,7 +136,7 @@ public final class Installers {
         final List<InstallerFlow.Desktop> desktops = mirror.isEmpty()
                 ? List.of() : desktopsFor(system, era, SetupTiming.eraFactor(era));
         return InstallerFlow.beginning(system.installerStyle(), system.id().toString(), system.displayName(),
-                system.footprintMb(), copyTicks, disksOf(machine), suggestedName(machine), desktops, mirror);
+                system.footprintMb(), copyTicks, disksOf(machine), machineName(machine), desktops, mirror);
     }
 
     /**
@@ -138,8 +157,14 @@ public final class Installers {
                 computerName, desktopId, eraseSlot);
     }
 
-    /** The name the installer offers for the computer: the one it already goes by, in a name's own shape. */
-    private static String suggestedName(final IOsHost machine) {
+    /**
+     * What this computer calls itself: the name it was given, else the one on the assembly screen, else the
+     * plain word.
+     *
+     * <p>Not the host name, which is this lowered and hyphenated for the network. This is the name a player
+     * typed and should see written back to them.
+     */
+    public static String machineName(final IOsHost machine) {
         final String console = machine.console() == null ? "" : machine.console().computerName();
         if (console != null && !console.isBlank()) {
             return console;

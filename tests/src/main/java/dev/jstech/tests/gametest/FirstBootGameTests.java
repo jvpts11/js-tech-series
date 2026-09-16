@@ -15,6 +15,7 @@ import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.boot.SystemWelcome;
+import dev.jstech.computers.os.boot.WelcomeFacts;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -45,6 +46,9 @@ public final class FirstBootGameTests {
 
     private static final ResourceLocation UBUNTU =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "ubuntu");
+
+    private static final ResourceLocation FRAMES_95 =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_95");
 
     private FirstBootGameTests() {
     }
@@ -121,6 +125,60 @@ public final class FirstBootGameTests {
         helper.assertTrue(welcome.seen(), "the system has been met");
         helper.assertFalse(welcome.showAtStartup(), "and was asked not to say hello again");
         helper.assertFalse(welcome.greets(), "so it does not");
+        helper.succeed();
+    }
+
+    /** Only the systems that had a welcome put one up; the ones that come up at a prompt say nothing. */
+    @GameTest(template = ARENA)
+    public static void greeter_onlyTheSystemsThatHadAWelcome(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = legacy(helper);
+        helper.assertTrue(computer.installOs(DEBIAN), "Debian installs on the machine");
+        helper.assertFalse(WelcomeFacts.greeter(computer), "a distribution comes up at its terminal");
+
+        helper.assertTrue(computer.formatDisk(0), "the disk is erased");
+        helper.assertTrue(computer.installOs(FRAMES_95), "and takes a system of the other family");
+        helper.assertTrue(WelcomeFacts.greeter(computer), "which does have a welcome to put up");
+        helper.succeed();
+    }
+
+    /** What the welcome offers to say about the other systems is read off the other disks. */
+    @GameTest(template = ARENA)
+    public static void others_areTheSystemsOnTheMachinesOtherDisks(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = legacy(helper);
+        computer.getHardware().setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START + 1,
+                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+        helper.assertTrue(computer.installOs(FRAMES_95, 0), "Frames 95 goes on the first disk");
+        helper.assertTrue(computer.installOs(UBUNTU, 1), "Ubuntu goes on the second");
+        computer.setBootDiskSlot(0);
+
+        helper.assertTrue(WelcomeFacts.bootedSlot(computer) == 0, "the machine boots the first disk");
+        final java.util.List<WelcomeFacts.Other> others = WelcomeFacts.others(computer);
+        helper.assertTrue(others.size() == 1, "and knows of one other system: " + others);
+        helper.assertTrue("Ubuntu".equals(others.getFirst().system()) && others.getFirst().slot() == 1,
+                "named, and on the disk it is really on: " + others.getFirst());
+        helper.succeed();
+    }
+
+    /**
+     * A tip is only worth showing while it is true, so the one about installing software says where software
+     * comes from on THIS machine rather than naming a Mirror that is not answering.
+     */
+    @GameTest(template = ARENA)
+    public static void tips_tellTheTruthAboutThisMachinesNetwork(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = legacy(helper);
+        helper.assertTrue(computer.installOs(FRAMES_95), "Frames 95 installs on the machine");
+
+        final java.util.List<String> alone = WelcomeFacts.tips(computer, "", false);
+        helper.assertTrue(alone.getFirst().contains("once a Mainframe on this network runs the Mirror"),
+                "with no Mirror it says where software would come from: " + alone.getFirst());
+        for (final String tip : alone) {
+            helper.assertFalse(tip.startsWith("Network shows"),
+                    "and a machine on no network is told nothing about one: " + tip);
+        }
+
+        final java.util.List<String> served = WelcomeFacts.tips(computer, "CORE", true);
+        helper.assertTrue(served.getFirst().contains("the Mirror on CORE"),
+                "with one answering it names it: " + served.getFirst());
         helper.succeed();
     }
 

@@ -57,6 +57,7 @@ public final class ComputingPayloads {
         FileTransferPayloads.register(registrar);
         DesktopPayloads.register(registrar);
         ThisPcPayloads.register(registrar);
+        dev.jstech.computers.operation.payload.desktop.WelcomePayloads.register(registrar);
         IqlPayloads.register(registrar);
         TerminalPayloads.register(registrar);
         TerminalLocalPayloads.register(registrar);

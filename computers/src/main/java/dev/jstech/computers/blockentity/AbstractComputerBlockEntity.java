@@ -476,7 +476,31 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
             return;
         }
         power.endBoot();
+        greet();
         ScreenSessions.bootWatchers(level, worldPosition);
+    }
+
+    /**
+     * Puts the system's welcome on the desktop as the system finishes coming up, when it has one to put and is
+     * owed the putting: the first time always, and after that only while it is still wanted.
+     *
+     * <p>The window is the machine's, like every other window on it, so a machine that came up with nobody
+     * watching still has its welcome waiting when somebody opens the monitor. It is never put up twice.
+     */
+    private void greet() {
+        if (!dev.jstech.computers.os.boot.WelcomeFacts.greeter(this) || !systemWelcome().greets()) {
+            return;
+        }
+        final java.util.List<dev.jstech.computers.os.OpenWindow> windows =
+                new java.util.ArrayList<>(openWindows());
+        for (final dev.jstech.computers.os.OpenWindow open : windows) {
+            if (open.key().equals(dev.jstech.computers.os.boot.WelcomeFacts.WINDOW_KEY)) {
+                return;
+            }
+        }
+        windows.add(new dev.jstech.computers.os.OpenWindow(
+                dev.jstech.computers.os.boot.WelcomeFacts.WINDOW_KEY, 40, 30, 250, 136, false, false));
+        setOpenWindows(windows);
     }
 
     /** How long the coming-up under way takes in all, for the bar on the screen watching it. */

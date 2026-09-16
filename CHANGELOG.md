@@ -29,6 +29,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   in Files (where Open with is now a submenu), brings the same choice up for any file. An addon registers a program
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
+### Added
+- The Frames editions put up a welcome the first time they come up, in the shape each of them used: a tip that
+  changes with a column of buttons beside it, a pane of places to go with the machine written out next to it, and
+  four cards. It asks nothing, because the installer already asked. Everything on it is read off the computer it
+  is running on, down to the tips: the one about installing software names the Mirror only where a Mirror is
+  answering, and the one about the network only appears on a machine that is on one. Every button opens a program
+  that is really there, under the name that edition gives it. Unticking "Show this at startup" is remembered with
+  the system.
+
 ### Changed
 - A system remembers having been met, and the mark rides on the disk it is installed on rather than on the
   machine. A computer with two systems therefore meets each of them once, a disk carried to another computer

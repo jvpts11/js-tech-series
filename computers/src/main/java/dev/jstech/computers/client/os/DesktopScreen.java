@@ -152,6 +152,37 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         }
     }
 
+    /**
+     * Starts one of this machine's programs by its id, the way a shortcut to it does.
+     *
+     * <p>For a program that offers another as a way out of itself: a welcome pointing at This PC, and whatever
+     * comes to want the same. Nothing happens when this machine has no such program, which is the honest answer
+     * on a computer where it was never installed.
+     */
+    public static void openProgramById(final String path) {
+        if (active != null) {
+            active.startProgramById(path);
+        }
+    }
+
+    /**
+     * The name this desktop gives that program, or empty when this machine has no such program.
+     *
+     * <p>The name is the desktop's, not the program's: the same prompt is called one thing on one edition and
+     * something else on another, and a button that offers it should say what this machine calls it.
+     */
+    public static String programLabel(final String path) {
+        if (active == null) {
+            return "";
+        }
+        for (final Launcher l : active.launchers) {
+            if (l.programId().getPath().equals(path)) {
+                return l.label();
+            }
+        }
+        return "";
+    }
+
     /** The programs pinned to the panel, by program id path, in the order the machine keeps them. */
     private final List<String> pinnedPrograms = new ArrayList<>();
 
@@ -5961,7 +5992,24 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** Recreates a program from its launcher key, for restoring persisted windows. */
     @org.jetbrains.annotations.Nullable
+    /** Opens that program's window on this desktop, if this machine has it at all. */
+    private void startProgramById(final String path) {
+        for (final Launcher l : launchers) {
+            if (l.programId().getPath().equals(path) && l.factory() != null) {
+                openApp(l.label(), l.factory().get());
+                return;
+            }
+        }
+    }
+
     private IDesktopApp factoryFor(final String key) {
+        /*
+         * The welcome has no launcher of its own: it is the system putting itself in front of somebody, not a
+         * program anybody goes looking for, and it is the machine that asks for it by name.
+         */
+        if (WelcomeApp.KEY.equals(key)) {
+            return new WelcomeApp(host);
+        }
         for (final Launcher l : launchers) {
             if (l.label().equals(key) && l.factory() != null) {
                 return l.factory().get();
