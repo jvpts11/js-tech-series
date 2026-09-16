@@ -64,6 +64,32 @@ public final class HardwareTooltipGameTests {
         helper.succeed();
     }
 
+    /**
+     * A processor says what it understands, not only how wide its words are.
+     *
+     * <p>The tooltip is the one place a player reads this before buying into a machine, and nothing about it is
+     * checked by the compiler, so it is checked here.
+     */
+    @GameTest(template = ARENA)
+    public static void cpuTooltip_namesTheArchitectureAndItsWordSize(final GameTestHelper helper) {
+        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_486SX.get()), "x86-16, 16-bit");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_INTEGRA_VERTEX_700.get()), "x86, 32-bit");
+        assertTooltipHas(helper, new ItemStack(HardwareItems.CPU_APEX_5_4590.get()), "x86-64, 64-bit");
+        helper.succeed();
+    }
+
+    private static void assertTooltipHas(final GameTestHelper helper, final ItemStack stack, final String text) {
+        final List<Component> tooltip = stack.getTooltipLines(Item.TooltipContext.of(helper.getLevel()), null,
+                TooltipFlag.NORMAL);
+        for (final Component line : tooltip) {
+            if (line.getString().contains(text)) {
+                return;
+            }
+        }
+        helper.fail(stack.getHoverName().getString() + " says nothing of '" + text + "'; it says "
+                + tooltip.stream().map(Component::getString).toList());
+    }
+
     private static void assertEraColour(final GameTestHelper helper, final ItemStack stack, final HardwareEra era) {
         final List<Component> tooltip = stack.getTooltipLines(Item.TooltipContext.of(helper.getLevel()), null,
                 TooltipFlag.NORMAL);

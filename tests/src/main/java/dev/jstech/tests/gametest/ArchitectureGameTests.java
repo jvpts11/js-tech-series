@@ -10,12 +10,15 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.machine.IMachineRuntime;
+import dev.jstech.computers.machine.MachineListing;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.SigmaLanguage;
 import dev.jstech.core.language.IProgrammingLanguage;
 import dev.jstech.tests.JsTests;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.Item;
@@ -39,6 +42,12 @@ public final class ArchitectureGameTests {
     private static final String ARENA = "empty";
 
     private static final BlockPos WHERE = new BlockPos(2, 2, 2);
+
+    /** A second machine, for the tests that need two of different ages standing at once. */
+    private static final BlockPos ELSEWHERE = new BlockPos(4, 2, 2);
+
+    /** Room enough for a program that does nothing. */
+    private static final long ROOM = 1024L * 1024L;
 
     /** A program that starts and is done, so the test is about where it runs and nothing else. */
     private static final String QUIET = """
@@ -137,8 +146,7 @@ public final class ArchitectureGameTests {
         final MachinePrograms.Started onNewer = newer.programs().start("quiet.asm", built.binary(), 1, newer);
         helper.assertTrue(onNewer.ok(), "the 64-bit machine runs it: " + onNewer.message());
 
-        helper.setBlock(WHERE, net.minecraft.world.level.block.Blocks.AIR);
-        final PersonalComputerBlockEntity older = legacy(helper);
+        final PersonalComputerBlockEntity older = legacy(helper, ELSEWHERE);
         if (older == null) {
             return;
         }
@@ -146,6 +154,32 @@ public final class ArchitectureGameTests {
         helper.assertFalse(onOlder.ok(), "and the 32-bit one will not");
         helper.assertTrue(onOlder.message().contains("built for x86-64; this machine is x86"),
                 "saying why: " + onOlder.message());
+        helper.succeed();
+    }
+
+    /**
+     * A program saved on a machine that runs it does not come back on one that does not.
+     *
+     * <p>Coming back is a second door into running a program, and a machine that would refuse to start something
+     * must refuse to find it already running just the same.
+     */
+    @GameTest(template = ARENA)
+    public static void aProgramSavedOnANewerMachine_doesNotComeBackOnAnOlderOne(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity newer = standard(helper);
+        final PersonalComputerBlockEntity older = legacy(helper, ELSEWHERE);
+        if (newer == null || older == null) {
+            return;
+        }
+        final String built = listing("jsc:x86_64");
+        final IMachineRuntime running = MachineListing.start(built, ROOM, newer, List.of());
+        helper.assertTrue(running != null, "it starts on the machine it was built for");
+        final CompoundTag saved = new CompoundTag();
+        running.save(saved);
+
+        helper.assertTrue(MachineListing.restore(built, saved, newer) != null,
+                "and comes back there");
+        helper.assertTrue(MachineListing.restore(built, saved, older) == null,
+                "but not on a machine whose processor does not run it");
         helper.succeed();
     }
 
@@ -160,19 +194,31 @@ public final class ArchitectureGameTests {
     }
 
     private static PersonalComputerBlockEntity vintage(final GameTestHelper helper) {
-        return assemble(helper, ComputingModule.VINTAGE_PERSONAL_COMPUTER.get(),
+        return vintage(helper, WHERE);
+    }
+
+    private static PersonalComputerBlockEntity vintage(final GameTestHelper helper, final BlockPos at) {
+        return assemble(helper, at, ComputingModule.VINTAGE_PERSONAL_COMPUTER.get(),
                 HardwareItems.MOTHERBOARD_BABYAT_VINTAGE.get(), HardwareItems.CPU_INTEGRA_486SX.get(),
                 HardwareItems.RAM_SIMM_4.get(), HardwareItems.PSU_300B.get());
     }
 
     private static PersonalComputerBlockEntity legacy(final GameTestHelper helper) {
-        return assemble(helper, ComputingModule.LEGACY_PERSONAL_COMPUTER.get(),
+        return legacy(helper, WHERE);
+    }
+
+    private static PersonalComputerBlockEntity legacy(final GameTestHelper helper, final BlockPos at) {
+        return assemble(helper, at, ComputingModule.LEGACY_PERSONAL_COMPUTER.get(),
                 HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get(), HardwareItems.CPU_INTEGRA_DUO_E4300.get(),
                 HardwareItems.RAM_DDR2_2048.get(), HardwareItems.PSU_500B.get());
     }
 
     private static PersonalComputerBlockEntity standard(final GameTestHelper helper) {
-        return assemble(helper, ComputingModule.PERSONAL_COMPUTER.get(),
+        return standard(helper, WHERE);
+    }
+
+    private static PersonalComputerBlockEntity standard(final GameTestHelper helper, final BlockPos at) {
+        return assemble(helper, at, ComputingModule.PERSONAL_COMPUTER.get(),
                 ComputingModule.MOTHERBOARD_ATX_P.get(), ComputingModule.CPU_ASCENT_965.get(),
                 ComputingModule.RAM_DDR3_8192.get(), ComputingModule.PSU_650G.get());
     }
@@ -181,12 +227,12 @@ public final class ArchitectureGameTests {
      * The computer is only assembled, not powered on: what is being tested is the processor a listing is held
      * against, and that is read off the parts in the slots.
      */
-    private static PersonalComputerBlockEntity assemble(final GameTestHelper helper, final Block computer,
-                                                        final Item board, final Item cpu, final Item ram,
-                                                        final Item psu) {
-        helper.setBlock(WHERE, computer);
-        if (!(helper.getBlockEntity(WHERE) instanceof PersonalComputerBlockEntity assembled)) {
-            helper.fail("no personal computer at " + WHERE);
+    private static PersonalComputerBlockEntity assemble(final GameTestHelper helper, final BlockPos at,
+                                                        final Block computer, final Item board, final Item cpu,
+                                                        final Item ram, final Item psu) {
+        helper.setBlock(at, computer);
+        if (!(helper.getBlockEntity(at) instanceof PersonalComputerBlockEntity assembled)) {
+            helper.fail("no personal computer at " + at);
             return null;
         }
         final ItemStackHandler hardware = assembled.getHardware();
