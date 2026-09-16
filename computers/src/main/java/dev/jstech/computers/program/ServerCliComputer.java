@@ -147,10 +147,6 @@ public final class ServerCliComputer implements ICliComputer {
         return remotes().machines();
     }
 
-    private Map<String, BlockEntity> reachableMachines() {
-        return remotes().machines();
-    }
-
     @Override
     public List<RemoteHost> reachableHosts() {
         return remotes().hosts();
@@ -163,46 +159,17 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public OpResult sshConnect(final String hostname) {
-        final ComputerConsoleState console = host.console();
-        if (console == null) {
-            return OpResult.fail("ssh: this terminal keeps no session");
-        }
-        final Map<String, BlockEntity> matches = matchMachines(hostname);
-        if (matches.isEmpty()) {
-            return OpResult.fail("ssh: " + hostname + ": host not found on this network");
-        }
-        if (matches.size() > 1) {
-            return OpResult.fail("ssh: " + hostname + " matches " + matches.size() + " machines ("
-                    + String.join(", ", matches.keySet()) + ") - use the host name or node id");
-        }
-        final BlockEntity target = matches.values().iterator().next();
-        final ServerCliComputer remote = new ServerCliComputer((IComputerTerminalHost) target, level);
-        if (!remote.running()) {
-            return OpResult.fail("ssh: connect to host " + hostname + ": machine is powered off");
-        }
-        console.setSshTarget(target.getBlockPos().asLong());
-        return OpResult.ok("Connected to " + hostname + ". Type exit to return.");
+        return remotes().connect(hostname);
     }
 
     @Override
     public OpResult sshDisconnect() {
-        final ComputerConsoleState console = host.console();
-        if (console == null || console.sshTarget() == null) {
-            return OpResult.fail("exit: not connected - close the window to leave this terminal");
-        }
-        console.setSshTarget(null);
-        return OpResult.ok("Connection closed.");
+        return remotes().disconnect();
     }
 
     @Override
     public String sshSession() {
-        final ComputerConsoleState console = host.console();
-        if (console == null || console.sshTarget() == null) {
-            return "";
-        }
-        // The machine at the other end names itself; nothing is built here to ask it.
-        final BlockEntity target = level.getBlockEntity(BlockPos.of(console.sshTarget()));
-        return target instanceof IComputerTerminalHost remote ? remote.hostname() : "";
+        return remotes().session();
     }
 
     @Override
@@ -920,22 +887,12 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public List<NetworkShare> networkShares() {
-        final List<NetworkShare> out = new ArrayList<>();
-        reachableMachines().forEach((hostname, machine) -> {
-            final ServerCliComputer remote = new ServerCliComputer((IComputerTerminalHost) machine, level);
-            if (!remote.running()) {
-                return;
-            }
-            for (final ShareInfo share : remote.shares()) {
-                out.add(new NetworkShare(hostname, share));
-            }
-        });
-        return out;
+        return remotes().networkShares();
     }
 
     /** Where a path on another machine of the network leads, followed on that machine's own shell. */
     private NetworkPathResolver networkPaths() {
-        return new NetworkPathResolver(level, this::matchMachines, this::networkShares);
+        return remotes().paths();
     }
 
     /** The machines of this network that name picks out, by host name, for whoever follows a network path. */

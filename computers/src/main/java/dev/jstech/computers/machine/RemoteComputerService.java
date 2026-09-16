@@ -13,6 +13,7 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
@@ -137,6 +138,80 @@ public final class RemoteComputerService {
             return null;
         }
         return new ServerCliComputer((IComputerTerminalHost) matches.values().iterator().next(), this.level);
+    }
+
+    /**
+     * Opens a session on another machine: from here on the window's commands run there until it is closed.
+     *
+     * <p>Being on the same network is what grants access; authentication arrives with the security module.
+     */
+    public ICliComputer.OpResult connect(final String hostname) {
+        final ComputerConsoleState console = this.terminal.console();
+        if (console == null) {
+            return ICliComputer.OpResult.fail("ssh: this terminal keeps no session");
+        }
+        final Map<String, BlockEntity> matches = this.matching(hostname);
+        if (matches.isEmpty()) {
+            return ICliComputer.OpResult.fail("ssh: " + hostname + ": host not found on this network");
+        }
+        if (matches.size() > 1) {
+            return ICliComputer.OpResult.fail("ssh: " + hostname + " matches " + matches.size() + " machines ("
+                    + String.join(", ", matches.keySet()) + ") - use the host name or node id");
+        }
+        final BlockEntity target = matches.values().iterator().next();
+        if (!(target instanceof IComputerTerminalHost remote) || !remote.computerRunning()) {
+            return ICliComputer.OpResult.fail("ssh: connect to host " + hostname + ": machine is powered off");
+        }
+        console.setSshTarget(target.getBlockPos().asLong());
+        return ICliComputer.OpResult.ok("Connected to " + hostname + ". Type exit to return.");
+    }
+
+    /** Closes the session and returns to the local machine; fails when there is none open. */
+    public ICliComputer.OpResult disconnect() {
+        final ComputerConsoleState console = this.terminal.console();
+        if (console == null || console.sshTarget() == null) {
+            return ICliComputer.OpResult.fail("exit: not connected - close the window to leave this terminal");
+        }
+        console.setSshTarget(null);
+        return ICliComputer.OpResult.ok("Connection closed.");
+    }
+
+    /**
+     * The name of the machine this session is connected to, or {@code ""} when there is none.
+     *
+     * <p>The machine at the other end names itself, so nothing is built here to ask it.
+     */
+    public String session() {
+        final ComputerConsoleState console = this.terminal.console();
+        if (console == null || console.sshTarget() == null) {
+            return "";
+        }
+        final BlockEntity target = this.level.getBlockEntity(BlockPos.of(console.sshTarget()));
+        return target instanceof IComputerTerminalHost remote ? remote.hostname() : "";
+    }
+
+    /**
+     * Every folder the other running machines of the network share, by host name.
+     *
+     * <p>Whether a machine is on is something it answers itself; only reading what it shares still goes through its
+     * shell, since that is the machine's own configuration.
+     */
+    public List<ICliComputer.NetworkShare> networkShares() {
+        final List<ICliComputer.NetworkShare> out = new ArrayList<>();
+        this.machines().forEach((hostname, machine) -> {
+            if (!(machine instanceof IComputerTerminalHost host) || !host.computerRunning()) {
+                return;
+            }
+            for (final ICliComputer.ShareInfo share : new ServerCliComputer(host, this.level).shares()) {
+                out.add(new ICliComputer.NetworkShare(hostname, share));
+            }
+        });
+        return out;
+    }
+
+    /** Where a path on another machine of the network leads, followed on that machine's own shell. */
+    public NetworkPathResolver paths() {
+        return new NetworkPathResolver(this.level, this::matching, this::networkShares);
     }
 
     /**
