@@ -9,15 +9,20 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.block.part.NamedBus;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.MoveLabels;
+import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.program.IqlEngine;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.iql.IqlOperation;
+import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -265,6 +270,152 @@ public final class IqlService {
             this.engine = new IqlEngine(current, this.shell, ROW_LIMIT);
         }
         return this.engine;
+    }
+
+    /**
+     * Runs an INSERT.
+     *
+     * <p>An INSERT from a named bus imports through that bus's external inventory; one with no bus source pushes this
+     * machine's own storage into the network, and then the source name, if any, only says where it came from.
+     */
+    public ICliComputer.OpResult insert(final IqlOperation op) {
+        final MainframeBlockEntity mainframe = this.mainframe();
+        if (op.from() != null && !op.from().isBlank() && mainframe != null) {
+            final NamedBus.Located bus = NamedBus.find(this.level, this.terminal.networkUuid(), op.from());
+            if (bus != null) {
+                return this.moveFromBus(op, mainframe, bus.port());
+            }
+        }
+        return this.operations.insert(op.item(), op.quantity(), op.priority(), MoveLabels.IQL);
+    }
+
+    /**
+     * Runs a MOVE.
+     *
+     * <p>A named bus on either side routes through its external inventory: to a bus exports, from a bus imports.
+     * Otherwise both sides name servers and it is an internal server-to-server move.
+     */
+    public ICliComputer.OpResult move(final IqlOperation op) {
+        final NetworkUuid net = this.terminal.networkUuid();
+        final MainframeBlockEntity mainframe = this.mainframe();
+        if (mainframe == null || net == null) {
+            return ICliComputer.OpResult.fail("the network has no running Mainframe");
+        }
+        final NamedBus.Located toBus = NamedBus.find(this.level, net, op.to());
+        if (toBus != null) {
+            return this.moveToBus(op, mainframe, toBus.port());
+        }
+        final NamedBus.Located fromBus = NamedBus.find(this.level, net, op.from());
+        if (fromBus != null) {
+            return this.moveFromBus(op, mainframe, fromBus.port());
+        }
+        final NodeUuid source = this.network.serverNamed(net, op.from());
+        final NodeUuid dest = this.network.serverNamed(net, op.to());
+        if (source == null) {
+            return ICliComputer.OpResult.fail("no server or bus named '" + op.from() + "'");
+        }
+        if (dest == null) {
+            return ICliComputer.OpResult.fail("no server or bus named '" + op.to() + "'");
+        }
+        final IDataSink destSink = this.serverSink(dest);
+        if (destSink == null) {
+            return ICliComputer.OpResult.fail("the destination server is unavailable");
+        }
+        final List<StorageKey> keys = this.keysFor(op.item(), source);
+        if (keys.isEmpty()) {
+            return op.isAnyItem() ? ICliComputer.OpResult.fail("nothing to move")
+                    : ICliComputer.OpResult.fail("unknown item: " + op.item());
+        }
+        int queued = 0;
+        for (final StorageKey key : keys) {
+            if (prioritize(mainframe.submitNetworkMove(key, OperationsService.demand(op.quantity()), destSink,
+                    this.terminal.originLabel(MoveLabels.IQL), Set.of(source)), op) != null) {
+                queued++;
+            }
+        }
+        return queued == 0 ? ICliComputer.OpResult.fail("could not start the MOVE")
+                : ICliComputer.OpResult.ok("MOVE queued: " + describe(op, keys)
+                        + " " + op.from() + " -> " + NetworkLookup.serverLabel(this.level, dest));
+    }
+
+    /** Network to a named bus's external inventory: a timed export, the same path the Export Bus uses. */
+    private ICliComputer.OpResult moveToBus(final IqlOperation op, final MainframeBlockEntity mainframe,
+                                            final ExternalDataPort port) {
+        if (port.isEmpty()) {
+            return ICliComputer.OpResult.fail("the bus '" + op.to() + "' touches no inventory");
+        }
+        final List<StorageKey> keys = this.keysFor(op.item(), null);
+        if (keys.isEmpty()) {
+            return op.isAnyItem() ? ICliComputer.OpResult.ok("nothing to move")
+                    : ICliComputer.OpResult.fail("unknown item: " + op.item());
+        }
+        final Map<StorageKey, Long> stock = NetworkStorage.of(this.level, this.terminal.networkUuid()).query();
+        int queued = 0;
+        for (final StorageKey key : keys) {
+            if (stock.getOrDefault(key, 0L) <= 0L) {
+                continue;
+            }
+            if (prioritize(mainframe.submitNetworkDelete(key, OperationsService.demand(op.quantity()), port,
+                    this.terminal.originLabel(MoveLabels.IQL)), op) != null) {
+                queued++;
+            }
+        }
+        return queued == 0 ? ICliComputer.OpResult.ok("nothing to move to " + op.to())
+                : ICliComputer.OpResult.ok("MOVE queued: " + describe(op, keys) + " -> " + op.to());
+    }
+
+    /**
+     * A named bus's external inventory to the network. Pulls from the bus and inserts into the network as a timed
+     * operation; anything the network cannot hold is returned to the source, so nothing is lost.
+     */
+    private ICliComputer.OpResult moveFromBus(final IqlOperation op, final MainframeBlockEntity mainframe,
+                                              final ExternalDataPort port) {
+        if (port.isEmpty()) {
+            return ICliComputer.OpResult.fail("the bus '" + op.from() + "' touches no inventory");
+        }
+        final List<StorageKey> keys = op.isAnyItem() ? port.available() : this.keysFor(op.item(), null);
+        if (keys.isEmpty()) {
+            return op.isAnyItem() ? ICliComputer.OpResult.ok("nothing to import")
+                    : ICliComputer.OpResult.fail("unknown item: " + op.item());
+        }
+        final long perKey = OperationsService.demand(op.quantity());
+        int queued = 0;
+        for (final StorageKey key : keys) {
+            final long avail = port.extract(key, perKey, true);
+            if (avail <= 0L) {
+                continue;
+            }
+            final long pulled = port.extract(key, avail, false);
+            if (pulled <= 0L) {
+                continue;
+            }
+            final NetworkInsertOperation insert = prioritize(
+                    mainframe.submitNetworkInsert(key, pulled, this.terminal.originLabel(MoveLabels.IQL)), op);
+            if (insert != null) {
+                insert.onSettle(() -> {
+                    final long left = insert.leftover();
+                    if (left > 0L) {
+                        port.insert(key, left, false); // the network could not hold it all: return to the source
+                    }
+                });
+                queued++;
+            } else {
+                port.insert(key, pulled, false); // dispatch failed (engine off): put it back, lose nothing
+            }
+        }
+        return queued == 0 ? ICliComputer.OpResult.ok("nothing to import from " + op.from())
+                : ICliComputer.OpResult.ok("MOVE queued: import from " + op.from());
+    }
+
+    /** Where a server's own storage takes what is moved into it, or null when that server cannot be reached. */
+    @Nullable
+    private IDataSink serverSink(final NodeUuid node) {
+        return NetworkSystem.get(this.level).locationOf(node)
+                .map(loc -> this.level.getBlockEntity(BlockPos.of(loc.rackPos()))
+                        instanceof ServerRackBlockEntity rack
+                        ? (IDataSink) new StoreSink(rack.getServerStorage(loc.slot()))
+                        : null)
+                .orElse(null);
     }
 
     /** A file of statements, read the way the shell reads any file. */

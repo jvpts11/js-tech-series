@@ -15,8 +15,6 @@ import dev.jstech.computers.machine.DriveTable;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.NetworkPathResolver;
 import dev.jstech.computers.operation.MoveLabels;
-import dev.jstech.computers.operation.NetworkStorage;
-import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.OsDef;
@@ -308,11 +306,6 @@ public final class ServerCliComputer implements ICliComputer {
         return operations().select(item, quantity, origin);
     }
 
-    /** True once this computer has left the world: a pull into its storage stops there instead of feeding a ghost. */
-    private java.util.function.BooleanSupplier hostGone() {
-        return operations().hostGone();
-    }
-
     @Override
     public List<OperationStat> operationStats() {
         return mainframeStats().work();
@@ -560,11 +553,11 @@ public final class ServerCliComputer implements ICliComputer {
     public OpResult execute(final IqlOperation op) {
         return switch (op.verb()) {
             case SELECT -> iql().select(op);
-            case INSERT -> executeInsert(op);
+            case INSERT -> iql().insert(op);
             case CRAFT -> craft(op.item(), op.quantity(), op.priority(), MoveLabels.IQL);
             case DELETE -> iql().destroy(op, "DELETE");
             case DROP -> iql().destroy(op, "DROP");
-            case MOVE -> executeMove(op);
+            case MOVE -> iql().move(op);
             case LOCK -> lock(op.item(), op.quantity());
             case UNLOCK -> unlock(op.item());
             case ANALYZE -> maintenance("analyze");
@@ -572,179 +565,6 @@ public final class ServerCliComputer implements ICliComputer {
             case REINDEX -> maintenance("reindex");
             case QUERY, COUNT -> OpResult.fail("a read does not run as an operation");
         };
-    }
-
-    /** The keys a statement targets, worked out where the language lives. */
-    private List<StorageKey> keysFor(final String item, final NodeUuid scopeServer) {
-        return iql().keysFor(item, scopeServer);
-    }
-
-    /** How a statement reads back, worded where the language lives. */
-    private static String describe(final IqlOperation op, final List<StorageKey> keys) {
-        return dev.jstech.computers.machine.IqlService.describe(op, keys);
-    }
-
-    /**
-     * INSERT from a named bus imports through that bus's external inventory; an INSERT with no bus source
-     * pushes this computer's local storage into the network, as it always did (the source name, if any, is
-     * then informational).
-     */
-    private OpResult executeInsert(final IqlOperation op) {
-        final MainframeBlockEntity mainframe = mainframe(host.networkUuid());
-        if (op.from() != null && !op.from().isBlank() && mainframe != null) {
-            final dev.jstech.computers.block.part.NamedBus.Located bus =
-                    dev.jstech.computers.block.part.NamedBus.find(level, host.networkUuid(), op.from());
-            if (bus != null) {
-                return moveFromBus(op, mainframe, bus.port());
-            }
-        }
-        return insert(op.item(), op.quantity(), op.priority(), MoveLabels.IQL);
-    }
-
-    /** Applies the statement's {@code PRIORITY} to a freshly submitted Operation, where the language lives. */
-    @org.jetbrains.annotations.Nullable
-    private static <T extends dev.jstech.computers.operation.INetworkOperation> T prioritize(
-            @org.jetbrains.annotations.Nullable final T operation, final IqlOperation statement) {
-        return dev.jstech.computers.machine.IqlService.prioritize(operation, statement);
-    }
-
-    private OpResult executeMove(final IqlOperation op) {
-        final NetworkUuid net = host.networkUuid();
-        final MainframeBlockEntity mainframe = mainframe(net);
-        if (mainframe == null || net == null) {
-            return OpResult.fail("the network has no running Mainframe");
-        }
-        /*
-         * A named bus on either side routes through its external inventory: TO a bus EXPORTS, FROM a bus
-         * IMPORTS. Otherwise both sides name servers and it is an internal server-to-server move.
-         */
-        final dev.jstech.computers.block.part.NamedBus.Located toBus =
-                dev.jstech.computers.block.part.NamedBus.find(level, net, op.to());
-        if (toBus != null) {
-            return moveToBus(op, mainframe, toBus.port());
-        }
-        final dev.jstech.computers.block.part.NamedBus.Located fromBus =
-                dev.jstech.computers.block.part.NamedBus.find(level, net, op.from());
-        if (fromBus != null) {
-            return moveFromBus(op, mainframe, fromBus.port());
-        }
-        final NodeUuid source = resolveServer(net, op.from());
-        final NodeUuid dest = resolveServer(net, op.to());
-        if (source == null) {
-            return OpResult.fail("no server or bus named '" + op.from() + "'");
-        }
-        if (dest == null) {
-            return OpResult.fail("no server or bus named '" + op.to() + "'");
-        }
-        final dev.jstech.computers.storage.IDataSink destSink = serverSink(dest);
-        if (destSink == null) {
-            return OpResult.fail("the destination server is unavailable");
-        }
-        final List<StorageKey> keys = keysFor(op.item(), source);
-        if (keys.isEmpty()) {
-            return op.isAnyItem() ? OpResult.fail("nothing to move") : OpResult.fail("unknown item: " + op.item());
-        }
-        int queued = 0;
-        for (final StorageKey key : keys) {
-            if (prioritize(mainframe.submitNetworkMove(key, demand(op.quantity()), destSink,
-                    host.originLabel(MoveLabels.IQL), java.util.Set.of(source)), op) != null) {
-                queued++;
-            }
-        }
-        return queued == 0 ? OpResult.fail("could not start the MOVE")
-                : OpResult.ok("MOVE queued: " + describe(op, keys)
-                        + " " + op.from() + " -> " + NetworkLookup.serverLabel(level, dest));
-    }
-
-    /** Network -> a named bus's external inventory: a timed export, the same path the Export Bus uses. */
-    private OpResult moveToBus(final IqlOperation op, final MainframeBlockEntity mainframe,
-                               final dev.jstech.computers.storage.ExternalDataPort port) {
-        if (port.isEmpty()) {
-            return OpResult.fail("the bus '" + op.to() + "' touches no inventory");
-        }
-        final List<StorageKey> keys = keysFor(op.item(), null);
-        if (keys.isEmpty()) {
-            return op.isAnyItem() ? OpResult.ok("nothing to move") : OpResult.fail("unknown item: " + op.item());
-        }
-        final java.util.Map<StorageKey, Long> stock = NetworkStorage.of(level, host.networkUuid()).query();
-        int queued = 0;
-        for (final StorageKey key : keys) {
-            if (stock.getOrDefault(key, 0L) <= 0L) {
-                continue;
-            }
-            if (prioritize(mainframe.submitNetworkDelete(key, demand(op.quantity()), port,
-                    host.originLabel(MoveLabels.IQL)), op) != null) {
-                queued++;
-            }
-        }
-        return queued == 0 ? OpResult.ok("nothing to move to " + op.to())
-                : OpResult.ok("MOVE queued: " + describe(op, keys) + " -> " + op.to());
-    }
-
-    /**
-     * A named bus's external inventory -> network. Pulls from the bus and inserts into the network as a
-     * timed operation; anything the network cannot hold is returned to the source, so nothing is lost.
-     */
-    private OpResult moveFromBus(final IqlOperation op, final MainframeBlockEntity mainframe,
-                                 final dev.jstech.computers.storage.ExternalDataPort port) {
-        if (port.isEmpty()) {
-            return OpResult.fail("the bus '" + op.from() + "' touches no inventory");
-        }
-        final List<StorageKey> keys = op.isAnyItem() ? port.available() : keysFor(op.item(), null);
-        if (keys.isEmpty()) {
-            return op.isAnyItem() ? OpResult.ok("nothing to import") : OpResult.fail("unknown item: " + op.item());
-        }
-        final long perKey = demand(op.quantity());
-        int queued = 0;
-        for (final StorageKey key : keys) {
-            final long avail = port.extract(key, perKey, true);
-            if (avail <= 0L) {
-                continue;
-            }
-            final long pulled = port.extract(key, avail, false);
-            if (pulled <= 0L) {
-                continue;
-            }
-            final dev.jstech.computers.operation.NetworkInsertOperation insert =
-                    prioritize(mainframe.submitNetworkInsert(key, pulled, host.originLabel(MoveLabels.IQL)), op);
-            if (insert != null) {
-                insert.onSettle(() -> {
-                    final long left = insert.leftover();
-                    if (left > 0L) {
-                        port.insert(key, left, false); // the network could not hold it all: return to the source
-                    }
-                });
-                queued++;
-            } else {
-                port.insert(key, pulled, false); // dispatch failed (engine off): put it back, lose nothing
-            }
-        }
-        return queued == 0 ? OpResult.ok("nothing to import from " + op.from())
-                : OpResult.ok("MOVE queued: import from " + op.from());
-    }
-
-    private NodeUuid resolveServer(final NetworkUuid net, final String name) {
-        if (name == null || name.isBlank()) {
-            return null;
-        }
-        for (final dev.jstech.core.network.ServerNode server
-                : NetworkSystem.get(level).serversOf(net)) {
-            if (NetworkLookup.serverLabel(level, server.nodeUuid()).equalsIgnoreCase(name)) {
-                return server.nodeUuid();
-            }
-        }
-        return null;
-    }
-
-    private dev.jstech.computers.storage.IDataSink serverSink(final NodeUuid node) {
-        return NetworkSystem.get(level).locationOf(node)
-                .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos()))
-                        instanceof dev.jstech.computers.blockentity.ServerRackBlockEntity rack
-                        ? (dev.jstech.computers.storage.IDataSink)
-                                new dev.jstech.computers.storage.StoreSink(
-                                        rack.getServerStorage(loc.slot()))
-                        : null)
-                .orElse(null);
     }
 
     // helpers
@@ -778,16 +598,6 @@ public final class ServerCliComputer implements ICliComputer {
             return null;
         }
         return BuiltInRegistries.ITEM.getOptional(location).orElse(null);
-    }
-
-    /** Resolves a parsed quantity to a concrete demand: ALL or unspecified means "as much as possible". */
-    private static long demand(final long quantity) {
-        return dev.jstech.computers.machine.OperationsService.demand(quantity);
-    }
-
-    /** How a quantity reads back to the player: a real count, or {@code "all"} for ALL/unspecified. */
-    private static String qtyLabel(final long quantity) {
-        return dev.jstech.computers.machine.OperationsService.qtyLabel(quantity);
     }
 
     // filesystem
