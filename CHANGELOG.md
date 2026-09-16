@@ -30,6 +30,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Added
+- A machine in a rack now installs a system the way any other machine does. The bay keeps the copy and the
+  installer it is in, written onto the Server item with the rest of its session, so the work goes on with nobody
+  watching, takes the time it costs and is still going when the world comes back. It used to be written to the
+  bay's disk there and then, in no time at all, with no installer and nothing to watch. Where a rack holds more
+  than one machine, the installer's pages only reach the monitor while the KVM switch is on that machine's
+  channel, so a page meant for one bay never lands in front of somebody looking at another.
 - What was chosen while installing a system by hand now survives into it. The machine answers to the name the
   installer was given, and its prompt and the network use it. The packages asked for inside the new system are
   really installed on it. The filesystem table goes onto the disk it describes, so the installed system can read

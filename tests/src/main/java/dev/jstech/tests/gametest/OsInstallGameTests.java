@@ -18,6 +18,8 @@ import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.install.OsInstallJob;
+import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
@@ -322,6 +324,79 @@ public final class OsInstallGameTests {
                     helper.assertTrue(MonitorBlock.entryFor(mainframe) == MonitorBlock.Entry.BOOT
                                     && mainframe.pendingInstallSlot() == IOsHost.NO_PENDING_INSTALL,
                             "with the installed disk gone the machine falls back to its boot target");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A machine in a rack holds its own copy, like any other machine.
+     *
+     * <p>It used to be written to there and then, because a bay had nowhere to keep the work: the copy took no
+     * time, survived nothing and could not be watched. It keeps one now, on the Server item with the rest of
+     * its session, so it goes on with nobody looking and is still going after a save.
+     */
+    @GameTest(template = ARENA)
+    public static void rackUnit_keepsItsOwnCopyRatherThanBeingWrittenToAtOnce(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos, ComputingModule.SERVER_RACK.get());
+        if (!(helper.getBlockEntity(pos) instanceof ServerRackBlockEntity rack)) {
+            helper.fail("no rack at " + pos);
+            return;
+        }
+        TestWorldBuilder.mountDefaultServer(rack, 0);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final IOsHost unit = rack.unitHost(0);
+                    helper.assertTrue(unit.keepsInstalls(), "a bay can hold a copy of its own now");
+
+                    final OsInstallJob job = new OsInstallJob(DEBIAN.toString(), 0,
+                            OsInstallJob.NO_READER, 40, 40);
+                    unit.setInstalling(job);
+                    helper.assertTrue(unit.installing() != null, "the bay took the copy on");
+                    helper.assertTrue(!unit.hasOs(), "and nothing is on its drive yet");
+
+                    final CompoundTag onItem = rack.getServers().getStackInSlot(0)
+                            .get(ComputingModule.SERVER_CONSOLE.get());
+                    helper.assertTrue(onItem != null && onItem.contains("Installing"),
+                            "the copy is flushed onto the Server item, so a save keeps it");
+
+                    for (int i = 0; i <= job.ticksTotal(); i++) {
+                        OsInstallRunner.tick(unit, helper.getLevel(), pos);
+                    }
+                    helper.assertTrue(DEBIAN.equals(unit.installedOsId()),
+                            "and when it ends the system is on the bay's drive; got " + unit.installedOsId());
+                    helper.assertTrue(unit.installing() == null, "with the copy over");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * Two machines in one rack, one monitor: only the bay the switch is on is being looked at.
+     *
+     * <p>The bays all share the rack's position, so the watcher lookup cannot tell them apart. That makes this
+     * the one place a page for one machine could land in front of somebody watching another, and the reason
+     * every installer screen asks the machine whether it is the one on screen before it sends anything.
+     */
+    @GameTest(template = ARENA)
+    public static void rackUnits_onlyTheBayTheSwitchIsOnIsOnScreen(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos, ComputingModule.SERVER_RACK.get());
+        if (!(helper.getBlockEntity(pos) instanceof ServerRackBlockEntity rack)) {
+            helper.fail("no rack at " + pos);
+            return;
+        }
+        TestWorldBuilder.mountDefaultServer(rack, 0);
+        TestWorldBuilder.mountDefaultServer(rack, 1);
+        rack.getServers().setStackInSlot(2, new ItemStack(ComputingModule.KVM_SWITCH.get()));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertTrue(rack.hasKvmSwitch(), "the switch is mounted");
+                    rack.setActiveChannel(0);
+                    helper.assertTrue(rack.unitHost(0).onScreen(), "the bay the switch is on is on screen");
+                    helper.assertTrue(!rack.unitHost(1).onScreen(), "and the other bay is not");
+                    rack.setActiveChannel(1);
+                    helper.assertTrue(!rack.unitHost(0).onScreen(), "switching channels moves it over");
+                    helper.assertTrue(rack.unitHost(1).onScreen(), "to the bay now being shown");
                 })
                 .thenSucceed();
     }

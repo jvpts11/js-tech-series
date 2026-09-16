@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.firmware;
 
-import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.InstallerActionPayload;
@@ -42,7 +42,7 @@ public final class InstallerPayloads {
 
     private static void handleAction(final InstallerActionPayload payload, final ServerPlayer player,
                                      final ServerLevel level) {
-        if (!(level.getBlockEntity(payload.hostPos()) instanceof AbstractComputerBlockEntity machine)) {
+        if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost machine)) {
             return;
         }
         final InstallerFlow flow = machine.installer();
@@ -84,7 +84,7 @@ public final class InstallerPayloads {
         if (!wasStarted && flow.started() && flow.eraseSlot() != InstallerFlow.NO_DISK) {
             machine.formatDisk(flow.eraseSlot());
         }
-        machine.setChanged();
+        machine.markChanged();
         OsInstallRunner.show(level, machine, payload.hostPos(), flow);
     }
 
@@ -94,7 +94,7 @@ public final class InstallerPayloads {
      * <p>Only ever while nothing has been done: every installer that offers a desktop asks for it before it
      * copies anything, which is what makes this safe rather than a clock that jumps under a running bar.
      */
-    private static void resize(final AbstractComputerBlockEntity machine, final InstallerFlow flow) {
+    private static void resize(final IOsHost machine, final InstallerFlow flow) {
         final OsInstallJob job = machine.installing();
         if (job == null || job.ticksLeft() != job.ticksTotal()) {
             return;
@@ -104,7 +104,7 @@ public final class InstallerPayloads {
     }
 
     /** Leaving with nothing written, which the pages before the work allow and the work itself does not. */
-    private static void quit(final AbstractComputerBlockEntity machine, final ServerPlayer player,
+    private static void quit(final IOsHost machine, final ServerPlayer player,
                              final ServerLevel level, final InstallerActionPayload payload) {
         final InstallerFlow flow = machine.installer();
         if (flow == null || !flow.quittable()) {
@@ -118,7 +118,7 @@ public final class InstallerPayloads {
     }
 
     /** The last page's one action: restart into the system that was just written. */
-    private static void reboot(final AbstractComputerBlockEntity machine, final ServerPlayer player,
+    private static void reboot(final IOsHost machine, final ServerPlayer player,
                                final ServerLevel level, final InstallerActionPayload payload,
                                final InstallerFlow flow) {
         final int slot = flow.targetSlot();

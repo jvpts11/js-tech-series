@@ -299,7 +299,18 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return level == null ? 0 : power.postRemaining(level.getGameTime());
     }
 
+    @Override
+    public boolean keepsInstalls() {
+        return true;
+    }
+
+    @Override
+    public void markChanged() {
+        setChanged();
+    }
+
     /** The system being copied onto a disk right now, or nothing. */
+    @Override
     @Nullable
     public dev.jstech.computers.os.install.OsInstallJob installing() {
         return session.installing();

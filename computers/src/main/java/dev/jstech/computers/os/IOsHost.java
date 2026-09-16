@@ -148,6 +148,50 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
     }
 
     /**
+     * A system being copied onto this machine's disks right now, or nothing.
+     *
+     * <p>A machine that cannot hold one answers nothing and is installed the moment it is asked, which is what
+     * a host with nowhere to keep the work has to do.
+     */
+    @Nullable
+    default dev.jstech.computers.os.install.OsInstallJob installing() {
+        return null;
+    }
+
+    /** Starts, replaces or ends the copy this machine is doing; a host that keeps none does nothing. */
+    default void setInstalling(@Nullable final dev.jstech.computers.os.install.OsInstallJob job) {
+    }
+
+    /** The installer this machine is in: the page it is on and what has been answered so far. */
+    @Nullable
+    default dev.jstech.computers.os.install.InstallerFlow installer() {
+        return null;
+    }
+
+    /** Puts the machine in an installer, or takes it out of one. */
+    default void setInstaller(@Nullable final dev.jstech.computers.os.install.InstallerFlow flow) {
+    }
+
+    /** Whether this machine can hold a copy of its own rather than being written to there and then. */
+    default boolean keepsInstalls() {
+        return false;
+    }
+
+    /**
+     * Whether a monitor watching this machine's block is showing THIS machine right now.
+     *
+     * <p>Every machine in a rack shares the rack's position, and its monitor shows one of them at a time, so a
+     * screen meant for one of them must not be put in front of somebody looking at another.
+     */
+    default boolean onScreen() {
+        return true;
+    }
+
+    /** Tells the world this machine's state changed, so it is written with the block that holds it. */
+    default void markChanged() {
+    }
+
+    /**
      * What the system this machine boots remembers about being greeted, and whether its welcome comes back.
      *
      * <p>A host that does not keep it answers that nobody has met its system, which is what a machine with no

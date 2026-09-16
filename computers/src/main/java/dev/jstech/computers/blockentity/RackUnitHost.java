@@ -71,6 +71,49 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
+    public boolean keepsInstalls() {
+        return true;
+    }
+
+    @Override
+    @Nullable
+    public dev.jstech.computers.os.install.OsInstallJob installing() {
+        return rack.asUnit(row, rack::installing);
+    }
+
+    @Override
+    public void setInstalling(@Nullable final dev.jstech.computers.os.install.OsInstallJob job) {
+        rack.asUnit(row, () -> {
+            rack.setInstalling(job);
+            return null;
+        });
+    }
+
+    @Override
+    @Nullable
+    public dev.jstech.computers.os.install.InstallerFlow installer() {
+        return rack.asUnit(row, rack::installer);
+    }
+
+    @Override
+    public void setInstaller(@Nullable final dev.jstech.computers.os.install.InstallerFlow flow) {
+        rack.asUnit(row, () -> {
+            rack.setInstaller(flow);
+            return null;
+        });
+    }
+
+    @Override
+    public boolean onScreen() {
+        return rack.asUnit(row, rack::onScreen);
+    }
+
+    @Override
+    public void markChanged() {
+        rack.setChanged();
+    }
+
+    @Override
     @Nullable
     public ResourceLocation bootedDesktopId() {
         return rack.asUnit(row, rack::bootedDesktopId);

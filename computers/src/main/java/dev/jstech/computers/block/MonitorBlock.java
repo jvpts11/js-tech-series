@@ -209,26 +209,26 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         if (computer.needsPost()) {
             return Entry.POST;
         }
-        if (computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine) {
-            if (machine.installing() != null) {
+        if (computer.installing() != null) {
+            return Entry.INSTALLING;
+        }
+        /*
+         * An installer holds the machine from its first page to the restart that ends it, so the last page
+         * still counts as being in one even with nothing left to copy. It only holds it while what it wrote
+         * is still there, though: a disk formatted or pulled between the install and the restart leaves
+         * nothing to restart into, and the machine goes back to whatever it would boot.
+         */
+        final dev.jstech.computers.os.install.InstallerFlow installer = computer.installer();
+        if (installer != null) {
+            final int wrote = installer.targetSlot();
+            final boolean systemStillThere = wrote < 0 ? computer.hasOs()
+                    : dev.jstech.computers.os.OsDisks.hasSystem(computer.diskInSlot(wrote));
+            if (systemStillThere) {
                 return Entry.INSTALLING;
             }
-            /*
-             * An installer holds the machine from its first page to the restart that ends it, so the last page
-             * still counts as being in one even with nothing left to copy. It only holds it while what it wrote
-             * is still there, though: a disk formatted or pulled between the install and the restart leaves
-             * nothing to restart into, and the machine goes back to whatever it would boot.
-             */
-            final dev.jstech.computers.os.install.InstallerFlow installer = machine.installer();
-            if (installer != null) {
-                final int wrote = installer.targetSlot();
-                final boolean systemStillThere = wrote < 0 ? computer.hasOs()
-                        : dev.jstech.computers.os.OsDisks.hasSystem(computer.diskInSlot(wrote));
-                if (systemStillThere) {
-                    return Entry.INSTALLING;
-                }
-                machine.setInstaller(null);
-            }
+            computer.setInstaller(null);
+        }
+        if (computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine) {
             if (machine.atBootMenu()) {
                 return Entry.BOOT_MENU;
             }
@@ -311,11 +311,8 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
     /** Sends the client the copy this machine is in the middle of, at the point the machine has reached. */
     private static void openInstallProgress(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                             final BlockPos owner, final IOsHost computer) {
-        if (!(computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine)) {
-            return;
-        }
-        final dev.jstech.computers.os.install.InstallerFlow flow = machine.installer();
-        final dev.jstech.computers.os.install.OsInstallJob job = machine.installing();
+        final dev.jstech.computers.os.install.InstallerFlow flow = computer.installer();
+        final dev.jstech.computers.os.install.OsInstallJob job = computer.installing();
         if (flow != null) {
             /*
              * The installer is the machine's, so a monitor opened halfway through is put on the page the

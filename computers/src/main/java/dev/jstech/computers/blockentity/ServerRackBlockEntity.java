@@ -282,6 +282,18 @@ public class ServerRackBlockEntity extends BlockEntity
         final List<dev.jstech.computers.os.OpenWindow> openWindows = new ArrayList<>();
         /** A guided installer that wrote the system but is still waiting for its reboot. */
         int pendingInstallSlot = dev.jstech.computers.os.IOsHost.NO_PENDING_INSTALL;
+        /*
+         * A system being copied onto this machine's drives right now, and the installer it belongs to. Kept per
+         * bay and flushed onto the Server item with the rest of its session: a machine in a rack is a machine,
+         * and its copy has to survive a save and go on with nobody watching, like any other's.
+         */
+        @org.jetbrains.annotations.Nullable
+        dev.jstech.computers.os.install.OsInstallJob installing;
+        @org.jetbrains.annotations.Nullable
+        dev.jstech.computers.os.install.InstallerFlow installer;
+        /** The installer's answers, waiting for a level to build it back from after a reload. */
+        @org.jetbrains.annotations.Nullable
+        net.minecraft.nbt.CompoundTag installerMemo;
         /** The recipe drafts the Pattern Studio edits on this machine; ride on the Server item like the windows. */
         final dev.jstech.computers.crafting.PatternWorkbench studio =
                 new dev.jstech.computers.crafting.PatternWorkbench();
@@ -306,6 +318,13 @@ public class ServerRackBlockEntity extends BlockEntity
                         saved.getList("OpenWindows", net.minecraft.nbt.Tag.TAG_COMPOUND)));
                 state.pendingInstallSlot = saved.contains("PendingInstall") ? saved.getInt("PendingInstall")
                         : dev.jstech.computers.os.IOsHost.NO_PENDING_INSTALL;
+                if (saved.contains("Installing")) {
+                    final net.minecraft.nbt.CompoundTag copying = saved.getCompound("Installing");
+                    state.installing = new dev.jstech.computers.os.install.OsInstallJob(
+                            copying.getString("Os"), copying.getInt("Slot"), copying.getLong("Reader"),
+                            copying.getInt("Total"), copying.getInt("Left"));
+                }
+                state.installerMemo = saved.contains("Installer") ? saved.getCompound("Installer") : null;
                 if (saved.contains("Studio") && getLevel() != null) {
                     state.studio.load(saved.getCompound("Studio"), getLevel().registryAccess());
                 }
@@ -364,6 +383,19 @@ public class ServerRackBlockEntity extends BlockEntity
         }
         if (state.pendingInstallSlot != dev.jstech.computers.os.IOsHost.NO_PENDING_INSTALL) {
             tag.putInt("PendingInstall", state.pendingInstallSlot);
+        }
+        if (state.installing != null) {
+            final net.minecraft.nbt.CompoundTag copying = new net.minecraft.nbt.CompoundTag();
+            copying.putString("Os", state.installing.osId());
+            copying.putInt("Slot", state.installing.targetSlot());
+            copying.putLong("Reader", state.installing.readerPos());
+            copying.putInt("Total", state.installing.ticksTotal());
+            copying.putInt("Left", state.installing.ticksLeft());
+            tag.put("Installing", copying);
+        }
+        final net.minecraft.nbt.CompoundTag pages = installerPages(state);
+        if (pages != null) {
+            tag.put("Installer", pages);
         }
         if (getLevel() != null) {
             final net.minecraft.nbt.CompoundTag studioTag = new net.minecraft.nbt.CompoundTag();
@@ -960,8 +992,10 @@ public class ServerRackBlockEntity extends BlockEntity
             }
             final UUID node = ensureNodeUuid(stack);
             present.add(node);
-            // A server setting a program up keeps copying while it is a powered node.
+            // A server setting a program up keeps copying while it is a powered node, and so does one
+            // having a system put on it: a machine in a rack is a machine.
             dev.jstech.computers.os.install.SetupRunner.tick(unitHost(i), level, worldPosition);
+            dev.jstech.computers.os.install.OsInstallRunner.tick(unitHost(i), level, worldPosition);
 
             final NetworkUuid previous = registered.get(node);
             if (network == null) {
@@ -1337,6 +1371,96 @@ public class ServerRackBlockEntity extends BlockEntity
         final int slot = soleComputerSlot();
         return slot < 0 ? dev.jstech.computers.os.IOsHost.NO_PENDING_INSTALL
                 : unitState(slot).pendingInstallSlot;
+    }
+
+    @Override
+    @org.jetbrains.annotations.Nullable
+    public dev.jstech.computers.os.install.OsInstallJob installing() {
+        final int slot = soleComputerSlot();
+        return slot < 0 ? null : unitState(slot).installing;
+    }
+
+    @Override
+    public void setInstalling(@org.jetbrains.annotations.Nullable
+                              final dev.jstech.computers.os.install.OsInstallJob job) {
+        final int slot = soleComputerSlot();
+        if (slot >= 0) {
+            unitState(slot).installing = job;
+            flushConsole(slot);
+            setChanged();
+        }
+    }
+
+    @Override
+    @org.jetbrains.annotations.Nullable
+    public dev.jstech.computers.os.install.InstallerFlow installer() {
+        final int slot = soleComputerSlot();
+        if (slot < 0) {
+            return null;
+        }
+        final UnitState state = unitState(slot);
+        /*
+         * Built back from the answers the first time it is asked for after a reload, since the disks and the
+         * desktops it offers are read off the world and a rack is loaded before it can reach one.
+         */
+        if (state.installer == null && state.installerMemo != null && getLevel() instanceof ServerLevel level) {
+            final net.minecraft.nbt.CompoundTag memo = state.installerMemo;
+            state.installerMemo = null;
+            final dev.jstech.computers.os.OsDef system = dev.jstech.computers.os.OsRegistry.getOs(
+                    net.minecraft.resources.ResourceLocation.tryParse(memo.getString("Os")));
+            if (system != null) {
+                state.installer = dev.jstech.computers.os.install.Installers.restored(unitHost(slot), level,
+                        system, memo.getInt("Copy"), memo.getInt("Stage"), memo.getInt("Slot"),
+                        memo.getString("Name"), memo.getString("Desktop"), memo.getInt("Erase"));
+            }
+        }
+        return state.installer;
+    }
+
+    @Override
+    public void setInstaller(@org.jetbrains.annotations.Nullable
+                             final dev.jstech.computers.os.install.InstallerFlow flow) {
+        final int slot = soleComputerSlot();
+        if (slot >= 0) {
+            unitState(slot).installer = flow;
+            unitState(slot).installerMemo = null;
+            flushConsole(slot);
+            setChanged();
+        }
+    }
+
+    @Override
+    public boolean keepsInstalls() {
+        return true;
+    }
+
+    @Override
+    public boolean onScreen() {
+        // The switch shows one machine at a time, so only the bay it is on is the one being looked at.
+        final int slot = soleComputerSlot();
+        return slot >= 0 && (!hasKvmSwitch() || activeChannel() == slot);
+    }
+
+    @Override
+    public void markChanged() {
+        setChanged();
+    }
+
+    /** The installer's answers as they are written onto the Server item, or null when the bay is in none. */
+    @org.jetbrains.annotations.Nullable
+    private static net.minecraft.nbt.CompoundTag installerPages(final UnitState state) {
+        if (state.installer == null) {
+            return state.installerMemo;
+        }
+        final net.minecraft.nbt.CompoundTag pages = new net.minecraft.nbt.CompoundTag();
+        pages.putString("Os", state.installer.systemId());
+        pages.putInt("Copy", state.installer.copyTicks());
+        pages.putInt("Stage", state.installer.stageIndex());
+        pages.putInt("Slot", state.installer.targetSlot());
+        pages.putString("Name", state.installer.computerName());
+        pages.putString("Desktop", state.installer.desktopId());
+        pages.putInt("Erase", state.installer.eraseSlot());
+        return pages;
     }
 
     @Override

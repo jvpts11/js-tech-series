@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.os.install;
 
-import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.os.FirmwareKind;
@@ -40,7 +40,7 @@ public final class OsInstallRunner {
     }
 
     /** One tick of whatever copy this machine is doing, if it is doing one. */
-    public static void tick(final AbstractComputerBlockEntity machine, final ServerLevel level, final BlockPos pos) {
+    public static void tick(final IOsHost machine, final ServerLevel level, final BlockPos pos) {
         final OsInstallJob job = machine.installing();
         if (job == null) {
             return;
@@ -57,7 +57,7 @@ public final class OsInstallRunner {
             return;
         }
         if (flow == null && !job.tick()) {
-            machine.setChanged();
+            machine.markChanged();
             return;
         }
         finish(machine, level, pos, job, flow, system);
@@ -72,11 +72,11 @@ public final class OsInstallRunner {
      * <p>A screen watching this is not told every tick: it holds the same installer and walks the same clock,
      * and is only sent the page again when the page really changes, which is the one thing it cannot work out.
      */
-    private static boolean carry(final AbstractComputerBlockEntity machine, final ServerLevel level,
+    private static boolean carry(final IOsHost machine, final ServerLevel level,
                                  final BlockPos pos, final OsInstallJob job, final InstallerFlow flow) {
         if (job.ticksTotal() - job.ticksLeft() < flow.ticksUnlocked()) {
             job.tick();
-            machine.setChanged();
+            machine.markChanged();
         }
         if (flow.advance(job.ticksTotal() - job.ticksLeft()) && !job.finished()) {
             show(level, machine, pos, flow);
@@ -85,7 +85,7 @@ public final class OsInstallRunner {
     }
 
     /** Writes the system, gives the machine the name it was asked for, and leaves the installer on its last page. */
-    private static void finish(final AbstractComputerBlockEntity machine, final ServerLevel level,
+    private static void finish(final IOsHost machine, final ServerLevel level,
                                final BlockPos pos, final OsInstallJob job, @Nullable final InstallerFlow flow,
                                @Nullable final OsDef system) {
         machine.setInstalling(null);
@@ -108,19 +108,19 @@ public final class OsInstallRunner {
         name(machine, flow);
         desktop(machine, flow);
         flow.goTo(InstallerPage.DONE);
-        machine.setChanged();
+        machine.markChanged();
         show(level, machine, pos, flow);
     }
 
     /** The name the installer asked for becomes the name the prompt and the network use. */
-    private static void name(final AbstractComputerBlockEntity machine, final InstallerFlow flow) {
+    private static void name(final IOsHost machine, final InstallerFlow flow) {
         if (machine.console() != null && !flow.computerName().isBlank()) {
             machine.console().setComputerName(flow.computerName());
         }
     }
 
     /** A desktop chosen from the Mirror is installed with the system, which is what its own step paid for. */
-    private static void desktop(final AbstractComputerBlockEntity machine, final InstallerFlow flow) {
+    private static void desktop(final IOsHost machine, final InstallerFlow flow) {
         final InstallerFlow.Desktop chosen = flow.desktop();
         if (chosen != null && machine.console() != null) {
             machine.console().install(chosen.id());
@@ -139,8 +139,16 @@ public final class OsInstallRunner {
     }
 
     /** Puts every player watching this machine on the installer's page, wherever it has got to. */
-    public static void show(final ServerLevel level, final AbstractComputerBlockEntity machine, final BlockPos pos,
+    public static void show(final ServerLevel level, final IOsHost machine, final BlockPos pos,
                             final InstallerFlow flow) {
+        if (!machine.onScreen()) {
+            /*
+             * Every machine in a rack shares the rack's position and its monitor shows one of them at a time,
+             * so a page for one of them must not land in front of somebody looking at another. The work goes
+             * on regardless; whoever switches to this one is put where it has got to.
+             */
+            return;
+        }
         final OsInstallJob job = machine.installing();
         final int done = job == null ? flow.ticksTotal() : job.ticksTotal() - job.ticksLeft();
         ScreenSessions.eachWatcher(level, pos, (player, monitor) -> {
@@ -151,8 +159,11 @@ public final class OsInstallRunner {
     }
 
     /** Puts every player watching this machine on the installer's last beat, finished or refused. */
-    private static void tell(final ServerLevel level, final AbstractComputerBlockEntity machine, final BlockPos pos,
+    private static void tell(final ServerLevel level, final IOsHost machine, final BlockPos pos,
                              final OsInstallJob job, @Nullable final OsDef system, final String failure) {
+        if (!machine.onScreen()) {
+            return;
+        }
         final HardwareEra era = machine.displayEra();
         final int kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD).id();
         final String name = system != null ? system.displayName() : job.osId();

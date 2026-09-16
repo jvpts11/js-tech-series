@@ -453,16 +453,17 @@ public final class FirmwarePayloads {
                             + def.footprintMb() + " MB needed).";
             /*
              * A machine that holds a copy of its own takes as long over it as the system is big and the medium
-             * is slow, and goes on with it whether or not anybody is watching. A bay in a rack holds no copy of
-             * its own yet, so it writes the system there and then, the way every machine used to.
+             * is slow, and goes on with it whether or not anybody is watching. A host with nowhere to keep the
+             * work writes the system there and then, the way every machine used to.
              */
-            if (!(computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine)) {
+            if (!computer.keepsInstalls()) {
                 if (computer.installOs(def.id(), targetSlot)) {
                     computer.setPendingInstallSlot(targetSlot);
                     return null;
                 }
                 return noRoom;
             }
+            final IOsHost machine = computer;
             /*
              * Room is no longer asked once and for all here: the installer offers the disks and the player
              * chooses one, and a disk that is full can be erased on the way. What still stops it before it
