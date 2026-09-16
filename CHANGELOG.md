@@ -30,6 +30,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Added
+- A hand-installed distribution now goes through the steps it was missing. `grub-install` installs the
+  bootloader for the firmware the machine really has: on an older one it goes on the disk and says so, on a
+  modern one it goes in the boot partition and refuses with nowhere to put it. `grub-mkconfig` writes the list
+  of what to start, generated from the system that is really installed, and `mkinitcpio` builds what the kernel
+  is handed at boot. `hostname` names the machine and writes it into the new system's own file. A reboot before
+  any of those says which one is missing, since a bootloader with nothing to start starts nothing.
 - A disk can be partitioned by hand before a distribution is installed on it. `fdisk /dev/sdX` opens the
   partition editor with its own one-letter commands: `g` for a new table, `n` for a partition (`n 512M`, or
   nothing for the rest of the disk), `t 1 uefi` to mark the one the firmware boots from, and `p`, `d`, `m`, `w`

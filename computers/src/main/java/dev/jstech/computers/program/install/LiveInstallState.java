@@ -160,6 +160,12 @@ public final class LiveInstallState {
     private long kernelReadyAt = -1;  // gentoo: kernel sources compile finishes at this tick
     private boolean kernelBuilt;      // gentoo: genkernel done
     private boolean bootloader;
+    /** Whether the bootloader has been given its list of what to start. */
+    private boolean grubConfig;
+    /** Whether the image the kernel is handed at boot has been built, which only one of the two needs. */
+    private boolean initramfs;
+    /** The name the player gave the machine, empty while they have not. */
+    private String chosenName = "";
     private boolean password;
 
     public LiveInstallState(final Distro distro) {
@@ -187,9 +193,15 @@ public final class LiveInstallState {
                     "  4. pacstrap /mnt base linux                the base system, over the network Mirror",
                     "  5. genfstab -U /mnt >> /mnt/etc/fstab      write the filesystem table",
                     "  6. arch-chroot /mnt                        enter the new system",
-                    "  7. grub-install /dev/sdX                   the bootloader",
-                    "  8. passwd                                  a root password",
-                    "  9. exit, then reboot",
+                    "  7. hostname <name>                         name the machine",
+                    "  8. mkinitcpio -P                           the image the kernel is handed at boot",
+                    "  9. grub-install /dev/sdX                   the bootloader",
+                    " 10. grub-mkconfig -o /boot/grub/grub.cfg    what it should start",
+                    " 11. passwd                                  a root password",
+                    " 12. exit, then reboot",
+                    "",
+                    "A machine that boots the modern way needs a partition for the bootloader: fdisk, then",
+                    "t <n> uefi, mkfs.fat -F32 /dev/sdXn, and mount it at /mnt/boot.",
                     "",
                     "Read a file with cat or less. A Mainframe on this network must run the Mirror.");
         }
@@ -204,8 +216,13 @@ public final class LiveInstallState {
                 "  6. emerge --sync                           fetch the portage tree",
                 "  7. emerge sys-kernel/gentoo-sources        a real compile, and a real wait",
                 "  8. genkernel all                           build the kernel once it is done",
-                "  9. grub-install /dev/sdX                   the bootloader",
-                " 10. passwd, then exit, then reboot",
+                "  9. hostname <name>                         name the machine",
+                " 10. grub-install /dev/sdX                   the bootloader",
+                " 11. grub-mkconfig -o /boot/grub/grub.cfg    what it should start",
+                " 12. passwd, then exit, then reboot",
+                "",
+                "A machine that boots the modern way needs a partition for the bootloader: fdisk, then",
+                "t <n> uefi, mkfs.fat -F32 /dev/sdXn, and mount it at /mnt/boot.",
                 "",
                 "Read a file with cat or less. A Mainframe on this network must run the Mirror.");
     }
@@ -243,6 +260,11 @@ public final class LiveInstallState {
             return chroot ? "[root@archiso " + where + "]#" : "root@archiso " + where + " #";
         }
         return chroot ? "(chroot) livecd " + where + " #" : "livecd " + where + " #";
+    }
+
+    /** The name the player gave the machine while installing it, empty when they gave none. */
+    public String chosenName() {
+        return chosenName;
     }
 
     /** The host name the live medium reports. */
@@ -289,7 +311,10 @@ public final class LiveInstallState {
             case "arch-chroot", "chroot" -> enterChroot(arg1);
             case "emerge-webrsync", "emerge" -> emerge(line, env);
             case "genkernel" -> genkernel(env);
-            case "grub-install" -> grub(arg1);
+            case "grub-install" -> grub(arg1, env);
+            case "grub-mkconfig" -> grubConfig(line);
+            case "mkinitcpio" -> initramfs();
+            case "hostname" -> hostname(parts);
             case "passwd" -> passwd();
             case "exit" -> exit();
             case "reboot" -> reboot();
@@ -811,19 +836,127 @@ public final class LiveInstallState {
         return Result.pass("* Gentoo Linux Genkernel", "* kernel: >> Compiling 6.8-jsc bzImage ... done", "* Kernel compiled successfully!");
     }
 
-    private Result grub(final String arg) {
+    /**
+     * Installs the bootloader, for the firmware this machine really has.
+     *
+     * <p>A machine of the older firmware takes it on the disk itself and is named a disk; a machine of the
+     * modern one takes it in a partition of its own, is named nothing, and needs that partition mounted where
+     * it will be looked for. Saying one platform on every machine, as this did, was the plainest way of
+     * pretending the two are the same thing.
+     */
+    private Result grub(final String arg, final Env env) {
         if (!chroot) {
             return Result.fail("grub-install: error: cannot find EFI directory (run this inside the new system).");
-        }
-        final String dev = deviceName(arg);
-        if (!dev.equals(device)) {
-            return Result.fail("grub-install: error: cannot find a device for /dev/" + (dev.isEmpty() ? "?" : dev) + ".");
         }
         if (distro == Distro.GENTOO && !kernelBuilt) {
             return Result.fail("grub-install: error: no kernel image found in /boot (run genkernel first).");
         }
+        if (env.uefi()) {
+            if (espMount.isEmpty()) {
+                return Result.fail("grub-install: error: failed to get canonical path of '/boot/efi'.",
+                        "       (this machine boots the modern way: make an EFI partition, then",
+                        "        mkfs.fat -F32 /dev/sdXn and mount /dev/sdXn /mnt/boot)");
+            }
+            bootloader = true;
+            write(MOUNT + "/boot/EFI/BOOT/BOOTX64.EFI", "");
+            return Result.pass("Installing for x86_64-efi platform.",
+                    "Installation finished. No error reported.");
+        }
+        final String dev = deviceName(arg);
+        if (dev.isEmpty()) {
+            return Result.fail("grub-install: error: install device isn't specified.");
+        }
+        /*
+         * On the older firmware it goes onto the disk rather than into a partition, so being named the
+         * partition the system sits in is the mistake this catches.
+         */
+        if (!dev.equals(diskOf(device))) {
+            return Result.fail("grub-install: error: cannot find a device for /dev/" + dev + ".",
+                    "       (it goes on the disk, not in a partition: grub-install /dev/" + diskOf(device) + ")");
+        }
         bootloader = true;
         return Result.pass("Installing for i386-pc platform.", "Installation finished. No error reported.");
+    }
+
+    /** The disk a device name sits on: {@code sda2} is on {@code sda}, and {@code sda} is its own. */
+    private static String diskOf(final String name) {
+        int end = name.length();
+        while (end > 0 && Character.isDigit(name.charAt(end - 1))) {
+            end--;
+        }
+        return name.substring(0, end);
+    }
+
+    /**
+     * Writes the bootloader's own list of what it can start, which is the step that makes it able to.
+     *
+     * <p>Generated from the system that is really installed, so reading the file back shows this machine's
+     * system on the disk it is on rather than a line written in advance.
+     */
+    private Result grubConfig(final String line) {
+        if (!chroot) {
+            return Result.fail("grub-mkconfig: command not found");
+        }
+        if (!bootloader) {
+            return Result.fail("/usr/bin/grub-mkconfig: line 1: /boot/grub: No such file or directory",
+                    "       (install the bootloader first: grub-install)");
+        }
+        if (!line.contains("-o")) {
+            return Result.fail("Usage: grub-mkconfig -o /boot/grub/grub.cfg");
+        }
+        final String name = distro == Distro.ARCH ? "Arch Linux" : "Gentoo Linux";
+        final String config = String.join("\n",
+                "# generated by grub-mkconfig",
+                "menuentry '" + name + "' {",
+                "        set root='hd0'",
+                "        linux /boot/vmlinuz-linux root=UUID=jsc-" + device + " rw",
+                "}");
+        write(MOUNT + "/boot/grub/grub.cfg", config);
+        grubConfig = true;
+        return Result.pass("Generating grub configuration file ...",
+                "Found linux image: /boot/vmlinuz-linux", "done");
+    }
+
+    /** Builds the image the kernel is handed at boot, which on this distribution is its own step. */
+    private Result initramfs() {
+        if (distro != Distro.ARCH) {
+            return Result.fail("mkinitcpio: command not found");
+        }
+        if (!chroot) {
+            return Result.fail("mkinitcpio: this must be run inside the new system (arch-chroot /mnt)");
+        }
+        write(MOUNT + "/boot/initramfs-linux.img", "");
+        initramfs = true;
+        return Result.pass("==> Building image from preset: /etc/mkinitcpio.d/linux.preset: 'default'",
+                "==> Image generation successful");
+    }
+
+    /**
+     * Names the machine, which is the first thing in this sequence the player chooses rather than performs.
+     *
+     * <p>Written into the new system's own file, so it is there to read back and, when the install finishes,
+     * there to carry over: a machine installed by hand answers to the name its installer was given.
+     */
+    private Result hostname(final String[] parts) {
+        if (!chroot) {
+            return Result.fail("hostname: this must be run inside the new system");
+        }
+        if (parts.length > 2) {
+            // A name is one word: two of them is somebody who has not been told that yet.
+            return Result.fail("hostname: the specified hostname is invalid");
+        }
+        final String name = parts.length > 1 ? parts[1].trim() : "";
+        if (name.isEmpty()) {
+            final String written = files.get(MOUNT + "/etc/hostname");
+            return Result.pass(written == null || written.isEmpty() ? hostname() : written);
+        }
+        if (!name.matches("[A-Za-z0-9][A-Za-z0-9-]{0,14}")) {
+            return Result.fail("hostname: the specified hostname is invalid",
+                    "       (letters, digits and dashes, up to 15, starting with a letter or digit)");
+        }
+        write(MOUNT + "/etc/hostname", name);
+        chosenName = name;
+        return Result.pass();
     }
 
     private Result passwd() {
@@ -858,8 +991,18 @@ public final class LiveInstallState {
         if (distro == Distro.GENTOO && !kernelBuilt) {
             missing.add("no kernel (genkernel)");
         }
+        if (distro == Distro.ARCH && !initramfs) {
+            missing.add("no initramfs (mkinitcpio -P)");
+        }
         if (!bootloader) {
             missing.add("no bootloader (grub-install)");
+        }
+        /*
+         * A bootloader with nothing to start is a bootloader that starts nothing, so the list it is given
+         * counts as much as the bootloader itself.
+         */
+        if (!grubConfig) {
+            missing.add("nothing for the bootloader to start (grub-mkconfig -o /boot/grub/grub.cfg)");
         }
         if (!password) {
             missing.add("no root password (passwd)");
@@ -913,6 +1056,9 @@ public final class LiveInstallState {
         put(out, "kernel_ready_at", Long.toString(kernelReadyAt));
         put(out, "kernel_built", kernelBuilt);
         put(out, "bootloader", bootloader);
+        put(out, "grub_config", grubConfig);
+        put(out, "initramfs", initramfs);
+        put(out, "chosen_name", chosenName);
         put(out, "password", password);
         put(out, "cwd", cwd);
         put(out, "editing", editing);
@@ -963,6 +1109,9 @@ public final class LiveInstallState {
         st.kernelReadyAt = number(saved, "kernel_ready_at", -1L);
         st.kernelBuilt = flag(saved, "kernel_built");
         st.bootloader = flag(saved, "bootloader");
+        st.grubConfig = flag(saved, "grub_config");
+        st.initramfs = flag(saved, "initramfs");
+        st.chosenName = saved.getOrDefault("chosen_name", "");
         st.password = flag(saved, "password");
         st.cwd = saved.getOrDefault("cwd", HOME);
         st.editing = saved.getOrDefault("editing", "");

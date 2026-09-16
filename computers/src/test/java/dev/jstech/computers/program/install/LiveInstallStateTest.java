@@ -37,7 +37,10 @@ class LiveInstallStateTest {
         assertTrue(run(st, "genfstab -U /mnt >> /mnt/etc/fstab", true, 0).ok());
         assertTrue(run(st, "arch-chroot /mnt", true, 0).ok());
         assertEquals("[root@archiso /]#", st.prompt());
+        assertTrue(run(st, "hostname workshop", true, 0).ok());
+        assertTrue(run(st, "mkinitcpio -P", true, 0).ok());
         assertTrue(run(st, "grub-install /dev/sda", true, 0).ok());
+        assertTrue(run(st, "grub-mkconfig -o /boot/grub/grub.cfg", true, 0).ok());
         assertTrue(run(st, "passwd", true, 0).ok());
         assertTrue(run(st, "exit", true, 0).ok());
         final LiveInstallState.Result reboot = run(st, "reboot", true, 0);
@@ -107,6 +110,7 @@ class LiveInstallStateTest {
         assertFalse(run(st, "genkernel all", true, 50).ok());   // still compiling (ready at 110)
         assertTrue(run(st, "genkernel all", true, 120).ok());
         assertTrue(run(st, "grub-install /dev/sdb", true, 120).ok());
+        assertTrue(run(st, "grub-mkconfig -o /boot/grub/grub.cfg", true, 120).ok());
         assertTrue(run(st, "passwd", true, 120).ok());
         run(st, "exit", true, 120);
         assertTrue(run(st, "reboot", true, 120).complete());
@@ -357,6 +361,129 @@ class LiveInstallStateTest {
         assertTrue(st.run("mount /dev/sda2 /mnt", uefi(true, 0)).ok());
         assertTrue(st.run("mount /dev/sda1 /mnt/boot", uefi(true, 0)).ok());
         assertTrue(String.join("\n", st.run("lsblk", uefi(true, 0)).lines()).contains("/mnt/boot"));
+    }
+
+    /**
+     * The bootloader is installed for the firmware the machine really has, which is the whole reason the
+     * partition it may or may not need exists at all.
+     */
+    @Test
+    void grubInstall_namesThePlatformThisMachineBootsBy() {
+        final LiveInstallState older = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        run(older, "mkfs.ext4 /dev/sda", true, 0);
+        run(older, "mount /dev/sda /mnt", true, 0);
+        run(older, "pacstrap /mnt base linux", true, 0);
+        run(older, "arch-chroot /mnt", true, 0);
+        assertTrue(String.join("\n", run(older, "grub-install /dev/sda", true, 0).lines())
+                .contains("i386-pc"), "an older machine takes it on the disk itself");
+
+        final LiveInstallState newer = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        newer.run("fdisk /dev/sda", uefi(true, 0));
+        newer.run("g", uefi(true, 0));
+        newer.run("n 512M", uefi(true, 0));
+        newer.run("t 1 uefi", uefi(true, 0));
+        newer.run("n", uefi(true, 0));
+        newer.run("w", uefi(true, 0));
+        newer.run("mkfs.fat -F32 /dev/sda1", uefi(true, 0));
+        newer.run("mkfs.ext4 /dev/sda2", uefi(true, 0));
+        newer.run("mount /dev/sda2 /mnt", uefi(true, 0));
+        newer.run("pacstrap /mnt base linux", uefi(true, 0));
+        newer.run("arch-chroot /mnt", uefi(true, 0));
+        assertTrue(String.join("\n", newer.run("grub-install", uefi(true, 0)).lines())
+                        .contains("failed to get canonical path"),
+                "a modern machine will not take it with nowhere to put it");
+
+        newer.run("exit", uefi(true, 0));
+        newer.run("mount /dev/sda1 /mnt/boot", uefi(true, 0));
+        newer.run("arch-chroot /mnt", uefi(true, 0));
+        assertTrue(String.join("\n", newer.run("grub-install", uefi(true, 0)).lines())
+                .contains("x86_64-efi"), "and with somewhere to put it, it goes there");
+    }
+
+    /** On the older firmware it goes on the disk, not into the partition the system lives in. */
+    @Test
+    void grubInstall_onTheOlderFirmware_wantsTheDiskAndNotThePartition() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        run(st, "fdisk /dev/sda", true, 0);
+        run(st, "g", true, 0);
+        run(st, "n", true, 0);
+        run(st, "w", true, 0);
+        run(st, "mkfs.ext4 /dev/sda1", true, 0);
+        run(st, "mount /dev/sda1 /mnt", true, 0);
+        run(st, "pacstrap /mnt base linux", true, 0);
+        run(st, "arch-chroot /mnt", true, 0);
+
+        final LiveInstallState.Result wrong = run(st, "grub-install /dev/sda1", true, 0);
+        assertFalse(wrong.ok());
+        assertTrue(String.join("\n", wrong.lines()).contains("grub-install /dev/sda"),
+                "and it says which one it wanted: " + wrong.lines());
+        assertTrue(run(st, "grub-install /dev/sda", true, 0).ok());
+    }
+
+    /** The list the bootloader is given is generated from the system that is really installed. */
+    @Test
+    void grubMkconfig_writesAFileNamingThisMachinesSystem() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        run(st, "mkfs.ext4 /dev/sdb", true, 0);
+        run(st, "mount /dev/sdb /mnt", true, 0);
+        run(st, "pacstrap /mnt base linux", true, 0);
+        run(st, "arch-chroot /mnt", true, 0);
+        assertFalse(run(st, "grub-mkconfig -o /boot/grub/grub.cfg", true, 0).ok(),
+                "there is no bootloader to give a list to yet");
+
+        run(st, "grub-install /dev/sdb", true, 0);
+        assertTrue(run(st, "grub-mkconfig -o /boot/grub/grub.cfg", true, 0).ok());
+        final String written = String.join("\n", run(st, "cat /boot/grub/grub.cfg", true, 0).lines());
+        assertTrue(written.contains("Arch Linux") && written.contains("jsc-sdb"),
+                "and it names the system and the disk it is on: " + written);
+    }
+
+    /** A bootloader with nothing to start is a bootloader that starts nothing. */
+    @Test
+    void reboot_withoutTheBootloadersList_saysSo() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        run(st, "mkfs.ext4 /dev/sda", true, 0);
+        run(st, "mount /dev/sda /mnt", true, 0);
+        run(st, "pacstrap /mnt base linux", true, 0);
+        run(st, "genfstab -U /mnt >> /mnt/etc/fstab", true, 0);
+        run(st, "arch-chroot /mnt", true, 0);
+        run(st, "mkinitcpio -P", true, 0);
+        run(st, "grub-install /dev/sda", true, 0);
+        run(st, "passwd", true, 0);
+        run(st, "exit", true, 0);
+
+        final LiveInstallState.Result r = run(st, "reboot", true, 0);
+        assertFalse(r.complete());
+        assertTrue(String.join("\n", r.lines()).contains("grub-mkconfig"));
+    }
+
+    /** The name is the one thing here the player chooses, and it is written where it belongs. */
+    @Test
+    void hostname_isWrittenIntoTheNewSystemAndRemembered() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.GENTOO);
+        run(st, "mkfs.ext4 /dev/sda", true, 0);
+        run(st, "mount /dev/sda /mnt", true, 0);
+        run(st, "tar xpf stage3-amd64.tar.xz -C /mnt", true, 0);
+        assertFalse(run(st, "hostname library", true, 0).ok(), "not from outside the new system");
+
+        run(st, "chroot /mnt", true, 0);
+        assertTrue(run(st, "hostname library", true, 0).ok());
+        assertEquals("library", st.chosenName());
+        assertEquals("library", String.join("", run(st, "cat /etc/hostname", true, 0).lines()));
+        assertEquals("library", String.join("", run(st, "hostname", true, 0).lines()),
+                "and asking with no name reads back the one that was set");
+    }
+
+    @Test
+    void hostname_somethingThatIsNotAName_isRefused() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        run(st, "mkfs.ext4 /dev/sda", true, 0);
+        run(st, "mount /dev/sda /mnt", true, 0);
+        run(st, "pacstrap /mnt base linux", true, 0);
+        run(st, "arch-chroot /mnt", true, 0);
+        assertFalse(run(st, "hostname a machine", true, 0).ok());
+        assertFalse(run(st, "hostname -weird", true, 0).ok());
+        assertEquals("", st.chosenName());
     }
 
     @Test
