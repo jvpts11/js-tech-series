@@ -43,6 +43,13 @@ public record FirmwareActionPayload(BlockPos hostPos, BlockPos monitorPos, int a
      * a machine with no OS can still have its storage set up.
      */
     public static final int ACTION_RAID_MODE = 5;
+    /**
+     * Boot disk slot {@code ref} for this boot only, from the self-test's one-time menu.
+     *
+     * <p>Unlike {@link #ACTION_BOOT_DISK} the order saved in setup is left alone and the machine does not test
+     * itself again: it has already done that, and this is the choice of where to go next.
+     */
+    public static final int ACTION_BOOT_ONCE = 6;
 
     public static final CustomPacketPayload.Type<FirmwareActionPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "firmware_action"));

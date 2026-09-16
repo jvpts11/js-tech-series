@@ -277,6 +277,11 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return session.canTakeOs(osId, preferredSlot);
     }
 
+    /** Boots that disk for this boot only, leaving the order saved in the firmware where it is. */
+    public void setBootOnce(final int slot) {
+        session.setBootOnce(slot);
+    }
+
     /**
      * Carries the self-test along: works out how long this machine's own takes the first tick after the power
      * goes on, and ends it when its time is up, booting whoever is watching.

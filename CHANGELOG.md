@@ -7,6 +7,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### Added
+- F12 during the power-on self-test opens a one-time boot menu: every disk with a system and every drive holding
+  something bootable, picked with the arrow keys and booted with Enter. What is picked there is for that boot only,
+  and the boot order saved in the firmware setup is left exactly as it was.
 - `sgsc --arch <architecture>` builds a program for a named architecture, by its id (`jsc:x86_64`) or by the name it
   is written under (`x86-64`). Left alone, the compiler builds for the oldest architecture that runs the program, so
   it runs on every machine it could have. An architecture nothing answers to is refused before anything is written.

@@ -67,6 +67,11 @@ final class OsSession {
     private ResourceLocation bootedDesktop;
     /* The firmware's preferred boot disk slot (-1 = the first disk with a system). Persisted, so dual boot sticks. */
     private int bootDisk = -1;
+    /*
+     * A disk picked from the one-time boot menu, for this boot and no other. Deliberately not persisted and
+     * dropped with the session: "this boot only" means exactly that, and the order saved in setup is untouched.
+     */
+    private int bootOnce = -1;
 
     OsSession(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
@@ -124,6 +129,8 @@ final class OsSession {
         this.pendingInstall = IOsHost.NO_PENDING_INSTALL;
         // A copy dies with the power, as it would on any machine, and nothing of it reaches the disk.
         this.installing = null;
+        // "This boot only" ends with the boot it was for.
+        this.bootOnce = -1;
     }
 
     /**
@@ -131,7 +138,13 @@ final class OsSession {
      * otherwise the first disk that has one, so a computer with two installed systems dual-boots by choice.
      */
     ItemStack systemDisk() {
-        return OsDisks.systemDisk(this.machine.layout().diskCount(), this::diskInSlot, this.bootDisk);
+        final int from = this.bootOnce >= 0 ? this.bootOnce : this.bootDisk;
+        return OsDisks.systemDisk(this.machine.layout().diskCount(), this::diskInSlot, from);
+    }
+
+    /** Boots that disk for this boot only, leaving the order saved in setup where it is. */
+    void setBootOnce(final int slot) {
+        this.bootOnce = slot;
     }
 
     /** The disk slot the firmware boots first, or -1 for "the first disk with a system". */

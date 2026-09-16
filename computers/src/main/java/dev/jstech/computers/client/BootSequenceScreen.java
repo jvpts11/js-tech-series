@@ -9,6 +9,7 @@ package dev.jstech.computers.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.PostCompletePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
@@ -56,6 +57,10 @@ public final class BootSequenceScreen extends Screen {
     private int ticks;
     private boolean completed;
     private boolean setupRequested;
+    /** Whether F12 opened the one-time boot menu over the self-test. */
+    private boolean bootMenu;
+    /** Which entry the menu is on. */
+    private int menuAt;
 
     public BootSequenceScreen(final BlockPos computerPos, final BlockPos monitorPos, final FirmwareKind kind,
                               final String machineName, final int remainingTicks) {
@@ -108,6 +113,14 @@ public final class BootSequenceScreen extends Screen {
 
     @Override
     public boolean keyPressed(final int keyCode, final int scanCode, final int modifiers) {
+        if (bootMenu) {
+            return bootMenuKey(keyCode);
+        }
+        if (keyCode == InputConstants.KEY_F12 && !setupRequested && !bootable().isEmpty()) {
+            bootMenu = true;
+            menuAt = 0;
+            return true;
+        }
         /*
          * A self-test that ended with nothing to boot waits here, as a machine does. Any key asks the machine
          * to go on, which with nothing on any disk means its setup.
@@ -180,6 +193,38 @@ public final class BootSequenceScreen extends Screen {
         if (kind == FirmwareKind.BLUE_BIOS) {
             renderMakerBadge(g, x, y, accent, dim);
         }
+        if (bootMenu) {
+            renderBootMenu(g, x, y, text, dim, accent);
+        }
+    }
+
+    /**
+     * The one-time boot menu, drawn over the self-test the way a firmware's own does.
+     *
+     * <p>Whatever is picked here is for this boot and no other: the order saved in setup is not touched, which
+     * is the whole point of having it apart from the setup.
+     */
+    private void renderBootMenu(final GuiGraphics g, final int x, final int y, final int text, final int dim,
+                                final int accent) {
+        final List<Choice> choices = bootable();
+        final int boxW = 200;
+        final int boxH = 30 + choices.size() * 11;
+        final int bx = x + (W - boxW) / 2;
+        final int by = y + (H - boxH) / 2;
+        g.fill(bx, by, bx + boxW, by + boxH, 0xFF000060);
+        g.fill(bx, by, bx + boxW, by + 1, accent);
+        g.fill(bx, by + boxH - 1, bx + boxW, by + boxH, accent);
+        g.drawString(font, "Boot Menu  (this boot only)", bx + 6, by + 6, accent, false);
+        int ly = by + 20;
+        for (int i = 0; i < choices.size(); i++) {
+            final Choice choice = choices.get(i);
+            final boolean on = i == menuAt;
+            final String where = choice.slot() >= 0 ? "Disk " + choice.slot() : "Drive";
+            g.drawString(font, (on ? "> " : "  ") + where + "    " + choice.entry().label(), bx + 6, ly,
+                    on ? accent : text, false);
+            ly += 11;
+        }
+        g.drawString(font, "Up/Down: Select     Enter: Boot", bx + 6, by + boxH - 11, dim, false);
     }
 
     /** The maker's badge in the top right, where a board of that age printed its firmware house's mark. */
@@ -209,7 +254,7 @@ public final class BootSequenceScreen extends Screen {
         }
         // The setup hint blinks at the bottom for the whole sequence.
         if ((ticks / 10) % 2 == 0 && !setupRequested) {
-            g.drawString(font, "Press DEL to enter SETUP", x + 10, y + H - 14, dim, false);
+            g.drawString(font, "DEL  Setup      F12  Boot Menu", x + 10, y + H - 14, dim, false);
         }
         if (setupRequested) {
             g.drawString(font, "Entering SETUP ...", x + 10, y + H - 14, accent, false);
@@ -265,6 +310,54 @@ public final class BootSequenceScreen extends Screen {
             out.add(new String[]{"Reading system configuration ...", "0"});
         }
         return out;
+    }
+
+    /** One thing the one-time menu can boot: the entry, and the disk slot it sits in, or -1 for a medium. */
+    private record Choice(FirmwareStatePayload.Entry entry, int slot) {
+    }
+
+    /** Everything this machine could boot right now, in the order the firmware found it. */
+    private List<Choice> bootable() {
+        if (state == null) {
+            return List.of();
+        }
+        final List<Choice> out = new ArrayList<>();
+        int slot = 0;
+        for (final FirmwareStatePayload.Entry entry : state.entries()) {
+            final int here = entry.kind() == FirmwareStatePayload.KIND_DISK ? slot++ : -1;
+            if (entry.bootable()) {
+                out.add(new Choice(entry, here));
+            }
+        }
+        return out;
+    }
+
+    /** Up and down walk the menu, Enter boots what is on, and anything else puts the menu away. */
+    private boolean bootMenuKey(final int keyCode) {
+        final List<Choice> choices = bootable();
+        if (choices.isEmpty()) {
+            bootMenu = false;
+            return true;
+        }
+        switch (keyCode) {
+            case InputConstants.KEY_UP -> menuAt = (menuAt - 1 + choices.size()) % choices.size();
+            case InputConstants.KEY_DOWN -> menuAt = (menuAt + 1) % choices.size();
+            case InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER -> {
+                final Choice chosen = choices.get(Math.min(menuAt, choices.size() - 1));
+                bootMenu = false;
+                setupRequested = true;
+                /*
+                 * A disk boots this once and the saved order stays where it is; a medium boots the way it does
+                 * from the setup, since booting one is already a thing that happens once.
+                 */
+                PacketDistributor.sendToServer(new FirmwareActionPayload(computerPos, monitorPos,
+                        chosen.slot() >= 0 ? FirmwareActionPayload.ACTION_BOOT_ONCE
+                                : FirmwareActionPayload.ACTION_BOOT_MEDIA,
+                        chosen.slot() >= 0 ? chosen.slot() : chosen.entry().ref(), -1));
+            }
+            default -> bootMenu = false;
+        }
+        return true;
     }
 
     /**
@@ -355,7 +448,7 @@ public final class BootSequenceScreen extends Screen {
         if (setupRequested) {
             g.drawCenteredString(font, "Entering Setup ...", x + W / 2, y + H - 18, accent);
         } else if ((ticks / 10) % 2 == 0) {
-            g.drawCenteredString(font, "Press DEL to enter Setup", x + W / 2, y + H - 18, dim);
+            g.drawCenteredString(font, "DEL  Setup      F12  Boot Menu", x + W / 2, y + H - 18, dim);
         }
     }
 

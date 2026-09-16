@@ -256,6 +256,19 @@ public final class FirmwarePayloads {
                     return;
                 }
             }
+            case FirmwareActionPayload.ACTION_BOOT_ONCE -> {
+                /*
+                 * The one-time menu: boot that disk now and leave the saved order where it is. The machine has
+                 * already tested itself, so this hands straight over rather than starting again.
+                 */
+                if (computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine) {
+                    machine.setBootOnce((int) payload.ref());
+                }
+                computer.setPendingInstallSlot(IOsHost.NO_PENDING_INSTALL);
+                dev.jstech.computers.block.MonitorBlock.openBootTarget(
+                        player, level, payload.monitorPos(), payload.hostPos());
+                return;
+            }
             case FirmwareActionPayload.ACTION_SET_BOOT -> computer.setBootDiskSlot((int) payload.ref());
             case FirmwareActionPayload.ACTION_RAID_MODE -> {
                 final var mode = dev.jstech.computers.rack.RaidMode.find((int) payload.ref());
