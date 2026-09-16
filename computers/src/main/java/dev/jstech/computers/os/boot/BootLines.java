@@ -194,8 +194,12 @@ public final class BootLines {
             out.line("Started Journal Service.", "OK");
             out.line("Reached target Local File Systems.", "OK");
         }
-        final NetworkReadService network = machine.networkService();
-        if (network != null && network.online()) {
+        /*
+         * The claim is about the network, not about what happens to be reading it, so it is put to the machine
+         * rather than to the shell running on it: a machine on a cable is on a network whether or not anything
+         * is up yet to ask about it.
+         */
+        if (machine.networkAttached()) {
             out.line("Reached target Network is Online.", "OK");
         }
         final String desktop = machine.installedDesktopId() == null ? ""
@@ -256,6 +260,10 @@ public final class BootLines {
     /**
      * The network machines: every step is a question put to the network, and an unanswered one says so rather
      * than opening on a list with nothing in it and no reason given.
+     *
+     * <p>A machine with nobody to ask is a different thing from one whose link is down, and it says nothing
+     * instead of the other. Every line here is a claim about the network, and a machine that cannot put the
+     * question has no grounds for any of them, least of all for the one that says the cable is dead.
      */
     private static BootSequence net(final IOsHost machine, final OsDef system,
                                     final String copyright) {
@@ -263,7 +271,10 @@ public final class BootLines {
                 .title(system.displayName() + " 1.0")
                 .subtitle(copyright);
         final NetworkReadService network = machine.networkService();
-        final ICliComputer.NetSummary summary = network == null ? null : network.summary();
+        if (network == null) {
+            return out.build();
+        }
+        final ICliComputer.NetSummary summary = network.summary();
         if (summary == null || !summary.linked()) {
             out.line("network link", "down");
             out.line("mainframe", "skipped");

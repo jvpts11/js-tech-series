@@ -288,6 +288,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- A Linux machine on a cable now says its network is up as it comes up. The line was asked of the shell running on
+  the machine rather than of the machine, so one that had no shell to ask came up silent about a network it was
+  plainly on. A machine is on a network the moment a cable reaches one, which is before anything on it is running.
+- An MC-NET machine that has nobody to ask about the network no longer comes up reporting that its link is down.
+  Every line of that system's start is a claim about the network, and a machine that cannot put the question has no
+  grounds for any of them, least of all for the one saying the cable is dead; it says nothing instead.
 - A machine built west or north of the world's origin no longer ignores the drive an install was told to read from,
   and no longer carries on copying a system after the medium has been taken out of it. A drive is named by the
   position it stands at, and a position out there is a negative number, which both of those read as "no drive

@@ -42,6 +42,9 @@ public final class BootSequenceGameTests {
 
     private static final BlockPos WHERE = new BlockPos(2, 2, 2);
 
+    /** Ticks for a machine's attachment to find the cable beside it. */
+    private static final int SETTLE = 4;
+
     private static final ResourceLocation MC_DOS =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_dos");
 
@@ -95,6 +98,49 @@ public final class BootSequenceGameTests {
         helper.assertTrue(has(sequence, "Memory: " + older.ramTotalMb() + " MB available"),
                 "and the memory is the memory that is in it: " + labels(sequence));
         helper.succeed();
+    }
+
+    /**
+     * A machine on a cable says its network is up, whatever is or is not running on it yet.
+     *
+     * <p>The line is a claim about the network, so it used to be wrong to put the question to the shell: the
+     * machine is on a network the moment a cable reaches one, and it is saying so on its way up, which is
+     * before anything on it is running to be asked.
+     */
+    @GameTest(template = ARENA)
+    public static void linux_saysTheNetworkIsUpWhenACableReachesOne(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO));
+        /*
+         * The whole chain, because a computer never meets a Mainframe directly: the Mainframe sits on the HBW
+         * backbone and a Personal Router is what bridges an Ethernet machine onto it.
+         */
+        world.placeRunningMainframe(new BlockPos(1, 2, 2));
+        world.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        world.setBlock(new BlockPos(3, 2, 2), ComputingModule.PERSONAL_ROUTER.get());
+        world.setBlock(new BlockPos(4, 2, 2), ComputingModule.ETHERNET_CABLE.get());
+        final PersonalComputerBlockEntity onACable = legacy(helper, new BlockPos(5, 2, 2));
+        if (onACable == null) {
+            return;
+        }
+        world.faceRearTowardCable(new BlockPos(5, 2, 2));
+        helper.assertTrue(onACable.installOs(DEBIAN), "Debian installs on the cabled machine");
+        onACable.togglePower();
+
+        final PersonalComputerBlockEntity onItsOwn = legacy(helper, new BlockPos(5, 2, 5));
+        if (onItsOwn == null) {
+            return;
+        }
+        helper.assertTrue(onItsOwn.installOs(DEBIAN), "and on the one standing on its own");
+        onItsOwn.togglePower();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertTrue(onACable.networkAttached(), "the cable reaches a network");
+                    helper.assertTrue(has(BootLines.forMachine(onACable), "Reached target Network is Online."),
+                            "so the machine says so coming up: " + labels(BootLines.forMachine(onACable)));
+                    helper.assertFalse(has(BootLines.forMachine(onItsOwn), "Reached target Network is Online."),
+                            "and the one with no cable claims nothing of the sort");
+                })
+                .thenSucceed();
     }
 
     /**
@@ -215,9 +261,13 @@ public final class BootSequenceGameTests {
 
     /** A Legacy machine: the 32-bit generation, whose kernel calls itself i686. */
     private static PersonalComputerBlockEntity legacy(final GameTestHelper helper) {
-        helper.setBlock(WHERE, ComputingModule.LEGACY_PERSONAL_COMPUTER.get());
-        if (!(helper.getBlockEntity(WHERE) instanceof PersonalComputerBlockEntity computer)) {
-            helper.fail("no legacy personal computer at " + WHERE);
+        return legacy(helper, WHERE);
+    }
+
+    private static PersonalComputerBlockEntity legacy(final GameTestHelper helper, final BlockPos at) {
+        helper.setBlock(at, ComputingModule.LEGACY_PERSONAL_COMPUTER.get());
+        if (!(helper.getBlockEntity(at) instanceof PersonalComputerBlockEntity computer)) {
+            helper.fail("no legacy personal computer at " + at);
             return null;
         }
         final ItemStackHandler hardware = computer.getHardware();
