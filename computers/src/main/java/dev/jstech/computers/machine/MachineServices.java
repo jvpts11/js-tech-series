@@ -297,9 +297,9 @@ public final class MachineServices implements IHost {
         this.shellLevel = level;
         if (this.machine instanceof IComputerTerminalHost terminal && level instanceof ServerLevel server) {
             this.shell = new ServerCliComputer(terminal, server);
-            this.files = new FileService(this.machine, server,
-                    new NetworkPathResolver(server, this.shell::machinesNamed, this.shell::networkShares),
-                    this.shell::currentLocation);
+            // The other machines come first: the drives follow a network path through them.
+            this.remotes = new RemoteComputerService(terminal, server);
+            this.files = new FileService(this.machine, server, this.remotes.paths(), this.shell::currentLocation);
             this.computer = new ComputerInfoService(this.machine, this.shell);
             // Operations first: the network hands their rows back when a query asks for them.
             this.operations = new OperationsService(terminal, server, this.shell);
@@ -310,8 +310,7 @@ public final class MachineServices implements IHost {
             this.packages = new PackageService(terminal, server, this.files, this.iql);
             this.installs = new InstallService(terminal, server, this.packages, this.iql);
             this.config = new MachineConfigService(terminal, server, this.files);
-            this.programs = new ProgramService(this.machine, terminal, server, this.shell);
-            this.remotes = new RemoteComputerService(terminal, server);
+            this.programs = new ProgramService(this.machine, terminal, server, this.files, this.remotes);
             this.gateways = new GatewayBridgeService(this.machine, server);
         } else {
             this.shell = null;

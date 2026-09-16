@@ -146,11 +146,6 @@ public final class ServerCliComputer implements ICliComputer {
         return remotes().hosts();
     }
 
-    /** The machines a typed name picks out, resolved where the other computers are known. */
-    private Map<String, BlockEntity> matchMachines(final String wanted) {
-        return remotes().matching(wanted);
-    }
-
     @Override
     public OpResult sshConnect(final String hostname) {
         return remotes().connect(hostname);
@@ -414,10 +409,6 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     // packages: the Linux package managers over the network's Mirror service
-
-    private OsDef installedOsDef() {
-        return packages().installedOs();
-    }
 
     @Override
     public dev.jstech.computers.os.PackageManagerKind packageManager() {
@@ -706,11 +697,6 @@ public final class ServerCliComputer implements ICliComputer {
         return remotes().paths();
     }
 
-    /** The machines of this network that name picks out, by host name, for whoever follows a network path. */
-    public Map<String, BlockEntity> machinesNamed(final String name) {
-        return matchMachines(name);
-    }
-
     /** What this machine keeps about itself, as this shell reads and changes it. */
     private dev.jstech.computers.machine.MachineConfigService config() {
         return new dev.jstech.computers.machine.MachineConfigService(host, level, files());
@@ -829,6 +815,6 @@ public final class ServerCliComputer implements ICliComputer {
     @org.jetbrains.annotations.Nullable
     private dev.jstech.computers.machine.ProgramService sigma() {
         return hostBlock instanceof AbstractComputerBlockEntity computer
-                ? new dev.jstech.computers.machine.ProgramService(computer, host, level, this) : null;
+                ? new dev.jstech.computers.machine.ProgramService(computer, host, level, files(), remotes()) : null;
     }
 }

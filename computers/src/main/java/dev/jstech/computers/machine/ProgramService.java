@@ -38,14 +38,18 @@ public final class ProgramService {
     private final AbstractComputerBlockEntity machine;
     private final IComputerTerminalHost terminal;
     private final ServerLevel level;
-    private final ServerCliComputer shell;
+    /** The machine's drives, which is where a program is read from before it is started. */
+    private final FileService files;
+    /** The other computers of the network, for a program asked after by the machine it runs on. */
+    private final RemoteComputerService remotes;
 
     public ProgramService(final AbstractComputerBlockEntity machine, final IComputerTerminalHost terminal,
-                          final ServerLevel level, final ServerCliComputer shell) {
+                          final ServerLevel level, final FileService files, final RemoteComputerService remotes) {
         this.machine = machine;
         this.terminal = terminal;
         this.level = level;
-        this.shell = shell;
+        this.files = files;
+        this.remotes = remotes;
     }
 
     /**
@@ -54,7 +58,7 @@ public final class ProgramService {
      */
     public ProgramLauncher.Launch start(final String path, final List<String> arguments, final IProgramParent parent,
                                         final ProgramPriority priority) {
-        return ProgramLauncher.launch(this.machine, path, this.shell::readFile, arguments, parent, priority, 0);
+        return ProgramLauncher.launch(this.machine, path, this.files::readFile, arguments, parent, priority, 0);
     }
 
     /**
@@ -120,7 +124,7 @@ public final class ProgramService {
      * its until it returns. One that is a service does not, and says what it started instead.
      */
     public ICliComputer.OpResult startAtTerminal(final String path, final int heapMb, final List<String> arguments) {
-        final ProgramLauncher.Launch launch = ProgramLauncher.launch(this.machine, path, this.shell::readFile,
+        final ProgramLauncher.Launch launch = ProgramLauncher.launch(this.machine, path, this.files::readFile,
                 arguments, IProgramParent.NONE, ProgramPriority.MEDIUM, heapMb);
         if (!launch.ok()) {
             return ICliComputer.OpResult.fail(switch (launch.refusal()) {
@@ -183,7 +187,7 @@ public final class ProgramService {
         if (host == null || host.isEmpty()) {
             return this.machine;
         }
-        final ServerCliComputer remote = this.shell.remoteShell(host);
+        final ServerCliComputer remote = this.remotes.find(host);
         return remote != null && remote.machine() instanceof AbstractComputerBlockEntity there ? there : null;
     }
 }
