@@ -21,10 +21,10 @@ import java.util.Set;
  */
 final class PeripheralEndpoints {
 
+    private final Set<Long> linked = new LinkedHashSet<>();
+
     /* The name these positions have had on disk since the days when only a monitor could be one. */
     private static final String LINKED = "LinkedMonitors";
-
-    private final Set<Long> linked = new LinkedHashSet<>();
 
     /** The endpoints as they stand: the set itself, which is where a link is made and unmade. */
     Set<Long> all() {

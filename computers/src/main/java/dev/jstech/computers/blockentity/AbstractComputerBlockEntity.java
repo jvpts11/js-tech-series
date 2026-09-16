@@ -44,28 +44,48 @@ import java.util.Set;
 /**
  * Shared base for every computer that is a BLOCK (Personal Computer, Mainframe, Crafting Computer, and
  * future ones such as Subframe / Supercomputer / AI Server).
+ *
+ * <p>What a computer is made of is held in parts, each owning one matter of it: the hardware installed and
+ * what it adds up to, the power, where it stands on the data network, what hangs off its peripheral cables,
+ * the system it boots and the session it runs it in, the console that rides on its disk, the programs it is
+ * running, the players watching it, and what it sends them.
+ *
+ * <p>This class is where those parts are put together. It holds them, answers to the names the rest of the
+ * mod has always called, decides what THIS kind of computer accepts in a slot, which is the one thing each
+ * kind settles for itself, and saves each part in turn.
  */
 public abstract class AbstractComputerBlockEntity extends BlockEntity
         implements IPeripheralOwnerSupport, dev.jstech.computers.os.IOsHost {
 
+    /** The parts installed and what they add up to; it is built with the layout, so the constructor sets it. */
     private final ComputerHardware hardware;
-
+    /** Whether it is on, whether it comes up by itself, and whether the next look at it shows the self-test. */
     private final ComputerPower power = new ComputerPower(this::setChanged, this::endSession);
-
-    private String computerName = "";
-
+    /** Where this computer stands on the data network: its node, its network, and the cable it reads. */
     private final NetworkAttachment attachment = new NetworkAttachment(this);
-
+    /** What is on the far end of its peripheral cables. */
+    private final PeripheralEndpoints peripherals = new PeripheralEndpoints();
+    /** The system it boots and the session it runs: disks, desktop, windows, installing and formatting. */
+    private final OsSession session = new OsSession(this);
+    /** The console it keeps, which rides on the system disk rather than on the machine. */
+    private final DiskConsole diskConsole = new DiskConsole(this);
+    /** The programs it is running and what they reach through it. */
+    private final ProgramHost host = new ProgramHost(this);
+    /** The players with this computer's console on screen. */
+    private final Viewers viewers = new Viewers(this.worldPosition);
+    /** What it sends them: the windows its programs have open, and what those programs print. */
     private final ClientReplication replication = new ClientReplication(this);
 
-    private final PeripheralEndpoints peripherals = new PeripheralEndpoints();
-
-    private final OsSession session = new OsSession(this);
+    /** The name a player gave this computer: the machine's own, and no part's. */
+    private String computerName = "";
 
     /*
-     * The OS is no longer stored on the block entity; it lives on the system disk's SYSTEM_OS
-     * component. All OS-related state is derived at runtime by scanning the installed disk stacks.
+     * The recipe drafts the Pattern Studio edits, kept out of the session deliberately: a power cut ends a
+     * session and closes its windows, while a draft half laid out is still there afterwards, for whoever
+     * sits down next.
      */
+    private final dev.jstech.computers.crafting.PatternWorkbench studio =
+            new dev.jstech.computers.crafting.PatternWorkbench();
 
     protected AbstractComputerBlockEntity(final BlockEntityType<?> type, final BlockPos pos,
                                           final BlockState state, final ComputerHardwareLayout layout) {
@@ -258,13 +278,6 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     public void setBootedDesktopId(@Nullable final ResourceLocation id) {
         session.setBootedDesktopId(id);
     }
-
-    /*
-     * The recipe drafts the Pattern Studio edits. Machine state like the windows: a draft half laid out when
-     * the player walks away is still there for whoever sits down next, and after the game was closed.
-     */
-    private final dev.jstech.computers.crafting.PatternWorkbench studio =
-            new dev.jstech.computers.crafting.PatternWorkbench();
 
     @Override
     public dev.jstech.computers.crafting.PatternWorkbench studio() {
@@ -532,8 +545,6 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         replication.pushBuildProgress(level);
     }
 
-    private final Viewers viewers = new Viewers(this.worldPosition);
-
     /**
      * Every player with this computer's console on screen: its terminal menus, or its open desktop.
      *
@@ -678,17 +689,6 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return getBlockState().getBlock() instanceof IDataNetworkConnectable device
                 && device.acceptedCableTiers().contains(tier);
     }
-
-    // Console state: the Command Prompt's per-computer history and installed programs.
-
-    private final DiskConsole diskConsole = new DiskConsole(this);
-
-    /*
-     * Script processes: the Σ# programs this machine is running, which live with the machine
-     * rather than with its system disk: they are what it is doing, not what it has installed.
-     */
-
-    private final ProgramHost host = new ProgramHost(this);
 
     /** The Σ# programs this machine is running. */
     public dev.jstech.computers.machine.MachinePrograms programs() {
