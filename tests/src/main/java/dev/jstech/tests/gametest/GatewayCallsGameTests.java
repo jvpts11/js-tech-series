@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.NetworkGatewayBlock;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.integration.computercraft.ComputerCraftIntegration;
 import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.vm.program.Halt;
 import dev.jstech.computers.vm.program.IWorldCall;
@@ -147,8 +148,15 @@ public final class GatewayCallsGameTests {
                     helper.assertTrue(name.equals(ask(host, call, member("Current"))),
                             "its later calls go through that Gateway");
                     helper.assertTrue(Boolean.TRUE.equals(ask(host, call, member("Online"))), "which is online");
-                    helper.assertTrue(ask(host, call, member("Computers")) instanceof Values.ListValue,
-                            "and says which computers are on its wire");
+                    /*
+                     * Whether the Gateway is there and reaching its computer is this mod's own business, so it
+                     * is asked either way. What is out on the wire belongs to the optional mod, and without it
+                     * the call stops the program on purpose, which is the contract and not a failure.
+                     */
+                    if (ComputerCraftIntegration.isLoaded()) {
+                        helper.assertTrue(ask(host, call, member("Computers")) instanceof Values.ListValue,
+                                "and says which computers are on its wire");
+                    }
                 })
                 .thenSucceed();
     }
