@@ -17,6 +17,9 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.program.install.LiveInstallState;
+import dev.jstech.computers.vm.program.Numbers;
+import dev.jstech.computers.vm.program.UiWidgets;
+import dev.jstech.computers.vm.program.Values;
 import dev.jstech.core.language.ILanguageProcess;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -38,11 +41,11 @@ final class ClientReplication {
 
     private final AbstractComputerBlockEntity machine;
     /*
-     * What each player watching has already been sent, by the player, and under them by the program and the
-     * window, as it went. Per player and not per machine: two people at one desktop are not sent the same
+     * What each player watching has already been sent: under the player, the revision each window stood at when
+     * it went to them. Per player and not per machine, because two people at one desktop are not sent the same
      * windows at the same moments, and whoever opens second must be given what the first already has.
      */
-    private final Map<UUID, Map<WindowId, UiWindowPayload>> sentByViewer = new HashMap<>();
+    private final Map<UUID, Map<WindowId, Long>> sentByViewer = new HashMap<>();
     /*
      * Which progress quarter (25/50/75%) each running build last reported, so the console gets a handful
      * of emerge-style progress lines instead of one per second. Transient by design.
@@ -68,12 +71,13 @@ final class ClientReplication {
             return;
         }
         forgetWhoLeft(viewers);
-        final Map<WindowId, UiWindowPayload> open = openNow();
+        final Map<WindowId, Values.Obj> open = openNow();
+        final Map<WindowId, UiWindowPayload> made = new HashMap<>();
         for (final ServerPlayer viewer : viewers) {
             if (!(viewer.containerMenu instanceof DesktopMenu)) {
                 continue;
             }
-            for (final UiWindowPayload payload : takeOwed(viewer, open)) {
+            for (final UiWindowPayload payload : takeOwed(viewer, open, made)) {
                 PacketDistributor.sendToPlayer(viewer, payload);
             }
         }
@@ -88,40 +92,59 @@ final class ClientReplication {
      * whole on opening rather than at whatever changes next.
      */
     List<UiWindowPayload> takeOwed(final ServerPlayer viewer) {
-        return takeOwed(viewer, openNow());
+        return takeOwed(viewer, openNow(), new HashMap<>());
     }
 
-    private List<UiWindowPayload> takeOwed(final ServerPlayer viewer, final Map<WindowId, UiWindowPayload> open) {
-        final Map<WindowId, UiWindowPayload> sent =
+    /**
+     * A window is written out for the wire only when its revision has moved since that player was sent it, and
+     * once written it serves every player owed it this tick.
+     *
+     * <p>The revision is what makes this cheap: every change to a window or to a widget it shows goes through
+     * the one door that moves it, so a machine whose desktop is sitting still costs two lookups per window a
+     * tick instead of flattening its whole tree of widgets and comparing that with what went last time.
+     */
+    private List<UiWindowPayload> takeOwed(final ServerPlayer viewer, final Map<WindowId, Values.Obj> open,
+                                           final Map<WindowId, UiWindowPayload> made) {
+        final Map<WindowId, Long> sent =
                 this.sentByViewer.computeIfAbsent(viewer.getUUID(), id -> new HashMap<>());
+        final BlockPos pos = this.machine.getBlockPos();
         final List<UiWindowPayload> owed = new ArrayList<>();
-        for (final var entry : open.entrySet()) {
-            if (!entry.getValue().equals(sent.get(entry.getKey()))) {
-                owed.add(entry.getValue());
+        for (final Map.Entry<WindowId, Values.Obj> entry : open.entrySet()) {
+            if (Long.valueOf(revisionOf(entry.getValue())).equals(sent.get(entry.getKey()))) {
+                continue;
+            }
+            final UiWindowPayload payload = made.computeIfAbsent(entry.getKey(),
+                    id -> UiWindowPayload.of(pos, id.program(), entry.getValue()));
+            if (payload != null) {
+                owed.add(payload);
             }
         }
-        final BlockPos pos = this.machine.getBlockPos();
-        for (final var entry : sent.entrySet()) {
+        for (final Map.Entry<WindowId, Long> entry : sent.entrySet()) {
             if (!open.containsKey(entry.getKey())) {
-                owed.add(UiWindowPayload.gone(pos, entry.getValue().program(), entry.getValue().window()));
+                owed.add(UiWindowPayload.gone(pos, entry.getKey().program(), entry.getKey().window()));
             }
         }
         sent.clear();
-        sent.putAll(open);
+        for (final Map.Entry<WindowId, Values.Obj> entry : open.entrySet()) {
+            sent.put(entry.getKey(), revisionOf(entry.getValue()));
+        }
         return owed;
     }
 
-    /** The windows the programs on this machine have open, as they would go over. */
-    private Map<WindowId, UiWindowPayload> openNow() {
-        final BlockPos pos = this.machine.getBlockPos();
-        final Map<WindowId, UiWindowPayload> open = new HashMap<>();
+    /** The windows the programs on this machine have open, as the programs hold them. */
+    private Map<WindowId, Values.Obj> openNow() {
+        final Map<WindowId, Values.Obj> open = new HashMap<>();
         this.machine.programs().eachWindow((window, program) -> {
-            final var payload = UiWindowPayload.of(pos, program, window);
-            if (payload != null) {
-                open.put(new WindowId(payload.program(), payload.window()), payload);
+            if (window != null && UiWidgets.WINDOW.equals(window.type())) {
+                open.put(new WindowId(program, Numbers.toLong(window.get(UiWidgets.ID))), window);
             }
         });
         return open;
+    }
+
+    /** Where a window stands: a number its one door moves whenever anything the window shows changes. */
+    private static long revisionOf(final Values.Obj window) {
+        return Numbers.toLong(window.get(UiWidgets.REVISION));
     }
 
     /** What was sent to somebody who is no longer looking is dropped, rather than kept for a return. */

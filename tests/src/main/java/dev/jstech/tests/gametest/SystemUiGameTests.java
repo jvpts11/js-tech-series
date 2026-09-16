@@ -158,6 +158,34 @@ public final class SystemUiGameTests {
                 .thenSucceed();
     }
 
+    /** A window goes over when something in it has moved, and a tick where nothing did sends nothing. */
+    @GameTest(template = ARENA)
+    public static void windows_goOverOnlyWhenSomethingInThemMoves(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2), "frames_xp");
+        if (computer == null) {
+            return;
+        }
+        final ServerPlayer watcher = viewer(helper.getLevel(), "watcher");
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final MachinePrograms.Started started = computer.programs().start("panel.sgs", PANEL, 1, computer);
+                    helper.assertTrue(started.ok(), started.message());
+                    computer.programs().tick(8192);
+                    helper.assertTrue(computer.takeWindowsOwed(watcher).size() == 1, "the window goes over once");
+                    computer.programs().tick(8192);
+                    helper.assertTrue(computer.takeWindowsOwed(watcher).isEmpty(),
+                            "and a tick where nothing in it moved owes nothing at all");
+                    final Values.Obj window = computer.programs().windowsOf(started.id()).getFirst();
+                    final Values.Obj button = widgetOf(window, UiWidgets.BUTTON);
+                    helper.assertTrue(computer.programs().deliverUiEvent(started.id(), 1L,
+                            (Long) button.get(UiWidgets.ID), "click", List.of()), "the click is taken");
+                    computer.programs().tick(8192);
+                    helper.assertTrue(computer.takeWindowsOwed(watcher).size() == 1,
+                            "while a click that changed what it shows owes it again");
+                })
+                .thenSucceed();
+    }
+
     /*
      * A server player of the test's own, never put on the server's player list: a listed player is announced to
      * every mod when it leaves, and keeps chunks loaded and packets flowing for the rest of the run.
