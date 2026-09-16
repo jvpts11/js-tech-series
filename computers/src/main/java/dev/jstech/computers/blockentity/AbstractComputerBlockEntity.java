@@ -9,7 +9,6 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.hardware.ComputerBuild;
-import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.DiskItem;
@@ -689,28 +688,16 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * rather than with its system disk: they are what it is doing, not what it has installed.
      */
 
-    private final dev.jstech.computers.machine.MachinePrograms programs =
-            new dev.jstech.computers.machine.MachinePrograms(this::tellRemoteParent);
-
-    /** What the programs on this machine reach through it, kept here so a call finds it ready. */
-    private final dev.jstech.computers.machine.MachineServices services =
-            new dev.jstech.computers.machine.MachineServices(this);
-
-    /** What the network holds of an item, as the programs' tick asks it; made once, not on every tick. */
-    private final java.util.function.ToLongFunction<String> stockLookup = this::networkStock;
-
-    /** Whether a program on another machine still waits, as the programs' tick asks it; made once, not per tick. */
-    private final java.util.function.Predicate<dev.jstech.computers.vm.program.IProgramParent.Remote> parentWaiting =
-            this::remoteParentWaiting;
+    private final ProgramHost host = new ProgramHost(this);
 
     /** The Σ# programs this machine is running. */
     public dev.jstech.computers.machine.MachinePrograms programs() {
-        return programs;
+        return host.programs();
     }
 
     /** What the Σ# programs on this machine reach through it. */
     public dev.jstech.computers.machine.MachineServices services() {
-        return services;
+        return host.services();
     }
 
     /**
@@ -720,17 +707,12 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * off, which is the truthful answer and not an error.
      */
     public long networkStock(final String item) {
-        final dev.jstech.computers.machine.NetworkReadService network = services.network();
-        return network == null ? 0L : network.stock(item);
+        return host.networkStock(item);
     }
 
     /** The prompt this machine's shell would show, for giving it back when a program lets go. */
     String shellPrompt() {
-        if (this instanceof dev.jstech.computers.terminal.IComputerTerminalHost host
-                && level instanceof ServerLevel server) {
-            return new dev.jstech.computers.program.ServerCliComputer(host, server).prompt();
-        }
-        return "";
+        return host.shellPrompt();
     }
 
     /**
@@ -740,15 +722,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * been taken out from under a running program.
      */
     public int sigmaCredits() {
-        final ComputerBuild build = currentBuild();
-        if (build == null) {
-            return 0;
-        }
-        long coreMegahertz = 0;
-        for (final CpuSpec cpu : build.cpus()) {
-            coreMegahertz += (long) cpu.cores() * cpu.freqMhz();
-        }
-        return dev.jstech.computers.machine.MachinePrograms.creditsFor(coreMegahertz);
+        return host.credits();
     }
 
     /**
@@ -758,28 +732,12 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * their chance to say goodbye rather than being left frozen for whenever it comes back on.
      */
     protected void tickSigma() {
-        // A machine running nothing still pays down what a Gateway spent on its behalf, tick by tick.
-        if (programs.isEmpty() && programs.owed() == 0) {
+        if (!host.tick() || !(level instanceof ServerLevel server)) {
             return;
         }
-        if (!isRunning()) {
-            programs.stopAll();
-            setChanged();
-            return;
-        }
-        /*
-         * The server's clock, not this machine's worth, is what bounds the tick: a machine the server has
-         * no time for this tick runs nothing and is first next tick.
-         */
-        final long deadline = level instanceof ServerLevel server
-                ? dev.jstech.computers.machine.ServerTickDeadline.shared().claim(server, worldPosition)
-                : Long.MAX_VALUE;
-        programs.tick(sigmaCredits(), deadline, stockLookup, parentWaiting);
-        if (level instanceof ServerLevel server) {
-            replication.pushOutput(server);
-            replication.pushWindows(server);
-            hearGateways();
-        }
+        replication.pushOutput(server);
+        replication.pushWindows(server);
+        host.hearGateways();
     }
 
     /**
@@ -790,35 +748,12 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * tick never looks. A machine whose chunk is not loaded is not known to be gone: its programs come back
      * with it, so what was started for them is kept until it can be asked.
      */
-    private boolean remoteParentWaiting(final dev.jstech.computers.vm.program.IProgramParent.Remote parent) {
-        if (!(level instanceof ServerLevel server)) {
-            return false;
-        }
-        final net.minecraft.core.BlockPos where = net.minecraft.core.BlockPos.of(parent.machine());
-        if (!server.isLoaded(where)) {
-            return true;
-        }
-        return server.getBlockEntity(where) instanceof AbstractComputerBlockEntity machine
-                && machine.nodeUuid() != null && parent.node().equals(machine.nodeUuid().value())
-                && machine.programs().byId(parent.program()) != null;
-    }
 
     /**
      * Tells the program on another machine that started one of this machine's programs that the program has ended, so
      * a wait on it runs again at once. A machine that is not loaded is not told: its programs look again when they
      * come back.
      */
-    private void tellRemoteParent(final dev.jstech.computers.vm.program.IProgramParent.Remote parent,
-                                  final int child) {
-        if (!(level instanceof ServerLevel server)) {
-            return;
-        }
-        final net.minecraft.core.BlockPos where = net.minecraft.core.BlockPos.of(parent.machine());
-        if (server.isLoaded(where) && server.getBlockEntity(where) instanceof AbstractComputerBlockEntity machine
-                && machine.nodeUuid() != null && parent.node().equals(machine.nodeUuid().value())) {
-            machine.programs().tellEnded(parent.program(), child);
-        }
-    }
 
     /**
      * Hands the programs on this machine whatever the ComputerCraft computers said through its Gateways.
@@ -826,33 +761,9 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * <p>A message waits on the Gateway until this tick and no longer: whoever is listening hears it now,
      * and a machine where no program listens simply lets it go.
      */
-    private void hearGateways() {
-        // Nothing was said to a Gateway of this machine since the last look, so there is nothing to find.
-        if (!gatewayMail) {
-            return;
-        }
-        gatewayMail = false;
-        if (!(level instanceof ServerLevel server)) {
-            return;
-        }
-        for (final dev.jstech.computers.blockentity.NetworkGatewayBlockEntity gateway
-                : dev.jstech.computers.gateway.GatewayManager.gatewaysOf(server, this)) {
-            for (final dev.jstech.computers.blockentity.NetworkGatewayBlockEntity.Message said
-                    : gateway.takeMessages()) {
-                programs.deliverGatewayMessage(said.from(), said.text(), said.tick());
-            }
-        }
-    }
-
-    /*
-     * Whether a Gateway of this machine may have something waiting. It starts true, so a machine that loads after
-     * a Gateway was spoken to still looks once; a Gateway sets it again whenever it is spoken to.
-     */
-    private boolean gatewayMail = true;
-
     /** Says a Gateway linked to this machine has something waiting for its programs. */
     public void gatewayMailWaits() {
-        gatewayMail = true;
+        host.gatewayMailWaits();
     }
 
     /*
@@ -904,9 +815,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (tag.contains("Studio")) {
             studio.load(tag.getCompound("Studio"), registries);
         }
-        if (tag.contains("Σ#")) {
-            programs.load(tag.getCompound("Σ#"), this);
-        }
+        host.load(tag);
         diskConsole.loadLegacy(tag);
         loadExtra(tag, registries);
         hardware.markDirty();
@@ -930,11 +839,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         final CompoundTag studioTag = new CompoundTag();
         studio.save(studioTag, registries);
         tag.put("Studio", studioTag);
-        if (!programs.isEmpty()) {
-            final CompoundTag sigmaTag = new CompoundTag();
-            programs.save(sigmaTag);
-            tag.put("Σ#", sigmaTag);
-        }
+        host.save(tag);
         peripherals.save(tag);
         /*
          * The console rides on the system disk, so flush it there BEFORE the hardware handler is
