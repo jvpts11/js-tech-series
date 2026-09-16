@@ -213,19 +213,9 @@ final class InstallerFrames {
         return new Frame(cx + 10, cy + 42, cw - 20, ch - 68, paint, next, back, null, erase);
     }
 
-    /** The four panes of a window, in the colours of the edition being installed. */
+    /** The maker's mark of the edition being installed, the same one its desktop wears. */
     static void emblem(final GuiGraphics g, final int x, final int y, final int size, final InstallerStyle style) {
-        final int gap = Math.max(1, size / 10);
-        final int half = (size - gap) / 2;
-        final int[] panes = switch (style) {
-            case FRAMES_95 -> new int[]{0xFF000080, 0xFF1F8A8A, 0xFF5FC3C3, 0xFF3A4FA8};
-            case FRAMES_XP -> new int[]{0xFF6F9FE0, 0xFF8FB8F0, 0xFF4E8B26, 0xFF9BD164};
-            default -> new int[]{0xFF3A6AE0, 0xFF5C86EA, 0xFF2B55C4, 0xFF4471DD};
-        };
-        g.fill(x, y, x + half, y + half, panes[0]);
-        g.fill(x + half + gap, y, x + size, y + half, panes[1]);
-        g.fill(x, y + half + gap, x + half, y + size, panes[2]);
-        g.fill(x + half + gap, y + half + gap, x + size, y + size, panes[3]);
+        FramesEmblem.draw(g, x, y, size, style.serializedName());
     }
 
     /** A raised or sunken bevel in the manner of the grey machines: light one way, dark the other. */

@@ -39,6 +39,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the system.
 
 ### Changed
+- The Start button carries its edition's own mark, four panes in that edition's colours, instead of the same
+  four-coloured flag on all of them. It is the mark the setup, the installer and the screen the system comes up
+  behind already wear, so a desktop now looks like the thing that installed it.
+- The newest edition greets the machine by name the first time it comes up, in place of the maker's name and
+  inside the same wait, so a first start says something different rather than taking longer.
 - A system remembers having been met, and the mark rides on the disk it is installed on rather than on the
   machine. A computer with two systems therefore meets each of them once, a disk carried to another computer
   arrives already met, and erasing a disk and installing again is a first meeting all over. The advancement for

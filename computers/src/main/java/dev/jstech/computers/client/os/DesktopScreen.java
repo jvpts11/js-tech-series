@@ -1821,11 +1821,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                 final int sbW = 54;
                 g.fill(4, tbY + 3, 4 + sbW, sh - 3, theme.startButton());
                 bevel(g, 4, tbY + 3, sbW, TASKBAR_H - 6, 0xFFFFFFFF, 0xFF808080);
-                // Four-pane flag logo.
-                g.fill(8, tbY + 8, 11, tbY + 11, 0xFFE0454A);
-                g.fill(12, tbY + 8, 15, tbY + 11, 0xFF49B84B);
-                g.fill(8, tbY + 12, 11, tbY + 15, 0xFF3C74D6);
-                g.fill(12, tbY + 12, 15, tbY + 15, 0xFFE6B928);
+                // The edition's own mark, the same one its setup and its boot screen wear.
+                dev.jstech.computers.client.FramesEmblem.draw(g, 8, tbY + 8, 7, osp);
                 g.drawString(font, "Start", 18, tbY + 8, 0xFF000000, false);
             }
             final TaskStrip strip = taskStrip(sw);
@@ -3532,7 +3529,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** The Windows 11 Start glyph: four solid blue panes with a thin gap. */
     private static void drawWin11Start(final GuiGraphics g, final int x, final int y) {
-        final int c = 0xFF4C84F0;
+        final int c = dev.jstech.computers.client.FramesEmblem.panesOf("frames_11")[0];
         g.fill(x, y, x + 5, y + 5, c);
         g.fill(x + 6, y, x + 11, y + 5, c);
         g.fill(x, y + 6, x + 5, y + 11, c);
@@ -3580,13 +3577,17 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             xpStartBand(g, XP_START_W - round + i, top + inset, 1, h - inset * 2);
         }
         g.fill(2, top + 1, XP_START_W - round, top + 1 + h / 3, 0x3AFFFFFF); // the gloss along the top
-        // The flag: four panes, the top row lifted a pixel so the whole thing leans the way it always did.
+        /*
+         * The edition's own mark, the same one its setup and its boot screen wear, with the right-hand panes
+         * lifted a pixel so the whole thing leans the way that button always did.
+         */
         final int fx = 7;
         final int fy = tbY + 8;
-        g.fill(fx, fy + 1, fx + 4, fy + 4, 0xFFE0454A);
-        g.fill(fx + 5, fy, fx + 9, fy + 3, 0xFF49B84B);
-        g.fill(fx, fy + 5, fx + 4, fy + 8, 0xFF3C74D6);
-        g.fill(fx + 5, fy + 4, fx + 9, fy + 7, 0xFFE6B928);
+        final int[] panes = dev.jstech.computers.client.FramesEmblem.panesOf("frames_xp");
+        g.fill(fx, fy + 1, fx + 4, fy + 4, panes[0]);
+        g.fill(fx + 5, fy, fx + 9, fy + 3, panes[1]);
+        g.fill(fx, fy + 5, fx + 4, fy + 8, panes[2]);
+        g.fill(fx + 5, fy + 4, fx + 9, fy + 7, panes[3]);
         g.drawString(font, net.minecraft.network.chat.Component.literal("start")
                         .withStyle(net.minecraft.ChatFormatting.BOLD, net.minecraft.ChatFormatting.ITALIC),
                 fx + 13, tbY + 8, 0xFFFFFFFF, true);

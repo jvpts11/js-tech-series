@@ -57,7 +57,7 @@ public final class BootLines {
             case MC_DOS -> dos(machine, system, copyright);
             case MC_NET -> net(machine, system, copyright);
             case LINUX -> linux(machine, system);
-            case FRAMES -> frames(system);
+            case FRAMES -> frames(machine, system);
             default -> new BootSequence.Builder().title(system.displayName()).subtitle(copyright).build();
         };
     }
@@ -68,12 +68,28 @@ public final class BootLines {
      * <p>That silence is the system's character rather than a gap: these are the machines that put a picture up
      * and a bar under it, and tell you nothing until they are ready. The bar is what the screen draws when a
      * sequence has no steps.
+     *
+     * <p>The newest of them says one thing, and only the once: the first time it comes up it greets the machine
+     * by name instead of showing the maker's, and it does it inside the same wait, so a first start is no longer
+     * than any other.
      */
-    private static BootSequence frames(final OsDef system) {
+    private static BootSequence frames(final AbstractComputerBlockEntity machine, final OsDef system) {
+        if (firstTime(machine, system)) {
+            return new BootSequence.Builder()
+                    .title("Hi.")
+                    .subtitle(dev.jstech.computers.os.install.Installers.machineName(machine)
+                            + " is getting ready for you")
+                    .build();
+        }
         return new BootSequence.Builder()
                 .title(system.house().name())
                 .subtitle(system.displayName())
                 .build();
+    }
+
+    /** Whether this is the newest edition coming up for the first time, which is the one start that greets. */
+    private static boolean firstTime(final AbstractComputerBlockEntity machine, final OsDef system) {
+        return "frames_11".equals(system.id().getPath()) && !machine.systemWelcome().seen();
     }
 
     /**

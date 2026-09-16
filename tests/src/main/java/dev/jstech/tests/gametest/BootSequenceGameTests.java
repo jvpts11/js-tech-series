@@ -108,6 +108,11 @@ public final class BootSequenceGameTests {
         final PersonalComputerBlockEntity computer =
                 TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
                         .placeRunningPersonalComputer(WHERE);
+        /*
+         * An ordinary start, not the first one: the newest edition greets the machine by name the first time it
+         * ever comes up, and this is the question about every start after that.
+         */
+        computer.setSystemWelcome(computer.systemWelcome().met());
         final BootSequence sequence = BootLines.forMachine(computer);
         helper.assertTrue(sequence.title().equals("Midsoft"),
                 "the maker's name is what goes up first: " + sequence.title());

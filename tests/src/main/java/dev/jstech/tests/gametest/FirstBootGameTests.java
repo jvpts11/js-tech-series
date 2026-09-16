@@ -14,6 +14,8 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.os.OsDisks;
+import dev.jstech.computers.os.boot.BootLines;
+import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.SystemWelcome;
 import dev.jstech.computers.os.boot.WelcomeFacts;
 import dev.jstech.tests.JsTests;
@@ -49,6 +51,9 @@ public final class FirstBootGameTests {
 
     private static final ResourceLocation FRAMES_95 =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_95");
+
+    private static final ResourceLocation FRAMES_11 =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_11");
 
     private FirstBootGameTests() {
     }
@@ -180,6 +185,50 @@ public final class FirstBootGameTests {
         helper.assertTrue(served.getFirst().contains("the Mirror on CORE"),
                 "with one answering it names it: " + served.getFirst());
         helper.succeed();
+    }
+
+    /**
+     * The newest edition greets the machine by name the first time it comes up, and only then.
+     *
+     * <p>It takes the place of the maker's name inside the same wait, so a first start is no longer than any
+     * other; once the system has been met it comes up behind that name like every other start.
+     */
+    @GameTest(template = ARENA)
+    public static void boot_theNewestEdition_greetsByNameOnlyTheFirstTime(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = standard(helper);
+        helper.assertTrue(computer.installOs(FRAMES_11), "Frames 11 installs on the machine");
+        computer.console().setComputerName("STUDIO-11");
+
+        final BootSequence first = BootLines.forMachine(computer);
+        helper.assertTrue("Hi.".equals(first.title()), "the first start greets: " + first.title());
+        helper.assertTrue(first.subtitle().startsWith("STUDIO-11"),
+                "and greets this machine by its own name: " + first.subtitle());
+
+        computer.setSystemWelcome(computer.systemWelcome().met());
+        final BootSequence later = BootLines.forMachine(computer);
+        helper.assertFalse("Hi.".equals(later.title()),
+                "a later start comes up behind the maker's name: " + later.title());
+        helper.succeed();
+    }
+
+    /** A Standard machine, which is what the newest edition needs. */
+    private static PersonalComputerBlockEntity standard(final GameTestHelper helper) {
+        helper.setBlock(WHERE, ComputingModule.PERSONAL_COMPUTER.get());
+        if (!(helper.getBlockEntity(WHERE) instanceof PersonalComputerBlockEntity computer)) {
+            throw new IllegalStateException("no personal computer at " + WHERE);
+        }
+        final ItemStackHandler hardware = computer.getHardware();
+        hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
+                new ItemStack(HardwareItems.MOTHERBOARD_ATX_STANDARD_LGA1150.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
+                new ItemStack(HardwareItems.CPU_APEX_7_4790K.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
+                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
+                new ItemStack(ComputingModule.PSU_650G.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
+                new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
+        return computer;
     }
 
     /** A Legacy machine with one empty disk, which is enough for every question here. */
