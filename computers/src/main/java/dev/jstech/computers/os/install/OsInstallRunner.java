@@ -68,7 +68,7 @@ public final class OsInstallRunner {
 
     /** Whether what was being read has left the drive it was in. */
     private static boolean mediumGone(final ServerLevel level, final OsInstallJob job) {
-        if (job.readerPos() < 0) {
+        if (!job.hasReader()) {
             return false;
         }
         return !(level.getBlockEntity(BlockPos.of(job.readerPos())) instanceof MediaReaderBlockEntity reader)

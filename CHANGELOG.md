@@ -202,6 +202,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- A machine built west or north of the world's origin no longer ignores the drive an install was told to read from,
+  and no longer carries on copying a system after the medium has been taken out of it. A drive is named by the
+  position it stands at, and a position out there is a negative number, which both of those read as "no drive
+  named".
 - A shell window on a desktop now sends what you type to the machine you are connected to. Only the terminal that
   takes the whole screen of a monitor did: in a window, `ssh` opened the session and said it had, and then every
   command ran on the computer standing in front of you, with a prompt that named no machine either.

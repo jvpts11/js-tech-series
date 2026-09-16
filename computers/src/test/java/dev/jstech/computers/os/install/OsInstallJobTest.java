@@ -100,6 +100,23 @@ class OsInstallJobTest {
         assertEquals(600, job.permille());
     }
 
+    /*
+     * A drive's position is packed into a long, and anything west or north of the world's origin packs into a
+     * negative one. Reading "no drive" as "less than zero" meant that half the world's machines never noticed the
+     * medium being taken out of them, which is the kind of thing that only shows up where the world put you.
+     */
+    @Test
+    void aReaderWestOfTheOrigin_isStillAReader() {
+        assertTrue(new OsInstallJob("jsc:debian", 0, -12_229_062L, 100, 100).hasReader());
+        assertTrue(new OsInstallJob("jsc:debian", 0, 0L, 100, 100).hasReader());
+        assertTrue(new OsInstallJob("jsc:debian", 0, -1L, 100, 100).hasReader());
+    }
+
+    @Test
+    void aJobReadFromNoDrive_saysSo() {
+        assertFalse(new OsInstallJob("jsc:debian", 0, OsInstallJob.NO_READER, 100, 100).hasReader());
+    }
+
     @Test
     void aJobOfNoLength_isStillOneTick() {
         assertEquals(1, new OsInstallJob("jsc:mc_dos", -1, 0L, 0, 0).ticksTotal());

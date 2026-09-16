@@ -44,6 +44,9 @@ import java.util.List;
  */
 public final class FirmwarePayloads {
 
+    /** What an install asks for when it does not care which drive the medium is in. */
+    public static final long ANY_READER = -1L;
+
     private FirmwarePayloads() {
     }
 
@@ -367,7 +370,13 @@ public final class FirmwarePayloads {
         final HardwareEra hostEra = computer.installedEra() != null ? computer.installedEra() : HardwareEra.STANDARD;
         String failure = null;
         for (final long endpoint : computer.linkedEndpoints()) {
-            if (readerPos >= 0 && endpoint != readerPos) {
+            /*
+             * -1 is the word for "any drive with an installer in it"; anything else names one drive by its packed
+             * position. Asking whether that position is positive is not the same question: a drive west or north
+             * of the world's origin packs into a negative long, so on those bases naming a drive was read as
+             * naming none of them, and the machine installed from whichever it found first.
+             */
+            if (readerPos != ANY_READER && endpoint != readerPos) {
                 continue;
             }
             if (!(level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader)

@@ -23,6 +23,14 @@ import dev.jstech.computers.os.media.MediaFormat;
  */
 public final class OsInstallJob {
 
+    /**
+     * A copy that is being read from no drive at all.
+     *
+     * <p>Not {@code -1}: a drive's position is packed into a long, and any position west or north of the world's
+     * origin packs into a negative one, so "less than zero" would have meant "no drive" for half the world.
+     */
+    public static final long NO_READER = Long.MIN_VALUE;
+
     private final String osId;
     private final int targetSlot;
     private final long readerPos;
@@ -75,6 +83,11 @@ public final class OsInstallJob {
     /** The drive the medium is in; a copy stops if what it is reading leaves. */
     public long readerPos() {
         return this.readerPos;
+    }
+
+    /** Whether this copy is being read from a drive, and so can lose what it is reading. */
+    public boolean hasReader() {
+        return this.readerPos != NO_READER;
     }
 
     public int ticksTotal() {
