@@ -42,7 +42,7 @@ final class ClientReplication {
      * window, as it went. Per player and not per machine: two people at one desktop are not sent the same
      * windows at the same moments, and whoever opens second must be given what the first already has.
      */
-    private final Map<UUID, Map<Long, UiWindowPayload>> sentByViewer = new HashMap<>();
+    private final Map<UUID, Map<WindowId, UiWindowPayload>> sentByViewer = new HashMap<>();
     /*
      * Which progress quarter (25/50/75%) each running build last reported, so the console gets a handful
      * of emerge-style progress lines instead of one per second. Transient by design.
@@ -68,7 +68,7 @@ final class ClientReplication {
             return;
         }
         forgetWhoLeft(viewers);
-        final Map<Long, UiWindowPayload> open = openNow();
+        final Map<WindowId, UiWindowPayload> open = openNow();
         for (final ServerPlayer viewer : viewers) {
             if (!(viewer.containerMenu instanceof DesktopMenu)) {
                 continue;
@@ -91,8 +91,8 @@ final class ClientReplication {
         return takeOwed(viewer, openNow());
     }
 
-    private List<UiWindowPayload> takeOwed(final ServerPlayer viewer, final Map<Long, UiWindowPayload> open) {
-        final Map<Long, UiWindowPayload> sent =
+    private List<UiWindowPayload> takeOwed(final ServerPlayer viewer, final Map<WindowId, UiWindowPayload> open) {
+        final Map<WindowId, UiWindowPayload> sent =
                 this.sentByViewer.computeIfAbsent(viewer.getUUID(), id -> new HashMap<>());
         final List<UiWindowPayload> owed = new ArrayList<>();
         for (final var entry : open.entrySet()) {
@@ -112,13 +112,13 @@ final class ClientReplication {
     }
 
     /** The windows the programs on this machine have open, as they would go over. */
-    private Map<Long, UiWindowPayload> openNow() {
+    private Map<WindowId, UiWindowPayload> openNow() {
         final BlockPos pos = this.machine.getBlockPos();
-        final Map<Long, UiWindowPayload> open = new HashMap<>();
+        final Map<WindowId, UiWindowPayload> open = new HashMap<>();
         this.machine.programs().eachWindow((window, program) -> {
             final var payload = UiWindowPayload.of(pos, program, window);
             if (payload != null) {
-                open.put(key(payload.program(), payload.window()), payload);
+                open.put(new WindowId(payload.program(), payload.window()), payload);
             }
         });
         return open;
@@ -277,8 +277,14 @@ final class ClientReplication {
         }
     }
 
-    private static long key(final int program, final long window) {
-        return ((long) program << 32) | (window & 0xFFFFFFFFL);
+    /**
+     * One window of one program on this machine.
+     *
+     * <p>The two were packed into a single long before, which threw away the top half of a window's number:
+     * a machine that had opened more than four thousand million windows would have had two of them answer to
+     * the same name and shown one in place of the other.
+     */
+    private record WindowId(int program, long window) {
     }
 
     /** What a program is called on a console line: its command name, or its id without the namespace. */
