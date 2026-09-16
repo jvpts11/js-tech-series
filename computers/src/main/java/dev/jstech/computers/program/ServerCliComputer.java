@@ -863,10 +863,8 @@ public final class ServerCliComputer implements ICliComputer {
      */
     @org.jetbrains.annotations.Nullable
     public MachinePrograms foreground() {
-        if (hostBlock instanceof AbstractComputerBlockEntity computer && computer.programs().held() != 0) {
-            return computer.programs();
-        }
-        return null;
+        final dev.jstech.computers.machine.ProgramService running = sigma();
+        return running == null ? null : running.foreground();
     }
 
     @Override
@@ -876,55 +874,32 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public OpResult startSigma(final String path, final int heapMb, final List<String> arguments) {
-        if (!(hostBlock instanceof AbstractComputerBlockEntity computer)) {
-            return OpResult.fail("sigma: this machine cannot run programs");
-        }
-        final var launch = dev.jstech.computers.machine.ProgramLauncher.launch(computer, path, this::readFile,
-                arguments, dev.jstech.computers.vm.program.IProgramParent.NONE,
-                dev.jstech.computers.vm.program.ProgramPriority.MEDIUM, heapMb);
-        if (!launch.ok()) {
-            return OpResult.fail(switch (launch.refusal()) {
-                case NO_RUNNER -> path + ": nothing installed runs a program of this kind"
-                        + " (compile a source file first)";
-                case NO_MEMORY -> "sigma: " + launch.roomMb() + " MB will not fit in " + launch.freeMb()
-                        + " MB of free memory";
-                case UNREADABLE, NOT_STARTED -> launch.message();
-            });
-        }
-        final var one = computer.programs().byId(launch.id());
-        if (one != null && !one.process().isService()) {
-            /*
-             * A program that runs at a terminal takes the one that started it, the way it does on any
-             * machine: the prompt is its, and comes back when it returns.
-             */
-            computer.programs().hold(launch.id());
-            return OpResult.ok("");
-        }
-        return OpResult.ok(launch.message());
+        final dev.jstech.computers.machine.ProgramService running = sigma();
+        return running == null ? OpResult.fail("sigma: this machine cannot run programs")
+                : running.startAtTerminal(path, heapMb, arguments);
     }
 
     @Override
     public OpResult stopSigma(final int id) {
-        if (!(hostBlock instanceof AbstractComputerBlockEntity computer)) {
-            return OpResult.fail("sigma: this machine cannot run programs");
-        }
-        if (!computer.programs().stop(id)) {
-            return OpResult.fail("sigma: nothing is running as " + id);
-        }
-        computer.setChanged();
-        return OpResult.ok("stopped " + id);
+        final dev.jstech.computers.machine.ProgramService running = sigma();
+        return running == null ? OpResult.fail("sigma: this machine cannot run programs") : running.stop(id);
     }
 
     @Override
     public List<SigmaProcess> sigmaProcesses() {
-        if (!(hostBlock instanceof AbstractComputerBlockEntity computer)) {
-            return List.of();
-        }
-        final List<SigmaProcess> running = new java.util.ArrayList<>();
-        for (final var one : computer.programs().view()) {
-            running.add(new SigmaProcess(one.id(), one.name(), one.state(), one.heldBytes(), one.heapBytes(),
-                    one.file()));
-        }
-        return running;
+        final dev.jstech.computers.machine.ProgramService running = sigma();
+        return running == null ? List.of() : running.processes();
+    }
+
+    /**
+     * The programs running on this machine, as this shell reaches them; null when the machine runs none at all.
+     *
+     * <p>Named for the language rather than for programs, since this shell already answers {@code programs()} with
+     * what is installed, which is another thing entirely.
+     */
+    @org.jetbrains.annotations.Nullable
+    private dev.jstech.computers.machine.ProgramService sigma() {
+        return hostBlock instanceof AbstractComputerBlockEntity computer
+                ? new dev.jstech.computers.machine.ProgramService(computer, host, level, this) : null;
     }
 }

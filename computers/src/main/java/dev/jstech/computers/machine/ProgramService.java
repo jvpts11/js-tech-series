@@ -10,6 +10,7 @@ package dev.jstech.computers.machine;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
+import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
@@ -39,8 +40,8 @@ public final class ProgramService {
     private final ServerLevel level;
     private final ServerCliComputer shell;
 
-    ProgramService(final AbstractComputerBlockEntity machine, final IComputerTerminalHost terminal,
-                   final ServerLevel level, final ServerCliComputer shell) {
+    public ProgramService(final AbstractComputerBlockEntity machine, final IComputerTerminalHost terminal,
+                          final ServerLevel level, final ServerCliComputer shell) {
         this.machine = machine;
         this.terminal = terminal;
         this.level = level;
@@ -99,6 +100,62 @@ public final class ProgramService {
     public boolean send(final int from, final int to, final String text) {
         final long tick = this.machine.getLevel() == null ? 0L : this.machine.getLevel().getGameTime();
         return this.machine.programs().send(from, to, text, tick);
+    }
+
+    /**
+     * The program sitting in front of the machine's terminal, or null when none is.
+     *
+     * <p>A machine has one prompt, so it has at most one program in front of it; whoever is at the keyboard is
+     * typing at that program until it returns.
+     */
+    @Nullable
+    public MachinePrograms foreground() {
+        return this.machine.programs().held() != 0 ? this.machine.programs() : null;
+    }
+
+    /**
+     * Starts a program from the prompt, which is not the same as starting one for another program.
+     *
+     * <p>A program started this way that runs at a terminal TAKES it, the way it does on any machine: the prompt is
+     * its until it returns. One that is a service does not, and says what it started instead.
+     */
+    public ICliComputer.OpResult startAtTerminal(final String path, final int heapMb, final List<String> arguments) {
+        final ProgramLauncher.Launch launch = ProgramLauncher.launch(this.machine, path, this.shell::readFile,
+                arguments, IProgramParent.NONE, ProgramPriority.MEDIUM, heapMb);
+        if (!launch.ok()) {
+            return ICliComputer.OpResult.fail(switch (launch.refusal()) {
+                case NO_RUNNER -> path + ": nothing installed runs a program of this kind"
+                        + " (compile a source file first)";
+                case NO_MEMORY -> "sigma: " + launch.roomMb() + " MB will not fit in " + launch.freeMb()
+                        + " MB of free memory";
+                case UNREADABLE, NOT_STARTED -> launch.message();
+            });
+        }
+        final ProgramEntry<IMachineRuntime> one = this.machine.programs().byId(launch.id());
+        if (one != null && !one.process().isService()) {
+            this.machine.programs().hold(launch.id());
+            return ICliComputer.OpResult.ok("");
+        }
+        return ICliComputer.OpResult.ok(launch.message());
+    }
+
+    /** Stops the program under that number, in the words the prompt answers with. */
+    public ICliComputer.OpResult stop(final int id) {
+        if (!this.machine.programs().stop(id)) {
+            return ICliComputer.OpResult.fail("sigma: nothing is running as " + id);
+        }
+        this.machine.setChanged();
+        return ICliComputer.OpResult.ok("stopped " + id);
+    }
+
+    /** Every program running on this machine, as a prompt lists them. */
+    public List<ICliComputer.SigmaProcess> processes() {
+        final List<ICliComputer.SigmaProcess> running = new ArrayList<>();
+        for (final ProgramView one : this.machine.programs().view()) {
+            running.add(new ICliComputer.SigmaProcess(one.id(), one.name(), one.state(), one.heldBytes(),
+                    one.heapBytes(), one.file()));
+        }
+        return running;
     }
 
     /** Runs one line at a computer's prompt, as that shell sees it, and hands back what it printed. */
