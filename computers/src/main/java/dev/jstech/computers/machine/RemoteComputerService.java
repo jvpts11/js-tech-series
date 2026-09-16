@@ -193,8 +193,8 @@ public final class RemoteComputerService {
     /**
      * Every folder the other running machines of the network share, by host name.
      *
-     * <p>Whether a machine is on is something it answers itself; only reading what it shares still goes through its
-     * shell, since that is the machine's own configuration.
+     * <p>Each machine answers for itself, both whether it is on and what it shares, so walking the network builds
+     * nothing at all.
      */
     public List<ICliComputer.NetworkShare> networkShares() {
         final List<ICliComputer.NetworkShare> out = new ArrayList<>();
@@ -202,7 +202,7 @@ public final class RemoteComputerService {
             if (!(machine instanceof IComputerTerminalHost host) || !host.computerRunning()) {
                 return;
             }
-            for (final ICliComputer.ShareInfo share : new ServerCliComputer(host, this.level).shares()) {
+            for (final ICliComputer.ShareInfo share : MachineConfigService.sharesOf(host)) {
                 out.add(new ICliComputer.NetworkShare(hostname, share));
             }
         });

@@ -135,7 +135,17 @@ public final class MachineConfigService {
 
     /** The folders this machine shares, in the order they were shared. */
     public List<ICliComputer.ShareInfo> shares() {
-        final ComputerConsoleState console = this.terminal.console();
+        return sharesOf(this.terminal);
+    }
+
+    /**
+     * The folders any machine shares, in the order they were shared.
+     *
+     * <p>What a machine shares is written in its own settings, so reading it needs the machine and nothing else.
+     * Whoever walks a network asks each machine directly instead of standing a shell up in front of it.
+     */
+    public static List<ICliComputer.ShareInfo> sharesOf(final IComputerTerminalHost machine) {
+        final ComputerConsoleState console = machine.console();
         if (console == null) {
             return List.of();
         }
