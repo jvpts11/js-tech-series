@@ -279,7 +279,7 @@ public final class MachineServices implements IHost {
             this.mainframe = new MainframeStatsService(terminal, server);
             this.iql = new IqlService(terminal, server, this.files, this.operations, this.network);
             // The packages come after the language: the Mirror's list of services carries the engine's row.
-            this.packages = new PackageService(terminal, server, this.iql);
+            this.packages = new PackageService(terminal, server, this.files, this.iql);
             this.programs = new ProgramService(this.machine, terminal, server, this.shell);
             this.remotes = new RemoteComputerService(this.shell);
             this.gateways = new GatewayBridgeService(this.machine, server);

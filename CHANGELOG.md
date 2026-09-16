@@ -123,6 +123,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   network for, the IQL statements it runs, the programs it starts and asks after, on its own computer or another of
   its network, and its calls through the computer's Gateways, which services the computer keeps answer. A computer
   keeps the shell its programs reach its drives and its network through, instead of making one for each call.
+- A computer installs packages in one place, whether the prompt or a program asks: what its package manager is, what
+  the network's Mirror can serve it, installing, removing, updating, and publishing a package of your own for the
+  rest of the network to install. The Mirror itself is kept there too, so the list of the network's services has each
+  row answered by whoever keeps that service.
 - A computer speaks the network's own language in one place, whether the prompt, a program or the management studio
   asks: installing the engine on the Mainframe and starting or stopping it, and carrying out every statement that
   changes something, buses included. The engine that runs a statement is now handed only what it uses, which is one

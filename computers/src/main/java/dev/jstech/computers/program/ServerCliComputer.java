@@ -502,32 +502,6 @@ public final class ServerCliComputer implements ICliComputer {
         return null;
     }
 
-    /**
-     * Refuses a program the machine is too old to run, or {@code null} when the era is fine. Software
-     * cannot predate its hardware generation: a desktop of the 2010s does not install on a machine of
-     * the 1990s, however much disk it has free. Both install paths (the package manager and the install
-     * medium) go through this, so neither is a way around the rule.
-     */
-    @org.jetbrains.annotations.Nullable
-    private OpResult eraGate(final dev.jstech.computers.os.ProgramSpec spec) {
-        if (spec.minEra() == dev.jstech.core.tier.HardwareEra.VINTAGE) {
-            return null; // no requirement
-        }
-        /*
-         * displayEra, not installedEra: a Vintage or Legacy chassis IS that generation whatever board
-         * sits in it, and that chassis is the only way a machine of an older era exists right now.
-         */
-        final dev.jstech.core.tier.HardwareEra era =
-                hostBlock instanceof IOsHost computer ? computer.displayEra() : null;
-        if (era != null && dev.jstech.computers.os.OsGating.canInstall(spec.minEra(), era)) {
-            return null;
-        }
-        final String needed = spec.minEra().name();
-        return OpResult.fail(spec.commandName() + " needs "
-                + (needed.charAt(0) + needed.substring(1).toLowerCase(java.util.Locale.ROOT))
-                + " hardware or later");
-    }
-
     @Override
     public OpResult engineControl(final String action) {
         return iql().control(action);
@@ -660,52 +634,19 @@ public final class ServerCliComputer implements ICliComputer {
         return packages().manager();
     }
 
-    /** The network's Mainframe when its Mirror service is serving, else null. */
-    private MainframeBlockEntity mirrorMainframe() {
-        return packages().mirrorMainframe();
-    }
-
     @Override
     public boolean mirrorReachable() {
         return packages().reachable();
     }
 
-    /** Moves finished source builds into the installed set (lazy: runs whenever packages are touched). */
-    private void settleBuilds() {
-        packages().settleBuilds();
-    }
-
     @Override
     public java.util.List<String> drainBuildNotices() {
-        settleBuilds();
-        final java.util.List<String> out = new ArrayList<>();
-        // What the machine itself has to say goes first: it happened as the world loaded, before any build finished.
-        if (hostBlock instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity computer) {
-            for (final String notice : computer.programs().drainNotices()) {
-                out.add(">>> " + notice);
-            }
-        }
-        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
-        final java.util.List<String> finished = console == null ? java.util.List.of() : console.drainFinishedBuilds();
-        if (!finished.isEmpty()) {
-            hostBlock.setChanged();
-        }
-        for (final String id : finished) {
-            final dev.jstech.computers.os.ProgramSpec spec =
-                    OsRegistry.getProgram(net.minecraft.resources.ResourceLocation.tryParse(id));
-            out.add(">>> " + (spec != null ? spec.commandName() : id) + ": build finished, package installed");
-        }
-        return out;
+        return packages().notices();
     }
 
     /** Whether the named program is present on this computer (console install, or a Mainframe service flag). */
     private boolean hasPackage(final dev.jstech.computers.os.ProgramSpec spec) {
         return packages().has(spec);
-    }
-
-    /** The packages a manager on this computer can offer, by the platform it is running. */
-    private java.util.List<dev.jstech.computers.os.ProgramSpec> mirrorPackages() {
-        return packages().offered();
     }
 
     @Override
@@ -715,364 +656,33 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public OpResult publishPackage(final String path) {
-        final MainframeBlockEntity mirror = mirrorMainframe();
-        if (mirror == null) {
-            return OpResult.fail("could not resolve mirror:// - connect this computer to a network whose"
-                    + " Mainframe runs the Mirror service");
-        }
-        final FsResult read = readFile(path);
-        if (!read.ok()) {
-            return OpResult.fail(read.message());
-        }
-        final dev.jstech.computers.sigma.pack.Packed packed =
-                dev.jstech.computers.sigma.pack.Packed.read(read.message());
-        if (packed == null) {
-            return OpResult.fail(path + ": this is not a package (build one with 'sgpack build')");
-        }
-        final java.util.List<String> wrong = packed.problems();
-        if (!wrong.isEmpty()) {
-            return OpResult.fail(path + ": " + wrong.getFirst());
-        }
-        final String name = packed.manifest().name();
-        final boolean replacing = mirror.shelvedPackage(name) != null;
-        if (!mirror.shelve(name, read.message())) {
-            return OpResult.fail("the Mirror is full (" + MainframeBlockEntity.SHELF_MAX + " packages)");
-        }
-        return OpResult.ok((replacing ? "replaced " : "published ") + packed.manifest().label()
-                + " on the Mirror");
+        return packages().publish(path);
     }
 
     @Override
     public OpResult unpublishPackage(final String name) {
-        final MainframeBlockEntity mirror = mirrorMainframe();
-        if (mirror == null) {
-            return OpResult.fail("could not resolve mirror://");
-        }
-        if (!mirror.unshelve(name == null ? "" : name.trim())) {
-            return OpResult.fail("the Mirror is not serving " + name);
-        }
-        return OpResult.ok("took " + name + " off the Mirror");
+        return packages().unpublish(name);
     }
 
-    /**
-     * The folder a player's package is unpacked into.
-     *
-     * <p>One folder each, named after the package, so two of them cannot quietly overwrite each other's
-     * files and removing one takes exactly its own files with it.
-     */
-    private static final String COMMUNITY_DIR = "PROGRAMS";
-
-    /**
-     * Installs a package a player published, if that is what this name is.
-     *
-     * <p>Returns null when the name belongs to something else, so the usual path carries on.
-     */
-    @org.jetbrains.annotations.Nullable
-    private OpResult installCommunity(final String wanted) {
-        final MainframeBlockEntity mirror = mirrorMainframe();
-        final String held = mirror == null ? null : mirror.shelvedPackage(wanted);
-        if (held == null) {
-            return null;
-        }
-        final dev.jstech.computers.sigma.pack.Packed packed =
-                dev.jstech.computers.sigma.pack.Packed.read(held);
-        if (packed == null || !packed.problems().isEmpty()) {
-            return OpResult.fail(wanted + ": the Mirror's copy of this package is not readable");
-        }
-        if (!dev.jstech.computers.program.cli.SigmaCommands.installed(this,
-                dev.jstech.computers.program.cli.SigmaCommands.RUNTIME)) {
-            return OpResult.fail(wanted + " is a Σ# program; install sigma first");
-        }
-        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
-        if (console == null) {
-            return OpResult.fail("no system disk to install onto");
-        }
-        // Its own folder, made before anything is written into it.
-        final String folder = COMMUNITY_DIR + "/" + wanted;
-        makeDir(COMMUNITY_DIR);
-        if (!makeDir(folder).ok() && listDisk(folder).entries().isEmpty()) {
-            return OpResult.fail(wanted + ": this system has no folders to install into");
-        }
-        for (final var file : packed.files().entrySet()) {
-            final FsResult written = writeFile(folder + "/" + file.getKey(), file.getValue());
-            if (!written.ok()) {
-                return OpResult.fail(wanted + ": " + written.message());
-            }
-        }
-        console.addCommunity(new dev.jstech.computers.program.ComputerConsoleState.Community(
-                wanted, packed.manifest().version(), packed.manifest().house(),
-                packed.manifest().icon(), folder + "/" + packed.manifest().entry()));
-        hostBlock.setChanged();
-        return OpResult.ok("installed " + packed.manifest().label() + " into " + folder);
-    }
 
     @Override
     public OpResult packageInstall(final String name) {
-        settleBuilds();
-        final dev.jstech.computers.os.PackageManagerKind manager = packageManager();
-        if (manager == dev.jstech.computers.os.PackageManagerKind.NONE) {
-            return OpResult.fail("this system installs programs from install media, not a package manager");
-        }
-        final OpResult community =
-                installCommunity(name == null ? "" : name.trim().toLowerCase(java.util.Locale.ROOT));
-        if (community != null) {
-            return community;
-        }
-        if (mirrorMainframe() == null) {
-            return OpResult.fail("could not resolve mirror:// - connect this computer to a network whose Mainframe"
-                    + " runs the Mirror service");
-        }
-        dev.jstech.computers.os.ProgramSpec spec = null;
-        final String wanted = name == null ? "" : name.trim().toLowerCase(java.util.Locale.ROOT);
-        for (final dev.jstech.computers.os.ProgramSpec candidate : mirrorPackages()) {
-            if (candidate.commandName().equalsIgnoreCase(wanted) || candidate.id().getPath().equalsIgnoreCase(wanted)) {
-                spec = candidate;
-                break;
-            }
-        }
-        if (spec == null) {
-            return OpResult.fail("unable to locate package " + wanted);
-        }
-        final OpResult tooOld = eraGate(spec);
-        if (tooOld != null) {
-            return tooOld;
-        }
-        if (spec.hostScope() == dev.jstech.computers.os.HostScope.MAINFRAME
-                && !(hostBlock instanceof MainframeBlockEntity)) {
-            return OpResult.fail(spec.commandName() + " only installs on the Mainframe");
-        }
-        if (spec.hostScope() == dev.jstech.computers.os.HostScope.SERVER
-                && !(hostBlock instanceof dev.jstech.computers.blockentity
-                        .ServerRackBlockEntity)) {
-            return OpResult.fail(spec.commandName() + " only installs on a server in a rack");
-        }
-        if (spec.hostScope() == dev.jstech.computers.os.HostScope.CLUSTER_MANAGEMENT_COMPUTER
-                && !(hostBlock instanceof dev.jstech.computers.blockentity
-                        .ClusterManagementComputerBlockEntity)) {
-            return OpResult.fail(spec.commandName() + " only installs on a Cluster Management Computer");
-        }
-        if (hasPackage(spec)) {
-            return OpResult.ok(spec.commandName() + " is already the newest version");
-        }
-        // Re-running emerge on a package still compiling reports the build instead of restarting it from zero.
-        final Long readyAt = host.console() == null ? null : host.console().pendingBuilds().get(spec.id().toString());
-        if (readyAt != null) {
-            final long left = Math.max(0L, readyAt - level.getGameTime());
-            return OpResult.ok(">>> " + spec.commandName() + " is already compiling (about " + (left / 20) + "s left)");
-        }
-        // A Mainframe service switches its flag on directly (a prebuilt daemon, so no source build either).
-        if (hostBlock instanceof MainframeBlockEntity mf
-                && spec.kind() == dev.jstech.computers.os.ProgramKind.SERVICE) {
-            final boolean done = switch (spec.id().getPath()) {
-                case "iqlengine" -> mf.installIqlEngine();
-                case "automation_engine" -> mf.installAutomationEngine();
-                case "mirror" -> mf.installMirror();
-                default -> host.console() != null && host.console().install(spec.id().toString());
-            };
-            hostBlock.setChanged();
-            return done ? OpResult.ok("Setting up " + spec.commandName() + " ... done")
-                    : OpResult.fail(spec.commandName() + " could not be set up");
-        }
-        if (hostBlock instanceof IOsHost oc
-                && !OsRegistry.canInstallProgram(oc.installedOsId(), spec.id(), oc.maxCpuMhz(), oc.totalVramMb(),
-                        oc.systemDiskFreeMb())) {
-            return OpResult.fail(spec.commandName() + ": unmet requirements (hardware or free disk space)");
-        }
-        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
-        if (console == null) {
-            return OpResult.fail("this computer cannot store installed programs");
-        }
-        if (manager.compilesFromSource()) {
-            final long ticks = buildTicks(spec);
-            console.startBuild(spec.id().toString(), level.getGameTime() + ticks, ticks);
-            hostBlock.setChanged();
-            return OpResult.ok(">>> Emerging " + spec.commandName() + " ... compiling (about " + (ticks / 20) + "s)");
-        }
-        /*
-         * A package from the Mirror is fetched over the network and set up over time, the way the same
-         * program from a disc is; the manager's own gates above have already said it may.
-         */
-        final dev.jstech.computers.os.IOsHost machine = osHost();
-        if (machine == null) {
-            return OpResult.fail("this computer cannot store installed programs");
-        }
-        final dev.jstech.computers.os.ProgramSpec fetched = spec;
-        final java.util.Optional<String> refusal = dev.jstech.computers.os.install.SetupRunner.begin(
-                machine, level, hostBlock.getBlockPos(), fetched, null, false, manager.command());
-        return refusal.map(OpResult::fail).orElseGet(() -> OpResult.ok(fetchLines(manager, fetched)));
-    }
-
-    /**
-     * What a package manager prints before the download starts, in its own words.
-     *
-     * <p>Each of them has a voice a player who has used the real one knows on sight, and the lines are
-     * that voice: what was resolved, what will be installed, how big it is, and where it comes from.
-     * They are one message, line by line, and the bar the machine draws afterwards follows them.
-     */
-    private String fetchLines(final dev.jstech.computers.os.PackageManagerKind manager,
-                              final dev.jstech.computers.os.ProgramSpec spec) {
-        final String pkg = spec.commandName();
-        final String ver = dev.jstech.computers.os.ProgramVersions.of(spec.id());
-        final int mb = spec.minDiskMb();
-        return switch (manager) {
-            case APT -> String.join("\n",
-                    "Reading package lists... Done",
-                    "Building dependency tree... Done",
-                    "The following NEW packages will be installed:",
-                    "  " + pkg,
-                    "Need to get " + mb + " MB of archives.",
-                    "Get:1 mirror://" + mirrorHostname() + " stable/main " + pkg + " " + ver + " [" + mb + " MB]");
-            case DNF -> String.join("\n",
-                    "Last metadata expiration check: 0:00:01 ago.",
-                    "Dependencies resolved.",
-                    "Installing:  " + pkg + "  x86_64  " + ver + "  mirror  " + mb + " MB",
-                    "Downloading Packages:");
-            case PACMAN -> String.join("\n",
-                    "resolving dependencies...",
-                    "looking for conflicting packages...",
-                    "Packages (1) " + pkg + "-" + ver,
-                    "Total Download Size: " + mb + ".00 MiB",
-                    ":: Retrieving packages...");
-            default -> "Fetching " + pkg + " " + ver + " from mirror://" + mirrorHostname() + " [" + mb + " MB]";
-        };
-    }
-
-    /** The same, for a removal: what the manager says before it takes the package off. */
-    private static String removeLines(final dev.jstech.computers.os.PackageManagerKind manager,
-                                      final dev.jstech.computers.os.ProgramSpec spec) {
-        final String pkg = spec.commandName();
-        final String ver = dev.jstech.computers.os.ProgramVersions.of(spec.id());
-        return switch (manager) {
-            case APT -> String.join("\n",
-                    "Reading package lists... Done",
-                    "Building dependency tree... Done",
-                    "The following packages will be REMOVED:",
-                    "  " + pkg,
-                    "After this operation, " + spec.minDiskMb() + " MB disk space will be freed.",
-                    "Removing " + pkg + " (" + ver + ") ...");
-            case DNF -> String.join("\n",
-                    "Dependencies resolved.",
-                    "Removing:  " + pkg + "  x86_64  " + ver,
-                    "Running transaction");
-            case PACMAN -> String.join("\n",
-                    "checking dependencies...",
-                    "Packages (1) " + pkg + "-" + ver,
-                    ":: Removing " + pkg + " ...");
-            default -> "Removing " + pkg + " ...";
-        };
-    }
-
-    /** The name the Mirror's Mainframe goes by in a package line, or the plain word when it has none. */
-    private String mirrorHostname() {
-        return packages().mirrorHostname();
+        return packages().install(name);
     }
 
     /** The build every package the Mirror serves is currently at: the mod's own version. */
     public static String modVersion() {
-        return net.neoforged.fml.ModList.get()
-                .getModContainerById(dev.jstech.computers.JsComputers.MODID)
-                .map(container -> container.getModInfo().getVersion().toString())
-                .orElse("0");
+        return dev.jstech.computers.machine.PackageService.modVersion();
     }
 
     @Override
     public OpResult packageUpdate() {
-        settleBuilds();
-        final dev.jstech.computers.os.PackageManagerKind manager = packageManager();
-        if (manager == dev.jstech.computers.os.PackageManagerKind.NONE) {
-            return OpResult.fail("this system installs programs from install media, not a package manager");
-        }
-        final ComputerConsoleState console = host.console();
-        if (console == null) {
-            return OpResult.fail("this computer cannot store installed programs");
-        }
-        if (mirrorMainframe() == null) {
-            return OpResult.fail("could not resolve mirror:// - connect this computer to a network whose Mainframe"
-                    + " runs the Mirror service");
-        }
-        /*
-         * Each package has a version of its own, and one installed at an older one is what an update
-         * brings up. The program itself always runs the code this build ships, so an update reconciles
-         * the record rather than moving files.
-         */
-        final java.util.List<String> outdated = new java.util.ArrayList<>();
-        for (final String id : console.installed()) {
-            if (!dev.jstech.computers.os.ProgramVersions.of(id).equals(console.installedVersion(id))) {
-                outdated.add(id);
-            }
-        }
-        if (outdated.isEmpty()) {
-            return OpResult.ok("All packages are up to date.");
-        }
-        final StringBuilder lines = new StringBuilder();
-        for (final String id : outdated) {
-            final String version = dev.jstech.computers.os.ProgramVersions.of(id);
-            console.setInstalledVersion(id, version);
-            final String path = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
-            lines.append("Setting up ").append(path).append(" (").append(version).append(") ...\n");
-        }
-        hostBlock.setChanged();
-        return OpResult.ok(lines + "Updated " + outdated.size() + " package" + (outdated.size() == 1 ? "" : "s") + ".");
-    }
-
-    /**
-     * How long a source build takes: proportional to the package's footprint and inversely to the CPU clock, so
-     * faster hardware compiles faster (balancing estimate, clamped to a few seconds ... half an hour).
-     */
-    private long buildTicks(final dev.jstech.computers.os.ProgramSpec spec) {
-        final int cpu = Math.max(100, hostBlock instanceof IOsHost c ? c.maxCpuMhz() : 100);
-        final long seconds = Math.max(5L, Math.min(1800L, Math.max(16L, spec.minDiskMb()) * 1000L / cpu));
-        return seconds * 20L;
+        return packages().update();
     }
 
     @Override
     public OpResult packageRemove(final String name) {
-        settleBuilds();
-        final String wanted = name == null ? "" : name.trim().toLowerCase(java.util.Locale.ROOT);
-        final dev.jstech.computers.program.ComputerConsoleState theirs = host.console();
-        if (theirs != null && theirs.communityProgram(wanted) != null) {
-            // Its own files and nothing else: what was written when it was installed.
-            for (final ICliComputer.FsEntry file
-                    : listDisk(COMMUNITY_DIR + "/" + wanted).entries()) {
-                // The listing's name is the whole last segment, extension and all.
-                deleteFile(COMMUNITY_DIR + "/" + wanted + "/" + file.name());
-            }
-            theirs.removeCommunity(wanted);
-            hostBlock.setChanged();
-            return OpResult.ok("removed " + wanted);
-        }
-        dev.jstech.computers.os.ProgramSpec spec = null;
-        for (final dev.jstech.computers.os.ProgramSpec candidate : OsRegistry.programs()) {
-            if (candidate.installable()
-                    && (candidate.commandName().equalsIgnoreCase(wanted)
-                            || candidate.id().getPath().equalsIgnoreCase(wanted))) {
-                spec = candidate;
-                break;
-            }
-        }
-        if (spec == null) {
-            return OpResult.fail("unable to locate package " + wanted);
-        }
-        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
-        // A build still compiling is simply cancelled.
-        if (console != null && console.cancelBuild(spec.id().toString())) {
-            hostBlock.setChanged();
-            return OpResult.ok(">>> " + spec.commandName() + ": build cancelled");
-        }
-        /*
-         * Removing is the same job as installing, run backwards and quicker; a Mainframe service also
-         * turns its agent off when the job ends, so nothing is left running headless.
-         */
-        final dev.jstech.computers.os.IOsHost machine = osHost();
-        if (machine == null) {
-            return OpResult.fail("this computer cannot store installed programs");
-        }
-        final dev.jstech.computers.os.ProgramSpec removing = spec;
-        final dev.jstech.computers.os.PackageManagerKind manager = packageManager();
-        final String via = manager == dev.jstech.computers.os.PackageManagerKind.NONE ? "uninstall" : manager.command();
-        final java.util.Optional<String> refusal = dev.jstech.computers.os.install.SetupRunner.begin(
-                machine, level, hostBlock.getBlockPos(), removing, null, true, via);
-        return refusal.map(OpResult::fail).orElseGet(() -> OpResult.ok(removeLines(manager, removing)));
+        return packages().remove(name);
     }
 
     @Override
@@ -1120,15 +730,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public java.util.Map<String, Long> buildsRemaining() {
-        settleBuilds();
-        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
-        if (console == null) {
-            return java.util.Map.of();
-        }
-        final java.util.Map<String, Long> out = new java.util.LinkedHashMap<>();
-        final long now = level.getGameTime();
-        console.pendingBuilds().forEach((id, readyAt) -> out.put(id, Math.max(0L, readyAt - now)));
-        return out;
+        return packages().buildsRemaining();
     }
 
     @Override
@@ -1536,7 +1138,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     /** The packages this machine installs over its network's Mirror, as this shell reaches them. */
     private dev.jstech.computers.machine.PackageService packages() {
-        return new dev.jstech.computers.machine.PackageService(host, level, iql());
+        return new dev.jstech.computers.machine.PackageService(host, level, files(), iql());
     }
 
     /** The network's own language, as this shell speaks it. */
