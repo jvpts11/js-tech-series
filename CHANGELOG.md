@@ -27,6 +27,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Changed
+- Putting a system on a disk is now the machine's work rather than the screen's. It takes as long as the system is
+  big and the medium is slow, on the same rule a program's setup follows, where it used to be three and a half
+  seconds for every system on every machine. Closing the monitor no longer throws the install away: it carries on,
+  it is saved with the machine, and opening the monitor again joins it where it has got to. Taking the medium out
+  part-way through stops it with nothing written, and a machine that cannot take the system says so before the copy
+  starts instead of after it.
 - The power-on self-test now belongs to the machine instead of to the screen watching it. It takes as long as the
   machine gives it reason to, growing with the memory and the devices seated and shrinking with the era, where it
   used to be three and a half seconds on every computer. Closing the monitor part-way through no longer stops the

@@ -46,6 +46,10 @@ public final class ComputingClientSetup {
                         failure.isEmpty()
                                 ? OsInstallScreen.completed(pos, monitorPos, kind, osName, targetLabel, targetSlot)
                                 : OsInstallScreen.failed(pos, monitorPos, kind, osName, targetLabel, failure)));
+        dev.jstech.computers.block.IInstallProgressScreenOpener.Holder.set(
+                (pos, monitorPos, kind, osName, targetLabel, ticksLeft, ticksTotal) ->
+                        Minecraft.getInstance().setScreen(OsInstallScreen.working(pos, monitorPos, kind, osName,
+                                targetLabel, ticksLeft, ticksTotal)));
         dev.jstech.computers.block.IKvmScreenOpener.Holder.set(payload ->
                 Minecraft.getInstance().setScreen(new KvmChannelScreen(payload)));
 

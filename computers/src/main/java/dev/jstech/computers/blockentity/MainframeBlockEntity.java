@@ -408,6 +408,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
              * self-test to carry along, which the base tick does for every other kind of computer.
              */
             be.tickPost(serverLevel);
+            dev.jstech.computers.os.install.OsInstallRunner.tick(be, serverLevel, be.getBlockPos());
             be.syncVisualsIfChanged();
             be.tick(serverLevel);
         }

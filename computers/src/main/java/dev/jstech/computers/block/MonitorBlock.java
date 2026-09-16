@@ -184,6 +184,8 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         NO_POWER,
         /** A fresh power-up or a restart: the power-on self-test first. */
         POST,
+        /** The machine is copying a system onto a disk: the screen joins it where it has got to. */
+        INSTALLING,
         /** A guided installer has written the system and still waits for the reboot that boots it. */
         INSTALLER,
         /** Hand over to whatever the boot target is (firmware, shell, desktop). */
@@ -202,6 +204,10 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         }
         if (computer.needsPost()) {
             return Entry.POST;
+        }
+        if (computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine
+                && machine.installing() != null) {
+            return Entry.INSTALLING;
         }
         final int slot = computer.pendingInstallSlot();
         if (slot != IOsHost.NO_PENDING_INSTALL) {
@@ -227,6 +233,10 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                     openPost(player, level, monitorPos, owner);
                     return;
                 }
+                case INSTALLING -> {
+                    openInstallProgress(player, level, monitorPos, owner, computer);
+                    return;
+                }
                 case INSTALLER -> {
                     openInstallerPrompt(player, level, monitorPos, owner, computer);
                     return;
@@ -236,6 +246,27 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
             }
         }
         openBootTarget(player, level, monitorPos, owner);
+    }
+
+    /** Sends the client the copy this machine is in the middle of, at the point the machine has reached. */
+    private static void openInstallProgress(final ServerPlayer player, final Level level, final BlockPos monitorPos,
+                                            final BlockPos owner, final IOsHost computer) {
+        if (!(computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine)) {
+            return;
+        }
+        final dev.jstech.computers.os.install.OsInstallJob job = machine.installing();
+        if (job == null) {
+            return;
+        }
+        final HardwareEra era = computer.displayEra();
+        final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
+        final dev.jstech.computers.os.OsDef os = dev.jstech.computers.os.OsRegistry
+                .getOs(net.minecraft.resources.ResourceLocation.tryParse(job.osId()));
+        dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, owner);
+        PacketDistributor.sendToPlayer(player, new dev.jstech.computers.operation.payload.OsInstallProgressPayload(
+                owner, monitorPos, kind.id(), os != null ? os.displayName() : job.osId(),
+                job.targetSlot() < 0 ? "the default disk" : "Disk " + job.targetSlot(),
+                job.ticksLeft(), job.ticksTotal()));
     }
 
     /** Sends the client the finished installer's reboot prompt for the system it just put on the disk. */

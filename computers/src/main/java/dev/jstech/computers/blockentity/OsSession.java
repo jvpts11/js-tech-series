@@ -14,6 +14,7 @@ import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ComputerConsoleState;
@@ -53,6 +54,12 @@ final class OsSession {
      */
     private int pendingInstall = IOsHost.NO_PENDING_INSTALL;
     /*
+     * A system being copied onto a disk right now. Persisted: the copy belongs to the machine, so it carries on
+     * where it was after a reload, and closing the monitor is not what decides whether it happened.
+     */
+    @Nullable
+    private OsInstallJob installing;
+    /*
      * The desktop this session booted into. Held apart from what is on disk so that installing or
      * removing a desktop package takes effect on the next boot, not the next time the monitor is opened.
      */
@@ -71,6 +78,18 @@ final class OsSession {
 
     void setPendingInstallSlot(final int slot) {
         this.pendingInstall = slot;
+        this.machine.setChanged();
+    }
+
+    /** The system being copied onto a disk right now, or nothing. */
+    @Nullable
+    OsInstallJob installing() {
+        return this.installing;
+    }
+
+    /** Starts, replaces or ends the copy this machine is doing. */
+    void setInstalling(@Nullable final OsInstallJob job) {
+        this.installing = job;
         this.machine.setChanged();
     }
 
@@ -103,6 +122,8 @@ final class OsSession {
     void drop() {
         this.openWindows.clear();
         this.pendingInstall = IOsHost.NO_PENDING_INSTALL;
+        // A copy dies with the power, as it would on any machine, and nothing of it reaches the disk.
+        this.installing = null;
     }
 
     /**
@@ -206,6 +227,11 @@ final class OsSession {
      * already carrying this system (so a re-install is idempotent), else the first disk without one, else the
      * first disk. False when the system is unknown, no disk is present, or the footprint does not fit.
      */
+    /** Whether that system could go on that disk, asked before a copy starts rather than after it ends. */
+    boolean canTakeOs(final ResourceLocation osId, final int preferredSlot) {
+        return OsDisks.roomFor(this.machine.layout().diskCount(), this::diskInSlot, osId, preferredSlot);
+    }
+
     boolean installOs(final ResourceLocation osId, final int preferredSlot) {
         /*
          * Writing back through setStackInSlot makes onContentsChanged fire (setChanged + build
@@ -303,6 +329,15 @@ final class OsSession {
         if (this.pendingInstall != IOsHost.NO_PENDING_INSTALL) {
             tag.putInt("PendingInstall", this.pendingInstall);
         }
+        if (this.installing != null) {
+            final CompoundTag copying = new CompoundTag();
+            copying.putString("Os", this.installing.osId());
+            copying.putInt("Slot", this.installing.targetSlot());
+            copying.putLong("Reader", this.installing.readerPos());
+            copying.putInt("Total", this.installing.ticksTotal());
+            copying.putInt("Left", this.installing.ticksLeft());
+            tag.put("Installing", copying);
+        }
     }
 
     void load(final CompoundTag tag) {
@@ -313,6 +348,13 @@ final class OsSession {
         this.openWindows.addAll(OpenWindow.loadAll(tag.getList("OpenWindows", Tag.TAG_COMPOUND)));
         this.pendingInstall = tag.contains("PendingInstall")
                 ? tag.getInt("PendingInstall") : IOsHost.NO_PENDING_INSTALL;
+        if (tag.contains("Installing")) {
+            final CompoundTag copying = tag.getCompound("Installing");
+            this.installing = new OsInstallJob(copying.getString("Os"), copying.getInt("Slot"),
+                    copying.getLong("Reader"), copying.getInt("Total"), copying.getInt("Left"));
+        } else {
+            this.installing = null;
+        }
     }
 
     /** Puts a disk stack back in its slot through the handler, so the machine hears the change. */

@@ -31,7 +31,7 @@ public final class OsInstallScreen extends Screen {
 
     private static final int W = 320;
     private static final int H = 176;
-    /** How long the write takes on screen. Long enough to read, short enough not to annoy. */
+    /** How long the bar is drawn over until the machine says otherwise, which is only the moment before it does. */
     private static final int WORK_TICKS = 70;
 
     private enum Phase { CONFIRM, WORKING, DONE, FAILED }
@@ -56,6 +56,8 @@ public final class OsInstallScreen extends Screen {
     /** Why the server refused the write, once it has; shown in place of the reboot prompt. */
     private String failure = "";
     private int ticks;
+    /** How long the machine said its copy takes, once it has said so. */
+    private int workTicks = WORK_TICKS;
     private int[] primary;
     private int[] secondary;
 
@@ -86,6 +88,23 @@ public final class OsInstallScreen extends Screen {
     }
 
     /**
+     * The installer showing a copy the machine is already doing, with what the machine says is left of it.
+     *
+     * <p>The count is the machine's, not this screen's: the copy goes on whether or not anybody is watching, so a
+     * player who closed the monitor and came back is put in front of where it has got to.
+     */
+    public static OsInstallScreen working(final BlockPos computerPos, final BlockPos monitorPos,
+                                          final FirmwareKind kind, final String osName, final String targetLabel,
+                                          final int ticksLeft, final int ticksTotal) {
+        final OsInstallScreen screen = new OsInstallScreen(computerPos, monitorPos, kind, osName, targetLabel,
+                -1, -1L);
+        screen.phase = Phase.WORKING;
+        screen.workTicks = Math.max(1, ticksTotal);
+        screen.ticks = Math.max(0, ticksTotal - ticksLeft);
+        return screen;
+    }
+
+    /**
      * The installer at the beat the server put it on: the progress finished on screen, but the write
      * was refused (a system newer than the machine, a live medium, no room), and the player must hear
      * that instead of a "complete" that leaves the disk empty and the next boot in the firmware.
@@ -110,23 +129,31 @@ public final class OsInstallScreen extends Screen {
 
     /** Progress through the write, 0..1000. */
     private int permille() {
-        return Math.min(1000, ticks * 1000 / WORK_TICKS);
+        return Math.min(1000, ticks * 1000 / workTicks);
     }
 
     @Override
     public void tick() {
-        if (phase == Phase.WORKING && ++ticks >= WORK_TICKS) {
-            phase = Phase.DONE;
-            // The system is written only now: an install the player walked away from never happened.
-            PacketDistributor.sendToServer(new FirmwareActionPayload(computerPos, monitorPos,
-                    FirmwareActionPayload.ACTION_INSTALL, readerRef, targetSlot));
+        /*
+         * The copy is the machine's, so this only follows it: the bar walks to the end and waits there, and the
+         * machine is what writes the system and puts this screen on its next beat. Walking away no longer throws
+         * the work out.
+         */
+        if (phase == Phase.WORKING && ticks < workTicks) {
+            ticks++;
         }
     }
 
     @Override
     public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
         if (phase == Phase.CONFIRM && in(primary, mouseX, mouseY)) {
+            /*
+             * The machine starts copying and answers with how long its copy takes; the bar runs on an estimate
+             * for the tick or two that takes, which is shorter than anybody can read.
+             */
             phase = Phase.WORKING;
+            PacketDistributor.sendToServer(new FirmwareActionPayload(computerPos, monitorPos,
+                    FirmwareActionPayload.ACTION_INSTALL, readerRef, targetSlot));
             return true;
         }
         if (phase == Phase.CONFIRM && in(secondary, mouseX, mouseY)) {

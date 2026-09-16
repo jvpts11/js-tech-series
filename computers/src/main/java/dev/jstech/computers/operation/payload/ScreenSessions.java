@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
@@ -77,6 +78,17 @@ public final class ScreenSessions {
      * screen session and so writes to the very map this reads.
      */
     public static void bootWatchers(final ServerLevel level, final BlockPos host) {
+        eachWatcher(level, host, (player, monitor) -> MonitorBlock.openBootTarget(player, level, monitor, host));
+    }
+
+    /**
+     * Hands every player watching that machine to {@code action}, with the monitor each is watching it on.
+     *
+     * <p>The watchers are gathered before the first is handed over, because putting a screen in front of one ends
+     * that player's plain screen session and so writes to the very map this reads.
+     */
+    public static void eachWatcher(final ServerLevel level, final BlockPos host,
+                                   final BiConsumer<ServerPlayer, BlockPos> action) {
         final List<Map.Entry<UUID, Session>> watching = new ArrayList<>();
         for (final Map.Entry<UUID, Session> each : OPEN.entrySet()) {
             if (each.getValue().host().equals(host) && each.getValue().level().equals(level.dimension())) {
@@ -86,7 +98,7 @@ public final class ScreenSessions {
         for (final Map.Entry<UUID, Session> each : watching) {
             final ServerPlayer player = level.getServer().getPlayerList().getPlayer(each.getKey());
             if (player != null) {
-                MonitorBlock.openBootTarget(player, level, each.getValue().monitor(), host);
+                action.accept(player, each.getValue().monitor());
             }
         }
     }

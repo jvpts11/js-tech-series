@@ -30,6 +30,9 @@ import java.util.function.ObjIntConsumer;
  */
 public final class OsDisks {
 
+    /** Answered by the slot search when a disk already carries the system and nothing has to be written. */
+    private static final int ALREADY_THERE = -2;
+
     private OsDisks() {
     }
 
@@ -88,6 +91,54 @@ public final class OsDisks {
      * (capacity − stored items − files). On success the stamped disk is written back through
      * {@code setDiskInSlot} so the owner's change hooks fire.
      */
+    /**
+     * Whether that system can go onto that disk at all: the same question {@link #installOs} answers on its way
+     * to writing, asked on its own so a machine can refuse before it spends a minute copying rather than after.
+     *
+     * <p>A disk already carrying the system answers yes, since putting it there again is nothing to do.
+     */
+    public static boolean roomFor(final int diskCount, final IntFunction<ItemStack> diskInSlot,
+                                  final ResourceLocation osId, final int preferredSlot) {
+        final OsDef def = OsRegistry.getOs(osId);
+        if (def == null) {
+            return false;
+        }
+        final int targetSlot = targetFor(diskCount, diskInSlot, osId, preferredSlot);
+        if (targetSlot == ALREADY_THERE) {
+            return true;
+        }
+        if (targetSlot < 0) {
+            return false;
+        }
+        final ItemStack disk = diskInSlot.apply(targetSlot);
+        if (osId.equals(disk.get(ComputingModule.SYSTEM_OS.get()))) {
+            return true;
+        }
+        final DiskItem target = (DiskItem) disk.getItem();
+        final long freeWeight = target.spec().capacityItems() * StorageKey.MB_EQ_PER_ITEM
+                - DriveVolumes.usedWeight(disk) - DiskFilesystem.filesWeight(disk);
+        return def.footprintItemsOn(target.spec().era()) * StorageKey.MB_EQ_PER_ITEM <= freeWeight;
+    }
+
+    /**
+     * The slot that system would go onto: the one asked for when it holds a disk, else a disk already carrying
+     * it ({@link #ALREADY_THERE}), else the default target, and {@code -1} when there is no disk at all.
+     */
+    private static int targetFor(final int diskCount, final IntFunction<ItemStack> diskInSlot,
+                                 final ResourceLocation osId, final int preferredSlot) {
+        if (preferredSlot >= 0 && preferredSlot < diskCount
+                && diskInSlot.apply(preferredSlot).getItem() instanceof DiskItem) {
+            return preferredSlot;
+        }
+        for (int i = 0; i < diskCount; i++) {
+            final ItemStack stack = diskInSlot.apply(i);
+            if (stack.getItem() instanceof DiskItem && osId.equals(stack.get(ComputingModule.SYSTEM_OS.get()))) {
+                return ALREADY_THERE;
+            }
+        }
+        return defaultInstallSlot(diskCount, diskInSlot);
+    }
+
     public static boolean installOs(final int diskCount, final IntFunction<ItemStack> diskInSlot,
                                     final ObjIntConsumer<ItemStack> setDiskInSlot,
                                     final ResourceLocation osId, final int preferredSlot) {
@@ -95,39 +146,16 @@ public final class OsDisks {
         if (def == null) {
             return false;
         }
-        int targetSlot = -1;
-        if (preferredSlot >= 0 && preferredSlot < diskCount
-                && diskInSlot.apply(preferredSlot).getItem() instanceof DiskItem) {
-            targetSlot = preferredSlot;
-        } else {
-            for (int i = 0; i < diskCount; i++) {
-                final ItemStack stack = diskInSlot.apply(i);
-                if (!(stack.getItem() instanceof DiskItem)) {
-                    continue;
-                }
-                if (osId.equals(stack.get(ComputingModule.SYSTEM_OS.get()))) {
-                    // Already stamped with this OS; treat as re-install: success with no mutation.
-                    return true;
-                }
-            }
-            targetSlot = defaultInstallSlot(diskCount, diskInSlot);
+        if (!roomFor(diskCount, diskInSlot, osId, preferredSlot)) {
+            return false;
         }
-        if (targetSlot == -1) {
-            return false; // no disk installed
+        final int targetSlot = targetFor(diskCount, diskInSlot, osId, preferredSlot);
+        if (targetSlot == ALREADY_THERE) {
+            return true; // a disk already carries it: a re-install with nothing to write
         }
         final ItemStack disk = diskInSlot.apply(targetSlot);
         if (osId.equals(disk.get(ComputingModule.SYSTEM_OS.get()))) {
             return true; // re-install onto the same disk: nothing to do
-        }
-        final DiskItem target = (DiskItem) disk.getItem();
-        final long diskCapacityItems = target.spec().capacityItems();
-        final long storageUsedWeight = DriveVolumes.usedWeight(disk);
-        final long fsUsedWeight = DiskFilesystem.filesWeight(disk);
-        // Free weight in mB-eq; the system's size in megabytes costs items at the disk's own era.
-        final long freeWeight =
-                diskCapacityItems * StorageKey.MB_EQ_PER_ITEM - storageUsedWeight - fsUsedWeight;
-        if (def.footprintItemsOn(target.spec().era()) * StorageKey.MB_EQ_PER_ITEM > freeWeight) {
-            return false;
         }
         final ItemStack updated = disk.copy();
         updated.set(ComputingModule.SYSTEM_OS.get(), osId);

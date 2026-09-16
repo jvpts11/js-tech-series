@@ -261,6 +261,22 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return level == null ? 0 : power.postRemaining(level.getGameTime());
     }
 
+    /** The system being copied onto a disk right now, or nothing. */
+    @Nullable
+    public dev.jstech.computers.os.install.OsInstallJob installing() {
+        return session.installing();
+    }
+
+    /** Starts, replaces or ends the copy this machine is doing. */
+    public void setInstalling(@Nullable final dev.jstech.computers.os.install.OsInstallJob job) {
+        session.setInstalling(job);
+    }
+
+    /** Whether that system could go on that disk, asked before a copy starts rather than after it ends. */
+    public boolean canTakeOs(final ResourceLocation osId, final int preferredSlot) {
+        return session.canTakeOs(osId, preferredSlot);
+    }
+
     /**
      * Carries the self-test along: works out how long this machine's own takes the first tick after the power
      * goes on, and ends it when its time is up, booting whoever is watching.
@@ -724,6 +740,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     protected void tickNode(final ServerLevel level) {
         tickBuildProgress(level);
         tickPost(level);
+        dev.jstech.computers.os.install.OsInstallRunner.tick(this, level, worldPosition);
         tickSigma();
         dev.jstech.computers.os.install.SetupRunner.tick(this, level, worldPosition);
         attachment.tick(level);

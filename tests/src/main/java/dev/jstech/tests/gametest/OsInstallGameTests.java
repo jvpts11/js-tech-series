@@ -80,12 +80,71 @@ public final class OsInstallGameTests {
         return mainframe;
     }
 
-    /** Runs the installer's final write, as the firmware action does when the on-screen progress ends. */
+    /**
+     * Starts the guided install and carries the machine's copy to its end.
+     *
+     * <p>The copy takes a minute and a half of world ticks, which is not something a test sits through: the
+     * runner is asked for every one of its ticks here instead, which is the same path the machine walks.
+     */
     private static void finishInstaller(final GameTestHelper helper, final MainframeBlockEntity mainframe) {
         helper.assertTrue(!mainframe.linkedEndpoints().isEmpty(), "the reader links to the Mainframe");
         helper.assertTrue(FirmwarePayloads.installOsFromReader(helper.getLevel(), mainframe, -1L, -1),
-                "the guided installer writes the system");
+                "the guided installer starts copying");
+        final dev.jstech.computers.os.install.OsInstallJob job = mainframe.installing();
+        helper.assertTrue(job != null, "the machine took the copy on");
+        for (int i = 0; i <= job.ticksTotal(); i++) {
+            dev.jstech.computers.os.install.OsInstallRunner.tick(mainframe, helper.getLevel(),
+                    mainframe.getBlockPos());
+        }
         helper.assertTrue(DEBIAN.equals(mainframe.installedOsId()), "the system is on the disk");
+    }
+
+    /**
+     * The copy is the machine's: it goes on with nobody watching, and nothing is on the disk until it ends.
+     */
+    @GameTest(template = ARENA)
+    public static void guidedInstall_writesNothingUntilTheCopyEnds(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = placeMainframeWithInstaller(helper, pos);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    mainframe.setNeedsPost(false);
+                    helper.assertTrue(FirmwarePayloads.beginInstall(helper.getLevel(), mainframe, -1L, -1) == null,
+                            "the copy starts");
+                    final dev.jstech.computers.os.install.OsInstallJob job = mainframe.installing();
+                    helper.assertTrue(job != null && job.ticksLeft() == job.ticksTotal(), "with all of it to go");
+                    helper.assertTrue(!mainframe.hasOs(), "and nothing on the disk yet");
+                    helper.assertTrue(MonitorBlock.entryFor(mainframe) == MonitorBlock.Entry.INSTALLING,
+                            "a monitor opened now joins the copy where it is");
+                    for (int i = 0; i < 20; i++) {
+                        dev.jstech.computers.os.install.OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                    }
+                    helper.assertTrue(job.ticksLeft() < job.ticksTotal(), "it moves whether or not anybody watches");
+                    helper.assertTrue(!mainframe.hasOs(), "and still nothing is written part way through");
+                })
+                .thenSucceed();
+    }
+
+    /** What the machine was reading leaves the drive: the copy stops and the disk is untouched. */
+    @GameTest(template = ARENA)
+    public static void guidedInstall_stopsWhenTheMediumIsTakenOut(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = placeMainframeWithInstaller(helper, pos);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    mainframe.setNeedsPost(false);
+                    helper.assertTrue(FirmwarePayloads.beginInstall(helper.getLevel(), mainframe, -1L, -1) == null,
+                            "the copy starts");
+                    if (!(helper.getBlockEntity(pos.east()) instanceof MediaReaderBlockEntity reader)) {
+                        helper.fail("no reader beside the Mainframe");
+                        return;
+                    }
+                    reader.mediaSlot().setStackInSlot(0, ItemStack.EMPTY);
+                    dev.jstech.computers.os.install.OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                    helper.assertTrue(mainframe.installing() == null, "the copy is over");
+                    helper.assertTrue(!mainframe.hasOs(), "and the disk never saw the system");
+                })
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA)
@@ -152,7 +211,7 @@ public final class OsInstallGameTests {
                 .thenExecuteAfter(SETTLE + 4, () -> {
                     helper.assertTrue(pc.isRunning(), "the vintage machine powers on");
                     helper.assertTrue(!pc.linkedEndpoints().isEmpty(), "the reader links to the computer");
-                    final String failure = FirmwarePayloads.installFailure(helper.getLevel(), pc, -1L, -1);
+                    final String failure = FirmwarePayloads.beginInstall(helper.getLevel(), pc, -1L, -1);
                     helper.assertTrue(failure != null && failure.contains("Legacy") && failure.contains("Vintage"),
                             "the refusal names the era the system needs and the machine's own, got: " + failure);
                     helper.assertTrue(!pc.hasOs(), "nothing was written to the disk");

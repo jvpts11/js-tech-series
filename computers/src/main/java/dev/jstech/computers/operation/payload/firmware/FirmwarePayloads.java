@@ -13,6 +13,7 @@ import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
 import dev.jstech.computers.operation.payload.OpenPostPayload;
+import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
 import dev.jstech.computers.operation.payload.PostCompletePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwarePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
@@ -83,6 +84,14 @@ public final class FirmwarePayloads {
                                 payload.host(), payload.monitorPos(),
                                 dev.jstech.computers.os.FirmwareKind.byId(payload.firmwareKind()),
                                 payload.osName(), payload.targetLabel(), payload.targetSlot(), payload.failure())));
+        // A copy already under way: the monitor shows where the machine has got to, not a fresh one.
+        registrar.playToClient(OsInstallProgressPayload.TYPE, OsInstallProgressPayload.STREAM_CODEC,
+                ClientPayloadHandlers.onMainThread((payload, player) ->
+                        dev.jstech.computers.block.IInstallProgressScreenOpener.Holder.open(
+                                payload.hostPos(), payload.monitorPos(),
+                                dev.jstech.computers.os.FirmwareKind.byId(payload.firmwareKind()),
+                                payload.osName(), payload.targetLabel(), payload.ticksLeft(),
+                                payload.ticksTotal())));
         ComputerAccess.accept(registrar, PostCompletePayload.TYPE, PostCompletePayload.STREAM_CODEC,
                 ComputerAccess.screen(PostCompletePayload::hostPos), FirmwarePayloads::handlePostComplete);
     }
@@ -209,20 +218,31 @@ public final class FirmwarePayloads {
             }
             case FirmwareActionPayload.ACTION_FORMAT -> computer.formatDisk((int) payload.ref());
             case FirmwareActionPayload.ACTION_INSTALL -> {
-                final String failure = installFailure(level, computer, payload.ref(), payload.target());
+                final String failure = beginInstall(level, computer, payload.ref(), payload.target());
+                final HardwareEra era = computer.displayEra();
+                final int kind = dev.jstech.computers.os.FirmwareKind
+                        .forEra(era != null ? era : HardwareEra.STANDARD).id();
+                final int slot = payload.target();
+                final String target = slot < 0 ? "the default disk" : "Disk " + slot;
+                ScreenSessions.opened(player, payload.monitorPos(), payload.hostPos());
                 if (failure != null) {
-                    /*
-                     * The client's installer has just played its progress to the end: end it on the
-                     * refusal, not on a "complete" the disk never saw.
-                     */
-                    final HardwareEra era = computer.displayEra();
-                    final int slot = payload.target();
-                    ScreenSessions.opened(player, payload.monitorPos(), payload.hostPos());
+                    // Refused before a minute of copying: say so instead of playing a bar that writes nothing.
                     PacketDistributor.sendToPlayer(player, new OpenInstallDonePayload(payload.hostPos(),
-                            payload.monitorPos(),
-                            dev.jstech.computers.os.FirmwareKind
-                                    .forEra(era != null ? era : HardwareEra.STANDARD).id(),
-                            "", slot < 0 ? "the default disk" : "Disk " + slot, slot, failure));
+                            payload.monitorPos(), kind, "", target, slot, failure));
+                    return;
+                }
+                final dev.jstech.computers.os.install.OsInstallJob job =
+                        computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine
+                                ? machine.installing() : null;
+                if (job != null) {
+                    // The machine is copying; the screen is told how long its copy is so the bar is the truth.
+                    PacketDistributor.sendToPlayer(player, new OsInstallProgressPayload(payload.hostPos(),
+                            payload.monitorPos(), kind, nameOfSystem(job.osId()), target, job.ticksLeft(),
+                            job.ticksTotal()));
+                } else {
+                    // A machine that wrote it there and then, with no copy to follow: straight to the prompt.
+                    PacketDistributor.sendToPlayer(player, new OpenInstallDonePayload(payload.hostPos(),
+                            payload.monitorPos(), kind, "", target, slot, ""));
                 }
             }
             case FirmwareActionPayload.ACTION_BOOT_MEDIA -> {
@@ -263,18 +283,26 @@ public final class FirmwarePayloads {
      */
     public static boolean installOsFromReader(final ServerLevel level, final IOsHost computer,
                                               final long readerPos, final int targetSlot) {
-        return installFailure(level, computer, readerPos, targetSlot) == null;
+        return beginInstall(level, computer, readerPos, targetSlot) == null;
+    }
+
+    /** A system by the name a person reads, or its id when no mod has brought one under it. */
+    private static String nameOfSystem(final String osId) {
+        final OsDef def = OsRegistry.getOs(net.minecraft.resources.ResourceLocation.tryParse(osId));
+        return def != null ? def.displayName() : osId;
     }
 
     /**
-     * The install behind {@link #installOsFromReader}, telling why it did not happen: {@code null} once the
-     * system is on the disk, otherwise a sentence for the player. The installer screen plays its progress
-     * on the client before the write, so without this a refused install (a system newer than the machine's
-     * era, a live medium, no room on the disk) looked exactly like a finished one.
+     * Starts putting the system in a linked drive onto a disk, telling why it did not start: {@code null} once
+     * the machine is copying, otherwise a sentence for the player.
+     *
+     * <p>Everything a machine can refuse for is asked here, before a minute of copying: a system newer than the
+     * machine's era, a live medium that installs by hand, no room on the disk. What happens after that belongs
+     * to the machine, and {@link dev.jstech.computers.os.install.OsInstallRunner} carries it.
      */
     @Nullable
-    public static String installFailure(final ServerLevel level, final IOsHost computer,
-                                        final long readerPos, final int targetSlot) {
+    public static String beginInstall(final ServerLevel level, final IOsHost computer,
+                                      final long readerPos, final int targetSlot) {
         final HardwareEra hostEra = computer.installedEra() != null ? computer.installedEra() : HardwareEra.STANDARD;
         String failure = null;
         for (final long endpoint : computer.linkedEndpoints()) {
@@ -303,18 +331,29 @@ public final class FirmwarePayloads {
                 failure = def.displayName() + " is put on the disk by hand from its own shell: boot the medium instead.";
                 continue;
             }
-            if (computer.installOs(def.id(), targetSlot)) {
-                /*
-                 * The files are on the disk, but the machine is still running the installer until it
-                 * restarts: remember that, so the monitor comes back to the reboot prompt, not the system.
-                 */
-                computer.setPendingInstallSlot(targetSlot);
-                return null;
-            }
-            return computer.defaultInstallSlot() < 0
+            final String noRoom = computer.defaultInstallSlot() < 0
                     ? "No disk is installed to put " + def.displayName() + " on."
                     : "The target disk has no room for " + def.displayName() + " ("
                             + def.footprintMb() + " MB needed).";
+            /*
+             * A machine that holds a copy of its own takes as long over it as the system is big and the medium
+             * is slow, and goes on with it whether or not anybody is watching. A bay in a rack holds no copy of
+             * its own yet, so it writes the system there and then, the way every machine used to.
+             */
+            if (!(computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine)) {
+                if (computer.installOs(def.id(), targetSlot)) {
+                    computer.setPendingInstallSlot(targetSlot);
+                    return null;
+                }
+                return noRoom;
+            }
+            if (!machine.canTakeOs(def.id(), targetSlot)) {
+                return noRoom;
+            }
+            machine.setInstalling(dev.jstech.computers.os.install.OsInstallJob.beginning(
+                    def.id().toString(), targetSlot, endpoint, def.footprintMb(), reader.insertedFormat(),
+                    dev.jstech.computers.os.install.SetupTiming.eraFactor(hostEra)));
+            return null;
         }
         return failure != null ? failure : "No installation medium is in a drive linked to this machine.";
     }
