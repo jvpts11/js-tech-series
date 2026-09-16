@@ -73,7 +73,12 @@ public final class ShellApp implements IDesktopApp {
             this.title = chrome != null && promptSpec != null ? chrome.nameOf(promptSpec) : "Command Prompt";
         }
         this.host = host;
-        this.view = new ShellView(host, posix, true);
+        /*
+         * A shell greets the player with the system it belongs to. On this family the desktop and the system are
+         * the same thing by the same name, so the desktop is where the name comes from; a Unix terminal opens on
+         * a bare prompt and greets nobody.
+         */
+        this.view = new ShellView(host, posix, chrome == null || posix ? "" : chrome.displayName());
         this.view.setOnIdle(this::typeNext);
     }
 

@@ -167,7 +167,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
          * The panel is a view of the machine's own console, not a terminal of its own: what is compiled
          * here shows in the Command Prompt window too, because a computer has one console.
          */
-        this.terminal = this.root.add(new ShellView(host, false, false)).setOnIdle(this::runNext);
+        this.terminal = this.root.add(new ShellView(host, false, "")).setOnIdle(this::runNext);
         this.root.add(this.menuBar);
         this.menuBar.add("File", this::fileMenu).add("Edit", this::editMenu).add("View", this::viewMenu)
                 .add("Go", this::goMenu).add("Run", this::runMenu).add("Terminal", this::terminalMenu)

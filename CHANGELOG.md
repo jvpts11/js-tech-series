@@ -30,6 +30,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Changed
+- A Command Prompt window now opens with the name of the system it belongs to and that system's own copyright, the
+  way the terminal on a machine with no desktop already did, instead of greeting the player with the mod's name.
 - A self-test now ends by naming what it is about to boot ("Booting from Disk 0: Frames XP"), and a machine with
   nothing to boot ends on its own era's way of saying so and waits for a key, instead of dropping the player into
   the firmware setup without a word. A Legacy machine posts on black with its maker's badge, the way the boards of

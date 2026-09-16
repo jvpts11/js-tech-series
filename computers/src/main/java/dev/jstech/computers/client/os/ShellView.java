@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
 import dev.jstech.computers.operation.payload.program.DesktopShellPayloads;
+import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.client.gui.component.CommandLine;
 import dev.jstech.core.client.gui.component.Label;
@@ -85,7 +86,7 @@ public final class ShellView extends Panel {
      * @param banner whether to greet the player, which the terminal window does and a panel inside
      *               another program does not
      */
-    public ShellView(final BlockPos host, final boolean posix, final boolean banner) {
+    public ShellView(final BlockPos host, final boolean posix, final String systemName) {
         this.host = host;
         if (posix) {
             /*
@@ -95,9 +96,14 @@ public final class ShellView extends Panel {
             this.prompt = "$";
         } else {
             this.prompt = "C:\\>";
-            if (banner) {
-                push("J's Computers Shell", colorOf(CliStyle.ACCENT));
-                push("type a command and press ENTER", colorOf(CliStyle.DIM));
+            /*
+             * A shell of this family opens by saying which system it belongs to, the way one does. The system is
+             * the Midsoft house's, not the board maker's and certainly not the mod's, which is what this used to
+             * print. A shell that cannot tell which system it is on says nothing at all.
+             */
+            if (systemName != null && !systemName.isEmpty()) {
+                push(systemName, colorOf(CliStyle.ACCENT));
+                push(Branding.systemCopyright(systemName, era()), colorOf(CliStyle.DIM));
             }
         }
         this.output = add(new ListView<Line>(() -> this.wrapCache, LINE_H, this::renderLine));
@@ -481,5 +487,21 @@ public final class ShellView extends Panel {
             case PURPLE -> 0xFF9E8FD6;
             default -> 0xFFCDD6E2;
         };
+    }
+
+    /**
+     * The host computer's generation, for the year under the system's name.
+     *
+     * <p>Read off the machine on the client, the way the other screens here do it, and the middle generation when
+     * the computer is not loaded, which only decides a year for a system nobody has heard of.
+     */
+    private dev.jstech.core.tier.HardwareEra era() {
+        final net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.level != null && mc.level.getBlockEntity(this.host)
+                instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity computer
+                && computer.displayEra() != null) {
+            return computer.displayEra();
+        }
+        return dev.jstech.core.tier.HardwareEra.STANDARD;
     }
 }

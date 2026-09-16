@@ -241,7 +241,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         this.dockTabs = this.root.add(new TabStrip(DOCK_TABS).fitToLabels(12).setUnderline(true));
         this.errors = this.root.add(new ListView<>(this::errorRows, ROW_H, this::drawErrorRow)).setOnClick(this::onError);
         this.outputList = this.root.add(new ListView<>(() -> this.output, ROW_H, this::drawOutputRow));
-        this.terminal = this.root.add(new ShellView(host, false, false));
+        this.terminal = this.root.add(new ShellView(host, false, ""));
         this.terminal.setOnIdle(this::typeNext);
         this.tabs.setCloseable(this::closeTab);
         this.askClose.add(new Button("Save", () -> {
