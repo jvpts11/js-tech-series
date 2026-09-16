@@ -11,7 +11,6 @@ import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
-import dev.jstech.computers.machine.DriveTable;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.NetworkPathResolver;
 import dev.jstech.computers.operation.MoveLabels;
@@ -19,13 +18,8 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
-import dev.jstech.computers.os.fs.DiskFilesystem;
-import dev.jstech.computers.program.cli.DosPath;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.iql.IqlOperation;
-import dev.jstech.computers.program.iql.IqlParseResult;
-import dev.jstech.computers.program.iql.IqlParser;
-import dev.jstech.computers.program.iql.IqlVerb;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
@@ -377,32 +371,6 @@ public final class ServerCliComputer implements ICliComputer {
         return BuiltInRegistries.ITEM.getOptional(location).orElse(null);
     }
 
-    // filesystem
-
-    /** A path resolved against the current location: its drive letter, that drive, and the path on it. */
-    private record Resolved(char drive, DriveTable.Drive ctx, String path) {}
-
-    /** The drive with that letter, or {@code null} when the letter is not mapped. */
-    private DriveTable.Drive diskFor(final char drive) {
-        return DriveTable.of(hostBlock, level).find(drive);
-    }
-
-    /** Resolves a DOS path argument against the current location, mapping it to the target drive's context. */
-    private Resolved resolve(final String input) {
-        final DosPath.Location loc = DosPath.resolve(currentLocation(), input);
-        return new Resolved(loc.drive(), diskFor(loc.drive()), loc.storagePath());
-    }
-
-    /** The error for an unmapped drive. */
-    private FsResult driveError(final char drive) {
-        return DriveTable.missing(drive);
-    }
-
-    /** The error for a mapped but empty drive (a media reader with no medium inserted). */
-    private static FsResult notReady(final char drive) {
-        return DriveTable.notReady(drive);
-    }
-
 
     /** The shell family of the OS installed on {@code host} (DOS when it has no OS or is not a computer). */
     public static dev.jstech.computers.os.ShellFamily shellFamilyOf(final Object host) {
@@ -660,39 +628,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public FsResult runScript(final String path) {
-        // Check the extension first so the error names the right problem.
-        final String ext = extensionOf(path);
-        if (!"iql".equalsIgnoreCase(ext)) {
-            return FsResult.fail(path + ": only .iql files can be run (got ." + (ext.isEmpty() ? "<none>" : ext) + ")");
-        }
-        final Resolved r = resolve(path);
-        if (r.ctx() == null) {
-            return driveError(r.drive());
-        }
-        if (r.ctx().disk().isEmpty()) {
-            return notReady(r.drive());
-        }
-        final DriveTable.Drive ctx = r.ctx();
-        final String real = r.path();
-        final java.util.Optional<String> content = DiskFilesystem.read(ctx.disk(), real);
-        if (content.isEmpty()) {
-            return FsResult.fail(path + ": file not found");
-        }
-        // Parse and dispatch through the exact same path the 'operation' command uses.
-        final IqlParseResult parsed = IqlParser.tryParse(content.get().trim());
-        if (!parsed.ok()) {
-            return FsResult.fail(path + ": syntax error: " + parsed.error());
-        }
-        final IqlOperation op = parsed.operation();
-        /*
-         * QUERY/COUNT are read operations that produce rows, not timed operations; they cannot be
-         * dispatched via execute(). The caller should use 'operation' for those.
-         */
-        if (op.verb() == IqlVerb.QUERY || op.verb() == IqlVerb.COUNT) {
-            return FsResult.fail(path + ": QUERY/COUNT are not supported by 'run', use 'operation' instead");
-        }
-        final OpResult result = execute(op);
-        return FsResult.iqlResult(result);
+        return iql().runFile(path);
     }
 
     @Override
@@ -845,13 +781,6 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
 
-    /** Returns the lowercase extension of a file path (after the last dot), or {@code ""} if none. */
-    private static String extensionOf(final String path) {
-        final int dot = path.lastIndexOf('.');
-        return dot >= 0 && dot < path.length() - 1
-                ? path.substring(dot + 1).toLowerCase(java.util.Locale.ROOT)
-                : "";
-    }
 
     // Script processes: the Σ# programs this machine is running.
 

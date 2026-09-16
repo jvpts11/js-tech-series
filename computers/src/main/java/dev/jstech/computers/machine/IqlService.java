@@ -21,6 +21,9 @@ import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.iql.IIqlCondition;
 import dev.jstech.computers.program.iql.IIqlView;
 import dev.jstech.computers.program.iql.IqlOperation;
+import dev.jstech.computers.program.iql.IqlParseResult;
+import dev.jstech.computers.program.iql.IqlParser;
+import dev.jstech.computers.program.iql.IqlVerb;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
@@ -462,6 +465,45 @@ public final class IqlService {
     /** A file of statements, read the way a machine reads any file. */
     public ICliComputer.FsResult read(final String path) {
         return this.files.readFile(path);
+    }
+
+    /**
+     * Runs a file of statements from the machine's drives.
+     *
+     * <p>Only a {@code .iql} file is run, and the extension is checked before the file is looked for, so a wrong
+     * name is answered as a wrong name rather than as a missing file. What is inside goes through the very path the
+     * {@code operation} command uses, so a statement in a file and one typed at the prompt are the same statement.
+     */
+    public ICliComputer.FsResult runFile(final String path) {
+        final String ext = extensionOf(path);
+        if (!"iql".equalsIgnoreCase(ext)) {
+            return ICliComputer.FsResult.fail(path + ": only .iql files can be run (got ."
+                    + (ext.isEmpty() ? "<none>" : ext) + ")");
+        }
+        final ICliComputer.FsResult read = this.files.readFile(path);
+        if (!read.ok()) {
+            return read;
+        }
+        final IqlParseResult parsed = IqlParser.tryParse(read.message().trim());
+        if (!parsed.ok()) {
+            return ICliComputer.FsResult.fail(path + ": syntax error: " + parsed.error());
+        }
+        final IqlOperation op = parsed.operation();
+        /*
+         * QUERY/COUNT are read operations that produce rows, not timed operations; they cannot be
+         * dispatched via execute(). The caller should use 'operation' for those.
+         */
+        if (op.verb() == IqlVerb.QUERY || op.verb() == IqlVerb.COUNT) {
+            return ICliComputer.FsResult.fail(path
+                    + ": QUERY/COUNT are not supported by 'run', use 'operation' instead");
+        }
+        return ICliComputer.FsResult.iqlResult(this.execute(op));
+    }
+
+    /** The lowercase extension of a path (after the last dot), or {@code ""} when it has none. */
+    private static String extensionOf(final String path) {
+        final int dot = path.lastIndexOf('.');
+        return dot >= 0 && dot < path.length() - 1 ? path.substring(dot + 1).toLowerCase(Locale.ROOT) : "";
     }
 
     /**
