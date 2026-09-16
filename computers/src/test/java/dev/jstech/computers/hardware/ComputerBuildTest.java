@@ -22,13 +22,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ComputerBuildTest {
 
     private static MotherboardSpec mtxStandard() {
-        return new MotherboardSpec(FormFactor.MTX, HardwareEra.STANDARD, CpuSocket.LGA_2011, 4,
+        return new MotherboardSpec(FormFactor.MTX, HardwareEra.STANDARD, CpuSocketId.LGA_2011, 4,
                 Set.of(RamGeneration.DDR3), 24, PcieGeneration.PCIE_3_0, 10, 4, 8);
     }
 
     private static CpuSpec standardCpu() {
         // 8 cores at 3500 MHz -> 1120 items/tick
-        return new CpuSpec(HardwareEra.STANDARD, CpuSocket.LGA_2011, 8, 3500, 130, false);
+        return new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 8, 3500, 130, false);
     }
 
     private static RamSpec ddr3() {
@@ -83,7 +83,7 @@ class ComputerBuildTest {
 
     @Test
     void wrongSocketCpu_isNotPowered() {
-        final CpuSpec sp5Cpu = new CpuSpec(HardwareEra.STANDARD, CpuSocket.SP5, 8, 3500, 130, false);
+        final CpuSpec sp5Cpu = new CpuSpec(HardwareEra.STANDARD, CpuSocketId.SP5, 8, 3500, 130, false);
         final ComputerBuild build = new ComputerBuild(mtxStandard(),
                 List.of(sp5Cpu), List.of(), List.of(ddr3()), psu(650));
         assertFalse(build.isPowered());

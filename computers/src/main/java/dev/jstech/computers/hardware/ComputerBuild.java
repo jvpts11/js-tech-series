@@ -177,9 +177,9 @@ public record ComputerBuild(MotherboardSpec motherboard,
                     + motherboard.cpuSlots() + " sockets");
         }
         for (final CpuSpec cpu : cpus) {
-            if (cpu.socket() != motherboard.socket()) {
-                problems.add("CPU socket " + cpu.socket() + " does not fit board socket "
-                        + motherboard.socket());
+            if (!cpu.socket().equals(motherboard.socket())) {
+                problems.add("CPU socket " + cpu.socket().display() + " does not fit board socket "
+                        + motherboard.socket().display());
             }
         }
 

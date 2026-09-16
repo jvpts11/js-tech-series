@@ -48,7 +48,7 @@ public class MotherboardItem extends SpecItem<MotherboardSpec> {
          * the socket, the memory generations, and the bus version cards are held to.
          */
         tooltip.add(Component.literal(
-                spec.cpuSlots() + "x " + spec.socket().name() + "  |  "
+                spec.cpuSlots() + "x " + spec.socket().display() + "  |  "
                         + spec.ramSlots() + " RAM (" + ramTypes + ")  |  "
                         + spec.pcieSlots() + "x " + spec.pcieGeneration())
                 .withStyle(ChatFormatting.GRAY));

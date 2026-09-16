@@ -141,7 +141,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (!(boardStack.getItem() instanceof MotherboardItem board)) {
             return true; // no board yet: allow pre-staging, as the expansion slots do
         }
-        return cpu.spec().socket() == board.spec().socket()
+        return cpu.spec().socket().equals(board.spec().socket())
                 && cpu.spec().era() == board.spec().era();
     }
 

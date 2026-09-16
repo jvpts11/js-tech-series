@@ -36,12 +36,12 @@ class PerEraBuildTest {
     // Vintage
 
     private static MotherboardSpec vintageBoard() {
-        return new MotherboardSpec(FormFactor.BABY_AT, HardwareEra.VINTAGE, CpuSocket.SOCKET_3, 1,
+        return new MotherboardSpec(FormFactor.BABY_AT, HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1,
                 Set.of(RamGeneration.SIMM), 4, PcieGeneration.PCI, 4, 2, 2);
     }
 
     private static CpuSpec vintageCpu() {
-        return new CpuSpec(HardwareEra.VINTAGE, CpuSocket.SOCKET_3, 1, 100, 5, false);
+        return new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 100, 5, false);
     }
 
     private static RamSpec vintageRam() {
@@ -55,7 +55,7 @@ class PerEraBuildTest {
 
     @Test
     void vintageBuild_wrongSocket_isNotPowered() {
-        final CpuSpec wrong = new CpuSpec(HardwareEra.VINTAGE, CpuSocket.SOCKET_7, 1, 350, 15, false);
+        final CpuSpec wrong = new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 350, 15, false);
         assertFalse(build(vintageBoard(), wrong, vintageRam(), psu(300)).isPowered());
     }
 
@@ -68,12 +68,12 @@ class PerEraBuildTest {
     // Legacy
 
     private static MotherboardSpec legacyBoard() {
-        return new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY, CpuSocket.LGA_775, 1,
+        return new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY, CpuSocketId.LGA_775, 1,
                 Set.of(RamGeneration.DDR, RamGeneration.DDR2), 4, PcieGeneration.PCIE_1_0, 4, 4, 4);
     }
 
     private static CpuSpec legacyCpu() {
-        return new CpuSpec(HardwareEra.LEGACY, CpuSocket.LGA_775, 2, 2400, 65, false);
+        return new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_775, 2, 2400, 65, false);
     }
 
     private static RamSpec legacyRam() {
@@ -87,7 +87,7 @@ class PerEraBuildTest {
 
     @Test
     void legacyBuild_wrongSocket_isNotPowered() {
-        final CpuSpec wrong = new CpuSpec(HardwareEra.LEGACY, CpuSocket.SOCKET_A, 1, 2000, 65, false);
+        final CpuSpec wrong = new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_A, 1, 2000, 65, false);
         assertFalse(build(legacyBoard(), wrong, legacyRam(), psu(500)).isPowered());
     }
 
@@ -100,12 +100,12 @@ class PerEraBuildTest {
     // Standard
 
     private static MotherboardSpec standardBoard() {
-        return new MotherboardSpec(FormFactor.ATX, HardwareEra.STANDARD, CpuSocket.LGA_1150, 1,
+        return new MotherboardSpec(FormFactor.ATX, HardwareEra.STANDARD, CpuSocketId.LGA_1150, 1,
                 Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_3_0, 4, 2, 4);
     }
 
     private static CpuSpec standardCpu() {
-        return new CpuSpec(HardwareEra.STANDARD, CpuSocket.LGA_1150, 4, 4000, 88, false);
+        return new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 4, 4000, 88, false);
     }
 
     private static RamSpec standardRam() {
@@ -119,7 +119,7 @@ class PerEraBuildTest {
 
     @Test
     void standardBuild_wrongSocket_isNotPowered() {
-        final CpuSpec wrong = new CpuSpec(HardwareEra.STANDARD, CpuSocket.AM3, 4, 3400, 125, false);
+        final CpuSpec wrong = new CpuSpec(HardwareEra.STANDARD, CpuSocketId.AM3, 4, 3400, 125, false);
         assertFalse(build(standardBoard(), wrong, standardRam(), psu(650)).isPowered());
     }
 

@@ -15,7 +15,7 @@ import java.util.Objects;
  * Immutable specification of a CPU.
  */
 public record CpuSpec(HardwareEra era,
-                      CpuSocket socket,
+                      CpuSocketId socket,
                       int cores,
                       int freqMhz,
                       int tdpWatts,

@@ -23,7 +23,7 @@ import dev.jstech.computers.blockentity.MainframePartBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.PersonalRouterBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
-import dev.jstech.computers.hardware.CpuSocket;
+import dev.jstech.computers.hardware.CpuSocketId;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.CraftingCardSpec;
 import dev.jstech.computers.hardware.DiskSize;
@@ -617,20 +617,20 @@ public final class ComputingModule {
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_P = ITEMS.register(
             "motherboard_mtx_p", () -> new MotherboardItem(new Item.Properties(),
                     new MotherboardSpec(dev.jstech.computers.hardware.FormFactor.MTX,
-                            HardwareEra.STANDARD, CpuSocket.LGA_2011, 4,
+                            HardwareEra.STANDARD, CpuSocketId.LGA_2011, 4,
                             Set.of(RamGeneration.DDR3), 8, PcieGeneration.PCIE_3_0, 6, 4, 8)));
 
     public static final DeferredItem<CpuItem> CPU_SERVO_2620 = ITEMS.register(
             "cpu_servo_2620", () -> new CpuItem(new Item.Properties(),
-                    new CpuSpec(HardwareEra.STANDARD, CpuSocket.LGA_2011, 6, 2000, 95, false)));
+                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 6, 2000, 95, false)));
 
     public static final DeferredItem<CpuItem> CPU_SERVO_2690 = ITEMS.register(
             "cpu_servo_2690", () -> new CpuItem(new Item.Properties(),
-                    new CpuSpec(HardwareEra.STANDARD, CpuSocket.LGA_2011, 8, 2900, 135, false)));
+                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 8, 2900, 135, false)));
 
     public static final DeferredItem<CpuItem> CPU_SERVO_2699 = ITEMS.register(
             "cpu_servo_2699", () -> new CpuItem(new Item.Properties(),
-                    new CpuSpec(HardwareEra.STANDARD, CpuSocket.LGA_2011, 18, 2300, 145, false)));
+                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 18, 2300, 145, false)));
 
     public static final DeferredItem<RamItem> RAM_DDR3_8192 = ITEMS.register(
             "ram_ddr3_8192", () -> new RamItem(new Item.Properties(),
@@ -810,7 +810,7 @@ public final class ComputingModule {
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_P = ITEMS.register(
             "motherboard_eeb_p", () -> new MotherboardItem(new Item.Properties(),
                     new MotherboardSpec(dev.jstech.computers.hardware.FormFactor.EEB,
-                            HardwareEra.STANDARD, CpuSocket.LGA_2011, 2,
+                            HardwareEra.STANDARD, CpuSocketId.LGA_2011, 2,
                             Set.of(RamGeneration.DDR3), 8, PcieGeneration.PCIE_3_0, 6, 6, 6)));
 
     /**
@@ -987,12 +987,12 @@ public final class ComputingModule {
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_P = ITEMS.register(
             "motherboard_atx_p", () -> new MotherboardItem(new Item.Properties(),
                     new MotherboardSpec(dev.jstech.computers.hardware.FormFactor.ATX,
-                            HardwareEra.STANDARD, CpuSocket.AM3, 1,
+                            HardwareEra.STANDARD, CpuSocketId.AM3, 1,
                             Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_3_0, 4, 2, 4)));
 
     public static final DeferredItem<CpuItem> CPU_ASCENT_965 = ITEMS.register(
             "cpu_ascent_965", () -> new CpuItem(new Item.Properties(),
-                    new CpuSpec(HardwareEra.STANDARD, CpuSocket.AM3, 4, 3400, 125, false)));
+                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.AM3, 4, 3400, 125, false)));
 
     // Mainframe
 
