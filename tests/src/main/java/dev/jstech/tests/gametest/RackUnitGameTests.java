@@ -98,10 +98,12 @@ public final class RackUnitGameTests {
                     // The same row again is refused; nothing sneaks into another row.
                     player.setItemInHand(InteractionHand.MAIN_HAND, ComputingModule.defaultServer());
                     helper.useBlock(pos, player, hitOn(helper, pos, Direction.NORTH, 0.5));
-                    helper.assertTrue(mountedServers(rack) == 1 && !player.getItemInHand(InteractionHand.MAIN_HAND).isEmpty(),
+                    helper.assertTrue(mountedServers(rack) == 1
+                                    && !player.getItemInHand(InteractionHand.MAIN_HAND).isEmpty(),
                             "a taken row refuses the unit instead of seating it elsewhere");
                     // The bottom row (texel 8) cannot take a 2U chassis: refused, not moved up.
-                    player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ComputingModule.STORAGE_SERVER.get()));
+                    player.setItemInHand(InteractionHand.MAIN_HAND,
+                            new ItemStack(ComputingModule.STORAGE_SERVER.get()));
                     helper.useBlock(pos, player, hitOn(helper, pos, Direction.NORTH, 0.25));
                     helper.assertTrue(mountedServers(rack) == 1 && rack.getServers().getStackInSlot(7).isEmpty(),
                             "a 2U chassis aimed at the bottom row is refused");
@@ -178,7 +180,8 @@ public final class RackUnitGameTests {
                                     .insertItem(2, new ItemStack(ComputingModule.SERVER.get()), false).isEmpty(),
                             "the first free row after the 2U chassis must accept a 1U server");
                     helper.assertTrue(!rack.getServers()
-                                    .insertItem(7, new ItemStack(ComputingModule.COMPUTE_SERVER.get()), false).isEmpty(),
+                                    .insertItem(7, new ItemStack(ComputingModule.COMPUTE_SERVER.get()), false)
+                                    .isEmpty(),
                             "a 2U chassis must not hang past the bottom of the rack");
                 })
                 .thenSucceed();
@@ -388,7 +391,8 @@ public final class RackUnitGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     helper.assertTrue(rack.getServers()
-                                    .insertItem(0, new ItemStack(ComputingModule.STORAGE_SERVER.get()), false).isEmpty(),
+                                    .insertItem(0, new ItemStack(ComputingModule.STORAGE_SERVER.get()), false)
+                                    .isEmpty(),
                             "the 2U storage chassis mounts at the top");
                     helper.assertTrue(!rack.getServers()
                                     .insertItem(1, new ItemStack(ComputingModule.RACK_UPS.get()), false).isEmpty(),
@@ -574,9 +578,18 @@ public final class RackUnitGameTests {
                                     .anyMatch(h -> h.hostname().equals("vault")),
                             "the rack server shows up as a reachable host");
 
+                    helper.assertTrue(cli.sshSession().isEmpty(),
+                            "with no session open the shell names no machine");
+
                     helper.assertTrue(cli.sshConnect("vault").ok(), "ssh connects to the server");
                     helper.assertTrue(mainframe.console().sshTarget() != null,
                             "the session records the machine it is connected to");
+                    /*
+                     * The session has to name the machine at the OTHER end. It used to answer with the local
+                     * machine's name, which nothing read, so a DOS prompt looked the same connected or not.
+                     */
+                    helper.assertTrue(cli.sshSession().equals("vault"),
+                            "the session names the machine it is connected to; got '" + cli.sshSession() + "'");
 
                     helper.assertTrue(cli.sshConnect("nowhere").message().contains("host not found"),
                             "an unknown host is reported, not silently ignored");
@@ -584,6 +597,8 @@ public final class RackUnitGameTests {
                     helper.assertTrue(cli.sshDisconnect().ok(), "exit closes the session");
                     helper.assertTrue(mainframe.console().sshTarget() == null,
                             "the session is gone after exit");
+                    helper.assertTrue(cli.sshSession().isEmpty(),
+                            "the shell names no machine once the session is closed");
                     helper.assertTrue(!cli.sshDisconnect().ok(),
                             "exit with no session says so instead of pretending");
                 })
@@ -816,7 +831,8 @@ public final class RackUnitGameTests {
                         helper.assertTrue((chassis.rackType()
                                         == dev.jstech.computers.rack.RackChassis.RackType.SERVER)
                                         == server,
-                                chassis + (server ? " belongs in the Server Rack" : " belongs in the Supercomputer Rack"));
+                                chassis + (server ? " belongs in the Server Rack"
+                                        : " belongs in the Supercomputer Rack"));
                     }
                     helper.assertTrue(!rack.acceptsChassis(ComputingModule.defaultSupercomputerNode()),
                             "a node is refused by the general cabinet");

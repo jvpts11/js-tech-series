@@ -29,7 +29,9 @@ import java.util.List;
  */
 public final class ConsolePayloads {
 
-    /** How many characters wide a command prompt is: the shell lays its output out to this and long lines wrap at it. */
+    /**
+     * How many characters wide a command prompt is: the shell lays its output out to this and long lines wrap at it.
+     */
     static final int CLI_WIDTH = 50;
 
     private ConsolePayloads() {
@@ -87,7 +89,14 @@ public final class ConsolePayloads {
         for (final var cliLine : response.lines()) {
             wire.add(new CommandOutputPayload.WireLine(cliLine.text(), cliLine.style().id()));
         }
-        final String prompt = computer.prompt();
+        /*
+         * A prompt in a session says which machine the line is going to. Without it the DOS families give
+         * nothing away, since their prompt is only the drive and folder: connected or not, it reads the same,
+         * and the player has no way to tell the line left the computer in front of them.
+         */
+        final String connected = localComputer.sshSession();
+        final String prompt = connected.isEmpty() ? computer.prompt()
+                : "[" + connected + "] " + computer.prompt();
         final var handOver = response.handOver();
         PacketDistributor.sendToPlayer(player, new CommandOutputPayload(response.clearScreen(), prompt, wire,
                 handOver == null ? "" : handOver.editor(),

@@ -260,7 +260,12 @@ public final class ServerCliComputer implements ICliComputer {
     @Override
     public String sshSession() {
         final ComputerConsoleState console = host.console();
-        return console == null || console.sshTarget() == null ? "" : hostname();
+        if (console == null || console.sshTarget() == null) {
+            return "";
+        }
+        // The machine at the other end names itself; nothing is built here to ask it.
+        final BlockEntity target = level.getBlockEntity(BlockPos.of(console.sshTarget()));
+        return target instanceof IComputerTerminalHost remote ? remote.hostname() : "";
     }
 
     @Override

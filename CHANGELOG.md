@@ -148,6 +148,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- A prompt connected to another computer now says so: it shows the name of the machine the line is going to, ahead of
+  that machine's own prompt. On MC-DOS and Frames the prompt is only the drive and folder, so a session looked exactly
+  like sitting at your own keyboard and there was no way to tell the command had left the computer in front of you.
+  The commands did run on the far machine all along; only the prompt kept quiet about it.
 - `Program.Shell` runs a line at the computer's own prompt and hands back what it printed. It used to stop the
   program at the call.
 - A program can no longer be compiled with `Program.RunSource`, which no computer answered, so the program stopped at
