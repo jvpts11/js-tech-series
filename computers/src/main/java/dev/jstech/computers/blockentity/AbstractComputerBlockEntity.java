@@ -803,13 +803,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         }
     }
 
-    /*
-     * The players looking at this machine through a desktop or a prompt. Their menus say when they open and close,
-     * so a tick never goes through the level's players to find them; the first look after the machine loads does,
-     * once.
-     */
-    private final java.util.List<net.minecraft.server.level.ServerPlayer> viewers = new java.util.ArrayList<>();
-    private boolean viewersKnown;
+    private final Viewers viewers = new Viewers(this.worldPosition);
 
     /**
      * Every player with this computer's console on screen: its terminal menus, or its open desktop.
@@ -818,29 +812,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
     public java.util.List<net.minecraft.server.level.ServerPlayer> consoleViewers(
             final net.minecraft.server.level.ServerLevel level) {
-        if (!viewersKnown) {
-            viewersKnown = true;
-            for (final net.minecraft.server.level.ServerPlayer player : level.players()) {
-                if (!(player instanceof net.neoforged.neoforge.common.util.FakePlayer) && !viewers.contains(player)) {
-                    viewers.add(player);
-                }
-            }
-        }
-        for (int i = viewers.size() - 1; i >= 0; i--) {
-            final net.minecraft.server.level.ServerPlayer player = viewers.get(i);
-            if (player.isRemoved() || player.level() != level || !showsThisMachine(player)) {
-                viewers.remove(i);
-            }
-        }
-        return viewers;
-    }
-
-    /** Whether that player's open menu is this machine's prompt or desktop. */
-    private boolean showsThisMachine(final net.minecraft.server.level.ServerPlayer player) {
-        return (player.containerMenu instanceof dev.jstech.computers.menu.CommandPromptMenu prompt
-                && worldPosition.equals(prompt.hostPos()))
-                || (player.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu desk
-                        && worldPosition.equals(desk.hostPos()));
+        return viewers.at(level);
     }
 
     /** Tells the machine at {@code host} that this player opened its desktop or prompt; nothing on the client. */
@@ -848,9 +820,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (player instanceof net.minecraft.server.level.ServerPlayer viewer
                 && !(player instanceof net.neoforged.neoforge.common.util.FakePlayer)
                 && viewer.level().isLoaded(host)
-                && viewer.level().getBlockEntity(host) instanceof AbstractComputerBlockEntity machine
-                && !machine.viewers.contains(viewer)) {
-            machine.viewers.add(viewer);
+                && viewer.level().getBlockEntity(host) instanceof AbstractComputerBlockEntity machine) {
+            machine.viewers.opened(viewer);
         }
     }
 
@@ -858,7 +829,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     public static void screenClosed(final net.minecraft.world.entity.player.Player player, final BlockPos host) {
         if (player instanceof net.minecraft.server.level.ServerPlayer viewer && viewer.level().isLoaded(host)
                 && viewer.level().getBlockEntity(host) instanceof AbstractComputerBlockEntity machine) {
-            machine.viewers.remove(viewer);
+            machine.viewers.closed(viewer);
         }
     }
 
