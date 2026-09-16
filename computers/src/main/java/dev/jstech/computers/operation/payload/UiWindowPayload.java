@@ -40,9 +40,17 @@ public record UiWindowPayload(BlockPos hostPos, int program, long window, String
     public static final int SHOWS = 1;
     public static final int ANSWERS = 2;
     public static final int TICKED = 4;
+    /** A canvas carrying only what has been drawn since it last went over, to add to what the screen has. */
+    public static final int APPENDS = 8;
 
     /** Where a widget the program placed itself is; laid out widgets have this instead of a place. */
     public static final int LAID_OUT = -1;
+
+    /** The same window carrying those widgets, for sending one player less of it than another is sent. */
+    public UiWindowPayload withWidgets(final List<Widget> widgets) {
+        return new UiWindowPayload(this.hostPos, this.program, this.window, this.title, this.width, this.height,
+                this.ask, this.open, widgets);
+    }
 
     private static final int MOST_WIDGETS = UiWidgets.MOST_WIDGETS;
     private static final int MOST_ROWS = UiWidgets.MOST_ROWS;
@@ -59,10 +67,11 @@ public record UiWindowPayload(BlockPos hostPos, int program, long window, String
      * @param parent  the widget that holds it, or zero for the one the window shows
      * @param numbers the spacing, the value, the least, the most and what is picked, in that order
      * @param rows    what a list holds, and {@code details} what is written at the right of each row
+     * @param epoch   which drawing a canvas is on, moved on every time it is cleared; zero for anything else
      */
     public record Widget(long id, String kind, long parent, int weight, int flags, int width, int height,
                          int x, int y, String text, List<Integer> numbers, List<String> rows,
-                         List<String> details, List<Stroke> drawing) {
+                         List<String> details, List<Stroke> drawing, int epoch) {
 
         public Widget {
             numbers = List.copyOf(numbers);
@@ -81,6 +90,32 @@ public record UiWindowPayload(BlockPos hostPos, int program, long window, String
 
         public boolean ticked() {
             return (this.flags & TICKED) != 0;
+        }
+
+        /** Whether these strokes are to be added to the ones the screen already has, rather than to replace them. */
+        public boolean appends() {
+            return (this.flags & APPENDS) != 0;
+        }
+
+        /** The same widget holding all of those strokes, which is what a screen keeps once it has added them. */
+        public Widget withStrokes(final List<Stroke> strokes) {
+            return new Widget(this.id, this.kind, this.parent, this.weight, this.flags & ~APPENDS, this.width,
+                    this.height, this.x, this.y, this.text, this.numbers, this.rows, this.details, strokes,
+                    this.epoch);
+        }
+
+        /**
+         * The same widget carrying only the strokes from that one on, to be added to what the screen already
+         * has. A canvas only ever grows between clears, so what a screen is missing is always its tail.
+         */
+        public Widget strokesFrom(final int index) {
+            if (index <= 0) {
+                return this;
+            }
+            final int from = Math.min(index, this.drawing.size());
+            return new Widget(this.id, this.kind, this.parent, this.weight, this.flags | APPENDS, this.width,
+                    this.height, this.x, this.y, this.text, this.numbers, this.rows, this.details,
+                    this.drawing.subList(from, this.drawing.size()), this.epoch);
         }
 
         /** One of the five numbers a widget carries, or zero when it carries none. */
@@ -143,7 +178,8 @@ public record UiWindowPayload(BlockPos hostPos, int program, long window, String
         into.add(new Widget(id, widget.type(), parent, weight, flags,
                 placedW > 0 ? placedW : Numbers.toInt(widget.get(UiWidgets.WIDTH)),
                 placedH > 0 ? placedH : Numbers.toInt(widget.get(UiWidgets.HEIGHT)), x, y,
-                text(widget.get(UiWidgets.TEXT)), numbers, rows, details, drawing));
+                text(widget.get(UiWidgets.TEXT)), numbers, rows, details, drawing,
+                Numbers.toInt(widget.get(UiWidgets.EPOCH))));
         if (!(widget.get(UiWidgets.CHILDREN) instanceof Values.ListValue children)) {
             return;
         }
@@ -237,6 +273,7 @@ public record UiWindowPayload(BlockPos hostPos, int program, long window, String
         WORDS.apply(ByteBufCodecs.list(MOST_ROWS)).encode(buf, widget.rows());
         WORDS.apply(ByteBufCodecs.list(MOST_ROWS)).encode(buf, widget.details());
         STROKE.apply(ByteBufCodecs.list(MOST_STROKES)).encode(buf, widget.drawing());
+        ByteBufCodecs.VAR_INT.encode(buf, widget.epoch());
     }
 
     private static Widget readWidget(final RegistryFriendlyByteBuf buf) {
@@ -246,7 +283,8 @@ public record UiWindowPayload(BlockPos hostPos, int program, long window, String
                 WORDS.decode(buf), ByteBufCodecs.VAR_INT.apply(ByteBufCodecs.list(8)).decode(buf),
                 WORDS.apply(ByteBufCodecs.list(MOST_ROWS)).decode(buf),
                 WORDS.apply(ByteBufCodecs.list(MOST_ROWS)).decode(buf),
-                STROKE.apply(ByteBufCodecs.list(MOST_STROKES)).decode(buf));
+                STROKE.apply(ByteBufCodecs.list(MOST_STROKES)).decode(buf),
+                ByteBufCodecs.VAR_INT.decode(buf));
     }
 
     private static void write(final RegistryFriendlyByteBuf buf, final UiWindowPayload payload) {

@@ -78,7 +78,7 @@ public final class SigmaWindowApp implements IDesktopApp {
 
     /** Takes the window as it now stands. */
     public void accept(final UiWindowPayload payload) {
-        this.state = payload;
+        this.state = merged(payload);
         // A box the program itself changed shows what the program says, not what was half typed into it.
         for (final UiWindowPayload.Widget widget : payload.widgets()) {
             final String typed = this.typing.get(widget.id());
@@ -86,6 +86,40 @@ public final class SigmaWindowApp implements IDesktopApp {
                 this.typing.remove(widget.id());
             }
         }
+    }
+
+    /*
+     * A canvas arrives carrying only what has been drawn on it since the last time, so that a program painting
+     * every tick does not send its whole picture again: those strokes are added to the ones this screen has.
+     */
+    private UiWindowPayload merged(final UiWindowPayload payload) {
+        final List<UiWindowPayload.Widget> widgets = payload.widgets();
+        List<UiWindowPayload.Widget> joined = null;
+        for (int i = 0; i < widgets.size(); i++) {
+            final UiWindowPayload.Widget widget = widgets.get(i);
+            if (!widget.appends()) {
+                continue;
+            }
+            final List<UiWindowPayload.Stroke> had = strokesOf(widget.id());
+            final List<UiWindowPayload.Stroke> all = new ArrayList<>(had.size() + widget.drawing().size());
+            all.addAll(had);
+            all.addAll(widget.drawing());
+            if (joined == null) {
+                joined = new ArrayList<>(widgets);
+            }
+            joined.set(i, widget.withStrokes(all));
+        }
+        return joined == null ? payload : payload.withWidgets(joined);
+    }
+
+    /** The strokes this screen already has for that widget. */
+    private List<UiWindowPayload.Stroke> strokesOf(final long widget) {
+        for (final UiWindowPayload.Widget had : this.state.widgets()) {
+            if (had.id() == widget) {
+                return had.drawing();
+            }
+        }
+        return List.of();
     }
 
     /** The middle of the first widget of that kind, in desktop pixels, or null when it has none; for tests. */

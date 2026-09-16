@@ -47,6 +47,11 @@ final class ClientReplication {
      */
     private final Map<UUID, Map<WindowId, Long>> sentByViewer = new HashMap<>();
     /*
+     * What each player has of each canvas: which drawing it was on, and how many strokes of that drawing have
+     * gone to them. A canvas only grows between clears, so what a screen is missing is always the tail.
+     */
+    private final Map<UUID, Map<CanvasId, CanvasSent>> canvasByViewer = new HashMap<>();
+    /*
      * Which progress quarter (25/50/75%) each running build last reported, so the console gets a handful
      * of emerge-style progress lines instead of one per second. Transient by design.
      */
@@ -68,6 +73,7 @@ final class ClientReplication {
         final List<ServerPlayer> viewers = this.machine.consoleViewers(level);
         if (viewers.isEmpty()) {
             this.sentByViewer.clear();
+            this.canvasByViewer.clear();
             return;
         }
         forgetWhoLeft(viewers);
@@ -107,6 +113,8 @@ final class ClientReplication {
                                            final Map<WindowId, UiWindowPayload> made) {
         final Map<WindowId, Long> sent =
                 this.sentByViewer.computeIfAbsent(viewer.getUUID(), id -> new HashMap<>());
+        final Map<CanvasId, CanvasSent> canvases =
+                this.canvasByViewer.computeIfAbsent(viewer.getUUID(), id -> new HashMap<>());
         final BlockPos pos = this.machine.getBlockPos();
         final List<UiWindowPayload> owed = new ArrayList<>();
         for (final Map.Entry<WindowId, Values.Obj> entry : open.entrySet()) {
@@ -116,12 +124,13 @@ final class ClientReplication {
             final UiWindowPayload payload = made.computeIfAbsent(entry.getKey(),
                     id -> UiWindowPayload.of(pos, id.program(), entry.getValue()));
             if (payload != null) {
-                owed.add(payload);
+                owed.add(cutCanvases(entry.getKey(), payload, canvases));
             }
         }
         for (final Map.Entry<WindowId, Long> entry : sent.entrySet()) {
             if (!open.containsKey(entry.getKey())) {
                 owed.add(UiWindowPayload.gone(pos, entry.getKey().program(), entry.getKey().window()));
+                canvases.keySet().removeIf(canvas -> canvas.window().equals(entry.getKey()));
             }
         }
         sent.clear();
@@ -142,6 +151,36 @@ final class ClientReplication {
         return open;
     }
 
+    /**
+     * The window as that player is owed it: a canvas they are already up to date on carries only the strokes
+     * drawn since it last went to them.
+     *
+     * <p>This is what keeps a program that draws every tick from sending its whole picture over and over. A
+     * canvas the player has never seen, or one that has been cleared since (which moves its drawing on), goes
+     * whole, and the player's screen replaces what it had.
+     */
+    private UiWindowPayload cutCanvases(final WindowId window, final UiWindowPayload whole,
+                                        final Map<CanvasId, CanvasSent> canvases) {
+        final List<UiWindowPayload.Widget> widgets = whole.widgets();
+        List<UiWindowPayload.Widget> cut = null;
+        for (int i = 0; i < widgets.size(); i++) {
+            final UiWindowPayload.Widget widget = widgets.get(i);
+            if (!UiWidgets.CANVAS.equals(widget.kind())) {
+                continue;
+            }
+            final CanvasSent had = canvases.put(new CanvasId(window, widget.id()),
+                    new CanvasSent(widget.epoch(), widget.drawing().size()));
+            if (had == null || had.epoch() != widget.epoch() || had.strokes() <= 0) {
+                continue;
+            }
+            if (cut == null) {
+                cut = new ArrayList<>(widgets);
+            }
+            cut.set(i, widget.strokesFrom(had.strokes()));
+        }
+        return cut == null ? whole : whole.withWidgets(cut);
+    }
+
     /** Where a window stands: a number its one door moves whenever anything the window shows changes. */
     private static long revisionOf(final Values.Obj window) {
         return Numbers.toLong(window.get(UiWidgets.REVISION));
@@ -152,14 +191,17 @@ final class ClientReplication {
         if (this.sentByViewer.isEmpty()) {
             return;
         }
-        this.sentByViewer.keySet().removeIf(id -> {
-            for (final ServerPlayer viewer : viewers) {
-                if (viewer.getUUID().equals(id)) {
-                    return false;
-                }
+        this.sentByViewer.keySet().removeIf(id -> !watching(viewers, id));
+        this.canvasByViewer.keySet().removeIf(id -> !watching(viewers, id));
+    }
+
+    private static boolean watching(final List<ServerPlayer> viewers, final UUID id) {
+        for (final ServerPlayer viewer : viewers) {
+            if (viewer.getUUID().equals(id)) {
+                return true;
             }
-            return true;
-        });
+        }
+        return false;
     }
 
     /**
@@ -308,6 +350,14 @@ final class ClientReplication {
      * the same name and shown one in place of the other.
      */
     private record WindowId(int program, long window) {
+    }
+
+    /** One canvas in one window of one program on this machine. */
+    private record CanvasId(WindowId window, long widget) {
+    }
+
+    /** What a player has of a canvas: the drawing it was on, and how many of its strokes have gone to them. */
+    private record CanvasSent(int epoch, int strokes) {
     }
 
     /** What a program is called on a console line: its command name, or its id without the namespace. */

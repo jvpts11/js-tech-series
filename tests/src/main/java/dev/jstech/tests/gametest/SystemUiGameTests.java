@@ -79,6 +79,33 @@ public final class SystemUiGameTests {
             }
             """;
 
+    /** A canvas that gains a stroke every tick, and a button that wipes it clean. */
+    private static final String PAINTER = """
+            using System.*;
+            using System.UI.*;
+            namespace Art;
+            class Painter : IScript {
+                Window window;
+                Canvas paper;
+                Button wipe;
+                public void OnInit() {
+                    paper = new Canvas();
+                    wipe = new Button("WIPE");
+                    wipe.OnClick += Wipe;
+                    Column page = new Column();
+                    page.Add(wipe);
+                    page.Add(paper, 1);
+                    window = new Window("Paint", 200, 120);
+                    window.Content = page;
+                    window.Show();
+                    paper.SetPixel(0, 0, 7);
+                }
+                void Wipe() { paper.Clear(0); }
+                public void OnTick() { paper.SetPixel(1, 1, 7); }
+                public void OnDestroy() { window.Close(); }
+            }
+            """;
+
     private static CraftingComputerBlockEntity computer(final GameTestHelper helper, final BlockPos at,
                                                         final String os) {
         helper.setBlock(at, ComputingModule.CRAFTING_COMPUTER.get());
@@ -184,6 +211,57 @@ public final class SystemUiGameTests {
                             "while a click that changed what it shows owes it again");
                 })
                 .thenSucceed();
+    }
+
+    /** A canvas sends only what has been drawn on it since it last went over, until somebody clears it. */
+    @GameTest(template = ARENA)
+    public static void canvas_sendsOnlyWhatWasDrawnSinceItLastWent(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2), "frames_xp");
+        if (computer == null) {
+            return;
+        }
+        final ServerPlayer watcher = viewer(helper.getLevel(), "painter");
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final MachinePrograms.Started started =
+                            computer.programs().start("paint.sgs", PAINTER, 1, computer);
+                    helper.assertTrue(started.ok(), started.message());
+                    computer.programs().tick(8192);
+                    final UiWindowPayload.Widget first = canvasOf(computer.takeWindowsOwed(watcher));
+                    helper.assertTrue(first != null, "the window has a canvas");
+                    helper.assertFalse(first.appends(), "the first one goes whole");
+                    helper.assertTrue(!first.drawing().isEmpty(),
+                            "carrying what has been drawn so far; got " + first.drawing().size());
+
+                    computer.programs().tick(8192);
+                    final UiWindowPayload.Widget next = canvasOf(computer.takeWindowsOwed(watcher));
+                    helper.assertTrue(next != null && next.appends(), "the next one only adds to it");
+                    helper.assertTrue(next.drawing().size() == 1,
+                            "one stroke, the one drawn since; got " + next.drawing().size());
+
+                    final Values.Obj window = computer.programs().windowsOf(started.id()).getFirst();
+                    final Values.Obj button = widgetOf(window, UiWidgets.BUTTON);
+                    helper.assertTrue(computer.programs().deliverUiEvent(started.id(), 1L,
+                            (Long) button.get(UiWidgets.ID), "click", List.of()), "the wipe is taken");
+                    computer.programs().tick(8192);
+                    final UiWindowPayload.Widget wiped = canvasOf(computer.takeWindowsOwed(watcher));
+                    helper.assertTrue(wiped != null, "the window is still there");
+                    helper.assertFalse(wiped.appends(),
+                            "a canvas that was cleared goes whole again, not added to the drawing it had");
+                })
+                .thenSucceed();
+    }
+
+    /** The canvas of the one window a machine owed a player, or null when there is none. */
+    private static UiWindowPayload.Widget canvasOf(final List<UiWindowPayload> owed) {
+        for (final UiWindowPayload payload : owed) {
+            for (final UiWindowPayload.Widget widget : payload.widgets()) {
+                if ("Canvas".equals(widget.kind())) {
+                    return widget;
+                }
+            }
+        }
+        return null;
     }
 
     /*
