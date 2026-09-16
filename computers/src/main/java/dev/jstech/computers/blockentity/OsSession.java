@@ -187,6 +187,30 @@ final class OsSession {
         return OsDisks.systemDisk(this.machine.layout().diskCount(), this::diskInSlot, from);
     }
 
+    /** The slot the machine boots from, or -1 when nothing in it carries a system. */
+    private int systemDiskSlot() {
+        final int from = this.bootOnce >= 0 ? this.bootOnce : this.bootDisk;
+        return OsDisks.systemDiskSlot(this.machine.layout().diskCount(), this::diskInSlot, from);
+    }
+
+    /** What the system this machine boots remembers about being greeted. */
+    dev.jstech.computers.os.boot.SystemWelcome welcome() {
+        final int slot = this.systemDiskSlot();
+        return slot < 0 ? dev.jstech.computers.os.boot.SystemWelcome.UNSEEN
+                : OsDisks.welcomeOn(this.diskInSlot(slot));
+    }
+
+    /** Writes that back onto the disk the system is on, since the greeting belongs to the system. */
+    void setWelcome(final dev.jstech.computers.os.boot.SystemWelcome welcome) {
+        final int slot = this.systemDiskSlot();
+        if (slot < 0) {
+            return;
+        }
+        final ItemStack updated = this.diskInSlot(slot).copy();
+        updated.set(ComputingModule.SYSTEM_WELCOME.get(), welcome);
+        this.putDisk(updated, slot);
+    }
+
     /** Boots that disk for this boot only, leaving the order saved in setup where it is. */
     void setBootOnce(final int slot) {
         this.bootOnce = slot;

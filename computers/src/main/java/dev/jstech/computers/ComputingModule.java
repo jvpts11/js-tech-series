@@ -260,6 +260,18 @@ public final class ComputingModule {
                     .networkSynchronized(net.minecraft.resources.ResourceLocation.STREAM_CODEC));
 
     /*
+     * What the system on this disk remembers about being greeted. It rides on the disk rather than on the machine
+     * so that erasing and installing again is a first meeting again, and so that a machine with two systems
+     * greets each of them once.
+     */
+    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
+            net.minecraft.core.component.DataComponentType<
+                    dev.jstech.computers.os.boot.SystemWelcome>>
+            SYSTEM_WELCOME = COMPONENTS.registerComponentType("system_welcome", b -> b
+                    .persistent(dev.jstech.computers.os.boot.SystemWelcome.CODEC)
+                    .networkSynchronized(dev.jstech.computers.os.boot.SystemWelcome.STREAM_CODEC));
+
+    /*
      * A user-chosen label for a disk or media volume, shown in This PC and the explorer drive tree and
      * editable there. Rides on the ItemStack so it travels with the disk/medium. Absent → the volume's
      * default name (e.g. "Local Disk" for a system disk, "Removable Drive" for a medium).

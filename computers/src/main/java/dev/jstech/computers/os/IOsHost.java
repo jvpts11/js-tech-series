@@ -147,6 +147,20 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
         return networkUuid() != null;
     }
 
+    /**
+     * What the system this machine boots remembers about being greeted, and whether its welcome comes back.
+     *
+     * <p>A host that does not keep it answers that nobody has met its system, which is what a machine with no
+     * disk of its own means anyway.
+     */
+    default dev.jstech.computers.os.boot.SystemWelcome systemWelcome() {
+        return dev.jstech.computers.os.boot.SystemWelcome.UNSEEN;
+    }
+
+    /** Writes the greeting back onto the disk the system is on; a host that cannot keep it does nothing. */
+    default void setSystemWelcome(final dev.jstech.computers.os.boot.SystemWelcome welcome) {
+    }
+
     /** The player-given machine name, or an empty string. */
     String customName();
 

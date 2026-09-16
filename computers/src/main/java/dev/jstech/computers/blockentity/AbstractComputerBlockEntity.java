@@ -310,6 +310,16 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         session.setInstalling(job);
     }
 
+    @Override
+    public dev.jstech.computers.os.boot.SystemWelcome systemWelcome() {
+        return session.welcome();
+    }
+
+    @Override
+    public void setSystemWelcome(final dev.jstech.computers.os.boot.SystemWelcome welcome) {
+        session.setWelcome(welcome);
+    }
+
     /** The installer this machine is in: the page it is on and what has been answered so far. */
     @Nullable
     public dev.jstech.computers.os.install.InstallerFlow installer() {

@@ -424,10 +424,16 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
             case TERMINAL_ONLY -> openCommandPrompt(player, level, monitorPos, owner);
             case NETWORK_GUI -> openTerminal(player, level, monitorPos, owner);
         }
-        // Booting into an installed OS is an advancement criterion (the live installers do not count yet).
+        /*
+         * The first time an installed system comes up in front of somebody, and only then. The mark lives on the
+         * disk with the system, so erasing it and installing again is a first boot again; before the mark existed
+         * this fired on every single boot, which made "first boot" mean nothing at all.
+         */
         if (target != BootController.BootTarget.FIRMWARE
                 && ownerBe instanceof IOsHost c && c.installedOsId() != null
-                && (c.console() == null || c.console().liveInstall() == null)) {
+                && (c.console() == null || c.console().liveInstall() == null)
+                && !c.systemWelcome().seen()) {
+            c.setSystemWelcome(c.systemWelcome().met());
             dev.jstech.computers.ComputingModule.OS_FIRST_BOOT.get()
                     .trigger(player, c.installedOsId());
         }

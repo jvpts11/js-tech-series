@@ -30,6 +30,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Changed
+- A system remembers having been met, and the mark rides on the disk it is installed on rather than on the
+  machine. A computer with two systems therefore meets each of them once, a disk carried to another computer
+  arrives already met, and erasing a disk and installing again is a first meeting all over. The advancement for
+  booting a system for the first time used to fire on every boot; it now fires once, the first time that system
+  comes up in front of somebody.
 - Installing a system now goes through that system's own installer instead of one screen for all of them. It asks
   only what the game has: which disk, with what each disk already holds and the room the system needs; what the
   computer is called, which becomes the name the prompt and the network use; and, where a Mirror answers, a

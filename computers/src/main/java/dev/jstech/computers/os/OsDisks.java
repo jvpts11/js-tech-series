@@ -42,6 +42,35 @@ public final class OsDisks {
         return osId != null && OsRegistry.getOs(osId) != null;
     }
 
+    /** What the system on that disk remembers about being greeted; a disk with no mark has met nobody. */
+    public static dev.jstech.computers.os.boot.SystemWelcome welcomeOn(final ItemStack disk) {
+        return disk.getOrDefault(ComputingModule.SYSTEM_WELCOME.get(),
+                dev.jstech.computers.os.boot.SystemWelcome.UNSEEN);
+    }
+
+    /**
+     * The slot the machine boots from, or {@code -1} when nothing on it carries a system.
+     *
+     * <p>The same search {@link #systemDisk} makes, answering where rather than what, for the callers that have
+     * to write something back onto that disk.
+     */
+    public static int systemDiskSlot(final int diskCount, final IntFunction<ItemStack> diskInSlot,
+                                     final int preferredSlot) {
+        if (preferredSlot >= 0 && preferredSlot < diskCount) {
+            final ItemStack preferred = diskInSlot.apply(preferredSlot);
+            if (preferred.getItem() instanceof DiskItem && hasSystem(preferred)) {
+                return preferredSlot;
+            }
+        }
+        for (int i = 0; i < diskCount; i++) {
+            final ItemStack stack = diskInSlot.apply(i);
+            if (stack.getItem() instanceof DiskItem && hasSystem(stack)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     /**
      * The disk that boots: the preferred slot when it holds a system, else the first disk with a
      * system, else EMPTY, so a machine with two installed OSes dual-boots by choice.
@@ -193,6 +222,8 @@ public final class OsDisks {
         final boolean hadSystem = hasSystem(disk);
         final ItemStack updated = disk.copy();
         updated.remove(ComputingModule.SYSTEM_OS.get());
+        // The greeting goes with the system: installing again on this disk is a first meeting again.
+        updated.remove(ComputingModule.SYSTEM_WELCOME.get());
         updated.remove(ComputingModule.FILESYSTEM.get());
         DriveVolumes.erase(updated);
         updated.remove(ComputingModule.DISK_PUBLIC_PERMILLE.get());
