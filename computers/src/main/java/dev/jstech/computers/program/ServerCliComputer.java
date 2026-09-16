@@ -27,8 +27,6 @@ import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -342,28 +340,6 @@ public final class ServerCliComputer implements ICliComputer {
         return NetworkSystem.get(level).mainframePositionOf(net)
                 .map(pos -> level.getBlockEntity(BlockPos.of(pos)) instanceof MainframeBlockEntity mf ? mf : null)
                 .orElse(null);
-    }
-
-    /** The storage key an item name stands for, as the shell reads names, or null for one it does not know. */
-    public static StorageKey itemKey(final String name) {
-        return resolveKey(name);
-    }
-
-    private static StorageKey resolveKey(final String name) {
-        final Item item = resolveItem(name);
-        return item == null ? null : StorageKey.of(item);
-    }
-
-    private static Item resolveItem(final String name) {
-        if (name == null || name.isBlank()) {
-            return null;
-        }
-        final String id = name.contains(":") ? name : "minecraft:" + name;
-        final ResourceLocation location = ResourceLocation.tryParse(id.toLowerCase(java.util.Locale.ROOT));
-        if (location == null) {
-            return null;
-        }
-        return BuiltInRegistries.ITEM.getOptional(location).orElse(null);
     }
 
 

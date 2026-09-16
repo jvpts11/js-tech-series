@@ -16,7 +16,6 @@ import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.program.IqlEngine;
-import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.iql.IIqlCondition;
 import dev.jstech.computers.program.iql.IIqlView;
@@ -95,7 +94,7 @@ public final class IqlService {
                     : NetworkStorage.ofServers(this.level, List.of(scopeServer));
             return storage.query().keySet().stream().limit(MAX_WILDCARD_TYPES).toList();
         }
-        final StorageKey key = ServerCliComputer.itemKey(item);
+        final StorageKey key = StorageKey.byName(item);
         return key == null ? List.of() : List.of(key);
     }
 

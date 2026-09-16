@@ -11,7 +11,6 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.network.NetworkLookup;
-import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.ICliRemote;
 import dev.jstech.computers.program.iql.IIqlCondition;
@@ -357,7 +356,7 @@ public final class NetworkReadService {
     /** Which servers hold an item, and how much each holds; a server holding none of it is left out. */
     public List<ICliComputer.Holding> find(final String item) {
         final NetworkUuid net = this.terminal.networkUuid();
-        final StorageKey key = ServerCliComputer.itemKey(item);
+        final StorageKey key = StorageKey.byName(item);
         if (net == null || key == null) {
             return List.of();
         }
@@ -410,7 +409,7 @@ public final class NetworkReadService {
      */
     public long stock(final String item) {
         final NetworkUuid net = this.terminal.networkUuid();
-        final StorageKey key = ServerCliComputer.itemKey(item);
+        final StorageKey key = StorageKey.byName(item);
         return net == null || key == null ? 0L : NetworkStorage.of(this.level, net).count(key);
     }
 

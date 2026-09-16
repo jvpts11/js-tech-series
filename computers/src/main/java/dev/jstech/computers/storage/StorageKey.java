@@ -11,6 +11,7 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
@@ -21,6 +22,7 @@ import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.fluids.FluidStack;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -71,6 +73,26 @@ public final class StorageKey {
     /** A chemical key by registry id (e.g. {@code mekanism:oxygen}). */
     public static StorageKey chemical(final ResourceLocation chemical) {
         return new StorageKey(Kind.CHEMICAL, ItemStack.EMPTY, FluidStack.EMPTY, chemical);
+    }
+
+    /**
+     * The key an item name stands for, as a player writes it: {@code cobblestone} or {@code minecraft:cobblestone}
+     * alike, and {@code jsc:...} for this mod's own. Null for a name no item answers to.
+     *
+     * <p>A name with no namespace is taken as vanilla's, which is what someone typing at a prompt means by
+     * {@code iron_ingot}.
+     */
+    @Nullable
+    public static StorageKey byName(final String name) {
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+        final String id = name.contains(":") ? name : "minecraft:" + name;
+        final ResourceLocation location = ResourceLocation.tryParse(id.toLowerCase(Locale.ROOT));
+        if (location == null) {
+            return null;
+        }
+        return BuiltInRegistries.ITEM.getOptional(location).map(StorageKey::of).orElse(null);
     }
 
     public Kind kind() {

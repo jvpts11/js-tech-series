@@ -11,7 +11,6 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.payload.OperationRecord;
-import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.ICliNetwork;
 import dev.jstech.computers.storage.StorageKey;
@@ -72,7 +71,7 @@ public final class OperationsService {
      * @param origin what to put on the row of the network's log, from {@link MoveLabels}
      */
     public ICliComputer.OpResult select(final String item, final long quantity, final String origin) {
-        final StorageKey key = ServerCliComputer.itemKey(item);
+        final StorageKey key = StorageKey.byName(item);
         if (key == null) {
             return ICliComputer.OpResult.fail("unknown item: " + item);
         }
@@ -98,7 +97,7 @@ public final class OperationsService {
      */
     public ICliComputer.OpResult insert(final String item, final long quantity, final OperationPriority priority,
                                         final String origin) {
-        final StorageKey key = ServerCliComputer.itemKey(item);
+        final StorageKey key = StorageKey.byName(item);
         if (key == null) {
             return ICliComputer.OpResult.fail("unknown item: " + item);
         }
@@ -137,7 +136,7 @@ public final class OperationsService {
     /** Asks the network to make an item, at the priority given. */
     public ICliComputer.OpResult craft(final String item, final long quantity, final OperationPriority priority,
                                        final String origin) {
-        final StorageKey key = ServerCliComputer.itemKey(item);
+        final StorageKey key = StorageKey.byName(item);
         if (key == null) {
             return ICliComputer.OpResult.fail("unknown item: " + item);
         }
@@ -165,7 +164,7 @@ public final class OperationsService {
      * @param quantity how much to hold; none given holds everything the network has free of it
      */
     public ICliComputer.OpResult lock(final String item, final long quantity) {
-        final StorageKey key = ServerCliComputer.itemKey(item);
+        final StorageKey key = StorageKey.byName(item);
         if (key == null) {
             return ICliComputer.OpResult.fail("unknown item: " + item);
         }
@@ -186,7 +185,7 @@ public final class OperationsService {
 
     /** Lets an item go again, so that what was waiting on it can have it. */
     public ICliComputer.OpResult unlock(final String item) {
-        final StorageKey key = ServerCliComputer.itemKey(item);
+        final StorageKey key = StorageKey.byName(item);
         if (key == null) {
             return ICliComputer.OpResult.fail("unknown item: " + item);
         }
