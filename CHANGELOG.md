@@ -18,6 +18,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Changed
+- A computer now sends one player only so much in a tick, and whatever is left over goes first on the next one, so
+  that a machine whose windows all changed at once, or one whose desktop has just been opened onto a full canvas,
+  no longer puts the lot on the wire in a single tick. A window that has closed is always told of at once.
 - A canvas now sends only what has been drawn on it since the last time it went over, instead of its whole picture
   again whenever anything in its window changes. Clearing one sends it whole again.
 - A running computer now asks after the cable it is already attached to, one block, instead of looking round all six

@@ -106,6 +106,39 @@ public final class SystemUiGameTests {
             }
             """;
 
+    /** Two windows, each with a canvas too full for both of them to cross in one tick. */
+    private static final String WALL = """
+            using System.*;
+            using System.UI.*;
+            namespace Art;
+            class Wall : IScript {
+                Window left;
+                Window right;
+                Canvas one;
+                Canvas two;
+                public void OnInit() {
+                    one = new Canvas();
+                    two = new Canvas();
+                    Column a = new Column();
+                    a.Add(one, 1);
+                    left = new Window("Left", 200, 120);
+                    left.Content = a;
+                    left.Show();
+                    Column b = new Column();
+                    b.Add(two, 1);
+                    right = new Window("Right", 200, 120);
+                    right.Content = b;
+                    right.Show();
+                    for (int i = 0; i < 300; i = i + 1) {
+                        one.SetPixel(i, 1, 7);
+                        two.SetPixel(i, 2, 7);
+                    }
+                }
+                public void OnTick() { }
+                public void OnDestroy() { left.Close(); right.Close(); }
+            }
+            """;
+
     private static CraftingComputerBlockEntity computer(final GameTestHelper helper, final BlockPos at,
                                                         final String os) {
         helper.setBlock(at, ComputingModule.CRAFTING_COMPUTER.get());
@@ -248,6 +281,34 @@ public final class SystemUiGameTests {
                     helper.assertTrue(wiped != null, "the window is still there");
                     helper.assertFalse(wiped.appends(),
                             "a canvas that was cleared goes whole again, not added to the drawing it had");
+                })
+                .thenSucceed();
+    }
+
+    /** A machine sends what a tick can carry and the rest waits for the next one, which serves it first. */
+    @GameTest(template = ARENA)
+    public static void windows_waitTheirTurnWhenOneTickCannotCarryThemAll(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2), "frames_xp");
+        if (computer == null) {
+            return;
+        }
+        final ServerPlayer watcher = viewer(helper.getLevel(), "crowd");
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final MachinePrograms.Started started =
+                            computer.programs().start("wall.sgs", WALL, 1, computer);
+                    helper.assertTrue(started.ok(), started.message());
+                    computer.programs().tick(1_000_000);
+                    computer.programs().tick(1_000_000);
+                    final int open = computer.programs().windowsOf(started.id()).size();
+                    helper.assertTrue(open == 2, "both windows are open; got " + open);
+                    final List<UiWindowPayload> first = computer.takeWindowsOwed(watcher);
+                    helper.assertTrue(first.size() == 1, "one window fills the tick's budget; got " + first.size());
+                    final List<UiWindowPayload> next = computer.takeWindowsOwed(watcher);
+                    helper.assertTrue(next.size() == 1, "the one that waited goes next; got " + next.size());
+                    helper.assertFalse(first.getFirst().title().equals(next.getFirst().title()),
+                            "the other window, not the same one over again");
+                    helper.assertTrue(computer.takeWindowsOwed(watcher).isEmpty(), "and then nothing is owed");
                 })
                 .thenSucceed();
     }

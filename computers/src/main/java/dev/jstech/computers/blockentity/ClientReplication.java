@@ -28,6 +28,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,21 @@ final class ClientReplication {
      */
     private final Map<UUID, Map<CanvasId, CanvasSent>> canvasByViewer = new HashMap<>();
     /*
+     * Where each player's turn begins: the window the budget stopped at last tick, so that what waited goes
+     * before the rest when the next one comes and no window is left behind while others are served again.
+     */
+    private final Map<UUID, WindowId> resumeAt = new HashMap<>();
+
+    /**
+     * What one machine sends one player in one tick before the rest of it waits for the next.
+     *
+     * <p>A single canvas may hold four thousand strokes, which is ten times this on its own, so a machine that
+     * has just been opened, or one whose programs all drew at once, would otherwise put the lot on the wire in a
+     * single tick. The first window of a turn always goes, however big, or one too large for the budget would
+     * wait for ever.
+     */
+    private static final int MOST_BYTES_A_TICK = 8192;
+    /*
      * Which progress quarter (25/50/75%) each running build last reported, so the console gets a handful
      * of emerge-style progress lines instead of one per second. Transient by design.
      */
@@ -74,6 +90,7 @@ final class ClientReplication {
         if (viewers.isEmpty()) {
             this.sentByViewer.clear();
             this.canvasByViewer.clear();
+            this.resumeAt.clear();
             return;
         }
         forgetWhoLeft(viewers);
@@ -111,33 +128,85 @@ final class ClientReplication {
      */
     private List<UiWindowPayload> takeOwed(final ServerPlayer viewer, final Map<WindowId, Values.Obj> open,
                                            final Map<WindowId, UiWindowPayload> made) {
-        final Map<WindowId, Long> sent =
-                this.sentByViewer.computeIfAbsent(viewer.getUUID(), id -> new HashMap<>());
-        final Map<CanvasId, CanvasSent> canvases =
-                this.canvasByViewer.computeIfAbsent(viewer.getUUID(), id -> new HashMap<>());
+        final UUID who = viewer.getUUID();
+        final Map<WindowId, Long> sent = this.sentByViewer.computeIfAbsent(who, id -> new HashMap<>());
+        final Map<CanvasId, CanvasSent> canvases = this.canvasByViewer.computeIfAbsent(who, id -> new HashMap<>());
         final BlockPos pos = this.machine.getBlockPos();
         final List<UiWindowPayload> owed = new ArrayList<>();
+
+        /* A window that has closed always goes, budget or no: it is a few bytes, and one left on a screen is a lie. */
+        for (final WindowId id : sent.keySet()) {
+            if (!open.containsKey(id)) {
+                owed.add(UiWindowPayload.gone(pos, id.program(), id.window()));
+                canvases.keySet().removeIf(canvas -> canvas.window().equals(id));
+            }
+        }
+        sent.keySet().removeIf(id -> !open.containsKey(id));
+
+        final List<WindowId> moved = new ArrayList<>();
         for (final Map.Entry<WindowId, Values.Obj> entry : open.entrySet()) {
-            if (Long.valueOf(revisionOf(entry.getValue())).equals(sent.get(entry.getKey()))) {
+            if (!Long.valueOf(revisionOf(entry.getValue())).equals(sent.get(entry.getKey()))) {
+                moved.add(entry.getKey());
+            }
+        }
+        if (moved.isEmpty()) {
+            this.resumeAt.remove(who);
+            return owed;
+        }
+        moved.sort(Comparator.naturalOrder());
+        final int start = startFor(moved, this.resumeAt.get(who));
+        int spent = 0;
+        int given = 0;
+        WindowId waits = null;
+        for (int n = 0; n < moved.size(); n++) {
+            final WindowId id = moved.get((start + n) % moved.size());
+            final Values.Obj window = open.get(id);
+            final UiWindowPayload whole =
+                    made.computeIfAbsent(id, k -> UiWindowPayload.of(pos, k.program(), window));
+            if (whole == null) {
                 continue;
             }
-            final UiWindowPayload payload = made.computeIfAbsent(entry.getKey(),
-                    id -> UiWindowPayload.of(pos, id.program(), entry.getValue()));
-            if (payload != null) {
-                owed.add(cutCanvases(entry.getKey(), payload, canvases));
+            final UiWindowPayload cut = cutCanvases(id, whole, canvases);
+            if (given > 0 && spent + cut.weight() > MOST_BYTES_A_TICK) {
+                waits = id; // this one and whatever follows it wait, and begin the next turn
+                break;
             }
+            owed.add(cut);
+            spent += cut.weight();
+            given++;
+            noteSent(id, whole, window, sent, canvases);
         }
-        for (final Map.Entry<WindowId, Long> entry : sent.entrySet()) {
-            if (!open.containsKey(entry.getKey())) {
-                owed.add(UiWindowPayload.gone(pos, entry.getKey().program(), entry.getKey().window()));
-                canvases.keySet().removeIf(canvas -> canvas.window().equals(entry.getKey()));
-            }
-        }
-        sent.clear();
-        for (final Map.Entry<WindowId, Values.Obj> entry : open.entrySet()) {
-            sent.put(entry.getKey(), revisionOf(entry.getValue()));
+        if (waits == null) {
+            this.resumeAt.remove(who);
+        } else {
+            this.resumeAt.put(who, waits);
         }
         return owed;
+    }
+
+    /** Where a player's turn begins: at the window the budget stopped at, or at the first one owed after it. */
+    private static int startFor(final List<WindowId> moved, final WindowId from) {
+        if (from == null) {
+            return 0;
+        }
+        for (int i = 0; i < moved.size(); i++) {
+            if (moved.get(i).compareTo(from) >= 0) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    /** Writes down what that player now holds of a window: where it stood, and how much of each canvas in it. */
+    private void noteSent(final WindowId id, final UiWindowPayload whole, final Values.Obj window,
+                          final Map<WindowId, Long> sent, final Map<CanvasId, CanvasSent> canvases) {
+        sent.put(id, revisionOf(window));
+        for (final UiWindowPayload.Widget widget : whole.widgets()) {
+            if (UiWidgets.CANVAS.equals(widget.kind())) {
+                canvases.put(new CanvasId(id, widget.id()),
+                        new CanvasSent(widget.epoch(), widget.drawing().size()));
+            }
+        }
     }
 
     /** The windows the programs on this machine have open, as the programs hold them. */
@@ -168,8 +237,7 @@ final class ClientReplication {
             if (!UiWidgets.CANVAS.equals(widget.kind())) {
                 continue;
             }
-            final CanvasSent had = canvases.put(new CanvasId(window, widget.id()),
-                    new CanvasSent(widget.epoch(), widget.drawing().size()));
+            final CanvasSent had = canvases.get(new CanvasId(window, widget.id()));
             if (had == null || had.epoch() != widget.epoch() || had.strokes() <= 0) {
                 continue;
             }
@@ -193,6 +261,7 @@ final class ClientReplication {
         }
         this.sentByViewer.keySet().removeIf(id -> !watching(viewers, id));
         this.canvasByViewer.keySet().removeIf(id -> !watching(viewers, id));
+        this.resumeAt.keySet().removeIf(id -> !watching(viewers, id));
     }
 
     private static boolean watching(final List<ServerPlayer> viewers, final UUID id) {
@@ -349,7 +418,14 @@ final class ClientReplication {
      * a machine that had opened more than four thousand million windows would have had two of them answer to
      * the same name and shown one in place of the other.
      */
-    private record WindowId(int program, long window) {
+    private record WindowId(int program, long window) implements Comparable<WindowId> {
+
+        /** A steady order, so that a turn cut short by the budget carries on where it left off. */
+        @Override
+        public int compareTo(final WindowId other) {
+            final int byProgram = Integer.compare(this.program, other.program);
+            return byProgram != 0 ? byProgram : Long.compare(this.window, other.window);
+        }
     }
 
     /** One canvas in one window of one program on this machine. */

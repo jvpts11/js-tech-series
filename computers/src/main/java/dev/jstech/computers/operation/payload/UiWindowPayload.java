@@ -46,6 +46,32 @@ public record UiWindowPayload(BlockPos hostPos, int program, long window, String
     /** Where a widget the program placed itself is; laid out widgets have this instead of a place. */
     public static final int LAID_OUT = -1;
 
+    /*
+     * Roughly what a window, a widget and a stroke cost on the wire. Counted by shape rather than by running the
+     * encoding a second time: near enough to spend a budget by, and cheap enough to ask of every window that goes.
+     */
+    private static final int A_WINDOW = 32;
+    private static final int A_WIDGET = 40;
+    private static final int A_STROKE = 20;
+
+    /** Roughly how many bytes this window takes on the wire, for a machine to spend its budget by. */
+    public int weight() {
+        int bytes = A_WINDOW + this.title.length();
+        for (final Widget widget : this.widgets) {
+            bytes += A_WIDGET + widget.text().length();
+            for (final String row : widget.rows()) {
+                bytes += row.length() + 2;
+            }
+            for (final String detail : widget.details()) {
+                bytes += detail.length() + 2;
+            }
+            for (final Stroke stroke : widget.drawing()) {
+                bytes += A_STROKE + stroke.text().length();
+            }
+        }
+        return bytes;
+    }
+
     /** The same window carrying those widgets, for sending one player less of it than another is sent. */
     public UiWindowPayload withWidgets(final List<Widget> widgets) {
         return new UiWindowPayload(this.hostPos, this.program, this.window, this.title, this.width, this.height,
