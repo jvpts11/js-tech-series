@@ -187,8 +187,6 @@ public final class InstallService {
                         (int) Math.min(Integer.MAX_VALUE, sizeMb)));
             }
         }
-        final long kernelTicks =
-                Math.max(5L, Math.min(1800L, 64_000L / Math.max(100, computer.maxCpuMhz()))) * 20L;
         /*
          * Which firmware this machine has decides whether the disk needs a partition of its own for the
          * bootloader, and which target the bootloader is installed for. It is the machine's generation that
@@ -198,8 +196,12 @@ public final class InstallService {
                 computer.installedEra() != null ? computer.installedEra()
                         : dev.jstech.core.tier.HardwareEra.STANDARD)
                 == dev.jstech.computers.os.FirmwareKind.UEFI;
+        final dev.jstech.core.tier.HardwareEra era = computer.installedEra() != null ? computer.installedEra()
+                : dev.jstech.core.tier.HardwareEra.STANDARD;
         final LiveInstallState.Result result = state.run(line, new LiveInstallState.Env(
-                devices, this.packages.reachable(), this.level.getGameTime(), kernelTicks, uefi));
+                devices, this.packages.reachable(), this.level.getGameTime(), coresOf(computer),
+                computer.maxCpuMhz(), dev.jstech.computers.os.install.SetupTiming.eraFactor(era),
+                uefi));
         machine.setChanged();
         final String text = String.join("\n", result.lines());
         if (!result.complete()) {
@@ -240,5 +242,26 @@ public final class InstallService {
             }
         }
         return null;
+    }
+
+    /**
+     * How many cores this machine really has, across every processor in it.
+     *
+     * <p>Not how many processors: a compile is spread over cores, and a machine with one four-core processor
+     * gets through four times the work of one with a single core, which is the whole point of the number.
+     */
+    private static int coresOf(final IOsHost computer) {
+        if (!(computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine)) {
+            return Math.max(1, computer.installedCpus());
+        }
+        final dev.jstech.computers.hardware.ComputerBuild build = machine.currentBuild();
+        if (build == null) {
+            return 1;
+        }
+        int cores = 0;
+        for (final dev.jstech.computers.hardware.CpuSpec cpu : build.cpus()) {
+            cores += cpu.cores();
+        }
+        return Math.max(1, cores);
     }
 }

@@ -30,6 +30,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Added
+- Fetching a system by hand takes time, and what needs it waits. `pacstrap` and the stage 3 bring a base system
+  over the Mirror at the network's speed, printing what they are fetching a package at a time, and nothing
+  enters a system that is still arriving. Extra packages afterwards, with `pacman -S` or `emerge`, take their
+  own time the same way.
+- Compiling the Gentoo kernel now depends on the machine and on the player. The processor's cores and clock
+  decide how much work it gets through, and how much of it happens at once comes from `MAKEOPTS` in
+  `/etc/portage/make.conf`, capped at the cores the machine really has: left alone it builds one thing at a
+  time, `-j4` on a four-core machine cuts the wait to a quarter, and asking for sixty-four of them on that same
+  machine is still four. `echo` writes the line that sets it.
 - A hand-installed distribution now goes through the steps it was missing. `grub-install` installs the
   bootloader for the firmware the machine really has: on an older one it goes on the disk and says so, on a
   modern one it goes in the boot partition and refuses with nowhere to put it. `grub-mkconfig` writes the list

@@ -62,10 +62,14 @@ public final class LiveInstallState {
     /**
      * What the shell needs from the world for one command.
      *
-     * @param uefi whether this machine's firmware boots the modern way, which decides whether the disk needs a
-     *             partition of its own for the bootloader and which target the bootloader is installed for
+     * @param cores     how many the processor has, which caps how much of a compile can happen at once
+     * @param mhz       how fast it runs, which is the other half of how long a compile takes
+     * @param eraFactor how much faster than the earliest machines this one unpacks and writes
+     * @param uefi      whether this machine's firmware boots the modern way, which decides whether the disk
+     *                  needs a partition of its own for the bootloader and which target it is installed for
      */
-    public record Env(List<Device> devices, boolean mirror, long now, long kernelBuildTicks, boolean uefi) {
+    public record Env(List<Device> devices, boolean mirror, long now, int cores, int mhz, int eraFactor,
+                      boolean uefi) {
 
         /** Whether a device of that name is in the machine. */
         public boolean has(final String name) {
@@ -119,6 +123,30 @@ public final class LiveInstallState {
 
     /** Where the disk being installed onto hangs while the session is outside it. */
     private static final String MOUNT = "/mnt";
+
+    /** Where the build options of the source distribution live, inside the system being built. */
+    private static final String PORTAGE_CONF = "/etc/portage/make.conf";
+
+    /**
+     * How much work compiling a kernel is, in megahertz-seconds.
+     *
+     * <p>A balancing number like every other here: it is the figure that put a single-job build at about half a
+     * minute on the machine the sequence was written against, so a faster processor or more of it at once cuts
+     * it from there.
+     */
+    private static final long COMPILE_WORK = 64_000L;
+
+    /** What one extra package weighs, a balancing figure like the rest of them. */
+    private static final int PACKAGE_MB = 64;
+
+    /**
+     * What a base install fetches.
+     *
+     * <p>Not the whole system: {@code pacstrap base linux} and a stage 3 bring a system that boots and nothing
+     * more, and everything else arrives afterwards, a package at a time, because the player asked for it. The
+     * figure is the usual kind of estimate.
+     */
+    private static final int BASE_MB = 256;
 
     private final Distro distro;
     /*
@@ -306,6 +334,38 @@ public final class LiveInstallState {
         return busyDone;
     }
 
+    /**
+     * How long compiling the kernel takes on this machine, with what the player asked of it.
+     *
+     * <p>Two things decide it and the player owns one of them. The processor is the machine's: cores times
+     * clock is how much work it can get through. How much of it happens at once is written in the build
+     * options, and a number larger than the machine has cores buys nothing, because the cores are the ceiling.
+     * Left alone, it builds one thing at a time, which is what it really does when nobody has said otherwise.
+     */
+    public long compileTicks(final Env env) {
+        final int jobs = Math.max(1, Math.min(makeJobs(), Math.max(1, env.cores())));
+        final long seconds = Math.max(5L, Math.min(1800L,
+                COMPILE_WORK / (long) Math.max(100, env.mhz()) / jobs));
+        return seconds * 20L;
+    }
+
+    /** How many jobs the build options ask for, which is one until somebody writes otherwise. */
+    public int makeJobs() {
+        final String conf = files.get(MOUNT + PORTAGE_CONF);
+        if (conf == null) {
+            return 1;
+        }
+        final java.util.regex.Matcher found =
+                java.util.regex.Pattern.compile("MAKEOPTS\\s*=\\s*\"?[^\"\\n]*-j\\s*(\\d+)").matcher(conf);
+        return found.find() ? Math.max(1, Integer.parseInt(found.group(1))) : 1;
+    }
+
+    /** How long fetching that many megabytes over the network takes this machine. */
+    private static long fetchTicks(final int sizeMb, final Env env) {
+        return dev.jstech.computers.os.install.SetupTiming.networkTicks(sizeMb, false,
+                Math.max(1, env.eraFactor()));
+    }
+
     /** Sets a step running for a while, which is how every step that is not instant says so. */
     private void takesTime(final long now, final long ticks, final String what, final String done) {
         busyUntil = now + Math.max(1L, ticks);
@@ -330,6 +390,8 @@ public final class LiveInstallState {
         return switch (cmd) {
             case "fdisk" -> fdisk(arg1, env);
             case "mkfs.fat", "mkfs.vfat" -> mkfat(parts, env);
+            case "echo" -> echo(line);
+            case "pacman" -> pacman(parts, env);
             case "ls" -> ls(arg1);
             case "cat" -> cat(arg1, false);
             case "less", "more" -> cat(arg1, true);
@@ -339,8 +401,8 @@ public final class LiveInstallState {
             case "mount" -> mount(arg1, parts.length > 2 ? parts[2] : "");
             case "pacstrap" -> pacstrap(arg1, env);
             case "tar" -> stage3(line, env);
-            case "genfstab" -> genfstab(line);
-            case "arch-chroot", "chroot" -> enterChroot(arg1);
+            case "genfstab" -> genfstab(line, env);
+            case "arch-chroot", "chroot" -> enterChroot(arg1, env);
             case "emerge-webrsync", "emerge" -> emerge(line, env);
             case "genkernel" -> genkernel(env);
             case "grub-install" -> grub(arg1, env);
@@ -765,8 +827,17 @@ public final class LiveInstallState {
         }
         base = true;
         laidOut();
-        return Result.pass("==> Creating install root at /mnt", ":: Synchronizing package databases (mirror://mainframe)",
-                ":: Installing base linux ... done", "pacstrap: installation complete");
+        final long ticks = fetchTicks(BASE_MB, env);
+        takesTime(env.now(), ticks, "the base system",
+                "==> pacstrap: installation complete. Next: genfstab -U /mnt >> /mnt/etc/fstab");
+        final List<String> out = new ArrayList<>();
+        out.add("==> Creating install root at /mnt");
+        out.add(":: Synchronizing package databases (mirror://mainframe)");
+        for (final String pkg : ARCH_BASE) {
+            out.add(fetching(pkg));
+        }
+        out.add("==> Retrieving " + BASE_MB + " MB over the network (about " + (ticks / 20) + "s)");
+        return new Result(true, List.copyOf(out), false);
     }
 
     private Result stage3(final String line, final Env env) {
@@ -784,12 +855,20 @@ public final class LiveInstallState {
         }
         base = true;
         laidOut();
-        return Result.pass("Unpacking stage3 into /mnt ... done");
+        final long ticks = fetchTicks(BASE_MB, env);
+        takesTime(env.now(), ticks, "the stage 3",
+                ">>> stage3 unpacked. Next: chroot /mnt");
+        return Result.pass("Fetching stage3-amd64.tar.xz from mirror://mainframe",
+                "  stage3-amd64.tar.xz  [" + bar() + "] " + BASE_MB + " MB",
+                "Unpacking into /mnt (about " + (ticks / 20) + "s)");
     }
 
-    private Result genfstab(final String line) {
+    private Result genfstab(final String line, final Env env) {
         if (distro != Distro.ARCH) {
             return Result.fail("genfstab: command not found");
+        }
+        if (busy(env.now())) {
+            return stillWorking(env);
         }
         if (!base) {
             return Result.fail("genfstab: /mnt/etc does not exist (install the base system first)");
@@ -804,9 +883,12 @@ public final class LiveInstallState {
         return new Result(true, List.copyOf(List.of(table.split("\n", -1))), false);
     }
 
-    private Result enterChroot(final String point) {
+    private Result enterChroot(final String point, final Env env) {
         if (!point.equals("/mnt")) {
             return Result.fail("chroot: cannot change root directory to '" + point + "': No such file or directory");
+        }
+        if (busy(env.now())) {
+            return stillWorking(env);
         }
         if (!base) {
             return Result.fail("chroot: failed to run command '/bin/bash': No such file or directory");
@@ -815,6 +897,86 @@ public final class LiveInstallState {
         // A chroot drops you at the root of the system you entered, which is what its prompt then shows.
         cwd = "/";
         return Result.pass();
+    }
+
+    /**
+     * Says something, or puts it in a file.
+     *
+     * <p>How a line of configuration gets written without an editor, which is what the build options of the
+     * source distribution are set with: {@code echo 'MAKEOPTS="-j4"' >> /etc/portage/make.conf}. A full screen
+     * editor belongs with the editor work; this is the way anybody in a hurry does it anyway.
+     */
+    private Result echo(final String line) {
+        final String said = line.length() > 4 ? line.substring(4).trim() : "";
+        final int append = said.lastIndexOf(">>");
+        final int over = append >= 0 ? -1 : said.lastIndexOf('>');
+        if (append < 0 && over < 0) {
+            return Result.pass(unquote(said));
+        }
+        final int at = append >= 0 ? append : over;
+        final String text = unquote(said.substring(0, at).trim());
+        final String target = said.substring(at + (append >= 0 ? 2 : 1)).trim();
+        if (target.isEmpty()) {
+            return Result.fail("bash: syntax error near unexpected token `newline'");
+        }
+        final String whole = resolve(target);
+        if (dirs.contains(whole)) {
+            return Result.fail("bash: " + target + ": Is a directory");
+        }
+        final String had = append >= 0 ? files.get(whole) : null;
+        write(whole, had == null || had.isEmpty() ? text : had + "\n" + text);
+        return Result.pass();
+    }
+
+    /** A value with the quotes a shell would have eaten taken off. */
+    private static String unquote(final String text) {
+        if (text.length() >= 2 && (text.charAt(0) == '\'' || text.charAt(0) == '"')
+                && text.charAt(text.length() - 1) == text.charAt(0)) {
+            return text.substring(1, text.length() - 1);
+        }
+        return text;
+    }
+
+    /** Installs an extra package inside the new system, over the Mirror, like everything else here. */
+    private Result pacman(final String[] parts, final Env env) {
+        if (distro != Distro.ARCH) {
+            return Result.fail("pacman: command not found");
+        }
+        if (!chroot) {
+            return Result.fail("pacman: this must be run inside the new system (arch-chroot /mnt)");
+        }
+        if (parts.length < 3 || !parts[1].startsWith("-S")) {
+            return Result.fail("error: no operation specified (use -S <package>)");
+        }
+        if (!env.mirror()) {
+            return Result.fail("error: failed retrieving file 'core.db' from mirror://mainframe",
+                    "error: failed to synchronize all databases (unexpected error)");
+        }
+        if (busy(env.now())) {
+            return stillWorking(env);
+        }
+        final String named = parts[2];
+        final long ticks = fetchTicks(PACKAGE_MB, env);
+        takesTime(env.now(), ticks, named, ":: " + named + " installed.");
+        return Result.pass(":: Retrieving packages...", fetching(named),
+                ":: Installing (about " + (ticks / 20) + "s)");
+    }
+
+    /** What a step says when something the machine is already doing has to finish first. */
+    private Result stillWorking(final Env env) {
+        return Result.fail("Still fetching " + busyWhat + " (" + ((busyUntil - env.now()) / 20) + "s left).");
+    }
+
+    /** The packages a base install fetches, named so the output is an account rather than one line. */
+    private static final String[] ARCH_BASE = {"base", "linux", "linux-firmware", "e2fsprogs", "grub"};
+
+    /** One package's line as a fetch prints it, bar and all. */
+    private static String fetching(final String pkg) {
+        return String.format(Locale.ROOT, " %-16s [%s] 100%%", pkg, bar());
+    }
+
+    private static String bar() {
+        return "######################";
     }
 
     /** The directories a base system brings with it, which is what makes them there to look in. */
@@ -843,14 +1005,29 @@ public final class LiveInstallState {
         if (!synced) {
             return Result.fail("!!! The portage tree is empty. Run emerge-webrsync or emerge --sync first.");
         }
+        if (busy(env.now())) {
+            return stillWorking(env);
+        }
         if (line.contains("gentoo-sources")) {
             sources = true;
-            takesTime(env.now(), env.kernelBuildTicks(), "sys-kernel/gentoo-sources",
+            final int jobs = Math.max(1, Math.min(makeJobs(), Math.max(1, env.cores())));
+            final long ticks = compileTicks(env);
+            takesTime(env.now(), ticks, "sys-kernel/gentoo-sources",
                     ">>> sys-kernel/gentoo-sources: compiled. Run 'genkernel all' to build the kernel.");
-            return Result.pass(">>> Emerging (1 of 1) sys-kernel/gentoo-sources", ">>> Compiling ... (about "
-                    + (env.kernelBuildTicks() / 20) + "s; run genkernel when it finishes)");
+            return Result.pass(">>> Emerging (1 of 1) sys-kernel/gentoo-sources",
+                    ">>> Compiling with " + jobs + (jobs == 1 ? " job" : " jobs") + " on " + env.cores()
+                            + " cores at " + env.mhz() + " MHz",
+                    ">>> about " + (ticks / 20) + "s; run genkernel when it finishes");
         }
-        return Result.pass(">>> Emerging " + line.substring("emerge".length()).trim() + " ... done");
+        final String named = line.substring("emerge".length()).trim();
+        if (named.isEmpty()) {
+            return Result.fail("!!! No packages given.");
+        }
+        // Anything else asked for comes over the Mirror like everything else, and takes as long as it is big.
+        final long ticks = fetchTicks(PACKAGE_MB, env);
+        takesTime(env.now(), ticks, named, ">>> " + named + " merged.");
+        return Result.pass(">>> Emerging " + named,
+                " " + named + "  [" + bar() + "] (about " + (ticks / 20) + "s)");
     }
 
     private Result genkernel(final Env env) {

@@ -1063,7 +1063,8 @@ public final class OsCliGameTests {
      * (against the network mirror) lands Arch on the chosen disk, the live session ends, and the computer boots
      * the new system with its zsh prompt.
      */
-    @GameTest(template = ARENA)
+    // Long enough for the base system to come over the network, which the rest of the sequence waits for.
+    @GameTest(template = ARENA, timeoutTicks = 400)
     public static void linux_archLiveInstallByHandBootsTheSystem(final GameTestHelper helper) {
         final BlockPos pos = new BlockPos(2, 2, 2);
         final MainframeBlockEntity mainframe = placeMainframeWithOs(helper, pos,
@@ -1101,11 +1102,25 @@ public final class OsCliGameTests {
                     shell.run("mkfs.ext4 /dev/sda2", cli);
                     shell.run("mount /dev/sda2 /mnt", cli);
                     shell.run("mount /dev/sda1 /mnt/boot", cli);
-                    helper.assertTrue(text(shell.run("pacstrap /mnt base linux", cli)).contains("installation complete"),
+                    helper.assertTrue(text(shell.run("pacstrap /mnt base linux", cli)).contains("Retrieving"),
                             "pacstrap must pull the base system from the mirror");
+                    helper.assertTrue(text(shell.run("arch-chroot /mnt", cli)).contains("Still fetching"),
+                            "and nothing enters a system that is still being fetched");
+                })
+                /*
+                 * The fetch takes real time, so the rest of the sequence waits for it exactly as a player at
+                 * the terminal would. The base is small; it is the compile that is long, and that one has a
+                 * test of its own.
+                 */
+                .thenExecuteAfter(180, () -> {
+                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
+                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
                     shell.run("genfstab -U /mnt >> /mnt/etc/fstab", cli);
                     shell.run("arch-chroot /mnt", cli);
-                    helper.assertTrue("[root@archiso /]#".equals(cli.prompt()), "the chroot changes the prompt");
+                    helper.assertTrue("[root@archiso /]#".equals(cli.prompt()),
+                            "once the fetch is done the new system can be entered; got " + cli.prompt());
+                    helper.assertTrue(text(shell.run("cat /etc/fstab", cli)).contains("UUID=jsc-sda2"),
+                            "and the table that step wrote is readable from inside it");
                     shell.run("hostname workshop", cli);
                     helper.assertTrue(text(shell.run("cat /etc/hostname", cli)).contains("workshop"),
                             "the name went into the new system's own file");
@@ -1201,8 +1216,13 @@ public final class OsCliGameTests {
                     shell.run("mkfs.ext4 /dev/sda2", cli);
                     shell.run("mount /dev/sda2 /mnt", cli);
                     shell.run("mount /dev/sda1 /mnt/boot", cli);
-                    helper.assertTrue(text(shell.run("tar xpf stage3-amd64.tar.xz -C /mnt", cli)).contains("done"),
+                    helper.assertTrue(text(shell.run("tar xpf stage3-amd64.tar.xz -C /mnt", cli)).contains("Fetching"),
                             "the stage3 tarball must come from the mirror");
+                })
+                // The stage 3 comes over the network and takes as long as it takes, so the rest waits for it.
+                .thenExecuteAfter(180, () -> {
+                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
+                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
                     shell.run("chroot /mnt", cli);
                     helper.assertTrue("(chroot) livecd / #".equals(cli.prompt()), "the chroot changes the prompt");
                     helper.assertTrue(text(shell.run("emerge sys-kernel/gentoo-sources", cli)).contains("portage tree is empty"),
