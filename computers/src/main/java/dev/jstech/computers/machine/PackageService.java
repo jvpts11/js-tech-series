@@ -218,8 +218,11 @@ public final class PackageService {
     /**
      * Refuses a program the machine is too old to run, or {@code null} when the era is fine. Software cannot predate
      * its hardware generation: a desktop of the 2010s does not install on a machine of the 1990s, however much disk
-     * it has free. Both install paths (the package manager and the install medium) go through this, so neither is a
-     * way around the rule.
+     * it has free.
+     *
+     * <p>This is the package manager's gate. The install medium does not come through here: it is refused by
+     * {@code SetupGate}, which tests the same rule among the others it checks and names the machine's era in its
+     * message. Two doors, one rule.
      */
     @Nullable
     public ICliComputer.OpResult eraGate(final ProgramSpec spec) {

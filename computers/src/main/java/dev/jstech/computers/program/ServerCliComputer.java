@@ -403,37 +403,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public OpResult install(final String programId) {
-        final ResourceLocation location = ResourceLocation.tryParse(
-                programId.contains(":") ? programId.toLowerCase(java.util.Locale.ROOT)
-                        : "jsc:" + programId.toLowerCase(java.util.Locale.ROOT));
-        final dev.jstech.computers.os.ProgramSpec program =
-                location == null ? null : Programs.get(location);
-        if (program == null) {
-            return OpResult.fail("no such program: " + programId);
-        }
-        if (program.id().equals(Programs.IQL_ENGINE)) {
-            // The Engine is a service on the Mainframe, not a console-local app, so install it there.
-            return engineControl("install");
-        }
-        /*
-         * Installing is something the machine does over time, from the disc in a linked drive. Whether
-         * it can, and why not, is decided in one place for every way of asking, so the prompt says
-         * exactly what the Setup window on a desktop would.
-         */
-        final dev.jstech.computers.os.media.MediaFormat medium = installMediumFormatFor(program.id());
-        if (medium == null) {
-            return OpResult.fail(program.commandName() + " needs its install disc in a linked drive");
-        }
-        final dev.jstech.computers.os.IOsHost machine = osHost();
-        if (machine == null) {
-            return OpResult.fail("this computer cannot store installed programs");
-        }
-        final java.util.Optional<String> refusal = dev.jstech.computers.os.install.SetupRunner.begin(
-                machine, level, hostBlock.getBlockPos(), program, medium, false,
-                dev.jstech.computers.os.install.SetupJob.VIA_INSTALL);
-        return refusal.map(OpResult::fail)
-                .orElseGet(() -> OpResult.ok("Setting up " + program.commandName() + " from "
-                        + mediumDriveName(medium) + " ..."));
+        return installs().install(programId);
     }
 
     /** The machine as the thing that installs programs, whichever of the two handles this prompt holds. */
@@ -443,33 +413,6 @@ public final class ServerCliComputer implements ICliComputer {
             return fromHost;
         }
         return hostBlock instanceof dev.jstech.computers.os.IOsHost fromBlock ? fromBlock : null;
-    }
-
-    /** What the disc a program comes from is called at a prompt. */
-    private static String mediumDriveName(final dev.jstech.computers.os.media.MediaFormat medium) {
-        return switch (medium) {
-            case FLOPPY -> "the floppy";
-            case CD -> "the CD";
-            case DVD -> "the DVD";
-            case USB -> "the USB drive";
-        };
-    }
-
-    /** The format of the disc a program's installer sits on in a linked drive, or null when none does. */
-    @org.jetbrains.annotations.Nullable
-    private dev.jstech.computers.os.media.MediaFormat installMediumFormatFor(final ResourceLocation programId) {
-        if (!(host instanceof dev.jstech.computers.os.IOsHost computer)) {
-            return null;
-        }
-        for (final long endpoint : computer.linkedEndpoints()) {
-            if (level.getBlockEntity(net.minecraft.core.BlockPos.of(endpoint))
-                    instanceof dev.jstech.computers.os.media.MediaReaderBlockEntity reader
-                    && reader.insertedKind() == dev.jstech.computers.os.media.MediaKind.PROGRAM_INSTALL
-                    && programId.equals(reader.insertedPayload())) {
-                return reader.insertedFormat();
-            }
-        }
-        return null;
     }
 
     @Override
@@ -1101,7 +1044,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     /** What is installed on this machine, and the installing itself, as this shell reaches it. */
     private dev.jstech.computers.machine.InstallService installs() {
-        return new dev.jstech.computers.machine.InstallService(host, level, packages());
+        return new dev.jstech.computers.machine.InstallService(host, level, packages(), iql());
     }
 
     /** The packages this machine installs over its network's Mirror, as this shell reaches them. */

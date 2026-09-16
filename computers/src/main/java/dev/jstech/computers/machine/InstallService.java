@@ -12,14 +12,23 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.install.SetupJob;
+import dev.jstech.computers.os.install.SetupRunner;
+import dev.jstech.computers.os.media.MediaFormat;
+import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -35,12 +44,15 @@ public final class InstallService {
     private final ServerLevel level;
     /** The packages the machine installs over the network, which is what says whether it already has one. */
     private final PackageService packages;
+    /** The network's own language, since its engine is installed on the Mainframe rather than here. */
+    private final IqlService iql;
 
     public InstallService(final IComputerTerminalHost terminal, final ServerLevel level,
-                          final PackageService packages) {
+                          final PackageService packages, final IqlService iql) {
         this.terminal = terminal;
         this.level = level;
         this.packages = packages;
+        this.iql = iql;
     }
 
     /**
@@ -85,8 +97,71 @@ public final class InstallService {
         return spec != null && this.packages.has(spec);
     }
 
-    /** The world the machine is in, which the installing itself is timed against. */
-    ServerLevel level() {
-        return this.level;
+    /**
+     * Installs a program from the disc in a linked drive.
+     *
+     * <p>Installing is something the machine does over time, from that disc. Whether it can, and why not, is decided
+     * in one place for every way of asking, so the prompt says exactly what the Setup window on a desktop would.
+     */
+    public ICliComputer.OpResult install(final String programId) {
+        final ResourceLocation location = ResourceLocation.tryParse(
+                programId.contains(":") ? programId.toLowerCase(Locale.ROOT)
+                        : "jsc:" + programId.toLowerCase(Locale.ROOT));
+        final ProgramSpec program = location == null ? null : Programs.get(location);
+        if (program == null) {
+            return ICliComputer.OpResult.fail("no such program: " + programId);
+        }
+        if (program.id().equals(Programs.IQL_ENGINE)) {
+            // The Engine is a service on the Mainframe, not a console-local app, so install it there.
+            return this.iql.control("install");
+        }
+        final MediaFormat medium = this.installMediumFor(program.id());
+        if (medium == null) {
+            return ICliComputer.OpResult.fail(program.commandName() + " needs its install disc in a linked drive");
+        }
+        final IOsHost machine = this.osHost();
+        if (machine == null) {
+            return ICliComputer.OpResult.fail("this computer cannot store installed programs");
+        }
+        final Optional<String> refusal = SetupRunner.begin(machine, this.level,
+                ((BlockEntity) this.terminal).getBlockPos(), program, medium, false, SetupJob.VIA_INSTALL);
+        return refusal.map(ICliComputer.OpResult::fail)
+                .orElseGet(() -> ICliComputer.OpResult.ok("Setting up " + program.commandName() + " from "
+                        + driveName(medium) + " ..."));
+    }
+
+    /** The machine as the thing that installs programs, whichever of the two the prompt is held by. */
+    @Nullable
+    private IOsHost osHost() {
+        if (this.terminal instanceof IOsHost fromHost) {
+            return fromHost;
+        }
+        return (BlockEntity) this.terminal instanceof IOsHost fromBlock ? fromBlock : null;
+    }
+
+    /** What the disc a program comes from is called at a prompt. */
+    private static String driveName(final MediaFormat medium) {
+        return switch (medium) {
+            case FLOPPY -> "the floppy";
+            case CD -> "the CD";
+            case DVD -> "the DVD";
+            case USB -> "the USB drive";
+        };
+    }
+
+    /** The format of the disc a program's installer sits on in a linked drive, or null when none does. */
+    @Nullable
+    private MediaFormat installMediumFor(final ResourceLocation programId) {
+        if (!(this.terminal instanceof IOsHost computer)) {
+            return null;
+        }
+        for (final long endpoint : computer.linkedEndpoints()) {
+            if (this.level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader
+                    && reader.insertedKind() == MediaKind.PROGRAM_INSTALL
+                    && programId.equals(reader.insertedPayload())) {
+                return reader.insertedFormat();
+            }
+        }
+        return null;
     }
 }
