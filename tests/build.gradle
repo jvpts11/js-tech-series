@@ -96,6 +96,14 @@ neoForge {
             gameDirectory = rootProject.file('run')
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
             systemProperty 'jsc.gametests.computercraft', withoutComputerCraft ? 'absent' : 'present'
+            // -Pjfr records the run with Java Flight Recorder, for profiling the scale benchmark. Deep stacks,
+            // because what is being chased sits well below the tick. Off unless asked for.
+            if (providers.gradleProperty('jfr').present) {
+                jvmArguments.addAll(
+                        '-XX:StartFlightRecording=settings=profile,name=jsc,dumponexit=true,filename='
+                                + rootProject.file('local/bench/jfr/scale.jfr').absolutePath,
+                        '-XX:FlightRecorderOptions=stackdepth=512')
+            }
         }
 
         data {
