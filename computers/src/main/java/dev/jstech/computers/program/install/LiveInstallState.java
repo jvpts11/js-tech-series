@@ -203,6 +203,11 @@ public final class LiveInstallState {
     private boolean initramfs;
     /** The name the player gave the machine, empty while they have not. */
     private String chosenName = "";
+    /*
+     * The packages asked for inside the new system. Kept because they were asked for and waited on, so they
+     * belong to the system that comes out of this rather than to the session that built it.
+     */
+    private final java.util.Set<String> asked = new java.util.LinkedHashSet<>();
     private boolean password;
 
     public LiveInstallState(final Distro distro) {
@@ -302,6 +307,17 @@ public final class LiveInstallState {
     /** The name the player gave the machine while installing it, empty when they gave none. */
     public String chosenName() {
         return chosenName;
+    }
+
+    /** The packages the player asked for inside the new system, in the order they asked. */
+    public List<String> askedFor() {
+        return List.copyOf(asked);
+    }
+
+    /** The filesystem table the installation wrote, empty when it never wrote one. */
+    public String filesystemTable() {
+        final String table = files.get(MOUNT + "/etc/fstab");
+        return table == null ? "" : table;
     }
 
     /** The host name the live medium reports. */
@@ -411,7 +427,7 @@ public final class LiveInstallState {
             case "hostname" -> hostname(parts);
             case "passwd" -> passwd();
             case "exit" -> exit();
-            case "reboot" -> reboot();
+            case "reboot" -> reboot(env);
             case "help" -> help();
             default -> Result.fail(cmd + ": command not found");
         };
@@ -957,6 +973,7 @@ public final class LiveInstallState {
         }
         final String named = parts[2];
         final long ticks = fetchTicks(PACKAGE_MB, env);
+        asked.add(named);
         takesTime(env.now(), ticks, named, ":: " + named + " installed.");
         return Result.pass(":: Retrieving packages...", fetching(named),
                 ":: Installing (about " + (ticks / 20) + "s)");
@@ -1025,6 +1042,7 @@ public final class LiveInstallState {
         }
         // Anything else asked for comes over the Mirror like everything else, and takes as long as it is big.
         final long ticks = fetchTicks(PACKAGE_MB, env);
+        asked.add(named);
         takesTime(env.now(), ticks, named, ">>> " + named + " merged.");
         return Result.pass(">>> Emerging " + named,
                 " " + named + "  [" + bar() + "] (about " + (ticks / 20) + "s)");
@@ -1189,9 +1207,13 @@ public final class LiveInstallState {
         return Result.pass();
     }
 
-    private Result reboot() {
+    private Result reboot(final Env env) {
         if (chroot) {
             return Result.fail("reboot: you are inside the chroot. exit first.");
+        }
+        if (busy(env.now())) {
+            // Restarting on top of something still arriving would leave the system half of what was asked for.
+            return stillWorking(env);
         }
         final List<String> missing = new ArrayList<>();
         if (!base) {
@@ -1275,6 +1297,7 @@ public final class LiveInstallState {
         put(out, "grub_config", grubConfig);
         put(out, "initramfs", initramfs);
         put(out, "chosen_name", chosenName);
+        put(out, "asked", String.join(" ", asked));
         put(out, "password", password);
         put(out, "cwd", cwd);
         put(out, "editing", editing);
@@ -1332,6 +1355,11 @@ public final class LiveInstallState {
         st.grubConfig = flag(saved, "grub_config");
         st.initramfs = flag(saved, "initramfs");
         st.chosenName = saved.getOrDefault("chosen_name", "");
+        for (final String pkg : saved.getOrDefault("asked", "").split(" ")) {
+            if (!pkg.isEmpty()) {
+                st.asked.add(pkg);
+            }
+        }
         st.password = flag(saved, "password");
         st.cwd = saved.getOrDefault("cwd", HOME);
         st.editing = saved.getOrDefault("editing", "");

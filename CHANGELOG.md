@@ -30,6 +30,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Added
+- What was chosen while installing a system by hand now survives into it. The machine answers to the name the
+  installer was given, and its prompt and the network use it. The packages asked for inside the new system are
+  really installed on it. The filesystem table goes onto the disk it describes, so the installed system can read
+  back the line its own bootloader was pointed at. A restart is refused while something is still arriving,
+  rather than leaving the system half of what was asked for.
 - Fetching a system by hand takes time, and what needs it waits. `pacstrap` and the stage 3 bring a base system
   over the Mirror at the network's speed, printing what they are fetching a package at a time, and nothing
   enters a system that is still arriving. Extra packages afterwards, with `pacman -S` or `emerge`, take their

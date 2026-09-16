@@ -216,6 +216,7 @@ public final class InstallService {
                     + "\nThe installation could not be written to the disk (no space or no disk).");
         }
         computer.setBootDiskSlot(target);
+        carryOver(computer, state, target);
         /*
          * Ask the host for the console again rather than reusing the reference taken at the top of this
          * method: writing the system may have replaced the disk stack, and the console is bound to the
@@ -226,6 +227,58 @@ public final class InstallService {
         machine.setChanged();
         reboot.run();
         return ICliComputer.OpResult.ok(text + "\nInstallation complete. Rebooting into the new system ...");
+    }
+
+    /**
+     * Carries into the installed system what the player chose while building it.
+     *
+     * <p>Without this the whole sequence is theatre: the distribution lands on the disk and every decision made
+     * getting it there is thrown away, so a machine somebody spent half an hour naming, laying out and fitting
+     * with packages comes up nameless and bare. The name, the filesystem table and the packages are the three
+     * things a person really decided, and each of them goes where that system keeps it.
+     */
+    private void carryOver(final IOsHost computer, final LiveInstallState state, final int target) {
+        final ComputerConsoleState console = computer.console();
+        if (console == null) {
+            return;
+        }
+        if (!state.chosenName().isEmpty()) {
+            // The name the installer was given is the name the prompt and the network use from here on.
+            console.setComputerName(state.chosenName());
+        }
+        for (final String pkg : state.askedFor()) {
+            final ProgramSpec program = Programs.get(ResourceLocation.tryParse(
+                    pkg.contains(":") ? pkg : "jsc:" + pkg.toLowerCase(Locale.ROOT)));
+            if (program != null) {
+                console.install(program.id().toString());
+            }
+        }
+        /*
+         * The table goes onto the disk it describes, so the installed system can read back the line its own
+         * bootloader was pointed at rather than taking it on trust.
+         */
+        final String table = state.filesystemTable();
+        if (!table.isEmpty()) {
+            writeFstab(computer, target, table);
+        }
+    }
+
+    /** Puts the filesystem table on the disk the system was written to, where that system keeps it. */
+    private static void writeFstab(final IOsHost computer, final int target, final String table) {
+        final int slot = target >= 0 ? target : computer.defaultInstallSlot();
+        if (slot < 0) {
+            return;
+        }
+        final net.minecraft.world.item.ItemStack disk = computer.diskInSlot(slot);
+        if (!(disk.getItem() instanceof DiskItem)) {
+            return;
+        }
+        final dev.jstech.computers.os.fs.FilesystemContents was = disk.getOrDefault(
+                dev.jstech.computers.ComputingModule.FILESYSTEM.get(),
+                dev.jstech.computers.os.fs.FilesystemContents.EMPTY);
+        disk.set(dev.jstech.computers.ComputingModule.FILESYSTEM.get(),
+                was.withDir("/etc").with(new dev.jstech.computers.os.fs.StoredFile("/etc/fstab",
+                        dev.jstech.computers.os.fs.FileType.CFG, table)));
     }
 
     /** The format of the disc a program's installer sits on in a linked drive, or null when none does. */

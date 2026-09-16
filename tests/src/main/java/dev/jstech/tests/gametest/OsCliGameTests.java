@@ -1136,9 +1136,22 @@ public final class OsCliGameTests {
                     helper.assertTrue(mainframe.console().liveInstall() == null, "the live session must end");
                     helper.assertTrue(arch.equals(mainframe.installedOsId()),
                             "the computer must boot the hand-installed Arch; got " + mainframe.installedOsId());
+                    /*
+                     * What the player decided on the way here survives the reboot. Without this the whole
+                     * sequence is theatre: the distribution lands and every choice made getting it there is
+                     * thrown away, so the machine comes up nameless and bare.
+                     */
+                    helper.assertTrue("workshop".equals(mainframe.console().computerName()),
+                            "the machine keeps the name it was given; got "
+                                    + mainframe.console().computerName());
                     final ServerCliComputer after = cliFor(mainframe, helper.getLevel());
-                    helper.assertTrue("player@arch ~ %".equals(after.prompt()),
-                            "after the reboot Arch shows its zsh prompt; got " + after.prompt());
+                    helper.assertTrue("player@workshop ~ %".equals(after.prompt()),
+                            "which is the name its own prompt now shows; got " + after.prompt());
+                    final dev.jstech.computers.os.fs.FilesystemContents fs =
+                            mainframe.diskInSlot(0).get(ComputingModule.FILESYSTEM.get());
+                    helper.assertTrue(fs != null && fs.files().get("/etc/fstab") != null
+                                    && fs.files().get("/etc/fstab").content().contains("UUID=jsc-sda2"),
+                            "and the table it wrote is on the disk it describes");
                 })
                 .thenSucceed();
     }
