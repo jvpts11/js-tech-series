@@ -18,6 +18,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Changed
+- A running computer now asks after the cable it is already attached to, one block, instead of looking round all six
+  of its sides every tick and building a list of them to do it.
 - A computer whose desktop somebody is watching now writes a window out for the wire only when something in it has
   moved. It used to write every open window out in full each tick and compare all of it with what it had last sent,
   so a desktop sitting still cost the server the same as one being used.

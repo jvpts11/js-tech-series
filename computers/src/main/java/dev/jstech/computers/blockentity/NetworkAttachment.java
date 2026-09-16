@@ -21,10 +21,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * Where one computer stands on the data network: the node it is known by, the network it is on, and the
  * network it is registered with.
@@ -44,12 +40,22 @@ final class NetworkAttachment {
     private NetworkUuid registered;
     /** The client's copy of whether this machine is on a network; the server answers from the network itself. */
     private boolean clientAttached;
+    /*
+     * The cable this machine read its network off last time. Held from tick to tick so an attached machine
+     * asks after that one block instead of looking round all six of its faces again; a tick that finds it
+     * gone falls back to the full look. Never saved: a machine that has just loaded looks properly once.
+     */
+    private long cable;
 
     /** No cable on any face this computer would take one on. */
     static final long NO_CABLE = Long.MIN_VALUE;
 
+    /* Every face, held once: Direction.values() hands back a fresh copy of the array on every call. */
+    private static final Direction[] FACES = Direction.values();
+
     NetworkAttachment(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
+        this.cable = NO_CABLE;
     }
 
     /** The node this computer is known by on a network, drawn the first time anyone asks. */
@@ -98,8 +104,8 @@ final class NetworkAttachment {
         final NetworkSystem system = NetworkSystem.get(level);
         NetworkUuid resolved = null;
         if (this.machine.isRunning()) {
-            final long cable = adjacentCable(level);
-            resolved = cable == NO_CABLE ? null : system.connectivity().networkOf(cable).orElse(null);
+            final long found = cable(level);
+            resolved = found == NO_CABLE ? null : system.connectivity().networkOf(found).orElse(null);
         }
         if (this.registered != null && !this.registered.equals(resolved)) {
             this.machine.unregisterNode(system, this.registered);
@@ -155,36 +161,46 @@ final class NetworkAttachment {
         this.clientAttached = tag != null && tag.getBoolean("Networked");
     }
 
-    /** The cable this computer reads its network from, or {@link #NO_CABLE} when it touches none. */
+    /**
+     * The cable this computer reads its network off, or {@link #NO_CABLE} when it touches none.
+     *
+     * <p>The one it found last time is asked after first, which is a single block to look at rather than six;
+     * only when that one has gone, or when there was none, is every face looked at again.
+     */
+    private long cable(final ServerLevel level) {
+        if (this.cable != NO_CABLE && cableAt(level, BlockPos.of(this.cable))) {
+            return this.cable;
+        }
+        this.cable = adjacentCable(level);
+        return this.cable;
+    }
+
+    /**
+     * Looks round every face this computer would take a data cable on, which the block's
+     * {@link IDataNetworkConnectable#connectsOnFace} decides, so the device's attachment and the cable's
+     * rendered connection always agree. A standalone computer offers only its rear; the Mainframe (a separate
+     * block entity) and the cluster nodes offer every face.
+     */
     private long adjacentCable(final ServerLevel level) {
         final BlockPos pos = this.machine.getBlockPos();
-        for (final Direction direction : searchFaces()) {
+        final BlockState state = this.machine.getBlockState();
+        final IDataNetworkConnectable device =
+                state.getBlock() instanceof IDataNetworkConnectable connectable ? connectable : null;
+        for (final Direction direction : FACES) {
+            if (device != null && !device.connectsOnFace(state, direction)) {
+                continue;
+            }
             final BlockPos neighbor = pos.relative(direction);
-            if (level.getBlockState(neighbor).getBlock() instanceof DataCableBlock cable
-                    && this.machine.acceptsTier(cable.tier())) {
+            if (cableAt(level, neighbor)) {
                 return neighbor.asLong();
             }
         }
         return NO_CABLE;
     }
 
-    /**
-     * The faces on which this computer will accept a data cable, derived from the block's
-     * {@link IDataNetworkConnectable#connectsOnFace} so the device's attachment and the cable's rendered
-     * connection always agree. A standalone computer reports only its rear; the Mainframe (a separate block
-     * entity) and the cluster nodes keep every face.
-     */
-    private List<Direction> searchFaces() {
-        final BlockState state = this.machine.getBlockState();
-        if (state.getBlock() instanceof IDataNetworkConnectable device) {
-            final List<Direction> faces = new ArrayList<>(Direction.values().length);
-            for (final Direction direction : Direction.values()) {
-                if (device.connectsOnFace(state, direction)) {
-                    faces.add(direction);
-                }
-            }
-            return faces;
-        }
-        return Arrays.asList(Direction.values());
+    /** Whether that block is a data cable of a kind this computer takes. */
+    private boolean cableAt(final ServerLevel level, final BlockPos pos) {
+        return level.getBlockState(pos).getBlock() instanceof DataCableBlock cable
+                && this.machine.acceptsTier(cable.tier());
     }
 }
