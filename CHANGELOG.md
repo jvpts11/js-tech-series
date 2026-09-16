@@ -18,6 +18,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Changed
+- A compiled listing now names the processor architecture it was built for, on a `.arch` line under the version, and
+  the format's version is 3. A listing compiled before this still loads and runs as it did, and is read as having
+  been built for the 32-bit machines.
 - A computer now settles whether its installed parts can run it when those parts change, instead of working it out
   again for every machine on every tick.
 - A computer now sends one player only so much in a tick, and whatever is left over goes first on the next one, so

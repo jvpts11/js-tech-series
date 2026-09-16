@@ -56,8 +56,8 @@ public final class AsmReader {
             this.report(at + 1, ListingError.VERSION_TOO_NEW, AsmProgram.VERSION, version);
             return new AsmProgram(version);
         }
-        if (version >= 0 && version < AsmProgram.VERSION) {
-            this.report(at + 1, ListingError.VERSION_TOO_OLD, version, AsmProgram.VERSION);
+        if (version >= 0 && version < AsmProgram.OLDEST_VERSION) {
+            this.report(at + 1, ListingError.VERSION_TOO_OLD, version, AsmProgram.OLDEST_VERSION);
             return new AsmProgram(version);
         }
         final AsmProgram program = new AsmProgram(version < 0 ? AsmProgram.VERSION : version);
@@ -104,6 +104,18 @@ public final class AsmReader {
         final String word = space < 0 ? text.substring(1) : text.substring(1, space);
         final String rest = space < 0 ? "" : text.substring(space + 1).trim();
         switch (word) {
+            case "arch" -> {
+                /*
+                 * Only the shape of the name is checked. Whether a name is one anything answers to is a question
+                 * about the machines there are, which is not something a listing can be read against.
+                 */
+                final int colon = rest.indexOf(':');
+                if (colon <= 0 || colon == rest.length() - 1) {
+                    this.report(line, ListingError.MALFORMED_OPERAND, rest, ".arch");
+                    return;
+                }
+                program.setArchitecture(rest);
+            }
             case "start" -> {
                 /*
                  * "<Type> <shape>"; a listing that names no shape is a script, which is what the only

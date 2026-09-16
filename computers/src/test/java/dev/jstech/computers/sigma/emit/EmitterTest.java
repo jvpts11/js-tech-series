@@ -275,7 +275,7 @@ class EmitterTest {
 
     @Test
     void emit_namesTheClassTheRuntimeStartsFromAndWhatKindOfProgramItIs() {
-        assertTrue(compile("").startsWith(".asm 2\n.start Tests.Monitor script\n"));
+        assertTrue(compile("").startsWith(".asm 3\n.arch jsc:x86\n.start Tests.Monitor script\n"));
     }
 
     @Test
@@ -286,7 +286,8 @@ class EmitterTest {
                 }
                 """)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
-        assertTrue(built.assembly().startsWith(".asm 2\n.start Tests.Hello console\n"), built.assembly());
+        assertTrue(built.assembly().startsWith(".asm 3\n.arch jsc:x86\n.start Tests.Hello console\n"),
+                built.assembly());
     }
 
     @Test

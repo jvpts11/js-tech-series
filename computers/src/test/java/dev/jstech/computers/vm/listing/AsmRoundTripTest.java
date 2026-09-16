@@ -112,22 +112,23 @@ class AsmRoundTripTest {
     @Test
     void write_laysTheListingOutInColumnsAPlayerCanFollow() {
         final String[] lines = AsmWriter.write(golden()).split("\n", -1);
-        assertEquals(".asm 2", lines[0]);
-        assertEquals(".start Monitor script", lines[1]);
-        assertEquals("", lines[2]);
-        assertEquals(".class Monitor : IScript", lines[3]);
-        assertEquals(".field int threshold", lines[4]);
-        assertEquals("", lines[5]);
-        assertEquals(".method void OnTick() slots 1", lines[6]);
-        assertEquals("    ldthis", lines[7]);
-        assertEquals("    ldfld   threshold", lines[8]);
-        assertEquals("    ldc.i4  100", lines[9]);
-        assertEquals("    blt     L1", lines[10]);
-        assertEquals("    ret", lines[11]);
-        assertEquals("L1: ldc.i4  1" + " ".repeat(32) + "; LogLevel.WARN", lines[12]);
-        assertEquals("    ldstr   \"stock is low\"", lines[13]);
-        assertEquals("    call    Mainframe.Log(int, string) -> void", lines[14]);
-        assertEquals("    ret", lines[15]);
+        assertEquals(".asm 3", lines[0]);
+        assertEquals(".arch jsc:x86", lines[1]);
+        assertEquals(".start Monitor script", lines[2]);
+        assertEquals("", lines[3]);
+        assertEquals(".class Monitor : IScript", lines[4]);
+        assertEquals(".field int threshold", lines[5]);
+        assertEquals("", lines[6]);
+        assertEquals(".method void OnTick() slots 1", lines[7]);
+        assertEquals("    ldthis", lines[8]);
+        assertEquals("    ldfld   threshold", lines[9]);
+        assertEquals("    ldc.i4  100", lines[10]);
+        assertEquals("    blt     L1", lines[11]);
+        assertEquals("    ret", lines[12]);
+        assertEquals("L1: ldc.i4  1" + " ".repeat(32) + "; LogLevel.WARN", lines[13]);
+        assertEquals("    ldstr   \"stock is low\"", lines[14]);
+        assertEquals("    call    Mainframe.Log(int, string) -> void", lines[15]);
+        assertEquals("    ret", lines[16]);
     }
 
     @Test
@@ -195,7 +196,7 @@ class AsmRoundTripTest {
     @Test
     void write_thenRead_copesWithAProgramThatHoldsNothing() {
         final String text = AsmWriter.write(new AsmProgram());
-        assertEquals(".asm 2\n", text);
+        assertEquals(".asm 3\n.arch jsc:x86\n", text);
         final AsmProgram read = this.read(text);
         assertFalse(this.reader.hasProblems());
         assertTrue(read.types().isEmpty());
@@ -215,14 +216,49 @@ class AsmRoundTripTest {
     }
 
     @Test
-    void read_refusesAListingFromAnEarlierVersion() {
-        this.read(".asm " + (AsmProgram.VERSION - 1) + "\n.class C\n");
+    void read_refusesAListingFromTooEarlyAVersion() {
+        this.read(".asm " + (AsmProgram.OLDEST_VERSION - 1) + "\n.class C\n");
         assertEquals(List.of("A4012"), this.codes());
     }
 
     @Test
+    void read_takesAListingFromAnEarlierVersionThatStillReads() {
+        final AsmProgram read = this.read(".asm " + AsmProgram.OLDEST_VERSION + "\n.class C\n");
+        assertFalse(this.reader.hasProblems());
+        assertEquals(AsmProgram.OLDEST_VERSION, read.version());
+        assertNotNull(read.type("C"));
+    }
+
+    @Test
+    void read_aListingThatNamesNoArchitecture_isTheOneTheFormatFallsBackTo() {
+        final AsmProgram read = this.read(".asm " + AsmProgram.OLDEST_VERSION + "\n.class C\n");
+        assertEquals(AsmProgram.DEFAULT_ARCHITECTURE, read.architecture());
+    }
+
+    @Test
+    void read_keepsTheArchitectureAListingNames() {
+        final AsmProgram read = this.read(".asm 3\n.arch jsc:x86_64\n.class C\n");
+        assertFalse(this.reader.hasProblems());
+        assertEquals("jsc:x86_64", read.architecture());
+    }
+
+    @Test
+    void read_refusesAnArchitectureThatIsNotANamespacedName() {
+        this.read(".asm 3\n.arch x86\n.class C\n");
+        assertEquals(List.of("A4006"), this.codes());
+    }
+
+    @Test
+    void write_thenRead_keepsTheArchitecture() {
+        final AsmProgram program = new AsmProgram();
+        program.setArchitecture("other:risc64");
+        assertEquals("other:risc64", this.read(AsmWriter.write(program)).architecture());
+    }
+
+    @Test
     void read_findsTheOwnerOfAConstructorCallBeforeTheDoubleDot() {
-        final String text = ".asm " + AsmProgram.VERSION + "\n\n.class Tests.Below\n\n.method void .ctor() slots 0\n"
+        final String text = ".asm " + AsmProgram.VERSION + "\n.arch " + AsmProgram.DEFAULT_ARCHITECTURE
+                + "\n\n.class Tests.Below\n\n.method void .ctor() slots 0\n"
                 + "    call    Tests.Base..ctor(int) -> void\n    ret\n";
         final AsmProgram read = this.read(text);
         assertFalse(this.reader.hasProblems(), () -> String.join("\n", this.reader.problems().stream()

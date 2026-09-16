@@ -152,7 +152,8 @@ class SigmaCommandsTest {
         this.computer.add(SigmaCommands.COMPILER);
         this.computer.files.put("Monitor.sgs", SCRIPT);
         assertTrue(this.run("sgsc Monitor.sgs").contains("wrote Monitor.asm"));
-        assertTrue(this.computer.files.get("Monitor.asm").startsWith(".asm 2"));
+        assertTrue(this.computer.files.get("Monitor.asm").startsWith(".asm 3"));
+        assertTrue(this.computer.files.get("Monitor.asm").contains(".arch jsc:x86"));
         assertTrue(this.computer.files.get("Monitor.asm").contains(".start Tests.Monitor"));
     }
 

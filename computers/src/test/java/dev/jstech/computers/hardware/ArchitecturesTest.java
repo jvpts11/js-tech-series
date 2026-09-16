@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.hardware;
 
+import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.core.tier.HardwareEra;
 import org.junit.jupiter.api.Test;
 
@@ -82,6 +83,16 @@ class ArchitecturesTest {
     @Test
     void ids_holdTheThreeThisModBrings() {
         assertTrue(Architectures.ids().containsAll(Set.of("jsc:x86_16", "jsc:x86", "jsc:x86_64")));
+    }
+
+    /*
+     * The listing format falls back to 32-bit x86 for a program that names no architecture, and it holds that name
+     * itself because the virtual machine is not allowed to know the hardware. This is the seam where the two
+     * spellings are held together.
+     */
+    @Test
+    void x86_isWhatAListingFallsBackTo() {
+        assertEquals(Architectures.X86.id(), AsmProgram.DEFAULT_ARCHITECTURE);
     }
 
     @Test

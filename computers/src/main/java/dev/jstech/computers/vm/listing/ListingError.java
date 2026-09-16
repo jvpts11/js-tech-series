@@ -27,8 +27,8 @@ public enum ListingError {
     INSTRUCTION_OUTSIDE_METHOD("A4008", "an instruction has to be inside a method"),
     DIRECTIVE_OUTSIDE_TYPE("A4009", "'%s' has to be inside a type"),
     UNKNOWN_LABEL("A4010", "nothing in this method is labelled '%s'"),
-    VERSION_TOO_OLD("A4012", "this listing is assembly version %s and this runtime reads version %s: compile its "
-            + "source again"),
+    VERSION_TOO_OLD("A4012", "this listing is assembly version %s and this runtime reads version %s and later: "
+            + "compile its source again"),
     UNKNOWN_MEMBER("A4013", "nothing answers '%s'"),
     READ_ONLY_VALUE("A4014", "'%s' can be read but not written");
 

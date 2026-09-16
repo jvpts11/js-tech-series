@@ -1,4 +1,5 @@
-.asm 2
+.asm 3
+.arch jsc:x86
 .start Corpus.UiCorpus console
 
 .class Corpus.UiCorpus

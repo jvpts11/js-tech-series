@@ -16,16 +16,31 @@ import java.util.List;
  * <p>The version at the head is the format's, not the program's. A runtime refuses a listing whose
  * major version is above the one it knows, because a listing from a later version may use
  * instructions it has never heard of, and guessing at those would be worse than saying so. It refuses
- * one below it as well: the format changed since, and reading an older listing as today's would run
- * it wrongly without a word, where compiling its source again costs nothing.
+ * one too far below as well: the format changed since, and reading such a listing as today's would
+ * run it wrongly without a word, where compiling its source again costs nothing. Between those two
+ * lie the versions that still read correctly, and a listing of one of them runs untouched.
+ *
+ * <p>A program also names the architecture it was built for. The name is carried, not judged: which
+ * machines will run it is a question about hardware, and the answer is worked out where the hardware
+ * is.
  */
 public final class AsmProgram {
 
-    /** The version of the format this build writes and reads; 2 names every constructor {@code .ctor}. */
-    public static final int VERSION = 2;
+    /** The version of the format this build writes; 3 names the architecture a program was built for. */
+    public static final int VERSION = 3;
+
+    /** The oldest version this build still reads correctly. Version 2 names every constructor {@code .ctor}. */
+    public static final int OLDEST_VERSION = 2;
+
+    /**
+     * What a listing that names no architecture was built for. Every listing written before the name existed was
+     * compiled for the 32-bit machines, which is where the language starts, so that is what one without a name is.
+     */
+    public static final String DEFAULT_ARCHITECTURE = "jsc:x86";
 
     private final int version;
     private final List<AsmType> types = new ArrayList<>();
+    private String architecture = DEFAULT_ARCHITECTURE;
     private String entryPoint;
     private Shape shape = Shape.SCRIPT;
 
@@ -40,6 +55,11 @@ public final class AsmProgram {
     /** The format version this listing was written in. */
     public int version() {
         return this.version;
+    }
+
+    /** The architecture this program was built for. */
+    public String architecture() {
+        return this.architecture;
     }
 
     /** The types, in the order they were written. */
@@ -65,6 +85,11 @@ public final class AsmProgram {
     /** Whether this is a program that runs at a terminal or one that stays up. */
     public Shape shape() {
         return this.shape;
+    }
+
+    /** Names the architecture this program was built for. */
+    public void setArchitecture(final String architecture) {
+        this.architecture = architecture;
     }
 
     /** Names the class the runtime starts from, and says which kind of program it is. */
