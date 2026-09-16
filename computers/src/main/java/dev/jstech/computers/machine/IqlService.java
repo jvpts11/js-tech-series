@@ -18,6 +18,8 @@ import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.program.IqlEngine;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.iql.IIqlCondition;
+import dev.jstech.computers.program.iql.IIqlView;
 import dev.jstech.computers.program.iql.IqlOperation;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.IDataSink;
@@ -52,11 +54,11 @@ public final class IqlService {
 
     private final IComputerTerminalHost terminal;
     private final ServerLevel level;
-    /** The shell, for what the engine is still handed and for reading a file of statements. */
-    private final ServerCliComputer shell;
+    /** The machine's drives, for reading a file of statements. */
+    private final FileService files;
     /** The work a statement asks of the network, which is the same work the prompt asks for. */
     private final OperationsService operations;
-    /** The network a statement reads, for the servers it names. */
+    /** The network a statement reads, for the servers it names and the rows a query brings back. */
     private final NetworkReadService network;
 
     /** The Mainframe the kept engine runs on, which is what says whether it can be kept. */
@@ -66,11 +68,11 @@ public final class IqlService {
     @Nullable
     private IqlEngine engine;
 
-    public IqlService(final IComputerTerminalHost terminal, final ServerLevel level, final ServerCliComputer shell,
+    public IqlService(final IComputerTerminalHost terminal, final ServerLevel level, final FileService files,
                       final OperationsService operations, final NetworkReadService network) {
         this.terminal = terminal;
         this.level = level;
-        this.shell = shell;
+        this.files = files;
         this.operations = operations;
         this.network = network;
     }
@@ -267,7 +269,7 @@ public final class IqlService {
             this.engine = null;
         } else if (current != this.mainframe) {
             this.mainframe = current;
-            this.engine = new IqlEngine(current, this.shell, ROW_LIMIT);
+            this.engine = new IqlEngine(current, this.view(), ROW_LIMIT);
         }
         return this.engine;
     }
@@ -418,9 +420,48 @@ public final class IqlService {
                 .orElse(null);
     }
 
-    /** A file of statements, read the way the shell reads any file. */
+    /**
+     * Carries out a statement that changes something.
+     *
+     * <p>Every verb is answered here, on the machine's own services: the ones that move and make things go to the
+     * work the prompt asks for through the same doors, and a read is refused, because a read is not an operation.
+     */
+    public ICliComputer.OpResult execute(final IqlOperation op) {
+        return switch (op.verb()) {
+            case SELECT -> this.select(op);
+            case INSERT -> this.insert(op);
+            case CRAFT -> this.operations.craft(op.item(), op.quantity(), op.priority(), MoveLabels.IQL);
+            case DELETE -> this.destroy(op, "DELETE");
+            case DROP -> this.destroy(op, "DROP");
+            case MOVE -> this.move(op);
+            case LOCK -> this.operations.lock(op.item(), op.quantity());
+            case UNLOCK -> this.operations.unlock(op.item());
+            case ANALYZE -> this.operations.maintenance("analyze");
+            case VACUUM -> this.operations.maintenance("vacuum");
+            case REINDEX -> this.operations.maintenance("reindex");
+            case QUERY, COUNT -> ICliComputer.OpResult.fail("a read does not run as an operation");
+        };
+    }
+
+    /** The whole of this machine the engine is handed: what it reads, and what it asks to be done. */
+    private IIqlView view() {
+        return new IIqlView() {
+            @Override
+            public List<ICliComputer.StoredItem> queryObject(final String object, final IIqlCondition where,
+                                                             final String server, final int limit) {
+                return IqlService.this.network.queryObject(object, where, server, limit);
+            }
+
+            @Override
+            public ICliComputer.OpResult execute(final IqlOperation operation) {
+                return IqlService.this.execute(operation);
+            }
+        };
+    }
+
+    /** A file of statements, read the way a machine reads any file. */
     public ICliComputer.FsResult read(final String path) {
-        return this.shell.readFile(path);
+        return this.files.readFile(path);
     }
 
     /**

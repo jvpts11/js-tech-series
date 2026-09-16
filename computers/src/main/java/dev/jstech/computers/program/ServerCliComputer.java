@@ -551,20 +551,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public OpResult execute(final IqlOperation op) {
-        return switch (op.verb()) {
-            case SELECT -> iql().select(op);
-            case INSERT -> iql().insert(op);
-            case CRAFT -> craft(op.item(), op.quantity(), op.priority(), MoveLabels.IQL);
-            case DELETE -> iql().destroy(op, "DELETE");
-            case DROP -> iql().destroy(op, "DROP");
-            case MOVE -> iql().move(op);
-            case LOCK -> lock(op.item(), op.quantity());
-            case UNLOCK -> unlock(op.item());
-            case ANALYZE -> maintenance("analyze");
-            case VACUUM -> maintenance("vacuum");
-            case REINDEX -> maintenance("reindex");
-            case QUERY, COUNT -> OpResult.fail("a read does not run as an operation");
-        };
+        return iql().execute(op);
     }
 
     // helpers
@@ -1637,7 +1624,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     /** The network's own language, as this shell speaks it. */
     private dev.jstech.computers.machine.IqlService iql() {
-        return new dev.jstech.computers.machine.IqlService(host, level, this, operations(), networkReads());
+        return new dev.jstech.computers.machine.IqlService(host, level, files(), operations(), networkReads());
     }
 
     /** What the Mainframe of this machine's network keeps about the work it has done. */

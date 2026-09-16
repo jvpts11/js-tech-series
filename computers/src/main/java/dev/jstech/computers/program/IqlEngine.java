@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * The IQL Engine's runtime: it takes a statement and either runs it as an immediate action/query (via the
- * {@link ICliComputer}) or, for a Layer-2 statement, stores/runs a saved object against the Mainframe's
+ * The IQL Engine's runtime: it takes a statement and either runs it as an immediate action/query (through the
+ * two-method view it is handed) or, for a Layer-2 statement, stores/runs a saved object against the Mainframe's
  * catalog. CREATE/DROP touch the catalog; EXEC runs a procedure's statements in order, stopping at the
  * first error (the chosen default); a QUERY whose object is a view name runs the saved query. Touching the
  * catalog requires the Engine to be installed and running on the Mainframe; ad-hoc actions do not.
@@ -33,13 +33,37 @@ public final class IqlEngine {
     private static final int RECURSION_GUARD = 32;
 
     private final MainframeBlockEntity mainframe;
-    private final ICliComputer computer;
+    private final dev.jstech.computers.program.iql.IIqlView computer;
     private final int queryRowLimit;
 
-    public IqlEngine(final MainframeBlockEntity mainframe, final ICliComputer computer, final int queryRowLimit) {
+    public IqlEngine(final MainframeBlockEntity mainframe, final dev.jstech.computers.program.iql.IIqlView computer,
+                     final int queryRowLimit) {
         this.mainframe = mainframe;
         this.computer = computer;
         this.queryRowLimit = queryRowLimit;
+    }
+
+    /** The same engine for whoever holds a whole computer: it is taken as the two things the engine asks of it. */
+    public IqlEngine(final MainframeBlockEntity mainframe, final ICliComputer computer, final int queryRowLimit) {
+        this(mainframe, viewOf(computer), queryRowLimit);
+    }
+
+    /** A computer seen as what the engine needs: one way to read, one way to act. */
+    private static dev.jstech.computers.program.iql.IIqlView viewOf(final ICliComputer computer) {
+        return new dev.jstech.computers.program.iql.IIqlView() {
+            @Override
+            public List<ICliComputer.StoredItem> queryObject(final String object,
+                                                             final dev.jstech.computers.program.iql.IIqlCondition
+                                                                     where,
+                                                             final String server, final int limit) {
+                return computer.queryObject(object, where, server, limit);
+            }
+
+            @Override
+            public ICliComputer.OpResult execute(final dev.jstech.computers.program.iql.IqlOperation operation) {
+                return computer.execute(operation);
+            }
+        };
     }
 
     /** The result of running a statement: a status, a message, and (for a read) the result rows. */

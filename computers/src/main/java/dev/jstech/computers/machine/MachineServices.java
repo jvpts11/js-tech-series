@@ -263,7 +263,7 @@ public final class MachineServices implements IHost {
             this.operations = new OperationsService(terminal, server, this.shell);
             this.network = new NetworkReadService(terminal, server, this.shell, this.operations);
             this.mainframe = new MainframeStatsService(terminal, server);
-            this.iql = new IqlService(terminal, server, this.shell, this.operations, this.network);
+            this.iql = new IqlService(terminal, server, this.files, this.operations, this.network);
             this.programs = new ProgramService(this.machine, terminal, server, this.shell);
             this.remotes = new RemoteComputerService(this.shell);
             this.gateways = new GatewayBridgeService(this.machine, server);
