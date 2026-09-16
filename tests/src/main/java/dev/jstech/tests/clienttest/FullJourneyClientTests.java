@@ -14,7 +14,7 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.CraftingComputerScreen;
 import dev.jstech.computers.client.FirmwareScreen;
 import dev.jstech.computers.client.MainframeScreen;
-import dev.jstech.computers.client.OsInstallScreen;
+import dev.jstech.computers.client.InstallerScreen;
 import dev.jstech.computers.client.ServerRackScreen;
 import dev.jstech.computers.client.os.CraftingManagerApp;
 import dev.jstech.computers.client.os.DesktopScreen;
@@ -229,12 +229,12 @@ public final class FullJourneyClientTests {
                     final int[] install = ctx.screen(FirmwareScreen.class).installButtonCenter();
                     ctx.click(install[0], install[1]);
                 })
-                // The firmware hands over to the install sequence: confirm it, then the write takes its time.
-                .thenAwaitScreen(OsInstallScreen.class, SCREEN_WAIT)
-                .then(SETTLE, () -> {
-                    final int[] confirm = ctx.screen(OsInstallScreen.class).primaryButtonCenter();
-                    ctx.click(confirm[0], confirm[1]);
-                })
+                /*
+                 * The firmware hands over to the system's own installer. This one has no look of its own yet, so
+                 * it welcomes and copies: one key takes its suggestion and the write takes its time.
+                 */
+                .thenAwaitScreen(InstallerScreen.class, SCREEN_WAIT)
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
                 .thenWaitUntilServer(level -> mainframe(ctx, level).hasOs(), BOOT_WAIT,
                         "the install sequence to write the Network OS from the linked floppy",
                         level -> "hasOs=" + mainframe(ctx, level).hasOs())
@@ -323,11 +323,14 @@ public final class FullJourneyClientTests {
                     final int[] install = ctx.screen(FirmwareScreen.class).installButtonCenter();
                     ctx.click(install[0], install[1]);
                 })
-                .thenAwaitScreen(OsInstallScreen.class, SCREEN_WAIT)
-                .then(SETTLE, () -> {
-                    final int[] confirm = ctx.screen(OsInstallScreen.class).primaryButtonCenter();
-                    ctx.click(confirm[0], confirm[1]);
-                })
+                /*
+                 * This system installs through a wizard, which asks where it goes and what the computer is
+                 * called before it copies anything: take its own suggestion on each page.
+                 */
+                .thenAwaitScreen(InstallerScreen.class, SCREEN_WAIT)
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
                 .thenWaitUntilServer(level -> cc(ctx, level).hasOs(), BOOT_WAIT,
                         "the install sequence to write the desktop system from the linked CD drive",
                         level -> "hasOs=" + cc(ctx, level).hasOs())
