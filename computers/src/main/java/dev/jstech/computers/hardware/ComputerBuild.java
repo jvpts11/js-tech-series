@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.hardware;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -34,6 +36,16 @@ public record ComputerBuild(MotherboardSpec motherboard,
                          final List<IExpansionCardSpec> pcieCards, final List<RamSpec> rams,
                          final PsuSpec psu) {
         this(motherboard, cpus, pcieCards, rams, psu, List.of());
+    }
+
+    /**
+     * The architecture this machine runs, which is its processors'. A build with no processor has none, and
+     * {@link #validate()} says so; past validation every processor here answers the same, because a build whose
+     * processors disagree is refused there as well.
+     */
+    @Nullable
+    public ArchitectureSpec architecture() {
+        return this.cpus.isEmpty() ? null : this.cpus.get(0).architecture();
     }
 
     public List<GpuSpec> gpus() {
@@ -180,6 +192,20 @@ public record ComputerBuild(MotherboardSpec motherboard,
             if (!cpu.socket().equals(motherboard.socket())) {
                 problems.add("CPU socket " + cpu.socket().display() + " does not fit board socket "
                         + motherboard.socket().display());
+            }
+        }
+        /*
+         * One machine, one instruction set. Two processors can share a socket and still understand different
+         * instructions, and a program cannot run on half a machine, so a build that mixes them is not a computer.
+         */
+        if (!cpus.isEmpty()) {
+            final ArchitectureSpec first = cpus.get(0).architecture();
+            for (final CpuSpec cpu : cpus) {
+                if (!cpu.architecture().equals(first)) {
+                    problems.add("CPU architecture " + cpu.architecture().name() + " does not match the "
+                            + first.name() + " of the other processors");
+                    break;
+                }
             }
         }
 

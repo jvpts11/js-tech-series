@@ -16,6 +16,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -87,6 +88,36 @@ class ComputerBuildTest {
         final ComputerBuild build = new ComputerBuild(mtxStandard(),
                 List.of(sp5Cpu), List.of(), List.of(ddr3()), psu(650));
         assertFalse(build.isPowered());
+    }
+
+    @Test
+    void architecture_isTheProcessors() {
+        final ComputerBuild build = new ComputerBuild(mtxStandard(),
+                List.of(standardCpu()), List.of(), List.of(ddr3()), psu(650));
+        assertEquals(Architectures.X86_64, build.architecture());
+    }
+
+    @Test
+    void architecture_withNoCpu_isNothing() {
+        final ComputerBuild build = new ComputerBuild(mtxStandard(),
+                List.of(), List.of(), List.of(ddr3()), psu(650));
+        assertNull(build.architecture());
+    }
+
+    @Test
+    void mixedArchitectures_isNotPowered() {
+        final CpuSpec odd = new CpuSpec(HardwareEra.STANDARD, Architectures.X86, CpuSocketId.LGA_2011,
+                8, 3500, 130, false);
+        final ComputerBuild build = new ComputerBuild(mtxStandard(),
+                List.of(standardCpu(), odd), List.of(), List.of(ddr3()), psu(650));
+        assertFalse(build.isPowered(), "a machine cannot run two instruction sets at once");
+    }
+
+    @Test
+    void sameArchitectureTwice_isPowered() {
+        final ComputerBuild build = new ComputerBuild(mtxStandard(),
+                List.of(standardCpu(), standardCpu()), List.of(), List.of(ddr3()), psu(650));
+        assertTrue(build.isPowered());
     }
 
     @Test
