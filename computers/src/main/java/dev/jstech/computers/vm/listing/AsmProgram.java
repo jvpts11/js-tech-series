@@ -41,6 +41,7 @@ public final class AsmProgram {
     private final int version;
     private final List<AsmType> types = new ArrayList<>();
     private String architecture = DEFAULT_ARCHITECTURE;
+    private int architectureLine = 1;
     private String entryPoint;
     private Shape shape = Shape.SCRIPT;
 
@@ -60,6 +61,14 @@ public final class AsmProgram {
     /** The architecture this program was built for. */
     public String architecture() {
         return this.architecture;
+    }
+
+    /**
+     * The line the architecture was named on, so that a machine refusing the program can point at it. A listing
+     * that names none answers the head of the listing, which is the line that decides it.
+     */
+    public int architectureLine() {
+        return this.architectureLine;
     }
 
     /** The types, in the order they were written. */
@@ -87,9 +96,14 @@ public final class AsmProgram {
         return this.shape;
     }
 
-    /** Names the architecture this program was built for. */
-    public void setArchitecture(final String architecture) {
+    /**
+     * Names the architecture this program was built for.
+     *
+     * @param namedOnLine the line it was named on when the name was read from text, and 1 for a program being built
+     */
+    public void setArchitecture(final String architecture, final int namedOnLine) {
         this.architecture = architecture;
+        this.architectureLine = Math.max(1, namedOnLine);
     }
 
     /** Names the class the runtime starts from, and says which kind of program it is. */

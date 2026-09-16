@@ -30,7 +30,9 @@ public enum ListingError {
     VERSION_TOO_OLD("A4012", "this listing is assembly version %s and this runtime reads version %s and later: "
             + "compile its source again"),
     UNKNOWN_MEMBER("A4013", "nothing answers '%s'"),
-    READ_ONLY_VALUE("A4014", "'%s' can be read but not written");
+    READ_ONLY_VALUE("A4014", "'%s' can be read but not written"),
+    /* Nothing is wrong with the listing here: it is the machine it was brought to that will not run it. */
+    ARCHITECTURE_MISMATCH("A4015", "built for %s; this machine is %s");
 
     private final String code;
     private final String template;

@@ -114,7 +114,7 @@ public final class AsmReader {
                     this.report(line, ListingError.MALFORMED_OPERAND, rest, ".arch");
                     return;
                 }
-                program.setArchitecture(rest);
+                program.setArchitecture(rest, line);
             }
             case "start" -> {
                 /*

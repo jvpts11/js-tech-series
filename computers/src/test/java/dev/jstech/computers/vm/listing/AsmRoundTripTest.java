@@ -243,6 +243,16 @@ class AsmRoundTripTest {
     }
 
     @Test
+    void read_remembersWhereTheArchitectureWasNamed() {
+        assertEquals(2, this.read(".asm 3\n.arch jsc:x86_64\n.class C\n").architectureLine());
+    }
+
+    @Test
+    void read_aListingThatNamesNoArchitecture_pointsAtItsHead() {
+        assertEquals(1, this.read(".asm 2\n.class C\n").architectureLine());
+    }
+
+    @Test
     void read_refusesAnArchitectureThatIsNotANamespacedName() {
         this.read(".asm 3\n.arch x86\n.class C\n");
         assertEquals(List.of("A4006"), this.codes());
@@ -251,7 +261,7 @@ class AsmRoundTripTest {
     @Test
     void write_thenRead_keepsTheArchitecture() {
         final AsmProgram program = new AsmProgram();
-        program.setArchitecture("other:risc64");
+        program.setArchitecture("other:risc64", 1);
         assertEquals("other:risc64", this.read(AsmWriter.write(program)).architecture());
     }
 

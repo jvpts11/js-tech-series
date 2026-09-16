@@ -9,8 +9,12 @@ package dev.jstech.computers.machine;
 
 import com.mojang.logging.LogUtils;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.hardware.ArchitectureSpec;
+import dev.jstech.computers.hardware.Architectures;
+import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
+import dev.jstech.computers.vm.listing.ListingError;
 import dev.jstech.computers.vm.listing.ListingProblem;
 import dev.jstech.computers.vm.listing.Shape;
 import dev.jstech.computers.vm.program.IHost;
@@ -60,7 +64,7 @@ public final class MachineListing {
     @Nullable
     public static IMachineRuntime start(final String listing, final long heapBytes, final BlockEntity machine,
                                         final List<String> arguments) {
-        final ProgramImage program = read(listing);
+        final ProgramImage program = read(listing, machine);
         if (program == null || program.entryPoint() == null) {
             return null;
         }
@@ -86,7 +90,7 @@ public final class MachineListing {
      */
     @Nullable
     public static IMachineRuntime restore(final String listing, final CompoundTag saved, final BlockEntity machine) {
-        final ProgramImage program = read(listing);
+        final ProgramImage program = read(listing, machine);
         if (program == null) {
             return null;
         }
@@ -106,12 +110,13 @@ public final class MachineListing {
     }
 
     /**
-     * The first thing wrong with a listing, or null when nothing is: what a person is told when the listing does not
-     * start. Only asked once a listing has been refused, so reading it again costs a start that failed anyway.
+     * The first thing wrong with a listing on that machine, or null when nothing is: what a person is told when the
+     * listing does not start. Only asked once a listing has been refused, so reading it again costs a start that
+     * failed anyway.
      */
     @Nullable
-    public static ListingProblem firstProblem(final String listing) {
-        final List<ListingProblem> problems = load(listing).problems();
+    public static ListingProblem firstProblem(final String listing, @Nullable final BlockEntity machine) {
+        final List<ListingProblem> problems = load(listing, machine).problems();
         return problems.isEmpty() ? null : problems.getFirst();
     }
 
@@ -120,21 +125,54 @@ public final class MachineListing {
         return machine instanceof AbstractComputerBlockEntity computer ? computer.services() : IHost.still();
     }
 
-    /** Reads a listing, or null when it is not one or something in it has nothing to answer it. */
+    /**
+     * Reads a listing, or null when it is not one, when something in it has nothing to answer it, or when the
+     * machine it was brought to does not run programs built the way this one was.
+     */
     @Nullable
-    private static ProgramImage read(final String listing) {
-        final Loaded loaded = load(listing);
+    private static ProgramImage read(final String listing, @Nullable final BlockEntity machine) {
+        final Loaded loaded = load(listing, machine);
         return loaded.problems().isEmpty() ? loaded.image() : null;
     }
 
-    private static Loaded load(final String listing) {
+    private static Loaded load(final String listing, @Nullable final BlockEntity machine) {
         final AsmReader reader = new AsmReader(listing);
         final AsmProgram program = reader.read();
         if (reader.hasProblems()) {
             return new Loaded(null, reader.problems());
         }
+        final ListingProblem wrongMachine = refusedBy(machine, program);
+        if (wrongMachine != null) {
+            return new Loaded(null, List.of(wrongMachine));
+        }
         final ProgramImage image = ProgramImage.of(program);
         return new Loaded(image, image.problems());
+    }
+
+    /**
+     * Why that machine will not run this program, or null when it will.
+     *
+     * <p>The listing is not at fault here and would run untouched on another computer: a program is instructions for
+     * a processor, and a processor that does not understand them cannot be made to. Only a machine with a processor
+     * answers this, so a host that is not a computer holds no program against anything.
+     */
+    @Nullable
+    private static ListingProblem refusedBy(@Nullable final BlockEntity machine, final AsmProgram program) {
+        if (!(machine instanceof AbstractComputerBlockEntity computer)) {
+            return null;
+        }
+        final ComputerBuild build = computer.currentBuild();
+        final ArchitectureSpec here = build == null ? null : build.architecture();
+        if (here == null || here.runs(program.architecture())) {
+            return null;
+        }
+        return new ListingProblem(program.architectureLine(), 1, ListingError.ARCHITECTURE_MISMATCH.code(),
+                ListingError.ARCHITECTURE_MISMATCH.message(nameOf(program.architecture()), here.name()));
+    }
+
+    /** An architecture as a person reads it, falling back to its id when no mod has brought one under that name. */
+    private static String nameOf(final String architecture) {
+        return Architectures.byId(architecture).map(ArchitectureSpec::name).orElse(architecture);
     }
 
     /** A listing made ready, with everything wrong with it; there is no image when the text could not be read. */

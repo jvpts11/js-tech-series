@@ -275,7 +275,7 @@ public final class MachinePrograms {
             process = MachineListing.start(runnable, heapBytes, machine, given);
             if (process == null) {
                 // A listing that says what is wrong with it is worth more than being told it is not one.
-                final var problem = MachineListing.firstProblem(runnable);
+                final var problem = MachineListing.firstProblem(runnable, machine);
                 return Started.failed(name + ": "
                         + (problem == null ? "this is not a " + MachineListing.LABEL : problem.format()));
             }
