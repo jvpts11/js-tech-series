@@ -68,6 +68,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
 
     private final NetworkAttachment attachment = new NetworkAttachment(this);
 
+    private final ClientReplication replication = new ClientReplication(this);
+
     private final PeripheralEndpoints peripherals = new PeripheralEndpoints();
 
     /*
@@ -1074,7 +1076,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     /** The prompt this machine's shell would show, for giving it back when a program lets go. */
-    private String shellPrompt() {
+    String shellPrompt() {
         if (this instanceof dev.jstech.computers.terminal.IComputerTerminalHost host
                 && level instanceof ServerLevel server) {
             return new dev.jstech.computers.program.ServerCliComputer(host, server).prompt();
@@ -1125,8 +1127,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
                 : Long.MAX_VALUE;
         programs.tick(sigmaCredits(), deadline, stockLookup, parentWaiting);
         if (level instanceof ServerLevel server) {
-            pushSigmaOutput(server);
-            pushWindows(server);
+            replication.pushOutput(server);
+            replication.pushWindows(server);
             hearGateways();
         }
     }
@@ -1202,126 +1204,6 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     /** Says a Gateway linked to this machine has something waiting for its programs. */
     public void gatewayMailWaits() {
         gatewayMail = true;
-    }
-
-    /* Every window of a program that has been sent, by the program and the window, as it was sent. */
-    private final java.util.Map<Long, dev.jstech.computers.operation.payload.UiWindowPayload> sentWindows =
-            new java.util.HashMap<>();
-
-    /**
-     * Sends the windows the programs on this machine have open to whoever is at its desktop.
-     *
-     * <p>A window goes over whole whenever anything in it changes, and once more, empty, when it closes.
-     * A machine nobody is looking at sends nothing and forgets what it sent, so whoever opens the desktop
-     * next is sent everything as it stands.
-     */
-    private void pushWindows(final ServerLevel level) {
-        final java.util.List<net.minecraft.server.level.ServerPlayer> viewers = consoleViewers(level);
-        if (viewers.isEmpty()) {
-            sentWindows.clear();
-            return;
-        }
-        final java.util.Map<Long, dev.jstech.computers.operation.payload.UiWindowPayload> open =
-                new java.util.HashMap<>();
-        programs.eachWindow((window, program) -> {
-            final var payload = dev.jstech.computers.operation.payload.UiWindowPayload.of(
-                    worldPosition, program, window);
-            if (payload != null) {
-                open.put(key(payload.program(), payload.window()), payload);
-            }
-        });
-        final java.util.List<dev.jstech.computers.operation.payload.UiWindowPayload> send =
-                new java.util.ArrayList<>();
-        for (final var entry : open.entrySet()) {
-            if (!entry.getValue().equals(sentWindows.get(entry.getKey()))) {
-                send.add(entry.getValue());
-            }
-        }
-        for (final var entry : sentWindows.entrySet()) {
-            if (!open.containsKey(entry.getKey())) {
-                send.add(dev.jstech.computers.operation.payload.UiWindowPayload.gone(worldPosition,
-                        entry.getValue().program(), entry.getValue().window()));
-            }
-        }
-        sentWindows.clear();
-        sentWindows.putAll(open);
-        if (send.isEmpty()) {
-            return;
-        }
-        for (final net.minecraft.server.level.ServerPlayer viewer : viewers) {
-            if (!(viewer.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu)) {
-                continue;
-            }
-            for (final var payload : send) {
-                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(viewer, payload);
-            }
-        }
-    }
-
-    private static long key(final int program, final long window) {
-        return ((long) program << 32) | (window & 0xFFFFFFFFL);
-    }
-
-    /**
-     * Sends what the program in front has printed to whoever is at this machine's terminal.
-     *
-     * <p>This is what makes a program at a terminal behave like one anywhere else: its lines appear as
-     * it prints them rather than all at once when it is over, and the prompt comes back the moment it
-     * returns. A program nobody is watching still runs; there is simply nowhere for its lines to go.
-     */
-    private void pushSigmaOutput(final ServerLevel level) {
-        if (programs.held() == 0) {
-            return;
-        }
-        final var one = programs.byId(programs.held());
-        if (one == null) {
-            programs.release();
-            return;
-        }
-        final var state = one.process().state();
-        final boolean over = !dev.jstech.computers.machine.MachinePrograms.running(one.process());
-        final java.util.List<String> fresh = programs.unseen();
-        final String halt = over && state == dev.jstech.core.language.ILanguageProcess.State.HALTED
-                ? one.process().message() : null;
-        if (over) {
-            programs.release();
-            setChanged();
-        }
-        if (fresh.isEmpty() && halt == null && !over) {
-            return;
-        }
-        final java.util.List<net.minecraft.server.level.ServerPlayer> viewers = consoleViewers(level);
-        if (viewers.isEmpty()) {
-            return;
-        }
-        final java.util.List<dev.jstech.computers.operation.payload.DesktopShellOutputPayload
-                .WireLine> wire = new java.util.ArrayList<>();
-        for (final String line : fresh) {
-            wire.add(new dev.jstech.computers.operation.payload.DesktopShellOutputPayload.WireLine(
-                    line, dev.jstech.computers.program.cli.CliStyle.PLAIN.id()));
-        }
-        if (halt != null) {
-            wire.add(new dev.jstech.computers.operation.payload.DesktopShellOutputPayload.WireLine(
-                    halt, dev.jstech.computers.program.cli.CliStyle.ERROR.id()));
-        }
-        final var payload = new dev.jstech.computers.operation.payload.DesktopShellOutputPayload(
-                false, !over, over ? shellPrompt() : "", wire);
-        /*
-         * The same said twice, once in each terminal's own words: a window on a desktop, and the prompt
-         * that is the whole glass of a machine that has none. Both are watching this one console.
-         */
-        final java.util.List<dev.jstech.computers.operation.payload.CommandOutputPayload.WireLine> promptWire =
-                new java.util.ArrayList<>(wire.size());
-        for (final var line : wire) {
-            promptWire.add(new dev.jstech.computers.operation.payload.CommandOutputPayload.WireLine(
-                    line.text(), line.style()));
-        }
-        final var prompt = new dev.jstech.computers.operation.payload.CommandOutputPayload(
-                false, over ? shellPrompt() : "", promptWire);
-        for (final net.minecraft.server.level.ServerPlayer viewer : viewers) {
-            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(viewer,
-                    viewer.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu ? payload : prompt);
-        }
     }
 
     /**
