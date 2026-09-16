@@ -535,13 +535,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public java.util.List<ServiceStatus> services() {
-        final MainframeBlockEntity mainframe = mainframe(host.networkUuid());
-        if (mainframe == null) {
-            return java.util.List.of();
-        }
-        // The Mirror's own state still lives here, with the package commands it belongs to.
-        return java.util.List.of(new ServiceStatus("IQL Engine", iql().state()),
-                new ServiceStatus("Mirror", mirrorState(mainframe)));
+        return packages().services();
     }
 
     @Override
@@ -669,13 +663,12 @@ public final class ServerCliComputer implements ICliComputer {
 
     /** The network's Mainframe when its Mirror service is serving, else null. */
     private MainframeBlockEntity mirrorMainframe() {
-        final MainframeBlockEntity mf = mainframe(host.networkUuid());
-        return mf != null && mf.isMirrorActive() ? mf : null;
+        return packages().mirrorMainframe();
     }
 
     @Override
     public boolean mirrorReachable() {
-        return mirrorMainframe() != null;
+        return packages().reachable();
     }
 
     /** Moves finished source builds into the installed set (lazy: runs whenever packages are touched). */
@@ -1033,9 +1026,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     /** The name the Mirror's Mainframe goes by in a package line, or the plain word when it has none. */
     private String mirrorHostname() {
-        final MainframeBlockEntity mirror = mirrorMainframe();
-        final String name = mirror == null ? "" : mirror.console() == null ? "" : mirror.console().computerName();
-        return name == null || name.isBlank() ? "mainframe" : name;
+        return packages().mirrorHostname();
     }
 
     /** The build every package the Mirror serves is currently at: the mod's own version. */
@@ -1204,24 +1195,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public OpResult mirrorControl(final String action) {
-        final MainframeBlockEntity mainframe = mainframe(host.networkUuid());
-        if (mainframe == null) {
-            return OpResult.fail("the network has no running Mainframe to host the Mirror");
-        }
-        return switch (action == null ? "" : action.toLowerCase(java.util.Locale.ROOT)) {
-            case "install" -> mainframe.installMirror()
-                    ? OpResult.ok("Mirror installed on the Mainframe and serving packages")
-                    : OpResult.fail("the Mirror is already installed");
-            case "status", "" -> OpResult.ok("Mirror: " + mirrorState(mainframe));
-            default -> OpResult.fail("usage: mirror install|status");
-        };
-    }
-
-    private static String mirrorState(final MainframeBlockEntity mainframe) {
-        if (!mainframe.isMirrorInstalled()) {
-            return "not installed";
-        }
-        return mainframe.isMirrorActive() ? "serving" : "installed (Mainframe off)";
+        return packages().control(action);
     }
 
     @Override
@@ -1620,6 +1594,11 @@ public final class ServerCliComputer implements ICliComputer {
     /** The machines of this network that name picks out, by host name, for whoever follows a network path. */
     public Map<String, BlockEntity> machinesNamed(final String name) {
         return matchMachines(name);
+    }
+
+    /** The packages this machine installs over its network's Mirror, as this shell reaches them. */
+    private dev.jstech.computers.machine.PackageService packages() {
+        return new dev.jstech.computers.machine.PackageService(host, level, iql());
     }
 
     /** The network's own language, as this shell speaks it. */
