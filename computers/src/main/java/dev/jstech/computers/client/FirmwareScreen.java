@@ -11,6 +11,7 @@ import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
+import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.InstallMode;
 import dev.jstech.computers.rack.RaidMode;
@@ -403,7 +404,8 @@ public class FirmwareScreen extends Screen {
         g.fill(x, y, x + W, y + H, BLUE_BG);
         border(g, x, y, BLUE_BORDER);
         g.fill(x, y, x + W, y + 14, BLUE_TITLE);
-        drawCentered(g, "J's Computers BIOS Setup Utility", x + W / 2, y + 3, BLUE_BG);
+        // The house that made the board, not the mod: no screen inside the fiction names the mod.
+        drawCentered(g, Branding.HARDWARE_HOUSE + " BIOS Setup Utility", x + W / 2, y + 3, BLUE_BG);
         int px = x + 8;
         for (int i = 0; i < PAGES.length; i++) {
             tabHits[i] = new int[]{px - 3, y + 16, font.width(PAGES[i]) + 6, 12};
@@ -498,7 +500,7 @@ public class FirmwareScreen extends Screen {
         border(g, x, y, UEFI_PH);
         g.fill(x, y, x + W, y + 20, UEFI_HEAD);
         g.fill(x, y + 20, x + W, y + 22, UEFI_ACCENT);
-        g.drawString(font, "J's Computers", x + 10, y + 6, UEFI_TEXT, false);
+        g.drawString(font, Branding.HARDWARE_HOUSE, x + 10, y + 6, UEFI_TEXT, false);
         g.drawString(font, "UEFI", x + W - font.width("UEFI") - 10, y + 6, UEFI_DIM, false);
 
         final int top = y + 30;
