@@ -787,8 +787,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
 
     // Console state: the Command Prompt's per-computer history and installed programs.
 
-    private final dev.jstech.computers.program.ComputerConsoleState console =
-            new dev.jstech.computers.program.ComputerConsoleState();
+    private final DiskConsole diskConsole = new DiskConsole(this);
 
     /*
      * Script processes: the Σ# programs this machine is running, which live with the machine
@@ -961,46 +960,14 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         gatewayMail = true;
     }
 
-    /**
-     * The disk stack {@link #console} was read from, or null when nothing has been read yet. Identity,
-     * not equality: a different stack object means a different physical drive, while writing to the same
-     * drive (installing an OS, adding a program) keeps the same object and must NOT discard the state
-     * held in memory, because doing that resurrected a cleared live-install session from the older disk copy.
-     */
-    @Nullable
-    private ItemStack consoleDisk;
-
     /*
      * Provided here (no @Override: this base does not itself declare IComputerTerminalHost) so the
      * computer subclasses that ARE hosts inherit it and satisfy the interface's console() method.
      */
     public dev.jstech.computers.program.ComputerConsoleState console() {
-        final ItemStack disk = systemDisk();
-        if (consoleDisk != disk) {
-            loadConsoleFrom(disk);
-        }
-        return console;
+        return diskConsole.state();
     }
 
-    /**
-     * Reads the console state off {@code disk}, replacing whatever the previous drive left in memory. A
-     * disk with no state (a fresh or freshly formatted one) yields an empty console, which is what a
-     * clean install must see.
-     */
-    private void loadConsoleFrom(final ItemStack disk) {
-        consoleDisk = disk; // set first: nothing below may recurse back into console()
-        console.clear();
-        final CompoundTag saved = disk.isEmpty() ? null : disk.get(ComputingModule.DISK_CONSOLE.get());
-        if (saved != null) {
-            console.load(saved);
-        }
-    }
-
-    /**
-     * Writes the console state back onto the system disk. Called before the block entity is saved and
-     * after anything that changes installed software, so the disk is always the record of its own
-     * contents.
-     */
     @Override
     public void setChanged() {
         /*
@@ -1009,21 +976,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
          * program and immediately removing the drive would lose the install: the in-memory state is
          * discarded when the slot changes, and the world may not have saved in between.
          */
-        flushConsoleToDisk();
+        diskConsole.flush();
         super.setChanged();
-    }
-
-    protected void flushConsoleToDisk() {
-        /*
-         * Write back to the drive the state was read from, not to whatever is the system disk now: if a
-         * drive has just been swapped, this state belongs to the old one and must not be copied onto it.
-         */
-        if (consoleDisk == null || consoleDisk.isEmpty()) {
-            return;
-        }
-        final CompoundTag tag = new CompoundTag();
-        console.save(tag);
-        consoleDisk.set(ComputingModule.DISK_CONSOLE.get(), tag);
     }
 
     // Persistence (common fields; subclasses add their own via the hooks)
@@ -1058,14 +1012,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (tag.contains("Σ#")) {
             programs.load(tag.getCompound("Σ#"), this);
         }
-        /*
-         * A world saved before the software moved onto the disk still carries the old block-level tag;
-         * adopt it once so the machine keeps what it had, and it lands on the disk at the next save.
-         */
-        if (tag.contains("Console")) {
-            console.load(tag.getCompound("Console"));
-            consoleDisk = systemDisk(); // adopt it onto the current drive at the next flush
-        }
+        diskConsole.loadLegacy(tag);
         loadExtra(tag, registries);
         hardware.markDirty();
     }
@@ -1077,7 +1024,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
          * Push the software onto the disk first: the hardware handler below serializes the disk stacks,
          * and a flush after that point would be written to a copy and lost.
          */
-        flushConsoleToDisk();
+        diskConsole.flush();
         hardware.save(tag, registries, hardwareNbtKey());
         power.save(tag);
         session.save(tag);
