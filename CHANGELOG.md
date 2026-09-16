@@ -27,6 +27,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Changed
+- A self-test now ends by naming what it is about to boot ("Booting from Disk 0: Frames XP"), and a machine with
+  nothing to boot ends on its own era's way of saying so and waits for a key, instead of dropping the player into
+  the firmware setup without a word. A Legacy machine posts on black with its maker's badge, the way the boards of
+  that time did; the setup it opens with DEL is still the blue one.
 - The power-on self-test and the firmware's hardware page now show the machine that is actually there: the name its
   owner gave it, the processor by model with its cores and its architecture, the memory in megabytes with the slots
   it fills, the board, the video card, and the monitors really linked rather than a "connected" that was always

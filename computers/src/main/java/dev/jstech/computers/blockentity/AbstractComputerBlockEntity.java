@@ -303,7 +303,32 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
          * installed a moment ago wait for a restart instead of turning up on the next look at the monitor.
          */
         setBootedDesktopId(installedDesktopId());
-        ScreenSessions.bootWatchers(level, worldPosition);
+        /*
+         * A machine with nothing to boot ends its self-test on the era's own failure and stays there, the way
+         * one does: whoever is watching reads what happened instead of being dropped into the setup.
+         */
+        if (hasSomethingToBoot()) {
+            ScreenSessions.bootWatchers(level, worldPosition);
+        }
+    }
+
+    /** Whether anything on this machine can be booted: a disk with a system, or a medium that can boot. */
+    private boolean hasSomethingToBoot() {
+        if (hasOs()) {
+            return true;
+        }
+        if (level == null) {
+            return false;
+        }
+        for (final long endpoint : linkedEndpoints()) {
+            if (level.getBlockEntity(net.minecraft.core.BlockPos.of(endpoint))
+                    instanceof dev.jstech.computers.os.media.MediaReaderBlockEntity reader
+                    && reader.insertedKind() == dev.jstech.computers.os.media.MediaKind.OS_INSTALL
+                    && reader.insertedPayload() != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** How many memory modules the self-test has to count. */

@@ -108,6 +108,15 @@ public final class BootSequenceScreen extends Screen {
 
     @Override
     public boolean keyPressed(final int keyCode, final int scanCode, final int modifiers) {
+        /*
+         * A self-test that ended with nothing to boot waits here, as a machine does. Any key asks the machine
+         * to go on, which with nothing on any disk means its setup.
+         */
+        if (completed && !setupRequested && bootingFrom().isEmpty()) {
+            setupRequested = true;
+            PacketDistributor.sendToServer(new PostCompletePayload(computerPos, monitorPos, false));
+            return true;
+        }
         if (keyCode == InputConstants.KEY_DELETE && !completed && !setupRequested) {
             setupRequested = true;
             PacketDistributor.sendToServer(new PostCompletePayload(computerPos, monitorPos, true));
@@ -134,9 +143,12 @@ public final class BootSequenceScreen extends Screen {
         final int y = (height - H) / 2;
         MonitorFrame.renderBody(g, x, y, W, H, era(), font);
 
+        /*
+         * A Legacy machine posts on black with the maker's badge, the way the boards of that time did; the
+         * setup it opens with DEL is the blue one. The two are different screens and only setup was ever blue.
+         */
         final int bg = switch (kind) {
-            case CLI_BIOS -> 0xFF000000;
-            case BLUE_BIOS -> 0xFF0000A8;
+            case CLI_BIOS, BLUE_BIOS -> 0xFF000000;
             case UEFI -> 0xFF10121C;
         };
         /*
@@ -164,6 +176,21 @@ public final class BootSequenceScreen extends Screen {
             renderUefi(g, x, y, text, dim, accent);
         } else {
             renderClassic(g, x, y, text, dim, accent);
+        }
+        if (kind == FirmwareKind.BLUE_BIOS) {
+            renderMakerBadge(g, x, y, accent, dim);
+        }
+    }
+
+    /** The maker's badge in the top right, where a board of that age printed its firmware house's mark. */
+    private void renderMakerBadge(final GuiGraphics g, final int x, final int y, final int accent, final int dim) {
+        final String house = Branding.HARDWARE_HOUSE.toUpperCase(Locale.ROOT);
+        final int space = house.indexOf(' ');
+        final String top = space < 0 ? house : house.substring(0, space);
+        final String rest = space < 0 ? "" : house.substring(space + 1);
+        g.drawString(font, top, x + W - 10 - font.width(top), y + 10, accent, false);
+        if (!rest.isEmpty()) {
+            g.drawString(font, rest, x + W - 10 - font.width(rest), y + 20, dim, false);
         }
     }
 
@@ -221,12 +248,65 @@ public final class BootSequenceScreen extends Screen {
             }
             out.add(new String[]{"", "0"});
             if (completed) {
-                out.add(new String[]{"Booting ...", "1"});
+                /*
+                 * What it is about to boot, by name, or the era's own way of saying there is nothing: a machine
+                 * of this age told you which drive it was reaching for, and which one it had given up on.
+                 */
+                final String booting = bootingFrom();
+                if (!booting.isEmpty()) {
+                    out.add(new String[]{"Booting from " + booting + " ...", "1"});
+                } else {
+                    for (final String line : noBootLines()) {
+                        out.add(new String[]{line, "1"});
+                    }
+                }
             }
         } else {
             out.add(new String[]{"Reading system configuration ...", "0"});
         }
         return out;
+    }
+
+    /**
+     * What the machine is about to boot, worded as the firmware would say it ("Disk 0: Frames XP"), or nothing
+     * when no disk carries a system and no medium in a drive can boot.
+     */
+    private String bootingFrom() {
+        if (state == null) {
+            return "";
+        }
+        FirmwareStatePayload.Entry chosen = null;
+        int slot = 0;
+        int chosenSlot = 0;
+        for (final FirmwareStatePayload.Entry entry : state.entries()) {
+            final int here = entry.kind() == FirmwareStatePayload.KIND_DISK ? slot++ : -1;
+            if (!entry.bootable()) {
+                continue;
+            }
+            final boolean preferred = here >= 0 && here == state.bootSlot();
+            if (chosen == null || preferred) {
+                chosen = entry;
+                chosenSlot = here;
+            }
+            if (preferred) {
+                break;
+            }
+        }
+        if (chosen == null) {
+            return "";
+        }
+        return (chosenSlot >= 0 ? "Disk " + chosenSlot : "the medium") + ": " + chosen.label();
+    }
+
+    /** How this machine's age says that nothing can be booted. */
+    private List<String> noBootLines() {
+        return switch (kind) {
+            case CLI_BIOS -> List.of("Non-system disk or disk error",
+                    "Replace and press any key when ready");
+            case BLUE_BIOS -> List.of("DISK BOOT FAILURE, INSERT SYSTEM DISK AND PRESS ENTER");
+            case UEFI -> List.of("No bootable device found",
+                    "Press any key to enter Setup");
+        };
     }
 
     /** What the machine is called: the name its owner gave it, else the kind of machine it is. */
@@ -264,6 +344,14 @@ public final class BootSequenceScreen extends Screen {
         g.fill(bx, by, bx + barW, by + 3, 0xFF2A2D3E);
         final int fill = Math.min(barW, barW * ticks / postTicks);
         g.fill(bx, by, bx + fill, by + 3, accent);
+        if (completed && bootingFrom().isEmpty()) {
+            int ly = y + H / 2 + 20;
+            for (final String line : noBootLines()) {
+                g.drawCenteredString(font, line, x + W / 2, ly, text);
+                ly += 11;
+            }
+            return;
+        }
         if (setupRequested) {
             g.drawCenteredString(font, "Entering Setup ...", x + W / 2, y + H - 18, accent);
         } else if ((ticks / 10) % 2 == 0) {
