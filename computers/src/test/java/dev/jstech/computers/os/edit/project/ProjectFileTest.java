@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.computers.vm.listing.AsmProgram;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -36,6 +37,39 @@ class ProjectFileTest {
         assertTrue(text.contains("sources: StockWatch.sgs, Helpers.sgs\n"));
         assertTrue(text.contains("references: Helpers\n"));
         assertTrue(text.contains("entry: build/StockWatch.asm\n"));
+        assertTrue(text.contains("platform: jsc:x86\n"));
+    }
+
+    @Test
+    void read_aProjectWithNoPlatformLine_isBuiltForTheOldestThatRunsIt() {
+        final ProjectFile back = ProjectFile.read("name: Old\nkind: console\nlanguage: jsc:sigma\n"
+                + "sources: Old.sgs\nreferences: \nentry: build/Old.asm\n");
+        assertEquals(AsmProgram.DEFAULT_ARCHITECTURE, back.platform());
+    }
+
+    @Test
+    void withPlatform_buildsForThatOneInstead() {
+        assertEquals("jsc:x86_64", stockWatch().withPlatform("jsc:x86_64").platform());
+        assertEquals("jsc:x86_64",
+                ProjectFile.read(stockWatch().withPlatform("jsc:x86_64").write()).platform());
+    }
+
+    @Test
+    void withPlatform_theOneItAlreadyHas_isTheSameProject() {
+        final ProjectFile project = stockWatch();
+        assertSame(project, project.withPlatform(project.platform()));
+    }
+
+    /*
+     * A project keeps its platform through every other change. Rebuilding the record by hand in each of these is
+     * exactly where a field gets dropped, and dropping this one would quietly send a program back to the default.
+     */
+    @Test
+    void everyOtherChange_keepsThePlatform() {
+        final ProjectFile built = stockWatch().withPlatform("jsc:x86_64");
+        assertEquals("jsc:x86_64", built.withSource("More.sgs").platform());
+        assertEquals("jsc:x86_64", built.withoutSource("Helpers.sgs").platform());
+        assertEquals("jsc:x86_64", built.withReference("Other").platform());
     }
 
     @Test

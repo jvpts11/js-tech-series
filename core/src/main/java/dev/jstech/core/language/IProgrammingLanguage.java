@@ -106,6 +106,17 @@ public interface IProgrammingLanguage {
     CompileResult compile(List<SourceText> sources);
 
     /**
+     * The same, built for a named processor architecture.
+     *
+     * <p>A language that compiles for a processor overrides this. One that runs its own source on any machine that
+     * has it installed has no architecture to build for, and answers as it does without one, which is why this is
+     * not something every language has to implement.
+     */
+    default CompileResult compile(final List<SourceText> sources, final String architecture) {
+        return compile(sources);
+    }
+
+    /**
      * Breaks source into pieces an editor can colour.
      *
      * <p>Text that will not compile still has to come back sensibly, because that is most of what an

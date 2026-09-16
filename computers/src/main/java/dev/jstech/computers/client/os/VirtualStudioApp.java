@@ -13,11 +13,14 @@ import dev.jstech.computers.operation.payload.FolderContentPayload;
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.operation.payload.RequestFolderContentPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
+import dev.jstech.computers.hardware.ArchitectureSpec;
+import dev.jstech.computers.hardware.Architectures;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.os.edit.ProblemReport;
 import dev.jstech.computers.os.edit.project.ProjectFile;
 import dev.jstech.computers.os.edit.project.ProjectTemplate;
 import dev.jstech.computers.os.edit.project.SolutionFile;
+import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.AmountStepper;
 import dev.jstech.core.client.gui.component.Button;
@@ -76,6 +79,11 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private static final String KEY = "Virtual Studio";
 
     private static final List<String> DOCK_TABS = List.of("ERROR LIST", "OUTPUT", "TERMINAL");
+    /** Wide enough for the longest architecture name there is at three quarters of the font. */
+    private static final int PLATFORM_BTN_W = 30;
+    private static final int PLATFORM_GREEN = 0xFF2E7D32;
+    private static final int PLATFORM_AMBER = 0xFFB35C00;
+
     private static final int DOCK_ERRORS = 0;
     private static final int DOCK_OUTPUT = 1;
     private static final int DOCK_TERMINAL = 2;
@@ -210,8 +218,12 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private final Button askOk;
     private String askTitle = "";
     private java.util.function.Consumer<String> askAction = value -> { };
-    private final Popup properties = new Popup("Project Properties", 170, 70).setLayouter(this::layoutProperties);
+    private final Popup properties = new Popup("Project Properties", 170, 112).setLayouter(this::layoutProperties);
     private final List<Label> propertyLines = new ArrayList<>();
+    private final Label platformLabel;
+    /** One button per architecture there is, in the order the series was built. */
+    private final List<Button> platformButtons = new ArrayList<>();
+    private final Label platformHint;
     private final Button propertiesClose;
     private String propertiesOf = "";
     private final Popup options = new Popup("Options", 170, 60).setLayouter(this::layoutOptions);
@@ -305,6 +317,13 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             final int line = i;
             this.propertyLines.add(this.properties.add(new Label(() -> propertyText(line))));
         }
+        this.platformLabel = this.properties.add(new Label("Platform target", Label.Tone.DIM));
+        for (final ArchitectureSpec architecture : Architectures.all()) {
+            this.platformButtons.add(this.properties.add(new Button(architecture.name(),
+                    () -> setPlatform(architecture.id())).setLabelScale(0.75f)));
+        }
+        this.platformHint = this.properties.add(new Label(this::platformHintText)
+                .setColor(this::platformHintColor));
         this.propertiesClose = this.properties.add(new Button("Close", this.properties::close).setPrimary(true));
         this.options.add(new Label("Tab size", Label.Tone.DIM));
         this.options.add(this.tabStepper.setRange(2, 8).setAmount(4).setOnChange(v -> setTabSize((int) v)));
@@ -869,7 +888,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             buildNext();
             return;
         }
-        final IProgrammingLanguage.CompileResult result = language.compile(sources);
+        final IProgrammingLanguage.CompileResult result = language.compile(sources, project.platform());
         finishBuild(project.name(), join(projectDir(project.name()), project.entry()), result, names);
         buildNext();
     }
@@ -1339,6 +1358,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     private void showProperties(final String name) {
         this.propertiesOf = name;
+        refreshPlatformButtons();
         this.properties.open();
     }
 
@@ -1362,7 +1382,86 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             label.setBounds(p.x() + 4, y, p.width() - 8, 9);
             y += 9;
         }
+        /*
+         * A library has no platform of its own: it is compiled into whatever program references it, and that
+         * program's target is the one that counts. So the row is not there rather than there and doing nothing.
+         */
+        final boolean shown = buildsForAPlatform();
+        y += 2;
+        this.platformLabel.setVisible(shown);
+        this.platformLabel.setBounds(p.x() + 4, y, p.width() - 8, 9);
+        y += 10;
+        /*
+         * The buttons take the row on their own rather than sitting beside the words, so that the row still holds
+         * every architecture when a mod has brought two of its own.
+         */
+        int x = p.x() + 4;
+        for (final Button button : this.platformButtons) {
+            button.setVisible(shown);
+            button.setBounds(x, y, PLATFORM_BTN_W, 11);
+            x += PLATFORM_BTN_W + 2;
+        }
+        y += 13;
+        this.platformHint.setVisible(shown);
+        this.platformHint.setBounds(p.x() + 4, y, p.width() - 8, 9);
         this.propertiesClose.setBounds(p.right() - 38, p.bottom() - 14, 34, 11);
+    }
+
+    /** Whether the project the popup is open on builds something of its own, and so has a platform to pick. */
+    private boolean buildsForAPlatform() {
+        final ProjectFile project = this.projects.get(this.propertiesOf);
+        return project != null && project.buildsAListing();
+    }
+
+    /** Builds the project for that architecture from now on, and lights the button that says so. */
+    private void setPlatform(final String architecture) {
+        final ProjectFile project = this.projects.get(this.propertiesOf);
+        if (project == null) {
+            return;
+        }
+        saveProject(project.withPlatform(architecture));
+        refreshPlatformButtons();
+    }
+
+    /** Lights the architecture the open project is built for, and unlights the rest. */
+    private void refreshPlatformButtons() {
+        final ProjectFile project = this.projects.get(this.propertiesOf);
+        final String current = project == null ? AsmProgram.DEFAULT_ARCHITECTURE : project.platform();
+        final List<ArchitectureSpec> all = Architectures.all();
+        for (int i = 0; i < this.platformButtons.size() && i < all.size(); i++) {
+            this.platformButtons.get(i).setPrimary(all.get(i).id().equals(current));
+        }
+    }
+
+    /** What the line under the buttons says: which machines the program will run on once it is built. */
+    private String platformHintText() {
+        final ProjectFile project = this.projects.get(this.propertiesOf);
+        if (project == null) {
+            return "";
+        }
+        final ArchitectureSpec built = Architectures.byId(project.platform()).orElse(null);
+        if (built == null) {
+            return "nothing here answers to " + project.platform();
+        }
+        final List<String> runners = new ArrayList<>();
+        for (final ArchitectureSpec machine : Architectures.all()) {
+            if (machine.runs(built)) {
+                runners.add(machine.name());
+            }
+        }
+        return runners.isEmpty() ? "no machine here runs it"
+                : "runs on " + String.join(" and ", runners) + " machines";
+    }
+
+    /*
+     * Green while the project is built for the architecture a program gets when nobody asks, which is the one that
+     * reaches every machine it could reach. Anything else is a decision to leave machines behind, and the line goes
+     * amber so that it is a decision somebody sees themselves making.
+     */
+    private int platformHintColor() {
+        final ProjectFile project = this.projects.get(this.propertiesOf);
+        return project != null && AsmProgram.DEFAULT_ARCHITECTURE.equals(project.platform())
+                ? PLATFORM_GREEN : PLATFORM_AMBER;
     }
 
     private void layoutOptions(final Popup p) {

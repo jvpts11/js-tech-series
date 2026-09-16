@@ -11,7 +11,10 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.machine.SigmaLanguage;
+import dev.jstech.core.language.IProgrammingLanguage;
 import dev.jstech.tests.JsTests;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -36,6 +39,15 @@ public final class ArchitectureGameTests {
     private static final String ARENA = "empty";
 
     private static final BlockPos WHERE = new BlockPos(2, 2, 2);
+
+    /** A program that starts and is done, so the test is about where it runs and nothing else. */
+    private static final String QUIET = """
+            using System.IO.*;
+            namespace Programs;
+            class Quiet {
+                static void Main() { Console.PrintLine("quiet"); }
+            }
+            """;
 
     private ArchitectureGameTests() {
     }
@@ -100,6 +112,40 @@ public final class ArchitectureGameTests {
         helper.assertFalse(started.ok(), "the earliest machines run only their own, which is what dates them");
         helper.assertTrue(started.message().contains("this machine is x86-16"),
                 "it says what the machine is: " + started.message());
+        helper.succeed();
+    }
+
+    /**
+     * The whole way through: source compiled for the 64-bit machines runs on one and is refused by a 32-bit one.
+     *
+     * <p>The other tests hand a machine a listing written by hand. This one has the compiler write it, so what the
+     * project properties ask for, what the compiler puts on the .arch line and what a machine does with it are held
+     * together in one place.
+     */
+    @GameTest(template = ARENA)
+    public static void aProgramBuiltForTheNewerMachines_runsOnOneAndIsRefusedByTheOlder(final GameTestHelper helper) {
+        final IProgrammingLanguage.CompileResult built = SigmaLanguage.INSTANCE.compile(
+                List.of(new IProgrammingLanguage.SourceText("Quiet.sgs", QUIET)), "jsc:x86_64");
+        helper.assertTrue(built.ok(), "the corpus program compiles: " + built.complaints());
+        helper.assertTrue(built.binary().contains(".arch jsc:x86_64"),
+                "the compiler wrote what it was asked for: " + built.binary());
+
+        final PersonalComputerBlockEntity newer = standard(helper);
+        if (newer == null) {
+            return;
+        }
+        final MachinePrograms.Started onNewer = newer.programs().start("quiet.asm", built.binary(), 1, newer);
+        helper.assertTrue(onNewer.ok(), "the 64-bit machine runs it: " + onNewer.message());
+
+        helper.setBlock(WHERE, net.minecraft.world.level.block.Blocks.AIR);
+        final PersonalComputerBlockEntity older = legacy(helper);
+        if (older == null) {
+            return;
+        }
+        final MachinePrograms.Started onOlder = older.programs().start("quiet.asm", built.binary(), 1, older);
+        helper.assertFalse(onOlder.ok(), "and the 32-bit one will not");
+        helper.assertTrue(onOlder.message().contains("built for x86-64; this machine is x86"),
+                "saying why: " + onOlder.message());
         helper.succeed();
     }
 

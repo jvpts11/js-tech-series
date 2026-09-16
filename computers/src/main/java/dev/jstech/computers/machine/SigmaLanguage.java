@@ -14,6 +14,7 @@ import dev.jstech.computers.sigma.DiagnosticBag;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.sigma.edit.CommentSpans;
 import dev.jstech.computers.sigma.lex.Lexer;
+import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.core.language.IProgrammingLanguage;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -63,11 +64,16 @@ public final class SigmaLanguage implements IProgrammingLanguage {
 
     @Override
     public CompileResult compile(final List<SourceText> sources) {
+        return compile(sources, AsmProgram.DEFAULT_ARCHITECTURE);
+    }
+
+    @Override
+    public CompileResult compile(final List<SourceText> sources, final String architecture) {
         final List<SourceFile> files = new ArrayList<>();
         for (final SourceText source : sources) {
             files.add(new SourceFile(source.name(), source.text()));
         }
-        final SigmaCompiler.Result built = SigmaCompiler.compile(files);
+        final SigmaCompiler.Result built = SigmaCompiler.compile(files, architecture);
         if (built.ok()) {
             return CompileResult.of(built.assembly());
         }

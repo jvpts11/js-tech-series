@@ -10,6 +10,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - `sgsc --arch <architecture>` builds a program for a named architecture, by its id (`jsc:x86_64`) or by the name it
   is written under (`x86-64`). Left alone, the compiler builds for the oldest architecture that runs the program, so
   it runs on every machine it could have. An architecture nothing answers to is refused before anything is written.
+- Virtual Studio's Project Properties has a Platform target: one button per architecture, and a line under them
+  saying which machines the program will run on, amber once the choice leaves machines behind. A project keeps it on
+  a `platform:` line, and a project file without one builds as it always did. A library project has no platform of
+  its own, since it is compiled into the program that references it.
 - `Computer.Cpu.Architecture` gives a program the architecture the machine it runs on is built on, written the way a
   listing names its own, so a program can compare the two.
 - Every mod's jar now carries its licence texts under `META-INF`: the GNU LGPL 3.0 the series is licensed
