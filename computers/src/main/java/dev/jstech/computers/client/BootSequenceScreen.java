@@ -195,9 +195,20 @@ public final class BootSequenceScreen extends Screen {
         out.add(new String[]{Branding.firmwareCopyright(era()), "0"});
         out.add(new String[]{"", "0"});
         if (state != null) {
-            out.add(new String[]{"Main Processor : " + state.cpuLabel() + " @ " + state.cpuMhz() + " MHz", "0"});
+            final FirmwareStatePayload.Machine machine = state.machine();
+            /*
+             * The processor by its own model, then what it is: a self-test reads out the machine it found, and
+             * the model is the part of it a player recognises.
+             */
+            out.add(new String[]{"Main Processor : "
+                    + (machine.cpuName().isEmpty() ? "not detected" : machine.cpuName()), "0"});
+            if (machine.hasCpu()) {
+                out.add(new String[]{"                 " + machine.cores()
+                        + (machine.cores() == 1 ? " core   " : " cores  ")
+                        + machine.cpuMhz() + " MHz   " + machine.cpuArch(), "0"});
+            }
             // The memory test counts up while the POST runs, settling on the installed total.
-            final long total = (long) state.ramMb() * 1024L;
+            final long total = (long) machine.ramMb() * 1024L;
             final long counted = Math.min(total, total * Math.max(0, ticks - 12) / 28L);
             out.add(new String[]{"Memory Test : " + String.format(Locale.ROOT, "%,d", counted) + " KB OK", "0"});
             out.add(new String[]{"", "0"});
@@ -218,12 +229,34 @@ public final class BootSequenceScreen extends Screen {
         return out;
     }
 
+    /** What the machine is called: the name its owner gave it, else the kind of machine it is. */
+    private String machineTitle() {
+        final String named = state == null ? "" : state.machine().name();
+        return named.isEmpty() ? machineName : named;
+    }
+
+    /** The machine on one line, the way a modern firmware sums a computer up while it comes awake. */
+    private String buildSummary() {
+        if (state == null || !state.machine().hasCpu()) {
+            return "";
+        }
+        final FirmwareStatePayload.Machine m = state.machine();
+        final String memory = m.ramMb() >= 1024 ? m.ramMb() / 1024 + " GB" : m.ramMb() + " MB";
+        return m.cpuName() + "  -  " + m.cores() + (m.cores() == 1 ? " core" : " cores")
+                + "  -  " + memory + "  -  " + m.cpuArch();
+    }
+
     /** The modern machines hide the wall of text: logo line, a progress bar, the setup hint. */
     private void renderUefi(final GuiGraphics g, final int x, final int y, final int text, final int dim,
                             final int accent) {
-        final String logo = machineName.isEmpty() ? "JSC" : machineName;
-        g.drawCenteredString(font, logo, x + W / 2, y + H / 2 - 24, text);
-        g.drawCenteredString(font, "JSC UEFI 5.0", x + W / 2, y + H / 2 - 12, dim);
+        /*
+         * The maker's name, then the machine's own, then what it is made of on one line. No screen inside the
+         * fiction names the mod, and the machine that is in front of the player is the one it names.
+         */
+        g.drawCenteredString(font, Branding.HARDWARE_HOUSE.toUpperCase(Locale.ROOT), x + W / 2,
+                y + H / 2 - 30, dim);
+        g.drawCenteredString(font, machineTitle(), x + W / 2, y + H / 2 - 18, text);
+        g.drawCenteredString(font, buildSummary(), x + W / 2, y + H / 2 - 6, dim);
         // Progress: a thin bar filling across the POST duration.
         final int barW = 120;
         final int bx = x + (W - barW) / 2;

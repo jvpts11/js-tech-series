@@ -132,8 +132,10 @@ public final class PayloadRoundTripGameTests {
 
     @GameTest(template = ARENA)
     public static void firmware_stateRoundTrips(final GameTestHelper helper) {
-        roundTrip(helper, FirmwareStatePayload.STREAM_CODEC, new FirmwareStatePayload(HOST, 2, "Integra Apex 7 4790K",
-                4000, 16384, 0, -1,
+        roundTrip(helper, FirmwareStatePayload.STREAM_CODEC, new FirmwareStatePayload(HOST, 2,
+                new FirmwareStatePayload.Machine("RENDER-01", "Integra Apex 7 4790K", 4, 4000, "x86-64", 64,
+                        "MF ATX Standard Motherboard", 16384, 2, 4, "Visara Vertex GTX 780 Ti", 1, 2, "Standard"),
+                0, -1,
                 List.of(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_DISK, 0L, "jsc:frames_11",
                                 "Vaultis Swift SSD 500 GB", "Frames 11", true, 0),
                         new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, 123L, "jsc:ubuntu",

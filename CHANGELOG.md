@@ -27,6 +27,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Changed
+- The power-on self-test and the firmware's hardware page now show the machine that is actually there: the name its
+  owner gave it, the processor by model with its cores and its architecture, the memory in megabytes with the slots
+  it fills, the board, the video card, and the monitors really linked rather than a "connected" that was always
+  true. No screen inside the fiction names the mod any more: the maker is JSC Technologies and the firmware version
+  comes from one place.
 - Putting a system on a disk is now the machine's work rather than the screen's. It takes as long as the system is
   big and the medium is slow, on the same rule a program's setup follows, where it used to be three and a half
   seconds for every system on every machine. Closing the monitor no longer throws the install away: it carries on,

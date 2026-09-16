@@ -595,13 +595,33 @@ public class FirmwareScreen extends Screen {
     private void renderHardwareLines(final GuiGraphics g, final int x, final int y, final int lh,
                                      final int keyColor, final int valueColor, final int dimColor) {
         int ty = y;
-        final String cpu = state == null ? "detecting ..." : state.cpuLabel();
-        final String ram = state == null ? "detecting ..." : state.ramMb() + " it";
+        final FirmwareStatePayload.Machine machine = state == null ? null : state.machine();
+        final String detecting = "detecting ...";
+        /*
+         * What the firmware found, in its own words: the processor by model with its architecture beside it,
+         * memory in megabytes with the slots it fills, the board, the video card, and the monitors really
+         * linked out of the board's ports. This page used to say "connected" whether one was or not.
+         */
+        final String cpu = machine == null || machine.cpuName().isEmpty() ? detecting : machine.cpuName();
+        final String arch = machine == null || !machine.hasCpu() ? detecting
+                : machine.cpuArch() + "  (" + machine.cpuBits() + "-bit)";
+        final String cores = machine == null || !machine.hasCpu() ? detecting
+                : machine.cores() + " @ " + machine.cpuMhz() + " MHz";
+        final String ram = machine == null ? detecting
+                : machine.ramMb() + " MB  (" + machine.ramModules() + " of " + machine.ramSlots() + " slots)";
+        final String video = machine == null || machine.gpuName().isEmpty() ? "none" : machine.gpuName();
+        final String board = machine == null || machine.boardName().isEmpty() ? detecting : machine.boardName();
+        final String monitors = machine == null ? detecting
+                : machine.monitors() + " of " + machine.ports() + " ports linked";
         final String[][] kv = {
                 {"Processor", cpu},
+                {"Architecture", arch},
+                {"Cores", cores},
                 {"Memory", ram},
+                {"Video", video},
+                {"Board", board},
                 {"Hardware Era", eraLabel()},
-                {"Monitor", "connected"},
+                {"Monitors", monitors},
                 {"Boot Disk", state == null || state.bootSlot() < 0 ? "automatic" : "Disk " + state.bootSlot()},
                 {"Install Target", state == null || state.installTargetSlot() < 0 ? "no disk" : "Disk " + state.installTargetSlot()},
         };

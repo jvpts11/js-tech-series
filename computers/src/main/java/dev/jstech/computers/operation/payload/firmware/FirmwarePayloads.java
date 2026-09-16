@@ -12,6 +12,8 @@ import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
+import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.operation.payload.OpenPostPayload;
 import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
 import dev.jstech.computers.operation.payload.PostCompletePayload;
@@ -148,11 +150,57 @@ public final class FirmwarePayloads {
                     drive + (eraOk ? "" : " - " + eraName(os.minEra()) + " era or newer"), eraOk,
                     os.installMode().id()));
         }
-        final int cpuMhz = computer.maxCpuMhz();
-        final String cpuLabel = cpuMhz > 0 ? cpuMhz + " MHz" : "not detected";
-        final int ramMb = (int) Math.min(Integer.MAX_VALUE, computer.ramBuffer());
-        return new FirmwareStatePayload(pos, era.id(), cpuLabel, cpuMhz, ramMb, computer.bootDiskSlot(),
+        return new FirmwareStatePayload(pos, era.id(), machineOf(level, computer, pos), computer.bootDiskSlot(),
                 computer.defaultInstallSlot(), entries, raidInfoOf(level, computer));
+    }
+
+    /**
+     * What the firmware found when it powered the machine on, read off the parts rather than off the block.
+     *
+     * <p>A self-test reads out what is in the machine, so it has to be asked of the machine: the processor by its
+     * own model with its cores and its architecture, the memory counted over the modules, the board, the video
+     * card, and the monitors that are really linked rather than a "connected" that was always true.
+     */
+    private static FirmwareStatePayload.Machine machineOf(final ServerLevel level, final IOsHost computer,
+                                                          final BlockPos pos) {
+        if (!(computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine)) {
+            return FirmwareStatePayload.Machine.NONE;
+        }
+        final HardwareEra era = computer.displayEra();
+        final ComputerBuild build = machine.currentBuild();
+        final CpuSpec cpu = build == null || build.cpus().isEmpty() ? null : build.cpus().getFirst();
+        String cpuName = "";
+        String boardName = "";
+        String gpuName = "";
+        final net.neoforged.neoforge.items.ItemStackHandler hardware = machine.getHardware();
+        for (int i = 0; i < hardware.getSlots(); i++) {
+            final ItemStack part = hardware.getStackInSlot(i);
+            if (part.isEmpty()) {
+                continue;
+            }
+            if (part.getItem() instanceof dev.jstech.computers.item.CpuItem && cpuName.isEmpty()) {
+                cpuName = part.getHoverName().getString();
+            } else if (part.getItem() instanceof dev.jstech.computers.item.MotherboardItem) {
+                boardName = part.getHoverName().getString();
+            } else if (part.getItem() instanceof dev.jstech.computers.item.GpuItem && gpuName.isEmpty()) {
+                gpuName = part.getHoverName().getString();
+            }
+        }
+        int monitors = 0;
+        for (final long endpoint : computer.linkedEndpoints()) {
+            if (level.getBlockEntity(BlockPos.of(endpoint))
+                    instanceof dev.jstech.computers.blockentity.MonitorBlockEntity) {
+                monitors++;
+            }
+        }
+        final String name = computer.customName().isEmpty()
+                ? level.getBlockState(pos).getBlock().getName().getString() : computer.customName();
+        return new FirmwareStatePayload.Machine(name, cpuName, cpu == null ? 0 : cpu.cores(),
+                cpu == null ? 0 : cpu.freqMhz(),
+                cpu == null ? "" : cpu.architecture().name(), cpu == null ? 0 : cpu.architecture().bits(),
+                boardName, (int) Math.min(Integer.MAX_VALUE, computer.ramTotalMb()),
+                build == null ? 0 : build.rams().size(), machine.boardRamSlots(), gpuName, monitors,
+                machine.maxEndpoints(), era == null ? "" : dev.jstech.computers.item.HardwareTooltip.label(era));
     }
 
     /**

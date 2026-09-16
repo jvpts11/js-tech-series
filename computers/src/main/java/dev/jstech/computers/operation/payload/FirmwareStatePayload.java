@@ -25,14 +25,50 @@ import java.util.List;
 public record FirmwareStatePayload(
         BlockPos hostPos,
         int eraId,
-        String cpuLabel,
-        int cpuMhz,
-        int ramMb,
+        Machine machine,
         int bootSlot,
         int installTargetSlot,
         List<Entry> entries,
         RaidInfo raid
 ) implements CustomPacketPayload {
+
+    /**
+     * What the firmware found when the machine powered on: the same facts its self-test reads out and its
+     * hardware page lists.
+     *
+     * <p>Read off the parts themselves rather than off the block, so a computer answers with what is seated in
+     * it and not with what kind of computer it is.
+     *
+     * @param name       what the player called the machine, or what kind of machine it is when they called it
+     *                   nothing
+     * @param cpuName    the processor by model
+     * @param cores      how many cores it has
+     * @param cpuMhz     its clock, zero when no processor is seated
+     * @param cpuArch    the architecture by name, "x86-64"; the self-test reads it out on its own and the
+     *                   hardware page puts the word size beside it
+     * @param cpuBits    the architecture's word size
+     * @param boardName  the motherboard by model
+     * @param ramMb      the memory counted over the modules seated
+     * @param ramModules how many modules are in
+     * @param ramSlots   how many the board has
+     * @param gpuName    the video card by model, or empty when the machine draws nothing
+     * @param monitors   how many monitors are really linked, which is not the same as "connected"
+     * @param ports      how many peripheral ports the board offers
+     * @param eraLabel   the hardware generation in words
+     */
+    public record Machine(String name, String cpuName, int cores, int cpuMhz, String cpuArch, int cpuBits,
+                          String boardName, int ramMb, int ramModules, int ramSlots, String gpuName, int monitors,
+                          int ports, String eraLabel) {
+
+        /** A machine nothing could be read from: no parts, or a host that is not a computer. */
+        public static final Machine NONE =
+                new Machine("", "", 0, 0, "", 0, "", 0, 0, 0, "", 0, 0, "");
+
+        /** Whether a processor was found at all, which is what decides that there is a self-test to show. */
+        public boolean hasCpu() {
+            return this.cpuMhz > 0;
+        }
+    }
 
     /**
      * The storage controller the firmware found, if any. A real RAID controller is configured from
@@ -89,9 +125,7 @@ public record FirmwareStatePayload(
     private static void encode(final RegistryFriendlyByteBuf buf, final FirmwareStatePayload p) {
         buf.writeBlockPos(p.hostPos);
         buf.writeVarInt(p.eraId);
-        buf.writeUtf(p.cpuLabel, 48);
-        buf.writeVarInt(p.cpuMhz);
-        buf.writeVarInt(p.ramMb);
+        writeMachine(buf, p.machine);
         buf.writeVarInt(p.bootSlot);
         buf.writeVarInt(p.installTargetSlot);
         buf.writeVarInt(Math.min(p.entries.size(), MAX_ENTRIES));
@@ -121,9 +155,7 @@ public record FirmwareStatePayload(
     private static FirmwareStatePayload decode(final RegistryFriendlyByteBuf buf) {
         final BlockPos pos = buf.readBlockPos();
         final int era = buf.readVarInt();
-        final String cpuLabel = buf.readUtf(48);
-        final int cpuMhz = buf.readVarInt();
-        final int ramMb = buf.readVarInt();
+        final Machine machine = readMachine(buf);
         final int bootSlot = buf.readVarInt();
         final int target = buf.readVarInt();
         final int count = Math.min(buf.readVarInt(), MAX_ENTRIES);
@@ -144,6 +176,29 @@ public record FirmwareStatePayload(
             }
             raid = new RaidInfo(true, mode, members, drives, capacities);
         }
-        return new FirmwareStatePayload(pos, era, cpuLabel, cpuMhz, ramMb, bootSlot, target, entries, raid);
+        return new FirmwareStatePayload(pos, era, machine, bootSlot, target, entries, raid);
+    }
+
+    private static void writeMachine(final RegistryFriendlyByteBuf buf, final Machine m) {
+        buf.writeUtf(m.name(), 48);
+        buf.writeUtf(m.cpuName(), 48);
+        buf.writeVarInt(m.cores());
+        buf.writeVarInt(m.cpuMhz());
+        buf.writeUtf(m.cpuArch(), 32);
+        buf.writeVarInt(m.cpuBits());
+        buf.writeUtf(m.boardName(), 64);
+        buf.writeVarInt(m.ramMb());
+        buf.writeVarInt(m.ramModules());
+        buf.writeVarInt(m.ramSlots());
+        buf.writeUtf(m.gpuName(), 48);
+        buf.writeVarInt(m.monitors());
+        buf.writeVarInt(m.ports());
+        buf.writeUtf(m.eraLabel(), 24);
+    }
+
+    private static Machine readMachine(final RegistryFriendlyByteBuf buf) {
+        return new Machine(buf.readUtf(48), buf.readUtf(48), buf.readVarInt(), buf.readVarInt(), buf.readUtf(32),
+                buf.readVarInt(), buf.readUtf(64), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
+                buf.readUtf(48), buf.readVarInt(), buf.readVarInt(), buf.readUtf(24));
     }
 }
