@@ -46,12 +46,12 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * Shared base for every computer that is a BLOCK (Personal Computer, Mainframe, Crafting Computer, and future ones such as Subframe / Supercomputer / AI Server).
+ * Shared base for every computer that is a BLOCK (Personal Computer, Mainframe, Crafting Computer, and
+ * future ones such as Subframe / Supercomputer / AI Server).
  */
 public abstract class AbstractComputerBlockEntity extends BlockEntity
         implements IPeripheralOwnerSupport, dev.jstech.computers.os.IOsHost {
@@ -79,7 +79,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     /** The client's copy of whether this machine is on a network; the server answers from {@code networkUuid}. */
     private boolean clientNetworked;
 
-    protected final Set<Long> linkedMonitors = new LinkedHashSet<>();
+    private final PeripheralEndpoints peripherals = new PeripheralEndpoints();
 
     /*
      * The OS is no longer stored on the block entity; it lives on the system disk's SYSTEM_OS
@@ -182,7 +182,10 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         }
         final ItemStack boardStack = hardware.getStackInSlot(layout.motherboardSlot());
         if (!(boardStack.getItem() instanceof MotherboardItem motherboard)) {
-            // No board yet, so accept the card so it can be pre-staged; the slot will be inoperative until a board arrives.
+            /*
+             * No board yet, so accept the card so it can be pre-staged; the slot stays inoperative
+             * until a board arrives.
+             */
             return true;
         }
         return card.cardSpec().bus().compatibleWith(motherboard.spec().pcieGeneration());
@@ -1043,7 +1046,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
 
     @Override
     public Set<Long> peripheralEndpoints() {
-        return linkedMonitors;
+        return peripherals.all();
     }
 
     @Override
@@ -1549,10 +1552,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (tag.contains("NodeUuid")) {
             nodeUuid = NodeUuid.fromString(tag.getString("NodeUuid"));
         }
-        linkedMonitors.clear();
-        for (final long monitor : tag.getLongArray("LinkedMonitors")) {
-            linkedMonitors.add(monitor);
-        }
+        peripherals.load(tag);
         bootedDesktopId = tag.contains("BootedDesktop")
                 ? ResourceLocation.tryParse(tag.getString("BootedDesktop")) : null;
         openWindows.clear();
@@ -1618,9 +1618,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
             programs.save(sigmaTag);
             tag.put("Σ#", sigmaTag);
         }
-        if (!linkedMonitors.isEmpty()) {
-            tag.putLongArray("LinkedMonitors", linkedMonitors.stream().mapToLong(Long::longValue).toArray());
-        }
+        peripherals.save(tag);
         /*
          * The console rides on the system disk, so flush it there BEFORE the hardware handler is
          * serialized above, or the write would land on a disk stack that was already copied.
