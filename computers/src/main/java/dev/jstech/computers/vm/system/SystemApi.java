@@ -284,6 +284,7 @@ public final class SystemApi {
         cpu.recordValue(INT, "Mhz");
         cpu.recordValue(INT, "Cores");
         cpu.recordValue(STRING, "Era");
+        cpu.recordValue(STRING, "Architecture");
         return new TypeSpec(MACHINE, "CpuInfo", cpu.members);
     }
 

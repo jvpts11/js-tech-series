@@ -314,12 +314,13 @@ public final class ThisPcApp implements IDesktopApp {
         drivesHeader = page.add(new SectionHeader(() -> "Devices and drives"));
         noDrives = page.add(new Label("No disks installed and no drives linked", Label.Tone.DIM));
         hardwareHeader = page.add(new SectionHeader(() -> "Hardware"));
-        final String[] keys = {"Board", "Processor", "Memory", "Graphics", "Power", "Peripherals", "Build"};
+        final String[] keys = {"Board", "Processor", "Architecture", "Memory", "Graphics", "Power", "Peripherals",
+            "Build"};
         for (int i = 0; i < keys.length; i++) {
             final int line = i;
             hwKeys.add(page.add(new Label(keys[i], Label.Tone.DIM)));
             hwValues.add(page.add(new Label(() -> hardwareValue(line))
-                    .setColor(() -> line == 6 ? (data.machine().buildValid() ? GREEN : AMBER) : 0)));
+                    .setColor(() -> line == keys.length - 1 ? (data.machine().buildValid() ? GREEN : AMBER) : 0)));
         }
         programsHeader = page.add(new SectionHeader(() -> "Installed programs  " + data.installedPrograms().size()));
         noPrograms = page.add(new Label("None. Insert an installer, or run a package manager.", Label.Tone.DIM));
@@ -415,10 +416,11 @@ public final class ThisPcApp implements IDesktopApp {
         return switch (line) {
             case 0 -> m.boardLabel().isEmpty() ? "none" : m.boardLabel();
             case 1 -> m.cpuLabel().isEmpty() ? "none" : (m.cpuCount() > 1 ? m.cpuCount() + " × " : "") + m.cpuLabel();
-            case 2 -> m.ramMb() > 0 ? m.ramMb() + " it" : "none";
-            case 3 -> m.gpuCount() > 0 ? m.gpuCount() + " × " + m.vramMb() + " MB VRAM" : "none";
-            case 4 -> m.psuLabel().isEmpty() ? "none" : m.psuLabel();
-            case 5 -> m.peripherals().isEmpty() ? "none linked" : m.peripherals();
+            case 2 -> m.cpuArch().isEmpty() ? "none" : m.cpuArch();
+            case 3 -> m.ramMb() > 0 ? m.ramMb() + " it" : "none";
+            case 4 -> m.gpuCount() > 0 ? m.gpuCount() + " × " + m.vramMb() + " MB VRAM" : "none";
+            case 5 -> m.psuLabel().isEmpty() ? "none" : m.psuLabel();
+            case 6 -> m.peripherals().isEmpty() ? "none linked" : m.peripherals();
             default -> m.buildValid() ? "OK, the machine comes up" : "not valid";
         };
     }

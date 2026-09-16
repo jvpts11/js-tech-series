@@ -59,9 +59,9 @@ public final class SystemMonitorApp implements IDesktopApp {
     private final Label loadingLabel;
     private final Label nameLabel;
     private final Label osLabel;
-    private final Label[] specGroups = new Label[3];
-    private final Label[] specLabels = new Label[3];
-    private final Label[] specValues = new Label[3];
+    private final Label[] specGroups = new Label[4];
+    private final Label[] specLabels = new Label[4];
+    private final Label[] specValues = new Label[4];
     private final Label memoryHeader;
     private final Label memoryFree;
     private final ListView<RamUse> memList;
@@ -76,9 +76,11 @@ public final class SystemMonitorApp implements IDesktopApp {
         osLabel = root.add(new Label(() -> data == null ? "" : data.osLabel() + "  (" + data.platform() + ")", Label.Tone.DIM)
                 .setAlign(Label.Align.RIGHT));
         spec(0, "Processor", () -> data == null || data.cpuLabel().isEmpty() ? "-" : data.cpuLabel(), () -> cpuClock(data == null ? 0 : data.cpuMhz()));
-        spec(1, "Memory", () -> "RAM", () -> data == null ? "-"
+        // A second processor line with no group of its own, the way a continuation row reads under the one above it.
+        spec(1, "", () -> data == null || data.cpuArch().isEmpty() ? "-" : data.cpuArch(), () -> "");
+        spec(2, "Memory", () -> "RAM", () -> data == null ? "-"
                 : JsTechTheme.fmt(data.ramUsedMb()) + " / " + JsTechTheme.fmt(data.ramMb()) + " MB");
-        spec(2, "Graphics", () -> data != null && data.vramMb() > 0 ? "VRAM" : "no GPU",
+        spec(3, "Graphics", () -> data != null && data.vramMb() > 0 ? "VRAM" : "no GPU",
                 () -> data != null && data.vramMb() > 0 ? JsTechTheme.fmt(data.vramMb()) + " MB" : "-");
         memoryHeader = root.add(new Label("MEMORY", Label.Tone.DIM));
         memoryFree = root.add(new Label(() -> data == null ? ""
@@ -166,7 +168,7 @@ public final class SystemMonitorApp implements IDesktopApp {
             g.fill(px, row, px + pw, row + 1, skin.edge());
         }
         row += 5;
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < specGroups.length; i++) {
             specGroups[i].setVisible(ready);
             specLabels[i].setVisible(ready);
             specValues[i].setVisible(ready);

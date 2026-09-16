@@ -362,6 +362,9 @@ public final class SettingsApp implements IDesktopApp {
         heading("About", x, y, w);
         y += 12;
         y = specRow(x, y, w, "Processor", d.cpuLabel() + " - " + d.cpuMhz() + " MHz");
+        if (!d.cpuArch().isEmpty()) {
+            y = specRow(x, y, w, "Architecture", d.cpuArch());
+        }
         if (d.ramMb() > 0) {
             y = specRow(x, y, w, "Memory", group(d.ramMb()) + " MB");
         }

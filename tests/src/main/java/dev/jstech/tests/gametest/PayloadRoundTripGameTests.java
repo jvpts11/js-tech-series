@@ -66,8 +66,8 @@ public final class PayloadRoundTripGameTests {
     @GameTest(template = ARENA)
     public static void desktop_thisPcRoundTrips(final GameTestHelper helper) {
         final ThisPcPayload.WireMachine machine = new ThisPcPayload.WireMachine("desk", "Personal Computer", "Standard",
-                "Frames 11", 2021, "on CORE", "MF ATX Standard", "Integra Apex 7 4790K", 1, 16384, 3072, 1,
-                "PSU 650G", true, "Monitor");
+                "Frames 11", 2021, "on CORE", "MF ATX Standard", "Integra Apex 7 4790K", 1, "x86-64, 64-bit",
+                16384, 3072, 1, "PSU 650G", true, "Monitor");
         final ThisPcPayload.WireDisk disk = new ThisPcPayload.WireDisk(0, "Vaultis Swift SSD 500 GB", 2000L, 120L, true,
                 "C:\\", 80L, 20L, 20L);
         final ThisPcPayload.WireMedia media = new ThisPcPayload.WireMedia(123L, "D:", "Frames 11 USB", "OS", "FRAMES",

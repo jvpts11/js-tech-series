@@ -278,9 +278,19 @@ public final class DesktopPayloads {
                 st.accent(), st.clock12h(), st.guiScale(), st.brightness(),
                 String.valueOf(st.defaultSaveDrive()), st.removableAutoOpen(), st.themePreset(),
                 st.taskbarCentered(), st.darkMode(),
-                netshare, cpuLabel, computer.maxCpuMhz(),
+                netshare, cpuLabel, computer.maxCpuMhz(), architectureOf(computer),
                 computer.ramTotalMb(), computer.totalVramMb(),
                 osLabel, platform, installed, disks, ledger.usedMb(), ramUses, shares, st.remoteAllowed());
+    }
+
+    /** How the machine's architecture reads on a screen, or empty when it has no processor to read it from. */
+    private static String architectureOf(final dev.jstech.computers.os.IOsHost computer) {
+        if (!(computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine)) {
+            return "";
+        }
+        final dev.jstech.computers.hardware.ComputerBuild build = machine.currentBuild();
+        return build == null || build.cpus().isEmpty() ? ""
+                : dev.jstech.computers.item.HardwareTooltip.architecture(build.cpus().getFirst());
     }
 
     /** The last path segment (after the final {@code /}), or the whole path when it has no slash. */

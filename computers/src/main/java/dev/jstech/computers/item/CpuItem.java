@@ -35,8 +35,12 @@ public class CpuItem extends SpecItem<CpuSpec> {
                 spec.orchestrationCapacity() + " it/t  -  " + spec.tdpWatts() + " W")
                 .withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(Component.literal("Socket " + spec.socket().display()).withStyle(ChatFormatting.DARK_GRAY));
-        // The word size is what an item costs on the era's disks; the player can read the ladder off the chip.
-        tooltip.add(Component.literal(spec.era().bits() + "-bit architecture  -  "
+        /*
+         * The architecture is what decides which programs this chip will run, so it is named rather than left to be
+         * guessed from the era. The word size beside it is what an item costs on that era's disks, so the player can
+         * read the ladder off the chip.
+         */
+        tooltip.add(Component.literal(HardwareTooltip.architecture(spec) + "  -  "
                 + spec.era().mbPerItem() + " MB per item").withStyle(ChatFormatting.DARK_GRAY));
         HardwareTooltip.appendEra(tooltip, spec.era());
     }

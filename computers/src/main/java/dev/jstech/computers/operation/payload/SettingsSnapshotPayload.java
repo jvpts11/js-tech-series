@@ -41,6 +41,7 @@ public record SettingsSnapshotPayload(
         int netshare,
         String cpuLabel,
         int cpuMhz,
+        String cpuArch,
         int ramMb,
         int vramMb,
         String osLabel,
@@ -105,6 +106,7 @@ public record SettingsSnapshotPayload(
         buf.writeVarInt(p.netshare);
         buf.writeUtf(clip(p.cpuLabel, 64), 64);
         buf.writeVarInt(p.cpuMhz);
+        buf.writeUtf(clip(p.cpuArch, 48), 48);
         buf.writeVarInt(p.ramMb);
         buf.writeVarInt(p.vramMb);
         buf.writeUtf(clip(p.osLabel, LABEL_MAX), LABEL_MAX);
@@ -161,6 +163,7 @@ public record SettingsSnapshotPayload(
         final int netshare = buf.readVarInt();
         final String cpuLabel = buf.readUtf(64);
         final int cpuMhz = buf.readVarInt();
+        final String cpuArch = buf.readUtf(48);
         final int ramMb = buf.readVarInt();
         final int vramMb = buf.readVarInt();
         final String osLabel = buf.readUtf(48);
@@ -189,6 +192,7 @@ public record SettingsSnapshotPayload(
         final boolean remoteAllowed = buf.readBoolean();
         return new SettingsSnapshotPayload(pos, wallpaper, computerName, accent, clock12h, guiScale, brightness,
                 saveDrive, removableAutoOpen, themePreset, taskbarCentered, darkMode, netshare, cpuLabel, cpuMhz,
-                ramMb, vramMb, osLabel, platform, installed, disks, ramUsedMb, ramUses, shares, remoteAllowed);
+                cpuArch, ramMb, vramMb, osLabel, platform, installed, disks, ramUsedMb, ramUses, shares,
+                remoteAllowed);
     }
 }

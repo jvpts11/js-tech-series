@@ -169,6 +169,7 @@ public final class ThisPcPayloads {
          */
         String board = "";
         String cpu = "";
+        String architecture = "";
         int cpus = 0;
         int gpus = 0;
         String psu = "";
@@ -182,10 +183,12 @@ public final class ThisPcPayloads {
                 }
                 if (part.getItem() instanceof dev.jstech.computers.item.MotherboardItem) {
                     board = part.getHoverName().getString();
-                } else if (part.getItem() instanceof dev.jstech.computers.item.CpuItem) {
+                } else if (part.getItem() instanceof dev.jstech.computers.item.CpuItem chip) {
                     cpus++;
                     if (cpu.isEmpty()) {
                         cpu = part.getHoverName().getString();
+                        // A machine has one architecture, so the first chip answers for all of them.
+                        architecture = dev.jstech.computers.item.HardwareTooltip.architecture(chip.spec());
                     }
                 } else if (part.getItem() instanceof dev.jstech.computers.item.GpuItem) {
                     gpus++;
@@ -233,7 +236,7 @@ public final class ThisPcPayloads {
         }
         return new ThisPcPayload.WireMachine(computer.customName(), kind,
                 dev.jstech.computers.os.MinSpecTooltip.eraLabel(computer.displayEra()),
-                osLabel, osYear, network == null ? "" : networkLabel(network), board, cpu, cpus,
+                osLabel, osYear, network == null ? "" : networkLabel(network), board, cpu, cpus, architecture,
                 (int) Math.min(Integer.MAX_VALUE, computer.ramBuffer()), computer.totalVramMb(), gpus, psu,
                 valid, joined.toString());
     }

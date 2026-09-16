@@ -31,6 +31,7 @@ final class ComputerCalls {
             made.set("Mhz", cpu.mhz());
             made.set("Cores", cpu.cores());
             made.set("Era", cpu.era());
+            made.set("Architecture", cpu.architecture());
             return made;
         });
         computer(bindings, "Os", (info, call, target, arguments, line) -> {

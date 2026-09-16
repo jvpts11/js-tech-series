@@ -87,6 +87,9 @@ L8: ldstr   ""
     ldloc   9
     ldfld   CpuInfo.Era
     call    string.Concat(string, string) -> string
+    ldloc   9
+    ldfld   CpuInfo.Architecture
+    call    string.Concat(string, string) -> string
     ldloc   10
     ldfld   OsInfo.Id
     call    string.Concat(string, string) -> string

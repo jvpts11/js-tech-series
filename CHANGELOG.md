@@ -7,6 +7,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### Added
+- `Computer.Cpu.Architecture` gives a program the architecture the machine it runs on is built on, written the way a
+  listing names its own, so a program can compare the two.
 - Every mod's jar now carries its licence texts under `META-INF`: the GNU LGPL 3.0 the series is licensed
   under, and the GNU GPL 3.0 it builds on.
 - `Program.DroppedEvents` counts the clicks and watch alerts a program missed because too many of its calls were
@@ -24,6 +26,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A machine now refuses a program built for an architecture its processor does not run, naming both (`A4015`, "built
   for x86-64; this machine is x86"). The 64-bit machines run everything written for the 32-bit ones, as they do in
   life; the earliest machines run only their own.
+- A processor's tooltip now names its architecture, "x86-64, 64-bit", where it used to give the word size alone, and
+  This PC, System Monitor and Settings say what the machine in front of you is built on.
 - A computer now settles whether its installed parts can run it when those parts change, instead of working it out
   again for every machine on every tick.
 - A computer now sends one player only so much in a tick, and whatever is left over goes first on the next one, so
