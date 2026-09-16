@@ -398,37 +398,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public List<ProgramInfo> programs() {
-        final List<ProgramInfo> out = new ArrayList<>();
-        /*
-         * Pre-installed programs the host's platform supports, so an MC-DOS listing does not show the Frames
-         * desktop apps (which are pre-installed only on the Frames platform).
-         */
-        final dev.jstech.computers.os.Platform platform = hostPlatform();
-        for (final dev.jstech.computers.os.ProgramSpec spec : Programs.installed()) {
-            if (platform == null || spec.platforms().contains(platform)) {
-                out.add(new ProgramInfo(spec.commandName(), spec.id().toString()));
-            }
-        }
-        final ComputerConsoleState console = host.console();
-        if (console != null) {
-            for (final String id : console.installed()) {
-                final var program = Programs.get(ResourceLocation.tryParse(id));
-                if (program != null && !program.preinstalled()) {
-                    out.add(new ProgramInfo(program.commandName(), program.id().toString()));
-                }
-            }
-        }
-        return out;
-    }
-
-    /** The platform of the OS installed on the host computer, or {@code null} when it cannot be resolved. */
-    private dev.jstech.computers.os.Platform hostPlatform() {
-        if (host instanceof dev.jstech.computers.os.IOsHost oc) {
-            final dev.jstech.computers.os.OsDef os =
-                    dev.jstech.computers.os.OsRegistry.getOs(oc.installedOsId());
-            return os == null ? null : os.platform();
-        }
-        return null;
+        return installs().programs();
     }
 
     @Override
@@ -644,11 +614,6 @@ public final class ServerCliComputer implements ICliComputer {
         return packages().notices();
     }
 
-    /** Whether the named program is present on this computer (console install, or a Mainframe service flag). */
-    private boolean hasPackage(final dev.jstech.computers.os.ProgramSpec spec) {
-        return packages().has(spec);
-    }
-
     @Override
     public java.util.List<PackageInfo> packagesAvailable() {
         return packages().available();
@@ -692,9 +657,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public boolean hasProgram(final net.minecraft.resources.ResourceLocation id) {
-        final dev.jstech.computers.os.ProgramSpec spec =
-                id == null ? null : OsRegistry.getProgram(id);
-        return spec != null && hasPackage(spec);
+        return installs().has(id);
     }
 
     @Override
@@ -1134,6 +1097,11 @@ public final class ServerCliComputer implements ICliComputer {
     /** The machines of this network that name picks out, by host name, for whoever follows a network path. */
     public Map<String, BlockEntity> machinesNamed(final String name) {
         return matchMachines(name);
+    }
+
+    /** What is installed on this machine, and the installing itself, as this shell reaches it. */
+    private dev.jstech.computers.machine.InstallService installs() {
+        return new dev.jstech.computers.machine.InstallService(host, level, packages());
     }
 
     /** The packages this machine installs over its network's Mirror, as this shell reaches them. */
