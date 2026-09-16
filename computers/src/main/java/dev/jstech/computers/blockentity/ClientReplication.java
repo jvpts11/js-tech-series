@@ -346,25 +346,26 @@ final class ClientReplication {
             }
         }
 
-        // The Gentoo live install's kernel compile gets the same treatment.
+        /*
+         * A step of a hand-built install that takes time gets the same treatment. How long it takes is the
+         * installer's to work out, not this one's: reckoning it again here was one formula in two places, and
+         * the two would have parted the first time either changed.
+         */
         final LiveInstallState live = console.liveInstall();
-        if (live != null && live.kernelCompiling(now)) {
-            final long kernelTotal =
-                    Math.max(5L, Math.min(1800L, 64_000L / Math.max(100, this.machine.maxCpuMhz()))) * 20L;
-            final long left = live.kernelReadyAt() - now;
-            final int pct = (int) Math.max(0, Math.min(99, 100 - left * 100 / Math.max(1L, kernelTotal)));
+        if (live != null && live.busy(now)) {
+            final long left = live.busyUntil() - now;
+            final int pct = (int) Math.max(0, Math.min(99, 100 - left * 100 / Math.max(1L, live.busyTotal())));
             final int quarter = pct / 25;
             if (quarter >= 1 && quarter > this.liveKernelQuarterReported) {
                 this.liveKernelQuarterReported = quarter;
                 wire.add(new DesktopShellOutputPayload.WireLine(
-                        ">>> sys-kernel/gentoo-sources: compiling ... " + pct + "% ("
+                        ">>> " + live.busyWhat() + ": working ... " + pct + "% ("
                                 + (left / 20) + "s left)", dim));
             }
-        } else if (live != null && live.kernelReadyAt() >= 0 && !live.kernelCompiling(now)
+        } else if (live != null && live.busyUntil() >= 0 && !live.busy(now)
                 && this.liveKernelQuarterReported > 0 && this.liveKernelQuarterReported < 4) {
             this.liveKernelQuarterReported = 4;
-            wire.add(new DesktopShellOutputPayload.WireLine(
-                    ">>> sys-kernel/gentoo-sources: compiled. Run 'genkernel all' to build the kernel.", ok));
+            wire.add(new DesktopShellOutputPayload.WireLine(live.busyDone(), ok));
         }
 
         /*

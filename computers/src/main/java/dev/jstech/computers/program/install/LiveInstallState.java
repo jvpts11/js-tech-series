@@ -157,7 +157,16 @@ public final class LiveInstallState {
     private boolean fstab;
     private boolean chroot;
     private boolean synced;           // gentoo: portage tree synced
-    private long kernelReadyAt = -1;  // gentoo: kernel sources compile finishes at this tick
+    /*
+     * Work that takes time. A step that is not instant says how long it will be and leaves the tick it ends
+     * at here; the steps that need it wait, and whoever is watching the console is shown how far along it is.
+     * One piece of work at a time, which is all a shell doing one thing at a time can have.
+     */
+    private long busyUntil = -1;
+    private long busyTotal;
+    private String busyWhat = "";
+    private String busyDone = "";
+    private boolean sources;          // gentoo: the kernel sources are emerged
     private boolean kernelBuilt;      // gentoo: genkernel done
     private boolean bootloader;
     /** Whether the bootloader has been given its list of what to start. */
@@ -272,14 +281,37 @@ public final class LiveInstallState {
         return distro == Distro.ARCH ? "archiso" : "livecd";
     }
 
-    /** The tick the Gentoo kernel sources finish compiling, or -1 when no compile has started. */
-    public long kernelReadyAt() {
-        return kernelReadyAt;
+    /** Whether a step that takes time is still running. */
+    public boolean busy(final long nowTick) {
+        return busyUntil >= 0 && nowTick < busyUntil;
     }
 
-    /** Whether the Gentoo kernel is currently compiling (sources emerged, genkernel not yet possible). */
-    public boolean kernelCompiling(final long nowTick) {
-        return distro == Distro.GENTOO && kernelReadyAt >= 0 && !kernelBuilt && nowTick < kernelReadyAt;
+    /** The tick the work under way finishes at, or -1 when none is. */
+    public long busyUntil() {
+        return busyUntil;
+    }
+
+    /** How long the whole of it takes, so a console watching it can say how far along it is. */
+    public long busyTotal() {
+        return busyTotal;
+    }
+
+    /** What the work under way is, by the name the tool doing it would print. */
+    public String busyWhat() {
+        return busyWhat;
+    }
+
+    /** The line to say when it finishes, which is the tool's own way of handing over to the next step. */
+    public String busyDone() {
+        return busyDone;
+    }
+
+    /** Sets a step running for a while, which is how every step that is not instant says so. */
+    private void takesTime(final long now, final long ticks, final String what, final String done) {
+        busyUntil = now + Math.max(1L, ticks);
+        busyTotal = Math.max(1L, ticks);
+        busyWhat = what;
+        busyDone = done;
     }
 
     /** Whether the partition editor is open, which is a shell of its own with its own one-letter commands. */
@@ -812,7 +844,9 @@ public final class LiveInstallState {
             return Result.fail("!!! The portage tree is empty. Run emerge-webrsync or emerge --sync first.");
         }
         if (line.contains("gentoo-sources")) {
-            kernelReadyAt = env.now() + env.kernelBuildTicks();
+            sources = true;
+            takesTime(env.now(), env.kernelBuildTicks(), "sys-kernel/gentoo-sources",
+                    ">>> sys-kernel/gentoo-sources: compiled. Run 'genkernel all' to build the kernel.");
             return Result.pass(">>> Emerging (1 of 1) sys-kernel/gentoo-sources", ">>> Compiling ... (about "
                     + (env.kernelBuildTicks() / 20) + "s; run genkernel when it finishes)");
         }
@@ -826,11 +860,12 @@ public final class LiveInstallState {
         if (!chroot) {
             return Result.fail("genkernel: this must be run inside the new system (chroot /mnt)");
         }
-        if (kernelReadyAt < 0) {
+        if (!sources) {
             return Result.fail("* ERROR: no kernel sources found. emerge sys-kernel/gentoo-sources first.");
         }
-        if (env.now() < kernelReadyAt) {
-            return Result.fail("* kernel sources are still compiling (" + ((kernelReadyAt - env.now()) / 20) + "s left)");
+        if (busy(env.now())) {
+            return Result.fail("* kernel sources are still compiling ("
+                    + ((busyUntil - env.now()) / 20) + "s left)");
         }
         kernelBuilt = true;
         return Result.pass("* Gentoo Linux Genkernel", "* kernel: >> Compiling 6.8-jsc bzImage ... done", "* Kernel compiled successfully!");
@@ -1053,7 +1088,11 @@ public final class LiveInstallState {
         put(out, "fstab", fstab);
         put(out, "chroot", chroot);
         put(out, "synced", synced);
-        put(out, "kernel_ready_at", Long.toString(kernelReadyAt));
+        put(out, "busy_until", Long.toString(busyUntil));
+        put(out, "busy_total", Long.toString(busyTotal));
+        put(out, "busy_what", busyWhat);
+        put(out, "busy_done", busyDone);
+        put(out, "sources", sources);
         put(out, "kernel_built", kernelBuilt);
         put(out, "bootloader", bootloader);
         put(out, "grub_config", grubConfig);
@@ -1106,7 +1145,11 @@ public final class LiveInstallState {
         st.fstab = flag(saved, "fstab");
         st.chroot = flag(saved, "chroot");
         st.synced = flag(saved, "synced");
-        st.kernelReadyAt = number(saved, "kernel_ready_at", -1L);
+        st.busyUntil = number(saved, "busy_until", -1L);
+        st.busyTotal = number(saved, "busy_total", 0L);
+        st.busyWhat = saved.getOrDefault("busy_what", "");
+        st.busyDone = saved.getOrDefault("busy_done", "");
+        st.sources = flag(saved, "sources");
         st.kernelBuilt = flag(saved, "kernel_built");
         st.bootloader = flag(saved, "bootloader");
         st.grubConfig = flag(saved, "grub_config");
