@@ -1,0 +1,356 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Computers.
+ */
+package dev.jstech.computers.blockentity;
+
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OpenWindow;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsDisks;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.computers.program.install.LiveInstallState;
+import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.tier.HardwareEra;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * The system a computer is running and the session it is running it in: which disk it boots, which
+ * system is on that disk, which desktop this session came up in, and which windows are open on it.
+ *
+ * <p>The session lives on the machine rather than in any client, so whoever opens the monitor next
+ * finds what the last person left, and it survives the game being closed.
+ */
+final class OsSession {
+
+    private final AbstractComputerBlockEntity machine;
+    /*
+     * The windows open on this machine's desktop. Kept here, not in the client, so they belong to the
+     * machine: whoever opens the monitor next sees them, and they survive the game being closed.
+     */
+    private final List<OpenWindow> openWindows = new ArrayList<>();
+    /*
+     * A guided installer that finished writing the system but has not rebooted yet. Persisted: the
+     * machine is still in the installer after a reload, the same way it keeps its booted desktop.
+     */
+    private int pendingInstall = IOsHost.NO_PENDING_INSTALL;
+    /*
+     * The desktop this session booted into. Held apart from what is on disk so that installing or
+     * removing a desktop package takes effect on the next boot, not the next time the monitor is opened.
+     */
+    @Nullable
+    private ResourceLocation bootedDesktop;
+    /* The firmware's preferred boot disk slot (-1 = the first disk with a system). Persisted, so dual boot sticks. */
+    private int bootDisk = -1;
+
+    OsSession(final AbstractComputerBlockEntity machine) {
+        this.machine = machine;
+    }
+
+    int pendingInstallSlot() {
+        return this.pendingInstall;
+    }
+
+    void setPendingInstallSlot(final int slot) {
+        this.pendingInstall = slot;
+        this.machine.setChanged();
+    }
+
+    @Nullable
+    ResourceLocation bootedDesktopId() {
+        return this.bootedDesktop;
+    }
+
+    void setBootedDesktopId(@Nullable final ResourceLocation id) {
+        this.bootedDesktop = id;
+        this.machine.setChanged();
+    }
+
+    List<OpenWindow> openWindows() {
+        return List.copyOf(this.openWindows);
+    }
+
+    void setOpenWindows(final List<OpenWindow> windows) {
+        this.openWindows.clear();
+        for (final OpenWindow window : windows) {
+            if (this.openWindows.size() >= OpenWindow.MAX) {
+                break;
+            }
+            this.openWindows.add(window);
+        }
+        this.machine.setChanged();
+    }
+
+    /** What a cold start and a power cut leave of the session: no desktop, and no installer waiting. */
+    void drop() {
+        this.openWindows.clear();
+        this.pendingInstall = IOsHost.NO_PENDING_INSTALL;
+    }
+
+    /**
+     * The disk this machine boots from: the one chosen in the firmware's boot order when it holds a system,
+     * otherwise the first disk that has one, so a computer with two installed systems dual-boots by choice.
+     */
+    ItemStack systemDisk() {
+        return OsDisks.systemDisk(this.machine.layout().diskCount(), this::diskInSlot, this.bootDisk);
+    }
+
+    /** The disk slot the firmware boots first, or -1 for "the first disk with a system". */
+    int bootDiskSlot() {
+        return this.bootDisk;
+    }
+
+    void setBootDiskSlot(final int slot) {
+        this.bootDisk = slot;
+        this.machine.setChanged();
+        this.machine.markBuildDirty();
+    }
+
+    /**
+     * The desktop environment this computer boots into: the system's bundled one (the Frames editions), else
+     * the first desktop-environment package installed on it (a Linux distribution after {@code apt install
+     * gnome}), else null for a terminal-only or network system.
+     */
+    ResourceLocation installedDesktopId() {
+        return OsDisks.installedDesktopId(installedOs(), this.machine.console());
+    }
+
+    boolean hasOs() {
+        return !systemDisk().isEmpty();
+    }
+
+    /**
+     * The stacks in this computer's disk slots, in slot order. Entries may be empty or hold non-disk items;
+     * callers filter as needed (the "This PC" disk listing reads it).
+     */
+    List<ItemStack> diskStacks() {
+        final int count = this.machine.layout().diskCount();
+        final List<ItemStack> out = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            out.add(diskInSlot(i));
+        }
+        return out;
+    }
+
+    /** The disk stack in that 0-based disk slot, or EMPTY when the slot is out of range. */
+    ItemStack diskInSlot(final int slot) {
+        if (slot < 0 || slot >= this.machine.layout().diskCount()) {
+            return ItemStack.EMPTY;
+        }
+        return this.machine.getHardware().getStackInSlot(this.machine.layout().diskStart() + slot);
+    }
+
+    /** The registry key of the system on the boot disk, or null when no bootable disk is installed. */
+    @Nullable
+    ResourceLocation installedOsId() {
+        final ItemStack disk = systemDisk();
+        return disk.isEmpty() ? null : disk.get(ComputingModule.SYSTEM_OS.get());
+    }
+
+    /** The system on the boot disk, or null when there is no bootable disk or the registry has no entry. */
+    @Nullable
+    OsDef installedOs() {
+        final ResourceLocation osId = installedOsId();
+        return osId != null ? OsRegistry.getOs(osId) : null;
+    }
+
+    /**
+     * What the installed system takes on its disk, in item-equivalents, or zero when there is none. It is
+     * subtracted from the usable capacity, so the system competes for space with stored data.
+     */
+    long reservedByOs() {
+        // One lookup of the system disk serves both the system and the era the system sits on.
+        final ItemStack disk = systemDisk();
+        final ResourceLocation osId = disk.isEmpty() ? null : disk.get(ComputingModule.SYSTEM_OS.get());
+        final OsDef os = osId != null ? OsRegistry.getOs(osId) : null;
+        return os != null ? os.footprintItemsOn(diskEra(disk)) : 0L;
+    }
+
+    /**
+     * Free weight in mB-equivalents on the system disk for a player's files: the disk's capacity less the
+     * items stored, the files already there and the system's own footprint. Zero when no system disk is in.
+     */
+    long systemDiskFreeWeight() {
+        return OsDisks.systemDiskFreeWeight(systemDisk());
+    }
+
+    /**
+     * Free space on the system disk in real MB, for the program-install footprint gate: the free
+     * mB-equivalent weight at what an item costs on that disk's era.
+     */
+    long systemDiskFreeMb() {
+        final ItemStack disk = systemDisk();
+        return OsDisks.systemDiskFreeWeight(disk) * diskEra(disk).mbPerItem() / StorageKey.MB_EQ_PER_ITEM;
+    }
+
+    /**
+     * Installs {@code osId} onto disk slot {@code preferredSlot}, or (-1) onto the default target: a slot
+     * already carrying this system (so a re-install is idempotent), else the first disk without one, else the
+     * first disk. False when the system is unknown, no disk is present, or the footprint does not fit.
+     */
+    boolean installOs(final ResourceLocation osId, final int preferredSlot) {
+        /*
+         * Writing back through setStackInSlot makes onContentsChanged fire (setChanged + build
+         * invalidation); the block update then pushes the new disk state to watching clients.
+         */
+        final boolean installed = OsDisks.installOs(
+                this.machine.layout().diskCount(), this::diskInSlot, this::putDisk, osId, preferredSlot);
+        if (installed) {
+            tellClients();
+        }
+        return installed;
+    }
+
+    /**
+     * Whether the session on screen still stands: an installer running from live medium needs that medium to
+     * still be in a linked drive, and anything else needs a system on the boot disk.
+     */
+    boolean validateOsSession() {
+        final ComputerConsoleState console = this.machine.console();
+        final LiveInstallState live = console == null ? null : console.liveInstall();
+        if (live != null) {
+            if (hasLiveMediumFor(live.distro())) {
+                return true;
+            }
+            console.clearLiveInstall();
+            this.machine.setChanged();
+        }
+        return installedOsId() != null;
+    }
+
+    /**
+     * Formats that disk slot: erases the installed system, every file, the item storage and the privacy split
+     * on it, leaving a blank disk. The boot-order pointer is cleared when it pointed there. Whether a disk was
+     * actually formatted comes back.
+     */
+    boolean formatDisk(final int slot) {
+        // Write back through the handler so onContentsChanged fires (setChanged + build invalidation).
+        final OsDisks.FormatResult result = OsDisks.formatDisk(
+                this.machine.layout().diskCount(), this::diskInSlot, this::putDisk, slot);
+        if (!result.formatted()) {
+            return false;
+        }
+        if (this.bootDisk == slot) {
+            this.bootDisk = -1;
+        }
+        if (result == OsDisks.FormatResult.ERASED_SYSTEM) {
+            this.machine.onSystemErased();
+        }
+        this.machine.setChanged();
+        return true;
+    }
+
+    /**
+     * The disk slot the firmware installs onto by default: the first disk without a system, so a second
+     * system lands beside the first for dual boot, else the first disk; -1 when no disk is installed.
+     */
+    int defaultInstallSlot() {
+        return OsDisks.defaultInstallSlot(this.machine.layout().diskCount(), this::diskInSlot);
+    }
+
+    /** Takes the system off the boot disk. Nothing at all when no bootable disk is installed. */
+    void uninstallOs() {
+        for (int i = 0; i < this.machine.layout().diskCount(); i++) {
+            final ItemStack stack = diskInSlot(i);
+            if (!(stack.getItem() instanceof DiskItem) || stack.get(ComputingModule.SYSTEM_OS.get()) == null) {
+                continue;
+            }
+            /*
+             * Clear the component whether or not the system's id is still registered: if an addon system was
+             * installed and the addon later removed, the id is unknown but the player must still be able to
+             * uninstall it, rather than pull the disk physically and risk losing the files on it.
+             */
+            final ItemStack updated = stack.copy();
+            updated.remove(ComputingModule.SYSTEM_OS.get());
+            putDisk(updated, i);
+            tellClients();
+            return;
+        }
+    }
+
+    void save(final CompoundTag tag) {
+        if (this.bootDisk >= 0) {
+            tag.putInt("BootDisk", this.bootDisk);
+        }
+        /*
+         * The running session survives a reload, exactly like the POST flag: a machine that was left up
+         * with a desktop on screen must come back to that desktop, not fall to a shell.
+         */
+        if (this.bootedDesktop != null) {
+            tag.putString("BootedDesktop", this.bootedDesktop.toString());
+        }
+        if (!this.openWindows.isEmpty()) {
+            tag.put("OpenWindows", OpenWindow.saveAll(this.openWindows));
+        }
+        if (this.pendingInstall != IOsHost.NO_PENDING_INSTALL) {
+            tag.putInt("PendingInstall", this.pendingInstall);
+        }
+    }
+
+    void load(final CompoundTag tag) {
+        this.bootDisk = tag.contains("BootDisk") ? tag.getInt("BootDisk") : -1;
+        this.bootedDesktop = tag.contains("BootedDesktop")
+                ? ResourceLocation.tryParse(tag.getString("BootedDesktop")) : null;
+        this.openWindows.clear();
+        this.openWindows.addAll(OpenWindow.loadAll(tag.getList("OpenWindows", Tag.TAG_COMPOUND)));
+        this.pendingInstall = tag.contains("PendingInstall")
+                ? tag.getInt("PendingInstall") : IOsHost.NO_PENDING_INSTALL;
+    }
+
+    /** Puts a disk stack back in its slot through the handler, so the machine hears the change. */
+    private void putDisk(final ItemStack stack, final int slot) {
+        this.machine.getHardware().setStackInSlot(this.machine.layout().diskStart() + slot, stack);
+    }
+
+    /** The disks changed under the players watching this block, who are drawing what is in them. */
+    private void tellClients() {
+        final Level level = this.machine.getLevel();
+        if (level == null) {
+            return;
+        }
+        final BlockPos pos = this.machine.getBlockPos();
+        level.sendBlockUpdated(pos, this.machine.getBlockState(), this.machine.getBlockState(),
+                Block.UPDATE_CLIENTS);
+    }
+
+    /** Whether a linked drive still holds the live installer medium for that distribution. */
+    private boolean hasLiveMediumFor(final LiveInstallState.Distro distro) {
+        final Level level = this.machine.getLevel();
+        if (level == null) {
+            return true; // not resolvable right now; do not kill the session over a missing level
+        }
+        final String wanted = distro == LiveInstallState.Distro.ARCH ? "arch" : "gentoo";
+        for (final long endpoint : this.machine.linkedEndpoints()) {
+            if (level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader
+                    && reader.insertedKind() == MediaKind.OS_INSTALL
+                    && reader.insertedPayload() != null
+                    && wanted.equals(reader.insertedPayload().getPath())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** The era a disk was made for, which sets what an item and a system image cost on it; standard for none. */
+    private static HardwareEra diskEra(final ItemStack disk) {
+        return disk.getItem() instanceof DiskItem item ? item.spec().era() : HardwareEra.STANDARD;
+    }
+}

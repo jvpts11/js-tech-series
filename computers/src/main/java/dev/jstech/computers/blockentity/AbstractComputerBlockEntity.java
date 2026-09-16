@@ -19,7 +19,6 @@ import dev.jstech.computers.item.PsuItem;
 import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
-import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
@@ -62,6 +61,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     private final ClientReplication replication = new ClientReplication(this);
 
     private final PeripheralEndpoints peripherals = new PeripheralEndpoints();
+
+    private final OsSession session = new OsSession(this);
 
     /*
      * The OS is no longer stored on the block entity; it lives on the system disk's SYSTEM_OS
@@ -226,10 +227,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         power.toggleAutoStart(buildValid());
     }
 
-    /* What a cold start and a power cut leave of the session: no desktop, and no installer waiting. */
     private void endSession() {
-        openWindows.clear();
-        pendingInstallSlot = NO_PENDING_INSTALL;
+        session.drop();
     }
 
     /** Whether the next monitor use should play the power-on self-test before booting. */
@@ -241,48 +240,26 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         power.setNeedsPost(value);
     }
 
-    /*
-     * A guided installer that finished writing the system but has not rebooted yet. Persisted: the
-     * machine is still in the installer after a reload, the same way it keeps its booted desktop.
-     */
-    private int pendingInstallSlot = NO_PENDING_INSTALL;
-
     @Override
     public int pendingInstallSlot() {
-        return pendingInstallSlot;
+        return session.pendingInstallSlot();
     }
 
     @Override
     public void setPendingInstallSlot(final int slot) {
-        this.pendingInstallSlot = slot;
-        setChanged();
+        session.setPendingInstallSlot(slot);
     }
-
-    /*
-     * The desktop this session booted into. Held apart from what is on disk so that installing or
-     * removing a desktop package takes effect on the next boot, not the next time the monitor is opened.
-     */
-    @Nullable
-    private ResourceLocation bootedDesktopId;
 
     @Override
     @Nullable
     public ResourceLocation bootedDesktopId() {
-        return bootedDesktopId;
+        return session.bootedDesktopId();
     }
 
     @Override
     public void setBootedDesktopId(@Nullable final ResourceLocation id) {
-        this.bootedDesktopId = id;
-        setChanged();
+        session.setBootedDesktopId(id);
     }
-
-    /*
-     * The windows open on this machine's desktop. Kept here, not in the client, so they belong to the
-     * machine: whoever opens the monitor next sees them, and they survive the game being closed.
-     */
-    private final java.util.List<dev.jstech.computers.os.OpenWindow> openWindows =
-            new java.util.ArrayList<>();
 
     /*
      * The recipe drafts the Pattern Studio edits. Machine state like the windows: a draft half laid out when
@@ -298,19 +275,12 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
 
     @Override
     public java.util.List<dev.jstech.computers.os.OpenWindow> openWindows() {
-        return java.util.List.copyOf(openWindows);
+        return session.openWindows();
     }
 
     @Override
     public void setOpenWindows(final java.util.List<dev.jstech.computers.os.OpenWindow> windows) {
-        openWindows.clear();
-        for (final dev.jstech.computers.os.OpenWindow window : windows) {
-            if (openWindows.size() >= dev.jstech.computers.os.OpenWindow.MAX) {
-                break;
-            }
-            openWindows.add(window);
-        }
-        setChanged();
+        session.setOpenWindows(windows);
     }
 
     public long capacity() {
@@ -382,14 +352,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * mB-equivalent weight ({@link #systemDiskFreeWeight()}) at what an item costs on that disk's era.
      */
     public long systemDiskFreeMb() {
-        final ItemStack disk = systemDisk();
-        return dev.jstech.computers.os.OsDisks.systemDiskFreeWeight(disk)
-                * diskEra(disk).mbPerItem() / StorageKey.MB_EQ_PER_ITEM;
-    }
-
-    /** The era a disk was made for, which sets what an item and a system image cost on it; standard for no disk. */
-    protected static HardwareEra diskEra(final ItemStack disk) {
-        return disk.getItem() instanceof DiskItem item ? item.spec().era() : HardwareEra.STANDARD;
+        return session.systemDiskFreeMb();
     }
 
     public int installedDisks() {
@@ -465,32 +428,18 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * <p>The system disk is defined as the first disk slot (lowest index) holding a
      * {@link DiskItem} with a {@code SYSTEM_OS} component that maps to a known {@link OsDef}.
      */
-    // The firmware's preferred boot disk slot (-1 = the first disk with a system). Persisted, so dual boot sticks.
-    private int bootDiskSlot = -1;
-
     public ItemStack systemDisk() {
-        /*
-         * The preferred boot disk (chosen in the firmware's boot order) wins when it holds a system; otherwise
-         * the first disk with a system boots, so a computer with two installed OSes dual-boots by choice.
-         */
-        return dev.jstech.computers.os.OsDisks.systemDisk(
-                layout().diskCount(), this::diskInSlot, bootDiskSlot);
-    }
-
-    private static boolean hasSystem(final ItemStack disk) {
-        return dev.jstech.computers.os.OsDisks.hasSystem(disk);
+        return session.systemDisk();
     }
 
     /** The disk slot index the firmware boots first, or {@code -1} for "the first disk with a system". */
     public int bootDiskSlot() {
-        return bootDiskSlot;
+        return session.bootDiskSlot();
     }
 
     /** Sets the preferred boot disk slot ({@code -1} = automatic) and marks the computer dirty. */
     public void setBootDiskSlot(final int slot) {
-        this.bootDiskSlot = slot;
-        setChanged();
-        hardware.markDirty();
+        session.setBootDiskSlot(slot);
     }
 
     /**
@@ -502,12 +451,11 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * else null (a TTY-only or network OS).
      */
     public ResourceLocation installedDesktopId() {
-        return dev.jstech.computers.os.OsDisks.installedDesktopId(
-                installedOs(), console());
+        return session.installedDesktopId();
     }
 
     public boolean hasOs() {
-        return !systemDisk().isEmpty();
+        return session.hasOs();
     }
 
     /**
@@ -515,19 +463,12 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * non-disk items; callers filter as needed (used by the "This PC" disk listing).
      */
     public java.util.List<ItemStack> diskStacks() {
-        final java.util.List<ItemStack> out = new java.util.ArrayList<>(layout().diskCount());
-        for (int i = 0; i < layout().diskCount(); i++) {
-            out.add(getHardware().getStackInSlot(layout().diskStart() + i));
-        }
-        return out;
+        return session.diskStacks();
     }
 
     /** The disk stack in the given 0-based disk slot (for renaming a specific installed disk), or EMPTY. */
     public ItemStack diskInSlot(final int slot) {
-        if (slot < 0 || slot >= layout().diskCount()) {
-            return ItemStack.EMPTY;
-        }
-        return getHardware().getStackInSlot(layout().diskStart() + slot);
+        return session.diskInSlot(slot);
     }
 
     /**
@@ -536,8 +477,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
     @Nullable
     public ResourceLocation installedOsId() {
-        final ItemStack disk = systemDisk();
-        return disk.isEmpty() ? null : disk.get(ComputingModule.SYSTEM_OS.get());
+        return session.installedOsId();
     }
 
     /**
@@ -546,8 +486,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
     @Nullable
     public OsDef installedOs() {
-        final ResourceLocation osId = installedOsId();
-        return osId != null ? OsRegistry.getOs(osId) : null;
+        return session.installedOs();
     }
 
     /**
@@ -556,11 +495,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * space alongside stored data.
      */
     public long reservedByOs() {
-        // One lookup of the system disk serves both the system and the era the system sits on.
-        final ItemStack disk = systemDisk();
-        final ResourceLocation osId = disk.isEmpty() ? null : disk.get(ComputingModule.SYSTEM_OS.get());
-        final OsDef os = osId != null ? OsRegistry.getOs(osId) : null;
-        return os != null ? os.footprintItemsOn(diskEra(disk)) : 0L;
+        return session.reservedByOs();
     }
 
     /**
@@ -569,7 +504,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * system disk is present.
      */
     public long systemDiskFreeWeight() {
-        return dev.jstech.computers.os.OsDisks.systemDiskFreeWeight(systemDisk());
+        return session.systemDiskFreeWeight();
     }
 
     /**
@@ -728,7 +663,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         final net.minecraft.resources.ResourceLocation rl =
                 net.minecraft.resources.ResourceLocation.tryParse(programId);
         final dev.jstech.computers.os.ProgramSpec spec =
-                rl == null ? null : dev.jstech.computers.os.OsRegistry.getProgram(rl);
+                rl == null ? null : OsRegistry.getProgram(rl);
         return spec != null ? spec.commandName()
                 : (programId.contains(":") ? programId.substring(programId.indexOf(':') + 1) : programId);
     }
@@ -740,39 +675,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * installer shell.
      */
     public boolean validateOsSession() {
-        final dev.jstech.computers.program.ComputerConsoleState console = console();
-        final dev.jstech.computers.program.install.LiveInstallState live =
-                console == null ? null : console.liveInstall();
-        if (live != null) {
-            if (hasLiveMediumFor(live.distro())) {
-                return true;
-            }
-            console.clearLiveInstall();
-            setChanged();
-        }
-        return installedOsId() != null;
-    }
-
-    /** Whether a linked drive still holds the live/source installer medium for {@code distro}. */
-    private boolean hasLiveMediumFor(
-            final dev.jstech.computers.program.install.LiveInstallState.Distro distro) {
-        final net.minecraft.world.level.Level level = getLevel();
-        if (level == null) {
-            return true; // not resolvable right now; do not kill the session over a missing level
-        }
-        final String wanted = distro
-                == dev.jstech.computers.program.install.LiveInstallState.Distro.ARCH
-                ? "arch" : "gentoo";
-        for (final long endpoint : linkedEndpoints()) {
-            if (level.getBlockEntity(net.minecraft.core.BlockPos.of(endpoint))
-                    instanceof dev.jstech.computers.os.media.MediaReaderBlockEntity reader
-                    && reader.insertedKind() == dev.jstech.computers.os.media.MediaKind.OS_INSTALL
-                    && reader.insertedPayload() != null
-                    && wanted.equals(reader.insertedPayload().getPath())) {
-                return true;
-            }
-        }
-        return false;
+        return session.validateOsSession();
     }
 
     /**
@@ -781,22 +684,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * Returns whether a disk was actually formatted.
      */
     public boolean formatDisk(final int slot) {
-        // Write back through the handler so onContentsChanged fires (setChanged + build invalidation).
-        final dev.jstech.computers.os.OsDisks.FormatResult result =
-                dev.jstech.computers.os.OsDisks.formatDisk(
-                        layout().diskCount(), this::diskInSlot,
-                        (stack, s) -> getHardware().setStackInSlot(layout().diskStart() + s, stack), slot);
-        if (!result.formatted()) {
-            return false;
-        }
-        if (bootDiskSlot == slot) {
-            bootDiskSlot = -1;
-        }
-        if (result == dev.jstech.computers.os.OsDisks.FormatResult.ERASED_SYSTEM) {
-            onSystemErased();
-        }
-        setChanged();
-        return true;
+        return session.formatDisk(slot);
     }
 
     /**
@@ -816,8 +704,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * lands beside the first for dual boot), else the first disk; {@code -1} when no disk is installed.
      */
     public int defaultInstallSlot() {
-        return dev.jstech.computers.os.OsDisks.defaultInstallSlot(
-                layout().diskCount(), this::diskInSlot);
+        return session.defaultInstallSlot();
     }
 
     /**
@@ -826,48 +713,14 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * the first disk. Returns false when the OS is unknown, no disk is present, or the footprint does not fit.
      */
     public boolean installOs(final ResourceLocation osId, final int preferredSlot) {
-        /*
-         * Writing back through setStackInSlot makes onContentsChanged fire (setChanged + build
-         * invalidation); the block update then pushes the new disk state to watching clients.
-         */
-        final boolean installed = dev.jstech.computers.os.OsDisks.installOs(
-                layout().diskCount(), this::diskInSlot,
-                (stack, s) -> getHardware().setStackInSlot(layout().diskStart() + s, stack),
-                osId, preferredSlot);
-        if (installed && level != null) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
-                    Block.UPDATE_CLIENTS);
-        }
-        return installed;
+        return session.installOs(osId, preferredSlot);
     }
 
     /**
      * Removes the OS from the system disk. A no-op when no bootable disk is installed.
      */
     public void uninstallOs() {
-        for (int i = 0; i < layout().diskCount(); i++) {
-            final ItemStack stack = getHardware().getStackInSlot(layout().diskStart() + i);
-            if (!(stack.getItem() instanceof DiskItem)) {
-                continue;
-            }
-            final ResourceLocation osId = stack.get(ComputingModule.SYSTEM_OS.get());
-            if (osId == null) {
-                continue;
-            }
-            /*
-             * Clear the component regardless of whether the OS id is still registered: if an addon OS was
-             * installed and the addon later removed, the id is unknown but the player must still be able to
-             * uninstall it (otherwise they would have to physically pull the disk and risk losing its files).
-             */
-            final ItemStack updated = stack.copy();
-            updated.remove(ComputingModule.SYSTEM_OS.get());
-            getHardware().setStackInSlot(layout().diskStart() + i, updated);
-            if (level != null) {
-                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
-                        Block.UPDATE_CLIENTS);
-            }
-            return;
-        }
+        session.uninstallOs();
     }
 
     /*
@@ -1195,16 +1048,10 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         super.loadAdditional(tag, registries);
         hardware.load(tag, registries, hardwareNbtKey());
         power.load(tag);
-        bootDiskSlot = tag.contains("BootDisk") ? tag.getInt("BootDisk") : -1;
+        session.load(tag);
         computerName = tag.getString("ComputerName");
         attachment.load(tag);
         peripherals.load(tag);
-        bootedDesktopId = tag.contains("BootedDesktop")
-                ? ResourceLocation.tryParse(tag.getString("BootedDesktop")) : null;
-        openWindows.clear();
-        openWindows.addAll(dev.jstech.computers.os.OpenWindow.loadAll(
-                tag.getList("OpenWindows", net.minecraft.nbt.Tag.TAG_COMPOUND)));
-        pendingInstallSlot = tag.contains("PendingInstall") ? tag.getInt("PendingInstall") : NO_PENDING_INSTALL;
         if (tag.contains("Studio")) {
             studio.load(tag.getCompound("Studio"), registries);
         }
@@ -1233,26 +1080,11 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         flushConsoleToDisk();
         hardware.save(tag, registries, hardwareNbtKey());
         power.save(tag);
-        if (bootDiskSlot >= 0) {
-            tag.putInt("BootDisk", bootDiskSlot);
-        }
+        session.save(tag);
         if (!computerName.isEmpty()) {
             tag.putString("ComputerName", computerName);
         }
         attachment.save(tag);
-        /*
-         * The running session survives a reload, exactly like the POST flag: a machine that was left up
-         * with a desktop on screen must come back to that desktop, not fall to a shell.
-         */
-        if (bootedDesktopId != null) {
-            tag.putString("BootedDesktop", bootedDesktopId.toString());
-        }
-        if (!openWindows.isEmpty()) {
-            tag.put("OpenWindows", dev.jstech.computers.os.OpenWindow.saveAll(openWindows));
-        }
-        if (pendingInstallSlot != NO_PENDING_INSTALL) {
-            tag.putInt("PendingInstall", pendingInstallSlot);
-        }
         final CompoundTag studioTag = new CompoundTag();
         studio.save(studioTag, registries);
         tag.put("Studio", studioTag);
