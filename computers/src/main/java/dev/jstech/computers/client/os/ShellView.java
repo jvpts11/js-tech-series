@@ -104,6 +104,11 @@ public final class ShellView extends Panel {
             if (systemName != null && !systemName.isEmpty()) {
                 push(systemName, colorOf(CliStyle.ACCENT));
                 push(Branding.systemCopyright(systemName, era()), colorOf(CliStyle.DIM));
+                /*
+                 * The way this family told a player where to start, in its own words. A line nobody ever printed
+                 * would teach the same thing and sound like nothing; this one does both.
+                 */
+                push("Type HELP for a list of commands", colorOf(CliStyle.DIM));
             }
         }
         this.output = add(new ListView<Line>(() -> this.wrapCache, LINE_H, this::renderLine));
