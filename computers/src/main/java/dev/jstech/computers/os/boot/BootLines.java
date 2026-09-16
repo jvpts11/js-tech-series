@@ -8,7 +8,6 @@
 package dev.jstech.computers.os.boot;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.FirmwareKind;
@@ -46,7 +45,7 @@ public final class BootLines {
     }
 
     /** The sequence this machine's system shows while it comes up. */
-    public static BootSequence forMachine(final AbstractComputerBlockEntity machine) {
+    public static BootSequence forMachine(final IOsHost machine) {
         final OsDef system = machine.installedOs();
         if (system == null) {
             return BootSequence.NONE;
@@ -74,7 +73,7 @@ public final class BootLines {
      * by name instead of showing the maker's, and it does it inside the same wait, so a first start is no longer
      * than any other.
      */
-    private static BootSequence frames(final AbstractComputerBlockEntity machine, final OsDef system) {
+    private static BootSequence frames(final IOsHost machine, final OsDef system) {
         if (firstTime(machine, system)) {
             return new BootSequence.Builder()
                     .title("Hi.")
@@ -89,7 +88,7 @@ public final class BootLines {
     }
 
     /** Whether this is the newest edition coming up for the first time, which is the one start that greets. */
-    private static boolean firstTime(final AbstractComputerBlockEntity machine, final OsDef system) {
+    private static boolean firstTime(final IOsHost machine, final OsDef system) {
         return "frames_11".equals(system.id().getPath()) && !machine.systemWelcome().seen();
     }
 
@@ -148,7 +147,7 @@ public final class BootLines {
      * dark where it stood. The later ones close their programs first and say so, so they are the ones with
      * something to show.
      */
-    public static BootSequence shutdownFor(final AbstractComputerBlockEntity machine) {
+    public static BootSequence shutdownFor(final IOsHost machine) {
         final OsDef system = machine.installedOs();
         if (system == null || system.platform() != Platform.FRAMES) {
             return BootSequence.NONE;
@@ -167,7 +166,7 @@ public final class BootLines {
      * actually has: a network target only when a cable reaches a Mainframe, a mirror only when that Mainframe
      * runs one, a display manager only when a desktop is installed.
      */
-    private static BootSequence linux(final AbstractComputerBlockEntity machine, final OsDef system) {
+    private static BootSequence linux(final IOsHost machine, final OsDef system) {
         final boolean openRc = system.packageManager() == PackageManagerKind.EMERGE;
         final String arch = kernelArch(machine);
         final BootSequence.Builder out = new BootSequence.Builder()
@@ -195,7 +194,7 @@ public final class BootLines {
             out.line("Started Journal Service.", "OK");
             out.line("Reached target Local File Systems.", "OK");
         }
-        final NetworkReadService network = machine.services().network();
+        final NetworkReadService network = machine.networkService();
         if (network != null && network.online()) {
             out.line("Reached target Network is Online.", "OK");
         }
@@ -208,7 +207,7 @@ public final class BootLines {
     }
 
     /** What a kernel of this machine calls the architecture it is running on. */
-    private static String kernelArch(final AbstractComputerBlockEntity machine) {
+    private static String kernelArch(final IOsHost machine) {
         final ComputerBuild build = machine.currentBuild();
         if (build == null || build.cpus().isEmpty()) {
             return "x86_64";
@@ -218,7 +217,7 @@ public final class BootLines {
     }
 
     /** The processor as a kernel names it: its model and how many cores it has. */
-    private static String cpuName(final AbstractComputerBlockEntity machine) {
+    private static String cpuName(final IOsHost machine) {
         final ComputerBuild build = machine.currentBuild();
         if (build == null || build.cpus().isEmpty()) {
             return "unknown";
@@ -231,7 +230,7 @@ public final class BootLines {
      * The earliest machines: memory counted above the line, then a letter for every drive that is in, then the
      * network only when a cable actually reaches one.
      */
-    private static BootSequence dos(final AbstractComputerBlockEntity machine, final OsDef system,
+    private static BootSequence dos(final IOsHost machine, final OsDef system,
                                     final String copyright) {
         final BootSequence.Builder out = new BootSequence.Builder()
                 .title("Starting " + system.displayName() + "...")
@@ -258,12 +257,12 @@ public final class BootLines {
      * The network machines: every step is a question put to the network, and an unanswered one says so rather
      * than opening on a list with nothing in it and no reason given.
      */
-    private static BootSequence net(final AbstractComputerBlockEntity machine, final OsDef system,
+    private static BootSequence net(final IOsHost machine, final OsDef system,
                                     final String copyright) {
         final BootSequence.Builder out = new BootSequence.Builder()
                 .title(system.displayName() + " 1.0")
                 .subtitle(copyright);
-        final NetworkReadService network = machine.services().network();
+        final NetworkReadService network = machine.networkService();
         final ICliComputer.NetSummary summary = network == null ? null : network.summary();
         if (summary == null || !summary.linked()) {
             out.line("network link", "down");
@@ -290,8 +289,8 @@ public final class BootLines {
     }
 
     /** The network this machine is on, by the name it answers to, or nothing when no cable reaches one. */
-    private static String networkName(final AbstractComputerBlockEntity machine) {
-        final NetworkReadService network = machine.services().network();
+    private static String networkName(final IOsHost machine) {
+        final NetworkReadService network = machine.networkService();
         if (network == null || !network.online()) {
             return "";
         }

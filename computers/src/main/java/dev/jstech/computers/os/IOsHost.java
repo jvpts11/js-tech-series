@@ -265,6 +265,17 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
         return false;
     }
 
+    /**
+     * The data network as what runs on this machine reads it, or nothing when the machine has nobody to ask.
+     *
+     * <p>Nothing is not the same as a network that is down, and whoever reads this owes the difference: a
+     * machine with nobody to ask has no grounds for a claim about the network either way.
+     */
+    @Nullable
+    default dev.jstech.computers.machine.NetworkReadService networkService() {
+        return null;
+    }
+
     /** The player-given machine name, or an empty string. */
     String customName();
 

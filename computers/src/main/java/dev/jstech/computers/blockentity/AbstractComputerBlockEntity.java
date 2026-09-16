@@ -889,6 +889,12 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return host.services();
     }
 
+    /** The data network as what runs on this machine reads it. */
+    @Override
+    public dev.jstech.computers.machine.NetworkReadService networkService() {
+        return host.services().network();
+    }
+
     /**
      * How much of that the network holds, for the programs watching it.
      *
