@@ -10,10 +10,7 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
-import dev.jstech.computers.hardware.DiskSpec;
-import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.FormFactor;
-import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.IExpansionCardItem;
@@ -54,13 +51,7 @@ import java.util.Set;
 public abstract class AbstractComputerBlockEntity extends BlockEntity
         implements IPeripheralOwnerSupport, dev.jstech.computers.os.IOsHost {
 
-    protected final ComputerHardwareLayout layout;
-
-    protected final ItemStackHandler hardware;
-
-    @Nullable
-    private ComputerBuild cachedBuild;
-    private boolean buildDirty = true;
+    private final ComputerHardware hardware;
 
     private final ComputerPower power = new ComputerPower(this::setChanged, this::endSession);
 
@@ -80,25 +71,13 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     protected AbstractComputerBlockEntity(final BlockEntityType<?> type, final BlockPos pos,
                                           final BlockState state, final ComputerHardwareLayout layout) {
         super(type, pos, state);
-        this.layout = layout;
-        this.hardware = new ItemStackHandler(layout.totalSlots()) {
-            @Override
-            protected void onContentsChanged(final int slot) {
-                buildDirty = true;
-                power.hardwareChanged(buildValid());
-                setChanged();
-            }
+        this.hardware = new ComputerHardware(this, layout);
+    }
 
-            @Override
-            public boolean isItemValid(final int slot, final ItemStack stack) {
-                return isValidForSlot(slot, stack);
-            }
-
-            @Override
-            public int getSlotLimit(final int slot) {
-                return 1;
-            }
-        };
+    /* The parts installed have changed: the build is worked out again and the power reconsidered. */
+    void hardwareChanged() {
+        power.hardwareChanged(buildValid());
+        setChanged();
     }
 
     // Hardware assembly
@@ -139,7 +118,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (!(stack.getItem() instanceof CpuItem cpu)) {
             return false;
         }
-        final ItemStack boardStack = hardware.getStackInSlot(layout.motherboardSlot());
+        final ItemStack boardStack = getHardware().getStackInSlot(layout().motherboardSlot());
         if (!(boardStack.getItem() instanceof MotherboardItem board)) {
             return true; // no board yet: allow pre-staging, as the expansion slots do
         }
@@ -155,7 +134,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (!(stack.getItem() instanceof RamItem ram)) {
             return false;
         }
-        final ItemStack boardStack = hardware.getStackInSlot(layout.motherboardSlot());
+        final ItemStack boardStack = getHardware().getStackInSlot(layout().motherboardSlot());
         if (!(boardStack.getItem() instanceof MotherboardItem board)) {
             return true; // no board yet: allow pre-staging
         }
@@ -167,7 +146,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (!(stack.getItem() instanceof IExpansionCardItem card)) {
             return false;
         }
-        final ItemStack boardStack = hardware.getStackInSlot(layout.motherboardSlot());
+        final ItemStack boardStack = getHardware().getStackInSlot(layout().motherboardSlot());
         if (!(boardStack.getItem() instanceof MotherboardItem motherboard)) {
             /*
              * No board yet, so accept the card so it can be pre-staged; the slot stays inoperative
@@ -179,95 +158,47 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     public boolean isValidForSlot(final int slot, final ItemStack stack) {
-        if (slot == layout.motherboardSlot()) {
+        if (slot == layout().motherboardSlot()) {
             return isAcceptedBoard(stack);
         }
-        if (slot == layout.psuSlot()) {
+        if (slot == layout().psuSlot()) {
             return stack.getItem() instanceof PsuItem;
         }
-        if (layout.isCpu(slot)) {
+        if (layout().isCpu(slot)) {
             return isValidCpu(stack);
         }
-        if (layout.isRam(slot)) {
+        if (layout().isRam(slot)) {
             return isValidRam(stack);
         }
-        if (layout.isPcie(slot)) {
+        if (layout().isPcie(slot)) {
             return isValidPcieCard(stack);
         }
-        if (layout.isDisk(slot)) {
+        if (layout().isDisk(slot)) {
             return stack.getItem() instanceof DiskItem;
         }
         return false;
     }
 
     public ItemStackHandler getHardware() {
-        return hardware;
+        return hardware.handler();
+    }
+
+    /** Where this computer's slots are: which one takes the board, which ones take disks, and how many. */
+    ComputerHardwareLayout layout() {
+        return hardware.layout();
     }
 
     protected void markBuildDirty() {
-        buildDirty = true;
+        hardware.markDirty();
     }
 
     @Nullable
     public ComputerBuild currentBuild() {
-        if (buildDirty) {
-            cachedBuild = computeBuild();
-            buildDirty = false;
-        }
-        return cachedBuild;
-    }
-
-    @Nullable
-    private ComputerBuild computeBuild() {
-        final ItemStack boardStack = hardware.getStackInSlot(layout.motherboardSlot());
-        if (!(boardStack.getItem() instanceof MotherboardItem motherboard) || !isAcceptedBoard(boardStack)) {
-            /*
-             * A board this computer does not accept (wrong form factor or wrong era) yields no build, so a
-             * direct setStackInSlot or a board installed before an era gate existed can never run the machine.
-             */
-            return null;
-        }
-        if (!(hardware.getStackInSlot(layout.psuSlot()).getItem() instanceof PsuItem psu)) {
-            return null;
-        }
-        /*
-         * Every count is clamped to what the installed board exposes, so a part in a slot the board
-         * does not offer is ignored.
-         */
-        final int cpuCount = Math.min(layout.cpuCount(), motherboard.spec().cpuSlots());
-        final List<CpuSpec> cpus = new ArrayList<>();
-        for (int i = 0; i < cpuCount; i++) {
-            if (hardware.getStackInSlot(layout.cpuStart() + i).getItem() instanceof CpuItem cpu) {
-                cpus.add(cpu.spec());
-            }
-        }
-        final int ramCount = Math.min(layout.ramCount(), motherboard.spec().ramSlots());
-        final List<RamSpec> rams = new ArrayList<>();
-        for (int i = 0; i < ramCount; i++) {
-            if (hardware.getStackInSlot(layout.ramStart() + i).getItem() instanceof RamItem ram) {
-                rams.add(ram.spec());
-            }
-        }
-        final int pcieCount = Math.min(layout.pcieCount(), motherboard.spec().pcieSlots());
-        final List<IExpansionCardSpec> pcieCards = new ArrayList<>();
-        for (int i = 0; i < pcieCount; i++) {
-            if (hardware.getStackInSlot(layout.pcieStart() + i).getItem() instanceof IExpansionCardItem card) {
-                pcieCards.add(card.cardSpec());
-            }
-        }
-        final int diskCount = Math.min(layout.diskCount(), motherboard.spec().diskSlots());
-        final List<DiskSpec> disks = new ArrayList<>();
-        for (int i = 0; i < diskCount; i++) {
-            if (hardware.getStackInSlot(layout.diskStart() + i).getItem() instanceof DiskItem disk) {
-                disks.add(disk.spec());
-            }
-        }
-        return new ComputerBuild(motherboard.spec(), cpus, pcieCards, rams, psu.spec(), disks);
+        return hardware.current();
     }
 
     public boolean buildValid() {
-        final ComputerBuild build = currentBuild();
-        return build != null && build.isPowered();
+        return hardware.valid();
     }
 
     public boolean isRunning() {
@@ -396,23 +327,23 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
 
     public int boardCpuSlots() {
-        return hardware.getStackInSlot(layout.motherboardSlot()).getItem() instanceof MotherboardItem m
-                ? Math.min(layout.cpuCount(), m.spec().cpuSlots()) : 0;
+        return getHardware().getStackInSlot(layout().motherboardSlot()).getItem() instanceof MotherboardItem m
+                ? Math.min(layout().cpuCount(), m.spec().cpuSlots()) : 0;
     }
 
     public int boardRamSlots() {
-        return hardware.getStackInSlot(layout.motherboardSlot()).getItem() instanceof MotherboardItem m
-                ? Math.min(layout.ramCount(), m.spec().ramSlots()) : 0;
+        return getHardware().getStackInSlot(layout().motherboardSlot()).getItem() instanceof MotherboardItem m
+                ? Math.min(layout().ramCount(), m.spec().ramSlots()) : 0;
     }
 
     public int boardPcieSlots() {
-        return hardware.getStackInSlot(layout.motherboardSlot()).getItem() instanceof MotherboardItem m
-                ? Math.min(layout.pcieCount(), m.spec().pcieSlots()) : 0;
+        return getHardware().getStackInSlot(layout().motherboardSlot()).getItem() instanceof MotherboardItem m
+                ? Math.min(layout().pcieCount(), m.spec().pcieSlots()) : 0;
     }
 
     public int boardDiskSlots() {
-        return hardware.getStackInSlot(layout.motherboardSlot()).getItem() instanceof MotherboardItem m
-                ? Math.min(layout.diskCount(), m.spec().diskSlots()) : 0;
+        return getHardware().getStackInSlot(layout().motherboardSlot()).getItem() instanceof MotherboardItem m
+                ? Math.min(layout().diskCount(), m.spec().diskSlots()) : 0;
     }
 
     /**
@@ -421,7 +352,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
     @Nullable
     public HardwareEra installedEra() {
-        return hardware.getStackInSlot(layout.motherboardSlot()).getItem() instanceof MotherboardItem m
+        return getHardware().getStackInSlot(layout().motherboardSlot()).getItem() instanceof MotherboardItem m
                 ? m.spec().era() : null;
     }
 
@@ -572,7 +503,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
          * the first disk with a system boots, so a computer with two installed OSes dual-boots by choice.
          */
         return dev.jstech.computers.os.OsDisks.systemDisk(
-                layout.diskCount(), this::diskInSlot, bootDiskSlot);
+                layout().diskCount(), this::diskInSlot, bootDiskSlot);
     }
 
     private static boolean hasSystem(final ItemStack disk) {
@@ -588,7 +519,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     public void setBootDiskSlot(final int slot) {
         this.bootDiskSlot = slot;
         setChanged();
-        buildDirty = true;
+        hardware.markDirty();
     }
 
     /**
@@ -613,19 +544,19 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * non-disk items; callers filter as needed (used by the "This PC" disk listing).
      */
     public java.util.List<ItemStack> diskStacks() {
-        final java.util.List<ItemStack> out = new java.util.ArrayList<>(layout.diskCount());
-        for (int i = 0; i < layout.diskCount(); i++) {
-            out.add(hardware.getStackInSlot(layout.diskStart() + i));
+        final java.util.List<ItemStack> out = new java.util.ArrayList<>(layout().diskCount());
+        for (int i = 0; i < layout().diskCount(); i++) {
+            out.add(getHardware().getStackInSlot(layout().diskStart() + i));
         }
         return out;
     }
 
     /** The disk stack in the given 0-based disk slot (for renaming a specific installed disk), or EMPTY. */
     public ItemStack diskInSlot(final int slot) {
-        if (slot < 0 || slot >= layout.diskCount()) {
+        if (slot < 0 || slot >= layout().diskCount()) {
             return ItemStack.EMPTY;
         }
-        return hardware.getStackInSlot(layout.diskStart() + slot);
+        return getHardware().getStackInSlot(layout().diskStart() + slot);
     }
 
     /**
@@ -882,8 +813,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         // Write back through the handler so onContentsChanged fires (setChanged + build invalidation).
         final dev.jstech.computers.os.OsDisks.FormatResult result =
                 dev.jstech.computers.os.OsDisks.formatDisk(
-                        layout.diskCount(), this::diskInSlot,
-                        (stack, s) -> hardware.setStackInSlot(layout.diskStart() + s, stack), slot);
+                        layout().diskCount(), this::diskInSlot,
+                        (stack, s) -> getHardware().setStackInSlot(layout().diskStart() + s, stack), slot);
         if (!result.formatted()) {
             return false;
         }
@@ -915,7 +846,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
     public int defaultInstallSlot() {
         return dev.jstech.computers.os.OsDisks.defaultInstallSlot(
-                layout.diskCount(), this::diskInSlot);
+                layout().diskCount(), this::diskInSlot);
     }
 
     /**
@@ -929,8 +860,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
          * invalidation); the block update then pushes the new disk state to watching clients.
          */
         final boolean installed = dev.jstech.computers.os.OsDisks.installOs(
-                layout.diskCount(), this::diskInSlot,
-                (stack, s) -> hardware.setStackInSlot(layout.diskStart() + s, stack),
+                layout().diskCount(), this::diskInSlot,
+                (stack, s) -> getHardware().setStackInSlot(layout().diskStart() + s, stack),
                 osId, preferredSlot);
         if (installed && level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
@@ -943,8 +874,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * Removes the OS from the system disk. A no-op when no bootable disk is installed.
      */
     public void uninstallOs() {
-        for (int i = 0; i < layout.diskCount(); i++) {
-            final ItemStack stack = hardware.getStackInSlot(layout.diskStart() + i);
+        for (int i = 0; i < layout().diskCount(); i++) {
+            final ItemStack stack = getHardware().getStackInSlot(layout().diskStart() + i);
             if (!(stack.getItem() instanceof DiskItem)) {
                 continue;
             }
@@ -959,7 +890,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
              */
             final ItemStack updated = stack.copy();
             updated.remove(ComputingModule.SYSTEM_OS.get());
-            hardware.setStackInSlot(layout.diskStart() + i, updated);
+            getHardware().setStackInSlot(layout().diskStart() + i, updated);
             if (level != null) {
                 level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
                         Block.UPDATE_CLIENTS);
@@ -1291,10 +1222,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     @Override
     protected void loadAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
-        final String hardwareKey = hardwareNbtKey();
-        if (tag.contains(hardwareKey)) {
-            hardware.deserializeNBT(registries, tag.getCompound(hardwareKey));
-        }
+        hardware.load(tag, registries, hardwareNbtKey());
         power.load(tag);
         bootDiskSlot = tag.contains("BootDisk") ? tag.getInt("BootDisk") : -1;
         computerName = tag.getString("ComputerName");
@@ -1321,7 +1249,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
             consoleDisk = systemDisk(); // adopt it onto the current drive at the next flush
         }
         loadExtra(tag, registries);
-        buildDirty = true;
+        hardware.markDirty();
     }
 
     @Override
@@ -1332,7 +1260,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
          * and a flush after that point would be written to a copy and lost.
          */
         flushConsoleToDisk();
-        tag.put(hardwareNbtKey(), hardware.serializeNBT(registries));
+        hardware.save(tag, registries, hardwareNbtKey());
         power.save(tag);
         if (bootDiskSlot >= 0) {
             tag.putInt("BootDisk", bootDiskSlot);
