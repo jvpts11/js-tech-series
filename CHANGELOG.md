@@ -30,6 +30,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Changed
+- A Linux machine now reads out its kernel and its services as it starts: the architecture its processor really
+  understands (i686 on the 32-bit machines, x86_64 on the others), the processor and the memory it found, a line
+  per drive, and then the services this machine has, with the network only when a cable reaches one and a display
+  manager only when a desktop is installed. Gentoo says it in OpenRC's words rather than systemd's.
 - A starting system now says what it is finding, and every line of it is read off the machine: MC-DOS counts the
   memory above the line and gives a letter to each drive that is really in, naming it, and mentions a network only
   when a cable reaches one; MC-NET asks the network for the link, the Mainframe, the index and the storage, and

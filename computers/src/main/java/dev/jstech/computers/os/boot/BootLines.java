@@ -8,11 +8,12 @@
 package dev.jstech.computers.os.boot;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.machine.NetworkReadService;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.OsDef;
-import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.world.item.ItemStack;
@@ -32,6 +33,9 @@ public final class BootLines {
     /** What a machine of the earliest age reserves below the line, in kilobytes, as those machines did. */
     private static final int BASE_MEMORY_KB = 640;
 
+    /** The kernel these machines run, named after the mod so it is plainly this world's own. */
+    private static final String KERNEL_VERSION = "6.8-jsc";
+
     private BootLines() {
     }
 
@@ -47,8 +51,77 @@ public final class BootLines {
         return switch (system.platform()) {
             case MC_DOS -> dos(machine, system, copyright);
             case MC_NET -> net(machine, system, copyright);
+            case LINUX -> linux(machine, system);
             default -> new BootSequence.Builder().title(system.displayName()).subtitle(copyright).build();
         };
+    }
+
+    /**
+     * A Linux machine reads out its kernel and then its services, in the words of whichever init it runs.
+     *
+     * <p>The kernel line names the architecture the processor really understands, so a machine of the earlier
+     * generation says i686 where a later one says x86_64, and the service lines are the services this machine
+     * actually has: a network target only when a cable reaches a Mainframe, a mirror only when that Mainframe
+     * runs one, a display manager only when a desktop is installed.
+     */
+    private static BootSequence linux(final AbstractComputerBlockEntity machine, final OsDef system) {
+        final boolean openRc = system.packageManager() == PackageManagerKind.EMERGE;
+        final String arch = kernelArch(machine);
+        final BootSequence.Builder out = new BootSequence.Builder()
+                .title(openRc
+                        ? "OpenRC is starting up " + system.displayName() + " Linux (" + arch + ")"
+                        : "Loading Linux " + KERNEL_VERSION + " ...")
+                .subtitle("");
+        if (openRc) {
+            out.line("Mounting /proc ...", "ok");
+            out.line("Starting udev ...", "ok");
+            out.line("Checking local filesystems ...", "ok");
+            out.line("Mounting local filesystems ...", "ok");
+            out.line("Setting hostname ...", machine.customName().isEmpty() ? "localhost" : machine.customName());
+        } else {
+            out.line("Linux version " + KERNEL_VERSION + " (" + arch + ")");
+            out.line("CPU: " + cpuName(machine));
+            out.line("Memory: " + machine.ramTotalMb() + " MB available");
+            int drive = 0;
+            for (int slot = 0; slot < machine.diskSlots(); slot++) {
+                final ItemStack disk = machine.diskInSlot(slot);
+                if (disk.getItem() instanceof DiskItem) {
+                    out.line("sd" + (char) ('a' + drive++) + ":", disk.getHoverName().getString());
+                }
+            }
+            out.line("Started Journal Service.", "OK");
+            out.line("Reached target Local File Systems.", "OK");
+        }
+        final NetworkReadService network = machine.services().network();
+        if (network != null && network.online()) {
+            out.line("Reached target Network is Online.", "OK");
+        }
+        final String desktop = machine.installedDesktopId() == null ? ""
+                : machine.installedDesktopId().getPath().replace('_', ' ');
+        if (!desktop.isEmpty()) {
+            out.line("Started " + desktop + " Display Manager.", "OK");
+        }
+        return out.build();
+    }
+
+    /** What a kernel of this machine calls the architecture it is running on. */
+    private static String kernelArch(final AbstractComputerBlockEntity machine) {
+        final ComputerBuild build = machine.currentBuild();
+        if (build == null || build.cpus().isEmpty()) {
+            return "x86_64";
+        }
+        final int bits = build.cpus().getFirst().architecture().bits();
+        return bits >= 64 ? "x86_64" : "i686";
+    }
+
+    /** The processor as a kernel names it: its model and how many cores it has. */
+    private static String cpuName(final AbstractComputerBlockEntity machine) {
+        final ComputerBuild build = machine.currentBuild();
+        if (build == null || build.cpus().isEmpty()) {
+            return "unknown";
+        }
+        final int cores = build.cpus().getFirst().cores();
+        return build.cpus().getFirst().freqMhz() + " MHz, " + cores + (cores == 1 ? " core" : " cores");
     }
 
     /**

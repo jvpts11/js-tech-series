@@ -43,6 +43,9 @@ public final class BootSequenceGameTests {
     private static final ResourceLocation MC_DOS =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_dos");
 
+    private static final ResourceLocation DEBIAN =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "debian");
+
     private BootSequenceGameTests() {
     }
 
@@ -70,6 +73,25 @@ public final class BootSequenceGameTests {
         }
         helper.assertFalse(has(BootLines.forMachine(computer), "NET"),
                 "a machine with no cable reaching it has no network line to show");
+        helper.succeed();
+    }
+
+    /**
+     * A kernel names the architecture the processor really understands, so the same distribution reads
+     * differently on a machine of another age.
+     */
+    @GameTest(template = ARENA)
+    public static void linux_namesTheArchitectureTheProcessorUnderstands(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity older = legacy(helper);
+        if (older == null) {
+            return;
+        }
+        helper.assertTrue(older.installOs(DEBIAN), "Debian installs on the machine");
+        final BootSequence sequence = BootLines.forMachine(older);
+        helper.assertTrue(has(sequence, "Linux version 6.8-jsc (i686)"),
+                "a 16-bit machine's kernel is not x86_64: " + labels(sequence));
+        helper.assertTrue(has(sequence, "Memory: " + older.ramTotalMb() + " MB available"),
+                "and the memory is the memory that is in it: " + labels(sequence));
         helper.succeed();
     }
 
@@ -110,6 +132,27 @@ public final class BootSequenceGameTests {
             helper.fail("MC-DOS would not install on the vintage machine");
             return null;
         }
+        return computer;
+    }
+
+    /** A Legacy machine: the 32-bit generation, whose kernel calls itself i686. */
+    private static PersonalComputerBlockEntity legacy(final GameTestHelper helper) {
+        helper.setBlock(WHERE, ComputingModule.LEGACY_PERSONAL_COMPUTER.get());
+        if (!(helper.getBlockEntity(WHERE) instanceof PersonalComputerBlockEntity computer)) {
+            helper.fail("no legacy personal computer at " + WHERE);
+            return null;
+        }
+        final ItemStackHandler hardware = computer.getHardware();
+        hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,
+                new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT,
+                new ItemStack(HardwareItems.CPU_INTEGRA_DUO_E4300.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.RAM_SLOTS_START,
+                new ItemStack(HardwareItems.RAM_DDR2_2048.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.PSU_SLOT,
+                new ItemStack(HardwareItems.PSU_500B.get()));
+        hardware.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
+                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         return computer;
     }
 
