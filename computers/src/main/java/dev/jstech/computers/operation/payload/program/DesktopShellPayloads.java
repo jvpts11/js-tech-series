@@ -66,7 +66,8 @@ public final class DesktopShellPayloads {
             final var running = computer.foreground();
             if (running != null) {
                 busy = drainForeground(running, payload.line(), wire);
-                PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(false, busy, computer.prompt(),
+                PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(false, busy,
+                        dev.jstech.computers.program.cli.SshTerminal.prompt(computer, computer),
                         wire, payload.session()));
                 return;
             }
@@ -80,26 +81,38 @@ public final class DesktopShellPayloads {
                 if (INTERRUPT.equals(payload.line())) {
                     dev.jstech.computers.os.install.SetupRunner.cancel(machine, level, payload.hostPos());
                     PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(false, false,
-                            computer.prompt(), wire, payload.session()));
+                            dev.jstech.computers.program.cli.SshTerminal.prompt(computer, computer),
+                            wire, payload.session()));
                     return;
                 }
                 wire.add(new DesktopShellOutputPayload.WireLine(
                         (setup.removing() ? "Removing " : "Setting up ") + setup.name() + "  "
                                 + (setup.permille() / 10) + "%  (Ctrl+C to cancel)",
                         dev.jstech.computers.program.cli.CliStyle.DIM.id()));
-                PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(false, true, computer.prompt(),
+                PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(false, true,
+                        dev.jstech.computers.program.cli.SshTerminal.prompt(computer, computer),
                         wire, payload.session()));
                 return;
             }
+            /*
+             * An open ssh session runs the line on the far machine, in its own shell family; this window is
+             * only the glass it is read through. Everything else, ssh itself and exit, stays here.
+             */
+            var shellOn = computer;
+            final var target = dev.jstech.computers.program.cli.SshTerminal.targetOf(
+                    host, level, payload.line());
+            if (target != null) {
+                shellOn = new dev.jstech.computers.program.ServerCliComputer(target, level);
+            }
             final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(
-                    computer, CLI_WIDTH);
-            final var response = shell.run(payload.line(), computer);
+                    shellOn, CLI_WIDTH);
+            final var response = shell.run(payload.line(), shellOn);
             clear = response.clearScreen();
             handOver = response.handOver();
             for (final var cliLine : response.lines()) {
                 wire.add(new DesktopShellOutputPayload.WireLine(cliLine.text(), cliLine.style().id()));
             }
-            prompt = computer.prompt();
+            prompt = dev.jstech.computers.program.cli.SshTerminal.prompt(computer, shellOn);
             /*
              * The command just run may have been one that starts a program at this terminal, in
              * which case the prompt does not come back with this reply.

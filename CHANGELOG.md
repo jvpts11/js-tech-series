@@ -158,6 +158,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- A shell window on a desktop now sends what you type to the machine you are connected to. Only the terminal that
+  takes the whole screen of a monitor did: in a window, `ssh` opened the session and said it had, and then every
+  command ran on the computer standing in front of you, with a prompt that named no machine either.
 - A second person opening a computer's desktop now sees the windows its programs already have open. The machine kept
   one record of what it had sent, not one per player, so whoever opened after somebody else was shown an empty desktop
   until a window happened to change, and on a machine where nothing was moving it stayed empty.

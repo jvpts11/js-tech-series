@@ -591,6 +591,23 @@ public final class RackUnitGameTests {
                     helper.assertTrue(cli.sshSession().equals("vault"),
                             "the session names the machine it is connected to; got '" + cli.sshSession() + "'");
 
+                    /*
+                     * Every line typed while the session is open goes to the far machine, and both terminals a
+                     * player can type at ask this one rule. The shell window on a desktop used to ask nobody and
+                     * ran everything on the machine standing in front of the player.
+                     */
+                    final var routed = dev.jstech.computers.program.cli.SshTerminal.targetOf(
+                            mainframe, helper.getLevel(), "help");
+                    helper.assertTrue(routed != null, "an open session sends the line to the far machine");
+                    helper.assertTrue("vault".equals(routed.hostname()),
+                            "to the machine it is connected to; got " + routed.hostname());
+                    helper.assertTrue(dev.jstech.computers.program.cli.SshTerminal.targetOf(
+                                    mainframe, helper.getLevel(), "exit") == null,
+                            "while exit stays at home, or there would be no way back out of the session");
+                    final String shown = dev.jstech.computers.program.cli.SshTerminal.prompt(cli, cli);
+                    helper.assertTrue(shown.startsWith("[vault] "),
+                            "and the prompt says where the lines are going; got '" + shown + "'");
+
                     helper.assertTrue(cli.sshConnect("nowhere").message().contains("host not found"),
                             "an unknown host is reported, not silently ignored");
 

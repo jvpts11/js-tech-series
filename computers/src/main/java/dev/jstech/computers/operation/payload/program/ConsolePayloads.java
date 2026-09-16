@@ -73,7 +73,7 @@ public final class ConsolePayloads {
         final var localComputer =
                 new dev.jstech.computers.program.ServerCliComputer(host, level);
         var computer = localComputer;
-        final var session = sshTargetOf(host, level, payload.line());
+        final var session = dev.jstech.computers.program.cli.SshTerminal.targetOf(host, level, payload.line());
         if (session != null) {
             computer = new dev.jstech.computers.program.ServerCliComputer(
                     session, level);
@@ -89,14 +89,7 @@ public final class ConsolePayloads {
         for (final var cliLine : response.lines()) {
             wire.add(new CommandOutputPayload.WireLine(cliLine.text(), cliLine.style().id()));
         }
-        /*
-         * A prompt in a session says which machine the line is going to. Without it the DOS families give
-         * nothing away, since their prompt is only the drive and folder: connected or not, it reads the same,
-         * and the player has no way to tell the line left the computer in front of them.
-         */
-        final String connected = localComputer.sshSession();
-        final String prompt = connected.isEmpty() ? computer.prompt()
-                : "[" + connected + "] " + computer.prompt();
+        final String prompt = dev.jstech.computers.program.cli.SshTerminal.prompt(localComputer, computer);
         final var handOver = response.handOver();
         PacketDistributor.sendToPlayer(player, new CommandOutputPayload(response.clearScreen(), prompt, wire,
                 handOver == null ? "" : handOver.editor(),
@@ -284,30 +277,4 @@ public final class ConsolePayloads {
         dev.jstech.computers.client.CommandPromptScreen.accept(payload);
     }
 
-    /**
-     * The machine an open ssh session points at, or null when the line must run locally. {@code ssh}
-     * and {@code exit} always run on the local terminal: one opens the session, the other closes it.
-     * A session whose machine went away (broken, unpowered) is dropped, so the shell falls back home
-     * instead of talking to a ghost.
-     */
-    @org.jetbrains.annotations.Nullable
-    private static dev.jstech.computers.terminal.IComputerTerminalHost sshTargetOf(
-            final dev.jstech.computers.terminal.IComputerTerminalHost host,
-            final ServerLevel level, final String line) {
-        final var console = host.console();
-        if (console == null || console.sshTarget() == null) {
-            return null;
-        }
-        final String verb = line.trim().split("\\s+", 2)[0].toLowerCase(java.util.Locale.ROOT);
-        if (verb.equals("ssh") || verb.equals("exit") || verb.equals("logout")) {
-            return null;
-        }
-        final var target = level.getBlockEntity(BlockPos.of(console.sshTarget()));
-        if (target instanceof dev.jstech.computers.terminal.IComputerTerminalHost remote
-                && remote.computerRunning()) {
-            return remote;
-        }
-        console.setSshTarget(null);
-        return null;
-    }
 }

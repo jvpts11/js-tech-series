@@ -15,6 +15,7 @@ import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.machine.NetworkReadService;
 import dev.jstech.computers.machine.ServerTickDeadline;
 import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.SshTerminal;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.computers.vm.program.IProgramParent;
 import net.minecraft.core.BlockPos;
@@ -76,7 +77,8 @@ final class ProgramHost {
     String shellPrompt() {
         if (this.machine instanceof IComputerTerminalHost host
                 && this.machine.getLevel() instanceof ServerLevel server) {
-            return new ServerCliComputer(host, server).prompt();
+            final ServerCliComputer shell = new ServerCliComputer(host, server);
+            return SshTerminal.prompt(shell, shell);
         }
         return "";
     }
