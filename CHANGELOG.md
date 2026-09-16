@@ -30,6 +30,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Added
+- The live medium of a hand-installed distribution carries files, and `ls`, `cd`, `cat` and `less` to read them.
+  The guide the real medium ships with is in `/root/install.txt`, written from the steps the shell really
+  accepts. What a step wrote is what reading it back shows: the filesystem table is not there until `genfstab`
+  writes it, and then it names the disk the install actually used. Inside the chroot a path is the new system's
+  own, so `/etc/fstab` in there is the file written to `/mnt/etc/fstab` outside, and the prompt says where you
+  are standing.
 - The Frames editions put up a welcome the first time they come up, in the shape each of them used: a tip that
   changes with a column of buttons beside it, a pane of places to go with the machine written out next to it, and
   four cards. It asks nothing, because the installer already asked. Everything on it is read off the computer it

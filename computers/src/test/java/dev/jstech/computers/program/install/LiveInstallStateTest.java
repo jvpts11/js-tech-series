@@ -153,6 +153,91 @@ class LiveInstallStateTest {
         assertEquals(null, LiveInstallState.deserialize("distro=solaris"));
     }
 
+    /** The medium carries the guide the real one carries, and reading it is how a player knows what to type. */
+    @Test
+    void cat_theGuideOnTheMedium_namesTheStepsInOrder() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        final LiveInstallState.Result read = run(st, "cat /root/install.txt", true, 0);
+        assertTrue(read.ok());
+        assertTrue(String.join("\n", read.lines()).contains("pacstrap /mnt base linux"),
+                "the guide names the step that fetches the base system");
+    }
+
+    /** What a step wrote is what reading it back shows, rather than a line written in advance. */
+    @Test
+    void cat_theFilesystemTable_isWhatTheStepReallyWrote() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        run(st, "mkfs.ext4 /dev/sdb", true, 0);
+        run(st, "mount /dev/sdb /mnt", true, 0);
+        run(st, "pacstrap /mnt base linux", true, 0);
+        assertFalse(run(st, "cat /mnt/etc/fstab", true, 0).ok(), "nothing has written it yet");
+
+        run(st, "genfstab -U /mnt >> /mnt/etc/fstab", true, 0);
+        final LiveInstallState.Result read = run(st, "cat /mnt/etc/fstab", true, 0);
+        assertTrue(read.ok());
+        assertTrue(String.join("\n", read.lines()).contains("UUID=jsc-sdb"),
+                "and it names the disk the install really used: " + read.lines());
+    }
+
+    /**
+     * Inside the new system a path is that system's own, which is the one thing about a chroot that has to be
+     * true for the rest of it to make any sense.
+     */
+    @Test
+    void cat_insideTheChroot_readsTheNewSystemsOwnPaths() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        run(st, "mkfs.ext4 /dev/sda", true, 0);
+        run(st, "mount /dev/sda /mnt", true, 0);
+        run(st, "pacstrap /mnt base linux", true, 0);
+        run(st, "genfstab -U /mnt >> /mnt/etc/fstab", true, 0);
+        run(st, "arch-chroot /mnt", true, 0);
+
+        assertEquals("[root@archiso /]#", st.prompt());
+        assertTrue(run(st, "cat /etc/fstab", true, 0).ok(),
+                "the table written to /mnt/etc/fstab outside is /etc/fstab in here");
+    }
+
+    @Test
+    void cd_movesAndThePromptSaysWhere() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.GENTOO);
+        assertEquals("livecd ~ #", st.prompt());
+        assertTrue(run(st, "cd /mnt", true, 0).ok());
+        assertEquals("livecd /mnt #", st.prompt());
+        assertFalse(run(st, "cd /nowhere", true, 0).ok());
+        assertEquals("livecd /mnt #", st.prompt(), "a move that failed moved nothing");
+        assertTrue(run(st, "cd", true, 0).ok());
+        assertEquals("livecd ~ #", st.prompt(), "and with nowhere named it goes home");
+    }
+
+    @Test
+    void ls_listsWhatIsThereAndSaysSoWhenThereIsNot() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        assertTrue(String.join(" ", run(st, "ls /root", true, 0).lines()).contains("install.txt"));
+        assertFalse(run(st, "ls /mnt/etc", true, 0).ok(), "nothing is installed yet");
+        run(st, "mkfs.ext4 /dev/sda", true, 0);
+        run(st, "mount /dev/sda /mnt", true, 0);
+        run(st, "pacstrap /mnt base linux", true, 0);
+        assertTrue(run(st, "ls /mnt", true, 0).ok(), "the base system laid its directories down");
+        assertTrue(String.join(" ", run(st, "ls /mnt", true, 0).lines()).contains("etc"));
+    }
+
+    /** What the session wrote and where it was standing survive the world going away. */
+    @Test
+    void serialize_roundTripsTheFilesAndWhereTheSessionStands() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        run(st, "mkfs.ext4 /dev/sda", true, 0);
+        run(st, "mount /dev/sda /mnt", true, 0);
+        run(st, "pacstrap /mnt base linux", true, 0);
+        run(st, "genfstab -U /mnt >> /mnt/etc/fstab", true, 0);
+        run(st, "cd /mnt/etc", true, 0);
+
+        final LiveInstallState back = LiveInstallState.deserialize(st.serialize());
+        assertEquals("root@archiso /mnt/etc #", back.prompt());
+        assertTrue(String.join("\n", back.run("cat fstab", env(true, 0)).lines()).contains("UUID=jsc-sda"));
+        assertTrue(back.run("cat /root/install.txt", env(true, 0)).ok(),
+                "and the medium's own guide is back with it");
+    }
+
     @Test
     void wrongDistroVerb_isCommandNotFound() {
         final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.GENTOO);

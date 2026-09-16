@@ -65,7 +65,22 @@ public final class LiveInstallState {
         }
     }
 
+    /** Where a live session starts, and what its prompt writes as a tilde. */
+    private static final String HOME = "/root";
+
+    /** Where the disk being installed onto hangs while the session is outside it. */
+    private static final String MOUNT = "/mnt";
+
     private final Distro distro;
+    /*
+     * The files the installation touches, by their whole path, and the directories they sit in. Not a
+     * filesystem: the few files a person really reads or writes while installing by hand, so that what the
+     * steps wrote is what reading them shows. A guide the medium carries is put here when the session starts
+     * and is never saved, since it belongs to the medium and not to the install.
+     */
+    private final java.util.Map<String, String> files = new java.util.LinkedHashMap<>();
+    private final java.util.Set<String> dirs = new java.util.LinkedHashSet<>();
+    private String cwd = HOME;
     private String device = "";       // the formatted target, e.g. "sda"
     private boolean formatted;
     private boolean mounted;
@@ -80,6 +95,50 @@ public final class LiveInstallState {
 
     public LiveInstallState(final Distro distro) {
         this.distro = distro;
+        this.dirs.add("/");
+        this.dirs.add(HOME);
+        this.dirs.add("/mnt");
+        this.files.put(HOME + "/install.txt", guide(distro));
+    }
+
+    /**
+     * The guide the live medium carries, which is the one thing on it that tells a player what to do.
+     *
+     * <p>The real medium of one of these ships exactly this: a plain file in the root user's home naming the
+     * steps in order. It is written from the steps this sequence really accepts, so following it works.
+     */
+    private static String guide(final Distro distro) {
+        if (distro == Distro.ARCH) {
+            return String.join("\n",
+                    "Installing Arch Linux by hand.",
+                    "",
+                    "  1. lsblk                                  see the disks",
+                    "  2. mkfs.ext4 /dev/sdX                      make a filesystem",
+                    "  3. mount /dev/sdX /mnt                     mount it",
+                    "  4. pacstrap /mnt base linux                the base system, over the network Mirror",
+                    "  5. genfstab -U /mnt >> /mnt/etc/fstab      write the filesystem table",
+                    "  6. arch-chroot /mnt                        enter the new system",
+                    "  7. grub-install /dev/sdX                   the bootloader",
+                    "  8. passwd                                  a root password",
+                    "  9. exit, then reboot",
+                    "",
+                    "Read a file with cat or less. A Mainframe on this network must run the Mirror.");
+        }
+        return String.join("\n",
+                "Installing Gentoo by hand.",
+                "",
+                "  1. lsblk                                  see the disks",
+                "  2. mkfs.ext4 /dev/sdX                      make a filesystem",
+                "  3. mount /dev/sdX /mnt                     mount it",
+                "  4. tar xpf stage3-amd64.tar.xz -C /mnt     unpack the stage 3",
+                "  5. chroot /mnt                             enter the new system",
+                "  6. emerge --sync                           fetch the portage tree",
+                "  7. emerge sys-kernel/gentoo-sources        a real compile, and a real wait",
+                "  8. genkernel all                           build the kernel once it is done",
+                "  9. grub-install /dev/sdX                   the bootloader",
+                " 10. passwd, then exit, then reboot",
+                "",
+                "Read a file with cat or less. A Mainframe on this network must run the Mirror.");
     }
 
     public Distro distro() {
@@ -98,12 +157,19 @@ public final class LiveInstallState {
         return device.charAt(2) - 'a';
     }
 
-    /** The live shell prompt for the current state, in the distribution's own style. */
+    /**
+     * The live shell prompt for the current state, in the distribution's own style.
+     *
+     * <p>It names where the session is standing, as those prompts do, with the root user's home written as a
+     * tilde. Inside the new system it is that system's own root that is shown, not the mount point it hangs off
+     * outside, because from in there that is where you are.
+     */
     public String prompt() {
+        final String where = HOME.equals(cwd) ? "~" : cwd;
         if (distro == Distro.ARCH) {
-            return chroot ? "[root@archiso /]#" : "root@archiso ~ #";
+            return chroot ? "[root@archiso " + where + "]#" : "root@archiso " + where + " #";
         }
-        return chroot ? "(chroot) livecd / #" : "livecd ~ #";
+        return chroot ? "(chroot) livecd " + where + " #" : "livecd " + where + " #";
     }
 
     /** The host name the live medium reports. */
@@ -127,6 +193,10 @@ public final class LiveInstallState {
         final String cmd = parts.length == 0 ? "" : parts[0].toLowerCase(Locale.ROOT);
         final String arg1 = parts.length > 1 ? parts[1] : "";
         return switch (cmd) {
+            case "ls" -> ls(arg1);
+            case "cat" -> cat(arg1, false);
+            case "less", "more" -> cat(arg1, true);
+            case "cd" -> cd(arg1);
             case "lsblk" -> lsblk(env);
             case "mkfs.ext4", "mkfs" -> mkfs(cmd.equals("mkfs") ? (parts.length > 2 ? parts[2] : "") : arg1, env);
             case "mount" -> mount(arg1, parts.length > 2 ? parts[2] : "");
@@ -143,6 +213,117 @@ public final class LiveInstallState {
             case "help" -> help();
             default -> Result.fail(cmd + ": command not found");
         };
+    }
+
+    /**
+     * Turns what the player typed into the whole path it names.
+     *
+     * <p>Inside the new system a path is that system's own: {@code /etc/fstab} typed in there is the file the
+     * step outside wrote to {@code /mnt/etc/fstab}, because that is the same file seen from inside. It is the
+     * one thing about a chroot that has to be true for any of the rest to make sense.
+     */
+    private String resolve(final String typed) {
+        final String path = typed.isEmpty() ? cwd : typed;
+        final String whole = path.startsWith("/") ? path : (cwd.equals("/") ? "" : cwd) + "/" + path;
+        final String tidy = tidy(whole);
+        return chroot ? tidy(MOUNT + tidy) : tidy;
+    }
+
+    /** A path with its dots resolved and its trailing slash gone, so two ways of writing one agree. */
+    private static String tidy(final String path) {
+        final java.util.Deque<String> parts = new java.util.ArrayDeque<>();
+        for (final String part : path.split("/")) {
+            if (part.isEmpty() || part.equals(".")) {
+                continue;
+            }
+            if (part.equals("..")) {
+                parts.pollLast();
+                continue;
+            }
+            parts.addLast(part);
+        }
+        return parts.isEmpty() ? "/" : "/" + String.join("/", parts);
+    }
+
+    /** How a whole path reads back to somebody standing inside the new system. */
+    private String asTyped(final String whole) {
+        if (!chroot) {
+            return whole;
+        }
+        return whole.equals(MOUNT) ? "/" : whole.startsWith(MOUNT + "/") ? whole.substring(MOUNT.length()) : whole;
+    }
+
+    /** Writes a file the installation made, creating the directories above it. */
+    private void write(final String whole, final String content) {
+        files.put(whole, content);
+        String at = whole;
+        while (at.lastIndexOf('/') > 0) {
+            at = at.substring(0, at.lastIndexOf('/'));
+            dirs.add(at);
+        }
+        dirs.add("/");
+    }
+
+    private Result ls(final String arg) {
+        final String whole = resolve(arg);
+        if (files.containsKey(whole)) {
+            return Result.pass(asTyped(whole));
+        }
+        if (!dirs.contains(whole)) {
+            return Result.fail("ls: cannot access '" + (arg.isEmpty() ? asTyped(cwd) : arg)
+                    + "': No such file or directory");
+        }
+        final java.util.SortedSet<String> here = new java.util.TreeSet<>();
+        final String prefix = whole.equals("/") ? "/" : whole + "/";
+        for (final String dir : dirs) {
+            if (dir.startsWith(prefix) && !dir.equals(whole)) {
+                here.add(name(dir.substring(prefix.length())));
+            }
+        }
+        for (final String file : files.keySet()) {
+            if (file.startsWith(prefix)) {
+                here.add(name(file.substring(prefix.length())));
+            }
+        }
+        return here.isEmpty() ? Result.pass() : Result.pass(String.join("  ", here));
+    }
+
+    /** The first step of a path under a directory, which is what that directory lists. */
+    private static String name(final String rest) {
+        final int slash = rest.indexOf('/');
+        return slash < 0 ? rest : rest.substring(0, slash);
+    }
+
+    private Result cat(final String arg, final boolean paged) {
+        if (arg.isEmpty()) {
+            return Result.fail(paged ? "Usage: less <file>" : "Usage: cat <file>");
+        }
+        final String whole = resolve(arg);
+        if (dirs.contains(whole)) {
+            return Result.fail("cat: " + arg + ": Is a directory");
+        }
+        final String content = files.get(whole);
+        if (content == null) {
+            return Result.fail((paged ? arg + ": " : "cat: " + arg + ": ") + "No such file or directory");
+        }
+        final List<String> out = new ArrayList<>(List.of(content.split("\n", -1)));
+        if (paged) {
+            // The pager has nowhere to page to on a screen this size, so it says what a pager says at the end.
+            out.add("(END)");
+        }
+        return new Result(true, List.copyOf(out), false);
+    }
+
+    private Result cd(final String arg) {
+        final String whole = resolve(arg.isEmpty() ? HOME : arg);
+        if (files.containsKey(whole)) {
+            return Result.fail("cd: " + arg + ": Not a directory");
+        }
+        if (!dirs.contains(whole)) {
+            return Result.fail("cd: " + arg + ": No such file or directory");
+        }
+        cwd = asTyped(whole);
+        return Result.pass();
     }
 
     private Result lsblk(final Env env) {
@@ -206,6 +387,7 @@ public final class LiveInstallState {
                     "error: failed to synchronize all databases (unexpected error)");
         }
         base = true;
+        laidOut();
         return Result.pass("==> Creating install root at /mnt", ":: Synchronizing package databases (mirror://mainframe)",
                 ":: Installing base linux ... done", "pacstrap: installation complete");
     }
@@ -224,6 +406,7 @@ public final class LiveInstallState {
             return Result.fail("tar: stage3-amd64.tar.xz: Cannot open: mirror://mainframe could not be resolved");
         }
         base = true;
+        laidOut();
         return Result.pass("Unpacking stage3 into /mnt ... done");
     }
 
@@ -238,7 +421,10 @@ public final class LiveInstallState {
             return Result.fail("Usage: genfstab -U /mnt >> /mnt/etc/fstab");
         }
         fstab = true;
-        return Result.pass("# /dev/" + device, "UUID=jsc-" + device + "  /  ext4  rw,relatime  0 1");
+        // The table is written where it was told to go, so reading it back shows what this step really put there.
+        final String table = "# /dev/" + device + "\nUUID=jsc-" + device + "  /  ext4  rw,relatime  0 1";
+        write(MOUNT + "/etc/fstab", table);
+        return new Result(true, List.copyOf(List.of(table.split("\n", -1))), false);
     }
 
     private Result enterChroot(final String point) {
@@ -249,7 +435,18 @@ public final class LiveInstallState {
             return Result.fail("chroot: failed to run command '/bin/bash': No such file or directory");
         }
         chroot = true;
+        // A chroot drops you at the root of the system you entered, which is what its prompt then shows.
+        cwd = "/";
         return Result.pass();
+    }
+
+    /** The directories a base system brings with it, which is what makes them there to look in. */
+    private void laidOut() {
+        dirs.add(MOUNT + "/etc");
+        dirs.add(MOUNT + "/boot");
+        dirs.add(MOUNT + "/root");
+        dirs.add(MOUNT + "/usr");
+        dirs.add(MOUNT + "/var");
     }
 
     private Result emerge(final String line, final Env env) {
@@ -322,6 +519,8 @@ public final class LiveInstallState {
             return Result.pass("logout");
         }
         chroot = false;
+        // Back out on the medium, where the session was standing before it went in.
+        cwd = HOME;
         return Result.pass();
     }
 
@@ -359,10 +558,13 @@ public final class LiveInstallState {
     private Result help() {
         return distro == Distro.ARCH
                 ? Result.pass("lsblk | mkfs.ext4 /dev/sdX | mount /dev/sdX /mnt | pacstrap /mnt base linux",
-                        "genfstab -U /mnt >> /mnt/etc/fstab | arch-chroot /mnt | grub-install /dev/sdX | passwd | exit | reboot")
+                        "genfstab -U /mnt >> /mnt/etc/fstab | arch-chroot /mnt | grub-install /dev/sdX",
+                        "passwd | exit | reboot",
+                        "ls | cd | cat | less        the whole of it is written in /root/install.txt")
                 : Result.pass("lsblk | mkfs.ext4 /dev/sdX | mount /dev/sdX /mnt | tar xpf stage3-amd64.tar.xz -C /mnt",
                         "chroot /mnt | emerge --sync | emerge sys-kernel/gentoo-sources | genkernel all",
-                        "grub-install /dev/sdX | passwd | exit | reboot");
+                        "grub-install /dev/sdX | passwd | exit | reboot",
+                        "ls | cd | cat | less        the whole of it is written in /root/install.txt");
     }
 
     /*
@@ -392,6 +594,19 @@ public final class LiveInstallState {
         put(out, "kernel_built", kernelBuilt);
         put(out, "bootloader", bootloader);
         put(out, "password", password);
+        put(out, "cwd", cwd);
+        /*
+         * Only what the installation made: the guide the medium carries is put back when the session is built
+         * again, because it belongs to the medium rather than to the work done on it.
+         */
+        for (final String dir : dirs) {
+            put(out, "dir:" + dir, "1");
+        }
+        for (final java.util.Map.Entry<String, String> file : files.entrySet()) {
+            if (!file.getKey().equals(HOME + "/install.txt")) {
+                put(out, "file:" + file.getKey(), file.getValue());
+            }
+        }
         return out.toString();
     }
 
@@ -413,6 +628,14 @@ public final class LiveInstallState {
         st.kernelBuilt = flag(saved, "kernel_built");
         st.bootloader = flag(saved, "bootloader");
         st.password = flag(saved, "password");
+        st.cwd = saved.getOrDefault("cwd", HOME);
+        for (final java.util.Map.Entry<String, String> line : saved.entrySet()) {
+            if (line.getKey().startsWith("dir:")) {
+                st.dirs.add(line.getKey().substring(4));
+            } else if (line.getKey().startsWith("file:")) {
+                st.files.put(line.getKey().substring(5), line.getValue());
+            }
+        }
         return st;
     }
 
