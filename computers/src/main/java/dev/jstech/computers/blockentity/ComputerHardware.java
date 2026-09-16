@@ -18,6 +18,7 @@ import dev.jstech.computers.item.IExpansionCardItem;
 import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.item.PsuItem;
 import dev.jstech.computers.item.RamItem;
+import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
@@ -103,6 +104,99 @@ final class ComputerHardware {
         if (tag.contains(key)) {
             this.handler.deserializeNBT(registries, tag.getCompound(key));
         }
+    }
+
+    /** What the whole machine can hold, in mB-equivalent, or nothing when the parts do not make a computer. */
+    long capacity() {
+        return valid() ? current().totalCapacity() : 0L;
+    }
+
+    long ramBuffer() {
+        return valid() ? current().ramBuffer() : 0L;
+    }
+
+    /*
+     * Slot availability as the installed board offers it, read from the board alone with no PSU needed, so the
+     * assembly GUI lights up the usable slots the moment a board goes in.
+     */
+
+    int boardCpuSlots() {
+        final MotherboardItem board = board();
+        return board == null ? 0 : Math.min(this.layout.cpuCount(), board.spec().cpuSlots());
+    }
+
+    int boardRamSlots() {
+        final MotherboardItem board = board();
+        return board == null ? 0 : Math.min(this.layout.ramCount(), board.spec().ramSlots());
+    }
+
+    int boardPcieSlots() {
+        final MotherboardItem board = board();
+        return board == null ? 0 : Math.min(this.layout.pcieCount(), board.spec().pcieSlots());
+    }
+
+    int boardDiskSlots() {
+        final MotherboardItem board = board();
+        return board == null ? 0 : Math.min(this.layout.diskCount(), board.spec().diskSlots());
+    }
+
+    /**
+     * The hardware era of the installed motherboard, or null when no board is present. Read from the board
+     * alone, so the assembly GUI can adopt the era's skin the moment a board goes in.
+     */
+    @Nullable
+    HardwareEra installedEra() {
+        final MotherboardItem board = board();
+        return board == null ? null : board.spec().era();
+    }
+
+    int installedCpus() {
+        final ComputerBuild build = current();
+        return build == null ? 0 : build.cpus().size();
+    }
+
+    int installedRam() {
+        final ComputerBuild build = current();
+        return build == null ? 0 : build.rams().size();
+    }
+
+    int installedGpus() {
+        final ComputerBuild build = current();
+        return build == null ? 0 : build.gpus().size();
+    }
+
+    /** The best CPU clock in MHz across the installed CPUs, or 0 when the parts make no computer. */
+    int maxCpuMhz() {
+        final ComputerBuild build = current();
+        if (build == null) {
+            return 0;
+        }
+        int max = 0;
+        for (final CpuSpec cpu : build.cpus()) {
+            max = Math.max(max, cpu.freqMhz());
+        }
+        return max;
+    }
+
+    /**
+     * The usable VRAM in MB across the installed GPUs, or 0 when the parts make no computer. A card seated in
+     * a slot older than itself contributes only what that slot's bandwidth allows.
+     */
+    int totalVramMb() {
+        final ComputerBuild build = current();
+        return build == null ? 0 : build.effectiveVramMb();
+    }
+
+    int installedDisks() {
+        final ComputerBuild build = current();
+        return build == null ? 0 : build.disks().size();
+    }
+
+    /** The board installed, or null when the board slot is empty or holds something else. */
+    @Nullable
+    private MotherboardItem board() {
+        return this.handler.getStackInSlot(this.layout.motherboardSlot()).getItem()
+                instanceof MotherboardItem board ? board : null;
     }
 
     @Nullable

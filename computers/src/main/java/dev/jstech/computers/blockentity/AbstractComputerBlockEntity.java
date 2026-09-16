@@ -314,46 +314,33 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     public long capacity() {
-        return buildValid() ? currentBuild().totalCapacity() : 0L;
+        return hardware.capacity();
     }
 
     public long ramBuffer() {
-        return buildValid() ? currentBuild().ramBuffer() : 0L;
+        return hardware.ramBuffer();
     }
 
-    /*
-     * Motherboard-derived slot availability (read from the board alone, no PSU needed,
-     * so the assembly GUI lights up usable slots as soon as a board goes in).
-     */
-
     public int boardCpuSlots() {
-        return getHardware().getStackInSlot(layout().motherboardSlot()).getItem() instanceof MotherboardItem m
-                ? Math.min(layout().cpuCount(), m.spec().cpuSlots()) : 0;
+        return hardware.boardCpuSlots();
     }
 
     public int boardRamSlots() {
-        return getHardware().getStackInSlot(layout().motherboardSlot()).getItem() instanceof MotherboardItem m
-                ? Math.min(layout().ramCount(), m.spec().ramSlots()) : 0;
+        return hardware.boardRamSlots();
     }
 
     public int boardPcieSlots() {
-        return getHardware().getStackInSlot(layout().motherboardSlot()).getItem() instanceof MotherboardItem m
-                ? Math.min(layout().pcieCount(), m.spec().pcieSlots()) : 0;
+        return hardware.boardPcieSlots();
     }
 
     public int boardDiskSlots() {
-        return getHardware().getStackInSlot(layout().motherboardSlot()).getItem() instanceof MotherboardItem m
-                ? Math.min(layout().diskCount(), m.spec().diskSlots()) : 0;
+        return hardware.boardDiskSlots();
     }
 
-    /**
-     * The hardware era of the installed motherboard, or {@code null} when no board is present. Read from the board
-     * alone (no PSU needed), so the assembly GUI can adopt the era's skin the moment a board goes in.
-     */
+    /** The hardware era of the installed motherboard, or {@code null} when no board is present. */
     @Nullable
     public HardwareEra installedEra() {
-        return getHardware().getStackInSlot(layout().motherboardSlot()).getItem() instanceof MotherboardItem m
-                ? m.spec().era() : null;
+        return hardware.installedEra();
     }
 
     /**
@@ -369,40 +356,25 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     public int installedCpus() {
-        final ComputerBuild build = currentBuild();
-        return build == null ? 0 : build.cpus().size();
+        return hardware.installedCpus();
     }
 
     public int installedRam() {
-        final ComputerBuild build = currentBuild();
-        return build == null ? 0 : build.rams().size();
+        return hardware.installedRam();
     }
 
     public int installedGpus() {
-        final ComputerBuild build = currentBuild();
-        return build == null ? 0 : build.gpus().size();
+        return hardware.installedGpus();
     }
 
     /** The best (max) CPU clock in MHz across installed CPUs, or 0 when there is no valid build. */
     public int maxCpuMhz() {
-        final ComputerBuild build = currentBuild();
-        if (build == null) {
-            return 0;
-        }
-        int max = 0;
-        for (final CpuSpec cpu : build.cpus()) {
-            max = Math.max(max, cpu.freqMhz());
-        }
-        return max;
+        return hardware.maxCpuMhz();
     }
 
-    /**
-     * The usable VRAM in MB across installed GPUs, or 0 when there is no valid build. A card seated in
-     * a slot older than itself contributes only what that slot's bandwidth allows.
-     */
+    /** The usable VRAM in MB across installed GPUs, or 0 when there is no valid build. */
     public int totalVramMb() {
-        final ComputerBuild build = currentBuild();
-        return build == null ? 0 : build.effectiveVramMb();
+        return hardware.totalVramMb();
     }
 
     /**
@@ -421,8 +393,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     public int installedDisks() {
-        final ComputerBuild build = currentBuild();
-        return build == null ? 0 : build.disks().size();
+        return hardware.installedDisks();
     }
 
     /*
@@ -1027,7 +998,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
             return 0;
         }
         long coreMegahertz = 0;
-        for (final dev.jstech.computers.hardware.CpuSpec cpu : build.cpus()) {
+        for (final CpuSpec cpu : build.cpus()) {
             coreMegahertz += (long) cpu.cores() * cpu.freqMhz();
         }
         return dev.jstech.computers.machine.MachinePrograms.creditsFor(coreMegahertz);
