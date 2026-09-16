@@ -42,6 +42,12 @@ final class ComputerHardware {
     private final ItemStackHandler handler;
     @Nullable
     private ComputerBuild cached;
+    /*
+     * Whether those parts make a computer that can be switched on, settled when the build is and not on every
+     * ask. The question is asked of every machine on every tick, through isRunning, and answering it walks the
+     * four lists of parts and makes a list and a verdict of its own to do it.
+     */
+    private boolean powered;
     private boolean dirty = true;
 
     ComputerHardware(final AbstractComputerBlockEntity machine, final ComputerHardwareLayout layout) {
@@ -85,6 +91,7 @@ final class ComputerHardware {
     ComputerBuild current() {
         if (this.dirty) {
             this.cached = compute();
+            this.powered = this.cached != null && this.cached.isPowered();
             this.dirty = false;
         }
         return this.cached;
@@ -92,8 +99,8 @@ final class ComputerHardware {
 
     /** Whether the installed parts make a computer that can be switched on. */
     boolean valid() {
-        final ComputerBuild build = current();
-        return build != null && build.isPowered();
+        current();
+        return this.powered;
     }
 
     void save(final CompoundTag tag, final HolderLookup.Provider registries, final String key) {
