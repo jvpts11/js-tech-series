@@ -365,35 +365,111 @@ public final class LiveInstallState {
                         "grub-install /dev/sdX | passwd | exit | reboot");
     }
 
-    // persistence (a compact key=value string, so the console state stays free of NBT here)
+    /*
+     * Persistence: one line per thing remembered, written as name and value, so the console state stays free of
+     * NBT here and this class stays pure.
+     *
+     * <p>Named rather than counted on purpose. A sequence this long grows, and a state written as a row of
+     * unlabelled fields would mean every new thing remembered shifts everything after it and throws away what
+     * was saved before. By name, a state written by an older build simply says less, and what it does not say
+     * takes the value a fresh install would have.
+     */
+
+    /** Separates one remembered thing from the next; a value carrying one is escaped rather than cut. */
+    private static final char LINE = '\n';
 
     public String serialize() {
-        return distro.serializedName() + ";" + device + ";" + (formatted ? 1 : 0) + ";" + (mounted ? 1 : 0) + ";" + (base ? 1 : 0)
-                + ";" + (fstab ? 1 : 0) + ";" + (chroot ? 1 : 0) + ";" + (synced ? 1 : 0) + ";" + kernelReadyAt + ";"
-                + (kernelBuilt ? 1 : 0) + ";" + (bootloader ? 1 : 0) + ";" + (password ? 1 : 0);
+        final StringBuilder out = new StringBuilder();
+        put(out, "distro", distro.serializedName());
+        put(out, "device", device);
+        put(out, "formatted", formatted);
+        put(out, "mounted", mounted);
+        put(out, "base", base);
+        put(out, "fstab", fstab);
+        put(out, "chroot", chroot);
+        put(out, "synced", synced);
+        put(out, "kernel_ready_at", Long.toString(kernelReadyAt));
+        put(out, "kernel_built", kernelBuilt);
+        put(out, "bootloader", bootloader);
+        put(out, "password", password);
+        return out.toString();
     }
 
     public static LiveInstallState deserialize(final String s) {
-        final String[] p = s.split(";", -1);
-        if (p.length < 12) {
-            return null;
-        }
-        final Distro distro = Distro.find(p[0]);
+        final java.util.Map<String, String> saved = read(s);
+        final Distro distro = Distro.find(saved.getOrDefault("distro", ""));
         if (distro == null) {
             return null;
         }
         final LiveInstallState st = new LiveInstallState(distro);
-        st.device = p[1];
-        st.formatted = p[2].equals("1");
-        st.mounted = p[3].equals("1");
-        st.base = p[4].equals("1");
-        st.fstab = p[5].equals("1");
-        st.chroot = p[6].equals("1");
-        st.synced = p[7].equals("1");
-        st.kernelReadyAt = Long.parseLong(p[8]);
-        st.kernelBuilt = p[9].equals("1");
-        st.bootloader = p[10].equals("1");
-        st.password = p[11].equals("1");
+        st.device = saved.getOrDefault("device", "");
+        st.formatted = flag(saved, "formatted");
+        st.mounted = flag(saved, "mounted");
+        st.base = flag(saved, "base");
+        st.fstab = flag(saved, "fstab");
+        st.chroot = flag(saved, "chroot");
+        st.synced = flag(saved, "synced");
+        st.kernelReadyAt = number(saved, "kernel_ready_at", -1L);
+        st.kernelBuilt = flag(saved, "kernel_built");
+        st.bootloader = flag(saved, "bootloader");
+        st.password = flag(saved, "password");
         return st;
+    }
+
+    private static void put(final StringBuilder out, final String name, final boolean value) {
+        put(out, name, value ? "1" : "0");
+    }
+
+    private static void put(final StringBuilder out, final String name, final String value) {
+        if (!out.isEmpty()) {
+            out.append(LINE);
+        }
+        out.append(name).append('=').append(escape(value));
+    }
+
+    /** What a saved state says, by name; anything it does not name is simply absent. */
+    private static java.util.Map<String, String> read(final String s) {
+        final java.util.Map<String, String> saved = new java.util.LinkedHashMap<>();
+        if (s == null || s.isEmpty()) {
+            return saved;
+        }
+        for (final String line : s.split("\n", -1)) {
+            final int split = line.indexOf('=');
+            if (split > 0) {
+                saved.put(line.substring(0, split), unescape(line.substring(split + 1)));
+            }
+        }
+        return saved;
+    }
+
+    private static boolean flag(final java.util.Map<String, String> saved, final String name) {
+        return "1".equals(saved.get(name));
+    }
+
+    private static long number(final java.util.Map<String, String> saved, final String name, final long fallback) {
+        try {
+            return Long.parseLong(saved.getOrDefault(name, Long.toString(fallback)));
+        } catch (final NumberFormatException wrong) {
+            return fallback;
+        }
+    }
+
+    /** A value with the two characters that would break a line written so they cannot. */
+    private static String escape(final String value) {
+        return value.replace("\\", "\\\\").replace("\n", "\\n");
+    }
+
+    private static String unescape(final String value) {
+        final StringBuilder out = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            final char c = value.charAt(i);
+            if (c != '\\' || i + 1 >= value.length()) {
+                out.append(c);
+                continue;
+            }
+            final char next = value.charAt(++i);
+            out.append(next == 'n' ? '\n' : next);
+        }
+        return out.toString();
     }
 }

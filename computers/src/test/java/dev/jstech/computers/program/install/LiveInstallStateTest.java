@@ -124,6 +124,35 @@ class LiveInstallStateTest {
         assertEquals(0, back.targetIndex());
     }
 
+    /**
+     * A state saved by a build that remembered less comes back as far as it goes, rather than not at all.
+     *
+     * <p>This sequence is going to grow, and a saved state that named nothing would throw away a player's
+     * half-finished install every time it did.
+     */
+    @Test
+    void deserialize_aStateThatSaysLess_comesBackAsFarAsItGoes() {
+        final LiveInstallState back = LiveInstallState.deserialize(
+                "distro=arch\ndevice=sdb\nformatted=1\nmounted=1");
+        assertEquals(LiveInstallState.Distro.ARCH, back.distro());
+        assertEquals(1, back.targetIndex());
+        assertFalse(back.inChroot());
+    }
+
+    @Test
+    void deserialize_aStateNamingSomethingUnknown_ignoresIt() {
+        final LiveInstallState back = LiveInstallState.deserialize(
+                "distro=gentoo\ndevice=sda\nsomething_later=yes");
+        assertEquals(LiveInstallState.Distro.GENTOO, back.distro());
+        assertEquals(0, back.targetIndex());
+    }
+
+    @Test
+    void deserialize_nothingAtAll_isNoInstallRatherThanACrash() {
+        assertEquals(null, LiveInstallState.deserialize(""));
+        assertEquals(null, LiveInstallState.deserialize("distro=solaris"));
+    }
+
     @Test
     void wrongDistroVerb_isCommandNotFound() {
         final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.GENTOO);
