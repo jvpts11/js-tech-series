@@ -30,6 +30,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Added
+- A disk can be partitioned by hand before a distribution is installed on it. `fdisk /dev/sdX` opens the
+  partition editor with its own one-letter commands: `g` for a new table, `n` for a partition (`n 512M`, or
+  nothing for the rest of the disk), `t 1 uefi` to mark the one the firmware boots from, and `p`, `d`, `m`, `w`
+  and `q`. Nothing reaches the disk until `w`, and `q` throws away everything typed since it opened. `lsblk`
+  lists the disks at the size they really are with their partitions underneath, `mkfs.ext4` refuses a disk that
+  someone has partitioned instead of wiping the table, `mkfs.fat` makes the boot partition, and that one mounts
+  at `/mnt/boot`, under the root and after it.
 - The live medium of a hand-installed distribution carries files, and `ls`, `cd`, `cat` and `less` to read them.
   The guide the real medium ships with is in `/root/install.txt`, written from the steps the shell really
   accepts. What a step wrote is what reading it back shows: the filesystem table is not there until `genfstab`

@@ -174,17 +174,32 @@ public final class InstallService {
         if (state == null || !(machine instanceof IOsHost computer)) {
             return ICliComputer.OpResult.fail("no live medium is booted");
         }
-        // The devices the live system sees: every installed disk, in slot order (sda, sdb, ...).
-        final List<String> devices = new ArrayList<>();
+        /*
+         * The devices the live system sees: every installed disk, in slot order (sda, sdb, ...), with the size
+         * that is really written on it, so the tools print the disk the player put in rather than a made-up one.
+         */
+        final List<LiveInstallState.Device> devices = new ArrayList<>();
         for (int i = 0; i < computer.diskSlots(); i++) {
-            if (computer.diskInSlot(i).getItem() instanceof DiskItem) {
-                devices.add("sd" + (char) ('a' + i));
+            final net.minecraft.world.item.ItemStack stack = computer.diskInSlot(i);
+            if (stack.getItem() instanceof DiskItem disk) {
+                final long sizeMb = disk.spec().capacityItems() * disk.spec().era().mbPerItem();
+                devices.add(new LiveInstallState.Device("sd" + (char) ('a' + i),
+                        (int) Math.min(Integer.MAX_VALUE, sizeMb)));
             }
         }
         final long kernelTicks =
                 Math.max(5L, Math.min(1800L, 64_000L / Math.max(100, computer.maxCpuMhz()))) * 20L;
+        /*
+         * Which firmware this machine has decides whether the disk needs a partition of its own for the
+         * bootloader, and which target the bootloader is installed for. It is the machine's generation that
+         * says so, exactly as it does for the self-test.
+         */
+        final boolean uefi = dev.jstech.computers.os.FirmwareKind.forEra(
+                computer.installedEra() != null ? computer.installedEra()
+                        : dev.jstech.core.tier.HardwareEra.STANDARD)
+                == dev.jstech.computers.os.FirmwareKind.UEFI;
         final LiveInstallState.Result result = state.run(line, new LiveInstallState.Env(
-                devices, this.packages.reachable(), this.level.getGameTime(), kernelTicks));
+                devices, this.packages.reachable(), this.level.getGameTime(), kernelTicks, uefi));
         machine.setChanged();
         final String text = String.join("\n", result.lines());
         if (!result.complete()) {

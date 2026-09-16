@@ -18,7 +18,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class LiveInstallStateTest {
 
     private static LiveInstallState.Env env(final boolean mirror, final long now) {
-        return new LiveInstallState.Env(List.of("sda", "sdb"), mirror, now, 100L);
+        return new LiveInstallState.Env(
+                List.of(new LiveInstallState.Device("sda", 20_480), new LiveInstallState.Device("sdb", 512_000)),
+                mirror, now, 100L, false);
     }
 
     private static LiveInstallState.Result run(final LiveInstallState st, final String line, final boolean mirror,
@@ -236,6 +238,125 @@ class LiveInstallStateTest {
         assertTrue(String.join("\n", back.run("cat fstab", env(true, 0)).lines()).contains("UUID=jsc-sda"));
         assertTrue(back.run("cat /root/install.txt", env(true, 0)).ok(),
                 "and the medium's own guide is back with it");
+    }
+
+    private static LiveInstallState.Env uefi(final boolean mirror, final long now) {
+        return new LiveInstallState.Env(
+                List.of(new LiveInstallState.Device("sda", 20_480), new LiveInstallState.Device("sdb", 512_000)),
+                mirror, now, 100L, true);
+    }
+
+    /** The editor takes the shell over while it is open, and says so the way it always has. */
+    @Test
+    void fdisk_takesTheShellOverWhileItIsOpen() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        assertFalse(st.editingTable());
+        assertTrue(run(st, "fdisk /dev/sda", true, 0).ok());
+        assertTrue(st.editingTable());
+        assertEquals("Command (m for help):", st.prompt());
+        assertTrue(run(st, "w", true, 0).ok());
+        assertFalse(st.editingTable());
+        assertEquals("root@archiso ~ #", st.prompt());
+    }
+
+    @Test
+    void fdisk_aDiskTheMachineDoesNotHave_isNoSuchFile() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        final LiveInstallState.Result r = run(st, "fdisk /dev/sdz", true, 0);
+        assertFalse(r.ok());
+        assertTrue(r.lines().get(0).contains("No such file or directory"));
+        assertFalse(st.editingTable(), "and it did not open on a disk that is not there");
+    }
+
+    /** The editor says nothing reaches the disk until it is told to write, so walking away must mean it. */
+    @Test
+    void fdisk_quit_throwsAwayEverythingTypedSinceItOpened() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        run(st, "fdisk /dev/sda", true, 0);
+        run(st, "g", true, 0);
+        run(st, "n 512M", true, 0);
+        run(st, "q", true, 0);
+
+        assertFalse(st.editingTable());
+        final String listed = String.join("\n", run(st, "lsblk", true, 0).lines());
+        assertFalse(listed.contains("sda1"), "nothing was written to the disk: " + listed);
+    }
+
+    @Test
+    void fdisk_write_putsTheTableOnTheDiskAndTheListingShowsIt() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        run(st, "fdisk /dev/sda", true, 0);
+        run(st, "g", true, 0);
+        run(st, "n 512M", true, 0);
+        run(st, "t 1 uefi", true, 0);
+        run(st, "n", true, 0);
+        final String printed = String.join("\n", run(st, "p", true, 0).lines());
+        assertTrue(printed.contains("EFI System"), "the editor prints what it was told: " + printed);
+        assertTrue(printed.contains("20 GiB"), "and the disk the machine really has: " + printed);
+        run(st, "w", true, 0);
+
+        final String listed = String.join("\n", run(st, "lsblk", true, 0).lines());
+        assertTrue(listed.contains("sda1") && listed.contains("sda2"), "both partitions are there: " + listed);
+    }
+
+    @Test
+    void fdisk_aPartitionBeforeALabel_isRefused() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        run(st, "fdisk /dev/sda", true, 0);
+        final LiveInstallState.Result r = run(st, "n 512M", true, 0);
+        assertFalse(r.ok());
+        assertTrue(r.lines().get(0).contains("Create a disklabel first"));
+    }
+
+    /** A disk somebody partitioned is not a disk to write a filesystem straight onto. */
+    @Test
+    void mkfs_onAPartitionedDisk_refusesRatherThanWipingTheTable() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        run(st, "fdisk /dev/sda", true, 0);
+        run(st, "g", true, 0);
+        run(st, "n", true, 0);
+        run(st, "w", true, 0);
+
+        assertFalse(run(st, "mkfs.ext4 /dev/sda", true, 0).ok(), "the whole disk is refused");
+        assertTrue(run(st, "mkfs.ext4 /dev/sda1", true, 0).ok(), "its partition is not");
+    }
+
+    /** The place the firmware reads a bootloader from is made with its own tool, not with the other one. */
+    @Test
+    void mkfat_onlyOnTheBootPartition() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        run(st, "fdisk /dev/sda", true, 0);
+        run(st, "g", true, 0);
+        run(st, "n 512M", true, 0);
+        run(st, "n", true, 0);
+        run(st, "w", true, 0);
+
+        assertFalse(st.run("mkfs.fat -F32 /dev/sda1", uefi(true, 0)).ok(), "it is not marked as one yet");
+        run(st, "fdisk /dev/sda", true, 0);
+        run(st, "t 1 uefi", true, 0);
+        run(st, "w", true, 0);
+        assertTrue(st.run("mkfs.fat -F32 /dev/sda1", uefi(true, 0)).ok(), "now it is");
+        assertFalse(st.run("mkfs.ext4 /dev/sda1", uefi(true, 0)).ok(),
+                "and the other tool will not take it, since that is not what it holds");
+    }
+
+    /** The boot partition hangs inside the new system, so it is mounted after the root and under it. */
+    @Test
+    void mount_theBootPartition_goesUnderTheRootAndOnlyAfterIt() {
+        final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.ARCH);
+        run(st, "fdisk /dev/sda", true, 0);
+        run(st, "g", true, 0);
+        run(st, "n 512M", true, 0);
+        run(st, "t 1 uefi", true, 0);
+        run(st, "n", true, 0);
+        run(st, "w", true, 0);
+        st.run("mkfs.fat -F32 /dev/sda1", uefi(true, 0));
+        st.run("mkfs.ext4 /dev/sda2", uefi(true, 0));
+
+        assertFalse(st.run("mount /dev/sda1 /mnt/boot", uefi(true, 0)).ok(), "the root is not mounted yet");
+        assertTrue(st.run("mount /dev/sda2 /mnt", uefi(true, 0)).ok());
+        assertTrue(st.run("mount /dev/sda1 /mnt/boot", uefi(true, 0)).ok());
+        assertTrue(String.join("\n", st.run("lsblk", uefi(true, 0)).lines()).contains("/mnt/boot"));
     }
 
     @Test

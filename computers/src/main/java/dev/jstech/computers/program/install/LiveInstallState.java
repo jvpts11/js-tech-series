@@ -50,8 +50,57 @@ public final class LiveInstallState {
         }
     }
 
-    /** What the shell needs from the world for one command. */
-    public record Env(List<String> devices, boolean mirror, long now, long kernelBuildTicks) {
+    /**
+     * A disk the machine really has, as the live shell sees it.
+     *
+     * @param name   the device name the shell gives it, {@code sda} for the first
+     * @param sizeMb how big it is, so the tools print the disk the player actually put in
+     */
+    public record Device(String name, int sizeMb) {
+    }
+
+    /**
+     * What the shell needs from the world for one command.
+     *
+     * @param uefi whether this machine's firmware boots the modern way, which decides whether the disk needs a
+     *             partition of its own for the bootloader and which target the bootloader is installed for
+     */
+    public record Env(List<Device> devices, boolean mirror, long now, long kernelBuildTicks, boolean uefi) {
+
+        /** Whether a device of that name is in the machine. */
+        public boolean has(final String name) {
+            return this.find(name) != null;
+        }
+
+        /** The device of that name, or null when the machine has none. */
+        public Device find(final String name) {
+            for (final Device device : this.devices) {
+                if (device.name().equals(name)) {
+                    return device;
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
+     * A partition written onto a disk.
+     *
+     * @param number where it sits on the disk, so {@code sda1} is number one
+     * @param sizeMb how big it was asked to be, or 0 for one that took whatever was left
+     * @param esp    whether it is the partition the firmware looks in for a bootloader
+     */
+    public record Partition(int number, int sizeMb, boolean esp) {
+
+        /** The device name of this partition on that disk. */
+        public String on(final String disk) {
+            return disk + this.number;
+        }
+
+        /** What a partition table calls it. */
+        public String type() {
+            return this.esp ? "EFI System" : "Linux filesystem";
+        }
     }
 
     /** The outcome of one command: its output lines, whether it failed, and whether the install completed. */
@@ -80,8 +129,28 @@ public final class LiveInstallState {
      */
     private final java.util.Map<String, String> files = new java.util.LinkedHashMap<>();
     private final java.util.Set<String> dirs = new java.util.LinkedHashSet<>();
+    /*
+     * The partitions written onto each disk, by the disk's name. A disk with none is a disk nobody has
+     * partitioned, which a machine of the older firmware can still be installed onto whole.
+     */
+    private final java.util.Map<String, List<Partition>> tables = new java.util.LinkedHashMap<>();
     private String cwd = HOME;
-    private String device = "";       // the formatted target, e.g. "sda"
+    /** The disk the partition editor is open on, empty when it is not open. */
+    private String editing = "";
+    /*
+     * What the editor has been told so far, which is not the disk yet. The real one keeps every change in
+     * memory until it is told to write, and says so when it opens; walking away with q has to really throw
+     * the changes away or that promise is a lie.
+     */
+    private final List<Partition> draft = new ArrayList<>();
+    /** Whether the disk being edited has been given a table that can carry a boot partition. */
+    private boolean gpt;
+    /** The partition mounted where the firmware looks for a bootloader, empty when none is. */
+    private String espMount = "";
+    /** The partition made ready to hold a bootloader, empty when none has been. */
+    private String espDevice = "";
+    private boolean espFormatted;
+    private String device = "";       // the formatted target, e.g. "sda" or "sda2"
     private boolean formatted;
     private boolean mounted;
     private boolean base;             // pacstrap / stage3 done
@@ -165,6 +234,10 @@ public final class LiveInstallState {
      * outside, because from in there that is where you are.
      */
     public String prompt() {
+        if (this.editingTable()) {
+            // The editor takes the shell over while it is open, and says so the way it always has.
+            return "Command (m for help):";
+        }
         final String where = HOME.equals(cwd) ? "~" : cwd;
         if (distro == Distro.ARCH) {
             return chroot ? "[root@archiso " + where + "]#" : "root@archiso " + where + " #";
@@ -187,12 +260,22 @@ public final class LiveInstallState {
         return distro == Distro.GENTOO && kernelReadyAt >= 0 && !kernelBuilt && nowTick < kernelReadyAt;
     }
 
+    /** Whether the partition editor is open, which is a shell of its own with its own one-letter commands. */
+    public boolean editingTable() {
+        return !editing.isEmpty();
+    }
+
     /** Runs one command line against the state. */
     public Result run(final String line, final Env env) {
         final String[] parts = line.trim().split("\\s+");
         final String cmd = parts.length == 0 ? "" : parts[0].toLowerCase(Locale.ROOT);
         final String arg1 = parts.length > 1 ? parts[1] : "";
+        if (this.editingTable()) {
+            return table(cmd, parts, env);
+        }
         return switch (cmd) {
+            case "fdisk" -> fdisk(arg1, env);
+            case "mkfs.fat", "mkfs.vfat" -> mkfat(parts, env);
             case "ls" -> ls(arg1);
             case "cat" -> cat(arg1, false);
             case "less", "more" -> cat(arg1, true);
@@ -326,18 +409,226 @@ public final class LiveInstallState {
         return Result.pass();
     }
 
+    /** Opens the partition editor on a disk, which takes the shell over until it is written or left. */
+    private Result fdisk(final String arg, final Env env) {
+        final String dev = deviceName(arg);
+        if (dev.isEmpty()) {
+            return Result.fail("Usage: fdisk /dev/<device>");
+        }
+        final Device disk = env.find(dev);
+        if (disk == null) {
+            return Result.fail("fdisk: cannot open /dev/" + dev + ": No such file or directory");
+        }
+        editing = dev;
+        draft.clear();
+        draft.addAll(tables.getOrDefault(dev, List.of()));
+        gpt = !draft.isEmpty();
+        return Result.pass("Welcome to fdisk (JSC).",
+                "Changes stay in memory only, until you decide to write them.",
+                "",
+                "Disk /dev/" + dev + ": " + megabytes(disk.sizeMb()),
+                "",
+                "Command (m for help):");
+    }
+
+    /**
+     * One command inside the partition editor.
+     *
+     * <p>The one-letter commands of the real thing, and the same promise it makes: nothing reaches the disk
+     * until {@code w}, and {@code q} walks away from everything typed since it opened.
+     */
+    private Result table(final String cmd, final String[] parts, final Env env) {
+        switch (cmd) {
+            case "m", "help" -> {
+                return Result.pass("  g   create a new empty GPT partition table",
+                        "  n   add a new partition            (n <size>, e.g. n 512M; no size takes the rest)",
+                        "  t   change a partition type        (t <number> uefi)",
+                        "  d   delete a partition             (d <number>)",
+                        "  p   print the partition table",
+                        "  w   write the table to disk and exit",
+                        "  q   quit without saving changes");
+            }
+            case "g" -> {
+                gpt = true;
+                draft.clear();
+                return Result.pass("Created a new GPT disklabel.");
+            }
+            case "p" -> {
+                return print(env);
+            }
+            case "n" -> {
+                if (!gpt) {
+                    return Result.fail("Partition type not known. Create a disklabel first (g).");
+                }
+                final int size = megabytesOf(parts.length > 1 ? parts[1] : "");
+                final int number = draft.size() + 1;
+                draft.add(new Partition(number, size, false));
+                return Result.pass("Created a new partition " + number + " of type 'Linux filesystem' and of size "
+                        + (size > 0 ? megabytes(size) : "the rest of the disk") + ".");
+            }
+            case "t" -> {
+                final int number = numberOf(parts.length > 1 ? parts[1] : "");
+                final String type = parts.length > 2 ? parts[2].toLowerCase(Locale.ROOT) : "";
+                if (number < 1 || number > draft.size()) {
+                    return Result.fail("Partition " + (number < 1 ? "?" : number) + " does not exist yet!");
+                }
+                if (!type.equals("uefi") && !type.equals("efi") && !type.equals("linux")) {
+                    return Result.fail("Usage: t <number> uefi|linux");
+                }
+                final Partition was = draft.get(number - 1);
+                draft.set(number - 1, new Partition(was.number(), was.sizeMb(), !type.equals("linux")));
+                return Result.pass("Changed type of partition " + number + " to '"
+                        + draft.get(number - 1).type() + "'.");
+            }
+            case "d" -> {
+                final int number = numberOf(parts.length > 1 ? parts[1] : "");
+                if (number < 1 || number > draft.size()) {
+                    return Result.fail("Partition " + (number < 1 ? "?" : number) + " does not exist yet!");
+                }
+                draft.remove(number - 1);
+                renumber(draft);
+                return Result.pass("Partition " + number + " has been deleted.");
+            }
+            case "w" -> {
+                tables.put(editing, List.copyOf(draft));
+                editing = "";
+                draft.clear();
+                return Result.pass("The partition table has been altered.",
+                        "Calling ioctl() to re-read partition table.", "Syncing disks.");
+            }
+            case "q" -> {
+                // Everything typed since it opened goes with it, which is what the opening line promised.
+                editing = "";
+                draft.clear();
+                return Result.pass();
+            }
+            default -> {
+                return Result.fail(cmd + ": unknown command", "Command (m for help):");
+            }
+        }
+    }
+
+    /** The table as the editor prints it, which is the disk's own size and what has been laid on it. */
+    private Result print(final Env env) {
+        final Device disk = env.find(editing);
+        final List<String> out = new ArrayList<>();
+        out.add("Disk /dev/" + editing + ": " + megabytes(disk == null ? 0 : disk.sizeMb()));
+        out.add("Disklabel type: " + (gpt ? "gpt" : "dos"));
+        if (draft.isEmpty()) {
+            out.add("(no partitions)");
+            return new Result(true, List.copyOf(out), false);
+        }
+        out.add("Device      Size            Type");
+        for (final Partition part : draft) {
+            out.add(String.format(Locale.ROOT, "%-11s %-15s %s", "/dev/" + part.on(editing),
+                    part.sizeMb() > 0 ? megabytes(part.sizeMb()) : "rest", part.type()));
+        }
+        return new Result(true, List.copyOf(out), false);
+    }
+
+    /** After a delete, the ones below move up, exactly as the numbers on a real table do. */
+    private static void renumber(final List<Partition> draft) {
+        for (int i = 0; i < draft.size(); i++) {
+            final Partition was = draft.get(i);
+            draft.set(i, new Partition(i + 1, was.sizeMb(), was.esp()));
+        }
+    }
+
+    /** A size as a person writes it at a partition editor: {@code 512M}, {@code 1G}, or nothing for the rest. */
+    private static int megabytesOf(final String written) {
+        if (written.isEmpty()) {
+            return 0;
+        }
+        final String digits = written.replaceAll("[^0-9]", "");
+        if (digits.isEmpty()) {
+            return 0;
+        }
+        final int value = Integer.parseInt(digits);
+        final char unit = Character.toUpperCase(written.charAt(written.length() - 1));
+        return unit == 'G' ? value * 1024 : unit == 'K' ? Math.max(1, value / 1024) : value;
+    }
+
+    private static int numberOf(final String written) {
+        try {
+            return Integer.parseInt(written.trim());
+        } catch (final NumberFormatException wrong) {
+            return -1;
+        }
+    }
+
+    /** Megabytes as a partition editor writes them. */
+    private static String megabytes(final int mb) {
+        if (mb >= 1024 * 1024 && mb % (1024 * 1024) == 0) {
+            return mb / (1024 * 1024) + " TiB";
+        }
+        if (mb >= 1024 && mb % 1024 == 0) {
+            return mb / 1024 + " GiB";
+        }
+        return mb + " MiB";
+    }
+
     private Result lsblk(final Env env) {
         final List<String> out = new ArrayList<>();
-        out.add("NAME   TYPE  MOUNTPOINT");
+        out.add(String.format(Locale.ROOT, "%-8s %-10s %-5s %s", "NAME", "SIZE", "TYPE", "MOUNTPOINT"));
         if (env.devices().isEmpty()) {
             out.add("(no disks detected)");
         }
-        for (int i = 0; i < env.devices().size(); i++) {
-            final String name = env.devices().get(i);
-            final String mp = mounted && name.equals(device) ? "/mnt" : "";
-            out.add(String.format(Locale.ROOT, "%-6s disk  %s", name, mp));
+        for (final Device disk : env.devices()) {
+            out.add(String.format(Locale.ROOT, "%-8s %-10s %-5s %s", disk.name(), megabytes(disk.sizeMb()),
+                    "disk", mountOf(disk.name())));
+            for (final Partition part : tables.getOrDefault(disk.name(), List.of())) {
+                final String name = part.on(disk.name());
+                out.add(String.format(Locale.ROOT, "%-8s %-10s %-5s %s", "`-" + name,
+                        part.sizeMb() > 0 ? megabytes(part.sizeMb()) : "rest", "part", mountOf(name)));
+            }
         }
-        return new Result(true, out, false);
+        return new Result(true, List.copyOf(out), false);
+    }
+
+    /** Where that device is mounted right now, which is what the listing's last column says. */
+    private String mountOf(final String name) {
+        if (mounted && name.equals(device)) {
+            return MOUNT;
+        }
+        return !espMount.isEmpty() && name.equals(espDevice) ? espMount : "";
+    }
+
+    /** The partition of that name, or null when nothing on this machine is called it. */
+    private Partition partitionOf(final String name) {
+        for (final java.util.Map.Entry<String, List<Partition>> disk : tables.entrySet()) {
+            for (final Partition part : disk.getValue()) {
+                if (part.on(disk.getKey()).equals(name)) {
+                    return part;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Makes the filesystem the firmware reads a bootloader out of, which only the modern one needs. */
+    private Result mkfat(final String[] parts, final Env env) {
+        String arg = "";
+        for (int i = 1; i < parts.length; i++) {
+            if (!parts[i].startsWith("-") && !parts[i].equals("32")) {
+                arg = parts[i];
+            }
+        }
+        final String dev = deviceName(arg);
+        if (dev.isEmpty()) {
+            return Result.fail("Usage: mkfs.fat -F32 /dev/<partition>");
+        }
+        final Partition part = partitionOf(dev);
+        if (part == null) {
+            return Result.fail("mkfs.fat: unable to open " + dev + ": No such file or directory");
+        }
+        if (!part.esp()) {
+            return Result.fail("mkfs.fat: " + dev + " is not an EFI System partition.",
+                    "       (set its type first: fdisk, then t " + part.number() + " uefi)");
+        }
+        espDevice = dev;
+        espFormatted = true;
+        espMount = "";
+        return Result.pass("mkfs.fat 4.2 (JSC)");
     }
 
     private static String deviceName(final String arg) {
@@ -349,8 +640,21 @@ public final class LiveInstallState {
         if (dev.isEmpty()) {
             return Result.fail("Usage: mkfs.ext4 /dev/<device>");
         }
-        if (!env.devices().contains(dev)) {
+        final Partition part = partitionOf(dev);
+        if (part == null && !env.has(dev)) {
             return Result.fail("mke2fs: No such file or directory while trying to determine filesystem size");
+        }
+        if (part != null && part.esp()) {
+            return Result.fail("mke2fs: " + dev + " is the EFI System partition.",
+                    "       (that one holds the bootloader: mkfs.fat -F32 /dev/" + dev + ")");
+        }
+        /*
+         * A disk somebody partitioned is not a disk to write a filesystem straight onto: the real tool refuses
+         * rather than quietly wiping the table somebody just made.
+         */
+        if (part == null && !tables.getOrDefault(dev, List.of()).isEmpty()) {
+            return Result.fail("/dev/" + dev + " contains a gpt partition table.",
+                    "mke2fs: will not make a filesystem here; use one of its partitions.");
         }
         device = dev;
         formatted = true;
@@ -364,7 +668,23 @@ public final class LiveInstallState {
         if (dev.isEmpty() || point.isEmpty()) {
             return Result.fail("mount: bad usage", "Try 'mount /dev/<device> /mnt'.");
         }
-        if (!point.equals("/mnt")) {
+        /*
+         * The place the firmware reads a bootloader out of hangs inside the new system, so it is mounted after
+         * the root is and under it, exactly where the bootloader will go looking for it.
+         */
+        if (point.equals(MOUNT + "/boot")) {
+            if (!mounted) {
+                return Result.fail("mount: " + point + ": mount point does not exist.",
+                        "       (mount the root first: mount /dev/<partition> /mnt)");
+            }
+            if (!espFormatted || !dev.equals(espDevice)) {
+                return Result.fail("mount: " + point + ": wrong fs type on /dev/" + dev + ".",
+                        "       (make it first: mkfs.fat -F32 /dev/" + dev + ")");
+            }
+            espMount = point;
+            return Result.pass();
+        }
+        if (!point.equals(MOUNT)) {
             return Result.fail("mount: " + point + ": mount point does not exist.");
         }
         if (!formatted || !dev.equals(device)) {
@@ -595,6 +915,22 @@ public final class LiveInstallState {
         put(out, "bootloader", bootloader);
         put(out, "password", password);
         put(out, "cwd", cwd);
+        put(out, "editing", editing);
+        put(out, "gpt", gpt);
+        put(out, "esp_device", espDevice);
+        put(out, "esp_formatted", espFormatted);
+        put(out, "esp_mount", espMount);
+        for (final java.util.Map.Entry<String, List<Partition>> disk : tables.entrySet()) {
+            final StringBuilder written = new StringBuilder();
+            for (final Partition part : disk.getValue()) {
+                if (!written.isEmpty()) {
+                    written.append(',');
+                }
+                written.append(part.number()).append(':').append(part.sizeMb())
+                        .append(':').append(part.esp() ? 1 : 0);
+            }
+            put(out, "table:" + disk.getKey(), written.toString());
+        }
         /*
          * Only what the installation made: the guide the medium carries is put back when the session is built
          * again, because it belongs to the medium rather than to the work done on it.
@@ -629,14 +965,41 @@ public final class LiveInstallState {
         st.bootloader = flag(saved, "bootloader");
         st.password = flag(saved, "password");
         st.cwd = saved.getOrDefault("cwd", HOME);
+        st.editing = saved.getOrDefault("editing", "");
+        st.gpt = flag(saved, "gpt");
+        st.espDevice = saved.getOrDefault("esp_device", "");
+        st.espFormatted = flag(saved, "esp_formatted");
+        st.espMount = saved.getOrDefault("esp_mount", "");
         for (final java.util.Map.Entry<String, String> line : saved.entrySet()) {
             if (line.getKey().startsWith("dir:")) {
                 st.dirs.add(line.getKey().substring(4));
             } else if (line.getKey().startsWith("file:")) {
                 st.files.put(line.getKey().substring(5), line.getValue());
+            } else if (line.getKey().startsWith("table:")) {
+                st.tables.put(line.getKey().substring(6), partitions(line.getValue()));
             }
         }
         return st;
+    }
+
+    /** A partition table read back from the one line it was written as. */
+    private static List<Partition> partitions(final String written) {
+        if (written.isEmpty()) {
+            return List.of();
+        }
+        final List<Partition> table = new ArrayList<>();
+        for (final String one : written.split(",")) {
+            final String[] field = one.split(":");
+            if (field.length == 3) {
+                try {
+                    table.add(new Partition(Integer.parseInt(field[0]), Integer.parseInt(field[1]),
+                            field[2].equals("1")));
+                } catch (final NumberFormatException wrong) {
+                    return List.copyOf(table);
+                }
+            }
+        }
+        return List.copyOf(table);
     }
 
     private static void put(final StringBuilder out, final String name, final boolean value) {
