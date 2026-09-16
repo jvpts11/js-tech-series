@@ -13,8 +13,6 @@ import dev.jstech.computers.block.MainframeStructure;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.core.network.ConnectivityIndex;
-import dev.jstech.core.network.IDataNetworkConnectable;
-import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.FailoverRole;
 import dev.jstech.core.network.MainframeNode;
 import dev.jstech.core.network.NetworkSystem;
@@ -44,7 +42,10 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * The Mainframe BlockEntity: the binding that turns installed hardware item stacks into a {@link ComputerBuild} and exposes the powered state, capacity and parallel-queue count. Unlike the passive computers it shares a base with, the Mainframe OWNS and orchestrates a data network rather than reading one from a cable.
+ * The Mainframe BlockEntity: the binding that turns installed hardware item stacks into a
+ * {@link ComputerBuild} and exposes the powered state, capacity and parallel-queue count. Unlike the
+ * passive computers it shares a base with, the Mainframe OWNS and orchestrates a data network rather
+ * than reading one from a cable.
  */
 public class MainframeBlockEntity extends AbstractComputerBlockEntity
         implements dev.jstech.computers.terminal.IComputerTerminalHost,
@@ -510,7 +511,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             if (primaryPeerPresent) {
                 // Two primaries on one network: collapse it until they are physically separated.
                 NetworkRegistrySavedData.get(level).setNetworkState(effective, NetworkUuidState.CONFLICTED);
-                networkUuid = null;
+                attachment().attachTo(null);
                 unregister(system);
                 return;
             }
@@ -523,7 +524,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             // Not on any network yet: dormant until it reaches a primary's network.
             failoverRole = FailoverRole.PASSIVE;
             failoverWaitTicks = 0;
-            networkUuid = null;
+            attachment().attachTo(null);
             unregister(system);
             return;
         }
@@ -531,7 +532,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             // The primary owns and orchestrates this network; the standby merely stands by on it.
             failoverRole = FailoverRole.PASSIVE;
             failoverWaitTicks = 0;
-            networkUuid = adopted;
+            attachment().attachTo(adopted);
             unregister(system);
             return;
         }
@@ -543,7 +544,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
                 .anyMatch(peer -> peer.worldPosition.asLong() < worldPosition.asLong());
         updateFailoverRole(superiorStandbyPresent);
         if (failoverRole == FailoverRole.PASSIVE) {
-            networkUuid = adopted;
+            attachment().attachTo(adopted);
             unregister(system);
             return;
         }
@@ -560,12 +561,12 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         }
         // The cables it touches tell the index, when one of them goes, whether the rest still reaches this Mainframe.
         index.anchor(worldPosition.asLong(), effective, cables);
-        networkUuid = effective;
+        attachment().attachTo(effective);
         // Restore the network from any prior CONFLICTED or ORPHANED state, since adopting it revives it.
         NetworkRegistrySavedData.get(level).setNetworkState(effective, NetworkUuidState.ACTIVE);
         system.registerMainframe(snapshot(effective));
         system.recordMainframePosition(effective, worldPosition.asLong());
-        registeredNetwork = effective;
+        attachment().registeredAs(effective);
     }
 
     private void updateFailoverRole(final boolean superiorPresent) {
@@ -594,15 +595,16 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     }
 
     private void leaveNetwork(final ServerLevel level) {
-        networkUuid = null;
+        attachment().attachTo(null);
         setConflict(level, false);
         unregister(NetworkSystem.get(level));
     }
 
     private void unregister(final NetworkSystem system) {
-        if (registeredNetwork != null) {
-            system.unregisterMainframe(registeredNetwork, nodeUuid());
-            registeredNetwork = null;
+        final NetworkUuid registered = attachment().registered();
+        if (registered != null) {
+            system.unregisterMainframe(registered, nodeUuid());
+            attachment().registeredAs(null);
         }
     }
 
@@ -625,8 +627,9 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         final NetworkSystem system = NetworkSystem.get(level);
         final ConnectivityIndex index = system.connectivity();
         final java.util.Set<NetworkUuid> owned = new java.util.LinkedHashSet<>();
-        if (registeredNetwork != null) {
-            owned.add(registeredNetwork);
+        final NetworkUuid registered = attachment().registered();
+        if (registered != null) {
+            owned.add(registered);
         }
         for (final long cable : adjacentCables(level)) {
             index.networkOf(cable).ifPresent(owned::add);
@@ -641,13 +644,14 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         final NetworkSystem system = NetworkSystem.get(level);
         final ConnectivityIndex index = system.connectivity();
         final NetworkRegistrySavedData registry = NetworkRegistrySavedData.get(level);
-        for (final NetworkUuid net : new java.util.LinkedHashSet<>(java.util.Arrays.asList(networkUuid, registeredNetwork))) {
+        for (final NetworkUuid net : new java.util.LinkedHashSet<>(
+                java.util.Arrays.asList(attachment().network(), attachment().registered()))) {
             if (net != null) {
                 index.clearNetwork(net);
                 registry.removeNetwork(net);
             }
         }
-        networkUuid = null;
+        attachment().attachTo(null);
         unregister(system);
     }
 
@@ -731,12 +735,6 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             }
         }
         return cables;
-    }
-
-    @Override
-    protected boolean acceptsTier(final DataTier tier) {
-        return getBlockState().getBlock() instanceof IDataNetworkConnectable device
-                && device.acceptedCableTiers().contains(tier);
     }
 
     private MainframeNode snapshot(final NetworkUuid network) {
@@ -875,7 +873,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     public void recordOperation(final byte type, final ItemStack icon, final long requested,
                                 final long moved, final byte status,
-                                final java.util.List<dev.jstech.computers.operation.payload.OperationRecord.MoveRow> moves) {
+                                final java.util.List<dev.jstech.computers.operation.payload.OperationRecord.MoveRow>
+                                        moves) {
         recordOperation(new dev.jstech.computers.operation.payload.OperationRecord(
                 type, dev.jstech.computers.storage.StorageKey.of(icon),
                 requested, moved, status, java.util.List.copyOf(moves)));
@@ -1247,7 +1246,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         if (preferred == null) {
             return all;
         }
-        final java.util.List<dev.jstech.computers.crafting.CraftingPattern> ordered = new java.util.ArrayList<>(all.size() + 1);
+        final java.util.List<dev.jstech.computers.crafting.CraftingPattern> ordered =
+                new java.util.ArrayList<>(all.size() + 1);
         ordered.add(preferred);
         for (final var pattern : all) {
             if (!pattern.equals(preferred)) {
@@ -2025,7 +2025,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     public int networkLinkState() {
-        return networkConflict ? NET_STATE_CONFLICT : (networkUuid != null ? NET_STATE_LINKED : NET_STATE_NONE);
+        return networkConflict ? NET_STATE_CONFLICT : (networkUuid() != null ? NET_STATE_LINKED : NET_STATE_NONE);
     }
 
     @Override
@@ -2067,8 +2067,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     public int networkServerCount() {
-        if (networkUuid != null && level instanceof ServerLevel serverLevel) {
-            return NetworkSystem.get(serverLevel).serversOf(networkUuid).size();
+        if (networkUuid() != null && level instanceof ServerLevel serverLevel) {
+            return NetworkSystem.get(serverLevel).serversOf(networkUuid()).size();
         }
         return 0;
     }
@@ -2115,16 +2115,16 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     public int networkPcCount() {
-        if (networkUuid != null && level instanceof ServerLevel serverLevel) {
-            return NetworkSystem.get(serverLevel).personalComputersOf(networkUuid).size();
+        if (networkUuid() != null && level instanceof ServerLevel serverLevel) {
+            return NetworkSystem.get(serverLevel).personalComputersOf(networkUuid()).size();
         }
         return 0;
     }
 
     @Override
     public int networkSubframeCount() {
-        if (networkUuid != null && level instanceof ServerLevel serverLevel) {
-            return NetworkSystem.get(serverLevel).subframesOf(networkUuid).size();
+        if (networkUuid() != null && level instanceof ServerLevel serverLevel) {
+            return NetworkSystem.get(serverLevel).subframesOf(networkUuid()).size();
         }
         return 0;
     }
@@ -2167,11 +2167,11 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     public long networkStorageTotal() {
-        if (networkUuid == null || !(level instanceof ServerLevel serverLevel)) {
+        if (networkUuid() == null || !(level instanceof ServerLevel serverLevel)) {
             return 0L;
         }
         // Counted in items as the racks registered them: what a megabyte holds differs by era, an item does not.
-        return NetworkSystem.get(serverLevel).totalStorageItemsOf(networkUuid);
+        return NetworkSystem.get(serverLevel).totalStorageItemsOf(networkUuid());
     }
 
     public static final int DATA_RUNNING = 0;
@@ -2205,7 +2205,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             case DATA_AUTOSTART -> isAutoStart() ? 1 : 0;
             case DATA_MANUAL_ON -> isManualOn() ? 1 : 0;
             case DATA_NETWORK_STATE ->
-                    networkConflict ? NET_STATE_CONFLICT : (networkUuid != null ? NET_STATE_LINKED : NET_STATE_NONE);
+                    networkConflict ? NET_STATE_CONFLICT : (networkUuid() != null ? NET_STATE_LINKED : NET_STATE_NONE);
             case DATA_PENDING_OPS -> pendingOps();
             case DATA_RUNNING_OPS -> runningOps();
             case DATA_COMPLETED_OPS -> (int) Math.min(Integer.MAX_VALUE, completedOps());

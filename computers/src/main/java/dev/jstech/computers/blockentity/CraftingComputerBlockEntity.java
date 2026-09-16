@@ -405,7 +405,7 @@ public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
             case DATA_CAPACITY -> (int) Math.min(Integer.MAX_VALUE, capacity());
             case DATA_RAM_BUFFER -> (int) Math.min(Integer.MAX_VALUE, ramBuffer());
             case DATA_AUTOSTART -> isAutoStart() ? 1 : 0;
-            case DATA_ON_NETWORK -> networkUuid != null ? 1 : 0;
+            case DATA_ON_NETWORK -> networkUuid() != null ? 1 : 0;
             case DATA_CRAFT_FACTOR_X100 -> (int) Math.round(craftingCardFactor() * 100.0);
             case DATA_CRAFT_THROUGHPUT -> (int) Math.min(Integer.MAX_VALUE, craftingThroughput());
             case DATA_ROM_USED -> romUsed();
@@ -458,7 +458,7 @@ public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     public int networkLinkState() {
-        return networkUuid != null ? 1 : 0; // a Crafting Computer never conflicts; it only reads a network
+        return networkUuid() != null ? 1 : 0; // a Crafting Computer never conflicts; it only reads a network
     }
 
     @Override
@@ -483,10 +483,10 @@ public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     public int networkServerCount() {
-        if (networkUuid == null || !(level instanceof ServerLevel serverLevel)) {
+        if (networkUuid() == null || !(level instanceof ServerLevel serverLevel)) {
             return 0;
         }
-        return NetworkSystem.get(serverLevel).serversOf(networkUuid).size();
+        return NetworkSystem.get(serverLevel).serversOf(networkUuid()).size();
     }
 
     @Override

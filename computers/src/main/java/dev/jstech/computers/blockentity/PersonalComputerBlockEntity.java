@@ -138,7 +138,7 @@ public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
     }
 
     private boolean onServerNetwork() {
-        return networkUuid != null && level instanceof ServerLevel;
+        return networkUuid() != null && level instanceof ServerLevel;
     }
 
     @Override
@@ -146,7 +146,7 @@ public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
         if (!onServerNetwork()) {
             return 0;
         }
-        return NetworkSystem.get((ServerLevel) level).serversOf(networkUuid).size();
+        return NetworkSystem.get((ServerLevel) level).serversOf(networkUuid()).size();
     }
 
     // Local storage (PC-specific: lives on the installed disks)
@@ -211,7 +211,7 @@ public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     public int networkLinkState() {
-        return networkUuid != null ? 1 : 0; // a PC never conflicts; it only reads a network
+        return networkUuid() != null ? 1 : 0; // a PC never conflicts; it only reads a network
     }
 
     @Override
@@ -299,7 +299,7 @@ public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
             case DATA_CAPACITY -> (int) Math.min(Integer.MAX_VALUE, capacity());
             case DATA_RAM_BUFFER -> (int) Math.min(Integer.MAX_VALUE, ramBuffer());
             case DATA_AUTOSTART -> isAutoStart() ? 1 : 0;
-            case DATA_ON_NETWORK -> networkUuid != null ? 1 : 0;
+            case DATA_ON_NETWORK -> networkUuid() != null ? 1 : 0;
             case DATA_SERVER_COUNT -> networkServerCount();
             default -> 0;
         };

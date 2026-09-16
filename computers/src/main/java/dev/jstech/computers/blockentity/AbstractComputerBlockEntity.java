@@ -8,7 +8,6 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
@@ -32,7 +31,6 @@ import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -56,8 +54,6 @@ import java.util.Set;
 public abstract class AbstractComputerBlockEntity extends BlockEntity
         implements IPeripheralOwnerSupport, dev.jstech.computers.os.IOsHost {
 
-    protected static final long NO_CABLE = Long.MIN_VALUE;
-
     protected final ComputerHardwareLayout layout;
 
     protected final ItemStackHandler hardware;
@@ -68,15 +64,9 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
 
     private final ComputerPower power = new ComputerPower(this::setChanged, this::endSession);
 
-    @Nullable
-    private NodeUuid nodeUuid;
     private String computerName = "";
-    @Nullable
-    protected NetworkUuid networkUuid;
-    @Nullable
-    protected NetworkUuid registeredNetwork;
-    /** The client's copy of whether this machine is on a network; the server answers from {@code networkUuid}. */
-    private boolean clientNetworked;
+
+    private final NetworkAttachment attachment = new NetworkAttachment(this);
 
     private final PeripheralEndpoints peripherals = new PeripheralEndpoints();
 
@@ -525,25 +515,22 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     // Identity & name
 
     public NodeUuid nodeUuid() {
-        if (nodeUuid == null) {
-            nodeUuid = NodeUuid.random();
-            setChanged();
-        }
-        return nodeUuid;
+        return attachment.node();
     }
 
     @Nullable
     public NetworkUuid networkUuid() {
-        return networkUuid;
+        return attachment.network();
     }
 
-    /**
-     * Whether this machine is attached to a data network. On the server that is simply whether it resolved
-     * one; on the client the network's identity never travels, only this answer does.
-     */
     @Override
     public boolean networkAttached() {
-        return level != null && level.isClientSide ? clientNetworked : networkUuid != null;
+        return attachment.attached();
+    }
+
+    /** Where this computer stands on the data network, for a Mainframe, which owns its network itself. */
+    protected NetworkAttachment attachment() {
+        return attachment;
     }
 
     public String customName() {
@@ -1016,38 +1003,11 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         tickBuildProgress(level);
         tickSigma();
         dev.jstech.computers.os.install.SetupRunner.tick(this, level, worldPosition);
-        final NetworkSystem system = NetworkSystem.get(level);
-        NetworkUuid resolved = null;
-        if (isRunning()) {
-            final long cable = adjacentCable(level);
-            resolved = cable == NO_CABLE ? null : system.connectivity().networkOf(cable).orElse(null);
-        }
-        if (registeredNetwork != null && !registeredNetwork.equals(resolved)) {
-            unregisterNode(system, registeredNetwork);
-            registeredNetwork = null;
-        }
-        final boolean wasAttached = networkUuid != null;
-        networkUuid = resolved;
-        if (resolved != null) {
-            registerNode(system, resolved);
-            registeredNetwork = resolved;
-        }
-        if (wasAttached != (resolved != null)) {
-            /*
-             * The desktop's notification area shows whether this machine is on a network, so a cable cut or
-             * laid has to reach the client rather than wait for the next time the monitor is opened.
-             */
-            setChanged();
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
-                    net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
-        }
+        attachment.tick(level);
     }
 
     public void onBroken(final ServerLevel level) {
-        if (registeredNetwork != null) {
-            unregisterNode(NetworkSystem.get(level), registeredNetwork);
-            registeredNetwork = null;
-        }
+        attachment.leave(level);
     }
 
     @Override
@@ -1061,38 +1021,6 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (level instanceof ServerLevel serverLevel) {
             onBroken(serverLevel);
         }
-    }
-
-    protected long adjacentCable(final ServerLevel level) {
-        for (final Direction direction : cableSearchFaces()) {
-            final BlockPos neighbor = worldPosition.relative(direction);
-            if (level.getBlockState(neighbor).getBlock() instanceof DataCableBlock cable
-                    && acceptsTier(cable.tier())) {
-                return neighbor.asLong();
-            }
-        }
-        return NO_CABLE;
-    }
-
-    /**
-     * The faces on which this computer will accept a data cable, derived from the block's
-     * {@link dev.jstech.core.network.IDataNetworkConnectable#connectsOnFace} so the
-     * device's attachment and the cable's rendered connection always agree. A standalone computer
-     * reports only its rear; the Mainframe (a separate block entity) and the cluster nodes keep every
-     * face.
-     */
-    protected java.util.List<Direction> cableSearchFaces() {
-        final BlockState state = getBlockState();
-        if (state.getBlock() instanceof dev.jstech.core.network.IDataNetworkConnectable device) {
-            final java.util.List<Direction> faces = new java.util.ArrayList<>(Direction.values().length);
-            for (final Direction direction : Direction.values()) {
-                if (device.connectsOnFace(state, direction)) {
-                    faces.add(direction);
-                }
-            }
-            return faces;
-        }
-        return java.util.Arrays.asList(Direction.values());
     }
 
     protected boolean acceptsTier(final DataTier tier) {
@@ -1488,9 +1416,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         power.load(tag);
         bootDiskSlot = tag.contains("BootDisk") ? tag.getInt("BootDisk") : -1;
         computerName = tag.getString("ComputerName");
-        if (tag.contains("NodeUuid")) {
-            nodeUuid = NodeUuid.fromString(tag.getString("NodeUuid"));
-        }
+        attachment.load(tag);
         peripherals.load(tag);
         bootedDesktopId = tag.contains("BootedDesktop")
                 ? ResourceLocation.tryParse(tag.getString("BootedDesktop")) : null;
@@ -1532,9 +1458,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (!computerName.isEmpty()) {
             tag.putString("ComputerName", computerName);
         }
-        if (nodeUuid != null) {
-            tag.putString("NodeUuid", nodeUuid.asString());
-        }
+        attachment.save(tag);
         /*
          * The running session survives a reload, exactly like the POST flag: a machine that was left up
          * with a desktop on screen must come back to that desktop, not fall to a shell.
@@ -1570,11 +1494,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (!computerName.isEmpty()) {
             tag.putString("ComputerName", computerName);
         }
-        /*
-         * Whether this machine is on a data network: the desktop's notification area reads it, so it has to
-         * travel to the client and be refreshed when a cable comes or goes.
-         */
-        tag.putBoolean("Networked", networkUuid != null);
+        attachment.saveForClient(tag);
         return tag;
     }
 
@@ -1599,6 +1519,6 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
          */
         final CompoundTag tag = packet.getTag();
         computerName = tag != null ? tag.getString("ComputerName") : "";
-        clientNetworked = tag != null && tag.getBoolean("Networked");
+        attachment.loadFromClient(tag);
     }
 }
