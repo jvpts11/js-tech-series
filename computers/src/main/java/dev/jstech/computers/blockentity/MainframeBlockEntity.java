@@ -89,6 +89,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
      * hardware slots are filled, which disks carry a system, and the machine's own condition.
      */
 
+    /* Every side, held once: SIDES hands back a fresh copy of the array on every call. */
+    private static final Direction[] SIDES = Direction.values();
     private static final int FLAG_RUNNING = 1;
     private static final int FLAG_BUILD_VALID = 2;
     private static final int FLAG_NETWORKED = 4;
@@ -665,7 +667,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
                     continue;
                 }
                 final BlockPos base = BlockPos.of(cablePos);
-                for (final Direction direction : Direction.values()) {
+                for (final Direction direction : SIDES) {
                     final MainframeBlockEntity mainframe = mainframeBehind(level, base.relative(direction));
                     if (mainframe != null && mainframe != this && mainframe.isRunning()) {
                         found.putIfAbsent(mainframe.worldPosition.asLong(), mainframe);
@@ -723,7 +725,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         final java.util.Set<Long> cables = new java.util.LinkedHashSet<>();
         for (final long posLong : inside) {
             final BlockPos p = BlockPos.of(posLong);
-            for (final Direction direction : Direction.values()) {
+            for (final Direction direction : SIDES) {
                 final BlockPos neighbor = p.relative(direction);
                 if (inside.contains(neighbor.asLong())) {
                     continue; // a face internal to the multiblock

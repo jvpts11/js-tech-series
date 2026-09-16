@@ -347,18 +347,19 @@ public final class NetworkIndex {
     }
 
     private static long hardwareCapOf(final ServerRackBlockEntity rack, final int slot) {
-        final ItemStack stack = rack.getServers().getStackInSlot(slot);
-        if (stack.getItem() instanceof ServerItem) {
-            final ComputerBuild build = ServerItem.build(stack);
-            if (build != null) {
-                /*
-                 * A cabinet over its thermal budget slows every machine in it, so the throughput a
-                 * server can promise the network drops with it.
-                 */
-                return rack.throttled(Math.min(build.totalCapacity(), build.ramBuffer()));
-            }
+        /*
+         * The cabinet has this build already and keeps it until the bay's parts change. Asking the item to
+         * build it again, which is what this did, walked every part of a server on every transfer that named it.
+         */
+        final ComputerBuild build = rack.buildIn(slot);
+        if (build == null) {
+            return Long.MAX_VALUE;
         }
-        return Long.MAX_VALUE;
+        /*
+         * A cabinet over its thermal budget slows every machine in it, so the throughput a
+         * server can promise the network drops with it.
+         */
+        return rack.throttled(Math.min(build.totalCapacity(), build.ramBuffer()));
     }
 
     private static StorageTier tierOf(final ServerRackBlockEntity rack, final int slot) {
@@ -450,7 +451,8 @@ public final class NetworkIndex {
                     if (level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
                         final long freeWeight = rack.getServerStorage(loc.slot()).freeWeight();
                         if (freeWeight > 0L) {
-                            room.put(server.nodeUuid(), new ItemLocation(server.nodeUuid(), tierOf(rack, loc.slot()), freeWeight));
+                            room.put(server.nodeUuid(), new ItemLocation(server.nodeUuid(),
+                                    tierOf(rack, loc.slot()), freeWeight));
                         }
                     }
                 });

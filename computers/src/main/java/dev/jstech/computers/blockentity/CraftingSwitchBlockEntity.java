@@ -38,6 +38,8 @@ import java.util.Set;
 public class CraftingSwitchBlockEntity extends BlockEntity {
 
     private static final int FACES = 6;
+    /* Every side, held once: SIDES hands back a fresh copy of the array on every call. */
+    private static final Direction[] SIDES = Direction.values();
     private static final int BFS_STEPS = 64;
 
     /*
@@ -91,7 +93,7 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
         final boolean[] before = machinePresent.clone();
         final BlockPos linkedBefore = linkedComputer;
         Direction cable = null;
-        for (final Direction direction : Direction.values()) {
+        for (final Direction direction : SIDES) {
             final BlockPos neighbor = worldPosition.relative(direction);
             if (level.getBlockState(neighbor).getBlock() instanceof DataCableBlock dataCable
                     && dataCable.tier() == DataTier.CRAFTING) {
@@ -112,7 +114,7 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
                 : findComputer(level, worldPosition.relative(cable));
         final java.util.List<BusMachineLine> busBefore = busMachineLines;
         final java.util.Set<BlockPos> adjacent = new HashSet<>();
-        for (final Direction direction : Direction.values()) {
+        for (final Direction direction : SIDES) {
             if (direction != cableFace && machinePresent[direction.get3DDataValue()]) {
                 adjacent.add(worldPosition.relative(direction));
             }
@@ -137,7 +139,7 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
         if (level.getCapability(Capabilities.ItemHandler.BLOCK, pos, null) != null) {
             return true;
         }
-        for (final Direction side : Direction.values()) {
+        for (final Direction side : SIDES) {
             if (level.getCapability(Capabilities.ItemHandler.BLOCK, pos, side) != null) {
                 return true;
             }
@@ -159,7 +161,7 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
                 return current;
             }
             if (state.getBlock() instanceof DataCableBlock cable && cable.tier() == DataTier.CRAFTING) {
-                for (final Direction direction : Direction.values()) {
+                for (final Direction direction : SIDES) {
                     final BlockPos neighbor = current.relative(direction);
                     if (visited.add(neighbor)) {
                         queue.add(neighbor);
@@ -234,7 +236,7 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
             return out;
         }
         final java.util.Set<BlockPos> declared = new HashSet<>();
-        for (final Direction direction : Direction.values()) {
+        for (final Direction direction : SIDES) {
             final int i = direction.get3DDataValue();
             if (direction == cableFace || !machinePresent[i] || !faceActive[i]) {
                 continue;
@@ -269,7 +271,7 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
         final java.util.List<BusMachineLine> lines = new java.util.ArrayList<>();
         final java.util.Map<BlockPos, Direction> origin = new java.util.HashMap<>();
         final Deque<BlockPos> queue = new ArrayDeque<>();
-        for (final Direction direction : Direction.values()) {
+        for (final Direction direction : SIDES) {
             if (!faceActive[direction.get3DDataValue()]) {
                 continue; // the face's toggle disables its whole cable run
             }
@@ -286,7 +288,7 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
                 continue;
             }
             final Direction from = origin.get(current);
-            for (final Direction face : Direction.values()) {
+            for (final Direction face : SIDES) {
                 if (cable.getPart(face) instanceof dev.jstech.computers.block.part
                         .AbstractBusPart bus
                         && (bus.type() == dev.jstech.computers.block.part.CablePartType.INPUT

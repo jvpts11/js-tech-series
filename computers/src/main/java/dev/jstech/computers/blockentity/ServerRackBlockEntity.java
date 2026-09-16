@@ -93,7 +93,8 @@ public class ServerRackBlockEntity extends BlockEntity
     private boolean servicePanelOff;
 
     @Override
-    public void registerControllers(final software.bernie.geckolib.animation.AnimatableManager.ControllerRegistrar controllers) {
+    public void registerControllers(
+            final software.bernie.geckolib.animation.AnimatableManager.ControllerRegistrar controllers) {
         /*
          * The roof fans turn while any bay is powered; the light bar and the seated units are bone
          * visibility set by the renderer, not animation.
@@ -490,6 +491,17 @@ public class ServerRackBlockEntity extends BlockEntity
             buildCached[slot] = true;
         }
         return buildCache[slot];
+    }
+
+    /**
+     * What the server in that bay adds up to, or null when the bay holds no server.
+     *
+     * <p>Worked out once and kept until the bay's parts change, so whoever needs a mounted machine's measures
+     * asks the cabinet rather than building it again from the item.
+     */
+    @org.jetbrains.annotations.Nullable
+    public dev.jstech.computers.hardware.ComputerBuild buildIn(final int slot) {
+        return slot >= 0 && slot < CAPACITY_U ? buildAt(slot) : null;
     }
 
     public void markStorageChanged(final int slot) {
