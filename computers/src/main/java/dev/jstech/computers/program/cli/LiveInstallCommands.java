@@ -21,9 +21,17 @@ public final class LiveInstallCommands {
     private LiveInstallCommands() {
     }
 
+    /*
+     * Every verb the sequence answers to. A verb the state machine knows and this list does not is a verb
+     * nobody can type, since the shell turns an unlisted word away before the state machine ever sees it:
+     * anything added there has to be added here in the same breath.
+     */
     private static final String[] VERBS = {
-            "lsblk", "mkfs.ext4", "mkfs", "mount", "pacstrap", "tar", "genfstab", "arch-chroot", "chroot",
-            "emerge-webrsync", "emerge", "genkernel", "grub-install", "passwd", "exit", "reboot", "help"};
+            "ls", "cat", "less", "more", "cd",
+            "lsblk", "fdisk", "mkfs.ext4", "mkfs", "mkfs.fat", "mkfs.vfat", "mount",
+            "pacstrap", "tar", "genfstab", "arch-chroot", "chroot",
+            "emerge-webrsync", "emerge", "genkernel", "hostname", "mkinitcpio",
+            "grub-install", "grub-mkconfig", "passwd", "exit", "reboot", "help"};
 
     public static List<ICliCommand> all() {
         final List<ICliCommand> out = new java.util.ArrayList<>();

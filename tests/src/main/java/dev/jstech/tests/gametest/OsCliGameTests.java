@@ -1081,18 +1081,38 @@ public final class OsCliGameTests {
                     final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
                     helper.assertTrue("root@archiso ~ #".equals(cli.prompt()),
                             "the live shell must be a root prompt on the ISO; got " + cli.prompt());
-                    helper.assertTrue(text(shell.run("ls", cli)).contains("command not found"),
-                            "the live shell only knows the installer verbs");
+                    helper.assertTrue(text(shell.run("cat /root/install.txt", cli)).contains("pacstrap"),
+                            "the medium's own guide is there to read through the real shell");
+                    helper.assertTrue(text(shell.run("nmap", cli)).contains("command not found"),
+                            "and the live shell knows only what a live medium carries");
                     helper.assertTrue(text(shell.run("pacstrap /mnt base linux", cli)).contains("not a mountpoint"),
                             "pacstrap before mount must fail with the real error");
-                    shell.run("mkfs.ext4 /dev/sda", cli);
-                    shell.run("mount /dev/sda /mnt", cli);
+                    /*
+                     * A Mainframe is a machine of the modern firmware, so it takes its bootloader in a
+                     * partition of its own: the disk is laid out first, exactly as it would have to be.
+                     */
+                    shell.run("fdisk /dev/sda", cli);
+                    shell.run("g", cli);
+                    shell.run("n 512M", cli);
+                    shell.run("t 1 uefi", cli);
+                    shell.run("n", cli);
+                    shell.run("w", cli);
+                    shell.run("mkfs.fat -F32 /dev/sda1", cli);
+                    shell.run("mkfs.ext4 /dev/sda2", cli);
+                    shell.run("mount /dev/sda2 /mnt", cli);
+                    shell.run("mount /dev/sda1 /mnt/boot", cli);
                     helper.assertTrue(text(shell.run("pacstrap /mnt base linux", cli)).contains("installation complete"),
                             "pacstrap must pull the base system from the mirror");
                     shell.run("genfstab -U /mnt >> /mnt/etc/fstab", cli);
                     shell.run("arch-chroot /mnt", cli);
                     helper.assertTrue("[root@archiso /]#".equals(cli.prompt()), "the chroot changes the prompt");
-                    shell.run("grub-install /dev/sda", cli);
+                    shell.run("hostname workshop", cli);
+                    helper.assertTrue(text(shell.run("cat /etc/hostname", cli)).contains("workshop"),
+                            "the name went into the new system's own file");
+                    shell.run("mkinitcpio -P", cli);
+                    helper.assertTrue(text(shell.run("grub-install", cli)).contains("x86_64-efi"),
+                            "a machine of this generation takes the modern bootloader");
+                    shell.run("grub-mkconfig -o /boot/grub/grub.cfg", cli);
                     shell.run("passwd", cli);
                     shell.run("exit", cli);
                     helper.assertTrue(text(shell.run("reboot", cli)).contains("Installation complete"),
@@ -1104,6 +1124,45 @@ public final class OsCliGameTests {
                     final ServerCliComputer after = cliFor(mainframe, helper.getLevel());
                     helper.assertTrue("player@arch ~ %".equals(after.prompt()),
                             "after the reboot Arch shows its zsh prompt; got " + after.prompt());
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * The partition editor, driven through the real shell rather than through the state machine underneath it.
+     *
+     * <p>Its commands are single letters, which no shell would have in its list of words, so while it is open
+     * the shell has to hand it everything typed. Reaching it any other way proves nothing: a verb the state
+     * machine knows and the shell does not is a verb nobody in the game can type.
+     */
+    @GameTest(template = ARENA)
+    public static void linux_partitionEditorIsReachableThroughTheLiveShell(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = placeMainframeWithOs(helper, pos,
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "ubuntu"));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    mainframe.installMirror();
+                    mainframe.console().startLiveInstall(
+                            dev.jstech.computers.program.install.LiveInstallState.Distro.ARCH);
+                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
+                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
+
+                    helper.assertTrue(text(shell.run("fdisk /dev/sda", cli)).contains("Command (m for help)"),
+                            "the editor opens from the shell");
+                    helper.assertTrue("Command (m for help):".equals(cli.prompt()),
+                            "and takes the prompt while it is open; got " + cli.prompt());
+                    helper.assertTrue(text(shell.run("g", cli)).contains("GPT"),
+                            "a single letter reaches the editor rather than the shell's own word list");
+                    shell.run("n 512M", cli);
+                    shell.run("t 1 uefi", cli);
+                    helper.assertTrue(text(shell.run("p", cli)).contains("EFI System"),
+                            "the editor prints what it was told");
+                    shell.run("w", cli);
+                    helper.assertTrue("root@archiso ~ #".equals(cli.prompt()),
+                            "and hands the shell back when it is written; got " + cli.prompt());
+                    helper.assertTrue(text(shell.run("lsblk", cli)).contains("sda1"),
+                            "the table reached the disk");
                 })
                 .thenSucceed();
     }
@@ -1131,8 +1190,17 @@ public final class OsCliGameTests {
                             "the Gentoo live CD is a root prompt; got " + cli.prompt());
                     helper.assertTrue(text(shell.run("tar xpf stage3-amd64.tar.xz -C /mnt", cli)).contains("Not a mountpoint"),
                             "unpacking the stage3 before mounting must fail with the real error");
-                    shell.run("mkfs.ext4 /dev/sda", cli);
-                    shell.run("mount /dev/sda /mnt", cli);
+                    // The same modern firmware as the other one, so the same layout before anything is unpacked.
+                    shell.run("fdisk /dev/sda", cli);
+                    shell.run("g", cli);
+                    shell.run("n 512M", cli);
+                    shell.run("t 1 uefi", cli);
+                    shell.run("n", cli);
+                    shell.run("w", cli);
+                    shell.run("mkfs.fat -F32 /dev/sda1", cli);
+                    shell.run("mkfs.ext4 /dev/sda2", cli);
+                    shell.run("mount /dev/sda2 /mnt", cli);
+                    shell.run("mount /dev/sda1 /mnt/boot", cli);
                     helper.assertTrue(text(shell.run("tar xpf stage3-amd64.tar.xz -C /mnt", cli)).contains("done"),
                             "the stage3 tarball must come from the mirror");
                     shell.run("chroot /mnt", cli);
@@ -1150,7 +1218,8 @@ public final class OsCliGameTests {
                     final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
                     helper.assertTrue(text(shell.run("genkernel all", cli)).contains("Kernel compiled successfully"),
                             "once the sources are compiled genkernel builds the kernel");
-                    shell.run("grub-install /dev/sda", cli);
+                    shell.run("grub-install", cli);
+                    shell.run("grub-mkconfig -o /boot/grub/grub.cfg", cli);
                     shell.run("passwd", cli);
                     shell.run("exit", cli);
                     helper.assertTrue(text(shell.run("reboot", cli)).contains("Installation complete"),
