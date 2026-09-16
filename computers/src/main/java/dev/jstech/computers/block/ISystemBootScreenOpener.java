@@ -7,8 +7,8 @@
  */
 package dev.jstech.computers.block;
 
+import dev.jstech.computers.os.boot.BootSequence;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,12 +24,11 @@ public interface ISystemBootScreenOpener {
      *
      * @param pos        the block position of the computer
      * @param monitorPos the monitor the sequence renders on
-     * @param osId       the system coming up, as the registry names it
-     * @param osName     the system as a person reads it
+     * @param sequence   what the system has to say while it comes up, worked out from the machine
      * @param remaining  what the machine says is left of it
-     * @param total      how long the whole thing takes, so the bar knows how far along it is
+     * @param total      how long the whole thing takes, so the steps and the bar know how far along they are
      */
-    void open(BlockPos pos, BlockPos monitorPos, ResourceLocation osId, String osName, int remaining, int total);
+    void open(BlockPos pos, BlockPos monitorPos, BootSequence sequence, int remaining, int total);
 
     final class Holder {
 
@@ -43,10 +42,10 @@ public interface ISystemBootScreenOpener {
             instance = opener;
         }
 
-        public static void open(final BlockPos pos, final BlockPos monitorPos, final ResourceLocation osId,
-                                final String osName, final int remaining, final int total) {
+        public static void open(final BlockPos pos, final BlockPos monitorPos, final BootSequence sequence,
+                                final int remaining, final int total) {
             if (instance != null) {
-                instance.open(pos, monitorPos, osId, osName, remaining, total);
+                instance.open(pos, monitorPos, sequence, remaining, total);
             }
         }
     }

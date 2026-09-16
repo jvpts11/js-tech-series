@@ -94,9 +94,8 @@ public final class FirmwarePayloads {
         registrar.playToClient(OpenSystemBootPayload.TYPE, OpenSystemBootPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
                         dev.jstech.computers.block.ISystemBootScreenOpener.Holder.open(
-                                payload.hostPos(), payload.monitorPos(),
-                                net.minecraft.resources.ResourceLocation.tryParse(payload.osId()),
-                                payload.osName(), payload.remainingTicks(), payload.totalTicks())));
+                                payload.hostPos(), payload.monitorPos(), payload.sequence(),
+                                payload.remainingTicks(), payload.totalTicks())));
         // A copy already under way: the monitor shows where the machine has got to, not a fresh one.
         registrar.playToClient(OsInstallProgressPayload.TYPE, OsInstallProgressPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->

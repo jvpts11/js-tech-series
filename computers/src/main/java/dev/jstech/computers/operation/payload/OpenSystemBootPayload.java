@@ -7,38 +7,76 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.boot.BootSequence;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Server to client: the system is coming up on this machine, and this much of it is left.
+ * Server to client: the system is coming up on this machine, what it has to say while it does, and how much of it
+ * is left.
  *
  * <p>Sent when the self-test hands over and again whenever a monitor is opened on a machine still coming up, so a
- * player who walked away and came back joins it where it has got to. The machine keeps the time, as it does for the
- * self-test: this only says where it is and which system is doing it.
+ * player who walked away and came back joins it where it has got to. Every line was worked out on the server from
+ * the machine itself; the screen only decides when each one has been reached.
  */
-public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, String osId, String osName,
-                                    int remainingTicks, int totalTicks) implements CustomPacketPayload {
+public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int remainingTicks, int totalTicks,
+                                    BootSequence sequence) implements CustomPacketPayload {
+
+    /** The longest a step's words may be; anything past it is a sentence, not a step. */
+    public static final int MAX_TEXT = 64;
 
     public static final CustomPacketPayload.Type<OpenSystemBootPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "open_system_boot"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, OpenSystemBootPayload> STREAM_CODEC =
-            StreamCodec.composite(
-                    BlockPos.STREAM_CODEC, OpenSystemBootPayload::hostPos,
-                    BlockPos.STREAM_CODEC, OpenSystemBootPayload::monitorPos,
-                    ByteBufCodecs.STRING_UTF8, OpenSystemBootPayload::osId,
-                    ByteBufCodecs.STRING_UTF8, OpenSystemBootPayload::osName,
-                    ByteBufCodecs.VAR_INT, OpenSystemBootPayload::remainingTicks,
-                    ByteBufCodecs.VAR_INT, OpenSystemBootPayload::totalTicks,
-                    OpenSystemBootPayload::new);
+            StreamCodec.of(OpenSystemBootPayload::encode, OpenSystemBootPayload::decode);
 
     @Override
     public CustomPacketPayload.Type<OpenSystemBootPayload> type() {
         return TYPE;
+    }
+
+    private static void encode(final RegistryFriendlyByteBuf buf, final OpenSystemBootPayload p) {
+        buf.writeBlockPos(p.hostPos());
+        buf.writeBlockPos(p.monitorPos());
+        buf.writeVarInt(p.remainingTicks());
+        buf.writeVarInt(p.totalTicks());
+        buf.writeUtf(clip(p.sequence().title()), MAX_TEXT);
+        buf.writeUtf(clip(p.sequence().subtitle()), MAX_TEXT);
+        final List<BootSequence.Line> lines = p.sequence().lines();
+        buf.writeVarInt(lines.size());
+        for (final BootSequence.Line line : lines) {
+            buf.writeUtf(clip(line.label()), MAX_TEXT);
+            buf.writeUtf(clip(line.value()), MAX_TEXT);
+        }
+    }
+
+    private static OpenSystemBootPayload decode(final RegistryFriendlyByteBuf buf) {
+        final BlockPos host = buf.readBlockPos();
+        final BlockPos monitor = buf.readBlockPos();
+        final int remaining = buf.readVarInt();
+        final int total = buf.readVarInt();
+        final String title = buf.readUtf(MAX_TEXT);
+        final String subtitle = buf.readUtf(MAX_TEXT);
+        final int count = Math.min(buf.readVarInt(), BootSequence.MOST_LINES);
+        final List<BootSequence.Line> lines = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            lines.add(new BootSequence.Line(buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT)));
+        }
+        return new OpenSystemBootPayload(host, monitor, remaining, total, new BootSequence(title, subtitle, lines));
+    }
+
+    /*
+     * Cut rather than refused: a machine that names a drive something enormous should still come up, and the cap
+     * is wider than anything a step of a starting system has to say.
+     */
+    private static String clip(final String text) {
+        return text.length() <= MAX_TEXT ? text : text.substring(0, MAX_TEXT);
     }
 }

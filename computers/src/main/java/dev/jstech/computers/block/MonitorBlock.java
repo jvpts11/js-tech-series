@@ -264,12 +264,10 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         if (!(computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine)) {
             return;
         }
-        final dev.jstech.computers.os.OsDef system = computer.installedOs();
-        final net.minecraft.resources.ResourceLocation id = system != null ? system.id() : null;
         dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, owner);
         PacketDistributor.sendToPlayer(player, new dev.jstech.computers.operation.payload.OpenSystemBootPayload(
-                owner, monitorPos, id == null ? "" : id.toString(),
-                system != null ? system.displayName() : "", machine.bootRemaining(), machine.bootTotal()));
+                owner, monitorPos, machine.bootRemaining(), machine.bootTotal(),
+                dev.jstech.computers.os.boot.BootLines.forMachine(machine)));
     }
 
     /** Sends the client the copy this machine is in the middle of, at the point the machine has reached. */
