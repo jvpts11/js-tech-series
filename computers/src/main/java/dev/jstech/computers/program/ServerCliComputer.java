@@ -747,142 +747,17 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public java.util.List<String> configSummary() {
-        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
-        if (console == null) {
-            return java.util.List.of();
-        }
-        final java.util.List<String> lines = new java.util.ArrayList<>();
-        final String name = console.computerName();
-        lines.add(String.format(java.util.Locale.ROOT, "  %-12s%s", "name", name.isEmpty() ? "(unnamed)" : name));
-        lines.add(String.format(java.util.Locale.ROOT, "  %-12s%d permille", "netshare", systemDiskPermille()));
-        lines.addAll(console.settings().summaryLines());
-        lines.add("  'config share <folder> [read|write]' opens a folder to the network as \\\\"
-                + hostname() + "\\<name>; 'config unshare <name>' closes it");
-        return lines;
+        return config().summary();
     }
 
     @Override
     public OpResult setConfig(final String key, final String value) {
-        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
-        if (console == null) {
-            return OpResult.fail("this computer has no settings store");
-        }
-        final String k = key == null ? "" : key.toLowerCase(java.util.Locale.ROOT).trim();
-        switch (k) {
-            case "name" -> {
-                console.setComputerName(value == null ? "" : value.trim());
-                hostBlock.setChanged();
-                return OpResult.ok("name set");
-            }
-            case "wallpaper" -> {
-                console.setWallpaper(value == null ? "" : value.trim());
-                hostBlock.setChanged();
-                return OpResult.ok("wallpaper set");
-            }
-            case "theme" -> {
-                // A theme preset bundles an accent and a wallpaper, so picking one restyles the desktop.
-                final String preset = value == null ? "" : value.trim().toLowerCase(java.util.Locale.ROOT);
-                console.settings().setThemePreset(preset.equals("system") ? "" : preset);
-                switch (preset) {
-                    case "ocean" -> {
-                        console.settings().setAccent(0xFF12A26F);
-                        console.setWallpaper("winxp");
-                    }
-                    case "slate" -> {
-                        console.settings().setAccent(0xFF7B52C9);
-                        console.setWallpaper("win11");
-                    }
-                    default -> {
-                        console.settings().setAccent(0);
-                        console.setWallpaper("");
-                    }
-                }
-                hostBlock.setChanged();
-                return OpResult.ok("theme set");
-            }
-            case "netshare" -> {
-                final Integer permille = tryInt(value);
-                if (permille == null) {
-                    return OpResult.fail("netshare needs a number from 0 to 1000");
-                }
-                if (!setSystemDiskPermille(permille)) {
-                    return OpResult.fail("no system disk to share");
-                }
-                hostBlock.setChanged();
-                return OpResult.ok("netshare set");
-            }
-            case "share" -> {
-                return shareFolder(console, value);
-            }
-            case "unshare" -> {
-                final String wanted = value == null ? "" : value.trim();
-                if (!console.settings().unshare(wanted)) {
-                    return OpResult.fail("nothing is shared as " + wanted);
-                }
-                hostBlock.setChanged();
-                return OpResult.ok("no longer shared: " + wanted);
-            }
-            default -> {
-                if (console.settings().applySetting(k, value)) {
-                    hostBlock.setChanged();
-                    return OpResult.ok(k + " set");
-                }
-                return OpResult.fail("unknown setting: " + k);
-            }
-        }
-    }
-
-    /**
-     * Shares a folder of this machine with the others on its network: {@code config share C:\pub}
-     * for reading, {@code config share C:\pub write} for writing too. The folder has to exist.
-     */
-    private OpResult shareFolder(final dev.jstech.computers.program.ComputerConsoleState console,
-                                 final String value) {
-        String path = value == null ? "" : value.trim();
-        boolean writable = false;
-        final int space = path.lastIndexOf(' ');
-        if (space > 0) {
-            final String mode = path.substring(space + 1).toLowerCase(java.util.Locale.ROOT);
-            if (mode.equals("write") || mode.equals("read")) {
-                writable = mode.equals("write");
-                path = path.substring(0, space).trim();
-            }
-        }
-        if (path.isEmpty()) {
-            return OpResult.fail("usage: config share <folder> [read|write]");
-        }
-        final Resolved r = resolve(path);
-        if (r.ctx() == null) {
-            return OpResult.fail(driveError(r.drive()).message());
-        }
-        if (r.ctx().disk().isEmpty()) {
-            return OpResult.fail(notReady(r.drive()).message());
-        }
-        if (!r.path().isEmpty() && !dirExists(r.ctx(), r.path())) {
-            return OpResult.fail(path + ": no such folder");
-        }
-        final String dos = r.drive() + ":\\" + r.path().replace('/', '\\');
-        if (!console.settings().share(dos, writable)) {
-            return OpResult.fail("this computer already shares "
-                    + dev.jstech.computers.program.ComputerSettings.MAX_SHARES + " folders");
-        }
-        hostBlock.setChanged();
-        final String name = dev.jstech.computers.program.ComputerSettings.shareNameOf(dos);
-        return OpResult.ok("shared " + dos + " as \\\\" + hostname() + "\\" + name
-                + (writable ? " (read and write)" : " (read only)"));
+        return config().set(key, value);
     }
 
     @Override
     public List<ShareInfo> shares() {
-        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
-        if (console == null) {
-            return List.of();
-        }
-        final List<ShareInfo> out = new ArrayList<>();
-        for (final dev.jstech.computers.program.ComputerSettings.Share share : console.settings().shares()) {
-            out.add(new ShareInfo(share.name(), share.path(), share.writable()));
-        }
-        return out;
+        return config().shares();
     }
 
     @Override
@@ -898,6 +773,11 @@ public final class ServerCliComputer implements ICliComputer {
     /** The machines of this network that name picks out, by host name, for whoever follows a network path. */
     public Map<String, BlockEntity> machinesNamed(final String name) {
         return matchMachines(name);
+    }
+
+    /** What this machine keeps about itself, as this shell reads and changes it. */
+    private dev.jstech.computers.machine.MachineConfigService config() {
+        return new dev.jstech.computers.machine.MachineConfigService(host, level, files());
     }
 
     /** The other computers of this machine's network, as this shell reaches them. */
@@ -964,35 +844,6 @@ public final class ServerCliComputer implements ICliComputer {
         return console != null && console.settings().remoteAllowed();
     }
 
-    /** The system disk's public-share permille (0 when there is no system disk). */
-    private int systemDiskPermille() {
-        final DriveTable.Drive ctx = diskFor('C');
-        return ctx == null || ctx.disk().isEmpty() ? 0
-                : dev.jstech.computers.item.DiskItem.publicPermille(ctx.disk());
-    }
-
-    /** Writes a clamped public-share permille onto the system disk; false when there is none. */
-    private boolean setSystemDiskPermille(final int permille) {
-        final DriveTable.Drive ctx = diskFor('C');
-        if (ctx == null || ctx.disk().isEmpty()) {
-            return false;
-        }
-        dev.jstech.computers.item.DiskItem.setPublicPermille(ctx.disk(), permille);
-        return true;
-    }
-
-    private static Integer tryInt(final String v) {
-        try {
-            return Integer.parseInt(v == null ? "" : v.trim());
-        } catch (final NumberFormatException e) {
-            return null;
-        }
-    }
-
-    /** True if {@code storagePath} is the drive root or an existing (explicit or implicit) directory. */
-    private boolean dirExists(final DriveTable.Drive ctx, final String storagePath) {
-        return DriveTable.dirExists(osHost(), ctx, storagePath);
-    }
 
     /** Returns the lowercase extension of a file path (after the last dot), or {@code ""} if none. */
     private static String extensionOf(final String path) {

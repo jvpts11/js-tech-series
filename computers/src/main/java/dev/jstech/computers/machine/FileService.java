@@ -597,6 +597,28 @@ public final class FileService {
         return ICliComputer.FsResult.ok("");
     }
 
+    /**
+     * A folder of this machine named the way a share names it, or the reason it cannot be.
+     *
+     * <p>The path is read against where the caller stands, so {@code pub} and {@code C:\pub} both work, and the
+     * answer carries the DOS spelling because that is what a share is stored and shown as. A drive that is not
+     * there, a drive with no disk and a folder that does not exist are three different answers, since they are
+     * three different things to fix.
+     *
+     * @return the folder in DOS form, or a failure saying why it is not one
+     */
+    public ICliComputer.OpResult folderForShare(final String path) {
+        final Resolved r = this.resolve(path);
+        final ICliComputer.FsResult unready = unready(r);
+        if (unready != null) {
+            return ICliComputer.OpResult.fail(unready.message());
+        }
+        if (!r.path().isEmpty() && !DriveTable.dirExists(this.osHost(), r.drive(), r.path())) {
+            return ICliComputer.OpResult.fail(path + ": no such folder");
+        }
+        return ICliComputer.OpResult.ok(r.letter() + ":\\" + r.path().replace('/', '\\'));
+    }
+
     /** Whether there is a file to read at that path. */
     public boolean exists(final String path) {
         return this.readFile(path).ok();

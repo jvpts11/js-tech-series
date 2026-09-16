@@ -73,6 +73,9 @@ public final class MachineServices implements IHost {
     private InstallService installs;
 
     @Nullable
+    private MachineConfigService config;
+
+    @Nullable
     private ProgramService programs;
 
     @Nullable
@@ -231,6 +234,17 @@ public final class MachineServices implements IHost {
     }
 
     /**
+     * What the machine keeps about itself: its name, its look, and the folders it shares.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public MachineConfigService config() {
+        this.follow();
+        return this.config;
+    }
+
+    /**
      * What is installed on the machine, and the installing itself.
      *
      * @return null when the machine has no shell
@@ -295,6 +309,7 @@ public final class MachineServices implements IHost {
             // The packages come after the language: the Mirror's list of services carries the engine's row.
             this.packages = new PackageService(terminal, server, this.files, this.iql);
             this.installs = new InstallService(terminal, server, this.packages, this.iql);
+            this.config = new MachineConfigService(terminal, server, this.files);
             this.programs = new ProgramService(this.machine, terminal, server, this.shell);
             this.remotes = new RemoteComputerService(terminal, server);
             this.gateways = new GatewayBridgeService(this.machine, server);
@@ -308,6 +323,7 @@ public final class MachineServices implements IHost {
             this.iql = null;
             this.packages = null;
             this.installs = null;
+            this.config = null;
             this.programs = null;
             this.remotes = null;
             this.gateways = null;
