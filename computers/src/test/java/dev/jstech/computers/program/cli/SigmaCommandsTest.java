@@ -158,6 +158,42 @@ class SigmaCommandsTest {
     }
 
     @Test
+    void compile_leftAlone_buildsForTheOldestArchitectureThatRunsIt() {
+        this.computer.add(SigmaCommands.COMPILER);
+        this.computer.files.put("Monitor.sgs", SCRIPT);
+        this.run("sgsc Monitor.sgs");
+        assertTrue(this.computer.files.get("Monitor.asm").contains(".arch jsc:x86\n"),
+                "a program nobody asked anything of runs on every machine it could have: "
+                        + this.computer.files.get("Monitor.asm"));
+    }
+
+    @Test
+    void compile_withAnArchitectureAsked_buildsForThatOne() {
+        this.computer.add(SigmaCommands.COMPILER);
+        this.computer.files.put("Monitor.sgs", SCRIPT);
+        this.run("sgsc Monitor.sgs --arch jsc:x86_64");
+        assertTrue(this.computer.files.get("Monitor.asm").contains(".arch jsc:x86_64"));
+    }
+
+    @Test
+    void compile_withAnArchitectureAskedByName_buildsForThatOne() {
+        this.computer.add(SigmaCommands.COMPILER);
+        this.computer.files.put("Monitor.sgs", SCRIPT);
+        this.run("sgsc Monitor.sgs --arch x86-64");
+        assertTrue(this.computer.files.get("Monitor.asm").contains(".arch jsc:x86_64"));
+    }
+
+    @Test
+    void compile_withAnArchitectureNothingAnswersTo_writesNothing() {
+        this.computer.add(SigmaCommands.COMPILER);
+        this.computer.files.put("Monitor.sgs", SCRIPT);
+        final String said = this.run("sgsc Monitor.sgs --arch risc");
+        assertTrue(said.contains("no architecture is called 'risc'"), said);
+        assertTrue(said.contains("x86-64"), "it says what there is instead: " + said);
+        assertFalse(this.computer.files.containsKey("Monitor.asm"), "and nothing was written");
+    }
+
+    @Test
     void compile_saysHowToRunWhatItWrote() {
         this.computer.add(SigmaCommands.COMPILER);
         this.computer.files.put("Monitor.sgs", SCRIPT);

@@ -7,16 +7,20 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.hardware.ArchitectureSpec;
+import dev.jstech.computers.hardware.Architectures;
 import dev.jstech.computers.sigma.SigmaCompiler;
 import dev.jstech.computers.sigma.Diagnostic;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.sigma.pack.Manifest;
 import dev.jstech.computers.sigma.pack.Packed;
+import dev.jstech.computers.vm.listing.AsmProgram;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * The verbs the Σ# toolchain brings to the prompt: one to compile a program, one to run it, and one
@@ -71,7 +75,7 @@ public final class SigmaCommands {
 
         @Override
         public String usage() {
-            return "<file" + SOURCE + "> [more" + SOURCE + " ...] [-o <out" + ASSEMBLY + ">]";
+            return "<file" + SOURCE + "> [more" + SOURCE + " ...] [-o <out" + ASSEMBLY + ">] [--arch <architecture>]";
         }
 
         @Override
@@ -83,11 +87,15 @@ public final class SigmaCommands {
         public void run(final CliContext ctx) {
             final List<String> paths = new ArrayList<>();
             String out = null;
+            String arch = null;
             for (int i = 0; i < ctx.args().size(); i++) {
                 final String arg = ctx.args().get(i);
                 if ("-o".equals(arg)) {
                     i++;
                     out = i < ctx.args().size() ? ctx.args().get(i) : null;
+                } else if ("--arch".equals(arg)) {
+                    i++;
+                    arch = i < ctx.args().size() ? ctx.args().get(i) : null;
                 } else {
                     paths.add(arg);
                 }
@@ -95,6 +103,19 @@ public final class SigmaCommands {
             if (paths.isEmpty()) {
                 ctx.out().error("usage: sgsc " + this.usage());
                 return;
+            }
+            /*
+             * Asked for by id or by the name it is written under, and refused before anything is compiled: a
+             * listing built for an architecture nothing answers to would be a file no machine anywhere runs.
+             */
+            String architecture = AsmProgram.DEFAULT_ARCHITECTURE;
+            if (arch != null) {
+                final Optional<ArchitectureSpec> asked = Architectures.find(arch);
+                if (asked.isEmpty()) {
+                    ctx.out().error("sgsc: no architecture is called '" + arch + "'; there is " + architectureNames());
+                    return;
+                }
+                architecture = asked.get().id();
             }
 
             final List<SourceFile> sources = new ArrayList<>();
@@ -107,7 +128,7 @@ public final class SigmaCommands {
                 sources.add(new SourceFile(leaf(path), read.message()));
             }
 
-            final SigmaCompiler.Result built = SigmaCompiler.compile(sources);
+            final SigmaCompiler.Result built = SigmaCompiler.compile(sources, architecture);
             final List<Diagnostic> diagnostics = built.diagnostics();
             final String assembly = built.ok() ? built.assembly() : null;
             for (final Diagnostic diagnostic : diagnostics) {
@@ -132,6 +153,15 @@ public final class SigmaCommands {
             ctx.out().ok("sgsc: wrote " + target);
             // Compiling is not running, and the prompt is the place to say how the second is done.
             ctx.out().dim("run it with: sigma run " + target);
+        }
+
+        /** The architectures there are, by name, for the person who asked for one that is not there. */
+        private static String architectureNames() {
+            final List<String> names = new ArrayList<>();
+            for (final ArchitectureSpec one : Architectures.all()) {
+                names.add(one.name());
+            }
+            return String.join(", ", names);
         }
 
         /** The name a source file compiles to: the same name, with the assembly's extension. */

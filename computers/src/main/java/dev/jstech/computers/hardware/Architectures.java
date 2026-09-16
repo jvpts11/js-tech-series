@@ -12,6 +12,7 @@ import dev.jstech.core.tier.HardwareEra;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -61,9 +62,27 @@ public final class Architectures {
         return Optional.ofNullable(KNOWN.get(id));
     }
 
-    /** Every architecture there is. */
-    public static Set<String> ids() {
-        return Set.copyOf(KNOWN.keySet());
+    /** Every architecture there is, oldest of the series first, then whatever a mod added after. */
+    public static List<ArchitectureSpec> all() {
+        return List.copyOf(KNOWN.values());
+    }
+
+    /**
+     * The architecture a person meant, by its id or by the name it is written under.
+     *
+     * <p>A player types x86-64 rather than jsc:x86_64, and both are the same thing said twice, so both are taken.
+     */
+    public static Optional<ArchitectureSpec> find(final String idOrName) {
+        final Optional<ArchitectureSpec> byId = byId(idOrName);
+        if (byId.isPresent()) {
+            return byId;
+        }
+        for (final ArchitectureSpec one : KNOWN.values()) {
+            if (one.name().equalsIgnoreCase(idOrName)) {
+                return Optional.of(one);
+            }
+        }
+        return Optional.empty();
     }
 
     /**

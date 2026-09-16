@@ -11,6 +11,7 @@ import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.core.tier.HardwareEra;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -81,8 +82,24 @@ class ArchitecturesTest {
     }
 
     @Test
-    void ids_holdTheThreeThisModBrings() {
-        assertTrue(Architectures.ids().containsAll(Set.of("jsc:x86_16", "jsc:x86", "jsc:x86_64")));
+    void all_holdTheThreeThisModBrings_oldestFirst() {
+        final List<ArchitectureSpec> all = Architectures.all();
+        assertTrue(all.containsAll(List.of(Architectures.X86_16, Architectures.X86, Architectures.X86_64)));
+        assertTrue(all.indexOf(Architectures.X86_16) < all.indexOf(Architectures.X86)
+                && all.indexOf(Architectures.X86) < all.indexOf(Architectures.X86_64),
+                "the series is listed in the order it was built: " + all);
+    }
+
+    @Test
+    void find_takesAnIdOrTheNameItIsWrittenUnder() {
+        assertEquals(Architectures.X86_64, Architectures.find("jsc:x86_64").orElseThrow());
+        assertEquals(Architectures.X86_64, Architectures.find("x86-64").orElseThrow());
+        assertEquals(Architectures.X86_64, Architectures.find("X86-64").orElseThrow());
+    }
+
+    @Test
+    void find_somethingNoModBrought_isEmpty() {
+        assertTrue(Architectures.find("risc").isEmpty());
     }
 
     /*

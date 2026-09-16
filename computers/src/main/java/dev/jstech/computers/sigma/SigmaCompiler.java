@@ -52,6 +52,16 @@ public final class SigmaCompiler {
 
     /** Compiles a whole program, which is a set of files with one class the runtime can start. */
     public static Result compile(final List<SourceFile> sources) {
+        return compile(sources, AsmProgram.DEFAULT_ARCHITECTURE);
+    }
+
+    /**
+     * The same, built for that architecture.
+     *
+     * <p>Left alone, a program is built for the oldest architecture that runs it, so that it runs on every machine
+     * it could have run on. Building for a newer one is a decision somebody makes, which is why it is asked for.
+     */
+    public static Result compile(final List<SourceFile> sources, final String architecture) {
         final DiagnosticBag bag = new DiagnosticBag(sources.isEmpty() ? "" : sources.getFirst().name());
         final SigmaSemantics.Analysis analysis = SigmaSemantics.analyse(sources, bag, true);
         if (bag.hasErrors()) {
@@ -62,6 +72,7 @@ public final class SigmaCompiler {
         if (bag.hasErrors()) {
             return new Result(null, bag.sorted(), bag.wasCapped());
         }
+        program.setArchitecture(architecture, 1);
         return new Result(AsmWriter.write(program), bag.sorted(), bag.wasCapped());
     }
 }
