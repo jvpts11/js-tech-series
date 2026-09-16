@@ -228,13 +228,11 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
             }
             computer.setInstaller(null);
         }
-        if (computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine) {
-            if (machine.atBootMenu()) {
-                return Entry.BOOT_MENU;
-            }
-            if (machine.booting()) {
-                return Entry.BOOTING;
-            }
+        if (computer.atBootMenu()) {
+            return Entry.BOOT_MENU;
+        }
+        if (computer.booting()) {
+            return Entry.BOOTING;
         }
         final int slot = computer.pendingInstallSlot();
         if (slot != IOsHost.NO_PENDING_INSTALL) {
@@ -286,26 +284,20 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
     /** Sends the client the boot manager this machine is standing at, with what is left of its wait. */
     public static void openBootMenu(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                     final BlockPos owner, final IOsHost computer) {
-        if (!(computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine)) {
-            return;
-        }
         dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, owner);
         PacketDistributor.sendToPlayer(player, new dev.jstech.computers.operation.payload.OpenBootMenuPayload(
                 owner, monitorPos,
-                dev.jstech.computers.os.boot.BootLines.menuFor(machine, machine.menuRemaining()),
-                machine.menuRemaining()));
+                dev.jstech.computers.os.boot.BootLines.menuFor(computer, computer.menuRemaining()),
+                computer.menuRemaining()));
     }
 
     /** Sends the client the system this machine is bringing up, at the point the machine has reached. */
     public static void openSystemBoot(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                       final BlockPos owner, final IOsHost computer) {
-        if (!(computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine)) {
-            return;
-        }
         dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, owner);
         PacketDistributor.sendToPlayer(player, new dev.jstech.computers.operation.payload.OpenSystemBootPayload(
-                owner, monitorPos, machine.bootRemaining(), machine.bootTotal(),
-                dev.jstech.computers.os.boot.BootLines.forMachine(machine), false));
+                owner, monitorPos, computer.bootRemaining(), computer.bootTotal(),
+                computer.bootSequence(), false));
     }
 
     /** Sends the client the copy this machine is in the middle of, at the point the machine has reached. */
@@ -384,8 +376,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final String name = level.getBlockState(owner).getBlock().getName().getString();
         final HardwareEra era = ownerBe instanceof IOsHost c ? c.displayEra() : null;
         final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
-        final int remaining = ownerBe instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine
-                ? machine.postRemaining() : 0;
+        final int remaining = ownerBe instanceof IOsHost machine ? machine.postRemaining() : 0;
         dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, owner);
         PacketDistributor.sendToPlayer(player, new dev.jstech.computers.operation.payload
                 .OpenPostPayload(owner, monitorPos, kind.id(), name, remaining));

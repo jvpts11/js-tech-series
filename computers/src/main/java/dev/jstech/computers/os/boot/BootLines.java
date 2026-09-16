@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsRegistry;
 import net.minecraft.resources.ResourceLocation;
 import dev.jstech.computers.machine.NetworkReadService;
@@ -101,7 +102,7 @@ public final class BootLines {
      *
      * @param countdownTicks how long the machine waits before booting the first entry by itself
      */
-    public static BootMenu menuFor(final AbstractComputerBlockEntity machine, final int countdownTicks) {
+    public static BootMenu menuFor(final IOsHost machine, final int countdownTicks) {
         final OsDef booting = machine.installedOs();
         if (booting == null || booting.platform() != Platform.LINUX) {
             return BootMenu.NONE;

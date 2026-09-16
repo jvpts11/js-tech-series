@@ -205,6 +205,66 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
     default void setSystemWelcome(final dev.jstech.computers.os.boot.SystemWelcome welcome) {
     }
 
+    /*
+     * Where the machine is on its way up. A host that runs no phases of its own answers that it is past all of
+     * them, which is what a machine reached through something other than its own power amounts to: whoever asks
+     * is told there is nothing to watch rather than being shown a self-test that will never end.
+     */
+
+    /** The ticks the self-test still has to run, for a monitor opened while it is under way. */
+    default int postRemaining() {
+        return 0;
+    }
+
+    /** Whether the machine is stopped at its boot manager, waiting to be told what to start. */
+    default boolean atBootMenu() {
+        return false;
+    }
+
+    /** The ticks left before the menu boots its first entry by itself, or zero once a key has stopped it. */
+    default int menuRemaining() {
+        return 0;
+    }
+
+    /** A key was pressed at the menu: the machine waits there for a choice. */
+    default void holdBootMenu() {
+    }
+
+    /** Leaves the menu and brings the chosen system up. */
+    default void leaveBootMenu() {
+    }
+
+    /** Whether the system is coming up on this machine right now. */
+    default boolean booting() {
+        return false;
+    }
+
+    /** The ticks the system still needs, for a monitor opened while it comes up. */
+    default int bootRemaining() {
+        return 0;
+    }
+
+    /** How long the coming-up under way takes in all, for the bar on the screen watching it. */
+    default int bootTotal() {
+        return 0;
+    }
+
+    /** What this machine's system shows while it comes up, which is nothing at all for a machine with none. */
+    default dev.jstech.computers.os.boot.BootSequence bootSequence() {
+        return dev.jstech.computers.os.boot.BootSequence.NONE;
+    }
+
+    /** The parts this machine is built from right now, or nothing when it is not built from parts. */
+    @Nullable
+    default dev.jstech.computers.hardware.ComputerBuild currentBuild() {
+        return null;
+    }
+
+    /** Whether a drive this machine reaches holds something it could boot instead of one of its own disks. */
+    default boolean hasBootableMedium() {
+        return false;
+    }
+
     /** The player-given machine name, or an empty string. */
     String customName();
 

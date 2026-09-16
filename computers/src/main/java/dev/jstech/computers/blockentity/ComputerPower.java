@@ -7,11 +7,15 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.os.boot.BootPhases;
 import net.minecraft.nbt.CompoundTag;
 
 /**
- * Whether a computer is on, whether it comes up by itself when its build stands, and whether the next
- * look at its monitor shows the power-on self-test.
+ * Whether a computer is on and whether it comes up by itself when its build stands.
+ *
+ * <p>Where it is on its way up is {@link BootPhases} beside this, because every machine has those phases
+ * and not every machine has this switch: a machine in a rack is switched on by its bay, and it still
+ * tests itself, still stops at its boot manager and still takes time to come up.
  *
  * <p>Two things are handed in because they belong to the machine and not to its power: {@code changed}
  * marks the machine to be saved, and {@code endSession} is what a cold start or a power cut does to the
@@ -21,40 +25,11 @@ final class ComputerPower {
 
     private final Runnable changed;
     private final Runnable endSession;
+    /** Where the machine is on its way up: the self-test, the boot manager and the system coming up. */
+    private final BootPhases phases = new BootPhases();
 
     private boolean manualOn;
     private boolean autoStart;
-
-    /*
-     * The power-on self-test runs once per power-up (and once per requested reboot), then the monitor
-     * boots straight into the OS. Deliberately transient: a computer that stayed on across a chunk
-     * reload does not POST again, exactly like a real machine that was never switched off.
-     */
-    private boolean needsPost;
-
-    /*
-     * When the self-test ends, in world time. The machine works this out for itself on the first tick after
-     * the power goes on, because how long it takes depends on what is seated in it and the power knows nothing
-     * of that; zero means it has not been worked out yet. Transient with the flag above, for the same reason.
-     */
-    private long postEndsAt;
-
-    /*
-     * The system coming up, after the self-test and before the desktop or the prompt. Held here beside the
-     * self-test because they are the two halves of one thing, a machine on its way up, and a machine is only ever
-     * in one of them. Transient for the same reason: a computer that stayed on across a reload is already up.
-     */
-    private boolean booting;
-    private long bootEndsAt;
-
-    /*
-     * Stopped at the boot manager's menu, before any of that. Its clock is separate because a key stops it and
-     * the machine then waits for a choice with no end in sight, which is a thing a deadline cannot say.
-     */
-    private boolean atMenu;
-    private long menuEndsAt;
-    /** How long this coming-up takes in all, so a bar drawn half way through knows how far along it is. */
-    private int bootTicksTotal;
 
     ComputerPower(final Runnable changed, final Runnable endSession) {
         this.changed = changed;
@@ -69,24 +44,14 @@ final class ComputerPower {
         return this.autoStart;
     }
 
+    /** Where the machine is on its way up, for whoever carries those phases along. */
+    BootPhases phases() {
+        return this.phases;
+    }
+
     /** Whether the machine owes a power-on self-test or is in the middle of one. */
     boolean needsPost() {
-        return this.needsPost;
-    }
-
-    /** Whether the machine has yet to work out how long its self-test will take. */
-    boolean postUntimed() {
-        return this.needsPost && this.postEndsAt == 0L;
-    }
-
-    /** Says when the self-test this machine is in will end. */
-    void timePost(final long endsAt) {
-        this.postEndsAt = endsAt;
-    }
-
-    /** Whether the self-test has run its course and it is time to boot. */
-    boolean postDone(final long now) {
-        return this.needsPost && this.postEndsAt != 0L && now >= this.postEndsAt;
+        return this.phases.needsPost();
     }
 
     /**
@@ -94,95 +59,52 @@ final class ComputerPower {
      * rather than starting over. A machine that has not worked its length out yet answers nothing.
      */
     int postRemaining(final long now) {
-        return this.needsPost && this.postEndsAt != 0L ? (int) Math.max(0L, this.postEndsAt - now) : 0;
+        return this.phases.postRemaining(now);
     }
 
     /** Whether the machine is stopped at its boot menu. */
     boolean atMenu() {
-        return this.atMenu;
-    }
-
-    /** Stops the machine at its boot menu, with that long before it goes on by itself. */
-    void beginMenu(final long now, final int ticks) {
-        this.atMenu = true;
-        this.menuEndsAt = ticks > 0 ? now + ticks : 0L;
+        return this.phases.atMenu();
     }
 
     /** The ticks left on the menu's clock, or zero once a key has stopped it. */
     int menuRemaining(final long now) {
-        return this.atMenu && this.menuEndsAt != 0L ? (int) Math.max(0L, this.menuEndsAt - now) : 0;
+        return this.phases.menuRemaining(now);
     }
 
     /** A key was pressed: the machine waits at the menu for as long as it takes. */
     void holdMenu() {
-        this.menuEndsAt = 0L;
-    }
-
-    /** Whether the menu's clock has run out and the machine should go on by itself. */
-    boolean menuDone(final long now) {
-        return this.atMenu && this.menuEndsAt != 0L && now >= this.menuEndsAt;
+        this.phases.holdMenu();
     }
 
     /** Leaves the menu, whichever way it was left. */
     void endMenu() {
-        this.atMenu = false;
-        this.menuEndsAt = 0L;
-    }
-
-    /** Whether the system is coming up right now. */
-    boolean booting() {
-        return this.booting;
-    }
-
-    /** Whether the machine has yet to work out how long its system takes to come up. */
-    boolean bootUntimed() {
-        return this.booting && this.bootEndsAt == 0L;
+        this.phases.endMenu();
     }
 
     /** Starts the system coming up; how long it takes is worked out on the next tick. */
     void beginBoot() {
-        this.booting = true;
-        this.bootEndsAt = 0L;
+        this.phases.beginBoot();
     }
 
-    /** Says how long this coming-up takes, and so when it ends. */
-    void timeBoot(final long now, final int ticks) {
-        this.bootTicksTotal = Math.max(1, ticks);
-        this.bootEndsAt = now + this.bootTicksTotal;
+    /** Whether the system is coming up right now. */
+    boolean booting() {
+        return this.phases.booting();
     }
 
     /** How long the coming-up under way takes in all. */
     int bootTotal() {
-        return this.booting ? this.bootTicksTotal : 0;
-    }
-
-    /** Whether the system has finished coming up and it is time to hand over to it. */
-    boolean bootDone(final long now) {
-        return this.booting && this.bootEndsAt != 0L && now >= this.bootEndsAt;
+        return this.phases.bootTotal();
     }
 
     /** The ticks the system still needs, so a monitor opened part way through joins it where it is. */
     int bootRemaining(final long now) {
-        return this.booting && this.bootEndsAt != 0L ? (int) Math.max(0L, this.bootEndsAt - now) : 0;
-    }
-
-    /** The system is up, or the machine is going down: either way it is no longer coming up. */
-    void endBoot() {
-        this.booting = false;
-        this.bootEndsAt = 0L;
-        this.bootTicksTotal = 0;
+        return this.phases.bootRemaining(now);
     }
 
     void setPowered(final boolean on) {
         this.manualOn = on;
-        this.booting = false;
-        this.bootEndsAt = 0L;
-        this.atMenu = false;
-        this.menuEndsAt = 0L;
-        if (on) {
-            this.needsPost = true;
-            this.postEndsAt = 0L;
-        }
+        this.phases.powered(on);
         // Power off or a cold start: neither leaves a desktop or an installer session behind.
         this.endSession.run();
         this.changed.run();
@@ -202,8 +124,7 @@ final class ComputerPower {
                  * invalid build never passed through setPowered, and its old windows would otherwise
                  * resurface on a session that no longer exists.
                  */
-                this.needsPost = true;
-                this.postEndsAt = 0L;
+                this.phases.setNeedsPost(true);
                 this.endSession.run();
             }
             this.manualOn = true;
@@ -212,15 +133,7 @@ final class ComputerPower {
     }
 
     void setNeedsPost(final boolean value) {
-        this.needsPost = value;
-        this.postEndsAt = 0L;
-        if (value) {
-            // A restart takes the machine back to the beginning, so whatever was coming up is not any more.
-            this.booting = false;
-            this.bootEndsAt = 0L;
-            this.atMenu = false;
-            this.menuEndsAt = 0L;
-        }
+        this.phases.setNeedsPost(value);
         if (value) {
             // A restart closes everything, as it does on any machine, and it is what an installer waits for.
             this.endSession.run();

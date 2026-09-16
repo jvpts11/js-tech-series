@@ -407,9 +407,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
              * switched off still has to put its lamps out on the client, and a cabinet coming up has a
              * self-test to carry along, which the base tick does for every other kind of computer.
              */
-            be.tickPost(serverLevel);
-            be.tickBootMenu(serverLevel);
-            be.tickBoot(serverLevel);
+            be.tickBootPhases(serverLevel);
             dev.jstech.computers.os.install.OsInstallRunner.tick(be, serverLevel, be.getBlockPos());
             be.syncVisualsIfChanged();
             be.tick(serverLevel);

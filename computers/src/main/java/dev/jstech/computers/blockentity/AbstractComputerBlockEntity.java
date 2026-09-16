@@ -19,7 +19,6 @@ import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.boot.BootLines;
-import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.computers.os.boot.BootTiming;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.DataTier;
@@ -90,9 +89,6 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
     private final dev.jstech.computers.crafting.PatternWorkbench studio =
             new dev.jstech.computers.crafting.PatternWorkbench();
-
-    /** How long a boot manager waits before booting its first entry: the five seconds those menus always gave. */
-    private static final int MENU_TICKS = 100;
 
     protected AbstractComputerBlockEntity(final BlockEntityType<?> type, final BlockPos pos,
                                           final BlockState state, final ComputerHardwareLayout layout) {
@@ -218,6 +214,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         hardware.markDirty();
     }
 
+    @Override
     @Nullable
     public ComputerBuild currentBuild() {
         return hardware.current();
@@ -272,7 +269,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (sequence.isEmpty()) {
             return;
         }
-        final int ticks = BootTiming.shutdownTicks(bootLength());
+        final int ticks = BootTiming.shutdownTicks(
+                dev.jstech.computers.os.boot.BootRunner.bootLength(this));
         ScreenSessions.eachWatcher(server, worldPosition, (player, monitor) -> {
             ScreenSessions.opened(player, monitor, worldPosition);
             net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
@@ -290,11 +288,13 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     /** Whether the machine owes a power-on self-test or is in the middle of one. */
+    @Override
     public boolean needsPost() {
         return power.needsPost();
     }
 
     /** The ticks the self-test still has to run, for a monitor opened while it is under way. */
+    @Override
     public int postRemaining() {
         return level == null ? 0 : power.postRemaining(level.getGameTime());
     }
@@ -353,190 +353,68 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     /**
-     * Carries the self-test along: works out how long this machine's own takes the first tick after the power
-     * goes on, and ends it when its time is up, booting whoever is watching.
+     * Carries this machine up: the self-test, the wait at a boot manager, and the system coming up.
      *
-     * <p>The machine keeps this time rather than the screen doing it. Closing the monitor halfway through no
+     * <p>The machine keeps these times rather than the screen doing it. Closing the monitor halfway through no
      * longer stops a machine coming up, opening it again shows how far it has got, and a machine nobody is
      * looking at boots all the same, which is what a machine does.
      */
-    protected void tickPost(final ServerLevel level) {
-        if (!isRunning() || !power.needsPost()) {
-            return;
-        }
-        final long now = level.getGameTime();
-        if (power.postUntimed()) {
-            power.timePost(now + BootTiming.postTicks(memoryModules(), postDevices(), installedEra()));
-            return;
-        }
-        if (!power.postDone(now)) {
-            return;
-        }
-        power.setNeedsPost(false);
-        /*
-         * The self-test is the moment the machine settles what it is running, which is what makes a desktop
-         * installed a moment ago wait for a restart instead of turning up on the next look at the monitor.
-         */
-        setBootedDesktopId(installedDesktopId());
-        /*
-         * A machine with nothing to boot ends its self-test on the era's own failure and stays there, the way
-         * one does: whoever is watching reads what happened instead of being dropped into the setup.
-         */
-        if (!hasSomethingToBoot()) {
-            return;
-        }
-        /*
-         * A system on a disk takes time to come up, and that time is the machine's too. A machine booting a
-         * medium instead has no system of its own to load, so it hands over as it always did.
-         */
-        if (hasOs()) {
-            /*
-             * The systems that bring a boot manager stop at it first, which is also how a player finds out that
-             * the other disk has something on it.
-             */
-            final BootMenu menu = BootLines.menuFor(this, MENU_TICKS);
-            if (!menu.isEmpty() && dev.jstech.computers.config.ComputersServerConfig.showBootMenu()) {
-                power.beginMenu(level.getGameTime(), MENU_TICKS);
-                showBootMenu(level);
-            } else {
-                power.beginBoot();
-            }
-            return;
-        }
-        ScreenSessions.bootWatchers(level, worldPosition);
+    protected void tickBootPhases(final ServerLevel level) {
+        dev.jstech.computers.os.boot.BootRunner.tick(this, power.phases(), level, worldPosition);
     }
 
     /** Whether the machine is stopped at its boot menu. */
+    @Override
     public boolean atBootMenu() {
         return power.atMenu();
     }
 
     /** The ticks left before the menu boots its first entry by itself, or zero once a key has stopped it. */
+    @Override
     public int menuRemaining() {
         return level == null ? 0 : power.menuRemaining(level.getGameTime());
     }
 
     /** A key was pressed at the menu: the machine waits there for a choice. */
+    @Override
     public void holdBootMenu() {
         power.holdMenu();
     }
 
     /** Leaves the menu and brings the chosen system up. */
+    @Override
     public void leaveBootMenu() {
         power.endMenu();
         power.beginBoot();
     }
 
-    /** Carries the wait at the boot menu along, and goes on by itself when nobody chooses. */
-    protected void tickBootMenu(final ServerLevel level) {
-        if (!power.atMenu()) {
-            return;
-        }
-        if (!isRunning()) {
-            power.endMenu();
-            return;
-        }
-        if (power.menuDone(level.getGameTime())) {
-            leaveBootMenu();
-        }
-    }
-
-    /** Puts the boot menu in front of whoever is watching. */
-    private void showBootMenu(final ServerLevel level) {
-        ScreenSessions.eachWatcher(level, worldPosition, (player, monitor) ->
-                dev.jstech.computers.block.MonitorBlock.openBootMenu(player, level, monitor, worldPosition, this));
-    }
-
     /** Whether the system is coming up on this machine right now. */
+    @Override
     public boolean booting() {
         return power.booting();
     }
 
     /** The ticks the system still needs, for a monitor opened while it comes up. */
+    @Override
     public int bootRemaining() {
         return level == null ? 0 : power.bootRemaining(level.getGameTime());
     }
 
-    /**
-     * Carries the system's own coming-up along, after the self-test and before the desktop or the prompt.
-     *
-     * <p>Built the same way as the self-test and for the same reason: how long a system takes is read off the
-     * machine it is on, the screen only watches, and a machine nobody is looking at comes up all the same.
-     */
-    protected void tickBoot(final ServerLevel level) {
-        if (!power.booting()) {
-            return;
-        }
-        if (!isRunning()) {
-            power.endBoot();
-            return;
-        }
-        final long now = level.getGameTime();
-        if (power.bootUntimed()) {
-            power.timeBoot(now, bootLength());
-            /*
-             * Whoever watched the self-test end is still looking at it, so they are shown the system coming up the
-             * moment the machine knows how long that takes.
-             */
-            ScreenSessions.eachWatcher(level, worldPosition, (player, monitor) ->
-                    dev.jstech.computers.block.MonitorBlock.openSystemBoot(player, level, monitor,
-                            worldPosition, this));
-            return;
-        }
-        if (!power.bootDone(now)) {
-            return;
-        }
-        power.endBoot();
-        greet();
-        ScreenSessions.bootWatchers(level, worldPosition);
-    }
-
-    /**
-     * Puts the system's welcome on the desktop as the system finishes coming up, when it has one to put and is
-     * owed the putting: the first time always, and after that only while it is still wanted.
-     *
-     * <p>The window is the machine's, like every other window on it, so a machine that came up with nobody
-     * watching still has its welcome waiting when somebody opens the monitor. It is never put up twice.
-     */
-    private void greet() {
-        if (!dev.jstech.computers.os.boot.WelcomeFacts.greeter(this) || !systemWelcome().greets()) {
-            return;
-        }
-        final java.util.List<dev.jstech.computers.os.OpenWindow> windows =
-                new java.util.ArrayList<>(openWindows());
-        for (final dev.jstech.computers.os.OpenWindow open : windows) {
-            if (open.key().equals(dev.jstech.computers.os.boot.WelcomeFacts.WINDOW_KEY)) {
-                return;
-            }
-        }
-        windows.add(new dev.jstech.computers.os.OpenWindow(
-                dev.jstech.computers.os.boot.WelcomeFacts.WINDOW_KEY, 40, 30, 250, 136, false, false));
-        setOpenWindows(windows);
-    }
-
     /** How long the coming-up under way takes in all, for the bar on the screen watching it. */
+    @Override
     public int bootTotal() {
         return power.bootTotal();
     }
 
-    /** How long this machine's system takes to come up: its size, over the disk it sits on and the era. */
-    private int bootLength() {
-        final OsDef system = installedOs();
-        if (system == null) {
-            return 0;
-        }
-        final ItemStack disk = systemDisk();
-        final int diskSpeed = disk.getItem() instanceof dev.jstech.computers.item.DiskItem drive
-                ? drive.spec().tier().speedMultiplier() : 1;
-        return BootTiming.bootTicks(system.footprintMb(), diskSpeed, installedEra(),
-                BootTiming.tightRam(ramTotalMb(), system.ramMb()));
+    /** What this machine's system shows while it comes up. */
+    @Override
+    public dev.jstech.computers.os.boot.BootSequence bootSequence() {
+        return BootLines.forMachine(this);
     }
 
-    /** Whether anything on this machine can be booted: a disk with a system, or a medium that can boot. */
-    private boolean hasSomethingToBoot() {
-        if (hasOs()) {
-            return true;
-        }
+    /** Whether a drive this machine reaches holds something it could boot instead of one of its own disks. */
+    @Override
+    public boolean hasBootableMedium() {
         if (level == null) {
             return false;
         }
@@ -549,18 +427,6 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
             }
         }
         return false;
-    }
-
-    /** How many memory modules the self-test has to count. */
-    private int memoryModules() {
-        final ComputerBuild build = currentBuild();
-        return build == null ? 0 : build.rams().size();
-    }
-
-    /** How many devices the self-test has to find: everything seated that is not memory. */
-    private int postDevices() {
-        final ComputerBuild build = currentBuild();
-        return build == null ? 0 : build.disks().size() + build.pcieCards().size();
     }
 
     public void setNeedsPost(final boolean value) {
@@ -984,9 +850,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
 
     protected void tickNode(final ServerLevel level) {
         tickBuildProgress(level);
-        tickPost(level);
-        tickBootMenu(level);
-        tickBoot(level);
+        tickBootPhases(level);
         dev.jstech.computers.os.install.OsInstallRunner.tick(this, level, worldPosition);
         tickSigma();
         dev.jstech.computers.os.install.SetupRunner.tick(this, level, worldPosition);
