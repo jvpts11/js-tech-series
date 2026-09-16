@@ -16,6 +16,7 @@ import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -92,6 +93,26 @@ public final class BootSequenceGameTests {
                 "a 16-bit machine's kernel is not x86_64: " + labels(sequence));
         helper.assertTrue(has(sequence, "Memory: " + older.ramTotalMb() + " MB available"),
                 "and the memory is the memory that is in it: " + labels(sequence));
+        helper.succeed();
+    }
+
+    /**
+     * The Frames family says nothing while it loads, which is its character and not a gap.
+     *
+     * <p>A machine that reports its steps and one that shows a name over a bar are both true to what they are, so
+     * the test is that this family comes up behind its maker's name with no account of what it is doing.
+     */
+    @GameTest(template = ARENA)
+    public static void frames_comesUpBehindItsMakersNameAndSaysNothing(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(WHERE);
+        final BootSequence sequence = BootLines.forMachine(computer);
+        helper.assertTrue(sequence.title().equals("Midsoft"),
+                "the maker's name is what goes up first: " + sequence.title());
+        helper.assertTrue(sequence.subtitle().equals("Frames 11"),
+                "with the system under it: " + sequence.subtitle());
+        helper.assertTrue(sequence.lines().isEmpty(), "and not a word about what it is doing");
         helper.succeed();
     }
 

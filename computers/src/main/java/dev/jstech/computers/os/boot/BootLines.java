@@ -52,8 +52,23 @@ public final class BootLines {
             case MC_DOS -> dos(machine, system, copyright);
             case MC_NET -> net(machine, system, copyright);
             case LINUX -> linux(machine, system);
+            case FRAMES -> frames(system);
             default -> new BootSequence.Builder().title(system.displayName()).subtitle(copyright).build();
         };
+    }
+
+    /**
+     * The Frames family comes up behind its maker's name and its own, with no account of what it is doing.
+     *
+     * <p>That silence is the system's character rather than a gap: these are the machines that put a picture up
+     * and a bar under it, and tell you nothing until they are ready. The bar is what the screen draws when a
+     * sequence has no steps.
+     */
+    private static BootSequence frames(final OsDef system) {
+        return new BootSequence.Builder()
+                .title(system.house().name())
+                .subtitle(system.displayName())
+                .build();
     }
 
     /**

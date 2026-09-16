@@ -83,6 +83,18 @@ public final class SystemBootScreen extends Screen {
         final int text = phosphor ? Phosphor.green(0xFFB8B8B8) : 0xFFE6ECF6;
         final int dim = phosphor ? Phosphor.green(0xFF707070) : 0xFF7D8A9C;
 
+        /*
+         * A system that reports nothing puts its name in the middle of the screen over a bar, which is what the
+         * machines that tell you nothing while they load have always done; one that reports its steps writes from
+         * the top corner, the way a machine reading out its own start does.
+         */
+        if (this.sequence.lines().isEmpty()) {
+            g.drawCenteredString(font, this.sequence.title(), x + W / 2, y + H / 2 - 22, text);
+            g.drawCenteredString(font, this.sequence.subtitle(), x + W / 2, y + H / 2 - 10, dim);
+            drawBar(g, x, y);
+            return;
+        }
+
         int ty = y + 14;
         if (!this.sequence.title().isEmpty()) {
             g.drawString(font, this.sequence.title(), x + 12, ty, text, false);
@@ -104,18 +116,15 @@ public final class SystemBootScreen extends Screen {
             }
             ty += 10;
         }
+    }
 
-        /*
-         * A system that says nothing while it comes up still has to show that it is: the bar is all a machine of
-         * the later ages ever gave you.
-         */
-        if (this.sequence.lines().isEmpty()) {
-            final int barW = 140;
-            final int bx = x + (W - barW) / 2;
-            final int by = y + H / 2 + 12;
-            g.fill(bx, by, bx + barW, by + 3, 0xFF1D2530);
-            g.fill(bx, by, bx + Math.min(barW, barW * this.ticks / this.totalTicks), by + 3, 0xFF39D6C4);
-        }
+    /** The bar that fills over however long this machine takes: all a system that says nothing ever gave you. */
+    private void drawBar(final GuiGraphics g, final int x, final int y) {
+        final int barW = 140;
+        final int bx = x + (W - barW) / 2;
+        final int by = y + H / 2 + 12;
+        g.fill(bx, by, bx + barW, by + 3, 0xFF1D2530);
+        g.fill(bx, by, bx + Math.min(barW, barW * this.ticks / this.totalTicks), by + 3, 0xFF39D6C4);
     }
 
     /** The monitor this is drawn on, for whatever asks. */
