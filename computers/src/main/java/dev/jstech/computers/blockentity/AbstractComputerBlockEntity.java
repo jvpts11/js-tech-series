@@ -66,8 +66,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     private ComputerBuild cachedBuild;
     private boolean buildDirty = true;
 
-    private boolean manualOn;
-    private boolean autoStart;
+    private final ComputerPower power = new ComputerPower(this::setChanged, this::endSession);
 
     @Nullable
     private NodeUuid nodeUuid;
@@ -94,11 +93,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
             @Override
             protected void onContentsChanged(final int slot) {
                 buildDirty = true;
-                if (!buildValid()) {
-                    manualOn = false;
-                } else if (autoStart) {
-                    manualOn = true;
-                }
+                power.hardwareChanged(buildValid());
                 setChanged();
             }
 
@@ -284,69 +279,43 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     public boolean isRunning() {
-        return buildValid() && manualOn;
+        return buildValid() && power.on();
     }
 
     public boolean isManualOn() {
-        return manualOn;
+        return power.on();
     }
 
     public boolean isAutoStart() {
-        return autoStart;
+        return power.autoStart();
     }
 
     public void togglePower() {
-        setPowered(!manualOn);
+        power.toggle();
     }
 
     @Override
     public void setPowered(final boolean on) {
-        manualOn = on;
-        if (on) {
-            needsPost = true;
-        }
-        openWindows.clear(); // power off or a cold start: no desktop survives either
-        pendingInstallSlot = NO_PENDING_INSTALL; // nor does an installer session
-        setChanged();
+        power.setPowered(on);
     }
 
     public void toggleAutoStart() {
-        autoStart = !autoStart;
-        if (autoStart && buildValid()) {
-            if (!manualOn) {
-                /*
-                 * Auto-start bringing a machine up from off is a cold start. It writes the POST flag
-                 * directly, so it has to close the desktop itself: a machine that went dark through an
-                 * invalid build never passed through setPowered, and its old windows would otherwise
-                 * resurface on a session that no longer exists.
-                 */
-                needsPost = true;
-                openWindows.clear();
-                pendingInstallSlot = NO_PENDING_INSTALL;
-            }
-            manualOn = true;
-        }
-        setChanged();
+        power.toggleAutoStart(buildValid());
     }
 
-    /*
-     * The power-on self-test runs once per power-up (and once per requested reboot), then the monitor
-     * boots straight into the OS. Deliberately transient: a computer that stayed on across a chunk
-     * reload does not POST again, exactly like a real machine that was never switched off.
-     */
-    private boolean needsPost;
+    /* What a cold start and a power cut leave of the session: no desktop, and no installer waiting. */
+    private void endSession() {
+        openWindows.clear();
+        pendingInstallSlot = NO_PENDING_INSTALL;
+    }
 
     /** Whether the next monitor use should play the power-on self-test before booting. */
     public boolean needsPost() {
-        return needsPost;
+        return power.needsPost();
     }
 
     public void setNeedsPost(final boolean value) {
-        this.needsPost = value;
-        if (value) {
-            openWindows.clear(); // a restart closes everything, as it does on any machine
-            pendingInstallSlot = NO_PENDING_INSTALL; // the restart is what the installer was waiting for
-        }
+        power.setNeedsPost(value);
     }
 
     /*
@@ -1545,8 +1514,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (tag.contains(hardwareKey)) {
             hardware.deserializeNBT(registries, tag.getCompound(hardwareKey));
         }
-        manualOn = tag.getBoolean("ManualOn");
-        autoStart = tag.getBoolean("AutoStart");
+        power.load(tag);
         bootDiskSlot = tag.contains("BootDisk") ? tag.getInt("BootDisk") : -1;
         computerName = tag.getString("ComputerName");
         if (tag.contains("NodeUuid")) {
@@ -1586,8 +1554,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
          */
         flushConsoleToDisk();
         tag.put(hardwareNbtKey(), hardware.serializeNBT(registries));
-        tag.putBoolean("ManualOn", manualOn);
-        tag.putBoolean("AutoStart", autoStart);
+        power.save(tag);
         if (bootDiskSlot >= 0) {
             tag.putInt("BootDisk", bootDiskSlot);
         }
