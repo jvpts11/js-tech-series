@@ -203,8 +203,16 @@ public final class MekanismProcessingGameTests {
 
     /**
      * A chamber burns oxygen at a rate that only averages what a pattern says a lot uses, so the request's nominal
-     * oxygen can run out before its last lot is done. A pattern that says 150 mB a lot, where the chamber burns about
-     * 200, used to leave it dry on the second lot until the operation timed out with half the clumps.
+     * oxygen can run out before its last lot is done. It used to be left dry until the operation timed out with
+     * half the clumps; now a machine that has stood still for want of a gas is given another lot's worth.
+     *
+     * <p>The pattern here understates on purpose, 25 mB a lot where a purification burns about 200, so the chamber
+     * MUST run dry several times over. That makes finishing the proof: two lots cannot come out of the 50 mB the
+     * request is nominally worth unless the dry machine was fed again.
+     *
+     * <p>It used to ask instead whether more than the nominal had been taken, which is a question about the burn
+     * rate rather than about the feeding: a chamber given enough power runs fast enough to fit inside its nominal,
+     * never goes dry, and made the test fail with everything working.
      */
     @GameTest(template = ARENA, timeoutTicks = 900)
     public static void purificationChamber_finishesWhenItBurnsMoreOxygenThanThePatternSays(
@@ -222,7 +230,7 @@ public final class MekanismProcessingGameTests {
                     MekanismRig.assertDiscovered(helper, PURIFICATION_CHAMBER);
                     final ProcessingPattern pattern = new ProcessingPattern(
                             List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.RAW_IRON), 1),
-                                    new ProcessingPattern.ProcessingInput(oxygen, 150)),
+                                    new ProcessingPattern.ProcessingInput(oxygen, 25)),
                             List.of(new ProcessingPattern.ProcessingOutput(clump, 2, 100)),
                             PURIFICATION_CHAMBER.toString(), 400);
                     op[0] = rig.net().mainframe().submitNetworkProcessing(pattern, 4, "battery");
@@ -239,8 +247,8 @@ public final class MekanismProcessingGameTests {
                             "the operation must finish whole, not partial; status " + op[0].toRecord().status()
                                     + ", produced " + op[0].produced());
                     helper.assertTrue(storage.count(clump) >= 4, "both lots' clumps land; got " + storage.count(clump));
-                    helper.assertTrue(storage.count(oxygen) < 1700,
-                            "the chamber took more than the nominal 300 mB it burned through; left "
+                    helper.assertTrue(storage.count(oxygen) < 1950,
+                            "which took far more oxygen than the 50 mB the request was nominally worth; left "
                                     + storage.count(oxygen));
                 })
                 .thenSucceed();
