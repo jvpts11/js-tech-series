@@ -652,13 +652,12 @@ public final class ServerCliComputer implements ICliComputer {
     // packages: the Linux package managers over the network's Mirror service
 
     private OsDef installedOsDef() {
-        return hostBlock instanceof IOsHost c ? c.installedOs() : null;
+        return packages().installedOs();
     }
 
     @Override
     public dev.jstech.computers.os.PackageManagerKind packageManager() {
-        final OsDef os = installedOsDef();
-        return os == null ? dev.jstech.computers.os.PackageManagerKind.NONE : os.packageManager();
+        return packages().manager();
     }
 
     /** The network's Mainframe when its Mirror service is serving, else null. */
@@ -673,10 +672,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     /** Moves finished source builds into the installed set (lazy: runs whenever packages are touched). */
     private void settleBuilds() {
-        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
-        if (console != null && !console.settleBuilds(level.getGameTime()).isEmpty()) {
-            hostBlock.setChanged();
-        }
+        packages().settleBuilds();
     }
 
     @Override
@@ -704,75 +700,17 @@ public final class ServerCliComputer implements ICliComputer {
 
     /** Whether the named program is present on this computer (console install, or a Mainframe service flag). */
     private boolean hasPackage(final dev.jstech.computers.os.ProgramSpec spec) {
-        if (hostBlock instanceof MainframeBlockEntity mf) {
-            switch (spec.id().getPath()) {
-                case "iqlengine" -> {
-                    return mf.isIqlEngineInstalled();
-                }
-                case "automation_engine" -> {
-                    return mf.isAutomationEngineInstalled();
-                }
-                case "mirror" -> {
-                    return mf.isMirrorInstalled();
-                }
-                default -> {
-                }
-            }
-        }
-        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
-        return console != null && console.isInstalled(spec.id().toString());
+        return packages().has(spec);
     }
 
-    /** Every program the mirror can serve a Linux computer: the specs that list the Linux platform. */
-    /**
-     * The packages a manager on THIS computer can offer: everything installable that runs on the
-     * platform it is running. Reading the platform (rather than assuming Linux) is what lets the
-     * Frames manager see the Frames-only software the mirror serves.
-     */
+    /** The packages a manager on this computer can offer, by the platform it is running. */
     private java.util.List<dev.jstech.computers.os.ProgramSpec> mirrorPackages() {
-        final dev.jstech.computers.os.OsDef os = installedOsDef();
-        final dev.jstech.computers.os.Platform platform =
-                os == null ? dev.jstech.computers.os.Platform.LINUX : os.platform();
-        final java.util.List<dev.jstech.computers.os.ProgramSpec> out = new ArrayList<>();
-        for (final dev.jstech.computers.os.ProgramSpec spec : OsRegistry.programs()) {
-            if (spec.installable() && spec.platforms().contains(platform)) {
-                out.add(spec);
-            }
-        }
-        return out;
+        return packages().offered();
     }
 
     @Override
     public java.util.List<PackageInfo> packagesAvailable() {
-        settleBuilds();
-        if (mirrorMainframe() == null) {
-            return java.util.List.of();
-        }
-        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
-        final java.util.List<PackageInfo> out = new ArrayList<>();
-        for (final dev.jstech.computers.os.ProgramSpec spec : mirrorPackages()) {
-            final boolean building = console != null && console.pendingBuilds().containsKey(spec.id().toString());
-            out.add(new PackageInfo(spec.commandName(), spec.displayName()
-                    + (spec.kind() == dev.jstech.computers.os.ProgramKind.SERVICE ? " (service)" : ""),
-                    hasPackage(spec), building));
-        }
-        // Then whatever players on this network have published, marked as theirs.
-        final MainframeBlockEntity mirror = mirrorMainframe();
-        if (mirror != null) {
-            for (final var shelved : mirror.shelvedPackages().entrySet()) {
-                final dev.jstech.computers.sigma.pack.Packed packed =
-                        dev.jstech.computers.sigma.pack.Packed.read(shelved.getValue());
-                if (packed == null) {
-                    continue;
-                }
-                final String about = packed.manifest().about();
-                out.add(new PackageInfo(shelved.getKey(),
-                        (about.isBlank() ? packed.manifest().label() : about)
-                                + " - " + packed.manifest().house(),
-                        false, false, true));
-            }
-        }
-        return out;
+        return packages().available();
     }
 
     @Override
