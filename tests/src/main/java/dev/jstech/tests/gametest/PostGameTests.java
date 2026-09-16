@@ -71,6 +71,29 @@ public final class PostGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * The self-test hands over to the system coming up, which is the machine's work too.
+     *
+     * <p>The machine used to go from its self-test straight to the desktop. Now there is a step between them, and
+     * it belongs to the machine the same way: it has a length of its own and nobody has to watch it.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void post_handsOverToTheSystemComingUp(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(WHERE);
+        helper.startSequence()
+                .thenExecuteAfter(PAST_THE_POST, () -> {
+                    helper.assertFalse(computer.needsPost(), "the self-test is over");
+                    helper.assertTrue(computer.booting(), "and the system is coming up");
+                    helper.assertTrue(computer.bootTotal() > 0, "for a length the machine worked out");
+                })
+                // Frames 11 off this machine's solid-state disk: nine seconds, and a little more to be sure.
+                .thenExecuteAfter(220, () -> helper.assertFalse(computer.booting(),
+                        "which ends on its own, with nobody watching"))
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA)
     public static void post_ofAnEarlierMachine_takesLonger(final GameTestHelper helper) {
         final PersonalComputerBlockEntity modern =

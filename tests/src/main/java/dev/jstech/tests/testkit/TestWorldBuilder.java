@@ -224,8 +224,13 @@ public final class TestWorldBuilder {
          * A machine on a real base has a disk with a system on it. Without one the computer powers on into
          * its firmware with nothing to boot, which is not what the base is meant to demonstrate.
          */
+        /*
+         * On a solid-state drive, because how long a system takes to come up is read off the disk it sits on:
+         * a machine of this generation running this system would have one, and a test that sits through the
+         * twenty seconds a mechanical disk costs is only testing the wait.
+         */
         hw.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+                new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
         be.installOs(DESKTOP_OS);
         be.togglePower();
         return be;
@@ -250,8 +255,9 @@ public final class TestWorldBuilder {
                 new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
                 new ItemStack(ComputingModule.PSU_650G.get()));
+        // Solid state for the same reason as the personal computer above: the disk decides how long it takes.
         hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+                new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
         be.installOs(DESKTOP_OS);
         be.togglePower();
         return be;
@@ -313,7 +319,7 @@ public final class TestWorldBuilder {
     public static void installDesktop(final CraftingComputerBlockEntity cc, final ResourceLocation os,
                                       final ResourceLocation... programs) {
         cc.getHardware().setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+                new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
         if (!cc.installOs(os)) {
             throw new IllegalStateException("could not install " + os + " on the Crafting Computer");
         }

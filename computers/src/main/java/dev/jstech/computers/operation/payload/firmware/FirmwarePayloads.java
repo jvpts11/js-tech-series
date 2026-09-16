@@ -15,6 +15,7 @@ import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.operation.payload.OpenPostPayload;
+import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
 import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
 import dev.jstech.computers.operation.payload.PostCompletePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwarePayload;
@@ -89,6 +90,13 @@ public final class FirmwarePayloads {
                                 payload.host(), payload.monitorPos(),
                                 dev.jstech.computers.os.FirmwareKind.byId(payload.firmwareKind()),
                                 payload.osName(), payload.targetLabel(), payload.targetSlot(), payload.failure())));
+        // The system coming up: the monitor joins it where the machine has got to.
+        registrar.playToClient(OpenSystemBootPayload.TYPE, OpenSystemBootPayload.STREAM_CODEC,
+                ClientPayloadHandlers.onMainThread((payload, player) ->
+                        dev.jstech.computers.block.ISystemBootScreenOpener.Holder.open(
+                                payload.hostPos(), payload.monitorPos(),
+                                net.minecraft.resources.ResourceLocation.tryParse(payload.osId()),
+                                payload.osName(), payload.remainingTicks(), payload.totalTicks())));
         // A copy already under way: the monitor shows where the machine has got to, not a fresh one.
         registrar.playToClient(OsInstallProgressPayload.TYPE, OsInstallProgressPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->

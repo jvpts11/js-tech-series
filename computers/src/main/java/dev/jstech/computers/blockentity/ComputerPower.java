@@ -39,6 +39,16 @@ final class ComputerPower {
      */
     private long postEndsAt;
 
+    /*
+     * The system coming up, after the self-test and before the desktop or the prompt. Held here beside the
+     * self-test because they are the two halves of one thing, a machine on its way up, and a machine is only ever
+     * in one of them. Transient for the same reason: a computer that stayed on across a reload is already up.
+     */
+    private boolean booting;
+    private long bootEndsAt;
+    /** How long this coming-up takes in all, so a bar drawn half way through knows how far along it is. */
+    private int bootTicksTotal;
+
     ComputerPower(final Runnable changed, final Runnable endSession) {
         this.changed = changed;
         this.endSession = endSession;
@@ -80,8 +90,54 @@ final class ComputerPower {
         return this.needsPost && this.postEndsAt != 0L ? (int) Math.max(0L, this.postEndsAt - now) : 0;
     }
 
+    /** Whether the system is coming up right now. */
+    boolean booting() {
+        return this.booting;
+    }
+
+    /** Whether the machine has yet to work out how long its system takes to come up. */
+    boolean bootUntimed() {
+        return this.booting && this.bootEndsAt == 0L;
+    }
+
+    /** Starts the system coming up; how long it takes is worked out on the next tick. */
+    void beginBoot() {
+        this.booting = true;
+        this.bootEndsAt = 0L;
+    }
+
+    /** Says how long this coming-up takes, and so when it ends. */
+    void timeBoot(final long now, final int ticks) {
+        this.bootTicksTotal = Math.max(1, ticks);
+        this.bootEndsAt = now + this.bootTicksTotal;
+    }
+
+    /** How long the coming-up under way takes in all. */
+    int bootTotal() {
+        return this.booting ? this.bootTicksTotal : 0;
+    }
+
+    /** Whether the system has finished coming up and it is time to hand over to it. */
+    boolean bootDone(final long now) {
+        return this.booting && this.bootEndsAt != 0L && now >= this.bootEndsAt;
+    }
+
+    /** The ticks the system still needs, so a monitor opened part way through joins it where it is. */
+    int bootRemaining(final long now) {
+        return this.booting && this.bootEndsAt != 0L ? (int) Math.max(0L, this.bootEndsAt - now) : 0;
+    }
+
+    /** The system is up, or the machine is going down: either way it is no longer coming up. */
+    void endBoot() {
+        this.booting = false;
+        this.bootEndsAt = 0L;
+        this.bootTicksTotal = 0;
+    }
+
     void setPowered(final boolean on) {
         this.manualOn = on;
+        this.booting = false;
+        this.bootEndsAt = 0L;
         if (on) {
             this.needsPost = true;
             this.postEndsAt = 0L;
@@ -117,6 +173,11 @@ final class ComputerPower {
     void setNeedsPost(final boolean value) {
         this.needsPost = value;
         this.postEndsAt = 0L;
+        if (value) {
+            // A restart takes the machine back to the beginning, so whatever was coming up is not any more.
+            this.booting = false;
+            this.bootEndsAt = 0L;
+        }
         if (value) {
             // A restart closes everything, as it does on any machine, and it is what an installer waits for.
             this.endSession.run();

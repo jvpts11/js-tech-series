@@ -312,9 +312,79 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
          * A machine with nothing to boot ends its self-test on the era's own failure and stays there, the way
          * one does: whoever is watching reads what happened instead of being dropped into the setup.
          */
-        if (hasSomethingToBoot()) {
-            ScreenSessions.bootWatchers(level, worldPosition);
+        if (!hasSomethingToBoot()) {
+            return;
         }
+        /*
+         * A system on a disk takes time to come up, and that time is the machine's too. A machine booting a
+         * medium instead has no system of its own to load, so it hands over as it always did.
+         */
+        if (hasOs()) {
+            power.beginBoot();
+            return;
+        }
+        ScreenSessions.bootWatchers(level, worldPosition);
+    }
+
+    /** Whether the system is coming up on this machine right now. */
+    public boolean booting() {
+        return power.booting();
+    }
+
+    /** The ticks the system still needs, for a monitor opened while it comes up. */
+    public int bootRemaining() {
+        return level == null ? 0 : power.bootRemaining(level.getGameTime());
+    }
+
+    /**
+     * Carries the system's own coming-up along, after the self-test and before the desktop or the prompt.
+     *
+     * <p>Built the same way as the self-test and for the same reason: how long a system takes is read off the
+     * machine it is on, the screen only watches, and a machine nobody is looking at comes up all the same.
+     */
+    protected void tickBoot(final ServerLevel level) {
+        if (!power.booting()) {
+            return;
+        }
+        if (!isRunning()) {
+            power.endBoot();
+            return;
+        }
+        final long now = level.getGameTime();
+        if (power.bootUntimed()) {
+            power.timeBoot(now, bootLength());
+            /*
+             * Whoever watched the self-test end is still looking at it, so they are shown the system coming up the
+             * moment the machine knows how long that takes.
+             */
+            ScreenSessions.eachWatcher(level, worldPosition, (player, monitor) ->
+                    dev.jstech.computers.block.MonitorBlock.openSystemBoot(player, level, monitor,
+                            worldPosition, this));
+            return;
+        }
+        if (!power.bootDone(now)) {
+            return;
+        }
+        power.endBoot();
+        ScreenSessions.bootWatchers(level, worldPosition);
+    }
+
+    /** How long the coming-up under way takes in all, for the bar on the screen watching it. */
+    public int bootTotal() {
+        return power.bootTotal();
+    }
+
+    /** How long this machine's system takes to come up: its size, over the disk it sits on and the era. */
+    private int bootLength() {
+        final OsDef system = installedOs();
+        if (system == null) {
+            return 0;
+        }
+        final ItemStack disk = systemDisk();
+        final int diskSpeed = disk.getItem() instanceof dev.jstech.computers.item.DiskItem drive
+                ? drive.spec().tier().speedMultiplier() : 1;
+        return BootTiming.bootTicks(system.footprintMb(), diskSpeed, installedEra(),
+                BootTiming.tightRam(ramTotalMb(), system.ramMb()));
     }
 
     /** Whether anything on this machine can be booted: a disk with a system, or a medium that can boot. */
@@ -770,6 +840,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     protected void tickNode(final ServerLevel level) {
         tickBuildProgress(level);
         tickPost(level);
+        tickBoot(level);
         dev.jstech.computers.os.install.OsInstallRunner.tick(this, level, worldPosition);
         tickSigma();
         dev.jstech.computers.os.install.SetupRunner.tick(this, level, worldPosition);

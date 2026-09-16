@@ -30,6 +30,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Changed
+- A system now takes time to come up. Between the self-test ending and the desktop or the prompt opening, the
+  monitor shows the system starting, for as long as that system's size, the disk it sits on and the machine's
+  generation say it should: seconds from a solid-state drive, the better part of half a minute for a large system
+  on a mechanical one. Like the self-test, it belongs to the machine: closing the monitor does not stop it, and
+  opening one again joins it where it has got to.
 - A Command Prompt window now opens with the name of the system it belongs to and that system's own copyright, the
   way the terminal on a machine with no desktop already did, instead of greeting the player with the mod's name.
 - A self-test now ends by naming what it is about to boot ("Booting from Disk 0: Frames XP"), and a machine with

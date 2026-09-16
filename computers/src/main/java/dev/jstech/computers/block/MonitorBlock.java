@@ -186,6 +186,8 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         POST,
         /** The machine is copying a system onto a disk: the screen joins it where it has got to. */
         INSTALLING,
+        /** The self-test is done and the system is coming up: the screen joins that instead. */
+        BOOTING,
         /** A guided installer has written the system and still waits for the reboot that boots it. */
         INSTALLER,
         /** Hand over to whatever the boot target is (firmware, shell, desktop). */
@@ -205,9 +207,13 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         if (computer.needsPost()) {
             return Entry.POST;
         }
-        if (computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine
-                && machine.installing() != null) {
-            return Entry.INSTALLING;
+        if (computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine) {
+            if (machine.installing() != null) {
+                return Entry.INSTALLING;
+            }
+            if (machine.booting()) {
+                return Entry.BOOTING;
+            }
         }
         final int slot = computer.pendingInstallSlot();
         if (slot != IOsHost.NO_PENDING_INSTALL) {
@@ -237,6 +243,10 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                     openInstallProgress(player, level, monitorPos, owner, computer);
                     return;
                 }
+                case BOOTING -> {
+                    openSystemBoot(player, level, monitorPos, owner, computer);
+                    return;
+                }
                 case INSTALLER -> {
                     openInstallerPrompt(player, level, monitorPos, owner, computer);
                     return;
@@ -246,6 +256,20 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
             }
         }
         openBootTarget(player, level, monitorPos, owner);
+    }
+
+    /** Sends the client the system this machine is bringing up, at the point the machine has reached. */
+    public static void openSystemBoot(final ServerPlayer player, final Level level, final BlockPos monitorPos,
+                                      final BlockPos owner, final IOsHost computer) {
+        if (!(computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine)) {
+            return;
+        }
+        final dev.jstech.computers.os.OsDef system = computer.installedOs();
+        final net.minecraft.resources.ResourceLocation id = system != null ? system.id() : null;
+        dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, owner);
+        PacketDistributor.sendToPlayer(player, new dev.jstech.computers.operation.payload.OpenSystemBootPayload(
+                owner, monitorPos, id == null ? "" : id.toString(),
+                system != null ? system.displayName() : "", machine.bootRemaining(), machine.bootTotal()));
     }
 
     /** Sends the client the copy this machine is in the middle of, at the point the machine has reached. */
