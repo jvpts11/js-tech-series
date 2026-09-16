@@ -11,6 +11,12 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.program.IqlEngine;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.uuid.NetworkUuid;
+import java.util.Locale;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -25,6 +31,9 @@ public final class IqlService {
     /** How many rows one query may bring back, the same as the studio's default page. */
     private static final int ROW_LIMIT = 4096;
 
+    private final IComputerTerminalHost terminal;
+    private final ServerLevel level;
+    /** The shell, for what the engine is still handed and for reading a file of statements. */
     private final ServerCliComputer shell;
 
     /** The Mainframe the kept engine runs on, which is what says whether it can be kept. */
@@ -34,8 +43,66 @@ public final class IqlService {
     @Nullable
     private IqlEngine engine;
 
-    IqlService(final ServerCliComputer shell) {
+    public IqlService(final IComputerTerminalHost terminal, final ServerLevel level,
+                      final ServerCliComputer shell) {
+        this.terminal = terminal;
+        this.level = level;
         this.shell = shell;
+    }
+
+    /** The Mainframe of the machine's network, or null when it is on none, or none is running. */
+    @Nullable
+    private MainframeBlockEntity mainframe() {
+        final NetworkUuid net = this.terminal.networkUuid();
+        if (net == null) {
+            return null;
+        }
+        return NetworkSystem.get(this.level).mainframePositionOf(net)
+                .map(pos -> this.level.getBlockEntity(BlockPos.of(pos)) instanceof MainframeBlockEntity mf ? mf : null)
+                .orElse(null);
+    }
+
+    /**
+     * Installs the engine on the network's Mainframe, starts it, stops it, or says how it stands.
+     *
+     * <p>The engine is the network's, not this machine's, so it is installed where the network is run from and every
+     * computer of the network speaks to that one.
+     */
+    public ICliComputer.OpResult control(final String action) {
+        final MainframeBlockEntity mainframe = this.mainframe();
+        if (mainframe == null) {
+            return ICliComputer.OpResult.fail("the network has no running Mainframe to host the IQL Engine");
+        }
+        return switch (action.toLowerCase(Locale.ROOT)) {
+            case "install" -> mainframe.installIqlEngine()
+                    ? ICliComputer.OpResult.ok("IQL Engine installed on the Mainframe and started")
+                    : ICliComputer.OpResult.fail("the IQL Engine is already installed");
+            case "start" -> mainframe.setIqlEngineRunning(true)
+                    ? ICliComputer.OpResult.ok("IQL Engine started")
+                    : ICliComputer.OpResult.fail(mainframe.isIqlEngineInstalled()
+                            ? "the IQL Engine is already running" : "the IQL Engine is not installed");
+            case "stop" -> mainframe.setIqlEngineRunning(false)
+                    ? ICliComputer.OpResult.ok("IQL Engine stopped")
+                    : ICliComputer.OpResult.fail(mainframe.isIqlEngineInstalled()
+                            ? "the IQL Engine is already stopped" : "the IQL Engine is not installed");
+            case "status", "" -> ICliComputer.OpResult.ok("IQL Engine: " + this.state());
+            default -> ICliComputer.OpResult.fail("usage: iqlengine install|start|stop|status");
+        };
+    }
+
+    /** Whether the network's Mainframe has the engine installed, which is what gates the Engine's own commands. */
+    public boolean installed() {
+        final MainframeBlockEntity mainframe = this.mainframe();
+        return mainframe != null && mainframe.isIqlEngineInstalled();
+    }
+
+    /** How the engine stands on the network's Mainframe, in the words every view shows. */
+    public String state() {
+        final MainframeBlockEntity mainframe = this.mainframe();
+        if (mainframe == null || !mainframe.isIqlEngineInstalled()) {
+            return "not installed";
+        }
+        return mainframe.isIqlEngineRunning() ? "running" : "stopped";
     }
 
     /**
@@ -46,7 +113,7 @@ public final class IqlService {
      */
     @Nullable
     public IqlEngine engine() {
-        final MainframeBlockEntity current = this.shell.mainframe();
+        final MainframeBlockEntity current = this.mainframe();
         if (current == null) {
             this.mainframe = null;
             this.engine = null;

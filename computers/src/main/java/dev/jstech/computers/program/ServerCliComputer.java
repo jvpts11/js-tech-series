@@ -537,25 +537,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public OpResult engineControl(final String action) {
-        final MainframeBlockEntity mainframe = mainframe(host.networkUuid());
-        if (mainframe == null) {
-            return OpResult.fail("the network has no running Mainframe to host the IQL Engine");
-        }
-        return switch (action.toLowerCase(java.util.Locale.ROOT)) {
-            case "install" -> mainframe.installIqlEngine()
-                    ? OpResult.ok("IQL Engine installed on the Mainframe and started")
-                    : OpResult.fail("the IQL Engine is already installed");
-            case "start" -> mainframe.setIqlEngineRunning(true)
-                    ? OpResult.ok("IQL Engine started")
-                    : OpResult.fail(mainframe.isIqlEngineInstalled()
-                            ? "the IQL Engine is already running" : "the IQL Engine is not installed");
-            case "stop" -> mainframe.setIqlEngineRunning(false)
-                    ? OpResult.ok("IQL Engine stopped")
-                    : OpResult.fail(mainframe.isIqlEngineInstalled()
-                            ? "the IQL Engine is already stopped" : "the IQL Engine is not installed");
-            case "status", "" -> OpResult.ok("IQL Engine: " + engineState(mainframe));
-            default -> OpResult.fail("usage: iqlengine install|start|stop|status");
-        };
+        return iql().control(action);
     }
 
     @Override
@@ -564,21 +546,14 @@ public final class ServerCliComputer implements ICliComputer {
         if (mainframe == null) {
             return java.util.List.of();
         }
-        return java.util.List.of(new ServiceStatus("IQL Engine", engineState(mainframe)),
+        // The Mirror's own state still lives here, with the package commands it belongs to.
+        return java.util.List.of(new ServiceStatus("IQL Engine", iql().state()),
                 new ServiceStatus("Mirror", mirrorState(mainframe)));
     }
 
     @Override
     public boolean iqlEngineInstalled() {
-        final MainframeBlockEntity mainframe = mainframe(host.networkUuid());
-        return mainframe != null && mainframe.isIqlEngineInstalled();
-    }
-
-    private static String engineState(final MainframeBlockEntity mainframe) {
-        if (!mainframe.isIqlEngineInstalled()) {
-            return "not installed";
-        }
-        return mainframe.isIqlEngineRunning() ? "running" : "stopped";
+        return iql().installed();
     }
 
     @Override
@@ -1954,6 +1929,11 @@ public final class ServerCliComputer implements ICliComputer {
     /** The machines of this network that name picks out, by host name, for whoever follows a network path. */
     public Map<String, BlockEntity> machinesNamed(final String name) {
         return matchMachines(name);
+    }
+
+    /** The network's own language, as this shell speaks it. */
+    private dev.jstech.computers.machine.IqlService iql() {
+        return new dev.jstech.computers.machine.IqlService(host, level, this);
     }
 
     /** What the Mainframe of this machine's network keeps about the work it has done. */
