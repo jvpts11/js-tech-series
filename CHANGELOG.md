@@ -30,6 +30,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Added
+- A machine in a rack now comes up the way any other machine does: its own power-on self-test, its own stop at a
+  boot manager, and its own system taking the time it takes, all on the machine's clocks. Its bay switch is its
+  power button, so flipping it off stops whatever was under way and flipping it on starts a self-test. The pages
+  only reach a monitor while the KVM switch is on that bay, and the machine goes on regardless, so whoever
+  switches over is put wherever it has got to.
 - A machine in a rack now installs a system the way any other machine does. The bay keeps the copy and the
   installer it is in, written onto the Server item with the rest of its session, so the work goes on with nobody
   watching, takes the time it costs and is still going when the world comes back. It used to be written to the
@@ -288,6 +293,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- A server in a rack no longer sits owing a power-on self-test that nothing ever runs. The flag was there and
+  nothing carried it along, so the only thing that could end one was a screen open on that bay reporting it done:
+  a rack nobody was looking at never came up, and opening the monitor was what made a machine start.
 - A Linux machine on a cable now says its network is up as it comes up. The line was asked of the shell running on
   the machine rather than of the machine, so one that had no shell to ask came up silent about a network it was
   plainly on. A machine is on a network the moment a cable reaches one, which is before anything on it is running.

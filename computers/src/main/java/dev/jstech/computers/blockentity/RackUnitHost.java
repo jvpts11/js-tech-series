@@ -109,6 +109,68 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
+    public int postRemaining() {
+        return rack.asUnit(row, rack::postRemaining);
+    }
+
+    @Override
+    public boolean atBootMenu() {
+        return rack.asUnit(row, rack::atBootMenu);
+    }
+
+    @Override
+    public int menuRemaining() {
+        return rack.asUnit(row, rack::menuRemaining);
+    }
+
+    @Override
+    public void holdBootMenu() {
+        rack.asUnit(row, () -> {
+            rack.holdBootMenu();
+            return null;
+        });
+    }
+
+    @Override
+    public void leaveBootMenu() {
+        rack.asUnit(row, () -> {
+            rack.leaveBootMenu();
+            return null;
+        });
+    }
+
+    @Override
+    public boolean booting() {
+        return rack.asUnit(row, rack::booting);
+    }
+
+    @Override
+    public int bootRemaining() {
+        return rack.asUnit(row, rack::bootRemaining);
+    }
+
+    @Override
+    public int bootTotal() {
+        return rack.asUnit(row, rack::bootTotal);
+    }
+
+    @Override
+    public dev.jstech.computers.os.boot.BootSequence bootSequence() {
+        return rack.asUnit(row, rack::bootSequence);
+    }
+
+    @Override
+    @Nullable
+    public dev.jstech.computers.hardware.ComputerBuild currentBuild() {
+        return rack.asUnit(row, rack::currentBuild);
+    }
+
+    @Override
+    public boolean hasBootableMedium() {
+        return rack.asUnit(row, rack::hasBootableMedium);
+    }
+
+    @Override
     public void markChanged() {
         rack.setChanged();
     }

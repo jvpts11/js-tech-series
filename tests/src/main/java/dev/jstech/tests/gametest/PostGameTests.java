@@ -9,7 +9,10 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -38,6 +41,9 @@ public final class PostGameTests {
 
     /** Longer than any modern machine's self-test, which sits at the one-second floor. */
     private static final int PAST_THE_POST = 40;
+
+    private static final net.minecraft.resources.ResourceLocation DEBIAN =
+            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "debian");
 
     private PostGameTests() {
     }
@@ -91,6 +97,47 @@ public final class PostGameTests {
                 // Frames 11 off this machine's solid-state disk: nine seconds, and a little more to be sure.
                 .thenExecuteAfter(220, () -> helper.assertFalse(computer.booting(),
                         "which ends on its own, with nobody watching"))
+                .thenSucceed();
+    }
+
+    /**
+     * A machine in a rack comes up the way a machine on a desk does.
+     *
+     * <p>It used to owe a self-test that nothing ever ran: the flag was there, the rack never carried it along,
+     * and the only thing that could end it was a screen open on that bay telling the server it was done. So a
+     * rack of servers nobody was looking at sat owing self-tests for ever, and what the monitor showed was the
+     * only thing that made one of them come up. Its bay switch is its power button; the rest is its own.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 600)
+    public static void post_ofARackBay_runsWithoutAnybodyOnThatChannel(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos, ComputingModule.SERVER_RACK.get());
+        if (!(helper.getBlockEntity(pos) instanceof ServerRackBlockEntity rack)) {
+            helper.fail("no rack at " + pos);
+            return;
+        }
+        TestWorldBuilder.mountDefaultServer(rack, 0);
+        final IOsHost unit = rack.unitHost(0);
+        helper.assertTrue(unit.installOs(DEBIAN, 0), "the bay's drive takes a system");
+        helper.assertTrue(unit.needsPost(), "a machine that was just mounted owes a self-test");
+        final int[] first = new int[1];
+        helper.startSequence()
+                .thenExecuteAfter(2, () -> {
+                    first[0] = unit.postRemaining();
+                    helper.assertTrue(first[0] > 0,
+                            "which the bay times for itself, off what is seated in it: " + first[0]);
+                })
+                .thenExecuteAfter(5, () -> helper.assertTrue(unit.postRemaining() < first[0],
+                        "and counts down with no screen open anywhere"))
+                .thenExecuteAfter(PAST_THE_POST, () -> {
+                    helper.assertFalse(unit.needsPost(), "the self-test ends by itself");
+                    helper.assertTrue(unit.atBootMenu() || unit.booting(),
+                            "and hands over to the system, which takes its own time too");
+                })
+                .thenExecuteAfter(400, () -> {
+                    helper.assertFalse(unit.booting(), "the system finishes coming up with nobody watching");
+                    helper.assertFalse(unit.atBootMenu(), "and nothing is left standing at a menu");
+                })
                 .thenSucceed();
     }
 

@@ -273,7 +273,12 @@ public class ServerRackBlockEntity extends BlockEntity
     private static final class UnitState {
         final dev.jstech.computers.program.ComputerConsoleState console =
                 new dev.jstech.computers.program.ComputerConsoleState();
-        boolean needsPost = true;
+        /*
+         * Where this machine is on its way up. A machine in a rack is a machine: it tests itself, it stops at
+         * its boot manager and its system takes time to come up, all of it on its own clocks, whether or not
+         * the monitor is showing this bay.
+         */
+        final dev.jstech.computers.os.boot.BootPhases phases = new dev.jstech.computers.os.boot.BootPhases();
         int bootDiskSlot = -1;
         /** The desktop this machine booted into, fixed at POST so later package changes wait for a reboot. */
         @org.jetbrains.annotations.Nullable
@@ -297,6 +302,11 @@ public class ServerRackBlockEntity extends BlockEntity
         /** The recipe drafts the Pattern Studio edits on this machine; ride on the Server item like the windows. */
         final dev.jstech.computers.crafting.PatternWorkbench studio =
                 new dev.jstech.computers.crafting.PatternWorkbench();
+
+        UnitState() {
+            // A machine that has just been mounted has never tested itself, so it owes one before anything else.
+            phases.setNeedsPost(true);
+        }
     }
 
     private final Map<Integer, UnitState> unitStates = new HashMap<>();
@@ -310,7 +320,7 @@ public class ServerRackBlockEntity extends BlockEntity
             if (saved != null) {
                 state.console.load(saved);
                 // Absent keys mean a machine that was never brought up, which still needs POST.
-                state.needsPost = !saved.contains("NeedsPost") || saved.getBoolean("NeedsPost");
+                state.phases.setNeedsPost(!saved.contains("NeedsPost") || saved.getBoolean("NeedsPost"));
                 state.bootDiskSlot = saved.contains("BootDiskSlot") ? saved.getInt("BootDiskSlot") : -1;
                 state.bootedDesktopId = saved.contains("BootedDesktop")
                         ? ResourceLocation.tryParse(saved.getString("BootedDesktop")) : null;
@@ -372,7 +382,7 @@ public class ServerRackBlockEntity extends BlockEntity
          * A machine that is already up must still be up after a reload. Keeping the POST flag only in
          * memory made every server re-run POST when the world came back, as if it had been switched off.
          */
-        tag.putBoolean("NeedsPost", state.needsPost);
+        tag.putBoolean("NeedsPost", state.phases.needsPost());
         tag.putInt("BootDiskSlot", state.bootDiskSlot);
         if (state.bootedDesktopId != null) {
             tag.putString("BootedDesktop", state.bootedDesktopId.toString());
@@ -562,12 +572,14 @@ public class ServerRackBlockEntity extends BlockEntity
             return;
         }
         bayPowerOff ^= 1 << slot;
-        if (bayPowerOn(slot)) {
-            unitState(slot).needsPost = true;
-        }
         /*
-         * Off or a cold start, no desktop survives; the bay switch is this machine's power button,
-         * and writing needsPost directly here had let it skip the clearing setNeedsPost does.
+         * The bay switch is this machine's power button, so it does to the phases what a power button does:
+         * whatever was under way stops, and a machine coming on owes a self-test before anything else.
+         */
+        unitState(slot).phases.powered(bayPowerOn(slot));
+        /*
+         * Off or a cold start, no desktop survives; writing the self-test flag directly here had let it skip
+         * the clearing setNeedsPost does.
          */
         unitState(slot).openWindows.clear();
         unitState(slot).pendingInstallSlot = dev.jstech.computers.os.IOsHost.NO_PENDING_INSTALL;
@@ -992,8 +1004,11 @@ public class ServerRackBlockEntity extends BlockEntity
             }
             final UUID node = ensureNodeUuid(stack);
             present.add(node);
-            // A server setting a program up keeps copying while it is a powered node, and so does one
-            // having a system put on it: a machine in a rack is a machine.
+            /*
+             * A machine in a rack is a machine: it comes up through its own self-test, boot manager and system,
+             * it keeps setting a program up while it is a powered node, and it keeps a copy of its own going.
+             */
+            dev.jstech.computers.os.boot.BootRunner.tick(unitHost(i), unitState(i).phases, level, worldPosition);
             dev.jstech.computers.os.install.SetupRunner.tick(unitHost(i), level, worldPosition);
             dev.jstech.computers.os.install.OsInstallRunner.tick(unitHost(i), level, worldPosition);
 
@@ -1363,7 +1378,87 @@ public class ServerRackBlockEntity extends BlockEntity
     @Override
     public boolean needsPost() {
         final int slot = soleComputerSlot();
-        return slot >= 0 && unitState(slot).needsPost;
+        return slot >= 0 && unitState(slot).phases.needsPost();
+    }
+
+    @Override
+    public int postRemaining() {
+        final int slot = soleComputerSlot();
+        return slot < 0 || level == null ? 0 : unitState(slot).phases.postRemaining(level.getGameTime());
+    }
+
+    @Override
+    public boolean atBootMenu() {
+        final int slot = soleComputerSlot();
+        return slot >= 0 && unitState(slot).phases.atMenu();
+    }
+
+    @Override
+    public int menuRemaining() {
+        final int slot = soleComputerSlot();
+        return slot < 0 || level == null ? 0 : unitState(slot).phases.menuRemaining(level.getGameTime());
+    }
+
+    @Override
+    public void holdBootMenu() {
+        final int slot = soleComputerSlot();
+        if (slot >= 0) {
+            unitState(slot).phases.holdMenu();
+        }
+    }
+
+    @Override
+    public void leaveBootMenu() {
+        final int slot = soleComputerSlot();
+        if (slot >= 0) {
+            unitState(slot).phases.endMenu();
+            unitState(slot).phases.beginBoot();
+        }
+    }
+
+    @Override
+    public boolean booting() {
+        final int slot = soleComputerSlot();
+        return slot >= 0 && unitState(slot).phases.booting();
+    }
+
+    @Override
+    public int bootRemaining() {
+        final int slot = soleComputerSlot();
+        return slot < 0 || level == null ? 0 : unitState(slot).phases.bootRemaining(level.getGameTime());
+    }
+
+    @Override
+    public int bootTotal() {
+        final int slot = soleComputerSlot();
+        return slot < 0 ? 0 : unitState(slot).phases.bootTotal();
+    }
+
+    @Override
+    public dev.jstech.computers.os.boot.BootSequence bootSequence() {
+        return dev.jstech.computers.os.boot.BootLines.forMachine(this);
+    }
+
+    @Override
+    @org.jetbrains.annotations.Nullable
+    public dev.jstech.computers.hardware.ComputerBuild currentBuild() {
+        return soleBuild();
+    }
+
+    @Override
+    public boolean hasBootableMedium() {
+        if (level == null) {
+            return false;
+        }
+        for (final long endpoint : linkedEndpoints()) {
+            if (level.getBlockEntity(BlockPos.of(endpoint))
+                    instanceof dev.jstech.computers.os.media.MediaReaderBlockEntity reader
+                    && reader.insertedKind() == dev.jstech.computers.os.media.MediaKind.OS_INSTALL
+                    && reader.insertedPayload() != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -1518,7 +1613,7 @@ public class ServerRackBlockEntity extends BlockEntity
     public void setNeedsPost(final boolean value) {
         final int slot = soleComputerSlot();
         if (slot >= 0) {
-            unitState(slot).needsPost = value;
+            unitState(slot).phases.setNeedsPost(value);
             if (value) {
                 unitState(slot).openWindows.clear(); // a restart closes everything
                 unitState(slot).pendingInstallSlot = // and is what a finished installer was waiting for
