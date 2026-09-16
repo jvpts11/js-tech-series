@@ -30,6 +30,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Changed
+- Installing a system now goes through that system's own installer instead of one screen for all of them. It asks
+  only what the game has: which disk, with what each disk already holds and the room the system needs; what the
+  computer is called, which becomes the name the prompt and the network use; and, where a Mirror answers, a
+  desktop to install along with it. A disk that already carries a system is erased first, after a confirmation
+  naming what is lost, and the erasing happens when the copying starts, so leaving before that still leaves
+  everything as it was. The installer belongs to the machine: closing the monitor does not cancel it, it is saved
+  with the world, and opening the monitor again returns to the page it had reached.
 - A machine running a Linux system now stops at its boot manager on the way up, listing every disk that carries a
   system, so the second one is something a player finds rather than something they have to know about. It boots the
   usual one by itself after five seconds; any key stops the count and the machine waits there. On the modern

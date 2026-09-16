@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.os.install;
 
+import dev.jstech.core.id.IStableName;
+
 import java.util.List;
 
 /**
@@ -23,31 +25,42 @@ import java.util.List;
  *
  * <p>Pure data with no drawing in it. What colour any of this is belongs to the screen.
  */
-public enum InstallerStyle {
+public enum InstallerStyle implements IStableName {
 
     /** Anything guided that has not been given a look of its own yet. */
-    PLAIN,
+    PLAIN("plain"),
 
     /** The setup of the first age: a welcome, a settings page, a box with a bar in it. */
-    MC_DOS,
+    MC_DOS("mc_dos"),
 
     /** A text check of the machine, then a grey wizard with a picture down its side. */
-    FRAMES_95,
+    FRAMES_95("frames_95"),
 
     /** A blue text phase that copies, then a graphical phase that asks while it works. */
-    FRAMES_XP,
+    FRAMES_XP("frames_xp"),
 
     /** Pale cards, a table of disks, one question to a page. */
-    FRAMES_11,
+    FRAMES_11("frames_11"),
 
     /** The server installer: a coloured header, a body of text, and Done at the foot. */
-    UBUNTU,
+    UBUNTU("ubuntu"),
 
     /** The text installer: a grey window with its title in a tab, over blue. */
-    DEBIAN,
+    DEBIAN("debian"),
 
     /** The text hub: every answer in a numbered list, and a letter to begin. */
-    FEDORA;
+    FEDORA("fedora");
+
+    private final String serializedName;
+
+    InstallerStyle(final String serializedName) {
+        this.serializedName = serializedName;
+    }
+
+    @Override
+    public String serializedName() {
+        return this.serializedName;
+    }
 
     /** The pages this installer shows, in order, with the steps of the copy spread among them. */
     public List<Stage> stages() {
@@ -208,7 +221,7 @@ public enum InstallerStyle {
                 case DONE -> "ENTER=Restart";
                 default -> "";
             };
-            case FRAMES_95 -> page == InstallerPage.WELCOME ? "ENTER=Continue  ESC=Exit" : "";
+            case FRAMES_95 -> page == InstallerPage.WELCOME ? "ENTER=Continue  F3=Exit" : "";
             case FRAMES_XP -> switch (page) {
                 case DISK -> "ENTER=Install  E=Erase disk  F3=Quit";
                 case DONE -> "ENTER=Restart";

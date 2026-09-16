@@ -333,11 +333,19 @@ public final class FirmwarePayloads {
                             payload.monitorPos(), kind, "", target, slot, failure));
                     return;
                 }
+                final dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine =
+                        computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity m
+                                ? m : null;
+                final dev.jstech.computers.os.install.InstallerFlow flow =
+                        machine == null ? null : machine.installer();
                 final dev.jstech.computers.os.install.OsInstallJob job =
-                        computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine
-                                ? machine.installing() : null;
-                if (job != null) {
-                    // The machine is copying; the screen is told how long its copy is so the bar is the truth.
+                        machine == null ? null : machine.installing();
+                if (flow != null) {
+                    // The machine is in its installer; the screen is sent the page it opens on.
+                    PacketDistributor.sendToPlayer(player, dev.jstech.computers.operation.payload
+                            .OpenInstallerPayload.of(payload.hostPos(), payload.monitorPos(), flow, 0));
+                } else if (job != null) {
+                    // A copy with no installer behind it: the screen is told how long it is so the bar is true.
                     PacketDistributor.sendToPlayer(player, new OsInstallProgressPayload(payload.hostPos(),
                             payload.monitorPos(), kind, nameOfSystem(job.osId()), target, job.ticksLeft(),
                             job.ticksTotal()));
@@ -455,12 +463,23 @@ public final class FirmwarePayloads {
                 }
                 return noRoom;
             }
-            if (!machine.canTakeOs(def.id(), targetSlot)) {
+            /*
+             * Room is no longer asked once and for all here: the installer offers the disks and the player
+             * chooses one, and a disk that is full can be erased on the way. What still stops it before it
+             * starts is a machine with no disk at all, which has nothing to offer.
+             */
+            final int eraFactor = dev.jstech.computers.os.install.SetupTiming.eraFactor(hostEra);
+            final int copyTicks = dev.jstech.computers.os.install.SetupTiming.ticks(
+                    def.footprintMb(), reader.insertedFormat(), false, eraFactor);
+            final dev.jstech.computers.os.install.InstallerFlow flow =
+                    dev.jstech.computers.os.install.Installers.beginning(machine, level, def, copyTicks);
+            if (flow.disks().isEmpty()) {
                 return noRoom;
             }
-            machine.setInstalling(dev.jstech.computers.os.install.OsInstallJob.beginning(
-                    def.id().toString(), targetSlot, endpoint, def.footprintMb(), reader.insertedFormat(),
-                    dev.jstech.computers.os.install.SetupTiming.eraFactor(hostEra)));
+            flow.select(targetSlot);
+            machine.setInstaller(flow);
+            machine.setInstalling(new dev.jstech.computers.os.install.OsInstallJob(def.id().toString(),
+                    flow.targetSlot(), endpoint, flow.ticksTotal(), flow.ticksTotal()));
             return null;
         }
         return failure != null ? failure : "No installation medium is in a drive linked to this machine.";

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.computers.os.install.InstallerStyle;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -77,17 +78,21 @@ public final class OsBootstrap {
              * a good part of a gigabyte for Frames 11. Its bundled programs weigh a quarter of that each.
              */
             OsDef.mediaInstalled(rl("mc_dos"), OsCapability.TERMINAL_ONLY, HardwareEra.VINTAGE, rl("dos"), 4,
-                    Platform.MC_DOS, "MC-DOS", Optional.empty(), SoftwareHouse.MIDSOFT).withRam(1),
+                    Platform.MC_DOS, "MC-DOS", Optional.empty(), SoftwareHouse.MIDSOFT).withRam(1)
+                    .withInstaller(InstallerStyle.MC_DOS),
             // MC-NET: full-screen network GUI (the rewrapped network interactor), from the Vintage era.
             OsDef.mediaInstalled(rl("mc_net"), OsCapability.NETWORK_GUI, HardwareEra.VINTAGE, rl("net_min"), 8,
                     Platform.MC_NET, "MC-NET", Optional.empty(), SoftwareHouse.NOUVELL).withRam(2),
             // The Frames editions bundle their own desktop environment (the id doubles as the DE id).
             OsDef.mediaInstalled(rl("frames_95"), OsCapability.FULL_DESKTOP, HardwareEra.LEGACY, rl("win9x"), 48,
-                    Platform.FRAMES, "Frames 95", Optional.of(rl("frames_95")), SoftwareHouse.MIDSOFT).withRam(16),
+                    Platform.FRAMES, "Frames 95", Optional.of(rl("frames_95")), SoftwareHouse.MIDSOFT).withRam(16)
+                    .withInstaller(InstallerStyle.FRAMES_95),
             OsDef.mediaInstalled(rl("frames_xp"), OsCapability.FULL_DESKTOP, HardwareEra.LEGACY, rl("nt"), 1_536,
-                    Platform.FRAMES, "Frames XP", Optional.of(rl("frames_xp")), SoftwareHouse.MIDSOFT).withRam(64),
+                    Platform.FRAMES, "Frames XP", Optional.of(rl("frames_xp")), SoftwareHouse.MIDSOFT).withRam(64)
+                    .withInstaller(InstallerStyle.FRAMES_XP),
             OsDef.mediaInstalled(rl("frames_11"), OsCapability.FULL_DESKTOP, HardwareEra.STANDARD, rl("nt"), 20_480,
-                    Platform.FRAMES, "Frames 11", Optional.of(rl("frames_11")), SoftwareHouse.MIDSOFT).withRam(768),
+                    Platform.FRAMES, "Frames 11", Optional.of(rl("frames_11")), SoftwareHouse.MIDSOFT).withRam(768)
+                    .withInstaller(InstallerStyle.FRAMES_11),
 
             /*
              * Linux distributions: all on the Linux kernel, all boot to a bash TTY until a desktop environment
@@ -98,11 +103,11 @@ public final class OsBootstrap {
              * weighs on top of it (the desktop environments below say how much).
              */
             OsDef.linuxDistro(rl("ubuntu"), 8_192, "Ubuntu", "bash", PackageManagerKind.APT, InstallMode.GUIDED,
-                    SoftwareHouse.AXIOMATIC).withRam(48),
+                    SoftwareHouse.AXIOMATIC).withRam(48).withInstaller(InstallerStyle.UBUNTU),
             OsDef.linuxDistro(rl("debian"), 4_096, "Debian", "bash", PackageManagerKind.APT, InstallMode.GUIDED,
-                    SoftwareHouse.DEBIAN_CIRCLE).withRam(24),
+                    SoftwareHouse.DEBIAN_CIRCLE).withRam(24).withInstaller(InstallerStyle.DEBIAN),
             OsDef.linuxDistro(rl("fedora"), 8_192, "Fedora", "bash", PackageManagerKind.DNF, InstallMode.GUIDED,
-                    SoftwareHouse.RED_CAP).withRam(48),
+                    SoftwareHouse.RED_CAP).withRam(48).withInstaller(InstallerStyle.FEDORA),
             OsDef.linuxDistro(rl("arch"), 2_048, "Arch Linux", "zsh", PackageManagerKind.PACMAN, InstallMode.LIVE_MANUAL,
                     SoftwareHouse.ARCH_COLLECTIVE).withRam(12),
             OsDef.linuxDistro(rl("gentoo"), 4_096, "Gentoo", "bash", PackageManagerKind.EMERGE, InstallMode.SOURCE,

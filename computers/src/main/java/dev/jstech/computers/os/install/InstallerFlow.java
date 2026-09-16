@@ -37,7 +37,14 @@ public final class InstallerFlow {
     /** How long a computer's name may be, the length the machines of the first age allowed. */
     public static final int MOST_NAME_LETTERS = 15;
 
+    /** More disks than any machine wires up, so a list that crosses the wire has an end to it. */
+    public static final int MOST_DISKS = 16;
+
+    /** The same for the desktops a Mirror can offer. */
+    public static final int MOST_DESKTOPS = 16;
+
     private final InstallerStyle style;
+    private final String systemId;
     private final String systemName;
     private final int footprintMb;
     private final int copyTicks;
@@ -54,10 +61,11 @@ public final class InstallerFlow {
     private int erasePrompt = NO_DISK;
     private String computerName;
 
-    private InstallerFlow(final InstallerStyle style, final String systemName, final int footprintMb,
-                          final int copyTicks, final List<Disk> disks, final String suggestedName,
-                          final List<Desktop> desktops, final String mirrorHost) {
+    private InstallerFlow(final InstallerStyle style, final String systemId, final String systemName,
+                          final int footprintMb, final int copyTicks, final List<Disk> disks,
+                          final String suggestedName, final List<Desktop> desktops, final String mirrorHost) {
         this.style = style;
+        this.systemId = systemId;
         this.systemName = systemName;
         this.footprintMb = Math.max(0, footprintMb);
         this.copyTicks = Math.max(1, copyTicks);
@@ -81,16 +89,41 @@ public final class InstallerFlow {
      * @param copyTicks  how long the copy of the system itself takes
      * @param mirrorHost the Mirror answering this machine, empty when none does
      */
-    public static InstallerFlow beginning(final InstallerStyle style, final String systemName,
-                                          final int footprintMb, final int copyTicks, final List<Disk> disks,
-                                          final String suggestedName, final List<Desktop> desktops,
-                                          final String mirrorHost) {
-        return new InstallerFlow(style, systemName, footprintMb, copyTicks, disks, suggestedName, desktops,
-                mirrorHost);
+    public static InstallerFlow beginning(final InstallerStyle style, final String systemId,
+                                          final String systemName, final int footprintMb, final int copyTicks,
+                                          final List<Disk> disks, final String suggestedName,
+                                          final List<Desktop> desktops, final String mirrorHost) {
+        return new InstallerFlow(style, systemId, systemName, footprintMb, copyTicks, disks, suggestedName,
+                desktops, mirrorHost);
+    }
+
+    /**
+     * An installation put back where it was: the same machine read again, with the answers it had been given.
+     *
+     * <p>Used both by a machine coming back after a reload and by a monitor being opened on one, so what the
+     * player sees and what the machine holds are built the same way from the same facts.
+     */
+    public static InstallerFlow restored(final InstallerStyle style, final String systemId, final String systemName,
+                                         final int footprintMb, final int copyTicks, final List<Disk> disks,
+                                         final List<Desktop> desktops, final String mirrorHost,
+                                         final int stageIndex, final int targetSlot, final String computerName,
+                                         final String desktopId, final int eraseSlot) {
+        final InstallerFlow flow = beginning(style, systemId, systemName, footprintMb, copyTicks, disks,
+                computerName, desktops, mirrorHost);
+        flow.restoreErase(eraseSlot);
+        flow.select(targetSlot);
+        flow.chooseDesktop(indexOfDesktop(flow, desktopId));
+        flow.goToStage(stageIndex);
+        return flow;
     }
 
     public InstallerStyle style() {
         return this.style;
+    }
+
+    /** The system being installed, as the registry names it. */
+    public String systemId() {
+        return this.systemId;
     }
 
     public String systemName() {
@@ -100,6 +133,11 @@ public final class InstallerFlow {
     /** What the system takes on the disk, which is what every page that offers a disk has to say. */
     public int footprintMb() {
         return this.footprintMb;
+    }
+
+    /** How long the copy of the system itself takes, before anything the Mirror adds to it. */
+    public int copyTicks() {
+        return this.copyTicks;
     }
 
     public List<Disk> disks() {
@@ -157,6 +195,25 @@ public final class InstallerFlow {
     public Desktop desktop() {
         return this.desktopIndex >= 0 && this.desktopIndex < this.desktops.size()
                 ? this.desktops.get(this.desktopIndex) : null;
+    }
+
+    /** The desktop chosen, as the registry names it, or empty for the terminal alone. */
+    public String desktopId() {
+        final Desktop chosen = this.desktop();
+        return chosen == null ? "" : chosen.id();
+    }
+
+    /** Where that desktop sits in the list this machine was offered, or {@link #NO_DESKTOP} when it is not in it. */
+    public static int indexOfDesktop(final InstallerFlow flow, final String id) {
+        if (id == null || id.isEmpty()) {
+            return NO_DESKTOP;
+        }
+        for (int i = 0; i < flow.desktops().size(); i++) {
+            if (flow.desktops().get(i).id().equals(id)) {
+                return i;
+            }
+        }
+        return NO_DESKTOP;
     }
 
     /** The disk this installation erases first, or {@link #NO_DISK} when it erases nothing. */

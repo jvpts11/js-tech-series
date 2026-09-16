@@ -46,6 +46,18 @@ public final class ComputingClientSetup {
                         failure.isEmpty()
                                 ? OsInstallScreen.completed(pos, monitorPos, kind, osName, targetLabel, targetSlot)
                                 : OsInstallScreen.failed(pos, monitorPos, kind, osName, targetLabel, failure)));
+        /*
+         * An installer already on screen is given the new page rather than replaced, so a page that changes
+         * under the player does not throw away what they were in the middle of typing.
+         */
+        dev.jstech.computers.block.IInstallerScreenOpener.Holder.set(payload -> {
+            if (Minecraft.getInstance().screen instanceof InstallerScreen open
+                    && open.isFor(payload.hostPos())) {
+                open.accept(payload);
+                return;
+            }
+            Minecraft.getInstance().setScreen(new InstallerScreen(payload));
+        });
         dev.jstech.computers.block.IBootMenuScreenOpener.Holder.set(
                 (pos, monitorPos, menu, remaining) -> Minecraft.getInstance().setScreen(
                         new BootMenuScreen(pos, monitorPos, menu, remaining)));

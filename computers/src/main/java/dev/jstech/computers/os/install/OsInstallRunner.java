@@ -30,6 +30,9 @@ import org.jetbrains.annotations.Nullable;
  * machine, so one that was under way when the world went away carries on where it was. Two things end it early
  * and write nothing: the power going off, which drops it with the rest of the session, and the medium leaving
  * the drive it was being read from.
+ *
+ * <p>How far it may run is the installer's business, not the clock's: the work goes to the end of the page it is
+ * on and waits there, so a question nobody has answered is never copied past.
  */
 public final class OsInstallRunner {
 
@@ -45,25 +48,83 @@ public final class OsInstallRunner {
         final OsDef system = OsRegistry.getOs(ResourceLocation.tryParse(job.osId()));
         if (mediumGone(level, job)) {
             machine.setInstalling(null);
+            machine.setInstaller(null);
             tell(level, machine, pos, job, system, "The medium was taken out before the system was written.");
             return;
         }
-        if (!job.tick()) {
+        final InstallerFlow flow = machine.installer();
+        if (flow != null && !carry(machine, level, pos, job, flow)) {
+            return;
+        }
+        if (flow == null && !job.tick()) {
             machine.setChanged();
             return;
         }
+        finish(machine, level, pos, job, flow, system);
+    }
+
+    /**
+     * One tick of the work under an installer, answering whether the whole of it is now done.
+     *
+     * <p>The clock only runs inside what the page it is on has unlocked; when that page's steps are over, the
+     * installer moves on by itself unless the next page is one that asks something.
+     *
+     * <p>A screen watching this is not told every tick: it holds the same installer and walks the same clock,
+     * and is only sent the page again when the page really changes, which is the one thing it cannot work out.
+     */
+    private static boolean carry(final AbstractComputerBlockEntity machine, final ServerLevel level,
+                                 final BlockPos pos, final OsInstallJob job, final InstallerFlow flow) {
+        if (job.ticksTotal() - job.ticksLeft() < flow.ticksUnlocked()) {
+            job.tick();
+            machine.setChanged();
+        }
+        if (flow.advance(job.ticksTotal() - job.ticksLeft()) && !job.finished()) {
+            show(level, machine, pos, flow);
+        }
+        return job.finished();
+    }
+
+    /** Writes the system, gives the machine the name it was asked for, and leaves the installer on its last page. */
+    private static void finish(final AbstractComputerBlockEntity machine, final ServerLevel level,
+                               final BlockPos pos, final OsInstallJob job, @Nullable final InstallerFlow flow,
+                               @Nullable final OsDef system) {
         machine.setInstalling(null);
         final ResourceLocation id = ResourceLocation.tryParse(job.osId());
-        if (id != null && machine.installOs(id, job.targetSlot())) {
-            /*
-             * The files are on the disk, but the machine is still running the installer until it restarts:
-             * remember that, so the monitor comes back to the reboot prompt rather than to the system.
-             */
-            machine.setPendingInstallSlot(job.targetSlot());
+        final int slot = flow != null ? flow.targetSlot() : job.targetSlot();
+        if (id == null || !machine.installOs(id, slot)) {
+            machine.setInstaller(null);
+            tell(level, machine, pos, job, system, "The disk would not take the system.");
+            return;
+        }
+        /*
+         * The files are on the disk, but the machine is still running the installer until it restarts:
+         * remember that, so the monitor comes back to the reboot prompt rather than to the system.
+         */
+        machine.setPendingInstallSlot(slot);
+        if (flow == null) {
             tell(level, machine, pos, job, system, "");
             return;
         }
-        tell(level, machine, pos, job, system, "The disk would not take the system.");
+        name(machine, flow);
+        desktop(machine, flow);
+        flow.goTo(InstallerPage.DONE);
+        machine.setChanged();
+        show(level, machine, pos, flow);
+    }
+
+    /** The name the installer asked for becomes the name the prompt and the network use. */
+    private static void name(final AbstractComputerBlockEntity machine, final InstallerFlow flow) {
+        if (machine.console() != null && !flow.computerName().isBlank()) {
+            machine.console().setComputerName(flow.computerName());
+        }
+    }
+
+    /** A desktop chosen from the Mirror is installed with the system, which is what its own step paid for. */
+    private static void desktop(final AbstractComputerBlockEntity machine, final InstallerFlow flow) {
+        final InstallerFlow.Desktop chosen = flow.desktop();
+        if (chosen != null && machine.console() != null) {
+            machine.console().install(chosen.id());
+        }
     }
 
     /** Whether what was being read has left the drive it was in. */
@@ -75,6 +136,18 @@ public final class OsInstallRunner {
                 || reader.insertedKind() != MediaKind.OS_INSTALL
                 || reader.insertedPayload() == null
                 || !reader.insertedPayload().toString().equals(job.osId());
+    }
+
+    /** Puts every player watching this machine on the installer's page, wherever it has got to. */
+    public static void show(final ServerLevel level, final AbstractComputerBlockEntity machine, final BlockPos pos,
+                            final InstallerFlow flow) {
+        final OsInstallJob job = machine.installing();
+        final int done = job == null ? flow.ticksTotal() : job.ticksTotal() - job.ticksLeft();
+        ScreenSessions.eachWatcher(level, pos, (player, monitor) -> {
+            ScreenSessions.opened(player, monitor, pos);
+            PacketDistributor.sendToPlayer(player,
+                    dev.jstech.computers.operation.payload.OpenInstallerPayload.of(pos, monitor, flow, done));
+        });
     }
 
     /** Puts every player watching this machine on the installer's last beat, finished or refused. */

@@ -310,6 +310,17 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         session.setInstalling(job);
     }
 
+    /** The installer this machine is in: the page it is on and what has been answered so far. */
+    @Nullable
+    public dev.jstech.computers.os.install.InstallerFlow installer() {
+        return session.installer();
+    }
+
+    /** Puts the machine in an installer, or takes it out of one. */
+    public void setInstaller(@Nullable final dev.jstech.computers.os.install.InstallerFlow flow) {
+        session.setInstaller(flow);
+    }
+
     /** Whether that system could go on that disk, asked before a copy starts rather than after it ends. */
     public boolean canTakeOs(final ResourceLocation osId, final int preferredSlot) {
         return session.canTakeOs(osId, preferredSlot);

@@ -213,6 +213,22 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
             if (machine.installing() != null) {
                 return Entry.INSTALLING;
             }
+            /*
+             * An installer holds the machine from its first page to the restart that ends it, so the last page
+             * still counts as being in one even with nothing left to copy. It only holds it while what it wrote
+             * is still there, though: a disk formatted or pulled between the install and the restart leaves
+             * nothing to restart into, and the machine goes back to whatever it would boot.
+             */
+            final dev.jstech.computers.os.install.InstallerFlow installer = machine.installer();
+            if (installer != null) {
+                final int wrote = installer.targetSlot();
+                final boolean systemStillThere = wrote < 0 ? computer.hasOs()
+                        : dev.jstech.computers.os.OsDisks.hasSystem(computer.diskInSlot(wrote));
+                if (systemStillThere) {
+                    return Entry.INSTALLING;
+                }
+                machine.setInstaller(null);
+            }
             if (machine.atBootMenu()) {
                 return Entry.BOOT_MENU;
             }
@@ -298,7 +314,19 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         if (!(computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine)) {
             return;
         }
+        final dev.jstech.computers.os.install.InstallerFlow flow = machine.installer();
         final dev.jstech.computers.os.install.OsInstallJob job = machine.installing();
+        if (flow != null) {
+            /*
+             * The installer is the machine's, so a monitor opened halfway through is put on the page the
+             * machine has reached, with the work it has already done behind it.
+             */
+            final int done = job == null ? flow.ticksTotal() : job.ticksTotal() - job.ticksLeft();
+            dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, owner);
+            PacketDistributor.sendToPlayer(player, dev.jstech.computers.operation.payload.OpenInstallerPayload
+                    .of(owner, monitorPos, flow, done));
+            return;
+        }
         if (job == null) {
             return;
         }

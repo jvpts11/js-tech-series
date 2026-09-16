@@ -89,7 +89,8 @@ public final class OsInstallGameTests {
     private static void finishInstaller(final GameTestHelper helper, final MainframeBlockEntity mainframe) {
         helper.assertTrue(!mainframe.linkedEndpoints().isEmpty(), "the reader links to the Mainframe");
         helper.assertTrue(FirmwarePayloads.installOsFromReader(helper.getLevel(), mainframe, -1L, -1),
-                "the guided installer starts copying");
+                "the guided installer opens");
+        answerEveryQuestion(helper, mainframe);
         final dev.jstech.computers.os.install.OsInstallJob job = mainframe.installing();
         helper.assertTrue(job != null, "the machine took the copy on");
         for (int i = 0; i <= job.ticksTotal(); i++) {
@@ -97,6 +98,19 @@ public final class OsInstallGameTests {
                     mainframe.getBlockPos());
         }
         helper.assertTrue(DEBIAN.equals(mainframe.installedOsId()), "the system is on the disk");
+    }
+
+    /**
+     * Takes the installer's own suggestion on every page it asks, which is what a player pressing the one key
+     * does: the disk it found, the name the machine already goes by, and no desktop where no Mirror answers.
+     */
+    private static void answerEveryQuestion(final GameTestHelper helper, final MainframeBlockEntity mainframe) {
+        final dev.jstech.computers.os.install.InstallerFlow flow = mainframe.installer();
+        helper.assertTrue(flow != null, "the machine opened an installer");
+        for (int page = 0; page < flow.style().stages().size() && !flow.started(); page++) {
+            flow.next();
+        }
+        helper.assertTrue(flow.started(), "every question was answered and the work began");
     }
 
     /**
@@ -110,17 +124,61 @@ public final class OsInstallGameTests {
                 .thenExecuteAfter(SETTLE + 4, () -> {
                     mainframe.setNeedsPost(false);
                     helper.assertTrue(FirmwarePayloads.beginInstall(helper.getLevel(), mainframe, -1L, -1) == null,
-                            "the copy starts");
-                    final dev.jstech.computers.os.install.OsInstallJob job = mainframe.installing();
-                    helper.assertTrue(job != null && job.ticksLeft() == job.ticksTotal(), "with all of it to go");
+                            "the installer opens");
+                    final dev.jstech.computers.os.install.InstallerFlow flow = mainframe.installer();
+                    helper.assertTrue(flow != null && !flow.started(), "and waits on its first question");
                     helper.assertTrue(!mainframe.hasOs(), "and nothing on the disk yet");
                     helper.assertTrue(MonitorBlock.entryFor(mainframe) == MonitorBlock.Entry.INSTALLING,
-                            "a monitor opened now joins the copy where it is");
+                            "a monitor opened now joins the installer where it is");
+                    for (int i = 0; i < 20; i++) {
+                        dev.jstech.computers.os.install.OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                    }
+                    final dev.jstech.computers.os.install.OsInstallJob waiting = mainframe.installing();
+                    helper.assertTrue(waiting != null && waiting.ticksLeft() == waiting.ticksTotal(),
+                            "and copies nothing at all while a question has no answer");
+
+                    answerEveryQuestion(helper, mainframe);
+                    final dev.jstech.computers.os.install.OsInstallJob job = mainframe.installing();
+                    helper.assertTrue(job != null && job.ticksLeft() == job.ticksTotal(), "with all of it to go");
                     for (int i = 0; i < 20; i++) {
                         dev.jstech.computers.os.install.OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
                     }
                     helper.assertTrue(job.ticksLeft() < job.ticksTotal(), "it moves whether or not anybody watches");
                     helper.assertTrue(!mainframe.hasOs(), "and still nothing is written part way through");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * The name the installer asks for is the name the machine ends up with, which is why it asks at all.
+     *
+     * <p>It also pins where the installer stands when the work is over: on its last page, waiting to be
+     * restarted, rather than gone the moment the files landed.
+     */
+    @GameTest(template = ARENA)
+    public static void guidedInstall_namesTheComputerWhatItWasTold(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = placeMainframeWithInstaller(helper, pos);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    mainframe.setNeedsPost(false);
+                    helper.assertTrue(FirmwarePayloads.beginInstall(helper.getLevel(), mainframe, -1L, -1) == null,
+                            "the installer opens");
+                    final dev.jstech.computers.os.install.InstallerFlow flow = mainframe.installer();
+                    helper.assertTrue(flow != null, "the machine opened an installer");
+                    flow.setComputerName("LIBRARY");
+                    answerEveryQuestion(helper, mainframe);
+                    final dev.jstech.computers.os.install.OsInstallJob job = mainframe.installing();
+                    helper.assertTrue(job != null, "the machine took the copy on");
+                    for (int i = 0; i <= job.ticksTotal(); i++) {
+                        dev.jstech.computers.os.install.OsInstallRunner.tick(mainframe, helper.getLevel(), pos);
+                    }
+                    helper.assertTrue("LIBRARY".equals(mainframe.console().computerName()),
+                            "the machine took the name: " + mainframe.console().computerName());
+                    final dev.jstech.computers.os.install.InstallerFlow after = mainframe.installer();
+                    helper.assertTrue(after != null
+                                    && after.page() == dev.jstech.computers.os.install.InstallerPage.DONE,
+                            "and the installer waits on its last page for the restart");
                 })
                 .thenSucceed();
     }
@@ -159,8 +217,8 @@ public final class OsInstallGameTests {
                     finishInstaller(helper, mainframe);
                     helper.assertTrue(mainframe.pendingInstallSlot() != IOsHost.NO_PENDING_INSTALL,
                             "the machine remembers it is still in the installer");
-                    helper.assertTrue(MonitorBlock.entryFor(mainframe) == MonitorBlock.Entry.INSTALLER,
-                            "reopening the monitor returns to the installer's reboot prompt, not the system");
+                    helper.assertTrue(MonitorBlock.entryFor(mainframe) == MonitorBlock.Entry.INSTALLING,
+                            "reopening the monitor returns to the installer's last page, not the system");
                     // The reboot the prompt asks for: a restart, as the firmware's boot-disk action performs.
                     mainframe.setNeedsPost(true);
                     helper.assertTrue(mainframe.pendingInstallSlot() == IOsHost.NO_PENDING_INSTALL,
@@ -229,7 +287,7 @@ public final class OsInstallGameTests {
                 .thenExecuteAfter(SETTLE + 4, () -> {
                     mainframe.setNeedsPost(false);
                     finishInstaller(helper, mainframe);
-                    helper.assertTrue(MonitorBlock.entryFor(mainframe) == MonitorBlock.Entry.INSTALLER,
+                    helper.assertTrue(MonitorBlock.entryFor(mainframe) == MonitorBlock.Entry.INSTALLING,
                             "the installer waits for its reboot");
                     mainframe.togglePower(); // off
                     helper.assertTrue(mainframe.pendingInstallSlot() == IOsHost.NO_PENDING_INSTALL,
@@ -252,8 +310,13 @@ public final class OsInstallGameTests {
                     mainframe.setNeedsPost(false);
                     finishInstaller(helper, mainframe);
                     final CompoundTag saved = mainframe.saveWithoutMetadata(helper.getLevel().registryAccess());
-                    helper.assertTrue(saved.contains("PendingInstall") && saved.getInt("PendingInstall") == -1,
-                            "the pending reboot is written with the machine, so a reload keeps it in the installer");
+                    /*
+                     * The disk is the one the installer settled on, not the word "the default": the installer
+                     * chose it on its own page, so the reboot that follows boots that disk and no other.
+                     */
+                    helper.assertTrue(saved.contains("PendingInstall") && saved.getInt("PendingInstall") == 0,
+                            "the pending reboot is written with the machine and names the disk it wrote to, got: "
+                                    + (saved.contains("PendingInstall") ? saved.getInt("PendingInstall") : "none"));
                     // A formatted or pulled disk leaves nothing to reboot into: the pending install is dropped.
                     mainframe.getInventory().setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START, ItemStack.EMPTY);
                     helper.assertTrue(MonitorBlock.entryFor(mainframe) == MonitorBlock.Entry.BOOT

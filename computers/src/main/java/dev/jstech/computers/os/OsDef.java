@@ -61,7 +61,8 @@ public record OsDef(
         InstallMode installMode,
         Optional<ResourceLocation> bundledDesktop,
         SoftwareHouse house,
-        int ramMb
+        int ramMb,
+        dev.jstech.computers.os.install.InstallerStyle installerStyle
 ) {
 
     public static final Codec<OsDef> CODEC = RecordCodecBuilder.create(inst -> inst.group(
@@ -80,7 +81,10 @@ public record OsDef(
                     .forGetter(OsDef::installMode),
             ResourceLocation.CODEC.optionalFieldOf("bundled_desktop").forGetter(OsDef::bundledDesktop),
             SoftwareHouse.CODEC.optionalFieldOf("house", SoftwareHouse.MIDSOFT).forGetter(OsDef::house),
-            Codec.INT.optionalFieldOf("ram_mb", 0).forGetter(OsDef::ramMb)
+            Codec.INT.optionalFieldOf("ram_mb", 0).forGetter(OsDef::ramMb),
+            StableCodecs.byName(dev.jstech.computers.os.install.InstallerStyle.class)
+                    .optionalFieldOf("installer", dev.jstech.computers.os.install.InstallerStyle.PLAIN)
+                    .forGetter(OsDef::installerStyle)
     ).apply(inst, OsDef::new));
 
     /**
@@ -99,7 +103,8 @@ public record OsDef(
         return new OsDef(id, capability, minEra, kernelId, footprintMb, Optional.empty(), platform,
                 displayName, "cmd",
                 platform == Platform.FRAMES ? PackageManagerKind.PCKMGR : PackageManagerKind.NONE,
-                InstallMode.GUIDED, bundledDesktop, house, 0);
+                InstallMode.GUIDED, bundledDesktop, house, 0,
+                dev.jstech.computers.os.install.InstallerStyle.PLAIN);
     }
 
     /** A Linux distribution: TTY capability on the Linux kernel, no bundled desktop, installable from the Legacy era. */
@@ -108,13 +113,25 @@ public record OsDef(
                                     final InstallMode installMode, final SoftwareHouse house) {
         return new OsDef(id, OsCapability.TERMINAL_ONLY, HardwareEra.LEGACY,
                 ResourceLocation.fromNamespaceAndPath("jsc", "linux"), footprintMb, Optional.empty(),
-                Platform.LINUX, displayName, shellId, packageManager, installMode, Optional.empty(), house, 0);
+                Platform.LINUX, displayName, shellId, packageManager, installMode, Optional.empty(), house, 0,
+                dev.jstech.computers.os.install.InstallerStyle.PLAIN);
     }
 
     /** The same system, holding {@code megabytes} of RAM for itself while it runs. */
     public OsDef withRam(final int megabytes) {
         return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
-                shellId, packageManager, installMode, bundledDesktop, house, megabytes);
+                shellId, packageManager, installMode, bundledDesktop, house, megabytes, installerStyle);
+    }
+
+    /**
+     * The same system, installed by an installer of its own rather than the plain one.
+     *
+     * <p>A system that says nothing here gets the plain installer, which is what an addon's system and anything
+     * still waiting for a pass of its own are drawn with.
+     */
+    public OsDef withInstaller(final dev.jstech.computers.os.install.InstallerStyle style) {
+        return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
+                shellId, packageManager, installMode, bundledDesktop, house, ramMb, style);
     }
 
     public OsDef {
@@ -138,6 +155,9 @@ public record OsDef(
         }
         if (ramMb < 0) {
             ramMb = 0;
+        }
+        if (installerStyle == null) {
+            installerStyle = dev.jstech.computers.os.install.InstallerStyle.PLAIN;
         }
     }
 

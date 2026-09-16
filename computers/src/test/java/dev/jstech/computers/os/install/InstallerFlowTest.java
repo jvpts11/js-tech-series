@@ -245,22 +245,22 @@ class InstallerFlowTest {
     }
 
     private static InstallerFlow frames11(final List<InstallerFlow.Disk> disks) {
-        return InstallerFlow.beginning(InstallerStyle.FRAMES_11, "Frames 11", 20_480, 100, disks,
+        return InstallerFlow.beginning(InstallerStyle.FRAMES_11, "jsc:frames_11", "Frames 11", 20_480, 100, disks,
                 "STUDIO-11", List.of(), "");
     }
 
     private static InstallerFlow framesXp(final List<InstallerFlow.Disk> disks) {
-        return InstallerFlow.beginning(InstallerStyle.FRAMES_XP, "Frames XP", 1_536, 100, disks,
+        return InstallerFlow.beginning(InstallerStyle.FRAMES_XP, "jsc:frames_xp", "Frames XP", 1_536, 100, disks,
                 "OFFICE-XP", List.of(), "");
     }
 
     private static InstallerFlow ubuntu(final List<InstallerFlow.Disk> disks) {
-        return InstallerFlow.beginning(InstallerStyle.UBUNTU, "Ubuntu", 8_192, 100, disks,
+        return InstallerFlow.beginning(InstallerStyle.UBUNTU, "jsc:ubuntu", "Ubuntu", 8_192, 100, disks,
                 "RENDER-01", List.of(GNOME), "CORE");
     }
 
     private static InstallerFlow fedora(final List<InstallerFlow.Disk> disks) {
-        return InstallerFlow.beginning(InstallerStyle.FEDORA, "Fedora", 8_192, 100, disks,
+        return InstallerFlow.beginning(InstallerStyle.FEDORA, "jsc:fedora", "Fedora", 8_192, 100, disks,
                 "LAB-02", List.of(GNOME), "CORE");
     }
 }

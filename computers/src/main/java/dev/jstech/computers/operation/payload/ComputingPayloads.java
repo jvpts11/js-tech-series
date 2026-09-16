@@ -69,6 +69,7 @@ public final class ComputingPayloads {
         NetworkPayloads.register(registrar);
         MachinePayloads.register(registrar);
         FirmwarePayloads.register(registrar);
+        dev.jstech.computers.operation.payload.firmware.InstallerPayloads.register(registrar);
         AutomationPayloads.register(registrar);
         ClusterManagerPayloads.register(registrar);
         GatewayManagerPayloads.register(registrar);

@@ -14,6 +14,8 @@ import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
@@ -60,6 +62,18 @@ final class OsSession {
     @Nullable
     private OsInstallJob installing;
     /*
+     * The installer the machine is in: which page it is on and what has been answered. Persisted with the copy
+     * it belongs to, so leaving the monitor and coming back finds the same page with the same answers.
+     */
+    @Nullable
+    private InstallerFlow installer;
+    /*
+     * The answers read back from the save, waiting for a level to build the installer from. A machine is loaded
+     * before it has one, and the list of disks and of desktops has to be read off the world.
+     */
+    @Nullable
+    private CompoundTag installerMemo;
+    /*
      * The desktop this session booted into. Held apart from what is on disk so that installing or
      * removing a desktop package takes effect on the next boot, not the next time the monitor is opened.
      */
@@ -98,6 +112,35 @@ final class OsSession {
         this.machine.setChanged();
     }
 
+    /**
+     * The installer this machine is in, or nothing.
+     *
+     * <p>Built back from the answers the first time it is asked for after a reload, since the disks and the
+     * desktops it offers are read off the world and the machine is loaded before it can reach one.
+     */
+    @Nullable
+    InstallerFlow installer() {
+        if (this.installer == null && this.installerMemo != null
+                && this.machine.getLevel() instanceof net.minecraft.server.level.ServerLevel level) {
+            final CompoundTag memo = this.installerMemo;
+            this.installerMemo = null;
+            final OsDef system = OsRegistry.getOs(ResourceLocation.tryParse(memo.getString("Os")));
+            if (system != null) {
+                this.installer = Installers.restored(this.machine, level, system, memo.getInt("Copy"),
+                        memo.getInt("Stage"), memo.getInt("Slot"), memo.getString("Name"),
+                        memo.getString("Desktop"), memo.getInt("Erase"));
+            }
+        }
+        return this.installer;
+    }
+
+    /** Puts the machine in an installer, or takes it out of one. */
+    void setInstaller(@Nullable final InstallerFlow flow) {
+        this.installer = flow;
+        this.installerMemo = null;
+        this.machine.setChanged();
+    }
+
     @Nullable
     ResourceLocation bootedDesktopId() {
         return this.bootedDesktop;
@@ -129,6 +172,8 @@ final class OsSession {
         this.pendingInstall = IOsHost.NO_PENDING_INSTALL;
         // A copy dies with the power, as it would on any machine, and nothing of it reaches the disk.
         this.installing = null;
+        this.installer = null;
+        this.installerMemo = null;
         // "This boot only" ends with the boot it was for.
         this.bootOnce = -1;
     }
@@ -351,6 +396,20 @@ final class OsSession {
             copying.putInt("Left", this.installing.ticksLeft());
             tag.put("Installing", copying);
         }
+        if (this.installer != null) {
+            final CompoundTag pages = new CompoundTag();
+            pages.putString("Os", this.installer.systemId());
+            pages.putInt("Copy", this.installer.copyTicks());
+            pages.putInt("Stage", this.installer.stageIndex());
+            pages.putInt("Slot", this.installer.targetSlot());
+            pages.putString("Name", this.installer.computerName());
+            pages.putString("Desktop", this.installer.desktopId());
+            pages.putInt("Erase", this.installer.eraseSlot());
+            tag.put("Installer", pages);
+        } else if (this.installerMemo != null) {
+            // Saved again without ever being asked for: a machine unloaded before anybody looked at it.
+            tag.put("Installer", this.installerMemo);
+        }
     }
 
     void load(final CompoundTag tag) {
@@ -368,6 +427,8 @@ final class OsSession {
         } else {
             this.installing = null;
         }
+        this.installer = null;
+        this.installerMemo = tag.contains("Installer") ? tag.getCompound("Installer") : null;
     }
 
     /** Puts a disk stack back in its slot through the handler, so the machine hears the change. */

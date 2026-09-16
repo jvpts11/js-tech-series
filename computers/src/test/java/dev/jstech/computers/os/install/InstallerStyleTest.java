@@ -109,6 +109,7 @@ class InstallerStyleTest {
     void hint_theTextInstallers_sayWhichKeysWork() {
         assertEquals("ENTER=Continue  F3=Exit", InstallerStyle.MC_DOS.hint(InstallerPage.WELCOME));
         assertEquals("ENTER=Restart", InstallerStyle.MC_DOS.hint(InstallerPage.DONE));
+        assertEquals("ENTER=Continue  F3=Exit", InstallerStyle.FRAMES_95.hint(InstallerPage.WELCOME));
         assertTrue(InstallerStyle.FRAMES_XP.hint(InstallerPage.DISK).contains("E=Erase disk"));
         assertTrue(InstallerStyle.FEDORA.hint(InstallerPage.HUB).contains("'b' to begin installation"));
         assertEquals("", InstallerStyle.FRAMES_11.hint(InstallerPage.DISK));
