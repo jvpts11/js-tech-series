@@ -30,6 +30,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Changed
+- Switching a machine off now shows the system closing itself, on the systems that had such a screen. The earliest
+  ones have none, as they had none in life: the monitor goes dark where it stands. A machine that goes down because
+  its parts no longer make a computer says nothing either, since that is a plug coming out and not a shutdown.
 - A Linux machine now reads out its kernel and its services as it starts: the architecture its processor really
   understands (i686 on the 32-bit machines, x86_64 on the others), the processor and the memory it found, a line
   per drive, and then the services this machine has, with the network only when a cable reaches one and a display

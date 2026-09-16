@@ -24,9 +24,12 @@ import java.util.List;
  * <p>Sent when the self-test hands over and again whenever a monitor is opened on a machine still coming up, so a
  * player who walked away and came back joins it where it has got to. Every line was worked out on the server from
  * the machine itself; the screen only decides when each one has been reached.
+ *
+ * <p>The same sequence carries a machine on its way down, where nothing follows it: {@code endsDark} says that
+ * what comes after this is a dark monitor rather than a system, so the screen sees itself out.
  */
 public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int remainingTicks, int totalTicks,
-                                    BootSequence sequence) implements CustomPacketPayload {
+                                    BootSequence sequence, boolean endsDark) implements CustomPacketPayload {
 
     /** The longest a step's words may be; anything past it is a sentence, not a step. */
     public static final int MAX_TEXT = 64;
@@ -55,6 +58,7 @@ public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int r
             buf.writeUtf(clip(line.label()), MAX_TEXT);
             buf.writeUtf(clip(line.value()), MAX_TEXT);
         }
+        buf.writeBoolean(p.endsDark());
     }
 
     private static OpenSystemBootPayload decode(final RegistryFriendlyByteBuf buf) {
@@ -69,7 +73,8 @@ public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int r
         for (int i = 0; i < count; i++) {
             lines.add(new BootSequence.Line(buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT)));
         }
-        return new OpenSystemBootPayload(host, monitor, remaining, total, new BootSequence(title, subtitle, lines));
+        return new OpenSystemBootPayload(host, monitor, remaining, total,
+                new BootSequence(title, subtitle, lines), buf.readBoolean());
     }
 
     /*

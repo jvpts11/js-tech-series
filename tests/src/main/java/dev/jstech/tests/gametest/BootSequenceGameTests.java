@@ -116,6 +116,29 @@ public final class BootSequenceGameTests {
         helper.succeed();
     }
 
+    /**
+     * The later systems say goodbye; the earliest ones simply stop.
+     *
+     * <p>A machine of the first age switched off where it stood, and giving it a farewell screen would be the
+     * kind of politeness those machines never had.
+     */
+    @GameTest(template = ARENA)
+    public static void shutdown_belongsToTheSystemsThatHadOne(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity frames =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(WHERE);
+        helper.assertFalse(BootLines.shutdownFor(frames).isEmpty(),
+                "a machine of this age closes its programs and says so");
+
+        final PersonalComputerBlockEntity older = vintageWithDos(helper, new BlockPos(4, 2, 2));
+        if (older == null) {
+            return;
+        }
+        helper.assertTrue(BootLines.shutdownFor(older).isEmpty(),
+                "and one of the first age goes dark where it stands");
+        helper.succeed();
+    }
+
     /** A machine with no system has nothing to come up, and so nothing to say. */
     @GameTest(template = ARENA)
     public static void aMachineWithNoSystem_hasNoSequence(final GameTestHelper helper) {
@@ -145,7 +168,11 @@ public final class BootSequenceGameTests {
     }
 
     private static PersonalComputerBlockEntity vintageWithDos(final GameTestHelper helper) {
-        final PersonalComputerBlockEntity computer = vintage(helper);
+        return vintageWithDos(helper, WHERE);
+    }
+
+    private static PersonalComputerBlockEntity vintageWithDos(final GameTestHelper helper, final BlockPos at) {
+        final PersonalComputerBlockEntity computer = vintage(helper, at);
         if (computer == null) {
             return null;
         }
@@ -178,9 +205,13 @@ public final class BootSequenceGameTests {
     }
 
     private static PersonalComputerBlockEntity vintage(final GameTestHelper helper) {
-        helper.setBlock(WHERE, ComputingModule.VINTAGE_PERSONAL_COMPUTER.get());
-        if (!(helper.getBlockEntity(WHERE) instanceof PersonalComputerBlockEntity computer)) {
-            helper.fail("no vintage personal computer at " + WHERE);
+        return vintage(helper, WHERE);
+    }
+
+    private static PersonalComputerBlockEntity vintage(final GameTestHelper helper, final BlockPos at) {
+        helper.setBlock(at, ComputingModule.VINTAGE_PERSONAL_COMPUTER.get());
+        if (!(helper.getBlockEntity(at) instanceof PersonalComputerBlockEntity computer)) {
+            helper.fail("no vintage personal computer at " + at);
             return null;
         }
         final ItemStackHandler hardware = computer.getHardware();

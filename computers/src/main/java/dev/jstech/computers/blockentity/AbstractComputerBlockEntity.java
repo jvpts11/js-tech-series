@@ -235,12 +235,45 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     public void togglePower() {
+        final boolean wasOn = isRunning();
         power.toggle();
+        if (wasOn && !isRunning()) {
+            showShutdown();
+        }
     }
 
     @Override
     public void setPowered(final boolean on) {
+        final boolean wasOn = isRunning();
         power.setPowered(on);
+        if (wasOn && !on) {
+            showShutdown();
+        }
+    }
+
+    /**
+     * Puts the system's own goodbye in front of whoever is watching the machine being switched off.
+     *
+     * <p>Only this path: a machine that went dark because its parts no longer make a computer lost its power
+     * rather than being shut down, and nothing says goodbye when the plug comes out. The systems of the earliest
+     * ages have nothing to show either, so their monitors simply go dark where they stand.
+     */
+    private void showShutdown() {
+        if (!(level instanceof ServerLevel server)) {
+            return;
+        }
+        final dev.jstech.computers.os.boot.BootSequence sequence =
+                dev.jstech.computers.os.boot.BootLines.shutdownFor(this);
+        if (sequence.isEmpty()) {
+            return;
+        }
+        final int ticks = BootTiming.shutdownTicks(bootLength());
+        ScreenSessions.eachWatcher(server, worldPosition, (player, monitor) -> {
+            ScreenSessions.opened(player, monitor, worldPosition);
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
+                    new dev.jstech.computers.operation.payload.OpenSystemBootPayload(
+                            worldPosition, monitor, ticks, ticks, sequence, true));
+        });
     }
 
     public void toggleAutoStart() {

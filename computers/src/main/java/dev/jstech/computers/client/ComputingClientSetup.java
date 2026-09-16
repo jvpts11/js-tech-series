@@ -47,8 +47,8 @@ public final class ComputingClientSetup {
                                 ? OsInstallScreen.completed(pos, monitorPos, kind, osName, targetLabel, targetSlot)
                                 : OsInstallScreen.failed(pos, monitorPos, kind, osName, targetLabel, failure)));
         dev.jstech.computers.block.ISystemBootScreenOpener.Holder.set(
-                (pos, monitorPos, sequence, remaining, total) -> Minecraft.getInstance().setScreen(
-                        new SystemBootScreen(pos, monitorPos, sequence, remaining, total)));
+                (pos, monitorPos, sequence, remaining, total, endsDark) -> Minecraft.getInstance().setScreen(
+                        new SystemBootScreen(pos, monitorPos, sequence, remaining, total, endsDark)));
         dev.jstech.computers.block.IInstallProgressScreenOpener.Holder.set(
                 (pos, monitorPos, kind, osName, targetLabel, ticksLeft, ticksTotal) ->
                         Minecraft.getInstance().setScreen(OsInstallScreen.working(pos, monitorPos, kind, osName,

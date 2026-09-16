@@ -267,7 +267,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, owner);
         PacketDistributor.sendToPlayer(player, new dev.jstech.computers.operation.payload.OpenSystemBootPayload(
                 owner, monitorPos, machine.bootRemaining(), machine.bootTotal(),
-                dev.jstech.computers.os.boot.BootLines.forMachine(machine)));
+                dev.jstech.computers.os.boot.BootLines.forMachine(machine), false));
     }
 
     /** Sends the client the copy this machine is in the middle of, at the point the machine has reached. */

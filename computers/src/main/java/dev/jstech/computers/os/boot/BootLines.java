@@ -14,6 +14,7 @@ import dev.jstech.computers.machine.NetworkReadService;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.PackageManagerKind;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.world.item.ItemStack;
@@ -68,6 +69,24 @@ public final class BootLines {
         return new BootSequence.Builder()
                 .title(system.house().name())
                 .subtitle(system.displayName())
+                .build();
+    }
+
+    /**
+     * What this machine's system shows on its way down, or nothing at all.
+     *
+     * <p>The earliest systems had no such screen: switching the machine off switched it off, and the glass went
+     * dark where it stood. The later ones close their programs first and say so, so they are the ones with
+     * something to show.
+     */
+    public static BootSequence shutdownFor(final AbstractComputerBlockEntity machine) {
+        final OsDef system = machine.installedOs();
+        if (system == null || system.platform() != Platform.FRAMES) {
+            return BootSequence.NONE;
+        }
+        return new BootSequence.Builder()
+                .title(system.displayName())
+                .subtitle(system.displayName() + " is shutting down...")
                 .build();
     }
 

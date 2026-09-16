@@ -36,17 +36,20 @@ public final class SystemBootScreen extends Screen {
     private final BlockPos monitorPos;
     private final BootSequence sequence;
     private final int totalTicks;
+    /** Whether a dark monitor follows this rather than a system, which is what a machine going down leaves. */
+    private final boolean endsDark;
 
     private int ticks;
 
     public SystemBootScreen(final BlockPos computerPos, final BlockPos monitorPos, final BootSequence sequence,
-                            final int remainingTicks, final int totalTicks) {
+                            final int remainingTicks, final int totalTicks, final boolean endsDark) {
         super(Component.literal("Starting"));
         this.computerPos = computerPos;
         this.monitorPos = monitorPos;
         this.sequence = sequence;
         this.totalTicks = totalTicks > 0 ? totalTicks : FALLBACK_TICKS;
         this.ticks = Math.max(0, this.totalTicks - Math.max(0, remainingTicks));
+        this.endsDark = endsDark;
     }
 
     @Override
@@ -54,6 +57,14 @@ public final class SystemBootScreen extends Screen {
         super.tick();
         if (this.ticks < this.totalTicks) {
             this.ticks++;
+            return;
+        }
+        /*
+         * A machine coming up is handed over by the machine itself, so this waits. A machine going down has
+         * nothing left to hand over, so the screen sees itself out and leaves the monitor dark.
+         */
+        if (this.endsDark && Minecraft.getInstance().screen == this) {
+            onClose();
         }
     }
 
