@@ -186,6 +186,8 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         POST,
         /** The machine is copying a system onto a disk: the screen joins it where it has got to. */
         INSTALLING,
+        /** The machine is standing at its boot manager, waiting to be told what to start. */
+        BOOT_MENU,
         /** The self-test is done and the system is coming up: the screen joins that instead. */
         BOOTING,
         /** A guided installer has written the system and still waits for the reboot that boots it. */
@@ -210,6 +212,9 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         if (computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine) {
             if (machine.installing() != null) {
                 return Entry.INSTALLING;
+            }
+            if (machine.atBootMenu()) {
+                return Entry.BOOT_MENU;
             }
             if (machine.booting()) {
                 return Entry.BOOTING;
@@ -243,6 +248,10 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                     openInstallProgress(player, level, monitorPos, owner, computer);
                     return;
                 }
+                case BOOT_MENU -> {
+                    openBootMenu(player, level, monitorPos, owner, computer);
+                    return;
+                }
                 case BOOTING -> {
                     openSystemBoot(player, level, monitorPos, owner, computer);
                     return;
@@ -256,6 +265,19 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
             }
         }
         openBootTarget(player, level, monitorPos, owner);
+    }
+
+    /** Sends the client the boot manager this machine is standing at, with what is left of its wait. */
+    public static void openBootMenu(final ServerPlayer player, final Level level, final BlockPos monitorPos,
+                                    final BlockPos owner, final IOsHost computer) {
+        if (!(computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine)) {
+            return;
+        }
+        dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, owner);
+        PacketDistributor.sendToPlayer(player, new dev.jstech.computers.operation.payload.OpenBootMenuPayload(
+                owner, monitorPos,
+                dev.jstech.computers.os.boot.BootLines.menuFor(machine, machine.menuRemaining()),
+                machine.menuRemaining()));
     }
 
     /** Sends the client the system this machine is bringing up, at the point the machine has reached. */

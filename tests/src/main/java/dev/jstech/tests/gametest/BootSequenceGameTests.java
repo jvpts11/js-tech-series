@@ -14,6 +14,7 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.os.boot.BootLines;
+import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -136,6 +137,30 @@ public final class BootSequenceGameTests {
         }
         helper.assertTrue(BootLines.shutdownFor(older).isEmpty(),
                 "and one of the first age goes dark where it stands");
+        helper.succeed();
+    }
+
+    /**
+     * The boot manager lists the disks that really carry a system, and only the systems that bring one show it.
+     */
+    @GameTest(template = ARENA)
+    public static void bootMenu_listsWhatTheMachineCouldBoot(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity linux = legacy(helper);
+        if (linux == null) {
+            return;
+        }
+        helper.assertTrue(linux.installOs(DEBIAN), "Debian installs on the machine");
+        final BootMenu menu = BootLines.menuFor(linux, 100);
+        helper.assertFalse(menu.isEmpty(), "a Linux machine stops at its boot manager");
+        helper.assertTrue(menu.entries().size() == 1, "with one entry for its one disk: " + menu.entries());
+        helper.assertTrue(menu.entries().get(0).label().equals("Debian"),
+                "named after the system on it: " + menu.entries().get(0).label());
+
+        final PersonalComputerBlockEntity frames =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(new BlockPos(4, 2, 2));
+        helper.assertTrue(BootLines.menuFor(frames, 100).isEmpty(),
+                "and a system that brings no boot manager shows none");
         helper.succeed();
     }
 

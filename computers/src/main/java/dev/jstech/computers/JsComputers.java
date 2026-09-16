@@ -27,6 +27,9 @@ public class JsComputers {
     public JsComputers(IEventBus modEventBus, ModContainer modContainer) {
         LOGGER.info("J's Computers {} loaded.", modContainer.getModInfo().getVersion());
 
+        // The settings of the machines themselves, beside the series' balance file rather than inside it.
+        dev.jstech.computers.config.ComputersServerConfig.register(modEventBus, modContainer);
+
         // The Operation types the network runs, declared in the core registry for every other mod to see.
         dev.jstech.computers.operation.ComputingOperations.register();
 

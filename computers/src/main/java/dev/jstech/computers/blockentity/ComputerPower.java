@@ -46,6 +46,13 @@ final class ComputerPower {
      */
     private boolean booting;
     private long bootEndsAt;
+
+    /*
+     * Stopped at the boot manager's menu, before any of that. Its clock is separate because a key stops it and
+     * the machine then waits for a choice with no end in sight, which is a thing a deadline cannot say.
+     */
+    private boolean atMenu;
+    private long menuEndsAt;
     /** How long this coming-up takes in all, so a bar drawn half way through knows how far along it is. */
     private int bootTicksTotal;
 
@@ -88,6 +95,38 @@ final class ComputerPower {
      */
     int postRemaining(final long now) {
         return this.needsPost && this.postEndsAt != 0L ? (int) Math.max(0L, this.postEndsAt - now) : 0;
+    }
+
+    /** Whether the machine is stopped at its boot menu. */
+    boolean atMenu() {
+        return this.atMenu;
+    }
+
+    /** Stops the machine at its boot menu, with that long before it goes on by itself. */
+    void beginMenu(final long now, final int ticks) {
+        this.atMenu = true;
+        this.menuEndsAt = ticks > 0 ? now + ticks : 0L;
+    }
+
+    /** The ticks left on the menu's clock, or zero once a key has stopped it. */
+    int menuRemaining(final long now) {
+        return this.atMenu && this.menuEndsAt != 0L ? (int) Math.max(0L, this.menuEndsAt - now) : 0;
+    }
+
+    /** A key was pressed: the machine waits at the menu for as long as it takes. */
+    void holdMenu() {
+        this.menuEndsAt = 0L;
+    }
+
+    /** Whether the menu's clock has run out and the machine should go on by itself. */
+    boolean menuDone(final long now) {
+        return this.atMenu && this.menuEndsAt != 0L && now >= this.menuEndsAt;
+    }
+
+    /** Leaves the menu, whichever way it was left. */
+    void endMenu() {
+        this.atMenu = false;
+        this.menuEndsAt = 0L;
     }
 
     /** Whether the system is coming up right now. */
@@ -138,6 +177,8 @@ final class ComputerPower {
         this.manualOn = on;
         this.booting = false;
         this.bootEndsAt = 0L;
+        this.atMenu = false;
+        this.menuEndsAt = 0L;
         if (on) {
             this.needsPost = true;
             this.postEndsAt = 0L;
@@ -177,6 +218,8 @@ final class ComputerPower {
             // A restart takes the machine back to the beginning, so whatever was coming up is not any more.
             this.booting = false;
             this.bootEndsAt = 0L;
+            this.atMenu = false;
+            this.menuEndsAt = 0L;
         }
         if (value) {
             // A restart closes everything, as it does on any machine, and it is what an installer waits for.

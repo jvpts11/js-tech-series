@@ -30,6 +30,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Changed
+- A machine running a Linux system now stops at its boot manager on the way up, listing every disk that carries a
+  system, so the second one is something a player finds rather than something they have to know about. It boots the
+  usual one by itself after five seconds; any key stops the count and the machine waits there. On the modern
+  machines the firmware setup is one of the entries. Whatever is chosen there is for that start only. A new
+  settings file beside the world save, `jscomputers-server.toml`, holds the switch that hides the menu.
 - Switching a machine off now shows the system closing itself, on the systems that had such a screen. The earliest
   ones have none, as they had none in life: the monitor goes dark where it stands. A machine that goes down because
   its parts no longer make a computer says nothing either, since that is a plug coming out and not a shutdown.

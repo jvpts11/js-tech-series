@@ -7,9 +7,13 @@
  */
 package dev.jstech.computers.os.boot;
 
+import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.computers.os.OsRegistry;
+import net.minecraft.resources.ResourceLocation;
 import dev.jstech.computers.machine.NetworkReadService;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.OsDef;
@@ -70,6 +74,54 @@ public final class BootLines {
                 .title(system.house().name())
                 .subtitle(system.displayName())
                 .build();
+    }
+
+    /**
+     * The menu this machine stops at on its way up, or nothing when it stops at none.
+     *
+     * <p>Only the systems that bring a boot manager with them show one, which here is the Linux family, and only
+     * when the server is set to let them. Every disk that carries a system is listed, so a player finds out from
+     * the menu that the other one is there, and the machines whose firmware is reached this way offer that too.
+     *
+     * @param countdownTicks how long the machine waits before booting the first entry by itself
+     */
+    public static BootMenu menuFor(final AbstractComputerBlockEntity machine, final int countdownTicks) {
+        final OsDef booting = machine.installedOs();
+        if (booting == null || booting.platform() != Platform.LINUX) {
+            return BootMenu.NONE;
+        }
+        final BootMenu.Builder out = new BootMenu.Builder();
+        final ItemStack bootDisk = machine.systemDisk();
+        int drive = 0;
+        for (int slot = 0; slot < machine.diskSlots(); slot++) {
+            final ItemStack disk = machine.diskInSlot(slot);
+            if (!(disk.getItem() instanceof DiskItem)) {
+                continue;
+            }
+            final ResourceLocation id = disk.get(ComputingModule.SYSTEM_OS.get());
+            final OsDef system = id == null ? null : OsRegistry.getOs(id);
+            final String device = "/dev/sd" + (char) ('a' + drive++) + "1";
+            if (system == null) {
+                continue;
+            }
+            if (disk == bootDisk) {
+                out.entry(system.displayName(), slot).defaultsToLast();
+            } else {
+                out.entry(system.displayName() + " Boot Manager (on " + device + ")", slot);
+            }
+        }
+        if (out.build(0).isEmpty()) {
+            return BootMenu.NONE;
+        }
+        /*
+         * The machines whose firmware is reached from the boot manager offer it here; the earlier ones are
+         * entered with a key during the self-test and nowhere else, so their menu does not pretend otherwise.
+         */
+        if (FirmwareKind.forEra(machine.installedEra() != null ? machine.installedEra() : HardwareEra.STANDARD)
+                == FirmwareKind.UEFI) {
+            out.entry("Firmware Settings", BootMenu.FIRMWARE);
+        }
+        return out.build(countdownTicks);
     }
 
     /**

@@ -15,6 +15,7 @@ import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.operation.payload.OpenPostPayload;
+import dev.jstech.computers.operation.payload.OpenBootMenuPayload;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
 import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
 import dev.jstech.computers.operation.payload.PostCompletePayload;
@@ -90,6 +91,12 @@ public final class FirmwarePayloads {
                                 payload.host(), payload.monitorPos(),
                                 dev.jstech.computers.os.FirmwareKind.byId(payload.firmwareKind()),
                                 payload.osName(), payload.targetLabel(), payload.targetSlot(), payload.failure())));
+        // The boot manager: the monitor joins the machine where it stands, with what is left of its wait.
+        registrar.playToClient(OpenBootMenuPayload.TYPE, OpenBootMenuPayload.STREAM_CODEC,
+                ClientPayloadHandlers.onMainThread((payload, player) ->
+                        dev.jstech.computers.block.IBootMenuScreenOpener.Holder.open(
+                                payload.hostPos(), payload.monitorPos(), payload.menu(),
+                                payload.remainingTicks())));
         // The system coming up: the monitor joins it where the machine has got to.
         registrar.playToClient(OpenSystemBootPayload.TYPE, OpenSystemBootPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
@@ -266,15 +273,39 @@ public final class FirmwarePayloads {
                     return;
                 }
             }
+            case FirmwareActionPayload.ACTION_HOLD_BOOT_MENU -> {
+                if (computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine) {
+                    machine.holdBootMenu();
+                }
+                return;
+            }
+            case FirmwareActionPayload.ACTION_OPEN_SETUP -> {
+                // Leaving the menu for the setup: the machine is no longer on its way anywhere until it is told.
+                if (computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine) {
+                    machine.holdBootMenu();
+                }
+                dev.jstech.computers.block.MonitorBlock.openFirmware(
+                        player, level, payload.monitorPos(), payload.hostPos());
+                return;
+            }
             case FirmwareActionPayload.ACTION_BOOT_ONCE -> {
                 /*
                  * The one-time menu: boot that disk now and leave the saved order where it is. The machine has
                  * already tested itself, so this hands straight over rather than starting again.
                  */
+                computer.setPendingInstallSlot(IOsHost.NO_PENDING_INSTALL);
                 if (computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine) {
                     machine.setBootOnce((int) payload.ref());
+                    /*
+                     * Chosen at the boot manager, the system still has to come up: the machine leaves the menu and
+                     * starts loading, and puts the player in front of that. Chosen anywhere else there is nothing
+                     * left to load, so it hands straight over.
+                     */
+                    if (machine.atBootMenu()) {
+                        machine.leaveBootMenu();
+                        return;
+                    }
                 }
-                computer.setPendingInstallSlot(IOsHost.NO_PENDING_INSTALL);
                 dev.jstech.computers.block.MonitorBlock.openBootTarget(
                         player, level, payload.monitorPos(), payload.hostPos());
                 return;

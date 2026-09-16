@@ -18,6 +18,8 @@ import dev.jstech.computers.item.PsuItem;
 import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.boot.BootLines;
+import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.computers.os.boot.BootTiming;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.DataTier;
@@ -88,6 +90,9 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
     private final dev.jstech.computers.crafting.PatternWorkbench studio =
             new dev.jstech.computers.crafting.PatternWorkbench();
+
+    /** How long a boot manager waits before booting its first entry: the five seconds those menus always gave. */
+    private static final int MENU_TICKS = 100;
 
     protected AbstractComputerBlockEntity(final BlockEntityType<?> type, final BlockPos pos,
                                           final BlockState state, final ComputerHardwareLayout layout) {
@@ -353,10 +358,61 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
          * medium instead has no system of its own to load, so it hands over as it always did.
          */
         if (hasOs()) {
-            power.beginBoot();
+            /*
+             * The systems that bring a boot manager stop at it first, which is also how a player finds out that
+             * the other disk has something on it.
+             */
+            final BootMenu menu = BootLines.menuFor(this, MENU_TICKS);
+            if (!menu.isEmpty() && dev.jstech.computers.config.ComputersServerConfig.showBootMenu()) {
+                power.beginMenu(level.getGameTime(), MENU_TICKS);
+                showBootMenu(level);
+            } else {
+                power.beginBoot();
+            }
             return;
         }
         ScreenSessions.bootWatchers(level, worldPosition);
+    }
+
+    /** Whether the machine is stopped at its boot menu. */
+    public boolean atBootMenu() {
+        return power.atMenu();
+    }
+
+    /** The ticks left before the menu boots its first entry by itself, or zero once a key has stopped it. */
+    public int menuRemaining() {
+        return level == null ? 0 : power.menuRemaining(level.getGameTime());
+    }
+
+    /** A key was pressed at the menu: the machine waits there for a choice. */
+    public void holdBootMenu() {
+        power.holdMenu();
+    }
+
+    /** Leaves the menu and brings the chosen system up. */
+    public void leaveBootMenu() {
+        power.endMenu();
+        power.beginBoot();
+    }
+
+    /** Carries the wait at the boot menu along, and goes on by itself when nobody chooses. */
+    protected void tickBootMenu(final ServerLevel level) {
+        if (!power.atMenu()) {
+            return;
+        }
+        if (!isRunning()) {
+            power.endMenu();
+            return;
+        }
+        if (power.menuDone(level.getGameTime())) {
+            leaveBootMenu();
+        }
+    }
+
+    /** Puts the boot menu in front of whoever is watching. */
+    private void showBootMenu(final ServerLevel level) {
+        ScreenSessions.eachWatcher(level, worldPosition, (player, monitor) ->
+                dev.jstech.computers.block.MonitorBlock.openBootMenu(player, level, monitor, worldPosition, this));
     }
 
     /** Whether the system is coming up on this machine right now. */
@@ -873,6 +929,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     protected void tickNode(final ServerLevel level) {
         tickBuildProgress(level);
         tickPost(level);
+        tickBootMenu(level);
         tickBoot(level);
         dev.jstech.computers.os.install.OsInstallRunner.tick(this, level, worldPosition);
         tickSigma();

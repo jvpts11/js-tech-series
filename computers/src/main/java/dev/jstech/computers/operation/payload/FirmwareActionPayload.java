@@ -50,6 +50,10 @@ public record FirmwareActionPayload(BlockPos hostPos, BlockPos monitorPos, int a
      * itself again: it has already done that, and this is the choice of where to go next.
      */
     public static final int ACTION_BOOT_ONCE = 6;
+    /** A key was pressed at the boot manager: stop counting and wait there for a choice. */
+    public static final int ACTION_HOLD_BOOT_MENU = 7;
+    /** Open the firmware setup from the boot manager, which is one of its entries on the modern machines. */
+    public static final int ACTION_OPEN_SETUP = 8;
 
     public static final CustomPacketPayload.Type<FirmwareActionPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "firmware_action"));
