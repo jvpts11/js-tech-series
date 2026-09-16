@@ -652,54 +652,13 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public dev.jstech.computers.program.install.LiveInstallState liveInstall() {
-        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
-        return console == null ? null : console.liveInstall();
+        return installs().live();
     }
 
     @Override
     public OpResult liveRun(final String line) {
-        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
-        final dev.jstech.computers.program.install.LiveInstallState state =
-                console == null ? null : console.liveInstall();
-        if (state == null || !(hostBlock instanceof IOsHost computer)) {
-            return OpResult.fail("no live medium is booted");
-        }
-        // The devices the live system sees: every installed disk, in slot order (sda, sdb, ...).
-        final java.util.List<String> devices = new ArrayList<>();
-        for (int i = 0; i < computer.diskSlots(); i++) {
-            if (computer.diskInSlot(i).getItem() instanceof dev.jstech.computers.item.DiskItem) {
-                devices.add("sd" + (char) ('a' + i));
-            }
-        }
-        final long kernelTicks = Math.max(5L, Math.min(1800L, 64_000L / Math.max(100, computer.maxCpuMhz()))) * 20L;
-        final dev.jstech.computers.program.install.LiveInstallState.Result result =
-                state.run(line, new dev.jstech.computers.program.install.LiveInstallState.Env(
-                        devices, mirrorReachable(), level.getGameTime(), kernelTicks));
-        hostBlock.setChanged();
-        final String text = String.join("\n", result.lines());
-        if (!result.complete()) {
-            return result.ok() ? OpResult.ok(text) : OpResult.fail(text);
-        }
-        // The sequence completed: the hand-installed system lands on the chosen disk and boots first.
-        final ResourceLocation osId = ResourceLocation.fromNamespaceAndPath("jsc",
-                state.distro() == dev.jstech.computers.program.install.LiveInstallState.Distro.ARCH
-                        ? "arch" : "gentoo");
-        final int target = state.targetIndex();
-        if (!computer.installOs(osId, target)) {
-            return OpResult.fail(text + "\nThe installation could not be written to the disk (no space or no disk).");
-        }
-        computer.setBootDiskSlot(target);
-        /*
-         * Ask the host for the console again rather than reusing the reference taken at the top of this
-         * method: writing the system may have replaced the disk stack, and the console is bound to the
-         * drive it was read from. Clearing the stale binding would leave the finished live session on
-         * the newly written disk, so the machine would boot straight back into the installer.
-         */
-        host.console().clearLiveInstall();
-        hostBlock.setChanged();
         // The live medium's reboot is a real one: the shell closes, the POST replays, the new system boots.
-        requestReboot();
-        return OpResult.ok(text + "\nInstallation complete. Rebooting into the new system ...");
+        return installs().liveRun(line, this::requestReboot);
     }
 
     @Override
