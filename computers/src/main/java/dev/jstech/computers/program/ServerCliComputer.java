@@ -559,11 +559,11 @@ public final class ServerCliComputer implements ICliComputer {
     @Override
     public OpResult execute(final IqlOperation op) {
         return switch (op.verb()) {
-            case SELECT -> executeSelect(op);
+            case SELECT -> iql().select(op);
             case INSERT -> executeInsert(op);
             case CRAFT -> craft(op.item(), op.quantity(), op.priority(), MoveLabels.IQL);
-            case DELETE -> executeDestroy(op, "DELETE");
-            case DROP -> executeDestroy(op, "DROP");
+            case DELETE -> iql().destroy(op, "DELETE");
+            case DROP -> iql().destroy(op, "DROP");
             case MOVE -> executeMove(op);
             case LOCK -> lock(op.item(), op.quantity());
             case UNLOCK -> unlock(op.item());
@@ -574,34 +574,14 @@ public final class ServerCliComputer implements ICliComputer {
         };
     }
 
-    /** Safety cap on how many item types a single {@code *} operation expands to. */
-    private static final int MAX_WILDCARD_TYPES = 256;
-
-    /**
-     * The keys an operation targets: a single resolved item, or every item type in scope (the whole network, or one
-     * server) when the item is the {@code *} wildcard, capped at {@link #MAX_WILDCARD_TYPES}.
-     */
+    /** The keys a statement targets, worked out where the language lives. */
     private List<StorageKey> keysFor(final String item, final NodeUuid scopeServer) {
-        if (IqlOperation.ANY_ITEM.equals(item)) {
-            final NetworkUuid net = host.networkUuid();
-            if (net == null) {
-                return List.of();
-            }
-            final NetworkStorage storage = scopeServer == null
-                    ? NetworkStorage.of(level, net)
-                    : NetworkStorage.ofServers(level, java.util.List.of(scopeServer));
-            return storage.query().keySet().stream().limit(MAX_WILDCARD_TYPES).toList();
-        }
-        final StorageKey key = resolveKey(item);
-        return key == null ? List.of() : List.of(key);
+        return iql().keysFor(item, scopeServer);
     }
 
-    /** How an operation reads back: "N item types" for a {@code *}, else "qty item". */
+    /** How a statement reads back, worded where the language lives. */
     private static String describe(final IqlOperation op, final List<StorageKey> keys) {
-        if (op.isAnyItem()) {
-            return keys.size() + (keys.size() == 1 ? " item type" : " item types");
-        }
-        return qtyLabel(op.quantity()) + " " + keys.get(0).displayName().getString();
+        return dev.jstech.computers.machine.IqlService.describe(op, keys);
     }
 
     /**
@@ -621,97 +601,11 @@ public final class ServerCliComputer implements ICliComputer {
         return insert(op.item(), op.quantity(), op.priority(), MoveLabels.IQL);
     }
 
-    /** Applies the statement's {@code PRIORITY} to a freshly submitted Operation; a null submission passes through. */
+    /** Applies the statement's {@code PRIORITY} to a freshly submitted Operation, where the language lives. */
     @org.jetbrains.annotations.Nullable
     private static <T extends dev.jstech.computers.operation.INetworkOperation> T prioritize(
             @org.jetbrains.annotations.Nullable final T operation, final IqlOperation statement) {
-        if (operation != null) {
-            operation.setPriority(statement.priority());
-        }
-        return operation;
-    }
-
-    private OpResult executeSelect(final IqlOperation op) {
-        final NetworkUuid net = host.networkUuid();
-        final MainframeBlockEntity mainframe = mainframe(net);
-        if (mainframe == null || net == null) {
-            return OpResult.fail("the network has no running Mainframe");
-        }
-        NodeUuid from = null;
-        if (op.hasFrom()) {
-            from = resolveServer(net, op.from());
-            if (from == null) {
-                return OpResult.fail("no server named '" + op.from() + "'");
-            }
-        }
-        final List<StorageKey> keys = keysFor(op.item(), from);
-        if (keys.isEmpty()) {
-            return op.isAnyItem() ? OpResult.fail("nothing to select") : OpResult.fail("unknown item: " + op.item());
-        }
-        int queued = 0;
-        for (final StorageKey key : keys) {
-            /*
-             * SELECT pulls from the whole network; SELECT ... FROM <server> is a move scoped to that server,
-             * both landing in this computer's local storage.
-             */
-            final var operation = prioritize(from == null
-                    ? mainframe.submitNetworkSelect(key, demand(op.quantity()), host.localStorage(),
-                            host.originLabel(MoveLabels.IQL))
-                    : mainframe.submitNetworkMove(key, demand(op.quantity()), host.localStorage(),
-                            host.originLabel(MoveLabels.IQL), java.util.Set.of(from)), op);
-            if (operation != null) {
-                operation.abortWhen(hostGone()); // the pull lands in this computer: stop once it is gone
-                queued++;
-            }
-        }
-        if (queued == 0) {
-            return OpResult.fail("could not start the SELECT");
-        }
-        return OpResult.ok("SELECT queued: " + describe(op, keys)
-                + (from == null ? "" : " from " + op.from()) + " -> local storage");
-    }
-
-    private OpResult executeDestroy(final IqlOperation op, final String verb) {
-        final MainframeBlockEntity mainframe = mainframe(host.networkUuid());
-        if (mainframe == null) {
-            return OpResult.fail("the network has no running Mainframe");
-        }
-        /*
-         * A DELETE that names a bus EXPORTS to that bus's external inventory (the "leaves the network" sense);
-         * a DROP, or a DELETE with no target, trashes via a sink that accepts everything and keeps nothing.
-         */
-        dev.jstech.computers.storage.IDataSink target = (k, amount, simulate) -> amount;
-        if ("DELETE".equals(verb) && op.to() != null && !op.to().isBlank()) {
-            final dev.jstech.computers.block.part.NamedBus.Located bus =
-                    dev.jstech.computers.block.part.NamedBus.find(level, host.networkUuid(), op.to());
-            if (bus == null) {
-                return OpResult.fail("no bus named '" + op.to() + "'");
-            }
-            target = bus.port();
-        }
-        final List<StorageKey> keys = keysFor(op.item(), null);
-        if (keys.isEmpty()) {
-            return op.isAnyItem()
-                    ? OpResult.ok("nothing to " + verb.toLowerCase(java.util.Locale.ROOT))
-                    : OpResult.fail("unknown item: " + op.item());
-        }
-        /*
-         * Only act on items the network actually holds, so a repeating job's DROP/DELETE becomes a quiet
-         * no-op once the stock runs out, instead of a stream of failed operations polluting the log.
-         */
-        final java.util.Map<StorageKey, Long> stock = NetworkStorage.of(level, host.networkUuid()).query();
-        int queued = 0;
-        for (final StorageKey key : keys) {
-            if (stock.getOrDefault(key, 0L) <= 0L) {
-                continue;
-            }
-            if (prioritize(mainframe.submitNetworkDelete(key, demand(op.quantity()), target,
-                    host.originLabel(MoveLabels.IQL)), op) != null) {
-                queued++;
-            }
-        }
-        return queued == 0 ? OpResult.ok("nothing to " + verb.toLowerCase(java.util.Locale.ROOT))
-                : OpResult.ok(verb + " queued: " + describe(op, keys));
+        return dev.jstech.computers.machine.IqlService.prioritize(operation, statement);
     }
 
     private OpResult executeMove(final IqlOperation op) {
@@ -1933,7 +1827,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     /** The network's own language, as this shell speaks it. */
     private dev.jstech.computers.machine.IqlService iql() {
-        return new dev.jstech.computers.machine.IqlService(host, level, this);
+        return new dev.jstech.computers.machine.IqlService(host, level, this, operations(), networkReads());
     }
 
     /** What the Mainframe of this machine's network keeps about the work it has done. */

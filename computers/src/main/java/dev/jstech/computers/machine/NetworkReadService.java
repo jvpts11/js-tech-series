@@ -198,7 +198,7 @@ public final class NetworkReadService {
 
     /** The server of this network that a name picks out, or null when no server carries that label. */
     @Nullable
-    private NodeUuid serverNamed(final NetworkUuid net, final String name) {
+    public NodeUuid serverNamed(final NetworkUuid net, final String name) {
         if (name == null || name.isBlank()) {
             return null;
         }
