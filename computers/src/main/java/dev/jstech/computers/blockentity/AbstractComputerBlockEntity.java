@@ -16,7 +16,9 @@ import dev.jstech.computers.item.IExpansionCardItem;
 import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.item.PsuItem;
 import dev.jstech.computers.item.RamItem;
+import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.boot.BootTiming;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
@@ -249,9 +251,55 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         session.drop();
     }
 
-    /** Whether the next monitor use should play the power-on self-test before booting. */
+    /** Whether the machine owes a power-on self-test or is in the middle of one. */
     public boolean needsPost() {
         return power.needsPost();
+    }
+
+    /** The ticks the self-test still has to run, for a monitor opened while it is under way. */
+    public int postRemaining() {
+        return level == null ? 0 : power.postRemaining(level.getGameTime());
+    }
+
+    /**
+     * Carries the self-test along: works out how long this machine's own takes the first tick after the power
+     * goes on, and ends it when its time is up, booting whoever is watching.
+     *
+     * <p>The machine keeps this time rather than the screen doing it. Closing the monitor halfway through no
+     * longer stops a machine coming up, opening it again shows how far it has got, and a machine nobody is
+     * looking at boots all the same, which is what a machine does.
+     */
+    protected void tickPost(final ServerLevel level) {
+        if (!isRunning() || !power.needsPost()) {
+            return;
+        }
+        final long now = level.getGameTime();
+        if (power.postUntimed()) {
+            power.timePost(now + BootTiming.postTicks(memoryModules(), postDevices(), installedEra()));
+            return;
+        }
+        if (!power.postDone(now)) {
+            return;
+        }
+        power.setNeedsPost(false);
+        /*
+         * The self-test is the moment the machine settles what it is running, which is what makes a desktop
+         * installed a moment ago wait for a restart instead of turning up on the next look at the monitor.
+         */
+        setBootedDesktopId(installedDesktopId());
+        ScreenSessions.bootWatchers(level, worldPosition);
+    }
+
+    /** How many memory modules the self-test has to count. */
+    private int memoryModules() {
+        final ComputerBuild build = currentBuild();
+        return build == null ? 0 : build.rams().size();
+    }
+
+    /** How many devices the self-test has to find: everything seated that is not memory. */
+    private int postDevices() {
+        final ComputerBuild build = currentBuild();
+        return build == null ? 0 : build.disks().size() + build.pcieCards().size();
     }
 
     public void setNeedsPost(final boolean value) {
@@ -675,6 +723,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
 
     protected void tickNode(final ServerLevel level) {
         tickBuildProgress(level);
+        tickPost(level);
         tickSigma();
         dev.jstech.computers.os.install.SetupRunner.tick(this, level, worldPosition);
         attachment.tick(level);

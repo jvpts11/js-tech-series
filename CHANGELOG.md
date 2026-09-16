@@ -27,6 +27,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
 ### Changed
+- The power-on self-test now belongs to the machine instead of to the screen watching it. It takes as long as the
+  machine gives it reason to, growing with the memory and the devices seated and shrinking with the era, where it
+  used to be three and a half seconds on every computer. Closing the monitor part-way through no longer stops the
+  machine coming up or starts the test over: reopening shows what is left of it, and a machine nobody is watching
+  boots all the same.
 - A compiled listing now names the processor architecture it was built for, on a `.arch` line under the version, and
   the format's version is 3. A listing compiled before this still loads and runs as it did, and is read as having
   been built for the 32-bit machines.

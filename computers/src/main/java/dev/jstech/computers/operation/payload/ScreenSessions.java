@@ -8,13 +8,17 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.menu.DesktopMenu;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -63,6 +67,28 @@ public final class ScreenSessions {
     /** Writes down that the server opened a plain screen for this player, showing that machine on that monitor. */
     public static void opened(final ServerPlayer player, final BlockPos monitor, final BlockPos host) {
         OPEN.put(player.getUUID(), new Session(player.level().dimension(), monitor.immutable(), host.immutable()));
+    }
+
+    /**
+     * Boots every player watching that machine into whatever it comes up as: what the end of a self-test does
+     * to the screens that were showing it.
+     *
+     * <p>The watchers are gathered before any screen is opened, because opening one ends that player's plain
+     * screen session and so writes to the very map this reads.
+     */
+    public static void bootWatchers(final ServerLevel level, final BlockPos host) {
+        final List<Map.Entry<UUID, Session>> watching = new ArrayList<>();
+        for (final Map.Entry<UUID, Session> each : OPEN.entrySet()) {
+            if (each.getValue().host().equals(host) && each.getValue().level().equals(level.dimension())) {
+                watching.add(Map.entry(each.getKey(), each.getValue()));
+            }
+        }
+        for (final Map.Entry<UUID, Session> each : watching) {
+            final ServerPlayer player = level.getServer().getPlayerList().getPlayer(each.getKey());
+            if (player != null) {
+                MonitorBlock.openBootTarget(player, level, each.getValue().monitor(), host);
+            }
+        }
     }
 
     /** Whether this player has such a screen open on that machine and is still at the monitor showing it. */

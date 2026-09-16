@@ -32,6 +32,13 @@ final class ComputerPower {
      */
     private boolean needsPost;
 
+    /*
+     * When the self-test ends, in world time. The machine works this out for itself on the first tick after
+     * the power goes on, because how long it takes depends on what is seated in it and the power knows nothing
+     * of that; zero means it has not been worked out yet. Transient with the flag above, for the same reason.
+     */
+    private long postEndsAt;
+
     ComputerPower(final Runnable changed, final Runnable endSession) {
         this.changed = changed;
         this.endSession = endSession;
@@ -45,15 +52,39 @@ final class ComputerPower {
         return this.autoStart;
     }
 
-    /** Whether the next monitor use should play the power-on self-test before booting. */
+    /** Whether the machine owes a power-on self-test or is in the middle of one. */
     boolean needsPost() {
         return this.needsPost;
+    }
+
+    /** Whether the machine has yet to work out how long its self-test will take. */
+    boolean postUntimed() {
+        return this.needsPost && this.postEndsAt == 0L;
+    }
+
+    /** Says when the self-test this machine is in will end. */
+    void timePost(final long endsAt) {
+        this.postEndsAt = endsAt;
+    }
+
+    /** Whether the self-test has run its course and it is time to boot. */
+    boolean postDone(final long now) {
+        return this.needsPost && this.postEndsAt != 0L && now >= this.postEndsAt;
+    }
+
+    /**
+     * The ticks the self-test still has to run, so a monitor opened halfway through shows the rest of it
+     * rather than starting over. A machine that has not worked its length out yet answers nothing.
+     */
+    int postRemaining(final long now) {
+        return this.needsPost && this.postEndsAt != 0L ? (int) Math.max(0L, this.postEndsAt - now) : 0;
     }
 
     void setPowered(final boolean on) {
         this.manualOn = on;
         if (on) {
             this.needsPost = true;
+            this.postEndsAt = 0L;
         }
         // Power off or a cold start: neither leaves a desktop or an installer session behind.
         this.endSession.run();
@@ -75,6 +106,7 @@ final class ComputerPower {
                  * resurface on a session that no longer exists.
                  */
                 this.needsPost = true;
+                this.postEndsAt = 0L;
                 this.endSession.run();
             }
             this.manualOn = true;
@@ -84,6 +116,7 @@ final class ComputerPower {
 
     void setNeedsPost(final boolean value) {
         this.needsPost = value;
+        this.postEndsAt = 0L;
         if (value) {
             // A restart closes everything, as it does on any machine, and it is what an installer waits for.
             this.endSession.run();

@@ -404,8 +404,10 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             be.tickBuildProgress(serverLevel);
             /*
              * Before tick(), which returns early on a powered-down machine: a cabinet that was just
-             * switched off still has to put its lamps out on the client.
+             * switched off still has to put its lamps out on the client, and a cabinet coming up has a
+             * self-test to carry along, which the base tick does for every other kind of computer.
              */
+            be.tickPost(serverLevel);
             be.syncVisualsIfChanged();
             be.tick(serverLevel);
         }

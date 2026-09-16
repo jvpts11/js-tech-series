@@ -38,15 +38,17 @@ public final class BootSequenceScreen extends Screen {
     private static final int W = 340;
     private static final int H = 214;
 
-    /** Ticks before the finished POST hands control to the boot target. */
-    private static final int POST_TICKS = 70;
+    /** How long a self-test is drawn for when the machine did not say, which only a stale packet leaves. */
+    private static final int FALLBACK_TICKS = 70;
     /** Safety: if the server never swaps the screen (nothing could open), close on our own. */
-    private static final int CLOSE_TICKS = POST_TICKS + 60;
+    private static final int GRACE_TICKS = 60;
 
     private final BlockPos computerPos;
     private final BlockPos monitorPos;
     private final FirmwareKind kind;
     private final String machineName;
+    /** What the machine said was left of its self-test when this screen opened. */
+    private final int postTicks;
 
     private static BootSequenceScreen active;
 
@@ -56,12 +58,13 @@ public final class BootSequenceScreen extends Screen {
     private boolean setupRequested;
 
     public BootSequenceScreen(final BlockPos computerPos, final BlockPos monitorPos, final FirmwareKind kind,
-                              final String machineName) {
+                              final String machineName, final int remainingTicks) {
         super(Component.literal("Power-On Self-Test"));
         this.computerPos = computerPos;
         this.monitorPos = monitorPos;
         this.kind = kind;
         this.machineName = machineName;
+        this.postTicks = remainingTicks > 0 ? remainingTicks : FALLBACK_TICKS;
     }
 
     @Override
@@ -90,11 +93,15 @@ public final class BootSequenceScreen extends Screen {
     public void tick() {
         super.tick();
         ticks++;
-        if (!completed && !setupRequested && ticks >= POST_TICKS) {
+        /*
+         * The machine is the one that ends its self-test and puts whoever is watching in front of what boots,
+         * so this waits rather than reporting. All the screen owes is a way out if nothing ever comes: a
+         * machine switched off mid-test leaves this here with nothing else to show.
+         */
+        if (!completed && ticks >= postTicks) {
             completed = true;
-            PacketDistributor.sendToServer(new PostCompletePayload(computerPos, monitorPos, false));
         }
-        if (ticks >= CLOSE_TICKS && Minecraft.getInstance().screen == this) {
+        if (ticks >= postTicks + GRACE_TICKS && Minecraft.getInstance().screen == this) {
             onClose();
         }
     }
@@ -222,7 +229,7 @@ public final class BootSequenceScreen extends Screen {
         final int bx = x + (W - barW) / 2;
         final int by = y + H / 2 + 8;
         g.fill(bx, by, bx + barW, by + 3, 0xFF2A2D3E);
-        final int fill = Math.min(barW, barW * ticks / POST_TICKS);
+        final int fill = Math.min(barW, barW * ticks / postTicks);
         g.fill(bx, by, bx + fill, by + 3, accent);
         if (setupRequested) {
             g.drawCenteredString(font, "Entering Setup ...", x + W / 2, y + H - 18, accent);

@@ -67,15 +67,15 @@ public final class FirmwarePayloads {
                         ComputerAccess.screen(RequestFirmwarePayload::hostPos)),
                 FirmwarePayloads::handleRequestFirmware);
         /*
-         * The power-on self-test: the server asks the monitor to play it; the client reports it finished
-         * (or that DEL asked for the setup) and the server opens the boot target.
+         * The power-on self-test: the server asks the monitor to play what is left of it. The machine ends it
+         * itself and boots whoever is watching; the client only speaks up when DEL asks for the setup.
          */
         registrar.playToClient(OpenPostPayload.TYPE, OpenPostPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
                         dev.jstech.computers.block.IPostScreenOpener.Holder.open(
                                 payload.host(), payload.monitorPos(),
                                 dev.jstech.computers.os.FirmwareKind.byId(payload.firmwareKind()),
-                                payload.name())));
+                                payload.name(), payload.remainingTicks())));
         // A finished installer still waiting for its reboot: the monitor comes back to that prompt.
         registrar.playToClient(OpenInstallDonePayload.TYPE, OpenInstallDonePayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->

@@ -284,9 +284,11 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final String name = level.getBlockState(owner).getBlock().getName().getString();
         final HardwareEra era = ownerBe instanceof IOsHost c ? c.displayEra() : null;
         final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
+        final int remaining = ownerBe instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine
+                ? machine.postRemaining() : 0;
         dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, owner);
         PacketDistributor.sendToPlayer(player, new dev.jstech.computers.operation.payload
-                .OpenPostPayload(owner, monitorPos, kind.id(), name));
+                .OpenPostPayload(owner, monitorPos, kind.id(), name, remaining));
     }
 
     /**
