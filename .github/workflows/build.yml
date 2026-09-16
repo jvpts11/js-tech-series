@@ -103,7 +103,7 @@ jobs:
         with:
           cache-read-only: false
 
-      - name: Run the GameTests with CC: Tweaked out of the runtime
+      - name: 'Run the GameTests with CC: Tweaked out of the runtime'
         # CC: Tweaked is a soft dependency, so every mod must run unchanged without it.
         run: ./gradlew :tests:runGameTestServer -PwithoutComputerCraft --console=plain
 
