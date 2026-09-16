@@ -53,8 +53,13 @@ final class GatewayCalls {
 
     static void bind(final Map<MemberId, MachineCalls.Binding<?>> bindings) {
         gateways(bindings, "Online", (gateways, call, target, arguments, line) -> {
+            /*
+             * Whether the Gateway is there and reaching its computer, which is a question about this mod's own
+             * block. Asking its bridge instead made a Gateway that is present, named and linked answer "no" for
+             * no better reason than the optional mod on the other side not being installed.
+             */
             final NetworkGatewayBlockEntity gateway = gateways.pick(call.gateway());
-            return gateway != null && gateway.bridge() != null;
+            return gateway != null && gateway.online();
         });
         gateways(bindings, "Names", (gateways, call, target, arguments, line) -> {
             final Values.ListValue names = new Values.ListValue();
