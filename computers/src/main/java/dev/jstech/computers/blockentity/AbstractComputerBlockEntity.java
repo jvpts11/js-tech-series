@@ -18,7 +18,6 @@ import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.item.PsuItem;
 import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.os.OsDef;
-import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
@@ -529,104 +528,9 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return installOs(osId, -1);
     }
 
-    /*
-     * Which progress quarter (25/50/75%) each running build last reported, so the console gets a handful
-     * of emerge-style progress lines instead of one per second. Transient by design.
-     */
-    private final java.util.Map<String, Integer> buildQuarterReported = new java.util.HashMap<>();
-    private int liveKernelQuarterReported;
-
-    /**
-     * Streams source-build progress and completion to every console open on this computer (the full-screen
-     * prompt and the desktop terminal window alike). Called from the host block's server ticker; checks
-     * once a second and only speaks on a 25% step or on completion, like emerge's own output.
-     */
+    /** Tells every console open on this computer how a source build is coming along. */
     public void tickBuildProgress(final net.minecraft.server.level.ServerLevel level) {
-        final dev.jstech.computers.program.ComputerConsoleState console = console();
-        if (console == null || level.getGameTime() % 20 != 0) {
-            return;
-        }
-        final long now = level.getGameTime();
-        final java.util.List<dev.jstech.computers.operation.payload.CommandOutputPayload.WireLine>
-                wire = new java.util.ArrayList<>();
-        final int dim = dev.jstech.computers.program.cli.CliStyle.DIM.id();
-        final int ok = dev.jstech.computers.program.cli.CliStyle.OK.id();
-
-        // Package builds (emerge): progress quarters while compiling.
-        for (final java.util.Map.Entry<String, Long> entry : console.pendingBuilds().entrySet()) {
-            final long total = console.buildTotal(entry.getKey());
-            if (total <= 0 || entry.getValue() <= now) {
-                continue; // completions are handled below
-            }
-            final long left = entry.getValue() - now;
-            final int pct = (int) Math.max(0, Math.min(99, 100 - left * 100 / total));
-            final int quarter = pct / 25;
-            if (quarter >= 1 && quarter > buildQuarterReported.getOrDefault(entry.getKey(), 0)) {
-                buildQuarterReported.put(entry.getKey(), quarter);
-                wire.add(new dev.jstech.computers.operation.payload.CommandOutputPayload.WireLine(
-                        ">>> " + buildDisplayName(entry.getKey()) + ": compiling ... " + pct + "% ("
-                                + (left / 20) + "s left)", dim));
-            }
-        }
-
-        // The Gentoo live install's kernel compile gets the same treatment.
-        final dev.jstech.computers.program.install.LiveInstallState live = console.liveInstall();
-        if (live != null && live.kernelCompiling(now)) {
-            final long kernelTotal = Math.max(5L, Math.min(1800L, 64_000L / Math.max(100, maxCpuMhz()))) * 20L;
-            final long left = live.kernelReadyAt() - now;
-            final int pct = (int) Math.max(0, Math.min(99, 100 - left * 100 / Math.max(1L, kernelTotal)));
-            final int quarter = pct / 25;
-            if (quarter >= 1 && quarter > liveKernelQuarterReported) {
-                liveKernelQuarterReported = quarter;
-                wire.add(new dev.jstech.computers.operation.payload.CommandOutputPayload.WireLine(
-                        ">>> sys-kernel/gentoo-sources: compiling ... " + pct + "% (" + (left / 20) + "s left)", dim));
-            }
-        } else if (live != null && live.kernelReadyAt() >= 0 && !live.kernelCompiling(now)
-                && liveKernelQuarterReported > 0 && liveKernelQuarterReported < 4) {
-            liveKernelQuarterReported = 4;
-            wire.add(new dev.jstech.computers.operation.payload.CommandOutputPayload.WireLine(
-                    ">>> sys-kernel/gentoo-sources: compiled. Run 'genkernel all' to build the kernel.", ok));
-        }
-
-        /*
-         * Completions: announced live to whoever is looking; with no console open the notice stays queued
-         * for the shell to print ahead of the next command instead.
-         */
-        final java.util.List<net.minecraft.server.level.ServerPlayer> viewers = consoleViewers(level);
-        if (!console.settleBuilds(now).isEmpty()) {
-            setChanged();
-            if (!viewers.isEmpty()) {
-                for (final String id : console.drainFinishedBuilds()) {
-                    buildQuarterReported.remove(id);
-                    wire.add(new dev.jstech.computers.operation.payload.CommandOutputPayload
-                            .WireLine(">>> " + buildDisplayName(id) + ": build finished, package installed", ok));
-                }
-            }
-        }
-        if (wire.isEmpty() || viewers.isEmpty()) {
-            return;
-        }
-        final var prompt = new dev.jstech.computers.operation.payload.CommandOutputPayload(
-                false, "", wire);
-        final java.util.List<dev.jstech.computers.operation.payload.DesktopShellOutputPayload
-                .WireLine> desktopWire = new java.util.ArrayList<>();
-        for (final var line : wire) {
-            desktopWire.add(new dev.jstech.computers.operation.payload.DesktopShellOutputPayload
-                    .WireLine(line.text(), line.style()));
-        }
-        /*
-         * Every reply says whether a program has the terminal, notices included: one that said otherwise
-         * would hand the keyboard back while a program was still using it.
-         */
-        final var desktop = new dev.jstech.computers.operation.payload.DesktopShellOutputPayload(
-                false, programs.held() != 0, "", desktopWire);
-        for (final net.minecraft.server.level.ServerPlayer viewer : viewers) {
-            if (viewer.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu) {
-                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(viewer, desktop);
-            } else {
-                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(viewer, prompt);
-            }
-        }
+        replication.pushBuildProgress(level);
     }
 
     private final Viewers viewers = new Viewers(this.worldPosition);
@@ -657,15 +561,6 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
                 && viewer.level().getBlockEntity(host) instanceof AbstractComputerBlockEntity machine) {
             machine.viewers.closed(viewer);
         }
-    }
-
-    private static String buildDisplayName(final String programId) {
-        final net.minecraft.resources.ResourceLocation rl =
-                net.minecraft.resources.ResourceLocation.tryParse(programId);
-        final dev.jstech.computers.os.ProgramSpec spec =
-                rl == null ? null : OsRegistry.getProgram(rl);
-        return spec != null ? spec.commandName()
-                : (programId.contains(":") ? programId.substring(programId.indexOf(':') + 1) : programId);
     }
 
     /**
