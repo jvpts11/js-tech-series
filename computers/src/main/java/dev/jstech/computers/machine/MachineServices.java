@@ -296,7 +296,7 @@ public final class MachineServices implements IHost {
             this.packages = new PackageService(terminal, server, this.files, this.iql);
             this.installs = new InstallService(terminal, server, this.packages, this.iql);
             this.programs = new ProgramService(this.machine, terminal, server, this.shell);
-            this.remotes = new RemoteComputerService(this.shell);
+            this.remotes = new RemoteComputerService(terminal, server);
             this.gateways = new GatewayBridgeService(this.machine, server);
         } else {
             this.shell = null;

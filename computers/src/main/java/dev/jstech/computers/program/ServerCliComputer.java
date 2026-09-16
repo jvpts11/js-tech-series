@@ -144,84 +144,21 @@ public final class ServerCliComputer implements ICliComputer {
      */
     /** The reachable machines by host name, for callers outside the CLI (Remote Control's list). */
     public Map<String, BlockEntity> remoteMachines() {
-        return reachableMachines();
+        return remotes().machines();
     }
 
     private Map<String, BlockEntity> reachableMachines() {
-        final Map<String, BlockEntity> out = new java.util.LinkedHashMap<>();
-        final NetworkUuid network = host.networkUuid();
-        if (network == null) {
-            return out;
-        }
-        final NetworkSystem system = NetworkSystem.get(level);
-        final java.util.List<BlockEntity> candidates = new ArrayList<>();
-        final MainframeBlockEntity mainframe = mainframe(network);
-        if (mainframe != null) {
-            candidates.add(mainframe);
-        }
-        for (final NetworkSystem.PersonalComputerNode pc : system.personalComputersOf(network)) {
-            if (level.getBlockEntity(net.minecraft.core.BlockPos.of(pc.pos()))
-                    instanceof PersonalComputerBlockEntity be) {
-                candidates.add(be);
-            }
-        }
-        for (final dev.jstech.core.network.ServerNode server : system.serversOf(network)) {
-            system.locationOf(server.nodeUuid()).ifPresent(loc -> {
-                if (level.getBlockEntity(net.minecraft.core.BlockPos.of(loc.rackPos()))
-                        instanceof dev.jstech.computers.blockentity
-                                .ServerRackBlockEntity rack) {
-                    candidates.add(rack);
-                }
-            });
-        }
-        for (final BlockEntity candidate : candidates) {
-            if (candidate == hostBlock || !(candidate instanceof IComputerTerminalHost terminalHost)) {
-                continue;
-            }
-            final String hostname = new ServerCliComputer(terminalHost, level).hostname();
-            // A duplicate host name keeps the first machine found, the way a name collision would.
-            out.putIfAbsent(hostname, candidate);
-        }
-        return out;
+        return remotes().machines();
     }
 
     @Override
     public List<RemoteHost> reachableHosts() {
-        final List<RemoteHost> hosts = new ArrayList<>();
-        reachableMachines().forEach((hostname, machine) -> {
-            final ServerCliComputer remote = new ServerCliComputer((IComputerTerminalHost) machine, level);
-            final dev.jstech.computers.os.OsDef os = remote.installedOsDef();
-            hosts.add(new RemoteHost(hostname, remote.name(), remote.nodeId(),
-                    os == null ? "" : os.displayName(), remote.type(), remote.running()));
-        });
-        return hosts;
+        return remotes().hosts();
     }
 
-    /**
-     * Resolves what the player typed to one machine. A host name, the machine's own name and the
-     * head of its node id all address it; an OS name works too, but only while it picks out exactly
-     * one machine, since two Debian servers make "debian" ambiguous, and saying so is more useful than
-     * guessing.
-     */
+    /** The machines a typed name picks out, resolved where the other computers are known. */
     private Map<String, BlockEntity> matchMachines(final String wanted) {
-        final String needle = wanted == null ? "" : wanted.trim().toLowerCase(java.util.Locale.ROOT);
-        final Map<String, BlockEntity> matches = new java.util.LinkedHashMap<>();
-        if (needle.isEmpty()) {
-            return matches;
-        }
-        reachableMachines().forEach((hostname, machine) -> {
-            final ServerCliComputer remote = new ServerCliComputer((IComputerTerminalHost) machine, level);
-            final dev.jstech.computers.os.OsDef os = remote.installedOsDef();
-            final boolean hit = hostname.equalsIgnoreCase(needle)
-                    || remote.name().equalsIgnoreCase(needle)
-                    || remote.nodeId().equalsIgnoreCase(needle)
-                    || (os != null && (os.displayName().equalsIgnoreCase(needle)
-                            || os.id().getPath().equalsIgnoreCase(needle)));
-            if (hit) {
-                matches.put(hostname, machine);
-            }
-        });
-        return matches;
+        return remotes().matching(wanted);
     }
 
     @Override
@@ -1006,6 +943,11 @@ public final class ServerCliComputer implements ICliComputer {
         return matchMachines(name);
     }
 
+    /** The other computers of this machine's network, as this shell reaches them. */
+    private dev.jstech.computers.machine.RemoteComputerService remotes() {
+        return new dev.jstech.computers.machine.RemoteComputerService(host, level);
+    }
+
     /** What is installed on this machine, and the installing itself, as this shell reaches it. */
     private dev.jstech.computers.machine.InstallService installs() {
         return new dev.jstech.computers.machine.InstallService(host, level, packages(), iql());
@@ -1044,12 +986,9 @@ public final class ServerCliComputer implements ICliComputer {
     /** The machine on this network that {@code name} picks out, as its own shell; null when none or several. */
     @org.jetbrains.annotations.Nullable
     public ServerCliComputer remoteShell(final String name) {
-        final Map<String, BlockEntity> matches = matchMachines(name);
-        if (matches.size() != 1) {
-            return null;
-        }
-        return new ServerCliComputer((IComputerTerminalHost) matches.values().iterator().next(), level);
+        return remotes().find(name);
     }
+
 
     /** The block this shell runs on. */
     public BlockEntity machine() {
