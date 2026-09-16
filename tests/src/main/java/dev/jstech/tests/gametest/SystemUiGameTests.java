@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest;
 
+import com.mojang.authlib.GameProfile;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
@@ -18,11 +19,15 @@ import dev.jstech.computers.vm.program.UiWidgets;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.tests.JsTests;
 import java.util.List;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ClientInformation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -82,9 +87,11 @@ public final class SystemUiGameTests {
             return null;
         }
         final ItemStackHandler hw = computer.getHardware();
-        hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT, new ItemStack(ComputingModule.MOTHERBOARD_ATX_P.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
+                new ItemStack(ComputingModule.MOTHERBOARD_ATX_P.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT, new ItemStack(ComputingModule.CPU_ASCENT_965.get()));
-        hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START, new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
+                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
@@ -125,6 +132,39 @@ public final class SystemUiGameTests {
                             && "SCRAM".equals(w.text())), "the button goes over with its words");
                 })
                 .thenSucceed();
+    }
+
+    /** The window reaches a second player who opens the desktop later, not only whoever was there first. */
+    @GameTest(template = ARENA)
+    public static void windows_reachAPlayerWhoOpensAfterAnother(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2), "frames_xp");
+        if (computer == null) {
+            return;
+        }
+        final ServerPlayer first = viewer(helper.getLevel(), "first");
+        final ServerPlayer second = viewer(helper.getLevel(), "second");
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final MachinePrograms.Started started = computer.programs().start("panel.sgs", PANEL, 1, computer);
+                    helper.assertTrue(started.ok(), started.message());
+                    computer.programs().tick(8192);
+                    helper.assertTrue(computer.takeWindowsOwed(first).size() == 1,
+                            "the player at the desktop is owed the window");
+                    helper.assertTrue(computer.takeWindowsOwed(first).isEmpty(),
+                            "and is owed nothing once it has gone to them");
+                    helper.assertTrue(computer.takeWindowsOwed(second).size() == 1,
+                            "while one who opens later is owed it whole, instead of facing an empty desktop");
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * A server player of the test's own, never put on the server's player list: a listed player is announced to
+     * every mod when it leaves, and keeps chunks loaded and packets flowing for the rest of the run.
+     */
+    private static ServerPlayer viewer(final ServerLevel level, final String name) {
+        return new ServerPlayer(level.getServer(), level, new GameProfile(UUID.randomUUID(), name),
+                ClientInformation.createDefault());
     }
 
     /** What a player does to a widget reaches the program's handler, and what it changed goes back. */

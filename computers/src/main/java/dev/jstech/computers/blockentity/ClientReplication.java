@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * What a machine sends to the players watching it: the windows its programs have open, and what the
@@ -36,8 +37,12 @@ import java.util.Map;
 final class ClientReplication {
 
     private final AbstractComputerBlockEntity machine;
-    /* Every window of a program that has been sent, by the program and the window, as it was sent. */
-    private final Map<Long, UiWindowPayload> sentWindows = new HashMap<>();
+    /*
+     * What each player watching has already been sent, by the player, and under them by the program and the
+     * window, as it went. Per player and not per machine: two people at one desktop are not sent the same
+     * windows at the same moments, and whoever opens second must be given what the first already has.
+     */
+    private final Map<UUID, Map<Long, UiWindowPayload>> sentByViewer = new HashMap<>();
     /*
      * Which progress quarter (25/50/75%) each running build last reported, so the console gets a handful
      * of emerge-style progress lines instead of one per second. Transient by design.
@@ -59,9 +64,55 @@ final class ClientReplication {
     void pushWindows(final ServerLevel level) {
         final List<ServerPlayer> viewers = this.machine.consoleViewers(level);
         if (viewers.isEmpty()) {
-            this.sentWindows.clear();
+            this.sentByViewer.clear();
             return;
         }
+        forgetWhoLeft(viewers);
+        final Map<Long, UiWindowPayload> open = openNow();
+        for (final ServerPlayer viewer : viewers) {
+            if (!(viewer.containerMenu instanceof DesktopMenu)) {
+                continue;
+            }
+            for (final UiWindowPayload payload : takeOwed(viewer, open)) {
+                PacketDistributor.sendToPlayer(viewer, payload);
+            }
+        }
+    }
+
+    /**
+     * The windows this machine owes that player, taking them as sent in the same breath: everything its
+     * programs have open that the player has not been given already, and the empty word for one that has
+     * closed since.
+     *
+     * <p>A player who has just opened the desktop is owed every window there is, which is how they arrive
+     * whole on opening rather than at whatever changes next.
+     */
+    List<UiWindowPayload> takeOwed(final ServerPlayer viewer) {
+        return takeOwed(viewer, openNow());
+    }
+
+    private List<UiWindowPayload> takeOwed(final ServerPlayer viewer, final Map<Long, UiWindowPayload> open) {
+        final Map<Long, UiWindowPayload> sent =
+                this.sentByViewer.computeIfAbsent(viewer.getUUID(), id -> new HashMap<>());
+        final List<UiWindowPayload> owed = new ArrayList<>();
+        for (final var entry : open.entrySet()) {
+            if (!entry.getValue().equals(sent.get(entry.getKey()))) {
+                owed.add(entry.getValue());
+            }
+        }
+        final BlockPos pos = this.machine.getBlockPos();
+        for (final var entry : sent.entrySet()) {
+            if (!open.containsKey(entry.getKey())) {
+                owed.add(UiWindowPayload.gone(pos, entry.getValue().program(), entry.getValue().window()));
+            }
+        }
+        sent.clear();
+        sent.putAll(open);
+        return owed;
+    }
+
+    /** The windows the programs on this machine have open, as they would go over. */
+    private Map<Long, UiWindowPayload> openNow() {
         final BlockPos pos = this.machine.getBlockPos();
         final Map<Long, UiWindowPayload> open = new HashMap<>();
         this.machine.programs().eachWindow((window, program) -> {
@@ -70,30 +121,22 @@ final class ClientReplication {
                 open.put(key(payload.program(), payload.window()), payload);
             }
         });
-        final List<UiWindowPayload> send = new ArrayList<>();
-        for (final var entry : open.entrySet()) {
-            if (!entry.getValue().equals(this.sentWindows.get(entry.getKey()))) {
-                send.add(entry.getValue());
-            }
-        }
-        for (final var entry : this.sentWindows.entrySet()) {
-            if (!open.containsKey(entry.getKey())) {
-                send.add(UiWindowPayload.gone(pos, entry.getValue().program(), entry.getValue().window()));
-            }
-        }
-        this.sentWindows.clear();
-        this.sentWindows.putAll(open);
-        if (send.isEmpty()) {
+        return open;
+    }
+
+    /** What was sent to somebody who is no longer looking is dropped, rather than kept for a return. */
+    private void forgetWhoLeft(final List<ServerPlayer> viewers) {
+        if (this.sentByViewer.isEmpty()) {
             return;
         }
-        for (final ServerPlayer viewer : viewers) {
-            if (!(viewer.containerMenu instanceof DesktopMenu)) {
-                continue;
+        this.sentByViewer.keySet().removeIf(id -> {
+            for (final ServerPlayer viewer : viewers) {
+                if (viewer.getUUID().equals(id)) {
+                    return false;
+                }
             }
-            for (final var payload : send) {
-                PacketDistributor.sendToPlayer(viewer, payload);
-            }
-        }
+            return true;
+        });
     }
 
     /**

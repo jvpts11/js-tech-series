@@ -148,6 +148,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- A second person opening a computer's desktop now sees the windows its programs already have open. The machine kept
+  one record of what it had sent, not one per player, so whoever opened after somebody else was shown an empty desktop
+  until a window happened to change, and on a machine where nothing was moving it stayed empty.
 - A prompt connected to another computer now says so: it shows the name of the machine the line is going to, ahead of
   that machine's own prompt. On MC-DOS and Frames the prompt is only the drive and folder, so a session looked exactly
   like sitting at your own keyboard and there was no way to tell the command had left the computer in front of you.

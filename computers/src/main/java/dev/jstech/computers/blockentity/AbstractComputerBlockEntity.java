@@ -555,6 +555,18 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return viewers.at(level);
     }
 
+    /**
+     * The windows this machine owes that player, counted as sent from here on: everything its programs have
+     * open that the player has not been given already.
+     *
+     * <p>Somebody who has just opened the desktop is owed all of them, which is how a second person at the
+     * same machine is shown what the first is already looking at.
+     */
+    public java.util.List<dev.jstech.computers.operation.payload.UiWindowPayload> takeWindowsOwed(
+            final net.minecraft.server.level.ServerPlayer viewer) {
+        return replication.takeOwed(viewer);
+    }
+
     /** Tells the machine at {@code host} that this player opened its desktop or prompt; nothing on the client. */
     public static void screenOpened(final net.minecraft.world.entity.player.Player player, final BlockPos host) {
         if (player instanceof net.minecraft.server.level.ServerPlayer viewer
