@@ -122,6 +122,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private final LinuxLaunchers linuxLaunchers = new LinuxLaunchers(this);
     /** The Frames systems' own: the classic Start menu, XP's two columns, Frames 11's floating panel. */
     private final FramesLaunchers framesLaunchers = new FramesLaunchers(this);
+    /** The corner every panel reports the machine in: the network, the sound, the memory and the clock. */
+    private final PanelTray tray = new PanelTray(this);
 
     /*
      * Per-OS memory model: the system, its desktop and its services hold their share of the machine's RAM
@@ -660,6 +662,50 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     /** Whether the pointer is below a line and between two columns, for a footer that has no fixed height. */
     boolean hoverBelowRight(final int top, final int left, final int right) {
         return hoverY >= top && hoverX >= left && hoverX < right;
+    }
+
+    /** Whether the pointer is past both edges, for a corner that runs to the end of the screen. */
+    boolean hoverBeyond(final int minX, final int minY) {
+        return hoverX >= minX && hoverY >= minY;
+    }
+
+    /**
+     * Whether a light tone reads on a panel whose text is this colour.
+     *
+     * <p>A panel that writes in a pale colour is a dark band, so what sits on it has to be pale too. This is
+     * the quick integer brightness rather than the proper contrast measure: it is deciding between two fixed
+     * palettes, not checking whether text is readable.
+     */
+    boolean lightOn(final int textColor) {
+        return luminance(textColor) > 140;
+    }
+
+    /** How bright an opaque colour reads, 0 to 255, for deciding what tone sits well on it. */
+    private static int luminance(final int color) {
+        return (((color >> 16) & 0xFF) * 30 + ((color >> 8) & 0xFF) * 59 + (color & 0xFF) * 11) / 100;
+    }
+
+    /** The time this machine shows, in the format its settings ask for. */
+    String clock() {
+        return clockText();
+    }
+
+    /** Whether the host computer is on a data network right now, as its block entity tells the client. */
+    boolean onNetwork() {
+        return networkAttached();
+    }
+
+    /** How much memory the machine is using and how much it has, for the meter and its tooltip. */
+    int ramUsed() {
+        return ramUsedMb();
+    }
+
+    int ramTotal() {
+        return ramTotalMb;
+    }
+
+    String ramMeter() {
+        return ramMeterText();
     }
 
     /** What has been typed into an open launcher's search field, empty when nothing has. */
@@ -3603,56 +3649,29 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         return Math.max(3, (w - 24) / 6);
     }
 
-    /** The padding at each end of the notification area. */
-    private static final int TRAY_PAD = 5;
-    private static final int TRAY_ICON = 9;
-    private static final int TRAY_GAP = 4;
-    private static final int RAM_BAR_W = 26;
-    private static final int RAM_BAR_H = 6;
+    /** The padding at each end of the notification area, which the panels lay their own contents against. */
+    private static final int TRAY_PAD = PanelTray.PAD;
 
-    /** How wide the status group runs: the network icon, the speaker and the memory bar. */
     private int trayStatusWidth() {
-        return TRAY_ICON + TRAY_GAP + TRAY_ICON + TRAY_GAP + RAM_BAR_W;
+        return tray.statusWidth();
     }
 
-    /** How wide the whole notification area runs: the status group, the clock, and the padding around them. */
-    private int trayWidth() {
-        return TRAY_PAD + trayStatusWidth() + TRAY_GAP + font.width(clockText()) + TRAY_PAD;
-    }
-
-    /** The left edge of the notification area on a panel {@code sw} wide. */
     private int trayLeft(final int sw) {
-        return sw - trayWidth();
+        return tray.left(sw);
     }
 
     /** Where a panel's task buttons must stop: clear of the notification area at its right end. */
     private int taskStripRight(final int sw) {
-        return trayLeft(sw) - 4;
+        return tray.taskStripRight(sw);
     }
 
-    /**
-     * The whole notification area: the status group and then the clock, right-aligned on the panel. The
-     * icons take their tone from the panel's own text, which is the one thing that already knows whether
-     * this panel is a dark band or a light one.
-     */
     private void drawTray(final GuiGraphics g, final int panelY, final int sw, final int textColor) {
-        final int x = trayLeft(sw) + TRAY_PAD;
-        drawTrayStatus(g, x, panelY, textColor);
-        g.drawString(font, clockText(), x + trayStatusWidth() + TRAY_GAP, panelY + 8, textColor, false);
+        tray.draw(g, panelY, sw, textColor);
     }
 
     /** The status group alone, for a panel that puts its clock somewhere else of its own. */
     private void drawTrayStatus(final GuiGraphics g, final int x, final int panelY, final int textColor) {
-        final boolean light = luminance(textColor) > 140;
-        final int iconY = panelY + (TASKBAR_H - TRAY_ICON) / 2;
-        drawNetworkIcon(g, x, iconY, networkAttached(), light);
-        drawVolumeIcon(g, x + TRAY_ICON + TRAY_GAP, iconY, light);
-        drawRamBar(g, x + 2 * (TRAY_ICON + TRAY_GAP), panelY + (TASKBAR_H - RAM_BAR_H) / 2);
-    }
-
-    /** How bright an opaque colour reads, 0 to 255, for deciding what tone sits well on it. */
-    private static int luminance(final int color) {
-        return (((color >> 16) & 0xFF) * 30 + ((color >> 8) & 0xFF) * 59 + (color & 0xFF) * 11) / 100;
+        tray.drawStatus(g, x, panelY, textColor);
     }
 
     /** Whether the host computer is on a data network right now, as its block entity tells the client. */
@@ -3663,75 +3682,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                 && computer.networkAttached();
     }
 
-    /**
-     * The network icon: two linked machines, greyed and badged when this computer is on no network. It is
-     * the one status in the tray that says something true about the machine rather than decorating it.
-     */
-    private static void drawNetworkIcon(final GuiGraphics g, final int x, final int y, final boolean up,
-                                        final boolean light) {
-        final int frame = up ? (light ? 0xFF2058D8 : 0xFF1A3A78) : 0xFF6E7686;
-        final int screen = up ? (light ? 0xFFCFE4FF : 0xFF9FC0F0) : 0xFFB6BAC4;
-        g.fill(x + 4, y, x + 9, y + 4, frame);
-        g.fill(x + 5, y + 1, x + 8, y + 3, screen);
-        g.fill(x, y + 5, x + 5, y + 9, frame);
-        g.fill(x + 1, y + 6, x + 4, y + 8, screen);
-        if (!up) {
-            g.fill(x + 5, y + 5, x + 9, y + 9, 0xFFD03A2A);
-            g.fill(x + 6, y + 6, x + 8, y + 7, 0xFFFFFFFF);
-        }
-    }
-
-    /** The speaker, with the two arcs a volume icon has always had. */
-    private static void drawVolumeIcon(final GuiGraphics g, final int x, final int y, final boolean light) {
-        final int c = light ? 0xFFE8EEF8 : 0xFF3A4150;
-        g.fill(x, y + 3, x + 2, y + 6, c);
-        g.fill(x + 2, y + 2, x + 3, y + 7, c);
-        g.fill(x + 3, y + 1, x + 4, y + 8, c);
-        g.fill(x + 6, y + 3, x + 7, y + 6, c);
-        g.fill(x + 8, y + 1, x + 9, y + 8, c);
-    }
-
-    /** The memory bar: a dark trough filled green shading to amber, and red once the machine is nearly full. */
-    private void drawRamBar(final GuiGraphics g, final int x, final int y) {
-        g.fill(x, y, x + RAM_BAR_W, y + RAM_BAR_H, 0xFF2A2F3A);
-        g.fill(x + 1, y + 1, x + RAM_BAR_W - 1, y + RAM_BAR_H - 1, 0xFF11151E);
-        final int innerW = RAM_BAR_W - 2;
-        final int used = ramUsedMb();
-        if (ramTotalMb <= 0 || used <= 0) {
-            return;
-        }
-        final int fillW = (int) Math.min(innerW, (long) innerW * used / ramTotalMb);
-        final boolean nearlyFull = used * 100L >= ramTotalMb * 95L;
-        for (int px = 0; px < fillW; px++) {
-            final float t = innerW <= 1 ? 0f : (float) px / (innerW - 1);
-            final int color = nearlyFull ? 0xFFEF6A5A : blend(0xFF5FE07A, 0xFFF0B23A, t);
-            g.fill(x + 1 + px, y + 1, x + 2 + px, y + RAM_BAR_H - 1, color);
-        }
-    }
-
-    /** Linear blend of two opaque colours, {@code t} from the first (0) to the second (1). */
-    private static int blend(final int from, final int to, final float t) {
-        final int r = (int) (((from >> 16) & 0xFF) + (((to >> 16) & 0xFF) - ((from >> 16) & 0xFF)) * t);
-        final int gr = (int) (((from >> 8) & 0xFF) + (((to >> 8) & 0xFF) - ((from >> 8) & 0xFF)) * t);
-        final int b = (int) ((from & 0xFF) + ((to & 0xFF) - (from & 0xFF)) * t);
-        return 0xFF000000 | (r << 16) | (gr << 8) | b;
-    }
-
-    /** The figures behind the tray, shown while the cursor rests on it: the link and the memory. */
     private void drawTrayTip(final GuiGraphics g, final int panelY, final int sw) {
-        if (hoverY < panelY || hoverX < trayLeft(sw)) {
-            return;
-        }
-        final String link = networkAttached() ? "Network connected" : "No network";
-        final String mem = "RAM " + ramMeterText();
-        final int w = Math.max(font.width(link), font.width(mem)) + 8;
-        final int h = 22;
-        final int x = Math.max(2, sw - w - 2);
-        final int y = panelY - h - 2;
-        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, 0xFF101318);
-        g.fill(x, y, x + w, y + h, 0xFFF2F4F8);
-        g.drawString(font, link, x + 4, y + 3, 0xFF202430, false);
-        g.drawString(font, mem, x + 4, y + 12, 0xFF505868, false);
+        tray.drawTip(g, panelY, sw);
     }
 
     /** The Windows 11 Start glyph: four solid blue panes with a thin gap. */
