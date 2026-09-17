@@ -70,8 +70,8 @@ public final class FileAccess {
     }
 
     /**
-     * Resolves a {@code media:<readerPos>[/sub]} path to the medium's {@link net.minecraft.world.item.ItemStack}
-     * in a linked drive, or {@link net.minecraft.world.item.ItemStack#EMPTY} if not reachable.
+     * Resolves a {@code media:<readerPos>[/sub]} path to the medium's {@link ItemStack} in a linked drive,
+     * or {@link ItemStack#EMPTY} if not reachable.
      */
     public static ItemStack mediaStackFor(final ServerLevel level,
             final IOsHost computer,
@@ -125,8 +125,7 @@ public final class FileAccess {
         final long cap = media.getItem()
                 instanceof FormattedMediaItem fm
                 ? fm.format().capacityItems() : 64L;
-        final long capWeight = cap
-                * dev.jstech.computers.storage.StorageKey.MB_EQ_PER_ITEM;
+        final long capWeight = cap * StorageKey.MB_EQ_PER_ITEM;
         final long fsUsed = DiskFilesystem.filesWeight(media);
         /*
          * A DATA medium can also hold a stored item/fluid snapshot (MEDIA_DATA); both consume the medium's
@@ -199,8 +198,8 @@ public final class FileAccess {
 
     /**
      * Resolves a {@code .dat} path back to the {@link StorageKey} it projects, by re-running the deterministic
-     * {@link dev.jstech.computers.os.fs.StorageProjection} over the disk's storage volume
-     * and matching the requested path. Returns {@code null} when no projected entry matches (e.g. a stale path).
+     * {@link StorageProjection} over the disk's storage volume and matching the requested path. Returns
+     * {@code null} when no projected entry matches (e.g. a stale path).
      */
     @Nullable
     public static StorageKey resolveDatKey(final ItemStack disk, final String datPath) {

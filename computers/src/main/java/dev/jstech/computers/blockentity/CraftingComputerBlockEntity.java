@@ -103,8 +103,7 @@ public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
 
     /**
      * The era this Crafting Computer belongs to, read from its block. Defaults to Standard for any block that
-     * is not a {@link dev.jstech.computers.block.CraftingComputerBlock} (never happens in
-     * practice, but keeps the read total).
+     * is not a {@link CraftingComputerBlock} (never happens in practice, but keeps the read total).
      */
     private HardwareEra blockEra() {
         return getBlockState().getBlock()

@@ -47,6 +47,7 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
+import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.install.SetupTiming;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
@@ -435,7 +436,7 @@ public final class FirmwarePayloads {
      *
      * <p>Everything a machine can refuse for is asked here, before a minute of copying: a system newer than the
      * machine's era, a live medium that installs by hand, no room on the disk. What happens after that belongs
-     * to the machine, and {@link dev.jstech.computers.os.install.OsInstallRunner} carries it.
+     * to the machine, and {@link OsInstallRunner} carries it.
      */
     @Nullable
     public static String beginInstall(final ServerLevel level, final IOsHost computer,
@@ -557,7 +558,7 @@ public final class FirmwarePayloads {
      * Scans the computer's linked peripheral endpoints for a {@link MediaReaderBlockEntity}
      * holding an OS installer medium. Takes the first match whose OS passes the era gate and
      * whose footprint fits the computer's free storage, then calls
-     * {@link IOsHost#installOs(net.minecraft.resources.ResourceLocation)}.
+     * {@link IOsHost#installOs(ResourceLocation)}.
      *
      * <p>The reader must be linked to the computer over the COMPUTING peripheral cable system
      * (same way a monitor links). Only readers that are already auto-linked endpoints are

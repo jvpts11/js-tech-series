@@ -47,8 +47,7 @@ public interface IGatewayBridge {
     /**
      * Calls a method of a peripheral on the wire and gives back what it answered.
      *
-     * @throws dev.jstech.computers.gateway.GatewayRefusedException when there is no such peripheral or
-     *                                                              method, or it refused
+     * @throws GatewayRefusedException when there is no such peripheral or method, or it refused
      */
     Object call(String peripheral, String method, List<Object> arguments)
             throws GatewayRefusedException;

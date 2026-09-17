@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.program.ComputerSettings;
+import dev.jstech.computers.storage.StorageKey;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -26,7 +27,7 @@ import java.util.List;
  * @param usedItems       the network's used storage in item-equivalents
  * @param serverCount     the number of Servers on the network
  * @param crafts          the network's craft catalog (Crafting tab), with per-entry availability dots
- * @param favourites      the data this computer keeps starred, by {@link dev.jstech.computers.storage.StorageKey#id()}
+ * @param favourites      the data this computer keeps starred, by {@link StorageKey#id()}
  * @param capacityItems   the network's whole storage in item-equivalents, for the storage gauge
  * @param usedMb          the same use in megabytes, which is what the drives' labels say
  * @param capacityMb      the same whole in megabytes; counted by the drives, since what an item costs

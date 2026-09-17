@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.program.iql.IqlOperation;
 import java.util.List;
 
@@ -41,7 +42,7 @@ public interface ICliOperations {
      * from. The prompt says so by default; anything else that submits work says what it is, so a player
      * reading the log can tell a script's pull from one they made themselves.
      *
-     * @param origin what to put on the row, from {@link dev.jstech.computers.operation.MoveLabels}
+     * @param origin what to put on the row, from {@link MoveLabels}
      */
     default ICliComputer.OpResult select(final String item, final long quantity, final String origin) {
         return select(item, quantity);

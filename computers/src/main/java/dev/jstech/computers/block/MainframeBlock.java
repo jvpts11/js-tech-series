@@ -67,8 +67,7 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
     /**
      * The hardware era this Mainframe belongs to. It selects the block's skin and gates which MTX board
      * installs: only a board of this same era is accepted and counted in the build. The base is
-     * {@link dev.jstech.core.tier.HardwareEra#STANDARD}; the Vintage and Legacy variants
-     * override it.
+     * {@link HardwareEra#STANDARD}; the Vintage and Legacy variants override it.
      */
     public HardwareEra era() {
         return HardwareEra.STANDARD;

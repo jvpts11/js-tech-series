@@ -98,7 +98,7 @@ public interface IComputerTerminalHost {
     }
 
     /**
-     * The storage index's health as the id of an {@link dev.jstech.computers.operation.index.IndexHealth.State},
+     * The storage index's health as the id of an {@link IndexHealth.State},
      * so the terminal can show a permanent status strip. Hosts that own no index report OK.
      */
     default int indexHealthState() {
@@ -196,7 +196,7 @@ public interface IComputerTerminalHost {
 
     /**
      * The label an Operation's provenance shows for this computer acting through {@code program}, one of the
-     * {@link dev.jstech.computers.operation.MoveLabels} names: {@code "host (program)"}.
+     * {@link MoveLabels} names: {@code "host (program)"}.
      */
     default String originLabel(final String program) {
         return MoveLabels.via(hostname(), program);

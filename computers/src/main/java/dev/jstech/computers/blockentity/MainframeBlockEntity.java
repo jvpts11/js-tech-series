@@ -1169,8 +1169,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     }
 
     /**
-     * Same as {@link #submitNetworkCraft(dev.jstech.computers.storage.StorageKey, long,
-     * boolean, String)}, but plans with one extra pattern alongside the network's Recipe ROMs. A multi-stage
+     * Same as {@link #submitNetworkCraft(StorageKey, long, boolean, String)}, but plans with one extra
+     * pattern alongside the network's Recipe ROMs. A multi-stage
      * pipeline's bench stage carries its own embedded pattern, so it must craft even when that pattern was
      * never loaded into any Recipe ROM on the network.
      */
@@ -1280,7 +1280,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     }
 
     /**
-     * Runs a machine recipe: feeds a {@link dev.jstech.computers.crafting.ProcessingPattern}'s
+     * Runs a machine recipe: feeds a {@link ProcessingPattern}'s
      * inputs into the matching machine (declared on a Crafting Switch) and collects its outputs back into the
      * network, until {@code demand} of the primary output is produced or the pattern times out.
      */

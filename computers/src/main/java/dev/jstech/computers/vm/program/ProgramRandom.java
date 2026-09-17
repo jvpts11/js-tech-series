@@ -12,7 +12,7 @@ package dev.jstech.computers.vm.program;
  *
  * <p>A SplitMix64 generator: its whole state is one long, which is what lets a program put away with the world
  * carry on drawing the numbers it would have drawn had the world stayed up. A generator whose state cannot be read
- * back, as {@code java.util.Random}'s cannot, would start its sequence over on every load. Every program starts
+ * back, as the one the platform ships cannot, would start its sequence over on every load. Every program starts
  * from the same state, so one that never seeds draws the same numbers on every run, and one that seeds draws the
  * sequence that seed gives, on any machine.
  */

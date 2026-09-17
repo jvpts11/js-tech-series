@@ -31,6 +31,7 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.computers.program.iql.IqlSavedObject;
 import dev.jstech.computers.storage.DriveVolumes;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
@@ -204,7 +205,7 @@ public final class IqlPayloads {
 
     /**
      * Computes the available free weight on the given disk, mirroring the formula used in
-     * {@link dev.jstech.computers.os.IOsHost#installOs}:
+     * {@link IOsHost#installOs}:
      * capacity minus storage used minus filesystem used minus the OS footprint.
      */
     private static long computeDiskFreeWeight(
@@ -213,12 +214,10 @@ public final class IqlPayloads {
         if (!(disk.getItem() instanceof DiskItem diskItem)) {
             return 0L;
         }
-        final long capacityWeight = diskItem.spec().capacityItems()
-                * dev.jstech.computers.storage.StorageKey.MB_EQ_PER_ITEM;
+        final long capacityWeight = diskItem.spec().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
         final long storageUsed = DriveVolumes.usedWeight(disk);
         final long fsUsed = DiskFilesystem.filesWeight(disk);
-        final long osReserved = computer.reservedByOs()
-                * dev.jstech.computers.storage.StorageKey.MB_EQ_PER_ITEM;
+        final long osReserved = computer.reservedByOs() * StorageKey.MB_EQ_PER_ITEM;
         return Math.max(0L, capacityWeight - storageUsed - fsUsed - osReserved);
     }
 

@@ -16,6 +16,7 @@ import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaFormat;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.StableIds;
 import dev.jstech.core.peripheral.PeripheralCableType;
@@ -498,8 +499,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
         if (!(mediaStack.getItem() instanceof FormattedMediaItem item)) {
             return 0L;
         }
-        final long capacity = (long) item.format().capacityItems()
-                * dev.jstech.computers.storage.StorageKey.MB_EQ_PER_ITEM;
+        final long capacity = (long) item.format().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
         final long used = DiskFilesystem.filesWeight(mediaStack);
         return Math.max(0L, capacity - used);
     }

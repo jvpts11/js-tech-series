@@ -27,6 +27,7 @@ import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.storage.StorageKey;
 import java.util.Comparator;
 import java.util.Locale;
 import java.util.Optional;
@@ -119,7 +120,7 @@ public final class CraftManagerPayloads {
         PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level));
     }
 
-    /** Routes the Crafting Manager state payload to the open {@link dev.jstech.computers.client.os.CraftingManagerApp}. */
+    /** Routes the Crafting Manager state payload to the open {@link CraftingManagerApp}. */
     private static void handleCraftManagerState(final CraftManagerStatePayload payload, final Player player) {
         CraftingManagerApp.accept(payload);
     }
@@ -426,8 +427,7 @@ public final class CraftManagerPayloads {
         if (!(media.getItem() instanceof FormattedMediaItem fmt)) {
             return 0L;
         }
-        final long capWeight = (long) fmt.format().capacityItems()
-                * dev.jstech.computers.storage.StorageKey.MB_EQ_PER_ITEM;
+        final long capWeight = (long) fmt.format().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
         final long fsUsed = DiskFilesystem.filesWeight(media);
         return Math.max(0L, capWeight - fsUsed);
     }

@@ -15,6 +15,7 @@ import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,7 @@ import net.minecraft.world.item.ItemStack;
  *
  * <p>The three belong together because a machine passes through them in order and is only ever in one of
  * them, and they belong to the machine rather than to the screen, the way a copy onto a disk does
- * ({@link dev.jstech.computers.os.install.OsInstallRunner} beside this). Closing the monitor halfway through
+ * ({@link OsInstallRunner} beside this). Closing the monitor halfway through
  * no longer stops a machine coming up, opening it again shows how far it has got, and a machine nobody is
  * looking at comes up all the same, which is what a machine does.
  *

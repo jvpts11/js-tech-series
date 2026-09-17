@@ -50,6 +50,10 @@ class QualifiedNameRulesTest {
 
     private static final Pattern IMPORTED = Pattern.compile("\\s*import\\s+([A-Za-z0-9_.]+);");
 
+    /** What the documentation points a reader at: a link, or the type an exception tag names. */
+    private static final Pattern LINKED =
+            Pattern.compile("(?:\\{@link(?:plain)?|@throws|@see)\\s+([^}\\s]+)");
+
     private static final Pattern DECLARED =
             Pattern.compile("\\b(?:class|interface|enum|record)\\s+([A-Z][A-Za-z0-9_]*)");
 
@@ -74,6 +78,24 @@ class QualifiedNameRulesTest {
         assertEquals(List.of(), wrong, () -> String.join("\n", wrong));
     }
 
+    /*
+     * The same rule inside the documentation. A link is an import in disguise: javadoc resolves it against
+     * the file's imports, so writing the path out is the same omission as writing it out in code, and it
+     * renders as the whole path where the simple name would have read. The one exception the rule itself
+     * gives still applies, since a link to one of two types with the same name has to say which.
+     */
+    @Test
+    void javadoc_linksNoTypeByAPathWhereAnImportWouldDo() {
+        final Map<String, String> sources = mainSources();
+        final Map<String, Set<String>> beside = typesByPackage(sources);
+        final List<String> wrong = new ArrayList<>();
+        for (final Map.Entry<String, String> source : sources.entrySet()) {
+            wrong.addAll(wrongLinksIn(source.getKey(), source.getValue(), beside));
+        }
+
+        assertEquals(List.of(), wrong, () -> String.join("\n", wrong));
+    }
+
     @Test
     void sources_areReadFromEveryModuleOfTheSeries() {
         final Set<String> modules = new HashSet<>();
@@ -88,6 +110,35 @@ class QualifiedNameRulesTest {
     private static List<String> wrongIn(final String file, final String text,
                                         final Map<String, Set<String>> beside) {
         final String code = code(text);
+        final List<String> wrong = new ArrayList<>();
+        final Matcher found = QUALIFIED.matcher(code);
+        while (found.find()) {
+            if (!isTaken(found.group(2), found.group(1), text, code, beside)) {
+                wrong.add(file + ": " + found.group(1) + found.group(2)
+                        + " should be imported and written as " + found.group(2));
+            }
+        }
+        return wrong;
+    }
+
+    private static List<String> wrongLinksIn(final String file, final String text,
+                                             final Map<String, Set<String>> beside) {
+        final String code = code(text);
+        final List<String> wrong = new ArrayList<>();
+        final Matcher found = LINKED.matcher(text);
+        while (found.find()) {
+            final Matcher name = QUALIFIED.matcher(found.group(1));
+            if (name.lookingAt() && !isTaken(name.group(2), name.group(1), text, code, beside)) {
+                wrong.add(file + ": the documentation links " + name.group(1) + name.group(2)
+                        + ", which should be imported and linked as " + name.group(2));
+            }
+        }
+        return wrong;
+    }
+
+    /** Whether the simple name means something else in this file, which is the one reason to write a path. */
+    private static boolean isTaken(final String simple, final String where, final String text, final String code,
+                                   final Map<String, Set<String>> beside) {
         final Map<String, String> imported = new LinkedHashMap<>();
         for (final String line : text.split("\n")) {
             final Matcher match = IMPORTED.matcher(line);
@@ -102,23 +153,11 @@ class QualifiedNameRulesTest {
             declared.add(declares.group(1));
         }
         final String own = packageOf(text);
-        final Set<String> neighbours = beside.getOrDefault(own, Set.of());
-
-        final List<String> wrong = new ArrayList<>();
-        final Matcher found = QUALIFIED.matcher(code);
-        while (found.find()) {
-            final String where = found.group(1);
-            final String simple = found.group(2);
-            final boolean taken = declared.contains(simple)
-                    || imported.containsKey(simple) && !imported.get(simple).equals(where + simple)
-                    || neighbours.contains(simple) && !where.equals(own + ".")
-                    || JAVA_LANG.contains(simple) && !"java.lang.".equals(where)
-                    || Pattern.compile("\\b[A-Z][A-Za-z0-9_]*\\." + simple + "\\b").matcher(code).find();
-            if (!taken) {
-                wrong.add(file + ": " + where + simple + " should be imported and written as " + simple);
-            }
-        }
-        return wrong;
+        return declared.contains(simple)
+                || imported.containsKey(simple) && !imported.get(simple).equals(where + simple)
+                || beside.getOrDefault(own, Set.of()).contains(simple) && !where.equals(own + ".")
+                || JAVA_LANG.contains(simple) && !"java.lang.".equals(where)
+                || Pattern.compile("\\b[A-Z][A-Za-z0-9_]*\\." + simple + "\\b").matcher(code).find();
     }
 
     /** The text with everything that is not code blanked out, so nothing in a comment or a string counts. */

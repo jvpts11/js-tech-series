@@ -17,6 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -119,7 +120,7 @@ public class DesktopMenu extends AbstractContainerMenu {
     /**
      * Client-only: lays the 36 inventory slots out with their top-left at {@code (originX, originY)} in screen
      * space, using the standard 9-wide, 4-row grid with an 18px pitch (3 main rows then the hotbar). Because
-     * {@link net.minecraft.world.inventory.Slot}'s {@code x}/{@code y} are final, following a moving window means
+     * {@link Slot}'s {@code x}/{@code y} are final, following a moving window means
      * rebuilding each slot at its new spot; this only runs when the origin or viewport actually changed, so a
      * still window (and any in-progress drag) keeps its slot instances. The vanilla index is preserved, so server
      * sync (which is purely by slot index) is unaffected.
