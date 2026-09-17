@@ -9,7 +9,6 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.layout.FilesLayout;
 import dev.jstech.computers.machine.MachineListing;
-import dev.jstech.computers.operation.payload.CopyFilePayload;
 import dev.jstech.computers.operation.payload.DeleteFilePayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.EjectMediaPayload;
@@ -148,9 +147,8 @@ public final class FilesApp implements IDesktopApp {
     @Nullable
     private String pendingRename;
 
-    // The clipboard: paths waiting to be pasted, and whether the paste moves them.
-    private final List<String> clipboard = new ArrayList<>();
-    private boolean clipboardCut;
+    /** What has been cut or copied, waiting to be pasted. */
+    private final FileClipboard clipboard = new FileClipboard();
 
     // The row the context menu was opened on, for the actions that apply to a sweep.
     private int ctxRow = -1;
@@ -1750,23 +1748,25 @@ public final class FilesApp implements IDesktopApp {
     }
 
     private void cut(final Row r) {
-        clipboard.clear();
-        for (final Row s : selection(r)) {
-            if (s.file() != null && !s.file().readOnly()) {
-                clipboard.add(s.file().path());
-            }
-        }
-        clipboardCut = true;
+        clipboard.cut(takeable(r));
     }
 
     private void copy(final Row r) {
-        clipboard.clear();
+        clipboard.copy(takeable(r));
+    }
+
+    /**
+     * The paths an action can take from the rows it applies to. A read-only entry is a projection of what
+     * the computer holds rather than a file, so there is nothing to move and it is left where it is.
+     */
+    private List<String> takeable(final Row r) {
+        final List<String> out = new ArrayList<>();
         for (final Row s : selection(r)) {
             if (s.file() != null && !s.file().readOnly()) {
-                clipboard.add(s.file().path());
+                out.add(s.file().path());
             }
         }
-        clipboardCut = false;
+        return out;
     }
 
     /** The rows an action applies to: the sweep when the target is in it, else the target alone. */
@@ -1785,20 +1785,10 @@ public final class FilesApp implements IDesktopApp {
     }
 
     private void paste() {
-        if (clipboard.isEmpty() || readOnlyVolume()) {
+        if (readOnlyVolume()) {
             return;
         }
-        for (final String src : clipboard) {
-            if (clipboardCut) {
-                PacketDistributor.sendToServer(new MoveFilePayload(host, src, dir));
-            } else {
-                PacketDistributor.sendToServer(new CopyFilePayload(host, src, dir));
-            }
-        }
-        if (clipboardCut) {
-            clipboard.clear();
-        }
-        FilesApps.diskChanged();
+        clipboard.pasteInto(host, dir);
     }
 
     private void startRenameAt(final int index) {
