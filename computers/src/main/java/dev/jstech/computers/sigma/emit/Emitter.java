@@ -959,6 +959,32 @@ public final class Emitter {
         }
 
         /** Reads the place the index names: an array by its number, a list or a map by its own way in. */
+        /**
+         * The thing and the place an index names, each worked out once and put away.
+         *
+         * <p>Both sides of an index are expressions and either may do something on its way to a value. Reading
+         * what is in a place and writing what replaces it are one visit to ONE place, so naming it twice in the
+         * assembly is not a repetition but a second, different place: {@code n[Next()] += 5} would call Next
+         * twice and could read one element and write another. They are worked out once and pushed from where
+         * they were kept whenever the stack wants them underneath.
+         */
+        private Element keepElement(final IExpr.Index index) {
+            final ITypeSymbol of = Emitter.this.model.typeOf(index.target());
+            final int thing = this.hidden();
+            final int at = this.hidden();
+            this.value(index.target(), null);
+            this.emit(Opcode.STLOC, new IOperand.Slot(thing));
+            this.value(index.index(), null);
+            this.emit(Opcode.STLOC, new IOperand.Slot(at));
+            return new Element(thing, at, of);
+        }
+
+        /** Puts the thing and the place back on the stack, for the read or the write that follows. */
+        private void pushElement(final Element element) {
+            this.emit(Opcode.LDLOC, new IOperand.Slot(element.thing()));
+            this.emit(Opcode.LDLOC, new IOperand.Slot(element.at()));
+        }
+
         private void readElement(final ITypeSymbol target) {
             if (target instanceof ITypeSymbol.ArrayType) {
                 this.emit(Opcode.LDELEM);
@@ -1129,13 +1155,12 @@ public final class Emitter {
                                  final Opcode change, final IMemberSymbol member) {
             final int kept = this.hidden();
             final IExpr.Index index = place instanceof IExpr.Index at ? at : null;
-            final ITypeSymbol inside = index == null ? null : Emitter.this.model.typeOf(index.target());
+            Element inside = null;
             if (index != null) {
-                this.value(index.target(), null);
-                this.value(index.index(), null);
-                this.value(index.target(), null);
-                this.value(index.index(), null);
-                this.readElement(inside);
+                inside = this.keepElement(index);
+                this.pushElement(inside);
+                this.pushElement(inside);
+                this.readElement(inside.of());
             } else if (member != null) {
                 this.receiverOf(place);
                 this.emit(Opcode.DUP);
@@ -1153,8 +1178,8 @@ public final class Emitter {
                 this.emit(Opcode.DUP);
                 this.emit(Opcode.STLOC, new IOperand.Slot(kept));
             }
-            if (index != null) {
-                this.writeElement(inside);
+            if (inside != null) {
+                this.writeElement(inside.of());
             } else {
                 this.putBack(place, member);
             }
@@ -1486,20 +1511,19 @@ public final class Emitter {
 
         private void assignElement(final IExpr.Assign expression, final IExpr.Index index,
                                    final ITypeSymbol element) {
-            final ITypeSymbol target = Emitter.this.model.typeOf(index.target());
-            this.value(index.target(), null);
-            this.value(index.index(), null);
+            final Element place = this.keepElement(index);
+            this.pushElement(place);
             if (expression.operator() != Operator.ASSIGN) {
                 /*
-                 * What is already there is read for the combining, and the thing and the place are
-                 * named again to read it: the write below still wants its own pair underneath.
+                 * What is already there is read for the combining, and the pair is pushed again to read it:
+                 * the write below still wants its own underneath. The same pair both times, which is the
+                 * whole point of having kept it.
                  */
-                this.value(index.target(), null);
-                this.value(index.index(), null);
-                this.readElement(target);
+                this.pushElement(place);
+                this.readElement(place.of());
             }
             this.combine(expression, element);
-            this.writeElement(target);
+            this.writeElement(place.of());
         }
 
         /*
@@ -1610,6 +1634,10 @@ public final class Emitter {
      * moves into an object both of them read and write, so a change either makes is a change the
      * other sees. That is the one thing the language it borrows its shape from also promises.
      */
+    /** One place inside an array, a list or a map, as the slots holding the thing and the place in it. */
+    private record Element(int thing, int at, ITypeSymbol of) {
+    }
+
     private record Closure(String type, Map<IBinding.Variable, String> fields, boolean holdsThis) {
 
         /** The name of the field a closure keeps the object the method belonged to in. */

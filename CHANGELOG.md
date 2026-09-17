@@ -331,6 +331,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- An element written to and read in the same breath now names its place once. `n[Next()] += 5` and `n[Next()]++`
+  worked out the index twice, so anything the index did on its way to a number happened twice, and if it did not
+  give the same number both times the value was read from one element and written to another.
 - A server in a rack no longer sits owing a power-on self-test that nothing ever runs. The flag was there and
   nothing carried it along, so the only thing that could end one was a screen open on that bay reporting it done:
   a rack nobody was looking at never came up, and opening the monitor was what made a machine start.

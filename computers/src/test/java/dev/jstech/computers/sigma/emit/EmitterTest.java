@@ -310,6 +310,43 @@ class EmitterTest {
         assertTrue(broken.get(entered + 3).startsWith("br "), broken.get(entered + 3));
     }
 
+    /** How many times the listing calls that method anywhere in it. */
+    private static int callsTo(final String listing, final String name) {
+        int found = 0;
+        for (final String raw : listing.split("\n", -1)) {
+            if (raw.strip().startsWith("call ") && raw.contains("." + name + "(")) {
+                found++;
+            }
+        }
+        return found;
+    }
+
+    /**
+     * Where a place is written is worked out once, however the place was written down.
+     *
+     * <p>An index is an expression like any other and may do something on its way to a number. Reading what is
+     * there and writing what replaces it are one visit to one place, so whatever named that place runs once.
+     */
+    @Test
+    void emit_worksOutAnIndexOnceWhenTheElementIsBothReadAndWritten() {
+        final String listing = compile(
+                "    int calls;\n"
+                        + "    int Next() { calls = calls + 1; return 0; }\n"
+                        + "    void M() { int[] n = new int[4]; n[Next()] += 5; }\n");
+        assertEquals(1, callsTo(listing, "Next"),
+                () -> "the index was worked out more than once:\n" + String.join("\n", bodyOf(listing, "M")));
+    }
+
+    @Test
+    void emit_worksOutAnIndexOnceWhenTheElementIsStepped() {
+        final String listing = compile(
+                "    int calls;\n"
+                        + "    int Next() { calls = calls + 1; return 0; }\n"
+                        + "    void M() { int[] n = new int[4]; n[Next()]++; }\n");
+        assertEquals(1, callsTo(listing, "Next"),
+                () -> "the index was worked out more than once:\n" + String.join("\n", bodyOf(listing, "M")));
+    }
+
     /**
      * A script standing on the base class compiles to a listing a machine takes.
      *
