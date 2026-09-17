@@ -10,6 +10,7 @@ package dev.jstech.computers.vm.program;
 import dev.jstech.computers.vm.system.IPureContext;
 import dev.jstech.computers.vm.system.IPureFunction;
 import dev.jstech.computers.vm.system.IntrinsicRegistry;
+import dev.jstech.computers.vm.system.IntrinsicTypes;
 import java.util.Locale;
 
 /** What the language does with numbers: the arithmetic of Math, reading a value out of text, and counting ticks. */
@@ -17,7 +18,7 @@ final class NumberFunctions {
 
     private static final String MATH = "Math";
     private static final String CONVERT = "Convert";
-    private static final String TEXT = "string";
+    private static final String TEXT = IntrinsicTypes.TEXT;
     private static final String WHOLE = "int";
     private static final String REAL = "double";
     private static final String FLAG = "bool";

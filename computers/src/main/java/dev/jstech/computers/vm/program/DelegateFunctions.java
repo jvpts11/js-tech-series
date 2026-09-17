@@ -9,6 +9,7 @@ package dev.jstech.computers.vm.program;
 
 import dev.jstech.computers.vm.system.IPureContext;
 import dev.jstech.computers.vm.system.IntrinsicRegistry;
+import dev.jstech.computers.vm.system.IntrinsicTypes;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,7 +21,7 @@ import java.util.List;
  */
 final class DelegateFunctions {
 
-    private static final String DELEGATE = "Delegate";
+    private static final String DELEGATE = IntrinsicTypes.DELEGATE;
 
     private DelegateFunctions() {
     }

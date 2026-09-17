@@ -10,6 +10,7 @@ package dev.jstech.computers.vm.program;
 import dev.jstech.computers.vm.system.IPureContext;
 import dev.jstech.computers.vm.system.IPureFunction;
 import dev.jstech.computers.vm.system.IntrinsicRegistry;
+import dev.jstech.computers.vm.system.IntrinsicTypes;
 
 /**
  * What the language does with its two collections, a list and a map.
@@ -19,8 +20,8 @@ import dev.jstech.computers.vm.system.IntrinsicRegistry;
  */
 final class CollectionFunctions {
 
-    private static final String LIST = "List";
-    private static final String MAP = "Map";
+    private static final String LIST = IntrinsicTypes.LIST;
+    private static final String MAP = IntrinsicTypes.MAP;
     private static final String NOTHING = "void";
     private static final String FLAG = "bool";
     private static final String WHOLE = "int";

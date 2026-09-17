@@ -9,13 +9,14 @@ package dev.jstech.computers.vm.program;
 
 import dev.jstech.computers.vm.system.IPureContext;
 import dev.jstech.computers.vm.system.IntrinsicRegistry;
+import dev.jstech.computers.vm.system.IntrinsicTypes;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
 /** What the language does with text: joining it, cutting it, searching it and changing it. */
 final class TextFunctions {
 
-    private static final String TEXT = "string";
+    private static final String TEXT = IntrinsicTypes.TEXT;
 
     private TextFunctions() {
     }

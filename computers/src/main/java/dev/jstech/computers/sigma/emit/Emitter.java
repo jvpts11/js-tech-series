@@ -28,6 +28,7 @@ import dev.jstech.computers.vm.listing.AsmType;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Instruction;
 import dev.jstech.computers.vm.listing.Opcode;
+import dev.jstech.computers.vm.system.IntrinsicTypes;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -51,8 +52,13 @@ import java.util.Set;
 public final class Emitter {
 
     /** What the runtime provides for joining and parting delegates, and for putting text together. */
-    private static final String DELEGATE = "Delegate";
-    private static final String STRING = "string";
+    /*
+     * The machine's own types, named from the one place that names them. The compiler writes a call to one of
+     * these into a listing and the machine looks it up by the same name, so a second spelling here would be a
+     * listing that loads and a call that nothing answers.
+     */
+    private static final String DELEGATE = IntrinsicTypes.DELEGATE;
+    private static final String STRING = IntrinsicTypes.TEXT;
 
     private final SemanticModel model;
     private final TypeRules rules;
@@ -1635,20 +1641,9 @@ public final class Emitter {
         }
     }
 
-    // what a lambda keeps
-
-    /**
-     * The object a lambda keeps the method's variables in.
-     *
-     * <p>A lambda that uses a variable of the method around it does not take a copy: the variable
-     * moves into an object both of them read and write, so a change either makes is a change the
-     * other sees. That is the one thing the language it borrows its shape from also promises.
-     */
     /** One place inside an array, a list or a map, as the slots holding the thing and the place in it. */
     private record Element(int thing, int at, ITypeSymbol of) {
     }
-
-
 
     private boolean leavesAValue(final IExpr expression) {
         final ITypeSymbol type = this.model.typeOf(expression);
