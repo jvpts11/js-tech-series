@@ -7,6 +7,17 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### Added
+- A class can now say which of its methods another class may replace, with `virtual`, `override` and `abstract`.
+  A method marked `virtual` may be replaced by one below it written with `override`, and that one may be replaced
+  in its turn without anyone writing `virtual` again. A method marked `abstract` has no body at all, only an
+  `abstract` class may hold one, such a class cannot be made with `new`, and the first class below it that can be
+  made has to give every one of them a body. Giving an interface the method it asked for needs no word, since that
+  replaces nothing. `static` methods, constructors and everything in a `struct` take none of the three.
+- Writing a method with the name and parameters of one a base class already has is now an error rather than a
+  silent replacement. Either the one above is `virtual` and the new one wanted `override`, or it is not and the two
+  are a collision; the message says which, and says what to add. There is no way to hide a base method. Which
+  method runs has always been decided by what the object really is, and still is: what changed is that replacing
+  one has to be written down, so nothing already compiled behaves differently.
 - F12 during the power-on self-test opens a one-time boot menu: every disk with a system and every drive holding
   something bootable, picked with the arrow keys and booted with Enter. What is picked there is for that boot only,
   and the boot order saved in the firmware setup is left exactly as it was.

@@ -39,7 +39,8 @@ import java.util.Set;
 public final class Parser {
 
     private static final Set<TokenKind> MODIFIERS = EnumSet.of(
-            TokenKind.PUBLIC, TokenKind.PRIVATE, TokenKind.PROTECTED, TokenKind.STATIC, TokenKind.READONLY);
+            TokenKind.PUBLIC, TokenKind.PRIVATE, TokenKind.PROTECTED, TokenKind.STATIC, TokenKind.READONLY,
+            TokenKind.VIRTUAL, TokenKind.OVERRIDE, TokenKind.ABSTRACT);
 
     private static final Set<TokenKind> BUILT_IN_TYPES = EnumSet.of(
             TokenKind.INT, TokenKind.LONG, TokenKind.FLOAT, TokenKind.DOUBLE,
@@ -532,6 +533,9 @@ public final class Parser {
                 case PRIVATE -> IDecl.Modifier.PRIVATE;
                 case PROTECTED -> IDecl.Modifier.PROTECTED;
                 case STATIC -> IDecl.Modifier.STATIC;
+                case VIRTUAL -> IDecl.Modifier.VIRTUAL;
+                case OVERRIDE -> IDecl.Modifier.OVERRIDE;
+                case ABSTRACT -> IDecl.Modifier.ABSTRACT;
                 default -> IDecl.Modifier.READONLY;
             };
             if (!modifiers.add(modifier)) {

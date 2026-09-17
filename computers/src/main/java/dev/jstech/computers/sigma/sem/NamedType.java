@@ -51,6 +51,8 @@ public final class NamedType implements ITypeSymbol {
     private final List<NamedType> interfaces = new ArrayList<>();
     private NamedType base;
     private IMemberSymbol.MethodSymbol invoke;
+    /** Declared abstract: a type that stands only to be derived from, given its name in the second pass. */
+    private boolean abstractType;
 
     public NamedType(final String name, final Kind kind, final List<String> typeParameters, final boolean builtIn) {
         this.name = name;
@@ -104,6 +106,15 @@ public final class NamedType implements ITypeSymbol {
     /** Which of the four kinds this is. */
     public Kind kind() {
         return this.kind;
+    }
+
+    /** Whether this type is declared abstract, so it stands only to be derived from and never made. */
+    public boolean isAbstract() {
+        return this.abstractType;
+    }
+
+    public void setAbstract(final boolean value) {
+        this.abstractType = value;
     }
 
     /** The names of the arguments this type takes, empty for everything but the built-in collections. */

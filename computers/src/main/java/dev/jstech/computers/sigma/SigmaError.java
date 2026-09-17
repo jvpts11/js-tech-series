@@ -86,6 +86,15 @@ public enum SigmaError {
     NEEDS_USING("S3040", "'%s' is in %s; add 'using %s.*;' or 'using %s.%s;' at the top of the file"),
     STRUCT_NO_BASE("S3041", "a struct can implement interfaces but stands on no class, and '%s' is a class"),
     CANNOT_LOCK("S3042", "only an object can be locked, not '%s'"),
+    NEEDS_OVERRIDE("S3043", "'%s' is already on '%s', so write it with override to replace it"),
+    CANNOT_OVERRIDE("S3044", "'%s' on '%s' is not virtual, so nothing can replace it; mark it virtual there"),
+    OVERRIDE_WITHOUT_BASE("S3045", "'%s' is written with override but nothing above '%s' has it"),
+    ABSTRACT_NEEDS_ABSTRACT_CLASS("S3046", "'%s' has no body, so '%s' has to be declared abstract"),
+    ABSTRACT_WITH_BODY("S3047", "'%s' is abstract, so it is written with a semicolon and no body"),
+    MISSING_BODY("S3048", "'%s' has no body, so it is written with abstract"),
+    ABSTRACT_NOT_IMPLEMENTED("S3049", "'%s' is not abstract, so it has to give '%s' a body"),
+    CANNOT_CREATE_ABSTRACT("S3050", "'%s' is abstract, so it cannot be made with new"),
+    MODIFIER_NOT_ALLOWED("S3051", "'%s' cannot be written with %s"),
 
     // A4001 to A4010 are the listing's own problems, reported by reading one back (ListingError).
     NOT_YET_BUILT("S4011", "%s is not built yet"),

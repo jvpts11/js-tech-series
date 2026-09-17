@@ -20,6 +20,25 @@ A program is one of two shapes, and says which by how it is written:
 
 Every file starts with the namespaces it uses (`using System.IO.*;`) and its own (`namespace Mine;`).
 
+## Classes standing on other classes
+
+A class may stand on one other class and on as many interfaces as it likes, written after a colon.
+Which method runs is always decided by what the object really is, not by the name it is held under,
+and a class that replaces one of its base's methods has to say so:
+
+- `virtual` on a method means a class below may put its own in its place.
+- `override` on a method means it is taking the place of a `virtual` one above it. An `override` may
+  itself be replaced further down, without writing `virtual` again.
+- Writing a method that has the name and parameters of a base method, without `override`, is an error:
+  either the one above is `virtual` and you meant `override`, or it is not and the two are a collision
+  rather than a replacement. There is no way to hide a base method.
+- `abstract` on a method leaves it without a body, for the classes below to fill in; only an `abstract`
+  class may hold one, an `abstract` class cannot be made with `new`, and the first class below it that
+  can be made has to give every one of them a body.
+- Giving an interface the method it asked for is not replacing anything, so it needs no word.
+- `static` methods, constructors and everything in a `struct` take none of the three: a struct is
+  copied rather than pointed at, so there is no object whose real type could decide.
+
 ## The budget and the clock
 
 A program never blocks the game. Each tick a machine is worth a number of instructions, its credits:

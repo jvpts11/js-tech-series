@@ -143,6 +143,7 @@ public final class SigmaSemantics {
         declarations.declare(units);
         declarations.fill();
         declarations.checkInterfaces();
+        declarations.checkOverrides();
         new BodyChecker(builtIns, rules, declarations, bag, model).check(model.declaredTypes());
         if (wholeProgram) {
             bag.setFile(sources.isEmpty() ? "" : sources.getFirst().name());

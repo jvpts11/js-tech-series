@@ -596,6 +596,14 @@ public final class BodyChecker {
             this.checkArguments(created.arguments());
             return this.rules.isError(type) ? ITypeSymbol.Special.ERROR : type;
         }
+        /*
+         * An abstract class is a shape for others to fill, and part of it has no body at all, so there is
+         * nothing to make. The object still has to be some class further down that answered every one.
+         */
+        if (named.isAbstract()) {
+            this.report(created.line(), created.column(),
+                    SigmaError.CANNOT_CREATE_ABSTRACT, type.describe());
+        }
         this.callConstructor(named, type, created.arguments(), created);
         return type;
     }

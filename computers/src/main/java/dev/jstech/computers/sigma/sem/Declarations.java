@@ -48,6 +48,8 @@ public final class Declarations {
     private final Map<NamedType, Scope> scopes = new LinkedHashMap<>();
     /** The type each nested type was declared inside, whose other nested types it may name plainly. */
     private final Map<NamedType, NamedType> outers = new LinkedHashMap<>();
+    /** Where each method was written, so the override pass can report on the right line. */
+    private final Map<IMemberSymbol.MethodSymbol, INode> methodNodes = new LinkedHashMap<>();
     /** The type being filled, whose scope decides what a bare name means. */
     private NamedType current;
 
@@ -278,6 +280,7 @@ public final class Declarations {
     }
 
     private void fillClass(final NamedType type, final IDecl.ClassDecl declaration) {
+        type.setAbstract(declaration.modifiers().contains(IDecl.Modifier.ABSTRACT));
         for (final TypeRef base : declaration.bases()) {
             final ITypeSymbol resolved = this.resolve(base);
             if (!(resolved instanceof NamedType named)) {
@@ -356,6 +359,12 @@ public final class Declarations {
             }
         }
         type.addMember(method);
+        /*
+         * Where the method was written, kept here rather than on the symbol. The override rules are checked in a
+         * pass of their own once every type is filled in, and by then only the symbols are left; resolving the
+         * declaration again to find its line would report every unknown type in it a second time.
+         */
+        this.methodNodes.put(method, declaration);
     }
 
     private IMemberSymbol.MethodSymbol methodOf(final NamedType type, final IDecl.MethodDecl method) {
@@ -479,6 +488,146 @@ public final class Declarations {
                 }
             }
         }
+    }
+
+    /**
+     * Reports every way a method and the one it stands over disagree about replacing it.
+     *
+     * <p>Until now a method that happened to carry an inherited one's name and parameters simply took its place,
+     * silently, and the object's real type decided which ran. That is still what happens at run time, and it is
+     * why nothing here changes a listing: what changes is that the replacement has to be written down. A method
+     * that replaces one says {@code override}; the one underneath says {@code virtual} or {@code abstract}, or
+     * there is nothing to replace and hiding it by accident is refused outright rather than obeyed.
+     *
+     * <p>Only the chain of base CLASSES is walked. Giving an interface the method it asked for is not replacing
+     * anything, so it needs no word, which is what keeps every program written before this one compiling.
+     */
+    public void checkOverrides() {
+        for (final Map.Entry<NamedType, IDecl.ITypeDecl> entry : this.sources.entrySet()) {
+            final NamedType type = entry.getKey();
+            if (!type.kind().classLike()) {
+                continue;
+            }
+            this.diagnostics.setFile(this.files.get(type));
+            for (final IMemberSymbol member : type.members()) {
+                if (member instanceof IMemberSymbol.MethodSymbol method
+                        && this.methodNodes.get(method) instanceof IDecl.MethodDecl written) {
+                    this.checkOneOverride(type, method, written);
+                }
+            }
+            this.checkAbstractsAnswered(type, entry.getValue());
+        }
+    }
+
+    private void checkOneOverride(final NamedType type, final IMemberSymbol.MethodSymbol method,
+                                  final IDecl.MethodDecl written) {
+        final Set<IDecl.Modifier> words = method.modifiers();
+        final boolean overrides = words.contains(IDecl.Modifier.OVERRIDE);
+        final boolean virtual = words.contains(IDecl.Modifier.VIRTUAL);
+        final boolean isAbstract = words.contains(IDecl.Modifier.ABSTRACT);
+        /*
+         * A static method belongs to the type and a struct is copied rather than pointed at, so neither has
+         * anything for these words to mean: there is no object whose real type could decide.
+         */
+        if (method.isStatic() || type.kind() == NamedType.Kind.STRUCT) {
+            final IDecl.Modifier offender = virtual ? IDecl.Modifier.VIRTUAL
+                    : overrides ? IDecl.Modifier.OVERRIDE : isAbstract ? IDecl.Modifier.ABSTRACT : null;
+            if (offender != null) {
+                this.diagnostics.error(written.line(), written.column(), SigmaError.MODIFIER_NOT_ALLOWED,
+                        method.describe(), offender.text());
+            }
+            return;
+        }
+        this.checkBody(type, method, written, isAbstract);
+        final IMemberSymbol.MethodSymbol above = this.methodAbove(type, method);
+        if (above == null) {
+            if (overrides) {
+                this.diagnostics.error(written.line(), written.column(),
+                        SigmaError.OVERRIDE_WITHOUT_BASE, method.describe(), type.name());
+            }
+            return;
+        }
+        if (!replaceable(above)) {
+            this.diagnostics.error(written.line(), written.column(),
+                    SigmaError.CANNOT_OVERRIDE, method.describe(), above.owner().name());
+        } else if (!overrides) {
+            this.diagnostics.error(written.line(), written.column(),
+                    SigmaError.NEEDS_OVERRIDE, method.describe(), above.owner().name());
+        }
+    }
+
+    /** A method with no body is abstract and lives in an abstract class; one with the word has no body. */
+    private void checkBody(final NamedType type, final IMemberSymbol.MethodSymbol method,
+                           final IDecl.MethodDecl written, final boolean isAbstract) {
+        if (isAbstract) {
+            if (written.body() != null) {
+                this.diagnostics.error(written.line(), written.column(),
+                        SigmaError.ABSTRACT_WITH_BODY, method.describe());
+            }
+            if (!type.isAbstract()) {
+                this.diagnostics.error(written.line(), written.column(),
+                        SigmaError.ABSTRACT_NEEDS_ABSTRACT_CLASS, method.describe(), type.name());
+            }
+        } else if (written.body() == null) {
+            this.diagnostics.error(written.line(), written.column(),
+                    SigmaError.MISSING_BODY, method.describe());
+        }
+    }
+
+    /** A class that can be made has to answer every abstract method it inherits. */
+    private void checkAbstractsAnswered(final NamedType type, final IDecl.ITypeDecl declaration) {
+        if (type.isAbstract()) {
+            return;
+        }
+        for (NamedType above = type.base(); above != null; above = above.base()) {
+            for (final IMemberSymbol member : above.members()) {
+                if (member instanceof IMemberSymbol.MethodSymbol method
+                        && method.modifiers().contains(IDecl.Modifier.ABSTRACT)
+                        && !this.answered(type, above, method)) {
+                    this.diagnostics.error(declaration.line(), declaration.column(),
+                            SigmaError.ABSTRACT_NOT_IMPLEMENTED, type.name(), method.describe());
+                }
+            }
+        }
+    }
+
+    /** Whether some type between {@code type} and {@code owner} gives {@code wanted} a body. */
+    private boolean answered(final NamedType type, final NamedType owner,
+                             final IMemberSymbol.MethodSymbol wanted) {
+        for (NamedType at = type; at != null && at != owner; at = at.base()) {
+            for (final IMemberSymbol member : at.members()) {
+                if (member instanceof IMemberSymbol.MethodSymbol candidate
+                        && !candidate.modifiers().contains(IDecl.Modifier.ABSTRACT)
+                        && candidate.name().equals(wanted.name())
+                        && this.sameParameters(candidate, wanted)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** The nearest method of the same shape on a base class, or nothing when this method stands alone. */
+    private IMemberSymbol.MethodSymbol methodAbove(final NamedType type,
+                                                   final IMemberSymbol.MethodSymbol method) {
+        for (NamedType above = type.base(); above != null; above = above.base()) {
+            for (final IMemberSymbol member : above.members()) {
+                if (member instanceof IMemberSymbol.MethodSymbol candidate
+                        && !candidate.isStatic()
+                        && candidate.name().equals(method.name())
+                        && this.sameParameters(candidate, method)) {
+                    return candidate;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Whether something may stand in this method's place: it said so, or it is already standing in one. */
+    private static boolean replaceable(final IMemberSymbol.MethodSymbol method) {
+        return method.modifiers().contains(IDecl.Modifier.VIRTUAL)
+                || method.modifiers().contains(IDecl.Modifier.ABSTRACT)
+                || method.modifiers().contains(IDecl.Modifier.OVERRIDE);
     }
 
     private boolean hasMethod(final NamedType type, final IMemberSymbol.MethodSymbol required) {

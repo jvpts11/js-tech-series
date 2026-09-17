@@ -361,6 +361,118 @@ class SigmaSemanticsTest {
     }
 
     @Test
+    void check_letsAVirtualMethodBeReplacedByAnOverride() {
+        assertClean(check("class Base { public virtual int Value() { return 1; } } "
+                + "class Below : Base { public override int Value() { return 2; } } "
+                + "class M { static void Main() { Base b = new Below(); int v = b.Value(); } }"));
+    }
+
+    @Test
+    void check_refusesReplacingAMethodWithoutSayingSo() {
+        assertReports("S3043", check("class Base { public virtual int Value() { return 1; } } "
+                + "class Below : Base { public int Value() { return 2; } } "
+                + "class M { static void Main() { } }"));
+    }
+
+    @Test
+    void check_refusesHidingAMethodThatWasNeverVirtual() {
+        assertReports("S3044", check("class Base { public int Value() { return 1; } } "
+                + "class Below : Base { public int Value() { return 2; } } "
+                + "class M { static void Main() { } }"));
+    }
+
+    @Test
+    void check_refusesOverrideOnTopOfANonVirtualMethod() {
+        assertReports("S3044", check("class Base { public int Value() { return 1; } } "
+                + "class Below : Base { public override int Value() { return 2; } } "
+                + "class M { static void Main() { } }"));
+    }
+
+    @Test
+    void check_refusesOverrideWithNothingUnderneath() {
+        assertReports("S3045", check("class Base { } "
+                + "class Below : Base { public override int Value() { return 2; } } "
+                + "class M { static void Main() { } }"));
+    }
+
+    /** An override is itself replaceable, so a chain of three goes on without anybody writing virtual again. */
+    @Test
+    void check_letsAnOverrideBeReplacedInItsTurn() {
+        assertClean(check("class Top { public virtual int Value() { return 1; } } "
+                + "class Middle : Top { public override int Value() { return 2; } } "
+                + "class Bottom : Middle { public override int Value() { return 3; } } "
+                + "class M { static void Main() { } }"));
+    }
+
+    /** Giving an interface the method it asked for is not replacing anything, so it needs no word. */
+    @Test
+    void check_asksForNoOverrideWhenAnInterfaceIsBeingAnswered() {
+        assertClean(check("interface IThing { int Value(); } "
+                + "class Below : IThing { public int Value() { return 2; } } "
+                + "class M { static void Main() { } }"));
+    }
+
+    @Test
+    void check_letsAnAbstractClassLeaveAMethodToItsChildren() {
+        assertClean(check("abstract class Shape { public abstract int Sides(); } "
+                + "class Square : Shape { public override int Sides() { return 4; } } "
+                + "class M { static void Main() { Shape s = new Square(); int n = s.Sides(); } }"));
+    }
+
+    @Test
+    void check_refusesAnAbstractMethodInAClassThatIsNot() {
+        assertReports("S3046", check("class Shape { public abstract int Sides(); } "
+                + "class M { static void Main() { } }"));
+    }
+
+    @Test
+    void check_refusesAnAbstractMethodWithABody() {
+        assertReports("S3047", check("abstract class Shape { public abstract int Sides() { return 0; } } "
+                + "class M { static void Main() { } }"));
+    }
+
+    @Test
+    void check_refusesAMethodWithNoBodyThatIsNotAbstract() {
+        assertReports("S3048", check("class Shape { public int Sides(); } "
+                + "class M { static void Main() { } }"));
+    }
+
+    @Test
+    void check_refusesAClassThatLeavesAnAbstractMethodUnanswered() {
+        assertReports("S3049", check("abstract class Shape { public abstract int Sides(); } "
+                + "class Blob : Shape { } "
+                + "class M { static void Main() { } }"));
+    }
+
+    /** One abstract class may leave another's work to the class below it, since neither is ever made. */
+    @Test
+    void check_letsAnAbstractClassPassTheWorkDown() {
+        assertClean(check("abstract class Shape { public abstract int Sides(); } "
+                + "abstract class Round : Shape { } "
+                + "class Circle : Round { public override int Sides() { return 0; } } "
+                + "class M { static void Main() { } }"));
+    }
+
+    @Test
+    void check_refusesMakingAnAbstractClass() {
+        assertReports("S3050", check("abstract class Shape { public abstract int Sides(); } "
+                + "class M { static void Main() { Shape s = new Shape(); } }"));
+    }
+
+    @Test
+    void check_refusesAVirtualStaticMethod() {
+        assertReports("S3051", check("class M { public static virtual int Value() { return 1; } "
+                + "static void Main() { } }"));
+    }
+
+    /** A struct is copied rather than pointed at, so there is no object whose real type could decide. */
+    @Test
+    void check_refusesAVirtualMethodOnAStruct() {
+        assertReports("S3051", check("struct Point { public virtual int X() { return 1; } } "
+                + "class M { static void Main() { } }"));
+    }
+
+    @Test
     void check_namesTheFileEachMessageCameFrom() {
         final SigmaSemantics.Result result = SigmaSemantics.check(List.of(
                 new SourceFile("First.sgs", PRELUDE + "class A { void M() { nope(); } }"),
