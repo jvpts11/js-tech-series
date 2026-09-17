@@ -8,7 +8,6 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.MainframeStructure;
 import dev.jstech.computers.crafting.CraftPlanner;
@@ -37,9 +36,8 @@ import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.network.ConnectivityIndex;
+import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.FailoverRole;
-import dev.jstech.core.network.MainframeNode;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.operation.OperationDispatch;
@@ -47,19 +45,15 @@ import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.operation.IOperationTask;
 import dev.jstech.core.operation.OperationStatistics;
 import dev.jstech.core.operation.SelfTestOperationTask;
-import dev.jstech.core.persistence.NetworkRegistrySavedData;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
-import dev.jstech.core.uuid.NetworkUuidState;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -71,7 +65,6 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.Connection;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.inventory.ContainerData;
@@ -144,8 +137,6 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
      * hardware slots are filled, which disks carry a system, and the machine's own condition.
      */
 
-    /* Every side, held once: SIDES hands back a fresh copy of the array on every call. */
-    private static final Direction[] SIDES = Direction.values();
     private static final int FLAG_RUNNING = 1;
     private static final int FLAG_BUILD_VALID = 2;
     private static final int FLAG_NETWORKED = 4;
@@ -329,10 +320,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         clientFlags = tag.getInt("VisualFlags");
     }
 
-    private boolean networkConflict;
-    private boolean failoverEnabled;
-    private FailoverRole failoverRole = FailoverRole.NONE;
-    private int failoverWaitTicks;
+    /** Which network this Mainframe owns, who else is claiming it, and whose turn it is to run it. */
+    private final MainframeNetworking networking = new MainframeNetworking(this);
     @Nullable
     private NetworkUuid nativeNetworkUuid;
 
@@ -463,19 +452,19 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
          */
         tickSigma();
         if (!isRunning()) {
-            leaveNetwork(level);
+            networking.leave(level);
             closeDispatch();
             return;
         }
         // Whatever the machine is setting up copies on while it is up, network or no network.
         SetupRunner.tick(this, level, worldPosition);
-        updateNetwork(level);
-        if (networkConflict) {
+        networking.update(level);
+        if (networking.conflicted()) {
             // A contested network collapses: discard every in-flight Operation (its progress is
             closeDispatch();
             return;
         }
-        if (failoverRole == FailoverRole.PASSIVE) {
+        if (networking.standingBy()) {
             /*
              * A Passive standby holds no dispatcher and runs no Operations until it is promoted; the
              * Active member owns the network. closeDispatch settles anything left from a demotion.
@@ -531,115 +520,6 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         // No-op: ownership teardown runs through unregister(NetworkSystem)/onBroken(), not this hook.
     }
 
-    private void updateNetwork(final ServerLevel level) {
-        final NetworkSystem system = NetworkSystem.get(level);
-        final ConnectivityIndex index = system.connectivity();
-        final Set<Long> cables = adjacentCables(level);
-        /*
-         * Bridge every cable run this Mainframe touches into one segment, so the topology connected
-         * through the Mainframe is a single network.
-         */
-        index.bridge(cables);
-
-        // The network already laid on a touched cable, if any, a primary's network to join, or an
-        NetworkUuid adopted = null;
-        for (final long cable : cables) {
-            final Optional<NetworkUuid> segment = index.networkOf(cable);
-            if (segment.isPresent()) {
-                adopted = segment.get();
-                break;
-            }
-        }
-
-        final List<MainframeBlockEntity> peers = otherRunningMainframesOnSegment(level, index, cables);
-        final boolean primaryPeerPresent = peers.stream().anyMatch(peer -> !peer.failoverEnabled);
-
-        if (!failoverEnabled) {
-            failoverRole = FailoverRole.NONE;
-            failoverWaitTicks = 0;
-            final NetworkUuid effective = adopted != null ? adopted : nativeNetworkUuid();
-            if (adopted == null) {
-                NetworkRegistrySavedData.get(level).addNetwork(effective);
-            }
-            setConflict(level, primaryPeerPresent);
-            if (primaryPeerPresent) {
-                // Two primaries on one network: collapse it until they are physically separated.
-                NetworkRegistrySavedData.get(level).setNetworkState(effective, NetworkUuidState.CONFLICTED);
-                attachment().attachTo(null);
-                unregister(system);
-                return;
-            }
-            orchestrate(level, system, index, cables, effective);
-            return;
-        }
-
-        setConflict(level, false); // a standby never holds the network in conflict on its own
-        if (adopted == null) {
-            // Not on any network yet: dormant until it reaches a primary's network.
-            failoverRole = FailoverRole.PASSIVE;
-            failoverWaitTicks = 0;
-            attachment().attachTo(null);
-            unregister(system);
-            return;
-        }
-        if (primaryPeerPresent) {
-            // The primary owns and orchestrates this network; the standby merely stands by on it.
-            failoverRole = FailoverRole.PASSIVE;
-            failoverWaitTicks = 0;
-            attachment().attachTo(adopted);
-            unregister(system);
-            return;
-        }
-        /*
-         * No primary present, so it is gone and the network is orphaned. The lowest-positioned standby
-         * takes that SAME network over after the takeover delay; the rest keep standing by.
-         */
-        final boolean superiorStandbyPresent = peers.stream()
-                .anyMatch(peer -> peer.worldPosition.asLong() < worldPosition.asLong());
-        updateFailoverRole(superiorStandbyPresent);
-        if (failoverRole == FailoverRole.PASSIVE) {
-            attachment().attachTo(adopted);
-            unregister(system);
-            return;
-        }
-        orchestrate(level, system, index, cables, adopted);
-    }
-
-    private void orchestrate(final ServerLevel level, final NetworkSystem system, final ConnectivityIndex index,
-                             final Set<Long> cables, final NetworkUuid effective) {
-        // A cable whose BlockEntity has not registered yet (mid chunk-load) is skipped, picked up later.
-        for (final long cable : cables) {
-            if (index.contains(cable) && !effective.equals(index.networkOf(cable).orElse(null))) {
-                index.assignUuid(cable, effective);
-            }
-        }
-        // The cables it touches tell the index, when one of them goes, whether the rest still reaches this Mainframe.
-        index.anchor(worldPosition.asLong(), effective, cables);
-        attachment().attachTo(effective);
-        // Restore the network from any prior CONFLICTED or ORPHANED state, since adopting it revives it.
-        NetworkRegistrySavedData.get(level).setNetworkState(effective, NetworkUuidState.ACTIVE);
-        system.registerMainframe(snapshot(effective));
-        system.recordMainframePosition(effective, worldPosition.asLong());
-        attachment().registeredAs(effective);
-    }
-
-    private void updateFailoverRole(final boolean superiorPresent) {
-        if (superiorPresent) {
-            failoverRole = FailoverRole.PASSIVE; // a preferred Active is running, so stand by
-            failoverWaitTicks = 0;
-        } else if (failoverRole == FailoverRole.PASSIVE) {
-            // The Active this member was backing is gone; take over after the promotion delay.
-            if (++failoverWaitTicks >= FAILOVER_PROMOTE_DELAY) {
-                failoverRole = FailoverRole.ACTIVE;
-                failoverWaitTicks = 0;
-            }
-        } else {
-            // Lowest-positioned and not standing by, so own the network immediately (initial election).
-            failoverRole = FailoverRole.ACTIVE;
-            failoverWaitTicks = 0;
-        }
-    }
-
     public boolean submitOperation(final IOperationTask task, final OperationPriority priority) {
         if (dispatch == null || !isRunning()) {
             return false;
@@ -648,152 +528,22 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         return true;
     }
 
-    private void leaveNetwork(final ServerLevel level) {
-        attachment().attachTo(null);
-        setConflict(level, false);
-        unregister(NetworkSystem.get(level));
-    }
-
-    private void unregister(final NetworkSystem system) {
-        final NetworkUuid registered = attachment().registered();
-        if (registered != null) {
-            system.unregisterMainframe(registered, nodeUuid());
-            attachment().registeredAs(null);
-        }
-    }
-
+    /** What a Mainframe being broken leaves behind, which the networking side decides. */
     public void onBroken() {
         broken = true;
-        if (!(level instanceof ServerLevel serverLevel)) {
-            return;
-        }
-        final NetworkSystem system = NetworkSystem.get(serverLevel);
-        // The LAST Mainframe out orphans the network, whatever its failover role. While another
-        final boolean survivorPresent = !otherRunningMainframesOnSegment(
-                serverLevel, system.connectivity(), adjacentCables(serverLevel)).isEmpty();
-        if (!survivorPresent) {
-            orphanOwnedNetwork(serverLevel);
-        }
-        unregister(system);
-    }
-
-    private void orphanOwnedNetwork(final ServerLevel level) {
-        final NetworkSystem system = NetworkSystem.get(level);
-        final ConnectivityIndex index = system.connectivity();
-        final Set<NetworkUuid> owned = new LinkedHashSet<>();
-        final NetworkUuid registered = attachment().registered();
-        if (registered != null) {
-            owned.add(registered);
-        }
-        for (final long cable : adjacentCables(level)) {
-            index.networkOf(cable).ifPresent(owned::add);
-        }
-        final NetworkRegistrySavedData registry = NetworkRegistrySavedData.get(level);
-        for (final NetworkUuid net : owned) {
-            registry.setNetworkState(net, NetworkUuidState.ORPHANED);
+        if (level instanceof ServerLevel serverLevel) {
+            networking.onBroken(serverLevel);
         }
     }
 
-    private void eraseOwnedNetwork(final ServerLevel level) {
-        final NetworkSystem system = NetworkSystem.get(level);
-        final ConnectivityIndex index = system.connectivity();
-        final NetworkRegistrySavedData registry = NetworkRegistrySavedData.get(level);
-        for (final NetworkUuid net : new LinkedHashSet<>(
-                Arrays.asList(attachment().network(), attachment().registered()))) {
-            if (net != null) {
-                index.clearNetwork(net);
-                registry.removeNetwork(net);
-            }
-        }
-        attachment().attachTo(null);
-        unregister(system);
+    /** The base class's record of which network this computer is attached to and registered on. */
+    NetworkAttachment networkAttachment() {
+        return attachment();
     }
 
-    private List<MainframeBlockEntity> otherRunningMainframesOnSegment(
-            final ServerLevel level, final ConnectivityIndex index, final Set<Long> cables) {
-        final Map<Long, MainframeBlockEntity> found = new LinkedHashMap<>();
-        final Set<Long> scanned = new HashSet<>();
-        for (final long anchor : cables) {
-            for (final long cablePos : index.componentPositions(anchor)) {
-                if (!scanned.add(cablePos)) {
-                    continue;
-                }
-                final BlockPos base = BlockPos.of(cablePos);
-                for (final Direction direction : SIDES) {
-                    final MainframeBlockEntity mainframe = mainframeBehind(level, base.relative(direction));
-                    if (mainframe != null && mainframe != this && mainframe.isRunning()) {
-                        found.putIfAbsent(mainframe.worldPosition.asLong(), mainframe);
-                    }
-                }
-            }
-        }
-        return new ArrayList<>(found.values());
-    }
-
-    @Nullable
-    private MainframeBlockEntity mainframeBehind(final ServerLevel level, final BlockPos pos) {
-        final BlockEntity be = level.getBlockEntity(pos);
-        if (be instanceof MainframeBlockEntity mainframe) {
-            return mainframe;
-        }
-        if (be instanceof MainframePartBlockEntity part && part.controllerPos() != null
-                && level.getBlockEntity(part.controllerPos()) instanceof MainframeBlockEntity controller) {
-            return controller;
-        }
-        return null;
-    }
-
-    private void setConflict(final ServerLevel level, final boolean conflict) {
-        if (conflict != networkConflict && level.getServer() != null) {
-            final String message = conflict
-                    ? "[J's Computers] NETWORK_CONFLICT: two Mainframes share one network near "
-                            + worldPosition.toShortString()
-                    : "[J's Computers] Network conflict resolved near " + worldPosition.toShortString();
-            level.getServer().getPlayerList().broadcastSystemMessage(
-                    Component.literal(message), false);
-        }
-        networkConflict = conflict;
-    }
-
-    /*
-     * The Mainframe is a 3x2x2 multiblock, so it scans for a cable across its whole footprint and
-     * bridges every touched cable into one network, replacing the base's single-cable scan.
-     */
-    private Set<Long> adjacentCables(final ServerLevel level) {
-        final Direction facing = getBlockState().getValue(HorizontalDirectionalBlock.FACING);
-        final Set<Long> inside = new HashSet<>();
-        for (final BlockPos p : MainframeStructure.allPositions(worldPosition, facing)) {
-            if (p.equals(worldPosition)) {
-                inside.add(p.asLong());
-            } else if (level.getBlockEntity(p) instanceof MainframePartBlockEntity part
-                    && worldPosition.equals(part.controllerPos())) {
-                inside.add(p.asLong());
-            }
-        }
-        /*
-         * Collect EVERY cable on an external face, not just the first, because the mainframe
-         * bridges all of them into its single network.
-         */
-        final Set<Long> cables = new LinkedHashSet<>();
-        for (final long posLong : inside) {
-            final BlockPos p = BlockPos.of(posLong);
-            for (final Direction direction : SIDES) {
-                final BlockPos neighbor = p.relative(direction);
-                if (inside.contains(neighbor.asLong())) {
-                    continue; // a face internal to the multiblock
-                }
-                if (level.getBlockState(neighbor).getBlock() instanceof DataCableBlock cable
-                        && acceptsTier(cable.tier())) {
-                    cables.add(neighbor.asLong());
-                }
-            }
-        }
-        return cables;
-    }
-
-    private MainframeNode snapshot(final NetworkUuid network) {
-        return new MainframeNode(nodeUuid(), network, capacity(),
-                FailoverRole.NONE, Optional.empty(), 0L);
+    /** Whether a cable of that tier is one this Mainframe will talk over. */
+    boolean acceptsDataTier(final DataTier tier) {
+        return acceptsTier(tier);
     }
 
     // Operation dispatch (the virtual-thread runtime)
@@ -1440,23 +1190,28 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     }
 
     public boolean hasNetworkConflict() {
-        return networkConflict;
+        return networking.conflicted();
     }
 
     public boolean failoverEnabled() {
-        return failoverEnabled;
+        return networking.failoverEnabled();
     }
 
     public FailoverRole failoverRole() {
-        return failoverRole;
+        return networking.failoverRole();
     }
 
+    /**
+     * Switches this Mainframe between owning a network and standing by for whoever owns it.
+     *
+     * <p>Becoming a standby gives up the network it had: a machine that is about to back somebody else's
+     * cannot go on holding one of its own, or the two would be a conflict the moment they were wired up.
+     */
     public void toggleFailover() {
-        failoverEnabled = !failoverEnabled;
-        if (failoverEnabled && level instanceof ServerLevel serverLevel) {
-            eraseOwnedNetwork(serverLevel);
+        networking.toggleFailover();
+        if (networking.failoverEnabled() && level instanceof ServerLevel serverLevel) {
+            networking.eraseOwnedNetwork(serverLevel);
         }
-        setChanged();
     }
 
     // IComputerTerminalHost: read-only monitoring for the Monitor terminal
@@ -1473,7 +1228,15 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     public int networkLinkState() {
-        return networkConflict ? NET_STATE_CONFLICT : (networkUuid() != null ? NET_STATE_LINKED : NET_STATE_NONE);
+        return linkState();
+    }
+
+    /** Whether this Mainframe is on a network, on none, or on one somebody else is claiming too. */
+    private int linkState() {
+        if (networking.conflicted()) {
+            return NET_STATE_CONFLICT;
+        }
+        return networkUuid() != null ? NET_STATE_LINKED : NET_STATE_NONE;
     }
 
     @Override
@@ -1652,13 +1415,12 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             case DATA_RAM_BUFFER -> (int) Math.min(Integer.MAX_VALUE, ramBuffer());
             case DATA_AUTOSTART -> isAutoStart() ? 1 : 0;
             case DATA_MANUAL_ON -> isManualOn() ? 1 : 0;
-            case DATA_NETWORK_STATE ->
-                    networkConflict ? NET_STATE_CONFLICT : (networkUuid() != null ? NET_STATE_LINKED : NET_STATE_NONE);
+            case DATA_NETWORK_STATE -> linkState();
             case DATA_PENDING_OPS -> pendingOps();
             case DATA_RUNNING_OPS -> runningOps();
             case DATA_COMPLETED_OPS -> (int) Math.min(Integer.MAX_VALUE, completedOps());
-            case DATA_FAILOVER_ENABLED -> failoverEnabled ? 1 : 0;
-            case DATA_FAILOVER_ROLE -> failoverRole.id();
+            case DATA_FAILOVER_ENABLED -> networking.failoverEnabled() ? 1 : 0;
+            case DATA_FAILOVER_ROLE -> networking.failoverRole().id();
             default -> 0;
         };
     }
@@ -1701,7 +1463,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
          */
         closeDispatch(!broken);
         if (level instanceof ServerLevel serverLevel) {
-            unregister(NetworkSystem.get(serverLevel));
+            networking.unregisterFrom(NetworkSystem.get(serverLevel));
         }
     }
 
@@ -1711,7 +1473,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
          * Hardware (under the "Inventory" key), ManualOn, AutoStart, NodeUuid, LinkedMonitors and
          * Console are loaded by the base; only the Mainframe-only state is restored here.
          */
-        failoverEnabled = tag.getBoolean("Failover");
+        networking.load(tag);
         servicePanelOff = tag.getBoolean("ServicePanelOff");
         // Kept until the catalog has been read, since a hold can only be taken against what is there.
         heldOnLoad = null;
@@ -1728,14 +1490,6 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
                 heldOnLoad = held;
             }
         }
-        /*
-         * Persist the standby role + countdown so a reload mid-promotion does not reset the timer (which
-         * could, with frequent chunk cycling, stop a standby from ever promoting).
-         */
-        if (tag.contains("FailoverRole")) {
-            failoverRole = FailoverRole.byId(tag.getByte("FailoverRole"));
-        }
-        failoverWaitTicks = tag.getInt("FailoverWaitTicks");
         if (tag.contains("NetworkUuid")) {
             nativeNetworkUuid = NetworkUuid.fromString(tag.getString("NetworkUuid"));
         }
@@ -1756,10 +1510,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     protected void saveExtra(final CompoundTag tag, final HolderLookup.Provider registries) {
-        tag.putBoolean("Failover", failoverEnabled);
+        networking.save(tag);
         tag.putBoolean("ServicePanelOff", servicePanelOff);
-        tag.putByte("FailoverRole", (byte) failoverRole.id());
-        tag.putInt("FailoverWaitTicks", failoverWaitTicks);
         if (nativeNetworkUuid != null) {
             tag.putString("NetworkUuid", nativeNetworkUuid.asString());
         }
