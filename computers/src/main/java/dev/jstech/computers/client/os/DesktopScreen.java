@@ -16,7 +16,6 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.MonitorFrame;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.TaskbarGroups;
-import dev.jstech.computers.gui.layout.DesktopIconLayout;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.DeleteFilePayload;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
@@ -50,14 +49,12 @@ import dev.jstech.computers.program.Programs;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.ContextMenu;
 import dev.jstech.core.client.gui.component.Popup;
-import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.gui.layout.DesktopZ;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -128,6 +125,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private final FramesPanels framesPanels = new FramesPanels(this);
     /** The flyout that lists one program's windows over its button on the panel. */
     private final TaskPopup taskPopup = new TaskPopup(this);
+    /** The icons on the wallpaper: where each one sits, what it looks like, and which ones are picked. */
+    private final DesktopIcons iconGrid = new DesktopIcons(this);
 
     /*
      * Per-OS memory model: the system, its desktop and its services hold their share of the machine's RAM
@@ -512,15 +511,6 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     /** Files and folders living in the desktop folder ({@link SystemLayout#DESKTOP_DIR}), drawn as icons. */
     private final List<DiskFilesPayload.WireFile> desktopItems = new ArrayList<>();
 
-    /**
-     * Free-positioned desktop icons: the packed grid cell ({@code col << 16 | row}) each pinned icon was
-     * dropped on, keyed by its stable id ({@code app:<label>} for a launcher, {@code file:<name>} for a
-     * file or folder). Synced from the server and persisted on the computer, so a desktop reopened after a
-     * reload shows every icon exactly where the player left it. An icon with no entry flows into the next
-     * free auto-layout cell, so a fresh desktop looks just like it did before icons could be moved.
-     */
-    private final Map<String, Integer> iconCells = new HashMap<>();
-
     /** The player's chosen wallpaper style ({@code ""} = OS default) and computer name, synced from the server. */
     private String desktopWallpaper = "";
     private String computerName = "";
@@ -545,31 +535,12 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private double bandStartY;
     private double bandX;
     private double bandY;
-    private final Set<Integer> selectedIcons = new LinkedHashSet<>();
 
     /** The band's rectangle in desktop coordinates: {x, y, w, h}. */
     private int[] bandRect() {
         final int bx = (int) Math.min(bandStartX, bandX);
         final int by = (int) Math.min(bandStartY, bandY);
         return new int[]{bx, by, (int) Math.abs(bandX - bandStartX), (int) Math.abs(bandY - bandStartY)};
-    }
-
-    /** Selects every desktop icon whose cell the band currently touches. */
-    private void updateBandSelection() {
-        selectedIcons.clear();
-        final int[] r = bandRect();
-        final int perCol = iconsPerColumn(sh());
-        final int[] slotCells = computeSlotCells(perCol);
-        final int total = Math.min(slotCells.length, launchers.size() + desktopItems.size());
-        for (int i = 0; i < total; i++) {
-            final int ix = iconXForCell(slotCells[i]);
-            final int iy = iconYForCell(slotCells[i]);
-            // The icon's clickable cell, the same box the hover highlight uses.
-            if (ix + CELL_DX < r[0] + r[2] && ix + CELL_DX + CELL_W > r[0]
-                    && iy + CELL_DY < r[1] + r[3] && iy + CELL_DY + CELL_H > r[1]) {
-                selectedIcons.add(i);
-            }
-        }
     }
 
     private int deskDragSlot = -1; // global icon slot being dragged, or -1
@@ -743,6 +714,42 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     /** The windows a program has open, back to front. */
     List<DesktopWindow> windowsOf(final String key) {
         return groupWindows(key);
+    }
+
+    /** The files and folders of the desktop folder, which are drawn as icons after the launchers. */
+    List<DiskFilesPayload.WireFile> deskFiles() {
+        return desktopItems;
+    }
+
+    /** The icon a click has picked, which shows its whole name, or -1 while none is picked. */
+    int pickedIcon() {
+        return selectedIcon;
+    }
+
+    /** The icon being dragged and where the cursor has taken it, for the drop outline and the ghost. */
+    boolean draggingIcon() {
+        return deskDragging;
+    }
+
+    int draggedIconSlot() {
+        return deskDragSlot;
+    }
+
+    double iconDragX() {
+        return deskDragX;
+    }
+
+    double iconDragY() {
+        return deskDragY;
+    }
+
+    /** The desktop file being renamed in place and what has been typed so far, or -1 and empty. */
+    int renamingIcon() {
+        return deskRenaming;
+    }
+
+    String renameText() {
+        return deskRenameBuf.toString();
     }
 
     /** Whether this panel's popup shows the windows' live pictures rather than a list of their titles. */
@@ -978,30 +985,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private static final int CIN_MENU_W = LinuxLaunchers.CIN_MENU_W;
     private static final int CIN_HEADER_H = LinuxLaunchers.CIN_HEADER_H;
     private static final int CIN_ROW_H = LinuxLaunchers.CIN_ROW_H;
-    /*
-     * Desktop icons sit on a grid wide enough for a name on two lines. The old pitch was narrower than the
-     * labels it drew, so "Command Prompt" ran across its neighbour and both names read as one word.
-     */
-    private static final int ICON_PITCH_Y = 44;
-    private static final int ICON_PITCH_X = 50;
     /** The width of the Frames XP Start pill, which the task buttons and its own hit-test both clear. */
     static final int XP_START_W = 58;
-    /** Where the first icon column starts: far enough in that its cell's highlight clears the screen edge. */
-    private static final int ICON_ORIGIN_X = 14;
-    /** An icon's cell: the box its highlight, its drop outline and its hit-test all use. */
-    private static final int CELL_W = 46;
-    private static final int CELL_H = 40;
-    /** The cell's top-left corner, relative to the icon's own: the 24px icon sits centred in the cell. */
-    private static final int CELL_DX = (24 - CELL_W) / 2;
-    private static final int CELL_DY = -2;
-    /**
-     * How wide one line of an icon's label may run before it wraps, how many lines it may take, and how tall
-     * a line stands. The names are drawn in the small text a dense panel uses, which is what lets a word like
-     * "Calculator" fit its cell whole without the grid having to spread out across the whole desktop.
-     */
-    private static final int LABEL_W = CELL_W - 2;
-    private static final int LABEL_LINES = 2;
-    private static final int LABEL_LINE_H = 8;
     private static final int DESK_CTX_W = 88;
     private static final int DESK_CTX_ITEM_H = 11;
     /**
@@ -1834,9 +1819,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         active.defaultApps.clear();
         active.defaultApps.putAll(payload.defaultApps());
         active.rebuildSkin();
-        active.iconCells.clear();
+        active.iconGrid.pinnedCells().clear();
         for (final DesktopFilesPayload.WireIconCell cell : payload.iconCells()) {
-            active.iconCells.put(cell.key(), cell.cell());
+            active.iconGrid.pinnedCells().put(cell.key(), cell.cell());
         }
         /*
          * Refresh the installed-program launchers whenever the installed set changes, so ANY installable
@@ -1857,7 +1842,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         // Enter rename on a freshly created item once it appears in the listing.
         if (active.deskPendingRename != null) {
             for (int i = 0; i < active.desktopItems.size(); i++) {
-                if (baseName(active.desktopItems.get(i).path()).equals(active.deskPendingRename)) {
+                if (DesktopIcons.baseName(active.desktopItems.get(i).path())
+                        .equals(active.deskPendingRename)) {
                     active.startDeskRename(i);
                     break;
                 }
@@ -2004,96 +1990,19 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
          * out in columns (top-down, then left-to-right) like a Windows desktop. Each icon's cell comes
          * from the free-positioning layout (a pinned cell, else the next auto-flow cell).
          */
-        final int total = launchers.size() + desktopItems.size();
-        final int perCol = iconsPerColumn(sh);
-        final int[] slotCells = computeSlotCells(perCol);
-        final int deskDropTarget = deskDragging ? iconSlotAt(deskDragX, deskDragY, perCol) : -1;
-        /*
-         * The selected icon's full, wrapped label is drawn last (after every icon) so it sits on top of the
-         * icon below it instead of being clipped by it.
-         */
-        String selLabelText = null;
-        int selLabelX = 0;
-        int selLabelY = 0;
+        final int perCol = iconGrid.perColumn(sh);
         /*
          * Each desktop layer draws at its own strictly-increasing Z (DesktopZ): the depth buffer keeps a back
          * layer behind a front one, so a back layer's batched text (an icon label) can never paint over a
          * front layer (an open window). Flushing the text batch between layers does not work: g.flush() is a
          * no-op outside a managed draw in 1.21.1, which is why the icon-label-over-window bug kept returning.
+         *
+         * Icons draw at DesktopZ.ICONS and the Start menu at DesktopZ.MENU, so the menu covers them via the
+         * depth buffer: the icons behind it stay drawn (they must not vanish) and just sit under the panel.
          */
         g.pose().pushPose();
         g.pose().translate(0, 0, DesktopZ.ICONS);
-        for (int i = 0; i < total; i++) {
-            final int ix = iconXForCell(slotCells[i]);
-            final int iy = iconYForCell(slotCells[i]);
-            /*
-             * Icons draw at DesktopZ.ICONS and the Start menu at DesktopZ.MENU, so the menu covers them via the
-             * depth buffer, so the icons behind it stay drawn (they must not vanish) and just sit under the panel.
-             */
-            final int cellX = ix + CELL_DX;
-            final int cellY = iy + CELL_DY;
-            if (i == selectedIcon || selectedIcons.contains(i)) {
-                g.fill(cellX, cellY, cellX + CELL_W, cellY + CELL_H, 0x66000080);
-            } else if (lmx >= cellX && lmx < cellX + CELL_W && lmy >= cellY && lmy < cellY + CELL_H
-                    && !deskDragging) {
-                // Hover feedback so the player sees which icon the cursor is over.
-                g.fill(cellX, cellY, cellX + CELL_W, cellY + CELL_H, 0x28FFFFFF);
-            }
-            /*
-             * Green drop-target outline on the folder under the cursor while dragging a real
-             * file/folder icon (a launcher has no file to move into a folder, so it lights none).
-             */
-            if (deskDragging && deskDragSlot >= launchers.size()
-                    && i == deskDropTarget && i >= launchers.size() && i != deskDragSlot
-                    && desktopItems.get(i - launchers.size()).directory()) {
-                g.fill(cellX, cellY, cellX + CELL_W, cellY + 1, 0xFF49E07A);
-                g.fill(cellX, cellY + CELL_H - 1, cellX + CELL_W, cellY + CELL_H, 0xFF49E07A);
-                g.fill(cellX, cellY, cellX + 1, cellY + CELL_H, 0xFF49E07A);
-                g.fill(cellX + CELL_W - 1, cellY, cellX + CELL_W, cellY + CELL_H, 0xFF49E07A);
-            }
-            final String label;
-            if (i < launchers.size()) {
-                ProgramIcons.draw(g, ix, iy, 24, 22, launchers.get(i).programId(), iconSet());
-                label = launchers.get(i).label();
-            } else {
-                final int di = i - launchers.size();
-                final DiskFilesPayload.WireFile f = desktopItems.get(di);
-                drawDesktopIcon(g, ix, iy, f);
-                label = di == deskRenaming ? deskRenameBuf + "_" : baseName(f.path());
-            }
-            if (i == selectedIcon) {
-                // Defer the full label to a pass after every icon so nothing overdraws it.
-                selLabelText = label;
-                selLabelX = ix;
-                selLabelY = iy;
-            } else {
-                /*
-                 * The name under the icon: centred, wrapped inside its own cell over at most two lines, and
-                 * cut with an ellipsis past that. A name wider than the cell used to run across its neighbour,
-                 * which is how "Network" and "Command Prompt" came to read as one word.
-                 */
-                int ly = iy + 23;
-                final List<String> lines = wrapLabel(label, labelFontWidth());
-                for (int li = 0; li < lines.size() && li < LABEL_LINES; li++) {
-                    final String line = li == LABEL_LINES - 1 && lines.size() > LABEL_LINES
-                            ? fitLabelLine(lines.get(li) + "...")
-                            : fitLabelLine(lines.get(li));
-                    drawIconLabel(g, line, ix + 12, ly, theme.iconText(), theme.textShadow());
-                    ly += LABEL_LINE_H;
-                }
-            }
-        }
-        // Windows-style: the selected icon reveals its full name, wrapped, on a selection background.
-        if (selLabelText != null) {
-            int ly = selLabelY + 23;
-            for (final String line : wrapLabel(selLabelText, labelFontWidth())) {
-                final int lw = Texts.smallWidth(font, line);
-                final int lcx = selLabelX + 12 - lw / 2;
-                g.fill(lcx - 2, ly - 1, lcx + lw + 2, ly + LABEL_LINE_H, 0xE0000080);
-                Texts.small(g, font, line, lcx, ly, 0xFFFFFFFF);
-                ly += LABEL_LINE_H;
-            }
-        }
+        iconGrid.render(g, sh, lmx, lmy);
         g.pose().popPose();
 
         /*
@@ -2187,25 +2096,18 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
              * While dragging an icon to a free spot (not onto a folder), outline the grid cell it would snap to.
              * Suppressed over a folder (the green folder outline wins) or off the wallpaper, where the drop is a no-op.
              */
-            if (deskDropTarget < 0 && deskDragX < sw && deskDragY < tbY && overWallpaper(deskDragX, deskDragY)) {
-                final int cell = cellAt(deskDragX, deskDragY, perCol);
-                final int cx = iconXForCell(cell);
-                final int cy = iconYForCell(cell);
-                final int gx = cx + CELL_DX;
-                final int gy = cy + CELL_DY;
-                g.fill(gx, gy, gx + CELL_W, gy + 1, 0x804C84F0);
-                g.fill(gx, gy + CELL_H - 1, gx + CELL_W, gy + CELL_H, 0x804C84F0);
-                g.fill(gx, gy, gx + 1, gy + CELL_H, 0x804C84F0);
-                g.fill(gx + CELL_W - 1, gy, gx + CELL_W, gy + CELL_H, 0x804C84F0);
+            if (iconGrid.slotAt(deskDragX, deskDragY, perCol) < 0
+                    && deskDragX < sw && deskDragY < tbY && overWallpaper(deskDragX, deskDragY)) {
+                iconGrid.drawDropCell(g, iconGrid.cellAt(deskDragX, deskDragY, perCol));
             }
             /*
              * Drag ghost: a label trailing the cursor for the icon being moved.
              * (the rubber band is drawn below, outside the icon-drag branch)
              */
-            if (deskDragSlot < total) {
+            if (deskDragSlot < launchers.size() + desktopItems.size()) {
                 final String label = deskDragSlot < launchers.size()
                         ? launchers.get(deskDragSlot).label()
-                        : baseName(desktopItems.get(deskDragSlot - launchers.size()).path());
+                        : DesktopIcons.baseName(desktopItems.get(deskDragSlot - launchers.size()).path());
                 final int gx = (int) deskDragX + 6;
                 final int gy = (int) deskDragY + 2;
                 g.fill(gx, gy, gx + font.width(label) + 6, gy + 12, 0xD0303848);
@@ -2320,64 +2222,6 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
     }
 
-    private int iconsPerColumn(final int sh) {
-        // The work area is the screen minus one panel band, wherever that panel sits.
-        return Math.max(1, (sh - TASKBAR_H - 12) / ICON_PITCH_Y);
-    }
-
-    /** The stable persistence id for the icon at global slot {@code i}: {@code app:<label>} or {@code file:<name>}. */
-    private String iconKey(final int i) {
-        if (i < launchers.size()) {
-            return "app:" + launchers.get(i).label();
-        }
-        return "file:" + baseName(desktopItems.get(i - launchers.size()).path());
-    }
-
-    /**
-     * Resolves the grid cell ({@code col << 16 | row}) of every desktop icon for this layout: a pinned icon
-     * keeps its stored cell (clamped so it always lands on a real column), and the rest flow top-down then
-     * left-to-right into the first cell no pinned icon already claims. This single source feeds both the icon
-     * draw pass and the hit-test, so what the player sees and what they click are always the same cells.
-     */
-    private int[] computeSlotCells(final int perCol) {
-        final int total = launchers.size() + desktopItems.size();
-        final List<String> keys = new ArrayList<>(total);
-        for (int i = 0; i < total; i++) {
-            keys.add(iconKey(i));
-        }
-        return DesktopIconLayout.resolve(keys, iconCells, perCol);
-    }
-
-    private static int iconXForCell(final int packedCell) {
-        return ICON_ORIGIN_X + DesktopIconLayout.col(packedCell) * ICON_PITCH_X;
-    }
-
-    private int iconYForCell(final int packedCell) {
-        return workTop() + 10 + DesktopIconLayout.row(packedCell) * ICON_PITCH_Y;
-    }
-
-    /** The desktop icon slot under a desktop-local point, or {@code -1} for the empty background. */
-    private int iconSlotAt(final double mx, final double my, final int perCol) {
-        final int[] cells = computeSlotCells(perCol);
-        for (int i = 0; i < cells.length; i++) {
-            final int ix = iconXForCell(cells[i]);
-            final int iy = iconYForCell(cells[i]);
-            if (mx >= ix + CELL_DX && mx <= ix + CELL_DX + CELL_W
-                    && my >= iy + CELL_DY && my <= iy + CELL_DY + CELL_H) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    /** The packed grid cell ({@code col << 16 | row}) under a desktop-local point, clamped to the grid. */
-    private int cellAt(final double mx, final double my, final int perCol) {
-        final int col = Math.max(0, (int) Math.floor((mx - (ICON_ORIGIN_X - ICON_PITCH_X / 2.0)) / ICON_PITCH_X));
-        final int row = Math.max(0, Math.min(perCol - 1,
-                (int) Math.floor((my - workTop() - (10 - ICON_PITCH_Y / 2.0)) / ICON_PITCH_Y)));
-        return DesktopIconLayout.pack(col, row);
-    }
-
     /**
      * Resolves a dropped desktop icon at desktop-local point ({@code dx},{@code dy}). In priority order:
      * dropping onto an open Files explorer moves the file/folder into the folder that window shows; dropping
@@ -2413,8 +2257,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         }
 
         // (2) Drop onto a desktop folder icon: move the file inside it.
-        final int perCol = iconsPerColumn(sh());
-        final int target = iconSlotAt(dx, dy, perCol);
+        final int perCol = iconGrid.perColumn(sh());
+        final int target = iconGrid.slotAt(dx, dy, perCol);
         if (target >= launchers.size() && target != deskDragSlot && src != null) {
             final DiskFilesPayload.WireFile dst = desktopItems.get(target - launchers.size());
             if (dst.directory()) {
@@ -2434,15 +2278,12 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
          * unless that cell already holds another icon (so two icons never stack on the same spot).
          */
         if (dy >= workTop() && dy < workBottom() && overWallpaper(dx, dy)) {
-            final int cell = cellAt(dx, dy, perCol);
-            final int[] cells = computeSlotCells(perCol);
-            for (int i = 0; i < cells.length; i++) {
-                if (i != deskDragSlot && cells[i] == cell) {
-                    return; // the target cell is occupied; leave the icon where it was
-                }
+            final int cell = iconGrid.cellAt(dx, dy, perCol);
+            if (iconGrid.cellTaken(cell, deskDragSlot, perCol)) {
+                return; // the target cell is occupied; leave the icon where it was
             }
-            final String key = iconKey(deskDragSlot);
-            iconCells.put(key, cell);
+            final String key = iconGrid.keyOf(deskDragSlot);
+            iconGrid.pin(key, cell);
             PacketDistributor.sendToServer(new SetIconPositionPayload(host, key, cell));
         }
     }
@@ -2456,7 +2297,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** Forgets a desktop icon's pinned cell once its file has left the desktop folder (moved away). */
     private void clearMovedIconCell(final DiskFilesPayload.WireFile src) {
-        iconCells.remove("file:" + baseName(src.path()));
+        iconGrid.forget(src.path());
     }
 
     /**
@@ -2980,7 +2821,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
          * file, so keeping it out of reach left a text file that should have been a program with no
          * way to become one.
          */
-        deskRenameBuf.append(baseName(f.path()));
+        deskRenameBuf.append(DesktopIcons.baseName(f.path()));
     }
 
     private void commitDeskRename() {
@@ -3044,46 +2885,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     private boolean deskNameExists(final String name) {
         for (final DiskFilesPayload.WireFile f : desktopItems) {
-            if (baseName(f.path()).equals(name)) {
+            if (DesktopIcons.baseName(f.path()).equals(name)) {
                 return true;
             }
         }
         return false;
-    }
-
-    /** Draws a folder or document icon (~24x22) for a desktop file entry. */
-    private static void drawDesktopIcon(final GuiGraphics g, final int x, final int y,
-                                        final DiskFilesPayload.WireFile f) {
-        if (f.directory()) {
-            g.fill(x + 1, y + 1, x + 10, y + 4, 0xFFFFE9A8);   // tab
-            g.fill(x + 1, y + 4, x + 23, y + 20, 0xFFF4C842);  // body
-            g.fill(x + 1, y + 4, x + 23, y + 6, 0xFFFFF3C4);   // highlight
-            iconOutline(g, x + 1, y + 1, 22, 19, 0xFF9A7B16);
-        } else {
-            final int fill;
-            final int edge;
-            switch (f.ext().toLowerCase(Locale.ROOT)) {
-                case "iql" -> { fill = 0xFFA9D4FF; edge = 0xFF3A72B0; }
-                case "dat" -> { fill = 0xFFBDEEC0; edge = 0xFF4F9B53; }
-                default -> { fill = 0xFFEDEFF3; edge = 0xFF8A93A6; }
-            }
-            g.fill(x + 4, y + 1, x + 21, y + 21, fill);        // sheet
-            g.fill(x + 16, y + 1, x + 21, y + 6, 0xFFFFFFFF);  // folded corner
-            iconOutline(g, x + 4, y + 1, 17, 20, edge);
-        }
-    }
-
-    private static void iconOutline(final GuiGraphics g, final int x, final int y, final int w, final int h,
-                                    final int color) {
-        g.fill(x, y, x + w, y + 1, color);
-        g.fill(x, y + h - 1, x + w, y + h, color);
-        g.fill(x, y, x + 1, y + h, color);
-        g.fill(x + w - 1, y, x + w, y + h, color);
-    }
-
-    private static String baseName(final String path) {
-        final int slash = path.lastIndexOf('/');
-        return slash >= 0 && slash < path.length() - 1 ? path.substring(slash + 1) : path;
     }
 
     /** The overall width of the Start menu panel, which differs per Frames version. */
@@ -4377,8 +4183,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             commitDeskRename();
         }
 
-        final int perCol = iconsPerColumn(sh());
-        final int slot = iconSlotAt(mouseX, mouseY, perCol);
+        final int perCol = iconGrid.perColumn(sh());
+        final int slot = iconGrid.slotAt(mouseX, mouseY, perCol);
 
         if (button == 1) {
             // Right-click: the menu of whatever is under the cursor, or the wallpaper's own.
@@ -4410,7 +4216,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             return true;
         }
         selectedIcon = -1;
-        selectedIcons.clear();
+        iconGrid.selection().clear();
         /*
          * A click on empty desktop while holding a stack would make the vanilla container throw the item to the
          * world (no slot under the cursor). Swallow it so nothing is ever dropped by clicking the wallpaper.
@@ -4459,7 +4265,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         if (bandActive) {
             bandX = lx(mouseXAbs);
             bandY = ly(mouseYAbs);
-            updateBandSelection();
+            iconGrid.selectWithin(bandRect(), sh());
             return true;
         }
         /*
@@ -5001,56 +4807,6 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     private static String trim(final String s, final int max) {
         return s.length() <= max ? s : s.substring(0, max - 1) + "...";
-    }
-
-    /** Word-wraps a label to {@code maxW} pixels, capped at three lines, for a selected desktop icon. */
-    /** The width, in font units, one line of an icon label may run to before it wraps. */
-    private static int labelFontWidth() {
-        return Texts.smallFits(LABEL_W);
-    }
-
-    /**
-     * One label line, cut with an ellipsis when a single unbreakable word is wider than its cell. The test is
-     * the width the line is actually drawn at, not the width it would have at full size, or a name that fits
-     * its cell by a pixel gets cut for no reason.
-     */
-    private String fitLabelLine(final String s) {
-        if (Texts.smallWidth(font, s) <= LABEL_W) {
-            return s;
-        }
-        final int units = Math.max(1, labelFontWidth() - font.width("..."));
-        return font.plainSubstrByWidth(s, units) + "...";
-    }
-
-    /** An icon's label line, centred under the icon and drawn in the small text, with the theme's shadow. */
-    private void drawIconLabel(final GuiGraphics g, final String line, final int cx, final int y,
-                               final int color, final boolean shadow) {
-        final int lx = cx - Texts.smallWidth(font, line) / 2;
-        if (shadow) {
-            Texts.small(g, font, line, lx + 1, y + 1, 0xFF000000);
-        }
-        Texts.small(g, font, line, lx, y, color);
-    }
-
-    private List<String> wrapLabel(final String s, final int maxW) {
-        final List<String> out = new ArrayList<>();
-        StringBuilder cur = new StringBuilder();
-        for (final String word : s.split(" ")) {
-            final String cand = cur.length() == 0 ? word : cur + " " + word;
-            if (cur.length() == 0 || font.width(cand) <= maxW) {
-                cur = new StringBuilder(cand);
-            } else {
-                out.add(cur.toString());
-                cur = new StringBuilder(word);
-            }
-        }
-        if (cur.length() > 0) {
-            out.add(cur.toString());
-        }
-        while (out.size() > 3) {
-            out.remove(out.size() - 1);
-        }
-        return out;
     }
 
     @Override
