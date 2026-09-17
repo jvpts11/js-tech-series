@@ -9,7 +9,6 @@ package dev.jstech.computers.client.os;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -124,6 +123,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private final FramesLaunchers framesLaunchers = new FramesLaunchers(this);
     /** The corner every panel reports the machine in: the network, the sound, the memory and the clock. */
     private final PanelTray tray = new PanelTray(this);
+    /** The bars the Linux desktops put their open windows on, and the period panel drawn out of relief. */
+    private final LinuxPanels linuxPanels = new LinuxPanels(this);
 
     /*
      * Per-OS memory model: the system, its desktop and its services hold their share of the machine's RAM
@@ -706,6 +707,47 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     String ramMeter() {
         return ramMeterText();
+    }
+
+    /** The notification corner, which every panel draws at its right end. */
+    PanelTray tray() {
+        return tray;
+    }
+
+    /** Whether this desktop is drawn in that style, which decides what its panel and launcher look like. */
+    boolean isPanel(final PanelStyle style) {
+        return is(style);
+    }
+
+    /** Whether the launcher is open, which lights its button on the panel. */
+    boolean launcherOpen() {
+        return startOpen;
+    }
+
+    /** Where each task button sits and how wide it is: the same measurement the clicks are tested against. */
+    TaskStrip taskButtons(final int sw) {
+        return taskStrip(sw);
+    }
+
+    /** The program whose windows the panel's popup is showing, or null while none is up. */
+    @Nullable
+    String openTaskPopup() {
+        return taskPopupKey;
+    }
+
+    /** What a task button reads: the window's own title, or the program's name for a group of them. */
+    String taskLabel(final TaskbarGroups.Entry entry) {
+        return entryLabel(entry);
+    }
+
+    /** How many characters of a title fit in a button that wide. */
+    int taskTitleRoom(final int w) {
+        return taskTitleChars(w);
+    }
+
+    /** The little triangle that marks a button standing for several windows. */
+    void drawStackCaret(final GuiGraphics g, final int x, final int y, final int color) {
+        drawCaret(g, x, y, color);
     }
 
     /** What has been typed into an open launcher's search field, empty when nothing has. */
@@ -3460,8 +3502,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * @param quickCount how many icons the quick launch holds
      * @param right      where the strip must stop, clear of the notification area
      */
-    private record TaskStrip(List<TaskbarGroups.Entry> entries, int[] x, int[] w,
-                             int quickX, int quickCount, int right) {
+    record TaskStrip(List<TaskbarGroups.Entry> entries, int[] x, int[] w,
+                     int quickX, int quickCount, int right) {
 
         /** The entry whose button or cell is under a desktop-local x, or -1. */
         int indexAt(final double mx) {
@@ -3841,76 +3883,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      */
     private void renderLinuxPanel(final GuiGraphics g, final int tbY, final int sw, final int sh,
                                   final int lmx, final int lmy) {
-        final boolean kde = is(PanelStyle.KDE);
-        g.fill(0, tbY, sw, sh, theme.taskbar());
-        g.fill(0, tbY, sw, tbY + 1, theme.taskbarEdge());
-        // Launcher button.
-        final boolean startHot = startOpen || (lmx >= 4 && lmx <= 58 && lmy >= tbY);
-        if (startHot) {
-            g.fill(4, tbY + 2, 58, sh - 2, 0x22FFFFFF);
-        }
-        if (kde) {
-            g.fill(8, tbY + 5, 22, tbY + 19, theme.startButton());
-            g.drawString(font, "K", 12, tbY + 8, 0xFFFFFFFF, false);
-            g.drawString(font, "Apps", 26, tbY + 8, theme.startText(), false);
-        } else {
-            g.fill(8, tbY + 5, 22, tbY + 19, theme.startButton());
-            g.fill(11, tbY + 8, 19, tbY + 16, 0xFFFFFFFF);
-            g.fill(13, tbY + 10, 17, tbY + 14, theme.startButton());
-            g.drawString(font, "Menu", 26, tbY + 8, theme.startText(), false);
-        }
-        /*
-         * The task manager: a pinned program with nothing open is its icon alone; an open program is a
-         * button with a line under it; the one in front fills with the accent; one whose windows are all
-         * put away goes faint; and one with several windows stacks and carries their number.
-         */
-        final TaskStrip strip = taskStrip(sw);
-        final int accent = theme.startButton();
-        for (int i = 0; i < strip.entries().size(); i++) {
-            final TaskbarGroups.Entry entry = strip.entries().get(i);
-            final int bx = strip.x()[i];
-            final int bw = strip.w()[i];
-            if (bw == 0) {
-                continue;
-            }
-            if (bx + bw > strip.right()) {
-                break;
-            }
-            final boolean hot = lmx >= bx && lmx < bx + bw && lmy >= tbY;
-            final boolean shown = entry.key().equals(taskPopupKey);
-            if (!entry.open()) {
-                if (hot || shown) {
-                    g.fill(bx, tbY + 3, bx + bw, sh - 3, 0x22FFFFFF);
-                }
-                ProgramIcons.draw(g, bx + 3, tbY + 4, 16, 16, programIdForLabel(entry.key()), iconSet());
-                continue;
-            }
-            final boolean active = entry.state() == TaskbarGroups.State.ACTIVE;
-            final boolean minimized = entry.state() == TaskbarGroups.State.MINIMIZED;
-            final boolean several = entry.windows() > 1;
-            if (several) {
-                g.fill(bx + 2, tbY + 1, bx + bw + 2, tbY + 3, theme.taskButton());
-                g.fill(bx + bw, tbY + 3, bx + bw + 2, sh - 5, theme.taskButton());
-            }
-            g.fill(bx, tbY + 3, bx + bw, sh - 3, active ? accent : (hot || shown) ? 0x30FFFFFF : theme.taskButton());
-            final int line = active ? 0xFFFFFFFF : minimized ? (accent & 0x00FFFFFF) | 0x60000000 : accent;
-            g.fill(bx, sh - 4, bx + bw, sh - 3, line);
-            ProgramIcons.draw(g, bx + 3, tbY + 4, 16, 16, programIdForLabel(entry.key()), iconSet());
-            if (minimized) {
-                g.fill(bx + 3, tbY + 4, bx + 19, tbY + 20, (theme.taskbar() & 0x00FFFFFF) | 0x90000000);
-            }
-            final int textColor = active ? 0xFFFFFFFF : minimized ? 0xFF7C838A : theme.startText();
-            final int textW = bw - 22 - (several ? 12 : 0);
-            g.drawString(font, trim(entryLabel(entry), taskTitleChars(textW + 20)), bx + 22, tbY + 8, textColor, false);
-            if (several) {
-                final int badgeX = bx + bw - 12;
-                g.fill(badgeX, tbY + 5, badgeX + 10, tbY + 13, active ? 0xFFFFFFFF : accent);
-                Texts.small(g, font, String.valueOf(entry.windows()),
-                        badgeX + 3, tbY + 6, active ? accent : 0xFFFFFFFF);
-            }
-        }
-        drawTray(g, tbY, sw, theme.startText());
+        linuxPanels.renderModern(g, tbY, sw, sh, lmx, lmy);
     }
+
 
     /**
      * The panel of a Legacy-era Unix desktop, at the bottom for both KDE and GNOME. It is drawn entirely
@@ -3919,69 +3894,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      */
     private void renderPeriodPanel(final GuiGraphics g, final int tbY, final int sw, final int sh,
                                    final int lmx, final int lmy) {
-        final boolean kde = skin.form() == OsSkin.Form.KDE2;
-        skin.statusBar(g, 0, tbY, sw, TASKBAR_H);
-
-        // Launcher: KDE's K, GNOME's footprint. Both are a raised square stud, not a wide Start slab.
-        final boolean startHot = startOpen || (lmx >= 4 && lmx <= 58 && lmy >= tbY);
-        skin.button(g, font, 4, tbY + 3, 54, TASKBAR_H - 6, kde ? "K  Apps" : "▲  Menu",
-                startHot, startOpen, false);
-
-        /*
-         * Task buttons: pressed when that window is the one in front, exactly as a period panel showed it.
-         * The strip's origin and its shared-out width are the ones the taskbar click handler tests against,
-         * so the button a player sees and the button they hit are the same rectangle.
-         */
-        final TaskStrip strip = taskStrip(sw);
-        for (int i = 0; i < strip.entries().size(); i++) {
-            final TaskbarGroups.Entry entry = strip.entries().get(i);
-            final int bx = strip.x()[i];
-            final int btnW = strip.w()[i];
-            if (btnW == 0) {
-                continue;
-            }
-            if (bx + btnW > strip.right()) {
-                break;
-            }
-            final boolean active = entry.state() == TaskbarGroups.State.ACTIVE;
-            final boolean minimized = entry.state() == TaskbarGroups.State.MINIMIZED;
-            final boolean several = entry.windows() > 1;
-            final boolean hot = lmx >= bx && lmx <= bx + btnW && lmy >= tbY;
-            skin.button(g, font, bx, tbY + 3, btnW, TASKBAR_H - 6, "", hot, active, false);
-            ProgramIcons.draw(g, bx + 3, tbY + 5, 12, 12, programIdForLabel(entry.key()), iconSet());
-            final int textColor = minimized ? skin.dim() : skin.text();
-            g.drawString(font, trim(entryLabel(entry), taskTitleChars(btnW - (several ? 8 : 0))), bx + 19,
-                    tbY + 8 + (active ? 1 : 0), textColor, false);
-            if (several) {
-                drawCaret(g, bx + btnW - 8, tbY + 10 + (active ? 1 : 0), textColor);
-            }
-        }
-
-        /*
-         * A sunken well on the right: the period panels all recessed their status area rather than
-         * floating the text on the band.
-         */
-        final int trayX = trayLeft(sw);
-        skin.field(g, trayX, tbY + 4, sw - trayX - 3, TASKBAR_H - 8, false);
-        drawTray(g, tbY, sw, skin.text());
+        linuxPanels.renderPeriod(g, tbY, sw, sh, lmx, lmy);
     }
 
-    /**
-     * The GNOME top bar: "Activities" on the left (lit while the overview is open), the clock centered, and the
-     * process meter on the right. It occupies the top {@code TASKBAR_H} pixels.
-     */
     private void renderGnomeTopBar(final GuiGraphics g, final int sw, final int lmx, final int lmy) {
-        g.fill(0, 0, sw, TASKBAR_H, theme.taskbar());
-        g.fill(0, TASKBAR_H - 1, sw, TASKBAR_H, theme.taskbarEdge());
-        final boolean hot = startOpen || (lmx < 64 && lmy < TASKBAR_H);
-        if (hot) {
-            g.fill(4, 3, 62, TASKBAR_H - 3, 0x22FFFFFF);
-        }
-        g.drawString(font, "Activities", 8, 8, theme.startText(), false);
-        final String clock = clockText();
-        g.drawString(font, clock, (sw - font.width(clock)) / 2, 8, theme.startText(), false);
-        // GNOME keeps its clock in the middle, so only the status group sits at the right end.
-        drawTrayStatus(g, sw - TRAY_PAD - trayStatusWidth(), 0, theme.startText());
+        linuxPanels.renderGnomeTopBar(g, sw, lmx, lmy);
     }
 
     // Linux desktop environments: launchers, which LinuxLaunchers draws and hit-tests beside this screen
