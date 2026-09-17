@@ -8,6 +8,7 @@
 package dev.jstech.computers.hardware;
 
 import dev.jstech.computers.vm.listing.AsmProgram;
+import dev.jstech.computers.vm.listing.Opcode;
 import dev.jstech.core.tier.HardwareEra;
 import org.junit.jupiter.api.Test;
 
@@ -122,5 +123,42 @@ class ArchitecturesTest {
     void add_theSameArchitectureTwice_isLetThrough() {
         Architectures.add(Architectures.X86);
         assertEquals(Architectures.X86, Architectures.byId("jsc:x86").orElseThrow());
+    }
+
+    /**
+     * Nothing has been added to a later architecture yet, so every instruction there is belongs to the oldest.
+     *
+     * <p>This is the answer being right rather than the question going unasked, and it is what makes a program
+     * built today run on the oldest machine of its line instead of only on the newest.
+     */
+    @Test
+    void oldestWith_everyInstructionThereIs_isStillTheOldestOfTheLine() {
+        assertEquals(Architectures.X86,
+                Architectures.oldestWith(Architectures.X86, java.util.EnumSet.allOf(Opcode.class)));
+        assertTrue(Architectures.has(Architectures.X86, Opcode.ADD));
+    }
+
+    /** A newer chip of the same line is a candidate; a chip of another line is another machine. */
+    @Test
+    void oldestWith_looksOnlyAtWhatRunsTheBaselinesPrograms() {
+        assertEquals(Architectures.X86_16,
+                Architectures.oldestWith(Architectures.X86_16, java.util.EnumSet.of(Opcode.ADD)));
+        assertFalse(Architectures.X86.runs(Architectures.X86_16));
+    }
+
+    /**
+     * A program that reaches for something only a later architecture has is built for that one, and no further.
+     *
+     * <p>The table the mod keeps is empty until a later cycle writes in it, so this hands the choosing a table
+     * that says something. Both halves matter: a program that stays within the older one has to stay there, or
+     * every program would drift up to the newest chip and stop running on the machines it was written for.
+     */
+    @Test
+    void oldestWith_aProgramThatReachesForSomethingNewer_movesUpToIt() {
+        final java.util.Map<Opcode, String> addedIn = java.util.Map.of(Opcode.CONV_I8, "jsc:x86_64");
+        assertEquals(Architectures.X86_64, Architectures.oldestWith(Architectures.X86,
+                java.util.EnumSet.of(Opcode.ADD, Opcode.CONV_I8), addedIn));
+        assertEquals(Architectures.X86, Architectures.oldestWith(Architectures.X86,
+                java.util.EnumSet.of(Opcode.ADD, Opcode.SUB), addedIn));
     }
 }

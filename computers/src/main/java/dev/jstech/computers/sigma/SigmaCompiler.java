@@ -7,11 +7,20 @@
  */
 package dev.jstech.computers.sigma;
 
+import dev.jstech.computers.hardware.ArchitectureSpec;
+import dev.jstech.computers.hardware.Architectures;
 import dev.jstech.computers.sigma.emit.Emitter;
+import dev.jstech.computers.vm.listing.AsmMethod;
 import dev.jstech.computers.vm.listing.AsmProgram;
+import dev.jstech.computers.vm.listing.AsmType;
 import dev.jstech.computers.vm.listing.AsmWriter;
+import dev.jstech.computers.vm.listing.Instruction;
+import dev.jstech.computers.vm.listing.Opcode;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * The compiler, end to end: source files in, an assembly listing out.
@@ -84,7 +93,38 @@ public final class SigmaCompiler {
         if (bag.hasErrors()) {
             return new Result(null, bag.sorted(), bag.wasCapped());
         }
-        program.setArchitecture(architecture, 1);
+        program.setArchitecture(targetOf(program, architecture), 1);
         return new Result(AsmWriter.write(program), bag.sorted(), bag.wasCapped());
+    }
+
+    /**
+     * The architecture the listing is written for: the one asked for, or the oldest that has what the program
+     * turned out to need.
+     *
+     * <p>Asking for one is a decision somebody made and is left alone, even where an older one would have done.
+     * Left alone, the program is read back for the instructions it actually uses and given the oldest machine
+     * that has all of them, so it runs on everything it could have run on rather than on everything the newest
+     * chip can.
+     *
+     * <p>An architecture nothing knows is handed back untouched. It is not this stage's to refuse: a listing for
+     * a machine nobody has is refused where a machine reads it, with the name of the one it was built for.
+     */
+    private static String targetOf(final AsmProgram program, final String architecture) {
+        final Optional<ArchitectureSpec> baseline = Architectures.byId(architecture);
+        return baseline.map(spec -> Architectures.oldestWith(spec, instructionsOf(program)).id())
+                .orElse(architecture);
+    }
+
+    /** Every kind of instruction the program turned out to be made of. */
+    private static Set<Opcode> instructionsOf(final AsmProgram program) {
+        final Set<Opcode> used = EnumSet.noneOf(Opcode.class);
+        for (final AsmType type : program.types()) {
+            for (final AsmMethod method : type.methods()) {
+                for (final Instruction instruction : method.body()) {
+                    used.add(instruction.opcode());
+                }
+            }
+        }
+        return used;
     }
 }

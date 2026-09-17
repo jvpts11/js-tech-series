@@ -7,6 +7,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### Added
+- A program is now built for the oldest architecture that has what it turned out to need, rather than for a fixed
+  one. The compiler reads the listing back for the instructions it actually used and stamps the oldest machine of
+  the line that has all of them, so a program runs everywhere it could have run instead of only on the newest
+  chip. `--arch` still forces one, and forcing is left alone even where an older one would have done. Today every
+  program is x86, because the 32-bit and the 64-bit x86 have exactly the same instruction set; whatever a later
+  update adds to the newer one is what will start moving programs up.
 - `scc`, the Sigma Compiler Collection, compiles a `.sg` program into the assembly a machine runs. It is a package
   of its own, 4 MB of disk and 2 MB of memory, and the earliest machines can hold it: it is the whole toolchain
   there, since what it writes is the assembly the machine already runs and there is no runtime to install beside
