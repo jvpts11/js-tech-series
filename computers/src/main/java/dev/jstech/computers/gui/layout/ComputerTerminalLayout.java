@@ -28,6 +28,7 @@ public final class ComputerTerminalLayout {
     public static final int RAIL_X = 4;
     public static final int RAIL_W = 56;
     public static final int TAB_Y0 = 6;
+    public static final int TAB_H = 27;
 
     public static final int CONTENT_X = 63;
 
@@ -71,5 +72,56 @@ public final class ComputerTerminalLayout {
         }
         l.playerInventory(INV_X, invY);
         return l;
+    }
+
+    /*
+     * The rail down the left side. It scrolls rather than shrinking, so every entry keeps its full height
+     * and its name whatever the host offers, and the five readings below are what say which entry is where.
+     *
+     * They are here rather than on the screen because four separate places asked the same question: the
+     * drawing, the tooltips, the click and the wheel. Worked out separately they can disagree, and a rail
+     * entry drawn in one row and clicked in another is the exact bug this layout model exists to prevent.
+     */
+
+    /** How tall the rail runs for a host whose inventory sits at {@code invY}. */
+    public static int railHeight(final int invY) {
+        return invY - TAB_Y0 - 2;
+    }
+
+    /** How many entries fit, never fewer than one: a rail with room for none would show nothing at all. */
+    public static int visibleRows(final int railHeight) {
+        return Math.max(1, railHeight / TAB_H);
+    }
+
+    /** How far the rail can scroll: zero when everything already fits. */
+    public static int maxScroll(final int tabCount, final int visibleRows) {
+        return Math.max(0, tabCount - visibleRows);
+    }
+
+    /** A scroll position brought back into range, which is what the wheel and the drawing both need. */
+    public static int clampScroll(final int scroll, final int tabCount, final int visibleRows) {
+        return Math.max(0, Math.min(scroll, maxScroll(tabCount, visibleRows)));
+    }
+
+    /** Where the entry shown in {@code row} starts, relative to the screen's top. */
+    public static int rowY(final int row) {
+        return TAB_Y0 + row * TAB_H;
+    }
+
+    /**
+     * The row under a screen-local point, or -1 for anywhere off the rail. This is the same rectangle
+     * {@link #rowY} draws, which is what keeps the entry a player sees and the entry they hit the same one.
+     */
+    public static int rowAt(final double localX, final double localY, final int visibleRows) {
+        if (localX < RAIL_X || localX >= RAIL_X + RAIL_W) {
+            return -1;
+        }
+        for (int row = 0; row < visibleRows; row++) {
+            final int top = rowY(row);
+            if (localY >= top && localY < top + TAB_H) {
+                return row;
+            }
+        }
+        return -1;
     }
 }

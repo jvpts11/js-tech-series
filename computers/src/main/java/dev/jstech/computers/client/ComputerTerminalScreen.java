@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
 import dev.jstech.computers.operation.payload.CraftPlanRequestPayload;
@@ -106,10 +107,14 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         HOVER = JsTechTheme.hover();
     }
 
-    private static final int RAIL_X = 4;
-    private static final int RAIL_W = 56;
-    private static final int TAB_Y0 = 6;
-    private static final int TAB_H = 27;
+    /*
+     * The rail's own measurements come from the layout model, which is what the click, the drawing, the
+     * tooltips and the wheel all read, so none of them can work out a different answer from the others.
+     */
+    private static final int RAIL_X = ComputerTerminalLayout.RAIL_X;
+    private static final int RAIL_W = ComputerTerminalLayout.RAIL_W;
+    private static final int TAB_Y0 = ComputerTerminalLayout.TAB_Y0;
+    private static final int TAB_H = ComputerTerminalLayout.TAB_H;
     private static final int CONTENT_X = 63;
 
     // Network item grid (a virtual grid, not real slots; rendered from the snapshot).
@@ -385,12 +390,11 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     private int railScroll;
 
     private int railVisible() {
-        final int railH = menu.invY() - TAB_Y0 - 2;
-        return Math.max(1, railH / TAB_H);
+        return ComputerTerminalLayout.visibleRows(ComputerTerminalLayout.railHeight(menu.invY()));
     }
 
     private int maxRailScroll() {
-        return Math.max(0, railTabs().length - railVisible());
+        return ComputerTerminalLayout.maxScroll(railTabs().length, railVisible());
     }
 
     private int contentW() {
@@ -423,7 +427,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         g.fill(x + RAIL_X, y + TAB_Y0, x + RAIL_X + RAIL_W, y + TAB_Y0 + railH, RAIL);
         g.fill(x + RAIL_X + RAIL_W, y + TAB_Y0, x + RAIL_X + RAIL_W + 1, y + TAB_Y0 + railH, LINE);
         final int[] rail = railTabs();
-        railScroll = Math.max(0, Math.min(railScroll, maxRailScroll()));
+        railScroll = ComputerTerminalLayout.clampScroll(railScroll, railTabs().length, railVisible());
         final int visible = railVisible();
         for (int row = 0; row < visible && railScroll + row < rail.length; row++) {
             final int i = railScroll + row;
@@ -1584,30 +1588,25 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
      */
     private boolean clickedRail(final double mouseX, final double mouseY) {
         final int[] rail = railTabs();
-        final int tx = leftPos + RAIL_X;
-        final int visible = railVisible();
-        for (int row = 0; row < visible && railScroll + row < rail.length; row++) {
-            final int tab = rail[railScroll + row];
-            final int ty = topPos + TAB_Y0 + row * TAB_H;
-            if (mouseX < tx || mouseX >= tx + RAIL_W || mouseY < ty || mouseY >= ty + TAB_H) {
-                continue;
-            }
-            if (tab == ComputerTerminalMenu.TAB_CONSOLE) {
-                // Launch the Command Prompt for this computer instead of switching content.
-                PacketDistributor.sendToServer(new OpenProgramPayload(
-                        menu.monitorPos(), menu.hostPos(), Programs.COMMAND_PROMPT.toString()));
-                return true;
-            }
-            if (tab != menu.activeTab()) {
-                menu.setActiveTab(tab);
-                if (minecraft != null && minecraft.gameMode != null) {
-                    minecraft.gameMode.handleInventoryButtonClick(menu.containerId, tab);
-                }
-                syncSearchBoxVisibility();
-            }
+        final int row = ComputerTerminalLayout.rowAt(mouseX - leftPos, mouseY - topPos, railVisible());
+        if (row < 0 || railScroll + row >= rail.length) {
+            return false;
+        }
+        final int tab = rail[railScroll + row];
+        if (tab == ComputerTerminalMenu.TAB_CONSOLE) {
+            // Launch the Command Prompt for this computer instead of switching content.
+            PacketDistributor.sendToServer(new OpenProgramPayload(
+                    menu.monitorPos(), menu.hostPos(), Programs.COMMAND_PROMPT.toString()));
             return true;
         }
-        return false;
+        if (tab != menu.activeTab()) {
+            menu.setActiveTab(tab);
+            if (minecraft != null && minecraft.gameMode != null) {
+                minecraft.gameMode.handleInventoryButtonClick(menu.containerId, tab);
+            }
+            syncSearchBoxVisibility();
+        }
+        return true;
     }
 
     /**
@@ -2264,7 +2263,8 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     public boolean mouseScrolled(final double mx, final double my, final double dx, final double dy) {
         // Scrolling over the tab rail moves the rail when it holds more entries than fit.
         if (dy != 0 && mx >= leftPos + RAIL_X && mx < leftPos + RAIL_X + RAIL_W && maxRailScroll() > 0) {
-            railScroll = Math.max(0, Math.min(maxRailScroll(), railScroll - (int) Math.signum(dy)));
+            railScroll = ComputerTerminalLayout.clampScroll(
+                    railScroll - (int) Math.signum(dy), railTabs().length, railVisible());
             return true;
         }
         if (dropOpen && dy != 0) {
