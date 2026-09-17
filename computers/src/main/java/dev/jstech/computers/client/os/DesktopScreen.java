@@ -17,19 +17,15 @@ import dev.jstech.computers.client.MonitorFrame;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.TaskbarGroups;
 import dev.jstech.computers.menu.DesktopMenu;
-import dev.jstech.computers.operation.payload.DeleteFilePayload;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.MachinePowerPayload;
-import dev.jstech.computers.operation.payload.MkdirPayload;
 import dev.jstech.computers.operation.payload.MoveFilePayload;
 import dev.jstech.computers.operation.payload.NiDepositPayload;
 import dev.jstech.computers.operation.payload.NiShiftInsertPayload;
-import dev.jstech.computers.operation.payload.RenameFilePayload;
 import dev.jstech.computers.operation.payload.RequestDesktopFilesPayload;
-import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.operation.payload.SetIconPositionPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
@@ -130,6 +126,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private final TaskPopup taskPopup = new TaskPopup(this);
     /** The icons on the wallpaper: where each one sits, what it looks like, and which ones are picked. */
     private final DesktopIcons iconGrid = new DesktopIcons(this);
+    /** Making, renaming and deleting the things that live on the desktop. */
+    private final DeskFiles deskFiles = new DeskFiles(this);
 
     /*
      * Per-OS memory model: the system, its desktop and its services hold their share of the machine's RAM
@@ -555,12 +553,6 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     /** How far the cursor must travel from the press point before an icon click becomes a drag. */
     private static final double DRAG_THRESHOLD = 3.0;
 
-    // Inline rename of a desktop icon.
-    private int deskRenaming = -1; // index into desktopItems, or -1
-    private final StringBuilder deskRenameBuf = new StringBuilder();
-    @Nullable
-    private String deskPendingRename; // enter rename on this name once the next listing arrives
-
     static final int TASKBAR_H = 24;
 
     /*
@@ -748,11 +740,30 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** The desktop file being renamed in place and what has been typed so far, or -1 and empty. */
     int renamingIcon() {
-        return deskRenaming;
+        return deskFiles.renaming();
     }
 
     String renameText() {
-        return deskRenameBuf.toString();
+        return deskFiles.typedName();
+    }
+
+    /** The computer this desktop belongs to, and the folder its icons come from. */
+    BlockPos hostPos() {
+        return host;
+    }
+
+    String deskDir() {
+        return desktopDir;
+    }
+
+    /** Picks an icon, which is what a fresh file does so its name is ready to be typed over. */
+    void pickIcon(final int slot) {
+        selectedIcon = slot;
+    }
+
+    /** Says a file cannot be changed by hand, which is what a projection of stored items is. */
+    void showLocked() {
+        showError("Error", DAT_LOCKED_MESSAGE);
     }
 
     /** Whether this panel's popup shows the windows' live pictures rather than a list of their titles. */
@@ -1843,16 +1854,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             active.buildLaunchers();
         }
         // Enter rename on a freshly created item once it appears in the listing.
-        if (active.deskPendingRename != null) {
-            for (int i = 0; i < active.desktopItems.size(); i++) {
-                if (DesktopIcons.baseName(active.desktopItems.get(i).path())
-                        .equals(active.deskPendingRename)) {
-                    active.startDeskRename(i);
-                    break;
-                }
-            }
-            active.deskPendingRename = null;
-        }
+        active.deskFiles.takePendingRename();
     }
 
     @Override
@@ -2625,12 +2627,13 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     /** What New offers on the desktop: a folder first, then a file of every kind the machine can create. */
     private List<ContextMenu.Item> newDeskItems() {
         final List<ContextMenu.Item> entries = new ArrayList<>();
-        entries.add(new ContextMenu.Item("Folder", true, this::newDeskFolder));
+        entries.add(new ContextMenu.Item("Folder", true, deskFiles::newFolder));
         entries.add(ContextMenu.Item.separator());
         for (final FileType type
                 : FileOpeners.creatable()) {
             entries.add(new ContextMenu.Item(
-                    FilesApp.typeLabel(type) + " (." + type.extension() + ")", true, () -> newDeskFile(type)));
+                    FilesApp.typeLabel(type) + " (." + type.extension() + ")", true,
+                    () -> deskFiles.newFile(type)));
         }
         return entries;
     }
@@ -2771,8 +2774,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
              * A projection of what a drive holds is not a file anybody wrote, so it cannot be renamed or
              * deleted by hand; the filesystem refuses both, and a menu that offered them would be lying.
              */
-            entries.add(deskItem("Rename", !file.readOnly(), () -> startDeskRename(di)));
-            entries.add(deskItem("Delete", !file.readOnly(), () -> deleteDeskItem(di)));
+            entries.add(deskItem("Rename", !file.readOnly(), () -> deskFiles.startRename(di)));
+            entries.add(deskItem("Delete", !file.readOnly(), () -> deskFiles.delete(di)));
             entries.add(ContextMenu.Item.separator());
             entries.add(deskItem("Properties", true, () -> requestFileProperties(file.path())));
         } else {
@@ -2846,94 +2849,6 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private void uninstallLauncher(final ProgramSpec spec) {
         PacketDistributor.sendToServer(
                 new DesktopShellRunPayload(host, "uninstall " + spec.commandName()));
-    }
-
-    private void startDeskRename(final int idx) {
-        if (idx < 0 || idx >= desktopItems.size()) {
-            return;
-        }
-        final DiskFilesPayload.WireFile f = desktopItems.get(idx);
-        if (f.readOnly()) {
-            showError("Error", DAT_LOCKED_MESSAGE);
-            return;
-        }
-        deskRenaming = idx;
-        selectedIcon = launchers.size() + idx;
-        deskRenameBuf.setLength(0);
-        /*
-         * The whole name is edited, extension included: the extension decides which program opens the
-         * file, so keeping it out of reach left a text file that should have been a program with no
-         * way to become one.
-         */
-        deskRenameBuf.append(DesktopIcons.baseName(f.path()));
-    }
-
-    private void commitDeskRename() {
-        if (deskRenaming >= 0 && deskRenaming < desktopItems.size()) {
-            final DiskFilesPayload.WireFile f = desktopItems.get(deskRenaming);
-            final String oldPath = f.path();
-            final String newName = deskRenameBuf.toString().trim();
-            final String newPath = desktopDir + "/" + newName;
-            if (!newName.isEmpty() && !newPath.equals(oldPath)) {
-                PacketDistributor.sendToServer(new RenameFilePayload(host, oldPath, newPath));
-                FilesApps.diskChanged();
-            }
-        }
-        deskRenaming = -1;
-    }
-
-    private void deleteDeskItem(final int idx) {
-        if (idx < 0 || idx >= desktopItems.size()) {
-            return;
-        }
-        final DiskFilesPayload.WireFile f = desktopItems.get(idx);
-        if (f.readOnly()) {
-            showError("Error", DAT_LOCKED_MESSAGE);
-            return;
-        }
-        PacketDistributor.sendToServer(new DeleteFilePayload(host, f.path()));
-        FilesApps.diskChanged();
-    }
-
-    /**
-     * Makes an empty file of that kind, and puts the cursor in its name.
-     *
-     * <p>The kind is chosen before the file exists, because the extension is what decides which program
-     * opens it and a file created as text and renamed afterwards is a rename the player should not have
-     * had to do.
-     */
-    private void newDeskFile(final FileType type) {
-        final String name = uniqueDeskName("New File", "." + type.extension());
-        deskPendingRename = name;
-        PacketDistributor.sendToServer(new SaveFilePayload(host, desktopDir + "/" + name, ""));
-        FilesApps.diskChanged();
-    }
-
-    private void newDeskFolder() {
-        final String name = uniqueDeskName("New Folder", "");
-        deskPendingRename = name;
-        PacketDistributor.sendToServer(new MkdirPayload(host, desktopDir + "/" + name));
-        FilesApps.diskChanged();
-    }
-
-    private String uniqueDeskName(final String base, final String ext) {
-        if (!deskNameExists(base + ext)) {
-            return base + ext;
-        }
-        int n = 2;
-        while (deskNameExists(base + " (" + n + ")" + ext)) {
-            n++;
-        }
-        return base + " (" + n + ")" + ext;
-    }
-
-    private boolean deskNameExists(final String name) {
-        for (final DiskFilesPayload.WireFile f : desktopItems) {
-            if (DesktopIcons.baseName(f.path()).equals(name)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /** The overall width of the Start menu panel, which differs per Frames version. */
@@ -4284,8 +4199,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             return Click.TAKEN;
         }
         // A click on the desktop commits any in-progress icon rename.
-        if (deskRenaming >= 0) {
-            commitDeskRename();
+        if (deskFiles.isRenaming()) {
+            deskFiles.commitRename();
         }
 
         final int perCol = iconGrid.perColumn(sh());
@@ -4474,9 +4389,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         if (popup != null) {
             return true;
         }
-        // A desktop-icon rename captures typing before any window.
-        if (deskRenaming >= 0 && c >= 32 && c != 127 && c != '/' && c != '\\' && deskRenameBuf.length() < 64) {
-            deskRenameBuf.append(c);
+        // A desktop-icon rename captures typing before any window, until the name is as long as it may be.
+        if (deskFiles.isRenaming() && c >= 32 && c != 127 && c != '/' && c != '\\' && deskFiles.type(c)) {
             return true;
         }
         // The Frames 11 Start search box captures typing while it is open (it is always focused when shown).
@@ -4513,15 +4427,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             return true;
         }
         // An in-progress desktop-icon rename consumes keys first (Enter commits, Esc cancels).
-        if (deskRenaming >= 0) {
+        if (deskFiles.isRenaming()) {
             switch (key) {
-                case 257, 335 -> commitDeskRename();
-                case 256 -> deskRenaming = -1;
-                case 259 -> {
-                    if (deskRenameBuf.length() > 0) {
-                        deskRenameBuf.deleteCharAt(deskRenameBuf.length() - 1);
-                    }
-                }
+                case 257, 335 -> deskFiles.commitRename();
+                case 256 -> deskFiles.cancelRename();
+                case 259 -> deskFiles.backspace();
                 default -> {
                     return false;
                 }
