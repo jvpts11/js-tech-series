@@ -350,6 +350,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- Installing a system from the firmware showed the same grey box whatever system it was, so the installer each
+  one was drawn for was never reached: Frames XP Setup, the Debian and Fedora wizards, the pages that ask where
+  the system goes and what the computer is called. The system was written all the same, which is why it was easy
+  to miss. The firmware now sends the machine off and shows whatever the machine answers with, which is that
+  system's own installer, a plain copy, or nothing at all when the machine wrote it there and then. Arch and
+  Gentoo are unaffected: installing those means booting the medium and doing it by hand, which never went that
+  way.
 - A machine refused to start any program that reads or writes a field of one of its own classes, saying nothing
   answered it. That was every program with a field, and every program with a lambda, since what a lambda keeps hold
   of is a field too. Programs written before this run now with no change to them.
