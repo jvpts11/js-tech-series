@@ -126,6 +126,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private final LinuxPanels linuxPanels = new LinuxPanels(this);
     /** The Frames systems' two: the classic bottom taskbar, and Frames 11's centered band of icons. */
     private final FramesPanels framesPanels = new FramesPanels(this);
+    /** The flyout that lists one program's windows over its button on the panel. */
+    private final TaskPopup taskPopup = new TaskPopup(this);
 
     /*
      * Per-OS memory model: the system, its desktop and its services hold their share of the machine's RAM
@@ -738,10 +740,55 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         return win11StartX(sw);
     }
 
+    /** The windows a program has open, back to front. */
+    List<DesktopWindow> windowsOf(final String key) {
+        return groupWindows(key);
+    }
+
+    /** Whether this panel's popup shows the windows' live pictures rather than a list of their titles. */
+    boolean popupShowsThumbnails() {
+        return thumbnailPopups();
+    }
+
+    /** Whether this desktop's panel is the top bar rather than a bottom one. */
+    boolean panelOnTop() {
+        return topPanel();
+    }
+
+    /** The pixels a bottom panel takes, and the first row of the desktop under a top one. */
+    int panelReserve() {
+        return bottomReserve();
+    }
+
+    int workAreaTop() {
+        return workTop();
+    }
+
+    /** Ending or bringing forward a window on the panel's behalf. */
+    void closeOne(final DesktopWindow w) {
+        closeWindow(w);
+    }
+
+    void focusOne(final DesktopWindow w) {
+        focusWindow(w);
+    }
+
+    void closeAllOf(final String key) {
+        closeGroup(key);
+    }
+
+    /**
+     * Whether a launcher, a menu or a dialog is up. The popup gives way to all of them: it is the one
+     * thing on the panel that opens by itself, so it must never sit over something the player asked for.
+     */
+    boolean menuOrDialogOpen() {
+        return startOpen || panelCtxOpen || taskMenu.isOpen() || popup != null || powerOpen || crashing;
+    }
+
     /** The program whose windows the panel's popup is showing, or null while none is up. */
     @Nullable
     String openTaskPopup() {
-        return taskPopupKey;
+        return taskPopup.key();
     }
 
     /** What a task button reads: the window's own title, or the program's name for a group of them. */
@@ -894,20 +941,6 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private static final int LAUNCHER_W = 22;
     /** The pitch of the Frames XP quick launch icons beside Start. */
     static final int QL_W = 16;
-    /*
-     * The panel's popup: on a modern panel one card per window with its live picture, on a period one a
-     * list of titles. It rises after the cursor has rested on a program for a moment, and goes away a
-     * moment after the cursor has left both it and the program.
-     */
-    private static final int CARD_W = 60;
-    private static final int CARD_TITLE_H = 10;
-    private static final int THUMB_H = 32;
-    private static final int CARD_H = CARD_TITLE_H + THUMB_H + 4;
-    private static final int POPUP_PAD = 3;
-    private static final int LIST_W = 120;
-    private static final int LIST_ROW_H = 11;
-    private static final long HOVER_MS = 350L;
-    private static final long LEAVE_MS = 300L;
     static final int MENU_W = 130;
     static final int BAND_W = 22;
     static final int MENU_ITEM_H = 18;
@@ -1250,28 +1283,22 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** Whether the panel's popup (the windows of one program) is up. */
     public boolean isTaskPopupOpen() {
-        return taskPopupKey != null && !popupWindows().isEmpty();
+        return taskPopup.isOpen();
     }
 
     /** The titles the panel's popup lists, in order, empty when it is not up. */
     public List<String> taskPopupTitles() {
-        final List<String> out = new ArrayList<>();
-        for (final DesktopWindow w : popupWindows()) {
-            out.add(w.app().title());
-        }
-        return out;
+        return taskPopup.titles();
     }
 
     /** The desktop-local centre of the popup's {@code index}-th card or row, where a test clicks it. */
     public int[] taskPopupItemPoint(final int index) {
-        final int[] r = popupItemRect(index);
-        return r == null ? null : new int[] {r[0] + r[2] / 2, r[1] + r[3] / 2};
+        return taskPopup.itemPoint(index);
     }
 
     /** The desktop-local centre of the popup's close box for its {@code index}-th window. */
     public int[] taskPopupClosePoint(final int index) {
-        final int[] r = popupCloseRect(index);
-        return r == null ? null : new int[] {r[0] + r[2] / 2, r[1] + r[3] / 2};
+        return taskPopup.closePoint(index);
     }
 
     /** The labels of the open program menu, in order, empty when none is up. */
@@ -1944,7 +1971,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         // Cache the local cursor so the Start-menu draw (called deeper in this frame) can highlight the hovered row.
         this.hoverX = lmx;
         this.hoverY = lmy;
-        updateTaskPopup(lmx, lmy, sw, sh - TASKBAR_H);
+        taskPopup.update(lmx, lmy, sw, sh - TASKBAR_H);
         final HardwareEra eraNow = era();
 
         /*
@@ -2129,10 +2156,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             g.pose().popPose();
         }
         // The windows of one program, over the panel and the windows themselves.
-        if (taskPopupKey != null) {
+        if (taskPopup.key() != null) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.MENU);
-            renderTaskPopup(g, tbY, sw, sh, lmx, lmy);
+            taskPopup.render(g, tbY, sw, sh, lmx, lmy);
             g.pose().popPose();
         }
 
@@ -3731,18 +3758,6 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private final ContextMenu taskMenu =
             new ContextMenu(TASK_MENU_W, DESK_CTX_ITEM_H);
 
-    /** The program whose windows the panel's popup shows, or null while none is up. */
-    @Nullable
-    private String taskPopupKey;
-    /** Whether the popup was opened by a click, so it stays until one puts it away. */
-    private boolean taskPopupSticky;
-    /** The program the cursor has been resting on, and since when. */
-    @Nullable
-    private String taskHoverKey;
-    private long taskHoverSince;
-    /** When the cursor left the popup and its program, or zero while it is on one of them. */
-    private long taskPopupLeftAt;
-
     /** Opens a program's menu over its panel entry: what can be done with its windows and its pin. */
     private void openTaskMenu(final TaskbarGroups.Entry entry, final int atX, final int tbY) {
         final String key = entry.key();
@@ -3777,8 +3792,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                 items.add(deskItem("Unpin from taskbar", true, () -> togglePin(key)));
             }
         }
-        taskPopupKey = null;
-        taskPopupSticky = false;
+        taskPopup.dismiss();
         final int h = items.size() * DESK_CTX_ITEM_H + 2;
         // Above a bottom panel, below a top one: the menu never covers the entry it came from.
         final int y = topPanel() ? TASKBAR_H + 2 : tbY - h - 2;
@@ -3932,263 +3946,6 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         windows.add(made);
     }
 
-    /* The popup */
-
-    /** The windows the popup lists, back to front: the program's, as many as the desktop has room for. */
-    private List<DesktopWindow> popupWindows() {
-        if (taskPopupKey == null) {
-            return List.of();
-        }
-        final List<DesktopWindow> mine = groupWindows(taskPopupKey);
-        if (thumbnailPopups()) {
-            final int most = Math.max(1, (sw() - 4 - POPUP_PAD) / (CARD_W + POPUP_PAD));
-            return mine.size() > most ? mine.subList(0, most) : mine;
-        }
-        return mine;
-    }
-
-    /** The popup's box, desktop-local {x, y, w, h}, or null while none is up. */
-    @Nullable
-    private int[] popupRect(final int sw, final int tbY) {
-        final List<DesktopWindow> list = popupWindows();
-        if (list.isEmpty()) {
-            return null;
-        }
-        final TaskStrip strip = taskStrip(sw);
-        final int index = TaskbarGroups.indexOf(strip.entries(), taskPopupKey);
-        if (index < 0) {
-            return null;
-        }
-        final int center = strip.x()[index] + strip.w()[index] / 2;
-        final int n = list.size();
-        final int w;
-        final int h;
-        if (thumbnailPopups()) {
-            w = n * CARD_W + (n + 1) * POPUP_PAD;
-            h = CARD_H + 2 * POPUP_PAD;
-        } else {
-            w = LIST_W;
-            h = 2 + n * LIST_ROW_H + 5 + LIST_ROW_H + 2;
-        }
-        final int x = Math.max(2, Math.min(center - w / 2, sw - w - 2));
-        final int y = topPanel() ? TASKBAR_H + 3 : tbY - 3 - h;
-        return new int[] {x, y, w, h};
-    }
-
-    /** The popup's {@code index}-th card or row, desktop-local {x, y, w, h}, or null. */
-    @Nullable
-    private int[] popupItemRect(final int index) {
-        final int[] r = popupRect(sw(), sh() - TASKBAR_H);
-        if (r == null || index < 0 || index >= popupWindows().size()) {
-            return null;
-        }
-        if (thumbnailPopups()) {
-            return new int[] {r[0] + POPUP_PAD + index * (CARD_W + POPUP_PAD), r[1] + POPUP_PAD, CARD_W, CARD_H};
-        }
-        return new int[] {r[0] + 2, r[1] + 2 + index * LIST_ROW_H, r[2] - 4, LIST_ROW_H};
-    }
-
-    /** The close box of the popup's {@code index}-th window: on a card its corner, on a list the last row. */
-    @Nullable
-    private int[] popupCloseRect(final int index) {
-        final int[] item = popupItemRect(index);
-        if (item == null) {
-            return null;
-        }
-        if (thumbnailPopups()) {
-            return new int[] {item[0] + CARD_W - 10, item[1] + 1, 9, 9};
-        }
-        return popupCloseAllRect();
-    }
-
-    /** The "Close all" row of a list popup, or null on a modern panel. */
-    @Nullable
-    private int[] popupCloseAllRect() {
-        final int[] r = popupRect(sw(), sh() - TASKBAR_H);
-        if (r == null || thumbnailPopups()) {
-            return null;
-        }
-        return new int[] {r[0] + 2, r[1] + 2 + popupWindows().size() * LIST_ROW_H + 5, r[2] - 4, LIST_ROW_H};
-    }
-
-    private static boolean inRect(final double mx, final double my, @Nullable final int[] r) {
-        return r != null && mx >= r[0] && mx < r[0] + r[2] && my >= r[1] && my < r[1] + r[3];
-    }
-
-    /**
-     * Keeps the popup in step with the cursor, once a frame: it rises after the cursor has rested on an
-     * open program for a moment, moves to the program the cursor moves to, and goes away a moment after
-     * the cursor has left both the popup and its program. One opened by a click stays put instead.
-     */
-    private void updateTaskPopup(final int lmx, final int lmy, final int sw, final int tbY) {
-        if (startOpen || panelCtxOpen || taskMenu.isOpen() || popup != null || powerOpen || crashing) {
-            if (!taskPopupSticky) {
-                taskPopupKey = null;
-            }
-            return;
-        }
-        if (taskPopupKey != null && groupWindows(taskPopupKey).isEmpty()) {
-            taskPopupKey = null;
-            taskPopupSticky = false;
-        }
-        if (topPanel()) {
-            return; // the top bar lists no programs
-        }
-        final TaskStrip strip = taskStrip(sw);
-        final int idx = lmy >= tbY ? strip.indexAt(lmx) : -1;
-        final String under = idx >= 0 && strip.entries().get(idx).open() ? strip.entries().get(idx).key() : null;
-        final long now = System.currentTimeMillis();
-        if (under != null) {
-            if (!under.equals(taskHoverKey)) {
-                taskHoverKey = under;
-                taskHoverSince = now;
-            }
-            final boolean switching = taskPopupKey != null && !taskPopupSticky;
-            if (thumbnailPopups() && !under.equals(taskPopupKey) && (switching || now - taskHoverSince >= HOVER_MS)) {
-                taskPopupKey = under;
-                taskPopupSticky = false;
-                taskPopupLeftAt = 0;
-            }
-        } else {
-            taskHoverKey = null;
-        }
-        if (taskPopupKey != null && !taskPopupSticky) {
-            final boolean over = taskPopupKey.equals(under) || inRect(lmx, lmy, popupRect(sw, tbY));
-            if (over) {
-                taskPopupLeftAt = 0;
-            } else if (taskPopupLeftAt == 0) {
-                taskPopupLeftAt = now;
-            } else if (now - taskPopupLeftAt > LEAVE_MS) {
-                taskPopupKey = null;
-                taskPopupLeftAt = 0;
-            }
-        }
-    }
-
-    /** Draws the popup: cards with the windows' live pictures on a modern panel, a list of titles on a period one. */
-    private void renderTaskPopup(final GuiGraphics g, final int tbY, final int sw, final int sh,
-                                 final int lmx, final int lmy) {
-        final int[] r = popupRect(sw, tbY);
-        final List<DesktopWindow> list = popupWindows();
-        if (r == null) {
-            return;
-        }
-        skin.windowShadow(g, r[0], r[1], r[2], r[3]);
-        skin.panel(g, r[0], r[1], r[2], r[3]);
-        final ResourceLocation icon = programIdForLabel(taskPopupKey);
-        if (thumbnailPopups()) {
-            for (int i = 0; i < list.size(); i++) {
-                final DesktopWindow w = list.get(i);
-                final int[] card = popupItemRect(i);
-                if (card == null) {
-                    continue;
-                }
-                final boolean hot = inRect(lmx, lmy, card);
-                if (hot) {
-                    g.fill(card[0], card[1], card[0] + card[2], card[1] + card[3], skin.listHover());
-                }
-                ProgramIcons.draw(g, card[0] + 2, card[1] + 1, 8, 8, icon, iconSet());
-                final int titleW = CARD_W - 12 - (hot ? 10 : 2);
-                final String title = font.plainSubstrByWidth(w.app().title(),
-                        Texts.smallFits(titleW));
-                Texts.small(g, font, title, card[0] + 12, card[1] + 2, skin.text());
-                if (hot) {
-                    final int[] close = popupCloseRect(i);
-                    if (close != null) {
-                        if (inRect(lmx, lmy, close)) {
-                            g.fill(close[0], close[1], close[0] + close[2], close[1] + close[3], 0xFFC04A3E);
-                        }
-                        g.drawString(font, "x", close[0] + 2, close[1], inRect(lmx, lmy, close) ? 0xFFFFFFFF : skin.text(), false);
-                    }
-                }
-                final int tx = card[0] + 3;
-                final int ty = card[1] + CARD_TITLE_H + 1;
-                final int tw = CARD_W - 6;
-                OsSkin.outline(g, tx - 1, ty - 1, tw + 2, THUMB_H + 2, skin.edge());
-                g.fill(tx, ty, tx + tw, ty + THUMB_H, skin.fieldBg());
-                w.renderThumbnail(g, font, skin, tx, ty, tw, THUMB_H, sw, sh, bottomReserve(), workTop());
-            }
-            return;
-        }
-        for (int i = 0; i < list.size(); i++) {
-            final DesktopWindow w = list.get(i);
-            final int[] row = popupItemRect(i);
-            if (row == null) {
-                continue;
-            }
-            final boolean hot = inRect(lmx, lmy, row);
-            if (hot) {
-                g.fill(row[0], row[1], row[0] + row[2], row[1] + row[3], skin.listHover());
-            }
-            ProgramIcons.draw(g, row[0] + 2, row[1] + 1, 9, 9, icon, iconSet());
-            g.drawString(font, font.plainSubstrByWidth(w.app().title(), row[2] - 16), row[0] + 14, row[1] + 2,
-                    w.minimized() ? skin.dim() : skin.text(), false);
-        }
-        final int[] all = popupCloseAllRect();
-        if (all != null) {
-            g.fill(all[0] + 2, all[1] - 3, all[0] + all[2] - 2, all[1] - 2, skin.edge());
-            if (inRect(lmx, lmy, all)) {
-                g.fill(all[0], all[1], all[0] + all[2], all[1] + all[3], skin.listHover());
-            }
-            g.drawString(font, "Close all", all[0] + 14, all[1] + 2, 0xFFC04A3E, false);
-        }
-    }
-
-    /**
-     * A click while the popup is up. On one of its windows it brings that window forward; on a close box
-     * it ends that window; anywhere else it puts the popup away, and a click on the program's own entry
-     * that opened it is that and nothing more.
-     */
-    private boolean clickTaskPopup(final double mx, final double my, final int button) {
-        final int tbY = sh() - TASKBAR_H;
-        final int[] r = popupRect(sw(), tbY);
-        final List<DesktopWindow> list = popupWindows();
-        if (r == null) {
-            taskPopupKey = null;
-            taskPopupSticky = false;
-            return false;
-        }
-        if (inRect(mx, my, r)) {
-            if (button != 0) {
-                return true;
-            }
-            for (int i = 0; i < list.size(); i++) {
-                if (thumbnailPopups() && inRect(mx, my, popupCloseRect(i))) {
-                    closeWindow(list.get(i));
-                    if (groupWindows(taskPopupKey).isEmpty()) {
-                        taskPopupKey = null;
-                        taskPopupSticky = false;
-                    }
-                    return true;
-                }
-                if (inRect(mx, my, popupItemRect(i))) {
-                    focusWindow(list.get(i));
-                    taskPopupKey = null;
-                    taskPopupSticky = false;
-                    return true;
-                }
-            }
-            if (inRect(mx, my, popupCloseAllRect())) {
-                closeGroup(taskPopupKey);
-                taskPopupKey = null;
-                taskPopupSticky = false;
-            }
-            return true;
-        }
-        final String was = taskPopupKey;
-        final boolean sticky = taskPopupSticky;
-        taskPopupKey = null;
-        taskPopupSticky = false;
-        if (sticky && button == 0 && my >= tbY) {
-            final TaskStrip strip = taskStrip(sw());
-            final int idx = strip.indexAt(mx);
-            if (idx >= 0 && strip.entries().get(idx).key().equals(was)) {
-                return true; // the entry that opened it closes it; nothing more
-            }
-        }
-        return false;
-    }
-
     /** A click on a panel entry: the program's menu, its window, or the popup listing several of them. */
     private void clickTaskEntry(final TaskbarGroups.Entry entry, final int atX,
                                 final int button, final int tbY) {
@@ -4215,9 +3972,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             return;
         }
         // Several windows: the popup lists them, and stays until a click puts it away.
-        taskPopupKey = entry.key();
-        taskPopupSticky = true;
-        taskPopupLeftAt = 0;
+        taskPopup.openFor(entry.key());
     }
 
     private void openPowerDialog() {
@@ -4404,7 +4159,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             taskMenu.mouseClicked(lx(mouseXAbs), ly(mouseYAbs), button);
             return true;
         }
-        if (taskPopupKey != null && clickTaskPopup(lx(mouseXAbs), ly(mouseYAbs), button)) {
+        if (taskPopup.key() != null && taskPopup.click(lx(mouseXAbs), ly(mouseYAbs), button)) {
             return true;
         }
         // A modal dialog swallows every click; only its OK button dismisses it.
@@ -4842,9 +4597,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         if (taskMenu.isOpen() && taskMenu.keyPressed(key, scanCode, modifiers)) {
             return true;
         }
-        if (taskPopupKey != null && key == 256) {
-            taskPopupKey = null;
-            taskPopupSticky = false;
+        if (taskPopup.key() != null && key == 256) {
+            taskPopup.dismiss();
             return true;
         }
         // An in-progress desktop-icon rename consumes keys first (Enter commits, Esc cancels).
