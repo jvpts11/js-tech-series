@@ -117,6 +117,11 @@ public record FirmwareStatePayload(
     public static final StreamCodec<RegistryFriendlyByteBuf, FirmwareStatePayload> STREAM_CODEC =
             StreamCodec.of(FirmwareStatePayload::encode, FirmwareStatePayload::decode);
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public FirmwareStatePayload {
+        entries = List.copyOf(entries);
+    }
+
     @Override
     public CustomPacketPayload.Type<FirmwareStatePayload> type() {
         return TYPE;

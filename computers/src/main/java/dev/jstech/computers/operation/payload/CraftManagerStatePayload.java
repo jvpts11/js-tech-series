@@ -110,6 +110,11 @@ public record CraftManagerStatePayload(
                         ByteBufCodecs.stringUtf8(64), MediaBlock::label,
                         FileName.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_MEDIA_FILES)), MediaBlock::files,
                         MediaBlock::new);
+
+        /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+        MediaBlock {
+            files = List.copyOf(files);
+        }
     }
 
     // Wire record holds the serialized form; .map() converts to/from the flat public record.
@@ -123,6 +128,12 @@ public record CraftManagerStatePayload(
                         ByteBufCodecs.stringUtf8(96), Wire::status,
                         WireMachine.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_MACHINES)), Wire::machines,
                         Wire::new);
+
+        /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+        Wire {
+            rom = List.copyOf(rom);
+            machines = List.copyOf(machines);
+        }
     }
 
     public static final StreamCodec<RegistryFriendlyByteBuf, CraftManagerStatePayload> STREAM_CODEC =
@@ -135,6 +146,13 @@ public record CraftManagerStatePayload(
                             new MediaBlock(p.mediaVolumeKey(), p.mediaLabel(),
                                     p.mediaFiles().stream().map(FileName::new).toList()),
                             p.romEntries(), p.hasCard(), p.status(), p.machines()));
+
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public CraftManagerStatePayload {
+        mediaFiles = List.copyOf(mediaFiles);
+        romEntries = List.copyOf(romEntries);
+        machines = List.copyOf(machines);
+    }
 
     @Override
     public CustomPacketPayload.Type<CraftManagerStatePayload> type() {

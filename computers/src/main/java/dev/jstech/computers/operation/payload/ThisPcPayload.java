@@ -37,6 +37,13 @@ public record ThisPcPayload(WireMachine machine, List<WireDisk> disks, List<Wire
                     ByteBufCodecs.stringUtf8(96).apply(ByteBufCodecs.list(MAX)), ThisPcPayload::installedPrograms,
                     ThisPcPayload::new);
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public ThisPcPayload {
+        disks = List.copyOf(disks);
+        media = List.copyOf(media);
+        installedPrograms = List.copyOf(installedPrograms);
+    }
+
     @Override
     public CustomPacketPayload.Type<ThisPcPayload> type() {
         return TYPE;

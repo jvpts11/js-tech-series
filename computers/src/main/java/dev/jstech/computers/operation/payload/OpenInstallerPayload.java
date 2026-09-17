@@ -57,6 +57,12 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
                 ticksDone);
     }
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public OpenInstallerPayload {
+        disks = List.copyOf(disks);
+        desktops = List.copyOf(desktops);
+    }
+
     @Override
     public CustomPacketPayload.Type<OpenInstallerPayload> type() {
         return TYPE;

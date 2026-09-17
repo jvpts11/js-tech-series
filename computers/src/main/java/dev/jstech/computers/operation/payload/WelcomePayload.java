@@ -52,6 +52,12 @@ public record WelcomePayload(BlockPos hostPos, String machineName, String cpuNam
     public static final StreamCodec<RegistryFriendlyByteBuf, WelcomePayload> STREAM_CODEC =
             StreamCodec.of(WelcomePayload::encode, WelcomePayload::decode);
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public WelcomePayload {
+        others = List.copyOf(others);
+        tips = List.copyOf(tips);
+    }
+
     @Override
     public CustomPacketPayload.Type<WelcomePayload> type() {
         return TYPE;

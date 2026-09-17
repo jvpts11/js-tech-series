@@ -91,6 +91,13 @@ public record CraftPlannerPayload(ItemStack result, long quantity, boolean craft
                 stages, ingredients, tree);
     }
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public CraftPlannerPayload {
+        ingredients = List.copyOf(ingredients);
+        stages = List.copyOf(stages);
+        tree = List.copyOf(tree);
+    }
+
     @Override
     public CustomPacketPayload.Type<CraftPlannerPayload> type() {
         return TYPE;

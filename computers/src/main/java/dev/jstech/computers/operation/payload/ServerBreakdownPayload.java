@@ -42,6 +42,11 @@ public record ServerBreakdownPayload(List<ServerHolding> servers) implements Cus
             ServerHolding.STREAM_CODEC.apply(ByteBufCodecs.list(MAX))
                     .map(ServerBreakdownPayload::new, ServerBreakdownPayload::servers);
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public ServerBreakdownPayload {
+        servers = List.copyOf(servers);
+    }
+
     @Override
     public CustomPacketPayload.Type<ServerBreakdownPayload> type() {
         return TYPE;

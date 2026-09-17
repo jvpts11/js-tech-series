@@ -37,6 +37,12 @@ public record ItemRecipesPayload(StorageKey key, List<String> madeBy, List<Strin
                     ByteBufCodecs.stringUtf8(MAX_TEXT).apply(ByteBufCodecs.list(MAX_LINES)), ItemRecipesPayload::usedIn,
                     ItemRecipesPayload::new);
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public ItemRecipesPayload {
+        madeBy = List.copyOf(madeBy);
+        usedIn = List.copyOf(usedIn);
+    }
+
     @Override
     public CustomPacketPayload.Type<ItemRecipesPayload> type() {
         return TYPE;

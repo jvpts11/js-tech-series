@@ -37,6 +37,12 @@ public record DiskFilesPayload(String dir, List<WireFile> files,
                     WireVolume.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_VOLUMES)), DiskFilesPayload::volumes,
                     DiskFilesPayload::new);
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public DiskFilesPayload {
+        files = List.copyOf(files);
+        volumes = List.copyOf(volumes);
+    }
+
     @Override
     public CustomPacketPayload.Type<DiskFilesPayload> type() {
         return TYPE;

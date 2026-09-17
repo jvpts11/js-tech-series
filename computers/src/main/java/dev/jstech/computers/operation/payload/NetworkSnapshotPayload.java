@@ -29,6 +29,11 @@ public record NetworkSnapshotPayload(List<NetworkItemEntry> items) implements Cu
             NetworkItemEntry.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ENTRIES))
                     .map(NetworkSnapshotPayload::new, NetworkSnapshotPayload::items);
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public NetworkSnapshotPayload {
+        items = List.copyOf(items);
+    }
+
     @Override
     public CustomPacketPayload.Type<NetworkSnapshotPayload> type() {
         return TYPE;

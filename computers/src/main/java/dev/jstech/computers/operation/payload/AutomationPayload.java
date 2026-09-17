@@ -49,6 +49,12 @@ public record AutomationPayload(boolean engineOnline, String engineLabel, List<J
                     ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list(MAX_FILES)), AutomationPayload::iqlFiles,
                     AutomationPayload::new);
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public AutomationPayload {
+        jobs = List.copyOf(jobs);
+        iqlFiles = List.copyOf(iqlFiles);
+    }
+
     @Override
     public CustomPacketPayload.Type<AutomationPayload> type() {
         return TYPE;

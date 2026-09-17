@@ -42,6 +42,13 @@ public record ConsoleInitPayload(BlockPos hostPos, List<String> history,
                     ConsoleInitPayload::devices,
                     ConsoleInitPayload::new);
 
+    /* Copied on the way in, so what the terminal is handed cannot change under it after it arrives. */
+    public ConsoleInitPayload {
+        commands = List.copyOf(commands);
+        devices = List.copyOf(devices);
+        history = List.copyOf(history);
+    }
+
     @Override
     public CustomPacketPayload.Type<ConsoleInitPayload> type() {
         return TYPE;

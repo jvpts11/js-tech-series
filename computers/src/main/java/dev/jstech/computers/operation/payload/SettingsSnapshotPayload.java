@@ -77,6 +77,14 @@ public record SettingsSnapshotPayload(
     public static final StreamCodec<RegistryFriendlyByteBuf, SettingsSnapshotPayload> STREAM_CODEC =
             StreamCodec.of(SettingsSnapshotPayload::encode, SettingsSnapshotPayload::decode);
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public SettingsSnapshotPayload {
+        disks = List.copyOf(disks);
+        installed = List.copyOf(installed);
+        ramUses = List.copyOf(ramUses);
+        shares = List.copyOf(shares);
+    }
+
     @Override
     public CustomPacketPayload.Type<SettingsSnapshotPayload> type() {
         return TYPE;

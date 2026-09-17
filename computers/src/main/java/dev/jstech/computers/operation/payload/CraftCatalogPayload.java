@@ -65,6 +65,11 @@ public record CraftCatalogPayload(List<Entry> entries) implements CustomPacketPa
                     Entry.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ENTRIES)), CraftCatalogPayload::entries,
                     CraftCatalogPayload::new);
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public CraftCatalogPayload {
+        entries = List.copyOf(entries);
+    }
+
     @Override
     public CustomPacketPayload.Type<CraftCatalogPayload> type() {
         return TYPE;

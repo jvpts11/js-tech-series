@@ -58,6 +58,11 @@ public record CommandOutputPayload(boolean clear, String prompt, List<WireLine> 
                     ByteBufCodecs.BOOL, CommandOutputPayload::replaceLast,
                     CommandOutputPayload::new);
 
+    /* Copied on the way in, so what the terminal is handed cannot change under it after it arrives. */
+    public CommandOutputPayload {
+        lines = List.copyOf(lines);
+    }
+
     @Override
     public CustomPacketPayload.Type<CommandOutputPayload> type() {
         return TYPE;

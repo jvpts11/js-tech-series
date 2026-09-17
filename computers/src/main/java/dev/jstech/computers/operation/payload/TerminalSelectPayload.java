@@ -56,6 +56,11 @@ public record TerminalSelectPayload(BlockPos monitorPos, BlockPos hostPos, Stora
                             buf.readVarInt(),
                             ByteBufCodecs.STRING_UTF8.decode(buf)));
 
+    /* Copied on the way in, so what arrives from a client cannot change under whoever is acting on it. */
+    public TerminalSelectPayload {
+        serverKeys = List.copyOf(serverKeys);
+    }
+
     @Override
     public CustomPacketPayload.Type<TerminalSelectPayload> type() {
         return TYPE;

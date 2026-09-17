@@ -151,6 +151,16 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
                 defaultApps);
     }
 
+    /* Copied on the way in, so what the desktop is handed cannot change under it after it arrives. */
+    public DesktopFilesPayload {
+        files = List.copyOf(files);
+        programs = List.copyOf(programs);
+        iconCells = List.copyOf(iconCells);
+        community = List.copyOf(community);
+        pinned = List.copyOf(pinned);
+        defaultApps = Map.copyOf(defaultApps);
+    }
+
     @Override
     public CustomPacketPayload.Type<DesktopFilesPayload> type() {
         return TYPE;

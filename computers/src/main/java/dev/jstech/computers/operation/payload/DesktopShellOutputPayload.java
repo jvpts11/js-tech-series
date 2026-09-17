@@ -105,6 +105,11 @@ public record DesktopShellOutputPayload(boolean clear, boolean busy, String prom
                 informational);
     }
 
+    /* Copied on the way in, so what the terminal is handed cannot change under it after it arrives. */
+    public DesktopShellOutputPayload {
+        lines = List.copyOf(lines);
+    }
+
     @Override
     public CustomPacketPayload.Type<DesktopShellOutputPayload> type() {
         return TYPE;

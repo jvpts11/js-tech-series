@@ -137,6 +137,14 @@ public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, 
                     List.of(), true, true, 1, 1, List.of(), List.of());
         }
 
+        /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+        public Detail {
+            buffer = List.copyOf(buffer);
+            recent = List.copyOf(recent);
+            computers = List.copyOf(computers);
+            log = List.copyOf(log);
+        }
+
         public boolean present() {
             return pos != 0L;
         }
@@ -157,6 +165,11 @@ public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, 
                     Detail.STREAM_CODEC, GatewayManagerStatePayload::detail,
                     ByteBufCodecs.stringUtf8(160), GatewayManagerStatePayload::status,
                     GatewayManagerStatePayload::new);
+
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public GatewayManagerStatePayload {
+        gateways = List.copyOf(gateways);
+    }
 
     @Override
     public CustomPacketPayload.Type<GatewayManagerStatePayload> type() {

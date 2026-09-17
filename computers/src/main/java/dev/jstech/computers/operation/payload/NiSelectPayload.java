@@ -77,6 +77,11 @@ public record NiSelectPayload(BlockPos host, BlockPos monitorPos, StorageKey key
                                 priority);
                     });
 
+    /* Copied on the way in, so what arrives from a client cannot change under whoever is acting on it. */
+    public NiSelectPayload {
+        serverKeys = List.copyOf(serverKeys);
+    }
+
     @Override
     public CustomPacketPayload.Type<NiSelectPayload> type() {
         return TYPE;

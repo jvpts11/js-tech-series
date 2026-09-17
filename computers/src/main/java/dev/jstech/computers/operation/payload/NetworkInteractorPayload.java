@@ -79,6 +79,17 @@ public record NetworkInteractorPayload(List<NetworkItemEntry> networkItems, List
                 usedMb, capacityMb);
     }
 
+    /*
+     * Copied, because this is built straight from the index the network keeps and then written to the client
+     * while the network goes on changing it. What the terminal shows is the picture it was sent.
+     */
+    public NetworkInteractorPayload {
+        networkItems = List.copyOf(networkItems);
+        localItems = List.copyOf(localItems);
+        crafts = List.copyOf(crafts);
+        favourites = List.copyOf(favourites);
+    }
+
     @Override
     public CustomPacketPayload.Type<NetworkInteractorPayload> type() {
         return TYPE;

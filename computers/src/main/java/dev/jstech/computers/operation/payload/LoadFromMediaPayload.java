@@ -58,6 +58,11 @@ public record LoadFromMediaPayload(
                         FileName.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_FILES)), Wire::files,
                         ByteBufCodecs.BOOL, Wire::all,
                         Wire::new);
+
+        /* Copied on the way in, so what arrives cannot change under whoever is acting on it. */
+        Wire {
+            files = List.copyOf(files);
+        }
     }
 
     public static final StreamCodec<RegistryFriendlyByteBuf, LoadFromMediaPayload> STREAM_CODEC =
@@ -70,6 +75,11 @@ public record LoadFromMediaPayload(
                             p.hostPos(), p.mediaVolumeKey(),
                             p.fileNames().stream().map(FileName::new).toList(),
                             p.allMissing()));
+
+    /* Copied on the way in, so what arrives from a client cannot change under whoever is acting on it. */
+    public LoadFromMediaPayload {
+        fileNames = List.copyOf(fileNames);
+    }
 
     @Override
     public CustomPacketPayload.Type<LoadFromMediaPayload> type() {

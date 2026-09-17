@@ -98,6 +98,11 @@ public record DesktopWindowsPayload(BlockPos host, List<WireWindow> windows) imp
         return out;
     }
 
+    /* Copied on the way in, so what the desktop is handed cannot change under it after it arrives. */
+    public DesktopWindowsPayload {
+        windows = List.copyOf(windows);
+    }
+
     @Override
     public CustomPacketPayload.Type<DesktopWindowsPayload> type() {
         return TYPE;

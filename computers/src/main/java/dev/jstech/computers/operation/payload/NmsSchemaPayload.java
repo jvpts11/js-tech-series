@@ -40,6 +40,11 @@ public record NmsSchemaPayload(String networkLabel, List<String> servers, int it
                     EngineSnapshot.STREAM_CODEC, NmsSchemaPayload::engine,
                     NmsSchemaPayload::new);
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public NmsSchemaPayload {
+        servers = List.copyOf(servers);
+    }
+
     @Override
     public CustomPacketPayload.Type<NmsSchemaPayload> type() {
         return TYPE;
@@ -60,6 +65,13 @@ public record NmsSchemaPayload(String networkLabel, List<String> servers, int it
                         ByteBufCodecs.stringUtf8(64).apply(ByteBufCodecs.list(MAX_OBJECTS)), EngineSnapshot::jobs,
                         ByteBufCodecs.stringUtf8(MAX_SCRIPT), EngineSnapshot::script,
                         EngineSnapshot::new);
+
+        /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+        public EngineSnapshot {
+            views = List.copyOf(views);
+            procedures = List.copyOf(procedures);
+            jobs = List.copyOf(jobs);
+        }
 
         public static EngineSnapshot offline() {
             return new EngineSnapshot("not installed", List.of(), List.of(), List.of(), "");

@@ -46,12 +46,22 @@ public record DownloadToMediaPayload(
                         ByteBufCodecs.stringUtf8(64), Wire::key,
                         ByteBufCodecs.VAR_INT.apply(ByteBufCodecs.list(MAX_INDICES)), Wire::indices,
                         Wire::new);
+
+        /* Copied on the way in, so what arrives cannot change under whoever is acting on it. */
+        Wire {
+            indices = List.copyOf(indices);
+        }
     }
 
     public static final StreamCodec<RegistryFriendlyByteBuf, DownloadToMediaPayload> STREAM_CODEC =
             Wire.STREAM_CODEC.map(
                     w -> new DownloadToMediaPayload(w.pos(), w.key(), w.indices()),
                     p -> new Wire(p.hostPos(), p.mediaVolumeKey(), p.romIndices()));
+
+    /* Copied on the way in, so what arrives from a client cannot change under whoever is acting on it. */
+    public DownloadToMediaPayload {
+        romIndices = List.copyOf(romIndices);
+    }
 
     @Override
     public CustomPacketPayload.Type<DownloadToMediaPayload> type() {

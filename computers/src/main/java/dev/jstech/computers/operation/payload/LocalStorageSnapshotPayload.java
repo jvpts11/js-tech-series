@@ -47,6 +47,12 @@ public record LocalStorageSnapshotPayload(List<NetworkItemEntry> items, List<Dis
                     LocalStorageSnapshotPayload::disks,
                     LocalStorageSnapshotPayload::new);
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public LocalStorageSnapshotPayload {
+        items = List.copyOf(items);
+        disks = List.copyOf(disks);
+    }
+
     @Override
     public CustomPacketPayload.Type<LocalStorageSnapshotPayload> type() {
         return TYPE;
