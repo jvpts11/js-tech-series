@@ -1,5 +1,14 @@
-# Disable autocrlf on generated files, they always generate with LF
-# Add any extra files or paths here to make git stop saying they
-# are changed when only line endings change.
+# Every text file here is stored with LF line endings, whatever the machine it
+# was written on uses. Without this, the same file written on Windows and the
+# same file written anywhere else are two different files to git, and changing
+# one line of one of them shows up as a change to every line.
+* text=auto eol=lf
+
+# Never looked inside for lines to rewrite.
+*.png binary
+*.nbt binary
+*.jar binary
+
+# Generated data always comes out with LF, said outright so nothing has to guess.
 src/generated/**/.cache/* text eol=lf
 src/generated/**/*.json text eol=lf
