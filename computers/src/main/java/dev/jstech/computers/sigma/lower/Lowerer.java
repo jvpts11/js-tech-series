@@ -7,9 +7,11 @@
  */
 package dev.jstech.computers.sigma.lower;
 
+import dev.jstech.computers.sigma.DiagnosticBag;
 import dev.jstech.computers.sigma.ast.CompilationUnit;
 import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.IExpr;
+import dev.jstech.computers.sigma.ast.INode;
 import dev.jstech.computers.sigma.ast.IStmt;
 import dev.jstech.computers.sigma.ast.Operator;
 import dev.jstech.computers.sigma.lex.TokenKind;
@@ -18,8 +20,12 @@ import dev.jstech.computers.sigma.sem.IBinding;
 import dev.jstech.computers.sigma.sem.NamedType;
 import dev.jstech.computers.sigma.sem.TypeRules;
 import dev.jstech.computers.sigma.sem.SemanticModel;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The stage between knowing what a program means and writing it down: the shapes a player writes turned into
@@ -45,8 +51,10 @@ public final class Lowerer {
      */
     private final BuiltIns builtIns;
     private final TypeRules rules;
+    /** What a method's lambdas keep hold of, which is a question about the tree and is answered here. */
+    private final CaptureFinder finder;
     /** How many locks are held where the statement being reduced was written. */
-    private final java.util.Deque<Integer> loopLocks = new java.util.ArrayDeque<>();
+    private final Deque<Integer> loopLocks = new ArrayDeque<>();
     /**
      * What each method's statements came to, by the declaration they were written in.
      *
@@ -54,14 +62,18 @@ public final class Lowerer {
      * and the model belongs to the one before it: the checker has no business knowing what its answers were
      * later reduced to.
      */
-    private final java.util.Map<Object, IrStmt> bodies = new java.util.IdentityHashMap<>();
+    private final Map<Object, IrStmt> bodies = new IdentityHashMap<>();
+    /** What each method's lambdas keep, by the declaration they were written in. */
+    private final Map<Object, Captures> captures = new IdentityHashMap<>();
 
     private int locksOpen;
 
-    public Lowerer(final SemanticModel model, final BuiltIns builtIns, final TypeRules rules) {
+    public Lowerer(final SemanticModel model, final BuiltIns builtIns, final TypeRules rules,
+                   final DiagnosticBag diagnostics) {
         this.model = model;
         this.builtIns = builtIns;
         this.rules = rules;
+        this.finder = new CaptureFinder(model, diagnostics);
     }
 
     /**
@@ -168,6 +180,22 @@ public final class Lowerer {
         return this.bodies.get(written);
     }
 
+    /** What a method's lambdas keep hold of, or nothing when none of them keeps anything. */
+    public Captures capturesOf(final Object written) {
+        return this.captures.get(written);
+    }
+
+    /** Asks what a method's lambdas keep, for the bodies that have one to ask about. */
+    private void kept(final INode written, final List<IDecl.Parameter> parameters, final IStmt.Block body) {
+        if (body == null) {
+            return;
+        }
+        final Captures found = this.finder.forMethod(parameters, body, written);
+        if (found != null) {
+            this.captures.put(written, found);
+        }
+    }
+
     /** Reduces every body of every type in these files. */
     public void lower(final List<CompilationUnit> units) {
         for (final CompilationUnit unit : units) {
@@ -186,10 +214,12 @@ public final class Lowerer {
                 case IDecl.MethodDecl method -> {
                     this.block(method.body());
                     this.bodies.put(method, this.body(method.body()));
+                    this.kept(method, method.parameters(), method.body());
                 }
                 case IDecl.ConstructorDecl constructor -> {
                     this.block(constructor.body());
                     this.bodies.put(constructor, this.body(constructor.body()));
+                    this.kept(constructor, constructor.parameters(), constructor.body());
                 }
                 case IDecl.FieldDecl field -> this.replaceIn(field.initializer());
                 case IDecl.TypeMember nested -> this.type(nested.type());

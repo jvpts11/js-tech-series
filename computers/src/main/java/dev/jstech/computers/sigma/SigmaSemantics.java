@@ -8,6 +8,7 @@
 package dev.jstech.computers.sigma;
 
 import dev.jstech.computers.sigma.ast.CompilationUnit;
+import dev.jstech.computers.sigma.lower.Lowerer;
 import dev.jstech.computers.sigma.sem.BodyChecker;
 import dev.jstech.computers.sigma.sem.BuiltIns;
 import dev.jstech.computers.sigma.sem.Declarations;
@@ -17,7 +18,6 @@ import dev.jstech.computers.sigma.sem.TypeRules;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -118,7 +118,7 @@ public final class SigmaSemantics {
      * source in the order the sources were given, for an editor asking where in a file a caret is.
      */
     record Analysis(SemanticModel model, BuiltIns builtIns, TypeRules rules, Declarations declarations,
-                    List<CompilationUnit> units, dev.jstech.computers.sigma.lower.Lowerer lowered) {
+                    List<CompilationUnit> units, Lowerer lowered) {
     }
 
     /** Reads and checks into a bag the caller owns, and hands back what the next stage needs. */
@@ -168,8 +168,7 @@ public final class SigmaSemantics {
          * After the checking and before anything is written: every question about what the player wrote has
          * been asked by now, and the stage that writes the assembly has fewer shapes to know.
          */
-        final dev.jstech.computers.sigma.lower.Lowerer lowered =
-                new dev.jstech.computers.sigma.lower.Lowerer(model, builtIns, rules);
+        final Lowerer lowered = new Lowerer(model, builtIns, rules, bag);
         lowered.lower(units);
         if (wholeProgram) {
             bag.setFile(sources.isEmpty() ? "" : sources.getFirst().name());

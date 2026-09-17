@@ -63,7 +63,7 @@ public final class Emitter {
         this.declarations = declarations;
         this.diagnostics = diagnostics;
         this.lowered = lowered;
-        this.closures = new Closures(model, diagnostics);
+        this.closures = new Closures();
     }
 
     /** Writes the whole program out. */
@@ -264,7 +264,7 @@ public final class Emitter {
         final ITypeSymbol returns = this.declarations.resolve(method.returnType());
         final MethodBody body = new MethodBody(this, type, returns);
         body.parameters(method.parameters());
-        body.openClosure(this.closures.forMethod(type, method.parameters(), method.body(), method));
+        body.openClosure(this.closures.forMethod(type, this.lowered.capturesOf(method)));
         this.statements(body).block(this.lowered.bodyOf(method));
         return new AsmMethod(method.name(), returns.describe(), this.written(method.parameters()),
                 method.modifiers().contains(IDecl.Modifier.STATIC), body.slotCount(), body.finish());
@@ -287,8 +287,7 @@ public final class Emitter {
             values.calls().chained(type, constructor.chained());
         }
         if (constructor.body() != null) {
-            body.openClosure(this.closures.forMethod(type, constructor.parameters(), constructor.body(),
-                    constructor));
+            body.openClosure(this.closures.forMethod(type, this.lowered.capturesOf(constructor)));
             writes.block(this.lowered.bodyOf(constructor));
         }
         return new AsmMethod(AsmMethod.CONSTRUCTOR, "void", this.written(constructor.parameters()), false,
