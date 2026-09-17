@@ -7,11 +7,9 @@
  */
 package dev.jstech.computers.sigma.emit;
 
-import dev.jstech.computers.sigma.SigmaError;
 import dev.jstech.computers.sigma.DiagnosticBag;
 import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.IExpr;
-import dev.jstech.computers.sigma.ast.INode;
 import dev.jstech.computers.sigma.ast.IStmt;
 import dev.jstech.computers.sigma.ast.Operator;
 import dev.jstech.computers.sigma.ast.TypeRef;
@@ -32,11 +30,9 @@ import dev.jstech.computers.vm.listing.Instruction;
 import dev.jstech.computers.vm.listing.Opcode;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,10 +60,9 @@ public final class Emitter {
     private final Declarations declarations;
     private final DiagnosticBag diagnostics;
     private final List<AsmMethod> synthesized = new ArrayList<>();
-    private final List<AsmType> closures = new ArrayList<>();
-    private final Map<String, AsmType> closureTypes = new LinkedHashMap<>();
+    /** What each method's lambdas keep hold of, worked out from the tree before anything is written. */
+    private final Closures closures;
     private int lambdaCount;
-    private int closureCount;
 
     public Emitter(final SemanticModel model, final TypeRules rules, final BuiltIns builtIns,
                    final Declarations declarations, final DiagnosticBag diagnostics) {
@@ -76,6 +71,7 @@ public final class Emitter {
         this.builtIns = builtIns;
         this.declarations = declarations;
         this.diagnostics = diagnostics;
+        this.closures = new Closures(model, diagnostics);
     }
 
     /** Writes the whole program out. */
@@ -94,11 +90,10 @@ public final class Emitter {
                 case IDecl.DelegateDecl declaration -> program.addType(this.emitDelegate(type, declaration));
                 case null, default -> { }
             }
-            for (final AsmType closure : this.closures) {
+            for (final AsmType closure : this.closures.written()) {
                 program.addType(closure);
             }
-            this.closures.clear();
-            this.closureTypes.clear();
+            this.closures.forget();
         }
         return program;
     }
@@ -241,7 +236,7 @@ public final class Emitter {
         final ITypeSymbol returns = this.declarations.resolve(method.returnType());
         final Body body = new Body(type, returns);
         body.parameters(method.parameters());
-        body.openClosure(this.closureFor(type, method.parameters(), method.body(), method));
+        body.openClosure(this.closures.forMethod(type, method.parameters(), method.body(), method));
         body.block(method.body());
         return new AsmMethod(method.name(), returns.describe(), this.written(method.parameters()),
                 method.modifiers().contains(IDecl.Modifier.STATIC), body.slotCount(), body.finish());
@@ -262,7 +257,7 @@ public final class Emitter {
             body.chained(type, constructor.chained());
         }
         if (constructor.body() != null) {
-            body.openClosure(this.closureFor(type, constructor.parameters(), constructor.body(),
+            body.openClosure(this.closures.forMethod(type, constructor.parameters(), constructor.body(),
                     constructor));
             body.block(constructor.body());
         }
@@ -1610,7 +1605,7 @@ public final class Emitter {
                         new IOperand.Method(this.owner.qualifiedName(), name, written, gives.describe()));
                 return;
             }
-            Emitter.this.closureTypes.get(this.closure.type()).addMethod(made);
+            Emitter.this.closures.typeOf(this.closure.type()).addMethod(made);
             this.pushClosure();
             this.emit(Opcode.LDFN,
                     new IOperand.Method(this.closure.type(), name, written, gives.describe()));
@@ -1653,201 +1648,7 @@ public final class Emitter {
     private record Element(int thing, int at, ITypeSymbol of) {
     }
 
-    private record Closure(String type, Map<IBinding.Variable, String> fields, boolean holdsThis) {
 
-        /** The name of the field a closure keeps the object the method belonged to in. */
-        static final String OUTER = "0this";
-    }
-
-    /** What one walk of a method found. */
-    private static final class Found {
-        private final List<IExpr.Lambda> lambdas = new ArrayList<>();
-        private final Map<IBinding.Variable, Integer> declared = new IdentityHashMap<>();
-        private final Set<IBinding.Variable> used = Collections.newSetFromMap(new IdentityHashMap<>());
-        private boolean thisToo;
-    }
-
-    private Closure closureFor(final NamedType type, final List<IDecl.Parameter> parameters,
-                               final IStmt.Block body, final INode at) {
-        final Found method = new Found();
-        for (final IDecl.Parameter parameter : parameters) {
-            keep(method.declared, this.model.declaredAt(parameter), 0);
-        }
-        this.walk(body, 0, method);
-        if (method.lambdas.isEmpty()) {
-            return null;
-        }
-        final Map<IBinding.Variable, String> fields = new LinkedHashMap<>();
-        boolean holdsThis = false;
-        for (final IExpr.Lambda lambda : method.lambdas) {
-            final Found inside = this.inside(lambda);
-            holdsThis = holdsThis || inside.thisToo;
-            for (final IBinding.Variable variable : inside.used) {
-                final Integer depth = method.declared.get(variable);
-                if (depth == null) {
-                    this.cannotYet(at, "a lambda inside another one that keeps its variable");
-                    return null;
-                }
-                if (depth > 0) {
-                    this.cannotYet(at, "a lambda that keeps a variable a loop declares");
-                    return null;
-                }
-                fields.putIfAbsent(variable, variable.name());
-            }
-        }
-        if (fields.isEmpty()) {
-            return null;
-        }
-        this.closureCount++;
-        final Closure closure = new Closure("0closure" + this.closureCount, fields, holdsThis);
-        final AsmType written = new AsmType(AsmType.Kind.CLASS, closure.type());
-        if (holdsThis) {
-            written.addField(new AsmType.Field(Closure.OUTER, type.qualifiedName(), false));
-        }
-        for (final Map.Entry<IBinding.Variable, String> field : fields.entrySet()) {
-            written.addField(new AsmType.Field(field.getValue(), field.getKey().type().describe(), false));
-        }
-        this.closures.add(written);
-        this.closureTypes.put(closure.type(), written);
-        return closure;
-    }
-
-    private void cannotYet(final INode at, final String what) {
-        this.diagnostics.error(at.line(), at.column(), SigmaError.NOT_YET_BUILT, what);
-    }
-
-    /** What a lambda uses from outside itself, and whether it reaches the object it was written in. */
-    private Found inside(final IExpr.Lambda lambda) {
-        final Found found = new Found();
-        for (final IDecl.Parameter parameter : lambda.parameters()) {
-            keep(found.declared, this.model.declaredAt(parameter), 0);
-        }
-        this.walk(lambda.block(), 0, found);
-        this.walk(lambda.body(), 0, found);
-        found.used.removeAll(found.declared.keySet());
-        return found;
-    }
-
-    private static void keep(final Map<IBinding.Variable, Integer> into, final IBinding.Variable variable,
-                             final int depth) {
-        if (variable != null) {
-            into.putIfAbsent(variable, depth);
-        }
-    }
-
-    /*
-     * One walk serves both questions: how deep inside loops each variable was declared, and what each
-     * lambda reaches for. The depth is what says whether a variable outlives the lambda that keeps it.
-     */
-    private void walk(final IStmt statement, final int depth, final Found found) {
-        switch (statement) {
-            case null -> { }
-            case IStmt.Block block -> block.statements().forEach(inner -> this.walk(inner, depth, found));
-            case IStmt.LocalDecl local -> {
-                keep(found.declared, this.model.declaredAt(local), depth);
-                this.walk(local.initializer(), depth, found);
-            }
-            case IStmt.ExprStmt expression -> this.walk(expression.expression(), depth, found);
-            case IStmt.If branch -> {
-                this.walk(branch.condition(), depth, found);
-                this.walk(branch.then(), depth, found);
-                this.walk(branch.otherwise(), depth, found);
-            }
-            case IStmt.While loop -> {
-                this.walk(loop.condition(), depth, found);
-                this.walk(loop.body(), depth + 1, found);
-            }
-            case IStmt.DoWhile loop -> {
-                this.walk(loop.body(), depth + 1, found);
-                this.walk(loop.condition(), depth, found);
-            }
-            case IStmt.For loop -> {
-                loop.initializers().forEach(inner -> this.walk(inner, depth + 1, found));
-                this.walk(loop.condition(), depth + 1, found);
-                loop.updates().forEach(update -> this.walk(update, depth + 1, found));
-                this.walk(loop.body(), depth + 1, found);
-            }
-            case IStmt.ForEach loop -> {
-                keep(found.declared, this.model.declaredAt(loop), depth + 1);
-                this.walk(loop.source(), depth, found);
-                this.walk(loop.body(), depth + 1, found);
-            }
-            case IStmt.Switch choice -> {
-                this.walk(choice.value(), depth, found);
-                for (final IStmt.SwitchSection section : choice.sections()) {
-                    section.labels().forEach(label -> this.walk(label, depth, found));
-                    section.statements().forEach(inner -> this.walk(inner, depth, found));
-                }
-            }
-            case IStmt.Return give -> this.walk(give.value(), depth, found);
-            case IStmt.Dispose dispose -> this.walk(dispose.target(), depth, found);
-            case IStmt.Lock lock -> {
-                this.walk(lock.target(), depth, found);
-                this.walk(lock.body(), depth + 1, found);
-            }
-            default -> { }
-        }
-    }
-
-    private void walk(final IExpr expression, final int depth, final Found found) {
-        switch (expression) {
-            case null -> { }
-            case IExpr.Name name -> {
-                final IBinding binding = this.model.bindingOf(name);
-                if (binding instanceof IBinding.Variable variable) {
-                    found.used.add(variable);
-                } else if (binding instanceof IBinding.Member member && !member.member().isStatic()) {
-                    found.thisToo = true;
-                }
-            }
-            case IExpr.This ignored -> found.thisToo = true;
-            case IExpr.Base ignored -> found.thisToo = true;
-            case IExpr.OutArgument outward -> {
-                if (outward.type() != null) {
-                    keep(found.declared, this.model.declaredAt(outward), depth);
-                }
-                if (this.model.bindingOf(outward) instanceof IBinding.Variable variable) {
-                    found.used.add(variable);
-                }
-            }
-            case IExpr.Binary binary -> {
-                this.walk(binary.left(), depth, found);
-                this.walk(binary.right(), depth, found);
-            }
-            case IExpr.Unary unary -> this.walk(unary.operand(), depth, found);
-            case IExpr.Assign assign -> {
-                this.walk(assign.target(), depth, found);
-                this.walk(assign.value(), depth, found);
-            }
-            case IExpr.Conditional conditional -> {
-                this.walk(conditional.condition(), depth, found);
-                this.walk(conditional.whenTrue(), depth, found);
-                this.walk(conditional.whenFalse(), depth, found);
-            }
-            case IExpr.Call call -> {
-                this.walk(call.callee(), depth, found);
-                call.arguments().forEach(argument -> this.walk(argument, depth, found));
-            }
-            case IExpr.Member member -> this.walk(member.target(), depth, found);
-            case IExpr.Index index -> {
-                this.walk(index.target(), depth, found);
-                this.walk(index.index(), depth, found);
-            }
-            case IExpr.New created -> created.arguments()
-                    .forEach(argument -> this.walk(argument, depth, found));
-            case IExpr.NewArray created -> this.walk(created.length(), depth, found);
-            case IExpr.Cast cast -> this.walk(cast.value(), depth, found);
-            case IExpr.TypeTest test -> this.walk(test.value(), depth, found);
-            case IExpr.Lambda inner -> {
-                found.lambdas.add(inner);
-                inner.parameters().forEach(parameter ->
-                        keep(found.declared, this.model.declaredAt(parameter), depth));
-                this.walk(inner.block(), depth, found);
-                this.walk(inner.body(), depth, found);
-            }
-            default -> { }
-        }
-    }
 
     private boolean leavesAValue(final IExpr expression) {
         final ITypeSymbol type = this.model.typeOf(expression);
