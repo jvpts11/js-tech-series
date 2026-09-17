@@ -3917,11 +3917,49 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         return framesLaunchers.click11(mx, my, tbY);
     }
 
+    /**
+     * A click travels down the desktop one layer at a time: whatever is modal takes it first, then the
+     * panel, then the windows, then the wallpaper and its icons, and only what nothing claimed reaches the
+     * container underneath. Each layer below says whether it took the click, so the order they are tried in
+     * is the whole of the routing and reads in one place.
+     */
     @Override
     public boolean mouseClicked(final double mouseXAbs, final double mouseYAbs, final int button) {
         if (crashing) {
             return true; // the crash screen swallows input until the reboot completes
         }
+        if (clickedOverlay(mouseXAbs, mouseYAbs, button)) {
+            return true;
+        }
+        final double mouseX = lx(mouseXAbs);
+        final double mouseY = ly(mouseYAbs);
+        final int tbY = sh() - TASKBAR_H;
+        if (clickedPanel(mouseX, mouseY, button, tbY)) {
+            return true;
+        }
+        final Click inWindow = clickedWindow(mouseXAbs, mouseYAbs, mouseX, mouseY, button);
+        if (inWindow == Click.TAKEN) {
+            return true;
+        }
+        if (inWindow == Click.CONTAINER || clickedDesktop(mouseX, mouseY, button) == Click.CONTAINER) {
+            return super.mouseClicked(vx(mouseXAbs), vy(mouseYAbs), button);
+        }
+        return true;
+    }
+
+    /** What a layer did with a click: took it, left it for the next one, or handed it to the container. */
+    private enum Click {
+        TAKEN,
+        PASSED,
+        CONTAINER
+    }
+
+    /**
+     * Whatever is over everything else: the power dialog, an open program menu, the panel's popup, a modal
+     * dialog, and a window holding a dialog of its own. Each of these is modal in its own way, so a click
+     * reaching one goes no further down.
+     */
+    private boolean clickedOverlay(final double mouseXAbs, final double mouseYAbs, final int button) {
         /*
          * The power dialog is modal: it decides the fate of the whole machine, so nothing behind it
          * takes the click. An open program menu takes the next click the same way, and the panel's
@@ -3956,10 +3994,15 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             }
             return true;
         }
-        final double mouseX = lx(mouseXAbs);
-        final double mouseY = ly(mouseYAbs);
-        final int tbY = sh() - TASKBAR_H;
+        return false;
+    }
 
+    /**
+     * The panel and everything that belongs to it: a balloon over it, its own menu, the Start button and an
+     * open launcher, and the row of program entries. The bar swallows any click that lands on it and misses
+     * all of those, so nothing underneath ever reacts to a click on the panel.
+     */
+    private boolean clickedPanel(final double mouseX, final double mouseY, final int button, final int tbY) {
         // A balloon is dismissed by clicking it, and it swallows that click so nothing under it reacts.
         if (balloonClick(mouseX, mouseY, tbY, sw())) {
             return true;
@@ -4044,7 +4087,16 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             }
             return true;
         }
+        return false;
+    }
 
+    /**
+     * The open windows, front to back: a title-bar button, a resize edge, the bar itself, or the body. A
+     * window with a dialog up takes nothing itself, and a click on the front window's inventory band is a
+     * real container click rather than anything the desktop should answer.
+     */
+    private Click clickedWindow(final double mouseXAbs, final double mouseYAbs,
+                                final double mouseX, final double mouseY, final int button) {
         for (int i = windows.size() - 1; i >= 0; i--) {
             final DesktopWindow w = windows.get(i);
             if (w.minimized()) {
@@ -4058,7 +4110,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             if (held != null && mouseX >= w.x() && mouseX <= w.x() + w.width()
                     && mouseY >= w.y() && mouseY <= w.y() + w.height()) {
                 focusWindow(held);
-                return true;
+                return Click.TAKEN;
             }
             final int titleBtn = w.buttonAt(mouseX, mouseY);
             if (titleBtn != 0) {
@@ -4069,82 +4121,113 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                 bringToFront(i);
                 w.setPressedButton(titleBtn);
                 pressedBtnWindow = w;
-                return true;
+                return Click.TAKEN;
             }
             final int rdir = w.resizeHitTest(mouseX, mouseY);
             if (rdir != DesktopWindow.RESIZE_NONE) {
                 bringToFront(i);
                 resizing = w;
                 w.beginResize(rdir, mouseX, mouseY);
-                return true;
+                return Click.TAKEN;
             }
             if (w.titleBarHit(mouseX, mouseY)) {
                 bringToFront(i);
                 dragging = w;
                 dragOffsetX = (int) mouseX - w.x();
                 dragOffsetY = (int) mouseY - w.y();
-                return true;
+                return Click.TAKEN;
             }
             if (w.bodyHit(mouseX, mouseY)) {
                 bringToFront(i);
-                /*
-                 * A click landing on an active inventory slot (only the front inventory-band window has them) is
-                 * a real container click: let the vanilla container drive the cursor, drag, and shift-click.
-                 */
-                if (w.app() instanceof IInventoryBandApp && !(w.app() instanceof NetworkInteractorApp)
-                        && !w.app().modalActive() && slotUnderMouse(mouseXAbs, mouseYAbs) != null) {
-                    return super.mouseClicked(vx(mouseXAbs), vy(mouseYAbs), button);
-                }
-                if (w.app() instanceof NetworkInteractorApp ni) {
-                    /*
-                     * Shift-click an inventory slot inserts that whole stack into the network (Network tab) or
-                     * local storage (Local tab), like MC-NET, instead of the vanilla quick-move between slots.
-                     */
-                    if (!ni.hasPopup() && hasShiftDown()) {
-                        final Slot slot = slotUnderMouse(mouseXAbs, mouseYAbs);
-                        final int target = ni.shiftInsertTarget();
-                        if (slot != null && slot.hasItem() && target >= 0) {
-                            PacketDistributor.sendToServer(
-                                    new NiShiftInsertPayload(
-                                            host, monitorPos, slot.getContainerSlot(), target));
-                            return true;
-                        }
-                    }
-                    /*
-                     * While the request/storage dialog is open it is modal over the window (even over the
-                     * inventory band) so the app gets the click instead of the vanilla container.
-                     */
-                    if (!ni.hasPopup() && slotUnderMouse(mouseXAbs, mouseYAbs) != null) {
-                        return super.mouseClicked(vx(mouseXAbs), vy(mouseYAbs), button);
-                    }
-                    /*
-                     * A held stack dropped on the item grid goes to the network (Network tab) or local storage
-                     * (Storage tab): the desktop owns the cursor, so it routes the handoff here. Left = the
-                     * whole stack as items; right = one, or what a held container holds; and a held empty
-                     * container right-clicked on a fluid or chemical entry fills from it, so the entry under
-                     * the cursor travels with a right-click.
-                     */
-                    if (!ni.hasPopup() && !menu.getCarried().isEmpty() && (button == 0 || button == 1)) {
-                        final double lx = mouseX - (w.x() + 4);
-                        final double ly = mouseY - (w.y() + 18);
-                        final int target = ni.cursorDepositTarget(lx, ly);
-                        if (target >= 0) {
-                            PacketDistributor.sendToServer(
-                                    new NiDepositPayload(host, monitorPos, target, button == 0,
-                                            button == 1 ? ni.cursorDepositEntry(lx, ly) : Optional.empty()));
-                            return true;
-                        }
-                    }
-                }
-                w.app().mouseClicked(w, mouseX, mouseY, button);
-                return true;
+                return clickedWindowBody(w, mouseXAbs, mouseYAbs, mouseX, mouseY, button);
             }
         }
+        return Click.PASSED;
+    }
 
+    /**
+     * A click inside a window's body. Most of the time the program itself answers it, but a window carrying
+     * the player's inventory has to let the container drive instead, and the Network Interactor takes the
+     * ones the container would otherwise turn into a quick-move between slots.
+     */
+    private Click clickedWindowBody(final DesktopWindow w, final double mouseXAbs, final double mouseYAbs,
+                                    final double mouseX, final double mouseY, final int button) {
+        /*
+         * A click landing on an active inventory slot (only the front inventory-band window has them) is
+         * a real container click: let the vanilla container drive the cursor, drag, and shift-click.
+         */
+        if (w.app() instanceof IInventoryBandApp && !(w.app() instanceof NetworkInteractorApp)
+                && !w.app().modalActive() && slotUnderMouse(mouseXAbs, mouseYAbs) != null) {
+            return Click.CONTAINER;
+        }
+        if (w.app() instanceof NetworkInteractorApp ni) {
+            final Click routed = clickedInteractor(ni, w, mouseXAbs, mouseYAbs, mouseX, mouseY, button);
+            if (routed != Click.PASSED) {
+                return routed;
+            }
+        }
+        w.app().mouseClicked(w, mouseX, mouseY, button);
+        return Click.TAKEN;
+    }
+
+    /**
+     * The Network Interactor's own handling of a click on its window, which is where the desktop hands items
+     * between the player and the network. It is here rather than in the program because the desktop, not the
+     * container, owns the cursor while a window is open.
+     */
+    private Click clickedInteractor(final NetworkInteractorApp ni, final DesktopWindow w,
+                                    final double mouseXAbs, final double mouseYAbs,
+                                    final double mouseX, final double mouseY, final int button) {
+        /*
+         * Shift-click an inventory slot inserts that whole stack into the network (Network tab) or
+         * local storage (Local tab), like MC-NET, instead of the vanilla quick-move between slots.
+         */
+        if (!ni.hasPopup() && hasShiftDown()) {
+            final Slot slot = slotUnderMouse(mouseXAbs, mouseYAbs);
+            final int target = ni.shiftInsertTarget();
+            if (slot != null && slot.hasItem() && target >= 0) {
+                PacketDistributor.sendToServer(
+                        new NiShiftInsertPayload(host, monitorPos, slot.getContainerSlot(), target));
+                return Click.TAKEN;
+            }
+        }
+        /*
+         * While the request/storage dialog is open it is modal over the window (even over the
+         * inventory band) so the app gets the click instead of the vanilla container.
+         */
+        if (!ni.hasPopup() && slotUnderMouse(mouseXAbs, mouseYAbs) != null) {
+            return Click.CONTAINER;
+        }
+        /*
+         * A held stack dropped on the item grid goes to the network (Network tab) or local storage
+         * (Storage tab): the desktop owns the cursor, so it routes the handoff here. Left = the
+         * whole stack as items; right = one, or what a held container holds; and a held empty
+         * container right-clicked on a fluid or chemical entry fills from it, so the entry under
+         * the cursor travels with a right-click.
+         */
+        if (!ni.hasPopup() && !menu.getCarried().isEmpty() && (button == 0 || button == 1)) {
+            final double lx = mouseX - (w.x() + 4);
+            final double ly = mouseY - (w.y() + 18);
+            final int target = ni.cursorDepositTarget(lx, ly);
+            if (target >= 0) {
+                PacketDistributor.sendToServer(
+                        new NiDepositPayload(host, monitorPos, target, button == 0,
+                                button == 1 ? ni.cursorDepositEntry(lx, ly) : Optional.empty()));
+                return Click.TAKEN;
+            }
+        }
+        return Click.PASSED;
+    }
+
+    /**
+     * The wallpaper and its icons, which is where a click lands when nothing above wanted it: the desktop's
+     * own menu, an icon picked or opened, a drag armed, or a rubber band begun on bare wallpaper.
+     */
+    private Click clickedDesktop(final double mouseX, final double mouseY, final int button) {
         // An open desktop context menu takes the click first, and closes on it whatever it landed on.
         if (deskMenu.isOpen()) {
             deskMenu.mouseClicked(mouseX, mouseY, button);
-            return true;
+            return Click.TAKEN;
         }
         // A click on the desktop commits any in-progress icon rename.
         if (deskRenaming >= 0) {
@@ -4158,7 +4241,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             // Right-click: the menu of whatever is under the cursor, or the wallpaper's own.
             selectedIcon = slot;
             openDeskContext(slot, (int) mouseX, (int) mouseY);
-            return true;
+            return Click.TAKEN;
         }
 
         if (slot >= 0) {
@@ -4181,7 +4264,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                 openSlot(slot);
                 selectedIcon = -1;
             }
-            return true;
+            return Click.TAKEN;
         }
         selectedIcon = -1;
         iconGrid.selection().clear();
@@ -4190,7 +4273,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
          * world (no slot under the cursor). Swallow it so nothing is ever dropped by clicking the wallpaper.
          */
         if (!menu.getCarried().isEmpty()) {
-            return true;
+            return Click.TAKEN;
         }
         // Pressing on bare wallpaper starts a rubber band; the drag handler grows it from here.
         if (button == 0 && mouseY >= workTop() && mouseY < workBottom() && overWallpaper(mouseX, mouseY)) {
@@ -4200,7 +4283,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             bandX = mouseX;
             bandY = mouseY;
         }
-        return super.mouseClicked(vx(mouseXAbs), vy(mouseYAbs), button);
+        return Click.CONTAINER;
     }
 
     @Override
