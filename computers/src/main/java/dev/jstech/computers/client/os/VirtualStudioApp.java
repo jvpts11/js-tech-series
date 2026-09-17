@@ -248,27 +248,10 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         this.terminal = this.root.add(new ShellView(host, false, ""));
         this.terminal.setOnIdle(this::typeNext);
         this.tabs.setCloseable(this::closeTab);
-        this.askClose.add(new Button("Save", () -> {
-            this.askClose.close();
-            this.workspace.setCurrent(this.closing);
-            this.workspace.save();
-            this.workspace.close(this.closing);
-        }).setPrimary(true));
-        this.askClose.add(new Button("Don't Save", () -> {
-            this.askClose.close();
-            this.workspace.close(this.closing);
-        }));
-        this.askClose.add(new Button("Cancel", this.askClose::close));
-        this.askDelete.add(new Button("Delete", () -> {
-            this.askDelete.close();
-            deleteNode();
-        }).setPrimary(true));
-        this.askDelete.add(new Button("Cancel", this.askDelete::close));
+        buildPrompts();
         this.start = this.root.add(new Button("Start", this::startProgram).setPrimary(true));
         this.root.add(this.menuBar);
-        this.menuBar.add("File", this::fileMenu).add("Edit", this::editMenu).add("View", this::viewMenu)
-                .add("Project", this::projectMenu).add("Build", this::buildMenu).add("Debug", this::debugMenu)
-                .add("Tools", this::toolsMenu).add("Help", this::helpMenu);
+        buildMenuBar();
 
         /*
          * The wizard's first page: the templates used lately on the left, and on the right the whole
@@ -334,6 +317,36 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         this.completionsBox = this.options.add(new Checkbox(() -> "Suggest what can follow a name",
                 () -> this.completionsOn, () -> this.completionsOn = !this.completionsOn));
         this.optionsClose = this.options.add(new Button("Close", this.options::close).setPrimary(true));
+    }
+
+    /**
+     * The two questions the editor asks before doing something it cannot take back: whether to save a file
+     * being closed, and whether a file really is to be deleted. Neither offers its dangerous answer first.
+     */
+    private void buildPrompts() {
+        this.askClose.add(new Button("Save", () -> {
+            this.askClose.close();
+            this.workspace.setCurrent(this.closing);
+            this.workspace.save();
+            this.workspace.close(this.closing);
+        }).setPrimary(true));
+        this.askClose.add(new Button("Don't Save", () -> {
+            this.askClose.close();
+            this.workspace.close(this.closing);
+        }));
+        this.askClose.add(new Button("Cancel", this.askClose::close));
+        this.askDelete.add(new Button("Delete", () -> {
+            this.askDelete.close();
+            deleteNode();
+        }).setPrimary(true));
+        this.askDelete.add(new Button("Cancel", this.askDelete::close));
+    }
+
+    /** The eight menus across the top, each filled when it is opened rather than now. */
+    private void buildMenuBar() {
+        this.menuBar.add("File", this::fileMenu).add("Edit", this::editMenu).add("View", this::viewMenu)
+                .add("Project", this::projectMenu).add("Build", this::buildMenu).add("Debug", this::debugMenu)
+                .add("Tools", this::toolsMenu).add("Help", this::helpMenu);
     }
 
     /* What a test, or "Open with", asks of it */
