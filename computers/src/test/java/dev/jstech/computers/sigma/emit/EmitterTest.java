@@ -309,4 +309,39 @@ class EmitterTest {
         assertEquals(List.of("monitor.enter", "ldloc 1", "monitor.exit"), broken.subList(entered, entered + 3));
         assertTrue(broken.get(entered + 3).startsWith("br "), broken.get(entered + 3));
     }
+
+    /**
+     * A script standing on the base class compiles to a listing a machine takes.
+     *
+     * <p>The interface never reached the listing because a machine has nothing to do with one, and the base class
+     * must not reach it either: its three do nothing, and a call to something nothing answers is a listing the
+     * machine refuses at load. So the question is not what the compiler wrote but whether the machine takes it.
+     */
+    @Test
+    void emit_writesALoadableListingForAScriptOnTheBaseClass() {
+        final SigmaCompiler.Result result = build(
+                "class Monitor : Script {\n public override void OnTick() { Console.PrintLine(\"tick\"); }\n}\n");
+        assertTrue(result.ok(), () -> String.join("\n", result.lines()));
+        final AsmReader reader = new AsmReader(result.assembly());
+        final dev.jstech.computers.vm.listing.AsmProgram program = reader.read();
+        final List<ListingProblem> problems = new ArrayList<>(reader.problems());
+        if (!reader.hasProblems()) {
+            problems.addAll(dev.jstech.computers.vm.program.ProgramImage.of(program).problems());
+        }
+        assertTrue(problems.isEmpty(), () -> problems.stream().map(ListingProblem::format).toList().toString());
+    }
+
+    /** A script that fills in none of the three still stands, because the base class already answers all of them. */
+    @Test
+    void emit_writesALoadableListingForAScriptThatOverridesNothing() {
+        final SigmaCompiler.Result result = build("class Monitor : Script {\n}\n");
+        assertTrue(result.ok(), () -> String.join("\n", result.lines()));
+        final AsmReader reader = new AsmReader(result.assembly());
+        final dev.jstech.computers.vm.listing.AsmProgram program = reader.read();
+        final List<ListingProblem> problems = new ArrayList<>(reader.problems());
+        if (!reader.hasProblems()) {
+            problems.addAll(dev.jstech.computers.vm.program.ProgramImage.of(program).problems());
+        }
+        assertTrue(problems.isEmpty(), () -> problems.stream().map(ListingProblem::format).toList().toString());
+    }
 }

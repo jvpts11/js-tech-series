@@ -7,6 +7,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### Added
+- A program that stays up can now be written by standing on the class `Script` instead of implementing `IScript`.
+  `Script` already has `OnInit`, `OnTick` and `OnDestroy`, doing nothing, so a script written this way fills in only
+  the ones it uses and says `override` on each, while one written on the interface goes on writing all three with no
+  word at all. Both are the same program to the machine, and `IScript` is not going anywhere.
 - A class can now say which of its methods another class may replace, with `virtual`, `override` and `abstract`.
   A method marked `virtual` may be replaced by one below it written with `override`, and that one may be replaced
   in its turn without anyone writing `virtual` again. A method marked `abstract` has no body at all, only an

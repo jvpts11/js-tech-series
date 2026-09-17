@@ -16,7 +16,12 @@ A program is one of two shapes, and says which by how it is written:
 - A class with a `static void Main()` runs at the terminal that started it. It holds the prompt, prints
   as it goes, and is gone when `Main` returns (or when it calls `Program.Exit`).
 - A class that implements `IScript` stays up. `OnInit` runs once, `OnTick` every tick, `OnDestroy` when
-  it is stopped, and it is still running after the world has been away and come back.
+  it is stopped, and it is still running after the world has been away and come back. It writes all three.
+
+A script can also be written by standing on the class `Script` instead of implementing the interface.
+`Script` already has the three, doing nothing, so a script written this way fills in only the ones it
+uses and says `override` on each. The two are the same program to the machine; the class is the form
+Σ uses, since that language has no interfaces at all.
 
 Every file starts with the namespaces it uses (`using System.IO.*;`) and its own (`namespace Mine;`).
 

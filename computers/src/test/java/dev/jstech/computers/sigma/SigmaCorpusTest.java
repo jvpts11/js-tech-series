@@ -40,8 +40,14 @@ class SigmaCorpusTest {
     /** The programs of the corpus, kept under {@code sigma/corpus} as source and as the listing each compiles to. */
     private static final List<String> PROGRAMS = List.of("Library", "Programs", "Machine", "Network", "Gateway", "Ui");
 
-    /** The types the compiler declares as the language's own core, which the corpus is not about. */
-    private static final Set<String> CORE = Set.of("object", "string", "List", "Map", "Action", "Func", "IScript");
+    /**
+     * The types the compiler declares as the language's own core, which the corpus is not about.
+     *
+     * <p>Both shapes of entry point are here for the same reason: their three methods are what a program that
+     * stays up is made of, not something a program reaches for, and the corpus programs run at a terminal.
+     */
+    private static final Set<String> CORE =
+            Set.of("object", "string", "List", "Map", "Action", "Func", "IScript", "Script");
 
     @Test
     void compile_writesTheListingsItWroteBefore() throws IOException {

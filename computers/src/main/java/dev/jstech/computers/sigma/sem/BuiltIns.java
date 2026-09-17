@@ -33,6 +33,8 @@ public final class BuiltIns {
 
     private static final Set<IDecl.Modifier> PUBLIC = Set.of(IDecl.Modifier.PUBLIC);
     private static final Set<IDecl.Modifier> PUBLIC_STATIC = Set.of(IDecl.Modifier.PUBLIC, IDecl.Modifier.STATIC);
+    /** What the base class offers: a body of its own that does nothing, for a script to put its own in place of. */
+    private static final Set<IDecl.Modifier> PUBLIC_VIRTUAL = Set.of(IDecl.Modifier.PUBLIC, IDecl.Modifier.VIRTUAL);
     /** How a declaration marks a parameter the method fills in. */
     private static final String OUT = "out ";
 
@@ -46,6 +48,7 @@ public final class BuiltIns {
     private final NamedType actionOfType;
     private final NamedType funcType;
     private final NamedType scriptType;
+    private final NamedType scriptBase;
 
     public BuiltIns() {
         this.objectType = this.declare("object", NamedType.Kind.CLASS);
@@ -56,6 +59,7 @@ public final class BuiltIns {
         this.actionOfType = this.declare("Action", NamedType.Kind.DELEGATE, "T");
         this.funcType = this.declare("Func", NamedType.Kind.DELEGATE, "T", "R");
         this.scriptType = this.declare("IScript", NamedType.Kind.INTERFACE);
+        this.scriptBase = this.declare("Script", NamedType.Kind.CLASS);
 
         this.fillString();
         this.fillList();
@@ -85,9 +89,14 @@ public final class BuiltIns {
         return this.mapType;
     }
 
-    /** The interface a program's entry point implements. */
+    /** The interface a program's entry point implements, which the base class below also carries. */
     public NamedType scriptType() {
         return this.scriptType;
+    }
+
+    /** The class a script may stand on instead, filling in only the three it uses. */
+    public NamedType scriptBase() {
+        return this.scriptBase;
     }
 
     /**
@@ -135,7 +144,8 @@ public final class BuiltIns {
     private static final String UI = "System.UI";
 
     private static final Map<String, String> HOMES = Map.ofEntries(
-            Map.entry("IScript", SYSTEM), Map.entry("Action", SYSTEM), Map.entry("Func", SYSTEM),
+            Map.entry("IScript", SYSTEM), Map.entry("Script", SYSTEM),
+            Map.entry("Action", SYSTEM), Map.entry("Func", SYSTEM),
             Map.entry("List", COLLECTIONS), Map.entry("Map", COLLECTIONS));
 
     /**
@@ -285,10 +295,25 @@ public final class BuiltIns {
                 List.of(IMemberSymbol.ParameterSymbol.of("value", new ITypeSymbol.TypeParameter("T", 0))), PUBLIC));
     }
 
+    /**
+     * The two ways of writing a program that stays up, which are one thing underneath.
+     *
+     * <p>{@code IScript} is the full language's and always was: a class says it is a script and writes all three.
+     * {@code Script} is a class to stand on, whose three do nothing, so a script fills in only what it uses. The
+     * subset has no interfaces at all, so it is the only form there, and the full language keeps both, which is
+     * what lets a subset program compile unchanged as a full one.
+     *
+     * <p>{@code Script} implements {@code IScript}, so "does this type descend from IScript" remains the single
+     * question that finds a script, and nothing further down learns a second shape to look for.
+     */
     private void fillScript() {
         this.method(this.scriptType, "OnInit", ITypeSymbol.Primitive.VOID, PUBLIC);
         this.method(this.scriptType, "OnTick", ITypeSymbol.Primitive.VOID, PUBLIC);
         this.method(this.scriptType, "OnDestroy", ITypeSymbol.Primitive.VOID, PUBLIC);
+        this.scriptBase.addInterface(this.scriptType);
+        this.method(this.scriptBase, "OnInit", ITypeSymbol.Primitive.VOID, PUBLIC_VIRTUAL);
+        this.method(this.scriptBase, "OnTick", ITypeSymbol.Primitive.VOID, PUBLIC_VIRTUAL);
+        this.method(this.scriptBase, "OnDestroy", ITypeSymbol.Primitive.VOID, PUBLIC_VIRTUAL);
     }
 
     /**

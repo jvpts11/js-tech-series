@@ -472,6 +472,53 @@ class SigmaSemanticsTest {
                 + "class M { static void Main() { } }"));
     }
 
+    /** The interface is the full language's and stays: a class that answers it writes no override. */
+    @Test
+    void check_stillTakesAScriptWrittenOnTheInterface() {
+        assertClean(check(SCRIPT));
+    }
+
+    /** The base class is the other form, for the subset that has no interfaces, and the full language takes it too. */
+    @Test
+    void check_takesAScriptStandingOnTheBaseClass() {
+        assertClean(check("class Monitor : Script { public override void OnTick() { } }"));
+    }
+
+    /** Its three do nothing of their own, so a script fills in only what it uses. */
+    @Test
+    void check_letsAScriptOnTheBaseClassLeaveTheOthersAlone() {
+        assertClean(check("class Monitor : Script { public override void OnInit() { } }"));
+    }
+
+    /** They are virtual, not free: putting one in their place is still something you write down. */
+    @Test
+    void check_asksAScriptOnTheBaseClassToSayItIsReplacingOne() {
+        assertReports("S3043", check("class Monitor : Script { public void OnTick() { } }"));
+    }
+
+    /**
+     * One question finds a script either way, because the base class carries the interface.
+     *
+     * <p>That is what keeps the runtime from having to learn a second shape: it asks what it always asked.
+     */
+    @Test
+    void checkProgram_findsAScriptStandingOnTheBaseClass() {
+        final SigmaSemantics.Result result =
+                SigmaSemantics.checkProgram(List.of(new SourceFile("Watch.sgs", PRELUDE
+                        + "class Watch : Script { public override void OnTick() { } }")));
+        assertClean(result);
+        assertEquals(Shape.SCRIPT, result.model().shape());
+    }
+
+    @Test
+    void checkProgram_countsABaseClassScriptAmongTheEntryPoints() {
+        final SigmaSemantics.Result result =
+                SigmaSemantics.checkProgram(List.of(new SourceFile("Two.sgs", PRELUDE
+                        + "class Watch : Script { public override void OnTick() { } } "
+                        + "class Other { static void Main() { } }")));
+        assertReports("S3017", result);
+    }
+
     @Test
     void check_namesTheFileEachMessageCameFrom() {
         final SigmaSemantics.Result result = SigmaSemantics.check(List.of(
