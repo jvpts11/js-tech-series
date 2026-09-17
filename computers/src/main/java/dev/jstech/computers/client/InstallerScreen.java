@@ -77,6 +77,18 @@ public final class InstallerScreen extends Screen {
         return this.computerPos.equals(pos);
     }
 
+    /**
+     * The page the installer is showing, by name, for a test that has to answer what it asks.
+     *
+     * <p>An installer does not ask everything up front: the questions come while the copy runs, at the
+     * points the system reaches them, so anything driving one has to wait for a page rather than guess when
+     * it will appear. Without this there is no way to tell from outside whether the installer is copying or
+     * standing still waiting for somebody.
+     */
+    public String pageName() {
+        return this.flow == null ? "" : this.flow.page().name();
+    }
+
     /** The page the machine has moved to, with the work it has done behind it. */
     public void accept(final OpenInstallerPayload payload) {
         this.flow = payload.flow();

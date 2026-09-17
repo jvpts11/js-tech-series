@@ -275,14 +275,23 @@ public class FirmwareScreen extends Screen {
     }
 
     /**
-     * Hands over to the installation sequence. Writing the system is that screen's job, so the
-     * player watches it happen instead of the firmware closing and the system appearing later.
+     * Hands over to the installation sequence: the machine is told to start, and what it answers decides
+     * which screen the player lands on.
+     *
+     * <p>The firmware deliberately opens nothing itself. A system with an installer of its own puts the
+     * machine into it and the player gets that installer, drawn the way that system was drawn; a system
+     * that only copies gets the plain progress; and a machine that writes it there and then goes straight
+     * back to the prompt. The firmware cannot tell which of the three it is, because that depends on the
+     * medium and on what the machine can hold, and only the machine knows both.
+     *
+     * <p>Opening a screen here would settle that question before asking it, which is what used to happen:
+     * every install wore the same box whatever system it was, and the installers each system was drawn for
+     * were never reached from this button.
      */
     private void openInstaller(final String osLabel, final long readerRef) {
         final int target = state == null ? -1 : state.installTargetSlot();
-        final String targetLabel = target < 0 ? "the default disk" : "Disk " + target;
-        minecraft.setScreen(new OsInstallScreen(computerPos, monitorPos, kind, osLabel, targetLabel,
-                target, readerRef));
+        PacketDistributor.sendToServer(new FirmwareActionPayload(computerPos, monitorPos,
+                FirmwareActionPayload.ACTION_INSTALL, readerRef, target));
     }
 
     /** Screen centre of the primary install action drawn on the last frame (client tests click it). */

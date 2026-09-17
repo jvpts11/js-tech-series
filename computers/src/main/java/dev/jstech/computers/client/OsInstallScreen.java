@@ -36,7 +36,12 @@ public final class OsInstallScreen extends Screen {
     /** How long the bar is drawn over until the machine says otherwise, which is only the moment before it does. */
     private static final int WORK_TICKS = 70;
 
-    private enum Phase { CONFIRM, WORKING, DONE, FAILED }
+    /**
+     * What this screen can be showing. There is no page that asks first: a machine is already installing by
+     * the time anybody sees this, because the firmware sends the machine off and the machine answers with
+     * which screen the player belongs on. A system with an installer of its own is not shown here at all.
+     */
+    private enum Phase { WORKING, DONE, FAILED }
 
     /** The steps the progress walks through, each claiming a quarter of the work. */
     private static final String[] STEPS = {
@@ -52,9 +57,8 @@ public final class OsInstallScreen extends Screen {
     private final String osName;
     private final String targetLabel;
     private final int targetSlot;
-    private final long readerRef;
 
-    private Phase phase = Phase.CONFIRM;
+    private Phase phase = Phase.WORKING;
     /** Why the server refused the write, once it has; shown in place of the reboot prompt. */
     private String failure = "";
     private int ticks;
@@ -63,9 +67,8 @@ public final class OsInstallScreen extends Screen {
     private int[] primary;
     private int[] secondary;
 
-    public OsInstallScreen(final BlockPos computerPos, final BlockPos monitorPos, final FirmwareKind kind,
-                           final String osName, final String targetLabel, final int targetSlot,
-                           final long readerRef) {
+    private OsInstallScreen(final BlockPos computerPos, final BlockPos monitorPos, final FirmwareKind kind,
+                            final String osName, final String targetLabel, final int targetSlot) {
         super(Component.literal("Install system"));
         this.computerPos = computerPos;
         this.monitorPos = monitorPos;
@@ -73,7 +76,6 @@ public final class OsInstallScreen extends Screen {
         this.osName = osName == null || osName.isBlank() ? "the installer's system" : osName;
         this.targetLabel = targetLabel == null || targetLabel.isBlank() ? "the default disk" : targetLabel;
         this.targetSlot = targetSlot;
-        this.readerRef = readerRef;
     }
 
     /**
@@ -84,7 +86,7 @@ public final class OsInstallScreen extends Screen {
                                             final FirmwareKind kind, final String osName,
                                             final String targetLabel, final int targetSlot) {
         final OsInstallScreen screen = new OsInstallScreen(computerPos, monitorPos, kind, osName, targetLabel,
-                targetSlot, -1L);
+                targetSlot);
         screen.phase = Phase.DONE;
         return screen;
     }
@@ -98,8 +100,7 @@ public final class OsInstallScreen extends Screen {
     public static OsInstallScreen working(final BlockPos computerPos, final BlockPos monitorPos,
                                           final FirmwareKind kind, final String osName, final String targetLabel,
                                           final int ticksLeft, final int ticksTotal) {
-        final OsInstallScreen screen = new OsInstallScreen(computerPos, monitorPos, kind, osName, targetLabel,
-                -1, -1L);
+        final OsInstallScreen screen = new OsInstallScreen(computerPos, monitorPos, kind, osName, targetLabel, -1);
         screen.phase = Phase.WORKING;
         screen.workTicks = Math.max(1, ticksTotal);
         screen.ticks = Math.max(0, ticksTotal - ticksLeft);
@@ -114,8 +115,7 @@ public final class OsInstallScreen extends Screen {
     public static OsInstallScreen failed(final BlockPos computerPos, final BlockPos monitorPos,
                                          final FirmwareKind kind, final String osName,
                                          final String targetLabel, final String failure) {
-        final OsInstallScreen screen = new OsInstallScreen(computerPos, monitorPos, kind, osName, targetLabel,
-                -1, -1L);
+        final OsInstallScreen screen = new OsInstallScreen(computerPos, monitorPos, kind, osName, targetLabel, -1);
         screen.phase = Phase.FAILED;
         screen.failure = failure;
         return screen;
@@ -148,20 +148,6 @@ public final class OsInstallScreen extends Screen {
 
     @Override
     public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
-        if (phase == Phase.CONFIRM && in(primary, mouseX, mouseY)) {
-            /*
-             * The machine starts copying and answers with how long its copy takes; the bar runs on an estimate
-             * for the tick or two that takes, which is shorter than anybody can read.
-             */
-            phase = Phase.WORKING;
-            PacketDistributor.sendToServer(new FirmwareActionPayload(computerPos, monitorPos,
-                    FirmwareActionPayload.ACTION_INSTALL, readerRef, targetSlot));
-            return true;
-        }
-        if (phase == Phase.CONFIRM && in(secondary, mouseX, mouseY)) {
-            onClose();
-            return true;
-        }
         if (phase == Phase.DONE && in(primary, mouseX, mouseY)) {
             // Reboot into what was just installed: set it as the boot disk and let the machine come up.
             PacketDistributor.sendToServer(new FirmwareActionPayload(computerPos, monitorPos,
@@ -202,7 +188,6 @@ public final class OsInstallScreen extends Screen {
         g.fill(x + W - 1, y, x + W, y + H, p.edge);
         g.fill(x + 1, y + 1, x + W - 1, y + 17, p.bar);
         final String title = switch (phase) {
-            case CONFIRM -> "INSTALL SYSTEM";
             case WORKING -> "INSTALLING " + osName.toUpperCase(Locale.ROOT);
             case DONE -> "INSTALLATION COMPLETE";
             case FAILED -> "INSTALLATION FAILED";
@@ -211,17 +196,6 @@ public final class OsInstallScreen extends Screen {
 
         int ty = y + 26;
         switch (phase) {
-            case CONFIRM -> {
-                row(g, x, ty, p, "System", osName);
-                row(g, x, ty += 12, p, "Source", readerRef < 0 ? "linked drive" : "installer medium");
-                row(g, x, ty += 12, p, "Target", targetLabel);
-                ty += 18;
-                g.drawString(font, "Existing files on the target disk are kept.", x + 10, ty, p.dim, false);
-                g.drawString(font, "A second system installs beside the first (dual boot).",
-                        x + 10, ty + 11, p.dim, false);
-                primary = button(g, x + 10, y + H - 26, 96, 16, "INSTALL", p, true, mouseX, mouseY);
-                secondary = button(g, x + 114, y + H - 26, 96, 16, "CANCEL", p, false, mouseX, mouseY);
-            }
             case WORKING -> {
                 final int done = permille() * STEPS.length / 1000;
                 for (int i = 0; i < STEPS.length; i++) {
