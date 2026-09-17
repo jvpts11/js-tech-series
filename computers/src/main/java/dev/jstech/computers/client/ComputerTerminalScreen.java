@@ -1530,25 +1530,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
             }
             searchBox.setFocused(false);
         }
-        /*
-         * Holding a stack and clicking the grid or deposit bar hands it to the network (Network tab) or the
-         * computer's local storage (Storage tab): left = the whole stack as items, right = one; one item, or
-         * what a held container holds; and a held empty container right-clicked on a fluid or chemical
-         * entry fills from it, so the entry under the cursor travels with a right-click.
-         */
-        if (isGridTab() && !menu.getCarried().isEmpty()
-                && (button == 0 || button == 1)
-                && (overDepositBar(mouseX, mouseY) || overNetworkGrid(mouseX, mouseY))) {
-            final Optional<StorageKey> entry = button == 1
-                    ? Optional.ofNullable(networkItemAt((int) mouseX, (int) mouseY)).map(NetworkItemEntry::key)
-                    : Optional.empty();
-            if (menu.activeTab() == ComputerTerminalMenu.TAB_STORAGE) {
-                PacketDistributor.sendToServer(new TerminalLocalDepositPayload(menu.monitorPos(), menu.hostPos(),
-                        button == 1 ? TerminalLocalDepositPayload.CURSOR_ONE : TerminalLocalDepositPayload.CURSOR, entry));
-            } else {
-                PacketDistributor.sendToServer(new TerminalInsertPayload(menu.monitorPos(), menu.hostPos(),
-                        button == 1 ? TerminalInsertPayload.CURSOR_ONE : TerminalInsertPayload.CURSOR, entry));
-            }
+        if (clickedWithHeldStack(mouseX, mouseY, button)) {
             return true;
         }
         /*
@@ -1563,101 +1545,150 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
                 return true;
             }
         }
-        if (button == 0) {
-            final int[] rail = railTabs();
-            final int tx = leftPos + RAIL_X;
-            final int visible = railVisible();
-            for (int row = 0; row < visible && railScroll + row < rail.length; row++) {
-                final int tab = rail[railScroll + row];
-                final int ty = topPos + TAB_Y0 + row * TAB_H;
-                if (mouseX >= tx && mouseX < tx + RAIL_W && mouseY >= ty && mouseY < ty + TAB_H) {
-                    if (tab == ComputerTerminalMenu.TAB_CONSOLE) {
-                        // Launch the Command Prompt for this computer instead of switching content.
-                        PacketDistributor.sendToServer(new OpenProgramPayload(
-                                menu.monitorPos(), menu.hostPos(),
-                                Programs.COMMAND_PROMPT.toString()));
-                        return true;
-                    }
-                    if (tab != menu.activeTab()) {
-                        menu.setActiveTab(tab);
-                        if (minecraft != null && minecraft.gameMode != null) {
-                            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, tab);
-                        }
-                        syncSearchBoxVisibility();
-                    }
-                    return true;
-                }
+        if (button == 0 && (clickedRail(mouseX, mouseY) || clickedTabContent(mouseX, mouseY))) {
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    /**
+     * Handing a held stack to the machine: clicking the grid or the deposit bar puts it into the network
+     * (Network tab) or the computer's own storage (Storage tab).
+     *
+     * <p>Left puts the whole stack in as items and right puts in one, or what a held container holds. A held
+     * empty container right-clicked on a fluid or chemical entry fills from it, so which entry the cursor was
+     * over travels with a right-click and not with a left one.
+     */
+    private boolean clickedWithHeldStack(final double mouseX, final double mouseY, final int button) {
+        if (!isGridTab() || menu.getCarried().isEmpty() || (button != 0 && button != 1)
+                || (!overDepositBar(mouseX, mouseY) && !overNetworkGrid(mouseX, mouseY))) {
+            return false;
+        }
+        final Optional<StorageKey> entry = button == 1
+                ? Optional.ofNullable(networkItemAt((int) mouseX, (int) mouseY)).map(NetworkItemEntry::key)
+                : Optional.empty();
+        if (menu.activeTab() == ComputerTerminalMenu.TAB_STORAGE) {
+            PacketDistributor.sendToServer(new TerminalLocalDepositPayload(menu.monitorPos(), menu.hostPos(),
+                    button == 1 ? TerminalLocalDepositPayload.CURSOR_ONE : TerminalLocalDepositPayload.CURSOR,
+                    entry));
+        } else {
+            PacketDistributor.sendToServer(new TerminalInsertPayload(menu.monitorPos(), menu.hostPos(),
+                    button == 1 ? TerminalInsertPayload.CURSOR_ONE : TerminalInsertPayload.CURSOR, entry));
+        }
+        return true;
+    }
+
+    /**
+     * The rail down the left side, which is how the terminal changes what it is showing. The prompt is the
+     * one entry on it that opens something rather than switching the content beside it.
+     */
+    private boolean clickedRail(final double mouseX, final double mouseY) {
+        final int[] rail = railTabs();
+        final int tx = leftPos + RAIL_X;
+        final int visible = railVisible();
+        for (int row = 0; row < visible && railScroll + row < rail.length; row++) {
+            final int tab = rail[railScroll + row];
+            final int ty = topPos + TAB_Y0 + row * TAB_H;
+            if (mouseX < tx || mouseX >= tx + RAIL_W || mouseY < ty || mouseY >= ty + TAB_H) {
+                continue;
             }
-            // The Craft tab: clicking a catalog entry opens the request popup.
-            if (menu.activeTab() == ComputerTerminalMenu.TAB_CRAFT && menu.getCarried().isEmpty()) {
-                final var entry = craftEntryAt((int) mouseX, (int) mouseY);
-                if (entry != null) {
-                    openCraftPopup(entry);
-                    return true;
-                }
+            if (tab == ComputerTerminalMenu.TAB_CONSOLE) {
+                // Launch the Command Prompt for this computer instead of switching content.
+                PacketDistributor.sendToServer(new OpenProgramPayload(
+                        menu.monitorPos(), menu.hostPos(), Programs.COMMAND_PROMPT.toString()));
+                return true;
             }
-            if (isGridTab()) {
-                if (inRect(mouseX, mouseY, leftPos + SORT_X, topPos + TOOLBAR_Y + gridShift(),
-                        SORT_W, TOOLBAR_H)) {
-                    sortByQuantity = !sortByQuantity;
-                    netScrollRow = 0;
-                    return true;
+            if (tab != menu.activeTab()) {
+                menu.setActiveTab(tab);
+                if (minecraft != null && minecraft.gameMode != null) {
+                    minecraft.gameMode.handleInventoryButtonClick(menu.containerId, tab);
                 }
-                // The Network tab opens a request popup; the Storage tab withdraws directly (above).
-                if (menu.activeTab() == ComputerTerminalMenu.TAB_NETWORK) {
-                    final NetworkItemEntry e = networkItemAt((int) mouseX, (int) mouseY);
-                    if (e != null) {
-                        openRequest(e);
-                        return true;
-                    }
-                }
+                syncSearchBoxVisibility();
             }
-            if (menu.activeTab() == ComputerTerminalMenu.TAB_OPS) {
-                final int row = opsRowAt((int) mouseX, (int) mouseY);
-                if (row >= 0) {
-                    selectedOp = row;
-                    openOpPopup(menu.operationsLog().get(row)); // click a logged op -> SubOperations popup
-                    return true;
-                }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * A left click on whichever tab is showing: a recipe to request, an item to ask the network for, a
+     * logged or running operation to look into, or one of the maintenance actions.
+     */
+    private boolean clickedTabContent(final double mouseX, final double mouseY) {
+        // The Craft tab: clicking a catalog entry opens the request popup.
+        if (menu.activeTab() == ComputerTerminalMenu.TAB_CRAFT && menu.getCarried().isEmpty()) {
+            final var entry = craftEntryAt((int) mouseX, (int) mouseY);
+            if (entry != null) {
+                openCraftPopup(entry);
+                return true;
             }
-            if (menu.activeTab() == ComputerTerminalMenu.TAB_TASKS) {
-                final int sub = taskSubTabAt((int) mouseX, (int) mouseY);
-                if (sub >= 0) {
-                    taskSubTab = sub;
-                    return true;
-                }
-                final int opRow = taskOpRowAt((int) mouseX, (int) mouseY);
-                if (opRow >= 0) {
-                    openOpPopup(menu.activeOps().get(opRow)); // click an in-flight op -> SubOperations popup
-                    return true;
-                }
+        }
+        if (isGridTab()) {
+            if (inRect(mouseX, mouseY, leftPos + SORT_X, topPos + TOOLBAR_Y + gridShift(),
+                    SORT_W, TOOLBAR_H)) {
+                sortByQuantity = !sortByQuantity;
+                netScrollRow = 0;
+                return true;
             }
-            if (menu.activeTab() == ComputerTerminalMenu.TAB_MAINTENANCE) {
-                switch (maintButtonAt((int) mouseX, (int) mouseY)) {
-                    case 0 -> {
-                        sendMaintenance(TerminalMaintenancePayload.ACTION_ANALYZE);
-                        maintHint = "ANALYZE logged";
-                        return true;
-                    }
-                    case 1 -> {
-                        sendMaintenance(TerminalMaintenancePayload.ACTION_VACUUM);
-                        maintHint = "VACUUM logged";
-                        return true;
-                    }
-                    case 2 -> {
-                        sendMaintenance(TerminalMaintenancePayload.ACTION_REINDEX);
-                        maintHint = "REINDEX logged";
-                        return true;
-                    }
-                    case 3 -> {
-                        openDrop();
-                        return true;
-                    }
-                    default -> { /* clicked empty space */ }
+            // The Network tab opens a request popup; the Storage tab withdraws directly.
+            if (menu.activeTab() == ComputerTerminalMenu.TAB_NETWORK) {
+                final NetworkItemEntry e = networkItemAt((int) mouseX, (int) mouseY);
+                if (e != null) {
+                    openRequest(e);
+                    return true;
                 }
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        if (menu.activeTab() == ComputerTerminalMenu.TAB_OPS) {
+            final int row = opsRowAt((int) mouseX, (int) mouseY);
+            if (row >= 0) {
+                selectedOp = row;
+                openOpPopup(menu.operationsLog().get(row)); // click a logged op -> SubOperations popup
+                return true;
+            }
+        }
+        if (menu.activeTab() == ComputerTerminalMenu.TAB_TASKS) {
+            final int sub = taskSubTabAt((int) mouseX, (int) mouseY);
+            if (sub >= 0) {
+                taskSubTab = sub;
+                return true;
+            }
+            final int opRow = taskOpRowAt((int) mouseX, (int) mouseY);
+            if (opRow >= 0) {
+                openOpPopup(menu.activeOps().get(opRow)); // click an in-flight op -> SubOperations popup
+                return true;
+            }
+        }
+        return menu.activeTab() == ComputerTerminalMenu.TAB_MAINTENANCE
+                && clickedMaintenance(mouseX, mouseY);
+    }
+
+    /** The maintenance actions, each of which is logged as an Operation the way a database records one. */
+    private boolean clickedMaintenance(final double mouseX, final double mouseY) {
+        switch (maintButtonAt((int) mouseX, (int) mouseY)) {
+            case 0 -> {
+                sendMaintenance(TerminalMaintenancePayload.ACTION_ANALYZE);
+                maintHint = "ANALYZE logged";
+                return true;
+            }
+            case 1 -> {
+                sendMaintenance(TerminalMaintenancePayload.ACTION_VACUUM);
+                maintHint = "VACUUM logged";
+                return true;
+            }
+            case 2 -> {
+                sendMaintenance(TerminalMaintenancePayload.ACTION_REINDEX);
+                maintHint = "REINDEX logged";
+                return true;
+            }
+            case 3 -> {
+                openDrop();
+                return true;
+            }
+            default -> {
+                return false; // clicked empty space
+            }
+        }
     }
 
     @Override
