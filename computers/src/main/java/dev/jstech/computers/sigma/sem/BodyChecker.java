@@ -50,6 +50,8 @@ public final class BodyChecker {
     private final Declarations declarations;
     private final DiagnosticBag diagnostics;
     private final SemanticModel model;
+    /** Choosing between the versions of a method that share a name, which is a question about types alone. */
+    private final Overloads overloads;
 
     private NamedType currentType;
     private ITypeSymbol returnType = ITypeSymbol.Primitive.VOID;
@@ -64,6 +66,7 @@ public final class BodyChecker {
                        final DiagnosticBag diagnostics, final SemanticModel model) {
         this.builtIns = builtIns;
         this.rules = rules;
+        this.overloads = new Overloads(rules);
         this.declarations = declarations;
         this.diagnostics = diagnostics;
         this.model = model;
@@ -928,21 +931,7 @@ public final class BodyChecker {
                     || waitsForItsParameter(argument) || this.isMethodGroup(argument);
             given.add(waits ? null : this.check(argument, null));
         }
-        final List<IMemberSymbol.MethodSymbol> fitting = new ArrayList<>();
-        int best = -1;
-        for (final IMemberSymbol.MethodSymbol candidate : candidates) {
-            final int score = this.score(candidate, given, arguments);
-            if (score < 0) {
-                continue;
-            }
-            if (score > best) {
-                best = score;
-                fitting.clear();
-            }
-            if (score == best) {
-                fitting.add(candidate);
-            }
-        }
+        final List<IMemberSymbol.MethodSymbol> fitting = this.overloads.best(candidates, given, arguments);
         if (fitting.isEmpty()) {
             return this.reportNoFit(candidates, arguments, given, name, at);
         }
@@ -1017,41 +1006,6 @@ public final class BodyChecker {
      * that does not fit at all rules the version out. An outward argument fits only an outward
      * parameter, and only exactly, because the method writes straight into the place it is given.
      */
-    private int score(final IMemberSymbol.MethodSymbol candidate, final List<ITypeSymbol> given,
-                      final List<IExpr> arguments) {
-        if (candidate.parameters().size() != given.size()) {
-            return -1;
-        }
-        int total = 0;
-        for (int i = 0; i < given.size(); i++) {
-            final IMemberSymbol.ParameterSymbol parameter = candidate.parameters().get(i);
-            final boolean outward = arguments.get(i) instanceof IExpr.OutArgument;
-            if (outward != parameter.outward()) {
-                return -1;
-            }
-            final ITypeSymbol wanted = parameter.type();
-            final ITypeSymbol argument = given.get(i);
-            if (argument == null) {
-                if (outward) {
-                    total += 2;
-                    continue;
-                }
-                final NamedType named = this.rules.named(wanted);
-                if (named == null || named.kind() != NamedType.Kind.DELEGATE) {
-                    return -1;
-                }
-                total += 1;
-            } else if (argument.equals(wanted)) {
-                total += 2;
-            } else if (!outward && this.rules.isAssignable(argument, wanted)) {
-                total += 1;
-            } else {
-                return -1;
-            }
-        }
-        return total;
-    }
-
     private void checkArguments(final List<IExpr> arguments) {
         for (final IExpr argument : arguments) {
             this.check(argument, null);
