@@ -177,10 +177,30 @@ public class JscLanguageProvider extends LanguageProvider {
         add("jsc.gui.storage.disk", "Disk %s");
         // Expansion card bus-family mismatch: shown when a card cannot enter a slot due to incompatible bus.
         add("jsc.gui.computer.slot.bus_mismatch", "Wrong slot type: this card requires a %s slot");
+        addOperationFailures();
         for (final ComputingModule.DiskEntry disk : ComputingModule.DISKS) {
             add(disk.item().get(), disk.displayName());
         }
         addHardwareCatalog();
+    }
+
+    /**
+     * Why an Operation did not do what it was asked, as its row in the log reads it out.
+     *
+     * <p>Written as sentences a player can act on rather than as names of conditions: what the network was short
+     * of, or what it was waiting for, so that the next thing to try is obvious from the line itself.
+     */
+    private void addOperationFailures() {
+        add("jsc.operation.failure.not_enough_stored", "the network was not holding enough %s");
+        add("jsc.operation.failure.no_room", "the network had no room left for the %s");
+        add("jsc.operation.failure.held_by_another", "another Operation was holding the %s it needed");
+        add("jsc.operation.failure.not_enough_ingredients", "the ingredients for the %s ran out");
+        add("jsc.operation.failure.machine_stopped", "the machine making the %s stopped taking anything");
+        add("jsc.operation.failure.no_way_to_make_it", "nothing on the network knows how to make %s");
+        add("jsc.operation.failure.no_crafting_computer", "no crafting computer was free to make the %s");
+        add("jsc.operation.failure.no_stages", "the pattern has no stages in it");
+        add("jsc.operation.failure.stage_would_not_start", "stage %s of %s could not be started");
+        add("jsc.operation.failure.stage_failed", "stage %s of %s failed");
     }
 
     /**

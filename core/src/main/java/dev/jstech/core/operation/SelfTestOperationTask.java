@@ -30,7 +30,7 @@ public record SelfTestOperationTask(int workUnits) implements IOperationTask {
         }
         // Reference the result so the loop cannot be optimized away.
         return accumulator == Long.MIN_VALUE
-                ? IOperationResult.failure("self-test overflow")
+                ? IOperationResult.failure("jscore.operation.failure.self_test")
                 : IOperationResult.success();
     }
 }

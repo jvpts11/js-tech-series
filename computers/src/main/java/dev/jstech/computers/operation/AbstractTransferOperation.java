@@ -11,6 +11,7 @@ import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.ILatencyScheduler;
+import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.operation.exec.EqualShare;
 import dev.jstech.core.operation.exec.OperationProgress;
@@ -51,6 +52,7 @@ public abstract class AbstractTransferOperation implements INetworkOperation {
     private byte status = OperationRecord.STATUS_PARTIAL;
     private OperationPriority priority = OperationPriority.DEFAULT;
     private boolean cancelled;
+    private OperationFailure cause = OperationFailure.NONE;
     @Nullable
     private Runnable onSettle;
 
@@ -192,15 +194,32 @@ public abstract class AbstractTransferOperation implements INetworkOperation {
      * cancelled Operation that did not get all the way settles as DISCARDED whatever it would have reported.
      */
     protected final void markSettled(final byte finalStatus) {
+        markSettled(finalStatus, OperationFailure.NONE);
+    }
+
+    /**
+     * Settles with the reason it did not go as asked, which is what a row shows in place of the bare word.
+     *
+     * <p>A reason is kept only where it explains something: an Operation that did everything asked of it has
+     * nothing to explain, and one stopped by a player is explained by the word discarded on its own.
+     */
+    protected final void markSettled(final byte finalStatus, final OperationFailure why) {
         if (done) {
             return;
         }
         done = true;
         this.status = cancelled && finalStatus != OperationRecord.STATUS_COMPLETED
                 ? OperationRecord.STATUS_DISCARDED : finalStatus;
+        this.cause = this.status == OperationRecord.STATUS_COMPLETED
+                || this.status == OperationRecord.STATUS_DISCARDED ? OperationFailure.NONE : why;
         if (onSettle != null) {
             onSettle.run();
         }
+    }
+
+    /** Why it did not go as asked, or {@link OperationFailure#NONE} where there is nothing to say. */
+    public final OperationFailure cause() {
+        return cause;
     }
 
     /** Installs the settle callback, firing it immediately if the Operation has already settled. */

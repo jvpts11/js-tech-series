@@ -9,12 +9,15 @@ package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.operation.OperationTypeId;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.util.Utf8Text;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -25,6 +28,7 @@ import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -36,10 +40,22 @@ import java.util.UUID;
  * priority, cancel it); an instant Operation that was never queued carries {@link #NO_ID}. {@code priority}
  * is the level it was scheduled at. {@code waitedTicks} counts the ticks it sat queued or waiting before it
  * could run and {@code ranTicks} the ticks it was actually running: together they are how long it took.
+ * {@code cause} is why it failed, where it did, so the row says more than the word {@code failed}.
  */
 public record OperationRecord(UUID id, byte type, StorageKey key, long requested, long moved, byte status,
                               OperationPriority priority, List<MoveRow> moves, List<SubRow> subs,
-                              long waitedTicks, long ranTicks) {
+                              long waitedTicks, long ranTicks, OperationFailure cause) {
+
+    /*
+     * The lists and the reason are copied on the way in, because a record that hands out the very list it was
+     * built from is only as immutable as whoever built it. These are read by the client while the server goes
+     * on working on what it passed.
+     */
+    public OperationRecord {
+        moves = List.copyOf(moves);
+        subs = List.copyOf(subs);
+        cause = cause == null ? OperationFailure.NONE : cause;
+    }
 
     /** The id of a record that never had a live Operation behind it (an instant maintenance record). */
     public static final UUID NO_ID = new UUID(0L, 0L);
@@ -107,28 +123,50 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
     /** An instant Operation's record: no live identity, the default priority, no SubOperation rows, no time. */
     public OperationRecord(final byte type, final StorageKey key, final long requested, final long moved,
                            final byte status, final List<MoveRow> moves) {
-        this(NO_ID, type, key, requested, moved, status, OperationPriority.DEFAULT, moves, List.of(), 0, 0);
+        this(NO_ID, type, key, requested, moved, status, OperationPriority.DEFAULT, moves, List.of(), 0, 0,
+                OperationFailure.NONE);
     }
 
     /** A live Operation's record before the scheduler stamps its timing. */
     public OperationRecord(final UUID id, final byte type, final StorageKey key, final long requested,
                            final long moved, final byte status, final OperationPriority priority,
                            final List<MoveRow> moves, final List<SubRow> subs) {
-        this(id, type, key, requested, moved, status, priority, moves, subs, 0, 0);
+        this(id, type, key, requested, moved, status, priority, moves, subs, 0, 0, OperationFailure.NONE);
     }
 
     public OperationRecord withStatus(final byte newStatus) {
         return new OperationRecord(id, type, key, requested, moved, newStatus, priority, moves, subs,
-                waitedTicks, ranTicks);
+                waitedTicks, ranTicks, cause);
     }
 
     public OperationRecord withPriority(final OperationPriority newPriority) {
         return new OperationRecord(id, type, key, requested, moved, status, newPriority, moves, subs,
-                waitedTicks, ranTicks);
+                waitedTicks, ranTicks, cause);
     }
 
     public OperationRecord withTiming(final long waited, final long ran) {
-        return new OperationRecord(id, type, key, requested, moved, status, priority, moves, subs, waited, ran);
+        return new OperationRecord(id, type, key, requested, moved, status, priority, moves, subs, waited, ran,
+                cause);
+    }
+
+    /** The same record with the reason it failed, which only a failed one has any use for. */
+    public OperationRecord withCause(final OperationFailure newCause) {
+        return new OperationRecord(id, type, key, requested, moved, status, priority, moves, subs,
+                waitedTicks, ranTicks, newCause);
+    }
+
+    /**
+     * Why it failed, as a line of text, or nothing where the Operation did not fail or did not say.
+     *
+     * <p>The line is assembled here rather than by whoever draws it, so the terminal, the prompt and a window all
+     * read the same words.
+     */
+    public Optional<Component> failureText() {
+        if (!cause.isPresent()) {
+            return Optional.empty();
+        }
+        final Object[] arguments = cause.arguments().toArray();
+        return Optional.of(Component.translatable(cause.key(), arguments));
     }
 
     /** Whether the Operation delivered everything it was asked for. */
@@ -191,6 +229,33 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
     private static final StreamCodec<RegistryFriendlyByteBuf, List<SubRow>> SUBS_CODEC =
             SubRow.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_SUBS));
 
+    /*
+     * Written by hand rather than through stringUtf8, whose limit is counted in characters while what it
+     * enforces is bytes: an accent in a machine's name would make the encode throw and the whole packet would
+     * be lost with it. The reason is already cut to fit where it is built, and this cuts again in case it was
+     * built somewhere that forgot to.
+     */
+    private static final StreamCodec<RegistryFriendlyByteBuf, OperationFailure> CAUSE_CODEC =
+            StreamCodec.of(
+                    (buf, cause) -> {
+                        buf.writeUtf(Utf8Text.clamp(cause.key(), OperationFailure.MAX_KEY_BYTES));
+                        final List<String> arguments = cause.arguments();
+                        final int count = Math.min(arguments.size(), OperationFailure.MAX_ARGUMENTS);
+                        buf.writeByte(count);
+                        for (int i = 0; i < count; i++) {
+                            buf.writeUtf(Utf8Text.clamp(arguments.get(i), OperationFailure.MAX_ARGUMENT_BYTES));
+                        }
+                    },
+                    buf -> {
+                        final String key = buf.readUtf(OperationFailure.MAX_KEY_BYTES);
+                        final int count = Math.min(buf.readByte(), OperationFailure.MAX_ARGUMENTS);
+                        final List<String> arguments = new ArrayList<>(Math.max(0, count));
+                        for (int i = 0; i < count; i++) {
+                            arguments.add(buf.readUtf(OperationFailure.MAX_ARGUMENT_BYTES));
+                        }
+                        return new OperationFailure(key, arguments);
+                    });
+
     // Built by hand because the record has more components than StreamCodec.composite carries.
     public static final StreamCodec<RegistryFriendlyByteBuf, OperationRecord> STREAM_CODEC =
             StreamCodec.of(
@@ -206,6 +271,7 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
                         SUBS_CODEC.encode(buf, rec.subs());
                         buf.writeVarLong(rec.waitedTicks());
                         buf.writeVarLong(rec.ranTicks());
+                        CAUSE_CODEC.encode(buf, rec.cause());
                     },
                     buf -> new OperationRecord(
                             UUIDUtil.STREAM_CODEC.decode(buf),
@@ -218,7 +284,8 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
                             MOVES_CODEC.decode(buf),
                             SUBS_CODEC.decode(buf),
                             buf.readVarLong(),
-                            buf.readVarLong()));
+                            buf.readVarLong(),
+                            CAUSE_CODEC.decode(buf)));
 
     public CompoundTag toNbt(final HolderLookup.Provider registries) {
         final CompoundTag tag = new CompoundTag();
@@ -253,6 +320,17 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
             subList.add(s);
         }
         tag.put("subs", subList);
+        // Only where there is one: the overwhelming majority of records did not fail and would carry empties.
+        if (cause.isPresent()) {
+            final CompoundTag why = new CompoundTag();
+            why.putString("key", cause.key());
+            final ListTag argumentList = new ListTag();
+            for (final String argument : cause.arguments()) {
+                argumentList.add(StringTag.valueOf(argument));
+            }
+            why.put("args", argumentList);
+            tag.put("cause", why);
+        }
         return tag;
     }
 
@@ -275,8 +353,18 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
         final UUID id = tag.hasUUID("id") ? tag.getUUID("id") : NO_ID;
         final OperationPriority priority = tag.contains("priority")
                 ? OperationPriority.byId(tag.getByte("priority")) : OperationPriority.DEFAULT;
+        OperationFailure cause = OperationFailure.NONE;
+        if (tag.contains("cause", Tag.TAG_COMPOUND)) {
+            final CompoundTag why = tag.getCompound("cause");
+            final ListTag argumentList = why.getList("args", Tag.TAG_STRING);
+            final List<String> arguments = new ArrayList<>(argumentList.size());
+            for (int i = 0; i < argumentList.size(); i++) {
+                arguments.add(argumentList.getString(i));
+            }
+            cause = new OperationFailure(why.getString("key"), arguments);
+        }
         return new OperationRecord(id, tag.getByte("type"), key, tag.getLong("requested"),
                 tag.getLong("moved"), tag.getByte("status"), priority, List.copyOf(moves), List.copyOf(subs),
-                tag.getLong("waited"), tag.getLong("ran"));
+                tag.getLong("waited"), tag.getLong("ran"), cause);
     }
 }

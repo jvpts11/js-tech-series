@@ -33,6 +33,12 @@ public class JsCoreLanguageProvider extends LanguageProvider {
         add("gui.jscore.confirm", "Confirm");
         add("gui.jscore.cancel", "Cancel");
 
+        // Why an Operation failed, as a terminal shows it.
+        add("jscore.operation.failure.no_result", "the Operation finished without saying what it did");
+        add("jscore.operation.failure.cancelled", "the machine running it stopped");
+        add("jscore.operation.failure.crashed", "the Operation ran into a problem: %s (%s)");
+        add("jscore.operation.failure.self_test", "the self-test ran past what its numbers can hold");
+
         for (final ModMaterial material : ModMaterial.values()) {
             for (final MaterialForm form : material.activeModForms()) {
                 add(MaterialItems.get(material, form).get(),

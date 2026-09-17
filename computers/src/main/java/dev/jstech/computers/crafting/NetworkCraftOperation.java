@@ -19,6 +19,7 @@ import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.OperationBalance;
+import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -210,6 +211,13 @@ public final class NetworkCraftOperation implements IPersistentOperation {
     static final String PRIORITY_KEY = "Priority";
 
     private static final String MACHINE_STEPS_KEY = "MachineSteps";
+
+    /** Waited as long as it was allowed to for ingredients another Operation was holding. */
+    private static final String HELD_BY_ANOTHER = "jsc.operation.failure.held_by_another";
+
+    /** Made as many as the ingredients in the network stretched to, which was fewer than asked for. */
+    private static final String NOT_ENOUGH_INGREDIENTS = "jsc.operation.failure.not_enough_ingredients";
+
     private static final int STALL_LIMIT = 100;
 
     /** The design default of the WAITING timeout; the live value comes from the balance config. */
@@ -257,6 +265,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
     private boolean done;
     private boolean cancelled;
     private byte status = OperationRecord.STATUS_FAILED;
+    private OperationFailure cause = OperationFailure.NONE;
     private OperationPriority priority = OperationPriority.DEFAULT;
     private Runnable onSettle;
     /*
@@ -868,6 +877,11 @@ public final class NetworkCraftOperation implements IPersistentOperation {
                 : cancelled ? OperationRecord.STATUS_DISCARDED
                 : timedOut ? OperationRecord.STATUS_RESOURCE_LOCKED
                 : deliveredResult > 0 ? OperationRecord.STATUS_PARTIAL : OperationRecord.STATUS_FAILED;
+        if (timedOut) {
+            cause = OperationFailure.of(HELD_BY_ANOTHER, resultKey.displayName().getString());
+        } else if (status == OperationRecord.STATUS_PARTIAL || status == OperationRecord.STATUS_FAILED) {
+            cause = OperationFailure.of(NOT_ENOUGH_INGREDIENTS, resultKey.displayName().getString());
+        }
         if (onSettle != null) {
             onSettle.run();
         }
@@ -988,7 +1002,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         }
         final List<OperationRecord.SubRow> subs = includeSubs ? subRows() : List.of();
         return new OperationRecord(operationId, OperationRecord.TYPE_CRAFT, resultKey, requested, produced,
-                recordStatus, priority, List.copyOf(moves), subs);
+                recordStatus, priority, List.copyOf(moves), subs).withCause(cause);
     }
 
     @Override

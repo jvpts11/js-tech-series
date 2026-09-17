@@ -20,6 +20,7 @@ import dev.jstech.computers.storage.IDataPort;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.FilteredDataPort;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
@@ -46,6 +47,9 @@ import java.util.UUID;
  * partial/failed. Items and fluids feed in the same way; collecting a fluid back into the network is a follow-up.
  */
 public final class NetworkProcessingOperation implements IPersistentOperation {
+
+    /** The machine stopped taking what it was being fed, so the run was given up on where it stood. */
+    private static final String MACHINE_STOPPED = "jsc.operation.failure.machine_stopped";
 
     private static final int FEED_INTERVAL = 4;
     /** How long a machine that has run dry of a gas or a fluid sits still before it is given another lot of it. */
@@ -77,6 +81,7 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
     private int idleTicks;
     private int feedCooldown;
     private byte status = OperationRecord.STATUS_FAILED;
+    private OperationFailure cause = OperationFailure.NONE;
     private OperationPriority priority = OperationPriority.DEFAULT;
     private Runnable onSettle;
     private boolean concurrencyBlocked;
@@ -554,6 +559,8 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
 
     private void finishTimedOut() {
         status = produced > 0 ? OperationRecord.STATUS_PARTIAL : OperationRecord.STATUS_FAILED;
+        cause = resultKey == null ? OperationFailure.of(MACHINE_STOPPED, "")
+                : OperationFailure.of(MACHINE_STOPPED, resultKey.displayName().getString());
         finish();
     }
 
@@ -711,6 +718,6 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         final StorageKey key = resultKey != null ? resultKey
                 : (pattern.inputs().isEmpty() ? null : pattern.inputs().get(0).key());
         return new OperationRecord(operationId, OperationRecord.TYPE_CRAFT, key, requested, produced,
-                recordStatus, priority, List.of(), List.of());
+                recordStatus, priority, List.of(), List.of()).withCause(cause);
     }
 }

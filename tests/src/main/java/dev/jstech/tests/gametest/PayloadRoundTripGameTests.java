@@ -23,6 +23,7 @@ import dev.jstech.computers.operation.payload.TerminalSelectPayload;
 import dev.jstech.computers.operation.payload.ThisPcPayload;
 import dev.jstech.computers.operation.payload.UiEventPayload;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.tests.JsTests;
 import io.netty.buffer.ByteBufUtil;
@@ -113,10 +114,16 @@ public final class PayloadRoundTripGameTests {
     public static void operations_logRoundTripsAtEveryPriority(final GameTestHelper helper) {
         final List<OperationRecord> records = new ArrayList<>();
         for (final OperationPriority priority : OperationPriority.values()) {
+            /*
+             * The reason carries characters that are not one byte each on purpose: it is measured in bytes on
+             * the wire and in characters where it is built, and only a name that is longer one way than the
+             * other tells the two apart. The last of them is a pair of surrogates, four bytes and two chars,
+             * which is what a cut lands in the middle of when nobody is careful.
+             */
             records.add(new OperationRecord(new UUID(7L, priority.id()), (byte) 0, logs(), 64L, 32L, (byte) 1,
                     priority, List.of(new OperationRecord.MoveRow("rack-1", 32L, "Σ#: Programs.Restock")),
                     List.of(new OperationRecord.SubRow("rack-1", 64L, 32L, OperationRecord.SubRow.SUB_STREAMING)),
-                    4, 12));
+                    4, 12, OperationFailure.of("jsc.operation.failure.no_room", "Smelter Ω 𝚫")));
         }
         roundTrip(helper, OperationsLogPayload.STREAM_CODEC, new OperationsLogPayload(records));
         helper.succeed();

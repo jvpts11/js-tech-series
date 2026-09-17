@@ -88,6 +88,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Two readings of the storage under way at once were believed in the order they finished, so a reading started
   first could arrive last and put the network back to an older picture of itself: items taken in between came
   back, and items put in went missing until the next reading. Only the newest reading is believed now.
+- A failed Operation said only the word `failed`, whatever had gone wrong. Opening it now says why in a line
+  anybody can act on: what the network had run out of, what another Operation was holding, which stage of a
+  pattern gave up, or that nothing on the network knows how to make the thing at all.
+- Switching a Mainframe off left the Operations it was running reading as still running, for good: a terminal
+  went on showing a craft under way by a machine that had no power, and nothing ever moved it off that. They
+  now read as discarded, which is what happened to them.
 
 ### Changed
 - How long an Operation waited and how long it ran are counted without a ceiling, so a craft left running for

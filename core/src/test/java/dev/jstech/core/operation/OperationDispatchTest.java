@@ -305,4 +305,149 @@ class OperationDispatchTest {
         assertEquals(OperationStatus.PENDING, dispatch.statusOf(ids.get(0)),
                 "an old terminal status is evicted");
     }
+
+    @Test
+    void failure_keepsTheReasonItGave() {
+        dispatch = new OperationDispatch(1);
+        final UUID id = dispatch.submit(
+                context -> IOperationResult.failure("jscore.test.reason", "Iron Ingot"), OperationPriority.MEDIUM);
+        tickUntilTerminal(id);
+        assertEquals(OperationStatus.FAILED, dispatch.statusOf(id));
+        assertEquals("jscore.test.reason", dispatch.failureOf(id).key());
+        assertEquals(List.of("Iron Ingot"), dispatch.failureOf(id).arguments());
+    }
+
+    @Test
+    void success_hasNoReasonToGive() {
+        dispatch = new OperationDispatch(1);
+        final UUID id = dispatch.submit(context -> IOperationResult.success(), OperationPriority.MEDIUM);
+        tickUntilTerminal(id);
+        assertFalse(dispatch.failureOf(id).isPresent());
+    }
+
+    /* What was thrown is the only thing anybody has to go on, so both its type and its words are kept. */
+    @Test
+    void thrownTask_keepsWhatWasThrownAsTheReason() {
+        dispatch = new OperationDispatch(1);
+        final UUID id = dispatch.submit(context -> {
+            throw new IllegalStateException("the rack went away");
+        }, OperationPriority.MEDIUM);
+        tickUntilTerminal(id);
+        final OperationFailure why = dispatch.failureOf(id);
+        assertEquals(List.of("IllegalStateException", "the rack went away"), why.arguments());
+    }
+
+    @Test
+    void close_discardsWhatWasStillQueued() {
+        dispatch = new OperationDispatch(1);
+        final UUID queued = dispatch.submit(context -> IOperationResult.success(), OperationPriority.MEDIUM);
+        assertEquals(OperationStatus.PENDING, dispatch.statusOf(queued));
+        dispatch.close();
+        assertEquals(OperationStatus.DISCARDED, dispatch.statusOf(queued),
+                "an Operation the dispatcher will never run must say so");
+        dispatch = null;
+    }
+
+    /*
+     * The one that was already running matters more than the queued one: it read as still running, so a view
+     * showed a craft under way by a machine that had been switched off, with nothing ever to move it off that.
+     */
+    @Test
+    void close_discardsWhatWasAlreadyRunning() {
+        dispatch = new OperationDispatch(1);
+        final CountDownLatch started = new CountDownLatch(1);
+        final UUID running = dispatch.submit(context -> {
+            started.countDown();
+            context.awaitTicks(1_000_000);
+            return IOperationResult.success();
+        }, OperationPriority.MEDIUM);
+        dispatch.tick();
+        try {
+            started.await();
+        } catch (final InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+        }
+        assertEquals(OperationStatus.PROCESSING, dispatch.statusOf(running));
+        dispatch.close();
+        assertEquals(OperationStatus.DISCARDED, dispatch.statusOf(running));
+        dispatch = null;
+    }
+
+    @Test
+    void close_refusesAnAnswerThatArrivesAfterwards() {
+        dispatch = new OperationDispatch(1);
+        final CountDownLatch started = new CountDownLatch(1);
+        final CountDownLatch mayFinish = new CountDownLatch(1);
+        final UUID id = dispatch.submit(context -> {
+            started.countDown();
+            try {
+                mayFinish.await();
+            } catch (final InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+            }
+            return IOperationResult.success();
+        }, OperationPriority.MEDIUM);
+        dispatch.tick();
+        try {
+            started.await();
+        } catch (final InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+        }
+        dispatch.close();
+        mayFinish.countDown();
+        sleep(50);
+        assertEquals(OperationStatus.DISCARDED, dispatch.statusOf(id),
+                "a late answer must not undo the discarding");
+        assertEquals(0L, dispatch.completedCount(), "nor must it be counted as one that finished");
+        dispatch = null;
+    }
+
+    @Test
+    void submit_afterCloseGivesBackAnOperationAlreadyDiscarded() {
+        dispatch = new OperationDispatch(1);
+        dispatch.close();
+        final UUID id = dispatch.submit(context -> IOperationResult.success(), OperationPriority.MEDIUM);
+        assertEquals(OperationStatus.DISCARDED, dispatch.statusOf(id));
+        assertEquals(0, dispatch.pendingCount(), "a closed dispatcher queues nothing");
+        dispatch = null;
+    }
+
+    /*
+     * The queue of waiting Operations is a plain one, on purpose, because it is touched once a tick. Written
+     * from two threads it does not fail where the mistake is, so it has to fail at the door instead.
+     */
+    @Test
+    void submit_refusesAnyThreadButTheOneThatOwnsIt() throws Exception {
+        dispatch = new OperationDispatch(1);
+        final AtomicReference<Throwable> refused = new AtomicReference<>();
+        final Thread other = new Thread(() -> {
+            try {
+                dispatch.submit(context -> IOperationResult.success(), OperationPriority.MEDIUM);
+            } catch (final Throwable thrown) {
+                refused.set(thrown);
+            }
+        }, "not-the-owner");
+        other.start();
+        other.join();
+        assertTrue(refused.get() instanceof IllegalStateException,
+                "queueing from another thread must be refused, not quietly corrupt the queue");
+        assertTrue(refused.get().getMessage().contains("not-the-owner"),
+                "and the message must name the thread that did it");
+    }
+
+    @Test
+    void tick_refusesAnyThreadButTheOneThatOwnsIt() throws Exception {
+        dispatch = new OperationDispatch(1);
+        final AtomicReference<Throwable> refused = new AtomicReference<>();
+        final Thread other = new Thread(() -> {
+            try {
+                dispatch.tick();
+            } catch (final Throwable thrown) {
+                refused.set(thrown);
+            }
+        }, "not-the-owner");
+        other.start();
+        other.join();
+        assertTrue(refused.get() instanceof IllegalStateException);
+    }
 }
