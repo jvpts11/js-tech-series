@@ -78,42 +78,6 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   in Files (where Open with is now a submenu), brings the same choice up for any file. An addon registers a program
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
-### Fixed
-- A machine refused to start any program that reads or writes a field of one of its own classes, saying nothing
-  answered it. That was every program with a field, and every program with a lambda, since what a lambda keeps hold
-  of is a field too. Programs written before this run now with no change to them.
-- A hold a player put on the storage with `LOCK` was let go of by closing and reopening the world, although it
-  promised to last until somebody unlocked it. It is written down with the Mainframe now and taken again when the
-  world comes back.
-- Two readings of the storage under way at once were believed in the order they finished, so a reading started
-  first could arrive last and put the network back to an older picture of itself: items taken in between came
-  back, and items put in went missing until the next reading. Only the newest reading is believed now.
-- A failed Operation said only the word `failed`, whatever had gone wrong. Opening it now says why in a line
-  anybody can act on: what the network had run out of, what another Operation was holding, which stage of a
-  pattern gave up, or that nothing on the network knows how to make the thing at all.
-- Switching a Mainframe off left the Operations it was running reading as still running, for good: a terminal
-  went on showing a craft under way by a machine that had no power, and nothing ever moved it off that. They
-  now read as discarded, which is what happened to them.
-- A craft, a pipeline or a machine run whose saved pattern could not be read came back as nothing at all, with
-  no word anywhere about what had been lost. The same for a slot of a saved pattern and a row of the
-  Operations log. What could not be read is now named in the log, so a world that comes back short says why.
-- An amount too large to weigh came back as less than nothing, and everything after it believed that: a
-  request for it passed every check that it fitted, putting it away added room to a disk rather than using it,
-  and free space read as more than the disk holds. Asking for more than there could ever be now gets
-  everything there is, the same answer a merely large number gets.
-
-### Changed
-- How long an Operation waited and how long it ran are counted without a ceiling, so a craft left running for
-  days still reads correctly instead of turning over.
-- A mod built on this one now adds what it brings at one named moment, by listening for `CoreRegisterEvent` or
-  `ComputersRegisterEvent`, and the two mods of the series add their own the same way rather than by a path of
-  their own. After the loading is done every registry is closed, so what a world can install and knows how to do
-  does not change under somebody playing it. Two things of the same id are refused rather than one quietly
-  replacing the other. What a mod may use is gathered in `dev.jstech.core.api` and `dev.jstech.computers.api`, and
-  `docs/API.md` says what is promised, what is not, and how long anything lives once it is marked as going.
-  `JSComputersAPI` is now `JsComputersApi` in that package.
-
-### Added
 - A machine in a rack now comes up the way any other machine does: its own power-on self-test, its own stop at a
   boot manager, and its own system taking the time it takes, all on the machine's clocks. Its bay switch is its
   power button, so flipping it off stops whatever was under way and flipping it on starts a self-test. The pages
@@ -167,6 +131,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the system.
 
 ### Changed
+- How long an Operation waited and how long it ran are counted without a ceiling, so a craft left running for
+  days still reads correctly instead of turning over.
+- A mod built on this one now adds what it brings at one named moment, by listening for `CoreRegisterEvent` or
+  `ComputersRegisterEvent`, and the two mods of the series add their own the same way rather than by a path of
+  their own. After the loading is done every registry is closed, so what a world can install and knows how to do
+  does not change under somebody playing it. Two things of the same id are refused rather than one quietly
+  replacing the other. What a mod may use is gathered in `dev.jstech.core.api` and `dev.jstech.computers.api`, and
+  `docs/API.md` says what is promised, what is not, and how long anything lives once it is marked as going.
+  `JSComputersAPI` is now `JsComputersApi` in that package.
 - The Start button carries its edition's own mark, four panes in that edition's colours, instead of the same
   four-coloured flag on all of them. It is the mark the setup, the installer and the screen the system comes up
   behind already wear, so a desktop now looks like the thing that installed it.
@@ -377,6 +350,28 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- A machine refused to start any program that reads or writes a field of one of its own classes, saying nothing
+  answered it. That was every program with a field, and every program with a lambda, since what a lambda keeps hold
+  of is a field too. Programs written before this run now with no change to them.
+- A hold a player put on the storage with `LOCK` was let go of by closing and reopening the world, although it
+  promised to last until somebody unlocked it. It is written down with the Mainframe now and taken again when the
+  world comes back.
+- Two readings of the storage under way at once were believed in the order they finished, so a reading started
+  first could arrive last and put the network back to an older picture of itself: items taken in between came
+  back, and items put in went missing until the next reading. Only the newest reading is believed now.
+- A failed Operation said only the word `failed`, whatever had gone wrong. Opening it now says why in a line
+  anybody can act on: what the network had run out of, what another Operation was holding, which stage of a
+  pattern gave up, or that nothing on the network knows how to make the thing at all.
+- Switching a Mainframe off left the Operations it was running reading as still running, for good: a terminal
+  went on showing a craft under way by a machine that had no power, and nothing ever moved it off that. They
+  now read as discarded, which is what happened to them.
+- A craft, a pipeline or a machine run whose saved pattern could not be read came back as nothing at all, with
+  no word anywhere about what had been lost. The same for a slot of a saved pattern and a row of the
+  Operations log. What could not be read is now named in the log, so a world that comes back short says why.
+- An amount too large to weigh came back as less than nothing, and everything after it believed that: a
+  request for it passed every check that it fitted, putting it away added room to a disk rather than using it,
+  and free space read as more than the disk holds. Asking for more than there could ever be now gets
+  everything there is, the same answer a merely large number gets.
 - An element written to and read in the same breath now names its place once. `n[Next()] += 5` and `n[Next()]++`
   worked out the index twice, so anything the index did on its way to a number happened twice, and if it did not
   give the same number both times the value was read from one element and written to another.
