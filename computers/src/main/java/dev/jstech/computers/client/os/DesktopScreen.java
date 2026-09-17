@@ -120,6 +120,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private final List<Launcher> launchers = new ArrayList<>();
     private final List<String> installedPrograms = new ArrayList<>();
 
+    /** The Linux desktops' own ways of opening a program: Kickoff, the Mint menu, the Activities overview. */
+    private final LinuxLaunchers linuxLaunchers = new LinuxLaunchers(this);
+
     /*
      * Per-OS memory model: the system, its desktop and its services hold their share of the machine's RAM
      * (reserved, from the server) and every open program holds its own, weighed under the running system by the
@@ -578,7 +581,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     @Nullable
     private String deskPendingRename; // enter rename on this name once the next listing arrives
 
-    private static final int TASKBAR_H = 24;
+    static final int TASKBAR_H = 24;
 
     /*
      * The work area (icons, windows, drops) is the desktop minus its panel. Every panel style but GNOME puts
@@ -603,6 +606,104 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         return periodPanel()
                 ? desktopId.getPath() + ProgramIcons.PERIOD_SUFFIX
                 : desktopId.getPath();
+    }
+
+    /*
+     * What a launcher drawn beside this screen is allowed to ask it. Each one is a plain reading of
+     * something the screen already knows, named for what the caller wants rather than for the field it
+     * happens to come from.
+     */
+
+    /** The icon set to draw programs with, which is the desktop's own and its era's. */
+    String icons() {
+        return iconSet();
+    }
+
+    Font textFont() {
+        return font;
+    }
+
+    DesktopTheme themeColours() {
+        return theme;
+    }
+
+    OsSkin panelSkin() {
+        return skin;
+    }
+
+    List<Launcher> launcherList() {
+        return launchers;
+    }
+
+    int screenW() {
+        return sw();
+    }
+
+    int screenH() {
+        return sh();
+    }
+
+    /** Where an open launcher starts and how tall it is, which its own desktop decides. */
+    int startMenuLeft() {
+        return startMenuX();
+    }
+
+    int startMenuTall() {
+        return startMenuHeight();
+    }
+
+    /** Whether the pointer is inside that rectangle, which is what decides a highlight. */
+    boolean hoverIn(final int x, final int y, final int w, final int h) {
+        return hoverX >= x && hoverX < x + w && hoverY >= y && hoverY < y + h;
+    }
+
+    /** Whether the pointer is below a line and between two columns, for a footer that has no fixed height. */
+    boolean hoverBelowRight(final int top, final int left, final int right) {
+        return hoverY >= top && hoverX >= left && hoverX < right;
+    }
+
+    /** What has been typed into an open launcher's search field, empty when nothing has. */
+    String searchText() {
+        return startSearch.toString();
+    }
+
+    /** The programs that match what was typed, or all of them when nothing was. */
+    List<Launcher> searchedLaunchers() {
+        return w11Filtered();
+    }
+
+    /** Whether anything is open at all, which is what a workspace preview shows. */
+    boolean anyWindowOpen() {
+        return !windows.isEmpty();
+    }
+
+    /** The name this machine shows for whoever is at it. */
+    String accountLabel() {
+        return hostAccountLabel();
+    }
+
+    String shorten(final String text, final int max) {
+        return trim(text, max);
+    }
+
+    void drawOutline(final GuiGraphics g, final int x, final int y, final int w, final int h, final int color) {
+        outline(g, x, y, w, h, color);
+    }
+
+    void launchAt(final int index) {
+        startChoose(index);
+    }
+
+    void launch(final Launcher launcher) {
+        startChoose(launcher);
+    }
+
+    void closeLauncher() {
+        closeStart();
+    }
+
+    void askToPowerOff() {
+        openPowerDialog();
     }
 
     /**
@@ -675,22 +776,17 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private static final int W11_TILE_H = 30;
     private static final int W11_SEARCH_H = 14;
     private static final int W11_FOOTER_H = 18;
-    // KDE Plasma: a Kickoff-style launcher (places column left, app list right, search on top, session footer).
-    private static final int KDE_MENU_W = 214;
-    private static final int KDE_SIDE_W = 74;
-    private static final int KDE_HEADER_H = 26;
-    private static final int KDE_ROW_H = 16;
-    private static final int KDE_FOOTER_H = 16;
-    // Cinnamon: the Mint menu (favourites rail, categories, app list with a search box).
-    private static final int CIN_MENU_W = 236;
-    private static final int CIN_RAIL_W = 30;
-    private static final int CIN_CATS_W = 84;
-    private static final int CIN_HEADER_H = 22;
-    private static final int CIN_ROW_H = 16;
-    // GNOME: the Activities overview (search, workspace strip, app grid).
-    private static final int GN_COLS = 6;
-    private static final int GN_TILE_W = 40;
-    private static final int GN_TILE_H = 34;
+    /*
+     * The Linux launchers' own measurements live with the launchers, since that is what draws and hit-tests
+     * them; the desktop only needs the few the shared geometry below is worked out from.
+     */
+    private static final int KDE_MENU_W = LinuxLaunchers.KDE_MENU_W;
+    private static final int KDE_HEADER_H = LinuxLaunchers.KDE_HEADER_H;
+    private static final int KDE_ROW_H = LinuxLaunchers.KDE_ROW_H;
+    private static final int KDE_FOOTER_H = LinuxLaunchers.KDE_FOOTER_H;
+    private static final int CIN_MENU_W = LinuxLaunchers.CIN_MENU_W;
+    private static final int CIN_HEADER_H = LinuxLaunchers.CIN_HEADER_H;
+    private static final int CIN_ROW_H = LinuxLaunchers.CIN_ROW_H;
     /*
      * Desktop icons sit on a grid wide enough for a name on two lines. The old pitch was narrower than the
      * labels it drew, so "Command Prompt" ran across its neighbour and both names read as one word.
@@ -737,8 +833,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * own: like any console program they get a terminal and print into it, which is the same thing that
      * happens when one is opened in the file explorer.
      */
-    private record Launcher(String label, ResourceLocation programId,
-                            Supplier<IDesktopApp> factory, String runs) {
+    record Launcher(String label, ResourceLocation programId,
+                    Supplier<IDesktopApp> factory, String runs) {
 
         Launcher(final String label, final ResourceLocation programId,
                  final Supplier<IDesktopApp> factory) {
@@ -3932,297 +4028,30 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         drawTrayStatus(g, sw - TRAY_PAD - trayStatusWidth(), 0, theme.startText());
     }
 
-    // Linux desktop environments: launchers
+    // Linux desktop environments: launchers, which LinuxLaunchers draws and hit-tests beside this screen
 
-    /** KDE Plasma's Kickoff: a dark two-pane launcher with a places column, an app list and a session footer. */
     private void renderStartMenuKde(final GuiGraphics g, final int tbY) {
-        final int x = startMenuX();
-        final int w = KDE_MENU_W;
-        final int h = startMenuHeight();
-        final int y = tbY - h;
-        g.fill(x + 2, y + 3, x + w + 2, y + h + 3, 0x40000000);
-        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, 0xFF1B1E24);
-        g.fill(x, y, x + w, y + h, 0xFF31363B);
-        // Header: the user and the search hint.
-        g.fill(x + 6, y + 6, x + 20, y + 20, theme.startButton());
-        g.drawString(font, hostAccountLabel(), x + 26, y + 6, 0xFFEFF0F1, false);
-        g.drawString(font, "Type to search...", x + 26, y + 15, 0xFF8A9199, false);
-        // Side column: places.
-        final int bodyTop = y + KDE_HEADER_H;
-        final int bodyBot = y + h - KDE_FOOTER_H;
-        g.fill(x, bodyTop, x + KDE_SIDE_W, bodyBot, 0xFF232629);
-        final String[] places = {"Favorites", "All Apps", "System", "Utilities"};
-        for (int i = 0; i < places.length; i++) {
-            final int py = bodyTop + 4 + i * 14;
-            if (i == 0) {
-                g.fill(x, py - 2, x + KDE_SIDE_W, py + 10, theme.startButton());
-            }
-            g.drawString(font, places[i], x + 8, py, i == 0 ? 0xFFFFFFFF : 0xFFBDC3C7, false);
-        }
-        // App list.
-        int my = bodyTop + 4;
-        final int listX = x + KDE_SIDE_W + 4;
-        final int listW = w - KDE_SIDE_W - 8;
-        for (final Launcher l : launchers) {
-            final boolean hov = hoverY >= my && hoverY < my + KDE_ROW_H && hoverX >= listX && hoverX < listX + listW;
-            if (hov) {
-                g.fill(listX, my, listX + listW, my + KDE_ROW_H, 0x443DAEE9);
-            }
-            ProgramIcons.draw(g, listX + 2, my, 16, KDE_ROW_H, l.programId(), iconSet());
-            g.drawString(font, trim(l.label(), 18), listX + 22, my + 4, 0xFFEFF0F1, false);
-            my += KDE_ROW_H;
-        }
-        // Footer: session actions.
-        g.fill(x, bodyBot, x + w, y + h, 0xFF232629);
-        g.drawString(font, "Sleep", x + 8, bodyBot + 4, 0xFF8A9199, false);
-        final String off = "Shut Down";
-        final int offX = x + w - font.width(off) - 8;
-        final boolean offHov = hoverY >= bodyBot && hoverX >= offX - 4 && hoverX < x + w;
-        g.drawString(font, off, offX, bodyBot + 4, offHov ? 0xFFFFFFFF : 0xFFBDC3C7, false);
+        linuxLaunchers.renderKde(g, tbY);
     }
 
     private boolean handleStartClickKde(final int mx, final int my, final int tbY) {
-        final int x = startMenuX();
-        final int w = KDE_MENU_W;
-        final int h = startMenuHeight();
-        final int y = tbY - h;
-        if (mx < x || mx > x + w || my < y || my > y + h) {
-            return false;
-        }
-        final int bodyTop = y + KDE_HEADER_H;
-        final int bodyBot = y + h - KDE_FOOTER_H;
-        if (my >= bodyBot) {
-            if (mx >= x + w - font.width("Shut Down") - 12) {
-                openPowerDialog();
-                closeStart();
-            }
-            return true;
-        }
-        if (my >= bodyTop && mx >= x + KDE_SIDE_W + 4) {
-            final int row = (my - (bodyTop + 4)) / KDE_ROW_H;
-            if (row >= 0 && row < launchers.size()) {
-                startChoose(row);
-                closeStart();
-            }
-        }
-        return true;
+        return linuxLaunchers.clickKde(mx, my, tbY);
     }
 
-    /**
-     * GNOME's Activities overview: a translucent layer over the desktop with a search box, a workspace strip,
-     * the app grid (or the search results) and a dash of the first few apps along the bottom.
-     */
     private void renderOverviewGnome(final GuiGraphics g) {
-        final int sw = sw();
-        final int sh = sh();
-        final int top = TASKBAR_H;
-        g.fill(0, top, sw, sh, 0xD00F0F14);
-        // Search box.
-        final int fieldW = Math.min(180, sw - 40);
-        final int fieldX = (sw - fieldW) / 2;
-        final int fieldY = top + 8;
-        g.fill(fieldX, fieldY, fieldX + fieldW, fieldY + 14, 0x33FFFFFF);
-        final String q = startSearch.toString();
-        if (q.isEmpty()) {
-            final String hint = "Type to search";
-            g.drawString(font, hint, fieldX + (fieldW - font.width(hint)) / 2, fieldY + 3, 0xFFB8BBC8, false);
-        } else {
-            g.drawString(font, trim(q, (fieldW - 8) / 6), fieldX + 6, fieldY + 3, 0xFFFFFFFF, false);
-        }
-        final List<Launcher> filtered = w11Filtered();
-        int contentTop = fieldY + 22;
-        if (q.isEmpty()) {
-            // Workspace strip: the current workspace (with a hint of the open windows) and an empty one.
-            final int wsW = Math.min(90, (sw - 40) / 2);
-            final int wsX = (sw - (wsW * 2 + 10)) / 2;
-            g.fill(wsX, contentTop, wsX + wsW, contentTop + 34, 0x33FFFFFF);
-            outline(g, wsX, contentTop, wsW, 34, 0xFFFFFFFF);
-            if (!windows.isEmpty()) {
-                g.fill(wsX + 8, contentTop + 8, wsX + wsW - 8, contentTop + 26, 0xFFF6F5F4);
-            }
-            g.fill(wsX + wsW + 10, contentTop, wsX + wsW * 2 + 10, contentTop + 34, 0x22FFFFFF);
-            contentTop += 42;
-            // App grid.
-            final int gridX = (sw - GN_COLS * GN_TILE_W) / 2;
-            for (int i = 0; i < filtered.size(); i++) {
-                final int col = i % GN_COLS;
-                final int row = i / GN_COLS;
-                final int tx = gridX + col * GN_TILE_W;
-                final int ty = contentTop + row * GN_TILE_H;
-                if (ty + GN_TILE_H > sh - 26) {
-                    break;
-                }
-                final Launcher l = filtered.get(i);
-                if (hoverX >= tx && hoverX < tx + GN_TILE_W && hoverY >= ty && hoverY < ty + GN_TILE_H) {
-                    g.fill(tx + 2, ty, tx + GN_TILE_W - 2, ty + GN_TILE_H - 2, 0x33FFFFFF);
-                }
-                ProgramIcons.draw(g, tx + (GN_TILE_W - 16) / 2, ty + 3, 16, 16, l.programId(), iconSet());
-                String label = l.label();
-                while (label.length() > 3 && font.width(label) > GN_TILE_W - 2) {
-                    label = label.substring(0, label.length() - 1);
-                }
-                g.drawString(font, label, tx + (GN_TILE_W - font.width(label)) / 2, ty + 22, 0xFFFFFFFF, false);
-            }
-            // Dash: the first apps as a pill along the bottom.
-            final int dashN = Math.min(5, launchers.size());
-            final int dashW = dashN * 22 + 8;
-            final int dashX = (sw - dashW) / 2;
-            final int dashY = sh - 24;
-            g.fill(dashX, dashY, dashX + dashW, dashY + 20, 0x66000000);
-            for (int i = 0; i < dashN; i++) {
-                ProgramIcons.draw(g, dashX + 4 + i * 22 + 3, dashY + 2, 16, 16, launchers.get(i).programId(),
-                        iconSet());
-            }
-        } else {
-            g.drawString(font, filtered.isEmpty() ? "No results" : "Applications", fieldX, contentTop, 0xFFB8BBC8, false);
-            int my = contentTop + 12;
-            for (final Launcher l : filtered) {
-                if (hoverY >= my && hoverY < my + 16 && hoverX >= fieldX && hoverX < fieldX + fieldW) {
-                    g.fill(fieldX, my, fieldX + fieldW, my + 16, 0x33FFFFFF);
-                }
-                ProgramIcons.draw(g, fieldX + 2, my, 16, 16, l.programId(), iconSet());
-                g.drawString(font, l.label(), fieldX + 22, my + 4, 0xFFFFFFFF, false);
-                my += 16;
-            }
-        }
+        linuxLaunchers.renderGnomeOverview(g);
     }
 
     private boolean handleOverviewClickGnome(final int mx, final int my) {
-        final int sw = sw();
-        final int sh = sh();
-        final int top = TASKBAR_H;
-        if (my < top) {
-            return false; // the top bar handles its own clicks
-        }
-        final int fieldW = Math.min(180, sw - 40);
-        final int fieldX = (sw - fieldW) / 2;
-        final int fieldY = top + 8;
-        final List<Launcher> filtered = w11Filtered();
-        if (startSearch.length() > 0) {
-            int ry = fieldY + 22 + 12;
-            for (final Launcher l : filtered) {
-                if (my >= ry && my < ry + 16 && mx >= fieldX && mx < fieldX + fieldW) {
-                    startChoose(l);
-                    closeStart();
-                    return true;
-                }
-                ry += 16;
-            }
-            if (my >= fieldY && my < fieldY + 14) {
-                return true;
-            }
-            closeStart();
-            return true;
-        }
-        final int gridTop = fieldY + 22 + 42;
-        final int gridX = (sw - GN_COLS * GN_TILE_W) / 2;
-        if (my >= gridTop && mx >= gridX && mx < gridX + GN_COLS * GN_TILE_W) {
-            final int col = (mx - gridX) / GN_TILE_W;
-            final int row = (my - gridTop) / GN_TILE_H;
-            final int idx = row * GN_COLS + col;
-            if (idx >= 0 && idx < filtered.size() && gridTop + (row + 1) * GN_TILE_H <= sh - 26) {
-                startChoose(filtered.get(idx));
-                closeStart();
-                return true;
-            }
-        }
-        final int dashN = Math.min(5, launchers.size());
-        final int dashW = dashN * 22 + 8;
-        final int dashX = (sw - dashW) / 2;
-        final int dashY = sh - 24;
-        if (my >= dashY && my < dashY + 20 && mx >= dashX && mx < dashX + dashW) {
-            final int idx = (mx - dashX - 4) / 22;
-            if (idx >= 0 && idx < dashN) {
-                startChoose(idx);
-                closeStart();
-            }
-            return true;
-        }
-        if (my >= fieldY && my < fieldY + 14) {
-            return true; // the search box keeps the overview open
-        }
-        closeStart(); // clicking the overview backdrop leaves it, as GNOME does
-        return true;
+        return linuxLaunchers.clickGnomeOverview(mx, my);
     }
 
-    /** Cinnamon's Mint menu: a favourites rail, a categories column and the app list with a search hint. */
     private void renderStartMenuCinnamon(final GuiGraphics g, final int tbY) {
-        final int x = startMenuX();
-        final int w = CIN_MENU_W;
-        final int h = startMenuHeight();
-        final int y = tbY - h;
-        g.fill(x + 2, y + 3, x + w + 2, y + h + 3, 0x40000000);
-        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, 0xFF1F1F1F);
-        g.fill(x, y, x + w, y + h, 0xFF2F2F2F);
-        // Favourites rail: the first apps as icons.
-        g.fill(x, y, x + CIN_RAIL_W, y + h, 0xFF262626);
-        final int favN = Math.min(4, launchers.size());
-        for (int i = 0; i < favN; i++) {
-            final int fy = y + 8 + i * 22;
-            if (hoverX >= x && hoverX < x + CIN_RAIL_W && hoverY >= fy - 3 && hoverY < fy + 19) {
-                g.fill(x + 2, fy - 3, x + CIN_RAIL_W - 2, fy + 19, 0x3369B03B);
-            }
-            ProgramIcons.draw(g, x + (CIN_RAIL_W - 16) / 2, fy, 16, 16, launchers.get(i).programId(),
-                    iconSet());
-        }
-        // Categories.
-        final int catsX = x + CIN_RAIL_W;
-        g.fill(catsX + CIN_CATS_W - 1, y, catsX + CIN_CATS_W, y + h, 0xFF3A3A3A);
-        final String[] cats = {"All", "Accessories", "Office", "System", "Preferences"};
-        for (int i = 0; i < cats.length; i++) {
-            final int cy = y + CIN_HEADER_H + i * 14;
-            if (i == 0) {
-                g.fill(catsX, cy - 2, catsX + CIN_CATS_W - 1, cy + 10, theme.startButton());
-            }
-            g.drawString(font, cats[i], catsX + 8, cy, i == 0 ? 0xFFFFFFFF : 0xFFBDBDBD, false);
-        }
-        // Search hint + app list.
-        final int listX = catsX + CIN_CATS_W + 4;
-        final int listW = x + w - listX - 4;
-        g.fill(listX, y + 5, listX + listW, y + 17, 0xFF222222);
-        outline(g, listX, y + 5, listW, 12, 0xFF444444);
-        g.drawString(font, "Search", listX + 4, y + 7, 0xFF9A9A9A, false);
-        int my = y + CIN_HEADER_H;
-        for (final Launcher l : launchers) {
-            final boolean hov = hoverY >= my && hoverY < my + CIN_ROW_H && hoverX >= listX && hoverX < listX + listW;
-            if (hov) {
-                g.fill(listX, my, listX + listW, my + CIN_ROW_H, 0x3369B03B);
-            }
-            ProgramIcons.draw(g, listX + 2, my, 16, CIN_ROW_H, l.programId(), iconSet());
-            g.drawString(font, trim(l.label(), 16), listX + 22, my + 4, 0xFFE8E8E8, false);
-            my += CIN_ROW_H;
-        }
+        linuxLaunchers.renderCinnamon(g, tbY);
     }
 
     private boolean handleStartClickCinnamon(final int mx, final int my, final int tbY) {
-        final int x = startMenuX();
-        final int w = CIN_MENU_W;
-        final int h = startMenuHeight();
-        final int y = tbY - h;
-        if (mx < x || mx > x + w || my < y || my > y + h) {
-            return false;
-        }
-        if (mx < x + CIN_RAIL_W) {
-            final int favN = Math.min(4, launchers.size());
-            for (int i = 0; i < favN; i++) {
-                final int fy = y + 8 + i * 22;
-                if (my >= fy - 3 && my < fy + 19) {
-                    startChoose(i);
-                    closeStart();
-                    return true;
-                }
-            }
-            return true;
-        }
-        final int listX = x + CIN_RAIL_W + CIN_CATS_W + 4;
-        if (mx >= listX && my >= y + CIN_HEADER_H) {
-            final int row = (my - (y + CIN_HEADER_H)) / CIN_ROW_H;
-            if (row >= 0 && row < launchers.size()) {
-                startChoose(row);
-                closeStart();
-            }
-        }
-        return true;
+        return linuxLaunchers.clickCinnamon(mx, my, tbY);
     }
 
     /** Frames XP: a two-column panel (programs on the left, system places on the right) with header/footer bands. */
