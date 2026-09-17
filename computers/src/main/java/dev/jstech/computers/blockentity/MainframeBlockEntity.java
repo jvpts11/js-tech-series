@@ -31,10 +31,7 @@ import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.install.SetupRunner;
-import dev.jstech.computers.program.IqlJobAgent;
 import dev.jstech.computers.program.iql.IqlCatalog;
-import dev.jstech.computers.program.iql.IqlDefinition;
-import dev.jstech.computers.program.iql.IqlSavedObject;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StorageKey;
@@ -64,7 +61,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
@@ -73,7 +69,6 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
@@ -364,26 +359,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     // Set when the block is being destroyed, so setRemoved can tell a break (discard) from a chunk unload (keep).
     private boolean broken;
 
-    /*
-     * The IQL Engine: a service installed on the Mainframe that holds the network's saved IQL objects
-     * (views/procedures/jobs) and runs the jobs. The catalog persists with the Mainframe; the NMS only
-     * opens when the Engine is installed and running. A running Mainframe runs its Engine by default.
-     */
-    private final IqlCatalog iqlCatalog =
-            new IqlCatalog();
-    private boolean iqlEngineInstalled;
-    private boolean iqlEngineRunning = true;
-    /**
-     * The Automation Engine: a second service that, like the IQL Engine, lets the job agent fire the saved
-     * jobs. Installing it lets the Automation Manager run jobs without the full IQL Engine / NMS stack.
-     */
-    private boolean automationEngineInstalled;
-    private final IqlJobAgent iqlJobAgent =
-            new IqlJobAgent();
-    /** Jobs the player paused from the Processes tab (lowercased names); a paused job never fires. */
-    private final Set<String> pausedJobs = new HashSet<>();
-    /** The last script the NMS editor held, persisted so it survives closing and reopening the studio. */
-    private String savedScript = "";
+    /** The software installed on this Mainframe: the IQL Engine, the Automation Engine and the Mirror. */
+    private final MainframeServices services = new MainframeServices(this);
 
     private static final int OPERATION_LOG_MAX = 32;
     private static final int FAILOVER_PROMOTE_DELAY = 60;
@@ -529,7 +506,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         restorePendingOperations(level);
         scheduler.tick();
         // The IQL Engine's job agent fires scheduled/conditional jobs (no-op unless the Engine runs).
-        iqlJobAgent.tick(this, level);
+        services.tick(level);
     }
 
     public NetworkIndex networkIndex() {
@@ -1774,31 +1751,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             pendingSavedAt = tag.getLong("ActiveOperationsSavedAt");
             resumeCountdown = 0;
         }
-        iqlEngineInstalled = tag.getBoolean("IqlEngineInstalled");
-        iqlEngineRunning = !tag.contains("IqlEngineRunning") || tag.getBoolean("IqlEngineRunning");
-        automationEngineInstalled = tag.getBoolean("AutomationEngineInstalled");
-        mirrorInstalled = tag.getBoolean("MirrorInstalled");
-        shelved.clear();
-        final CompoundTag shelf = tag.getCompound("MirrorShelf");
-        for (final String name : shelf.getAllKeys()) {
-            shelved.put(name, shelf.getString(name));
-        }
-        iqlCatalog.clear();
-        final ListTag catalog = tag.getList("IqlCatalog", Tag.TAG_COMPOUND);
-        for (int i = 0; i < catalog.size(); i++) {
-            final CompoundTag entry = catalog.getCompound(i);
-            iqlCatalog.put(new IqlSavedObject(
-                    IqlDefinition.ObjectType.byId(entry.getByte("Type")),
-                    entry.getString("Name"), entry.getString("Body"),
-                    IqlDefinition.TriggerKind.byId(entry.getByte("Trigger")),
-                    entry.getString("Spec")));
-        }
-        pausedJobs.clear();
-        final ListTag paused = tag.getList("PausedJobs", Tag.TAG_STRING);
-        for (int i = 0; i < paused.size(); i++) {
-            pausedJobs.add(paused.getString(i));
-        }
-        savedScript = tag.getString("IqlScript");
+        services.load(tag);
     }
 
     @Override
@@ -1864,243 +1817,137 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
                     }));
             tag.put("ManualLocks", holds);
         }
-        tag.putBoolean("IqlEngineInstalled", iqlEngineInstalled);
-        tag.putBoolean("IqlEngineRunning", iqlEngineRunning);
-        tag.putBoolean("AutomationEngineInstalled", automationEngineInstalled);
-        tag.putBoolean("MirrorInstalled", mirrorInstalled);
-        if (!shelved.isEmpty()) {
-            final CompoundTag shelf = new CompoundTag();
-            shelved.forEach(shelf::putString);
-            tag.put("MirrorShelf", shelf);
-        }
-        if (!iqlCatalog.isEmpty()) {
-            final ListTag catalog = new ListTag();
-            for (final IqlSavedObject object : iqlCatalog.all()) {
-                final CompoundTag entry = new CompoundTag();
-                entry.putByte("Type", (byte) object.type().id());
-                entry.putString("Name", object.name());
-                entry.putString("Body", object.body());
-                entry.putByte("Trigger", (byte) object.triggerKind().id());
-                entry.putString("Spec", object.triggerSpec());
-                catalog.add(entry);
-            }
-            tag.put("IqlCatalog", catalog);
-        }
-        if (!pausedJobs.isEmpty()) {
-            final ListTag paused = new ListTag();
-            for (final String name : pausedJobs) {
-                paused.add(StringTag.valueOf(name));
-            }
-            tag.put("PausedJobs", paused);
-        }
-        if (!savedScript.isEmpty()) {
-            tag.putString("IqlScript", savedScript);
-        }
+        services.save(tag);
     }
 
     // IQL Engine (the saved-object service installed on the Mainframe)
 
     public IqlCatalog iqlCatalog() {
-        return iqlCatalog;
+        return services.catalog();
     }
 
     public boolean isIqlEngineInstalled() {
-        return iqlEngineInstalled;
+        return services.iqlEngineInstalled();
     }
 
     public boolean isIqlEngineRunning() {
-        return iqlEngineRunning;
+        return services.iqlEngineRunning();
     }
 
     /** The Engine is usable only when installed, not stopped, and the Mainframe itself is powered. */
     public boolean isIqlEngineActive() {
-        return iqlEngineInstalled && iqlEngineRunning && isRunning();
+        return services.iqlEngineActive();
     }
 
     /** Installs the Engine on the Mainframe; returns false if it was already installed. */
     public boolean installIqlEngine() {
-        if (iqlEngineInstalled) {
-            return false;
-        }
-        iqlEngineInstalled = true;
-        iqlEngineRunning = true;
-        setChanged();
-        return true;
+        return services.installIqlEngine();
     }
 
     /** Starts or stops the installed Engine service; returns false if there is nothing to change. */
     public boolean setIqlEngineRunning(final boolean running) {
-        if (!iqlEngineInstalled || iqlEngineRunning == running) {
-            return false;
-        }
-        iqlEngineRunning = running;
-        setChanged();
-        return true;
+        return services.setIqlEngineRunning(running);
     }
 
     public boolean isAutomationEngineInstalled() {
-        return automationEngineInstalled;
+        return services.automationEngineInstalled();
     }
 
     /** Active when installed and the Mainframe is powered; enables the job agent like the IQL Engine does. */
     public boolean isAutomationEngineActive() {
-        return automationEngineInstalled && isRunning();
+        return services.automationEngineActive();
     }
 
     /** Installs the Automation Engine on the Mainframe; returns false if it was already installed. */
     public boolean installAutomationEngine() {
-        if (automationEngineInstalled) {
-            return false;
-        }
-        automationEngineInstalled = true;
-        setChanged();
-        return true;
+        return services.installAutomationEngine();
     }
 
-    // The Mirror: the package repository service every Linux computer on the network installs from.
-    private boolean mirrorInstalled;
-
     public boolean isMirrorInstalled() {
-        return mirrorInstalled;
+        return services.mirrorInstalled();
     }
 
     /** Whether the Mirror serves packages: installed and the Mainframe is running. */
     public boolean isMirrorActive() {
-        return mirrorInstalled && isRunning();
+        return services.mirrorActive();
     }
 
     /** Installs the Mirror service on the Mainframe; returns false if it was already installed. */
     public boolean installMirror() {
-        if (mirrorInstalled) {
-            return false;
-        }
-        mirrorInstalled = true;
-        setChanged();
-        return true;
+        return services.installMirror();
     }
 
-    /**
-     * The packages players on this network have published to the Mirror, by name.
-     *
-     * <p>They live with the Mainframe, not with the machine that built them: that is what a Mirror is
-     * for. Each is the whole package as text, so what a player installs is exactly what the player who
-     * published it could read on their own screen.
-     */
-    private final Map<String, String> shelved = new LinkedHashMap<>();
-
     /** How many packages one network's Mirror will hold, so a shelf cannot grow without end. */
-    public static final int SHELF_MAX = 64;
+    public static final int SHELF_MAX = MainframeServices.SHELF_MAX;
 
-    /** Everything on the shelf, by name. */
+    /** Everything on the Mirror's shelf, by name. */
     public Map<String, String> shelvedPackages() {
-        return Map.copyOf(shelved);
+        return services.shelvedPackages();
     }
 
     /** One of them, or null. */
     @Nullable
     public String shelvedPackage(final String name) {
-        return shelved.get(name);
+        return services.shelvedPackage(name);
     }
 
-    /**
-     * Puts one on the shelf, replacing any build of it already there.
-     *
-     * <p>Replacing rather than refusing is deliberate: publishing again is how a player releases a fix,
-     * and making them take the old one down first would only mean a moment when the network has none.
-     */
+    /** Puts one on the shelf, replacing any build of it already there. */
     public boolean shelve(final String name, final String text) {
-        if (name == null || name.isBlank() || text == null || text.isBlank()) {
-            return false;
-        }
-        if (!shelved.containsKey(name) && shelved.size() >= SHELF_MAX) {
-            return false;
-        }
-        shelved.put(name, text);
-        setChanged();
-        return true;
+        return services.shelve(name, text);
     }
 
     /** Takes one off the shelf; false when it was not there. */
     public boolean unshelve(final String name) {
-        if (shelved.remove(name) == null) {
-            return false;
-        }
-        setChanged();
-        return true;
+        return services.unshelve(name);
     }
 
     /** Removes the Mirror service; returns false if it was not installed. */
     public boolean uninstallMirror() {
-        if (!mirrorInstalled) {
-            return false;
-        }
-        mirrorInstalled = false;
-        setChanged();
-        return true;
+        return services.uninstallMirror();
     }
 
     /** Removes the IQL Engine service (stopping it); returns false if it was not installed. */
     public boolean uninstallIqlEngine() {
-        if (!iqlEngineInstalled) {
-            return false;
-        }
-        iqlEngineInstalled = false;
-        iqlEngineRunning = false;
-        setChanged();
-        return true;
+        return services.uninstallIqlEngine();
     }
 
     /** Removes the Automation Engine service; returns false if it was not installed. */
     public boolean uninstallAutomationEngine() {
-        if (!automationEngineInstalled) {
-            return false;
-        }
-        automationEngineInstalled = false;
-        setChanged();
-        return true;
+        return services.uninstallAutomationEngine();
     }
 
     @Override
     protected void onSystemErased() {
         super.onSystemErased();
         // The services were software on the formatted disk: a wiped Mainframe serves nothing any more.
-        uninstallMirror();
-        uninstallIqlEngine();
-        uninstallAutomationEngine();
+        services.eraseInstalls();
     }
 
     public void markIqlCatalogChanged() {
         setChanged();
     }
 
-    // IQL job process control (the Processes-tab task manager)
-
     public boolean isJobPaused(final String jobName) {
-        return pausedJobs.contains(jobName.toLowerCase(Locale.ROOT));
+        return services.jobPaused(jobName);
     }
 
     /** Pauses a job (a resumable "End"): the agent stops firing it until it is restarted. */
     public void pauseJob(final String jobName) {
-        if (pausedJobs.add(jobName.toLowerCase(Locale.ROOT))) {
-            setChanged();
-        }
+        services.pauseJob(jobName);
     }
 
     /** Restarts a job: resumes it if paused and re-arms its trigger so it reschedules from now. */
     public void restartJob(final String jobName) {
-        pausedJobs.remove(jobName.toLowerCase(Locale.ROOT));
-        iqlJobAgent.rearm(jobName);
-        setChanged();
+        services.restartJob(jobName);
     }
 
     /** The persisted NMS editor script for this Mainframe, or "" if none has been saved. */
     public String savedScript() {
-        return savedScript;
+        return services.savedScript();
     }
 
     /** Persists the NMS editor script so it survives closing and reopening the studio (and a reload). */
     public void setSavedScript(final String script) {
-        this.savedScript = script == null ? "" : script;
-        setChanged();
+        services.savedScript(script);
     }
 }
