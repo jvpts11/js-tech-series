@@ -97,6 +97,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A craft, a pipeline or a machine run whose saved pattern could not be read came back as nothing at all, with
   no word anywhere about what had been lost. The same for a slot of a saved pattern and a row of the
   Operations log. What could not be read is now named in the log, so a world that comes back short says why.
+- An amount too large to weigh came back as less than nothing, and everything after it believed that: a
+  request for it passed every check that it fitted, putting it away added room to a disk rather than using it,
+  and free space read as more than the disk holds. Asking for more than there could ever be now gets
+  everything there is, the same answer a merely large number gets.
 
 ### Changed
 - How long an Operation waited and how long it ran are counted without a ceiling, so a craft left running for

@@ -10,6 +10,7 @@ package dev.jstech.computers.crafting;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.util.Sizes;
 import java.util.ArrayList;
 import java.util.function.Function;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -128,16 +129,12 @@ public record MultiStagePattern(List<Stage> stages, String name, String note) {
         demand[stages.size() - 1] = Math.max(1, finalRequested);
         for (int i = stages.size() - 2; i >= 0; i--) {
             final Stage next = stages.get(i + 1);
-            final long runsOfNext = ceilDiv(demand[i + 1], Math.max(1, outputPerRun(next)));
+            final long runsOfNext = Sizes.ceilDiv(demand[i + 1], Math.max(1, outputPerRun(next)));
             final StorageKey produced = outputKey(stages.get(i));
             final long consumedPerRun = produced == null ? 0 : inputPerRun(next, produced);
             demand[i] = consumedPerRun > 0 ? runsOfNext * consumedPerRun : demand[i + 1];
         }
         return demand;
-    }
-
-    private static long ceilDiv(final long amount, final long perRun) {
-        return (amount + perRun - 1) / perRun;
     }
 
     /** The primary result a stage yields per run: the bench result count, or the primary output's amount. */

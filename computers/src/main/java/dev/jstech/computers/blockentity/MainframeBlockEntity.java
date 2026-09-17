@@ -59,6 +59,7 @@ import dev.jstech.core.operation.SelfTestOperationTask;
 import dev.jstech.core.operation.exec.QueueArbiter;
 import dev.jstech.core.persistence.NetworkRegistrySavedData;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.util.Sizes;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NetworkUuidState;
 import dev.jstech.core.uuid.NodeUuid;
@@ -1526,7 +1527,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         final var storage = NetworkStorage
                 .of(serverLevel, networkUuid());
         final var primary = machine.primaryOutput();
-        final long runs = ceilDiv(quantity, primary == null ? 1 : Math.max(1, primary.amount()));
+        final long runs = Sizes.ceilDiv(quantity, primary == null ? 1 : Math.max(1, primary.amount()));
         final Map<StorageKey, Long> need =
                 new HashMap<>();
         for (final var in : machine.inputs()) {
@@ -1538,10 +1539,6 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             }
         }
         return true;
-    }
-
-    private static long ceilDiv(final long amount, final long perRun) {
-        return (amount + perRun - 1) / perRun;
     }
 
     /*

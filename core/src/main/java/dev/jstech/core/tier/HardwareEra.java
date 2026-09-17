@@ -10,6 +10,7 @@ package dev.jstech.core.tier;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableIds;
+import dev.jstech.core.util.Sizes;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -79,13 +80,15 @@ public enum HardwareEra implements IStableId, IStableName {
         };
     }
 
-    /** How many items a size in megabytes costs on this era's disks, rounded up: a system image, say. */
+    /**
+     * How many items a size in megabytes costs on this era's disks, rounded up: a system image, say.
+     *
+     * <p>Rounded up without the addition the obvious form uses, because that addition is itself an amount
+     * that can run past the end: a size near the largest number there is would round up to a negative one,
+     * and something enormous would then cost nothing to store.
+     */
     public long itemsFor(final long mb) {
-        if (mb <= 0L) {
-            return 0L;
-        }
-        final long per = mbPerItem();
-        return (mb + per - 1L) / per;
+        return Sizes.ceilDiv(mb, mbPerItem());
     }
 
     /**

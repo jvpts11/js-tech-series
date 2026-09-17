@@ -11,6 +11,7 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.core.util.Sizes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -111,9 +112,16 @@ public final class StorageKey {
         return kind == Kind.CHEMICAL;
     }
 
-    /** Fluids and chemicals are measured in millibuckets; one item weighs {@link #MB_EQ_PER_ITEM}. */
+    /**
+     * Fluids and chemicals are measured in millibuckets; one item weighs {@link #MB_EQ_PER_ITEM}.
+     *
+     * <p>A quantity can come from a packet, so it can be any number at all, and a thousand times a large
+     * enough one comes back negative. A negative weight is not a number written badly, it is a different
+     * answer: a request for it passes every check that it fits, and putting it away adds storage rather than
+     * using it. Asking for more items than there could ever be gets the largest weight there is instead.
+     */
     public long weight(final long quantity) {
-        return kind == Kind.ITEM ? quantity * MB_EQ_PER_ITEM : quantity;
+        return kind == Kind.ITEM ? Sizes.times(quantity, MB_EQ_PER_ITEM) : quantity;
     }
 
     public ItemStack stack(final int count) {

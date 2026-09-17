@@ -18,6 +18,7 @@ import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.crafting.RecipeChoice;
 import dev.jstech.computers.operation.payload.CraftPlanPayload;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.util.Sizes;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -80,7 +81,7 @@ public final class CraftPlanMath {
             } else {
                 kind = RecipeChoice.KIND_BENCH;
                 final CraftingPattern bench = recipe.bench().get();
-                final long runs = ceilDiv(quantity, Math.max(1, bench.result().getCount()));
+                final long runs = Sizes.ceilDiv(quantity, Math.max(1, bench.result().getCount()));
                 rows = new ArrayList<>();
                 for (final var in : bench.ingredientTotals().entrySet()) {
                     final long need = in.getValue() * runs;
@@ -212,7 +213,7 @@ public final class CraftPlanMath {
             } else {
                 // A bench-first pipeline: its raw inputs are the bench pattern's ingredients per run.
                 final var bench = stage.bench().get();
-                final long runs = ceilDiv(firstDemand, Math.max(1, bench.result().getCount()));
+                final long runs = Sizes.ceilDiv(firstDemand, Math.max(1, bench.result().getCount()));
                 final List<CraftPlanPayload.Row> rows = new ArrayList<>();
                 long maxRuns = Long.MAX_VALUE;
                 for (final var in : bench.ingredientTotals().entrySet()) {
@@ -230,7 +231,7 @@ public final class CraftPlanMath {
         }
         final var primary = first.primaryOutput();
         final long perRun = primary == null ? 1 : Math.max(1, primary.amount());
-        final long runs = ceilDiv(firstDemand, perRun);
+        final long runs = Sizes.ceilDiv(firstDemand, perRun);
         final List<CraftPlanPayload.Row> rows = new ArrayList<>();
         long maxRuns = Long.MAX_VALUE;
         for (final var in : first.inputs()) {
@@ -245,10 +246,6 @@ public final class CraftPlanMath {
                 ? forwardYield(recipe.multi().get(), maxFirst) : maxFirst;
         return new MachinePlan(List.copyOf(rows), maxFirst >= firstDemand,
                 Math.min(quantity, maxFinal), estimate, recipe.proc().isPresent(), stages);
-    }
-
-    private static long ceilDiv(final long amount, final long perRun) {
-        return (amount + perRun - 1) / perRun;
     }
 
     /** How much of the final result a pipeline yields when its first stage produces {@code firstOutput}. */

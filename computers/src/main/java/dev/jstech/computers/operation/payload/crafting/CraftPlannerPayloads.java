@@ -18,6 +18,7 @@ import dev.jstech.computers.operation.payload.CraftPlanPayload;
 import dev.jstech.computers.operation.payload.CraftPlannerPayload;
 import dev.jstech.computers.operation.payload.RequestCraftPlannerPayload;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.util.Sizes;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -147,7 +148,7 @@ public final class CraftPlannerPayloads {
         if (!craftable || !visiting.add(key)) {
             return;
         }
-        final long runs = Math.max(1, (need + perRun - 1) / perRun);
+        final long runs = Math.max(1, Sizes.ceilDiv(need, perRun));
         for (final Map.Entry<StorageKey, Long> e : inputs.entrySet()) {
             treeWalk(e.getKey(), e.getValue() * runs, depth + 1, patterns, machines, out, visiting);
         }

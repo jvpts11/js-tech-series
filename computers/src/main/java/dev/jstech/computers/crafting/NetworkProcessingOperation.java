@@ -24,6 +24,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.persistence.SavedValue;
+import dev.jstech.core.util.Sizes;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -549,7 +550,7 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
         final ProcessingPattern.ProcessingOutput primary = pattern.primaryOutput();
         final long perLot = Math.max(1L, primary.amount());
         if (!primary.probabilistic()) {
-            return (requested + perLot - 1) / perLot;
+            return Sizes.ceilDiv(requested, perLot);
         }
         return produced >= requested ? lotsFed : lotsFed + 1;
     }
