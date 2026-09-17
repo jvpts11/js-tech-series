@@ -68,6 +68,19 @@ public final class NetworkIndex {
      */
     private final Map<StorageKey, ManualLock> manualLocks = new LinkedHashMap<>();
 
+    /**
+     * How many rebuilds have been asked for, so that only the newest one publishes what it built.
+     *
+     * <p>A rebuild reads the whole network and hands the answer back later, and two of them can be in the air
+     * at once. Whichever finished last used to win, which is not the same as whichever was asked for last: a
+     * rebuild started before a change could land after one started after it, and put the network back the way
+     * it was before the change with nothing to say it had. Each one now carries the count it was asked at, and
+     * an older one that comes back late gives up rather than speaking over a newer one.
+     *
+     * <p>Read from the thread doing the building as well as from the one asking, so it is volatile.
+     */
+    private volatile long rebuildsAsked;
+
     private record ManualLock(UUID id, long amount) {
     }
 
@@ -290,6 +303,7 @@ public final class NetworkIndex {
     public void rebuildAsync(final ServerLevel level, final NetworkUuid network,
                              final OperationDispatch dispatch,
                              @Nullable final Runnable onDone) {
+        final long asked = ++this.rebuildsAsked;
         final List<NodeSnapshot> snapshots = new ArrayList<>();
         final NetworkSystem system = NetworkSystem.get(level);
         for (final ServerNode server : system.serversOf(network)) {
@@ -309,6 +323,18 @@ public final class NetworkIndex {
             }
         }
         dispatch.submit(context -> {
+            /*
+             * Somebody asked again while this was waiting its turn. Building would only be work for an answer
+             * that is already out of date and would not be published, so it is dropped here instead.
+             */
+            if (asked < this.rebuildsAsked) {
+                context.onMainThread(() -> {
+                    if (onDone != null) {
+                        onDone.run();
+                    }
+                });
+                return IOperationResult.success();
+            }
             final Map<StorageKey, List<ItemLocation>> built = new LinkedHashMap<>();
             final Map<NodeUuid, Long> modCounts = new LinkedHashMap<>();
             for (final NodeSnapshot snapshot : snapshots) {
@@ -321,11 +347,18 @@ public final class NetworkIndex {
                 modCounts.put(snapshot.node(), snapshot.modCount());
             }
             context.onMainThread(() -> {
-                catalog.clear();
-                catalog.putAll(built);
-                indexedModCounts.clear();
-                indexedModCounts.putAll(modCounts);
-                health.onFullRebuild(); // a rebuild from scratch settles every doubt the index carried
+                /*
+                 * A newer rebuild was asked for while this one was building. Its answer is the one that counts,
+                 * so this one goes no further than saying it is done: what it built describes a network that
+                 * has already moved on.
+                 */
+                if (asked >= this.rebuildsAsked) {
+                    catalog.clear();
+                    catalog.putAll(built);
+                    indexedModCounts.clear();
+                    indexedModCounts.putAll(modCounts);
+                    health.onFullRebuild(); // a rebuild from scratch settles every doubt the index carried
+                }
                 if (onDone != null) {
                     onDone.run();
                 }
@@ -591,6 +624,27 @@ public final class NetworkIndex {
         final Map<StorageKey, Long> out = new LinkedHashMap<>();
         manualLocks.forEach((key, held) -> out.put(key, held.amount()));
         return out;
+    }
+
+    /**
+     * Puts back the holds a world was saved with, once the catalog has been read again.
+     *
+     * <p>A hold promises to last until somebody lets it go, and a world being closed is not somebody letting
+     * it go. The reservation itself cannot be saved, because it points at where the things were and a reload
+     * reads the network afresh, so what is kept is what was held and of what; each is then taken again
+     * against what is there now. A hold that can no longer be met in full holds what it can, which is the
+     * truth about the network rather than a promise the storage can no longer keep.
+     *
+     * @return how many of them could be taken again
+     */
+    public int restoreManualLocks(final Map<StorageKey, Long> held) {
+        int taken = 0;
+        for (final Map.Entry<StorageKey, Long> hold : held.entrySet()) {
+            if (this.manualLock(hold.getKey(), hold.getValue(), null) > 0L) {
+                taken++;
+            }
+        }
+        return taken;
     }
 
     public void clear() {

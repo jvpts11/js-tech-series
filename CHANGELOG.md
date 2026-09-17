@@ -82,6 +82,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A machine refused to start any program that reads or writes a field of one of its own classes, saying nothing
   answered it. That was every program with a field, and every program with a lambda, since what a lambda keeps hold
   of is a field too. Programs written before this run now with no change to them.
+- A hold a player put on the storage with `LOCK` was let go of by closing and reopening the world, although it
+  promised to last until somebody unlocked it. It is written down with the Mainframe now and taken again when the
+  world comes back.
+- Two readings of the storage under way at once were believed in the order they finished, so a reading started
+  first could arrive last and put the network back to an older picture of itself: items taken in between came
+  back, and items put in went missing until the next reading. Only the newest reading is believed now.
 
 ### Changed
 - How long an Operation waited and how long it ran are counted without a ceiling, so a craft left running for

@@ -83,6 +83,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.Connection;
@@ -354,6 +355,9 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     @Nullable
     private OperationDispatch dispatch;
     private int dispatchQueues;
+    /** The holds this Mainframe was saved with, waiting for the catalog to be read before being taken again. */
+    private Map<StorageKey, Long> heldOnLoad;
+
     private final NetworkIndex networkIndex =
             new NetworkIndex();
     private final List<INetworkOperation>
@@ -524,6 +528,14 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         runDispatch();
         // Reconcile the in-RAM storage catalog with the network's servers: a changes-only ANALYZE
         networkIndex.analyzeIncremental(level, networkUuid());
+        /*
+         * The holds a player put on the storage last: taken again now that the catalog has been read, since
+         * a hold lasts until somebody lets it go and closing a world is not somebody letting it go.
+         */
+        if (heldOnLoad != null) {
+            networkIndex.restoreManualLocks(heldOnLoad);
+            heldOnLoad = null;
+        }
         restorePendingOperations(level);
         tickOperations();
         // The IQL Engine's job agent fires scheduled/conditional jobs (no-op unless the Engine runs).
@@ -2340,6 +2352,21 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
          */
         failoverEnabled = tag.getBoolean("Failover");
         servicePanelOff = tag.getBoolean("ServicePanelOff");
+        // Kept until the catalog has been read, since a hold can only be taken against what is there.
+        heldOnLoad = null;
+        if (tag.contains("ManualLocks")) {
+            final Map<StorageKey, Long> held = new LinkedHashMap<>();
+            final ListTag holds = tag.getList("ManualLocks", Tag.TAG_COMPOUND);
+            for (int i = 0; i < holds.size(); i++) {
+                final CompoundTag hold = holds.getCompound(i);
+                StorageKey.CODEC.parse(registries.createSerializationContext(NbtOps.INSTANCE),
+                                hold.get("key"))
+                        .result().ifPresent(key -> held.put(key, hold.getLong("amount")));
+            }
+            if (!held.isEmpty()) {
+                heldOnLoad = held;
+            }
+        }
         /*
          * Persist the standby role + countdown so a reload mid-promotion does not reset the timer (which
          * could, with frequent chunk cycling, stop a standby from ever promoting).
@@ -2434,6 +2461,24 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
              */
             tag.putLong("ActiveOperationsSavedAt", pendingOperations != null && pendingSavedAt > 0L
                     ? pendingSavedAt : level != null ? level.getGameTime() : 0L);
+        }
+        /*
+         * What a player put a hold on. The reservation itself points at where the things were, and a reload
+         * reads the network afresh, so what is kept is what was held and of what; it is taken again once the
+         * catalog is back.
+         */
+        final Map<StorageKey, Long> held = networkIndex.manualLockView();
+        if (!held.isEmpty()) {
+            final ListTag holds = new ListTag();
+            held.forEach((key, amount) -> StorageKey.CODEC
+                    .encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), key)
+                    .result().ifPresent(encoded -> {
+                        final CompoundTag hold = new CompoundTag();
+                        hold.put("key", encoded);
+                        hold.putLong("amount", amount);
+                        holds.add(hold);
+                    }));
+            tag.put("ManualLocks", holds);
         }
         tag.putBoolean("IqlEngineInstalled", iqlEngineInstalled);
         tag.putBoolean("IqlEngineRunning", iqlEngineRunning);
