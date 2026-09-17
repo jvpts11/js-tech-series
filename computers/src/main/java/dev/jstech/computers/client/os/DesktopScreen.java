@@ -13,7 +13,6 @@ import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
-import dev.jstech.computers.client.FramesEmblem;
 import dev.jstech.computers.client.MonitorFrame;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.TaskbarGroups;
@@ -125,6 +124,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private final PanelTray tray = new PanelTray(this);
     /** The bars the Linux desktops put their open windows on, and the period panel drawn out of relief. */
     private final LinuxPanels linuxPanels = new LinuxPanels(this);
+    /** The Frames systems' two: the classic bottom taskbar, and Frames 11's centered band of icons. */
+    private final FramesPanels framesPanels = new FramesPanels(this);
 
     /*
      * Per-OS memory model: the system, its desktop and its services hold their share of the machine's RAM
@@ -729,6 +730,14 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         return taskStrip(sw);
     }
 
+    /**
+     * The left edge of the Start button on a panel that centres its contents, which is what makes the
+     * whole [Start + open programs] group move together with the taskbar alignment setting.
+     */
+    int modernStartLeft(final int sw) {
+        return win11StartX(sw);
+    }
+
     /** The program whose windows the panel's popup is showing, or null while none is up. */
     @Nullable
     String openTaskPopup() {
@@ -878,13 +887,13 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         return topPanel() ? 0 : TASKBAR_H;
     }
 
-    // Windows 11 taskbar: each centered item (Start + one per program) occupies this slot.
-    private static final int WIN11_SLOT = 22;
-    private static final int WIN11_ICON = 16;
+    // Frames 11 taskbar: each centered item (Start + one per program) occupies this slot.
+    static final int WIN11_SLOT = 22;
+    static final int WIN11_ICON = 16;
     /** A pinned program with no window, on the panels that keep it in place as an icon (KDE, Cinnamon). */
     private static final int LAUNCHER_W = 22;
     /** The pitch of the Frames XP quick launch icons beside Start. */
-    private static final int QL_W = 16;
+    static final int QL_W = 16;
     /*
      * The panel's popup: on a modern panel one card per window with its live picture, on a period one a
      * list of titles. It rises after the cursor has rested on a program for a moment, and goes away a
@@ -943,7 +952,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private static final int ICON_PITCH_Y = 44;
     private static final int ICON_PITCH_X = 50;
     /** The width of the Frames XP Start pill, which the task buttons and its own hit-test both clear. */
-    private static final int XP_START_W = 58;
+    static final int XP_START_W = 58;
     /** Where the first icon column starts: far enough in that its cell's highlight clears the screen edge. */
     private static final int ICON_ORIGIN_X = 14;
     /** An icon's cell: the box its highlight, its drop outline and its hit-test all use. */
@@ -2092,8 +2101,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         final int tbY = sh - TASKBAR_H;
         final String osp = desktopId.getPath();
         if (is(PanelStyle.FRAMES_11)) {
-            // Windows 11 taskbar: dark bar, centered Start + app icons with an active indicator, clock right.
-            renderWin11Taskbar(g, tbY, sw, lmx, lmy);
+            // Frames 11 taskbar: dark bar, centered Start + app icons with an active indicator, clock right.
+            framesPanels.renderModern(g, tbY, sw, lmx, lmy);
         } else if (periodPanel()) {
             renderPeriodPanel(g, tbY, sw, sh, lmx, lmy);
         } else if (is(PanelStyle.GNOME)) {
@@ -2101,78 +2110,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         } else if (linuxDesktop()) {
             renderLinuxPanel(g, tbY, sw, sh, lmx, lmy);
         } else {
-            // Taskbar background: 95 bevelled grey, XP Luna gradient.
-            if (osp.equals("frames_xp")) {
-                g.fillGradient(0, tbY, sw, sh, 0xFF4A86D4, 0xFF1C4D9C);
-                g.fill(0, tbY, sw, tbY + 1, 0xFF8FBCEC);
-            } else {
-                g.fill(0, tbY, sw, sh, theme.taskbar());
-                g.fill(0, tbY, sw, tbY + 1, 0xFFFFFFFF);
-            }
-            // Start button: distinct per Frames version, each with its own glyph.
-            if (osp.equals("frames_xp")) {
-                drawXpStart(g, tbY, sh);
-            } else {
-                final int sbW = 54;
-                g.fill(4, tbY + 3, 4 + sbW, sh - 3, theme.startButton());
-                bevel(g, 4, tbY + 3, sbW, TASKBAR_H - 6, 0xFFFFFFFF, 0xFF808080);
-                // The edition's own mark, the same one its setup and its boot screen wear.
-                FramesEmblem.draw(g, 8, tbY + 8, 7, osp);
-                g.drawString(font, "Start", 18, tbY + 8, 0xFF000000, false);
-            }
-            final TaskStrip strip = taskStrip(sw);
-            if (osp.equals("frames_xp")) {
-                drawQuickLaunch(g, strip, tbY, sh, lmx, lmy);
-            }
-            final boolean xp = osp.equals("frames_xp");
-            for (int i = 0; i < strip.entries().size(); i++) {
-                final TaskbarGroups.Entry entry = strip.entries().get(i);
-                final int bx = strip.x()[i];
-                final int btnW = strip.w()[i];
-                if (btnW == 0) {
-                    continue; // on the quick launch only, or not shown at all
-                }
-                if (bx + btnW > strip.right()) {
-                    break;
-                }
-                final boolean active = entry.state() == TaskbarGroups.State.ACTIVE;
-                final boolean minimized = entry.state() == TaskbarGroups.State.MINIMIZED;
-                /*
-                 * The program in front reads as a pushed-in button, the way a taskbar has always said which
-                 * program you are actually looking at; one whose windows are all put away sits raised and
-                 * paler, so it reads as "on the panel only".
-                 */
-                taskButton(g, bx, tbY + 3, btnW, TASKBAR_H - 6, osp, active);
-                if (minimized) {
-                    g.fill(bx + 1, tbY + 4, bx + btnW - 1, sh - 4, xp ? 0x38FFFFFF : 0x30FFFFFF);
-                }
-                ProgramIcons.draw(g, bx + 4, tbY + 6, 12, 12, programIdForLabel(entry.key()), iconSet());
-                /*
-                 * No shadow: the taskbar button name sits on a solid button, where a shadow only muddies it
-                 * (a dark blob behind the dark 95 text, a halo behind the light XP text).
-                 */
-                final boolean several = entry.windows() > 1;
-                final int textColor = minimized ? (xp ? 0xFFD0DCF0 : 0xFF606060) : theme.startText();
-                g.drawString(font, trim(entryLabel(entry), taskTitleChars(btnW - (several ? 8 : 0))), bx + 20, tbY + 8,
-                        textColor, false);
-                if (several) {
-                    drawCaret(g, bx + btnW - 8, tbY + 10, textColor);
-                }
-            }
-            // The notification area, dressed in each version's own frame.
-            final int trayX = trayLeft(sw);
-            if (osp.equals("frames_xp")) {
-                g.fillGradient(trayX, tbY + 2, sw, sh - 2, 0xFF1A53C4, 0xFF0D3590);
-                g.fill(trayX, tbY + 2, trayX + 1, sh - 2, 0xFF4A83E6); // the lit left edge
-                g.fill(trayX + 1, tbY + 2, trayX + 2, sh - 2, 0xFF0A2C7A); // and its inset shadow
-                drawTray(g, tbY, sw, 0xFFFFFFFF);
-            } else if (osp.equals("frames_95")) {
-                g.fill(trayX, tbY + 3, sw - 2, sh - 3, theme.taskbar());
-                bevel(g, trayX, tbY + 3, sw - 2 - trayX, TASKBAR_H - 6, 0xFF808080, 0xFFFFFFFF); // sunken
-                drawTray(g, tbY, sw, theme.startText());
-            } else {
-                drawTray(g, tbY, sw, theme.startText());
-            }
+            framesPanels.renderClassic(g, tbY, sw, sh, lmx, lmy, osp);
         }
         g.pose().popPose(); // close the TASKBAR layer
 
@@ -3283,110 +3221,6 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         return out;
     }
 
-    /**
-     * The Windows 11 taskbar: a dark bar with the Start logo and the open windows' icons centered, each app
-     * carrying an indicator under it (a wide pill for the focused window, a short dot otherwise), and the clock
-     * pinned to the right. Modelled on the real Windows 11 taskbar (centered, dark, flat).
-     */
-    private void renderWin11Taskbar(final GuiGraphics g, final int tbY, final int sw, final int lmx, final int lmy) {
-        final int bottom = tbY + TASKBAR_H;
-        g.fill(0, tbY, sw, bottom, 0xF01E1F23);          // dark, slightly translucent bar
-        g.fill(0, tbY, sw, tbY + 1, 0x18FFFFFF);          // faint top hairline
-
-        final int iconY = tbY + (TASKBAR_H - WIN11_ICON) / 2;
-
-        /*
-         * Start: follows the taskbar alignment (centered as the leftmost of the centered group, or left corner),
-         * with a hover highlight, the four-pane blue logo, no text.
-         */
-        final int startX = win11StartX(sw);
-        if (lmx >= startX && lmx < startX + WIN11_SLOT && lmy >= tbY) {
-            g.fill(startX, tbY + 2, startX + WIN11_SLOT, bottom - 2, 0x18FFFFFF);
-        }
-        drawWin11Start(g, startX + (WIN11_SLOT - 11) / 2, iconY + 2);
-
-        /*
-         * One icon per program, CENTERED: the pinned ones first, then the open ones, each with a hover or
-         * active background and an indicator underneath that says how it stands. A pinned program with
-         * nothing open is the icon alone; an open one carries a dot; the one in front a wide pill; a
-         * program with several windows has its mark split in two; and a program whose windows are all
-         * put away sits dimmed.
-         */
-        final TaskStrip strip = taskStrip(sw);
-        for (int i = 0; i < strip.entries().size(); i++) {
-            final TaskbarGroups.Entry entry = strip.entries().get(i);
-            final int ix = strip.x()[i];
-            final boolean hover = lmx >= ix && lmx < ix + WIN11_SLOT && lmy >= tbY;
-            final boolean active = entry.state() == TaskbarGroups.State.ACTIVE;
-            final boolean shown = entry.key().equals(taskPopupKey);
-            if (hover || active || shown) {
-                g.fill(ix + 1, tbY + 2, ix + WIN11_SLOT - 1, bottom - 2, active ? 0x26FFFFFF : 0x18FFFFFF);
-            }
-            final int iconX = ix + (WIN11_SLOT - WIN11_ICON) / 2;
-            ProgramIcons.draw(g, iconX, iconY, WIN11_ICON, WIN11_ICON - 2, programIdForLabel(entry.key()), "frames_11");
-            if (entry.state() == TaskbarGroups.State.MINIMIZED) {
-                g.fill(iconX, iconY, iconX + WIN11_ICON, iconY + WIN11_ICON - 2, 0x901E1F23);
-            }
-            drawWin11Indicator(g, ix + WIN11_SLOT / 2, bottom, entry);
-        }
-
-        drawTray(g, tbY, sw, 0xFFE6E8EC);
-    }
-
-    /** The mark under a Frames 11 icon: what the program is doing, in the bar's own language. */
-    private static void drawWin11Indicator(final GuiGraphics g, final int cx, final int bottom,
-                                           final TaskbarGroups.Entry entry) {
-        final boolean several = entry.windows() > 1;
-        switch (entry.state()) {
-            case ACTIVE -> {
-                if (several) {
-                    g.fill(cx - 6, bottom - 2, cx - 1, bottom - 1, 0xFF4C84F0);
-                    g.fill(cx + 1, bottom - 2, cx + 6, bottom - 1, 0xFF4C84F0);
-                } else {
-                    g.fill(cx - 6, bottom - 2, cx + 6, bottom - 1, 0xFF4C84F0);
-                }
-            }
-            case OPEN, MINIMIZED -> {
-                final int color = entry.state() == TaskbarGroups.State.OPEN
-                        ? 0xFF8A93A4 : 0xFF5E6570;
-                if (several) {
-                    g.fill(cx - 4, bottom - 2, cx - 1, bottom - 1, color);
-                    g.fill(cx + 1, bottom - 2, cx + 4, bottom - 1, color);
-                } else {
-                    g.fill(cx - 2, bottom - 2, cx + 2, bottom - 1, color);
-                }
-            }
-            default -> {
-            }
-        }
-    }
-
-    /**
-     * The Frames XP quick launch: the pinned programs as small icons right after Start, with a rule
-     * between them and the task buttons, the way that desktop kept them.
-     */
-    private void drawQuickLaunch(final GuiGraphics g, final TaskStrip strip, final int tbY, final int sh,
-                                 final int lmx, final int lmy) {
-        if (strip.quickCount() == 0) {
-            return;
-        }
-        int j = 0;
-        for (final TaskbarGroups.Entry entry : strip.entries()) {
-            if (!entry.pinned()) {
-                continue;
-            }
-            final int qx = strip.quickX() + j * QL_W;
-            if (lmx >= qx && lmx < qx + QL_W && lmy >= tbY) {
-                g.fill(qx, tbY + 3, qx + QL_W, sh - 3, 0x30FFFFFF);
-            }
-            ProgramIcons.draw(g, qx + 2, tbY + 6, 12, 12, programIdForLabel(entry.key()), iconSet());
-            j++;
-        }
-        final int rule = strip.quickX() + strip.quickCount() * QL_W + 2;
-        g.fill(rule, tbY + 5, rule + 1, sh - 5, 0xFF2C5FA8);
-        g.fill(rule + 1, tbY + 5, rule + 2, sh - 5, 0xFF6FA3EF);
-    }
-
     /** A small downward caret: a program with several windows says so at the end of its button. */
     private static void drawCaret(final GuiGraphics g, final int x, final int y, final int color) {
         g.fill(x, y, x + 5, y + 1, color);
@@ -3728,98 +3562,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         tray.drawTip(g, panelY, sw);
     }
 
-    /** The Windows 11 Start glyph: four solid blue panes with a thin gap. */
-    private static void drawWin11Start(final GuiGraphics g, final int x, final int y) {
-        final int c = FramesEmblem.panesOf("frames_11")[0];
-        g.fill(x, y, x + 5, y + 5, c);
-        g.fill(x + 6, y, x + 11, y + 5, c);
-        g.fill(x, y + 6, x + 5, y + 11, c);
-        g.fill(x + 6, y + 6, x + 11, y + 11, c);
-    }
-
-    /** Draws a taskbar window button in the OS's style (95 bevelled, XP gradient, 11 flat). */
-    private void taskButton(final GuiGraphics g, final int x, final int y, final int w, final int h,
-                            final String osp, final boolean active) {
-        switch (osp) {
-            case "frames_xp" -> {
-                if (active) {
-                    // Pushed in: the gradient runs the other way, with a shadow along the top edge.
-                    g.fillGradient(x, y, x + w, y + h, 0xFF1E4FBC, 0xFF3670DC);
-                    g.fill(x, y, x + w, y + 1, 0x40000000);
-                } else {
-                    g.fillGradient(x, y, x + w, y + h, 0xFF5B95DD, 0xFF2C5FA8);
-                    g.fill(x, y, x + w, y + 1, 0x33FFFFFF);
-                }
-                outline(g, x, y, w, h, 0xFF1A4CBF);
-            }
-            case "frames_11" -> g.fill(x, y, x + w, y + h, 0xFFE3E5EE);
-            default -> {
-                g.fill(x, y, x + w, y + h, theme.taskButton());
-                // The classic bevel inverts when the button is pressed: dark on top, light underneath.
-                bevel(g, x, y, w, h, active ? 0xFF808080 : 0xFFFFFFFF, active ? 0xFFFFFFFF : 0xFF808080);
-            }
-        }
-    }
-
-    /**
-     * The Frames XP Start button: a glossy green pill flush with the left edge and rounded at its right end,
-     * carrying the four-pane flag and the word in italics. It is the one control of that desktop everybody
-     * pictures, and a plain green rectangle never read as it.
-     */
-    private void drawXpStart(final GuiGraphics g, final int tbY, final int sh) {
-        final int top = tbY + 1;
-        final int bottom = sh - 1;
-        final int h = bottom - top;
-        final int round = 6;
-        xpStartBand(g, 0, top, XP_START_W - round, h);
-        for (int i = 0; i < round; i++) {
-            final double d = i + 1;
-            final int inset = (int) Math.round(round - Math.sqrt(Math.max(0.0, round * round - d * d)));
-            xpStartBand(g, XP_START_W - round + i, top + inset, 1, h - inset * 2);
-        }
-        g.fill(2, top + 1, XP_START_W - round, top + 1 + h / 3, 0x3AFFFFFF); // the gloss along the top
-        /*
-         * The edition's own mark, the same one its setup and its boot screen wear, with the right-hand panes
-         * lifted a pixel so the whole thing leans the way that button always did.
-         */
-        final int fx = 7;
-        final int fy = tbY + 8;
-        final int[] panes = FramesEmblem.panesOf("frames_xp");
-        g.fill(fx, fy + 1, fx + 4, fy + 4, panes[0]);
-        g.fill(fx + 5, fy, fx + 9, fy + 3, panes[1]);
-        g.fill(fx, fy + 5, fx + 4, fy + 8, panes[2]);
-        g.fill(fx + 5, fy + 4, fx + 9, fy + 7, panes[3]);
-        g.drawString(font, Component.literal("start")
-                        .withStyle(ChatFormatting.BOLD, ChatFormatting.ITALIC),
-                fx + 13, tbY + 8, 0xFFFFFFFF, true);
-    }
-
-    /** One vertical slice of the Start pill: light crown, body, and a darker foot, as the Luna button had. */
-    private static void xpStartBand(final GuiGraphics g, final int x, final int y, final int w, final int h) {
-        if (w <= 0 || h <= 0) {
-            return;
-        }
-        final int q = Math.max(1, h / 4);
-        g.fillGradient(x, y, x + w, y + q, 0xFF8FDD72, 0xFF57C04B);
-        g.fillGradient(x, y + q, x + w, y + h - q, 0xFF4CB745, 0xFF2E9A33);
-        g.fillGradient(x, y + h - q, x + w, y + h, 0xFF2E9A33, 0xFF24802A);
-    }
-
     /** Whether a desktop-local point is on the bottom panel's Start button. */
     private boolean startButtonHit(final double mx, final double my, final int tbY) {
-        if (is(PanelStyle.FRAMES_XP)) {
-            return my >= tbY && mx >= 0 && mx <= XP_START_W;
-        }
-        return my >= tbY + 3 && mx >= 4 && mx <= 58;
-    }
-
-    /** A 1px 3D bevel: light top/left, dark bottom/right (the classic raised look). */
-    private static void bevel(final GuiGraphics g, final int x, final int y, final int w, final int h,
-                              final int light, final int dark) {
-        g.fill(x, y, x + w, y + 1, light);
-        g.fill(x, y, x + 1, y + h, light);
-        g.fill(x, y + h - 1, x + w, y + h, dark);
-        g.fill(x + w - 1, y, x + w, y + h, dark);
+        return framesPanels.startButtonHit(mx, my, tbY);
     }
 
     private String osBandLabel() {
