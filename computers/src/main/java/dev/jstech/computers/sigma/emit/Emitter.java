@@ -10,15 +10,10 @@ package dev.jstech.computers.sigma.emit;
 import dev.jstech.computers.sigma.DiagnosticBag;
 import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.IExpr;
-import dev.jstech.computers.sigma.ast.IStmt;
-import dev.jstech.computers.sigma.ast.Operator;
-import dev.jstech.computers.sigma.lower.IrStmt;
 import dev.jstech.computers.sigma.lower.Lowerer;
-import dev.jstech.computers.sigma.ast.TypeRef;
 import dev.jstech.computers.sigma.sem.BodyChecker;
 import dev.jstech.computers.sigma.sem.BuiltIns;
 import dev.jstech.computers.sigma.sem.Declarations;
-import dev.jstech.computers.sigma.sem.IBinding;
 import dev.jstech.computers.sigma.sem.IMemberSymbol;
 import dev.jstech.computers.sigma.sem.ITypeSymbol;
 import dev.jstech.computers.sigma.sem.NamedType;
@@ -27,18 +22,9 @@ import dev.jstech.computers.sigma.sem.TypeRules;
 import dev.jstech.computers.vm.listing.AsmMethod;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmType;
-import dev.jstech.computers.vm.listing.IOperand;
-import dev.jstech.computers.vm.listing.Instruction;
 import dev.jstech.computers.vm.listing.Opcode;
-import dev.jstech.computers.vm.system.IntrinsicTypes;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Turns a checked program into the assembly.
@@ -47,28 +33,23 @@ import java.util.Set;
  * and which method each call resolved to. So this stage never decides anything about the language,
  * it only writes down what the earlier stages settled, which is why nothing here reports a mistake.
  *
- * <p>A few shapes of the language have no instruction of their own and are written out in terms of
- * ones that do. A property is a field. A short-circuit is a branch. An enum value is a number. And
- * the values a method fills in come back on the stack, so the caller stores them like anything else.
+ * <p>This part writes the shape of a program: its types, and for each one the methods it declares.
+ * Filling a method in is two other writers' work, one for what the method does and one for the values
+ * it works out, and both write into the same {@link MethodBody}.
  */
 public final class Emitter {
 
-    /** What the runtime provides for joining and parting delegates, and for putting text together. */
     /*
-     * The machine's own types, named from the one place that names them. The compiler writes a call to one of
-     * these into a listing and the machine looks it up by the same name, so a second spelling here would be a
-     * listing that loads and a call that nothing answers.
+     * What the stages before this one produced. The writers in this package read them and nothing
+     * else does, and none of them changes while a program is being written.
      */
-    private static final String DELEGATE = IntrinsicTypes.DELEGATE;
-    private static final String STRING = IntrinsicTypes.TEXT;
-
-    private final SemanticModel model;
-    private final TypeRules rules;
-    private final BuiltIns builtIns;
-    private final Declarations declarations;
-    private final DiagnosticBag diagnostics;
+    final SemanticModel model;
+    final TypeRules rules;
+    final BuiltIns builtIns;
+    final Declarations declarations;
+    final DiagnosticBag diagnostics;
     /** What each method's statements came to once the shorthand was gone. */
-    private final Lowerer lowered;
+    final Lowerer lowered;
     private final List<AsmMethod> synthesized = new ArrayList<>();
     /** What each method's lambdas keep hold of, worked out from the tree before anything is written. */
     private final Closures closures;
@@ -109,6 +90,52 @@ public final class Emitter {
         return program;
     }
 
+    /** How a method's parameters are written down: each one's type, marked when it is one it fills in. */
+    static List<String> writtenParameters(final IMemberSymbol.MethodSymbol method) {
+        final List<String> written = new ArrayList<>();
+        if (method == null) {
+            return written;
+        }
+        for (final IMemberSymbol.ParameterSymbol parameter : method.parameters()) {
+            written.add((parameter.outward() ? "out " : "") + parameter.type().describe());
+        }
+        return written;
+    }
+
+    /**
+     * Writes the method a lambda becomes and puts it where it can be reached from, giving back its name.
+     *
+     * <p>With nothing of the surrounding method's own to keep, the lambda belongs to the type it was
+     * written in. With something to keep, it belongs to the object holding that, so it can reach it.
+     *
+     * <p>Its name begins with a digit, so no name written in the source can ever be the same.
+     */
+    String lambdaMethod(final IExpr.Lambda lambda, final MethodBody around, final ITypeSymbol gives,
+                        final List<String> written) {
+        this.lambdaCount++;
+        final String name = "0lambda" + this.lambdaCount;
+        final Closure closure = around.closure();
+        final MethodBody body = new MethodBody(this, around.owner(), gives);
+        if (closure != null) {
+            body.closureIsThis(closure);
+        }
+        body.parameters(lambda.parameters());
+        if (lambda.block() != null) {
+            this.statements(body).block(this.lowered.bodyOf(lambda));
+        } else {
+            new ExpressionWriter(this, body).value(lambda.body(), gives);
+            body.emit(Opcode.RET);
+        }
+        final AsmMethod made = new AsmMethod(name, gives.describe(), written, false,
+                body.slotCount(), body.finish());
+        if (closure == null) {
+            this.synthesized.add(made);
+        } else {
+            this.closures.typeOf(closure.type()).addMethod(made);
+        }
+        return name;
+    }
+
     // types
 
     /** The kind a class-like type is written as: a struct and a record keep their own directive. */
@@ -118,6 +145,33 @@ public final class Emitter {
             case RECORD -> AsmType.Kind.RECORD;
             default -> AsmType.Kind.CLASS;
         };
+    }
+
+    private static AsmType emitInterface(final NamedType type) {
+        final AsmType written = new AsmType(AsmType.Kind.INTERFACE, type.qualifiedName());
+        for (final NamedType face : type.interfaces()) {
+            written.addBase(face.qualifiedName());
+        }
+        for (final IMemberSymbol member : type.members()) {
+            if (member instanceof IMemberSymbol.MethodSymbol method) {
+                written.addMethod(new AsmMethod(method.name(), method.returnType().describe(),
+                        writtenParameters(method), method.isStatic(), 0, null));
+            }
+        }
+        return written;
+    }
+
+    private static AsmType emitEnum(final NamedType type, final IDecl.EnumDecl declaration) {
+        final AsmType written = new AsmType(AsmType.Kind.ENUM, type.qualifiedName());
+        int next = 0;
+        for (final IDecl.EnumConstant constant : declaration.constants()) {
+            final Integer given = constant.value() == null ? null
+                    : BodyChecker.numberOf(constant.value());
+            final int number = given == null ? next : given;
+            written.addValue(new AsmType.Value(constant.name(), number));
+            next = number + 1;
+        }
+        return written;
     }
 
     private AsmType emitClass(final NamedType type, final IDecl.ClassDecl declaration) {
@@ -138,7 +192,8 @@ public final class Emitter {
                             field.modifiers().contains(IDecl.Modifier.STATIC)));
                     // A struct field is never nothing: one declared without a value starts as an empty one.
                     final boolean starts = field.initializer() != null
-                            || this.rules.named(held) instanceof NamedType named && named.kind() == NamedType.Kind.STRUCT;
+                            || this.rules.named(held) instanceof NamedType named
+                            && named.kind() == NamedType.Kind.STRUCT;
                     if (starts) {
                         (field.modifiers().contains(IDecl.Modifier.STATIC) ? staticStart : instanceStart)
                                 .add(field);
@@ -183,44 +238,17 @@ public final class Emitter {
         final boolean hasConstructor = declaration.members().stream()
                 .anyMatch(member -> member instanceof IDecl.ConstructorDecl);
         if (!hasConstructor && !instanceStart.isEmpty()) {
-            final Body body = new Body(type, ITypeSymbol.Primitive.VOID);
-            body.fieldStarts(instanceStart);
+            final MethodBody body = new MethodBody(this, type, ITypeSymbol.Primitive.VOID);
+            this.statements(body).fieldStarts(instanceStart);
             written.addMethod(new AsmMethod(AsmMethod.CONSTRUCTOR, "void", List.of(), false,
                     body.slotCount(), body.finish()));
         }
         if (!staticStart.isEmpty()) {
-            final Body body = new Body(type, ITypeSymbol.Primitive.VOID);
-            body.fieldStarts(staticStart);
+            final MethodBody body = new MethodBody(this, type, ITypeSymbol.Primitive.VOID);
+            this.statements(body).fieldStarts(staticStart);
             written.addMethod(new AsmMethod(AsmMethod.TYPE_SET_UP, "void", List.of(), true,
                     body.slotCount(), body.finish()));
         }
-    }
-
-    private static AsmType emitInterface(final NamedType type) {
-        final AsmType written = new AsmType(AsmType.Kind.INTERFACE, type.qualifiedName());
-        for (final NamedType face : type.interfaces()) {
-            written.addBase(face.qualifiedName());
-        }
-        for (final IMemberSymbol member : type.members()) {
-            if (member instanceof IMemberSymbol.MethodSymbol method) {
-                written.addMethod(new AsmMethod(method.name(), method.returnType().describe(),
-                        writtenParameters(method), method.isStatic(), 0, null));
-            }
-        }
-        return written;
-    }
-
-    private static AsmType emitEnum(final NamedType type, final IDecl.EnumDecl declaration) {
-        final AsmType written = new AsmType(AsmType.Kind.ENUM, type.qualifiedName());
-        int next = 0;
-        for (final IDecl.EnumConstant constant : declaration.constants()) {
-            final Integer given = constant.value() == null ? null
-                    : BodyChecker.numberOf(constant.value());
-            final int number = given == null ? next : given;
-            written.addValue(new AsmType.Value(constant.name(), number));
-            next = number + 1;
-        }
-        return written;
     }
 
     private AsmType emitDelegate(final NamedType type, final IDecl.DelegateDecl declaration) {
@@ -230,50 +258,45 @@ public final class Emitter {
         return written;
     }
 
-    private static List<String> writtenParameters(final IMemberSymbol.MethodSymbol method) {
-        final List<String> written = new ArrayList<>();
-        if (method == null) {
-            return written;
-        }
-        for (final IMemberSymbol.ParameterSymbol parameter : method.parameters()) {
-            written.add((parameter.outward() ? "out " : "") + parameter.type().describe());
-        }
-        return written;
-    }
-
     // methods
 
     private AsmMethod emitMethod(final NamedType type, final IDecl.MethodDecl method) {
         final ITypeSymbol returns = this.declarations.resolve(method.returnType());
-        final Body body = new Body(type, returns);
+        final MethodBody body = new MethodBody(this, type, returns);
         body.parameters(method.parameters());
         body.openClosure(this.closures.forMethod(type, method.parameters(), method.body(), method));
-        body.block(this.lowered.bodyOf(method));
+        this.statements(body).block(this.lowered.bodyOf(method));
         return new AsmMethod(method.name(), returns.describe(), this.written(method.parameters()),
                 method.modifiers().contains(IDecl.Modifier.STATIC), body.slotCount(), body.finish());
     }
 
     private AsmMethod emitConstructor(final NamedType type, final IDecl.ConstructorDecl constructor,
                                       final List<IDecl.FieldDecl> instanceStart) {
-        final Body body = new Body(type, ITypeSymbol.Primitive.VOID);
+        final MethodBody body = new MethodBody(this, type, ITypeSymbol.Primitive.VOID);
+        final StatementWriter writes = this.statements(body);
         body.parameters(constructor.parameters());
         /*
          * Chaining to another constructor of the same class means that one already put the starting
          * values in place, so doing it again here would undo whatever it decided.
          */
         if (constructor.chained() == null || constructor.chained().base()) {
-            body.fieldStarts(instanceStart);
+            writes.fieldStarts(instanceStart);
         }
         if (constructor.chained() != null) {
-            body.chained(type, constructor.chained());
+            writes.chained(type, constructor.chained());
         }
         if (constructor.body() != null) {
             body.openClosure(this.closures.forMethod(type, constructor.parameters(), constructor.body(),
                     constructor));
-            body.block(this.lowered.bodyOf(constructor));
+            writes.block(this.lowered.bodyOf(constructor));
         }
         return new AsmMethod(AsmMethod.CONSTRUCTOR, "void", this.written(constructor.parameters()), false,
                 body.slotCount(), body.finish());
+    }
+
+    /** The pair that fills a body in: what the method does, and, under that, the values it works out. */
+    private StatementWriter statements(final MethodBody body) {
+        return new StatementWriter(this, body, new ExpressionWriter(this, body));
     }
 
     private List<String> written(final List<IDecl.Parameter> parameters) {
@@ -283,1426 +306,5 @@ public final class Emitter {
                     + this.declarations.resolve(parameter.type()).describe());
         }
         return names;
-    }
-
-    /** The lines of one method, and the places it keeps its values in. */
-    private final class Body {
-
-        private final List<Instruction> code = new ArrayList<>();
-        private final Map<IBinding.Variable, Integer> places = new IdentityHashMap<>();
-        private final Map<String, String> aliases = new HashMap<>();
-        private final List<String> pending = new ArrayList<>();
-        private final Deque<String> breaks = new ArrayDeque<>();
-        private final Deque<String> continues = new ArrayDeque<>();
-        /** What each enclosing lock took, innermost first, so a way out can name the same objects back. */
-        private final Deque<IrStmt.Temporary> held = new ArrayDeque<>();
-        /** Where each value the program never named ended up living. */
-        private final Map<IrStmt.Temporary, Integer> temporaries = new IdentityHashMap<>();
-        private final NamedType owner;
-        private final ITypeSymbol returns;
-        private Closure closure;
-        private int closureSlot = -1;
-        private boolean closureIsThis;
-        private int nextLabel;
-        private int nextSlot;
-
-        Body(final NamedType owner, final ITypeSymbol returns) {
-            this.owner = owner;
-            this.returns = returns;
-        }
-
-        int slotCount() {
-            return this.nextSlot;
-        }
-
-        /**
-         * Makes the object the lambdas of this method share, and moves into it every parameter they
-         * keep. Locals they keep are written straight into it when they are declared.
-         */
-        void openClosure(final Closure made) {
-            if (made == null) {
-                return;
-            }
-            this.closure = made;
-            this.closureSlot = this.hidden();
-            this.emit(Opcode.NEWOBJ, new IOperand.Constructor(made.type(), List.of()));
-            this.emit(Opcode.STLOC, new IOperand.Slot(this.closureSlot));
-            if (made.holdsThis()) {
-                this.pushClosure();
-                this.emit(Opcode.LDTHIS);
-                this.emit(Opcode.STFLD, new IOperand.Field(made.type(), Closure.OUTER));
-            }
-            for (final Map.Entry<IBinding.Variable, String> field : made.fields().entrySet()) {
-                final Integer at = this.places.get(field.getKey());
-                if (at != null) {
-                    this.pushClosure();
-                    this.emit(Opcode.LDLOC, new IOperand.Slot(at));
-                    this.emit(Opcode.STFLD, new IOperand.Field(made.type(), field.getValue()));
-                }
-            }
-        }
-
-        /** Inside a lambda, the object the method shared with it is the object the lambda belongs to. */
-        void closureIsThis(final Closure made) {
-            this.closure = made;
-            this.closureIsThis = true;
-        }
-
-        private boolean kept(final IBinding.Variable variable) {
-            return this.closure != null && this.closure.fields().containsKey(variable);
-        }
-
-        private void pushClosure() {
-            if (this.closureIsThis) {
-                this.emit(Opcode.LDTHIS);
-            } else {
-                this.emit(Opcode.LDLOC, new IOperand.Slot(this.closureSlot));
-            }
-        }
-
-        private void loadKept(final IBinding.Variable variable) {
-            this.pushClosure();
-            this.emit(Opcode.LDFLD,
-                    new IOperand.Field(this.closure.type(), this.closure.fields().get(variable)));
-        }
-
-        /** Puts a value already on the stack into the shared object. The object goes on first. */
-        private void storeKept(final IBinding.Variable variable) {
-            this.emit(Opcode.STFLD,
-                    new IOperand.Field(this.closure.type(), this.closure.fields().get(variable)));
-        }
-
-        /*
-         * Inside a lambda the object the method belonged to is a field of the shared object, because
-         * the lambda itself belongs to that shared object and not to the type the method was in.
-         */
-        private void pushThis() {
-            this.emit(Opcode.LDTHIS);
-            if (this.closureIsThis) {
-                this.emit(Opcode.LDFLD, new IOperand.Field(this.closure.type(), Closure.OUTER));
-            }
-        }
-
-        void parameters(final List<IDecl.Parameter> parameters) {
-            for (final IDecl.Parameter parameter : parameters) {
-                this.slot(Emitter.this.model.declaredAt(parameter));
-            }
-        }
-
-        void fieldStarts(final List<IDecl.FieldDecl> fields) {
-            for (final IDecl.FieldDecl field : fields) {
-                final ITypeSymbol type = Emitter.this.declarations.resolve(field.type());
-                final boolean fieldIsStatic = field.modifiers().contains(IDecl.Modifier.STATIC);
-                if (!fieldIsStatic) {
-                    this.emit(Opcode.LDTHIS);
-                }
-                if (field.initializer() == null) {
-                    this.emit(Opcode.NEWOBJ, new IOperand.Constructor(type.describe(), List.of()));
-                } else {
-                    this.copied(field.initializer(), type);
-                }
-                this.emit(fieldIsStatic ? Opcode.STSFLD : Opcode.STFLD,
-                        new IOperand.Field(fieldIsStatic ? this.owner.qualifiedName() : null, field.name()));
-            }
-        }
-
-        void chained(final NamedType type, final IDecl.ConstructorCall call) {
-            final NamedType target = call.base() ? type.base() : type;
-            if (target == null) {
-                return;
-            }
-            this.emit(Opcode.LDTHIS);
-            final IMemberSymbol.MethodSymbol chosen = this.constructorOf(target, call.arguments().size());
-            this.arguments(call.arguments(), chosen);
-            this.emit(Opcode.CALL, new IOperand.Method(target.qualifiedName(), AsmMethod.CONSTRUCTOR,
-                    chosen == null ? List.of() : writtenParameters(chosen), "void"));
-        }
-
-        private IMemberSymbol.MethodSymbol constructorOf(final NamedType target, final int count) {
-            for (final IMemberSymbol member : target.members()) {
-                if (member instanceof IMemberSymbol.ConstructorSymbol constructor
-                        && constructor.parameters().size() == count) {
-                    return new IMemberSymbol.MethodSymbol(target, AsmMethod.CONSTRUCTOR,
-                            ITypeSymbol.Primitive.VOID, constructor.parameters(), constructor.modifiers());
-                }
-            }
-            return null;
-        }
-
-        // writing lines
-
-        private void add(final Instruction instruction) {
-            Instruction written = instruction;
-            if (!this.pending.isEmpty()) {
-                written = written.labelled(this.pending.getFirst());
-                for (int i = 1; i < this.pending.size(); i++) {
-                    this.aliases.put(this.pending.get(i), this.pending.getFirst());
-                }
-                this.pending.clear();
-            }
-            this.code.add(written);
-        }
-
-        private void emit(final Opcode opcode) {
-            this.add(Instruction.of(opcode));
-        }
-
-        private void emit(final Opcode opcode, final IOperand operand) {
-            this.add(Instruction.of(opcode, operand));
-        }
-
-        private String label() {
-            this.nextLabel++;
-            return "L" + this.nextLabel;
-        }
-
-        private void mark(final String label) {
-            this.pending.add(label);
-        }
-
-        private int slot(final IBinding.Variable variable) {
-            if (variable == null) {
-                return this.nextSlot++;
-            }
-            final Integer known = this.places.get(variable);
-            if (known != null) {
-                return known;
-            }
-            final int given = this.nextSlot++;
-            this.places.put(variable, given);
-            return given;
-        }
-
-        /** A place with no name, for what a lowered loop needs to hold on to. */
-        private int hidden() {
-            return this.nextSlot++;
-        }
-
-        List<Instruction> finish() {
-            if (this.code.isEmpty() || !this.pending.isEmpty()
-                    || this.code.getLast().opcode() != Opcode.RET) {
-                this.emit(Opcode.RET);
-            }
-            final List<Instruction> resolved = new ArrayList<>();
-            for (final Instruction instruction : this.code) {
-                if (instruction.operand() instanceof IOperand.Label target) {
-                    resolved.add(new Instruction(instruction.label(), instruction.opcode(),
-                            new IOperand.Label(this.resolve(target.name())), instruction.comment()));
-                } else {
-                    resolved.add(instruction);
-                }
-            }
-            return resolved;
-        }
-
-        // Two labels can land on the same line, and a line carries one, so the rest point at it.
-        private String resolve(final String label) {
-            String at = label;
-            while (this.aliases.containsKey(at)) {
-                at = this.aliases.get(at);
-            }
-            return at;
-        }
-
-        // statements
-
-        void block(final IrStmt block) {
-            for (final IrStmt statement : ((IrStmt.Block) block).statements()) {
-                this.statement(statement);
-            }
-        }
-
-        /**
-         * One statement of the reduced program.
-         *
-         * <p>Every decision has been made before this: how many locks a way out lets go of, what a walk over a
-         * collection asks that collection for, whether each turn of it takes a copy. What is left here is where
-         * things go on the stack and which label a jump names.
-         */
-        private void statement(final IrStmt statement) {
-            switch (statement) {
-                case IrStmt.Block inner -> this.block(inner);
-                case IrStmt.Source written -> this.written(written.written());
-                case IrStmt.If branch -> this.branch(branch);
-                case IrStmt.While loop -> this.whileLoop(loop);
-                case IrStmt.DoWhile loop -> this.doLoop(loop);
-                case IrStmt.For loop -> this.forLoop(loop);
-                case IrStmt.ForEach loop -> this.forEach(loop);
-                case IrStmt.Switch choice -> this.choice(choice);
-                case IrStmt.Keep kept -> {
-                    this.value(kept.value(), null);
-                    if (kept.leaves()) {
-                        this.emit(Opcode.DUP);
-                    }
-                    this.emit(Opcode.STLOC, new IOperand.Slot(this.placeOf(kept.place())));
-                }
-                case IrStmt.MonitorEnter taken -> {
-                    this.emit(Opcode.MONITOR_ENTER);
-                    this.held.push(taken.place());
-                }
-                case IrStmt.MonitorExit given -> {
-                    this.emit(Opcode.LDLOC, new IOperand.Slot(this.placeOf(given.place())));
-                    this.emit(Opcode.MONITOR_EXIT);
-                    this.held.pop();
-                }
-                case IrStmt.Break leaving -> {
-                    this.letGo(leaving.unlocks());
-                    this.emit(Opcode.BR, new IOperand.Label(
-                            leaving.continuing() ? this.continues.peek() : this.breaks.peek()));
-                }
-                case IrStmt.Return give -> this.give(give);
-                case null -> { }
-            }
-        }
-
-        /** A statement with nothing inside it left to reduce, written as it stands. */
-        private void written(final IStmt statement) {
-            switch (statement) {
-                case IStmt.LocalDecl local -> this.local(local);
-                case IStmt.ExprStmt expression -> this.discard(expression.expression());
-                case IStmt.Dispose dispose -> this.dispose(dispose);
-                default -> { } // an empty statement, and nothing else reaches here
-            }
-        }
-
-        /** Where a value the program never named ends up living, worked out the first time it is asked for. */
-        private int placeOf(final IrStmt.Temporary temporary) {
-            return this.temporaries.computeIfAbsent(temporary, one -> this.hidden());
-        }
-
-        /** Lets go of the locks a way out of the middle of something leaves behind, nearest first. */
-        private void letGo(final int locks) {
-            int left = locks;
-            for (final IrStmt.Temporary place : this.held) {
-                if (left <= 0) {
-                    return;
-                }
-                this.emit(Opcode.LDLOC, new IOperand.Slot(this.placeOf(place)));
-                this.emit(Opcode.MONITOR_EXIT);
-                left--;
-            }
-        }
-
-        /*
-         * The lock is taken on the way in and let go on the way out, and every way out counts: the end
-         * of the body, a return, a break or a continue that leaves it. The object is kept in a place of
-         * its own so that letting go names the same object that was taken, whatever the body did.
-         */
-
-        /** Lets go of every lock taken inside what is being left, innermost first, down to {@code depth}. */
-
-        private void local(final IStmt.LocalDecl local) {
-            final IBinding.Variable variable = Emitter.this.model.declaredAt(local);
-            if (this.kept(variable)) {
-                if (local.initializer() != null) {
-                    this.pushClosure();
-                    this.copied(local.initializer(), variable.type());
-                    this.storeKept(variable);
-                }
-                return;
-            }
-            final int place = this.slot(variable);
-            if (local.initializer() == null) {
-                if (variable != null && this.isStruct(variable.type())) {
-                    // A struct is never nothing: a local declared without a value starts as an empty one.
-                    this.emit(Opcode.NEWOBJ, new IOperand.Constructor(variable.type().describe(), List.of()));
-                    this.emit(Opcode.STLOC, new IOperand.Slot(place));
-                }
-                return;
-            }
-            this.copied(local.initializer(), variable == null ? null : variable.type());
-            this.emit(Opcode.STLOC, new IOperand.Slot(place));
-        }
-
-        /** Whether a value of that type is a struct: copied whenever it is stored or handed over. */
-        private boolean isStruct(final ITypeSymbol type) {
-            return Emitter.this.rules.named(type) instanceof NamedType named
-                    && named.kind() == NamedType.Kind.STRUCT;
-        }
-
-        /**
-         * The expression's value as a store or a hand-over keeps it: a struct is copied, unless it is
-         * fresh from new and nobody else holds it, and everything else is itself.
-         */
-        private void copied(final IExpr expression, final ITypeSymbol wanted) {
-            this.value(expression, wanted);
-            if (!(expression instanceof IExpr.New) && this.isStruct(Emitter.this.model.typeOf(expression))) {
-                this.emit(Opcode.COPY);
-            }
-        }
-
-        /*
-         * An expression written as a statement is there for what it does, so whatever it leaves
-         * behind is thrown away. An assignment is told beforehand, so it never puts it there at all.
-         */
-        private void discard(final IExpr expression) {
-            if (expression instanceof IExpr.Assign assign) {
-                this.assign(assign, false);
-                return;
-            }
-            this.value(expression, null);
-            if (Emitter.this.leavesAValue(expression)) {
-                this.emit(Opcode.POP);
-            }
-        }
-
-        private void branch(final IrStmt.If statement) {
-            final String otherwise = this.label();
-            this.value(statement.condition(), ITypeSymbol.Primitive.BOOL);
-            this.emit(Opcode.BRFALSE, new IOperand.Label(otherwise));
-            this.statement(statement.then());
-            if (statement.otherwise() == null) {
-                this.mark(otherwise);
-                return;
-            }
-            final String end = this.label();
-            this.emit(Opcode.BR, new IOperand.Label(end));
-            this.mark(otherwise);
-            this.statement(statement.otherwise());
-            this.mark(end);
-        }
-
-        private void whileLoop(final IrStmt.While loop) {
-            final String top = this.label();
-            final String end = this.label();
-            this.mark(top);
-            this.value(loop.condition(), ITypeSymbol.Primitive.BOOL);
-            this.emit(Opcode.BRFALSE, new IOperand.Label(end));
-            this.inLoop(top, end, loop.body());
-            this.emit(Opcode.BR, new IOperand.Label(top));
-            this.mark(end);
-        }
-
-        private void doLoop(final IrStmt.DoWhile loop) {
-            final String top = this.label();
-            final String again = this.label();
-            final String end = this.label();
-            this.mark(top);
-            this.inLoop(again, end, loop.body());
-            this.mark(again);
-            this.value(loop.condition(), ITypeSymbol.Primitive.BOOL);
-            this.emit(Opcode.BRTRUE, new IOperand.Label(top));
-            this.mark(end);
-        }
-
-        private void forLoop(final IrStmt.For loop) {
-            for (final IrStmt initializer : loop.initializers()) {
-                this.statement(initializer);
-            }
-            final String top = this.label();
-            final String again = this.label();
-            final String end = this.label();
-            this.mark(top);
-            if (loop.condition() != null) {
-                this.value(loop.condition(), ITypeSymbol.Primitive.BOOL);
-                this.emit(Opcode.BRFALSE, new IOperand.Label(end));
-            }
-            this.inLoop(again, end, loop.body());
-            this.mark(again);
-            for (final IExpr update : loop.updates()) {
-                this.discard(update);
-            }
-            this.emit(Opcode.BR, new IOperand.Label(top));
-            this.mark(end);
-        }
-
-        /*
-         * A foreach is a counted loop over the thing it walks, which is why the assembly has no
-         * instruction of its own for it.
-         */
-        private void forEach(final IrStmt.ForEach loop) {
-            final ITypeSymbol source = loop.kind();
-            final int held = this.hidden();
-            final int index = this.hidden();
-            this.value(loop.source(), null);
-            this.emit(Opcode.STLOC, new IOperand.Slot(held));
-            this.emit(Opcode.LDC_I4, new IOperand.I4(0));
-            this.emit(Opcode.STLOC, new IOperand.Slot(index));
-
-            final String top = this.label();
-            final String again = this.label();
-            final String end = this.label();
-            this.mark(top);
-            this.emit(Opcode.LDLOC, new IOperand.Slot(index));
-            this.emit(Opcode.LDLOC, new IOperand.Slot(held));
-            this.length(source);
-            this.emit(Opcode.BGE, new IOperand.Label(end));
-
-            this.emit(Opcode.LDLOC, new IOperand.Slot(held));
-            this.emit(Opcode.LDLOC, new IOperand.Slot(index));
-            this.element(source);
-            if (loop.copies()) {
-                this.emit(Opcode.COPY); // the loop's own copy: changing it changes nothing in the collection
-            }
-            this.emit(Opcode.STLOC, new IOperand.Slot(this.slot(loop.walker())));
-
-            this.inLoop(again, end, loop.body());
-            this.mark(again);
-            this.emit(Opcode.LDLOC, new IOperand.Slot(index));
-            this.emit(Opcode.LDC_I4, new IOperand.I4(1));
-            this.emit(Opcode.ADD);
-            this.emit(Opcode.STLOC, new IOperand.Slot(index));
-            this.emit(Opcode.BR, new IOperand.Label(top));
-            this.mark(end);
-        }
-
-        private void length(final ITypeSymbol source) {
-            if (source instanceof ITypeSymbol.ArrayType) {
-                this.emit(Opcode.LDLEN);
-            } else {
-                this.emit(Opcode.LDFLD, new IOperand.Field(Emitter.this.builtIns.listType().name(), "Count"));
-            }
-        }
-
-        private void element(final ITypeSymbol source) {
-            if (source instanceof ITypeSymbol.ArrayType) {
-                this.emit(Opcode.LDELEM);
-                return;
-            }
-            final ITypeSymbol held = Emitter.this.rules.elementOf(source);
-            this.emit(Opcode.CALL, new IOperand.Method(Emitter.this.builtIns.listType().name(), "Get",
-                    List.of("int"), held == null ? "object" : held.describe()));
-        }
-
-        private void inLoop(final String again, final String end, final IrStmt body) {
-            this.continues.push(again);
-            this.breaks.push(end);
-            this.statement(body);
-            this.breaks.pop();
-            this.continues.pop();
-        }
-
-        /*
-         * Every label is tested first and the sections follow, so a section is entered only by being
-         * chosen and a run of labels can share the lines under them.
-         */
-        private void choice(final IrStmt.Switch choice) {
-            final ITypeSymbol type = Emitter.this.model.typeOf(choice.value());
-            final int held = this.hidden();
-            this.value(choice.value(), null);
-            this.emit(Opcode.STLOC, new IOperand.Slot(held));
-
-            final String end = this.label();
-            final List<String> starts = new ArrayList<>();
-            String fallback = end;
-            for (final IrStmt.Switch.Section section : choice.sections()) {
-                final String start = this.label();
-                starts.add(start);
-                if (section.fallback()) {
-                    fallback = start;
-                }
-                for (final IExpr label : section.labels()) {
-                    this.emit(Opcode.LDLOC, new IOperand.Slot(held));
-                    this.value(label, type);
-                    this.emit(Opcode.BEQ, new IOperand.Label(start));
-                }
-            }
-            this.emit(Opcode.BR, new IOperand.Label(fallback));
-
-            this.breaks.push(end);
-            for (int i = 0; i < choice.sections().size(); i++) {
-                this.mark(starts.get(i));
-                for (final IrStmt statement : choice.sections().get(i).statements()) {
-                    this.statement(statement);
-                }
-            }
-            this.breaks.pop();
-            this.mark(end);
-        }
-
-        private void give(final IrStmt.Return give) {
-            if (give.value() != null) {
-                this.copied(give.value(), this.returns);
-            }
-            // The answer sits under the objects let go of, so it is still on top when the method leaves.
-            this.letGo(give.unlocks());
-            this.emit(Opcode.RET);
-        }
-
-        // Freeing an object leaves the place that held it empty, so the reference is cleared as well.
-        private void dispose(final IStmt.Dispose statement) {
-            this.value(statement.target(), null);
-            this.emit(Opcode.DISPOSE);
-            final IBinding binding = Emitter.this.model.bindingOf(statement.target());
-            if (binding instanceof IBinding.Variable variable && this.kept(variable)) {
-                this.pushClosure();
-                this.emit(Opcode.LDNULL);
-                this.storeKept(variable);
-            } else if (binding instanceof IBinding.Variable variable) {
-                this.emit(Opcode.LDNULL);
-                this.emit(Opcode.STLOC, new IOperand.Slot(this.slot(variable)));
-            } else if (binding instanceof IBinding.Member member
-                    && member.member() instanceof IMemberSymbol.FieldSymbol field) {
-                this.storeField(statement.target(), field, Opcode.LDNULL);
-            }
-        }
-
-        private void storeField(final IExpr target, final IMemberSymbol.FieldSymbol field,
-                                final Opcode pushValue) {
-            if (field.isStatic()) {
-                this.emit(pushValue);
-                this.emit(Opcode.STSFLD, new IOperand.Field(field.owner().qualifiedName(), field.name()));
-                return;
-            }
-            this.receiver(target);
-            this.emit(pushValue);
-            this.emit(Opcode.STFLD, new IOperand.Field(this.ownerOf(field), field.name()));
-        }
-
-        private String ownerOf(final IMemberSymbol member) {
-            return member.owner() == this.owner ? null : member.owner().qualifiedName();
-        }
-
-        // expressions
-
-        private void value(final IExpr expression, final ITypeSymbol wanted) {
-            if (expression == null) {
-                return;
-            }
-            /*
-             * What a richer shape was reduced to is what gets written. The tree still holds what the player
-             * wrote, because a message has to point at that; only this stage follows the simpler one.
-             */
-            final IExpr simpler = Emitter.this.model.loweredOf(expression);
-            if (simpler != null) {
-                this.value(simpler, wanted);
-                return;
-            }
-            switch (expression) {
-                case IExpr.Literal literal -> this.constant(literal);
-                case IExpr.Name name -> this.name(name);
-                case IExpr.This ignored -> this.pushThis();
-                case IExpr.Base ignored -> this.pushThis();
-                case IExpr.Member member -> this.member(member);
-                case IExpr.Index index -> this.index(index);
-                case IExpr.Call call -> this.call(call);
-                case IExpr.New created -> this.created(created);
-                case IExpr.NewArray created -> this.createdArray(created);
-                case IExpr.Cast cast -> this.cast(cast);
-                case IExpr.TypeTest test -> this.typeTest(test);
-                case IExpr.Unary unary -> this.unary(unary);
-                case IExpr.Binary binary -> this.binary(binary);
-                case IExpr.Conditional conditional -> this.conditional(conditional, wanted);
-                case IExpr.Assign assign -> this.assign(assign, true);
-                case IExpr.Lambda lambda -> this.lambda(lambda);
-                case IExpr.OutArgument ignored -> { }
-                /*
-                 * Never reached: a string with holes is reduced to additions before anything is written, and
-                 * the line above follows what it was reduced to. Getting here means the reducing did not run,
-                 * which would otherwise show up as a program quietly missing a line it printed.
-                 */
-                case IExpr.Interpolation written -> Emitter.this.diagnostics.error(written.line(),
-                        written.column(), dev.jstech.computers.sigma.SigmaError.NOT_YET_BUILT,
-                        "a string with holes that was never reduced");
-            }
-            this.coerce(Emitter.this.model.typeOf(expression), wanted);
-        }
-
-        private void constant(final IExpr.Literal literal) {
-            final Object held = literal.value();
-            switch (literal.kind()) {
-                case INT_LITERAL -> this.emit(Opcode.LDC_I4, new IOperand.I4((Integer) held));
-                case LONG_LITERAL -> this.emit(Opcode.LDC_I8, new IOperand.I8((Long) held));
-                case FLOAT_LITERAL -> this.emit(Opcode.LDC_R4, new IOperand.R4((Float) held));
-                case DOUBLE_LITERAL -> this.emit(Opcode.LDC_R8, new IOperand.R8((Double) held));
-                case CHAR_LITERAL -> this.emit(Opcode.LDC_I4, new IOperand.I4((Character) held));
-                case STRING_LITERAL -> this.emit(Opcode.LDSTR, new IOperand.Text((String) held));
-                case TRUE -> this.emit(Opcode.LDC_I4, new IOperand.I4(1));
-                case FALSE -> this.emit(Opcode.LDC_I4, new IOperand.I4(0));
-                default -> this.emit(Opcode.LDNULL);
-            }
-        }
-
-        private void name(final IExpr.Name name) {
-            final IBinding binding = Emitter.this.model.bindingOf(name);
-            if (binding instanceof IBinding.Variable variable) {
-                if (this.kept(variable)) {
-                    this.loadKept(variable);
-                } else {
-                    this.emit(Opcode.LDLOC, new IOperand.Slot(this.slot(variable)));
-                }
-                return;
-            }
-            if (binding instanceof IBinding.Member member) {
-                this.loadMember(null, member.member());
-            }
-        }
-
-        private void member(final IExpr.Member expression) {
-            final IBinding binding = Emitter.this.model.bindingOf(expression);
-            if (binding instanceof IBinding.Member member) {
-                this.loadMember(expression.target(), member.member());
-            }
-        }
-
-        /*
-         * A field, a property and an event are all read the same way, because in the assembly they
-         * are the same thing: a named place on an object.
-         */
-        private void loadMember(final IExpr target, final IMemberSymbol member) {
-            if (member instanceof IMemberSymbol.MethodSymbol method) {
-                this.handler(target, method);
-                return;
-            }
-            if (member.isStatic()) {
-                this.emit(Opcode.LDSFLD, new IOperand.Field(member.owner().qualifiedName(), member.name()));
-                return;
-            }
-            if (target == null) {
-                this.pushThis();
-            } else {
-                this.receiver(target);
-            }
-            this.emit(Opcode.LDFLD, new IOperand.Field(this.ownerOf(member), member.name()));
-        }
-
-        // A method handed over without brackets becomes a delegate bound to whatever it belongs to.
-        private void handler(final IExpr target, final IMemberSymbol.MethodSymbol method) {
-            if (method.isStatic()) {
-                this.emit(Opcode.LDNULL);
-            } else if (target == null) {
-                this.pushThis();
-            } else {
-                this.receiver(target);
-            }
-            this.emit(Opcode.LDFN, this.methodRef(method));
-        }
-
-        private IOperand.Method methodRef(final IMemberSymbol.MethodSymbol method) {
-            return new IOperand.Method(method.owner().qualifiedName(), method.name(),
-                    writtenParameters(method), method.returnType().describe());
-        }
-
-        /** Puts the object a member is read from on the stack, unless the member belongs to a type. */
-        private void receiver(final IExpr target) {
-            if (target instanceof IExpr.Member member) {
-                if (Emitter.this.model.bindingOf(member) instanceof IBinding.TypeName) {
-                    return;
-                }
-                this.value(member, null);
-                return;
-            }
-            if (Emitter.this.model.bindingOf(target) instanceof IBinding.TypeName) {
-                return;
-            }
-            this.value(target, null);
-        }
-
-        private void index(final IExpr.Index expression) {
-            final ITypeSymbol target = Emitter.this.model.typeOf(expression.target());
-            this.value(expression.target(), null);
-            this.value(expression.index(), null);
-            this.readElement(target);
-        }
-
-        /** Reads the place the index names: an array by its number, a list or a map by its own way in. */
-        /**
-         * The thing and the place an index names, each worked out once and put away.
-         *
-         * <p>Both sides of an index are expressions and either may do something on its way to a value. Reading
-         * what is in a place and writing what replaces it are one visit to ONE place, so naming it twice in the
-         * assembly is not a repetition but a second, different place: {@code n[Next()] += 5} would call Next
-         * twice and could read one element and write another. They are worked out once and pushed from where
-         * they were kept whenever the stack wants them underneath.
-         */
-        private Element keepElement(final IExpr.Index index) {
-            final ITypeSymbol of = Emitter.this.model.typeOf(index.target());
-            final int thing = this.hidden();
-            final int at = this.hidden();
-            this.value(index.target(), null);
-            this.emit(Opcode.STLOC, new IOperand.Slot(thing));
-            this.value(index.index(), null);
-            this.emit(Opcode.STLOC, new IOperand.Slot(at));
-            return new Element(thing, at, of);
-        }
-
-        /** Puts the thing and the place back on the stack, for the read or the write that follows. */
-        private void pushElement(final Element element) {
-            this.emit(Opcode.LDLOC, new IOperand.Slot(element.thing()));
-            this.emit(Opcode.LDLOC, new IOperand.Slot(element.at()));
-        }
-
-        /**
-         * Where an expression says a value lives, or nothing when it names no place at all.
-         *
-         * <p>Worked out once, here, and then read by everything that writes: plain assignment, assignment that
-         * combines, and one more or one less. Each of the three used to walk this list for itself.
-         */
-        private Place placeOf(final IExpr target) {
-            final IBinding binding = Emitter.this.model.bindingOf(target);
-            if (binding instanceof IBinding.Variable variable) {
-                return this.kept(variable) ? new Place.Captured(variable)
-                        : new Place.Local(this.slot(variable));
-            }
-            if (target instanceof IExpr.Index index) {
-                return new Place.Element(index);
-            }
-            if (!(binding instanceof IBinding.Member held)) {
-                return null;
-            }
-            final IMemberSymbol member = held.member();
-            if (!(member instanceof IMemberSymbol.FieldSymbol)
-                    && !(member instanceof IMemberSymbol.PropertySymbol)) {
-                return null;
-            }
-            return member.isStatic() ? new Place.Shared(member)
-                    : new Place.Held(target instanceof IExpr.Member at ? at.target() : null, member);
-        }
-
-        /**
-         * Pushes what the write will need under the value, and hands back the kept element when there is one.
-         *
-         * <p>A place inside a collection is the only one whose address is worked out rather than named, so it
-         * is the only one with anything to hand back.
-         */
-        private Element prepare(final Place place) {
-            return switch (place) {
-                case Place.Captured ignored -> {
-                    this.pushClosure();
-                    yield null;
-                }
-                case Place.Held held -> {
-                    this.pushHolder(held);
-                    yield null;
-                }
-                case Place.Element at -> {
-                    final Element kept = this.keepElement(at.index());
-                    this.pushElement(kept);
-                    yield kept;
-                }
-                case Place.Local ignored -> null;
-                case Place.Shared ignored -> null;
-            };
-        }
-
-        /** Pushes what is in the place now, leaving whatever {@link #prepare} pushed still underneath it. */
-        private void loadOver(final Place place, final Element kept) {
-            switch (place) {
-                case Place.Local local -> this.emit(Opcode.LDLOC, new IOperand.Slot(local.slot()));
-                case Place.Captured captured -> this.loadKept(captured.variable());
-                case Place.Shared shared -> this.emit(Opcode.LDSFLD, sharedField(shared));
-                case Place.Held held -> {
-                    this.emit(Opcode.DUP);
-                    this.emit(Opcode.LDFLD, new IOperand.Field(this.ownerOf(held.member()), held.member().name()));
-                }
-                case Place.Element ignored -> {
-                    this.pushElement(kept);
-                    this.readElement(kept.of());
-                }
-            }
-        }
-
-        /** Writes the value on top into the place, using up whatever {@link #prepare} pushed. */
-        private void store(final Place place, final Element kept) {
-            switch (place) {
-                case Place.Local local -> this.emit(Opcode.STLOC, new IOperand.Slot(local.slot()));
-                case Place.Captured captured -> this.storeKept(captured.variable());
-                case Place.Shared shared -> this.emit(Opcode.STSFLD, sharedField(shared));
-                case Place.Held held -> this.emit(Opcode.STFLD,
-                        new IOperand.Field(this.ownerOf(held.member()), held.member().name()));
-                case Place.Element ignored -> this.writeElement(kept.of());
-            }
-        }
-
-        /** Reads the place again from nothing, for an answer that is wanted after the writing is done. */
-        private void reload(final Place place) {
-            switch (place) {
-                case Place.Local local -> this.emit(Opcode.LDLOC, new IOperand.Slot(local.slot()));
-                case Place.Captured captured -> this.loadKept(captured.variable());
-                case Place.Shared shared -> this.loadMember(null, shared.member());
-                case Place.Held held -> this.loadMember(held.target(), held.member());
-                case Place.Element ignored -> { } // an element written as a value answers nothing, as before
-            }
-        }
-
-        /** What it belongs to, for a place on an object: what the program named, or this object. */
-        private void pushHolder(final Place.Held held) {
-            if (held.target() == null) {
-                this.pushThis();
-            } else {
-                this.receiver(held.target());
-            }
-        }
-
-        /** The same, for a member expression that has not been read as a place: an event has no place. */
-        private void receiverOf(final IExpr target) {
-            this.pushHolder(new Place.Held(target instanceof IExpr.Member member ? member.target() : null, null));
-        }
-
-        private static IOperand.Field sharedField(final Place.Shared shared) {
-            return new IOperand.Field(shared.member().owner().qualifiedName(), shared.member().name());
-        }
-
-        private void readElement(final ITypeSymbol target) {
-            if (target instanceof ITypeSymbol.ArrayType) {
-                this.emit(Opcode.LDELEM);
-                return;
-            }
-            final NamedType named = Emitter.this.rules.named(target);
-            final List<ITypeSymbol> held = Emitter.this.rules.arguments(target);
-            final boolean isMap = named == Emitter.this.builtIns.mapType();
-            this.emit(Opcode.CALL, new IOperand.Method(named == null ? "object" : named.qualifiedName(), "Get",
-                    List.of(isMap ? held.getFirst().describe() : "int"),
-                    held.isEmpty() ? "object" : held.getLast().describe()));
-        }
-
-        /** Writes the place the index names, with the thing, the place and the value already on the stack. */
-        private void writeElement(final ITypeSymbol target) {
-            if (target instanceof ITypeSymbol.ArrayType) {
-                this.emit(Opcode.STELEM);
-                return;
-            }
-            final NamedType named = Emitter.this.rules.named(target);
-            final List<ITypeSymbol> held = Emitter.this.rules.arguments(target);
-            final boolean isMap = named == Emitter.this.builtIns.mapType();
-            this.emit(Opcode.CALL, new IOperand.Method(named == null ? "object" : named.qualifiedName(),
-                    isMap ? "Put" : "Set",
-                    List.of(isMap ? held.getFirst().describe() : "int",
-                            held.isEmpty() ? "object" : held.getLast().describe()), "void"));
-        }
-
-        private void created(final IExpr.New expression) {
-            final IMemberSymbol chosen = Emitter.this.model.callOf(expression);
-            final IMemberSymbol.MethodSymbol constructor = chosen instanceof IMemberSymbol.MethodSymbol method
-                    ? method : null;
-            this.arguments(expression.arguments(), constructor);
-            final ITypeSymbol type = Emitter.this.model.typeOf(expression);
-            this.emit(Opcode.NEWOBJ, new IOperand.Constructor(type == null ? "object" : type.describe(),
-                    constructor == null ? List.of() : writtenParameters(constructor)));
-        }
-
-        private void createdArray(final IExpr.NewArray expression) {
-            this.value(expression.length(), ITypeSymbol.Primitive.INT);
-            this.emit(Opcode.NEWARR, new IOperand.Type(expression.elementType().describe()));
-        }
-
-        private void cast(final IExpr.Cast expression) {
-            final ITypeSymbol from = Emitter.this.model.typeOf(expression.value());
-            final ITypeSymbol to = Emitter.this.model.typeOf(expression);
-            this.value(expression.value(), null);
-            if (Emitter.this.rules.isNumeric(from) && Emitter.this.rules.isNumeric(to)) {
-                this.convert(to);
-                return;
-            }
-            this.emit(Opcode.CASTCLASS, new IOperand.Type(this.named(expression.type())));
-        }
-
-        /*
-         * A type as the runtime knows it, which is the whole name. What was written may be the short
-         * one, and a short name matches nothing at all once the program lives in a namespace.
-         */
-        private String named(final TypeRef reference) {
-            return Emitter.this.declarations.resolve(reference, this.owner).describe();
-        }
-
-        /*
-         * "is" asks and gives back an answer; "as" converts when it can and gives back nothing when
-         * it cannot, which is the same question asked first and acted on.
-         */
-        private void typeTest(final IExpr.TypeTest expression) {
-            final String written = this.named(expression.type());
-            if (!expression.conversion()) {
-                this.value(expression.value(), null);
-                this.emit(Opcode.ISINST, new IOperand.Type(written));
-                return;
-            }
-            final String otherwise = this.label();
-            final String end = this.label();
-            this.value(expression.value(), null);
-            this.emit(Opcode.DUP);
-            this.emit(Opcode.ISINST, new IOperand.Type(written));
-            this.emit(Opcode.BRFALSE, new IOperand.Label(otherwise));
-            this.emit(Opcode.CASTCLASS, new IOperand.Type(written));
-            this.emit(Opcode.BR, new IOperand.Label(end));
-            this.mark(otherwise);
-            this.emit(Opcode.POP);
-            this.emit(Opcode.LDNULL);
-            this.mark(end);
-        }
-
-        private void unary(final IExpr.Unary expression) {
-            if (expression.operator() == Operator.INCREMENT || expression.operator() == Operator.DECREMENT) {
-                this.step(expression);
-                return;
-            }
-            this.value(expression.operand(), null);
-            switch (expression.operator()) {
-                case NOT -> {
-                    this.emit(Opcode.LDC_I4, new IOperand.I4(0));
-                    this.emit(Opcode.CEQ);
-                }
-                case NEGATE -> this.emit(Opcode.NEG);
-                case COMPLEMENT -> this.emit(Opcode.NOT);
-                default -> { }
-            }
-        }
-
-        /*
-         * Reading, changing and writing back, with the value that is left over being the one the
-         * language says: the old one after, the new one before.
-         */
-        /**
-         * One more or one less, wherever the one is kept.
-         *
-         * <p>Three shapes, and which one a place takes is decided by what reaching it leaves on the stack.
-         * A captured variable is read through the object that holds it, so the answer is read rather than
-         * kept. A slot or a place belonging to a type is reached from nothing, so the answer can be taken
-         * with a duplicate as the value goes past. A place on an object or inside a collection sits on top
-         * of what it belongs to, and a duplicate would be buried under that when the value goes back, so
-         * the answer is put away in a place of its own and read out at the end.
-         */
-        private void step(final IExpr.Unary expression) {
-            final IExpr written = expression.operand();
-            final Place place = this.placeOf(written);
-            if (place == null) {
-                return;
-            }
-            final ITypeSymbol type = Emitter.this.model.typeOf(written);
-            final Opcode change = expression.operator() == Operator.INCREMENT ? Opcode.ADD : Opcode.SUB;
-            if (place instanceof Place.Captured captured) {
-                this.stepThroughAnObject(expression, captured, type, change);
-                return;
-            }
-            final int kept = place.overSomething() ? this.hidden() : -1;
-            final Element inside = this.prepare(place);
-            this.loadOver(place, inside);
-            this.answer(expression.postfix(), kept);
-            this.one(type);
-            this.emit(change);
-            this.answer(!expression.postfix(), kept);
-            this.store(place, inside);
-            if (kept >= 0) {
-                this.emit(Opcode.LDLOC, new IOperand.Slot(kept));
-            }
-        }
-
-        /** Keeps the value that answers the expression: a duplicate on top, or one put away in a slot. */
-        private void answer(final boolean now, final int kept) {
-            if (!now) {
-                return;
-            }
-            this.emit(Opcode.DUP);
-            if (kept >= 0) {
-                this.emit(Opcode.STLOC, new IOperand.Slot(kept));
-            }
-        }
-
-        /*
-         * A captured variable is a field of the object a lambda shares with the method around it, so both
-         * reading and writing name that object. There is nothing to duplicate on the way past, and the value
-         * is read again instead, before or after depending on which one was asked for.
-         */
-        private void stepThroughAnObject(final IExpr.Unary expression, final Place.Captured captured,
-                                         final ITypeSymbol type, final Opcode change) {
-            if (expression.postfix()) {
-                this.loadKept(captured.variable());
-            }
-            this.prepare(captured);
-            this.loadOver(captured, null);
-            this.one(type);
-            this.emit(change);
-            this.store(captured, null);
-            if (!expression.postfix()) {
-                this.loadKept(captured.variable());
-            }
-        }
-
-        private void one(final ITypeSymbol type) {
-            if (type == ITypeSymbol.Primitive.LONG) {
-                this.emit(Opcode.LDC_I8, new IOperand.I8(1));
-            } else if (type == ITypeSymbol.Primitive.FLOAT) {
-                this.emit(Opcode.LDC_R4, new IOperand.R4(1));
-            } else if (type == ITypeSymbol.Primitive.DOUBLE) {
-                this.emit(Opcode.LDC_R8, new IOperand.R8(1));
-            } else {
-                this.emit(Opcode.LDC_I4, new IOperand.I4(1));
-            }
-        }
-
-        private void binary(final IExpr.Binary expression) {
-            switch (expression.operator()) {
-                case AND, OR -> this.shortCircuit(expression);
-                case ADD -> this.plus(expression);
-                case EQUAL, NOT_EQUAL, LESS, LESS_EQUAL, GREATER, GREATER_EQUAL ->
-                        this.compare(expression);
-                default -> {
-                    final ITypeSymbol result = Emitter.this.model.typeOf(expression);
-                    this.value(expression.left(), result);
-                    this.value(expression.right(), shiftKeepsItsOwn(expression) ? null : result);
-                    this.emit(arithmetic(expression.operator()));
-                    this.wholeDivision(expression, result);
-                }
-            }
-        }
-
-        /**
-         * Says in the assembly that a division or a remainder was between whole numbers.
-         *
-         * <p>Dividing two whole numbers throws the fraction away and dividing two real ones does not, and
-         * which of those a line meant is something only the compiler knows: it reads the types. Writing
-         * the conversion down after the division puts that knowledge in the assembly itself, where
-         * anything that reads it later (a machine of another kind, another language) can see it; the
-         * runtime it was written for hands a whole number straight back.
-         */
-        private void wholeDivision(final IExpr.Binary expression, final ITypeSymbol result) {
-            if (expression.operator() != Operator.DIVIDE && expression.operator() != Operator.REMAINDER) {
-                return;
-            }
-            if (result == ITypeSymbol.Primitive.INT || result == ITypeSymbol.Primitive.LONG) {
-                this.convert(result);
-            }
-        }
-
-        /*
-         * A shift moves its left side by however much its right side says, and the two do not have
-         * to be the same kind of number.
-         */
-        private static boolean shiftKeepsItsOwn(final IExpr.Binary expression) {
-            return expression.operator() == Operator.SHIFT_LEFT
-                    || expression.operator() == Operator.SHIFT_RIGHT;
-        }
-
-        private void plus(final IExpr.Binary expression) {
-            final ITypeSymbol result = Emitter.this.model.typeOf(expression);
-            if (result == Emitter.this.builtIns.stringType()) {
-                final String left = this.joined(expression.left());
-                final String right = this.joined(expression.right());
-                this.emit(Opcode.CALL, new IOperand.Method(STRING, "Concat", List.of(left, right), STRING));
-                return;
-            }
-            this.value(expression.left(), result);
-            this.value(expression.right(), result);
-            this.emit(Opcode.ADD);
-        }
-
-        /**
-         * Pushes a value that is about to be joined to a string, and says what type was pushed.
-         *
-         * <p>An object of a type that says how it reads, with a {@code ToString()} of its own, is asked
-         * for that text here, so a record in a sentence reads as its fields rather than as its type's
-         * name; anything else is joined as it is, and the runtime writes it the way it writes values.
-         */
-        private String joined(final IExpr expression) {
-            final ITypeSymbol type = Emitter.this.model.typeOf(expression);
-            this.value(expression, null);
-            final IMemberSymbol.MethodSymbol reads = readsItself(type);
-            if (reads == null) {
-                return describe(type);
-            }
-            this.emit(Opcode.CALL, this.methodRef(reads));
-            return STRING;
-        }
-
-        /** The {@code ToString()} a type declares for itself, or null when it reads as its name. */
-        private static IMemberSymbol.MethodSymbol readsItself(final ITypeSymbol type) {
-            if (!(type instanceof NamedType named) || named.kind() == NamedType.Kind.ENUM
-                    || named.kind() == NamedType.Kind.DELEGATE || named.isBuiltIn()) {
-                return null;
-            }
-            for (final IMemberSymbol member : named.allMembers()) {
-                if (member instanceof IMemberSymbol.MethodSymbol method && "ToString".equals(method.name())
-                        && method.parameters().isEmpty() && !method.isStatic()) {
-                    return method;
-                }
-            }
-            return null;
-        }
-
-        private void compare(final IExpr.Binary expression) {
-            final ITypeSymbol left = Emitter.this.model.typeOf(expression.left());
-            final ITypeSymbol right = Emitter.this.model.typeOf(expression.right());
-            final ITypeSymbol common = Emitter.this.rules.promote(left, right);
-            this.value(expression.left(), common);
-            this.value(expression.right(), common);
-            switch (expression.operator()) {
-                case EQUAL -> this.emit(Opcode.CEQ);
-                case NOT_EQUAL -> {
-                    this.emit(Opcode.CEQ);
-                    this.invert();
-                }
-                case LESS -> this.emit(Opcode.CLT);
-                case GREATER -> this.emit(Opcode.CGT);
-                case LESS_EQUAL -> {
-                    this.emit(Opcode.CGT);
-                    this.invert();
-                }
-                default -> {
-                    this.emit(Opcode.CLT);
-                    this.invert();
-                }
-            }
-        }
-
-        private void invert() {
-            this.emit(Opcode.LDC_I4, new IOperand.I4(0));
-            this.emit(Opcode.CEQ);
-        }
-
-        /*
-         * The right side of "and" and "or" is not run when the left side already settles the answer,
-         * which is a branch and cannot be an instruction that takes both sides at once.
-         */
-        private void shortCircuit(final IExpr.Binary expression) {
-            final String settled = this.label();
-            final String end = this.label();
-            final boolean isAnd = expression.operator() == Operator.AND;
-            this.value(expression.left(), ITypeSymbol.Primitive.BOOL);
-            this.emit(isAnd ? Opcode.BRFALSE : Opcode.BRTRUE, new IOperand.Label(settled));
-            this.value(expression.right(), ITypeSymbol.Primitive.BOOL);
-            this.emit(Opcode.BR, new IOperand.Label(end));
-            this.mark(settled);
-            this.emit(Opcode.LDC_I4, new IOperand.I4(isAnd ? 0 : 1));
-            this.mark(end);
-        }
-
-        private void conditional(final IExpr.Conditional expression, final ITypeSymbol wanted) {
-            final ITypeSymbol result = wanted != null ? wanted : Emitter.this.model.typeOf(expression);
-            final String otherwise = this.label();
-            final String end = this.label();
-            this.value(expression.condition(), ITypeSymbol.Primitive.BOOL);
-            this.emit(Opcode.BRFALSE, new IOperand.Label(otherwise));
-            this.value(expression.whenTrue(), result);
-            this.emit(Opcode.BR, new IOperand.Label(end));
-            this.mark(otherwise);
-            this.value(expression.whenFalse(), result);
-            this.mark(end);
-        }
-
-        // calls
-
-        private void call(final IExpr.Call expression) {
-            final IMemberSymbol resolved = Emitter.this.model.callOf(expression);
-            if (!(resolved instanceof IMemberSymbol.MethodSymbol method)) {
-                return;
-            }
-            final IExpr callee = expression.callee();
-            final boolean throughDelegate = "Invoke".equals(method.name())
-                    && method.owner().kind() == NamedType.Kind.DELEGATE;
-            if (throughDelegate) {
-                this.value(callee, null);
-            } else if (!method.isStatic()) {
-                if (callee instanceof IExpr.Member member) {
-                    this.receiver(member.target());
-                } else {
-                    this.pushThis();
-                }
-            }
-            this.arguments(expression.arguments(), method);
-            this.emit(throughDelegate ? Opcode.CALLVIRT : Opcode.CALL, this.methodRef(method));
-            this.storeOutward(expression.arguments(), method);
-        }
-
-        private void arguments(final List<IExpr> arguments, final IMemberSymbol.MethodSymbol method) {
-            for (int i = 0; i < arguments.size(); i++) {
-                final IMemberSymbol.ParameterSymbol parameter = method == null
-                        || i >= method.parameters().size() ? null : method.parameters().get(i);
-                if (parameter != null && parameter.outward()) {
-                    continue;
-                }
-                this.copied(arguments.get(i), parameter == null ? null : parameter.type());
-            }
-        }
-
-        /*
-         * What a method fills in comes back on the stack after its answer, the last one on top, so
-         * they are put away from the last to the first.
-         */
-        private void storeOutward(final List<IExpr> arguments, final IMemberSymbol.MethodSymbol method) {
-            for (int i = arguments.size() - 1; i >= 0; i--) {
-                if (i >= method.parameters().size() || !method.parameters().get(i).outward()) {
-                    continue;
-                }
-                final IBinding binding = Emitter.this.model.bindingOf(arguments.get(i));
-                if (binding instanceof IBinding.Variable variable && this.kept(variable)) {
-                    final int held = this.hidden();
-                    this.emit(Opcode.STLOC, new IOperand.Slot(held));
-                    this.pushClosure();
-                    this.emit(Opcode.LDLOC, new IOperand.Slot(held));
-                    this.storeKept(variable);
-                } else if (binding instanceof IBinding.Variable variable) {
-                    this.emit(Opcode.STLOC, new IOperand.Slot(this.slot(variable)));
-                } else if (binding instanceof IBinding.Member member
-                        && member.member() instanceof IMemberSymbol.FieldSymbol field) {
-                    this.emit(field.isStatic() ? Opcode.STSFLD : Opcode.STFLD,
-                            new IOperand.Field(field.isStatic() ? field.owner().qualifiedName()
-                                    : this.ownerOf(field), field.name()));
-                } else {
-                    this.emit(Opcode.POP);
-                }
-            }
-        }
-
-        // assignment
-
-        private void assign(final IExpr.Assign expression, final boolean leavesValue) {
-            final IBinding binding = Emitter.this.model.bindingOf(expression.target());
-            if (binding instanceof IBinding.Member member
-                    && member.member() instanceof IMemberSymbol.EventSymbol event) {
-                this.subscribe(expression, event);
-                return;
-            }
-            final Place place = this.placeOf(expression.target());
-            if (place == null) {
-                return; // not somewhere a value can be put, which has already been complained about
-            }
-            final ITypeSymbol target = Emitter.this.model.typeOf(expression.target());
-            final Element kept = this.prepare(place);
-            if (expression.operator() != Operator.ASSIGN) {
-                this.loadOver(place, kept);
-            }
-            this.combine(expression, target);
-            /*
-             * A slot is the one place whose answer can be taken on the way in, since nothing of it is on the
-             * stack to be buried by the duplicate. Everywhere else the answer is read back afterwards.
-             */
-            if (leavesValue && place instanceof Place.Local) {
-                this.emit(Opcode.DUP);
-            }
-            this.store(place, kept);
-            if (leavesValue && !(place instanceof Place.Local)) {
-                this.reload(place);
-            }
-        }
-
-        private void combine(final IExpr.Assign expression, final ITypeSymbol target) {
-            if (expression.operator() == Operator.ASSIGN) {
-                this.copied(expression.value(), target);
-                return;
-            }
-            if (target == Emitter.this.builtIns.stringType()) {
-                final String added = this.joined(expression.value());
-                this.emit(Opcode.CALL, new IOperand.Method(STRING, "Concat", List.of(STRING, added), STRING));
-                return;
-            }
-            this.value(expression.value(), target);
-            this.emit(arithmetic(expression.operator()));
-        }
-
-        /*
-         * Joining and parting handlers is what the runtime does with a delegate, so the assembly asks
-         * it rather than pretending an event is a kind of arithmetic.
-         */
-        private void subscribe(final IExpr.Assign expression, final IMemberSymbol.EventSymbol event) {
-            final String delegate = event.delegateType().qualifiedName();
-            if (!event.isStatic()) {
-                this.receiverOf(expression.target());
-                this.emit(Opcode.DUP);
-            }
-            this.emit(event.isStatic() ? Opcode.LDSFLD : Opcode.LDFLD,
-                    new IOperand.Field(event.isStatic() ? event.owner().qualifiedName() : this.ownerOf(event),
-                            event.name()));
-            this.value(expression.value(), event.delegateType());
-            this.emit(Opcode.CALL, new IOperand.Method(DELEGATE,
-                    expression.operator() == Operator.ADD ? "Combine" : "Remove",
-                    List.of(delegate, delegate), delegate));
-            this.emit(event.isStatic() ? Opcode.STSFLD : Opcode.STFLD,
-                    new IOperand.Field(event.isStatic() ? event.owner().qualifiedName() : this.ownerOf(event),
-                            event.name()));
-        }
-
-        /*
-         * A lambda becomes a method of the type it was written in, and a delegate bound to the same
-         * object. Its name begins with a digit so no source name can ever be the same.
-         */
-        private void lambda(final IExpr.Lambda lambda) {
-            final ITypeSymbol type = Emitter.this.model.typeOf(lambda);
-            final NamedType delegate = Emitter.this.rules.named(type);
-            if (delegate == null || delegate.invoke() == null) {
-                this.emit(Opcode.LDNULL);
-                return;
-            }
-            final List<ITypeSymbol> filled = Emitter.this.rules.arguments(type);
-            final IMemberSymbol.MethodSymbol shape = delegate.invoke();
-            final ITypeSymbol gives = Emitter.this.rules.substitute(shape.returnType(), filled);
-            final List<String> written = new ArrayList<>();
-            for (final IMemberSymbol.ParameterSymbol parameter : shape.parameters()) {
-                written.add((parameter.outward() ? "out " : "")
-                        + Emitter.this.rules.substitute(parameter.type(), filled).describe());
-            }
-
-            Emitter.this.lambdaCount++;
-            final String name = "0lambda" + Emitter.this.lambdaCount;
-            final Body body = new Body(this.owner, gives);
-            if (this.closure != null) {
-                body.closureIsThis(this.closure);
-            }
-            body.parameters(lambda.parameters());
-            if (lambda.block() != null) {
-                body.block(Emitter.this.lowered.bodyOf(lambda));
-            } else {
-                body.value(lambda.body(), gives);
-                body.emit(Opcode.RET);
-            }
-            final AsmMethod made = new AsmMethod(name, gives.describe(), written, false,
-                    body.slotCount(), body.finish());
-
-            /*
-             * With nothing of the method's own to keep, the lambda belongs to the type it was written
-             * in. With something to keep, it belongs to the object holding it, so it can reach it.
-             */
-            if (this.closure == null) {
-                Emitter.this.synthesized.add(made);
-                this.pushThis();
-                this.emit(Opcode.LDFN,
-                        new IOperand.Method(this.owner.qualifiedName(), name, written, gives.describe()));
-                return;
-            }
-            Emitter.this.closures.typeOf(this.closure.type()).addMethod(made);
-            this.pushClosure();
-            this.emit(Opcode.LDFN,
-                    new IOperand.Method(this.closure.type(), name, written, gives.describe()));
-        }
-
-        // conversions
-
-        private void coerce(final ITypeSymbol from, final ITypeSymbol to) {
-            if (from == null || to == null || from.equals(to)) {
-                return;
-            }
-            if (Emitter.this.rules.isNumeric(from) && Emitter.this.rules.isNumeric(to)) {
-                this.convert(to);
-            }
-        }
-
-        private void convert(final ITypeSymbol to) {
-            if (to == ITypeSymbol.Primitive.LONG) {
-                this.emit(Opcode.CONV_I8);
-            } else if (to == ITypeSymbol.Primitive.FLOAT) {
-                this.emit(Opcode.CONV_R4);
-            } else if (to == ITypeSymbol.Primitive.DOUBLE) {
-                this.emit(Opcode.CONV_R8);
-            } else {
-                this.emit(Opcode.CONV_I4);
-            }
-        }
-    }
-
-    /** One place inside an array, a list or a map, as the slots holding the thing and the place in it. */
-    private record Element(int thing, int at, ITypeSymbol of) {
-    }
-
-    private boolean leavesAValue(final IExpr expression) {
-        final ITypeSymbol type = this.model.typeOf(expression);
-        return type != null && type != ITypeSymbol.Primitive.VOID
-                && type != ITypeSymbol.Special.ERROR;
-    }
-
-    private static String describe(final ITypeSymbol type) {
-        return type == null ? "object" : type.describe();
-    }
-
-    private static Opcode arithmetic(final Operator operator) {
-        return switch (operator) {
-            case ADD -> Opcode.ADD;
-            case SUBTRACT -> Opcode.SUB;
-            case MULTIPLY -> Opcode.MUL;
-            case DIVIDE -> Opcode.DIV;
-            case REMAINDER -> Opcode.REM;
-            case BIT_AND -> Opcode.AND;
-            case BIT_OR -> Opcode.OR;
-            case BIT_XOR -> Opcode.XOR;
-            case SHIFT_LEFT -> Opcode.SHL;
-            default -> Opcode.SHR;
-        };
     }
 }
