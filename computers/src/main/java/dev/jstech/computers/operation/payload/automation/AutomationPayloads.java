@@ -107,8 +107,7 @@ public final class AutomationPayloads {
             return "Periodic Move";
         }
         if (b.startsWith("CRAFT")) {
-            return kind == dev.jstech.computers.program.iql
-                    .IqlDefinition.TriggerKind.WHEN ? "Keep Stock" : "Batch Craft";
+            return kind == IqlDefinition.TriggerKind.WHEN ? "Keep Stock" : "Batch Craft";
         }
         return "Custom";
     }

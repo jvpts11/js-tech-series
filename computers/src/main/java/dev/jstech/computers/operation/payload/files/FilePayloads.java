@@ -101,8 +101,8 @@ public final class FilePayloads {
                      * tree says what is in the drive before it is opened.
                      */
                     final ItemStack medium = reader.mediaSlot().getStackInSlot(0);
-                    final String fallback = dev.jstech.computers.os.media
-                            .InstallerProjection.facts(medium).map(f -> f.name() + " Setup").orElse("Removable Drive");
+                    final String fallback = InstallerProjection.facts(medium)
+                            .map(f -> f.name() + " Setup").orElse("Removable Drive");
                     volumes.add(new DiskFilesPayload.WireVolume("media:" + endpoint,
                             VolumeLabel.of(medium, fallback)));
                 }

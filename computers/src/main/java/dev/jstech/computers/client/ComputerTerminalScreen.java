@@ -15,6 +15,7 @@ import dev.jstech.computers.operation.payload.CraftSubmitPayload;
 import dev.jstech.computers.operation.payload.LocalStorageSnapshotPayload;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
 import dev.jstech.computers.operation.payload.NetworkServersPayload;
+import dev.jstech.computers.operation.payload.OpenProgramPayload;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.RequestServerBreakdownPayload;
 import dev.jstech.computers.operation.payload.ServerBreakdownPayload;
@@ -1580,8 +1581,8 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
                 if (mouseX >= tx && mouseX < tx + RAIL_W && mouseY >= ty && mouseY < ty + TAB_H) {
                     if (tab == ComputerTerminalMenu.TAB_CONSOLE) {
                         // Launch the Command Prompt for this computer instead of switching content.
-                        PacketDistributor.sendToServer(new dev.jstech.computers.operation.payload
-                                .OpenProgramPayload(menu.monitorPos(), menu.hostPos(),
+                        PacketDistributor.sendToServer(new OpenProgramPayload(
+                                menu.monitorPos(), menu.hostPos(),
                                 Programs.COMMAND_PROMPT.toString()));
                         return true;
                     }

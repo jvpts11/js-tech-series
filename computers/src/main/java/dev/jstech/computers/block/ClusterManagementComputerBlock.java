@@ -10,6 +10,7 @@ package dev.jstech.computers.block;
 import com.mojang.serialization.MapCodec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
+import dev.jstech.computers.menu.ClusterManagementComputerMenu;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.IRearFacingDataPort;
 import dev.jstech.core.peripheral.PeripheralCableType;
@@ -101,8 +102,7 @@ public class ClusterManagementComputerBlock extends HorizontalDirectionalBlock
         if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof ClusterManagementComputerBlockEntity computer) {
             serverPlayer.openMenu(new SimpleMenuProvider(
-                    (id, inventory, p) -> new dev.jstech.computers.menu
-                            .ClusterManagementComputerMenu(id, inventory, computer),
+                    (id, inventory, p) -> new ClusterManagementComputerMenu(id, inventory, computer),
                     Component.translatable("block.jsc.cluster_management_computer")),
                     buf -> buf.writeBlockPos(pos));
         }

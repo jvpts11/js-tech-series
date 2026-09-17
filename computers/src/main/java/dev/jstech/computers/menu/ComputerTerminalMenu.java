@@ -13,9 +13,11 @@ import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.operation.index.IndexHealth;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
 import dev.jstech.computers.operation.payload.CraftPlanPayload;
+import dev.jstech.computers.operation.payload.LocalStorageSnapshotPayload;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
 import dev.jstech.computers.operation.payload.NetworkServersPayload;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.operation.payload.ProcessListPayload;
 import dev.jstech.computers.operation.payload.ServerBreakdownPayload;
 import dev.jstech.computers.operation.payload.crafting.CraftingPayloads;
 import dev.jstech.computers.operation.payload.network.NetworkPayloads;
@@ -321,19 +323,15 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
         }
     }
 
-    private List<dev.jstech.computers.operation.payload
-            .CraftCatalogPayload.Entry> craftCatalog = List.of();
+    private List<CraftCatalogPayload.Entry> craftCatalog = List.of();
 
-    private List<dev.jstech.computers.operation.payload
-            .ProcessListPayload.ProcessLine> processes = List.of();
+    private List<ProcessListPayload.ProcessLine> processes = List.of();
 
-    public void setProcesses(final List<dev.jstech.computers.operation.payload
-            .ProcessListPayload.ProcessLine> processes) {
+    public void setProcesses(final List<ProcessListPayload.ProcessLine> processes) {
         this.processes = processes;
     }
 
-    public List<dev.jstech.computers.operation.payload
-            .ProcessListPayload.ProcessLine> processes() {
+    public List<ProcessListPayload.ProcessLine> processes() {
         return processes;
     }
 
@@ -345,8 +343,7 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
         this.craftCatalog = entries;
     }
 
-    public List<dev.jstech.computers.operation.payload
-            .CraftCatalogPayload.Entry> craftCatalog() {
+    public List<CraftCatalogPayload.Entry> craftCatalog() {
         return craftCatalog;
     }
 
@@ -380,16 +377,13 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
      * Per-disk privacy state for the Storage tab's slider, synced with the local snapshot. Empty for a
      * host with no slider (a Server/Mainframe), which the screen reads as "always public".
      */
-    private List<dev.jstech.computers.operation.payload
-            .LocalStorageSnapshotPayload.DiskInfo> diskPrivacy = List.of();
+    private List<LocalStorageSnapshotPayload.DiskInfo> diskPrivacy = List.of();
 
-    public void setDiskPrivacy(final List<dev.jstech.computers.operation.payload
-            .LocalStorageSnapshotPayload.DiskInfo> disks) {
+    public void setDiskPrivacy(final List<LocalStorageSnapshotPayload.DiskInfo> disks) {
         this.diskPrivacy = disks;
     }
 
-    public List<dev.jstech.computers.operation.payload
-            .LocalStorageSnapshotPayload.DiskInfo> diskPrivacy() {
+    public List<LocalStorageSnapshotPayload.DiskInfo> diskPrivacy() {
         return diskPrivacy;
     }
 

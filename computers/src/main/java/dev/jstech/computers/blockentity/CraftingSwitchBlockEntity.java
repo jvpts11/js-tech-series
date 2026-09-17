@@ -10,6 +10,7 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.CraftingComputerBlock;
 import dev.jstech.computers.block.DataCableBlock;
+import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.block.part.CablePartType;
 import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.core.network.DataTier;
@@ -302,8 +303,7 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
             }
             final Direction from = origin.get(current);
             for (final Direction face : SIDES) {
-                if (cable.getPart(face) instanceof dev.jstech.computers.block.part
-                        .AbstractBusPart bus
+                if (cable.getPart(face) instanceof AbstractBusPart bus
                         && (bus.type() == CablePartType.INPUT
                         || bus.type() == CablePartType.RECEIVING)) {
                     final BlockPos machinePos = current.relative(face);

@@ -20,8 +20,10 @@ import dev.jstech.computers.menu.DosTerminalMenu;
 import dev.jstech.computers.menu.LinuxTtyMenu;
 import dev.jstech.computers.operation.payload.OpenBootMenuPayload;
 import dev.jstech.computers.operation.payload.OpenComputerUiPayload;
+import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
 import dev.jstech.computers.operation.payload.OpenInstallerPayload;
 import dev.jstech.computers.operation.payload.OpenKvmPayload;
+import dev.jstech.computers.operation.payload.OpenPostPayload;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
 import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
@@ -369,8 +371,8 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final String osName = os != null ? os.displayName() : "";
         final String targetLabel = slot < 0 ? "the default disk" : "Disk " + slot;
         ScreenSessions.opened(player, monitorPos, owner);
-        PacketDistributor.sendToPlayer(player, new dev.jstech.computers.operation.payload
-                .OpenInstallDonePayload(owner, monitorPos, kind.id(), osName, targetLabel, slot, ""));
+        PacketDistributor.sendToPlayer(player, new OpenInstallDonePayload(
+                owner, monitorPos, kind.id(), osName, targetLabel, slot, ""));
     }
 
     /** Sends the client the switch's channel bar: every machine this rack can put on the monitor. */
@@ -378,13 +380,11 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
             final ServerPlayer player,
             final ServerRackBlockEntity rack,
             final BlockPos monitorPos) {
-        final List<dev.jstech.computers.operation.payload
-                .OpenKvmPayload.Channel> channels = new ArrayList<>();
+        final List<OpenKvmPayload.Channel> channels = new ArrayList<>();
         for (final int slot : rack.computerSlots()) {
             final ItemStack stack = rack.getServers().getStackInSlot(slot);
             final String custom = ServerItem.customName(stack);
-            channels.add(new dev.jstech.computers.operation.payload
-                    .OpenKvmPayload.Channel(slot,
+            channels.add(new OpenKvmPayload.Channel(slot,
                     custom.isEmpty() ? "bay " + (slot + 1) + "U" : custom,
                     rack.bayPowerOn(slot)
                             && ServerItem.build(stack) != null));
@@ -404,8 +404,8 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
         final int remaining = ownerBe instanceof IOsHost machine ? machine.postRemaining() : 0;
         ScreenSessions.opened(player, monitorPos, owner);
-        PacketDistributor.sendToPlayer(player, new dev.jstech.computers.operation.payload
-                .OpenPostPayload(owner, monitorPos, kind.id(), name, remaining));
+        PacketDistributor.sendToPlayer(player,
+                new OpenPostPayload(owner, monitorPos, kind.id(), name, remaining));
     }
 
     /**

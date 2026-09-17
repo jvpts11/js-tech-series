@@ -228,8 +228,7 @@ public final class FileTransferPayloads {
                                              final ServerLevel level) {
         final var host = niHost(player, level, payload.hostPos(), payload.monitorPos());
         if (host == null
-                || !(host instanceof dev.jstech.computers.os
-                        .IOsHost computer)) {
+                || !(host instanceof IOsHost computer)) {
             return;
         }
         // The destination must be a DATA medium in a linked drive; anything else cannot hold a snapshot.

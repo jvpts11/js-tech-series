@@ -86,8 +86,7 @@ public final class FileAccess {
         }
         if (!computer.linkedEndpoints().contains(readerPos)
                 || !(level.getBlockEntity(BlockPos.of(readerPos))
-                        instanceof dev.jstech.computers.os.media
-                                .MediaReaderBlockEntity reader)) {
+                        instanceof MediaReaderBlockEntity reader)) {
             return ItemStack.EMPTY;
         }
         return reader.mediaSlot().getStackInSlot(0);

@@ -27,6 +27,7 @@ import dev.jstech.computers.operation.payload.UiEventPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.operation.payload.UninstallProgramPayload;
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.ServerCliComputer;
@@ -192,8 +193,7 @@ public final class ProgramPayloads {
              */
             final HardwareEra hostEra =
                     player.level().getBlockEntity(payload.hostPos())
-                            instanceof dev.jstech.computers.os
-                                    .IOsHost host ? host.displayEra() : null;
+                            instanceof IOsHost host ? host.displayEra() : null;
             player.openMenu(new SimpleMenuProvider(
                     (windowId, inv, p) -> new CommandPromptMenu(
                             windowId, inv, payload.monitorPos(), payload.hostPos(), hostEra), title),

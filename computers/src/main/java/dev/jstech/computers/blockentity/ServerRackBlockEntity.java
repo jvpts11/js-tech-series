@@ -692,8 +692,7 @@ public class ServerRackBlockEntity extends BlockEntity
             if (i == exceptSlot) {
                 continue;
             }
-            final RackLayout.Unit unit = dev.jstech.computers.rack
-                    .IMountableRackUnit.unitAt(servers.getStackInSlot(i), i);
+            final RackLayout.Unit unit = IMountableRackUnit.unitAt(servers.getStackInSlot(i), i);
             if (unit != null) {
                 mounted.add(unit);
             }

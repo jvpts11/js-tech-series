@@ -124,8 +124,7 @@ public final class ThisPcPayloads {
             }
             for (final long endpoint : computer.linkedEndpoints()) {
                 if (level.getBlockEntity(BlockPos.of(endpoint))
-                        instanceof dev.jstech.computers.os.media
-                                .MediaReaderBlockEntity reader) {
+                        instanceof MediaReaderBlockEntity reader) {
                     media.add(mediaRow(computer, payload.hostPos(), endpoint, reader));
                 }
             }
@@ -322,8 +321,7 @@ public final class ThisPcPayloads {
         // The drive must be a media reader currently linked to this computer.
         if (!computer.linkedEndpoints().contains(payload.readerPos())
                 || !(level.getBlockEntity(BlockPos.of(payload.readerPos()))
-                        instanceof dev.jstech.computers.os.media
-                                .MediaReaderBlockEntity reader)) {
+                        instanceof MediaReaderBlockEntity reader)) {
             return;
         }
         if (reader.insertedKind()

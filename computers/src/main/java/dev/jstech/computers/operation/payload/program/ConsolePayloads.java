@@ -166,8 +166,7 @@ public final class ConsolePayloads {
          * must meet its CPU/VRAM minimums. Null-safe: programs with no declared requirement always pass.
          */
         if (player.level() instanceof ServerLevel osLevel
-                && osLevel.getBlockEntity(hostPos) instanceof dev.jstech.computers.os
-                        .IOsHost osComputer
+                && osLevel.getBlockEntity(hostPos) instanceof IOsHost osComputer
                 && !OsRegistry.canRunProgram(
                         osComputer.installedOsId(), program.id(),
                         osComputer.maxCpuMhz(), osComputer.totalVramMb())) {
@@ -262,8 +261,7 @@ public final class ConsolePayloads {
          * order during a live install, or the mounted drives' device names on an installed POSIX system.
          */
         final List<String> devices = new ArrayList<>();
-        if (live && host instanceof dev.jstech.computers.os
-                .IOsHost computer) {
+        if (live && host instanceof IOsHost computer) {
             for (int i = 0; i < computer.diskSlots(); i++) {
                 if (computer.diskInSlot(i).getItem()
                         instanceof DiskItem) {

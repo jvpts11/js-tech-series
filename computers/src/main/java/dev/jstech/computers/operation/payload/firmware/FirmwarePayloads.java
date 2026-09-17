@@ -16,6 +16,7 @@ import dev.jstech.computers.block.ISystemBootScreenOpener;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.BootSequenceScreen;
 import dev.jstech.computers.client.FirmwareScreen;
 import dev.jstech.computers.item.CpuItem;
@@ -28,6 +29,7 @@ import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
+import dev.jstech.computers.operation.payload.OpenInstallerPayload;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.operation.payload.OpenPostPayload;
@@ -255,8 +257,7 @@ public final class FirmwarePayloads {
      */
     private static FirmwareStatePayload.RaidInfo raidInfoOf(
             final ServerLevel level, final IOsHost computer) {
-        if (!(computer instanceof dev.jstech.computers.blockentity
-                .ServerRackBlockEntity rack)) {
+        if (!(computer instanceof ServerRackBlockEntity rack)) {
             return FirmwareStatePayload.RaidInfo.ABSENT;
         }
         final int slot = rack.soleComputerSlot();
@@ -341,8 +342,7 @@ public final class FirmwarePayloads {
             case FirmwareActionPayload.ACTION_SET_BOOT -> computer.setBootDiskSlot((int) payload.ref());
             case FirmwareActionPayload.ACTION_RAID_MODE -> {
                 final var mode = RaidMode.find((int) payload.ref());
-                if (computer instanceof dev.jstech.computers.blockentity
-                        .ServerRackBlockEntity rack && mode != null) {
+                if (computer instanceof ServerRackBlockEntity rack && mode != null) {
                     rack.setRaidMode(rack.soleComputerSlot(), mode);
                 }
             }
@@ -370,8 +370,8 @@ public final class FirmwarePayloads {
                         machine == null ? null : machine.installing();
                 if (flow != null) {
                     // The machine is in its installer; the screen is sent the page it opens on.
-                    PacketDistributor.sendToPlayer(player, dev.jstech.computers.operation.payload
-                            .OpenInstallerPayload.of(payload.hostPos(), payload.monitorPos(), flow, 0));
+                    PacketDistributor.sendToPlayer(player,
+                            OpenInstallerPayload.of(payload.hostPos(), payload.monitorPos(), flow, 0));
                 } else if (job != null) {
                     // A copy with no installer behind it: the screen is told how long it is so the bar is true.
                     PacketDistributor.sendToPlayer(player, new OsInstallProgressPayload(payload.hostPos(),

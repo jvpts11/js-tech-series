@@ -11,6 +11,7 @@ import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
 import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.computers.gui.layout.CraftingSwitchLayout;
 import dev.jstech.computers.menu.CraftingSwitchMenu;
+import dev.jstech.computers.operation.payload.SetBusNamePayload;
 import dev.jstech.computers.operation.payload.SetCraftingSwitchFacePayload;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import java.util.ArrayList;
@@ -209,8 +210,8 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
         final var viaBus = busMachinesOnFace(selectedFace);
         if (!viaBus.isEmpty()) {
             final var line = viaBus.get(0);
-            PacketDistributor.sendToServer(new dev.jstech.computers.operation.payload
-                    .SetBusNamePayload(line.cablePos(), line.busFace(), name));
+            PacketDistributor.sendToServer(
+                    new SetBusNamePayload(line.cablePos(), line.busFace(), name));
         }
     }
 

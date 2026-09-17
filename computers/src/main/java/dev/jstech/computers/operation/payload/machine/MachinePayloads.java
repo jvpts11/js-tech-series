@@ -101,8 +101,7 @@ public final class MachinePayloads {
                 if (entries.size() >= RemoteHostsPayload.MAX_HOSTS) {
                     return;
                 }
-                final var remote = new dev.jstech.computers.program
-                        .ServerCliComputer(
+                final var remote = new ServerCliComputer(
                         (IComputerTerminalHost) machine,
                         level);
                 final var os = machine instanceof IOsHost h

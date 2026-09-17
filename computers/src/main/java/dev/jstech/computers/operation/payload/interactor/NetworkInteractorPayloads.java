@@ -140,8 +140,7 @@ public final class NetworkInteractorPayloads {
                 op.abortWhen(gone(host)); // the pull lands in this computer: stop once it is gone
             }
         }
-        if (op != null && host instanceof dev.jstech.computers.os
-                .IOsHost computer) {
+        if (op != null && host instanceof IOsHost computer) {
             op.onSettle(() -> sendNetworkInteractor(player, level, computer));
         }
     }
@@ -283,8 +282,7 @@ public final class NetworkInteractorPayloads {
                 op.setPriority(payload.priority());
                 op.abortWhen(gone(host));
             }
-            if (op != null && host instanceof dev.jstech.computers.os
-                    .IOsHost computer) {
+            if (op != null && host instanceof IOsHost computer) {
                 op.onSettle(() -> sendNetworkInteractor(player, level, computer));
             }
         } else if (payload.mode() == NiGridClickPayload.MODE_LOCAL_TO_NET) {
@@ -309,8 +307,7 @@ public final class NetworkInteractorPayloads {
                 if (leftover > 0L) {
                     host.localStore().insert(key, leftover);
                 }
-                if (host instanceof dev.jstech.computers.os
-                        .IOsHost computer) {
+                if (host instanceof IOsHost computer) {
                     sendNetworkInteractor(player, level, computer);
                 }
             });
@@ -337,8 +334,7 @@ public final class NetworkInteractorPayloads {
                     host.localStore().insert(key, remaining);
                 }
             }
-            if (host instanceof dev.jstech.computers.os
-                    .IOsHost computer) {
+            if (host instanceof IOsHost computer) {
                 sendNetworkInteractor(player, level, computer);
             }
         }
@@ -411,8 +407,7 @@ public final class NetworkInteractorPayloads {
         // Clamp the client-supplied quantity so a spoofed packet cannot ask the dispatcher for Long.MAX.
         final long safeAmount = Math.max(1L, Math.min(payload.amount(), Integer.MAX_VALUE));
         final IOsHost computer =
-                host instanceof dev.jstech.computers.os
-                        .IOsHost c ? c : null;
+                host instanceof IOsHost c ? c : null;
         final Runnable refreshNi = () -> {
             if (computer != null) {
                 sendNetworkInteractor(player, level, computer);

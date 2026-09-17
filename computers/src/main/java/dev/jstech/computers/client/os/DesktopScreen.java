@@ -19,10 +19,14 @@ import dev.jstech.computers.gui.TaskbarGroups;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.DeleteFilePayload;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
+import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
+import dev.jstech.computers.operation.payload.MachinePowerPayload;
 import dev.jstech.computers.operation.payload.MkdirPayload;
 import dev.jstech.computers.operation.payload.MoveFilePayload;
+import dev.jstech.computers.operation.payload.NiDepositPayload;
+import dev.jstech.computers.operation.payload.NiShiftInsertPayload;
 import dev.jstech.computers.operation.payload.RenameFilePayload;
 import dev.jstech.computers.operation.payload.RequestDesktopFilesPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
@@ -2787,8 +2791,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** Takes a program off this computer, the way {@code uninstall} at the prompt does. */
     private void uninstallLauncher(final ProgramSpec spec) {
-        PacketDistributor.sendToServer(new dev.jstech.computers.operation.payload
-                .DesktopShellRunPayload(host, "uninstall " + spec.commandName()));
+        PacketDistributor.sendToServer(
+                new DesktopShellRunPayload(host, "uninstall " + spec.commandName()));
     }
 
     /** Cycles to the next wallpaper style and persists the choice on the computer. */
@@ -3847,8 +3851,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                  */
                 powerCycling = true;
                 PacketDistributor.sendToServer(
-                        new dev.jstech.computers.operation.payload
-                                .MachinePowerPayload(host, monitorPos, i));
+                        new MachinePowerPayload(host, monitorPos, i));
                 powerOpen = false;
                 return true;
             }
@@ -4136,8 +4139,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                         final int target = ni.shiftInsertTarget();
                         if (slot != null && slot.hasItem() && target >= 0) {
                             PacketDistributor.sendToServer(
-                                    new dev.jstech.computers.operation.payload
-                                            .NiShiftInsertPayload(host, monitorPos, slot.getContainerSlot(), target));
+                                    new NiShiftInsertPayload(
+                                            host, monitorPos, slot.getContainerSlot(), target));
                             return true;
                         }
                     }
@@ -4161,8 +4164,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                         final int target = ni.cursorDepositTarget(lx, ly);
                         if (target >= 0) {
                             PacketDistributor.sendToServer(
-                                    new dev.jstech.computers.operation.payload
-                                            .NiDepositPayload(host, monitorPos, target, button == 0,
+                                    new NiDepositPayload(host, monitorPos, target, button == 0,
                                             button == 1 ? ni.cursorDepositEntry(lx, ly) : Optional.empty()));
                             return true;
                         }

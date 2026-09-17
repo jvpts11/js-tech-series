@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.crafting;
 
+import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.os.CraftPlannerApp;
 import dev.jstech.computers.client.os.NetworkInteractorApp;
@@ -382,8 +383,7 @@ public final class CraftingPayloads {
         if (player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > 64.0) {
             return; // out of reach
         }
-        if (level.getBlockEntity(pos) instanceof dev.jstech.computers.blockentity
-                .CraftingSwitchBlockEntity sw) {
+        if (level.getBlockEntity(pos) instanceof CraftingSwitchBlockEntity sw) {
             final Direction face =
                     Direction.from3DDataValue(payload.face());
             sw.setFaceName(face, payload.name());

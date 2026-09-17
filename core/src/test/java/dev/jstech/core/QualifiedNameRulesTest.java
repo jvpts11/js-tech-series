@@ -48,6 +48,13 @@ class QualifiedNameRulesTest {
 
     private static final Pattern NOT_CODE = Pattern.compile("^\\s*(import|package)\\b|^\\s*\\*|^\\s*//|^\\s*/\\*");
 
+    /**
+     * A line break sitting right before a dot. A path long enough to need wrapping is the very case the rule
+     * is about, and reading line by line is exactly how one hides: {@code a.b.c} on one line and
+     * {@code .Type} on the next is one name, so the break is closed up before anything is looked for.
+     */
+    private static final Pattern WRAPPED = Pattern.compile("\\s*\\n\\s*(?=\\.)");
+
     private static final Pattern IMPORTED = Pattern.compile("\\s*import\\s+([A-Za-z0-9_.]+);");
 
     /** What the documentation points a reader at: a link, or the type an exception tag names. */
@@ -177,7 +184,7 @@ class QualifiedNameRulesTest {
             }
             out.append(NOT_CODE.matcher(line).lookingAt() ? "" : masked(line)).append('\n');
         }
-        return out.toString();
+        return WRAPPED.matcher(out.toString()).replaceAll("");
     }
 
     private static String masked(final String line) {
