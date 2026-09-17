@@ -36,6 +36,7 @@ final class ExpressionWriter {
 
     private final Emitter emitter;
     private final MethodBody body;
+    private final CallWriter calls;
 
     /*
      * The machine's own types, named from the one place that names them. The compiler writes a call to one of
@@ -45,9 +46,20 @@ final class ExpressionWriter {
     private static final String DELEGATE = IntrinsicTypes.DELEGATE;
     private static final String STRING = IntrinsicTypes.TEXT;
 
+    /*
+     * The one place the two fold back on each other: a call is a value, and the values a call takes are
+     * values in their own right. Made here rather than passed in, because there is no order in which the
+     * two could be built separately; it is only kept, never used, while this constructor runs.
+     */
     ExpressionWriter(final Emitter emitter, final MethodBody body) {
         this.emitter = emitter;
         this.body = body;
+        this.calls = new CallWriter(emitter, body, this);
+    }
+
+    /** The writer of calls that belongs to this one, for whoever writes a call that is not a value. */
+    CallWriter calls() {
+        return this.calls;
     }
 
     void value(final IExpr expression, final ITypeSymbol wanted) {
@@ -70,8 +82,8 @@ final class ExpressionWriter {
             case IExpr.Base ignored -> this.body.pushThis();
             case IExpr.Member member -> this.member(member);
             case IExpr.Index index -> this.index(index);
-            case IExpr.Call call -> this.call(call);
-            case IExpr.New created -> this.created(created);
+            case IExpr.Call call -> this.calls.call(call);
+            case IExpr.New created -> this.calls.created(created);
             case IExpr.NewArray created -> this.createdArray(created);
             case IExpr.Cast cast -> this.cast(cast);
             case IExpr.TypeTest test -> this.typeTest(test);
@@ -123,17 +135,6 @@ final class ExpressionWriter {
             return;
         }
         this.value(target, null);
-    }
-
-    void arguments(final List<IExpr> arguments, final IMemberSymbol.MethodSymbol method) {
-        for (int i = 0; i < arguments.size(); i++) {
-            final IMemberSymbol.ParameterSymbol parameter = method == null
-                    || i >= method.parameters().size() ? null : method.parameters().get(i);
-            if (parameter != null && parameter.outward()) {
-                continue;
-            }
-            this.copied(arguments.get(i), parameter == null ? null : parameter.type());
-        }
     }
 
     void assign(final IExpr.Assign expression, final boolean leavesValue) {
@@ -233,12 +234,7 @@ final class ExpressionWriter {
         } else {
             this.receiver(target);
         }
-        this.body.emit(Opcode.LDFN, methodRef(method));
-    }
-
-    private static IOperand.Method methodRef(final IMemberSymbol.MethodSymbol method) {
-        return new IOperand.Method(method.owner().qualifiedName(), method.name(),
-                Emitter.writtenParameters(method), method.returnType().describe());
+        this.body.emit(Opcode.LDFN, CallWriter.methodRef(method));
     }
 
     private void index(final IExpr.Index expression) {
@@ -413,16 +409,6 @@ final class ExpressionWriter {
                 isMap ? "Put" : "Set",
                 List.of(isMap ? held.getFirst().describe() : "int",
                         held.isEmpty() ? "object" : held.getLast().describe()), "void"));
-    }
-
-    private void created(final IExpr.New expression) {
-        final IMemberSymbol chosen = this.emitter.model.callOf(expression);
-        final IMemberSymbol.MethodSymbol constructor = chosen instanceof IMemberSymbol.MethodSymbol method
-                ? method : null;
-        this.arguments(expression.arguments(), constructor);
-        final ITypeSymbol type = this.emitter.model.typeOf(expression);
-        this.body.emit(Opcode.NEWOBJ, new IOperand.Constructor(type == null ? "object" : type.describe(),
-                constructor == null ? List.of() : Emitter.writtenParameters(constructor)));
     }
 
     private void createdArray(final IExpr.NewArray expression) {
@@ -639,7 +625,7 @@ final class ExpressionWriter {
         if (reads == null) {
             return describe(type);
         }
-        this.body.emit(Opcode.CALL, methodRef(reads));
+        this.body.emit(Opcode.CALL, CallWriter.methodRef(reads));
         return STRING;
     }
 
@@ -716,59 +702,6 @@ final class ExpressionWriter {
         this.body.mark(otherwise);
         this.value(expression.whenFalse(), result);
         this.body.mark(end);
-    }
-
-    // calls
-
-    private void call(final IExpr.Call expression) {
-        final IMemberSymbol resolved = this.emitter.model.callOf(expression);
-        if (!(resolved instanceof IMemberSymbol.MethodSymbol method)) {
-            return;
-        }
-        final IExpr callee = expression.callee();
-        final boolean throughDelegate = "Invoke".equals(method.name())
-                && method.owner().kind() == NamedType.Kind.DELEGATE;
-        if (throughDelegate) {
-            this.value(callee, null);
-        } else if (!method.isStatic()) {
-            if (callee instanceof IExpr.Member member) {
-                this.receiver(member.target());
-            } else {
-                this.body.pushThis();
-            }
-        }
-        this.arguments(expression.arguments(), method);
-        this.body.emit(throughDelegate ? Opcode.CALLVIRT : Opcode.CALL, methodRef(method));
-        this.storeOutward(expression.arguments(), method);
-    }
-
-    /*
-     * What a method fills in comes back on the stack after its answer, the last one on top, so
-     * they are put away from the last to the first.
-     */
-    private void storeOutward(final List<IExpr> arguments, final IMemberSymbol.MethodSymbol method) {
-        for (int i = arguments.size() - 1; i >= 0; i--) {
-            if (i >= method.parameters().size() || !method.parameters().get(i).outward()) {
-                continue;
-            }
-            final IBinding binding = this.emitter.model.bindingOf(arguments.get(i));
-            if (binding instanceof IBinding.Variable variable && this.body.kept(variable)) {
-                final int held = this.body.hidden();
-                this.body.emit(Opcode.STLOC, new IOperand.Slot(held));
-                this.body.pushClosure();
-                this.body.emit(Opcode.LDLOC, new IOperand.Slot(held));
-                this.body.storeKept(variable);
-            } else if (binding instanceof IBinding.Variable variable) {
-                this.body.emit(Opcode.STLOC, new IOperand.Slot(this.body.slot(variable)));
-            } else if (binding instanceof IBinding.Member member
-                    && member.member() instanceof IMemberSymbol.FieldSymbol field) {
-                this.body.emit(field.isStatic() ? Opcode.STSFLD : Opcode.STFLD,
-                        new IOperand.Field(field.isStatic() ? field.owner().qualifiedName()
-                                : this.body.ownerOf(field), field.name()));
-            } else {
-                this.body.emit(Opcode.POP);
-            }
-        }
     }
 
     // assignment

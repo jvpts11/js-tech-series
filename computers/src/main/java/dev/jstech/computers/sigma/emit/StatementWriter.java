@@ -14,8 +14,6 @@ import dev.jstech.computers.sigma.lower.IrStmt;
 import dev.jstech.computers.sigma.sem.IBinding;
 import dev.jstech.computers.sigma.sem.IMemberSymbol;
 import dev.jstech.computers.sigma.sem.ITypeSymbol;
-import dev.jstech.computers.sigma.sem.NamedType;
-import dev.jstech.computers.vm.listing.AsmMethod;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Opcode;
 import java.util.ArrayList;
@@ -72,30 +70,6 @@ final class StatementWriter {
                     new IOperand.Field(fieldIsStatic ? this.body.owner().qualifiedName() : null,
                             field.name()));
         }
-    }
-
-    /** The call a constructor makes to another one, of its own class or of the one it is built on. */
-    void chained(final NamedType type, final IDecl.ConstructorCall call) {
-        final NamedType target = call.base() ? type.base() : type;
-        if (target == null) {
-            return;
-        }
-        this.body.emit(Opcode.LDTHIS);
-        final IMemberSymbol.MethodSymbol chosen = constructorOf(target, call.arguments().size());
-        this.values.arguments(call.arguments(), chosen);
-        this.body.emit(Opcode.CALL, new IOperand.Method(target.qualifiedName(), AsmMethod.CONSTRUCTOR,
-                chosen == null ? List.of() : Emitter.writtenParameters(chosen), "void"));
-    }
-
-    private static IMemberSymbol.MethodSymbol constructorOf(final NamedType target, final int count) {
-        for (final IMemberSymbol member : target.members()) {
-            if (member instanceof IMemberSymbol.ConstructorSymbol constructor
-                    && constructor.parameters().size() == count) {
-                return new IMemberSymbol.MethodSymbol(target, AsmMethod.CONSTRUCTOR,
-                        ITypeSymbol.Primitive.VOID, constructor.parameters(), constructor.modifiers());
-            }
-        }
-        return null;
     }
 
     private void statement(final IrStmt statement) {

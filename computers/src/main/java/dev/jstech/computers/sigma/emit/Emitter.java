@@ -273,7 +273,8 @@ public final class Emitter {
     private AsmMethod emitConstructor(final NamedType type, final IDecl.ConstructorDecl constructor,
                                       final List<IDecl.FieldDecl> instanceStart) {
         final MethodBody body = new MethodBody(this, type, ITypeSymbol.Primitive.VOID);
-        final StatementWriter writes = this.statements(body);
+        final ExpressionWriter values = new ExpressionWriter(this, body);
+        final StatementWriter writes = new StatementWriter(this, body, values);
         body.parameters(constructor.parameters());
         /*
          * Chaining to another constructor of the same class means that one already put the starting
@@ -283,7 +284,7 @@ public final class Emitter {
             writes.fieldStarts(instanceStart);
         }
         if (constructor.chained() != null) {
-            writes.chained(type, constructor.chained());
+            values.calls().chained(type, constructor.chained());
         }
         if (constructor.body() != null) {
             body.openClosure(this.closures.forMethod(type, constructor.parameters(), constructor.body(),
