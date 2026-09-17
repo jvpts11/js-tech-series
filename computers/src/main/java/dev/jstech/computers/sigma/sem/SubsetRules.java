@@ -303,6 +303,15 @@ public final class SubsetRules {
      * limit here, since the checker proper reports anything this misses as a member that is simply not there.
      */
     private void libraryMember(final IExpr.Member member) {
+        /*
+         * Written out in full, a name walks past the refused using: System.Utils.Random.Next() never asks for a
+         * using at all. It is caught at the root of the chain, where the namespace is still a name of its own.
+         */
+        if (root(member) instanceof IExpr.Name first && "System".equals(first.identifier())) {
+            this.refuse(first, "the 'System' library",
+                    "everything Sigma has is in " + BuiltIns.SUBSET_LIBRARY);
+            return;
+        }
         if (!(member.target() instanceof IExpr.Name owner)) {
             return;
         }
@@ -312,6 +321,15 @@ public final class SubsetRules {
                     "Sigma's " + owner.identifier() + " has "
                             + String.join(", ", new java.util.TreeSet<>(offered)));
         }
+    }
+
+    /** The leftmost thing of a chain of members, which for a written-out name is the namespace it starts with. */
+    private static IExpr root(final IExpr expression) {
+        IExpr at = expression;
+        while (at instanceof IExpr.Member member) {
+            at = member.target();
+        }
+        return at;
     }
 
     private void refuse(final INode where, final String what, final String instead) {

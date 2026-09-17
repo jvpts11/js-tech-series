@@ -31,6 +31,15 @@ class SigmaCommandsTest {
             }
             """;
 
+    /** The same program in the smaller language: one library, and the class a script stands on. */
+    private static final String SUBSET = """
+            using Standard.*;
+            namespace Tests;
+            class Monitor : Script {
+                public override void OnTick() { Console.PrintLine("hello"); }
+            }
+            """;
+
     private CliShell shell;
     private Fake computer;
 
@@ -58,6 +67,57 @@ class SigmaCommandsTest {
         this.computer.files.put("Monitor.sgs", SCRIPT);
         assertTrue(this.run("sgsc Monitor.sgs").contains("command not found"));
         assertTrue(this.run("sigma ps").contains("command not found"));
+    }
+
+    /** The smaller language's compiler is its own package, and brings its own verb with it. */
+    @Test
+    void scc_isNotThereUntilItsOwnPackageIs() {
+        this.computer.files.put("Watch.sg", SUBSET);
+        assertTrue(this.run("scc Watch.sg").contains("command not found"));
+        this.computer.add(SigmaCommands.SUBSET_COMPILER);
+        assertTrue(this.run("scc Watch.sg").contains("wrote Watch.asm"));
+    }
+
+    /** One compiler, two languages: what comes out is the listing, whichever verb was typed. */
+    @Test
+    void scc_writesTheSameListingSgscWouldForTheSameProgram() {
+        this.computer.add(SigmaCommands.SUBSET_COMPILER);
+        this.computer.add(SigmaCommands.COMPILER);
+        this.computer.files.put("Watch.sg", SUBSET);
+        this.computer.files.put("Watch.sgs", SUBSET);
+        this.run("scc Watch.sg -o small.asm");
+        this.run("sgsc Watch.sgs -o big.asm");
+        assertEquals(this.computer.files.get("big.asm"), this.computer.files.get("small.asm"));
+    }
+
+    @Test
+    void scc_refusesWhatIsOutsideTheSmallerLanguage() {
+        this.computer.add(SigmaCommands.SUBSET_COMPILER);
+        this.computer.files.put("Watch.sg", """
+                using Standard.*;
+                namespace Tests;
+                class Watch : Script {
+                    public override void OnTick() { int[] n = new int[2]; foreach (int x in n) { } }
+                }
+                """);
+        assertTrue(this.errored("scc Watch.sg"));
+        assertFalse(this.computer.files.containsKey("Watch.asm"));
+    }
+
+    /** The oldest machines run the smaller language only, so the bigger one cannot be built for them. */
+    @Test
+    void sgsc_willNotBuildForTheArchitectureThatRunsSigmaOnly() {
+        this.computer.add(SigmaCommands.COMPILER);
+        this.computer.files.put("Monitor.sgs", SCRIPT);
+        assertTrue(this.run("sgsc Monitor.sgs --arch x86-16").contains("scc"));
+        assertFalse(this.computer.files.containsKey("Monitor.asm"));
+    }
+
+    @Test
+    void scc_buildsForTheArchitectureThatRunsSigmaOnly() {
+        this.computer.add(SigmaCommands.SUBSET_COMPILER);
+        this.computer.files.put("Watch.sg", SUBSET);
+        assertTrue(this.run("scc Watch.sg --arch x86-16").contains("wrote Watch.asm"));
     }
 
     @Test

@@ -132,9 +132,9 @@ public final class SigmaSemantics {
         return analyse(sources, bag, wholeProgram, tolerant, LanguageLevel.SIGMA_SHARP);
     }
 
-    private static Analysis analyse(final List<SourceFile> sources, final DiagnosticBag bag,
-                                    final boolean wholeProgram, final boolean tolerant,
-                                    final LanguageLevel level) {
+    static Analysis analyse(final List<SourceFile> sources, final DiagnosticBag bag,
+                            final boolean wholeProgram, final boolean tolerant,
+                            final LanguageLevel level) {
         final List<CompilationUnit> units = new ArrayList<>();
         for (final SourceFile source : sources) {
             bag.setFile(source.name());

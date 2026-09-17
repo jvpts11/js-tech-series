@@ -207,6 +207,15 @@ class SubsetLevelTest {
                 () -> "the message does not point at the one library: " + String.join("\n", result.lines()));
     }
 
+    /** Writing the name out in full walks past the refused using, so it is caught where the chain starts. */
+    @Test
+    void subset_cannotReachTheFullLibraryByWritingItsNameOutInFull() {
+        final SigmaSemantics.Result result = subset(
+                "class M { static void Main() { int n = System.Utils.Random.Next(4); } }");
+        assertTrue(result.diagnostics().stream().anyMatch(d -> "S3052".equals(d.code())),
+                () -> "it went through: " + String.join("\n", result.lines()));
+    }
+
     @Test
     void subset_saysWhatToWriteInstead() {
         final SigmaSemantics.Result result = subset(

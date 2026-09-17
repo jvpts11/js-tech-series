@@ -7,6 +7,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### Added
+- `scc`, the Sigma Compiler Collection, compiles a `.sg` program into the assembly a machine runs. It is a package
+  of its own, 4 MB of disk and 2 MB of memory, and the earliest machines can hold it: it is the whole toolchain
+  there, since what it writes is the assembly the machine already runs and there is no runtime to install beside
+  it. A Legacy machine or later can use it too, and a program built with it runs everywhere. The same program
+  compiled by `scc` and by `sgsc` gives the same listing, which is what makes Sigma a subset in fact.
+- `sgsc` now refuses to build for x86-16, naming `scc` instead. Those machines run the smaller language only, and
+  the way that stays true is at the compiler: a listing they can load can only have come from a source they could
+  have held.
 - Sigma has a library of its own, `Standard`, and it is the only one it can reach. Eight types with a handful of
   members each: `Console`, `File`, `Program`, `Math`, `Convert`, `Time`, `Computer` and `Script`. They are the same
   types the full language has, under a second namespace rather than copies of them, so a call written in Sigma

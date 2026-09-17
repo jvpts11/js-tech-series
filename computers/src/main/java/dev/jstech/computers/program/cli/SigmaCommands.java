@@ -9,6 +9,7 @@ package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.hardware.ArchitectureSpec;
 import dev.jstech.computers.hardware.Architectures;
+import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.sigma.SigmaCompiler;
 import dev.jstech.computers.sigma.Diagnostic;
 import dev.jstech.computers.sigma.SourceFile;
@@ -38,8 +39,17 @@ public final class SigmaCommands {
     /** The id of the runtime package. */
     public static final String RUNTIME = "jsc:sigma";
 
+    /**
+     * The id of the smaller language's compiler, which is a package of its own.
+     *
+     * <p>It is the toolchain the earliest machines can hold: a compiler and nothing else, since what it writes is
+     * the assembly the machine already runs and needs no runtime brought along beside it.
+     */
+    public static final String SUBSET_COMPILER = "jsc:scc";
+
     /** The extension a program is written in, and the one it is compiled to. */
     private static final String SOURCE = ".sgs";
+    private static final String SUBSET_SOURCE = ".sg";
     private static final String ASSEMBLY = ".asm";
 
     private SigmaCommands() {
@@ -47,7 +57,10 @@ public final class SigmaCommands {
 
     /** Every verb, for the shell to register. */
     public static List<ICliCommand> all() {
-        return List.of(new Compile(), new Run(), new Pack());
+        return List.of(
+                new Compile("sgsc", SOURCE, COMPILER, LanguageLevel.SIGMA_SHARP),
+                new Compile("scc", SUBSET_SOURCE, SUBSET_COMPILER, LanguageLevel.SIGMA),
+                new Run(), new Pack());
     }
 
     /** Whether that package is installed on the computer. */
@@ -60,27 +73,47 @@ public final class SigmaCommands {
         return false;
     }
 
-    /** Compiles one or more source files into one assembly listing. */
+    /**
+     * Compiles one or more source files into one assembly listing.
+     *
+     * <p>One command for both languages, because compiling is the same work: the language a source may be decides
+     * what the compiler accepts, never what it writes. A program the smaller language takes compiles to the very
+     * listing the bigger one would have written for it, which is what makes it a subset in fact and not in name.
+     */
     static final class Compile implements ICliCommand {
+
+        private final String verb;
+        private final String extension;
+        private final String packageId;
+        private final LanguageLevel level;
+
+        Compile(final String verb, final String extension, final String packageId, final LanguageLevel level) {
+            this.verb = verb;
+            this.extension = extension;
+            this.packageId = packageId;
+            this.level = level;
+        }
 
         @Override
         public String name() {
-            return "sgsc";
+            return this.verb;
         }
 
         @Override
         public String summary() {
-            return "compile a Σ# program into the assembly the runtime reads";
+            return "compile a " + (this.level.full() ? "Σ#" : "Σ")
+                    + " program into the assembly a machine runs";
         }
 
         @Override
         public String usage() {
-            return "<file" + SOURCE + "> [more" + SOURCE + " ...] [-o <out" + ASSEMBLY + ">] [--arch <architecture>]";
+            return "<file" + this.extension + "> [more" + this.extension + " ...] [-o <out" + ASSEMBLY
+                    + ">] [--arch <architecture>]";
         }
 
         @Override
         public boolean available(final ICliComputer computer) {
-            return installed(computer, COMPILER);
+            return installed(computer, this.packageId);
         }
 
         @Override
@@ -101,7 +134,7 @@ public final class SigmaCommands {
                 }
             }
             if (paths.isEmpty()) {
-                ctx.out().error("usage: sgsc " + this.usage());
+                ctx.out().error("usage: " + this.verb + " " + this.usage());
                 return;
             }
             /*
@@ -112,23 +145,34 @@ public final class SigmaCommands {
             if (arch != null) {
                 final Optional<ArchitectureSpec> asked = Architectures.find(arch);
                 if (asked.isEmpty()) {
-                    ctx.out().error("sgsc: no architecture is called '" + arch + "'; there is " + architectureNames());
+                    ctx.out().error(this.verb + ": no architecture is called '" + arch + "'; there is "
+                            + architectureNames());
                     return;
                 }
                 architecture = asked.get().id();
+            }
+            /*
+             * The oldest machines run the smaller language and nothing else, and the way that is kept true is
+             * here rather than at the machine: a listing they could load can only ever have been written from a
+             * source they could have held. Refused before anything is compiled, with the way to do it.
+             */
+            if (this.level.full() && Architectures.X86_16.id().equals(architecture)) {
+                ctx.out().error(this.verb + ": " + Architectures.X86_16.name()
+                        + " runs Σ only; write it in Σ and build it with scc");
+                return;
             }
 
             final List<SourceFile> sources = new ArrayList<>();
             for (final String path : paths) {
                 final ICliComputer.FsResult read = ctx.computer().readFile(path);
                 if (!read.ok()) {
-                    ctx.out().error("sgsc: " + read.message());
+                    ctx.out().error(this.verb + ": " + read.message());
                     return;
                 }
                 sources.add(new SourceFile(leaf(path), read.message()));
             }
 
-            final SigmaCompiler.Result built = SigmaCompiler.compile(sources, architecture);
+            final SigmaCompiler.Result built = SigmaCompiler.compile(sources, architecture, this.level);
             final List<Diagnostic> diagnostics = built.diagnostics();
             final String assembly = built.ok() ? built.assembly() : null;
             for (final Diagnostic diagnostic : diagnostics) {
@@ -140,17 +184,17 @@ public final class SigmaCommands {
             }
             if (assembly == null) {
                 final long errors = diagnostics.stream().filter(Diagnostic::isError).count();
-                ctx.out().error("sgsc: " + errors + (errors == 1 ? " error" : " errors")
+                ctx.out().error(this.verb + ": " + errors + (errors == 1 ? " error" : " errors")
                         + ", nothing was written");
                 return;
             }
             final String target = out != null ? out : compiled(paths.getFirst());
             final ICliComputer.FsResult written = ctx.computer().writeFile(target, assembly);
             if (!written.ok()) {
-                ctx.out().error("sgsc: " + written.message());
+                ctx.out().error(this.verb + ": " + written.message());
                 return;
             }
-            ctx.out().ok("sgsc: wrote " + target);
+            ctx.out().ok(this.verb + ": wrote " + target);
             // Compiling is not running, and the prompt is the place to say how the second is done.
             ctx.out().dim("run it with: sigma run " + target);
         }
@@ -165,7 +209,7 @@ public final class SigmaCommands {
         }
 
         /** The name a source file compiles to: the same name, with the assembly's extension. */
-        private static String compiled(final String path) {
+        static String compiled(final String path) {
             final int dot = path.lastIndexOf('.');
             final int slash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
             return dot > slash ? path.substring(0, dot) + ASSEMBLY : path + ASSEMBLY;

@@ -62,8 +62,20 @@ public final class SigmaCompiler {
      * it could have run on. Building for a newer one is a decision somebody makes, which is why it is asked for.
      */
     public static Result compile(final List<SourceFile> sources, final String architecture) {
+        return compile(sources, architecture, LanguageLevel.SIGMA_SHARP);
+    }
+
+    /**
+     * The same, holding the sources to as much of the language as {@code level} allows.
+     *
+     * <p>What comes out is the same either way. The smaller language is a subset, so a source it accepts means
+     * exactly what it means to the bigger one and is written out as exactly the same listing; the level decides
+     * what a source may be, never what it compiles to.
+     */
+    public static Result compile(final List<SourceFile> sources, final String architecture,
+                                 final LanguageLevel level) {
         final DiagnosticBag bag = new DiagnosticBag(sources.isEmpty() ? "" : sources.getFirst().name());
-        final SigmaSemantics.Analysis analysis = SigmaSemantics.analyse(sources, bag, true);
+        final SigmaSemantics.Analysis analysis = SigmaSemantics.analyse(sources, bag, true, false, level);
         if (bag.hasErrors()) {
             return new Result(null, bag.sorted(), bag.wasCapped());
         }

@@ -320,6 +320,13 @@ public final class OsBootstrap {
              */
             ProgramSpec.of(rl("sgsc"), "sgsc", "Σ# Compiler", false, ALL_PLATFORMS, 8, ProgramKind.APP, 2, HostScope.ANY)
                     .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.SIGMA_FOUNDATION).withRam(16),
+            /*
+             * The Sigma Compiler Collection, which is the whole toolchain of the earliest machines: it writes the
+             * assembly the machine already runs, so there is no runtime to install beside it. Small enough to sit
+             * on a Vintage disk, and useful long past that, since a program built with it runs everywhere.
+             */
+            ProgramSpec.of(rl("scc"), "scc", "Σ Compiler", false, ALL_PLATFORMS, 4, ProgramKind.APP, 1, HostScope.ANY)
+                    .withMinEra(VINTAGE).withEra(VINTAGE).withHouse(SoftwareHouse.SIGMA_FOUNDATION).withRam(2),
             ProgramSpec.of(rl("sigma"), "sigma", "Sigma Runtime", false, ALL_PLATFORMS, 12, ProgramKind.SERVICE, 2, HostScope.ANY)
                     .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.SIGMA_FOUNDATION).withRam(24),
             /*
