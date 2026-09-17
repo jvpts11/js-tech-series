@@ -1868,83 +1868,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
          * monitor from them (its plain screen-render hook skips container screens on purpose).
          */
         NeoForge.EVENT_BUS.post(new ContainerScreenEvent.Render.Background(this, g, mouseX, mouseY));
-        // Draw whatever the machine says its Σ# programs have open, opening and closing as it says.
-        if (!PENDING_UI.isEmpty()) {
-            for (final var payload : PENDING_UI) {
-                acceptProgramWindow(payload);
-            }
-            PENDING_UI.clear();
-        }
-        // Drain any cross-app open requests (e.g. Files asked to launch the Editor).
-        if (!PENDING_OPEN.isEmpty()) {
-            for (final String key : PENDING_OPEN) {
-                if (key.startsWith(OPEN_FILES_AT)) {
-                    // This PC asked for a drive or a folder to be opened in the explorer.
-                    if (allowOpen("Files")) {
-                        openApp("Files", new FilesApp(host, desktopId.getPath(),
-                                key.substring(OPEN_FILES_AT.length()), monitorPos));
-                    }
-                    continue;
-                }
-                if (key.startsWith(RUN_AT_TERMINAL)) {
-                    runAtTerminal(key.substring(RUN_AT_TERMINAL.length()));
-                    continue;
-                }
-                if (key.startsWith(OPEN_PROPS)) {
-                    // A desktop icon's Properties: the explorer on the desktop's folder shows the window.
-                    final String path = key.substring(OPEN_PROPS.length());
-                    if (allowOpen("Files")) {
-                        final FilesApp files = new FilesApp(host, desktopId.getPath(),
-                                FilesApp.desktopDirFor(desktopId.getPath()), monitorPos);
-                        files.showPropertiesFor(FsPaths.fileName(path));
-                        openApp("Files", files);
-                    }
-                    continue;
-                }
-                if (key.startsWith(TYPE_AT_TERMINAL)) {
-                    typeAtTerminal(List.of(key.substring(TYPE_AT_TERMINAL.length()).split("\n")));
-                    continue;
-                }
-                if (key.startsWith(OPEN_FILE)) {
-                    // A window asked for a file to be opened, in a program it named or in the default one.
-                    final String rest = key.substring(OPEN_FILE.length());
-                    final int split = rest.indexOf('\0');
-                    final String programId = rest.substring(0, split);
-                    final String path = rest.substring(split + 1);
-                    if (programId.isEmpty()) {
-                        openFile(path);
-                    } else {
-                        openIn(programId, path);
-                    }
-                    continue;
-                }
-                if (key.startsWith(CHOOSE_OPENER)) {
-                    chooseOpener(key.substring(CHOOSE_OPENER.length()));
-                    continue;
-                }
-                final IDesktopApp app = factoryFor(key);
-                if (app != null && allowOpen(key)) {
-                    openApp(key, app);
-                }
-            }
-            PENDING_OPEN.clear();
-        }
-        /*
-         * Drain any request to end a window (the Task Manager), newest first so ending a repeated program
-         * closes the one on top rather than the oldest copy of it.
-         */
-        if (!PENDING_CLOSE.isEmpty()) {
-            for (final String key : PENDING_CLOSE) {
-                for (int i = windows.size() - 1; i >= 0; i--) {
-                    final DesktopWindow w = windows.get(i);
-                    if (!w.dialog() && w.appKey().equals(key)) {
-                        closeWindow(w);
-                        break;
-                    }
-                }
-            }
-            PENDING_CLOSE.clear();
-        }
+        takePendingRequests();
         pushWindowsIfChanged();
         /*
          * Keep the inventory slots glued to the focused Network Interactor window this frame (per-frame, so a
@@ -2008,10 +1932,47 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         iconGrid.render(g, sh, lmx, lmy);
         g.pose().popPose();
 
+        renderWindows(g, lmx, lmy, partialTick, sw, sh);
+
+        final int tbY = sh - TASKBAR_H;
+        renderPanelLayer(g, tbY, sw, sh, lmx, lmy);
+        renderMenus(g, tbY, lmx, lmy, partialTick);
+        renderDragFeedback(g, sw, tbY, perCol);
+        renderBand(g);
+
+        g.disableScissor();
+        renderOverlays(g, sw, sh, lmx, lmy, partialTick);
+        g.pose().popPose(); // close the (ox, oy) desktop-origin translate
+
         /*
-         * Each window draws in a depth band of its own: an item is a model standing well in front of the pose
-         * it is drawn at, so windows sharing one depth painted their items over each other (see DesktopItems).
+         * The container pass posts its foreground event with the pose at the gui origin and the depth test off,
+         * so a listener draws over the finished screen without fighting the desktop's layered depth.
          */
+        RenderSystem.disableDepthTest();
+        g.pose().pushPose();
+        g.pose().translate(leftPos, topPos, 0);
+        NeoForge.EVENT_BUS.post(new ContainerScreenEvent.Render.Foreground(this, g, mouseX, mouseY));
+        g.pose().popPose();
+        RenderSystem.enableDepthTest();
+    }
+
+    /*
+     * The desktop paints its whole surface in the render() override above and does not call super.render(), so
+     * the container's background pass is unused, and the inventory items and cursor are drawn by render() instead.
+     */
+    @Override
+    protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
+    }
+
+    /**
+     * The open windows, back to front, and the real container items of whichever one carries the player's
+     * inventory.
+     *
+     * <p>Each window draws in a depth band of its own. An item is a model standing well in front of the pose
+     * it is drawn at, so windows sharing one depth painted their items over one another.
+     */
+    private void renderWindows(final GuiGraphics g, final int lmx, final int lmy, final float partialTick,
+                               final int sw, final int sh) {
         final DesktopWindow front = frontWindow();
         for (int i = 0; i < windows.size(); i++) {
             final DesktopWindow w = windows.get(i);
@@ -2024,7 +1985,6 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             w.render(g, font, skin, lmx, lmy, partialTick, sw, sh, bottomReserve(), workTop());
             g.pose().popPose();
         }
-
         /*
          * Real container-slot items for the focused Network Interactor window's inventory zone, over the
          * window the app already drew the slot backgrounds for.
@@ -2033,12 +1993,16 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         g.pose().translate(0, 0, DesktopZ.INVENTORY);
         renderInventoryItems(g, lmx, lmy, partialTick);
         g.pose().popPose();
+    }
 
+    /**
+     * The panel this desktop wears, and the three things that sit just above it: a tray balloon, the figures
+     * behind the notification area, and the popup listing one program's windows.
+     */
+    private void renderPanelLayer(final GuiGraphics g, final int tbY, final int sw, final int sh,
+                                  final int lmx, final int lmy) {
         g.pose().pushPose();
         g.pose().translate(0, 0, DesktopZ.TASKBAR);
-
-        final int tbY = sh - TASKBAR_H;
-        final String osp = desktopId.getPath();
         if (is(PanelStyle.FRAMES_11)) {
             // Frames 11 taskbar: dark bar, centered Start + app icons with an active indicator, clock right.
             framesPanels.renderModern(g, tbY, sw, lmx, lmy);
@@ -2049,11 +2013,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         } else if (linuxDesktop()) {
             renderLinuxPanel(g, tbY, sw, sh, lmx, lmy);
         } else {
-            framesPanels.renderClassic(g, tbY, sw, sh, lmx, lmy, osp);
+            framesPanels.renderClassic(g, tbY, sw, sh, lmx, lmy, desktopId.getPath());
         }
-        g.pose().popPose(); // close the TASKBAR layer
+        g.pose().popPose();
 
-        // A tray balloon sits above the panel and under the menus, so opening Start covers it.
+        // A tray balloon sits above the panel and under the menus, so opening the launcher covers it.
         if (balloon != null) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.TASKBAR + 10);
@@ -2074,72 +2038,86 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             taskPopup.render(g, tbY, sw, sh, lmx, lmy);
             g.pose().popPose();
         }
+    }
 
-        // Menus (Start + desktop context), above the taskbar.
-        if (startOpen || deskMenu.isOpen() || panelCtxOpen) {
-            g.pose().pushPose();
-            g.pose().translate(0, 0, DesktopZ.MENU);
-            if (startOpen) {
-                renderStartMenu(g, tbY);
-            }
-            if (panelCtxOpen) {
-                renderPanelContext(g, lmx, lmy);
-            }
-            if (deskMenu.isOpen()) {
-                deskMenu.render(g, new UiContext(skin, font, lmx, lmy, partialTick));
-            }
-            g.pose().popPose();
+    /** The three menus that share a height above the panel: the launcher, the panel's own, and the desktop's. */
+    private void renderMenus(final GuiGraphics g, final int tbY, final int lmx, final int lmy,
+                             final float partialTick) {
+        if (!startOpen && !deskMenu.isOpen() && !panelCtxOpen) {
+            return;
         }
-
-        // Icon drag feedback (drop-target outline + ghost), above the menus.
-        if (deskDragging && deskDragSlot >= 0) {
-            g.pose().pushPose();
-            g.pose().translate(0, 0, DesktopZ.DRAG);
-            /*
-             * While dragging an icon to a free spot (not onto a folder), outline the grid cell it would snap to.
-             * Suppressed over a folder (the green folder outline wins) or off the wallpaper, where the drop is a no-op.
-             */
-            if (iconGrid.slotAt(deskDragX, deskDragY, perCol) < 0
-                    && deskDragX < sw && deskDragY < tbY && overWallpaper(deskDragX, deskDragY)) {
-                iconGrid.drawDropCell(g, iconGrid.cellAt(deskDragX, deskDragY, perCol));
-            }
-            /*
-             * Drag ghost: a label trailing the cursor for the icon being moved.
-             * (the rubber band is drawn below, outside the icon-drag branch)
-             */
-            if (deskDragSlot < launchers.size() + desktopItems.size()) {
-                final String label = deskDragSlot < launchers.size()
-                        ? launchers.get(deskDragSlot).label()
-                        : DesktopIcons.baseName(desktopItems.get(deskDragSlot - launchers.size()).path());
-                final int gx = (int) deskDragX + 6;
-                final int gy = (int) deskDragY + 2;
-                g.fill(gx, gy, gx + font.width(label) + 6, gy + 12, 0xD0303848);
-                g.drawString(font, label, gx + 3, gy + 2, 0xFFFFFFFF, false);
-            }
-            g.pose().popPose();
+        g.pose().pushPose();
+        g.pose().translate(0, 0, DesktopZ.MENU);
+        if (startOpen) {
+            renderStartMenu(g, tbY);
         }
+        if (panelCtxOpen) {
+            renderPanelContext(g, lmx, lmy);
+        }
+        if (deskMenu.isOpen()) {
+            deskMenu.render(g, new UiContext(skin, font, lmx, lmy, partialTick));
+        }
+        g.pose().popPose();
+    }
 
+    /** What an icon being dragged shows: the cell it would land on, and its name trailing the cursor. */
+    private void renderDragFeedback(final GuiGraphics g, final int sw, final int tbY, final int perCol) {
+        if (!deskDragging || deskDragSlot < 0) {
+            return;
+        }
+        g.pose().pushPose();
+        g.pose().translate(0, 0, DesktopZ.DRAG);
         /*
-         * The rubber band, over the wallpaper and its icons: a translucent fill with a solid outline,
-         * the way every desktop draws one.
+         * While dragging an icon to a free spot (not onto a folder), outline the grid cell it would snap to.
+         * Suppressed over a folder (the green folder outline wins) or off the wallpaper, where the drop is a
+         * no-op.
          */
-        if (bandActive) {
-            final int[] r = bandRect();
-            g.pose().pushPose();
-            g.pose().translate(0, 0, DesktopZ.ICONS + 1);
-            g.fill(r[0], r[1], r[0] + r[2], r[1] + r[3], 0x334C84F0);
-            g.fill(r[0], r[1], r[0] + r[2], r[1] + 1, 0xCC4C84F0);
-            g.fill(r[0], r[1] + r[3] - 1, r[0] + r[2], r[1] + r[3], 0xCC4C84F0);
-            g.fill(r[0], r[1], r[0] + 1, r[1] + r[3], 0xCC4C84F0);
-            g.fill(r[0] + r[2] - 1, r[1], r[0] + r[2], r[1] + r[3], 0xCC4C84F0);
-            g.pose().popPose();
+        if (iconGrid.slotAt(deskDragX, deskDragY, perCol) < 0
+                && deskDragX < sw && deskDragY < tbY && overWallpaper(deskDragX, deskDragY)) {
+            iconGrid.drawDropCell(g, iconGrid.cellAt(deskDragX, deskDragY, perCol));
         }
+        if (deskDragSlot < launchers.size() + desktopItems.size()) {
+            final String label = deskDragSlot < launchers.size()
+                    ? launchers.get(deskDragSlot).label()
+                    : DesktopIcons.baseName(desktopItems.get(deskDragSlot - launchers.size()).path());
+            final int gx = (int) deskDragX + 6;
+            final int gy = (int) deskDragY + 2;
+            g.fill(gx, gy, gx + font.width(label) + 6, gy + 12, 0xD0303848);
+            g.drawString(font, label, gx + 3, gy + 2, 0xFFFFFFFF, false);
+        }
+        g.pose().popPose();
+    }
 
-        g.disableScissor();
+    /**
+     * The rubber band, over the wallpaper and its icons: a translucent fill with a solid outline, the way
+     * every desktop draws one.
+     */
+    private void renderBand(final GuiGraphics g) {
+        if (!bandActive) {
+            return;
+        }
+        final int[] r = bandRect();
+        g.pose().pushPose();
+        g.pose().translate(0, 0, DesktopZ.ICONS + 1);
+        g.fill(r[0], r[1], r[0] + r[2], r[1] + r[3], 0x334C84F0);
+        g.fill(r[0], r[1], r[0] + r[2], r[1] + 1, 0xCC4C84F0);
+        g.fill(r[0], r[1] + r[3] - 1, r[0] + r[2], r[1] + r[3], 0xCC4C84F0);
+        g.fill(r[0], r[1], r[0] + 1, r[1] + r[3], 0xCC4C84F0);
+        g.fill(r[0] + r[2] - 1, r[1], r[0] + r[2], r[1] + r[3], 0xCC4C84F0);
+        g.pose().popPose();
+    }
+
+    /**
+     * Everything that sits over the finished desktop, in the order it stacks: hover tooltips, the stack on
+     * the cursor, the brightness dim, a program's own modal dialog, a dialog over the whole desktop, the
+     * power dialog, and a program's menu from its panel entry.
+     */
+    private void renderOverlays(final GuiGraphics g, final int sw, final int sh, final int lmx, final int lmy,
+                                final float partialTick) {
         /*
-         * Hover tooltips: drawn at the base pose because the vanilla tooltip renderer translates +400 itself,
-         * landing them at DesktopZ.TOOLTIP, above every window and the taskbar. The front window's app draws
-         * its own hover hints (network/storage cells); the inventory zone defers to the real slot's item tooltip.
+         * Hover tooltips draw at the base pose because the vanilla tooltip renderer translates +400 itself,
+         * landing them at DesktopZ.TOOLTIP, above every window and the panel. The front window's app draws
+         * its own hover hints; the inventory zone defers to the real slot's item tooltip.
          */
         final DesktopWindow tooltipWin = frontWindow();
         if (tooltipWin != null) {
@@ -2155,7 +2133,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         renderCarried(g, lmx, lmy);
         g.pose().popPose();
 
-        // Brightness: a per-computer dim over the whole surface (100 = none, 0 = deeply dimmed), below any popup.
+        // Brightness: a per-computer dim over the whole surface (100 = none, 0 = deeply dimmed).
         if (desktopBrightness < 100) {
             final int alpha = Math.min(210, (100 - desktopBrightness) * 21 / 10);
             g.pose().pushPose();
@@ -2165,8 +2143,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         }
 
         /*
-         * A focused app's modal dialog renders here, above every item icon and window, so the dialog and its
-         * own dim cover and darken the icons instead of them piercing through at their blit depth.
+         * A focused app's modal dialog draws above every item icon and window, so the dialog and its own dim
+         * cover and darken the icons instead of them piercing through at their blit depth.
          */
         final DesktopWindow modalWin = frontWindow();
         if (modalWin != null && modalWin.app().modalActive()) {
@@ -2178,7 +2156,6 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             g.pose().popPose();
         }
 
-        // A modal dialog sits over the whole desktop: dim the surface, then draw it on top.
         if (popup != null && !popup.isOpen()) {
             // Closed by its own choice rather than by a click the desktop saw, as Open with can be.
             popup = null;
@@ -2203,26 +2180,103 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             taskMenu.render(g, new UiContext(skin, font, lmx, lmy, partialTick));
             g.pose().popPose();
         }
-        g.pose().popPose(); // close the (ox, oy) desktop-origin translate
-
-        /*
-         * The container pass posts its foreground event with the pose at the gui origin and the depth test off,
-         * so a listener draws over the finished screen without fighting the desktop's layered depth.
-         */
-        RenderSystem.disableDepthTest();
-        g.pose().pushPose();
-        g.pose().translate(leftPos, topPos, 0);
-        NeoForge.EVENT_BUS.post(new ContainerScreenEvent.Render.Foreground(this, g, mouseX, mouseY));
-        g.pose().popPose();
-        RenderSystem.enableDepthTest();
     }
 
-    /*
-     * The desktop paints its whole surface in the render() override above and does not call super.render(), so
-     * the container's background pass is unused, and the inventory items and cursor are drawn by render() instead.
+    /**
+     * Carries out what other screens and programs have asked of this desktop since the last frame: windows a
+     * machine's own programs have opened or closed, files to open, things to type at the prompt, and windows
+     * the Task Manager has ended.
+     *
+     * <p>They arrive as requests rather than as calls because whoever asks is usually not on the render
+     * thread and often is not a screen at all. Draining them here, once at the top of a frame, is what keeps
+     * a window from being opened halfway through the frame that draws it.
      */
-    @Override
-    protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
+    private void takePendingRequests() {
+        // Draw whatever the machine says its programs have open, opening and closing as it says.
+        if (!PENDING_UI.isEmpty()) {
+            for (final var payload : PENDING_UI) {
+                acceptProgramWindow(payload);
+            }
+            PENDING_UI.clear();
+        }
+        if (!PENDING_OPEN.isEmpty()) {
+            for (final String key : PENDING_OPEN) {
+                runOpenRequest(key);
+            }
+            PENDING_OPEN.clear();
+        }
+        /*
+         * A request to end a window (the Task Manager) closes the newest of that program, so ending a
+         * repeated program closes the one on top rather than the oldest copy of it.
+         */
+        if (!PENDING_CLOSE.isEmpty()) {
+            for (final String key : PENDING_CLOSE) {
+                for (int i = windows.size() - 1; i >= 0; i--) {
+                    final DesktopWindow w = windows.get(i);
+                    if (!w.dialog() && w.appKey().equals(key)) {
+                        closeWindow(w);
+                        break;
+                    }
+                }
+            }
+            PENDING_CLOSE.clear();
+        }
+    }
+
+    /**
+     * One request to open something. Most are a program's name, but a few carry what to open it on: a folder
+     * for the explorer, a file with or without the program to open it in, a line to run or to type at the
+     * prompt, or a file whose Properties to show.
+     */
+    private void runOpenRequest(final String key) {
+        if (key.startsWith(OPEN_FILES_AT)) {
+            // This PC asked for a drive or a folder to be opened in the explorer.
+            if (allowOpen("Files")) {
+                openApp("Files", new FilesApp(host, desktopId.getPath(),
+                        key.substring(OPEN_FILES_AT.length()), monitorPos));
+            }
+            return;
+        }
+        if (key.startsWith(RUN_AT_TERMINAL)) {
+            runAtTerminal(key.substring(RUN_AT_TERMINAL.length()));
+            return;
+        }
+        if (key.startsWith(OPEN_PROPS)) {
+            // A desktop icon's Properties: the explorer on the desktop's folder shows the window.
+            final String path = key.substring(OPEN_PROPS.length());
+            if (allowOpen("Files")) {
+                final FilesApp files = new FilesApp(host, desktopId.getPath(),
+                        FilesApp.desktopDirFor(desktopId.getPath()), monitorPos);
+                files.showPropertiesFor(FsPaths.fileName(path));
+                openApp("Files", files);
+            }
+            return;
+        }
+        if (key.startsWith(TYPE_AT_TERMINAL)) {
+            typeAtTerminal(List.of(key.substring(TYPE_AT_TERMINAL.length()).split("\n")));
+            return;
+        }
+        if (key.startsWith(OPEN_FILE)) {
+            // A window asked for a file to be opened, in a program it named or in the default one.
+            final String rest = key.substring(OPEN_FILE.length());
+            final int split = rest.indexOf('\0');
+            final String programId = rest.substring(0, split);
+            final String path = rest.substring(split + 1);
+            if (programId.isEmpty()) {
+                openFile(path);
+            } else {
+                openIn(programId, path);
+            }
+            return;
+        }
+        if (key.startsWith(CHOOSE_OPENER)) {
+            chooseOpener(key.substring(CHOOSE_OPENER.length()));
+            return;
+        }
+        final IDesktopApp app = factoryFor(key);
+        if (app != null && allowOpen(key)) {
+            openApp(key, app);
+        }
     }
 
     /**
