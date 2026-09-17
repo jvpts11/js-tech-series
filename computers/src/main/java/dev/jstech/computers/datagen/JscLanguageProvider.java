@@ -235,6 +235,10 @@ public class JscLanguageProvider extends LanguageProvider {
         add("program.jsc.screenfetch.desc", "Prints the system's identity, with its distribution's logo.");
         add("program.jsc.sgsc.desc",
                 "Compiles a Σ# program into the assembly the runtime reads.");
+        add("program.jsc.scc.desc",
+                "Compiles a Σ program into the assembly a machine runs. Small enough for the oldest of them, "
+                        + "and the whole toolchain there, since nothing else has to be installed to run what "
+                        + "it writes.");
         add("program.jsc.sigma.desc",
                 "Runs compiled Σ# programs, and brings the 'sigma' command to the prompt.");
         add("program.jsc.kde_plasma.desc", "The KDE Plasma desktop environment.");

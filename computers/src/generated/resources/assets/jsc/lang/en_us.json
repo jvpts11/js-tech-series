@@ -260,6 +260,8 @@
   "program.jsc.predictive_cache.desc": "Keeps this bay's most-wanted items staged in memory, cutting read latency by 15%. Stacks with a Cache Card.",
   "program.jsc.remote_control": "Remote Control",
   "program.jsc.remote_control.desc": "Take over another machine on the network and use it on this screen.",
+  "program.jsc.scc": "Σ Compiler",
+  "program.jsc.scc.desc": "Compiles a Σ program into the assembly a machine runs. Small enough for the oldest of them, and the whole toolchain there, since nothing else has to be installed to run what it writes.",
   "program.jsc.screenfetch": "screenfetch",
   "program.jsc.screenfetch.desc": "Prints the system's identity, with its distribution's logo.",
   "program.jsc.settings": "Settings",
