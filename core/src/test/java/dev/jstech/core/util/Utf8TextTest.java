@@ -98,4 +98,18 @@ class Utf8TextTest {
     void clamp_givesNothingBackForTextThatIsNotCharacters() {
         assertEquals("", Utf8Text.clamp("a\ud835b", 2));
     }
+
+    @Test
+    void field_tidiesAndCutsWhatSomebodyTyped() {
+        assertEquals("a name", Utf8Text.field("  a name  ", 64));
+        assertEquals("", Utf8Text.field(null, 64));
+        assertEquals("", Utf8Text.field("   ", 64));
+        assertEquals("abc", Utf8Text.field(" abcdef ", 3));
+    }
+
+    /* The trimming happens first, so a name that only looks too long because of its spaces still fits. */
+    @Test
+    void field_trimsBeforeItCuts() {
+        assertEquals("abcd", Utf8Text.field("   abcd   ", 4));
+    }
 }

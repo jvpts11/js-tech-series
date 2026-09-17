@@ -11,6 +11,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.util.Sizes;
+import dev.jstech.core.util.Utf8Text;
 import java.util.ArrayList;
 import java.util.function.Function;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -63,13 +64,8 @@ public record MultiStagePattern(List<Stage> stages, String name, String note) {
 
     public MultiStagePattern {
         stages = List.copyOf(stages);
-        name = clamp(name, CraftingPattern.MAX_NAME);
-        note = clamp(note, CraftingPattern.MAX_NOTE);
-    }
-
-    private static String clamp(final String s, final int max) {
-        final String value = s == null ? "" : s.trim();
-        return value.length() <= max ? value : value.substring(0, max);
+        name = Utf8Text.field(name, CraftingPattern.MAX_NAME);
+        note = Utf8Text.field(note, CraftingPattern.MAX_NOTE);
     }
 
     public static final Codec<MultiStagePattern> CODEC = RecordCodecBuilder.create(i -> i.group(

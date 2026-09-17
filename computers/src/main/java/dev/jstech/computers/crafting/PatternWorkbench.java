@@ -15,6 +15,7 @@ import dev.jstech.computers.storage.ChemicalBridges;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.persistence.SavedValue;
+import dev.jstech.core.util.Utf8Text;
 import dev.jstech.core.id.StableIds;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -222,8 +223,8 @@ public final class PatternWorkbench {
     }
 
     public void setBenchName(final String name, final String note) {
-        benchName = clamp(name, CraftingPattern.MAX_NAME);
-        benchNote = clamp(note, CraftingPattern.MAX_NOTE);
+        benchName = Utf8Text.field(name, CraftingPattern.MAX_NAME);
+        benchNote = Utf8Text.field(note, CraftingPattern.MAX_NOTE);
     }
 
     public void clearBench() {
@@ -348,8 +349,8 @@ public final class PatternWorkbench {
     }
 
     public void setProcName(final String name, final String note) {
-        procName = clamp(name, CraftingPattern.MAX_NAME);
-        procNote = clamp(note, CraftingPattern.MAX_NOTE);
+        procName = Utf8Text.field(name, CraftingPattern.MAX_NAME);
+        procNote = Utf8Text.field(note, CraftingPattern.MAX_NOTE);
     }
 
     /**
@@ -462,8 +463,8 @@ public final class PatternWorkbench {
     }
 
     public void setPipelineName(final String name, final String note) {
-        pipelineName = clamp(name, CraftingPattern.MAX_NAME);
-        pipelineNote = clamp(note, CraftingPattern.MAX_NOTE);
+        pipelineName = Utf8Text.field(name, CraftingPattern.MAX_NAME);
+        pipelineNote = Utf8Text.field(note, CraftingPattern.MAX_NOTE);
     }
 
     /** Appends the bench draft as a stage and clears the bench so the next stage starts fresh. */
@@ -688,8 +689,4 @@ public final class PatternWorkbench {
         }
     }
 
-    private static String clamp(final String s, final int max) {
-        final String value = s == null ? "" : s.trim();
-        return value.length() <= max ? value : value.substring(0, max);
-    }
 }

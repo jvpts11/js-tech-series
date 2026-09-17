@@ -31,6 +31,17 @@ public final class Utf8Text {
     private Utf8Text() {
     }
 
+    /**
+     * A name or a note somebody typed, tidied and cut to fit: nothing at all reads as empty, the spaces at
+     * either end go, and what is left is cut to the room there is.
+     *
+     * <p>This is the shape every text field taken from a player wants, and it used to be written out four
+     * times over, each one counting characters where the limit is in bytes.
+     */
+    public static String field(final String text, final int limit) {
+        return clamp(text == null ? "" : text.trim(), limit);
+    }
+
     /** How many bytes the text takes where it is written. */
     public static int byteLength(final String text) {
         return text == null ? 0 : text.getBytes(StandardCharsets.UTF_8).length;
