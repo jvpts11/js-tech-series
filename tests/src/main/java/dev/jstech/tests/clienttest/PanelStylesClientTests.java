@@ -31,11 +31,10 @@ import net.minecraft.resources.ResourceLocation;
  * sits is what this asserts, because that is the difference a reading can see; whether the bar drew a task
  * list is a question for the picture.
  *
- * <p>NOT COVERED, and worth naming rather than pretending otherwise: the period panel, the one a Legacy or
- * Vintage machine wears, built out of the skin's own raised studs and sunken wells instead of a flat band.
- * Reaching it needs a machine of that era, and the client test kit can only build a Standard one today.
- * Writing a case here that installs a modern desktop and calls it the period one would be worse than having
- * no case at all.
+ * <p>The last of them is the period panel, the one an earlier machine wears: raised studs and sunken wells
+ * taken from the skin's own relief instead of a flat band, the way panels looked before anybody flattened
+ * them. It is the one panel that does not follow from the system installed but from the machine underneath,
+ * so reaching it means building a machine of that era rather than installing something.
  */
 public final class PanelStylesClientTests {
 
@@ -52,9 +51,11 @@ public final class PanelStylesClientTests {
 
     /**
      * What each desktop calls the calculator. The launcher lists programs by its own desktop's names, and
-     * only KDE renames this one: GNOME, Cinnamon and every Frames edition all call it Calculator.
+     * KDE is the only one that renames this one: GNOME, Cinnamon and every Frames edition call it
+     * Calculator, while KDE calls it KCalc.
      */
     private static final String CALCULATOR = "Calculator";
+    private static final String KCALC = "KCalc";
 
     private static ResourceLocation jsc(final String path) {
         return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, path);
@@ -66,12 +67,16 @@ public final class PanelStylesClientTests {
 
     /**
      * A machine at its desktop: {@code os} installed, and {@code desktopPackage} on top of it when the
-     * system is a Linux that takes one.
+     * system is a Linux that takes one. {@code period} builds a Legacy-era machine instead of a current
+     * one, which is what decides whether the desktop wears period chrome.
      */
     private static ClientTestContext booted(final ClientTestContext ctx, final String os,
-                                            final String desktopPackage, final String calculator) {
+                                            final String desktopPackage, final String calculator,
+                                            final boolean period) {
         return ctx.thenBuild(0, world -> {
-                    final CraftingComputerBlockEntity computer = world.placeRunningCraftingComputer(COMPUTER);
+                    final CraftingComputerBlockEntity computer = period
+                            ? world.placeRunningLegacyCraftingComputer(COMPUTER)
+                            : world.placeRunningCraftingComputer(COMPUTER);
                     computer.installOs(jsc(os));
                     if (desktopPackage != null) {
                         computer.console().install(desktopPackage);
@@ -87,7 +92,7 @@ public final class PanelStylesClientTests {
 
     @ClientTest(timeoutTicks = 2400)
     public static void cinnamon_listsAnOpenProgramAndOpensItsMenuFromThePanel(final ClientTestContext ctx) {
-        booted(ctx, "ubuntu", "jsc:cinnamon", CALCULATOR)
+        booted(ctx, "ubuntu", "jsc:cinnamon", CALCULATOR, false)
                 .then(0, () -> DesktopScreen.requestOpen(CALCULATOR))
                 .thenWaitUntil(() -> desktop(ctx).windowFor(CALCULATOR) != null, SCREEN_WAIT, "the Calculator window")
                 .then(2, () -> ctx.assertTrue(desktop(ctx).taskEntryLabels().contains(CALCULATOR),
@@ -101,7 +106,7 @@ public final class PanelStylesClientTests {
 
     @ClientTest(timeoutTicks = 2400)
     public static void gnome_putsItsBarOnTopAndListsNoProgramsOnIt(final ClientTestContext ctx) {
-        booted(ctx, "ubuntu", "jsc:gnome", CALCULATOR)
+        booted(ctx, "ubuntu", "jsc:gnome", CALCULATOR, false)
                 .then(0, () -> DesktopScreen.requestOpen(CALCULATOR))
                 .thenWaitUntil(() -> desktop(ctx).windowFor(CALCULATOR) != null, SCREEN_WAIT, "the Calculator window")
                 /*
@@ -126,7 +131,7 @@ public final class PanelStylesClientTests {
 
     @ClientTest(timeoutTicks = 2400)
     public static void frames95_listsAnOpenProgramOnItsClassicBar(final ClientTestContext ctx) {
-        booted(ctx, "frames_95", null, CALCULATOR)
+        booted(ctx, "frames_95", null, CALCULATOR, false)
                 .then(0, () -> DesktopScreen.requestOpen(CALCULATOR))
                 .thenWaitUntil(() -> desktop(ctx).windowFor(CALCULATOR) != null, SCREEN_WAIT, "the Calculator")
                 .then(2, () -> ctx.assertTrue(desktop(ctx).taskEntryLabels().contains(CALCULATOR),
@@ -136,5 +141,24 @@ public final class PanelStylesClientTests {
                 .thenAssert(2, () -> desktop(ctx).isStartOpen(),
                         "the classic Start menu opens from its button")
                 .thenScreenshot(2, "frames95-start");
+    }
+
+    /**
+     * The period panel, on a Legacy machine wearing KDE. The same desktop on a current machine draws the
+     * flat band the other Linux tests show; here it is built out of the skin's own relief instead, which
+     * is what makes this the one panel that follows from the hardware rather than from the system.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void period_drawsItsPanelOnALegacyMachine(final ClientTestContext ctx) {
+        booted(ctx, "ubuntu", "jsc:kde_plasma", KCALC, true)
+                .then(0, () -> DesktopScreen.requestOpen(KCALC))
+                .thenWaitUntil(() -> desktop(ctx).windowFor(KCALC) != null, SCREEN_WAIT, "the KCalc window")
+                .then(2, () -> ctx.assertTrue(desktop(ctx).taskEntryLabels().contains(KCALC),
+                        "the period panel lists the open program; got " + desktop(ctx).taskEntryLabels()))
+                .thenScreenshot(2, "period-panel")
+                .then(SETTLE, () -> ctx.click(desktop(ctx).startButtonX(), desktop(ctx).startButtonY()))
+                .thenAssert(2, () -> desktop(ctx).isStartOpen(),
+                        "the period launcher opens from its raised stud")
+                .thenScreenshot(2, "period-menu");
     }
 }
