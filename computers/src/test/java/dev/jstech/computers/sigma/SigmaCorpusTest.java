@@ -38,7 +38,8 @@ import org.junit.jupiter.api.Test;
 class SigmaCorpusTest {
 
     /** The programs of the corpus, kept under {@code sigma/corpus} as source and as the listing each compiles to. */
-    private static final List<String> PROGRAMS = List.of("Library", "Programs", "Machine", "Network", "Gateway", "Ui");
+    private static final List<String> PROGRAMS =
+            List.of("Library", "Programs", "Machine", "Network", "Gateway", "Ui", "Steps");
 
     /**
      * The types the compiler declares as the language's own core, which the corpus is not about.

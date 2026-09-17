@@ -5,7 +5,7 @@
  *
  * This file is part of J's Computers.
  */
-package dev.jstech.computers.sigma.emit;
+package dev.jstech.computers.sigma.lower;
 
 import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.sem.IBinding;
@@ -17,11 +17,12 @@ import dev.jstech.computers.sigma.sem.IMemberSymbol;
  * <p>There are only so many of those in the language, and every way of writing to one reads the same list:
  * plain assignment, assignment that combines, and one more or one less. Each used to work the list out again
  * for itself, in its own order, which is how the three came to disagree about how many times the place gets
- * named. Written down once here, they cannot.
+ * named. Worked out once, here, they cannot.
  *
  * <p>This is only what a place IS. What the assembly says to reach one belongs to whoever is writing it, which
  * keeps the two apart: a place has no opinion about stacks, and the stack has no opinion about how the player
- * wrote the place down.
+ * wrote the place down. A local names the variable and not a slot, because which slot that turns out to be is
+ * the writing stage's business.
  *
  * <p>The one distinction that matters to whoever emits is whether reaching the place leaves something on the
  * stack underneath the value. A local, a captured variable and a static field are reached from nothing, so the
@@ -33,8 +34,8 @@ public sealed interface Place {
     /** Whether reaching this place leaves what it belongs to on the stack, under the value. */
     boolean overSomething();
 
-    /** A local or a parameter: a numbered slot of the method's own. */
-    record Local(int slot) implements Place {
+    /** A local or a parameter, which the method keeps in a slot of its own. */
+    record Local(IBinding.Variable variable) implements Place {
 
         @Override
         public boolean overSomething() {

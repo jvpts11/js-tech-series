@@ -1,0 +1,108 @@
+using System.*;
+using System.Collections.*;
+namespace Corpus;
+class Counter {
+    public int Value;
+    public long Big;
+    public float Small;
+    public double Wide;
+    public static int Shared;
+}
+class StepsCorpus {
+    static int Total;
+
+    static void Main() {
+        int local = 0;
+        local++;
+        local--;
+        ++local;
+        --local;
+        int before = local++;
+        int after = ++local;
+        int down = local--;
+        int up = --local;
+        Console.PrintLine("" + before + after + down + up);
+
+        long big = 0;
+        float small = 0;
+        double wide = 0;
+        big++;
+        small++;
+        wide--;
+        Console.PrintLine("" + big + small + wide);
+
+        Total++;
+        --Total;
+        int shared = Total++;
+        Counter.Shared++;
+        int other = ++Counter.Shared;
+        Console.PrintLine("" + shared + other);
+
+        Counter counter = new Counter();
+        counter.Value++;
+        --counter.Value;
+        int held = counter.Value++;
+        int heldUp = ++counter.Value;
+        counter.Big++;
+        counter.Small--;
+        counter.Wide++;
+        Console.PrintLine("" + held + heldUp + counter.Value + counter.Big);
+
+        int[] numbers = new int[4];
+        numbers[0]++;
+        --numbers[1];
+        int inside = numbers[2]++;
+        int insideUp = ++numbers[3];
+        Console.PrintLine("" + inside + insideUp + numbers[0]);
+
+        List<int> list = new List<int>();
+        list.Add(1);
+        list[0]++;
+        int fromList = list[0]--;
+        Console.PrintLine("" + fromList + list[0]);
+
+        Map<string, int> map = new Map<string, int>();
+        map.Put("a", 1);
+        map["a"]++;
+        int fromMap = ++map["a"];
+        Console.PrintLine("" + fromMap);
+
+        int kept = 0;
+        Action count = () => {
+            kept++;
+            int was = kept++;
+            int now = ++kept;
+            kept--;
+            Console.PrintLine("" + was + now);
+        };
+        count();
+        Console.PrintLine("" + kept);
+
+        int combined = 1;
+        combined += 2;
+        combined -= 1;
+        combined *= 3;
+        combined /= 2;
+        combined %= 4;
+        combined &= 6;
+        combined |= 1;
+        combined ^= 3;
+        combined <<= 2;
+        combined >>= 1;
+        Console.PrintLine("" + combined);
+
+        string text = "a";
+        text += "b";
+        text += combined;
+        Console.PrintLine(text);
+
+        counter.Value += 5;
+        Counter.Shared += 2;
+        numbers[0] += 3;
+        list[0] += 4;
+        int answered = counter.Value += 1;
+        int alsoAnswered = numbers[0] += 1;
+        int plain = local = 7;
+        Console.PrintLine("" + answered + alsoAnswered + plain);
+    }
+}

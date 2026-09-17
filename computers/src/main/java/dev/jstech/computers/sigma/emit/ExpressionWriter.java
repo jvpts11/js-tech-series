@@ -11,6 +11,8 @@ import dev.jstech.computers.sigma.SigmaError;
 import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.ast.Operator;
 import dev.jstech.computers.sigma.ast.TypeRef;
+import dev.jstech.computers.sigma.lower.IrWrite;
+import dev.jstech.computers.sigma.lower.Place;
 import dev.jstech.computers.sigma.sem.IBinding;
 import dev.jstech.computers.sigma.sem.IMemberSymbol;
 import dev.jstech.computers.sigma.sem.ITypeSymbol;
@@ -144,26 +146,64 @@ final class ExpressionWriter {
             this.subscribe(expression, event);
             return;
         }
-        final Place place = this.placeOf(expression.target());
-        if (place == null) {
+        final IrWrite written = this.emitter.lowered.writeOf(expression);
+        if (written == null) {
             return; // not somewhere a value can be put, which has already been complained about
         }
-        final ITypeSymbol target = this.emitter.model.typeOf(expression.target());
-        final Element kept = this.prepare(place);
-        if (expression.operator() != Operator.ASSIGN) {
-            this.loadOver(place, kept);
-        }
-        this.combine(expression, target);
+        this.write(written, leavesValue);
+    }
+
+    /**
+     * Writes a value into a place: the one shape three of them were reduced to.
+     *
+     * <p>Which place, which value and which answer were all settled before anything got here. What is decided
+     * here is only how the stack has to be arranged for it, and that turns on two things: whether reaching the
+     * place leaves what it belongs to underneath, and whether the answer is the value put there or the value
+     * that was there.
+     *
+     * <p>An assignment answers with what it put there, which a slot can take on the way in with a duplicate,
+     * since nothing of it is on the stack to bury; everywhere else it is read back afterwards. One more or one
+     * less answers with the value on one side of the change, which is taken with a duplicate as it goes past,
+     * kept in a place of its own where the duplicate would be buried.
+     */
+    private void write(final IrWrite written, final boolean answerWanted) {
+        final Place place = written.place();
         /*
-         * A slot is the one place whose answer can be taken on the way in, since nothing of it is on the
-         * stack to be buried by the duplicate. Everywhere else the answer is read back afterwards.
+         * A local's slot is settled first, so that the number it gets is the one it would have had when the
+         * place was worked out rather than one taken by something written in between.
          */
-        if (leavesValue && place instanceof Place.Local) {
-            this.body.emit(Opcode.DUP);
+        if (place instanceof Place.Local local) {
+            this.body.slot(local.variable());
         }
-        this.store(place, kept);
-        if (leavesValue && !(place instanceof Place.Local)) {
-            this.reload(place);
+        if (written.answer() == IrWrite.Answer.WRITTEN) {
+            final Element kept = this.prepare(place);
+            if (written.operator() != Operator.ASSIGN) {
+                this.loadOver(place, kept);
+            }
+            this.combine(written);
+            if (answerWanted && place instanceof Place.Local) {
+                this.body.emit(Opcode.DUP);
+            }
+            this.store(place, kept);
+            if (answerWanted && !(place instanceof Place.Local)) {
+                this.reload(place);
+            }
+            return;
+        }
+        if (place instanceof Place.Captured captured) {
+            this.stepThroughAnObject(written, captured);
+            return;
+        }
+        final int kept = place.overSomething() ? this.body.hidden() : -1;
+        final Element inside = this.prepare(place);
+        this.loadOver(place, inside);
+        this.answer(written.answer() == IrWrite.Answer.BEFORE, kept);
+        this.value(written.value(), null);
+        this.body.emit(arithmetic(written.operator()));
+        this.answer(written.answer() == IrWrite.Answer.AFTER, kept);
+        this.store(place, inside);
+        if (kept >= 0) {
+            this.body.emit(Opcode.LDLOC, new IOperand.Slot(kept));
         }
     }
 
@@ -276,27 +316,6 @@ final class ExpressionWriter {
      * <p>Worked out once, here, and then read by everything that writes: plain assignment, assignment that
      * combines, and one more or one less. Each of the three used to walk this list for itself.
      */
-    private Place placeOf(final IExpr target) {
-        final IBinding binding = this.emitter.model.bindingOf(target);
-        if (binding instanceof IBinding.Variable variable) {
-            return this.body.kept(variable) ? new Place.Captured(variable)
-                    : new Place.Local(this.body.slot(variable));
-        }
-        if (target instanceof IExpr.Index index) {
-            return new Place.Element(index);
-        }
-        if (!(binding instanceof IBinding.Member held)) {
-            return null;
-        }
-        final IMemberSymbol member = held.member();
-        if (!(member instanceof IMemberSymbol.FieldSymbol)
-                && !(member instanceof IMemberSymbol.PropertySymbol)) {
-            return null;
-        }
-        return member.isStatic() ? new Place.Shared(member)
-                : new Place.Held(target instanceof IExpr.Member at ? at.target() : null, member);
-    }
-
     /**
      * Pushes what the write will need under the value, and hands back the kept element when there is one.
      *
@@ -326,7 +345,8 @@ final class ExpressionWriter {
     /** Pushes what is in the place now, leaving whatever {@link #prepare} pushed still underneath it. */
     private void loadOver(final Place place, final Element kept) {
         switch (place) {
-            case Place.Local local -> this.body.emit(Opcode.LDLOC, new IOperand.Slot(local.slot()));
+            case Place.Local local ->
+                    this.body.emit(Opcode.LDLOC, new IOperand.Slot(this.body.slot(local.variable())));
             case Place.Captured captured -> this.body.loadKept(captured.variable());
             case Place.Shared shared -> this.body.emit(Opcode.LDSFLD, sharedField(shared));
             case Place.Held held -> {
@@ -344,7 +364,8 @@ final class ExpressionWriter {
     /** Writes the value on top into the place, using up whatever {@link #prepare} pushed. */
     private void store(final Place place, final Element kept) {
         switch (place) {
-            case Place.Local local -> this.body.emit(Opcode.STLOC, new IOperand.Slot(local.slot()));
+            case Place.Local local ->
+                    this.body.emit(Opcode.STLOC, new IOperand.Slot(this.body.slot(local.variable())));
             case Place.Captured captured -> this.body.storeKept(captured.variable());
             case Place.Shared shared -> this.body.emit(Opcode.STSFLD, sharedField(shared));
             case Place.Held held -> this.body.emit(Opcode.STFLD,
@@ -356,7 +377,8 @@ final class ExpressionWriter {
     /** Reads the place again from nothing, for an answer that is wanted after the writing is done. */
     private void reload(final Place place) {
         switch (place) {
-            case Place.Local local -> this.body.emit(Opcode.LDLOC, new IOperand.Slot(local.slot()));
+            case Place.Local local ->
+                    this.body.emit(Opcode.LDLOC, new IOperand.Slot(this.body.slot(local.variable())));
             case Place.Captured captured -> this.body.loadKept(captured.variable());
             case Place.Shared shared -> this.loadMember(null, shared.member());
             case Place.Held held -> this.loadMember(held.target(), held.member());
@@ -462,7 +484,10 @@ final class ExpressionWriter {
 
     private void unary(final IExpr.Unary expression) {
         if (expression.operator() == Operator.INCREMENT || expression.operator() == Operator.DECREMENT) {
-            this.step(expression);
+            final IrWrite written = this.emitter.lowered.writeOf(expression);
+            if (written != null) {
+                this.write(written, true);
+            }
             return;
         }
         this.value(expression.operand(), null);
@@ -487,31 +512,6 @@ final class ExpressionWriter {
      * of what it belongs to, and a duplicate would be buried under that when the value goes back, so
      * the answer is put away in a place of its own and read out at the end.
      */
-    private void step(final IExpr.Unary expression) {
-        final IExpr written = expression.operand();
-        final Place place = this.placeOf(written);
-        if (place == null) {
-            return;
-        }
-        final ITypeSymbol type = this.emitter.model.typeOf(written);
-        final Opcode change = expression.operator() == Operator.INCREMENT ? Opcode.ADD : Opcode.SUB;
-        if (place instanceof Place.Captured captured) {
-            this.stepThroughAnObject(expression, captured, type, change);
-            return;
-        }
-        final int kept = place.overSomething() ? this.body.hidden() : -1;
-        final Element inside = this.prepare(place);
-        this.loadOver(place, inside);
-        this.answer(expression.postfix(), kept);
-        this.one(type);
-        this.body.emit(change);
-        this.answer(!expression.postfix(), kept);
-        this.store(place, inside);
-        if (kept >= 0) {
-            this.body.emit(Opcode.LDLOC, new IOperand.Slot(kept));
-        }
-    }
-
     /** Keeps the value that answers the expression: a duplicate on top, or one put away in a slot. */
     private void answer(final boolean now, final int kept) {
         if (!now) {
@@ -528,30 +528,17 @@ final class ExpressionWriter {
      * reading and writing name that object. There is nothing to duplicate on the way past, and the value
      * is read again instead, before or after depending on which one was asked for.
      */
-    private void stepThroughAnObject(final IExpr.Unary expression, final Place.Captured captured,
-                                     final ITypeSymbol type, final Opcode change) {
-        if (expression.postfix()) {
+    private void stepThroughAnObject(final IrWrite written, final Place.Captured captured) {
+        if (written.answer() == IrWrite.Answer.BEFORE) {
             this.body.loadKept(captured.variable());
         }
         this.prepare(captured);
         this.loadOver(captured, null);
-        this.one(type);
-        this.body.emit(change);
+        this.value(written.value(), null);
+        this.body.emit(arithmetic(written.operator()));
         this.store(captured, null);
-        if (!expression.postfix()) {
+        if (written.answer() == IrWrite.Answer.AFTER) {
             this.body.loadKept(captured.variable());
-        }
-    }
-
-    private void one(final ITypeSymbol type) {
-        if (type == ITypeSymbol.Primitive.LONG) {
-            this.body.emit(Opcode.LDC_I8, new IOperand.I8(1));
-        } else if (type == ITypeSymbol.Primitive.FLOAT) {
-            this.body.emit(Opcode.LDC_R4, new IOperand.R4(1));
-        } else if (type == ITypeSymbol.Primitive.DOUBLE) {
-            this.body.emit(Opcode.LDC_R8, new IOperand.R8(1));
-        } else {
-            this.body.emit(Opcode.LDC_I4, new IOperand.I4(1));
         }
     }
 
@@ -706,19 +693,19 @@ final class ExpressionWriter {
 
     // assignment
 
-    private void combine(final IExpr.Assign expression, final ITypeSymbol target) {
-        if (expression.operator() == Operator.ASSIGN) {
-            this.copied(expression.value(), target);
+    private void combine(final IrWrite written) {
+        if (written.operator() == Operator.ASSIGN) {
+            this.copied(written.value(), written.type());
             return;
         }
-        if (target == this.emitter.builtIns.stringType()) {
-            final String added = this.joined(expression.value());
+        if (written.type() == this.emitter.builtIns.stringType()) {
+            final String added = this.joined(written.value());
             this.body.emit(Opcode.CALL,
                     new IOperand.Method(STRING, "Concat", List.of(STRING, added), STRING));
             return;
         }
-        this.value(expression.value(), target);
-        this.body.emit(arithmetic(expression.operator()));
+        this.value(written.value(), written.type());
+        this.body.emit(arithmetic(written.operator()));
     }
 
     /*

@@ -17,6 +17,8 @@ import dev.jstech.computers.sigma.ast.Operator;
 import dev.jstech.computers.sigma.lex.TokenKind;
 import dev.jstech.computers.sigma.sem.BuiltIns;
 import dev.jstech.computers.sigma.sem.IBinding;
+import dev.jstech.computers.sigma.sem.IMemberSymbol;
+import dev.jstech.computers.sigma.sem.ITypeSymbol;
 import dev.jstech.computers.sigma.sem.NamedType;
 import dev.jstech.computers.sigma.sem.TypeRules;
 import dev.jstech.computers.sigma.sem.SemanticModel;
@@ -65,8 +67,12 @@ public final class Lowerer {
     private final Map<Object, IrStmt> bodies = new IdentityHashMap<>();
     /** What each method's lambdas keep, by the declaration they were written in. */
     private final Map<Object, Captures> captures = new IdentityHashMap<>();
+    /** What each assignment and each step came to, by the expression the player wrote. */
+    private final Map<IExpr, IrWrite> writes = new IdentityHashMap<>();
 
     private int locksOpen;
+    /** What the lambdas of the method being walked keep, which is what makes a variable not a slot. */
+    private Captures kept;
 
     public Lowerer(final SemanticModel model, final BuiltIns builtIns, final TypeRules rules,
                    final DiagnosticBag diagnostics) {
@@ -185,15 +191,95 @@ public final class Lowerer {
         return this.captures.get(written);
     }
 
+    /** What each assignment and each step came to, for the stage that writes them down. */
+    public IrWrite writeOf(final IExpr expression) {
+        return this.writes.get(expression);
+    }
+
     /** Asks what a method's lambdas keep, for the bodies that have one to ask about. */
-    private void kept(final INode written, final List<IDecl.Parameter> parameters, final IStmt.Block body) {
+    private Captures keptBy(final INode written, final List<IDecl.Parameter> parameters,
+                            final IStmt.Block body) {
         if (body == null) {
-            return;
+            return null;
         }
         final Captures found = this.finder.forMethod(parameters, body, written);
         if (found != null) {
             this.captures.put(written, found);
         }
+        return found;
+    }
+
+    /**
+     * Where an expression says a value lives, or nothing when it names no place at all.
+     *
+     * <p>Read by everything that writes: plain assignment, assignment that combines, and one more or one
+     * less. An event is not a place; joining and parting handlers is something else entirely and says so by
+     * not being here.
+     */
+    private Place placeOf(final IExpr target) {
+        final IBinding binding = this.model.bindingOf(target);
+        if (binding instanceof IBinding.Variable variable) {
+            return this.kept != null && this.kept.fields().containsKey(variable)
+                    ? new Place.Captured(variable) : new Place.Local(variable);
+        }
+        if (target instanceof IExpr.Index index) {
+            return new Place.Element(index);
+        }
+        if (!(binding instanceof IBinding.Member held)) {
+            return null;
+        }
+        final IMemberSymbol member = held.member();
+        if (!(member instanceof IMemberSymbol.FieldSymbol)
+                && !(member instanceof IMemberSymbol.PropertySymbol)) {
+            return null;
+        }
+        return member.isStatic() ? new Place.Shared(member)
+                : new Place.Held(target instanceof IExpr.Member at ? at.target() : null, member);
+    }
+
+    /** An assignment said as a place, a value and which value the line is worth. */
+    private void written(final IExpr.Assign assign) {
+        final Place place = this.placeOf(assign.target());
+        if (place == null) {
+            return;
+        }
+        this.writes.put(assign, new IrWrite(place, assign.operator(), assign.value(),
+                this.model.typeOf(assign.target()), IrWrite.Answer.WRITTEN));
+    }
+
+    /**
+     * One more or one less said as the combining assignment it is.
+     *
+     * <p>The one is made as a number of the kind the place holds, so that nothing has to be converted on the
+     * way and the line comes out as short as it was when this shape had a path of its own.
+     */
+    private void stepped(final IExpr.Unary step) {
+        final Place place = this.placeOf(step.operand());
+        if (place == null) {
+            return;
+        }
+        final ITypeSymbol type = this.model.typeOf(step.operand());
+        this.writes.put(step, new IrWrite(place,
+                step.operator() == Operator.INCREMENT ? Operator.ADD : Operator.SUBTRACT,
+                this.one(type, step), type,
+                step.postfix() ? IrWrite.Answer.BEFORE : IrWrite.Answer.AFTER));
+    }
+
+    /** The number one, written as the kind of number that place holds, and typed as it is made. */
+    private IExpr one(final ITypeSymbol type, final IExpr at) {
+        final IExpr made;
+        if (type == ITypeSymbol.Primitive.LONG) {
+            made = new IExpr.Literal(TokenKind.LONG_LITERAL, 1L, at.line(), at.column());
+        } else if (type == ITypeSymbol.Primitive.FLOAT) {
+            made = new IExpr.Literal(TokenKind.FLOAT_LITERAL, 1.0F, at.line(), at.column());
+        } else if (type == ITypeSymbol.Primitive.DOUBLE) {
+            made = new IExpr.Literal(TokenKind.DOUBLE_LITERAL, 1.0D, at.line(), at.column());
+        } else {
+            made = new IExpr.Literal(TokenKind.INT_LITERAL, 1, at.line(), at.column());
+        }
+        this.model.setType(made, type == ITypeSymbol.Primitive.LONG || type == ITypeSymbol.Primitive.FLOAT
+                || type == ITypeSymbol.Primitive.DOUBLE ? type : ITypeSymbol.Primitive.INT);
+        return made;
     }
 
     /** Reduces every body of every type in these files. */
@@ -211,17 +297,24 @@ public final class Lowerer {
         }
         for (final IDecl.IMemberDecl member : klass.members()) {
             switch (member) {
+                /*
+                 * What the lambdas keep is asked first, because walking the body works out where each value
+                 * goes and a variable a lambda keeps does not go in a slot of the method's own.
+                 */
                 case IDecl.MethodDecl method -> {
+                    this.kept = this.keptBy(method, method.parameters(), method.body());
                     this.block(method.body());
                     this.bodies.put(method, this.body(method.body()));
-                    this.kept(method, method.parameters(), method.body());
                 }
                 case IDecl.ConstructorDecl constructor -> {
+                    this.kept = this.keptBy(constructor, constructor.parameters(), constructor.body());
                     this.block(constructor.body());
                     this.bodies.put(constructor, this.body(constructor.body()));
-                    this.kept(constructor, constructor.parameters(), constructor.body());
                 }
-                case IDecl.FieldDecl field -> this.replaceIn(field.initializer());
+                case IDecl.FieldDecl field -> {
+                    this.kept = null; // a field's starting value is not inside any method, so it keeps nothing
+                    this.replaceIn(field.initializer());
+                }
                 case IDecl.TypeMember nested -> this.type(nested.type());
                 default -> { }
             }
@@ -291,7 +384,12 @@ public final class Lowerer {
     private void replaceIn(final IExpr expression) {
         switch (expression) {
             case null -> { }
-            case IExpr.Unary unary -> this.replaceIn(unary.operand());
+            case IExpr.Unary unary -> {
+                this.replaceIn(unary.operand());
+                if (unary.operator() == Operator.INCREMENT || unary.operator() == Operator.DECREMENT) {
+                    this.stepped(unary);
+                }
+            }
             case IExpr.Binary binary -> {
                 this.replaceIn(binary.left());
                 this.replaceIn(binary.right());
@@ -299,6 +397,7 @@ public final class Lowerer {
             case IExpr.Assign assign -> {
                 this.replaceIn(assign.target());
                 this.replaceIn(assign.value());
+                this.written(assign);
             }
             case IExpr.Conditional chosen -> {
                 this.replaceIn(chosen.condition());
