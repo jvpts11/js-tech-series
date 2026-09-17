@@ -29,7 +29,6 @@ import dev.jstech.computers.operation.payload.RequestNetworkInteractorPayload;
 import dev.jstech.computers.operation.payload.RequestNiOperationsPayload;
 import dev.jstech.computers.operation.payload.RequestNiServersPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
-import dev.jstech.computers.program.OperationPalette;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.CellGrid;
@@ -284,13 +283,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     @Nullable
     private CraftPlanPayload craftPlan;
 
-    // Operations tab (network task manager): the network's recent log and live in-flight Operations.
-    private final List<OperationRecord> recentOps = new ArrayList<>();
-    private final List<OperationRecord> activeOps = new ArrayList<>();
-    private int opSelected = -1;
-    // Parallel craft-slot capacity from the network's online supercomputers (used / total), shown in this tab.
-    private int scSlotsUsed;
-    private int scSlotsTotal;
+    /** The Operations tab: what the network is doing and what it has just done. */
+    private final InteractorOps ops = new InteractorOps(this);
 
     // The content tree.
     private final Panel root = new Panel();
@@ -333,7 +327,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                 .setRenderer(this::renderGridCell)
                 .setOnClick(this::gridCellClicked));
         gridBar = root.add(new ScrollBar(grid::maxScroll, grid::scroll, v -> grid.setScroll(v)));
-        opList = root.add(new ListView<OperationRecord>(this::allOps, OP_ROW_H, this::renderOpRow).setOnClick(this::opClicked));
+        opList = root.add(new ListView<OperationRecord>(ops::all, OP_ROW_H, ops::renderRow)
+                .setOnClick(ops::clicked));
         hintLabel = root.add(new Label(this::hintText, Label.Tone.DIM).setScale(Texts.SMALL));
         detailRequest = root.add(new Button("Request", this::detailRequestPressed).setLabelScale(Texts.SMALL));
         detailCraft = root.add(new Button("Craft", this::detailCraftPressed).setLabelScale(Texts.SMALL));
@@ -479,20 +474,17 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     }
 
     /** Delivers the network's recent Operations log to the open NI's Operations tab. */
-    public static void acceptOps(final List<OperationRecord> ops) {
+    public static void acceptOps(final List<OperationRecord> records) {
         if (active != null) {
-            active.recentOps.clear();
-            active.recentOps.addAll(ops);
+            active.ops.setRecent(records);
         }
     }
 
-    /** Delivers the network's live (in-flight) Operations and supercomputer slot capacity to the NI's Operations tab. */
-    public static void acceptActiveOps(final List<OperationRecord> ops, final int scSlotsUsed, final int scSlotsTotal) {
+    /** Delivers the network's live Operations and supercomputer slot capacity to the NI's Operations tab. */
+    public static void acceptActiveOps(final List<OperationRecord> records, final int slotsUsed,
+                                       final int slotsTotal) {
         if (active != null) {
-            active.activeOps.clear();
-            active.activeOps.addAll(ops);
-            active.scSlotsUsed = scSlotsUsed;
-            active.scSlotsTotal = scSlotsTotal;
+            active.ops.setActive(records, slotsUsed, slotsTotal);
         }
     }
 
@@ -658,7 +650,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         gridBar.setVisible(onGrid && z.gridH() > 0 && grid.maxScroll() > 0);
         // The list stops short of the vertical grip, so a press on the grip drags it instead of picking a row.
         opList.setBounds(x + z.gridX(), gridTop, z.gridW(), Math.max(OP_ROW_H, z.gridH()));
-        opList.setVisible(tab == TAB_OPS && z.gridH() > 0 && !allOps().isEmpty());
+        opList.setVisible(tab == TAB_OPS && z.gridH() > 0 && !ops.all().isEmpty());
         clampKeyCell();
 
         if (tab == TAB_STATUS) {
@@ -675,7 +667,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                     drawWrapped(g, font, msg, x + z.gridX() + 2, gridTop + 2, z.gridW() - 4, skin.dim());
                 }
                 if (tab == TAB_OPS) {
-                    renderOpsHeader(g, font, x + z.gridX(), gridTop);
+                    ops.renderHeader(g, font, x + z.gridX(), gridTop);
                 }
                 Draw.popScissor(g);
             }
@@ -767,7 +759,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             case TAB_LOCAL -> localItems.size() + " types";
             case TAB_CRAFTING -> crafts.size() + (crafts.size() == 1 ? " recipe" : " recipes");
             case TAB_FAV -> favourites.size() + " starred";
-            case TAB_OPS -> activeOps.size() + " live · " + recentOps.size() + " recent";
+            case TAB_OPS -> ops.caption();
             default -> networkItems.size() + " types · " + DiskSpec.sizeLabel(usedMb);
         };
     }
@@ -857,7 +849,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         anchorCell = -1;
         selected.clear();
         if (index == TAB_OPS) {
-            opSelected = -1;
+            ops.clearSelection();
             opList.setScroll(0);
             requestOps();
         }
@@ -1407,7 +1399,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         py = cardRow(g, font, px, py, dw, "Craftable", Integer.toString(crafts.size()));
         py = cardRow(g, font, px, py, dw, "Favourites", Integer.toString(favourites.size()));
         py = sectionRule(g, font, px, py + 2, dw, "RUNNING");
-        py = cardRow(g, font, px, py, dw, "Operations", activeOps.size() + " live");
+        py = cardRow(g, font, px, py, dw, "Operations", ops.liveCount() + " live");
         if (py + 10 < dy + dh) {
             Texts.small(g, font, "Select an item to see its details.", px, py + 4, skin.dim());
         }
@@ -1907,50 +1899,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     // Operations tab (network task manager)
 
-    private List<OperationRecord> allOps() {
-        final List<OperationRecord> all = new ArrayList<>(activeOps.size() + recentOps.size());
-        all.addAll(activeOps); // live ops first, then the recent log
-        all.addAll(recentOps);
-        return all;
-    }
-
-    private void renderOpsHeader(final GuiGraphics g, final Font font, final int listLeft, final int gridTop) {
-        // Supercomputer parallel craft-slot capacity, in the free strip above the list (amber when saturated).
-        if (scSlotsTotal > 0) {
-            Texts.small(g, font, "Supercomputer: " + scSlotsUsed + " / " + scSlotsTotal + " parallel crafts",
-                    listLeft + 2, gridTop - 9, scSlotsUsed >= scSlotsTotal ? AMBER : skin.dim());
-        }
-        if (allOps().isEmpty()) {
-            Texts.small(g, font, "No operations on the network.", listLeft + 2, gridTop + 4, skin.dim());
-        }
-    }
-
-    private void renderOpRow(final GuiGraphics g, final UiContext ctx, final OperationRecord op, final int index,
-                             final int x, final int y, final int w, final int h, final boolean hovered,
-                             final boolean selected) {
-        final boolean live = index < activeOps.size();
-        if (index == opSelected) {
-            g.fill(x, y, x + w, y + h, 0x552F6AC6);
-        } else if (hovered) {
-            g.fill(x, y, x + w, y + h, 0x22000000);
-        }
-        g.fill(x + 1, y + 4, x + 4, y + 7, live ? 0xFF49E07A : 0xFF8A93A4);
-        final Font font = ctx.font();
-        final String type = OperationPalette.labelFor(op.type());
-        g.drawString(font, type, x + 7, y + 2, OperationPalette.colorFor(op.type()), false);
-        final int nameX = x + 8 + font.width(type) + 3;
-        final String st = opStatusShort(op.status());
-        final int stW = font.width(st);
-        g.drawString(font, Texts.trim(font, op.name().getString(), x + w - nameX - stW - 6), nameX, y + 2,
-                ctx.skin().text(), false);
-        g.drawString(font, st, x + w - stW - 2, y + 2, opStatusColor(op.status()), false);
-    }
-
-    private void opClicked(final int index, final int button, final double mx, final double my) {
-        opSelected = index < 0 || opSelected == index ? -1 : index;
-    }
-
-    /** The selected Operation's detail in the right panel: amounts, status, and per-source/sub rows. */
+    /** The picked Operation's detail in the right panel, framed and clipped to it. */
     private void renderOpDetails(final GuiGraphics g, final Font font, final int x, final int y,
                                  final NetworkInteractorLayout.Zones z) {
         final int dx = x + z.detailsX();
@@ -1962,86 +1911,29 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         }
         framedPanel(g, dx, dy, dw, dh);
         Draw.pushScissor(g, dx + 1, dy + 1, dx + dw - 1, dy + dh - 1);
-        final List<OperationRecord> all = allOps();
-        final int px = dx + 5;
-        if (opSelected < 0 || opSelected >= all.size()) {
-            renderNetworkCard(g, font, dx, dy, dw, dh);
-            Draw.popScissor(g);
-            return;
-        }
-        final OperationRecord op = all.get(opSelected);
-        int py = panelHeader(g, font, dx, dy, dw, op.key(), op.name().getString(), OperationPalette.labelFor(op.type()),
-                OperationPalette.colorFor(op.type()), false);
-        Texts.small(g, font, "moved " + formatCount(op.moved()) + " / " + formatCount(op.requested()), px, py, skin.text());
-        py += 10;
-        Texts.small(g, font, opStatusLong(op.status()), px, py, opStatusColor(op.status()));
-        py += 12;
-        if (!op.subs().isEmpty()) {
-            py = sectionRule(g, font, px, py, dw, "SUBOPERATIONS");
-            for (final var sub : op.subs()) {
-                if (py > dy + dh - 9) {
-                    break;
-                }
-                Texts.small(g, font, Texts.trim(font, sub.server() + ": " + sub.moved() + "/" + sub.planned()
-                        + " " + subStateLabel(sub.state()), Texts.smallFits(dw - 10)), px, py, skin.text());
-                py += 9;
-            }
-        } else if (!op.moves().isEmpty()) {
-            py = sectionRule(g, font, px, py, dw, "SOURCES");
-            for (final var mv : op.moves()) {
-                if (py > dy + dh - 9) {
-                    break;
-                }
-                Texts.small(g, font, Texts.trim(font, mv.from() + " " + mv.qty() + " -> " + mv.to(),
-                        Texts.smallFits(dw - 10)), px, py, skin.text());
-                py += 9;
-            }
-        }
+        ops.renderDetails(g, font, dx, dy, dw, dh);
         Draw.popScissor(g);
     }
 
-    private static String opStatusShort(final byte status) {
-        return switch (status) {
-            case 0 -> "done";
-            case 1 -> "part";
-            case 2 -> "fail";
-            case 3 -> "run";
-            case 4 -> "wait";
-            case 5 -> "lock";
-            case 6 -> "pend";
-            default -> "drop";
-        };
+    /** What the Operations tab asks of the app: the skin, the panel furniture, and the network's own card. */
+    OsSkin panelSkin() {
+        return skin;
     }
 
-    private static String opStatusLong(final byte status) {
-        return switch (status) {
-            case 0 -> "Completed";
-            case 1 -> "Completed (partial)";
-            case 2 -> "Failed";
-            case 3 -> "Processing";
-            case 4 -> "Waiting";
-            case 5 -> "Resource locked";
-            case 6 -> "Pending";
-            default -> "Discarded";
-        };
+    int panelHeaderIn(final GuiGraphics g, final Font font, final int dx, final int dy, final int dw,
+                      @Nullable final StorageKey icon, final String name, final String sub, final int subColor,
+                      final boolean starred) {
+        return panelHeader(g, font, dx, dy, dw, icon, name, sub, subColor, starred);
     }
 
-    private static int opStatusColor(final byte status) {
-        return switch (status) {
-            case 0 -> ONLINE_GREEN;       // completed
-            case 1, 3, 4, 6 -> 0xFFB8860B; // partial / processing / waiting / pending: amber
-            case 2, 5, 7 -> 0xFFB23A3A; // failed / locked / discarded: red
-            default -> 0xFF6A7280;
-        };
+    int sectionRuleIn(final GuiGraphics g, final Font font, final int px, final int py, final int dw,
+                      final String caption) {
+        return sectionRule(g, font, px, py, dw, caption);
     }
 
-    private static String subStateLabel(final byte state) {
-        return switch (state) {
-            case 1 -> "reading";
-            case 2 -> "streaming";
-            case 3 -> "done";
-            default -> "queued";
-        };
+    void renderNetworkCardIn(final GuiGraphics g, final Font font, final int dx, final int dy, final int dw,
+                             final int dh) {
+        renderNetworkCard(g, font, dx, dy, dw, dh);
     }
 
     //  Input
@@ -3028,7 +2920,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     //  Helpers
 
-    private static String formatCount(final long n) {
+    static String formatCount(final long n) {
         if (n < 1000) {
             return Long.toString(n);
         }
@@ -3135,7 +3027,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     /** The Operations tab's selected row, or -1. */
     public int selectedOperation() {
-        return opSelected;
+        return ops.selected();
     }
 
     public int[] operationsTabCenter() {
