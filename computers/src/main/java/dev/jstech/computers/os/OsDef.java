@@ -9,6 +9,7 @@ package dev.jstech.computers.os;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.computers.os.install.InstallerStyle;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.tier.HardwareEra;
@@ -23,7 +24,7 @@ import java.util.Optional;
  * the kernel it runs on, the disk footprint it consumes on installation, an optional install
  * media item that carries the OS installer payload, and its display name (which datagen writes to
  * {@link #titleKey()}). The {@link #CODEC} keeps this JSON-serialisable, so the built-in OSes can
- * later move to a datapack; today the Java registration through {@link JSComputersAPI} is the source.
+ * later move to a datapack; today the Java registration through {@link ComputersRegisterEvent} is the source.
  *
  * @param id             unique registry key for this OS (e.g. {@code jsc:mc_dos})
  * @param capability     the capability tier this OS provides to programs and the player

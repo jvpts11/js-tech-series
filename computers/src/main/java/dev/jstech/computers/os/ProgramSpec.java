@@ -9,6 +9,7 @@ package dev.jstech.computers.os;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.resources.ResourceLocation;
@@ -27,7 +28,7 @@ import java.util.Set;
  * live on. See {@link OsGating} and {@link OsRegistry}. Requirements do not depend on the hardware era.
  *
  * <p>The {@link #CODEC} keeps this JSON-serialisable so the built-in registrations can later move to a
- * datapack; today the source of truth is the Java registration through {@link JSComputersAPI}.
+ * datapack; today the source of truth is the Java registration through {@link ComputersRegisterEvent}.
  *
  * @param id           unique registry key (e.g. {@code jsc:nms})
  * @param commandName  the short word the Command Prompt's {@code run}/{@code programs} verbs use

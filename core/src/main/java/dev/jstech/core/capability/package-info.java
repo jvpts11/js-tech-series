@@ -6,6 +6,6 @@
  * This file is part of J's Core.
  */
 /**
- * NeoForge {@code BlockCapability} declarations and the supporting interfaces that BlockEntities implement to expose them.
+ * What a block entity implements to say what it is on the network, and what may be asked of it.
  */
 package dev.jstech.core.capability;

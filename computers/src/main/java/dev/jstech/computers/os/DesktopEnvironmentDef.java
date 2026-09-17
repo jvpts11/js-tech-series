@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.computers.api.ComputersRegisterEvent;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>A desktop environment brings its chrome ({@link PanelStyle}), its skin and wallpaper (looked up by
  * {@link #id()} on the client), the built-in programs it bundles, and the native names those programs
  * show under it (Files is Dolphin on KDE and Nautilus on GNOME). Registered through
- * {@link JSComputersAPI}, so an add-on can ship its own.
+ * {@link ComputersRegisterEvent}, so an add-on can ship its own.
  *
  * @param id               unique registry key (e.g. {@code jsc:kde_plasma}); Frames use their OS id
  * @param displayName      the human name

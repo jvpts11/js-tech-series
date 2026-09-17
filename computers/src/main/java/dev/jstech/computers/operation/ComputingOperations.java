@@ -12,10 +12,10 @@ import dev.jstech.computers.crafting.MultiStagePattern;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.core.JsCore;
 import dev.jstech.core.network.NetworkCategory;
 import dev.jstech.core.operation.IOperationArgs;
 import dev.jstech.core.operation.OperationCategory;
+import dev.jstech.core.operation.OperationTypeRegistry;
 import dev.jstech.core.operation.IOperationHandler;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.operation.OperationStatus;
@@ -102,11 +102,10 @@ public final class ComputingOperations {
     }
 
     /** Declares every type once; safe to call again (a second registration is refused by the registry). */
-    public static void register() {
-        if (JsCore.operations().contains(SELECT)) {
+    public static void register(final OperationTypeRegistry registry) {
+        if (registry.contains(SELECT)) {
             return;
         }
-        final var registry = JsCore.operations();
         registry.register(timed(SELECT, PullArgs.class, OperationCategory.STORAGE, a -> accepted(
                 a.mainframe().submitNetworkSelect(a.key(), a.demand(), a.destination(), a.label(), a.sources()),
                 a.priority())));

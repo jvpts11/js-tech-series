@@ -9,6 +9,7 @@ package dev.jstech.computers.os;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.core.id.StableCodecs;
 import net.minecraft.resources.ResourceLocation;
 
@@ -16,7 +17,7 @@ import net.minecraft.resources.ResourceLocation;
  * Immutable descriptor for a kernel that an OS can run on top of.
  *
  * <p>A kernel defines the scheduling model and filesystem model available to the OS. Community
- * addons can register custom kernels via {@link JSComputersAPI#registerKernel(KernelDef)} to
+ * addons can register custom kernels via {@link ComputersRegisterEvent#kernel} to
  * ship alternative kernel implementations (e.g. Unix-like) without modifying the mod core. The
  * {@link #CODEC} keeps this JSON-serialisable so the built-in kernels can later move to a datapack.
  *

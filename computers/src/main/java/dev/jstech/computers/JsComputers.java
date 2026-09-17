@@ -8,16 +8,21 @@
 package dev.jstech.computers;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.integration.mekanism.MekanismIntegration;
 import dev.jstech.computers.machine.MachineListing;
 import dev.jstech.computers.machine.SigmaLanguage;
 import dev.jstech.computers.operation.ComputingOperations;
+import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.registry.JscCreativeModeTabs;
-import dev.jstech.core.JsCore;
+import dev.jstech.core.api.CoreRegisterEvent;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModLoader;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
 import org.slf4j.Logger;
 
 /**
@@ -36,22 +41,38 @@ public class JsComputers {
         // The settings of the machines themselves, beside the series' balance file rather than inside it.
         ComputersServerConfig.register(modEventBus, modContainer);
 
-        // The Operation types the network runs, declared in the core registry for every other mod to see.
-        ComputingOperations.register();
+        /*
+         * What this mod adds to the Core is added at the moment the Core opens for it, and by the same event
+         * an addon would use. Nothing here reaches into the Core's registries on its own, so the way in is
+         * the way that is tried every time the game starts rather than a path only addons take.
+         */
+        modEventBus.addListener(CoreRegisterEvent.class, JsComputers::addToTheCore);
 
         /*
-         * Σ# is a language like any other as far as the machines are concerned: it goes in the same
-         * registry an addon would use, and can be taken out of it by one. What it compiles to is not its own:
-         * the machines run listings themselves, so that extension is kept back from every language first.
+         * The same, the other way round: this mod opens its own registries once, and closes them when the
+         * loading is done, so that what a world can install does not change under somebody playing it.
          */
-        JsCore.languages().reserve(MachineListing.EXTENSION);
-        JsCore.languages().register(
-                SigmaLanguage.INSTANCE);
+        modEventBus.addListener(FMLCommonSetupEvent.class, event -> event.enqueueWork(
+                () -> ModLoader.postEvent(new ComputersRegisterEvent())));
+        modEventBus.addListener(FMLLoadCompleteEvent.class, event -> event.enqueueWork(OsRegistry::freeze));
 
         ComputingModule.register(modEventBus);
         JscCreativeModeTabs.register(modEventBus);
 
         // Soft integrations: each one checks for its mod and stays a no-op without it.
         MekanismIntegration.bootstrap();
+    }
+
+    /**
+     * What this mod puts in the Core's registries, at the one moment they are open.
+     *
+     * <p>Sigma Sharp is a language like any other as far as the machines are concerned: it goes in the same
+     * registry an addon would use, and can be taken out of it by one. What it compiles to is not its own:
+     * the machines run listings themselves, so that extension is kept back from every language first.
+     */
+    private static void addToTheCore(final CoreRegisterEvent event) {
+        ComputingOperations.register(event.operations());
+        event.languages().reserve(MachineListing.EXTENSION);
+        event.languages().register(SigmaLanguage.INSTANCE);
     }
 }

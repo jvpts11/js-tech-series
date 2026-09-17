@@ -83,6 +83,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   answered it. That was every program with a field, and every program with a lambda, since what a lambda keeps hold
   of is a field too. Programs written before this run now with no change to them.
 
+### Changed
+- A mod built on this one now adds what it brings at one named moment, by listening for `CoreRegisterEvent` or
+  `ComputersRegisterEvent`, and the two mods of the series add their own the same way rather than by a path of
+  their own. After the loading is done every registry is closed, so what a world can install and knows how to do
+  does not change under somebody playing it. Two things of the same id are refused rather than one quietly
+  replacing the other. What a mod may use is gathered in `dev.jstech.core.api` and `dev.jstech.computers.api`, and
+  `docs/API.md` says what is promised, what is not, and how long anything lives once it is marked as going.
+  `JSComputersAPI` is now `JsComputersApi` in that package.
+
 ### Added
 - A machine in a rack now comes up the way any other machine does: its own power-on self-test, its own stop at a
   boot manager, and its own system taking the time it takes, all on the machine's clocks. Its bay switch is its

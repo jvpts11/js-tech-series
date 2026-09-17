@@ -18,16 +18,17 @@ import net.neoforged.bus.api.SubscribeEvent;
 import static dev.jstech.core.tier.HardwareEra.LEGACY;
 import static dev.jstech.core.tier.HardwareEra.STANDARD;
 import static dev.jstech.core.tier.HardwareEra.VINTAGE;
+import dev.jstech.computers.api.ComputersRegisterEvent;
+import dev.jstech.computers.api.JsComputersApi;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 
 import java.util.Optional;
 
 /**
- * Registers the built-in kernels and operating systems during the common-setup phase.
+ * The kernels, operating systems, desktops and programs the mod brings of its own.
  *
- * <p>All registrations go through {@link JSComputersAPI} so the built-in entries exercise the
- * same public addon path that third-party developers use.
+ * <p>Every one of them is added the way an addon adds one, by listening for the same event, so the way in
+ * is the one that is tried every time the game starts rather than a path only addons take.
  */
 @EventBusSubscriber(modid = "jsc", bus = EventBusSubscriber.Bus.MOD)
 public final class OsBootstrap {
@@ -35,8 +36,8 @@ public final class OsBootstrap {
     private OsBootstrap() {}
 
     @SubscribeEvent
-    public static void onCommonSetup(FMLCommonSetupEvent event) {
-        event.enqueueWork(OsBootstrap::registerBuiltins);
+    public static void onRegister(final ComputersRegisterEvent event) {
+        registerBuiltins();
     }
 
     // Built-in registrations
@@ -133,13 +134,13 @@ public final class OsBootstrap {
 
     private static void registerKernels() {
         for (final KernelDef kernel : BUILTIN_KERNELS) {
-            JSComputersAPI.registerKernel(kernel);
+            JsComputersApi.registerKernel(kernel);
         }
     }
 
     private static void registerOses() {
         for (final OsDef os : BUILTIN_OSES) {
-            JSComputersAPI.registerOS(os);
+            JsComputersApi.registerOperatingSystem(os);
         }
     }
 
@@ -189,7 +190,7 @@ public final class OsBootstrap {
 
     private static void registerDesktops() {
         for (final DesktopEnvironmentDef desktop : BUILTIN_DESKTOPS) {
-            JSComputersAPI.registerDesktopEnvironment(desktop);
+            JsComputersApi.registerDesktop(desktop);
         }
     }
     private static final Set<Platform> ALL_PLATFORMS =
@@ -391,7 +392,7 @@ public final class OsBootstrap {
 
     private static void registerPrograms() {
         for (final ProgramSpec program : BUILTIN_PROGRAMS) {
-            JSComputersAPI.registerProgram(program);
+            JsComputersApi.registerProgram(program);
         }
     }
 

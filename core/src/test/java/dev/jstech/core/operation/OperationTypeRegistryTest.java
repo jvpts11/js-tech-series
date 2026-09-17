@@ -16,6 +16,7 @@ import java.util.EnumSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -157,6 +158,28 @@ class OperationTypeRegistryTest {
         assertEquals("jsc:valid_op", type.id());
         assertSame(OperationCategory.STORAGE, type.category());
         assertTrue(type.requiredCategories().contains(NetworkCategory.C));
+    }
+
+    /*
+     * Closing the registry is what lets a world be sure that what it knows how to do does not change under
+     * it. A late one is refused by the answer rather than by throwing, because it can happen in a world
+     * somebody is playing and no addon's mistake is worth ending that over.
+     */
+    @Test
+    void register_refusesOnceFrozen() {
+        this.registry.freeze();
+
+        assertNull(this.registry.register(this.sampleType("late_op")));
+        assertEquals(0, this.registry.size());
+    }
+
+    @Test
+    void freeze_saysWhetherItHasHappened() {
+        assertFalse(this.registry.isFrozen());
+
+        this.registry.freeze();
+
+        assertTrue(this.registry.isFrozen());
     }
 
     @Test
