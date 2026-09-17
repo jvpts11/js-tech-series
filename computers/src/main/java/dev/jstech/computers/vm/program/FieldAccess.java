@@ -93,7 +93,7 @@ final class FieldAccess {
             frame.push(this.heap.adopt(answer, line));
             return;
         }
-        final TypeImage type = this.program.type(field.owner());
+        final TypeImage type = this.program.type(field.owner().value());
         if (type == null) {
             // A value of the world that the machine the program runs on does not answer.
             throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, field.owner() + " has no " + field.name());
@@ -102,12 +102,12 @@ final class FieldAccess {
             frame.push(type.values().get(field.name()));
             return;
         }
-        frame.push(this.statics(field.owner()).get(field.name()));
+        frame.push(this.statics(field.owner().value()).get(field.name()));
     }
 
     /** Writes the value on top of the stack into a field a type keeps for itself. */
     void storeStatic(final Frame frame, final ProgramImage.ValueSite site, final int line) {
-        this.statics(site.field().owner()).set(site.field().name(), frame.pop());
+        this.statics(site.field().owner().value()).set(site.field().name(), frame.pop());
     }
 
     /** The holder of a type's static fields, made the first time the type is touched. */

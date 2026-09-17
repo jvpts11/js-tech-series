@@ -292,7 +292,7 @@ public final class AsmReader {
                 case LABEL -> new IOperand.Label(text);
                 case FIELD -> {
                     final int dot = text.lastIndexOf('.');
-                    yield dot < 0 ? new IOperand.Field(null, text)
+                    yield dot < 0 ? new IOperand.Field((String) null, text)
                             : new IOperand.Field(text.substring(0, dot), text.substring(dot + 1));
                 }
                 case METHOD -> this.readMethodOperand(text, line);

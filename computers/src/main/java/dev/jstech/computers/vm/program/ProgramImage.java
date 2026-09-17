@@ -222,12 +222,12 @@ public final class ProgramImage {
 
     CallSite callSite(final IOperand.Method called) {
         final Integer signature = this.signatures.get(key(called.name(), called.parameters()));
-        final TypeImage owner = this.types.get(called.owner());
+        final TypeImage owner = this.types.get(called.owner().value());
         final MethodImage direct = owner == null ? null : owner.method(signature);
         final IntrinsicSpec intrinsic = direct == null
-                ? this.registry.find(called.owner(), called.name(), called.parameters()) : null;
+                ? this.registry.find(called.owner().value(), called.name(), called.parameters()) : null;
         final IMemberSpec declared = direct == null && intrinsic == null
-                ? SystemApi.member(called.owner(), called.name(), called.parameters()) : null;
+                ? SystemApi.member(called.owner().value(), called.name(), called.parameters()) : null;
         final ProcessCalls.Binding handled = declared != null && declared.kind() == MemberKind.PROCESS
                 ? ProcessCalls.find(declared.id()) : null;
         final int world = declared != null && declared.kind() == MemberKind.WORLD ? this.worldPlace(declared) : -1;
@@ -271,17 +271,17 @@ public final class ProgramImage {
     }
 
     Creation creation(final IOperand.Constructor made) {
-        final TypeImage type = this.types.get(made.owner());
+        final TypeImage type = this.types.get(made.owner().value());
         ConstructorSpec declared = null;
-        if (type == null && SystemApi.member(made.owner(), ConstructorSpec.NAME, made.parameters())
+        if (type == null && SystemApi.member(made.owner().value(), ConstructorSpec.NAME, made.parameters())
                 instanceof ConstructorSpec found) {
             declared = found;
         }
         IObjectMaker handled = null;
         if (type == null) {
-            handled = CoreObjects.find(bare(made.owner()));
+            handled = CoreObjects.find(bare(made.owner().value()));
             if (handled == null) {
-                handled = WidgetObjects.find(made.owner());
+                handled = WidgetObjects.find(made.owner().value());
             }
         }
         return new Creation(made, type, type == null ? null : type.constructor(made.parameters().size()),
@@ -292,7 +292,7 @@ public final class ProgramImage {
         final boolean own = field.owner() == null || this.types.containsKey(field.owner());
         final boolean onType = opcode == Opcode.LDSFLD || opcode == Opcode.STSFLD;
         final ProcessValues.Binding handled =
-                own ? null : ProcessValues.find(bare(field.owner()), field.name(), onType);
+                own ? null : ProcessValues.find(bare(field.owner().value()), field.name(), onType);
         final boolean reads = opcode == Opcode.LDSFLD || opcode == Opcode.LDFLD;
         final int world = own || handled != null || !reads ? -1 : this.worldValuePlace(field, onType);
         return new ValueSite(field, own, handled, world);
@@ -303,7 +303,7 @@ public final class ProgramImage {
      * or -1 when it declares no such value there.
      */
     private int worldValuePlace(final IOperand.Field field, final boolean onType) {
-        final IMemberSpec declared = SystemApi.member(bare(field.owner()), field.name(), List.of());
+        final IMemberSpec declared = SystemApi.member(bare(field.owner().value()), field.name(), List.of());
         return declared instanceof PropertySpec value && value.isStatic() == onType && value.kind() == MemberKind.WORLD
                 ? this.worldPlace(value) : -1;
     }
@@ -368,10 +368,10 @@ public final class ProgramImage {
         }
         final boolean onType = opcode == Opcode.LDSFLD || opcode == Opcode.STSFLD;
         final boolean writes = opcode == Opcode.STFLD || opcode == Opcode.STSFLD;
-        if (!onType && !writes && CORE_VALUES.contains(bare(field.owner()) + "." + field.name())) {
+        if (!onType && !writes && CORE_VALUES.contains(bare(field.owner().value()) + "." + field.name())) {
             return null;
         }
-        for (final IMemberSpec member : SystemApi.members(field.owner(), field.name())) {
+        for (final IMemberSpec member : SystemApi.members(field.owner().value(), field.name())) {
             if (member.isStatic() != onType) {
                 continue;
             }

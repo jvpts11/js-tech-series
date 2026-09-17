@@ -88,47 +88,71 @@ public sealed interface IOperand {
      * A field. {@code owner} is null when it belongs to the type the method is in, which is the
      * common case and reads better without repeating the name on every line.
      */
-    record Field(String owner, String name) implements IOperand {
+    record Field(TypeName owner, String name) implements IOperand {
+
+        public Field(final String owner, final String name) {
+            this(TypeName.of(owner), name);
+        }
 
         @Override
         public String write() {
-            return this.owner == null ? this.name : this.owner + "." + this.name;
+            return this.owner == null ? this.name : this.owner.value() + "." + this.name;
         }
     }
 
-    /** A method, written with the types it takes and the type it gives back. */
-    record Method(String owner, String name, List<String> parameters, String returns) implements IOperand {
+    /**
+     * A method, written with the types it takes and the type it gives back.
+     *
+     * <p>The types it takes stay plain text where the owner and the answer do not, and the difference is what
+     * each could be mistaken for. A name standing beside another name can be handed over in its place and
+     * nothing notices; a list of them cannot be mistaken for either. They are also compared as text at the far
+     * end, against what the machine registered, so text is what they are.
+     */
+    record Method(TypeName owner, String name, List<String> parameters, TypeName returns) implements IOperand {
 
         public Method {
             parameters = List.copyOf(parameters);
         }
 
+        public Method(final String owner, final String name, final List<String> parameters,
+                      final String returns) {
+            this(TypeName.of(owner), name, parameters, TypeName.of(returns));
+        }
+
         @Override
         public String write() {
-            return this.owner + "." + this.name + "(" + String.join(", ", this.parameters) + ") -> "
-                    + this.returns;
+            return this.owner.value() + "." + this.name + "(" + String.join(", ", this.parameters) + ") -> "
+                    + this.returns.value();
         }
     }
 
     /** A constructor, which is named by its type and gives that type back. */
-    record Constructor(String owner, List<String> parameters) implements IOperand {
+    record Constructor(TypeName owner, List<String> parameters) implements IOperand {
 
         public Constructor {
             parameters = List.copyOf(parameters);
         }
 
+        public Constructor(final String owner, final List<String> parameters) {
+            this(TypeName.of(owner), parameters);
+        }
+
         @Override
         public String write() {
-            return this.owner + "(" + String.join(", ", this.parameters) + ")";
+            return this.owner.value() + "(" + String.join(", ", this.parameters) + ")";
         }
     }
 
     /** A type, as it is written in the language. */
-    record Type(String name) implements IOperand {
+    record Type(TypeName name) implements IOperand {
+
+        public Type(final String name) {
+            this(TypeName.of(name));
+        }
 
         @Override
         public String write() {
-            return this.name;
+            return this.name.value();
         }
     }
 

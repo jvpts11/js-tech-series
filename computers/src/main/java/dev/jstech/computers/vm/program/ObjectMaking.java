@@ -38,7 +38,7 @@ final class ObjectMaking {
             return;
         }
         frame.push(creation.type() == null
-                ? this.brought(creation.made().owner(), arguments, line)
+                ? this.brought(creation.made().owner().value(), arguments, line)
                 : this.instance(creation.type(), creation.constructor(), arguments, line));
     }
 
@@ -103,8 +103,8 @@ final class ObjectMaking {
         if (length < 0) {
             throw new Halt(Halt.Reason.OUT_OF_RANGE, line, "an array cannot have " + length + " places");
         }
-        final Values.Arr made = new Values.Arr(element.name(), length);
-        this.heap.allocate(made, Heap.HEADER + (long) Heap.sizeOf(element.name()) * length, line);
+        final Values.Arr made = new Values.Arr(element.name().value(), length);
+        this.heap.allocate(made, Heap.HEADER + (long) Heap.sizeOf(element.name().value()) * length, line);
         frame.push(made);
     }
 

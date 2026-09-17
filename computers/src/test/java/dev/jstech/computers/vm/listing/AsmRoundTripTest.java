@@ -58,7 +58,7 @@ class AsmRoundTripTest {
                 Instruction.of(Opcode.RET))));
         monitor.addMethod(new AsmMethod("OnTick", "void", List.of(), false, 3, List.of(
                 Instruction.of(Opcode.LDTHIS),
-                Instruction.of(Opcode.LDFLD, new IOperand.Field(null, "counts")),
+                Instruction.of(Opcode.LDFLD, new IOperand.Field((String) null, "counts")),
                 Instruction.of(Opcode.LDSTR, new IOperand.Text("minecraft:diamond")),
                 Instruction.of(Opcode.CALL, new IOperand.Method("Map", "TryGet",
                         List.of("string", "out int"), "bool")),
@@ -66,7 +66,7 @@ class AsmRoundTripTest {
                 Instruction.of(Opcode.BRFALSE, new IOperand.Label("L1")),
                 Instruction.of(Opcode.LDLOC, new IOperand.Slot(1)),
                 Instruction.of(Opcode.LDTHIS),
-                Instruction.of(Opcode.LDFLD, new IOperand.Field(null, "threshold")),
+                Instruction.of(Opcode.LDFLD, new IOperand.Field((String) null, "threshold")),
                 Instruction.of(Opcode.BGE, new IOperand.Label("L1")),
                 Instruction.of(Opcode.LDC_I4, new IOperand.I4(1)).saying("LogLevel.WARN"),
                 Instruction.of(Opcode.LDSTR, new IOperand.Text("low; and \"quoted\"")),
@@ -96,7 +96,7 @@ class AsmRoundTripTest {
         monitor.addField(new AsmType.Field("threshold", "int", false));
         monitor.addMethod(new AsmMethod("OnTick", "void", List.of(), false, 1, List.of(
                 Instruction.of(Opcode.LDTHIS),
-                Instruction.of(Opcode.LDFLD, new IOperand.Field(null, "threshold")),
+                Instruction.of(Opcode.LDFLD, new IOperand.Field((String) null, "threshold")),
                 Instruction.of(Opcode.LDC_I4, new IOperand.I4(100)),
                 Instruction.of(Opcode.BLT, new IOperand.Label("L1")),
                 Instruction.of(Opcode.RET),

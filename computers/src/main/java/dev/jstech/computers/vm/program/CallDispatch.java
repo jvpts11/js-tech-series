@@ -40,9 +40,9 @@ final class CallDispatch {
     /** Makes a delegate of the method named, bound to the object on top of the stack. */
     void handler(final Frame frame, final IOperand.Method method, final int line) {
         final Object target = frame.pop();
-        final Values.Bound bound = new Values.Bound(target, method.owner(), method.name(),
-                method.parameters(), method.returns());
-        final Values.DelegateValue made = new Values.DelegateValue(method.owner(), List.of(bound));
+        final Values.Bound bound = new Values.Bound(target, method.owner().value(), method.name(),
+                method.parameters(), method.returns().value());
+        final Values.DelegateValue made = new Values.DelegateValue(method.owner().value(), List.of(bound));
         this.heap.allocate(made, made.bytes(), line);
         frame.push(made);
     }
@@ -155,7 +155,8 @@ final class CallDispatch {
      */
     private MethodImage onItsOwnType(final ProgramImage.CallSite site, final Object self) {
         // A constructor runs on the type it names: a class chaining to its base must not land in one of its own.
-        if (site.constructs() || !(self instanceof Values.Obj object) || object.type().equals(site.named().owner())) {
+        if (site.constructs() || !(self instanceof Values.Obj object)
+                || object.type().equals(site.named().owner().value())) {
             return site.direct();
         }
         final TypeImage own = this.program.type(object.type());

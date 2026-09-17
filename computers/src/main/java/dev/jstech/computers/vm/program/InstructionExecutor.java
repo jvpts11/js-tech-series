@@ -97,9 +97,9 @@ final class InstructionExecutor {
             case MONITOR_ENTER -> this.enterMonitor(thread, frame, line);
             case MONITOR_EXIT -> this.exitMonitor(thread, frame, line);
             case CASTCLASS -> frame.push(this.types.cast(frame.pop(),
-                    ((IOperand.Type) instruction.operand()).name(), line));
+                    ((IOperand.Type) instruction.operand()).name().value(), line));
             case ISINST -> frame.push(this.types.isInstance(frame.pop(),
-                    ((IOperand.Type) instruction.operand()).name()));
+                    ((IOperand.Type) instruction.operand()).name().value()));
             case LDFN -> this.calls.handler(frame, (IOperand.Method) instruction.operand(), line);
             case CALL, CALLVIRT -> this.calls.call(frame, frame.method.call(line - 1),
                     instruction.opcode() == Opcode.CALLVIRT, line);
