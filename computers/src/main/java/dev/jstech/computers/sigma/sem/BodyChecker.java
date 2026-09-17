@@ -460,9 +460,24 @@ public final class BodyChecker {
             case IExpr.TypeTest test -> this.typeTestType(test);
             case IExpr.Lambda lambda -> this.lambdaType(lambda, expected);
             case IExpr.OutArgument outward -> this.outArgumentType(outward, expected);
+            case IExpr.Interpolation written -> this.interpolationType(written);
         };
         this.model.setType(expression, type);
         return type;
+    }
+
+    /**
+     * A string with holes is text, whatever is in the holes.
+     *
+     * <p>Each hole is checked so that a mistake inside one is reported where it was written, and then nothing
+     * more is asked of what it turned out to be: anything at all can be made into text, which is the whole
+     * point of writing it this way rather than converting each piece by hand.
+     */
+    private ITypeSymbol interpolationType(final IExpr.Interpolation written) {
+        for (final IExpr hole : dev.jstech.computers.sigma.lower.Lowerer.holesOf(written)) {
+            this.check(hole, null);
+        }
+        return this.builtIns.stringType();
     }
 
     private ITypeSymbol literalType(final IExpr.Literal literal) {

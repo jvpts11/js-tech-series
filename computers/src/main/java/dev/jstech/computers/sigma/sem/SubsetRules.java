@@ -279,6 +279,12 @@ public final class SubsetRules {
                 this.expression(test.value());
             }
             case IExpr.OutArgument out -> this.typeRef(out.type());
+            case IExpr.Interpolation written -> {
+                this.refuse(written, "strings with holes in them", "add the pieces together with +");
+                for (final IExpr hole : dev.jstech.computers.sigma.lower.Lowerer.holesOf(written)) {
+                    this.expression(hole);
+                }
+            }
             case IExpr.Literal ignored -> { }
             case IExpr.Name ignored -> { }
             case IExpr.This ignored -> { }

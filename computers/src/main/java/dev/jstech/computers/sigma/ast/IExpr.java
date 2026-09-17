@@ -99,4 +99,21 @@ public sealed interface IExpr extends INode {
      */
     record OutArgument(TypeRef type, String name, int line, int column) implements IExpr {
     }
+
+    /**
+     * A string with holes in it, kept as what was written rather than as what it amounts to.
+     *
+     * <p>It amounts to adding the pieces together, and that is what it becomes, but not here: a tree that
+     * already said addition could not be asked afterwards whether somebody wrote a string with holes or wrote
+     * the additions out by hand, and those are not the same question. The language a source is allowed to be
+     * turns on exactly that difference.
+     *
+     * @param parts the pieces in the order they were written, each of them either text or one expression
+     */
+    record Interpolation(List<Object> parts, int line, int column) implements IExpr {
+
+        public Interpolation {
+            parts = List.copyOf(parts);
+        }
+    }
 }

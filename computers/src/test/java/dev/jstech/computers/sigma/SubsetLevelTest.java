@@ -163,14 +163,25 @@ class SubsetLevelTest {
     }
 
     /**
-     * The one the checker cannot see, so it is refused while the string is still a string.
+     * A string with holes is refused by reading the tree, like everything else the subset lacks.
      *
-     * <p>A string with holes in it is read into the same additions somebody would have written by hand, so by
-     * the time there is a tree to walk there is nothing left that says which it was.
+     * <p>It used to be the one that could not be: the tree said additions, because the reading turned it into
+     * them on the spot, and additions are what somebody writing it out by hand would have said too. The tree
+     * keeps what was written now, and the additions are made later, so there is something left to refuse.
      */
     @Test
     void subset_hasNoStringsWithHolesInThem() {
         assertOnlyInTheFullLanguage("class M { static void Main() { int n = 1; string s = $\"n is {n}\"; } }");
+    }
+
+    /** And what is inside a hole is read as well, so a mistake in there is still a mistake. */
+    @Test
+    void subset_looksInsideTheHolesOfAStringItRefuses() {
+        final SigmaSemantics.Result result = subset(
+                "class M { static void Main() { int[] n = new int[2]; string s = $\"x {n[0]}\"; "
+                        + "foreach (int x in n) { } } }");
+        assertTrue(result.lines().stream().anyMatch(line -> line.contains("foreach")),
+                () -> "the foreach after it went unseen: " + String.join("\n", result.lines()));
     }
 
     /** One using opens the whole of the subset's library, and the same line opens it in the full language too. */

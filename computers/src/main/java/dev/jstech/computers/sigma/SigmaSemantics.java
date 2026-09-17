@@ -138,7 +138,7 @@ public final class SigmaSemantics {
         final List<CompilationUnit> units = new ArrayList<>();
         for (final SourceFile source : sources) {
             bag.setFile(source.name());
-            units.add(SigmaFrontEnd.parse(source, bag, level));
+            units.add(SigmaFrontEnd.parse(source, bag));
         }
         /*
          * Before anything is resolved, so a source that reached for something the subset does not have is told
@@ -164,6 +164,11 @@ public final class SigmaSemantics {
         declarations.checkInterfaces();
         declarations.checkOverrides();
         new BodyChecker(builtIns, rules, declarations, bag, model).check(model.declaredTypes());
+        /*
+         * After the checking and before anything is written: every question about what the player wrote has
+         * been asked by now, and the stage that writes the assembly has fewer shapes to know.
+         */
+        new dev.jstech.computers.sigma.lower.Lowerer(model, builtIns).lower(units);
         if (wholeProgram) {
             bag.setFile(sources.isEmpty() ? "" : sources.getFirst().name());
             declarations.checkEntryPoint(1, 1);

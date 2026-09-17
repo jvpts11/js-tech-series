@@ -840,6 +840,15 @@ public final class Emitter {
             if (expression == null) {
                 return;
             }
+            /*
+             * What a richer shape was reduced to is what gets written. The tree still holds what the player
+             * wrote, because a message has to point at that; only this stage follows the simpler one.
+             */
+            final IExpr simpler = Emitter.this.model.loweredOf(expression);
+            if (simpler != null) {
+                this.value(simpler, wanted);
+                return;
+            }
             switch (expression) {
                 case IExpr.Literal literal -> this.constant(literal);
                 case IExpr.Name name -> this.name(name);
@@ -858,6 +867,14 @@ public final class Emitter {
                 case IExpr.Assign assign -> this.assign(assign, true);
                 case IExpr.Lambda lambda -> this.lambda(lambda);
                 case IExpr.OutArgument ignored -> { }
+                /*
+                 * Never reached: a string with holes is reduced to additions before anything is written, and
+                 * the line above follows what it was reduced to. Getting here means the reducing did not run,
+                 * which would otherwise show up as a program quietly missing a line it printed.
+                 */
+                case IExpr.Interpolation written -> Emitter.this.diagnostics.error(written.line(),
+                        written.column(), dev.jstech.computers.sigma.SigmaError.NOT_YET_BUILT,
+                        "a string with holes that was never reduced");
             }
             this.coerce(Emitter.this.model.typeOf(expression), wanted);
         }

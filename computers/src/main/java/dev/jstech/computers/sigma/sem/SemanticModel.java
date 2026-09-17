@@ -29,6 +29,13 @@ public final class SemanticModel {
     private final Map<IExpr, IBinding> bindings = new IdentityHashMap<>();
     private final Map<IExpr, IMemberSymbol> calls = new IdentityHashMap<>();
     private final Map<INode, IBinding.Variable> places = new IdentityHashMap<>();
+    /**
+     * What each expression was reduced to before being written down, where it was reduced at all.
+     *
+     * <p>It is kept beside the tree rather than put into it, so the tree stays what the player wrote: a
+     * message still points at the string they typed and not at the additions it turned into.
+     */
+    private final Map<IExpr, IExpr> lowered = new IdentityHashMap<>();
     private final List<NamedType> declared = new ArrayList<>();
     private final List<DeclaredVariable> variables = new ArrayList<>();
     private String file = "";
@@ -60,6 +67,18 @@ public final class SemanticModel {
     /** The type of an expression, or null if it was never checked. */
     public ITypeSymbol typeOf(final IExpr expression) {
         return this.types.get(expression);
+    }
+
+    /** Records the simpler shape an expression is written down as; nothing means it is written as it stands. */
+    public void setLowered(final IExpr expression, final IExpr simpler) {
+        if (simpler != null) {
+            this.lowered.put(expression, simpler);
+        }
+    }
+
+    /** The simpler shape an expression is written down as, or null when it is written as it stands. */
+    public IExpr loweredOf(final IExpr expression) {
+        return this.lowered.get(expression);
     }
 
     /** Records what a name turned out to be. */

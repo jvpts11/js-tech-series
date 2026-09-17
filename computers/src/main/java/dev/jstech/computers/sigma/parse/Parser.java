@@ -57,23 +57,11 @@ public final class Parser {
 
     private final List<Token> tokens;
     private final DiagnosticBag diagnostics;
-    /*
-     * How much of the language this source may be. Almost everything the subset lacks is a shape in the tree and
-     * is refused by reading the tree afterwards; an interpolated string is the one that is not, because it is read
-     * into the same additions somebody would have written by hand, and by then there is nothing left to see.
-     */
-    private final dev.jstech.computers.sigma.LanguageLevel level;
     private int position;
 
     public Parser(final List<Token> tokens, final DiagnosticBag diagnostics) {
-        this(tokens, diagnostics, dev.jstech.computers.sigma.LanguageLevel.SIGMA_SHARP);
-    }
-
-    public Parser(final List<Token> tokens, final DiagnosticBag diagnostics,
-                  final dev.jstech.computers.sigma.LanguageLevel level) {
         this.tokens = new ArrayList<>(tokens);
         this.diagnostics = diagnostics;
-        this.level = level;
     }
 
     /**
@@ -1258,30 +1246,23 @@ public final class Parser {
      * is the expression it holds, joined with {@code +} from left to right, starting from the text so
      * the sum is a string whatever the first hole is.
      */
+    /**
+     * A string with holes in it, kept as what was written.
+     *
+     * <p>What it amounts to is the pieces added together, and that is what it becomes, but later and elsewhere.
+     * Turning it into additions here would throw away the one thing that tells a string with holes apart from
+     * the additions somebody wrote by hand, and that difference is what decides whether a source is allowed in
+     * the smaller language at all.
+     */
     private IExpr parseInterpolated(final Token token) {
-        if (!this.level.full()) {
-            this.diagnostics.error(token.line(), token.column(), SigmaError.NOT_IN_THE_SUBSET,
-                    "strings with holes in them", "add the pieces together with +");
-        }
         @SuppressWarnings("unchecked")
         final List<Object> parts = (List<Object>) token.value();
-        IExpr sum = null;
+        final List<Object> read = new ArrayList<>(parts.size());
         for (final Object part : parts) {
-            final IExpr piece;
-            if (part instanceof dev.jstech.computers.sigma.lex.Lexer.Hole hole) {
-                piece = this.parseHole(token, hole);
-            } else {
-                piece = new IExpr.Literal(TokenKind.STRING_LITERAL, part, token.line(), token.column());
-            }
-            if (sum == null) {
-                sum = part instanceof String ? piece
-                        : new IExpr.Binary(Operator.ADD, new IExpr.Literal(TokenKind.STRING_LITERAL, "",
-                        token.line(), token.column()), piece, token.line(), token.column());
-            } else {
-                sum = new IExpr.Binary(Operator.ADD, sum, piece, token.line(), token.column());
-            }
+            read.add(part instanceof dev.jstech.computers.sigma.lex.Lexer.Hole hole
+                    ? this.parseHole(token, hole) : part);
         }
-        return sum == null ? new IExpr.Literal(TokenKind.STRING_LITERAL, "", token.line(), token.column()) : sum;
+        return new IExpr.Interpolation(read, token.line(), token.column());
     }
 
     /**
