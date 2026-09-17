@@ -52,6 +52,8 @@ public final class BodyChecker {
     private final SemanticModel model;
     /** Choosing between the versions of a method that share a name, which is a question about types alone. */
     private final Overloads overloads;
+    /** Whether a parameter the method fills in is given a value by every way out of it. */
+    private final DefiniteAssignment assignment = new DefiniteAssignment(this::report);
 
     private NamedType currentType;
     private ITypeSymbol returnType = ITypeSymbol.Primitive.VOID;
@@ -1183,87 +1185,10 @@ public final class BodyChecker {
             if (!parameter.outward()) {
                 continue;
             }
-            if (body == null || !this.flow(body, parameter.name(), false)) {
+            if (body == null || !this.assignment.assignedBy(body, parameter.name(), false)) {
                 this.report(at.line(), at.column(), SigmaError.OUT_NOT_ASSIGNED, parameter.name());
             }
         }
-    }
-
-    private boolean flow(final IStmt statement, final String name, final boolean assigned) {
-        return switch (statement) {
-            case IStmt.Block block -> {
-                boolean now = assigned;
-                for (final IStmt inner : block.statements()) {
-                    now = this.flow(inner, name, now);
-                }
-                yield now;
-            }
-            case IStmt.ExprStmt expression -> assigned || writesTo(expression.expression(), name);
-            case IStmt.LocalDecl local -> assigned || writesTo(local.initializer(), name);
-            case IStmt.Return give -> {
-                if (!assigned && !writesTo(give.value(), name)) {
-                    this.report(give.line(), give.column(), SigmaError.OUT_NOT_ASSIGNED, name);
-                }
-                yield true;
-            }
-            case IStmt.If branch -> {
-                final boolean then = this.flow(branch.then(), name, assigned);
-                final boolean otherwise = branch.otherwise() == null
-                        ? assigned : this.flow(branch.otherwise(), name, assigned);
-                yield then && otherwise;
-            }
-            case IStmt.DoWhile loop -> this.flow(loop.body(), name, assigned);
-            case IStmt.Lock lock -> this.flow(lock.body(), name, assigned);
-            case IStmt.While loop -> this.aside(loop.body(), name, assigned);
-            case IStmt.For loop -> this.aside(loop.body(), name, assigned);
-            case IStmt.ForEach loop -> this.aside(loop.body(), name, assigned);
-            case IStmt.Switch choice -> {
-                for (final IStmt.SwitchSection section : choice.sections()) {
-                    boolean now = assigned;
-                    for (final IStmt inner : section.statements()) {
-                        now = this.flow(inner, name, now);
-                    }
-                }
-                yield assigned;
-            }
-            default -> assigned;
-        };
-    }
-
-    /*
-     * A body that may not run at all cannot be counted on to have given the value, but a way out
-     * inside it still has to be checked.
-     */
-    private boolean aside(final IStmt body, final String name, final boolean assigned) {
-        this.flow(body, name, assigned);
-        return assigned;
-    }
-
-    /*
-     * Whether evaluating this expression gives the name a value: an assignment to it, or handing it
-     * to a method as the place to fill in. A lambda's body does not count, because it runs later.
-     */
-    private static boolean writesTo(final IExpr expression, final String name) {
-        return switch (expression) {
-            case null -> false;
-            case IExpr.Assign assign -> (assign.operator() == Operator.ASSIGN
-                    && assign.target() instanceof IExpr.Name target && target.identifier().equals(name))
-                    || writesTo(assign.target(), name) || writesTo(assign.value(), name);
-            case IExpr.OutArgument outward -> outward.name().equals(name);
-            case IExpr.Binary binary -> writesTo(binary.left(), name) || writesTo(binary.right(), name);
-            case IExpr.Unary unary -> writesTo(unary.operand(), name);
-            case IExpr.Conditional conditional -> writesTo(conditional.condition(), name);
-            case IExpr.Call call -> writesTo(call.callee(), name)
-                    || call.arguments().stream().anyMatch(argument -> writesTo(argument, name));
-            case IExpr.Member member -> writesTo(member.target(), name);
-            case IExpr.Index index -> writesTo(index.target(), name) || writesTo(index.index(), name);
-            case IExpr.New created -> created.arguments().stream()
-                    .anyMatch(argument -> writesTo(argument, name));
-            case IExpr.NewArray created -> writesTo(created.length(), name);
-            case IExpr.Cast cast -> writesTo(cast.value(), name);
-            case IExpr.TypeTest test -> writesTo(test.value(), name);
-            default -> false;
-        };
     }
 
     // helpers
