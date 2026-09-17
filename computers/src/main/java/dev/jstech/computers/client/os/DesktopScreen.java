@@ -8,7 +8,6 @@
 package dev.jstech.computers.client.os;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.math.Axis;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
@@ -73,7 +72,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -122,6 +120,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** The Linux desktops' own ways of opening a program: Kickoff, the Mint menu, the Activities overview. */
     private final LinuxLaunchers linuxLaunchers = new LinuxLaunchers(this);
+    /** The Frames systems' own: the classic Start menu, XP's two columns, Frames 11's floating panel. */
+    private final FramesLaunchers framesLaunchers = new FramesLaunchers(this);
 
     /*
      * Per-OS memory model: the system, its desktop and its services hold their share of the machine's RAM
@@ -706,6 +706,67 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         openPowerDialog();
     }
 
+    /** How wide an open launcher is, which its own desktop decides. */
+    int startMenuWide() {
+        return startMenuW();
+    }
+
+    /** Where an open launcher's top edge is, for the one desktop that floats it rather than sitting it on the bar. */
+    int startMenuTop(final int tbY) {
+        return startMenuY(tbY);
+    }
+
+    /** The desktop's own name, which a period launcher carries up its side band. */
+    String deskName() {
+        return desktopName();
+    }
+
+    /** The system's name, which the classic Start menu carries up its side band. */
+    String osBand() {
+        return osBandLabel();
+    }
+
+    /** The program a label belongs to, for a row that only has the label to go on. */
+    ResourceLocation programIdFor(final String label) {
+        return programIdForLabel(label);
+    }
+
+    /** The XP menu's two columns: the programs on the left, the system's own places on the right. */
+    List<Launcher> xpLeft() {
+        return xpLeftLaunchers();
+    }
+
+    List<Launcher> xpRight() {
+        return xpRightLaunchers();
+    }
+
+    /** Where the XP left column's row {@code i} sits, which leaves the gap its separator needs. */
+    int xpLeftRow(final int i) {
+        return xpLeftRowY(i);
+    }
+
+    int xpAllRow() {
+        return xpAllRowY();
+    }
+
+    int xpFooterOff(final int x, final int w) {
+        return xpFooterOffX(x, w);
+    }
+
+    int xpFooterLog(final int x, final int w) {
+        return xpFooterLogX(x, w);
+    }
+
+    /** Leaves the desktop without touching the machine, which is what logging off is. */
+    void leaveDesktop() {
+        onClose();
+    }
+
+    /** Opens the page listing everything installed on this machine, services included. */
+    void openEverythingInstalled() {
+        openAllPrograms();
+    }
+
     /**
      * Whether the panel sits at the top. Only the modern GNOME shell does that: the GNOME of the Legacy
      * era put its panel at the bottom, and its top bar ("Activities") did not exist for another decade.
@@ -750,32 +811,32 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private static final int LIST_ROW_H = 11;
     private static final long HOVER_MS = 350L;
     private static final long LEAVE_MS = 300L;
-    private static final int MENU_W = 130;
-    private static final int BAND_W = 22;
-    private static final int MENU_ITEM_H = 18;
+    static final int MENU_W = 130;
+    static final int BAND_W = 22;
+    static final int MENU_ITEM_H = 18;
     // Frames XP Start: a two-column panel (programs left, system "places" right) with a header and a footer band.
-    private static final int XP_MENU_W = 202;
-    private static final int XP_HEADER_H = 26;
+    static final int XP_MENU_W = 202;
+    static final int XP_HEADER_H = 26;
     /** The orange band the Luna Start menu ran under its user header. */
-    private static final int XP_ORANGE_H = 2;
-    private static final int XP_FOOTER_H = 18;
-    private static final int XP_ROW_H = 16;
-    private static final int XP_LEFT_W = 120;
+    static final int XP_ORANGE_H = 2;
+    static final int XP_FOOTER_H = 18;
+    static final int XP_ROW_H = 16;
+    static final int XP_LEFT_W = 120;
     /** The gap a separator sits in, between the pinned block and the rest of the left column. */
-    private static final int XP_SEP_H = 5;
+    static final int XP_SEP_H = 5;
     /** How many of the left column's entries are drawn as pinned (bold) at its top. */
-    private static final int XP_PINNED = 2;
-    private static final int XP_ALL_ROW_H = 15;
+    static final int XP_PINNED = 2;
+    static final int XP_ALL_ROW_H = 15;
     /*
      * Frames 11 Start: a compact floating panel with a search box, a pinned-app grid, and a footer power button.
      * Kept small (5 columns, tight tiles) so even a Mainframe's full app set fits above the taskbar.
      */
-    private static final int W11_MENU_W = 172;
-    private static final int W11_COLS = 5;
-    private static final int W11_TILE_W = 32;
-    private static final int W11_TILE_H = 30;
-    private static final int W11_SEARCH_H = 14;
-    private static final int W11_FOOTER_H = 18;
+    static final int W11_MENU_W = 172;
+    static final int W11_COLS = 5;
+    static final int W11_TILE_W = 32;
+    static final int W11_TILE_H = 30;
+    static final int W11_SEARCH_H = 14;
+    static final int W11_FOOTER_H = 18;
     /*
      * The Linux launchers' own measurements live with the launchers, since that is what draws and hit-tests
      * them; the desktop only needs the few the shared geometry below is worked out from.
@@ -3801,69 +3862,12 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * carries the same relief as that skin's windows and panel instead of the modern flat chrome.
      */
     private void renderStartMenuPeriod(final GuiGraphics g, final int tbY) {
-        final int x = startMenuX();
-        final int h = startMenuHeight();
-        final int w = startMenuW();
-        final int y = tbY - h;
-        skin.panel(g, x, y, w, h);
-
-        // Side band with the desktop's name, rotated, the way the launchers of that period carried it.
-        g.fill(x + 2, y + 2, x + 2 + BAND_W, y + h - 2, skin.accent());
-        g.pose().pushPose();
-        g.pose().translate(x + BAND_W - 3, y + h - 8, 0);
-        g.pose().mulPose(Axis.ZP.rotationDegrees(-90));
-        g.drawString(font, desktopName(), 0, 0, 0xFFFFFFFF, false);
-        g.pose().popPose();
-
-        final int itemX = x + BAND_W + 6;
-        int my = y + 4;
-        for (final Launcher l : launchers) {
-            final boolean hov = hoverY >= my && hoverY < my + MENU_ITEM_H
-                    && hoverX >= itemX && hoverX < x + w;
-            skin.listRow(g, itemX, my, x + w - 4 - itemX, MENU_ITEM_H, hov, false);
-            ProgramIcons.draw(g, itemX + 2, my + 1, 14, 14, programIdForLabel(l.label()), iconSet());
-            g.drawString(font, l.label(), itemX + 20, my + 4,
-                    hov ? skin.listRowText(true) : skin.text(), false);
-            my += MENU_ITEM_H;
-        }
+        framesLaunchers.renderPeriod(g, tbY);
     }
 
     /** Frames 95: the classic Start menu with a rotated OS-name side band and a single vertical program list. */
     private void renderStartMenu95(final GuiGraphics g, final int tbY) {
-        final int x = startMenuX();
-        final int h = startMenuHeight();
-        final int y = tbY - h;
-        // Raised panel.
-        g.fill(x - 1, y - 1, x + MENU_W + 1, y + h + 1, 0xFF000000);
-        g.fill(x, y, x + MENU_W, y + h, theme.menuBg());
-        g.fill(x, y, x + MENU_W, y + 1, 0xFFFFFFFF);
-        g.fill(x, y, x + 1, y + h, 0xFFFFFFFF);
-        // Side band with the OS name, drawn rotated like the classic Start menu.
-        g.fill(x + 1, y + 1, x + 1 + BAND_W, y + h - 1, theme.titleActive());
-        g.pose().pushPose();
-        g.pose().translate(x + BAND_W - 5, y + h - 7, 0);
-        g.pose().mulPose(Axis.ZP.rotationDegrees(-90));
-        g.drawString(font, osBandLabel(), 0, 0, 0xFFFFFFFF, false);
-        g.pose().popPose();
-        // Program items with icons.
-        final int itemX = x + BAND_W + 4;
-        int my = y + 4;
-        for (final Launcher l : launchers) {
-            final boolean hov = hoverY >= my && hoverY < my + MENU_ITEM_H && hoverX >= itemX && hoverX < x + MENU_W;
-            if (hov) {
-                g.fill(itemX, my, x + MENU_W - 2, my + MENU_ITEM_H, theme.titleActive());
-            }
-            ProgramIcons.draw(g, itemX, my, 16, 14, l.programId(), iconSet());
-            g.drawString(font, l.label(), itemX + 20, my + 3, hov ? 0xFFFFFFFF : theme.menuText(), false);
-            my += MENU_ITEM_H;
-        }
-        // Separator, then Shut Down.
-        g.fill(itemX, my + 1, x + MENU_W - 4, my + 2, 0xFF808080);
-        g.fill(itemX, my + 2, x + MENU_W - 4, my + 3, 0xFFFFFFFF);
-        my += 6;
-        g.fill(itemX + 3, my + 2, itemX + 13, my + 12, 0xFFC03030);
-        g.fill(itemX + 7, my, itemX + 9, my + 6, 0xFFFFFFFF);
-        g.drawString(font, "Shut Down", itemX + 20, my + 3, theme.menuText(), false);
+        framesLaunchers.render95(g, tbY);
     }
 
     /** Whether the open launcher has a live search box (Frames 11's Start, GNOME's Activities overview). */
@@ -4056,210 +4060,12 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** Frames XP: a two-column panel (programs on the left, system places on the right) with header/footer bands. */
     private void renderStartMenuXp(final GuiGraphics g, final int tbY) {
-        final int x = startMenuX();
-        final int w = XP_MENU_W;
-        final int h = startMenuHeight();
-        final int y = tbY - h;
-        // Panel with a thin border.
-        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, 0xFF13315F);
-        g.fill(x, y, x + w, y + h, theme.menuBg());
-        // Header band: the player's own face and name over the Luna blue, the way this menu always opened.
-        g.fillGradient(x, y, x + w, y + XP_HEADER_H, 0xFF3B7BD4, 0xFF1E4E9E);
-        drawPlayerFace(g, x + 4, y + 3, XP_HEADER_H - 6);
-        g.drawString(font, playerName(), x + 4 + XP_HEADER_H - 6 + 5, y + (XP_HEADER_H - 8) / 2,
-                0xFFFFFFFF, true);
-        // The orange rule under the header, lit along its top edge.
-        g.fill(x, y + XP_HEADER_H, x + w, y + XP_HEADER_H + 1, 0xFFFFD268);
-        g.fill(x, y + XP_HEADER_H + 1, x + w, y + XP_HEADER_H + XP_ORANGE_H, 0xFFF4A11E);
-        // Body: left programs column over white, right places column over a tinted panel.
-        final int bodyTop = y + XP_HEADER_H + XP_ORANGE_H;
-        final int bodyBot = y + h - XP_FOOTER_H;
-        final int split = x + XP_LEFT_W;
-        g.fill(x, bodyTop, split, bodyBot, 0xFFFFFFFF);
-        g.fill(split, bodyTop, x + w, bodyBot, 0xFFDCE7F6);
-        g.fill(split, bodyTop, split + 1, bodyBot, 0xFFB6C6E0);
-        drawXpLeftColumn(g, x + 3, bodyTop + 3, XP_LEFT_W - 6);
-        drawXpColumn(g, xpRightLaunchers(), split + 3, bodyTop + 3, w - XP_LEFT_W - 6, 0xFF1A3A70, 0, false);
-        // Footer band: log off and turn off, right-aligned, mirroring the header gradient.
-        final int footY = bodyBot;
-        g.fillGradient(x, footY, x + w, y + h, 0xFF3B7BD4, 0xFF1E4E9E);
-        final int offX = xpFooterOffX(x, w);
-        final int logX = xpFooterLogX(x, w);
-        final int textY = footY + (XP_FOOTER_H - 8) / 2;
-        if (hoverY >= footY && hoverX >= logX && hoverX < offX - 4) {
-            g.fill(logX - 2, footY + 2, offX - 6, y + h - 2, 0x33FFFFFF);
-        }
-        g.fill(logX, footY + 5, logX + 8, footY + 13, 0xFFE0A020);
-        g.fill(logX + 3, footY + 8, logX + 8, footY + 10, 0xFFFFFFFF);
-        g.drawString(font, "Log Off", logX + 12, textY, 0xFFFFFFFF, true);
-        if (hoverY >= footY && hoverX >= offX && hoverX < x + w - 2) {
-            g.fill(offX - 2, footY + 2, x + w - 3, y + h - 2, 0x33FFFFFF);
-        }
-        g.fill(offX, footY + 5, offX + 8, footY + 13, 0xFFE24C4C);
-        g.fill(offX + 3, footY + 3, offX + 5, footY + 9, 0xFFFFFFFF);
-        g.drawString(font, "Turn Off Computer", offX + 12, textY, 0xFFFFFFFF, true);
-    }
-
-    /** The name shown on the Start menu's header: the player's own. */
-    private static String playerName() {
-        return Minecraft.getInstance().getUser().getName();
-    }
-
-    /**
-     * The player's face from their own skin, hat layer included, at {@code size} pixels square. A client
-     * without a player yet falls back to a plain plate, so the header never renders as a hole.
-     */
-    private static void drawPlayerFace(final GuiGraphics g, final int x, final int y, final int size) {
-        g.fill(x - 1, y - 1, x + size + 1, y + size + 1, 0xFFFFFFFF); // the little white frame XP drew
-        final AbstractClientPlayer player = Minecraft.getInstance().player;
-        if (player == null) {
-            g.fill(x, y, x + size, y + size, 0xFF2F6FD6);
-            return;
-        }
-        final ResourceLocation skin = player.getSkin().texture();
-        g.blit(skin, x, y, size, size, 8.0F, 8.0F, 8, 8, 64, 64);
-        g.blit(skin, x, y, size, size, 40.0F, 8.0F, 8, 8, 64, 64);
-    }
-
-    /**
-     * The XP Start menu's left column: the pinned entries in bold, a separator, the rest, and the
-     * "All Programs" row that opens the page listing everything installed, services included.
-     */
-    private void drawXpLeftColumn(final GuiGraphics g, final int colX, final int colY, final int colW) {
-        final List<Launcher> items = xpLeftLaunchers();
-        final int pinned = Math.min(XP_PINNED, items.size());
-        drawXpColumn(g, items, colX, colY, colW, theme.menuText(), pinned, true);
-        if (items.size() > pinned) {
-            final int sepY = colY + pinned * XP_ROW_H + XP_SEP_H / 2;
-            g.fill(colX + 3, sepY, colX + colW - 3, sepY + 1, 0xFF9FBBE6);
-        }
-        final int afterRows = colY + xpLeftRowY(items.size());
-        g.fill(colX + 3, afterRows + XP_SEP_H / 2, colX + colW - 3, afterRows + XP_SEP_H / 2 + 1, 0xFF9FBBE6);
-        final int allY = colY + xpAllRowY();
-        if (hoverY >= allY && hoverY < allY + XP_ALL_ROW_H && hoverX >= colX && hoverX < colX + colW) {
-            g.fill(colX, allY, colX + colW, allY + XP_ALL_ROW_H, 0x333B7BD4);
-        }
-        g.drawString(font, Component.literal("All Programs").withStyle(ChatFormatting.BOLD),
-                colX + 4, allY + 4, theme.menuText(), false);
-        // The green chevron that always sat at the end of this row.
-        final int ax = colX + colW - 10;
-        for (int i = 0; i < 5; i++) {
-            g.fill(ax + i, allY + 3 + i, ax + i + 1, allY + 12 - i, 0xFF2F9A33);
-        }
-    }
-
-    /**
-     * Draws one XP Start column as an icon+label list, with a hover highlight on the row under the cursor.
-     * The first {@code boldCount} entries are the pinned ones and are drawn in bold. The left column's rows
-     * are spaced by {@link #xpLeftRowY(int)}, which leaves the gap its separator sits in.
-     */
-    private void drawXpColumn(final GuiGraphics g, final List<Launcher> items, final int colX, final int colY,
-                              final int colW, final int textColor, final int boldCount,
-                              final boolean leftColumn) {
-        for (int i = 0; i < items.size(); i++) {
-            final Launcher l = items.get(i);
-            final int my = colY + (leftColumn ? xpLeftRowY(i) : i * XP_ROW_H);
-            if (hoverY >= my && hoverY < my + XP_ROW_H && hoverX >= colX && hoverX < colX + colW) {
-                g.fill(colX, my, colX + colW, my + XP_ROW_H, 0x333B7BD4);
-            }
-            ProgramIcons.draw(g, colX + 1, my, 14, 12, l.programId(), iconSet());
-            final String label = trim(l.label(), (colW - 20) / 6);
-            if (i < boldCount) {
-                g.drawString(font, Component.literal(label).withStyle(ChatFormatting.BOLD),
-                        colX + 18, my + 4, textColor, false);
-            } else {
-                g.drawString(font, label, colX + 18, my + 4, textColor, false);
-            }
-        }
+        framesLaunchers.renderXp(g, tbY);
     }
 
     /** Frames 11: a centered floating panel with a search box, a pinned-app grid, and a footer power button. */
     private void renderStartMenu11(final GuiGraphics g, final int tbY) {
-        final int x = startMenuX();
-        final int w = W11_MENU_W;
-        final int h = startMenuHeight();
-        final int y = startMenuY(tbY);
-        // The Start panel follows the window skin, so dark mode darkens it along with every program.
-        final int panelBg = skin.windowBg();
-        final int panelText = skin.text();
-        final int panelDim = skin.dim();
-        final int panelEdge = skin.edge();
-        final int panelHover = skin.listHover();
-        // Soft drop shadow, then the panel with a hairline border.
-        g.fill(x + 2, y + 3, x + w + 2, y + h + 3, 0x40000000);
-        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, skin.windowBorder());
-        g.fill(x, y, x + w, y + h, panelBg);
-        // Search box.
-        final int fieldX = x + 6;
-        final int fieldW = w - 12;
-        final int fieldY = y + 6;
-        g.fill(fieldX, fieldY, fieldX + fieldW, fieldY + W11_SEARCH_H, skin.fieldBg());
-        outline(g, fieldX, fieldY, fieldW, W11_SEARCH_H, panelEdge);
-        // Magnifier glyph.
-        outline(g, fieldX + 4, fieldY + 3, 5, 5, panelDim);
-        g.fill(fieldX + 8, fieldY + 7, fieldX + 10, fieldY + 9, panelDim);
-        final String q = startSearch.toString();
-        if (q.isEmpty()) {
-            g.drawString(font, "Type here to search", fieldX + 13, fieldY + 3, panelDim, false);
-        } else {
-            g.drawString(font, trim(q, (fieldW - 16) / 6), fieldX + 13, fieldY + 3, panelText, false);
-        }
-        final int contentTop = fieldY + W11_SEARCH_H + 5;
-        final List<Launcher> filtered = w11Filtered();
-        if (q.isEmpty()) {
-            // Pinned label + the app grid.
-            g.drawString(font, "Pinned", x + 8, contentTop, panelDim, false);
-            final int gridTop = contentTop + 9;
-            final int gridX = x + (w - W11_COLS * W11_TILE_W) / 2;
-            for (int i = 0; i < filtered.size(); i++) {
-                final int col = i % W11_COLS;
-                final int row = i / W11_COLS;
-                final int tx = gridX + col * W11_TILE_W;
-                final int ty = gridTop + row * W11_TILE_H;
-                drawW11Tile(g, filtered.get(i), tx, ty, panelText, panelHover, panelEdge);
-            }
-        } else {
-            // Search results as a vertical list.
-            g.drawString(font, filtered.isEmpty() ? "No results" : "Best match", x + 8, contentTop, panelDim, false);
-            int my = contentTop + 11;
-            final int rowW = w - 12;
-            for (final Launcher l : filtered) {
-                if (hoverY >= my && hoverY < my + 15 && hoverX >= x + 6 && hoverX < x + 6 + rowW) {
-                    g.fill(x + 6, my, x + 6 + rowW, my + 15, panelHover);
-                }
-                ProgramIcons.draw(g, x + 8, my + 1, 13, 12, l.programId(), iconSet());
-                g.drawString(font, l.label(), x + 24, my + 4, panelText, false);
-                my += 15;
-            }
-        }
-        // Footer: a separator, an account label on the left, and a power button on the right.
-        final int footY = y + h - W11_FOOTER_H;
-        g.fill(x + 8, footY, x + w - 8, footY + 1, panelEdge);
-        g.drawString(font, hostAccountLabel(), x + 12, footY + (W11_FOOTER_H - 8) / 2, panelText, false);
-        final int pwX = x + w - 22;
-        final int pwY = footY + (W11_FOOTER_H - 12) / 2;
-        final boolean pwHov = hoverX >= pwX - 2 && hoverX < pwX + 14 && hoverY >= footY;
-        if (pwHov) {
-            g.fill(pwX - 3, footY + 2, pwX + 15, footY + W11_FOOTER_H - 2, panelHover);
-        }
-        outline(g, pwX, pwY, 12, 12, panelText);
-        g.fill(pwX + 5, pwY - 1, pwX + 7, pwY + 6, panelText); // power stem
-    }
-
-    /** Draws one Frames 11 pinned tile: an icon over a centered label, with a hover background. */
-    private void drawW11Tile(final GuiGraphics g, final Launcher l, final int tx, final int ty,
-                             final int labelColor, final int hoverBg, final int hoverEdge) {
-        if (hoverX >= tx && hoverX < tx + W11_TILE_W && hoverY >= ty && hoverY < ty + W11_TILE_H) {
-            g.fill(tx + 1, ty + 1, tx + W11_TILE_W - 1, ty + W11_TILE_H - 1, hoverBg);
-            outline(g, tx + 1, ty + 1, W11_TILE_W - 2, W11_TILE_H - 2, hoverEdge);
-        }
-        ProgramIcons.draw(g, tx + (W11_TILE_W - 16) / 2, ty + 3, 16, 14, l.programId(), iconSet());
-        // Truncate the label to the tile width by dropping characters (no ellipsis, which would be wider).
-        String label = l.label();
-        while (label.length() > 3 && font.width(label) > W11_TILE_W - 2) {
-            label = label.substring(0, label.length() - 1);
-        }
-        g.drawString(font, label, tx + (W11_TILE_W - font.width(label)) / 2, ty + 20, labelColor, false);
+        framesLaunchers.render11(g, tbY);
     }
 
     /** A short account line for the Frames 11 Start footer: the computer's name, or a generic label. */
@@ -4942,88 +4748,15 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * uses, so what the player sees and what they hit are one list.
      */
     private boolean handleStartClickPeriod(final int mx, final int my, final int tbY) {
-        final int x = startMenuX();
-        final int w = startMenuW();
-        final int h = startMenuHeight();
-        final int y = tbY - h;
-        if (mx < x || mx > x + w || my < y || my > y + h) {
-            return false;
-        }
-        final int idx = (int) Math.floor((my - (y + 4)) / (double) MENU_ITEM_H);
-        if (idx >= 0 && idx < launchers.size()) {
-            startChoose(idx);
-        }
-        closeStart();
-        return true;
+        return framesLaunchers.clickPeriod(mx, my, tbY);
     }
 
     private boolean handleStartClick95(final int mx, final int my, final int tbY) {
-        final int h = startMenuHeight();
-        final int y = tbY - h;
-        if (mx < startMenuX() || mx > startMenuX() + MENU_W || my < y || my > y + h) {
-            return false;
-        }
-        final int itemsTop = y + 4;
-        final int idx = (int) Math.floor((my - itemsTop) / (double) MENU_ITEM_H);
-        if (idx >= 0 && idx < launchers.size()) {
-            startChoose(idx);
-        } else {
-            final int shutY = itemsTop + launchers.size() * MENU_ITEM_H + 6;
-            if (my >= shutY && my <= shutY + MENU_ITEM_H) {
-                openPowerDialog();
-            }
-        }
-        closeStart();
-        return true;
+        return framesLaunchers.click95(mx, my, tbY);
     }
 
     private boolean handleStartClickXp(final int mx, final int my, final int tbY) {
-        final int x = startMenuX();
-        final int w = XP_MENU_W;
-        final int h = startMenuHeight();
-        final int y = tbY - h;
-        if (mx < x || mx > x + w || my < y || my > y + h) {
-            return false;
-        }
-        final int bodyTop = y + XP_HEADER_H + XP_ORANGE_H;
-        final int bodyBot = y + h - XP_FOOTER_H;
-        final int split = x + XP_LEFT_W;
-        if (my >= bodyTop && my < bodyBot) {
-            final int dy = my - (bodyTop + 3);
-            if (mx < split) {
-                // The left column's rows are spaced around a separator, so they are walked, not divided.
-                final List<Launcher> col = xpLeftLaunchers();
-                for (int i = 0; i < col.size(); i++) {
-                    final int ry = xpLeftRowY(i);
-                    if (dy >= ry && dy < ry + XP_ROW_H) {
-                        startChoose(col.get(i));
-                        closeStart();
-                        return true;
-                    }
-                }
-                final int allY = xpAllRowY();
-                if (dy >= allY && dy < allY + XP_ALL_ROW_H) {
-                    openAllPrograms();
-                }
-            } else {
-                final List<Launcher> col = xpRightLaunchers();
-                final int row = dy / XP_ROW_H;
-                if (row >= 0 && row < col.size()) {
-                    startChoose(col.get(row));
-                }
-            }
-        } else if (my >= bodyBot) {
-            // The footer: log off leaves the machine, turn off asks the power dialog.
-            if (mx >= xpFooterOffX(x, w)) {
-                openPowerDialog();
-            } else if (mx >= xpFooterLogX(x, w)) {
-                closeStart();
-                onClose();
-                return true;
-            }
-        }
-        closeStart();
-        return true;
+        return framesLaunchers.clickXp(mx, my, tbY);
     }
 
     /** "All Programs": the page that lists everything installed on this machine, services included. */
@@ -5037,53 +4770,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     private boolean handleStartClick11(final int mx, final int my, final int tbY) {
-        final int x = startMenuX();
-        final int w = W11_MENU_W;
-        final int h = startMenuHeight();
-        final int y = startMenuY(tbY);
-        if (mx < x || mx > x + w || my < y || my > y + h) {
-            return false;
-        }
-        // Footer power button (right side): shut the computer down.
-        final int footY = y + h - W11_FOOTER_H;
-        if (my >= footY) {
-            if (mx >= x + w - 24) {
-                openPowerDialog();
-                closeStart();
-            }
-            return true; // clicks elsewhere in the footer are absorbed, keeping the menu open
-        }
-        final int contentTop = y + 6 + W11_SEARCH_H + 5;
-        final List<Launcher> filtered = w11Filtered();
-        if (startSearch.length() > 0) {
-            // Result list rows.
-            int ry = contentTop + 11;
-            for (final Launcher l : filtered) {
-                if (my >= ry && my < ry + 15) {
-                    startChoose(l);
-                    closeStart();
-                    return true;
-                }
-                ry += 15;
-            }
-            return true; // absorb clicks on the search box / empty space
-        }
-        // Pinned grid tiles.
-        final int gridTop = contentTop + 9;
-        final int gridX = x + (w - W11_COLS * W11_TILE_W) / 2;
-        if (my >= gridTop && mx >= gridX) {
-            final int col = (mx - gridX) / W11_TILE_W;
-            final int row = (my - gridTop) / W11_TILE_H;
-            if (col >= 0 && col < W11_COLS) {
-                final int idx = row * W11_COLS + col;
-                if (idx >= 0 && idx < filtered.size()) {
-                    startChoose(filtered.get(idx));
-                    closeStart();
-                    return true;
-                }
-            }
-        }
-        return true; // clicks on the search box or padding keep the menu open
+        return framesLaunchers.click11(mx, my, tbY);
     }
 
     @Override
