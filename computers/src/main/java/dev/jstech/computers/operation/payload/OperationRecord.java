@@ -38,7 +38,7 @@ import java.util.UUID;
  */
 public record OperationRecord(UUID id, byte type, StorageKey key, long requested, long moved, byte status,
                               OperationPriority priority, List<MoveRow> moves, List<SubRow> subs,
-                              int waitedTicks, int ranTicks) {
+                              long waitedTicks, long ranTicks) {
 
     /** The id of a record that never had a live Operation behind it (an instant maintenance record). */
     public static final UUID NO_ID = new UUID(0L, 0L);
@@ -54,17 +54,19 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
     public static final byte TYPE_CRAFT = 8;
 
     /*
-     * Mirrors the 8-state OperationStatus: COMPLETED, COMPLETED_PARTIAL, FAILED, PROCESSING, WAITING,
-     * RESOURCE_LOCKED, PENDING, DISCARDED.
+     * The same eight states a state carries a number for, written here as the numbers themselves because a
+     * switch needs a label it can read at compile time. They used to be a second numbering in an order of
+     * their own, with nothing to stop the two drifting; they are the state's own numbers now, and a test
+     * fails if one of these and the state it names ever stop agreeing.
      */
-    public static final byte STATUS_COMPLETED = 0;
-    public static final byte STATUS_PARTIAL = 1;
-    public static final byte STATUS_FAILED = 2;
-    public static final byte STATUS_PROCESSING = 3;
-    public static final byte STATUS_WAITING = 4;
-    public static final byte STATUS_RESOURCE_LOCKED = 5;
-    public static final byte STATUS_PENDING = 6;
-    public static final byte STATUS_DISCARDED = 7;
+    public static final byte STATUS_PENDING = 1;
+    public static final byte STATUS_PROCESSING = 2;
+    public static final byte STATUS_WAITING = 3;
+    public static final byte STATUS_COMPLETED = 4;
+    public static final byte STATUS_PARTIAL = 5;
+    public static final byte STATUS_FAILED = 6;
+    public static final byte STATUS_RESOURCE_LOCKED = 7;
+    public static final byte STATUS_DISCARDED = 8;
 
     public static final int MAX_MOVES = 32;
     public static final int MAX_SUBS = 32;
@@ -129,7 +131,7 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
                 waitedTicks, ranTicks);
     }
 
-    public OperationRecord withTiming(final int waited, final int ran) {
+    public OperationRecord withTiming(final long waited, final long ran) {
         return new OperationRecord(id, type, key, requested, moved, status, priority, moves, subs, waited, ran);
     }
 
@@ -206,8 +208,8 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
                         buf.writeByte(rec.priority().id());
                         MOVES_CODEC.encode(buf, rec.moves());
                         SUBS_CODEC.encode(buf, rec.subs());
-                        buf.writeVarInt(rec.waitedTicks());
-                        buf.writeVarInt(rec.ranTicks());
+                        buf.writeVarLong(rec.waitedTicks());
+                        buf.writeVarLong(rec.ranTicks());
                     },
                     buf -> new OperationRecord(
                             UUIDUtil.STREAM_CODEC.decode(buf),
@@ -219,8 +221,8 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
                             OperationPriority.byId(buf.readByte()),
                             MOVES_CODEC.decode(buf),
                             SUBS_CODEC.decode(buf),
-                            buf.readVarInt(),
-                            buf.readVarInt()));
+                            buf.readVarLong(),
+                            buf.readVarLong()));
 
     public CompoundTag toNbt(final HolderLookup.Provider registries) {
         final CompoundTag tag = new CompoundTag();
@@ -234,8 +236,8 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
         tag.putLong("moved", moved);
         tag.putByte("status", status);
         tag.putByte("priority", (byte) priority.id());
-        tag.putInt("waited", waitedTicks);
-        tag.putInt("ran", ranTicks);
+        tag.putLong("waited", waitedTicks);
+        tag.putLong("ran", ranTicks);
         final ListTag moveList = new ListTag();
         for (final MoveRow row : moves) {
             final CompoundTag m = new CompoundTag();
@@ -279,6 +281,6 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
                 ? OperationPriority.byId(tag.getByte("priority")) : OperationPriority.DEFAULT;
         return new OperationRecord(id, tag.getByte("type"), key, tag.getLong("requested"),
                 tag.getLong("moved"), tag.getByte("status"), priority, List.copyOf(moves), List.copyOf(subs),
-                tag.getInt("waited"), tag.getInt("ran"));
+                tag.getLong("waited"), tag.getLong("ran"));
     }
 }

@@ -22,11 +22,15 @@ import java.util.Optional;
  * orders them.
  */
 public enum OperationPriority implements IStableId, IStableName {
-    LOW(0, "low", "LOW"),
-    MEDIUM_LOW(1, "medium_low", "MED-"),
-    MEDIUM(2, "medium", "MED"),
-    MEDIUM_HIGH(3, "medium_high", "MED+"),
-    HIGH(4, "high", "HIGH");
+    /*
+     * Numbered in tens rather than one after another, so that a level can be put between two of these later
+     * without any of the numbers already written into a world having to move.
+     */
+    LOW(10, "low", "LOW"),
+    MEDIUM_LOW(20, "medium_low", "MED-"),
+    MEDIUM(30, "medium", "MED"),
+    MEDIUM_HIGH(40, "medium_high", "MED+"),
+    HIGH(50, "high", "HIGH");
 
     /** The level every Operation starts at when the requester does not choose one. */
     public static final OperationPriority DEFAULT = MEDIUM;

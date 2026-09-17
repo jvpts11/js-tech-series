@@ -14,7 +14,11 @@ import java.util.EnumSet;
 import java.util.Objects;
 
 /**
- * Definition of an operation type registered with the {@link OperationTypeRegistry}.
+ * What one kind of Operation is: what it takes, where it can run, and what carries it out.
+ *
+ * <p>Registered once while the game loads, and read from then on by everything that dispatches one. What it
+ * needs of a network cannot change after it is declared: the set is copied on the way in, so that whoever
+ * declared it cannot go on holding the same set and quietly change what the Operation requires later.
  */
 public record OperationType<T extends IOperationArgs>(
         String id,
@@ -40,5 +44,17 @@ public record OperationType<T extends IOperationArgs>(
             throw new IllegalArgumentException(
                     "id must be in 'namespace:path' form using [a-z0-9_/]; got: " + id);
         }
+        requiredCategories = EnumSet.copyOf(requiredCategories);
+    }
+
+    /**
+     * What this Operation needs of a network, as a set of its own.
+     *
+     * <p>A copy, so that reading what an Operation requires cannot become a way of changing it. The set kept
+     * inside was already copied from whoever declared it, and this keeps that true on the way out as well.
+     */
+    @Override
+    public EnumSet<NetworkCategory> requiredCategories() {
+        return EnumSet.copyOf(this.requiredCategories);
     }
 }

@@ -362,7 +362,7 @@ public final class NetworkManagerApp implements IDesktopApp {
     }
 
     /** Ticks as a short duration: whole seconds past a minute's worth, else ticks. */
-    private static String ticksLabel(final int ticks) {
+    private static String ticksLabel(final long ticks) {
         return ticks >= 1200 ? (ticks / 20) + "s" : ticks + "t";
     }
 

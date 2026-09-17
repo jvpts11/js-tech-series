@@ -84,6 +84,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   of is a field too. Programs written before this run now with no change to them.
 
 ### Changed
+- How long an Operation waited and how long it ran are counted without a ceiling, so a craft left running for
+  days still reads correctly instead of turning over.
 - A mod built on this one now adds what it brings at one named moment, by listening for `CoreRegisterEvent` or
   `ComputersRegisterEvent`, and the two mods of the series add their own the same way rather than by a path of
   their own. After the loading is done every registry is closed, so what a world can install and knows how to do

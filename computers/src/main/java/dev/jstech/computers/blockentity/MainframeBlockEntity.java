@@ -1737,7 +1737,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
                              final OperationRecord record) {
         if (record.completed()) {
             post(net -> new IOperationLifecycleEvent.Completed(net,
-                    operation.operationId(), operation.typeId(), (long) record.waitedTicks() + record.ranTicks()));
+                    operation.operationId(), operation.typeId(), record.waitedTicks() + record.ranTicks()));
         } else if (record.status() == OperationRecord.STATUS_DISCARDED) {
             post(net -> new IOperationLifecycleEvent.Discarded(net,
                     operation.operationId(), operation.typeId()));
