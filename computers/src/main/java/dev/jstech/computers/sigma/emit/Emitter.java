@@ -985,6 +985,117 @@ public final class Emitter {
             this.emit(Opcode.LDLOC, new IOperand.Slot(element.at()));
         }
 
+        /**
+         * Where an expression says a value lives, or nothing when it names no place at all.
+         *
+         * <p>Worked out once, here, and then read by everything that writes: plain assignment, assignment that
+         * combines, and one more or one less. Each of the three used to walk this list for itself.
+         */
+        private Place placeOf(final IExpr target) {
+            final IBinding binding = Emitter.this.model.bindingOf(target);
+            if (binding instanceof IBinding.Variable variable) {
+                return this.kept(variable) ? new Place.Captured(variable)
+                        : new Place.Local(this.slot(variable));
+            }
+            if (target instanceof IExpr.Index index) {
+                return new Place.Element(index);
+            }
+            if (!(binding instanceof IBinding.Member held)) {
+                return null;
+            }
+            final IMemberSymbol member = held.member();
+            if (!(member instanceof IMemberSymbol.FieldSymbol)
+                    && !(member instanceof IMemberSymbol.PropertySymbol)) {
+                return null;
+            }
+            return member.isStatic() ? new Place.Shared(member)
+                    : new Place.Held(target instanceof IExpr.Member at ? at.target() : null, member);
+        }
+
+        /**
+         * Pushes what the write will need under the value, and hands back the kept element when there is one.
+         *
+         * <p>A place inside a collection is the only one whose address is worked out rather than named, so it
+         * is the only one with anything to hand back.
+         */
+        private Element prepare(final Place place) {
+            return switch (place) {
+                case Place.Captured ignored -> {
+                    this.pushClosure();
+                    yield null;
+                }
+                case Place.Held held -> {
+                    this.pushHolder(held);
+                    yield null;
+                }
+                case Place.Element at -> {
+                    final Element kept = this.keepElement(at.index());
+                    this.pushElement(kept);
+                    yield kept;
+                }
+                case Place.Local ignored -> null;
+                case Place.Shared ignored -> null;
+            };
+        }
+
+        /** Pushes what is in the place now, leaving whatever {@link #prepare} pushed still underneath it. */
+        private void loadOver(final Place place, final Element kept) {
+            switch (place) {
+                case Place.Local local -> this.emit(Opcode.LDLOC, new IOperand.Slot(local.slot()));
+                case Place.Captured captured -> this.loadKept(captured.variable());
+                case Place.Shared shared -> this.emit(Opcode.LDSFLD, sharedField(shared));
+                case Place.Held held -> {
+                    this.emit(Opcode.DUP);
+                    this.emit(Opcode.LDFLD, new IOperand.Field(this.ownerOf(held.member()), held.member().name()));
+                }
+                case Place.Element ignored -> {
+                    this.pushElement(kept);
+                    this.readElement(kept.of());
+                }
+            }
+        }
+
+        /** Writes the value on top into the place, using up whatever {@link #prepare} pushed. */
+        private void store(final Place place, final Element kept) {
+            switch (place) {
+                case Place.Local local -> this.emit(Opcode.STLOC, new IOperand.Slot(local.slot()));
+                case Place.Captured captured -> this.storeKept(captured.variable());
+                case Place.Shared shared -> this.emit(Opcode.STSFLD, sharedField(shared));
+                case Place.Held held -> this.emit(Opcode.STFLD,
+                        new IOperand.Field(this.ownerOf(held.member()), held.member().name()));
+                case Place.Element ignored -> this.writeElement(kept.of());
+            }
+        }
+
+        /** Reads the place again from nothing, for an answer that is wanted after the writing is done. */
+        private void reload(final Place place) {
+            switch (place) {
+                case Place.Local local -> this.emit(Opcode.LDLOC, new IOperand.Slot(local.slot()));
+                case Place.Captured captured -> this.loadKept(captured.variable());
+                case Place.Shared shared -> this.loadMember(null, shared.member());
+                case Place.Held held -> this.loadMember(held.target(), held.member());
+                case Place.Element ignored -> { } // an element written as a value answers nothing, as before
+            }
+        }
+
+        /** What it belongs to, for a place on an object: what the program named, or this object. */
+        private void pushHolder(final Place.Held held) {
+            if (held.target() == null) {
+                this.pushThis();
+            } else {
+                this.receiver(held.target());
+            }
+        }
+
+        /** The same, for a member expression that has not been read as a place: an event has no place. */
+        private void receiverOf(final IExpr target) {
+            this.pushHolder(new Place.Held(target instanceof IExpr.Member member ? member.target() : null, null));
+        }
+
+        private static IOperand.Field sharedField(final Place.Shared shared) {
+            return new IOperand.Field(shared.member().owner().qualifiedName(), shared.member().name());
+        }
+
         private void readElement(final ITypeSymbol target) {
             if (target instanceof ITypeSymbol.ArrayType) {
                 this.emit(Opcode.LDELEM);
@@ -1093,105 +1204,70 @@ public final class Emitter {
          * Reading, changing and writing back, with the value that is left over being the one the
          * language says: the old one after, the new one before.
          */
-        private void step(final IExpr.Unary expression) {
-            final IExpr place = expression.operand();
-            final ITypeSymbol type = Emitter.this.model.typeOf(place);
-            final Opcode change = expression.operator() == Operator.INCREMENT ? Opcode.ADD : Opcode.SUB;
-            final IBinding binding = Emitter.this.model.bindingOf(place);
-            if (binding instanceof IBinding.Variable variable && this.kept(variable)) {
-                if (expression.postfix()) {
-                    this.loadKept(variable);
-                }
-                this.pushClosure();
-                this.loadKept(variable);
-                this.one(type);
-                this.emit(change);
-                this.storeKept(variable);
-                if (!expression.postfix()) {
-                    this.loadKept(variable);
-                }
-                return;
-            }
-            if (binding instanceof IBinding.Variable variable) {
-                final int at = this.slot(variable);
-                this.emit(Opcode.LDLOC, new IOperand.Slot(at));
-                if (expression.postfix()) {
-                    this.emit(Opcode.DUP);
-                }
-                this.one(type);
-                this.emit(change);
-                if (!expression.postfix()) {
-                    this.emit(Opcode.DUP);
-                }
-                this.emit(Opcode.STLOC, new IOperand.Slot(at));
-                return;
-            }
-            final IMemberSymbol member = binding instanceof IBinding.Member held ? held.member() : null;
-            if (member != null && member.isStatic()) {
-                this.value(place, null);
-                if (expression.postfix()) {
-                    this.emit(Opcode.DUP);
-                }
-                this.one(type);
-                this.emit(change);
-                if (!expression.postfix()) {
-                    this.emit(Opcode.DUP);
-                }
-                this.putBack(place, member);
-                return;
-            }
-            this.stepInPlace(expression, place, type, change, member);
-        }
-
         /**
-         * One more or one less in a place that lives on something: a field or a property of an object, or
-         * a place inside an array, a list or a map.
+         * One more or one less, wherever the one is kept.
          *
-         * <p>What it lives on has to be on the stack UNDER the new value when the value goes back, so the
-         * answer the expression itself gives cannot simply be left on top: it is put away in a place of
-         * its own first and read back once the writing is done.
+         * <p>Three shapes, and which one a place takes is decided by what reaching it leaves on the stack.
+         * A captured variable is read through the object that holds it, so the answer is read rather than
+         * kept. A slot or a place belonging to a type is reached from nothing, so the answer can be taken
+         * with a duplicate as the value goes past. A place on an object or inside a collection sits on top
+         * of what it belongs to, and a duplicate would be buried under that when the value goes back, so
+         * the answer is put away in a place of its own and read out at the end.
          */
-        private void stepInPlace(final IExpr.Unary expression, final IExpr place, final ITypeSymbol type,
-                                 final Opcode change, final IMemberSymbol member) {
-            final int kept = this.hidden();
-            final IExpr.Index index = place instanceof IExpr.Index at ? at : null;
-            Element inside = null;
-            if (index != null) {
-                inside = this.keepElement(index);
-                this.pushElement(inside);
-                this.pushElement(inside);
-                this.readElement(inside.of());
-            } else if (member != null) {
-                this.receiverOf(place);
-                this.emit(Opcode.DUP);
-                this.emit(Opcode.LDFLD, new IOperand.Field(this.ownerOf(member), member.name()));
-            } else {
+        private void step(final IExpr.Unary expression) {
+            final IExpr written = expression.operand();
+            final Place place = this.placeOf(written);
+            if (place == null) {
                 return;
             }
-            if (expression.postfix()) {
-                this.emit(Opcode.DUP);
-                this.emit(Opcode.STLOC, new IOperand.Slot(kept));
+            final ITypeSymbol type = Emitter.this.model.typeOf(written);
+            final Opcode change = expression.operator() == Operator.INCREMENT ? Opcode.ADD : Opcode.SUB;
+            if (place instanceof Place.Captured captured) {
+                this.stepThroughAnObject(expression, captured, type, change);
+                return;
             }
+            final int kept = place.overSomething() ? this.hidden() : -1;
+            final Element inside = this.prepare(place);
+            this.loadOver(place, inside);
+            this.answer(expression.postfix(), kept);
             this.one(type);
             this.emit(change);
-            if (!expression.postfix()) {
-                this.emit(Opcode.DUP);
-                this.emit(Opcode.STLOC, new IOperand.Slot(kept));
+            this.answer(!expression.postfix(), kept);
+            this.store(place, inside);
+            if (kept >= 0) {
+                this.emit(Opcode.LDLOC, new IOperand.Slot(kept));
             }
-            if (inside != null) {
-                this.writeElement(inside.of());
-            } else {
-                this.putBack(place, member);
-            }
-            this.emit(Opcode.LDLOC, new IOperand.Slot(kept));
         }
 
-        private void putBack(final IExpr place, final IMemberSymbol member) {
-            if (member.isStatic()) {
-                this.emit(Opcode.STSFLD, new IOperand.Field(member.owner().qualifiedName(), member.name()));
+        /** Keeps the value that answers the expression: a duplicate on top, or one put away in a slot. */
+        private void answer(final boolean now, final int kept) {
+            if (!now) {
                 return;
             }
-            this.emit(Opcode.STFLD, new IOperand.Field(this.ownerOf(member), member.name()));
+            this.emit(Opcode.DUP);
+            if (kept >= 0) {
+                this.emit(Opcode.STLOC, new IOperand.Slot(kept));
+            }
+        }
+
+        /*
+         * A captured variable is a field of the object a lambda shares with the method around it, so both
+         * reading and writing name that object. There is nothing to duplicate on the way past, and the value
+         * is read again instead, before or after depending on which one was asked for.
+         */
+        private void stepThroughAnObject(final IExpr.Unary expression, final Place.Captured captured,
+                                         final ITypeSymbol type, final Opcode change) {
+            if (expression.postfix()) {
+                this.loadKept(captured.variable());
+            }
+            this.prepare(captured);
+            this.loadOver(captured, null);
+            this.one(type);
+            this.emit(change);
+            this.store(captured, null);
+            if (!expression.postfix()) {
+                this.loadKept(captured.variable());
+            }
         }
 
         private void one(final ITypeSymbol type) {
@@ -1428,70 +1504,26 @@ public final class Emitter {
                 this.subscribe(expression, event);
                 return;
             }
+            final Place place = this.placeOf(expression.target());
+            if (place == null) {
+                return; // not somewhere a value can be put, which has already been complained about
+            }
             final ITypeSymbol target = Emitter.this.model.typeOf(expression.target());
-            if (binding instanceof IBinding.Variable variable) {
-                if (this.kept(variable)) {
-                    this.pushClosure();
-                    if (expression.operator() != Operator.ASSIGN) {
-                        this.loadKept(variable);
-                    }
-                    this.combine(expression, target);
-                    this.storeKept(variable);
-                    if (leavesValue) {
-                        this.loadKept(variable);
-                    }
-                    return;
-                }
-                final int at = this.slot(variable);
-                if (expression.operator() != Operator.ASSIGN) {
-                    this.emit(Opcode.LDLOC, new IOperand.Slot(at));
-                }
-                this.combine(expression, target);
-                if (leavesValue) {
-                    this.emit(Opcode.DUP);
-                }
-                this.emit(Opcode.STLOC, new IOperand.Slot(at));
-                return;
-            }
-            if (expression.target() instanceof IExpr.Index index) {
-                this.assignElement(expression, index, target);
-                return;
-            }
-            if (!(binding instanceof IBinding.Member member)) {
-                return;
-            }
-            /*
-             * A field and a property a program may write are the same thing in the assembly: a named
-             * place on an object. What may not be written has already been complained about.
-             */
-            final IMemberSymbol place = member.member();
-            if (!(place instanceof IMemberSymbol.FieldSymbol) && !(place instanceof IMemberSymbol.PropertySymbol)) {
-                return;
-            }
-            if (!place.isStatic()) {
-                this.receiverOf(expression.target());
-            }
+            final Element kept = this.prepare(place);
             if (expression.operator() != Operator.ASSIGN) {
-                if (!place.isStatic()) {
-                    this.emit(Opcode.DUP);
-                }
-                this.emit(place.isStatic() ? Opcode.LDSFLD : Opcode.LDFLD,
-                        new IOperand.Field(place.isStatic() ? place.owner().qualifiedName()
-                                : this.ownerOf(place), place.name()));
+                this.loadOver(place, kept);
             }
             this.combine(expression, target);
-            this.putBack(expression.target(), place);
-            if (leavesValue) {
-                this.loadMember(expression.target() instanceof IExpr.Member member2 ? member2.target() : null,
-                        place);
+            /*
+             * A slot is the one place whose answer can be taken on the way in, since nothing of it is on the
+             * stack to be buried by the duplicate. Everywhere else the answer is read back afterwards.
+             */
+            if (leavesValue && place instanceof Place.Local) {
+                this.emit(Opcode.DUP);
             }
-        }
-
-        private void receiverOf(final IExpr target) {
-            if (target instanceof IExpr.Member member) {
-                this.receiver(member.target());
-            } else {
-                this.pushThis();
+            this.store(place, kept);
+            if (leavesValue && !(place instanceof Place.Local)) {
+                this.reload(place);
             }
         }
 
@@ -1507,23 +1539,6 @@ public final class Emitter {
             }
             this.value(expression.value(), target);
             this.emit(arithmetic(expression.operator()));
-        }
-
-        private void assignElement(final IExpr.Assign expression, final IExpr.Index index,
-                                   final ITypeSymbol element) {
-            final Element place = this.keepElement(index);
-            this.pushElement(place);
-            if (expression.operator() != Operator.ASSIGN) {
-                /*
-                 * What is already there is read for the combining, and the pair is pushed again to read it:
-                 * the write below still wants its own underneath. The same pair both times, which is the
-                 * whole point of having kept it.
-                 */
-                this.pushElement(place);
-                this.readElement(place.of());
-            }
-            this.combine(expression, element);
-            this.writeElement(place.of());
         }
 
         /*
