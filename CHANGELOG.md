@@ -12,20 +12,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   serve every age: `scc` builds for the oldest machine there is unless told otherwise, so a program written in
   Sigma runs on a Vintage computer and on every computer that came later. `sgsc` still builds for the 32-bit
   machines, since the full language's library is not something a Vintage computer has.
-- A program is now built for the oldest architecture that has what it turned out to need, rather than for a fixed
-  one. The compiler reads the listing back for the instructions it actually used and stamps the oldest machine of
-  the line that has all of them, so a program runs everywhere it could have run instead of only on the newest
-  chip. `--arch` still forces one, and forcing is left alone even where an older one would have done. Today every
-  program is x86, because the 32-bit and the 64-bit x86 have exactly the same instruction set; whatever a later
-  update adds to the newer one is what will start moving programs up.
 - `scc`, the Sigma Compiler Collection, compiles a `.sg` program into the assembly a machine runs. It is a package
   of its own, 4 MB of disk and 2 MB of memory, and the earliest machines can hold it: it is the whole toolchain
   there, since what it writes is the assembly the machine already runs and there is no runtime to install beside
   it. A Legacy machine or later can use it too, and a program built with it runs everywhere. The same program
   compiled by `scc` and by `sgsc` gives the same listing, which is what makes Sigma a subset in fact.
-- `sgsc` now refuses to build for x86-16, naming `scc` instead. Those machines run the smaller language only, and
-  the way that stays true is at the compiler: a listing they can load can only have come from a source they could
-  have held.
 - Sigma has a library of its own, `Standard`, and it is the only one it can reach. Eight types with a handful of
   members each: `Console`, `File`, `Program`, `Math`, `Convert`, `Time`, `Computer` and `Script`. They are the same
   types the full language has, under a second namespace rather than copies of them, so a call written in Sigma
@@ -51,11 +42,6 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   `abstract` class may hold one, such a class cannot be made with `new`, and the first class below it that can be
   made has to give every one of them a body. Giving an interface the method it asked for needs no word, since that
   replaces nothing. `static` methods, constructors and everything in a `struct` take none of the three.
-- Writing a method with the name and parameters of one a base class already has is now an error rather than a
-  silent replacement. Either the one above is `virtual` and the new one wanted `override`, or it is not and the two
-  are a collision; the message says which, and says what to add. There is no way to hide a base method. Which
-  method runs has always been decided by what the object really is, and still is: what changed is that replacing
-  one has to be written down, so nothing already compiled behaves differently.
 - F12 during the power-on self-test opens a one-time boot menu: every disk with a system and every drive holding
   something bootable, picked with the arrow keys and booted with Enter. What is picked there is for that boot only,
   and the boot order saved in the firmware setup is left exactly as it was.
@@ -98,11 +84,6 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   over the Mirror at the network's speed, printing what they are fetching a package at a time, and nothing
   enters a system that is still arriving. Extra packages afterwards, with `pacman -S` or `emerge`, take their
   own time the same way.
-- Compiling the Gentoo kernel now depends on the machine and on the player. The processor's cores and clock
-  decide how much work it gets through, and how much of it happens at once comes from `MAKEOPTS` in
-  `/etc/portage/make.conf`, capped at the cores the machine really has: left alone it builds one thing at a
-  time, `-j4` on a four-core machine cuts the wait to a quarter, and asking for sixty-four of them on that same
-  machine is still four. `echo` writes the line that sets it.
 - A hand-installed distribution now goes through the steps it was missing. `grub-install` installs the
   bootloader for the firmware the machine really has: on an older one it goes on the disk and says so, on a
   modern one it goes in the boot partition and refuses with nowhere to put it. `grub-mkconfig` writes the list
@@ -131,6 +112,25 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the system.
 
 ### Changed
+- A program is now built for the oldest architecture that has what it turned out to need, rather than for a fixed
+  one. The compiler reads the listing back for the instructions it actually used and stamps the oldest machine of
+  the line that has all of them, so a program runs everywhere it could have run instead of only on the newest
+  chip. `--arch` still forces one, and forcing is left alone even where an older one would have done. Today every
+  program is x86, because the 32-bit and the 64-bit x86 have exactly the same instruction set; whatever a later
+  update adds to the newer one is what will start moving programs up.
+- `sgsc` now refuses to build for x86-16, naming `scc` instead. Those machines run the smaller language only, and
+  the way that stays true is at the compiler: a listing they can load can only have come from a source they could
+  have held.
+- Writing a method with the name and parameters of one a base class already has is now an error rather than a
+  silent replacement. Either the one above is `virtual` and the new one wanted `override`, or it is not and the two
+  are a collision; the message says which, and says what to add. There is no way to hide a base method. Which
+  method runs has always been decided by what the object really is, and still is: what changed is that replacing
+  one has to be written down, so nothing already compiled behaves differently.
+- Compiling the Gentoo kernel now depends on the machine and on the player. The processor's cores and clock
+  decide how much work it gets through, and how much of it happens at once comes from `MAKEOPTS` in
+  `/etc/portage/make.conf`, capped at the cores the machine really has: left alone it builds one thing at a
+  time, `-j4` on a four-core machine cuts the wait to a quarter, and asking for sixty-four of them on that same
+  machine is still four. `echo` writes the line that sets it.
 - How long an Operation waited and how long it ran are counted without a ceiling, so a craft left running for
   days still reads correctly instead of turning over.
 - A mod built on this one now adds what it brings at one named moment, by listening for `CoreRegisterEvent` or
