@@ -9,6 +9,7 @@ package dev.jstech.computers.vm.program;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -20,6 +21,7 @@ import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.ListingProblem;
 import dev.jstech.computers.vm.listing.Opcode;
+import dev.jstech.computers.vm.listing.TypeName;
 import dev.jstech.computers.vm.system.MemberId;
 import dev.jstech.computers.vm.system.SystemApi;
 import java.util.List;
@@ -274,5 +276,40 @@ class FieldAccessTest {
         access.statics(typeNamed("Counter"));
 
         assertThrows(UnsupportedOperationException.class, () -> access.statics().clear());
+    }
+
+    /*
+     * A field of a type the program itself declares is answered by the program, so nothing is looked for outside
+     * and nothing is said about it. Asking the wrong question here reaches for the world instead of the object,
+     * which is a program a machine refuses to start and, where it does not refuse, one that reads the wrong thing.
+     */
+    @Test
+    void valueSite_readsAFieldOfTheProgramsOwnTypeAsTheProgramsOwn() {
+        final ProgramImage.ValueSite site = PROGRAM.valueSite(
+                new IOperand.Field(new TypeName(typeNamed("Counter")), "Count"), Opcode.LDFLD);
+
+        assertTrue(site.own());
+        assertNull(site.handled());
+        assertEquals(-1, site.world());
+    }
+
+    @Test
+    void problems_saysNothingAboutAProgramThatUsesItsOwnFields() {
+        final SigmaCompiler.Result built = SigmaCompiler.compile(List.of(new SourceFile("Own.sgs",
+                "using System.*; namespace Tests;\n"
+                        + "class Box { public int Held; public static int Shared; }\n"
+                        + "class Own {\n"
+                        + "    static void Main() {\n"
+                        + "        Box box = new Box();\n"
+                        + "        box.Held = 1;\n"
+                        + "        Box.Shared = box.Held;\n"
+                        + "        Console.PrintLine(\"\" + box.Held + Box.Shared);\n"
+                        + "    }\n}\n")));
+        assertTrue(built.ok(), () -> String.join("\n", built.lines()));
+
+        final List<ListingProblem> problems = ProgramImage.of(new AsmReader(built.assembly()).read()).problems();
+
+        assertEquals(List.of(), problems,
+                () -> String.join("\n", problems.stream().map(ListingProblem::format).toList()));
     }
 }

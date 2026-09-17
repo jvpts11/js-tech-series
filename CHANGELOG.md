@@ -78,6 +78,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   in Files (where Open with is now a submenu), brings the same choice up for any file. An addon registers a program
   that opens any file with `JSComputersAPI.registerFileOpener`.
 
+### Fixed
+- A machine refused to start any program that reads or writes a field of one of its own classes, saying nothing
+  answered it. That was every program with a field, and every program with a lambda, since what a lambda keeps hold
+  of is a field too. Programs written before this run now with no change to them.
+
 ### Added
 - A machine in a rack now comes up the way any other machine does: its own power-on self-test, its own stop at a
   boot manager, and its own system taking the time it takes, all on the machine's clocks. Its bay switch is its

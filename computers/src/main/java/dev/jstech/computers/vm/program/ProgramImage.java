@@ -289,7 +289,7 @@ public final class ProgramImage {
     }
 
     ValueSite valueSite(final IOperand.Field field, final Opcode opcode) {
-        final boolean own = field.owner() == null || this.types.containsKey(field.owner());
+        final boolean own = field.owner() == null || this.types.containsKey(field.owner().value());
         final boolean onType = opcode == Opcode.LDSFLD || opcode == Opcode.STSFLD;
         final ProcessValues.Binding handled =
                 own ? null : ProcessValues.find(bare(field.owner().value()), field.name(), onType);
@@ -363,7 +363,7 @@ public final class ProgramImage {
      * value that can be written or an event to join.
      */
     private ListingError valueProblem(final Opcode opcode, final IOperand.Field field) {
-        if (field.owner() == null || this.types.containsKey(field.owner())) {
+        if (field.owner() == null || this.types.containsKey(field.owner().value())) {
             return null;
         }
         final boolean onType = opcode == Opcode.LDSFLD || opcode == Opcode.STSFLD;
