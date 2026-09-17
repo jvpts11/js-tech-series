@@ -94,6 +94,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Switching a Mainframe off left the Operations it was running reading as still running, for good: a terminal
   went on showing a craft under way by a machine that had no power, and nothing ever moved it off that. They
   now read as discarded, which is what happened to them.
+- A craft, a pipeline or a machine run whose saved pattern could not be read came back as nothing at all, with
+  no word anywhere about what had been lost. The same for a slot of a saved pattern and a row of the
+  Operations log. What could not be read is now named in the log, so a world that comes back short says why.
 
 ### Changed
 - How long an Operation waited and how long it ran are counted without a ceiling, so a craft left running for

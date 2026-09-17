@@ -81,13 +81,17 @@ public final class MinSpecTooltip {
         return lines;
     }
 
-    /** The OS floor a program needs: its Frames version when it declares one, otherwise its platforms. */
+    /**
+     * The system floor a program needs: the one it names in its family's order, otherwise its platforms.
+     *
+     * <p>The name comes from the systems themselves rather than being written here, so a family the mod does
+     * not ship reads the same way as the one it does.
+     */
     private static String minOsLabel(final ProgramSpec prog) {
-        return switch (prog.minOsRank()) {
-            case 3 -> "Frames 11";
-            case 2 -> "Frames XP or newer";
-            default -> platformsLabel(prog.platforms());
-        };
+        if (prog.minOsRank() <= 0) {
+            return platformsLabel(prog.platforms());
+        }
+        return OsRegistry.systemOfRank(prog.minOsRank()) + " or newer";
     }
 
     /** A readable, comma-joined list of platform labels in enum order. */

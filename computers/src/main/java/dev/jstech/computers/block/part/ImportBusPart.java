@@ -17,6 +17,7 @@ import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.persistence.SavedValue;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -228,8 +229,8 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
         flushedAmount = 0L;
         final var ops = registries.createSerializationContext(NbtOps.INSTANCE);
         if (tag.contains("BufferKey")) {
-            StorageKey.CODEC.parse(ops, tag.get("BufferKey"))
-                    .resultOrPartial(err -> LOGGER.warn("Import bus dropped a buffered payload it could not decode: {}", err))
+            SavedValue.read(StorageKey.CODEC.parse(ops, tag.get("BufferKey")),
+                            LOGGER, "what an import bus was holding")
                     .ifPresent(key -> {
                         bufferKey = key;
                         bufferAmount = tag.getLong("BufferAmount");
@@ -243,8 +244,8 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
          */
         if (tag.contains("FlushedKey")) {
             final long flushedAmt = tag.getLong("FlushedAmount");
-            StorageKey.CODEC.parse(ops, tag.get("FlushedKey"))
-                    .resultOrPartial(err -> LOGGER.warn("Import bus dropped an in-flight payload it could not decode: {}", err))
+            SavedValue.read(StorageKey.CODEC.parse(ops, tag.get("FlushedKey")),
+                            LOGGER, "what an import bus had on its way in")
                     .ifPresent(key -> {
                         if (bufferKey == null) {
                             bufferKey = key;

@@ -24,6 +24,7 @@ import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.persistence.SavedValue;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayDeque;
@@ -352,16 +353,14 @@ public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
                              final HolderLookup.Provider registries) {
         if (!rom.isEmpty()) {
             final var ops = RegistryOps.create(NbtOps.INSTANCE, registries);
-            CraftingPattern.CODEC.listOf()
-                    .encodeStart(ops, rom)
-                    .resultOrPartial(error -> JsComputers.LOGGER.warn("Failed to save Recipe ROM: {}", error))
+            SavedValue.written(CraftingPattern.CODEC.listOf().encodeStart(ops, rom),
+                            JsComputers.LOGGER, "this computer's recipes")
                     .ifPresent(encoded -> tag.put("RecipeRom", encoded));
         }
         if (!machineRecipes.isEmpty()) {
             final var ops = RegistryOps.create(NbtOps.INSTANCE, registries);
-            NetworkRecipe.CODEC.listOf()
-                    .encodeStart(ops, machineRecipes)
-                    .resultOrPartial(error -> JsComputers.LOGGER.warn("Failed to save machine ROM: {}", error))
+            SavedValue.written(NetworkRecipe.CODEC.listOf().encodeStart(ops, machineRecipes),
+                            JsComputers.LOGGER, "this computer's machine recipes")
                     .ifPresent(encoded -> tag.put("MachineRom", encoded));
         }
         if (!machineConfigs.isEmpty()) {
@@ -383,17 +382,15 @@ public class CraftingComputerBlockEntity extends AbstractComputerBlockEntity
         rom.clear();
         if (tag.contains("RecipeRom")) {
             final var ops = RegistryOps.create(NbtOps.INSTANCE, registries);
-            CraftingPattern.CODEC.listOf()
-                    .parse(ops, tag.get("RecipeRom"))
-                    .resultOrPartial(error -> JsComputers.LOGGER.warn("Failed to load Recipe ROM: {}", error))
+            SavedValue.read(CraftingPattern.CODEC.listOf().parse(ops, tag.get("RecipeRom")),
+                            JsComputers.LOGGER, "this computer's recipes")
                     .ifPresent(rom::addAll);
         }
         machineRecipes.clear();
         if (tag.contains("MachineRom")) {
             final var ops = RegistryOps.create(NbtOps.INSTANCE, registries);
-            NetworkRecipe.CODEC.listOf()
-                    .parse(ops, tag.get("MachineRom"))
-                    .resultOrPartial(error -> JsComputers.LOGGER.warn("Failed to load machine ROM: {}", error))
+            SavedValue.read(NetworkRecipe.CODEC.listOf().parse(ops, tag.get("MachineRom")),
+                            JsComputers.LOGGER, "this computer's machine recipes")
                     .ifPresent(machineRecipes::addAll);
         }
         machineConfigs.clear();

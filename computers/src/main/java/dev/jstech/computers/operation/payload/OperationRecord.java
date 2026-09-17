@@ -7,10 +7,12 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.OperationTypeId;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.persistence.SavedValue;
 import dev.jstech.core.util.Utf8Text;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.UUIDUtil;
@@ -335,9 +337,13 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
     }
 
     public static OperationRecord fromNbt(final CompoundTag tag, final HolderLookup.Provider registries) {
-        final StorageKey key = StorageKey.CODEC
-                .parse(registries.createSerializationContext(NbtOps.INSTANCE), tag.get("icon"))
-                .result().orElseGet(() -> StorageKey.of(Items.BARRIER));
+        /*
+         * A row whose subject cannot be read still belongs in the log, so it reads as a barrier rather than
+         * taking the rest of the log down with it; the line in the log is what says one was lost.
+         */
+        final StorageKey key = SavedValue.readOr(
+                StorageKey.CODEC.parse(registries.createSerializationContext(NbtOps.INSTANCE), tag.get("icon")),
+                JsComputers.LOGGER, "what an Operation in the log was about", StorageKey.of(Items.BARRIER));
         final List<MoveRow> moves = new ArrayList<>();
         final ListTag moveList = tag.getList("moves", Tag.TAG_COMPOUND);
         for (int i = 0; i < moveList.size(); i++) {

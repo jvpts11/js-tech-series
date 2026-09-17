@@ -39,7 +39,9 @@ import java.util.Set;
  * @param minVramMb    minimum VRAM in MB (checked against the total installed VRAM)
  * @param minDiskMb    disk footprint in MB the program needs free to install
  * @param kind         how it runs (foreground app or headless service)
- * @param minOsRank    minimum Frames version rank (0 any / 2 XP+ / 3 11); see {@code OsRegistry.osVersionRank}
+ * @param minOsRank    the oldest place in a family's order this will run on, counting from one; zero for a
+ *                     program that runs on any system of the platforms it names. Each system says where it
+ *                     sits ({@link OsDef#familyRank()}), so this is a number against those, not a name
  * @param hostScope    which computer it may live on (any, a Crafting Computer, or the Mainframe)
  * @param iconId       base id for its per-OS icon sprites ({@code textures/gui/program/<path>/<os>.png})
  * @param minEra       the oldest hardware generation that may install it (a gate)

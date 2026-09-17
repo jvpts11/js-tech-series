@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.crafting;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.block.part.CablePartType;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
@@ -22,6 +23,7 @@ import dev.jstech.computers.storage.FilteredDataPort;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.persistence.SavedValue;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -647,7 +649,9 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
                                                      final HolderLookup.Provider registries) {
         final RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, registries);
         final ProcessingPattern pattern = tag.contains("Pattern")
-                ? ProcessingPattern.CODEC.parse(ops, tag.get("Pattern")).result().orElse(null) : null;
+                ? SavedValue.readOr(ProcessingPattern.CODEC.parse(ops, tag.get("Pattern")),
+                        JsComputers.LOGGER, "the recipe a saved machine run was working through", null)
+                : null;
         if (pattern == null) {
             return null;
         }

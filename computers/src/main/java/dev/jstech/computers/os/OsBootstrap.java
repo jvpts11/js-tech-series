@@ -87,16 +87,20 @@ public final class OsBootstrap {
             // MC-NET: full-screen network GUI (the rewrapped network interactor), from the Vintage era.
             OsDef.mediaInstalled(rl("mc_net"), OsCapability.NETWORK_GUI, HardwareEra.VINTAGE, rl("net_min"), 8,
                     Platform.MC_NET, "MC-NET", Optional.empty(), SoftwareHouse.NOUVELL).withRam(2),
-            // The Frames editions bundle their own desktop environment (the id doubles as the DE id).
+            /*
+             * The Frames editions bundle their own desktop environment (the id doubles as the DE id), and they
+             * are the one family here with an order to it: each says where it sits (withRank), so a program can
+             * ask for XP or newer without anything but these three lines knowing which is newer than which.
+             */
             OsDef.mediaInstalled(rl("frames_95"), OsCapability.FULL_DESKTOP, HardwareEra.LEGACY, rl("win9x"), 48,
                     Platform.FRAMES, "Frames 95", Optional.of(rl("frames_95")), SoftwareHouse.MIDSOFT).withRam(16)
-                    .withInstaller(InstallerStyle.FRAMES_95),
+                    .withInstaller(InstallerStyle.FRAMES_95).withRank(1),
             OsDef.mediaInstalled(rl("frames_xp"), OsCapability.FULL_DESKTOP, HardwareEra.LEGACY, rl("nt"), 1_536,
                     Platform.FRAMES, "Frames XP", Optional.of(rl("frames_xp")), SoftwareHouse.MIDSOFT).withRam(64)
-                    .withInstaller(InstallerStyle.FRAMES_XP),
+                    .withInstaller(InstallerStyle.FRAMES_XP).withRank(2),
             OsDef.mediaInstalled(rl("frames_11"), OsCapability.FULL_DESKTOP, HardwareEra.STANDARD, rl("nt"), 20_480,
                     Platform.FRAMES, "Frames 11", Optional.of(rl("frames_11")), SoftwareHouse.MIDSOFT).withRam(768)
-                    .withInstaller(InstallerStyle.FRAMES_11),
+                    .withInstaller(InstallerStyle.FRAMES_11).withRank(3),
 
             /*
              * Linux distributions: all on the Linux kernel, all boot to a bash TTY until a desktop environment

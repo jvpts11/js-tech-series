@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.crafting;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.operation.INetworkOperation;
@@ -15,6 +16,7 @@ import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.persistence.SavedValue;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -119,7 +121,9 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
                                                      final HolderLookup.Provider registries) {
         final RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, registries);
         final MultiStagePattern pattern = tag.contains("Pattern")
-                ? MultiStagePattern.CODEC.parse(ops, tag.get("Pattern")).result().orElse(null) : null;
+                ? SavedValue.readOr(MultiStagePattern.CODEC.parse(ops, tag.get("Pattern")),
+                        JsComputers.LOGGER, "the pattern a saved pipeline was following", null)
+                : null;
         if (pattern == null) {
             return null;
         }

@@ -48,6 +48,10 @@ import java.util.Optional;
  * @param house          who wrote it: the name on its banner, its copyright line and its install disc
  * @param ramMb          megabytes the running system holds for itself before any program opens; a program
  *                       bundled with it weighs a share of this ({@link RamLedger#bundledWeightMb})
+ * @param familyRank     where this system sits in its own family's order, counting from one, so a program can
+ *                       ask for a system of that family no older than a given one. Zero, the default, means
+ *                       the family has no order: nothing is newer or older than anything else in it, and a
+ *                       program is decided by the platform alone
  */
 public record OsDef(
         ResourceLocation id,
@@ -64,7 +68,8 @@ public record OsDef(
         Optional<ResourceLocation> bundledDesktop,
         SoftwareHouse house,
         int ramMb,
-        InstallerStyle installerStyle
+        InstallerStyle installerStyle,
+        int familyRank
 ) {
 
     public static final Codec<OsDef> CODEC = RecordCodecBuilder.create(inst -> inst.group(
@@ -86,7 +91,8 @@ public record OsDef(
             Codec.INT.optionalFieldOf("ram_mb", 0).forGetter(OsDef::ramMb),
             StableCodecs.byName(InstallerStyle.class)
                     .optionalFieldOf("installer", InstallerStyle.PLAIN)
-                    .forGetter(OsDef::installerStyle)
+                    .forGetter(OsDef::installerStyle),
+            Codec.INT.optionalFieldOf("family_rank", 0).forGetter(OsDef::familyRank)
     ).apply(inst, OsDef::new));
 
     /**
@@ -106,7 +112,7 @@ public record OsDef(
                 displayName, "cmd",
                 platform == Platform.FRAMES ? PackageManagerKind.PCKMGR : PackageManagerKind.NONE,
                 InstallMode.GUIDED, bundledDesktop, house, 0,
-                InstallerStyle.PLAIN);
+                InstallerStyle.PLAIN, 0);
     }
 
     /** A Linux distribution: TTY capability on the Linux kernel, no bundled desktop, installable from the Legacy era. */
@@ -116,13 +122,28 @@ public record OsDef(
         return new OsDef(id, OsCapability.TERMINAL_ONLY, HardwareEra.LEGACY,
                 ResourceLocation.fromNamespaceAndPath("jsc", "linux"), footprintMb, Optional.empty(),
                 Platform.LINUX, displayName, shellId, packageManager, installMode, Optional.empty(), house, 0,
-                InstallerStyle.PLAIN);
+                InstallerStyle.PLAIN, 0);
     }
 
     /** The same system, holding {@code megabytes} of RAM for itself while it runs. */
     public OsDef withRam(final int megabytes) {
         return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
-                shellId, packageManager, installMode, bundledDesktop, house, megabytes, installerStyle);
+                shellId, packageManager, installMode, bundledDesktop, house, megabytes, installerStyle,
+                familyRank);
+    }
+
+    /**
+     * The same system, placed at {@code rank} in its family's order, counting from one.
+     *
+     * <p>A family whose systems say nothing here has no order, which is the answer for most of them: one
+     * Linux distribution is not newer than another in any way a program can ask about. A family that does
+     * have an order says so here, once, on each of its systems, and that is where the answer lives. It used
+     * to be a list of three names written into the registry, which meant a family the mod did not ship could
+     * never have an order at all.
+     */
+    public OsDef withRank(final int rank) {
+        return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
+                shellId, packageManager, installMode, bundledDesktop, house, ramMb, installerStyle, rank);
     }
 
     /**
@@ -133,7 +154,7 @@ public record OsDef(
      */
     public OsDef withInstaller(final InstallerStyle style) {
         return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
-                shellId, packageManager, installMode, bundledDesktop, house, ramMb, style);
+                shellId, packageManager, installMode, bundledDesktop, house, ramMb, style, familyRank);
     }
 
     public OsDef {
@@ -160,6 +181,10 @@ public record OsDef(
         }
         if (installerStyle == null) {
             installerStyle = InstallerStyle.PLAIN;
+        }
+        // A rank below zero would read as older than a family's own first system, which nothing can be.
+        if (familyRank < 0) {
+            familyRank = 0;
         }
     }
 

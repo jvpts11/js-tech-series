@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.crafting;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -21,6 +22,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.persistence.SavedValue;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.HashSet;
@@ -143,7 +145,9 @@ public final class NetworkCraftOperation implements IPersistentOperation {
                                    final List<NetworkProcessingOperation> machineSteps) {
         final RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, registries);
         final StorageKey result = tag.contains("Result")
-                ? StorageKey.CODEC.parse(ops, tag.get("Result")).result().orElse(null) : null;
+                ? SavedValue.readOr(StorageKey.CODEC.parse(ops, tag.get("Result")),
+                        JsComputers.LOGGER, "what a saved craft was making", null)
+                : null;
         if (result == null) {
             return new Restored(null, false);
         }
@@ -152,7 +156,8 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         final ListTag pool = tag.getList("Pool", Tag.TAG_COMPOUND);
         for (int i = 0; i < pool.size(); i++) {
             final CompoundTag row = pool.getCompound(i);
-            final StorageKey key = StorageKey.CODEC.parse(ops, row.get("Key")).result().orElse(null);
+            final StorageKey key = SavedValue.readOr(StorageKey.CODEC.parse(ops, row.get("Key")),
+                    JsComputers.LOGGER, "a thing a saved craft had gathered", null);
             final long amount = row.getLong("Amount");
             if (key != null && amount > 0) {
                 final long stored = storage.insert(key, amount);
@@ -166,7 +171,9 @@ public final class NetworkCraftOperation implements IPersistentOperation {
             return new Restored(null, true);
         }
         final CraftingPattern embedded = tag.contains("Embedded")
-                ? CraftingPattern.CODEC.parse(ops, tag.get("Embedded")).result().orElse(null) : null;
+                ? SavedValue.readOr(CraftingPattern.CODEC.parse(ops, tag.get("Embedded")),
+                        JsComputers.LOGGER, "the pattern a saved craft carried with it", null)
+                : null;
         final String label = tag.getString("Label");
         final OperationPriority priority = savedPriority(tag);
         final List<NetworkProcessingOperation> running = new ArrayList<>();

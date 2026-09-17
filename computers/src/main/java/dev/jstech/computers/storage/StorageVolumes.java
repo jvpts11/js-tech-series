@@ -9,6 +9,7 @@ package dev.jstech.computers.storage;
 
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.DataResult;
+import dev.jstech.core.persistence.SavedValue;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -122,8 +123,7 @@ public final class StorageVolumes extends SavedData {
             Tag items = encoded.get(id);
             if (items == null) {
                 final DataResult<Tag> fresh = ServerStorageContents.CODEC.encodeStart(ops, entry.getValue().snapshot());
-                items = fresh.resultOrPartial(error -> LOGGER.error("Could not save storage volume {}: {}", id, error))
-                        .orElse(null);
+                items = SavedValue.written(fresh, LOGGER, "what a server was storing (" + id + ")").orElse(null);
                 if (items != null && fresh.result().isPresent()) {
                     encoded.put(id, items); // a whole encoding stands until the volume is written again
                 }
@@ -150,7 +150,7 @@ public final class StorageVolumes extends SavedData {
             final Tag items = one.get("Items");
             if (items != null) {
                 final DataResult<ServerStorageContents> parsed = ServerStorageContents.CODEC.parse(ops, items);
-                parsed.resultOrPartial(error -> LOGGER.error("Could not load storage volume {}: {}", id, error))
+                SavedValue.read(parsed, LOGGER, "what a server was storing (" + id + ")")
                         .ifPresent(contents -> volume.replaceAll(contents.items()));
                 if (parsed.result().isPresent()) {
                     store.encoded.put(id, items); // what was read is what would be written: no encoding owed

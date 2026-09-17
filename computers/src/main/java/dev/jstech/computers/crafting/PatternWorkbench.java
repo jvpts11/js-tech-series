@@ -9,10 +9,12 @@ package dev.jstech.computers.crafting;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.storage.ChemicalBridges;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.id.IStableId;
+import dev.jstech.core.persistence.SavedValue;
 import dev.jstech.core.id.StableIds;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -680,7 +682,8 @@ public final class PatternWorkbench {
             final CompoundTag row = list.getCompound(i);
             final int index = row.getInt("Index");
             if (index >= 0 && index < cells.length && row.contains("Cell")) {
-                cells[index] = DataCell.CODEC.parse(ops, row.get("Cell")).result().orElse(null);
+                cells[index] = SavedValue.readOr(DataCell.CODEC.parse(ops, row.get("Cell")),
+                        JsComputers.LOGGER, "a slot of a saved pattern", null);
             }
         }
     }

@@ -155,20 +155,33 @@ public final class OsRegistry {
     }
 
     /**
-     * The version rank of a Frames OS, so a program can require a newer version within the same platform:
-     * {@code frames_95 = 1}, {@code frames_xp = 2}, {@code frames_11 = 3}; everything else (and no OS) is 0.
-     * A pure {@code osId}-to-rank map, safe to call on either side without the registry being populated.
+     * Where a system sits in its family's order, as the system itself declares, so a program can ask for one
+     * no older than a given one within the same platform.
+     *
+     * <p>Zero for a system that declares nothing, for one nobody has registered, and for no system at all: a
+     * family with no order means the platform alone decides, which is the answer for every family but one.
+     *
+     * <p>This used to be three names written out here, which meant the mod's own three systems were the only
+     * ones that could ever be ordered: a fourth, or an addon's, had no way to say it was newer than anything.
      */
     public static int osVersionRank(final ResourceLocation osId) {
-        if (osId == null) {
-            return 0;
+        final OsDef os = osId == null ? null : getOs(osId);
+        return os == null ? 0 : os.familyRank();
+    }
+
+    /**
+     * The name of the system at that place in its family's order, for a message saying what is needed.
+     *
+     * <p>Falls back to words rather than a name where nothing answers to that rank, which is what happens if a
+     * program asks for a rank past the end of its family.
+     */
+    public static String systemOfRank(final int rank) {
+        for (final OsDef os : oses()) {
+            if (os.familyRank() == rank) {
+                return os.displayName();
+            }
         }
-        return switch (osId.getPath()) {
-            case "frames_95" -> 1;
-            case "frames_xp" -> 2;
-            case "frames_11" -> 3;
-            default -> 0;
-        };
+        return "a newer system";
     }
 
     /**
