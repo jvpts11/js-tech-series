@@ -9,12 +9,23 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.block.IBootMenuScreenOpener;
 import dev.jstech.computers.block.IFirmwareScreenOpener;
+import dev.jstech.computers.block.IInstallDoneScreenOpener;
+import dev.jstech.computers.block.IInstallProgressScreenOpener;
+import dev.jstech.computers.block.IInstallerScreenOpener;
+import dev.jstech.computers.block.IKvmScreenOpener;
+import dev.jstech.computers.block.IPostScreenOpener;
+import dev.jstech.computers.block.ISystemBootScreenOpener;
 import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.menu.CommandPromptMenu;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
@@ -29,7 +40,7 @@ public final class ComputingClientSetup {
     }
 
     @SubscribeEvent
-    public static void onLoggingOut(final net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut event) {
+    public static void onLoggingOut(final ClientPlayerNetworkEvent.LoggingOut event) {
         // The desktop's per-machine caches belong to the world being left.
         DesktopScreen.forgetClientState();
     }
@@ -39,9 +50,9 @@ public final class ComputingClientSetup {
         // Wire the client-side firmware screen opener so blocks can open it without importing Minecraft.
         IFirmwareScreenOpener.Holder.set((pos, monitorPos, kind, name) ->
                 Minecraft.getInstance().setScreen(new FirmwareScreen(pos, monitorPos, kind, name)));
-        dev.jstech.computers.block.IPostScreenOpener.Holder.set((pos, monitorPos, kind, name, remaining) ->
+        IPostScreenOpener.Holder.set((pos, monitorPos, kind, name, remaining) ->
                 Minecraft.getInstance().setScreen(new BootSequenceScreen(pos, monitorPos, kind, name, remaining)));
-        dev.jstech.computers.block.IInstallDoneScreenOpener.Holder.set(
+        IInstallDoneScreenOpener.Holder.set(
                 (pos, monitorPos, kind, osName, targetLabel, targetSlot, failure) -> Minecraft.getInstance().setScreen(
                         failure.isEmpty()
                                 ? OsInstallScreen.completed(pos, monitorPos, kind, osName, targetLabel, targetSlot)
@@ -50,7 +61,7 @@ public final class ComputingClientSetup {
          * An installer already on screen is given the new page rather than replaced, so a page that changes
          * under the player does not throw away what they were in the middle of typing.
          */
-        dev.jstech.computers.block.IInstallerScreenOpener.Holder.set(payload -> {
+        IInstallerScreenOpener.Holder.set(payload -> {
             if (Minecraft.getInstance().screen instanceof InstallerScreen open
                     && open.isFor(payload.hostPos())) {
                 open.accept(payload);
@@ -58,17 +69,17 @@ public final class ComputingClientSetup {
             }
             Minecraft.getInstance().setScreen(new InstallerScreen(payload));
         });
-        dev.jstech.computers.block.IBootMenuScreenOpener.Holder.set(
+        IBootMenuScreenOpener.Holder.set(
                 (pos, monitorPos, menu, remaining) -> Minecraft.getInstance().setScreen(
                         new BootMenuScreen(pos, monitorPos, menu, remaining)));
-        dev.jstech.computers.block.ISystemBootScreenOpener.Holder.set(
+        ISystemBootScreenOpener.Holder.set(
                 (pos, monitorPos, sequence, remaining, total, endsDark) -> Minecraft.getInstance().setScreen(
                         new SystemBootScreen(pos, monitorPos, sequence, remaining, total, endsDark)));
-        dev.jstech.computers.block.IInstallProgressScreenOpener.Holder.set(
+        IInstallProgressScreenOpener.Holder.set(
                 (pos, monitorPos, kind, osName, targetLabel, ticksLeft, ticksTotal) ->
                         Minecraft.getInstance().setScreen(OsInstallScreen.working(pos, monitorPos, kind, osName,
                                 targetLabel, ticksLeft, ticksTotal)));
-        dev.jstech.computers.block.IKvmScreenOpener.Holder.set(payload ->
+        IKvmScreenOpener.Holder.set(payload ->
                 Minecraft.getInstance().setScreen(new KvmChannelScreen(payload)));
 
         event.register(ComputingModule.DESKTOP_MENU.get(), DesktopScreen::new);
@@ -79,9 +90,9 @@ public final class ComputingClientSetup {
         event.register(ComputingModule.PATTERN_ENCODER_MENU.get(), PatternEncoderScreen::new);
         event.register(ComputingModule.NETWORK_GATEWAY_MENU.get(), NetworkGatewayScreen::new);
         event.register(ComputingModule.COMMAND_PROMPT_MENU.get(),
-                (final dev.jstech.computers.menu.CommandPromptMenu menu,
-                 final net.minecraft.world.entity.player.Inventory inv,
-                 final net.minecraft.network.chat.Component title) -> new CommandPromptScreen<>(menu, inv, title));
+                (final CommandPromptMenu menu,
+                 final Inventory inv,
+                 final Component title) -> new CommandPromptScreen<>(menu, inv, title));
         event.register(ComputingModule.DOS_TERMINAL_MENU.get(), DosTerminalScreen::new);
         event.register(ComputingModule.LINUX_TTY_MENU.get(), LinuxTtyScreen::new);
         event.register(ComputingModule.SERVER_RACK_MENU.get(), ServerRackScreen::new);

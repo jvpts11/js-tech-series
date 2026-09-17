@@ -15,6 +15,8 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.client.gui.component.UiContext;
+import java.util.ArrayDeque;
+import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -50,7 +52,7 @@ public final class ShellApp implements IDesktopApp {
     private final BlockPos host;
 
     /** Lines still to be typed here, one after the other as each finishes. */
-    private final java.util.ArrayDeque<String> lines = new java.util.ArrayDeque<>();
+    private final ArrayDeque<String> lines = new ArrayDeque<>();
 
     public ShellApp(final BlockPos host) {
         this(host, null);
@@ -97,7 +99,7 @@ public final class ShellApp implements IDesktopApp {
      * Types lines here one after the other, the next only once the machine has answered the one
      * before, the way a studio hands the shell a job it cannot do itself.
      */
-    public void typeLines(final java.util.List<String> typed) {
+    public void typeLines(final List<String> typed) {
         this.lines.addAll(typed);
         if (!this.view.busy()) {
             typeNext();

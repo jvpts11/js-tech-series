@@ -9,9 +9,11 @@ package dev.jstech.core.event;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -61,7 +63,7 @@ public class CoreEventDispatcher {
          * graph (not just the direct interfaces) is what lets a listener on an ancestor interface
          * (e.g. ICoreEvent itself) be reached.
          */
-        final java.util.Set<Class<?>> types = new java.util.LinkedHashSet<>();
+        final Set<Class<?>> types = new LinkedHashSet<>();
         collectEventTypes(event.getClass(), types);
 
         for (final Class<?> type : types) {
@@ -80,7 +82,7 @@ public class CoreEventDispatcher {
         return event;
     }
 
-    private static void collectEventTypes(final Class<?> type, final java.util.Set<Class<?>> out) {
+    private static void collectEventTypes(final Class<?> type, final Set<Class<?>> out) {
         if (type == null || !ICoreEvent.class.isAssignableFrom(type) || !out.add(type)) {
             return;
         }

@@ -9,9 +9,11 @@ package dev.jstech.computers.os;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.os.boot.SystemWelcome;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.fs.SystemLayout;
+import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import net.minecraft.resources.ResourceLocation;
@@ -20,6 +22,7 @@ import net.minecraft.world.item.ItemStack;
 import java.util.List;
 import java.util.function.IntFunction;
 import java.util.function.ObjIntConsumer;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The disk-set logic every OS-hosting machine shares: which disk boots, where an install lands,
@@ -43,9 +46,9 @@ public final class OsDisks {
     }
 
     /** What the system on that disk remembers about being greeted; a disk with no mark has met nobody. */
-    public static dev.jstech.computers.os.boot.SystemWelcome welcomeOn(final ItemStack disk) {
+    public static SystemWelcome welcomeOn(final ItemStack disk) {
         return disk.getOrDefault(ComputingModule.SYSTEM_WELCOME.get(),
-                dev.jstech.computers.os.boot.SystemWelcome.UNSEEN);
+                SystemWelcome.UNSEEN);
     }
 
     /**
@@ -236,11 +239,11 @@ public final class OsDisks {
      * the first desktop-environment package installed on it (a Linux distribution after its desktop
      * package went in), else null (a TTY-only or network OS).
      */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public static ResourceLocation installedDesktopId(
-            @org.jetbrains.annotations.Nullable final OsDef os,
-            @org.jetbrains.annotations.Nullable
-            final dev.jstech.computers.program.ComputerConsoleState console) {
+            @Nullable final OsDef os,
+            @Nullable
+            final ComputerConsoleState console) {
         if (os == null) {
             return null;
         }

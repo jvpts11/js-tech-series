@@ -30,6 +30,7 @@ import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.gui.layout.DesktopZ;
 import dev.jstech.core.operation.OperationPriority;
+import java.util.Collections;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -289,7 +290,7 @@ public final class NetworkManagerApp implements IDesktopApp {
     public static void acceptOpsLog(final List<OperationRecord> ops) {
         if (active != null) {
             final List<OperationRecord> reversed = new ArrayList<>(ops);
-            java.util.Collections.reverse(reversed);
+            Collections.reverse(reversed);
             active.logNewestFirst = reversed;
         }
     }

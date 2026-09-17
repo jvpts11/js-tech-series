@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
+import dev.jstech.computers.os.edit.CodeRuns;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.AmountStepper;
@@ -21,6 +22,7 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.TextField;
+import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.language.IProgrammingLanguage;
 import java.util.ArrayDeque;
@@ -28,7 +30,9 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.function.Consumer;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -98,7 +102,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     private final TextField askField = new TextField(64);
     private final Button askOk;
     private String askTitle = "";
-    private java.util.function.Consumer<String> askAction = value -> { };
+    private Consumer<String> askAction = value -> { };
     private final Popup settings = new Popup("Settings", 170, 50).setLayouter(this::layoutSettings);
     private final AmountStepper tabStepper = new AmountStepper();
     /** The question a closing tab with changes asks. */
@@ -303,7 +307,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     private List<SideRow> sideRows() {
         final List<SideRow> out = new ArrayList<>();
         final String folder = this.workspace.folder();
-        out.add(new SideRow(folder.isEmpty() ? "C:\\" : shortName(folder).toUpperCase(java.util.Locale.ROOT),
+        out.add(new SideRow(folder.isEmpty() ? "C:\\" : shortName(folder).toUpperCase(Locale.ROOT),
                 0, null, true));
         for (final CodeWorkspace.TreeRow row : this.workspace.tree()) {
             final String mark = row.file().directory()
@@ -722,7 +726,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         boolean any = false;
         for (final DiskFilesPayload.WireFile file : files) {
             // A folder builds all of its Σ# sources into one program.
-            if (file.path().toLowerCase(java.util.Locale.ROOT).endsWith(".sgs")) {
+            if (file.path().toLowerCase(Locale.ROOT).endsWith(".sgs")) {
                 line.append(' ').append(file.path());
                 any = true;
             }
@@ -756,7 +760,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     }
 
     /** Asks for one thing in a small window and does something with the answer. */
-    private void ask(final String title, final String initial, final java.util.function.Consumer<String> action) {
+    private void ask(final String title, final String initial, final Consumer<String> action) {
         this.askTitle = title;
         this.askAction = action;
         this.askField.set(initial);
@@ -778,7 +782,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     }
 
     private void layoutAskClose(final Popup p) {
-        final List<dev.jstech.core.client.gui.component.UiComponent> c = p.children();
+        final List<UiComponent> c = p.children();
         final int y = p.bottom() - 15;
         c.get(0).setBounds(p.x() + 4, y, 40, 11);
         c.get(1).setBounds(p.x() + 48, y, 60, 11);
@@ -800,7 +804,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     }
 
     private void layoutSettings(final Popup p) {
-        final List<dev.jstech.core.client.gui.component.UiComponent> children = p.children();
+        final List<UiComponent> children = p.children();
         children.get(0).setBounds(p.x() + 4, p.contentTop() + 4, 50, 9);
         this.tabStepper.setBounds(p.x() + 56, p.contentTop() + 2, 96, 12);
         children.get(2).setBounds(p.right() - 38, p.bottom() - 15, 34, 11);
@@ -1041,7 +1045,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
 
     private int link(final GuiGraphics g, final Font font, final int x, final int y, final String label,
                      final Runnable action, final InkPalette palette) {
-        g.drawString(font, label, x, y, palette.of(dev.jstech.computers.os.edit.CodeRuns.Ink.KEYWORD), false);
+        g.drawString(font, label, x, y, palette.of(CodeRuns.Ink.KEYWORD), false);
         this.links.add(new Link(x, y - 1, font.width(label), 9, action));
         return y + 9;
     }

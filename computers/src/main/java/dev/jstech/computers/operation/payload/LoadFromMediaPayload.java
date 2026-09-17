@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.fs.FsPaths;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -44,7 +45,7 @@ public record LoadFromMediaPayload(
     private record FileName(String value) {
         static final StreamCodec<RegistryFriendlyByteBuf, FileName> STREAM_CODEC =
                 StreamCodec.composite(
-                        ByteBufCodecs.stringUtf8(dev.jstech.computers.os.fs.FsPaths.MAX_NAME_LENGTH),
+                        ByteBufCodecs.stringUtf8(FsPaths.MAX_NAME_LENGTH),
                         FileName::value,
                         FileName::new);
     }

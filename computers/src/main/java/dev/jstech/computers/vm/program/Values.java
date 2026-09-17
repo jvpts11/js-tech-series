@@ -8,6 +8,7 @@
 package dev.jstech.computers.vm.program;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,7 +108,7 @@ public final class Values {
 
         /** Everything it holds, in order, for writing the array down. */
         public List<Object> all() {
-            return new ArrayList<>(java.util.Arrays.asList(this.values));
+            return new ArrayList<>(Arrays.asList(this.values));
         }
     }
 

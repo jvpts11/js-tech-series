@@ -7,8 +7,12 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.PackageManagerKind;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * The POSIX command set: what a shell on a {@code ShellFamily.POSIX} kernel (Linux) speaks. Every file verb
@@ -44,10 +48,10 @@ public final class PosixCommands {
                 new Mkfs(),
                 new Screenfetch(),
                 // One package manager per distribution family; each is only available on the OS that ships it.
-                new PackageManagerCommand(dev.jstech.computers.os.PackageManagerKind.APT),
-                new PackageManagerCommand(dev.jstech.computers.os.PackageManagerKind.DNF),
-                new PackageManagerCommand(dev.jstech.computers.os.PackageManagerKind.PACMAN),
-                new PackageManagerCommand(dev.jstech.computers.os.PackageManagerKind.EMERGE));
+                new PackageManagerCommand(PackageManagerKind.APT),
+                new PackageManagerCommand(PackageManagerKind.DNF),
+                new PackageManagerCommand(PackageManagerKind.PACMAN),
+                new PackageManagerCommand(PackageManagerKind.EMERGE));
     }
 
     /**
@@ -56,9 +60,9 @@ public final class PosixCommands {
      * OS ships is available, so {@code apt} does not exist on Arch and {@code pacman} does not exist on Ubuntu.
      */
     static final class PackageManagerCommand implements ICliCommand {
-        private final dev.jstech.computers.os.PackageManagerKind kind;
+        private final PackageManagerKind kind;
 
-        PackageManagerCommand(final dev.jstech.computers.os.PackageManagerKind kind) {
+        PackageManagerCommand(final PackageManagerKind kind) {
             this.kind = kind;
         }
 
@@ -126,7 +130,7 @@ public final class PosixCommands {
                 ctx.out().dim("  This computer is not on a network whose Mainframe runs the Mirror service.");
                 return;
             }
-            ctx.out().dim(kind == dev.jstech.computers.os.PackageManagerKind.PACMAN
+            ctx.out().dim(kind == PackageManagerKind.PACMAN
                     ? ":: Synchronizing package databases (mirror://mainframe) ... done"
                     : "Reading package lists from mirror://mainframe ... Done");
         }
@@ -209,7 +213,7 @@ public final class PosixCommands {
         }
 
         private void builds(final CliContext ctx) {
-            final java.util.Map<String, Long> builds = ctx.computer().buildsRemaining();
+            final Map<String, Long> builds = ctx.computer().buildsRemaining();
             if (builds.isEmpty()) {
                 ctx.out().dim("no builds in progress");
                 return;
@@ -226,7 +230,7 @@ public final class PosixCommands {
     static final class Mkfs implements ICliCommand {
         @Override public String name() { return "mkfs.ext4"; }
 
-        @Override public java.util.List<String> aliases() { return java.util.List.of("mkfs"); }
+        @Override public List<String> aliases() { return List.of("mkfs"); }
 
         @Override public String summary() { return "build a filesystem on a device (erases it)"; }
 
@@ -259,7 +263,7 @@ public final class PosixCommands {
     static final class Screenfetch implements ICliCommand {
 
         // One small ASCII mark per distribution, printed beside the system readout.
-        private static final java.util.Map<String, String[]> LOGOS = java.util.Map.of(
+        private static final Map<String, String[]> LOGOS = Map.of(
                 "ubuntu", new String[]{
                         "                          ./+o+-",
                         "                  yyyyy- -yyyyyy+",
@@ -364,17 +368,17 @@ public final class PosixCommands {
                 "  '--------'  "};
 
         // Each distribution paints in its brand color, the way real fetch tools color their logo block.
-        private static final java.util.Map<String, dev.jstech.computers.program.cli.CliStyle>
-                COLORS = java.util.Map.of(
-                        "ubuntu", dev.jstech.computers.program.cli.CliStyle.ORANGE,
-                        "debian", dev.jstech.computers.program.cli.CliStyle.MAGENTA,
-                        "fedora", dev.jstech.computers.program.cli.CliStyle.BLUE,
-                        "arch", dev.jstech.computers.program.cli.CliStyle.CYAN,
-                        "gentoo", dev.jstech.computers.program.cli.CliStyle.PURPLE);
+        private static final Map<String, CliStyle>
+                COLORS = Map.of(
+                        "ubuntu", CliStyle.ORANGE,
+                        "debian", CliStyle.MAGENTA,
+                        "fedora", CliStyle.BLUE,
+                        "arch", CliStyle.CYAN,
+                        "gentoo", CliStyle.PURPLE);
 
         @Override public String name() { return "screenfetch"; }
 
-        @Override public java.util.List<String> aliases() { return java.util.List.of("neofetch"); }
+        @Override public List<String> aliases() { return List.of("neofetch"); }
 
         @Override public String summary() { return "show the system logo and information"; }
 
@@ -386,7 +390,7 @@ public final class PosixCommands {
              * the classic first thing to apt install on a fresh system.
              */
             return computer.hasProgram(
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("jsc", "screenfetch"));
+                    ResourceLocation.fromNamespaceAndPath("jsc", "screenfetch"));
         }
 
         @Override public void run(final CliContext ctx) {
@@ -396,9 +400,9 @@ public final class PosixCommands {
                 return;
             }
             final String[] logo = LOGOS.getOrDefault(info.distroId(), DEFAULT_LOGO);
-            final dev.jstech.computers.program.cli.CliStyle color = COLORS.getOrDefault(
-                    info.distroId(), dev.jstech.computers.program.cli.CliStyle.ACCENT);
-            final java.util.List<String> lines = new java.util.ArrayList<>();
+            final CliStyle color = COLORS.getOrDefault(
+                    info.distroId(), CliStyle.ACCENT);
+            final List<String> lines = new ArrayList<>();
             final String user = "player@" + info.hostname();
             lines.add(user);
             lines.add("-".repeat(user.length()));

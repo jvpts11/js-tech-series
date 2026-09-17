@@ -9,10 +9,14 @@ package dev.jstech.computers.operation.payload.network;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.item.ServerItem;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
+import java.util.Optional;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
@@ -25,15 +29,15 @@ public final class NetworkLookup {
     }
 
     public static String networkLabel(final NetworkUuid net) {
-        return "jsc-net-" + dev.jstech.core.util.ShortId.of(net.asString());
+        return "jsc-net-" + ShortId.of(net.asString());
     }
 
     public static MainframeBlockEntity resolveMainframe(final ServerLevel level, final NetworkUuid network) {
-        final java.util.Optional<Long> pos = NetworkSystem.get(level).mainframePositionOf(network);
+        final Optional<Long> pos = NetworkSystem.get(level).mainframePositionOf(network);
         if (pos.isEmpty()) {
             return null;
         }
-        return level.getBlockEntity(net.minecraft.core.BlockPos.of(pos.get())) instanceof MainframeBlockEntity mf
+        return level.getBlockEntity(BlockPos.of(pos.get())) instanceof MainframeBlockEntity mf
                 ? mf : null;
     }
 
@@ -43,11 +47,11 @@ public final class NetworkLookup {
 
     public static String serverLabel(final ServerLevel level, final NodeUuid node) {
         final String fallback = "SRV-" + ShortId.of(node.asString());
-        return dev.jstech.core.network.NetworkSystem.get(level).locationOf(node)
-                .map(loc -> level.getBlockEntity(net.minecraft.core.BlockPos.of(loc.rackPos()))
-                        instanceof dev.jstech.computers.blockentity.ServerRackBlockEntity rack
+        return NetworkSystem.get(level).locationOf(node)
+                .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos()))
+                        instanceof ServerRackBlockEntity rack
                         ? rack.getServers().getStackInSlot(loc.slot()) : ItemStack.EMPTY)
-                .map(dev.jstech.computers.item.ServerItem::customName)
+                .map(ServerItem::customName)
                 .filter(name -> !name.isEmpty())
                 .orElse(fallback);
     }

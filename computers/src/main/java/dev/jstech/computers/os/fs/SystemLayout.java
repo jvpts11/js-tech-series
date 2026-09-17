@@ -7,8 +7,11 @@
  */
 package dev.jstech.computers.os.fs;
 
+import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.OsCapability;
 
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.ShellFamily;
 import java.util.List;
 
 /**
@@ -71,8 +74,8 @@ public final class SystemLayout {
     }
 
     /** The desktop folder for an OS: the Unix home desktop on a POSIX kernel, the Windows-style one otherwise. */
-    public static String desktopDirFor(final dev.jstech.computers.os.KernelDef kernel) {
-        return kernel != null && kernel.shellFamily() == dev.jstech.computers.os.ShellFamily.POSIX
+    public static String desktopDirFor(final KernelDef kernel) {
+        return kernel != null && kernel.shellFamily() == ShellFamily.POSIX
                 ? POSIX_DESKTOP_DIR : DESKTOP_DIR;
     }
 
@@ -81,9 +84,9 @@ public final class SystemLayout {
      * kernel lays down the Unix tree regardless of capability (a Linux TTY still has /home and /etc), a DOS
      * kernel follows the capability rule above.
      */
-    public static List<String> directoriesFor(final dev.jstech.computers.os.OsDef os,
-                                              final dev.jstech.computers.os.KernelDef kernel) {
-        if (kernel != null && kernel.shellFamily() == dev.jstech.computers.os.ShellFamily.POSIX) {
+    public static List<String> directoriesFor(final OsDef os,
+                                              final KernelDef kernel) {
+        if (kernel != null && kernel.shellFamily() == ShellFamily.POSIX) {
             return POSIX_DIRECTORIES;
         }
         return directoriesFor(os.capability());

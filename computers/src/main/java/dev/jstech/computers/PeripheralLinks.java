@@ -9,6 +9,7 @@ package dev.jstech.computers;
 
 import dev.jstech.computers.block.PeripheralCableBlock;
 import dev.jstech.computers.blockentity.MainframePartBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.peripheral.PeripheralLinkValidator;
@@ -65,7 +66,7 @@ public final class PeripheralLinks {
             return OptionalLong.of(part.controllerPos().asLong());
         }
         // A rack cabinet spans several blocks; a cable touching any part links to its controller.
-        if (be instanceof dev.jstech.computers.blockentity.ServerRackPartBlockEntity part
+        if (be instanceof ServerRackPartBlockEntity part
                 && part.controllerPos() != null
                 && level.getBlockEntity(part.controllerPos()) instanceof IPeripheralOwner owner
                 && owner.cableType() == type) {

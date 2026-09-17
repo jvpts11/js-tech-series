@@ -7,8 +7,12 @@
  */
 package dev.jstech.computers.crafting;
 
+import dev.jstech.computers.block.part.AbstractBusPart;
+import dev.jstech.computers.block.part.CablePartType;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
+import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.operation.IPersistentOperation;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.CompositeDataPort;
@@ -18,6 +22,9 @@ import dev.jstech.computers.storage.FilteredDataPort;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.uuid.NetworkUuid;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -96,7 +103,7 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
                                       final ProcessingPattern pattern, final long requested,
                                       final List<BlockPos> candidateComputers, final UUID operationId,
                                       final String requesterLabel,
-                                      @org.jetbrains.annotations.Nullable final ICraftIo io) {
+                                      @Nullable final ICraftIo io) {
         this.level = level;
         this.network = network;
         this.pattern = pattern;
@@ -142,8 +149,8 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
          * Sided machines route through crafting buses when present: an Input Bus aimed at the machine carries
          * the deliveries, a Receiving Bus the pickups. Without buses both ride the switch-touched face.
          */
-        final IDataPort inPort = portFor(dev.jstech.computers.block.part.CablePartType.INPUT);
-        final IDataPort outPort = portFor(dev.jstech.computers.block.part.CablePartType.RECEIVING);
+        final IDataPort inPort = portFor(CablePartType.INPUT);
+        final IDataPort outPort = portFor(CablePartType.RECEIVING);
         if (inPort.isEmpty() && outPort.isEmpty()) {
             machine = null; // the machine was broken/removed; re-resolve next tick
             return;
@@ -318,8 +325,8 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
      * The dispatcher picks a free one per job, so concurrency scales with the machines actually present.
      */
     public List<BlockPos> routableMachines() {
-        final List<BlockPos> routable = new java.util.ArrayList<>();
-        final List<BlockPos> ofType = new java.util.ArrayList<>();
+        final List<BlockPos> routable = new ArrayList<>();
+        final List<BlockPos> ofType = new ArrayList<>();
         for (final BlockPos pos : candidateComputers) {
             if (level.getBlockEntity(pos) instanceof CraftingComputerBlockEntity cc) {
                 for (final CraftingSwitchBlockEntity.DeclaredMachine m : cc.availableMachines()) {
@@ -383,21 +390,21 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
      * anything, exactly as before this check existed.
      */
     private boolean machineCanRoute(final CraftingSwitchBlockEntity.DeclaredMachine m) {
-        final List<StorageKey> filters = new java.util.ArrayList<>();
+        final List<StorageKey> filters = new ArrayList<>();
         for (final Direction d : Direction.values()) {
-            final net.minecraft.core.BlockPos cablePos = m.machinePos().relative(d);
+            final BlockPos cablePos = m.machinePos().relative(d);
             if (level.getBlockEntity(cablePos)
-                    instanceof dev.jstech.computers.blockentity.DataCableBlockEntity cable
+                    instanceof DataCableBlockEntity cable
                     && cable.getPart(d.getOpposite())
-                    instanceof dev.jstech.computers.block.part.AbstractBusPart bus
-                    && bus.type() == dev.jstech.computers.block.part.CablePartType.INPUT) {
+                    instanceof AbstractBusPart bus
+                    && bus.type() == CablePartType.INPUT) {
                 filters.add(bus.filterKey()); // null = an unfiltered bus, a wildcard
             }
         }
         if (filters.isEmpty()) {
             return true; // no Input Bus: fed through the switch-touched face, which accepts anything
         }
-        final List<StorageKey> inputs = new java.util.ArrayList<>();
+        final List<StorageKey> inputs = new ArrayList<>();
         for (final ProcessingPattern.ProcessingInput in : pattern.inputs()) {
             inputs.add(in.key());
         }
@@ -411,7 +418,7 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
     /** True when every input can be matched to a distinct bus (Hungarian-style augmenting-path matching). */
     private static boolean hasFullMatching(final List<StorageKey> inputs, final List<StorageKey> filters) {
         final int[] inputForBus = new int[filters.size()];
-        java.util.Arrays.fill(inputForBus, -1);
+        Arrays.fill(inputForBus, -1);
         for (int i = 0; i < inputs.size(); i++) {
             if (!augment(i, inputs, filters, inputForBus, new boolean[filters.size()])) {
                 return false;
@@ -451,14 +458,14 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
      * key, so a machine fed two ingredients from two sides routes each to the correct face; an unfiltered bus
      * carries anything. Without a bus, the switch-touched face serves both directions.
      */
-    private IDataPort portFor(final dev.jstech.computers.block.part.CablePartType kind) {
-        final List<IDataPort> faces = new java.util.ArrayList<>();
+    private IDataPort portFor(final CablePartType kind) {
+        final List<IDataPort> faces = new ArrayList<>();
         for (final Direction d : Direction.values()) {
-            final net.minecraft.core.BlockPos cablePos = machine.machinePos().relative(d);
+            final BlockPos cablePos = machine.machinePos().relative(d);
             if (level.getBlockEntity(cablePos)
-                    instanceof dev.jstech.computers.blockentity.DataCableBlockEntity cable
+                    instanceof DataCableBlockEntity cable
                     && cable.getPart(d.getOpposite())
-                    instanceof dev.jstech.computers.block.part.AbstractBusPart bus
+                    instanceof AbstractBusPart bus
                     && bus.type() == kind) {
                 final ExternalDataPort port = portOn(d);
                 if (!port.isEmpty()) {
@@ -602,7 +609,7 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
 
     @Override
     public String typeId() {
-        return dev.jstech.computers.operation.ComputingOperations.PROCESSING;
+        return ComputingOperations.PROCESSING;
     }
 
     @Override
@@ -658,7 +665,7 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
 
     @Override
     public void setPriority(final OperationPriority priority) {
-        this.priority = java.util.Objects.requireNonNull(priority, "priority");
+        this.priority = Objects.requireNonNull(priority, "priority");
     }
 
     @Override

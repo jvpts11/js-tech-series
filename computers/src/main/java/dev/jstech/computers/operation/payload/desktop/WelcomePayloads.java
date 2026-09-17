@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload.desktop;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.client.os.WelcomeApp;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -21,6 +22,7 @@ import dev.jstech.computers.os.install.Installers;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -41,7 +43,7 @@ public final class WelcomePayloads {
                 ComputerAccess.machine(RequestWelcomePayload::hostPos), WelcomePayloads::handleRequest);
         registrar.playToClient(WelcomePayload.TYPE, WelcomePayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
-                        dev.jstech.computers.client.os.WelcomeApp.accept(payload)));
+                        WelcomeApp.accept(payload)));
         ComputerAccess.accept(registrar, WelcomeStartupPayload.TYPE, WelcomeStartupPayload.STREAM_CODEC,
                 ComputerAccess.machine(WelcomeStartupPayload::hostPos), WelcomePayloads::handleStartup);
     }
@@ -80,7 +82,7 @@ public final class WelcomePayloads {
         if (!(computer instanceof AbstractComputerBlockEntity machine)) {
             return "";
         }
-        final net.neoforged.neoforge.items.ItemStackHandler hardware = machine.getHardware();
+        final ItemStackHandler hardware = machine.getHardware();
         for (int i = 0; i < hardware.getSlots(); i++) {
             final ItemStack part = hardware.getStackInSlot(i);
             if (!part.isEmpty() && part.getItem() instanceof CpuItem) {

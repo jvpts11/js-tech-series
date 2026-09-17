@@ -8,9 +8,18 @@
 package dev.jstech.computers.operation.payload.crafting;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.client.os.CraftPlannerApp;
+import dev.jstech.computers.client.os.NetworkInteractorApp;
+import dev.jstech.computers.crafting.AnyTagResolver;
+import dev.jstech.computers.crafting.CraftPlanner;
 import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.crafting.NetworkRecipe;
+import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.crafting.RecipeChoice;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
+import dev.jstech.computers.menu.CraftingSwitchMenu;
 import dev.jstech.computers.operation.MoveLabels;
+import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
@@ -22,11 +31,22 @@ import dev.jstech.computers.operation.payload.crafting.CraftPlanMath.PlanPreview
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.operation.IOperationResult;
+import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.uuid.NetworkUuid;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -62,8 +82,8 @@ public final class CraftingPayloads {
         ComputerAccess.accept(registrar, CraftSubmitPayload.TYPE, CraftSubmitPayload.STREAM_CODEC,
                 ComputerAccess.machine(CraftSubmitPayload::hostPos), CraftingPayloads::handleCraftSubmit);
         ComputerAccess.accept(registrar, SetCraftingSwitchFacePayload.TYPE, SetCraftingSwitchFacePayload.STREAM_CODEC,
-                ComputerAccess.menu(dev.jstech.computers.menu.CraftingSwitchMenu.class,
-                        dev.jstech.computers.menu.CraftingSwitchMenu::switchPos, SetCraftingSwitchFacePayload::switchPos),
+                ComputerAccess.menu(CraftingSwitchMenu.class,
+                        CraftingSwitchMenu::switchPos, SetCraftingSwitchFacePayload::switchPos),
                 CraftingPayloads::handleSetCraftingSwitchFace);
     }
 
@@ -72,7 +92,7 @@ public final class CraftingPayloads {
             menu.setCraftCatalog(payload.entries());
         } else {
             // The desktop Craft Planner has no container menu; route the catalogue to it.
-            dev.jstech.computers.client.os.CraftPlannerApp.acceptCatalog(payload.entries());
+            CraftPlannerApp.acceptCatalog(payload.entries());
         }
     }
 
@@ -81,7 +101,7 @@ public final class CraftingPayloads {
             menu.setCraftPlan(payload);
         } else {
             // The desktop Network Interactor has no container menu; route the plan to its craft popup.
-            dev.jstech.computers.client.os.NetworkInteractorApp.acceptCraftPlan(payload);
+            NetworkInteractorApp.acceptCraftPlan(payload);
         }
     }
 
@@ -94,21 +114,21 @@ public final class CraftingPayloads {
     public static List<CraftCatalogPayload.Entry> buildCraftCatalog(final ServerLevel level, final NetworkUuid net) {
         final MainframeBlockEntity mainframe = net == null ? null : resolveMainframe(level, net);
         if (mainframe == null) {
-            return java.util.List.of();
+            return List.of();
         }
-        final var stock = dev.jstech.computers.operation.NetworkStorage
+        final var stock = NetworkStorage
                 .of(level, net).query();
         // "Any" cells are judged against what the network holds, the way a craft would resolve them.
-        final var patterns = dev.jstech.computers.crafting.AnyTagResolver
+        final var patterns = AnyTagResolver
                 .resolveAll(mainframe.networkPatterns(), stock);
-        final java.util.Map<StorageKey, CraftCatalogPayload.Entry> entries = new java.util.LinkedHashMap<>();
+        final Map<StorageKey, CraftCatalogPayload.Entry> entries = new LinkedHashMap<>();
         for (final var pattern : patterns) {
             final StorageKey key = StorageKey.of(pattern.result());
             if (entries.containsKey(key)) {
                 continue;
             }
             final byte dot;
-            if (dev.jstech.computers.crafting.CraftPlanner
+            if (CraftPlanner
                     .plan(key, 1, patterns, stock).feasible()) {
                 dot = CraftCatalogPayload.DOT_GREEN;
             } else {
@@ -136,7 +156,7 @@ public final class CraftingPayloads {
             if (key == null || entries.containsKey(key)) {
                 continue;
             }
-            final net.minecraft.world.item.ItemStack result = key.stack(1);
+            final ItemStack result = key.stack(1);
             if (result.isEmpty()) {
                 continue; // a fluid result: the item catalog cannot render it yet (v1)
             }
@@ -158,7 +178,7 @@ public final class CraftingPayloads {
             entries.put(key, new CraftCatalogPayload.Entry(result, dot, recipe.multi().isPresent(),
                     wire(label, CraftCatalogPayload.MAX_LABEL)));
         }
-        return java.util.List.copyOf(entries.values());
+        return List.copyOf(entries.values());
     }
 
     private static void handleCraftPlanRequest(final CraftPlanRequestPayload payload, final ServerPlayer player,
@@ -172,7 +192,7 @@ public final class CraftingPayloads {
             return;
         }
         final var machines = mainframe.networkProcessingPatterns();
-        final var stock = dev.jstech.computers.operation.NetworkStorage
+        final var stock = NetworkStorage
                 .of(level, host.networkUuid()).query();
         final StorageKey key = StorageKey.of(payload.result());
         final long quantity = payload.quantity();
@@ -182,14 +202,14 @@ public final class CraftingPayloads {
          * player picking for the item, else the first. The reply carries every recipe that makes the item
          * when there is more than one, so the dialog can offer the choice.
          */
-        final java.util.List<dev.jstech.computers.crafting.NetworkRecipe> recipes = mainframe.recipesFor(key);
+        final List<NetworkRecipe> recipes = mainframe.recipesFor(key);
         int chosen = payload.recipe();
         if (chosen < 0 || chosen >= recipes.size()) {
             chosen = rememberedRecipe(host, key, recipes.size());
         }
-        final java.util.List<dev.jstech.computers.crafting.RecipeChoice> options = recipes.size() > 1
-                ? recipeChoices(level, mainframe, recipes, key, quantity, machines, stock) : java.util.List.of();
-        final dev.jstech.computers.crafting.NetworkRecipe recipe = recipes.isEmpty() ? null : recipes.get(chosen);
+        final List<RecipeChoice> options = recipes.size() > 1
+                ? recipeChoices(level, mainframe, recipes, key, quantity, machines, stock) : List.of();
+        final NetworkRecipe recipe = recipes.isEmpty() ? null : recipes.get(chosen);
         final var patterns = mainframe.patternsPreferring(recipe == null ? null : recipe.bench().orElse(null));
         final int recipeIndex = chosen;
         /*
@@ -205,7 +225,7 @@ public final class CraftingPayloads {
                     machinePlan.plainMachine());
             final boolean feasible = machinePlan.feasible()
                     || (machinePlan.plainMachine() && cover.covered()
-                            && dev.jstech.computers.crafting.CraftPlanner.plan(key, quantity, patterns, machines, stock)
+                            && CraftPlanner.plan(key, quantity, patterns, machines, stock)
                                     .feasible());
             PacketDistributor.sendToPlayer(player, new CraftPlanPayload(
                     result, quantity, machinePlan.rows(), feasible,
@@ -218,17 +238,17 @@ public final class CraftingPayloads {
          * goes out from the main thread when it is ready (the dialog shows "planning..." meanwhile). Without
          * a dispatcher the plan is made here and now instead.
          */
-        final java.util.function.Supplier<PlanPreview> preview =
+        final Supplier<PlanPreview> preview =
                 () -> planPreview(key, quantity, patterns, machines, stock);
-        final java.util.function.Consumer<PlanPreview> reply = made ->
+        final Consumer<PlanPreview> reply = made ->
                 PacketDistributor.sendToPlayer(player, new CraftPlanPayload(result, quantity, made.rows(),
                         made.feasible(), made.maxFeasible(), estimateTicks(level, mainframe, made.plan()),
                         recipeIndex, options, unmakeableLines(made.plan()), Math.max(1, made.plan().steps().size())));
         final boolean queued = mainframe.submitOperation(task -> {
             final PlanPreview made = preview.get();
             task.onMainThread(() -> reply.accept(made));
-            return dev.jstech.core.operation.IOperationResult.success();
-        }, dev.jstech.core.operation.OperationPriority.MEDIUM);
+            return IOperationResult.success();
+        }, OperationPriority.MEDIUM);
         if (!queued) {
             reply.accept(preview.get());
         }
@@ -246,18 +266,18 @@ public final class CraftingPayloads {
     }
 
     /** What the network would craft to cover the short rows, one line each, and whether every one is coverable. */
-    private record Cover(java.util.List<String> lines, boolean covered) {
+    private record Cover(List<String> lines, boolean covered) {
     }
 
     /**
      * One line per short row. A processing run's tree crafts what is short when a pattern makes it
      * ({@code treeCovers}); a pipeline runs on what is in stock, so its line says to request the thing first.
      */
-    private static Cover coverShortfalls(final java.util.List<CraftPlanPayload.Row> rows,
-                                         final java.util.List<CraftingPattern> patterns,
-                                         final java.util.List<dev.jstech.computers.crafting.ProcessingPattern> machines,
-                                         final java.util.Map<StorageKey, Long> stock, final boolean treeCovers) {
-        final java.util.List<String> lines = new java.util.ArrayList<>();
+    private static Cover coverShortfalls(final List<CraftPlanPayload.Row> rows,
+                                         final List<CraftingPattern> patterns,
+                                         final List<ProcessingPattern> machines,
+                                         final Map<StorageKey, Long> stock, final boolean treeCovers) {
+        final List<String> lines = new ArrayList<>();
         boolean covered = true;
         for (final CraftPlanPayload.Row row : rows) {
             if (row.satisfied()) {
@@ -265,7 +285,7 @@ public final class CraftingPayloads {
             }
             final long shortfall = row.need() - row.have();
             final String name = row.item().getHoverName().getString();
-            final var plan = dev.jstech.computers.crafting.CraftPlanner.plan(
+            final var plan = CraftPlanner.plan(
                     StorageKey.of(row.item()), shortfall, patterns, machines, stock);
             if (plan.feasible() && !plan.steps().isEmpty()) {
                 if (lines.size() < CraftPlanPayload.MAX_COVER) {
@@ -283,12 +303,12 @@ public final class CraftingPayloads {
                 }
             }
         }
-        return new Cover(java.util.List.copyOf(lines), covered);
+        return new Cover(List.copyOf(lines), covered);
     }
 
     /** One line per thing a recursive plan found nothing to make (or not enough of in stock). */
-    private static java.util.List<String> unmakeableLines(final dev.jstech.computers.crafting.CraftPlanner.Plan plan) {
-        final java.util.List<String> lines = new java.util.ArrayList<>();
+    private static List<String> unmakeableLines(final CraftPlanner.Plan plan) {
+        final List<String> lines = new ArrayList<>();
         for (final var missing : plan.missing().entrySet()) {
             if (lines.size() >= CraftPlanPayload.MAX_COVER) {
                 break;
@@ -300,7 +320,7 @@ public final class CraftingPayloads {
     }
 
     /** "4 Logs, 2 Coal": the raw stock a plan consumes, at most three named. */
-    private static String rawSummary(final dev.jstech.computers.crafting.CraftPlanner.Plan plan) {
+    private static String rawSummary(final CraftPlanner.Plan plan) {
         final StringBuilder out = new StringBuilder();
         int named = 0;
         for (final var raw : plan.rawConsumption().entrySet()) {
@@ -317,7 +337,7 @@ public final class CraftingPayloads {
         return out.length() == 0 ? "stock" : out.toString();
     }
 
-    private static String firstStepName(final dev.jstech.computers.crafting.CraftPlanner.Plan plan) {
+    private static String firstStepName(final CraftPlanner.Plan plan) {
         final var step = plan.steps().get(0);
         return step.isMachine() ? step.machine().displayName() : step.pattern().displayName();
     }
@@ -358,19 +378,19 @@ public final class CraftingPayloads {
 
     private static void handleSetCraftingSwitchFace(final SetCraftingSwitchFacePayload payload,
                                                     final ServerPlayer player, final ServerLevel level) {
-        final net.minecraft.core.BlockPos pos = payload.switchPos();
+        final BlockPos pos = payload.switchPos();
         if (player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > 64.0) {
             return; // out of reach
         }
         if (level.getBlockEntity(pos) instanceof dev.jstech.computers.blockentity
                 .CraftingSwitchBlockEntity sw) {
-            final net.minecraft.core.Direction face =
-                    net.minecraft.core.Direction.from3DDataValue(payload.face());
+            final Direction face =
+                    Direction.from3DDataValue(payload.face());
             sw.setFaceName(face, payload.name());
             sw.setFaceActive(face, payload.active());
             sw.setFaceCategory(face, payload.category());
-            final net.minecraft.world.level.block.state.BlockState st = level.getBlockState(pos);
-            level.sendBlockUpdated(pos, st, st, net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+            final BlockState st = level.getBlockState(pos);
+            level.sendBlockUpdated(pos, st, st, Block.UPDATE_CLIENTS);
         }
     }
 }

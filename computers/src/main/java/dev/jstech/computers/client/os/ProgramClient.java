@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.client.NmsApp;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
@@ -70,7 +71,7 @@ public final class ProgramClient {
         register(rl("task_manager"), (host, mon, os) -> new TaskManagerApp(host, os));
         // Installable programs.
         register(rl("nms"), (host, mon, os) ->
-                new dev.jstech.computers.client.NmsApp(host, mon));
+                new NmsApp(host, mon));
         register(rl("crafting_manager"), (host, mon, os) -> new CraftingManagerApp(host));
         register(rl("pattern_studio"), (host, mon, os) -> new PatternStudioApp(host, mon));
         register(rl("cluster_manager"), (host, mon, os) -> new ClusterManagerApp(host));

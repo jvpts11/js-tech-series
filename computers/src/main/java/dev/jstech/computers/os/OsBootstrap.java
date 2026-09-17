@@ -9,6 +9,9 @@ package dev.jstech.computers.os;
 
 import dev.jstech.computers.os.install.InstallerStyle;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.SubscribeEvent;
 
@@ -50,7 +53,7 @@ public final class OsBootstrap {
      * from one source. dos = MS-DOS 2.0+ (real directories); win9x = cooperative; nt = preemptive (XP + 11);
      * net_min = the minimal network kernel with no scheduler or filesystem.
      */
-    private static final java.util.List<KernelDef> BUILTIN_KERNELS = java.util.List.of(
+    private static final List<KernelDef> BUILTIN_KERNELS = List.of(
             new KernelDef(rl("dos"), SchedulerKind.NONE, FilesystemKind.HIERARCHICAL, ShellFamily.DOS),
             new KernelDef(rl("win9x"), SchedulerKind.COOPERATIVE, FilesystemKind.HIERARCHICAL, ShellFamily.DOS),
             new KernelDef(rl("nt"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.DOS),
@@ -70,7 +73,7 @@ public final class OsBootstrap {
      * disk it lands on (1 MB an item at 16 bits, 16 MB at 32, 256 MB at 64). MC-DOS fills a fifth of a
      * 20 MB vintage drive; Frames 11 is 80 items of a standard disk and will not fit a vintage one at all.
      */
-    private static final java.util.List<OsDef> BUILTIN_OSES = java.util.List.of(
+    private static final List<OsDef> BUILTIN_OSES = List.of(
             /*
              * MC-DOS: terminal-only CLI shell from the Vintage era.
              * Each system also says the RAM it holds for itself while running (withRam): a fifth of a
@@ -119,12 +122,12 @@ public final class OsBootstrap {
     );
 
     /** The built-in kernels, so datagen and tooling read them from one source. */
-    public static java.util.List<KernelDef> builtinKernels() {
+    public static List<KernelDef> builtinKernels() {
         return BUILTIN_KERNELS;
     }
 
     /** The built-in operating systems, so datagen (lang, install media) reads them from one source. */
-    public static java.util.List<OsDef> builtinOses() {
+    public static List<OsDef> builtinOses() {
         return BUILTIN_OSES;
     }
 
@@ -144,12 +147,12 @@ public final class OsBootstrap {
      * Desktop apps that run under any desktop environment: the Frames editions and a Linux desktop alike. On
      * Frames they arrive on install media; on Linux the same programs are packages the Mirror serves.
      */
-    private static final java.util.Set<Platform> DESKTOPS = java.util.Set.of(Platform.FRAMES, Platform.LINUX);
-    private static final java.util.Set<Platform> LINUX_ONLY = java.util.Set.of(Platform.LINUX);
-    private static final java.util.Set<Platform> FRAMES_ONLY = java.util.Set.of(Platform.FRAMES);
+    private static final Set<Platform> DESKTOPS = Set.of(Platform.FRAMES, Platform.LINUX);
+    private static final Set<Platform> LINUX_ONLY = Set.of(Platform.LINUX);
+    private static final Set<Platform> FRAMES_ONLY = Set.of(Platform.FRAMES);
 
     /** The nine built-in desktop apps every desktop environment can bundle, in rail order. */
-    private static final java.util.List<ResourceLocation> BUILTIN_APPS = java.util.List.of(
+    private static final List<ResourceLocation> BUILTIN_APPS = List.of(
             rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
             rl("system_monitor"), rl("calculator"), rl("network_manager"));
 
@@ -158,29 +161,29 @@ public final class OsBootstrap {
      * existing skins and icon sets keep their keys); KDE Plasma, GNOME and Cinnamon are Linux packages, each
      * with its chrome and the native names its bundled apps show.
      */
-    private static final java.util.List<DesktopEnvironmentDef> BUILTIN_DESKTOPS = java.util.List.of(
-            new DesktopEnvironmentDef(rl("frames_95"), "Frames 95", PanelStyle.FRAMES_95, BUILTIN_APPS, java.util.Map.of(),
+    private static final List<DesktopEnvironmentDef> BUILTIN_DESKTOPS = List.of(
+            new DesktopEnvironmentDef(rl("frames_95"), "Frames 95", PanelStyle.FRAMES_95, BUILTIN_APPS, Map.of(),
                     SoftwareHouse.MIDSOFT),
-            new DesktopEnvironmentDef(rl("frames_xp"), "Frames XP", PanelStyle.FRAMES_XP, BUILTIN_APPS, java.util.Map.of(),
+            new DesktopEnvironmentDef(rl("frames_xp"), "Frames XP", PanelStyle.FRAMES_XP, BUILTIN_APPS, Map.of(),
                     SoftwareHouse.MIDSOFT),
-            new DesktopEnvironmentDef(rl("frames_11"), "Frames 11", PanelStyle.FRAMES_11, BUILTIN_APPS, java.util.Map.of(),
+            new DesktopEnvironmentDef(rl("frames_11"), "Frames 11", PanelStyle.FRAMES_11, BUILTIN_APPS, Map.of(),
                     SoftwareHouse.MIDSOFT),
-            new DesktopEnvironmentDef(rl("kde_plasma"), "KDE Plasma", PanelStyle.KDE, BUILTIN_APPS, java.util.Map.of(
+            new DesktopEnvironmentDef(rl("kde_plasma"), "KDE Plasma", PanelStyle.KDE, BUILTIN_APPS, Map.of(
                     rl("files"), "Dolphin", rl("editor"), "Kate", rl("command_prompt"), "Konsole",
                     rl("calculator"), "KCalc", rl("system_monitor"), "System Monitor",
                     rl("settings"), "System Settings", rl("this_pc"), "Info Center"), SoftwareHouse.KDE_GUILD),
-            new DesktopEnvironmentDef(rl("gnome"), "GNOME", PanelStyle.GNOME, BUILTIN_APPS, java.util.Map.of(
+            new DesktopEnvironmentDef(rl("gnome"), "GNOME", PanelStyle.GNOME, BUILTIN_APPS, Map.of(
                     rl("files"), "Files", rl("editor"), "Text Editor", rl("command_prompt"), "Terminal",
                     rl("calculator"), "Calculator", rl("system_monitor"), "System Monitor",
                     rl("settings"), "Settings", rl("this_pc"), "About"), SoftwareHouse.GNOME_TRUST),
-            new DesktopEnvironmentDef(rl("cinnamon"), "Cinnamon", PanelStyle.CINNAMON, BUILTIN_APPS, java.util.Map.of(
+            new DesktopEnvironmentDef(rl("cinnamon"), "Cinnamon", PanelStyle.CINNAMON, BUILTIN_APPS, Map.of(
                     rl("files"), "Nemo", rl("editor"), "xed", rl("command_prompt"), "Terminal",
                     rl("calculator"), "Calculator", rl("system_monitor"), "System Monitor",
                     rl("settings"), "System Settings", rl("this_pc"), "System Info"), SoftwareHouse.SPEARMINT)
     );
 
     /** The built-in desktop environments, so tooling reads them from one source. */
-    public static java.util.List<DesktopEnvironmentDef> builtinDesktops() {
+    public static List<DesktopEnvironmentDef> builtinDesktops() {
         return BUILTIN_DESKTOPS;
     }
 
@@ -189,8 +192,8 @@ public final class OsBootstrap {
             JSComputersAPI.registerDesktopEnvironment(desktop);
         }
     }
-    private static final java.util.Set<Platform> ALL_PLATFORMS =
-            java.util.Set.of(Platform.MC_DOS, Platform.MC_NET, Platform.FRAMES, Platform.LINUX);
+    private static final Set<Platform> ALL_PLATFORMS =
+            Set.of(Platform.MC_DOS, Platform.MC_NET, Platform.FRAMES, Platform.LINUX);
 
     /**
      * The built-in program descriptors, in desktop launcher order (the built-in apps first, then the
@@ -198,7 +201,7 @@ public final class OsBootstrap {
      * not run common setup) read from the same single source. Hardware minimums are conservative balancing
      * estimates; {@code hostScope} replaces the old per-program install special cases.
      */
-    private static final java.util.List<ProgramSpec> BUILTIN_PROGRAMS = java.util.List.of(
+    private static final List<ProgramSpec> BUILTIN_PROGRAMS = List.of(
             /*
              * Built-in Frames apps: pre-installed, no install disc, always present on a Frames desktop (subject
              * to host scope and OS rank). These used to be a hardcoded launcher list.
@@ -382,7 +385,7 @@ public final class OsBootstrap {
     );
 
     /** The built-in program descriptors, so datagen (lang, install media) reads them from one source. */
-    public static java.util.List<ProgramSpec> builtinPrograms() {
+    public static List<ProgramSpec> builtinPrograms() {
         return BUILTIN_PROGRAMS;
     }
 

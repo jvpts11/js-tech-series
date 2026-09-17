@@ -10,6 +10,7 @@ package dev.jstech.computers.operation.payload;
 import dev.jstech.computers.vm.program.Numbers;
 import dev.jstech.computers.vm.program.UiWidgets;
 import dev.jstech.computers.vm.program.Values;
+import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -263,7 +264,7 @@ public record UiWindowPayload(BlockPos hostPos, int program, long window, String
     public static final CustomPacketPayload.Type<UiWindowPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "ui_window"));
 
-    private static final StreamCodec<io.netty.buffer.ByteBuf, String> WORDS = ByteBufCodecs.stringUtf8(MOST_TEXT);
+    private static final StreamCodec<ByteBuf, String> WORDS = ByteBufCodecs.stringUtf8(MOST_TEXT);
 
     private static final StreamCodec<RegistryFriendlyByteBuf, Stroke> STROKE =
             StreamCodec.of((buf, stroke) -> {

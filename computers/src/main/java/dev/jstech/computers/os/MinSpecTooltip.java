@@ -7,7 +7,9 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.computers.item.HardwareTooltip;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.Set;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -42,7 +44,7 @@ public final class MinSpecTooltip {
     /** "Needs X hardware or later", with the era in the colour every hardware tooltip gives it. */
     private static Component needsEra(final HardwareEra era) {
         return line("Needs ")
-                .append(dev.jstech.computers.item.HardwareTooltip.eraName(era, eraLabel(era)))
+                .append(HardwareTooltip.eraName(era, eraLabel(era)))
                 .append(line(" hardware or later"));
     }
 
@@ -63,7 +65,7 @@ public final class MinSpecTooltip {
          * The era floor sits with the hardware minimums because that is what it is: a machine of an
          * older generation cannot run it at any clock speed.
          */
-        if (prog.minEra() != dev.jstech.core.tier.HardwareEra.VINTAGE) {
+        if (prog.minEra() != HardwareEra.VINTAGE) {
             // Worded exactly like the OS line above: the same requirement must not read as two rules.
             lines.add(needsEra(prog.minEra()));
         }
@@ -89,7 +91,7 @@ public final class MinSpecTooltip {
     }
 
     /** A readable, comma-joined list of platform labels in enum order. */
-    public static String platformsLabel(final java.util.Set<Platform> platforms) {
+    public static String platformsLabel(final Set<Platform> platforms) {
         final List<String> names = new ArrayList<>(platforms.size());
         for (final Platform p : Platform.values()) {
             if (platforms.contains(p)) {

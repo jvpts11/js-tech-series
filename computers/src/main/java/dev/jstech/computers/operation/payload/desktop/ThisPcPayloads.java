@@ -7,7 +7,21 @@
  */
 package dev.jstech.computers.operation.payload.desktop;
 
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.MonitorBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.client.os.ThisPcApp;
+import dev.jstech.computers.item.CpuItem;
+import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.item.GpuItem;
+import dev.jstech.computers.item.HardwareTooltip;
+import dev.jstech.computers.item.MotherboardItem;
+import dev.jstech.computers.item.PsuItem;
 import dev.jstech.computers.operation.payload.CancelSetupPayload;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -16,10 +30,35 @@ import dev.jstech.computers.operation.payload.InstallFromMediaPayload;
 import dev.jstech.computers.operation.payload.RequestThisPcPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
 import dev.jstech.computers.operation.payload.ThisPcPayload;
+import dev.jstech.computers.os.Branding;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.MinSpecTooltip;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.install.SetupJob;
+import dev.jstech.computers.os.install.SetupRunner;
+import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.storage.DriveVolumes;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.uuid.NetworkUuid;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -52,24 +91,24 @@ public final class ThisPcPayloads {
 
     private static void handleRequestThisPc(final RequestThisPcPayload payload, final ServerPlayer player,
                                             final ServerLevel level) {
-        final java.util.List<ThisPcPayload.WireDisk> disks = new java.util.ArrayList<>();
-        final java.util.List<ThisPcPayload.WireMedia> media = new java.util.ArrayList<>();
-        final java.util.List<String> installed = new java.util.ArrayList<>();
-        if (level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost computer) {
-            final net.minecraft.world.item.ItemStack sys = computer.systemDisk();
+        final List<ThisPcPayload.WireDisk> disks = new ArrayList<>();
+        final List<ThisPcPayload.WireMedia> media = new ArrayList<>();
+        final List<String> installed = new ArrayList<>();
+        if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
+            final ItemStack sys = computer.systemDisk();
             int slot = 0;
-            for (final net.minecraft.world.item.ItemStack stack : computer.diskStacks()) {
-                if (stack.getItem() instanceof dev.jstech.computers.item.DiskItem diskItem) {
+            for (final ItemStack stack : computer.diskStacks()) {
+                if (stack.getItem() instanceof DiskItem diskItem) {
                     final long cap = diskItem.spec().capacityItems();
                     final long storageW =
-                            dev.jstech.computers.storage.DriveVolumes.usedWeight(stack);
-                    final long fsW = dev.jstech.computers.os.fs.DiskFilesystem.filesWeight(stack);
-                    final net.minecraft.resources.ResourceLocation osId =
-                            stack.get(dev.jstech.computers.ComputingModule.SYSTEM_OS.get());
-                    final dev.jstech.computers.os.OsDef os =
-                            osId != null ? dev.jstech.computers.os.OsRegistry.getOs(osId) : null;
+                            DriveVolumes.usedWeight(stack);
+                    final long fsW = DiskFilesystem.filesWeight(stack);
+                    final ResourceLocation osId =
+                            stack.get(ComputingModule.SYSTEM_OS.get());
+                    final OsDef os =
+                            osId != null ? OsRegistry.getOs(osId) : null;
                     final long osItems = os != null ? os.footprintItemsOn(diskItem.spec().era()) : 0L;
-                    final long mbEq = dev.jstech.computers.storage.StorageKey.MB_EQ_PER_ITEM;
+                    final long mbEq = StorageKey.MB_EQ_PER_ITEM;
                     final long storeItems = storageW / mbEq;
                     final long fileItems = fsW / mbEq;
                     final long usedItems = storeItems + fileItems + osItems;
@@ -84,7 +123,7 @@ public final class ThisPcPayloads {
                 slot++;
             }
             for (final long endpoint : computer.linkedEndpoints()) {
-                if (level.getBlockEntity(net.minecraft.core.BlockPos.of(endpoint))
+                if (level.getBlockEntity(BlockPos.of(endpoint))
                         instanceof dev.jstech.computers.os.media
                                 .MediaReaderBlockEntity reader) {
                     media.add(mediaRow(computer, payload.hostPos(), endpoint, reader));
@@ -101,39 +140,39 @@ public final class ThisPcPayloads {
 
     /** One drive row for This PC: what is in the drive and, for an installer, what it would install. */
     private static ThisPcPayload.WireMedia mediaRow(
-            final dev.jstech.computers.os.IOsHost computer, final net.minecraft.core.BlockPos host,
-            final long endpoint, final dev.jstech.computers.os.media.MediaReaderBlockEntity reader) {
-        final net.minecraft.world.item.ItemStack m = reader.mediaSlot().getStackInSlot(0);
-        final dev.jstech.computers.os.media.MediaKind kind = m.isEmpty() ? null : reader.insertedKind();
-        final net.minecraft.resources.ResourceLocation pl = m.isEmpty() ? null : reader.insertedPayload();
+            final IOsHost computer, final BlockPos host,
+            final long endpoint, final MediaReaderBlockEntity reader) {
+        final ItemStack m = reader.mediaSlot().getStackInSlot(0);
+        final MediaKind kind = m.isEmpty() ? null : reader.insertedKind();
+        final ResourceLocation pl = m.isEmpty() ? null : reader.insertedPayload();
         String payloadName = "";
         int payloadYear = 0;
         String packageId = "";
         String needs = "";
         boolean installable = false;
-        if (pl != null && kind == dev.jstech.computers.os.media.MediaKind.PROGRAM_INSTALL) {
-            final dev.jstech.computers.os.ProgramSpec spec =
-                    dev.jstech.computers.os.OsRegistry.getProgram(pl);
+        if (pl != null && kind == MediaKind.PROGRAM_INSTALL) {
+            final ProgramSpec spec =
+                    OsRegistry.getProgram(pl);
             installable = !computer.console().isInstalled(pl.toString());
             if (spec != null) {
                 payloadName = spec.displayName();
-                payloadYear = dev.jstech.computers.os.Branding.year(spec.era());
+                payloadYear = Branding.year(spec.era());
                 packageId = spec.commandName();
-                needs = joinPlain(dev.jstech.computers.os.MinSpecTooltip.programMinSpec(pl));
+                needs = joinPlain(MinSpecTooltip.programMinSpec(pl));
             }
-        } else if (pl != null && kind == dev.jstech.computers.os.media.MediaKind.OS_INSTALL) {
-            final dev.jstech.computers.os.OsDef os =
-                    dev.jstech.computers.os.OsRegistry.getOs(pl);
+        } else if (pl != null && kind == MediaKind.OS_INSTALL) {
+            final OsDef os =
+                    OsRegistry.getOs(pl);
             if (os != null) {
                 payloadName = os.displayName();
-                payloadYear = dev.jstech.computers.os.Branding.osYear(os.displayName(), os.minEra());
+                payloadYear = Branding.osYear(os.displayName(), os.minEra());
                 packageId = os.id().getPath();
-                needs = joinPlain(dev.jstech.computers.os.MinSpecTooltip.osMinSpec(pl));
+                needs = joinPlain(MinSpecTooltip.osMinSpec(pl));
             }
         }
-        final long stored = kind == dev.jstech.computers.os.media.MediaKind.DATA
+        final long stored = kind == MediaKind.DATA
                 ? reader.insertedData().total() : 0L;
-        final net.minecraft.core.BlockPos at = net.minecraft.core.BlockPos.of(endpoint);
+        final BlockPos at = BlockPos.of(endpoint);
         final int blocksAway = Math.abs(at.getX() - host.getX()) + Math.abs(at.getY() - host.getY())
                 + Math.abs(at.getZ() - host.getZ());
         return new ThisPcPayload.WireMedia(endpoint, reader.driveType().serializedName(),
@@ -144,24 +183,24 @@ public final class ThisPcPayloads {
 
     /** The machine card for This PC: what this computer is, in one block of text the client draws. */
     private static ThisPcPayload.WireMachine machineCard(
-            final ServerLevel level, final dev.jstech.computers.os.IOsHost computer,
-            final net.minecraft.core.BlockPos host) {
+            final ServerLevel level, final IOsHost computer,
+            final BlockPos host) {
         final String kind;
         if (computer instanceof MainframeBlockEntity) {
             kind = "Mainframe";
-        } else if (computer instanceof dev.jstech.computers.blockentity.CraftingComputerBlockEntity) {
+        } else if (computer instanceof CraftingComputerBlockEntity) {
             kind = "Crafting Computer";
-        } else if (computer instanceof dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity) {
+        } else if (computer instanceof ClusterManagementComputerBlockEntity) {
             kind = "Cluster Management Computer";
-        } else if (computer instanceof dev.jstech.computers.blockentity.ServerRackBlockEntity) {
+        } else if (computer instanceof ServerRackBlockEntity) {
             kind = "Server";
         } else {
             kind = "Personal Computer";
         }
-        final dev.jstech.computers.os.OsDef os = computer.installedOs();
+        final OsDef os = computer.installedOs();
         final String osLabel = os == null ? "" : os.displayName();
         final int osYear = os == null ? 0
-                : dev.jstech.computers.os.Branding.osYear(os.displayName(), os.minEra());
+                : Branding.osYear(os.displayName(), os.minEra());
         final NetworkUuid network = computer.networkUuid();
         /*
          * Hardware by what is seated, read off the parts themselves so every computer type answers
@@ -174,25 +213,25 @@ public final class ThisPcPayloads {
         int gpus = 0;
         String psu = "";
         boolean valid = false;
-        if (computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity be) {
-            final net.neoforged.neoforge.items.ItemStackHandler hardware = be.getHardware();
+        if (computer instanceof AbstractComputerBlockEntity be) {
+            final ItemStackHandler hardware = be.getHardware();
             for (int i = 0; i < hardware.getSlots(); i++) {
-                final net.minecraft.world.item.ItemStack part = hardware.getStackInSlot(i);
+                final ItemStack part = hardware.getStackInSlot(i);
                 if (part.isEmpty()) {
                     continue;
                 }
-                if (part.getItem() instanceof dev.jstech.computers.item.MotherboardItem) {
+                if (part.getItem() instanceof MotherboardItem) {
                     board = part.getHoverName().getString();
-                } else if (part.getItem() instanceof dev.jstech.computers.item.CpuItem chip) {
+                } else if (part.getItem() instanceof CpuItem chip) {
                     cpus++;
                     if (cpu.isEmpty()) {
                         cpu = part.getHoverName().getString();
                         // A machine has one architecture, so the first chip answers for all of them.
-                        architecture = dev.jstech.computers.item.HardwareTooltip.architecture(chip.spec());
+                        architecture = HardwareTooltip.architecture(chip.spec());
                     }
-                } else if (part.getItem() instanceof dev.jstech.computers.item.GpuItem) {
+                } else if (part.getItem() instanceof GpuItem) {
                     gpus++;
-                } else if (part.getItem() instanceof dev.jstech.computers.item.PsuItem) {
+                } else if (part.getItem() instanceof PsuItem) {
                     psu = part.getHoverName().getString();
                 }
             }
@@ -200,22 +239,22 @@ public final class ThisPcPayloads {
         }
         final int mhz = computer.maxCpuMhz();
         if (!cpu.isEmpty() && mhz > 0) {
-            cpu = cpu + " · " + (mhz >= 1000 ? String.format(java.util.Locale.ROOT, "%.1f GHz", mhz / 1000.0) : mhz + " MHz");
+            cpu = cpu + " · " + (mhz >= 1000 ? String.format(Locale.ROOT, "%.1f GHz", mhz / 1000.0) : mhz + " MHz");
         }
         // Linked peripherals by name, each kind counted once.
-        final java.util.Map<String, Integer> peripherals = new java.util.LinkedHashMap<>();
+        final Map<String, Integer> peripherals = new LinkedHashMap<>();
         for (final long endpoint : computer.linkedEndpoints()) {
-            final net.minecraft.world.level.block.entity.BlockEntity be =
-                    level.getBlockEntity(net.minecraft.core.BlockPos.of(endpoint));
+            final BlockEntity be =
+                    level.getBlockEntity(BlockPos.of(endpoint));
             final String label;
-            if (be instanceof dev.jstech.computers.os.media.MediaReaderBlockEntity reader) {
+            if (be instanceof MediaReaderBlockEntity reader) {
                 label = switch (reader.driveType()) {
                     case FLOPPY_DRIVE -> "Floppy Drive";
                     case CD_DRIVE -> "CD Drive";
                     case DVD_DRIVE -> "DVD Drive";
                     case DOCK_STATION -> "Dock Station";
                 };
-            } else if (be instanceof dev.jstech.computers.blockentity.MonitorBlockEntity) {
+            } else if (be instanceof MonitorBlockEntity) {
                 label = "Monitor";
             } else if (be != null) {
                 label = be.getBlockState().getBlock().getName().getString();
@@ -225,7 +264,7 @@ public final class ThisPcPayloads {
             peripherals.merge(label, 1, Integer::sum);
         }
         final StringBuilder joined = new StringBuilder();
-        for (final java.util.Map.Entry<String, Integer> e : peripherals.entrySet()) {
+        for (final Map.Entry<String, Integer> e : peripherals.entrySet()) {
             if (joined.length() > 0) {
                 joined.append(", ");
             }
@@ -235,15 +274,15 @@ public final class ThisPcPayloads {
             joined.append(e.getKey());
         }
         return new ThisPcPayload.WireMachine(computer.customName(), kind,
-                dev.jstech.computers.os.MinSpecTooltip.eraLabel(computer.displayEra()),
+                MinSpecTooltip.eraLabel(computer.displayEra()),
                 osLabel, osYear, network == null ? "" : networkLabel(network), board, cpu, cpus, architecture,
                 (int) Math.min(Integer.MAX_VALUE, computer.ramBuffer()), computer.totalVramMb(), gpus, psu,
                 valid, joined.toString());
     }
 
-    private static String joinPlain(final java.util.List<net.minecraft.network.chat.Component> lines) {
+    private static String joinPlain(final List<Component> lines) {
         final StringBuilder sb = new StringBuilder();
-        for (final net.minecraft.network.chat.Component line : lines) {
+        for (final Component line : lines) {
             final String text = line.getString().trim();
             if (text.isEmpty()) {
                 continue;
@@ -258,42 +297,42 @@ public final class ThisPcPayloads {
 
     private static void handleEjectMedia(final EjectMediaPayload payload, final ServerPlayer player,
                                          final ServerLevel level) {
-        if (level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost computer
+        if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer
                 && computer.linkedEndpoints().contains(payload.readerPos())
-                && level.getBlockEntity(net.minecraft.core.BlockPos.of(payload.readerPos()))
-                        instanceof dev.jstech.computers.os.media.MediaReaderBlockEntity reader) {
-            final net.minecraft.world.item.ItemStack ejected = reader.ejectMedia();
+                && level.getBlockEntity(BlockPos.of(payload.readerPos()))
+                        instanceof MediaReaderBlockEntity reader) {
+            final ItemStack ejected = reader.ejectMedia();
             if (!ejected.isEmpty() && !player.addItem(ejected)) {
-                final net.minecraft.core.BlockPos at = net.minecraft.core.BlockPos.of(payload.readerPos());
-                net.minecraft.world.Containers.dropItemStack(level, at.getX() + 0.5, at.getY() + 1.0,
+                final BlockPos at = BlockPos.of(payload.readerPos());
+                Containers.dropItemStack(level, at.getX() + 0.5, at.getY() + 1.0,
                         at.getZ() + 0.5, ejected);
             }
         }
     }
 
     private static void handleThisPc(final ThisPcPayload payload, final Player player) {
-        dev.jstech.computers.client.os.ThisPcApp.accept(payload);
+        ThisPcApp.accept(payload);
     }
 
     private static void handleInstallFromMedia(final InstallFromMediaPayload payload, final ServerPlayer player,
                                                final ServerLevel level) {
-        if (!(level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost computer)) {
+        if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
             return;
         }
         // The drive must be a media reader currently linked to this computer.
         if (!computer.linkedEndpoints().contains(payload.readerPos())
-                || !(level.getBlockEntity(net.minecraft.core.BlockPos.of(payload.readerPos()))
+                || !(level.getBlockEntity(BlockPos.of(payload.readerPos()))
                         instanceof dev.jstech.computers.os.media
                                 .MediaReaderBlockEntity reader)) {
             return;
         }
         if (reader.insertedKind()
-                != dev.jstech.computers.os.media.MediaKind.PROGRAM_INSTALL) {
+                != MediaKind.PROGRAM_INSTALL) {
             return;
         }
-        final net.minecraft.resources.ResourceLocation pl = reader.insertedPayload();
-        final dev.jstech.computers.os.ProgramSpec spec =
-                pl == null ? null : dev.jstech.computers.os.OsRegistry.getProgram(pl);
+        final ResourceLocation pl = reader.insertedPayload();
+        final ProgramSpec spec =
+                pl == null ? null : OsRegistry.getProgram(pl);
         if (spec == null) {
             return;
         }
@@ -302,20 +341,20 @@ public final class ThisPcPayloads {
          * the Setup window that opens for it. It used to be a line in the chat, or nothing at all
          * when the program was already there, which is what made the disc's setup look inert.
          */
-        dev.jstech.computers.os.install.SetupRunner.begin(computer, level, payload.hostPos(), spec,
-                reader.insertedFormat(), false, dev.jstech.computers.os.install.SetupJob.VIA_SETUP);
+        SetupRunner.begin(computer, level, payload.hostPos(), spec,
+                reader.insertedFormat(), false, SetupJob.VIA_SETUP);
     }
 
     /** A machine telling a desktop how its setup is going: the desktop's Setup window is a view of it. */
     private static void handleSetupProgress(final SetupProgressPayload payload, final Player player) {
-        dev.jstech.computers.client.os.DesktopScreen.acceptSetup(payload);
+        DesktopScreen.acceptSetup(payload);
     }
 
     /** A player at the Setup window's Cancel: the machine stops and nothing is installed. */
     private static void handleCancelSetup(final CancelSetupPayload payload, final ServerPlayer player,
                                           final ServerLevel level) {
-        if (level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost host) {
-            dev.jstech.computers.os.install.SetupRunner.cancel(host, level, payload.hostPos());
+        if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost host) {
+            SetupRunner.cancel(host, level, payload.hostPos());
         }
     }
 }

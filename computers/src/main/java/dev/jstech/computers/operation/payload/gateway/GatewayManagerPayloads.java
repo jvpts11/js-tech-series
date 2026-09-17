@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload.gateway;
 
+import dev.jstech.computers.client.os.GatewayManagerApp;
+import dev.jstech.computers.gateway.GatewayManager;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.GatewayManagerActionPayload;
@@ -46,7 +48,7 @@ public final class GatewayManagerPayloads {
             return;
         }
         PacketDistributor.sendToPlayer(player,
-                dev.jstech.computers.gateway.GatewayManager.state(level, host, payload.selected(), ""));
+                GatewayManager.state(level, host, payload.selected(), ""));
     }
 
     private static void handleGatewayManagerAction(final GatewayManagerActionPayload payload,
@@ -55,13 +57,13 @@ public final class GatewayManagerPayloads {
         if (host == null) {
             return;
         }
-        final String status = dev.jstech.computers.gateway.GatewayManager.act(level, host, payload.gatewayPos(),
+        final String status = GatewayManager.act(level, host, payload.gatewayPos(),
                 payload.action(), payload.value(), payload.text());
         PacketDistributor.sendToPlayer(player,
-                dev.jstech.computers.gateway.GatewayManager.state(level, host, payload.gatewayPos(), status));
+                GatewayManager.state(level, host, payload.gatewayPos(), status));
     }
 
     private static void handleGatewayManagerState(final GatewayManagerStatePayload payload, final Player player) {
-        dev.jstech.computers.client.os.GatewayManagerApp.accept(payload);
+        GatewayManagerApp.accept(payload);
     }
 }

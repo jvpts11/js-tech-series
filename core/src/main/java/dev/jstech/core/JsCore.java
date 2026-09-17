@@ -10,6 +10,7 @@ package dev.jstech.core;
 import com.mojang.logging.LogUtils;
 import dev.jstech.core.config.CoreConfigBridge;
 import dev.jstech.core.event.CoreEventDispatcher;
+import dev.jstech.core.language.LanguageRegistry;
 import dev.jstech.core.operation.OperationTypeRegistry;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.registry.CoreAttachments;
@@ -33,8 +34,8 @@ public final class JsCore {
 
     private static final CoreEventDispatcher EVENTS = new CoreEventDispatcher();
     private static final OperationTypeRegistry OPERATIONS = new OperationTypeRegistry();
-    private static final dev.jstech.core.language.LanguageRegistry LANGUAGES =
-            new dev.jstech.core.language.LanguageRegistry();
+    private static final LanguageRegistry LANGUAGES =
+            new LanguageRegistry();
 
     /**
      * The series' internal event bus: an orchestrator posts the lifecycle of its Operations here and any mod
@@ -55,7 +56,7 @@ public final class JsCore {
      * <p>An addon may add one and may take one away, this series' own included: everything that deals in
      * programs resolves through here by extension rather than by naming a language.
      */
-    public static dev.jstech.core.language.LanguageRegistry languages() {
+    public static LanguageRegistry languages() {
         return LANGUAGES;
     }
 

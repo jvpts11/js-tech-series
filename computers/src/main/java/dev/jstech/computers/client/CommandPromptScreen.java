@@ -7,17 +7,30 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.client.os.CodeFileReplies;
+import dev.jstech.computers.client.os.FilesApps;
+import dev.jstech.computers.client.os.TtyEditor;
+import dev.jstech.computers.client.os.TtyEditors;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.operation.payload.CommandOutputPayload;
 import dev.jstech.computers.operation.payload.ConsoleInitPayload;
 import dev.jstech.computers.operation.payload.RequestConsoleInitPayload;
+import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.operation.payload.RunCommandPayload;
+import dev.jstech.computers.operation.payload.SaveFilePayload;
+import dev.jstech.computers.os.Branding;
+import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.gui.Phosphor;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.HashMap;
+import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -47,7 +60,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
      * walking away from a TTY and coming back finds what was there, the way a real one does. The lines
      * are kept here by machine, so opening the prompt again picks up where it was.
      */
-    private static final Map<net.minecraft.core.BlockPos, Deque<Line>> KEPT = new java.util.HashMap<>();
+    private static final Map<BlockPos, Deque<Line>> KEPT = new HashMap<>();
     private final Deque<Line> scrollback;
     /** Whether the machine's identity line has been added, so a late init reply adds it only once. */
     private boolean identityShown;
@@ -57,8 +70,8 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     private final List<String> deviceNames = new ArrayList<>();
 
     /** The verbs whose first argument is a device, so Tab completes {@code /dev/sdX} for them. */
-    private static final java.util.Set<String> DEVICE_VERBS =
-            java.util.Set.of("mkfs.ext4", "mkfs", "mount", "grub-install");
+    private static final Set<String> DEVICE_VERBS =
+            Set.of("mkfs.ext4", "mkfs", "mount", "grub-install");
     private int historyIndex = -1;
     private int scrollOffset;
     private int completionCycle;
@@ -154,12 +167,12 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
                  * kept short on purpose so they never overflow the narrow 256px window.
                  */
                 push(menu.osLabel() + "  Version 1.0  [Network Build]", CliStyle.ACCENT);
-                push(dev.jstech.computers.os.Branding.systemCopyright(
+                push(Branding.systemCopyright(
                         menu.osLabel(), screenEra()), CliStyle.DIM);
                 push("640K base memory", CliStyle.DIM);
                 push("", CliStyle.PLAIN);
             } else {
-                push(dev.jstech.computers.os.Branding.houseOf(menu.osLabel()).name()
+                push(Branding.houseOf(menu.osLabel()).name()
                         + " Shell v1.0", CliStyle.ACCENT);
                 push("type 'help' for commands, TAB to complete", CliStyle.DIM);
                 push("", CliStyle.PLAIN);
@@ -242,7 +255,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
          */
         if (payload.handsOver()) {
             final var flavourAsked =
-                    dev.jstech.computers.client.os.TtyEditors.flavourOf(payload.editor());
+                    TtyEditors.flavourOf(payload.editor());
             if (flavourAsked != null) {
                 openEditor(payload.editorPath(), flavourAsked);
             }
@@ -421,7 +434,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
          * as that green, brighter or dimmer, so an error still reads as an error without being red.
          */
         final int color = terminalColor(style);
-        return screenEra() == HardwareEra.VINTAGE ? dev.jstech.core.gui.Phosphor.green(color) : color;
+        return screenEra() == HardwareEra.VINTAGE ? Phosphor.green(color) : color;
     }
 
     /** The colour a style has on a monitor that can show colour. */
@@ -615,7 +628,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
              * now, not something drawn on top of a console that is still there.
              */
             this.editor.render(g, font, leftPos + 8, topPos + 8, imageWidth - 16, imageHeight - 16,
-                    dev.jstech.computers.os.edit.InkPalette.DARK);
+                    InkPalette.DARK);
         }
     }
 
@@ -625,14 +638,14 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
      * <p>This screen is the terminal of a machine that may have no desktop at all, which is exactly
      * where an editor that needs none earns its place.
      */
-    private dev.jstech.computers.client.os.TtyEditor editor;
+    private TtyEditor editor;
 
     /** Whoever is waiting for the file the machine said to open. */
-    private final dev.jstech.computers.client.os.CodeFileReplies.IReader opening =
-            new dev.jstech.computers.client.os.CodeFileReplies.IReader() {
+    private final CodeFileReplies.IReader opening =
+            new CodeFileReplies.IReader() {
                 @Override
                 public void onContent(final String path, final String content, final boolean exists) {
-                    CommandPromptScreen.this.editor = new dev.jstech.computers.client.os.TtyEditor(
+                    CommandPromptScreen.this.editor = new TtyEditor(
                             path, content, CommandPromptScreen.this.flavour,
                             CommandPromptScreen.this.terminalHost);
                     if (!exists) {
@@ -643,17 +656,17 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             };
 
     /** How the editor being opened reads a keyboard, set just before the file is asked for. */
-    private dev.jstech.computers.client.os.TtyEditor.IKeys flavour;
+    private TtyEditor.IKeys flavour;
 
     /** What an editor running here can ask this terminal to do for it. */
-    private final dev.jstech.computers.client.os.TtyEditor.IHost terminalHost =
-            new dev.jstech.computers.client.os.TtyEditor.IHost() {
+    private final TtyEditor.IHost terminalHost =
+            new TtyEditor.IHost() {
                 @Override
                 public void save(final String path, final String text) {
-                    net.neoforged.neoforge.network.PacketDistributor.sendToServer(
-                            new dev.jstech.computers.operation.payload.SaveFilePayload(
+                    PacketDistributor.sendToServer(
+                            new SaveFilePayload(
                                     menu.hostPos(), path, text));
-                    dev.jstech.computers.client.os.FilesApps.diskChanged();
+                    FilesApps.diskChanged();
                 }
 
                 @Override
@@ -664,11 +677,11 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
     /** Hands this terminal to an editor on {@code path}, which the machine is asked for. */
     private void openEditor(final String path,
-                            final dev.jstech.computers.client.os.TtyEditor.IKeys keys) {
+                            final TtyEditor.IKeys keys) {
         this.flavour = keys;
-        dev.jstech.computers.client.os.CodeFileReplies.expectContent(this.opening, path);
-        net.neoforged.neoforge.network.PacketDistributor.sendToServer(
-                new dev.jstech.computers.operation.payload.RequestFileContentPayload(menu.hostPos(), path));
+        CodeFileReplies.expectContent(this.opening, path);
+        PacketDistributor.sendToServer(
+                new RequestFileContentPayload(menu.hostPos(), path));
     }
 
 
@@ -697,9 +710,9 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
          * the right era skin; the synced era slot lagged a tick and flashed the default era on open. Fall back
          * to the synced value when the host isn't client-loaded.
          */
-        final net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        final Minecraft mc = Minecraft.getInstance();
         if (mc.level != null && mc.level.getBlockEntity(menu.hostPos())
-                instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity host) {
+                instanceof AbstractComputerBlockEntity host) {
             return host.displayEra();
         }
         return menu.hardwareEra();

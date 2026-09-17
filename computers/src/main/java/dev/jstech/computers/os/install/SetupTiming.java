@@ -8,6 +8,7 @@
 package dev.jstech.computers.os.install;
 
 import dev.jstech.computers.os.media.MediaFormat;
+import dev.jstech.core.tier.HardwareEra;
 
 /**
  * How long installing a program takes.
@@ -80,7 +81,7 @@ public final class SetupTiming {
      * generation does that twice as fast as the one before: Vintage 1, Legacy 2, Standard 4, and so on.
      * A machine with no generation to speak of counts as Vintage.
      */
-    public static int eraFactor(final dev.jstech.core.tier.HardwareEra era) {
+    public static int eraFactor(final HardwareEra era) {
         return era == null ? 1 : 1 << era.level();
     }
 

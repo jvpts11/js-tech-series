@@ -8,6 +8,7 @@
 package dev.jstech.core.client.gui.component;
 
 import dev.jstech.core.client.gui.logic.TextEditState;
+import java.util.function.Consumer;
 import net.minecraft.client.gui.GuiGraphics;
 import org.lwjgl.glfw.GLFW;
 
@@ -29,7 +30,7 @@ public final class CommandLine extends UiComponent {
     private static final int PROMPT = 0xFF40C060;
 
     private final int maxLength;
-    private final java.util.function.Consumer<String> onSubmit;
+    private final Consumer<String> onSubmit;
     private final TextEditState input;
     private final List<String> history = new ArrayList<>();
     private int historyIndex = -1;
@@ -39,7 +40,7 @@ public final class CommandLine extends UiComponent {
     private int background = BACKGROUND;
     private int textColor = PROMPT;
 
-    public CommandLine(final int maxLength, final java.util.function.Consumer<String> onSubmit) {
+    public CommandLine(final int maxLength, final Consumer<String> onSubmit) {
         this.maxLength = Math.max(1, maxLength);
         this.onSubmit = onSubmit;
         this.input = new TextEditState(this.maxLength);

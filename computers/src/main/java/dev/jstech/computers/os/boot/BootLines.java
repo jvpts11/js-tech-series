@@ -13,6 +13,7 @@ import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.install.Installers;
 import net.minecraft.resources.ResourceLocation;
 import dev.jstech.computers.machine.NetworkReadService;
 import dev.jstech.computers.os.Branding;
@@ -77,7 +78,7 @@ public final class BootLines {
         if (firstTime(machine, system)) {
             return new BootSequence.Builder()
                     .title("Hi.")
-                    .subtitle(dev.jstech.computers.os.install.Installers.machineName(machine)
+                    .subtitle(Installers.machineName(machine)
                             + " is getting ready for you")
                     .build();
         }

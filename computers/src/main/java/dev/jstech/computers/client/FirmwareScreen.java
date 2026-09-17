@@ -13,6 +13,7 @@ import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.InstallMode;
 import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.core.tier.HardwareEra;
@@ -21,6 +22,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
@@ -311,7 +313,7 @@ public class FirmwareScreen extends Screen {
     private HardwareEra era() {
         final Minecraft mc = Minecraft.getInstance();
         if (mc.level != null && mc.level.getBlockEntity(computerPos)
-                instanceof dev.jstech.computers.os.IOsHost host) {
+                instanceof IOsHost host) {
             return host.displayEra();
         }
         return switch (kind) {
@@ -344,7 +346,7 @@ public class FirmwareScreen extends Screen {
         border(g, x, y, CLI_DIM);
         final int tx = x + 14;
         int ty = y + 10;
-        final String title = dev.jstech.computers.os.Branding.biosBanner(era());
+        final String title = Branding.biosBanner(era());
         g.drawString(font, title, tx, ty, CLI_BRIGHT, false);
         // The machine's name takes what is left of the line, cut short rather than drawn over the title.
         final int nameRoom = x + W - 14 - (tx + font.width(title) + 10);
@@ -651,8 +653,8 @@ public class FirmwareScreen extends Screen {
              * straight through the border and over the help panel beside it.
              */
             ty += lh;
-            for (final net.minecraft.util.FormattedCharSequence line : font.split(
-                    net.minecraft.network.chat.Component.literal(
+            for (final FormattedCharSequence line : font.split(
+                    Component.literal(
                             "Mount a RAID Controller in this machine's gadget bay."), maxWidth)) {
                 g.drawString(font, line, x, ty, dimColor, false);
                 ty += lh;

@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.layout.OpenWithLayout;
+import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
@@ -72,7 +73,7 @@ public final class OpenWithPopup extends Popup {
         this.onChoice = onChoice;
         this.canRemember = !extension.isEmpty() && extension.length() <= MAX_EXTENSION;
         final int textW = OpenWithLayout.listW();
-        final String name = dev.jstech.computers.os.fs.FsPaths.fileName(path);
+        final String name = FsPaths.fileName(path);
         this.question = add(new Label(fit("How do you want to open ", name, "?", font, textW)));
         final int noteUnits = Texts.smallFits(OpenWithLayout.noteW());
         this.note = add(new Label(Texts.clip(font, noteFor(extension, opener, font, noteUnits), noteUnits),

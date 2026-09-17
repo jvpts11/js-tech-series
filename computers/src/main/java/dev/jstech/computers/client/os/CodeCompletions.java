@@ -20,6 +20,7 @@ import dev.jstech.core.client.gui.logic.TextDocument;
 import dev.jstech.core.language.IProgrammingLanguage;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
@@ -169,7 +170,7 @@ public final class CodeCompletions {
 
     /** Whether the file is one this can answer for. */
     private static boolean isSigma(final String path) {
-        return path != null && path.toLowerCase(java.util.Locale.ROOT).endsWith(".sgs");
+        return path != null && path.toLowerCase(Locale.ROOT).endsWith(".sgs");
     }
 
     /** Draws the list, which belongs over everything else the editor drew. */

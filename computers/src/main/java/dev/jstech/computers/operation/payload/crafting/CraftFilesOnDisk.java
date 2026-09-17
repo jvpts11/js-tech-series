@@ -9,9 +9,14 @@ package dev.jstech.computers.operation.payload.crafting;
 
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
+import java.util.Locale;
+import java.util.Optional;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
@@ -35,16 +40,16 @@ public final class CraftFilesOnDisk {
      */
     static void writeCraftToDisk(final CraftingComputerBlockEntity cc, final String fileName,
                                          final String content) {
-        final net.minecraft.world.item.ItemStack disk = cc.systemDisk();
+        final ItemStack disk = cc.systemDisk();
         if (disk.isEmpty()) {
             return;
         }
-        final dev.jstech.computers.os.FilesystemKind kind = filesystemKindOf(cc);
-        if (kind == dev.jstech.computers.os.FilesystemKind.NONE) {
+        final FilesystemKind kind = filesystemKindOf(cc);
+        if (kind == FilesystemKind.NONE) {
             return;
         }
         final String path;
-        if (kind == dev.jstech.computers.os.FilesystemKind.HIERARCHICAL) {
+        if (kind == FilesystemKind.HIERARCHICAL) {
             DiskFilesystem.mkdir(disk, CRAFTS_DIR, kind);
             path = CRAFTS_DIR + "/" + fileName;
         } else {
@@ -56,15 +61,15 @@ public final class CraftFilesOnDisk {
 
     /** Deletes a mirrored {@code .craft} from the Crafting Computer's system disk, if present. */
     static void deleteCraftFromDisk(final CraftingComputerBlockEntity cc, final String fileName) {
-        final net.minecraft.world.item.ItemStack disk = cc.systemDisk();
+        final ItemStack disk = cc.systemDisk();
         if (disk.isEmpty()) {
             return;
         }
-        final dev.jstech.computers.os.FilesystemKind kind = filesystemKindOf(cc);
-        if (kind == dev.jstech.computers.os.FilesystemKind.NONE) {
+        final FilesystemKind kind = filesystemKindOf(cc);
+        if (kind == FilesystemKind.NONE) {
             return;
         }
-        final String path = kind == dev.jstech.computers.os.FilesystemKind.HIERARCHICAL
+        final String path = kind == FilesystemKind.HIERARCHICAL
                 ? CRAFTS_DIR + "/" + fileName : fileName;
         DiskFilesystem.delete(disk, path);
     }
@@ -84,7 +89,7 @@ public final class CraftFilesOnDisk {
             if (craftFileExistsOnDisk(cc, diskName)) {
                 continue;
             }
-            final java.util.Optional<String> content = CraftFile.serialize(pattern, level.registryAccess());
+            final Optional<String> content = CraftFile.serialize(pattern, level.registryAccess());
             if (content.isPresent()) {
                 writeCraftToDisk(cc, diskName, content.get());
                 wrote = true;
@@ -97,15 +102,15 @@ public final class CraftFilesOnDisk {
 
     /** Reports whether a mirrored {@code .craft} of the given name already exists on the system disk. */
     static boolean craftFileExistsOnDisk(final CraftingComputerBlockEntity cc, final String fileName) {
-        final net.minecraft.world.item.ItemStack disk = cc.systemDisk();
+        final ItemStack disk = cc.systemDisk();
         if (disk.isEmpty()) {
             return false;
         }
-        final dev.jstech.computers.os.FilesystemKind kind = filesystemKindOf(cc);
-        if (kind == dev.jstech.computers.os.FilesystemKind.NONE) {
+        final FilesystemKind kind = filesystemKindOf(cc);
+        if (kind == FilesystemKind.NONE) {
             return false;
         }
-        final String path = kind == dev.jstech.computers.os.FilesystemKind.HIERARCHICAL
+        final String path = kind == FilesystemKind.HIERARCHICAL
                 ? CRAFTS_DIR + "/" + fileName : fileName;
         return DiskFilesystem.read(disk, path).isPresent();
     }
@@ -120,15 +125,15 @@ public final class CraftFilesOnDisk {
 
     /** Derives a safe file base-name from the result {@link ItemStack}'s registry path. */
     static String craftFileNameFor(final ItemStack result) {
-        final net.minecraft.resources.ResourceLocation key =
-                net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(result.getItem());
+        final ResourceLocation key =
+                BuiltInRegistries.ITEM.getKey(result.getItem());
         return sanitizeFileBase(key == null ? "pattern" : key.getPath());
     }
 
     /** Clamps a display or registry name to a safe file base (letters/digits/underscore, max 32 chars). */
     public static String sanitizeFileBase(final String base) {
         final StringBuilder sb = new StringBuilder();
-        for (final char c : base.toLowerCase(java.util.Locale.ROOT).toCharArray()) {
+        for (final char c : base.toLowerCase(Locale.ROOT).toCharArray()) {
             sb.append(Character.isLetterOrDigit(c) || c == '_' ? c : '_');
             if (sb.length() >= 32) {
                 break;

@@ -8,6 +8,7 @@
 package dev.jstech.computers.program;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -190,7 +191,7 @@ public final class ComputerSettings {
 
     /** The programs pinned to the panel, by program id path, in the order they were pinned. */
     public List<String> pinned() {
-        return java.util.Collections.unmodifiableList(pinned);
+        return Collections.unmodifiableList(pinned);
     }
 
     /** Replaces the pinned list (used on load): blanks and repeats are dropped, and the list is capped. */
@@ -234,7 +235,7 @@ public final class ComputerSettings {
 
     /** The starred data ids, in the order they were starred. */
     public List<String> favourites() {
-        return java.util.Collections.unmodifiableList(favourites);
+        return Collections.unmodifiableList(favourites);
     }
 
     /** Replaces the starred list (used on load): blanks and repeats are dropped, and the list is capped. */
@@ -268,7 +269,7 @@ public final class ComputerSettings {
 
     /** The folders this machine shares, in the order they were shared. */
     public List<Share> shares() {
-        return java.util.Collections.unmodifiableList(shares);
+        return Collections.unmodifiableList(shares);
     }
 
     /** Replaces the shares (used on load): blanks and repeats are dropped, and the list is capped. */
@@ -368,7 +369,7 @@ public final class ComputerSettings {
 
     /** An unmodifiable view of the remembered recipe choices, for serialisation. */
     public Map<String, Integer> recipeChoices() {
-        return java.util.Collections.unmodifiableMap(recipeChoices);
+        return Collections.unmodifiableMap(recipeChoices);
     }
 
     /** Replaces the remembered recipe choices (used on load). */
@@ -405,7 +406,7 @@ public final class ComputerSettings {
 
     /** An unmodifiable view of the default-app map for serialisation and display. */
     public Map<String, String> defaultApps() {
-        return java.util.Collections.unmodifiableMap(defaultApps);
+        return Collections.unmodifiableMap(defaultApps);
     }
 
     /** Replaces the default-app map (used on load). */

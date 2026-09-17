@@ -7,9 +7,20 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.computers.crafting.PatternWorkbench;
+import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.machine.NetworkReadService;
+import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.boot.SystemWelcome;
+import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
+import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * it, so every access route (a directly linked monitor, a KVM channel, ssh, remote control)
  * converges on one pipeline instead of duplicating it per machine shape.
  */
-public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
+public interface IOsHost extends IPeripheralOwner {
 
     /** Whether the machine is powered on with a valid build. */
     boolean isRunning();
@@ -59,20 +70,20 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
      * package changes what the NEXT boot will run, not what is running now. Without it, leaving the
      * monitor and coming back silently applied a change the machine was never restarted for.
      */
-    @org.jetbrains.annotations.Nullable
-    net.minecraft.resources.ResourceLocation bootedDesktopId();
+    @Nullable
+    ResourceLocation bootedDesktopId();
 
     /** Fixes the desktop for this session. Called when POST hands over to the boot manager. */
-    void setBootedDesktopId(@org.jetbrains.annotations.Nullable net.minecraft.resources.ResourceLocation id);
+    void setBootedDesktopId(@Nullable ResourceLocation id);
 
     /**
      * The program windows this machine has open, as the last player to leave its monitor left them.
      * Machine state, not viewer state: it persists with the machine and is cleared by a restart or a
      * shutdown, exactly like the windows on a real desktop.
      */
-    java.util.List<OpenWindow> openWindows();
+    List<OpenWindow> openWindows();
 
-    void setOpenWindows(java.util.List<OpenWindow> windows);
+    void setOpenWindows(List<OpenWindow> windows);
 
     /** The RAM buffer of the current build, in items. */
     long ramBuffer();
@@ -137,7 +148,7 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
 
     /** The network this machine currently belongs to, or null when unlinked. */
     @Nullable
-    dev.jstech.core.uuid.NetworkUuid networkUuid();
+    NetworkUuid networkUuid();
 
     /**
      * Whether this machine is attached to a data network. Unlike {@link #networkUuid()}, which is a server
@@ -154,22 +165,22 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
      * a host with nowhere to keep the work has to do.
      */
     @Nullable
-    default dev.jstech.computers.os.install.OsInstallJob installing() {
+    default OsInstallJob installing() {
         return null;
     }
 
     /** Starts, replaces or ends the copy this machine is doing; a host that keeps none does nothing. */
-    default void setInstalling(@Nullable final dev.jstech.computers.os.install.OsInstallJob job) {
+    default void setInstalling(@Nullable final OsInstallJob job) {
     }
 
     /** The installer this machine is in: the page it is on and what has been answered so far. */
     @Nullable
-    default dev.jstech.computers.os.install.InstallerFlow installer() {
+    default InstallerFlow installer() {
         return null;
     }
 
     /** Puts the machine in an installer, or takes it out of one. */
-    default void setInstaller(@Nullable final dev.jstech.computers.os.install.InstallerFlow flow) {
+    default void setInstaller(@Nullable final InstallerFlow flow) {
     }
 
     /** Whether this machine can hold a copy of its own rather than being written to there and then. */
@@ -197,12 +208,12 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
      * <p>A host that does not keep it answers that nobody has met its system, which is what a machine with no
      * disk of its own means anyway.
      */
-    default dev.jstech.computers.os.boot.SystemWelcome systemWelcome() {
-        return dev.jstech.computers.os.boot.SystemWelcome.UNSEEN;
+    default SystemWelcome systemWelcome() {
+        return SystemWelcome.UNSEEN;
     }
 
     /** Writes the greeting back onto the disk the system is on; a host that cannot keep it does nothing. */
-    default void setSystemWelcome(final dev.jstech.computers.os.boot.SystemWelcome welcome) {
+    default void setSystemWelcome(final SystemWelcome welcome) {
     }
 
     /*
@@ -250,13 +261,13 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
     }
 
     /** What this machine's system shows while it comes up, which is nothing at all for a machine with none. */
-    default dev.jstech.computers.os.boot.BootSequence bootSequence() {
-        return dev.jstech.computers.os.boot.BootSequence.NONE;
+    default BootSequence bootSequence() {
+        return BootSequence.NONE;
     }
 
     /** The parts this machine is built from right now, or nothing when it is not built from parts. */
     @Nullable
-    default dev.jstech.computers.hardware.ComputerBuild currentBuild() {
+    default ComputerBuild currentBuild() {
         return null;
     }
 
@@ -272,7 +283,7 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
      * machine with nobody to ask has no grounds for a claim about the network either way.
      */
     @Nullable
-    default dev.jstech.computers.machine.NetworkReadService networkService() {
+    default NetworkReadService networkService() {
         return null;
     }
 
@@ -286,7 +297,7 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
     int installedCpus();
 
     /** The installed disk stacks, in slot order. */
-    java.util.List<ItemStack> diskStacks();
+    List<ItemStack> diskStacks();
 
     /** Free space on the system disk in internal data-weight units. */
     long systemDiskFreeWeight();
@@ -313,7 +324,7 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
      * the window and the session. Null on a host that has no room for one (a machine that is not seated).
      */
     @Nullable
-    default dev.jstech.computers.crafting.PatternWorkbench studio() {
+    default PatternWorkbench studio() {
         return null;
     }
 
@@ -323,7 +334,7 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
      * <p>They hold memory like anything else the machine is doing, which is why the ledger asks for them.
      */
     @Nullable
-    default dev.jstech.computers.machine.MachinePrograms programs() {
+    default MachinePrograms programs() {
         return null;
     }
 
@@ -354,7 +365,7 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
                         RamLedger.Kind.DESKTOP);
             }
         }
-        final dev.jstech.computers.program.ComputerConsoleState console = console();
+        final ComputerConsoleState console = console();
         if (console != null) {
             for (final ProgramSpec spec : OsRegistry.programs()) {
                 if (spec.kind() == ProgramKind.SERVICE && console.isInstalled(spec.id().getPath())) {
@@ -362,7 +373,7 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
                 }
             }
         }
-        final dev.jstech.computers.machine.MachinePrograms scripts = programs();
+        final MachinePrograms scripts = programs();
         if (scripts != null) {
             for (final var one : scripts.view()) {
                 ledger.add(one.name(), one.heapMb(), RamLedger.Kind.PROCESS, one.id());
@@ -384,7 +395,7 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
      * The leading windows of {@code windows} that fit beside everything else this machine holds, in order;
      * the first past the budget and everything after it are dropped, so the oldest windows survive.
      */
-    default java.util.List<OpenWindow> windowsWithinBudget(final java.util.List<OpenWindow> windows) {
+    default List<OpenWindow> windowsWithinBudget(final List<OpenWindow> windows) {
         final OsDef os = installedOs();
         if (os == null) {
             return windows;

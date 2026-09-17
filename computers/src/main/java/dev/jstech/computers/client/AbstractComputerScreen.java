@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.EraThemes;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
@@ -46,9 +47,9 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
      * coordinates. A recipe viewer placing its panel beside the monitor reads this so the panel sits next to the
      * bezel rather than over it.
      */
-    public dev.jstech.computers.client.theme.MonitorFrameStyle.Geometry frameBounds() {
+    public MonitorFrameStyle.Geometry frameBounds() {
         final HardwareEra era = screenEra();
-        return dev.jstech.computers.client.theme.MonitorFrameStyle
+        return MonitorFrameStyle
                 .forEra(era == null ? HardwareEra.STANDARD : era)
                 .geometry(leftPos, topPos, imageWidth, imageHeight);
     }

@@ -8,6 +8,7 @@
 package dev.jstech.core.language;
 
 import com.mojang.logging.LogUtils;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -193,7 +194,7 @@ public final class LanguageRegistry {
 
     /** Every extension a language claims, as a person writes it or as its compiler produces it, in lower case. */
     private static List<String> extensionsOf(final IProgrammingLanguage language) {
-        final List<String> all = new java.util.ArrayList<>();
+        final List<String> all = new ArrayList<>();
         for (final String extension : language.sourceExtensions()) {
             all.add(extension.toLowerCase(Locale.ROOT));
         }

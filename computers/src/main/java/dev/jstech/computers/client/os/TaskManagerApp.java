@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.operation.payload.EndProcessPayload;
 import dev.jstech.computers.operation.payload.RequestSettingsPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload.DiskUse;
@@ -15,6 +17,7 @@ import dev.jstech.computers.os.RamLedger;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -165,7 +168,7 @@ public final class TaskManagerApp implements IDesktopApp {
              * machine is the one that knows which is which.
              */
             PacketDistributor.sendToServer(
-                    new dev.jstech.computers.operation.payload.EndProcessPayload(host, use.id()));
+                    new EndProcessPayload(host, use.id()));
         } else {
             return;
         }
@@ -524,8 +527,8 @@ public final class TaskManagerApp implements IDesktopApp {
             }
             final String tag = disk.label() + (disk.system() ? " (system)" : "");
             Texts.small(g, font, Texts.clip(font, tag, w - 70), x, row, skin.text());
-            final String use = dev.jstech.computers.hardware.DiskSpec.sizeLabel(disk.usedMb())
-                    + " / " + dev.jstech.computers.hardware.DiskSpec.sizeLabel(disk.capMb());
+            final String use = DiskSpec.sizeLabel(disk.usedMb())
+                    + " / " + DiskSpec.sizeLabel(disk.capMb());
             Texts.small(g, font, use, x + w - Texts.smallWidth(font, use), row, skin.dim());
             final double frac = Math.min(1.0, (double) disk.usedMb() / Math.max(1L, disk.capMb()));
             g.fill(x, row + 9, x + w, row + 15, skin.fieldBg());
@@ -797,7 +800,7 @@ public final class TaskManagerApp implements IDesktopApp {
 
     /** The vanilla font, which the hit-tests measure with exactly as the drawing does. */
     private static Font font() {
-        return net.minecraft.client.Minecraft.getInstance().font;
+        return Minecraft.getInstance().font;
     }
 
     /** Where the End button sits on the page in front, or null when this page has none. */

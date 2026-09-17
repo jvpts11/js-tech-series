@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.machine;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -40,6 +41,7 @@ import java.util.Locale;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.neoforged.fml.ModList;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -530,8 +532,8 @@ public final class PackageService {
 
     /** The build every package the Mirror serves is currently at: the mod's own version. */
     public static String modVersion() {
-        return net.neoforged.fml.ModList.get()
-                .getModContainerById(dev.jstech.computers.JsComputers.MODID)
+        return ModList.get()
+                .getModContainerById(JsComputers.MODID)
                 .map(container -> container.getModInfo().getVersion().toString())
                 .orElse("0");
     }

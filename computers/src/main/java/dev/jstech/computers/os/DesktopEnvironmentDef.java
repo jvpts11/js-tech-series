@@ -11,6 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 import java.util.Map;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A desktop environment: the graphical shell a computer runs on top of its OS. The Frames editions bundle
@@ -71,7 +72,7 @@ public record DesktopEnvironmentDef(
      * the one whose own name it is, else nothing. A window's key is its launcher label, so this is how the
      * machine reads a saved layout back into programs.
      */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public ProgramSpec programFor(final String key) {
         ProgramSpec byName = null;
         for (final ProgramSpec spec : OsRegistry.programs()) {

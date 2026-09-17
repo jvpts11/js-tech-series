@@ -16,6 +16,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.renderer.GeoBlockRenderer;
 
@@ -96,7 +97,7 @@ public final class MainframeRenderer extends GeoBlockRenderer<MainframeBlockEnti
 
     /** The cabinet spans twelve blocks; culling by the controller's own block would blink it out. */
     @Override
-    public net.minecraft.world.phys.AABB getRenderBoundingBox(final MainframeBlockEntity mainframe) {
+    public AABB getRenderBoundingBox(final MainframeBlockEntity mainframe) {
         return mainframe.renderBox();
     }
 }

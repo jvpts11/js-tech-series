@@ -8,7 +8,10 @@
 package dev.jstech.computers.menu;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.PersonalComputerBlock;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.core.tier.HardwareEra;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -17,6 +20,7 @@ import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Menu for the Personal Computer: a single hardware-assembly surface (motherboard, PSU, CPU, RAM, GPU, disks, each restricted to its component category and clamped to the count the installed motherboard offers) plus the player inventory.
@@ -60,7 +64,7 @@ public class PersonalComputerMenu extends AbstractComputerMenu {
         addDataSlots(this.data);
     }
 
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public static PersonalComputerMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                                    final RegistryFriendlyByteBuf buf) {
         if (playerInventory.player.level().getBlockEntity(buf.readBlockPos())
@@ -70,7 +74,7 @@ public class PersonalComputerMenu extends AbstractComputerMenu {
         return null;
     }
 
-    public net.minecraft.core.BlockPos pcPos() {
+    public BlockPos pcPos() {
         return blockEntity.getBlockPos();
     }
 
@@ -94,8 +98,8 @@ public class PersonalComputerMenu extends AbstractComputerMenu {
         return blockEntity.boardDiskSlots();
     }
 
-    @org.jetbrains.annotations.Nullable
-    public dev.jstech.core.tier.HardwareEra hardwareEra() {
+    @Nullable
+    public HardwareEra hardwareEra() {
         return blockEntity.displayEra();
     }
 
@@ -158,7 +162,7 @@ public class PersonalComputerMenu extends AbstractComputerMenu {
          */
         return access.evaluate((level, pos) ->
                 level.getBlockState(pos).getBlock()
-                        instanceof dev.jstech.computers.block.PersonalComputerBlock
+                        instanceof PersonalComputerBlock
                         && player.canInteractWithBlock(pos, 4.0), true);
     }
 

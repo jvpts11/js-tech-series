@@ -7,8 +7,16 @@
  */
 package dev.jstech.computers.operation.payload.machine;
 
+import dev.jstech.computers.block.IKvmScreenOpener;
+import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.blockentity.MonitorBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.client.os.RemoteControlApp;
+import dev.jstech.computers.menu.ClusterManagementComputerMenu;
 import dev.jstech.computers.menu.CraftingComputerMenu;
 import dev.jstech.computers.menu.PersonalComputerMenu;
+import dev.jstech.computers.menu.ServerAssemblyMenu;
+import dev.jstech.computers.menu.ServerRackMenu;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.KvmSelectPayload;
@@ -19,6 +27,9 @@ import dev.jstech.computers.operation.payload.RemoteControlPayload;
 import dev.jstech.computers.operation.payload.RemoteHostsPayload;
 import dev.jstech.computers.operation.payload.RenamePcPayload;
 import dev.jstech.computers.operation.payload.RenameServerPayload;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -41,8 +52,8 @@ public final class MachinePayloads {
     /** Registers the payloads this class handles. */
     public static void register(final PayloadRegistrar registrar) {
         ComputerAccess.accept(registrar, RackBayPowerPayload.TYPE, RackBayPowerPayload.STREAM_CODEC,
-                ComputerAccess.menu(dev.jstech.computers.menu.ServerRackMenu.class,
-                        dev.jstech.computers.menu.ServerRackMenu::rackPos, RackBayPowerPayload::rackPos),
+                ComputerAccess.menu(ServerRackMenu.class,
+                        ServerRackMenu::rackPos, RackBayPowerPayload::rackPos),
                 MachinePayloads::handleRackBayPower);
         ComputerAccess.accept(registrar, MachinePowerPayload.TYPE, MachinePowerPayload.STREAM_CODEC,
                 ComputerAccess.machine(MachinePowerPayload::hostPos), MachinePayloads::handleMachinePower);
@@ -55,7 +66,7 @@ public final class MachinePayloads {
         ComputerAccess.accept(registrar, KvmSelectPayload.TYPE, KvmSelectPayload.STREAM_CODEC,
                 ComputerAccess.screen(KvmSelectPayload::rackPos), MachinePayloads::handleKvmSelect);
         ComputerAccess.accept(registrar, RenameServerPayload.TYPE, RenameServerPayload.STREAM_CODEC,
-                ComputerAccess.menu(dev.jstech.computers.menu.ServerAssemblyMenu.class),
+                ComputerAccess.menu(ServerAssemblyMenu.class),
                 MachinePayloads::handleRenameServer);
         // A desk computer, a crafting computer and a cluster management computer are each renamed in their own assembly.
         ComputerAccess.accept(registrar, RenamePcPayload.TYPE, RenamePcPayload.STREAM_CODEC,
@@ -63,8 +74,8 @@ public final class MachinePayloads {
                         ComputerAccess.menu(PersonalComputerMenu.class, PersonalComputerMenu::pcPos, RenamePcPayload::pcPos),
                         ComputerAccess.menu(CraftingComputerMenu.class, CraftingComputerMenu::computerPos,
                                 RenamePcPayload::pcPos),
-                        ComputerAccess.menu(dev.jstech.computers.menu.ClusterManagementComputerMenu.class,
-                                dev.jstech.computers.menu.ClusterManagementComputerMenu::computerPos,
+                        ComputerAccess.menu(ClusterManagementComputerMenu.class,
+                                ClusterManagementComputerMenu::computerPos,
                                 RenamePcPayload::pcPos)),
                 MachinePayloads::handleRenamePc);
     }
@@ -72,7 +83,7 @@ public final class MachinePayloads {
     private static void handleRackBayPower(final RackBayPowerPayload payload, final ServerPlayer player,
                                            final ServerLevel level) {
         if (level.getBlockEntity(payload.rackPos())
-                instanceof dev.jstech.computers.blockentity.ServerRackBlockEntity rack) {
+                instanceof ServerRackBlockEntity rack) {
             rack.toggleBayPower(payload.slot());
         }
     }
@@ -80,10 +91,10 @@ public final class MachinePayloads {
     private static void handleRemoteControl(final RemoteControlPayload payload, final ServerPlayer player,
                                             final ServerLevel level) {
         if (!(level.getBlockEntity(payload.hostPos())
-                instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)) {
+                instanceof IComputerTerminalHost host)) {
             return;
         }
-        final var cli = new dev.jstech.computers.program.ServerCliComputer(host, level);
+        final var cli = new ServerCliComputer(host, level);
         if (payload.action() == RemoteControlPayload.ACTION_LIST) {
             final List<RemoteHostsPayload.Entry> entries = new ArrayList<>();
             cli.remoteMachines().forEach((hostname, machine) -> {
@@ -92,9 +103,9 @@ public final class MachinePayloads {
                 }
                 final var remote = new dev.jstech.computers.program
                         .ServerCliComputer(
-                        (dev.jstech.computers.terminal.IComputerTerminalHost) machine,
+                        (IComputerTerminalHost) machine,
                         level);
-                final var os = machine instanceof dev.jstech.computers.os.IOsHost h
+                final var os = machine instanceof IOsHost h
                         ? h.installedOs() : null;
                 entries.add(new RemoteHostsPayload.Entry(machine.getBlockPos().asLong(), hostname,
                         remote.type(), os == null ? "" : os.displayName(), remote.running()));
@@ -118,26 +129,26 @@ public final class MachinePayloads {
          * for showing a computer the cable does not link.
          */
         if (level.getBlockEntity(payload.monitorPos())
-                instanceof dev.jstech.computers.blockentity.MonitorBlockEntity monitor) {
+                instanceof MonitorBlockEntity monitor) {
             monitor.setRemoteSession(target);
         }
         player.closeContainer();
-        dev.jstech.computers.block.MonitorBlock.bootOrPost(
+        MonitorBlock.bootOrPost(
                 player, level, payload.monitorPos(), target);
     }
 
     private static void handleRemoteHosts(final RemoteHostsPayload payload, final Player player) {
-        dev.jstech.computers.client.os.RemoteControlApp.accept(payload);
+        RemoteControlApp.accept(payload);
     }
 
     private static void handleOpenKvm(final OpenKvmPayload payload, final Player player) {
-        dev.jstech.computers.block.IKvmScreenOpener.Holder.open(payload);
+        IKvmScreenOpener.Holder.open(payload);
     }
 
     private static void handleKvmSelect(final KvmSelectPayload payload, final ServerPlayer player,
                                         final ServerLevel level) {
         if (!(level.getBlockEntity(payload.rackPos())
-                instanceof dev.jstech.computers.blockentity.ServerRackBlockEntity rack)) {
+                instanceof ServerRackBlockEntity rack)) {
             return;
         }
         // The switch has to be there for the monitor to address a bay at all.
@@ -146,13 +157,13 @@ public final class MachinePayloads {
         }
         rack.setActiveChannel(payload.slot());
         // With the channel set, the rack answers as that machine: start its session.
-        dev.jstech.computers.block.MonitorBlock.openSelectedChannel(
+        MonitorBlock.openSelectedChannel(
                 player, level, payload.monitorPos(), payload.rackPos());
     }
 
     private static void handleMachinePower(final MachinePowerPayload payload, final ServerPlayer player,
                                            final ServerLevel level) {
-        if (!(level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost computer)) {
+        if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
             return;
         }
         /*
@@ -165,7 +176,7 @@ public final class MachinePayloads {
             case MachinePowerPayload.ACTION_RESTART -> {
                 computer.setPowered(false);
                 computer.setPowered(true);
-                dev.jstech.computers.block.MonitorBlock.openPost(
+                MonitorBlock.openPost(
                         player, level, payload.monitorPos(), payload.hostPos());
             }
             default -> {
@@ -180,14 +191,14 @@ public final class MachinePayloads {
      */
     private static void handleRenamePc(final RenamePcPayload payload, final ServerPlayer player,
                                        final ServerLevel level) {
-        if (level.getBlockEntity(payload.pcPos()) instanceof dev.jstech.computers.os.IOsHost computer) {
+        if (level.getBlockEntity(payload.pcPos()) instanceof IOsHost computer) {
             computer.setCustomName(payload.name());
         }
     }
 
     private static void handleRenameServer(final RenameServerPayload payload, final ServerPlayer player,
                                            final ServerLevel level) {
-        if (player.containerMenu instanceof dev.jstech.computers.menu.ServerAssemblyMenu menu) {
+        if (player.containerMenu instanceof ServerAssemblyMenu menu) {
             menu.setServerName(payload.name());
         }
     }

@@ -21,6 +21,7 @@ import dev.jstech.computers.operation.payload.TerminalLocalDepositPayload;
 import dev.jstech.computers.operation.payload.TerminalLocalUploadPayload;
 import dev.jstech.computers.operation.payload.TerminalLocalWithdrawPayload;
 import dev.jstech.computers.storage.DataContainers;
+import dev.jstech.computers.storage.DiskPrivacy;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -183,7 +184,7 @@ public final class TerminalLocalPayloads {
             return;
         }
         // Whitelist + clamp: only a value inside the valid per-mille range is ever applied.
-        final int permille = dev.jstech.computers.storage.DiskPrivacy
+        final int permille = DiskPrivacy
                 .clampPermille(payload.permille());
         pc.setDiskPrivacy(payload.diskIndex(), permille); // a no-op + no counter bump if the slot has no disk
         // Refresh the owner's Storage tab so the readout reflects the authoritative value.

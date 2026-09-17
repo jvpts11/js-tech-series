@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.hardware;
 
+import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.tier.IndustrialTier;
@@ -52,7 +53,7 @@ public record ClusterInterfaceCardSpec(HardwareEra era, IndustrialTier tier, Pci
         }
 
         /** Whether this reach covers a cabinet of the given kind. */
-        public boolean covers(final dev.jstech.computers.rack.RackChassis.RackType kind) {
+        public boolean covers(final RackChassis.RackType kind) {
             return switch (kind) {
                 case SERVER -> true;
                 case SUPERCOMPUTER -> this != DATACENTERS;

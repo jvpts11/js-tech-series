@@ -8,6 +8,10 @@
 package dev.jstech.computers.operation.payload.crafting;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.client.os.CraftPlannerApp;
+import dev.jstech.computers.crafting.CraftPlanner;
+import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.CraftPlanPayload;
@@ -15,6 +19,9 @@ import dev.jstech.computers.operation.payload.CraftPlannerPayload;
 import dev.jstech.computers.operation.payload.RequestCraftPlannerPayload;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.uuid.NetworkUuid;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Set;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -60,7 +67,7 @@ public final class CraftPlannerPayloads {
     }
 
     private static void handleCraftPlanner(final CraftPlannerPayload payload, final Player player) {
-        dev.jstech.computers.client.os.CraftPlannerApp.accept(payload);
+        CraftPlannerApp.accept(payload);
     }
 
     /** Runs the recursive planner for the Craft Planner: feasibility, the ordered stages, and the raw bill. */
@@ -74,13 +81,13 @@ public final class CraftPlannerPayloads {
         final var patterns = mf.networkPatterns();
         final var machines = mf.networkProcessingPatterns();
         final Map<StorageKey, Long> stock = mf.networkIndex().snapshot();
-        final var plan = dev.jstech.computers.crafting.CraftPlanner.plan(
+        final var plan = CraftPlanner.plan(
                 key, quantity, patterns, machines, stock);
         if (plan.steps().isEmpty()) {
             return new CraftPlannerPayload(key.stack(1), quantity, false, false, 0L, 0L,
                     List.of(), List.of(), List.of());
         }
-        final long maxFeasible = dev.jstech.computers.crafting.CraftPlanner.maxFeasible(
+        final long maxFeasible = CraftPlanner.maxFeasible(
                 key, quantity, patterns, machines, stock);
         final List<CraftPlannerPayload.Stage> stages = new ArrayList<>();
         for (final var step : plan.steps()) {
@@ -99,16 +106,16 @@ public final class CraftPlannerPayloads {
                     stock.getOrDefault(e.getKey(), 0L)));
         }
         final List<CraftPlannerPayload.TreeNode> tree = new ArrayList<>();
-        treeWalk(key, Math.max(1, quantity), 0, patterns, machines, tree, new java.util.HashSet<>());
+        treeWalk(key, Math.max(1, quantity), 0, patterns, machines, tree, new HashSet<>());
         return new CraftPlannerPayload(key.stack(1), quantity, true, plan.feasible(), plan.produced(),
                 maxFeasible, stages, ingredients, tree);
     }
 
     /** Recursively expands one recipe path (crafting preferred, then a machine) into a pre-order tree. */
     private static void treeWalk(final StorageKey key, final long need, final int depth,
-            final List<dev.jstech.computers.crafting.CraftingPattern> patterns,
-            final List<dev.jstech.computers.crafting.ProcessingPattern> machines,
-            final List<CraftPlannerPayload.TreeNode> out, final java.util.Set<StorageKey> visiting) {
+            final List<CraftingPattern> patterns,
+            final List<ProcessingPattern> machines,
+            final List<CraftPlannerPayload.TreeNode> out, final Set<StorageKey> visiting) {
         if (out.size() >= CraftPlannerPayload.MAX_TREE || depth > 6) {
             return;
         }
@@ -125,7 +132,7 @@ public final class CraftPlannerPayloads {
             for (final var pp : machines) {
                 final var o = pp.primaryOutput();
                 if (o != null && o.key().equals(key)) {
-                    final Map<StorageKey, Long> merged = new java.util.LinkedHashMap<>();
+                    final Map<StorageKey, Long> merged = new LinkedHashMap<>();
                     for (final var pi : pp.inputs()) {
                         merged.merge(pi.key(), pi.amount(), Long::sum);
                     }

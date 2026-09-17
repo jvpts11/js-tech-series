@@ -7,8 +7,17 @@
  */
 package dev.jstech.computers.operation.payload.interactor;
 
+import dev.jstech.computers.block.part.AbstractBusPart;
+import dev.jstech.computers.block.part.CablePartType;
+import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.client.os.NetworkInteractorApp;
+import dev.jstech.computers.client.os.StorageInsightsApp;
 import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.crafting.MachineCategory;
+import dev.jstech.computers.crafting.NetworkRecipe;
+import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.ItemDetailPayload;
@@ -20,10 +29,15 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
 import dev.jstech.core.uuid.NetworkUuid;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -54,7 +68,7 @@ public final class ItemInfoPayloads {
                 ComputerAccess.machine(RequestItemRecipesPayload::hostPos), ItemInfoPayloads::handleRequestItemRecipes);
         registrar.playToClient(ItemRecipesPayload.TYPE, ItemRecipesPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
-                        dev.jstech.computers.client.os.NetworkInteractorApp.acceptItemRecipes(payload)));
+                        NetworkInteractorApp.acceptItemRecipes(payload)));
     }
 
     private static void handleRequestItemDetail(final RequestItemDetailPayload payload, final ServerPlayer player,
@@ -69,14 +83,14 @@ public final class ItemInfoPayloads {
     }
 
     private static void handleItemDetail(final ItemDetailPayload payload, final Player player) {
-        dev.jstech.computers.client.os.StorageInsightsApp.acceptDetail(payload);
+        StorageInsightsApp.acceptDetail(payload);
     }
 
     /** One item's detail: the network total, where it is stored, what it makes, and which buses filter it. */
     private static ItemDetailPayload collectItemDetail(final ServerLevel level, final NetworkUuid network,
                                                        final StorageKey key) {
         final NetworkSystem system = NetworkSystem.get(level);
-        final long total = dev.jstech.computers.operation.NetworkStorage.of(level, network)
+        final long total = NetworkStorage.of(level, network)
                 .query().getOrDefault(key, 0L);
 
         // Where it is stored: per server that holds any.
@@ -87,7 +101,7 @@ public final class ItemInfoPayloads {
             }
             final long held = system.locationOf(server.nodeUuid())
                     .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos()))
-                            instanceof dev.jstech.computers.blockentity.ServerRackBlockEntity rack
+                            instanceof ServerRackBlockEntity rack
                             ? rack.getServerStorage(loc.slot()).count(key) : 0L)
                     .orElse(0L);
             if (held > 0) {
@@ -96,8 +110,8 @@ public final class ItemInfoPayloads {
         }
 
         // What it makes: the products of any pattern that consumes it as an ingredient.
-        final List<net.minecraft.world.item.ItemStack> uses = new ArrayList<>();
-        final java.util.Set<StorageKey> seen = new java.util.HashSet<>();
+        final List<ItemStack> uses = new ArrayList<>();
+        final Set<StorageKey> seen = new HashSet<>();
         final MainframeBlockEntity mf = resolveMainframe(level, network);
         if (mf != null) {
             for (final var pattern : mf.networkPatterns()) {
@@ -130,12 +144,12 @@ public final class ItemInfoPayloads {
                 break;
             }
             if (!(level.getBlockEntity(BlockPos.of(posLong))
-                    instanceof dev.jstech.computers.blockentity.DataCableBlockEntity cable)) {
+                    instanceof DataCableBlockEntity cable)) {
                 continue;
             }
-            for (final net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
+            for (final Direction dir : Direction.values()) {
                 if (cable.getPart(dir)
-                        instanceof dev.jstech.computers.block.part.AbstractBusPart bus
+                        instanceof AbstractBusPart bus
                         && key.equals(bus.filterKey())) {
                     buses.add(new ItemDetailPayload.BusRef(bus.name(), busKind(bus.type())));
                 }
@@ -144,9 +158,9 @@ public final class ItemInfoPayloads {
         return new ItemDetailPayload(key.stack(1), total, stored, uses, buses);
     }
 
-    private static String busKind(final dev.jstech.computers.block.part.CablePartType type) {
+    private static String busKind(final CablePartType type) {
         final String name = type.name();
-        return name.charAt(0) + name.substring(1).toLowerCase(java.util.Locale.ROOT).replace('_', ' ');
+        return name.charAt(0) + name.substring(1).toLowerCase(Locale.ROOT).replace('_', ' ');
     }
 
     /** Answers the details panel: what makes the item on this network, and what uses it. */
@@ -182,16 +196,16 @@ public final class ItemInfoPayloads {
     }
 
     /** "Blast · processing · Blast Furnace": how the details panel lists one recipe that makes an item. */
-    private static String recipeLine(final dev.jstech.computers.crafting.NetworkRecipe recipe) {
+    private static String recipeLine(final NetworkRecipe recipe) {
         if (recipe.proc().isPresent()) {
             return recipe.displayName() + " · processing · "
-                    + dev.jstech.computers.crafting.MachineCategory.label(recipe.proc().get().machineType());
+                    + MachineCategory.label(recipe.proc().get().machineType());
         }
         if (recipe.multi().isPresent()) {
             final List<String> machines = new ArrayList<>();
             for (final var stage : recipe.multi().get().stages()) {
                 machines.add(stage.proc().isPresent()
-                        ? dev.jstech.computers.crafting.MachineCategory.label(stage.proc().get().machineType())
+                        ? MachineCategory.label(stage.proc().get().machineType())
                         : "Bench");
             }
             return recipe.displayName() + " · multi-stage · " + String.join(" -> ", machines);
@@ -206,7 +220,7 @@ public final class ItemInfoPayloads {
     }
 
     /** Whether a machine recipe takes {@code key} in, at any of its stages. */
-    private static boolean consumes(final dev.jstech.computers.crafting.NetworkRecipe recipe, final StorageKey key) {
+    private static boolean consumes(final NetworkRecipe recipe, final StorageKey key) {
         if (recipe.proc().isPresent()) {
             return recipe.proc().get().ingredientTotals().containsKey(key);
         }

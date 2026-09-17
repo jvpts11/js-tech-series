@@ -8,6 +8,8 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.layout.FilesLayout;
+import dev.jstech.computers.machine.MachineListing;
+import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Draw;
 import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
@@ -33,10 +35,10 @@ public final class FileIcons {
      */
     public static Kind kindOf(final String ext) {
         final String lower = ext == null ? "" : ext.toLowerCase(Locale.ROOT);
-        if (dev.jstech.computers.machine.MachineListing.claims(lower)) {
+        if (MachineListing.claims(lower)) {
             return Kind.PROGRAM;
         }
-        final var language = dev.jstech.core.JsCore.languages().byExtension(lower);
+        final var language = JsCore.languages().byExtension(lower);
         if (language != null) {
             return language.sourceExtensions().contains(lower) ? Kind.SOURCE : Kind.PROGRAM;
         }

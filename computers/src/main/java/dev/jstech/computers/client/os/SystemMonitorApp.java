@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.computers.operation.payload.RequestSettingsPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
@@ -210,8 +211,8 @@ public final class SystemMonitorApp implements IDesktopApp {
         g.drawString(font, tag, x, y, ctx.skin().text(), false);
         final long cap = Math.max(1L, disk.capMb());
         final double frac = Math.min(1.0, (double) disk.usedMb() / cap);
-        final String usage = dev.jstech.computers.hardware.DiskSpec.sizeLabel(disk.usedMb())
-                + " / " + dev.jstech.computers.hardware.DiskSpec.sizeLabel(disk.capMb());
+        final String usage = DiskSpec.sizeLabel(disk.usedMb())
+                + " / " + DiskSpec.sizeLabel(disk.capMb());
         g.drawString(font, usage, x + w - font.width(usage), y, ctx.skin().dim(), false);
         final int barY = y + 10;
         g.fill(x, barY, x + w, barY + BAR_H, ctx.skin().fieldBg());

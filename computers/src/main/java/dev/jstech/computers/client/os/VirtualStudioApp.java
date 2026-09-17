@@ -34,6 +34,7 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.TextField;
+import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.language.IProgrammingLanguage;
 import java.util.ArrayDeque;
@@ -42,12 +43,15 @@ import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
@@ -217,7 +221,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private final TextField askField = new TextField(64);
     private final Button askOk;
     private String askTitle = "";
-    private java.util.function.Consumer<String> askAction = value -> { };
+    private Consumer<String> askAction = value -> { };
     private final Popup properties = new Popup("Project Properties", 170, 112).setLayouter(this::layoutProperties);
     private final List<Label> propertyLines = new ArrayList<>();
     private final Label platformLabel;
@@ -603,7 +607,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     private String languageName(final String id) {
         final IProgrammingLanguage language = id.contains(":")
-                ? JsCore.languages().get(net.minecraft.resources.ResourceLocation.tryParse(id)) : null;
+                ? JsCore.languages().get(ResourceLocation.tryParse(id)) : null;
         return language == null ? id : language.displayName() + " 1.0";
     }
 
@@ -858,7 +862,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             return;
         }
         final IProgrammingLanguage language = JsCore.languages().get(
-                net.minecraft.resources.ResourceLocation.tryParse(project.language()));
+                ResourceLocation.tryParse(project.language()));
         if (language == null) {
             this.output.add(project.name() + ": no language called " + project.language());
             buildNext();
@@ -1077,7 +1081,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     /** The templates that fit what was typed and the two filters. */
     private List<ProjectTemplate> matchingTemplates() {
         final List<ProjectTemplate> out = new ArrayList<>();
-        final String typed = this.templateSearch.edit().toLowerCase(java.util.Locale.ROOT).trim();
+        final String typed = this.templateSearch.edit().toLowerCase(Locale.ROOT).trim();
         for (final ProjectTemplate template : ProjectTemplate.values()) {
             if (!template.isKind(this.kindFilter)) {
                 continue;
@@ -1088,8 +1092,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             if (!this.platformFilter.isEmpty() && !template.tags().contains(this.platformFilter)) {
                 continue;
             }
-            if (!typed.isEmpty() && !template.title().toLowerCase(java.util.Locale.ROOT).contains(typed)
-                    && !template.description().toLowerCase(java.util.Locale.ROOT).contains(typed)) {
+            if (!typed.isEmpty() && !template.title().toLowerCase(Locale.ROOT).contains(typed)
+                    && !template.description().toLowerCase(Locale.ROOT).contains(typed)) {
                 continue;
             }
             out.add(template);
@@ -1258,7 +1262,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private String currentWhenLoaded = "";
 
     private void layoutTemplates(final Popup p) {
-        final List<dev.jstech.core.client.gui.component.UiComponent> c = p.children();
+        final List<UiComponent> c = p.children();
         final int x = p.x() + 4;
         final int top = p.contentTop() + 2;
         final int bottom = p.bottom() - 16;
@@ -1288,7 +1292,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         final int x = p.x() + 4;
         int y = p.contentTop() + 1;
         final int w = p.width() - 8;
-        final List<dev.jstech.core.client.gui.component.UiComponent> c = p.children();
+        final List<UiComponent> c = p.children();
         // The template's name and tags, the way the page is headed.
         c.get(0).setBounds(x, y, w, 9);
         y += 9;
@@ -1465,7 +1469,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     private void layoutOptions(final Popup p) {
-        final List<dev.jstech.core.client.gui.component.UiComponent> c = p.children();
+        final List<UiComponent> c = p.children();
         c.get(0).setBounds(p.x() + 4, p.contentTop() + 4, 50, 9);
         this.tabStepper.setBounds(p.x() + 56, p.contentTop() + 2, 96, 12);
         this.completionsBox.setBounds(p.x() + 4, p.contentTop() + 18, p.width() - 8, 9);
@@ -1479,7 +1483,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         }
     }
 
-    private void ask(final String title, final String initial, final java.util.function.Consumer<String> action) {
+    private void ask(final String title, final String initial, final Consumer<String> action) {
         this.askTitle = title;
         this.askAction = action;
         this.askField.set(initial);
@@ -1501,7 +1505,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     private void layoutAskClose(final Popup p) {
-        final List<dev.jstech.core.client.gui.component.UiComponent> c = p.children();
+        final List<UiComponent> c = p.children();
         final int y = p.bottom() - 15;
         c.get(0).setBounds(p.x() + 4, y, 40, 11);
         c.get(1).setBounds(p.x() + 48, y, 60, 11);
@@ -1922,7 +1926,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     private void layoutAskDelete(final Popup p) {
-        final List<dev.jstech.core.client.gui.component.UiComponent> c = p.children();
+        final List<UiComponent> c = p.children();
         final int y = p.bottom() - 15;
         c.get(0).setBounds(p.x() + 4, y, 44, 11);
         c.get(1).setBounds(p.right() - 44, y, 40, 11);
@@ -2149,7 +2153,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         final CodeWorkspace.Doc doc = this.workspace.current();
         // What the Start Window does not show is hidden outright: a list with no room still has rows to draw.
         final boolean start = this.page == Page.START;
-        for (final dev.jstech.core.client.gui.component.UiComponent part
+        for (final UiComponent part
                 : List.of(this.start, this.explorer, this.tabs, this.dockTabs, this.errors, this.outputList,
                         this.terminal)) {
             part.setVisible(!start);

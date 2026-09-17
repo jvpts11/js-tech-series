@@ -11,6 +11,9 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.DataHandoff;
 import dev.jstech.computers.operation.MoveLabels;
+import dev.jstech.computers.operation.NetworkIndex;
+import dev.jstech.computers.operation.NetworkQueryOperationTask;
+import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
@@ -26,6 +29,7 @@ import dev.jstech.computers.operation.payload.terminal.MoveDestinations.Dest;
 import dev.jstech.computers.storage.DataContainers;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.component.DataComponents;
@@ -33,6 +37,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -95,7 +100,7 @@ public final class TerminalPayloads {
         if (mainframe == null) {
             return;
         }
-        final dev.jstech.computers.operation.NetworkIndex index = mainframe.networkIndex();
+        final NetworkIndex index = mainframe.networkIndex();
         byte opType;
         long count;
         ItemStack icon;
@@ -116,7 +121,7 @@ public final class TerminalPayloads {
                 final ItemStack reindexIcon = labelledIcon(Items.COMPASS, "index");
                 mainframe.reindexAsync(() -> {
                     mainframe.recordOperation(OperationRecord.TYPE_REINDEX, reindexIcon, index.catalogSize(),
-                            index.catalogSize(), OperationRecord.STATUS_COMPLETED, java.util.List.of());
+                            index.catalogSize(), OperationRecord.STATUS_COMPLETED, List.of());
                     player.displayClientMessage(Component.literal("REINDEX complete - catalog rebuilt from disks"),
                             true);
                     dispatchTerminalQuery(player, net, level);
@@ -138,7 +143,7 @@ public final class TerminalPayloads {
         }
         // Index maintenance is instantaneous; log it COMPLETED so the Operations tab records that it ran.
         mainframe.recordOperation(opType, icon, count, count,
-                OperationRecord.STATUS_COMPLETED, java.util.List.of());
+                OperationRecord.STATUS_COMPLETED, List.of());
         player.displayClientMessage(Component.literal(message), true);
         dispatchTerminalQuery(player, net, level); // the catalog may have changed, so refresh the grid
     }
@@ -154,7 +159,7 @@ public final class TerminalPayloads {
         if (mainframe == null) {
             return;
         }
-        final dev.jstech.computers.operation.NetworkIndex index = mainframe.networkIndex();
+        final NetworkIndex index = mainframe.networkIndex();
         long destroyed = 0L;
         String label;
         StorageKey recordKey;
@@ -192,13 +197,13 @@ public final class TerminalPayloads {
             }
         }
         mainframe.recordOperation(new OperationRecord(OperationRecord.TYPE_DROP, recordKey,
-                destroyed, destroyed, OperationRecord.STATUS_COMPLETED, java.util.List.of()));
+                destroyed, destroyed, OperationRecord.STATUS_COMPLETED, List.of()));
         player.displayClientMessage(Component.literal(
                 "DROP destroyed " + destroyed + " from " + label), true);
         dispatchTerminalQuery(player, net, level);
     }
 
-    private static ItemStack labelledIcon(final net.minecraft.world.item.Item item, final String label) {
+    private static ItemStack labelledIcon(final Item item, final String label) {
         final ItemStack stack = new ItemStack(item);
         stack.set(DataComponents.CUSTOM_NAME, Component.literal(label));
         return stack;
@@ -206,7 +211,7 @@ public final class TerminalPayloads {
 
     private static void handleSnapshot(final NetworkSnapshotPayload payload, final Player player) {
         if (player.containerMenu
-                instanceof dev.jstech.computers.menu.ComputerTerminalMenu terminal) {
+                instanceof ComputerTerminalMenu terminal) {
             terminal.setNetworkItems(payload.items());
         }
     }
@@ -216,8 +221,8 @@ public final class TerminalPayloads {
         final MainframeBlockEntity mainframe = resolveMainframe(level, net);
         if (mainframe != null) {
             mainframe.submitOperation(
-                    new dev.jstech.computers.operation.NetworkQueryOperationTask(level, net, player),
-                    dev.jstech.core.operation.OperationPriority.MEDIUM);
+                    new NetworkQueryOperationTask(level, net, player),
+                    OperationPriority.MEDIUM);
         }
     }
 
@@ -317,7 +322,7 @@ public final class TerminalPayloads {
 
     private static ServerBreakdownPayload collectBreakdown(final ServerLevel level, final NetworkUuid net,
                                                            final StorageKey key) {
-        final Map<NodeUuid, Long> perServer = dev.jstech.computers.operation.NetworkStorage
+        final Map<NodeUuid, Long> perServer = NetworkStorage
                 .of(level, net).breakdown(key);
         final List<ServerBreakdownPayload.ServerHolding> rows = new ArrayList<>();
         for (final Map.Entry<NodeUuid, Long> e : perServer.entrySet()) {
@@ -336,7 +341,7 @@ public final class TerminalPayloads {
         }
         final Map<StorageKey, Long> totals = network == null
                 ? Map.of()
-                : dev.jstech.computers.operation.NetworkStorage.of(level, network).query();
+                : NetworkStorage.of(level, network).query();
         final List<NetworkItemEntry> entries = new ArrayList<>(Math.min(totals.size(),
                 NetworkSnapshotPayload.MAX_ENTRIES));
         /*

@@ -7,14 +7,23 @@
  */
 package dev.jstech.computers.machine;
 
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.os.fs.FilesystemContents;
+import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.computers.os.install.SetupJob;
 import dev.jstech.computers.os.install.SetupRunner;
+import dev.jstech.computers.os.install.SetupTiming;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.os.media.MediaKind;
@@ -23,6 +32,7 @@ import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -30,6 +40,7 @@ import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
@@ -180,7 +191,7 @@ public final class InstallService {
          */
         final List<LiveInstallState.Device> devices = new ArrayList<>();
         for (int i = 0; i < computer.diskSlots(); i++) {
-            final net.minecraft.world.item.ItemStack stack = computer.diskInSlot(i);
+            final ItemStack stack = computer.diskInSlot(i);
             if (stack.getItem() instanceof DiskItem disk) {
                 final long sizeMb = disk.spec().capacityItems() * disk.spec().era().mbPerItem();
                 devices.add(new LiveInstallState.Device("sd" + (char) ('a' + i),
@@ -192,15 +203,15 @@ public final class InstallService {
          * bootloader, and which target the bootloader is installed for. It is the machine's generation that
          * says so, exactly as it does for the self-test.
          */
-        final boolean uefi = dev.jstech.computers.os.FirmwareKind.forEra(
+        final boolean uefi = FirmwareKind.forEra(
                 computer.installedEra() != null ? computer.installedEra()
-                        : dev.jstech.core.tier.HardwareEra.STANDARD)
-                == dev.jstech.computers.os.FirmwareKind.UEFI;
-        final dev.jstech.core.tier.HardwareEra era = computer.installedEra() != null ? computer.installedEra()
-                : dev.jstech.core.tier.HardwareEra.STANDARD;
+                        : HardwareEra.STANDARD)
+                == FirmwareKind.UEFI;
+        final HardwareEra era = computer.installedEra() != null ? computer.installedEra()
+                : HardwareEra.STANDARD;
         final LiveInstallState.Result result = state.run(line, new LiveInstallState.Env(
                 devices, this.packages.reachable(), this.level.getGameTime(), coresOf(computer),
-                computer.maxCpuMhz(), dev.jstech.computers.os.install.SetupTiming.eraFactor(era),
+                computer.maxCpuMhz(), SetupTiming.eraFactor(era),
                 uefi));
         machine.setChanged();
         final String text = String.join("\n", result.lines());
@@ -269,16 +280,16 @@ public final class InstallService {
         if (slot < 0) {
             return;
         }
-        final net.minecraft.world.item.ItemStack disk = computer.diskInSlot(slot);
+        final ItemStack disk = computer.diskInSlot(slot);
         if (!(disk.getItem() instanceof DiskItem)) {
             return;
         }
-        final dev.jstech.computers.os.fs.FilesystemContents was = disk.getOrDefault(
-                dev.jstech.computers.ComputingModule.FILESYSTEM.get(),
-                dev.jstech.computers.os.fs.FilesystemContents.EMPTY);
-        disk.set(dev.jstech.computers.ComputingModule.FILESYSTEM.get(),
-                was.withDir("/etc").with(new dev.jstech.computers.os.fs.StoredFile("/etc/fstab",
-                        dev.jstech.computers.os.fs.FileType.CFG, table)));
+        final FilesystemContents was = disk.getOrDefault(
+                ComputingModule.FILESYSTEM.get(),
+                FilesystemContents.EMPTY);
+        disk.set(ComputingModule.FILESYSTEM.get(),
+                was.withDir("/etc").with(new StoredFile("/etc/fstab",
+                        FileType.CFG, table)));
     }
 
     /** The format of the disc a program's installer sits on in a linked drive, or null when none does. */
@@ -304,15 +315,15 @@ public final class InstallService {
      * gets through four times the work of one with a single core, which is the whole point of the number.
      */
     private static int coresOf(final IOsHost computer) {
-        if (!(computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine)) {
+        if (!(computer instanceof AbstractComputerBlockEntity machine)) {
             return Math.max(1, computer.installedCpus());
         }
-        final dev.jstech.computers.hardware.ComputerBuild build = machine.currentBuild();
+        final ComputerBuild build = machine.currentBuild();
         if (build == null) {
             return 1;
         }
         int cores = 0;
-        for (final dev.jstech.computers.hardware.CpuSpec cpu : build.cpus()) {
+        for (final CpuSpec cpu : build.cpus()) {
             cores += cpu.cores();
         }
         return Math.max(1, cores);

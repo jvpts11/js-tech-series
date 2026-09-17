@@ -16,9 +16,11 @@ import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.ast.INode;
 import dev.jstech.computers.sigma.ast.IStmt;
 import dev.jstech.computers.sigma.ast.TypeRef;
+import dev.jstech.computers.sigma.lower.Lowerer;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * What the subset does not have, reported where it was written.
@@ -281,7 +283,7 @@ public final class SubsetRules {
             case IExpr.OutArgument out -> this.typeRef(out.type());
             case IExpr.Interpolation written -> {
                 this.refuse(written, "strings with holes in them", "add the pieces together with +");
-                for (final IExpr hole : dev.jstech.computers.sigma.lower.Lowerer.holesOf(written)) {
+                for (final IExpr hole : Lowerer.holesOf(written)) {
                     this.expression(hole);
                 }
             }
@@ -325,7 +327,7 @@ public final class SubsetRules {
         if (offered != null && !offered.contains(member.name())) {
             this.refuse(member, "'" + owner.identifier() + "." + member.name() + "'",
                     "Sigma's " + owner.identifier() + " has "
-                            + String.join(", ", new java.util.TreeSet<>(offered)));
+                            + String.join(", ", new TreeSet<>(offered)));
         }
     }
 

@@ -10,6 +10,7 @@ package dev.jstech.computers.block;
 import com.mojang.serialization.MapCodec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.core.tier.HardwareEra;
+import net.minecraft.world.item.Item;
 
 /**
  * The Legacy-era Mainframe: the same orchestrator as the Standard one, but built on a Legacy MTX
@@ -35,7 +36,7 @@ public class LegacyMainframeBlock extends MainframeBlock {
     }
 
     @Override
-    protected net.minecraft.world.item.Item blockItem() {
+    protected Item blockItem() {
         return ComputingModule.LEGACY_MAINFRAME_ITEM.get();
     }
 }

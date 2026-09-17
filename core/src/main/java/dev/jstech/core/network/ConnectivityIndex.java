@@ -12,6 +12,7 @@ import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -98,7 +99,7 @@ public final class ConnectivityIndex {
                     result.add(entry.getKey());
                 }
             }
-            cached = java.util.Collections.unmodifiableSet(result);
+            cached = Collections.unmodifiableSet(result);
             componentCache.put(root, cached);
         }
         return cached;
@@ -204,7 +205,7 @@ public final class ConnectivityIndex {
 
     private void cleanupOrphanedUuids(int currentRoot) {
         // Collect ids to remove (avoid concurrent modification).
-        var toRemove = new java.util.ArrayList<Integer>();
+        var toRemove = new ArrayList<Integer>();
         for (Integer id : rootToUuid.keySet()) {
             if (id != currentRoot && dsu.find(id) == currentRoot) {
                 toRemove.add(id);

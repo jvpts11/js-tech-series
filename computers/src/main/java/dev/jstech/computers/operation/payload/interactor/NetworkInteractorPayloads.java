@@ -8,8 +8,10 @@
 package dev.jstech.computers.operation.payload.interactor;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.client.os.NetworkInteractorApp;
 import dev.jstech.computers.operation.DataHandoff;
 import dev.jstech.computers.operation.MoveLabels;
+import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
@@ -24,10 +26,14 @@ import dev.jstech.computers.operation.payload.RequestNetworkInteractorPayload;
 import dev.jstech.computers.operation.payload.RequestNiServersPayload;
 import dev.jstech.computers.operation.payload.TerminalSelectPayload;
 import dev.jstech.computers.operation.payload.terminal.MoveDestinations.Dest;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.storage.DataContainers;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -147,24 +153,24 @@ public final class NetworkInteractorPayloads {
          * network's contents, so a player must be at a monitor actually linked to this host.
          */
         if (niHost(player, level, payload.host(), payload.monitorPos()) != null
-                && level.getBlockEntity(payload.host()) instanceof dev.jstech.computers.os.IOsHost computer) {
+                && level.getBlockEntity(payload.host()) instanceof IOsHost computer) {
             sendNetworkInteractor(player, level, computer);
         }
     }
 
     /** Builds and sends a fresh Network Interactor snapshot (network grid, local grid, status, craft catalog). */
     public static void sendNetworkInteractor(final ServerPlayer player, final ServerLevel level,
-            final dev.jstech.computers.os.IOsHost computer) {
-        final dev.jstech.core.uuid.NetworkUuid network = computer.networkUuid();
+            final IOsHost computer) {
+        final NetworkUuid network = computer.networkUuid();
         // The whole network's items (Network Storage tab).
         final List<NetworkItemEntry> networkItems = new ArrayList<>();
         long usedItems = 0L;
         if (network != null) {
-            final dev.jstech.core.network.NetworkSystem system =
-                    dev.jstech.core.network.NetworkSystem.get(level);
-            final dev.jstech.computers.operation.NetworkStorage storage =
-                    dev.jstech.computers.operation.NetworkStorage.of(level, network);
-            final Map<dev.jstech.computers.storage.StorageKey, Long> totals = storage.query();
+            final NetworkSystem system =
+                    NetworkSystem.get(level);
+            final NetworkStorage storage =
+                    NetworkStorage.of(level, network);
+            final Map<StorageKey, Long> totals = storage.query();
             for (final var e : totals.entrySet()) {
                 if (networkItems.size() >= NetworkInteractorPayload.MAX_ENTRIES) {
                     break;
@@ -184,7 +190,7 @@ public final class NetworkInteractorPayloads {
         // This computer's own disks (Local Storage tab).
         final List<NetworkItemEntry> localItems = new ArrayList<>();
         int serverCount = 0;
-        if (computer instanceof dev.jstech.computers.terminal.IComputerTerminalHost host) {
+        if (computer instanceof IComputerTerminalHost host) {
             for (final var e : host.localStore().view().entrySet()) {
                 if (localItems.size() >= NetworkInteractorPayload.MAX_ENTRIES) {
                     break;
@@ -197,8 +203,8 @@ public final class NetworkInteractorPayloads {
         final List<CraftCatalogPayload.Entry> crafts = buildCraftCatalog(level, network);
         final List<String> favourites = computer.console() == null ? List.of()
                 : computer.console().settings().favourites();
-        final dev.jstech.computers.operation.NetworkStorage room = network == null ? null
-                : dev.jstech.computers.operation.NetworkStorage.of(level, network);
+        final NetworkStorage room = network == null ? null
+                : NetworkStorage.of(level, network);
         PacketDistributor.sendToPlayer(player, new NetworkInteractorPayload(
                 networkItems, localItems, online, usedItems, serverCount, crafts, favourites,
                 room == null ? 0L : room.capacity(),
@@ -207,11 +213,11 @@ public final class NetworkInteractorPayloads {
 
     /** A human label for a storage node in the details panel's per-server breakdown, such as a server's rack position
      *  and slot, or a generic label for a published Personal Computer (which has no rack location). */
-    private static String serverLabel(final dev.jstech.core.network.NetworkSystem system,
-                                      final dev.jstech.core.uuid.NodeUuid node) {
+    private static String serverLabel(final NetworkSystem system,
+                                      final NodeUuid node) {
         return system.locationOf(node)
                 .map(loc -> {
-                    final net.minecraft.core.BlockPos p = net.minecraft.core.BlockPos.of(loc.rackPos());
+                    final BlockPos p = BlockPos.of(loc.rackPos());
                     return "Server " + p.getX() + ", " + p.getY() + ", " + p.getZ() + " #" + (loc.slot() + 1);
                 })
                 .orElse("Published PC");
@@ -230,8 +236,8 @@ public final class NetworkInteractorPayloads {
         // The whole stack as items, the way a chest takes a shift-click; a bucket goes in as a bucket.
         final DataHandoff.ISource source = DataHandoff.inventory(player, slot);
         final int amount = source.get().getCount();
-        final dev.jstech.computers.os.IOsHost computer =
-                host instanceof dev.jstech.computers.os.IOsHost c ? c : null;
+        final IOsHost computer =
+                host instanceof IOsHost c ? c : null;
         final Runnable refresh = () -> {
             if (computer != null) {
                 sendNetworkInteractor(player, level, computer);
@@ -358,8 +364,8 @@ public final class NetworkInteractorPayloads {
         final int amount = one ? 1 : source.get().getCount();
         final boolean fill = one && payload.entry().isPresent()
                 && DataContainers.canTake(source.get(), payload.entry().get());
-        final dev.jstech.computers.os.IOsHost computer =
-                host instanceof dev.jstech.computers.os.IOsHost c ? c : null;
+        final IOsHost computer =
+                host instanceof IOsHost c ? c : null;
         final Runnable refresh = () -> {
             if (computer != null) {
                 sendNetworkInteractor(player, level, computer);
@@ -404,7 +410,7 @@ public final class NetworkInteractorPayloads {
         }
         // Clamp the client-supplied quantity so a spoofed packet cannot ask the dispatcher for Long.MAX.
         final long safeAmount = Math.max(1L, Math.min(payload.amount(), Integer.MAX_VALUE));
-        final dev.jstech.computers.os.IOsHost computer =
+        final IOsHost computer =
                 host instanceof dev.jstech.computers.os
                         .IOsHost c ? c : null;
         final Runnable refreshNi = () -> {
@@ -422,6 +428,6 @@ public final class NetworkInteractorPayloads {
     }
 
     private static void handleNetworkInteractor(final NetworkInteractorPayload payload, final Player player) {
-        dev.jstech.computers.client.os.NetworkInteractorApp.accept(payload);
+        NetworkInteractorApp.accept(payload);
     }
 }

@@ -16,24 +16,29 @@ import dev.jstech.core.network.INetworkBridge;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.util.BlockEntityTickers;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * The Server Router: a network topology element that switches the network and groups Server Racks into datacenter sections, one per output face.
  */
-public class ServerRouterBlock extends net.minecraft.world.level.block.HorizontalDirectionalBlock
+public class ServerRouterBlock extends HorizontalDirectionalBlock
         implements EntityBlock, IDataNetworkConnectable, INetworkBridge {
 
     public static final MapCodec<ServerRouterBlock> CODEC = simpleCodec(ServerRouterBlock::new);
@@ -41,7 +46,7 @@ public class ServerRouterBlock extends net.minecraft.world.level.block.Horizonta
     public ServerRouterBlock(final Properties properties) {
         super(properties);
         // Facing is purely cosmetic (the port banks); sections still bind per face regardless.
-        registerDefaultState(stateDefinition.any().setValue(FACING, net.minecraft.core.Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
     @Override
@@ -51,12 +56,12 @@ public class ServerRouterBlock extends net.minecraft.world.level.block.Horizonta
 
     @Override
     protected void createBlockStateDefinition(
-            final net.minecraft.world.level.block.state.StateDefinition.Builder<Block, BlockState> builder) {
+            final StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING);
     }
 
     @Override
-    public BlockState getStateForPlacement(final net.minecraft.world.item.context.BlockPlaceContext context) {
+    public BlockState getStateForPlacement(final BlockPlaceContext context) {
         return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
     }
 
@@ -65,7 +70,7 @@ public class ServerRouterBlock extends net.minecraft.world.level.block.Horizonta
     @Override
     protected InteractionResult useWithoutItem(final BlockState state, final Level level, final BlockPos pos,
                                                final Player player,
-                                               final net.minecraft.world.phys.BlockHitResult hit) {
+                                               final BlockHitResult hit) {
         if (!(level.getBlockEntity(pos) instanceof ServerRouterBlockEntity router)) {
             return InteractionResult.PASS;
         }

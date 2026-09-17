@@ -10,11 +10,18 @@ package dev.jstech.computers.block;
 import com.mojang.serialization.MapCodec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.menu.MainframeMenu;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
 import dev.jstech.core.multiblock.IMultiblockGeometry;
 import dev.jstech.core.multiblock.MultiblockPatternGeometry;
+import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.IDataNetworkConnectable;
+import dev.jstech.core.peripheral.IPeripheralConnectable;
+import dev.jstech.core.peripheral.PeripheralCableType;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -23,6 +30,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
@@ -41,14 +49,14 @@ import java.util.List;
  * The Mainframe, the network's orchestrator.
  */
 public class MainframeBlock extends AbstractMultiblockControllerBlock
-        implements dev.jstech.core.network.IDataNetworkConnectable,
-        dev.jstech.core.peripheral.IPeripheralConnectable, IEraChassisBlock {
+        implements IDataNetworkConnectable,
+        IPeripheralConnectable, IEraChassisBlock {
 
     public static final MapCodec<MainframeBlock> CODEC = simpleCodec(MainframeBlock::new);
 
     @Override
-    public dev.jstech.core.peripheral.PeripheralCableType peripheralType() {
-        return dev.jstech.core.peripheral.PeripheralCableType.COMPUTING;
+    public PeripheralCableType peripheralType() {
+        return PeripheralCableType.COMPUTING;
     }
 
     public MainframeBlock(final Properties properties) {
@@ -62,12 +70,12 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
      * {@link dev.jstech.core.tier.HardwareEra#STANDARD}; the Vintage and Legacy variants
      * override it.
      */
-    public dev.jstech.core.tier.HardwareEra era() {
-        return dev.jstech.core.tier.HardwareEra.STANDARD;
+    public HardwareEra era() {
+        return HardwareEra.STANDARD;
     }
 
     @Override
-    public dev.jstech.core.tier.HardwareEra chassisEra() {
+    public HardwareEra chassisEra() {
         return era();
     }
 
@@ -75,7 +83,7 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
      * The item this Mainframe drops and is picked as: its own era variant. Overridden per era so a
      * broken or pick-blocked Mainframe yields the matching era's item.
      */
-    protected net.minecraft.world.item.Item blockItem() {
+    protected Item blockItem() {
         return ComputingModule.MAINFRAME_ITEM.get();
     }
 
@@ -85,12 +93,12 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
     }
 
     @Override
-    public java.util.Set<dev.jstech.core.network.DataTier> acceptedCableTiers() {
+    public Set<DataTier> acceptedCableTiers() {
         /*
          * The Mainframe sits on the HBW backbone; it never takes an Ethernet
          * access link directly (a Personal Router bridges that).
          */
-        return java.util.Set.of(dev.jstech.core.network.DataTier.T2_HBW);
+        return Set.of(DataTier.T2_HBW);
     }
 
     @Override
@@ -117,10 +125,10 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
     protected BlockState partStateFor(final BlockPos controller, final Direction facing,
                                       final BlockPos part, final BlockState controllerState) {
         // Stamp the controller's era onto every structural part so the whole footprint wears one skin.
-        final dev.jstech.core.tier.HardwareEra era =
+        final HardwareEra era =
                 controllerState.getBlock() instanceof MainframeBlock mf
                         ? mf.era()
-                        : dev.jstech.core.tier.HardwareEra.STANDARD;
+                        : HardwareEra.STANDARD;
         return ComputingModule.MAINFRAME_PART.get().defaultBlockState()
                 .setValue(FACING, facing)
                 .setValue(MainframePartBlock.CORE,
@@ -179,7 +187,7 @@ public class MainframeBlock extends AbstractMultiblockControllerBlock
             }
             serverPlayer.openMenu(
                     new SimpleMenuProvider(
-                            (id, inventory, p) -> new dev.jstech.computers.menu.MainframeMenu(
+                            (id, inventory, p) -> new MainframeMenu(
                                     id, inventory, mainframe),
                             // Each era is its own machine and carries its own name in the GUI header.
                             state.getBlock().getName()),

@@ -8,6 +8,7 @@
 package dev.jstech.computers.vm.program;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.IdentityHashMap;
@@ -190,7 +191,7 @@ public final class UiWidgets {
 
     /** Every widget a window holds, the ones inside rows and columns among them, from the top down. */
     public static List<Values.Obj> inside(final Values.Obj window) {
-        final List<Values.Obj> all = new java.util.ArrayList<>();
+        final List<Values.Obj> all = new ArrayList<>();
         if (window.get(CONTENT) instanceof Values.Obj content) {
             gather(content, all);
         }

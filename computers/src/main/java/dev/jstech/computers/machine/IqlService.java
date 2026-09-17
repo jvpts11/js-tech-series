@@ -510,7 +510,7 @@ public final class IqlService {
      * {@code --} are skipped, the first refusal ends the run, and what the last statement run answered is the answer.
      */
     public static IqlEngine.Outcome runEach(final IqlEngine engine, final String text) {
-        IqlEngine.Outcome last = new IqlEngine.Outcome(true, "nothing to run", java.util.List.of());
+        IqlEngine.Outcome last = new IqlEngine.Outcome(true, "nothing to run", List.of());
         for (final String each : text.split("\\r?\\n")) {
             if (each.isBlank() || each.strip().startsWith("--")) {
                 continue;

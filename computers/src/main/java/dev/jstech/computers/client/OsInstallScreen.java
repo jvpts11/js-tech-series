@@ -10,6 +10,8 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.RequestFirmwarePayload;
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.core.gui.Phosphor;
+import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
@@ -201,7 +203,7 @@ public final class OsInstallScreen extends Screen {
         g.fill(x + 1, y + 1, x + W - 1, y + 17, p.bar);
         final String title = switch (phase) {
             case CONFIRM -> "INSTALL SYSTEM";
-            case WORKING -> "INSTALLING " + osName.toUpperCase(java.util.Locale.ROOT);
+            case WORKING -> "INSTALLING " + osName.toUpperCase(Locale.ROOT);
             case DONE -> "INSTALLATION COMPLETE";
             case FAILED -> "INSTALLATION FAILED";
         };
@@ -286,7 +288,7 @@ public final class OsInstallScreen extends Screen {
     }
 
     private static int green(final int color) {
-        return dev.jstech.core.gui.Phosphor.green(color);
+        return Phosphor.green(color);
     }
 
     /** The three firmware looks, so the installer matches the machine it is installing onto. */

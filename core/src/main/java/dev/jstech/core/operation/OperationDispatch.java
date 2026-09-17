@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.operation;
 
+import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
@@ -49,7 +50,7 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
      * Settle order, so the status map keeps only the most recent terminal entries: without this it would
      * grow one entry per Operation forever on a long-lived dispatcher. Touched on the main thread only.
      */
-    private final java.util.ArrayDeque<UUID> terminalOrder = new java.util.ArrayDeque<>();
+    private final ArrayDeque<UUID> terminalOrder = new ArrayDeque<>();
     private final Set<CompletableFuture<?>> inFlight = ConcurrentHashMap.newKeySet();
     private final Object tickMonitor = new Object();
 

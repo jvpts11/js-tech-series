@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.core.client.gui.skin.ISkin;
+import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -189,8 +190,8 @@ public final class OsSkin implements ISkin {
      * and requires a Standard machine, so it has no older self to wear.
      */
     public static OsSkin forDesktop(final ResourceLocation desktopId,
-                                    final dev.jstech.core.tier.HardwareEra era) {
-        if (era != null && era.isAtMost(dev.jstech.core.tier.HardwareEra.LEGACY)) {
+                                    final HardwareEra era) {
+        if (era != null && era.isAtMost(HardwareEra.LEGACY)) {
             switch (desktopId.getPath()) {
                 case "kde_plasma":
                     return KDE_PLASMA_LEGACY;

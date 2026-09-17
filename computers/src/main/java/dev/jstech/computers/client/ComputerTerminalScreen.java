@@ -7,7 +7,11 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
+import dev.jstech.computers.operation.payload.CraftCatalogPayload;
+import dev.jstech.computers.operation.payload.CraftPlanRequestPayload;
+import dev.jstech.computers.operation.payload.CraftSubmitPayload;
 import dev.jstech.computers.operation.payload.LocalStorageSnapshotPayload;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
 import dev.jstech.computers.operation.payload.NetworkServersPayload;
@@ -22,10 +26,16 @@ import dev.jstech.computers.operation.payload.TerminalLocalUploadPayload;
 import dev.jstech.computers.operation.payload.TerminalLocalWithdrawPayload;
 import dev.jstech.computers.operation.payload.TerminalMaintenancePayload;
 import dev.jstech.computers.operation.payload.TerminalSelectPayload;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Optional;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
@@ -41,6 +51,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Screen for the Monitor terminal: a left tab rail (icon over name) and a content area, drawn as a flat dark "computer OS" with square edges and a cyan accent, with the player inventory pinned along the bottom so every tab is usable.
@@ -131,7 +142,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     private int opScroll;
     int taskSubTab;
 
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private EditBox searchBox;
     boolean sortByQuantity = true;
     /*
@@ -182,12 +193,12 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     private static final String[] STEP_LABELS = {"----", "---", "--", "-", "+", "++", "+++", "++++"};
     private EditBox qtyBox;
     private boolean syncingQty;
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private NetworkItemEntry popupEntry;
 
     // Craft popup state (open only while craftPopup != null) + catalog scroll.
-    @org.jetbrains.annotations.Nullable
-    private dev.jstech.computers.operation.payload.CraftCatalogPayload.Entry craftPopup;
+    @Nullable
+    private CraftCatalogPayload.Entry craftPopup;
     private long craftQty = 1;
     int craftScroll;
     private int popupQty = 1;
@@ -198,7 +209,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     private static final int REQ_H_SIMPLE = 102;
     private static final int REQ_H_ADVANCED = 200;
 
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private OperationRecord popupOp;
     private int opPopupScroll;
     private static final int OP_POPUP_ROWS = 7;
@@ -216,7 +227,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
 
     private boolean dropOpen;
     private int dropScope = TerminalDropPayload.SCOPE_NETWORK;
-    private final Set<StorageKey> dropTypes = new java.util.LinkedHashSet<>();
+    private final Set<StorageKey> dropTypes = new LinkedHashSet<>();
     private int dropServerIndex;
     private int dropTypeScrollRow;
     String maintHint = "";
@@ -343,7 +354,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     private int[] railTabs() {
         // The Command Prompt launcher sits at the bottom of every computer's rail.
         final int[] base = baseRailTabs();
-        final int[] full = java.util.Arrays.copyOf(base, base.length + 1);
+        final int[] full = Arrays.copyOf(base, base.length + 1);
         full[base.length] = ComputerTerminalMenu.TAB_CONSOLE;
         return full;
     }
@@ -653,8 +664,8 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         return s.length() <= max ? s : s.substring(0, max - 1) + "…";
     }
 
-    @org.jetbrains.annotations.Nullable
-    private dev.jstech.computers.operation.payload.CraftCatalogPayload.Entry
+    @Nullable
+    private CraftCatalogPayload.Entry
             craftEntryAt(final int mouseX, final int mouseY) {
         final var catalog = menu.craftCatalog();
         final int gx = leftPos + NET_X;
@@ -669,7 +680,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     }
 
     private void openCraftPopup(
-            final dev.jstech.computers.operation.payload.CraftCatalogPayload.Entry entry) {
+            final CraftCatalogPayload.Entry entry) {
         craftPopup = entry;
         craftQty = 1;
         menu.setCraftPlan(null);
@@ -690,8 +701,8 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
 
     private void requestCraftPlan() {
         if (craftPopup != null) {
-            net.neoforged.neoforge.network.PacketDistributor.sendToServer(
-                    new dev.jstech.computers.operation.payload.CraftPlanRequestPayload(
+            PacketDistributor.sendToServer(
+                    new CraftPlanRequestPayload(
                             menu.monitorPos(), menu.hostPos(), craftPopup.result(), craftQty));
         }
     }
@@ -710,10 +721,10 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         if (craftPopup == null) {
             return;
         }
-        net.neoforged.neoforge.network.PacketDistributor.sendToServer(
-                new dev.jstech.computers.operation.payload.CraftSubmitPayload(
+        PacketDistributor.sendToServer(
+                new CraftSubmitPayload(
                         menu.monitorPos(), menu.hostPos(), craftPopup.result(), craftQty, partial, true,
-                        dev.jstech.core.operation.OperationPriority.DEFAULT));
+                        OperationPriority.DEFAULT));
         closeCraftPopup();
     }
 
@@ -731,7 +742,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         g.fill(px, py, px + POPUP_W, py + POPUP_H, PANEL);
         g.fill(px, py, px + POPUP_W, py + 1, ACCENT);
 
-        drawDataIcon(g, dev.jstech.computers.storage.StorageKey
+        drawDataIcon(g, StorageKey
                 .of(craftPopup.result()), -1L, px + 6, py + 5);
         g.drawString(font, "CRAFT  " + trim(craftPopup.result().getHoverName().getString(), 18),
                 px + 28, py + 8, TEXT, false);
@@ -760,7 +771,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         } else {
             for (int i = 0; i < Math.min(5, plan.rows().size()); i++) {
                 final var row = plan.rows().get(i);
-                drawDataIcon(g, dev.jstech.computers.storage.StorageKey
+                drawDataIcon(g, StorageKey
                         .of(row.item()), -1L, px + 6, rowY - 2);
                 g.drawString(font, trim(row.item().getHoverName().getString(), 14), px + 26, rowY + 2, TEXT, false);
                 final String counts = fmt(row.have()) + " / " + fmt(row.need());
@@ -918,7 +929,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         return netScrollRow;
     }
 
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private NetworkItemEntry networkItemAt(final int mx, final int my) {
         final int relX = mx - (leftPos + NET_X);
         final int relY = my - (topPos + NET_Y + gridShift());
@@ -1535,9 +1546,9 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         if (isGridTab() && !menu.getCarried().isEmpty()
                 && (button == 0 || button == 1)
                 && (overDepositBar(mouseX, mouseY) || overNetworkGrid(mouseX, mouseY))) {
-            final java.util.Optional<dev.jstech.computers.storage.StorageKey> entry = button == 1
-                    ? java.util.Optional.ofNullable(networkItemAt((int) mouseX, (int) mouseY)).map(NetworkItemEntry::key)
-                    : java.util.Optional.empty();
+            final Optional<StorageKey> entry = button == 1
+                    ? Optional.ofNullable(networkItemAt((int) mouseX, (int) mouseY)).map(NetworkItemEntry::key)
+                    : Optional.empty();
             if (menu.activeTab() == ComputerTerminalMenu.TAB_STORAGE) {
                 PacketDistributor.sendToServer(new TerminalLocalDepositPayload(menu.monitorPos(), menu.hostPos(),
                         button == 1 ? TerminalLocalDepositPayload.CURSOR_ONE : TerminalLocalDepositPayload.CURSOR, entry));
@@ -1571,7 +1582,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
                         // Launch the Command Prompt for this computer instead of switching content.
                         PacketDistributor.sendToServer(new dev.jstech.computers.operation.payload
                                 .OpenProgramPayload(menu.monitorPos(), menu.hostPos(),
-                                dev.jstech.computers.program.Programs.COMMAND_PROMPT.toString()));
+                                Programs.COMMAND_PROMPT.toString()));
                         return true;
                     }
                     if (tab != menu.activeTab()) {
@@ -1714,10 +1725,10 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
                 && slot != null && slot.hasItem() && slot.index >= menu.storageSlotCount()) {
             if (menu.activeTab() == ComputerTerminalMenu.TAB_STORAGE) {
                 PacketDistributor.sendToServer(new TerminalLocalDepositPayload(
-                        menu.monitorPos(), menu.hostPos(), slot.index, java.util.Optional.empty()));
+                        menu.monitorPos(), menu.hostPos(), slot.index, Optional.empty()));
             } else {
                 PacketDistributor.sendToServer(new TerminalInsertPayload(
-                        menu.monitorPos(), menu.hostPos(), slot.index, java.util.Optional.empty()));
+                        menu.monitorPos(), menu.hostPos(), slot.index, Optional.empty()));
             }
             return;
         }
@@ -2338,9 +2349,9 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
          * already wears the right era skin. Relying only on the synced era slot lagged one tick and flashed
          * the default era when the GUI opened. Fall back to the synced value if the host isn't client-loaded.
          */
-        final net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        final Minecraft mc = Minecraft.getInstance();
         if (mc.level != null && mc.level.getBlockEntity(menu.hostPos())
-                instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity host) {
+                instanceof AbstractComputerBlockEntity host) {
             return host.displayEra();
         }
         return menu.hardwareEra();

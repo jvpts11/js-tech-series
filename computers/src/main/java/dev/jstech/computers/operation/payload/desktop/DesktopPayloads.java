@@ -7,7 +7,19 @@
  */
 package dev.jstech.computers.operation.payload.desktop;
 
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.client.os.SettingsApp;
+import dev.jstech.computers.client.os.SystemMonitorApp;
+import dev.jstech.computers.client.os.TaskManagerApp;
+import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.item.HardwareTooltip;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
@@ -20,14 +32,34 @@ import dev.jstech.computers.operation.payload.SetDesktopPrefsPayload;
 import dev.jstech.computers.operation.payload.SetIconPositionPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
+import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.ProgramKind;
+import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.RamLedger;
+import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.fs.SystemLayout;
+import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.computers.program.ComputerSettings;
 import dev.jstech.computers.program.Programs;
+import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.storage.DriveVolumes;
+import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.handling.DirectionalPayloadHandler;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import java.util.ArrayList;
@@ -46,7 +78,7 @@ public final class DesktopPayloads {
     /** Registers the payloads this class handles. */
     public static void register(final PayloadRegistrar registrar) {
         registrar.playBidirectional(DesktopWindowsPayload.TYPE, DesktopWindowsPayload.STREAM_CODEC,
-                new net.neoforged.neoforge.network.handling.DirectionalPayloadHandler<>(
+                new DirectionalPayloadHandler<>(
                         ClientPayloadHandlers.onMainThread(DesktopPayloads::handleDesktopWindowsOnClient),
                         ComputerAccess.guarded(DesktopWindowsPayload.TYPE,
                                 ComputerAccess.machineOrClosingDesktop(DesktopWindowsPayload::host),
@@ -71,17 +103,17 @@ public final class DesktopPayloads {
 
     private static void handleRequestDesktopFiles(final RequestDesktopFilesPayload payload, final ServerPlayer player,
                                                   final ServerLevel level) {
-        final java.util.List<DiskFilesPayload.WireFile> wire = new java.util.ArrayList<>();
+        final List<DiskFilesPayload.WireFile> wire = new ArrayList<>();
         final String[] prefs = {"", ""};
         // accent override (0=none), brightness, clock12h (0/1), taskbar centered (1) vs left (0), dark (0/1), scale (%)
         final int[] deskPrefs = {0, 100, 0, 1, 0, 0};
-        final java.util.List<String> programs = new java.util.ArrayList<>();
-        final java.util.List<DesktopFilesPayload.WireIconCell> iconCells = new java.util.ArrayList<>();
-        final java.util.List<String> pinned = new java.util.ArrayList<>();
-        final java.util.Map<String, String> defaultApps = new java.util.LinkedHashMap<>();
-        if (level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost computer) {
-            final net.minecraft.world.item.ItemStack disk = computer.systemDisk();
-            final dev.jstech.computers.os.FilesystemKind kind =
+        final List<String> programs = new ArrayList<>();
+        final List<DesktopFilesPayload.WireIconCell> iconCells = new ArrayList<>();
+        final List<String> pinned = new ArrayList<>();
+        final Map<String, String> defaultApps = new LinkedHashMap<>();
+        if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
+            final ItemStack disk = computer.systemDisk();
+            final FilesystemKind kind =
                     filesystemKindOf(computer);
             prefs[0] = computer.console().wallpaper();
             prefs[1] = computer.console().computerName();
@@ -98,11 +130,11 @@ public final class DesktopPayloads {
              * apps). Each is gated by the installed OS, hardware and host scope; the built-in apps are
              * added on the client, so only installable desktop apps flow through this list.
              */
-            for (final dev.jstech.computers.os.ProgramSpec spec
-                    : dev.jstech.computers.os.OsRegistry.programs()) {
-                final dev.jstech.computers.os.OsDef hostOs = computer.installedOs();
+            for (final ProgramSpec spec
+                    : OsRegistry.programs()) {
+                final OsDef hostOs = computer.installedOs();
                 if (spec.installable()
-                        && spec.kind() == dev.jstech.computers.os.ProgramKind.APP
+                        && spec.kind() == ProgramKind.APP
                         && hostOs != null && spec.platforms().contains(hostOs.platform())
                         && installedAndAllowed(computer, spec.id())) {
                     programs.add(spec.id().getPath());
@@ -113,18 +145,18 @@ public final class DesktopPayloads {
              * under the home directory, the DOS family under Users/Public.
              */
             if (!disk.isEmpty()
-                    && kind == dev.jstech.computers.os.FilesystemKind.HIERARCHICAL) {
-                final dev.jstech.computers.os.OsDef osDef = computer.installedOs();
-                final String desktopDir = dev.jstech.computers.os.fs.SystemLayout.desktopDirFor(
-                        osDef == null ? null : dev.jstech.computers.os.OsRegistry.getKernel(
+                    && kind == FilesystemKind.HIERARCHICAL) {
+                final OsDef osDef = computer.installedOs();
+                final String desktopDir = SystemLayout.desktopDirFor(
+                        osDef == null ? null : OsRegistry.getKernel(
                                 osDef.kernelId()));
                 for (final String d
-                        : dev.jstech.computers.os.fs.DiskFilesystem.listDirs(
+                        : DiskFilesystem.listDirs(
                                 disk, desktopDir, kind)) {
                     wire.add(new DiskFilesPayload.WireFile(d, "", 0L, false, true));
                 }
-                for (final dev.jstech.computers.os.fs.DiskFilesystem.FileEntry e
-                        : dev.jstech.computers.os.fs.DiskFilesystem.list(
+                for (final DiskFilesystem.FileEntry e
+                        : DiskFilesystem.list(
                                 disk, desktopDir, kind)) {
                     wire.add(new DiskFilesPayload.WireFile(
                             e.path(), e.type().extension(), e.weight(), e.readOnly(), false));
@@ -135,13 +167,13 @@ public final class DesktopPayloads {
              * forgotten from the console state too, so a stale position never haunts a later file that
              * happens to take the same name (self-healing). "app:" launcher pins are always kept.
              */
-            final java.util.Set<String> desktopNames = new java.util.HashSet<>();
+            final Set<String> desktopNames = new HashSet<>();
             for (final DiskFilesPayload.WireFile f : wire) {
                 desktopNames.add(baseNameOf(f.path()));
             }
             boolean prunedAnyPin = false;
-            for (final java.util.Map.Entry<String, Integer> e
-                    : new java.util.ArrayList<>(computer.console().iconCells().entrySet())) {
+            for (final Map.Entry<String, Integer> e
+                    : new ArrayList<>(computer.console().iconCells().entrySet())) {
                 final String key = e.getKey();
                 if (key.startsWith("file:") && !desktopNames.contains(key.substring("file:".length()))) {
                     computer.console().clearIconCell(key);
@@ -160,14 +192,14 @@ public final class DesktopPayloads {
          */
         PacketDistributor.sendToPlayer(player, DesktopWindowsPayload.of(payload.hostPos(),
                 level.getBlockEntity(payload.hostPos()) instanceof IOsHost machine
-                        ? machine.openWindows() : java.util.List.of()));
+                        ? machine.openWindows() : List.of()));
         /*
          * Programs the player installed from the Mirror get a launcher of their own, so the icon on
          * the desktop is not only for what came with the machines.
          */
-        final java.util.List<DesktopFilesPayload.WireCommunity> community = new java.util.ArrayList<>();
+        final List<DesktopFilesPayload.WireCommunity> community = new ArrayList<>();
         if (level.getBlockEntity(payload.hostPos())
-                instanceof dev.jstech.computers.terminal.IComputerTerminalHost terminal) {
+                instanceof IComputerTerminalHost terminal) {
             final var console = terminal.console();
             if (console != null) {
                 for (final var one : console.community()) {
@@ -183,7 +215,7 @@ public final class DesktopPayloads {
 
     private static void handleSetDesktopPrefs(final SetDesktopPrefsPayload payload, final ServerPlayer player,
                                               final ServerLevel level) {
-        if (level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost computer) {
+        if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
             computer.console().setWallpaper(payload.wallpaper());
             computer.console().setComputerName(payload.computerName());
             computer.setChanged();
@@ -192,7 +224,7 @@ public final class DesktopPayloads {
 
     private static void handleRequestSettings(final RequestSettingsPayload payload, final ServerPlayer player,
                                               final ServerLevel level) {
-        if (level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost computer) {
+        if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
             PacketDistributor.sendToPlayer(player, buildSettingsSnapshot(computer, payload.hostPos()));
         }
     }
@@ -200,78 +232,78 @@ public final class DesktopPayloads {
     private static void handleEndProcess(final EndProcessPayload payload, final ServerPlayer player,
                                          final ServerLevel level) {
         if (level.getBlockEntity(payload.hostPos())
-                instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity computer
+                instanceof AbstractComputerBlockEntity computer
                 && computer.programs().stop(payload.id())) {
             computer.setChanged();
             PacketDistributor.sendToPlayer(player, buildSettingsSnapshot(
-                    (dev.jstech.computers.os.IOsHost) computer, payload.hostPos()));
+                    (IOsHost) computer, payload.hostPos()));
         }
     }
 
     private static void handleSetSetting(final SetSettingPayload payload, final ServerPlayer player,
                                          final ServerLevel level) {
-        if (level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost computer
-                && computer instanceof dev.jstech.computers.terminal.IComputerTerminalHost host) {
+        if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer
+                && computer instanceof IComputerTerminalHost host) {
             /*
              * Route through the same setConfig the MC-DOS 'config' command uses, so both front-ends
              * clamp and persist identically.
              */
-            new dev.jstech.computers.program.ServerCliComputer(host, level)
+            new ServerCliComputer(host, level)
                     .setConfig(payload.key(), payload.value());
             PacketDistributor.sendToPlayer(player, buildSettingsSnapshot(computer, payload.hostPos()));
         }
     }
 
     private static void handleSettingsSnapshot(final SettingsSnapshotPayload payload, final Player player) {
-        dev.jstech.computers.client.os.SettingsApp.accept(payload);
-        dev.jstech.computers.client.os.SystemMonitorApp.accept(payload);
-        dev.jstech.computers.client.os.TaskManagerApp.accept(payload);
+        SettingsApp.accept(payload);
+        SystemMonitorApp.accept(payload);
+        TaskManagerApp.accept(payload);
     }
 
     /** Reads the full Settings snapshot (editable knobs + read-only specs, disks and programs) from a computer. */
     private static SettingsSnapshotPayload buildSettingsSnapshot(
-            final dev.jstech.computers.os.IOsHost computer,
+            final IOsHost computer,
             final BlockPos pos) {
-        final dev.jstech.computers.program.ComputerConsoleState console = computer.console();
-        final dev.jstech.computers.program.ComputerSettings st = console.settings();
+        final ComputerConsoleState console = computer.console();
+        final ComputerSettings st = console.settings();
         final ItemStack sysDisk = computer.systemDisk();
-        final int netshare = dev.jstech.computers.item.DiskItem.publicPermille(sysDisk);
+        final int netshare = DiskItem.publicPermille(sysDisk);
         final int cpuCount = computer.installedCpus();
         final String cpuLabel = cpuCount + (cpuCount == 1 ? " CPU" : " CPUs");
-        final net.minecraft.resources.ResourceLocation osId = computer.installedOsId();
+        final ResourceLocation osId = computer.installedOsId();
         final String osLabel = osId == null ? "none" : osId.getPath();
-        final dev.jstech.computers.os.OsDef os = computer.installedOs();
+        final OsDef os = computer.installedOs();
         final String platform = os == null ? "-" : os.platform().label();
         final List<String> installed = new ArrayList<>(console.installed());
         final List<SettingsSnapshotPayload.DiskUse> disks = new ArrayList<>();
-        final long mbEq = dev.jstech.computers.storage.StorageKey.MB_EQ_PER_ITEM;
+        final long mbEq = StorageKey.MB_EQ_PER_ITEM;
         for (final ItemStack stack : computer.diskStacks()) {
-            if (!(stack.getItem() instanceof dev.jstech.computers.item.DiskItem diskItem)) {
+            if (!(stack.getItem() instanceof DiskItem diskItem)) {
                 continue;
             }
             // Megabytes follow the disk's own era: what an item costs there is what its usage is worth.
             final long mbPerItem = diskItem.spec().era().mbPerItem();
             final long capMb = diskItem.spec().capacityMb();
-            final long storageUsed = dev.jstech.computers.storage.DriveVolumes.usedWeight(stack);
-            final long fsUsed = dev.jstech.computers.os.fs.DiskFilesystem.filesWeight(stack);
-            final net.minecraft.resources.ResourceLocation dOsId =
-                    stack.get(dev.jstech.computers.ComputingModule.SYSTEM_OS.get());
-            final dev.jstech.computers.os.OsDef dOs =
-                    dOsId != null ? dev.jstech.computers.os.OsRegistry.getOs(dOsId) : null;
+            final long storageUsed = DriveVolumes.usedWeight(stack);
+            final long fsUsed = DiskFilesystem.filesWeight(stack);
+            final ResourceLocation dOsId =
+                    stack.get(ComputingModule.SYSTEM_OS.get());
+            final OsDef dOs =
+                    dOsId != null ? OsRegistry.getOs(dOsId) : null;
             final long osReserved = dOs != null ? dOs.footprintItemsOn(diskItem.spec().era()) * mbEq : 0L;
             final long usedMb = (storageUsed + fsUsed + osReserved) * mbPerItem / mbEq;
             disks.add(new SettingsSnapshotPayload.DiskUse(
                     stack.getHoverName().getString(), capMb, usedMb, stack == sysDisk));
         }
         // The memory ledger: what the system, its desktop, its services and its windows hold right now.
-        final dev.jstech.computers.os.RamLedger ledger = computer.ramLedger();
+        final RamLedger ledger = computer.ramLedger();
         final List<SettingsSnapshotPayload.RamUse> ramUses = new ArrayList<>();
-        for (final dev.jstech.computers.os.RamLedger.Entry entry : ledger.entries()) {
+        for (final RamLedger.Entry entry : ledger.entries()) {
             ramUses.add(new SettingsSnapshotPayload.RamUse(
                     entry.name(), entry.mb(), entry.kind().serializedName(), entry.id()));
         }
         final List<SettingsSnapshotPayload.ShareRow> shares = new ArrayList<>();
-        for (final dev.jstech.computers.program.ComputerSettings.Share share : st.shares()) {
+        for (final ComputerSettings.Share share : st.shares()) {
             shares.add(new SettingsSnapshotPayload.ShareRow(share.name(), share.path(), share.writable()));
         }
         return new SettingsSnapshotPayload(pos, console.wallpaper(), console.computerName(),
@@ -284,13 +316,13 @@ public final class DesktopPayloads {
     }
 
     /** How the machine's architecture reads on a screen, or empty when it has no processor to read it from. */
-    private static String architectureOf(final dev.jstech.computers.os.IOsHost computer) {
-        if (!(computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine)) {
+    private static String architectureOf(final IOsHost computer) {
+        if (!(computer instanceof AbstractComputerBlockEntity machine)) {
             return "";
         }
-        final dev.jstech.computers.hardware.ComputerBuild build = machine.currentBuild();
+        final ComputerBuild build = machine.currentBuild();
         return build == null || build.cpus().isEmpty() ? ""
-                : dev.jstech.computers.item.HardwareTooltip.architecture(build.cpus().getFirst());
+                : HardwareTooltip.architecture(build.cpus().getFirst());
     }
 
     /** The last path segment (after the final {@code /}), or the whole path when it has no slash. */
@@ -301,39 +333,39 @@ public final class DesktopPayloads {
 
     private static void handleSetIconPosition(final SetIconPositionPayload payload, final ServerPlayer player,
                                               final ServerLevel level) {
-        if (level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost computer) {
+        if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
             computer.console().setIconCell(payload.iconKey(), payload.cell());
             computer.setChanged();
         }
     }
 
     private static void handleDesktopFiles(final DesktopFilesPayload payload, final Player player) {
-        dev.jstech.computers.client.os.DesktopScreen.acceptDesktop(payload);
+        DesktopScreen.acceptDesktop(payload);
     }
 
     /** Whether {@code progId} is installed on the computer AND runnable on its current OS (version + specs). */
     private static boolean installedAndAllowed(
-            final dev.jstech.computers.os.IOsHost computer,
-            final net.minecraft.resources.ResourceLocation progId) {
+            final IOsHost computer,
+            final ResourceLocation progId) {
         return computer.console() != null
                 && computer.console().isInstalled(progId.toString())
-                && hostScopeAllows(dev.jstech.computers.os.OsRegistry.getProgram(progId),
+                && hostScopeAllows(OsRegistry.getProgram(progId),
                         computer)
-                && dev.jstech.computers.os.OsRegistry.canRunProgram(
+                && OsRegistry.canRunProgram(
                         computer.installedOsId(), progId, computer.maxCpuMhz(), computer.totalVramMb());
     }
 
     /** Whether a program's host scope permits it on this computer (a null spec places no restriction). */
     private static boolean hostScopeAllows(
-            final dev.jstech.computers.os.ProgramSpec spec,
-            final dev.jstech.computers.os.IOsHost computer) {
+            final ProgramSpec spec,
+            final IOsHost computer) {
         if (spec == null) {
             return true;
         }
         return switch (spec.hostScope()) {
             case ANY -> true;
             case MAINFRAME -> computer
-                    instanceof dev.jstech.computers.blockentity.MainframeBlockEntity;
+                    instanceof MainframeBlockEntity;
             case CRAFTING_COMPUTER -> computer
                     instanceof CraftingComputerBlockEntity;
             /*
@@ -341,9 +373,9 @@ public final class DesktopPayloads {
              * is a rack server", which is exactly where the headless server services belong.
              */
             case SERVER -> computer
-                    instanceof dev.jstech.computers.blockentity.ServerRackBlockEntity;
+                    instanceof ServerRackBlockEntity;
             case CLUSTER_MANAGEMENT_COMPUTER -> computer
-                    instanceof dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
+                    instanceof ClusterManagementComputerBlockEntity;
         };
     }
 
@@ -365,6 +397,6 @@ public final class DesktopPayloads {
 
     /** The desktop is opening: hand it the windows the machine has. */
     private static void handleDesktopWindowsOnClient(final DesktopWindowsPayload payload, final Player player) {
-        dev.jstech.computers.client.os.DesktopScreen.applyWindows(payload);
+        DesktopScreen.applyWindows(payload);
     }
 }

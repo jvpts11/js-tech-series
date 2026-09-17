@@ -9,6 +9,7 @@ package dev.jstech.computers.vm.program;
 
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Shape;
+import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
 import java.util.List;
@@ -61,7 +62,7 @@ public final class Process {
     public static final int SLICE = 64;
 
     /** What starting a thread costs beyond the call itself: a stack of its own is not a small thing. */
-    private static final int START_COST = dev.jstech.computers.vm.system.SigmaCosts.THREAD_START;
+    private static final int START_COST = SigmaCosts.THREAD_START;
 
     private final ProgramImage program;
     private final Heap heap;

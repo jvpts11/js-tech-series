@@ -8,6 +8,9 @@
 package dev.jstech.computers.operation.payload.iql;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.client.NmsApp;
+import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.IqlFileContentPayload;
@@ -20,16 +23,25 @@ import dev.jstech.computers.operation.payload.RequestNmsSchemaPayload;
 import dev.jstech.computers.operation.payload.RunIqlPayload;
 import dev.jstech.computers.operation.payload.SaveIqlFilePayload;
 import dev.jstech.computers.os.FilesystemKind;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.program.IqlEngine;
+import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.iql.IqlDefinition;
+import dev.jstech.computers.program.iql.IqlSavedObject;
+import dev.jstech.computers.storage.DriveVolumes;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
+import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -78,14 +90,14 @@ public final class IqlPayloads {
      * foreign computer is rejected.
      */
     private static boolean nmsNear(final ServerPlayer player, final BlockPos hostPos,
-                                   final dev.jstech.computers.terminal.IComputerTerminalHost host) {
-        final net.minecraft.world.phys.Vec3 p = player.position();
+                                   final IComputerTerminalHost host) {
+        final Vec3 p = player.position();
         if (hostPos.distToCenterSqr(p) <= 64.0) {
             return true;
         }
-        if (host instanceof dev.jstech.core.peripheral.IPeripheralOwner owner) {
+        if (host instanceof IPeripheralOwner owner) {
             for (final long endpoint : owner.linkedEndpoints()) {
-                if (net.minecraft.core.BlockPos.of(endpoint).distToCenterSqr(p) <= 64.0) {
+                if (BlockPos.of(endpoint).distToCenterSqr(p) <= 64.0) {
                     return true;
                 }
             }
@@ -95,7 +107,7 @@ public final class IqlPayloads {
 
     private static void handleRunIql(final RunIqlPayload payload, final ServerPlayer player, final ServerLevel level) {
         if (!(level.getBlockEntity(payload.hostPos())
-                instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)
+                instanceof IComputerTerminalHost host)
                 || !nmsNear(player, payload.hostPos(), host)) {
             return;
         }
@@ -105,8 +117,8 @@ public final class IqlPayloads {
                     new IqlResultPayload(false, "the network has no running Mainframe", List.of()));
             return;
         }
-        final var computer = new dev.jstech.computers.program.ServerCliComputer(host, level);
-        final var engine = new dev.jstech.computers.program.IqlEngine(
+        final var computer = new ServerCliComputer(host, level);
+        final var engine = new IqlEngine(
                 mainframe, computer, IqlResultPayload.MAX_ROWS);
         final var outcome = engine.run(payload.statement());
         final List<IqlResultPayload.Row> rows = new ArrayList<>(outcome.rows().size());
@@ -120,13 +132,13 @@ public final class IqlPayloads {
     }
 
     private static void handleIqlResult(final IqlResultPayload payload, final Player player) {
-        dev.jstech.computers.client.NmsApp.accept(payload);
+        NmsApp.accept(payload);
     }
 
     private static void handleRequestNmsSchema(final RequestNmsSchemaPayload payload, final ServerPlayer player,
                                                final ServerLevel level) {
         if (!(level.getBlockEntity(payload.hostPos())
-                instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)
+                instanceof IComputerTerminalHost host)
                 || !nmsNear(player, payload.hostPos(), host)) {
             return;
         }
@@ -134,14 +146,14 @@ public final class IqlPayloads {
     }
 
     private static void handleNmsSchema(final NmsSchemaPayload payload, final Player player) {
-        dev.jstech.computers.client.NmsApp.acceptSchema(payload);
+        NmsApp.acceptSchema(payload);
     }
 
     /**
      * The Object Explorer snapshot for an open Studio: the network label, the real server labels, and live item-type and active-operation counts. The IQL schema (table and column names) is fixed on the client; this fills in only the parts that reflect the running network.
      */
     public static NmsSchemaPayload nmsSchema(final ServerLevel level,
-            final dev.jstech.computers.terminal.IComputerTerminalHost host) {
+            final IComputerTerminalHost host) {
         final NetworkUuid net = host.networkUuid();
         if (net == null) {
             return new NmsSchemaPayload("jsc-net (offline)", List.of(), 0, 0,
@@ -155,7 +167,7 @@ public final class IqlPayloads {
             }
             servers.add(serverLabel(level, server.nodeUuid()));
         }
-        final int itemTypes = dev.jstech.computers.operation.NetworkStorage
+        final int itemTypes = NetworkStorage
                 .of(level, net).query().size();
         final MainframeBlockEntity mainframe = resolveMainframe(level, net);
         final int operations = mainframe != null ? mainframe.activeOperationRecords().size() : 0;
@@ -170,16 +182,16 @@ public final class IqlPayloads {
         final var catalog = mainframe.iqlCatalog();
         return new NmsSchemaPayload.EngineSnapshot(mainframe.isIqlEngineRunning() ? "running" : "stopped",
                 objectNames(catalog.ofType(
-                        dev.jstech.computers.program.iql.IqlDefinition.ObjectType.VIEW)),
+                        IqlDefinition.ObjectType.VIEW)),
                 objectNames(catalog.ofType(
-                        dev.jstech.computers.program.iql.IqlDefinition.ObjectType.PROCEDURE)),
+                        IqlDefinition.ObjectType.PROCEDURE)),
                 objectNames(catalog.ofType(
-                        dev.jstech.computers.program.iql.IqlDefinition.ObjectType.JOB)),
+                        IqlDefinition.ObjectType.JOB)),
                 mainframe.savedScript());
     }
 
     private static List<String> objectNames(
-            final List<dev.jstech.computers.program.iql.IqlSavedObject> objects) {
+            final List<IqlSavedObject> objects) {
         final List<String> names = new ArrayList<>();
         for (final var object : objects) {
             if (names.size() >= NmsSchemaPayload.MAX_OBJECTS) {
@@ -196,15 +208,15 @@ public final class IqlPayloads {
      * capacity minus storage used minus filesystem used minus the OS footprint.
      */
     private static long computeDiskFreeWeight(
-            final dev.jstech.computers.os.IOsHost computer,
-            final net.minecraft.world.item.ItemStack disk) {
-        if (!(disk.getItem() instanceof dev.jstech.computers.item.DiskItem diskItem)) {
+            final IOsHost computer,
+            final ItemStack disk) {
+        if (!(disk.getItem() instanceof DiskItem diskItem)) {
             return 0L;
         }
         final long capacityWeight = diskItem.spec().capacityItems()
                 * dev.jstech.computers.storage.StorageKey.MB_EQ_PER_ITEM;
-        final long storageUsed = dev.jstech.computers.storage.DriveVolumes.usedWeight(disk);
-        final long fsUsed = dev.jstech.computers.os.fs.DiskFilesystem.filesWeight(disk);
+        final long storageUsed = DriveVolumes.usedWeight(disk);
+        final long fsUsed = DiskFilesystem.filesWeight(disk);
         final long osReserved = computer.reservedByOs()
                 * dev.jstech.computers.storage.StorageKey.MB_EQ_PER_ITEM;
         return Math.max(0L, capacityWeight - storageUsed - fsUsed - osReserved);
@@ -218,7 +230,7 @@ public final class IqlPayloads {
     private static void handleSaveIqlFile(final SaveIqlFilePayload payload, final ServerPlayer player,
                                           final ServerLevel level) {
         if (!(level.getBlockEntity(payload.hostPos())
-                instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)
+                instanceof IComputerTerminalHost host)
                 || !nmsNear(player, payload.hostPos(), host)
                 || host.networkUuid() == null) {
             return;
@@ -263,7 +275,7 @@ public final class IqlPayloads {
     private static void handleRequestIqlFileList(final RequestIqlFileListPayload payload, final ServerPlayer player,
                                                  final ServerLevel level) {
         if (!(level.getBlockEntity(payload.hostPos())
-                instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)
+                instanceof IComputerTerminalHost host)
                 || !nmsNear(player, payload.hostPos(), host)
                 || host.networkUuid() == null) {
             return;
@@ -285,14 +297,14 @@ public final class IqlPayloads {
 
     /** Forwards the {@link IqlFileListPayload} to the open NMS screen. */
     private static void handleIqlFileList(final IqlFileListPayload payload, final Player player) {
-        dev.jstech.computers.client.NmsApp.acceptFileList(payload);
+        NmsApp.acceptFileList(payload);
     }
 
     /** Reads an {@code .iql} file from the Mainframe's disk and sends its content back. */
     private static void handleOpenIqlFile(final OpenIqlFilePayload payload, final ServerPlayer player,
                                           final ServerLevel level) {
         if (!(level.getBlockEntity(payload.hostPos())
-                instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)
+                instanceof IComputerTerminalHost host)
                 || !nmsNear(player, payload.hostPos(), host)
                 || host.networkUuid() == null) {
             return;
@@ -321,7 +333,7 @@ public final class IqlPayloads {
 
     /** Forwards the {@link IqlFileContentPayload} to the open NMS screen. */
     private static void handleIqlFileContent(final IqlFileContentPayload payload, final Player player) {
-        dev.jstech.computers.client.NmsApp.acceptFileContent(payload);
+        NmsApp.acceptFileContent(payload);
     }
 
     /** Builds the payload listing every {@code .iql} file on the given disk. */

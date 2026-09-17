@@ -9,6 +9,7 @@ package dev.jstech.computers.menu;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
@@ -17,7 +18,9 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -56,7 +59,7 @@ public class CommandPromptMenu extends AbstractContainerMenu {
      * Base constructor for the per-platform terminal menus (the MC-DOS terminal and the Linux TTY carry the
      * same data but open their own screens, so each gets its own menu type over this shared plumbing).
      */
-    protected CommandPromptMenu(final net.minecraft.world.inventory.MenuType<?> type, final int containerId,
+    protected CommandPromptMenu(final MenuType<?> type, final int containerId,
                                 final Inventory playerInventory, final BlockPos monitorPos, final BlockPos hostPos,
                                 @Nullable final HardwareEra era, final String shellId, final String hostname,
                                 final String osLabel) {
@@ -168,7 +171,7 @@ public class CommandPromptMenu extends AbstractContainerMenu {
                 return false;
             }
             if (!(level.getBlockEntity(monitorPos)
-                    instanceof dev.jstech.computers.blockentity.MonitorBlockEntity monitor)) {
+                    instanceof MonitorBlockEntity monitor)) {
                 // No monitor block (a firmware-opened prompt): fall back to standing at the machine.
                 return player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) <= 64.0;
             }
@@ -183,9 +186,9 @@ public class CommandPromptMenu extends AbstractContainerMenu {
      * live installer's medium closes the terminal on the next tick (the monitor then shows the firmware,
      * or nothing, on its next use).
      */
-    static boolean sessionAlive(final net.minecraft.world.level.Level level, final BlockPos pos) {
+    static boolean sessionAlive(final Level level, final BlockPos pos) {
         if (level.getBlockEntity(pos)
-                instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity computer) {
+                instanceof AbstractComputerBlockEntity computer) {
             return computer.isRunning() && computer.validateOsSession();
         }
         return true;

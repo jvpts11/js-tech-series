@@ -8,6 +8,8 @@
 package dev.jstech.computers.operation.payload.operations;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.client.os.NetworkInteractorApp;
+import dev.jstech.computers.client.os.NetworkManagerApp;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.ActiveOperationsPayload;
 import dev.jstech.computers.operation.payload.CancelOperationPayload;
@@ -98,9 +100,9 @@ public final class OperationsPayloads {
         if (player.containerMenu instanceof ComputerTerminalMenu menu) {
             menu.setOperationsLog(payload.operations());
         } else {
-            dev.jstech.computers.client.os.NetworkInteractorApp
+            NetworkInteractorApp
                     .acceptOps(payload.operations());
-            dev.jstech.computers.client.os.NetworkManagerApp
+            NetworkManagerApp
                     .acceptOpsLog(payload.operations());
         }
     }
@@ -117,9 +119,9 @@ public final class OperationsPayloads {
         if (player.containerMenu instanceof ComputerTerminalMenu menu) {
             menu.setActiveOps(payload.operations());
         } else {
-            dev.jstech.computers.client.os.NetworkInteractorApp
+            NetworkInteractorApp
                     .acceptActiveOps(payload.operations(), payload.scSlotsUsed(), payload.scSlotsTotal());
-            dev.jstech.computers.client.os.NetworkManagerApp
+            NetworkManagerApp
                     .acceptActiveOps(payload.operations(), payload.scSlotsUsed(), payload.scSlotsTotal());
         }
     }

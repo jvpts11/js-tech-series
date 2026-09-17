@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.gateway.GatewayLog;
 import dev.jstech.computers.gateway.GatewayName;
 import dev.jstech.computers.operation.payload.GatewayManagerActionPayload;
 import dev.jstech.computers.operation.payload.GatewayManagerStatePayload;
@@ -743,7 +744,7 @@ public final class GatewayManagerApp implements IDesktopApp {
     }
 
     private static int toneColor(final int tone, final UiContext ctx) {
-        return switch (dev.jstech.computers.gateway.GatewayLog.Tone.byId(tone)) {
+        return switch (GatewayLog.Tone.byId(tone)) {
             case OK -> GREEN;
             case BUSY -> AMBER;
             case DENIED -> RED;

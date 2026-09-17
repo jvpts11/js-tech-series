@@ -187,9 +187,9 @@ public final class StorageKey {
     /** The registry id of the data behind the key: the item's, the fluid's or the chemical's. */
     public ResourceLocation registryId() {
         return switch (kind) {
-            case FLUID -> net.minecraft.core.registries.BuiltInRegistries.FLUID.getKey(fluidPrototype.getFluid());
+            case FLUID -> BuiltInRegistries.FLUID.getKey(fluidPrototype.getFluid());
             case CHEMICAL -> Objects.requireNonNull(chemical);
-            case ITEM -> net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(itemPrototype.getItem());
+            case ITEM -> BuiltInRegistries.ITEM.getKey(itemPrototype.getItem());
         };
     }
 
@@ -198,7 +198,7 @@ public final class StorageKey {
      * machine's settings name what is starred. Two keys that differ only in their components share one id.
      */
     public String id() {
-        return kind.name().toLowerCase(java.util.Locale.ROOT) + "|" + registryId();
+        return kind.name().toLowerCase(Locale.ROOT) + "|" + registryId();
     }
 
     /** A chemical key on disk: {@code {"chemical": "<id>"}}. */

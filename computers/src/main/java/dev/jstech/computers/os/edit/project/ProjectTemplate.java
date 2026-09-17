@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os.edit.project;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -66,7 +67,7 @@ public enum ProjectTemplate {
 
     /** The words the filters match: the language, the platforms, and the kind. */
     public List<String> tags() {
-        final List<String> out = new java.util.ArrayList<>();
+        final List<String> out = new ArrayList<>();
         out.add("Σ#");
         out.addAll(PLATFORMS);
         out.addAll(this.tags);

@@ -8,7 +8,9 @@
 package dev.jstech.computers.operation.payload.crafting;
 
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.client.os.CraftingManagerApp;
 import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.CraftManagerStatePayload;
@@ -18,9 +20,17 @@ import dev.jstech.computers.operation.payload.RemoveRomCraftPayload;
 import dev.jstech.computers.operation.payload.RequestCraftManagerPayload;
 import dev.jstech.computers.operation.payload.SetMachineConfigPayload;
 import dev.jstech.computers.os.FilesystemKind;
+import dev.jstech.computers.os.VolumeLabel;
 import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.os.fs.FsPaths;
+import dev.jstech.computers.os.media.FormattedMediaItem;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import java.util.Comparator;
+import java.util.Locale;
+import java.util.Optional;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -77,7 +87,7 @@ public final class CraftManagerPayloads {
              * name limit is the cap, so this only guards against a path the filesystem should never hold.
              */
             if (e.type() == FileType.CRAFT && names.size() < CraftManagerStatePayload.MAX_MEDIA_FILES
-                    && e.path().length() <= dev.jstech.computers.os.fs.FsPaths.MAX_NAME_LENGTH) {
+                    && e.path().length() <= FsPaths.MAX_NAME_LENGTH) {
                 names.add(e.path());
             }
         }
@@ -111,7 +121,7 @@ public final class CraftManagerPayloads {
 
     /** Routes the Crafting Manager state payload to the open {@link dev.jstech.computers.client.os.CraftingManagerApp}. */
     private static void handleCraftManagerState(final CraftManagerStatePayload payload, final Player player) {
-        dev.jstech.computers.client.os.CraftingManagerApp.accept(payload);
+        CraftingManagerApp.accept(payload);
     }
 
     /**
@@ -153,7 +163,7 @@ public final class CraftManagerPayloads {
         int parsed = 0;
         boolean romFull = false;
         for (final String fileName : toLoad) {
-            final java.util.Optional<String> content = DiskFilesystem.read(media, fileName);
+            final Optional<String> content = DiskFilesystem.read(media, fileName);
             if (content.isEmpty()) {
                 continue;
             }
@@ -171,7 +181,7 @@ public final class CraftManagerPayloads {
                 }
                 parsed++;
                 added = cc.loadMachineRecipe(
-                        dev.jstech.computers.crafting.NetworkRecipe.ofProcessing(p.get()));
+                        NetworkRecipe.ofProcessing(p.get()));
             } else if ("multi".equals(kind)) {
                 final var p = CraftFile.parseMultiStage(content.get(), level.registryAccess());
                 if (p.isEmpty()) {
@@ -179,7 +189,7 @@ public final class CraftManagerPayloads {
                 }
                 parsed++;
                 added = cc.loadMachineRecipe(
-                        dev.jstech.computers.crafting.NetworkRecipe.ofMultiStage(p.get()));
+                        NetworkRecipe.ofMultiStage(p.get()));
             } else {
                 final var p = CraftFile.parse(content.get(), level.registryAccess());
                 if (p.isEmpty()) {
@@ -222,7 +232,7 @@ public final class CraftManagerPayloads {
             return;
         }
         final List<Integer> indices = new ArrayList<>(payload.romIndices());
-        indices.sort(java.util.Comparator.reverseOrder());
+        indices.sort(Comparator.reverseOrder());
         for (final int idx : indices) {
             if (idx >= CraftManagerStatePayload.MACHINE_ROM_BASE) {
                 // A machine recipe (processing/multi-stage): the offset index addresses that list.
@@ -259,7 +269,7 @@ public final class CraftManagerPayloads {
         }
         final List<CraftingPattern> rom = cc.romPatterns();
         for (final int idx : payload.romIndices()) {
-            final java.util.Optional<String> content;
+            final Optional<String> content;
             final String base;
             if (idx >= CraftManagerStatePayload.MACHINE_ROM_BASE) {
                 // A machine recipe: serialize it back to its typed .craft form.
@@ -303,8 +313,8 @@ public final class CraftManagerPayloads {
         final String rawPos = slash < 0 ? rest : rest.substring(0, slash);
         try {
             final long encoded = Long.parseLong(rawPos);
-            if (level.getBlockEntity(net.minecraft.core.BlockPos.of(encoded))
-                    instanceof dev.jstech.computers.os.media.MediaReaderBlockEntity reader) {
+            if (level.getBlockEntity(BlockPos.of(encoded))
+                    instanceof MediaReaderBlockEntity reader) {
                 reader.setChanged();
             }
         } catch (final NumberFormatException ignored) {
@@ -335,18 +345,18 @@ public final class CraftManagerPayloads {
          * mean, wherever it sits.
          */
         for (final long endpoint : cc.linkedEndpoints()) {
-            if (level.getBlockEntity(net.minecraft.core.BlockPos.of(endpoint))
-                    instanceof dev.jstech.computers.os.media.MediaReaderBlockEntity reader) {
+            if (level.getBlockEntity(BlockPos.of(endpoint))
+                    instanceof MediaReaderBlockEntity reader) {
                 final ItemStack m = reader.mediaSlot().getStackInSlot(0);
                 if (m.isEmpty()
-                        || !(m.getItem() instanceof dev.jstech.computers.os.media.FormattedMediaItem fmt)
+                        || !(m.getItem() instanceof FormattedMediaItem fmt)
                         || !fmt.writable()) {
                     continue;
                 }
                 final List<String> files = craftFileListFromMedia(m);
                 if (mediaVolumeKey.isEmpty() || !files.isEmpty()) {
                     mediaVolumeKey = "media:" + endpoint;
-                    mediaLabel = wire(dev.jstech.computers.os.VolumeLabel.of(m, "Removable Drive"), 64);
+                    mediaLabel = wire(VolumeLabel.of(m, "Removable Drive"), 64);
                     mediaFiles = files;
                 }
                 if (!files.isEmpty()) {
@@ -388,9 +398,9 @@ public final class CraftManagerPayloads {
          * machine type's shared ceiling. The label distinguishes machines of one type by their face and position.
          */
         final List<CraftManagerStatePayload.WireMachine> machines = new ArrayList<>();
-        final Set<net.minecraft.core.BlockPos> seen = new HashSet<>();
+        final Set<BlockPos> seen = new HashSet<>();
         for (final var dm : cc.availableMachines()) {
-            final net.minecraft.core.BlockPos pos = dm.machinePos();
+            final BlockPos pos = dm.machinePos();
             final String typeKey = dm.machineType();
             if (typeKey == null || typeKey.isBlank() || pos == null || !seen.add(pos)
                     || machines.size() >= CraftManagerStatePayload.MAX_MACHINES) {
@@ -400,7 +410,7 @@ public final class CraftManagerPayloads {
             final CraftingComputerBlockEntity.MachineConfig perMachine = cc.machineConfig(machineKey);
             final int typeMaxJobs = cc.machineConfig(typeKey).maxJobs();
             final String face = dm.face() != null
-                    ? dm.face().getName().substring(0, 1).toUpperCase(java.util.Locale.ROOT) + " " : "";
+                    ? dm.face().getName().substring(0, 1).toUpperCase(Locale.ROOT) + " " : "";
             final String label = !dm.name().isBlank() ? dm.name()
                     : face + "(" + pos.getX() + ", " + pos.getY() + ", " + pos.getZ() + ")";
             machines.add(new CraftManagerStatePayload.WireMachine(
@@ -413,12 +423,12 @@ public final class CraftManagerPayloads {
 
     /** Computes the remaining free weight on a removable medium (filesystem component only). */
     private static long mediaFreeWeightFor(final ItemStack media) {
-        if (!(media.getItem() instanceof dev.jstech.computers.os.media.FormattedMediaItem fmt)) {
+        if (!(media.getItem() instanceof FormattedMediaItem fmt)) {
             return 0L;
         }
         final long capWeight = (long) fmt.format().capacityItems()
                 * dev.jstech.computers.storage.StorageKey.MB_EQ_PER_ITEM;
-        final long fsUsed = dev.jstech.computers.os.fs.DiskFilesystem.filesWeight(media);
+        final long fsUsed = DiskFilesystem.filesWeight(media);
         return Math.max(0L, capWeight - fsUsed);
     }
 }

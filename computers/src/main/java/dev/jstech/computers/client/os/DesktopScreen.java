@@ -8,13 +8,22 @@
 package dev.jstech.computers.client.os;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.math.Axis;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.client.FramesEmblem;
 import dev.jstech.computers.client.MonitorFrame;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
+import dev.jstech.computers.gui.TaskbarGroups;
 import dev.jstech.computers.gui.layout.DesktopIconLayout;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.DeleteFilePayload;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
+import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.MkdirPayload;
 import dev.jstech.computers.operation.payload.MoveFilePayload;
@@ -23,23 +32,64 @@ import dev.jstech.computers.operation.payload.RequestDesktopFilesPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.operation.payload.SetDesktopPrefsPayload;
 import dev.jstech.computers.operation.payload.SetIconPositionPayload;
+import dev.jstech.computers.operation.payload.SetSettingPayload;
+import dev.jstech.computers.operation.payload.SetupProgressPayload;
+import dev.jstech.computers.operation.payload.UiWindowPayload;
+import dev.jstech.computers.os.DesktopEnvironmentDef;
+import dev.jstech.computers.os.HostScope;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OpenWindow;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.ProgramKind;
+import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.fs.FileOpeners;
+import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.fs.SystemLayout;
+import dev.jstech.computers.program.Programs;
+import dev.jstech.core.JsCore;
+import dev.jstech.core.client.gui.component.ContextMenu;
+import dev.jstech.core.client.gui.component.Popup;
+import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.gui.layout.DesktopZ;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Supplier;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.client.event.ContainerScreenEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The FULL_DESKTOP shell: a windowed desktop environment that a graphical OS (Frames 95 / XP / 11)
@@ -93,17 +143,17 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * The live app instances kept per computer while its Monitor is left, so re-entering restores each
      * program's in-progress session (terminal scrollback, an unsaved query) instead of a fresh window.
      */
-    private static final java.util.Map<BlockPos, java.util.Map<String, IDesktopApp>> SAVED_APPS =
-            new java.util.LinkedHashMap<>(16, 0.75f, true) {
+    private static final Map<BlockPos, Map<String, IDesktopApp>> SAVED_APPS =
+            new LinkedHashMap<>(16, 0.75f, true) {
                 @Override
                 protected boolean removeEldestEntry(
-                        final java.util.Map.Entry<BlockPos, java.util.Map<String, IDesktopApp>> eldest) {
+                        final Map.Entry<BlockPos, Map<String, IDesktopApp>> eldest) {
                     return size() > MAX_SAVED_DESKTOPS;
                 }
             };
 
     /** Apps a running window asked to launch (e.g. Files opening the Editor); drained by the active desktop. */
-    private static final java.util.List<String> PENDING_OPEN = new java.util.ArrayList<>();
+    private static final List<String> PENDING_OPEN = new ArrayList<>();
 
     /** Lets a running app request another program be opened on the desktop. */
     public static void requestOpen(final String key) {
@@ -117,16 +167,16 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * mentions it, redrawn whenever the machine sends it again, and taken away when the machine says it is
      * gone or the player shuts it.
      */
-    private static final java.util.List<dev.jstech.computers.operation.payload.UiWindowPayload> PENDING_UI =
-            new java.util.ArrayList<>();
+    private static final List<UiWindowPayload> PENDING_UI =
+            new ArrayList<>();
 
     /** Takes a window a Σ# program has open on the machine being looked at. */
-    public static void acceptWindow(final dev.jstech.computers.operation.payload.UiWindowPayload payload) {
+    public static void acceptWindow(final UiWindowPayload payload) {
         PENDING_UI.add(payload);
     }
 
     /** Windows a running app asked to end (the Task Manager); drained by the active desktop. */
-    private static final java.util.List<String> PENDING_CLOSE = new java.util.ArrayList<>();
+    private static final List<String> PENDING_CLOSE = new ArrayList<>();
 
     /** Lets a running app end another program's window, the way a task manager does. */
     public static void requestClose(final String key) {
@@ -187,10 +237,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private final List<String> pinnedPrograms = new ArrayList<>();
 
     /** Whether the computer at {@code pos} is on a data network, as its block entity tells the client. */
-    public static boolean hostNetworked(final net.minecraft.core.BlockPos pos) {
-        final net.minecraft.world.level.Level level = Minecraft.getInstance().level;
+    public static boolean hostNetworked(final BlockPos pos) {
+        final Level level = Minecraft.getInstance().level;
         return level != null
-                && level.getBlockEntity(pos) instanceof dev.jstech.computers.os.IOsHost computer
+                && level.getBlockEntity(pos) instanceof IOsHost computer
                 && computer.networkAttached();
     }
 
@@ -245,23 +295,23 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** The Open with chooser the open desktop is showing, or null when none is up. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public static OpenWithPopup openWithChooser() {
         return active != null && active.popup instanceof OpenWithPopup chooser && chooser.isOpen() ? chooser : null;
     }
 
     /** The ids of the programs the open desktop's machine has, for a window offering what can open a file. */
-    public static java.util.List<String> installedProgramIds() {
-        return active == null ? java.util.List.of() : java.util.List.copyOf(active.installedPrograms);
+    public static List<String> installedProgramIds() {
+        return active == null ? List.of() : List.copyOf(active.installedPrograms);
     }
 
     /** What a program is called, for a menu that offers it by id. */
     public static String openerName(final String programId) {
-        if (programId.equals(dev.jstech.computers.os.fs.FileOpeners.EDITOR)) {
+        if (programId.equals(FileOpeners.EDITOR)) {
             return "Editor";
         }
-        final dev.jstech.computers.os.ProgramSpec spec = dev.jstech.computers.program.Programs.get(
-                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("jsc", programId));
+        final ProgramSpec spec = Programs.get(
+                ResourceLocation.fromNamespaceAndPath("jsc", programId));
         return spec == null ? programId : spec.displayName();
     }
 
@@ -278,8 +328,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** The launcher labels the active desktop can open (built-in apps plus installed programs). */
-    public static java.util.List<String> openableLabels() {
-        return active != null ? active.launcherLabels() : java.util.List.of();
+    public static List<String> openableLabels() {
+        return active != null ? active.launcherLabels() : List.of();
     }
 
     /**
@@ -395,7 +445,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     /** How long a balloon stays up before it fades away, in milliseconds. */
     private static final long BALLOON_MS = 9_000L;
     private static final int BALLOON_W = 152;
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private Balloon balloon;
 
     /**
@@ -413,22 +463,22 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private int hoverX;
     private int hoverY;
     /** Programs pinned to the right "places" column of the Frames XP Start menu (drawn there, not on the left). */
-    private static final java.util.Set<String> XP_PLACES =
-            java.util.Set.of("This PC", "Files", "Settings", "Network");
+    private static final Set<String> XP_PLACES =
+            Set.of("This PC", "Files", "Settings", "Network");
     private int selectedIcon = -1;
     private long iconClickAt;
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private DesktopWindow dragging;
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private DesktopWindow resizing;
     // The window whose title-bar button is currently held down (pushed-in until release).
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private DesktopWindow pressedBtnWindow;
     private int dragOffsetX;
     private int dragOffsetY;
 
     /** The currently shown desktop is the one that receives desktop-folder listing replies. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private static DesktopScreen active;
 
     /**
@@ -441,14 +491,14 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                     + "use the network interactor for it.";
 
     /** The modal dialog currently shown over the desktop (an error, or Open with), or {@code null} when none. */
-    @org.jetbrains.annotations.Nullable
-    private dev.jstech.core.client.gui.component.Popup popup;
+    @Nullable
+    private Popup popup;
 
     /**
      * The program chosen with Always for each extension on this machine, as the desktop listing brings it. A choice
      * made here goes in at once, before the server has sent the listing again.
      */
-    private final java.util.Map<String, String> defaultApps = new java.util.HashMap<>();
+    private final Map<String, String> defaultApps = new HashMap<>();
 
     /** Files and folders living in the desktop folder ({@link SystemLayout#DESKTOP_DIR}), drawn as icons. */
     private final List<DiskFilesPayload.WireFile> desktopItems = new ArrayList<>();
@@ -460,15 +510,15 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * reload shows every icon exactly where the player left it. An icon with no entry flows into the next
      * free auto-layout cell, so a fresh desktop looks just like it did before icons could be moved.
      */
-    private final java.util.Map<String, Integer> iconCells = new java.util.HashMap<>();
+    private final Map<String, Integer> iconCells = new HashMap<>();
 
     /** The player's chosen wallpaper style ({@code ""} = OS default) and computer name, synced from the server. */
     private String desktopWallpaper = "";
     private String computerName = "";
 
     /** The desktop's right-click menu, the same component every program's menus are. */
-    private final dev.jstech.core.client.gui.component.ContextMenu deskMenu =
-            new dev.jstech.core.client.gui.component.ContextMenu(DESK_CTX_W, DESK_CTX_ITEM_H);
+    private final ContextMenu deskMenu =
+            new ContextMenu(DESK_CTX_W, DESK_CTX_ITEM_H);
     /** Whether the panel's own menu is up, and where it was raised. */
     private boolean panelCtxOpen;
     private int panelCtxX;
@@ -486,7 +536,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private double bandStartY;
     private double bandX;
     private double bandY;
-    private final java.util.Set<Integer> selectedIcons = new java.util.LinkedHashSet<>();
+    private final Set<Integer> selectedIcons = new LinkedHashSet<>();
 
     /** The band's rectangle in desktop coordinates: {x, y, w, h}. */
     private int[] bandRect() {
@@ -525,7 +575,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     // Inline rename of a desktop icon.
     private int deskRenaming = -1; // index into desktopItems, or -1
     private final StringBuilder deskRenameBuf = new StringBuilder();
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private String deskPendingRename; // enter rename on this name once the next listing arrives
 
     private static final int TASKBAR_H = 24;
@@ -560,7 +610,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * era put its panel at the bottom, and its top bar ("Activities") did not exist for another decade.
      */
     private boolean topPanel() {
-        return is(dev.jstech.computers.os.PanelStyle.GNOME) && !periodPanel();
+        return is(PanelStyle.GNOME) && !periodPanel();
     }
 
     /** The first desktop-local row of the work area. */
@@ -687,11 +737,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * own: like any console program they get a terminal and print into it, which is the same thing that
      * happens when one is opened in the file explorer.
      */
-    private record Launcher(String label, net.minecraft.resources.ResourceLocation programId,
-                            java.util.function.Supplier<IDesktopApp> factory, String runs) {
+    private record Launcher(String label, ResourceLocation programId,
+                            Supplier<IDesktopApp> factory, String runs) {
 
-        Launcher(final String label, final net.minecraft.resources.ResourceLocation programId,
-                 final java.util.function.Supplier<IDesktopApp> factory) {
+        Launcher(final String label, final ResourceLocation programId,
+                 final Supplier<IDesktopApp> factory) {
             this(label, programId, factory, "");
         }
     }
@@ -699,10 +749,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     /** The desktop environment drawn: the OS's bundled one (Frames) or the Linux package installed. */
     private final ResourceLocation desktopId;
     /** The desktop environment's descriptor (chrome family, bundled apps, native names); null if unknown. */
-    @org.jetbrains.annotations.Nullable
-    private final dev.jstech.computers.os.DesktopEnvironmentDef chrome;
+    @Nullable
+    private final DesktopEnvironmentDef chrome;
     /** The chrome family drawn (panel placement, launcher menu, window behaviour). */
-    private final dev.jstech.computers.os.PanelStyle panel;
+    private final PanelStyle panel;
     /** The on-disk desktop folder (Users/Public/Desktop on the DOS family, home/player/Desktop on POSIX). */
     private final String desktopDir;
 
@@ -714,30 +764,30 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         this.desktopId = menu.desktopId();
         this.ramTotalMb = menu.ramTotalMb();
         this.ramReservedMb = menu.ramReservedMb();
-        this.chrome = dev.jstech.computers.os.OsRegistry.getDesktop(desktopId);
+        this.chrome = OsRegistry.getDesktop(desktopId);
         this.panel = chrome != null ? chrome.panelStyle() : switch (desktopId.getPath()) {
-            case "frames_xp" -> dev.jstech.computers.os.PanelStyle.FRAMES_XP;
-            case "frames_11" -> dev.jstech.computers.os.PanelStyle.FRAMES_11;
-            default -> dev.jstech.computers.os.PanelStyle.FRAMES_95;
+            case "frames_xp" -> PanelStyle.FRAMES_XP;
+            case "frames_11" -> PanelStyle.FRAMES_11;
+            default -> PanelStyle.FRAMES_95;
         };
-        final dev.jstech.computers.os.OsDef os =
-                dev.jstech.computers.os.OsRegistry.getOs(osId);
+        final OsDef os =
+                OsRegistry.getOs(osId);
         this.desktopDir = SystemLayout.desktopDirFor(os == null ? null
-                : dev.jstech.computers.os.OsRegistry.getKernel(os.kernelId()));
+                : OsRegistry.getKernel(os.kernelId()));
         this.theme = DesktopTheme.forDesktop(desktopId);
         // A provisional skin: rebuildSkin() refines it with the host's era once the level is reachable.
         this.skin = OsSkin.forDesktop(desktopId);
     }
 
-    private boolean is(final dev.jstech.computers.os.PanelStyle style) {
+    private boolean is(final PanelStyle style) {
         return panel == style;
     }
 
     /** A Linux desktop environment (bottom-panel KDE/Cinnamon or top-bar GNOME), as opposed to a Frames edition. */
     private boolean linuxDesktop() {
-        return is(dev.jstech.computers.os.PanelStyle.KDE)
-                || is(dev.jstech.computers.os.PanelStyle.GNOME)
-                || is(dev.jstech.computers.os.PanelStyle.CINNAMON);
+        return is(PanelStyle.KDE)
+                || is(PanelStyle.GNOME)
+                || is(PanelStyle.CINNAMON);
     }
 
     /** The desktop environment's display name, for the Start band and menus. */
@@ -747,8 +797,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** The megabytes a window opened under {@code key} holds: its program's weight under the running system. */
     private int windowRamMb(final String key) {
-        final dev.jstech.computers.os.OsDef os = dev.jstech.computers.os.OsRegistry.getOs(osId);
-        return os == null ? 0 : dev.jstech.computers.os.IOsHost.windowRamMb(key, os, chrome);
+        final OsDef os = OsRegistry.getOs(osId);
+        return os == null ? 0 : IOsHost.windowRamMb(key, os, chrome);
     }
 
     /** What the open windows hold together; a dialog is part of its program, not another copy of it. */
@@ -888,8 +938,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * has to line up with something inside it asks here, rather than adding the corner and forgetting
      * the scale, which lands the shape low, right and too big.
      */
-    public net.minecraft.client.renderer.Rect2i onScreen(final int x, final int y, final int w, final int h) {
-        return new net.minecraft.client.renderer.Rect2i(sx(x), sy(y),
+    public Rect2i onScreen(final int x, final int y, final int w, final int h) {
+        return new Rect2i(sx(x), sy(y),
                 (int) Math.round(w * scale()), (int) Math.round(h * scale()));
     }
 
@@ -918,7 +968,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      */
     public int[] taskEntryPoint(final String key) {
         final TaskStrip strip = taskStrip(sw());
-        final int index = dev.jstech.computers.gui.TaskbarGroups.indexOf(strip.entries(), key);
+        final int index = TaskbarGroups.indexOf(strip.entries(), key);
         if (index < 0) {
             return null;
         }
@@ -933,7 +983,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     /** The programs the panel lists, in order: the pinned ones first, then every open one. */
     public List<String> taskEntryLabels() {
         final List<String> out = new ArrayList<>();
-        for (final dev.jstech.computers.gui.TaskbarGroups.Entry entry : taskEntries()) {
+        for (final TaskbarGroups.Entry entry : taskEntries()) {
             out.add(entry.key());
         }
         return out;
@@ -974,7 +1024,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     public List<String> taskMenuLabels() {
         final List<String> out = new ArrayList<>();
         if (taskMenu.isOpen()) {
-            for (final dev.jstech.core.client.gui.component.ContextMenu.Item item : taskMenu.items()) {
+            for (final ContextMenu.Item item : taskMenu.items()) {
                 out.add(item.label());
             }
         }
@@ -1011,7 +1061,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** Screen position of the centre of the panel menu's {@code label} entry, or null when it is not there. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public int[] panelMenuPoint(final String label) {
         if (!panelCtxOpen) {
             return null;
@@ -1045,7 +1095,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     /** What this desktop calls its terminal, or an empty string when it has none installed. */
     private String terminalLabel() {
         for (final Launcher l : launchers) {
-            if (dev.jstech.computers.program.Programs.COMMAND_PROMPT.equals(l.programId())) {
+            if (Programs.COMMAND_PROMPT.equals(l.programId())) {
                 return l.label();
             }
         }
@@ -1075,7 +1125,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** The open window hosting the program launched under {@code label}, or null. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     /** Every window of a program (its dialogs aside), front-most last, since a program may be open more than once. */
     public List<DesktopWindow> windowsFor(final String label) {
         final List<DesktopWindow> out = new ArrayList<>();
@@ -1098,7 +1148,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** Screen coordinates of the Start button's centre. */
     public int startButtonX() {
-        return sx(is(dev.jstech.computers.os.PanelStyle.FRAMES_11) ? 4 + WIN11_SLOT / 2 : 30);
+        return sx(is(PanelStyle.FRAMES_11) ? 4 + WIN11_SLOT / 2 : 30);
     }
 
     public int startButtonY() {
@@ -1116,7 +1166,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * columns (programs left, places right), so the column depends on the entry.
      */
     public int startMenuItemX(final int index) {
-        if (panel == dev.jstech.computers.os.PanelStyle.FRAMES_XP
+        if (panel == PanelStyle.FRAMES_XP
                 && index >= 0 && index < launchers.size()) {
             final boolean place = XP_PLACES.contains(launchers.get(index).label());
             final int colX = startMenuX() + (place ? XP_LEFT_W + 3 : 3);
@@ -1128,7 +1178,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     public int startMenuItemY(final int index) {
         final int tbY = sh() - TASKBAR_H;
-        if (panel == dev.jstech.computers.os.PanelStyle.FRAMES_XP
+        if (panel == PanelStyle.FRAMES_XP
                 && index >= 0 && index < launchers.size()) {
             final Launcher target = launchers.get(index);
             final boolean place = XP_PLACES.contains(target.label());
@@ -1149,7 +1199,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private HardwareEra era() {
         final Minecraft mc = Minecraft.getInstance();
         if (mc.level != null && mc.level.getBlockEntity(host)
-                instanceof dev.jstech.computers.os.IOsHost be) {
+                instanceof IOsHost be) {
             final HardwareEra era = be.displayEra();
             if (era != null) {
                 return era;
@@ -1170,9 +1220,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         final int minute = totalMin % 60;
         if (desktopClock12h) {
             final int h12 = hour24 % 12 == 0 ? 12 : hour24 % 12;
-            return String.format(java.util.Locale.ROOT, "%d:%02d %s", h12, minute, hour24 < 12 ? "AM" : "PM");
+            return String.format(Locale.ROOT, "%d:%02d %s", h12, minute, hour24 < 12 ? "AM" : "PM");
         }
-        return String.format(java.util.Locale.ROOT, "%02d:%02d", hour24, minute);
+        return String.format(Locale.ROOT, "%02d:%02d", hour24, minute);
     }
 
     /**
@@ -1227,7 +1277,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * of the desktop listing send the same payload again and must not open everything a second time.
      */
     public static void applyWindows(
-            final dev.jstech.computers.operation.payload.DesktopWindowsPayload payload) {
+            final DesktopWindowsPayload payload) {
         final DesktopScreen screen = active;
         if (screen == null || !screen.host.equals(payload.host()) || screen.windowsRestored) {
             return;
@@ -1236,8 +1286,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         if (!screen.windows.isEmpty()) {
             return; // the player already opened something before the layout arrived; keep theirs
         }
-        final java.util.Map<String, IDesktopApp> savedApps = SAVED_APPS.get(screen.host);
-        for (final dev.jstech.computers.os.OpenWindow ow : payload.toOpenWindows()) {
+        final Map<String, IDesktopApp> savedApps = SAVED_APPS.get(screen.host);
+        for (final OpenWindow ow : payload.toOpenWindows()) {
             IDesktopApp app = savedApps != null ? savedApps.get(ow.key()) : null;
             final boolean restored = app != null;
             if (app == null) {
@@ -1296,7 +1346,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         }
         pushedLayout = now;
         PacketDistributor.sendToServer(
-                dev.jstech.computers.operation.payload.DesktopWindowsPayload.of(host, snapshotWindows()));
+                DesktopWindowsPayload.of(host, snapshotWindows()));
     }
 
     /**
@@ -1310,13 +1360,13 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * The current windows as the machine should remember them: floating bounds plus their state. A
      * dialog is a question in flight, not something a machine has open, so it is not remembered.
      */
-    private java.util.List<dev.jstech.computers.os.OpenWindow> snapshotWindows() {
-        final java.util.List<dev.jstech.computers.os.OpenWindow> out =
-                new java.util.ArrayList<>(windows.size());
+    private List<OpenWindow> snapshotWindows() {
+        final List<OpenWindow> out =
+                new ArrayList<>(windows.size());
         for (final DesktopWindow w : windows) {
             // A Σ# program's window is the program's, not the desktop's: the machine says what it has.
             if (!w.dialog() && !(w.app() instanceof SigmaWindowApp)) {
-                out.add(new dev.jstech.computers.os.OpenWindow(
+                out.add(new OpenWindow(
                         w.appKey(), w.floatX(), w.floatY(), w.floatW(), w.floatH(), w.minimized(), w.maximized(),
                         w.app().saveState()));
             }
@@ -1333,22 +1383,22 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private void buildLaunchers() {
         launchers.clear();
         final boolean isMainframe = hostIs(
-                dev.jstech.computers.blockentity.MainframeBlockEntity.class);
+                MainframeBlockEntity.class);
         final boolean isCraftingComputer = hostIs(
-                dev.jstech.computers.blockentity.CraftingComputerBlockEntity.class);
+                CraftingComputerBlockEntity.class);
         // A rack shows the desktop of the server mounted in it, so a rack host IS a server session.
         final boolean isServer = hostIs(
-                dev.jstech.computers.blockentity.ServerRackBlockEntity.class);
+                ServerRackBlockEntity.class);
         final boolean isClusterManager = hostIs(
-                dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity.class);
-        final int rank = dev.jstech.computers.os.OsRegistry.osVersionRank(osId);
-        final dev.jstech.computers.os.OsDef os =
-                dev.jstech.computers.os.OsRegistry.getOs(osId);
-        final dev.jstech.computers.os.Platform platform =
-                os != null ? os.platform() : dev.jstech.computers.os.Platform.FRAMES;
-        for (final dev.jstech.computers.os.ProgramSpec spec
-                : dev.jstech.computers.os.OsRegistry.programs()) {
-            if (spec.kind() != dev.jstech.computers.os.ProgramKind.APP
+                ClusterManagementComputerBlockEntity.class);
+        final int rank = OsRegistry.osVersionRank(osId);
+        final OsDef os =
+                OsRegistry.getOs(osId);
+        final Platform platform =
+                os != null ? os.platform() : Platform.FRAMES;
+        for (final ProgramSpec spec
+                : OsRegistry.programs()) {
+            if (spec.kind() != ProgramKind.APP
                     || !spec.platforms().contains(platform)
                     || !ProgramClient.hasWindow(spec.id())) {
                 continue;
@@ -1380,8 +1430,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
          */
         for (final CommunityLauncher one : communityPrograms) {
             launchers.add(new Launcher(one.name(),
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
-                            dev.jstech.computers.JsComputers.MODID, "sigma_" + one.icon()),
+                    ResourceLocation.fromNamespaceAndPath(
+                            JsComputers.MODID, "sigma_" + one.icon()),
                     null, one.entry()));
         }
     }
@@ -1393,16 +1443,16 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private final List<CommunityLauncher> communityPrograms = new ArrayList<>();
 
     /** The program id for an open window's app key (its launcher label), for the taskbar icon; generic if none. */
-    private net.minecraft.resources.ResourceLocation programIdForLabel(final String label) {
+    private ResourceLocation programIdForLabel(final String label) {
         for (final Launcher l : launchers) {
             if (l.label().equals(label)) {
                 return l.programId();
             }
         }
         // A window whose program has no launcher (the Task Manager) still shows its own icon on the panel.
-        final dev.jstech.computers.os.ProgramSpec spec = chrome == null ? null : chrome.programFor(label);
+        final ProgramSpec spec = chrome == null ? null : chrome.programFor(label);
         return spec != null ? spec.id()
-                : net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("jsc", "generic");
+                : ResourceLocation.fromNamespaceAndPath("jsc", "generic");
     }
 
     /** Whether the linked host computer's block entity is (an instance of) {@code type}. */
@@ -1412,7 +1462,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** Whether a program's host scope permits it on this computer. */
-    private static boolean hostScopeAllows(final dev.jstech.computers.os.HostScope scope,
+    private static boolean hostScopeAllows(final HostScope scope,
                                            final boolean isMainframe, final boolean isCraftingComputer,
                                            final boolean isServer, final boolean isClusterManager) {
         return switch (scope) {
@@ -1428,12 +1478,12 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * The rail label for a program: the desktop environment's native name for it (Dolphin, Konsole, Nautilus...),
      * its own display name otherwise; the shell reads "Megashell" on Frames 11.
      */
-    private String launcherLabel(final dev.jstech.computers.os.ProgramSpec spec) {
+    private String launcherLabel(final ProgramSpec spec) {
         if (chrome != null) {
             return chrome.launcherLabel(spec); // the rule the server resolves a window back to its program with
         }
         if (spec.id().getPath().equals("command_prompt")
-                && is(dev.jstech.computers.os.PanelStyle.FRAMES_11)) {
+                && is(PanelStyle.FRAMES_11)) {
             return "Megashell";
         }
         return spec.displayName();
@@ -1462,7 +1512,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * window is a view of the machine's job: two players at two monitors of one machine see the same
      * bar, and a desktop opened halfway through picks it up where it is.
      */
-    public static void acceptSetup(final dev.jstech.computers.operation.payload.SetupProgressPayload payload) {
+    public static void acceptSetup(final SetupProgressPayload payload) {
         if (active == null || !active.host.equals(payload.hostPos())) {
             return;
         }
@@ -1475,7 +1525,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             active.openApp(SetupApp.KEY, app);
         }
         app.accept(payload);
-        if (payload.state() == dev.jstech.computers.operation.payload.SetupProgressPayload.STATE_DONE) {
+        if (payload.state() == SetupProgressPayload.STATE_DONE) {
             // The launcher appears, or goes, the moment the job is done.
             active.requestDesktop();
             FilesApps.refreshAll();
@@ -1511,7 +1561,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
          * Refresh the installed-program launchers whenever the installed set changes, so ANY installable
          * program (NMS, Minesweeper, Storage Insights, ...) gets its launcher the moment it is installed.
          */
-        final java.util.Set<String> before = new java.util.HashSet<>(active.installedPrograms);
+        final Set<String> before = new HashSet<>(active.installedPrograms);
         final List<CommunityLauncher> theirsBefore = List.copyOf(active.communityPrograms);
         active.installedPrograms.clear();
         active.installedPrograms.addAll(payload.programs());
@@ -1519,7 +1569,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         for (final DesktopFilesPayload.WireCommunity one : payload.community()) {
             active.communityPrograms.add(new CommunityLauncher(one.name(), one.icon(), one.entry()));
         }
-        if (!before.equals(new java.util.HashSet<>(active.installedPrograms))
+        if (!before.equals(new HashSet<>(active.installedPrograms))
                 || !theirsBefore.equals(active.communityPrograms)) {
             active.buildLaunchers();
         }
@@ -1742,7 +1792,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                  * which is how "Network" and "Command Prompt" came to read as one word.
                  */
                 int ly = iy + 23;
-                final java.util.List<String> lines = wrapLabel(label, labelFontWidth());
+                final List<String> lines = wrapLabel(label, labelFontWidth());
                 for (int li = 0; li < lines.size() && li < LABEL_LINES; li++) {
                     final String line = li == LABEL_LINES - 1 && lines.size() > LABEL_LINES
                             ? fitLabelLine(lines.get(li) + "...")
@@ -1756,10 +1806,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         if (selLabelText != null) {
             int ly = selLabelY + 23;
             for (final String line : wrapLabel(selLabelText, labelFontWidth())) {
-                final int lw = dev.jstech.core.client.gui.component.Texts.smallWidth(font, line);
+                final int lw = Texts.smallWidth(font, line);
                 final int lcx = selLabelX + 12 - lw / 2;
                 g.fill(lcx - 2, ly - 1, lcx + lw + 2, ly + LABEL_LINE_H, 0xE0000080);
-                dev.jstech.core.client.gui.component.Texts.small(g, font, line, lcx, ly, 0xFFFFFFFF);
+                Texts.small(g, font, line, lcx, ly, 0xFFFFFFFF);
                 ly += LABEL_LINE_H;
             }
         }
@@ -1796,12 +1846,12 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
         final int tbY = sh - TASKBAR_H;
         final String osp = desktopId.getPath();
-        if (is(dev.jstech.computers.os.PanelStyle.FRAMES_11)) {
+        if (is(PanelStyle.FRAMES_11)) {
             // Windows 11 taskbar: dark bar, centered Start + app icons with an active indicator, clock right.
             renderWin11Taskbar(g, tbY, sw, lmx, lmy);
         } else if (periodPanel()) {
             renderPeriodPanel(g, tbY, sw, sh, lmx, lmy);
-        } else if (is(dev.jstech.computers.os.PanelStyle.GNOME)) {
+        } else if (is(PanelStyle.GNOME)) {
             renderGnomeTopBar(g, sw, lmx, lmy);
         } else if (linuxDesktop()) {
             renderLinuxPanel(g, tbY, sw, sh, lmx, lmy);
@@ -1822,7 +1872,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                 g.fill(4, tbY + 3, 4 + sbW, sh - 3, theme.startButton());
                 bevel(g, 4, tbY + 3, sbW, TASKBAR_H - 6, 0xFFFFFFFF, 0xFF808080);
                 // The edition's own mark, the same one its setup and its boot screen wear.
-                dev.jstech.computers.client.FramesEmblem.draw(g, 8, tbY + 8, 7, osp);
+                FramesEmblem.draw(g, 8, tbY + 8, 7, osp);
                 g.drawString(font, "Start", 18, tbY + 8, 0xFF000000, false);
             }
             final TaskStrip strip = taskStrip(sw);
@@ -1831,7 +1881,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             }
             final boolean xp = osp.equals("frames_xp");
             for (int i = 0; i < strip.entries().size(); i++) {
-                final dev.jstech.computers.gui.TaskbarGroups.Entry entry = strip.entries().get(i);
+                final TaskbarGroups.Entry entry = strip.entries().get(i);
                 final int bx = strip.x()[i];
                 final int btnW = strip.w()[i];
                 if (btnW == 0) {
@@ -1840,8 +1890,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                 if (bx + btnW > strip.right()) {
                     break;
                 }
-                final boolean active = entry.state() == dev.jstech.computers.gui.TaskbarGroups.State.ACTIVE;
-                final boolean minimized = entry.state() == dev.jstech.computers.gui.TaskbarGroups.State.MINIMIZED;
+                final boolean active = entry.state() == TaskbarGroups.State.ACTIVE;
+                final boolean minimized = entry.state() == TaskbarGroups.State.MINIMIZED;
                 /*
                  * The program in front reads as a pushed-in button, the way a taskbar has always said which
                  * program you are actually looking at; one whose windows are all put away sits raised and
@@ -1914,7 +1964,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                 renderPanelContext(g, lmx, lmy);
             }
             if (deskMenu.isOpen()) {
-                deskMenu.render(g, new dev.jstech.core.client.gui.component.UiContext(skin, font, lmx, lmy, partialTick));
+                deskMenu.render(g, new UiContext(skin, font, lmx, lmy, partialTick));
             }
             g.pose().popPose();
         }
@@ -2021,7 +2071,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         if (popup != null) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.POPUP);
-            popup.renderIn(g, new dev.jstech.core.client.gui.component.UiContext(skin, font, lmx, lmy, 0f), 0, 0, sw, sh);
+            popup.renderIn(g, new UiContext(skin, font, lmx, lmy, 0f), 0, 0, sw, sh);
             g.pose().popPose();
         }
         // The power dialog rides at the same height: it is the one choice that ends the session.
@@ -2035,7 +2085,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         if (taskMenu.isOpen()) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.POPUP);
-            taskMenu.render(g, new dev.jstech.core.client.gui.component.UiContext(skin, font, lmx, lmy, partialTick));
+            taskMenu.render(g, new UiContext(skin, font, lmx, lmy, partialTick));
             g.pose().popPose();
         }
         g.pose().popPose(); // close the (ox, oy) desktop-origin translate
@@ -2245,7 +2295,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * explorer, an optional destination explorer, and the desktop icons. A {@code .dat} or a no-op move
      * (already in that folder) does nothing but show the locked dialog where appropriate.
      */
-    private void moveExplorerFile(final FilesApp origin, @org.jetbrains.annotations.Nullable final FilesApp dest,
+    private void moveExplorerFile(final FilesApp origin, @Nullable final FilesApp dest,
                                   final DiskFilesPayload.WireFile dragged, final String destDir) {
         if (destDir == null || samePathParent(dragged.path(), destDir)) {
             return;
@@ -2287,8 +2337,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      */
     private void openFile(final String path) {
         final String program =
-                dev.jstech.computers.os.fs.FileOpeners.defaultFor(path, installedPrograms, defaultApps);
-        if (program.isEmpty() && dev.jstech.computers.os.fs.FileOpeners.isUnknownKind(path)
+                FileOpeners.defaultFor(path, installedPrograms, defaultApps);
+        if (program.isEmpty() && FileOpeners.isUnknownKind(path)
                 && !runsAsProgram(path)) {
             chooseOpener(path);
             return;
@@ -2298,8 +2348,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** Whether a language on this computer runs files like this one, so opening it means running it. */
     private static boolean runsAsProgram(final String path) {
-        final String extension = dev.jstech.computers.os.fs.FileOpeners.extensionOf(path);
-        return !extension.isEmpty() && dev.jstech.core.JsCore.languages().runnerOf(extension) != null;
+        final String extension = FileOpeners.extensionOf(path);
+        return !extension.isEmpty() && JsCore.languages().runnerOf(extension) != null;
     }
 
     /**
@@ -2307,20 +2357,20 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * the choice this computer's program for the file's extension, written down on the machine.
      */
     private void chooseOpener(final String path) {
-        final List<String> programs = dev.jstech.computers.os.fs.FileOpeners.choices(path, installedPrograms);
+        final List<String> programs = FileOpeners.choices(path, installedPrograms);
         if (programs.isEmpty()) {
             showBalloon("Cannot open", "No program on this computer opens " + FsPaths.fileName(path));
             return;
         }
-        final String extension = dev.jstech.computers.os.fs.FileOpeners.extensionOf(path);
+        final String extension = FileOpeners.extensionOf(path);
         final String current =
-                dev.jstech.computers.os.fs.FileOpeners.defaultFor(path, installedPrograms, defaultApps);
+                FileOpeners.defaultFor(path, installedPrograms, defaultApps);
         final String opener = current.isEmpty() ? "" : openerName(current);
         popup = new OpenWithPopup(path, extension, programs, opener, skin.iconSet(), font, (program, always) -> {
             if (always) {
                 defaultApps.put(extension, program);
-                net.neoforged.neoforge.network.PacketDistributor.sendToServer(
-                        new dev.jstech.computers.operation.payload.SetSettingPayload(host, "defaultapp:" + extension,
+                PacketDistributor.sendToServer(
+                        new SetSettingPayload(host, "defaultapp:" + extension,
                                 program));
             }
             openIn(program, path);
@@ -2346,19 +2396,19 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             showBalloon("Cannot open", "No program on this computer opens " + FsPaths.fileName(path));
             return;
         }
-        if (programId.equals(dev.jstech.computers.os.fs.FileOpeners.EDITOR)) {
+        if (programId.equals(FileOpeners.EDITOR)) {
             final EditorApp editor = new EditorApp(host);
             openApp("Editor", editor);
             editor.openFile(path);
             return;
         }
-        if (programId.equals(dev.jstech.computers.os.fs.FileOpeners.RUNTIME)) {
+        if (programId.equals(FileOpeners.RUNTIME)) {
             // A compiled program is run, not read: it gets this desktop's terminal and prints into it.
             runAtTerminal(path);
             return;
         }
-        final dev.jstech.computers.os.ProgramSpec spec = dev.jstech.computers.program.Programs.get(
-                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("jsc", programId));
+        final ProgramSpec spec = Programs.get(
+                ResourceLocation.fromNamespaceAndPath("jsc", programId));
         final Launcher launcher = spec == null ? null : launcherFor(spec.id());
         if (launcher == null) {
             showBalloon("Cannot open", "No program on this computer opens " + FsPaths.fileName(path));
@@ -2398,7 +2448,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * This desktop's terminal window, brought forward, or opened when there is none: a program that
      * needs the prompt gets the one that is up rather than a second one beside it.
      */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private ShellApp terminalApp() {
         final String terminal = terminalLabel();
         if (terminal.isEmpty()) {
@@ -2427,7 +2477,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** The launcher of a program by id, or null when this desktop does not offer it. */
-    private Launcher launcherFor(final net.minecraft.resources.ResourceLocation id) {
+    private Launcher launcherFor(final ResourceLocation id) {
         for (final Launcher launcher : launchers) {
             if (id.equals(launcher.programId())) {
                 return launcher;
@@ -2442,36 +2492,36 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * <p>A menu rather than a dialog: it is the same question as the one that was just asked with the
      * right button, and the answer is one of a handful of names.
      */
-    private java.util.List<dev.jstech.core.client.gui.component.ContextMenu.Item> openWithItems(final String path) {
-        final java.util.List<dev.jstech.core.client.gui.component.ContextMenu.Item> entries = new java.util.ArrayList<>();
+    private List<ContextMenu.Item> openWithItems(final String path) {
+        final List<ContextMenu.Item> entries = new ArrayList<>();
         for (final String programId
-                : dev.jstech.computers.os.fs.FileOpeners.available(path, installedPrograms)) {
-            final dev.jstech.computers.os.ProgramSpec spec = dev.jstech.computers.program.Programs.get(
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("jsc", programId));
+                : FileOpeners.available(path, installedPrograms)) {
+            final ProgramSpec spec = Programs.get(
+                    ResourceLocation.fromNamespaceAndPath("jsc", programId));
             final String label = spec == null ? programId : spec.displayName();
-            entries.add(new dev.jstech.core.client.gui.component.ContextMenu.Item(label, true, () -> openIn(programId, path)));
+            entries.add(new ContextMenu.Item(label, true, () -> openIn(programId, path)));
         }
-        if (!dev.jstech.computers.os.fs.FileOpeners.choices(path, installedPrograms).isEmpty()) {
+        if (!FileOpeners.choices(path, installedPrograms).isEmpty()) {
             if (!entries.isEmpty()) {
-                entries.add(dev.jstech.core.client.gui.component.ContextMenu.Item.separator());
+                entries.add(ContextMenu.Item.separator());
             }
-            entries.add(new dev.jstech.core.client.gui.component.ContextMenu.Item("Choose another program...", true,
+            entries.add(new ContextMenu.Item("Choose another program...", true,
                     () -> chooseOpener(path)));
         }
         if (entries.isEmpty()) {
-            entries.add(new dev.jstech.core.client.gui.component.ContextMenu.Item("No program opens this", false, () -> { }));
+            entries.add(new ContextMenu.Item("No program opens this", false, () -> { }));
         }
         return entries;
     }
 
     /** What New offers on the desktop: a folder first, then a file of every kind the machine can create. */
-    private java.util.List<dev.jstech.core.client.gui.component.ContextMenu.Item> newDeskItems() {
-        final java.util.List<dev.jstech.core.client.gui.component.ContextMenu.Item> entries = new java.util.ArrayList<>();
-        entries.add(new dev.jstech.core.client.gui.component.ContextMenu.Item("Folder", true, this::newDeskFolder));
-        entries.add(dev.jstech.core.client.gui.component.ContextMenu.Item.separator());
-        for (final dev.jstech.computers.os.fs.FileType type
-                : dev.jstech.computers.os.fs.FileOpeners.creatable()) {
-            entries.add(new dev.jstech.core.client.gui.component.ContextMenu.Item(
+    private List<ContextMenu.Item> newDeskItems() {
+        final List<ContextMenu.Item> entries = new ArrayList<>();
+        entries.add(new ContextMenu.Item("Folder", true, this::newDeskFolder));
+        entries.add(ContextMenu.Item.separator());
+        for (final FileType type
+                : FileOpeners.creatable()) {
+            entries.add(new ContextMenu.Item(
                     FilesApp.typeLabel(type) + " (." + type.extension() + ")", true, () -> newDeskFile(type)));
         }
         return entries;
@@ -2582,7 +2632,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * makes new things, refreshes, and leads to the settings that dress it.
      */
     private void openDeskContext(final int slot, final int x, final int y) {
-        final java.util.List<dev.jstech.core.client.gui.component.ContextMenu.Item> entries = new java.util.ArrayList<>();
+        final List<ContextMenu.Item> entries = new ArrayList<>();
         if (slot >= 0 && slot < launchers.size()) {
             final Launcher launcher = launchers.get(slot);
             entries.add(deskItem("Open", true, () -> runLauncher(launcher)));
@@ -2590,15 +2640,15 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
              * Only what the machine could actually take off: the programs that ship with a system are
              * part of it, so offering to remove one would be offering something that then fails.
              */
-            final dev.jstech.computers.os.ProgramSpec spec =
-                    dev.jstech.computers.program.Programs.get(launcher.programId());
+            final ProgramSpec spec =
+                    Programs.get(launcher.programId());
             if (pinsOnPanel() && launcher.factory() != null) {
                 final boolean pinned = pinnedPrograms.contains(launcher.programId().getPath());
                 entries.add(deskItem(pinned ? "Unpin from taskbar" : "Pin to taskbar", true,
                         () -> togglePin(launcher.label())));
             }
             if (spec != null && spec.installable()) {
-                entries.add(dev.jstech.core.client.gui.component.ContextMenu.Item.separator());
+                entries.add(ContextMenu.Item.separator());
                 entries.add(deskItem("Uninstall", true, () -> uninstallLauncher(spec)));
             }
         } else if (slot >= launchers.size() && slot - launchers.size() < desktopItems.size()) {
@@ -2606,33 +2656,33 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             final DiskFilesPayload.WireFile file = desktopItems.get(di);
             entries.add(deskItem("Open", true, () -> openSlot(launchers.size() + di)));
             if (!file.directory()) {
-                entries.add(dev.jstech.core.client.gui.component.ContextMenu.Item.submenu("Open with", openWithItems(file.path())));
+                entries.add(ContextMenu.Item.submenu("Open with", openWithItems(file.path())));
             }
-            entries.add(dev.jstech.core.client.gui.component.ContextMenu.Item.separator());
+            entries.add(ContextMenu.Item.separator());
             /*
              * A projection of what a drive holds is not a file anybody wrote, so it cannot be renamed or
              * deleted by hand; the filesystem refuses both, and a menu that offered them would be lying.
              */
             entries.add(deskItem("Rename", !file.readOnly(), () -> startDeskRename(di)));
             entries.add(deskItem("Delete", !file.readOnly(), () -> deleteDeskItem(di)));
-            entries.add(dev.jstech.core.client.gui.component.ContextMenu.Item.separator());
+            entries.add(ContextMenu.Item.separator());
             entries.add(deskItem("Properties", true, () -> requestFileProperties(file.path())));
         } else {
-            entries.add(dev.jstech.core.client.gui.component.ContextMenu.Item.submenu("New", newDeskItems()));
-            entries.add(dev.jstech.core.client.gui.component.ContextMenu.Item.separator());
+            entries.add(ContextMenu.Item.submenu("New", newDeskItems()));
+            entries.add(ContextMenu.Item.separator());
             entries.add(deskItem("Refresh", true, this::requestDesktop));
-            entries.add(dev.jstech.core.client.gui.component.ContextMenu.Item.separator());
+            entries.add(ContextMenu.Item.separator());
             entries.add(deskItem("Display settings", true, () -> openSettingsPage(SettingsApp.PAGE_DISPLAY)));
             entries.add(deskItem("Personalize", true, () -> openSettingsPage(SettingsApp.PAGE_PERSONALIZE)));
-            entries.add(dev.jstech.core.client.gui.component.ContextMenu.Item.separator());
+            entries.add(ContextMenu.Item.separator());
             entries.add(deskItem("Properties", true, () -> runLauncherCalled("This PC")));
         }
         deskMenu.open(entries, x, y, 0, 0, sw(), sh());
     }
 
-    private static dev.jstech.core.client.gui.component.ContextMenu.Item deskItem(
+    private static ContextMenu.Item deskItem(
             final String label, final boolean enabled, final Runnable action) {
-        return new dev.jstech.core.client.gui.component.ContextMenu.Item(label, enabled, action);
+        return new ContextMenu.Item(label, enabled, action);
     }
 
     /* What a test reads of the desktop's menu and its scale. */
@@ -2650,7 +2700,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     /** The labels of the desk menu's items, in order, so a test finds one by name. */
     public List<String> deskMenuLabels() {
         final List<String> out = new ArrayList<>();
-        for (final dev.jstech.core.client.gui.component.ContextMenu.Item item : deskMenu.items()) {
+        for (final ContextMenu.Item item : deskMenu.items()) {
             out.add(item.label());
         }
         return out;
@@ -2658,7 +2708,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** The desktop-local centre of item {@code index} of the menu open beside the desk menu, or null when none is. */
     public int[] deskSubmenuItemCenter(final int index) {
-        final dev.jstech.core.client.gui.component.ContextMenu sub = deskMenu.openSubmenu();
+        final ContextMenu sub = deskMenu.openSubmenu();
         return sub == null ? null : sub.itemCenter(index);
     }
 
@@ -2685,7 +2735,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** Takes a program off this computer, the way {@code uninstall} at the prompt does. */
-    private void uninstallLauncher(final dev.jstech.computers.os.ProgramSpec spec) {
+    private void uninstallLauncher(final ProgramSpec spec) {
         PacketDistributor.sendToServer(new dev.jstech.computers.operation.payload
                 .DesktopShellRunPayload(host, "uninstall " + spec.commandName()));
     }
@@ -2757,7 +2807,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * opens it and a file created as text and renamed afterwards is a rename the player should not have
      * had to do.
      */
-    private void newDeskFile(final dev.jstech.computers.os.fs.FileType type) {
+    private void newDeskFile(final FileType type) {
         final String name = uniqueDeskName("New File", "." + type.extension());
         deskPendingRename = name;
         PacketDistributor.sendToServer(new SaveFilePayload(host, desktopDir + "/" + name, ""));
@@ -2802,7 +2852,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         } else {
             final int fill;
             final int edge;
-            switch (f.ext().toLowerCase(java.util.Locale.ROOT)) {
+            switch (f.ext().toLowerCase(Locale.ROOT)) {
                 case "iql" -> { fill = 0xFFA9D4FF; edge = 0xFF3A72B0; }
                 case "dat" -> { fill = 0xFFBDEEC0; edge = 0xFF4F9B53; }
                 default -> { fill = 0xFFEDEFF3; edge = 0xFF8A93A6; }
@@ -2902,7 +2952,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** The Start menu's left edge: left-pinned on 95/XP; on Frames 11 it opens over the Start button (clamped). */
     private int startMenuX() {
-        if (is(dev.jstech.computers.os.PanelStyle.FRAMES_11)) {
+        if (is(PanelStyle.FRAMES_11)) {
             final int w = startMenuW();
             final int startCenter = win11StartX(sw()) + WIN11_SLOT / 2;
             return Math.max(4, Math.min(sw() - w - 4, startCenter - w / 2));
@@ -2915,7 +2965,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** The Start menu's top edge for the given taskbar top: flush on 95/XP, floating with a gap on Frames 11. */
     private int startMenuY(final int tbY) {
-        if (is(dev.jstech.computers.os.PanelStyle.FRAMES_11)) {
+        if (is(PanelStyle.FRAMES_11)) {
             return Math.max(2, tbY - startMenuHeight() - 6); // float above the taskbar, but never off the top
         }
         if (topPanel()) {
@@ -2975,13 +3025,13 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** The launchers matching the Frames 11 Start search box (all of them when the box is empty). */
     private List<Launcher> w11Filtered() {
-        final String q = startSearch.toString().toLowerCase(java.util.Locale.ROOT).trim();
+        final String q = startSearch.toString().toLowerCase(Locale.ROOT).trim();
         if (q.isEmpty()) {
             return launchers;
         }
         final List<Launcher> out = new ArrayList<>();
         for (final Launcher l : launchers) {
-            if (l.label().toLowerCase(java.util.Locale.ROOT).contains(q)) {
+            if (l.label().toLowerCase(Locale.ROOT).contains(q)) {
                 out.add(l);
             }
         }
@@ -3019,17 +3069,17 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
          */
         final TaskStrip strip = taskStrip(sw);
         for (int i = 0; i < strip.entries().size(); i++) {
-            final dev.jstech.computers.gui.TaskbarGroups.Entry entry = strip.entries().get(i);
+            final TaskbarGroups.Entry entry = strip.entries().get(i);
             final int ix = strip.x()[i];
             final boolean hover = lmx >= ix && lmx < ix + WIN11_SLOT && lmy >= tbY;
-            final boolean active = entry.state() == dev.jstech.computers.gui.TaskbarGroups.State.ACTIVE;
+            final boolean active = entry.state() == TaskbarGroups.State.ACTIVE;
             final boolean shown = entry.key().equals(taskPopupKey);
             if (hover || active || shown) {
                 g.fill(ix + 1, tbY + 2, ix + WIN11_SLOT - 1, bottom - 2, active ? 0x26FFFFFF : 0x18FFFFFF);
             }
             final int iconX = ix + (WIN11_SLOT - WIN11_ICON) / 2;
             ProgramIcons.draw(g, iconX, iconY, WIN11_ICON, WIN11_ICON - 2, programIdForLabel(entry.key()), "frames_11");
-            if (entry.state() == dev.jstech.computers.gui.TaskbarGroups.State.MINIMIZED) {
+            if (entry.state() == TaskbarGroups.State.MINIMIZED) {
                 g.fill(iconX, iconY, iconX + WIN11_ICON, iconY + WIN11_ICON - 2, 0x901E1F23);
             }
             drawWin11Indicator(g, ix + WIN11_SLOT / 2, bottom, entry);
@@ -3040,7 +3090,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** The mark under a Frames 11 icon: what the program is doing, in the bar's own language. */
     private static void drawWin11Indicator(final GuiGraphics g, final int cx, final int bottom,
-                                           final dev.jstech.computers.gui.TaskbarGroups.Entry entry) {
+                                           final TaskbarGroups.Entry entry) {
         final boolean several = entry.windows() > 1;
         switch (entry.state()) {
             case ACTIVE -> {
@@ -3052,7 +3102,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                 }
             }
             case OPEN, MINIMIZED -> {
-                final int color = entry.state() == dev.jstech.computers.gui.TaskbarGroups.State.OPEN
+                final int color = entry.state() == TaskbarGroups.State.OPEN
                         ? 0xFF8A93A4 : 0xFF5E6570;
                 if (several) {
                     g.fill(cx - 4, bottom - 2, cx - 1, bottom - 1, color);
@@ -3076,7 +3126,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             return;
         }
         int j = 0;
-        for (final dev.jstech.computers.gui.TaskbarGroups.Entry entry : strip.entries()) {
+        for (final TaskbarGroups.Entry entry : strip.entries()) {
             if (!entry.pinned()) {
                 continue;
             }
@@ -3100,7 +3150,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** What a task button says: the window's title, or the count and the program when there are several. */
-    private String entryLabel(final dev.jstech.computers.gui.TaskbarGroups.Entry entry) {
+    private String entryLabel(final TaskbarGroups.Entry entry) {
         if (entry.windows() > 1) {
             return entry.windows() + " " + entry.key();
         }
@@ -3109,7 +3159,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** The balloon's box in desktop-local coordinates, or null when none is up. Draw and hit-test share it. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private int[] balloonRect(final int tbY, final int sw) {
         if (balloon == null) {
             return null;
@@ -3152,10 +3202,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         g.fill(x + 7, y + 4, x + 13, y + 14, 0xFF1C53C9);
         g.fill(x + 9, y + 6, x + 11, y + 7, 0xFFFFFFFF);
         g.fill(x + 9, y + 8, x + 11, y + 12, 0xFFFFFFFF);
-        g.drawString(font, Component.literal(balloon.title()).withStyle(net.minecraft.ChatFormatting.BOLD),
+        g.drawString(font, Component.literal(balloon.title()).withStyle(ChatFormatting.BOLD),
                 x + 18, y + 5, 0xFF000000, false);
         int ly = y + 16;
-        for (final net.minecraft.util.FormattedCharSequence line
+        for (final FormattedCharSequence line
                 : font.split(Component.literal(balloon.body()), w - 12)) {
             g.drawString(font, line, x + 6, ly, 0xFF303030, false);
             ly += 9;
@@ -3207,7 +3257,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * @param quickCount how many icons the quick launch holds
      * @param right      where the strip must stop, clear of the notification area
      */
-    private record TaskStrip(List<dev.jstech.computers.gui.TaskbarGroups.Entry> entries, int[] x, int[] w,
+    private record TaskStrip(List<TaskbarGroups.Entry> entries, int[] x, int[] w,
                              int quickX, int quickCount, int right) {
 
         /** The entry whose button or cell is under a desktop-local x, or -1. */
@@ -3261,12 +3311,12 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * as an icon until it opens; the older panels list only what is open.
      */
     private TaskStrip taskStrip(final int sw) {
-        final List<dev.jstech.computers.gui.TaskbarGroups.Entry> entries = taskEntries();
+        final List<TaskbarGroups.Entry> entries = taskEntries();
         final int n = entries.size();
         final int[] x = new int[n];
         final int[] w = new int[n];
         final int right = taskStripRight(sw);
-        if (is(dev.jstech.computers.os.PanelStyle.FRAMES_11)) {
+        if (is(PanelStyle.FRAMES_11)) {
             final int appsX = win11AppsX(sw);
             for (int i = 0; i < n; i++) {
                 x[i] = appsX + i * WIN11_SLOT;
@@ -3277,9 +3327,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         int left = TASK_X;
         int quickX = 0;
         int quickCount = 0;
-        if (is(dev.jstech.computers.os.PanelStyle.FRAMES_XP)) {
+        if (is(PanelStyle.FRAMES_XP)) {
             quickX = XP_START_W + 4;
-            for (final dev.jstech.computers.gui.TaskbarGroups.Entry entry : entries) {
+            for (final TaskbarGroups.Entry entry : entries) {
                 if (entry.pinned()) {
                     quickCount++;
                 }
@@ -3289,7 +3339,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         final boolean launcherCells = linuxDesktop() && !periodPanel();
         int openCount = 0;
         int launcherCount = 0;
-        for (final dev.jstech.computers.gui.TaskbarGroups.Entry entry : entries) {
+        for (final TaskbarGroups.Entry entry : entries) {
             if (entry.open()) {
                 openCount++;
             } else if (launcherCells) {
@@ -3301,7 +3351,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                 : Math.max(TASK_MIN_W, Math.min(TASK_MAX_W, strip / openCount - TASK_GAP));
         int cx = left;
         for (int i = 0; i < n; i++) {
-            final dev.jstech.computers.gui.TaskbarGroups.Entry entry = entries.get(i);
+            final TaskbarGroups.Entry entry = entries.get(i);
             if (entry.open()) {
                 x[i] = cx;
                 w[i] = btnW;
@@ -3316,13 +3366,13 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** The programs on the panel, in its order, grouped from the windows and the pins. */
-    private List<dev.jstech.computers.gui.TaskbarGroups.Entry> taskEntries() {
-        final List<dev.jstech.computers.gui.TaskbarGroups.Window> list = new ArrayList<>(windows.size());
+    private List<TaskbarGroups.Entry> taskEntries() {
+        final List<TaskbarGroups.Window> list = new ArrayList<>(windows.size());
         for (final DesktopWindow w : windows) {
-            list.add(new dev.jstech.computers.gui.TaskbarGroups.Window(w.groupKey(), w.minimized(), w.serial()));
+            list.add(new TaskbarGroups.Window(w.groupKey(), w.minimized(), w.serial()));
         }
         final DesktopWindow front = frontWindow();
-        return dev.jstech.computers.gui.TaskbarGroups.group(list, pinnedKeys(), front == null ? null : front.groupKey());
+        return TaskbarGroups.group(list, pinnedKeys(), front == null ? null : front.groupKey());
     }
 
     /**
@@ -3333,14 +3383,14 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         if (periodPanel()) {
             return false;
         }
-        return is(dev.jstech.computers.os.PanelStyle.FRAMES_11) || is(dev.jstech.computers.os.PanelStyle.FRAMES_XP)
-                || is(dev.jstech.computers.os.PanelStyle.KDE) || is(dev.jstech.computers.os.PanelStyle.CINNAMON);
+        return is(PanelStyle.FRAMES_11) || is(PanelStyle.FRAMES_XP)
+                || is(PanelStyle.KDE) || is(PanelStyle.CINNAMON);
     }
 
     /** Whether the panel's popup shows the windows' live pictures (a modern panel) rather than their titles. */
     private boolean thumbnailPopups() {
-        return !periodPanel() && (is(dev.jstech.computers.os.PanelStyle.FRAMES_11)
-                || is(dev.jstech.computers.os.PanelStyle.KDE) || is(dev.jstech.computers.os.PanelStyle.CINNAMON));
+        return !periodPanel() && (is(PanelStyle.FRAMES_11)
+                || is(PanelStyle.KDE) || is(PanelStyle.CINNAMON));
     }
 
     /** The pinned programs by the label the panel lists them under; only those this desktop can start. */
@@ -3361,7 +3411,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** The launcher a panel entry stands for, or null for a program with no launcher (the Task Manager). */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private Launcher pinnableLauncher(final String key) {
         for (final Launcher launcher : launchers) {
             if (launcher.factory() != null && launcher.label().equals(key)) {
@@ -3387,7 +3437,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         } else {
             pinnedPrograms.add(id);
         }
-        PacketDistributor.sendToServer(new dev.jstech.computers.operation.payload.SetSettingPayload(
+        PacketDistributor.sendToServer(new SetSettingPayload(
                 host, pinned ? "unpin" : "pin", id));
     }
 
@@ -3450,9 +3500,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** Whether the host computer is on a data network right now, as its block entity tells the client. */
     private boolean networkAttached() {
-        final net.minecraft.world.level.Level level = Minecraft.getInstance().level;
+        final Level level = Minecraft.getInstance().level;
         return level != null
-                && level.getBlockEntity(host) instanceof dev.jstech.computers.os.IOsHost computer
+                && level.getBlockEntity(host) instanceof IOsHost computer
                 && computer.networkAttached();
     }
 
@@ -3529,7 +3579,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** The Windows 11 Start glyph: four solid blue panes with a thin gap. */
     private static void drawWin11Start(final GuiGraphics g, final int x, final int y) {
-        final int c = dev.jstech.computers.client.FramesEmblem.panesOf("frames_11")[0];
+        final int c = FramesEmblem.panesOf("frames_11")[0];
         g.fill(x, y, x + 5, y + 5, c);
         g.fill(x + 6, y, x + 11, y + 5, c);
         g.fill(x, y + 6, x + 5, y + 11, c);
@@ -3583,13 +3633,13 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
          */
         final int fx = 7;
         final int fy = tbY + 8;
-        final int[] panes = dev.jstech.computers.client.FramesEmblem.panesOf("frames_xp");
+        final int[] panes = FramesEmblem.panesOf("frames_xp");
         g.fill(fx, fy + 1, fx + 4, fy + 4, panes[0]);
         g.fill(fx + 5, fy, fx + 9, fy + 3, panes[1]);
         g.fill(fx, fy + 5, fx + 4, fy + 8, panes[2]);
         g.fill(fx + 5, fy + 4, fx + 9, fy + 7, panes[3]);
-        g.drawString(font, net.minecraft.network.chat.Component.literal("start")
-                        .withStyle(net.minecraft.ChatFormatting.BOLD, net.minecraft.ChatFormatting.ITALIC),
+        g.drawString(font, Component.literal("start")
+                        .withStyle(ChatFormatting.BOLD, ChatFormatting.ITALIC),
                 fx + 13, tbY + 8, 0xFFFFFFFF, true);
     }
 
@@ -3606,7 +3656,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** Whether a desktop-local point is on the bottom panel's Start button. */
     private boolean startButtonHit(final double mx, final double my, final int tbY) {
-        if (is(dev.jstech.computers.os.PanelStyle.FRAMES_XP)) {
+        if (is(PanelStyle.FRAMES_XP)) {
             return my >= tbY && mx >= 0 && mx <= XP_START_W;
         }
         return my >= tbY + 3 && mx >= 4 && mx <= 58;
@@ -3665,7 +3715,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         g.fill(x + 2, y + 2, x + 2 + BAND_W, y + h - 2, skin.accent());
         g.pose().pushPose();
         g.pose().translate(x + BAND_W - 3, y + h - 8, 0);
-        g.pose().mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-90));
+        g.pose().mulPose(Axis.ZP.rotationDegrees(-90));
         g.drawString(font, desktopName(), 0, 0, 0xFFFFFFFF, false);
         g.pose().popPose();
 
@@ -3696,7 +3746,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         g.fill(x + 1, y + 1, x + 1 + BAND_W, y + h - 1, theme.titleActive());
         g.pose().pushPose();
         g.pose().translate(x + BAND_W - 5, y + h - 7, 0);
-        g.pose().mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-90));
+        g.pose().mulPose(Axis.ZP.rotationDegrees(-90));
         g.drawString(font, osBandLabel(), 0, 0, 0xFFFFFFFF, false);
         g.pose().popPose();
         // Program items with icons.
@@ -3726,8 +3776,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
          * The period launcher is a plain program list with no search field, so it is not searchable
          * even though the modern GNOME shell it replaces is.
          */
-        return is(dev.jstech.computers.os.PanelStyle.FRAMES_11)
-                || (is(dev.jstech.computers.os.PanelStyle.GNOME) && !periodPanel());
+        return is(PanelStyle.FRAMES_11)
+                || (is(PanelStyle.GNOME) && !periodPanel());
     }
 
     // Linux desktop environments: panels
@@ -3739,7 +3789,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      */
     private void renderLinuxPanel(final GuiGraphics g, final int tbY, final int sw, final int sh,
                                   final int lmx, final int lmy) {
-        final boolean kde = is(dev.jstech.computers.os.PanelStyle.KDE);
+        final boolean kde = is(PanelStyle.KDE);
         g.fill(0, tbY, sw, sh, theme.taskbar());
         g.fill(0, tbY, sw, tbY + 1, theme.taskbarEdge());
         // Launcher button.
@@ -3765,7 +3815,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         final TaskStrip strip = taskStrip(sw);
         final int accent = theme.startButton();
         for (int i = 0; i < strip.entries().size(); i++) {
-            final dev.jstech.computers.gui.TaskbarGroups.Entry entry = strip.entries().get(i);
+            final TaskbarGroups.Entry entry = strip.entries().get(i);
             final int bx = strip.x()[i];
             final int bw = strip.w()[i];
             if (bw == 0) {
@@ -3783,8 +3833,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                 ProgramIcons.draw(g, bx + 3, tbY + 4, 16, 16, programIdForLabel(entry.key()), iconSet());
                 continue;
             }
-            final boolean active = entry.state() == dev.jstech.computers.gui.TaskbarGroups.State.ACTIVE;
-            final boolean minimized = entry.state() == dev.jstech.computers.gui.TaskbarGroups.State.MINIMIZED;
+            final boolean active = entry.state() == TaskbarGroups.State.ACTIVE;
+            final boolean minimized = entry.state() == TaskbarGroups.State.MINIMIZED;
             final boolean several = entry.windows() > 1;
             if (several) {
                 g.fill(bx + 2, tbY + 1, bx + bw + 2, tbY + 3, theme.taskButton());
@@ -3803,7 +3853,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             if (several) {
                 final int badgeX = bx + bw - 12;
                 g.fill(badgeX, tbY + 5, badgeX + 10, tbY + 13, active ? 0xFFFFFFFF : accent);
-                dev.jstech.core.client.gui.component.Texts.small(g, font, String.valueOf(entry.windows()),
+                Texts.small(g, font, String.valueOf(entry.windows()),
                         badgeX + 3, tbY + 6, active ? accent : 0xFFFFFFFF);
             }
         }
@@ -3832,7 +3882,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
          */
         final TaskStrip strip = taskStrip(sw);
         for (int i = 0; i < strip.entries().size(); i++) {
-            final dev.jstech.computers.gui.TaskbarGroups.Entry entry = strip.entries().get(i);
+            final TaskbarGroups.Entry entry = strip.entries().get(i);
             final int bx = strip.x()[i];
             final int btnW = strip.w()[i];
             if (btnW == 0) {
@@ -3841,8 +3891,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             if (bx + btnW > strip.right()) {
                 break;
             }
-            final boolean active = entry.state() == dev.jstech.computers.gui.TaskbarGroups.State.ACTIVE;
-            final boolean minimized = entry.state() == dev.jstech.computers.gui.TaskbarGroups.State.MINIMIZED;
+            final boolean active = entry.state() == TaskbarGroups.State.ACTIVE;
+            final boolean minimized = entry.state() == TaskbarGroups.State.MINIMIZED;
             final boolean several = entry.windows() > 1;
             final boolean hot = lmx >= bx && lmx <= bx + btnW && lmy >= tbY;
             skin.button(g, font, bx, tbY + 3, btnW, TASKBAR_H - 6, "", hot, active, false);
@@ -4232,12 +4282,12 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      */
     private static void drawPlayerFace(final GuiGraphics g, final int x, final int y, final int size) {
         g.fill(x - 1, y - 1, x + size + 1, y + size + 1, 0xFFFFFFFF); // the little white frame XP drew
-        final net.minecraft.client.player.AbstractClientPlayer player = Minecraft.getInstance().player;
+        final AbstractClientPlayer player = Minecraft.getInstance().player;
         if (player == null) {
             g.fill(x, y, x + size, y + size, 0xFF2F6FD6);
             return;
         }
-        final net.minecraft.resources.ResourceLocation skin = player.getSkin().texture();
+        final ResourceLocation skin = player.getSkin().texture();
         g.blit(skin, x, y, size, size, 8.0F, 8.0F, 8, 8, 64, 64);
         g.blit(skin, x, y, size, size, 40.0F, 8.0F, 8, 8, 64, 64);
     }
@@ -4260,7 +4310,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         if (hoverY >= allY && hoverY < allY + XP_ALL_ROW_H && hoverX >= colX && hoverX < colX + colW) {
             g.fill(colX, allY, colX + colW, allY + XP_ALL_ROW_H, 0x333B7BD4);
         }
-        g.drawString(font, Component.literal("All Programs").withStyle(net.minecraft.ChatFormatting.BOLD),
+        g.drawString(font, Component.literal("All Programs").withStyle(ChatFormatting.BOLD),
                 colX + 4, allY + 4, theme.menuText(), false);
         // The green chevron that always sat at the end of this row.
         final int ax = colX + colW - 10;
@@ -4286,7 +4336,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             ProgramIcons.draw(g, colX + 1, my, 14, 12, l.programId(), iconSet());
             final String label = trim(l.label(), (colW - 20) / 6);
             if (i < boldCount) {
-                g.drawString(font, Component.literal(label).withStyle(net.minecraft.ChatFormatting.BOLD),
+                g.drawString(font, Component.literal(label).withStyle(ChatFormatting.BOLD),
                         colX + 18, my + 4, textColor, false);
             } else {
                 g.drawString(font, label, colX + 18, my + 4, textColor, false);
@@ -4429,29 +4479,29 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     private static final int TASK_MENU_W = 118;
 
     /** A program's own menu, from its panel entry: the same component every menu on this desktop is. */
-    private final dev.jstech.core.client.gui.component.ContextMenu taskMenu =
-            new dev.jstech.core.client.gui.component.ContextMenu(TASK_MENU_W, DESK_CTX_ITEM_H);
+    private final ContextMenu taskMenu =
+            new ContextMenu(TASK_MENU_W, DESK_CTX_ITEM_H);
 
     /** The program whose windows the panel's popup shows, or null while none is up. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private String taskPopupKey;
     /** Whether the popup was opened by a click, so it stays until one puts it away. */
     private boolean taskPopupSticky;
     /** The program the cursor has been resting on, and since when. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private String taskHoverKey;
     private long taskHoverSince;
     /** When the cursor left the popup and its program, or zero while it is on one of them. */
     private long taskPopupLeftAt;
 
     /** Opens a program's menu over its panel entry: what can be done with its windows and its pin. */
-    private void openTaskMenu(final dev.jstech.computers.gui.TaskbarGroups.Entry entry, final int atX, final int tbY) {
+    private void openTaskMenu(final TaskbarGroups.Entry entry, final int atX, final int tbY) {
         final String key = entry.key();
-        final List<dev.jstech.core.client.gui.component.ContextMenu.Item> items = new ArrayList<>();
+        final List<ContextMenu.Item> items = new ArrayList<>();
         final boolean pinnable = pinsOnPanel() && pinnableLauncher(key) != null;
         if (entry.open()) {
             final boolean several = entry.windows() > 1;
-            final boolean minimized = entry.state() == dev.jstech.computers.gui.TaskbarGroups.State.MINIMIZED;
+            final boolean minimized = entry.state() == TaskbarGroups.State.MINIMIZED;
             items.add(deskItem(several ? "Restore all" : minimized ? "Restore" : "Bring to front", true,
                     () -> restoreGroup(key)));
             items.add(deskItem(several ? "Minimize all" : "Minimize", true, () -> minimizeGroup(key)));
@@ -4466,15 +4516,15 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             }
             items.add(deskItem("Minimize others", true, () -> minimizeOthers(key)));
             if (pinnable) {
-                items.add(dev.jstech.core.client.gui.component.ContextMenu.Item.separator());
+                items.add(ContextMenu.Item.separator());
                 items.add(deskItem(entry.pinned() ? "Unpin from taskbar" : "Pin to taskbar", true, () -> togglePin(key)));
             }
-            items.add(dev.jstech.core.client.gui.component.ContextMenu.Item.separator());
+            items.add(ContextMenu.Item.separator());
             items.add(deskItem(several ? "Close all windows" : "Close", true, () -> closeGroup(key)));
         } else {
             items.add(deskItem("Open", true, () -> runLauncherCalled(key)));
             if (pinnable) {
-                items.add(dev.jstech.core.client.gui.component.ContextMenu.Item.separator());
+                items.add(ContextMenu.Item.separator());
                 items.add(deskItem("Unpin from taskbar", true, () -> togglePin(key)));
             }
         }
@@ -4500,7 +4550,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** The dialog up over {@code w}, or null: while there is one, {@code w} takes nothing itself. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private DesktopWindow dialogOf(final DesktopWindow w) {
         for (final DesktopWindow other : windows) {
             if (other.owner() == w) {
@@ -4649,14 +4699,14 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** The popup's box, desktop-local {x, y, w, h}, or null while none is up. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private int[] popupRect(final int sw, final int tbY) {
         final List<DesktopWindow> list = popupWindows();
         if (list.isEmpty()) {
             return null;
         }
         final TaskStrip strip = taskStrip(sw);
-        final int index = dev.jstech.computers.gui.TaskbarGroups.indexOf(strip.entries(), taskPopupKey);
+        final int index = TaskbarGroups.indexOf(strip.entries(), taskPopupKey);
         if (index < 0) {
             return null;
         }
@@ -4677,7 +4727,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** The popup's {@code index}-th card or row, desktop-local {x, y, w, h}, or null. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private int[] popupItemRect(final int index) {
         final int[] r = popupRect(sw(), sh() - TASKBAR_H);
         if (r == null || index < 0 || index >= popupWindows().size()) {
@@ -4690,7 +4740,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** The close box of the popup's {@code index}-th window: on a card its corner, on a list the last row. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private int[] popupCloseRect(final int index) {
         final int[] item = popupItemRect(index);
         if (item == null) {
@@ -4703,7 +4753,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** The "Close all" row of a list popup, or null on a modern panel. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private int[] popupCloseAllRect() {
         final int[] r = popupRect(sw(), sh() - TASKBAR_H);
         if (r == null || thumbnailPopups()) {
@@ -4712,7 +4762,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         return new int[] {r[0] + 2, r[1] + 2 + popupWindows().size() * LIST_ROW_H + 5, r[2] - 4, LIST_ROW_H};
     }
 
-    private static boolean inRect(final double mx, final double my, @org.jetbrains.annotations.Nullable final int[] r) {
+    private static boolean inRect(final double mx, final double my, @Nullable final int[] r) {
         return r != null && mx >= r[0] && mx < r[0] + r[2] && my >= r[1] && my < r[1] + r[3];
     }
 
@@ -4776,7 +4826,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         }
         skin.windowShadow(g, r[0], r[1], r[2], r[3]);
         skin.panel(g, r[0], r[1], r[2], r[3]);
-        final net.minecraft.resources.ResourceLocation icon = programIdForLabel(taskPopupKey);
+        final ResourceLocation icon = programIdForLabel(taskPopupKey);
         if (thumbnailPopups()) {
             for (int i = 0; i < list.size(); i++) {
                 final DesktopWindow w = list.get(i);
@@ -4791,8 +4841,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                 ProgramIcons.draw(g, card[0] + 2, card[1] + 1, 8, 8, icon, iconSet());
                 final int titleW = CARD_W - 12 - (hot ? 10 : 2);
                 final String title = font.plainSubstrByWidth(w.app().title(),
-                        dev.jstech.core.client.gui.component.Texts.smallFits(titleW));
-                dev.jstech.core.client.gui.component.Texts.small(g, font, title, card[0] + 12, card[1] + 2, skin.text());
+                        Texts.smallFits(titleW));
+                Texts.small(g, font, title, card[0] + 12, card[1] + 2, skin.text());
                 if (hot) {
                     final int[] close = popupCloseRect(i);
                     if (close != null) {
@@ -4891,7 +4941,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** A click on a panel entry: the program's menu, its window, or the popup listing several of them. */
-    private void clickTaskEntry(final dev.jstech.computers.gui.TaskbarGroups.Entry entry, final int atX,
+    private void clickTaskEntry(final TaskbarGroups.Entry entry, final int atX,
                                 final int button, final int tbY) {
         if (button == 1) {
             openTaskMenu(entry, atX, tbY);
@@ -4906,7 +4956,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         }
         if (entry.windows() == 1) {
             final List<DesktopWindow> mine = groupWindows(entry.key());
-            if (entry.state() == dev.jstech.computers.gui.TaskbarGroups.State.ACTIVE) {
+            if (entry.state() == TaskbarGroups.State.ACTIVE) {
                 minimizeGroup(entry.key());
             } else if (mine.get(0).minimized()) {
                 restoreGroup(entry.key());
@@ -4986,7 +5036,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                  * hand its windows back to a machine whose session has just ended.
                  */
                 powerCycling = true;
-                net.neoforged.neoforge.network.PacketDistributor.sendToServer(
+                PacketDistributor.sendToServer(
                         new dev.jstech.computers.operation.payload
                                 .MachinePowerPayload(host, monitorPos, i));
                 powerOpen = false;
@@ -5282,7 +5332,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             return true;
         }
         // Windows 11 keeps Start with the centered group, so it has its own hit test.
-        if (is(dev.jstech.computers.os.PanelStyle.FRAMES_11) && mouseY >= tbY) {
+        if (is(PanelStyle.FRAMES_11) && mouseY >= tbY) {
             final int startX = win11StartX(sw());
             if (mouseX >= startX && mouseX < startX + WIN11_SLOT) {
                 toggleStart();
@@ -5391,7 +5441,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                      * local storage (Local tab), like MC-NET, instead of the vanilla quick-move between slots.
                      */
                     if (!ni.hasPopup() && hasShiftDown()) {
-                        final net.minecraft.world.inventory.Slot slot = slotUnderMouse(mouseXAbs, mouseYAbs);
+                        final Slot slot = slotUnderMouse(mouseXAbs, mouseYAbs);
                         final int target = ni.shiftInsertTarget();
                         if (slot != null && slot.hasItem() && target >= 0) {
                             PacketDistributor.sendToServer(
@@ -5422,7 +5472,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                             PacketDistributor.sendToServer(
                                     new dev.jstech.computers.operation.payload
                                             .NiDepositPayload(host, monitorPos, target, button == 0,
-                                            button == 1 ? ni.cursorDepositEntry(lx, ly) : java.util.Optional.empty()));
+                                            button == 1 ? ni.cursorDepositEntry(lx, ly) : Optional.empty()));
                             return true;
                         }
                     }
@@ -5604,7 +5654,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
          * Frames 11 edge snapping: releasing a dragged window against a screen edge tiles it (top = maximize,
          * left/right = that half). A modern-OS gesture the earlier editions do not have.
          */
-        if (dragging != null && (is(dev.jstech.computers.os.PanelStyle.FRAMES_11) || linuxDesktop())) {
+        if (dragging != null && (is(PanelStyle.FRAMES_11) || linuxDesktop())) {
             final int lx = (int) (lx(mouseX));
             final int ly = (int) (ly(mouseY));
             final int top = workTop();
@@ -5753,7 +5803,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** The topmost non-minimized window, which receives keyboard and scroll input. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private DesktopWindow frontWindow() {
         for (int i = windows.size() - 1; i >= 0; i--) {
             if (!windows.get(i).minimized()) {
@@ -5788,7 +5838,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * The topmost open Files-explorer window whose body is under a desktop-local point, or {@code null}.
      * Cross-window drag uses this to decide which open folder a dragged file should move into.
      */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private DesktopWindow explorerWindowAt(final double mx, final double my) {
         for (int i = windows.size() - 1; i >= 0; i--) {
             final DesktopWindow w = windows.get(i);
@@ -5807,7 +5857,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * inventory slots. Returns {@code null} when the front window is another app or the desktop is bare, which
      * is exactly when the inventory slots must go inert.
      */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private DesktopWindow frontNetworkInteractorWindow() {
         final DesktopWindow w = frontWindow();
         return w != null && w.app() instanceof IInventoryBandApp ? w : null;
@@ -5898,7 +5948,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             if (!slot.isActive()) {
                 continue;
             }
-            final net.minecraft.world.item.ItemStack stack = slot.getItem();
+            final ItemStack stack = slot.getItem();
             if (!stack.isEmpty()) {
                 DesktopItems.item(g, stack, slot.x, slot.y);
                 DesktopItems.count(g, font, stack, slot.x, slot.y);
@@ -5915,8 +5965,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * hit-test ({@code slot.x + leftPos}, a 16x16 cell, active only), so a click there can be handed to the
      * vanilla container which expects the same geometry.
      */
-    @org.jetbrains.annotations.Nullable
-    private net.minecraft.world.inventory.Slot slotUnderMouse(final double absX, final double absY) {
+    @Nullable
+    private Slot slotUnderMouse(final double absX, final double absY) {
         if (!menu.slotsActive()) {
             return null;
         }
@@ -5935,7 +5985,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
 
     /** Draws the carried (cursor) stack at the mouse, above everything. Desktop-local coordinates. */
     private void renderCarried(final GuiGraphics g, final int lmx, final int lmy) {
-        final net.minecraft.world.item.ItemStack carried = menu.getCarried();
+        final ItemStack carried = menu.getCarried();
         if (!carried.isEmpty()) {
             g.renderItem(carried, lmx - 8, lmy - 8);
             g.renderItemDecorations(font, carried, lmx - 8, lmy - 8);
@@ -5943,7 +5993,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** The first window one of the machine's Σ# programs has open on this desktop, or null. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public SigmaWindowApp programWindow() {
         for (final DesktopWindow open : windows) {
             if (open.app() instanceof SigmaWindowApp app) {
@@ -5954,7 +6004,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** Opens, redraws or takes away a window one of the machine's Σ# programs has. */
-    private void acceptProgramWindow(final dev.jstech.computers.operation.payload.UiWindowPayload payload) {
+    private void acceptProgramWindow(final UiWindowPayload payload) {
         if (!payload.hostPos().equals(host)) {
             return;
         }
@@ -5992,7 +6042,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     }
 
     /** Recreates a program from its launcher key, for restoring persisted windows. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     /** Opens that program's window on this desktop, if this machine has it at all. */
     private void startProgramById(final String path) {
         for (final Launcher l : launchers) {
@@ -6020,7 +6070,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
          * A program the desktop shows no launcher for (the Task Manager) still opens, and still comes back
          * with the session, so it is looked up by the same label the panel calls it.
          */
-        final dev.jstech.computers.os.ProgramSpec spec = chrome == null ? null : chrome.programFor(key);
+        final ProgramSpec spec = chrome == null ? null : chrome.programFor(key);
         final ProgramClient.IDesktopAppFactory factory = spec == null ? null : ProgramClient.factory(spec.id());
         return factory == null ? null : factory.create(host, monitorPos, desktopId);
     }
@@ -6030,8 +6080,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * destination and has no launcher of its own, exactly as on the desktops this imitates.
      */
     private void openTaskManager() {
-        final dev.jstech.computers.os.ProgramSpec spec = dev.jstech.computers.os.OsRegistry
-                .getProgram(dev.jstech.computers.program.Programs.TASK_MANAGER);
+        final ProgramSpec spec = OsRegistry
+                .getProgram(Programs.TASK_MANAGER);
         if (spec == null) {
             return;
         }
@@ -6072,7 +6122,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     /** Word-wraps a label to {@code maxW} pixels, capped at three lines, for a selected desktop icon. */
     /** The width, in font units, one line of an icon label may run to before it wraps. */
     private static int labelFontWidth() {
-        return dev.jstech.core.client.gui.component.Texts.smallFits(LABEL_W);
+        return Texts.smallFits(LABEL_W);
     }
 
     /**
@@ -6081,7 +6131,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * its cell by a pixel gets cut for no reason.
      */
     private String fitLabelLine(final String s) {
-        if (dev.jstech.core.client.gui.component.Texts.smallWidth(font, s) <= LABEL_W) {
+        if (Texts.smallWidth(font, s) <= LABEL_W) {
             return s;
         }
         final int units = Math.max(1, labelFontWidth() - font.width("..."));
@@ -6091,15 +6141,15 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
     /** An icon's label line, centred under the icon and drawn in the small text, with the theme's shadow. */
     private void drawIconLabel(final GuiGraphics g, final String line, final int cx, final int y,
                                final int color, final boolean shadow) {
-        final int lx = cx - dev.jstech.core.client.gui.component.Texts.smallWidth(font, line) / 2;
+        final int lx = cx - Texts.smallWidth(font, line) / 2;
         if (shadow) {
-            dev.jstech.core.client.gui.component.Texts.small(g, font, line, lx + 1, y + 1, 0xFF000000);
+            Texts.small(g, font, line, lx + 1, y + 1, 0xFF000000);
         }
-        dev.jstech.core.client.gui.component.Texts.small(g, font, line, lx, y, color);
+        Texts.small(g, font, line, lx, y, color);
     }
 
-    private java.util.List<String> wrapLabel(final String s, final int maxW) {
-        final java.util.List<String> out = new java.util.ArrayList<>();
+    private List<String> wrapLabel(final String s, final int maxW) {
+        final List<String> out = new ArrayList<>();
         StringBuilder cur = new StringBuilder();
         for (final String word : s.split(" ")) {
             final String cand = cur.length() == 0 ? word : cur + " " + word;
@@ -6135,14 +6185,14 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
          */
         if (!powerCycling) {
             PacketDistributor.sendToServer(
-                    dev.jstech.computers.operation.payload.DesktopWindowsPayload.of(
+                    DesktopWindowsPayload.of(
                             host, snapshotWindows()));
         }
         /*
          * The programs' insides stay in this client as a convenience, keyed by the same launcher keys the
          * machine's layout uses, so a restored window picks its session back up when it is still here.
          */
-        final java.util.Map<String, IDesktopApp> apps = new java.util.LinkedHashMap<>();
+        final Map<String, IDesktopApp> apps = new LinkedHashMap<>();
         for (final DesktopWindow w : windows) {
             if (w.dialog()) {
                 w.app().onClosed(); // a question left unanswered is not kept; the program is
@@ -6176,12 +6226,12 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * (C-b in Emacs above all), so the desktop always reports one: an invisible box that draws nothing,
      * keeps nothing and answers no key, there only to say that typing is spoken for.
      */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private KeySink keySink;
 
     @Override
-    @org.jetbrains.annotations.Nullable
-    public net.minecraft.client.gui.components.events.GuiEventListener getFocused() {
+    @Nullable
+    public GuiEventListener getFocused() {
         if (this.font == null) {
             return super.getFocused();
         }
@@ -6191,9 +6241,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         return this.keySink;
     }
 
-    private static final class KeySink extends net.minecraft.client.gui.components.EditBox {
+    private static final class KeySink extends EditBox {
 
-        KeySink(final net.minecraft.client.gui.Font font) {
+        KeySink(final Font font) {
             super(font, 0, 0, 1, 1, Component.empty());
             this.setVisible(true);
             this.setEditable(true);

@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.computers.os.fs.FileOpeners;
+
 /**
  * Public API surface for third-party addons to extend J's Computers with custom kernels,
  * operating systems, and programs.
@@ -59,7 +61,7 @@ public final class JSComputersAPI {
      * @param programId the program's id path, as registered with {@link #registerProgram}
      */
     public static void registerFileOpener(String programId) {
-        dev.jstech.computers.os.fs.FileOpeners.registerAnyFileOpener(programId);
+        FileOpeners.registerAnyFileOpener(programId);
     }
 
     /**

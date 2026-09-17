@@ -13,6 +13,8 @@ import dev.jstech.computers.storage.StorageKey;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
@@ -189,7 +191,7 @@ public record CraftingPattern(List<ItemStack> grid, ItemStack result, List<Strin
             if (a.isEmpty() || ItemStack.isSameItem(a, b)) {
                 continue;
             }
-            final net.minecraft.tags.TagKey<net.minecraft.world.item.Item> tag = AnyTagResolver.tagOf(anyTags.get(i));
+            final TagKey<Item> tag = AnyTagResolver.tagOf(anyTags.get(i));
             if (tag == null || !a.is(tag) || !b.is(tag)) {
                 return false;
             }

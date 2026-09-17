@@ -7,14 +7,19 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.iql.IIqlCondition;
 import dev.jstech.computers.program.iql.IqlOperation;
 import dev.jstech.computers.program.iql.IqlParseResult;
 import dev.jstech.computers.program.iql.IqlParser;
 import dev.jstech.computers.program.iql.IqlVerb;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.function.Function;
 
 /**
  * The shell verbs that ship with the mod. Each is a small, self-contained {@link ICliCommand}; add-ons add their own the same way. They talk only to the {@link ICliComputer} facade, so the whole set is exercised in unit tests against a fake computer.
@@ -26,7 +31,7 @@ public final class BuiltinCommands {
 
     /** Every built-in command, in the order they appear in {@code help}. */
     /** The DOS-only verbs: everything else in {@link #all()} is shared with the POSIX shell. */
-    private static final java.util.Set<String> DOS_ONLY = java.util.Set.of(
+    private static final Set<String> DOS_ONLY = Set.of(
             "cls", "dir", "cd", "type", "del", "write", "run", "mkdir", "rmdir", "copy", "move", "ren",
             // The POSIX shell formats with mkfs and removes packages through its package manager.
             "format", "uninstall",
@@ -38,7 +43,7 @@ public final class BuiltinCommands {
 
     /** The verbs both shell families share (network, programs, config, maintenance); no DOS file verbs. */
     public static List<ICliCommand> shared() {
-        final List<ICliCommand> out = new java.util.ArrayList<>();
+        final List<ICliCommand> out = new ArrayList<>();
         for (final ICliCommand command : all()) {
             if (!DOS_ONLY.contains(command.name())) {
                 out.add(command);
@@ -48,7 +53,7 @@ public final class BuiltinCommands {
     }
 
     public static List<ICliCommand> all() {
-        final List<ICliCommand> out = new java.util.ArrayList<>(base());
+        final List<ICliCommand> out = new ArrayList<>(base());
         /*
          * The toolchain's verbs come from the toolchain, so adding one there is enough to have it. Two
          * lists of the same commands is two lists that eventually disagree, and the one that loses is
@@ -377,7 +382,7 @@ public final class BuiltinCommands {
         }
 
         private static void requireName(final CliContext ctx,
-                                        final java.util.function.Function<String, ICliComputer.OpResult> action) {
+                                        final Function<String, ICliComputer.OpResult> action) {
             if (ctx.argCount() < 2) {
                 ctx.out().error("pckmgr: this verb needs a package name");
                 return;
@@ -912,8 +917,8 @@ public final class BuiltinCommands {
 
         @Override public void run(final CliContext ctx) {
             boolean any = false;
-            for (final dev.jstech.computers.os.ProgramSpec program
-                    : dev.jstech.computers.program.Programs.all()) {
+            for (final ProgramSpec program
+                    : Programs.all()) {
                 if (program.preinstalled()) {
                     continue;
                 }

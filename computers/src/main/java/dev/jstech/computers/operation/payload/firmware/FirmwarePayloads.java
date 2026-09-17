@@ -7,6 +7,22 @@
  */
 package dev.jstech.computers.operation.payload.firmware;
 
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.IBootMenuScreenOpener;
+import dev.jstech.computers.block.IInstallDoneScreenOpener;
+import dev.jstech.computers.block.IInstallProgressScreenOpener;
+import dev.jstech.computers.block.IPostScreenOpener;
+import dev.jstech.computers.block.ISystemBootScreenOpener;
+import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.blockentity.MonitorBlockEntity;
+import dev.jstech.computers.client.BootSequenceScreen;
+import dev.jstech.computers.client.FirmwareScreen;
+import dev.jstech.computers.item.CpuItem;
+import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.item.GpuItem;
+import dev.jstech.computers.item.HardwareTooltip;
+import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
@@ -22,17 +38,28 @@ import dev.jstech.computers.operation.payload.PostCompletePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwarePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
+import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.InstallMode;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsGating;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.computers.os.install.Installers;
+import dev.jstech.computers.os.install.OsInstallJob;
+import dev.jstech.computers.os.install.SetupTiming;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.program.install.LiveInstallState;
+import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.Locale;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.jetbrains.annotations.Nullable;
@@ -64,8 +91,8 @@ public final class FirmwarePayloads {
         registrar.playToClient(FirmwareStatePayload.TYPE, FirmwareStatePayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) -> {
                     // The same hardware state feeds the setup screen and the POST's device-detection lines.
-                    dev.jstech.computers.client.FirmwareScreen.accept(payload);
-                    dev.jstech.computers.client.BootSequenceScreen.accept(payload);
+                    FirmwareScreen.accept(payload);
+                    BootSequenceScreen.accept(payload);
                 }));
         ComputerAccess.accept(registrar, FirmwareActionPayload.TYPE, FirmwareActionPayload.STREAM_CODEC,
                 ComputerAccess.screen(FirmwareActionPayload::hostPos), FirmwarePayloads::handleFirmwareAction);
@@ -80,35 +107,35 @@ public final class FirmwarePayloads {
          */
         registrar.playToClient(OpenPostPayload.TYPE, OpenPostPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
-                        dev.jstech.computers.block.IPostScreenOpener.Holder.open(
+                        IPostScreenOpener.Holder.open(
                                 payload.host(), payload.monitorPos(),
-                                dev.jstech.computers.os.FirmwareKind.byId(payload.firmwareKind()),
+                                FirmwareKind.byId(payload.firmwareKind()),
                                 payload.name(), payload.remainingTicks())));
         // A finished installer still waiting for its reboot: the monitor comes back to that prompt.
         registrar.playToClient(OpenInstallDonePayload.TYPE, OpenInstallDonePayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
-                        dev.jstech.computers.block.IInstallDoneScreenOpener.Holder.open(
+                        IInstallDoneScreenOpener.Holder.open(
                                 payload.host(), payload.monitorPos(),
-                                dev.jstech.computers.os.FirmwareKind.byId(payload.firmwareKind()),
+                                FirmwareKind.byId(payload.firmwareKind()),
                                 payload.osName(), payload.targetLabel(), payload.targetSlot(), payload.failure())));
         // The boot manager: the monitor joins the machine where it stands, with what is left of its wait.
         registrar.playToClient(OpenBootMenuPayload.TYPE, OpenBootMenuPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
-                        dev.jstech.computers.block.IBootMenuScreenOpener.Holder.open(
+                        IBootMenuScreenOpener.Holder.open(
                                 payload.hostPos(), payload.monitorPos(), payload.menu(),
                                 payload.remainingTicks())));
         // The system coming up: the monitor joins it where the machine has got to.
         registrar.playToClient(OpenSystemBootPayload.TYPE, OpenSystemBootPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
-                        dev.jstech.computers.block.ISystemBootScreenOpener.Holder.open(
+                        ISystemBootScreenOpener.Holder.open(
                                 payload.hostPos(), payload.monitorPos(), payload.sequence(),
                                 payload.remainingTicks(), payload.totalTicks(), payload.endsDark())));
         // A copy already under way: the monitor shows where the machine has got to, not a fresh one.
         registrar.playToClient(OsInstallProgressPayload.TYPE, OsInstallProgressPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
-                        dev.jstech.computers.block.IInstallProgressScreenOpener.Holder.open(
+                        IInstallProgressScreenOpener.Holder.open(
                                 payload.hostPos(), payload.monitorPos(),
-                                dev.jstech.computers.os.FirmwareKind.byId(payload.firmwareKind()),
+                                FirmwareKind.byId(payload.firmwareKind()),
                                 payload.osName(), payload.targetLabel(), payload.ticksLeft(),
                                 payload.ticksTotal())));
         ComputerAccess.accept(registrar, PostCompletePayload.TYPE, PostCompletePayload.STREAM_CODEC,
@@ -128,12 +155,12 @@ public final class FirmwarePayloads {
         final HardwareEra era = computer.displayEra() != null ? computer.displayEra() : HardwareEra.STANDARD;
         final List<FirmwareStatePayload.Entry> entries = new ArrayList<>();
         for (int i = 0; i < computer.diskSlots(); i++) {
-            final net.minecraft.world.item.ItemStack disk = computer.diskInSlot(i);
-            if (!(disk.getItem() instanceof dev.jstech.computers.item.DiskItem)) {
+            final ItemStack disk = computer.diskInSlot(i);
+            if (!(disk.getItem() instanceof DiskItem)) {
                 continue;
             }
-            final net.minecraft.resources.ResourceLocation osId =
-                    disk.get(dev.jstech.computers.ComputingModule.SYSTEM_OS.get());
+            final ResourceLocation osId =
+                    disk.get(ComputingModule.SYSTEM_OS.get());
             final OsDef os = osId == null ? null : OsRegistry.getOs(osId);
             entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_DISK, i,
                     os == null ? "" : os.id().toString(),
@@ -145,8 +172,8 @@ public final class FirmwarePayloads {
             if (!(level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader)) {
                 continue;
             }
-            final String drive = reader.driveType().name().toLowerCase(java.util.Locale.ROOT).replace('_', ' ');
-            final net.minecraft.world.item.ItemStack media = reader.mediaSlot().getStackInSlot(0);
+            final String drive = reader.driveType().name().toLowerCase(Locale.ROOT).replace('_', ' ');
+            final ItemStack media = reader.mediaSlot().getStackInSlot(0);
             if (media.isEmpty()) {
                 entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, endpoint, "",
                         "(no medium)", drive, false, -1));
@@ -162,7 +189,7 @@ public final class FirmwarePayloads {
             final boolean eraOk = OsGating.canInstall(os.minEra(), era);
             entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, endpoint,
                     os.id().toString(),
-                    os.displayName() + (os.installMode() == dev.jstech.computers.os.InstallMode.GUIDED
+                    os.displayName() + (os.installMode() == InstallMode.GUIDED
                             ? " installer" : " (live)"),
                     drive + (eraOk ? "" : " - " + eraName(os.minEra()) + " era or newer"), eraOk,
                     os.installMode().id()));
@@ -180,7 +207,7 @@ public final class FirmwarePayloads {
      */
     private static FirmwareStatePayload.Machine machineOf(final ServerLevel level, final IOsHost computer,
                                                           final BlockPos pos) {
-        if (!(computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine)) {
+        if (!(computer instanceof AbstractComputerBlockEntity machine)) {
             return FirmwareStatePayload.Machine.NONE;
         }
         final HardwareEra era = computer.displayEra();
@@ -189,24 +216,24 @@ public final class FirmwarePayloads {
         String cpuName = "";
         String boardName = "";
         String gpuName = "";
-        final net.neoforged.neoforge.items.ItemStackHandler hardware = machine.getHardware();
+        final ItemStackHandler hardware = machine.getHardware();
         for (int i = 0; i < hardware.getSlots(); i++) {
             final ItemStack part = hardware.getStackInSlot(i);
             if (part.isEmpty()) {
                 continue;
             }
-            if (part.getItem() instanceof dev.jstech.computers.item.CpuItem && cpuName.isEmpty()) {
+            if (part.getItem() instanceof CpuItem && cpuName.isEmpty()) {
                 cpuName = part.getHoverName().getString();
-            } else if (part.getItem() instanceof dev.jstech.computers.item.MotherboardItem) {
+            } else if (part.getItem() instanceof MotherboardItem) {
                 boardName = part.getHoverName().getString();
-            } else if (part.getItem() instanceof dev.jstech.computers.item.GpuItem && gpuName.isEmpty()) {
+            } else if (part.getItem() instanceof GpuItem && gpuName.isEmpty()) {
                 gpuName = part.getHoverName().getString();
             }
         }
         int monitors = 0;
         for (final long endpoint : computer.linkedEndpoints()) {
             if (level.getBlockEntity(BlockPos.of(endpoint))
-                    instanceof dev.jstech.computers.blockentity.MonitorBlockEntity) {
+                    instanceof MonitorBlockEntity) {
                 monitors++;
             }
         }
@@ -217,7 +244,7 @@ public final class FirmwarePayloads {
                 cpu == null ? "" : cpu.architecture().name(), cpu == null ? 0 : cpu.architecture().bits(),
                 boardName, (int) Math.min(Integer.MAX_VALUE, computer.ramTotalMb()),
                 build == null ? 0 : build.rams().size(), machine.boardRamSlots(), gpuName, monitors,
-                machine.maxEndpoints(), era == null ? "" : dev.jstech.computers.item.HardwareTooltip.label(era));
+                machine.maxEndpoints(), era == null ? "" : HardwareTooltip.label(era));
     }
 
     /**
@@ -226,7 +253,7 @@ public final class FirmwarePayloads {
      * simply has no storage page.
      */
     private static FirmwareStatePayload.RaidInfo raidInfoOf(
-            final ServerLevel level, final dev.jstech.computers.os.IOsHost computer) {
+            final ServerLevel level, final IOsHost computer) {
         if (!(computer instanceof dev.jstech.computers.blockentity
                 .ServerRackBlockEntity rack)) {
             return FirmwareStatePayload.RaidInfo.ABSENT;
@@ -237,14 +264,14 @@ public final class FirmwarePayloads {
         }
         final List<Long> sizes = new ArrayList<>();
         for (final ItemStack drive : rack.claimedDriveStacks(slot)) {
-            if (drive.getItem() instanceof dev.jstech.computers.item.DiskItem disk) {
+            if (drive.getItem() instanceof DiskItem disk) {
                 sizes.add(disk.spec().capacityItems());
             }
         }
-        final List<Long> capacities = new ArrayList<>(dev.jstech.computers.rack.RaidMode.values().length);
-        for (final var mode : dev.jstech.computers.rack.RaidMode.values()) {
+        final List<Long> capacities = new ArrayList<>(RaidMode.values().length);
+        for (final var mode : RaidMode.values()) {
             // NONE presents the drives as they are; the others present the array they would form.
-            capacities.add(mode == dev.jstech.computers.rack.RaidMode.NONE
+            capacities.add(mode == RaidMode.NONE
                     ? sizes.stream().mapToLong(Long::longValue).sum()
                     : mode.usableCapacity(sizes));
         }
@@ -268,23 +295,23 @@ public final class FirmwarePayloads {
                      * has to run, and left the session fixed on whatever it was before.
                      */
                     computer.setNeedsPost(true);
-                    dev.jstech.computers.block.MonitorBlock.openPost(
+                    MonitorBlock.openPost(
                             player, level, payload.monitorPos(), payload.hostPos());
                     return;
                 }
             }
             case FirmwareActionPayload.ACTION_HOLD_BOOT_MENU -> {
-                if (computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine) {
+                if (computer instanceof AbstractComputerBlockEntity machine) {
                     machine.holdBootMenu();
                 }
                 return;
             }
             case FirmwareActionPayload.ACTION_OPEN_SETUP -> {
                 // Leaving the menu for the setup: the machine is no longer on its way anywhere until it is told.
-                if (computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine) {
+                if (computer instanceof AbstractComputerBlockEntity machine) {
                     machine.holdBootMenu();
                 }
-                dev.jstech.computers.block.MonitorBlock.openFirmware(
+                MonitorBlock.openFirmware(
                         player, level, payload.monitorPos(), payload.hostPos());
                 return;
             }
@@ -294,7 +321,7 @@ public final class FirmwarePayloads {
                  * already tested itself, so this hands straight over rather than starting again.
                  */
                 computer.setPendingInstallSlot(IOsHost.NO_PENDING_INSTALL);
-                if (computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine) {
+                if (computer instanceof AbstractComputerBlockEntity machine) {
                     machine.setBootOnce((int) payload.ref());
                     /*
                      * Chosen at the boot manager, the system still has to come up: the machine leaves the menu and
@@ -306,13 +333,13 @@ public final class FirmwarePayloads {
                         return;
                     }
                 }
-                dev.jstech.computers.block.MonitorBlock.openBootTarget(
+                MonitorBlock.openBootTarget(
                         player, level, payload.monitorPos(), payload.hostPos());
                 return;
             }
             case FirmwareActionPayload.ACTION_SET_BOOT -> computer.setBootDiskSlot((int) payload.ref());
             case FirmwareActionPayload.ACTION_RAID_MODE -> {
-                final var mode = dev.jstech.computers.rack.RaidMode.find((int) payload.ref());
+                final var mode = RaidMode.find((int) payload.ref());
                 if (computer instanceof dev.jstech.computers.blockentity
                         .ServerRackBlockEntity rack && mode != null) {
                     rack.setRaidMode(rack.soleComputerSlot(), mode);
@@ -322,7 +349,7 @@ public final class FirmwarePayloads {
             case FirmwareActionPayload.ACTION_INSTALL -> {
                 final String failure = beginInstall(level, computer, payload.ref(), payload.target());
                 final HardwareEra era = computer.displayEra();
-                final int kind = dev.jstech.computers.os.FirmwareKind
+                final int kind = FirmwareKind
                         .forEra(era != null ? era : HardwareEra.STANDARD).id();
                 final int slot = payload.target();
                 final String target = slot < 0 ? "the default disk" : "Disk " + slot;
@@ -333,12 +360,12 @@ public final class FirmwarePayloads {
                             payload.monitorPos(), kind, "", target, slot, failure));
                     return;
                 }
-                final dev.jstech.computers.blockentity.AbstractComputerBlockEntity machine =
-                        computer instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity m
+                final AbstractComputerBlockEntity machine =
+                        computer instanceof AbstractComputerBlockEntity m
                                 ? m : null;
-                final dev.jstech.computers.os.install.InstallerFlow flow =
+                final InstallerFlow flow =
                         machine == null ? null : machine.installer();
-                final dev.jstech.computers.os.install.OsInstallJob job =
+                final OsInstallJob job =
                         machine == null ? null : machine.installing();
                 if (flow != null) {
                     // The machine is in its installer; the screen is sent the page it opens on.
@@ -360,20 +387,20 @@ public final class FirmwarePayloads {
                         && reader.insertedKind() == MediaKind.OS_INSTALL && reader.insertedPayload() != null) {
                     final OsDef os = OsRegistry.getOs(reader.insertedPayload());
                     if (os != null && os.installMode()
-                            != dev.jstech.computers.os.InstallMode.GUIDED) {
+                            != InstallMode.GUIDED) {
                         // A live medium: boot its shell and let the player install the system by hand.
                         computer.console().startLiveInstall(os.id().getPath().equals("arch")
-                                ? dev.jstech.computers.program.install.LiveInstallState.Distro.ARCH
-                                : dev.jstech.computers.program.install.LiveInstallState.Distro.GENTOO);
+                                ? LiveInstallState.Distro.ARCH
+                                : LiveInstallState.Distro.GENTOO);
                         computer.setChanged();
-                        dev.jstech.computers.block.MonitorBlock.openBootTarget(
+                        MonitorBlock.openBootTarget(
                                 player, level, payload.monitorPos(), payload.hostPos());
                         return;
                     } else {
                         final int target = payload.target() >= 0 ? payload.target() : computer.defaultInstallSlot();
                         if (installOsFromReader(level, computer, payload.ref(), target)) {
                             computer.setBootDiskSlot(target);
-                            dev.jstech.computers.block.MonitorBlock.openBootTarget(
+                            MonitorBlock.openBootTarget(
                                     player, level, payload.monitorPos(), payload.hostPos());
                             return;
                         }
@@ -398,7 +425,7 @@ public final class FirmwarePayloads {
 
     /** A system by the name a person reads, or its id when no mod has brought one under it. */
     private static String nameOfSystem(final String osId) {
-        final OsDef def = OsRegistry.getOs(net.minecraft.resources.ResourceLocation.tryParse(osId));
+        final OsDef def = OsRegistry.getOs(ResourceLocation.tryParse(osId));
         return def != null ? def.displayName() : osId;
     }
 
@@ -443,7 +470,7 @@ public final class FirmwarePayloads {
              * A live/source medium (Arch, Gentoo) never one-click installs: it must be BOOTED and the
              * system put on the disk by hand through its shell. Only guided installers land here.
              */
-            if (def.installMode() != dev.jstech.computers.os.InstallMode.GUIDED) {
+            if (def.installMode() != InstallMode.GUIDED) {
                 failure = def.displayName() + " is put on the disk by hand from its own shell: boot the medium instead.";
                 continue;
             }
@@ -469,17 +496,17 @@ public final class FirmwarePayloads {
              * chooses one, and a disk that is full can be erased on the way. What still stops it before it
              * starts is a machine with no disk at all, which has nothing to offer.
              */
-            final int eraFactor = dev.jstech.computers.os.install.SetupTiming.eraFactor(hostEra);
-            final int copyTicks = dev.jstech.computers.os.install.SetupTiming.ticks(
+            final int eraFactor = SetupTiming.eraFactor(hostEra);
+            final int copyTicks = SetupTiming.ticks(
                     def.footprintMb(), reader.insertedFormat(), false, eraFactor);
-            final dev.jstech.computers.os.install.InstallerFlow flow =
-                    dev.jstech.computers.os.install.Installers.beginning(machine, level, def, copyTicks);
+            final InstallerFlow flow =
+                    Installers.beginning(machine, level, def, copyTicks);
             if (flow.disks().isEmpty()) {
                 return noRoom;
             }
             flow.select(targetSlot);
             machine.setInstaller(flow);
-            machine.setInstalling(new dev.jstech.computers.os.install.OsInstallJob(def.id().toString(),
+            machine.setInstalling(new OsInstallJob(def.id().toString(),
                     flow.targetSlot(), endpoint, flow.ticksTotal(), flow.ticksTotal()));
             return null;
         }
@@ -488,7 +515,7 @@ public final class FirmwarePayloads {
 
     /** The era as the firmware names it to the player: "Vintage", "Legacy", "Standard" ... */
     private static String eraName(final HardwareEra era) {
-        final String lower = era.name().toLowerCase(java.util.Locale.ROOT);
+        final String lower = era.name().toLowerCase(Locale.ROOT);
         return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
     }
 
@@ -497,7 +524,7 @@ public final class FirmwarePayloads {
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost) {
             // Leave whatever screen the request came from (the desktop or the terminal) and enter setup.
             player.closeContainer();
-            dev.jstech.computers.block.MonitorBlock.openFirmware(
+            MonitorBlock.openFirmware(
                     player, level, payload.monitorPos(), payload.hostPos());
         }
     }
@@ -518,10 +545,10 @@ public final class FirmwarePayloads {
          */
         computer.setBootedDesktopId(computer.installedDesktopId());
         if (payload.enterSetup()) {
-            dev.jstech.computers.block.MonitorBlock.openFirmware(
+            MonitorBlock.openFirmware(
                     player, level, payload.monitorPos(), payload.hostPos());
         } else {
-            dev.jstech.computers.block.MonitorBlock.openBootTarget(
+            MonitorBlock.openBootTarget(
                     player, level, payload.monitorPos(), payload.hostPos());
         }
     }
@@ -570,7 +597,7 @@ public final class FirmwarePayloads {
             if (reader.insertedKind() != MediaKind.OS_INSTALL) {
                 continue;
             }
-            final net.minecraft.resources.ResourceLocation osId = reader.insertedPayload();
+            final ResourceLocation osId = reader.insertedPayload();
             if (osId == null) {
                 continue;
             }
@@ -582,7 +609,7 @@ public final class FirmwarePayloads {
                 continue;
             }
             // Live/source media (Arch, Gentoo) install only by hand through their booted shell.
-            if (def.installMode() != dev.jstech.computers.os.InstallMode.GUIDED) {
+            if (def.installMode() != InstallMode.GUIDED) {
                 continue;
             }
             // installOs checks the footprint against free storage; false means it did not fit.

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os.install;
 
+import dev.jstech.computers.operation.payload.OpenInstallerPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
@@ -154,7 +155,7 @@ public final class OsInstallRunner {
         ScreenSessions.eachWatcher(level, pos, (player, monitor) -> {
             ScreenSessions.opened(player, monitor, pos);
             PacketDistributor.sendToPlayer(player,
-                    dev.jstech.computers.operation.payload.OpenInstallerPayload.of(pos, monitor, flow, done));
+                    OpenInstallerPayload.of(pos, monitor, flow, done));
         });
     }
 

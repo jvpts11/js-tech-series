@@ -7,19 +7,35 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.machine.MachineListing;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
+import dev.jstech.computers.operation.payload.FolderContentPayload;
 import dev.jstech.computers.operation.payload.RequestDiskFilesPayload;
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
+import dev.jstech.computers.operation.payload.RequestFolderContentPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.os.edit.CodeRuns;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.os.edit.ProblemReport;
+import dev.jstech.computers.sigma.SigmaFrontEnd;
+import dev.jstech.computers.sigma.SourceFile;
+import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.logic.TextDocument;
 import dev.jstech.core.language.IProgrammingLanguage;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -90,13 +106,13 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
     private String folder = HOME;
 
     /** What every folder the workspace has looked into holds, by folder, files and subfolders alike. */
-    private final java.util.Map<String, List<DiskFilesPayload.WireFile>> listings = new java.util.LinkedHashMap<>();
+    private final Map<String, List<DiskFilesPayload.WireFile>> listings = new LinkedHashMap<>();
 
     /** The subfolders the player has opened up in a tree, by path. */
-    private final java.util.Set<String> expanded = new java.util.LinkedHashSet<>();
+    private final Set<String> expanded = new LinkedHashSet<>();
 
     /** Folders still to be asked for, one at a time, since one listing is waited for at once. */
-    private final java.util.ArrayDeque<String> toList = new java.util.ArrayDeque<>();
+    private final ArrayDeque<String> toList = new ArrayDeque<>();
 
     public CodeWorkspace(final BlockPos host) {
         this.host = host;
@@ -246,7 +262,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
     }
 
     /** The files still to open, one after the other, and the one to end on. */
-    private final java.util.ArrayDeque<String> toOpen = new java.util.ArrayDeque<>();
+    private final ArrayDeque<String> toOpen = new ArrayDeque<>();
     private String endOn = "";
 
     /**
@@ -436,7 +452,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
     public static boolean isListing(final String path) {
         final int dot = path.lastIndexOf('.');
         return dot >= 0 && dot < path.length() - 1
-                && dev.jstech.computers.machine.MachineListing.claims(path.substring(dot + 1));
+                && MachineListing.claims(path.substring(dot + 1));
     }
 
     /** The rows of a file, coloured as a listing or by whichever language owns it. */
@@ -555,9 +571,9 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
     }
 
     /** The text of every file on the disk the surveys have read, by path, for compiling beside an open one. */
-    private final java.util.Map<String, String> folderTexts = new java.util.LinkedHashMap<>();
+    private final Map<String, String> folderTexts = new LinkedHashMap<>();
     /** The folders whose files have been asked for, so a folder is read once and not on every keystroke. */
-    private final java.util.Set<String> surveyed = new java.util.HashSet<>();
+    private final Set<String> surveyed = new HashSet<>();
 
     /**
      * The other sources in {@code doc}'s folder that its language reads, for an editor asking what the
@@ -575,7 +591,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
     private List<IProgrammingLanguage.SourceText> siblingsOf(final Doc doc, final IProgrammingLanguage language) {
         final String dir = dirOf(doc.path);
         final List<IProgrammingLanguage.SourceText> out = new ArrayList<>();
-        final java.util.Set<String> seen = new java.util.HashSet<>();
+        final Set<String> seen = new HashSet<>();
         seen.add(doc.path);
         for (final Doc other : this.docs) {
             if (other != doc && dirOf(other.path).equals(dir) && sourceLanguageOf(other.path) == language
@@ -583,7 +599,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
                 out.add(new IProgrammingLanguage.SourceText(other.name(), other.area.text()));
             }
         }
-        for (final java.util.Map.Entry<String, String> entry : this.folderTexts.entrySet()) {
+        for (final Map.Entry<String, String> entry : this.folderTexts.entrySet()) {
             if (dirOf(entry.getKey()).equals(dir) && sourceLanguageOf(entry.getKey()) == language
                     && seen.add(entry.getKey())) {
                 out.add(new IProgrammingLanguage.SourceText(ProblemReport.nameOf(entry.getKey()), entry.getValue()));
@@ -618,8 +634,8 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
     }
 
     /** What the compiler says when a class leaves an interface's method out, with the three names in it. */
-    private static final java.util.regex.Pattern MISSING_MEMBER =
-            java.util.regex.Pattern.compile("'([^']+)' says it is a '([^']+)' but does not have '([^']+)'");
+    private static final Pattern MISSING_MEMBER =
+            Pattern.compile("'([^']+)' says it is a '([^']+)' but does not have '([^']+)'");
 
     /**
      * Writes into {@code doc} every method its classes promised an interface and left out, the way
@@ -630,14 +646,14 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
      * class's closing brace, at the class's own depth.
      */
     public boolean implementInterface(final Doc doc) {
-        final java.util.Map<Integer, List<String>> stubsByClassLine = new java.util.LinkedHashMap<>();
-        final java.util.Map<Integer, String> indentByClassLine = new java.util.HashMap<>();
+        final Map<Integer, List<String>> stubsByClassLine = new LinkedHashMap<>();
+        final Map<Integer, String> indentByClassLine = new HashMap<>();
         final TextDocument text = doc.area.document();
         for (final IProgrammingLanguage.Complaint complaint : doc.complaints) {
             if (!"S3018".equals(complaint.code())) {
                 continue;
             }
-            final java.util.regex.Matcher m = MISSING_MEMBER.matcher(complaint.message());
+            final Matcher m = MISSING_MEMBER.matcher(complaint.message());
             if (!m.find()) {
                 continue;
             }
@@ -656,7 +672,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         }
         // Later classes first, so writing into one does not move the lines of the ones above it.
         final List<Integer> lines = new ArrayList<>(stubsByClassLine.keySet());
-        lines.sort(java.util.Collections.reverseOrder());
+        lines.sort(Collections.reverseOrder());
         for (final int classLine : lines) {
             final int closing = closingBraceLine(text, classLine);
             if (closing < 0) {
@@ -709,11 +725,11 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         String returnType = "void";
         String parameters = "";
         if (!face.equals("IScript")) {
-            final dev.jstech.computers.sigma.ast.IDecl.MethodDecl declared = declaredMethod(face, member);
+            final IDecl.MethodDecl declared = declaredMethod(face, member);
             if (declared != null) {
                 returnType = declared.returnType().describe();
                 final StringBuilder params = new StringBuilder();
-                for (final dev.jstech.computers.sigma.ast.IDecl.Parameter p : declared.parameters()) {
+                for (final IDecl.Parameter p : declared.parameters()) {
                     params.append(params.isEmpty() ? "" : ", ").append(p.outward() ? "out " : "")
                             .append(p.type().describe()).append(' ').append(p.name());
                 }
@@ -732,14 +748,14 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
     }
 
     /** The declaration of {@code face}'s method described as {@code member}, in any open file, or null. */
-    private dev.jstech.computers.sigma.ast.IDecl.MethodDecl declaredMethod(final String face, final String member) {
+    private IDecl.MethodDecl declaredMethod(final String face, final String member) {
         for (final Doc open : this.docs) {
-            final dev.jstech.computers.sigma.SigmaFrontEnd.Result parsed = dev.jstech.computers.sigma.SigmaFrontEnd
-                    .parse(new dev.jstech.computers.sigma.SourceFile(open.name(), open.area.text()));
-            for (final dev.jstech.computers.sigma.ast.IDecl.ITypeDecl type : parsed.unit().types()) {
-                if (type instanceof dev.jstech.computers.sigma.ast.IDecl.InterfaceDecl declared
+            final SigmaFrontEnd.Result parsed = SigmaFrontEnd
+                    .parse(new SourceFile(open.name(), open.area.text()));
+            for (final IDecl.ITypeDecl type : parsed.unit().types()) {
+                if (type instanceof IDecl.InterfaceDecl declared
                         && declared.name().equals(face)) {
-                    for (final dev.jstech.computers.sigma.ast.IDecl.MethodDecl method : declared.methods()) {
+                    for (final IDecl.MethodDecl method : declared.methods()) {
                         final StringBuilder described = new StringBuilder(method.name()).append('(');
                         for (int i = 0; i < method.parameters().size(); i++) {
                             described.append(i > 0 ? ", " : "").append(method.parameters().get(i).type().describe());
@@ -778,8 +794,8 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
     /* What is wrong with the whole folder, not just with what is open */
 
     /** What the compiler said about every program on the disk, the last time they were all read. */
-    private final java.util.Map<String, List<IProgrammingLanguage.Complaint>> folderComplaints =
-            new java.util.LinkedHashMap<>();
+    private final Map<String, List<IProgrammingLanguage.Complaint>> folderComplaints =
+            new LinkedHashMap<>();
 
     /** Whether the next survey's outcome is announced in the status, as a survey somebody asked for is. */
     private boolean announceSurvey;
@@ -795,7 +811,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         this.surveyed.add(dir);
         CodeFileReplies.expectFolder(this, dir);
         PacketDistributor.sendToServer(
-                new dev.jstech.computers.operation.payload.RequestFolderContentPayload(
+                new RequestFolderContentPayload(
                         this.host, dir, ".sgs"));
     }
 
@@ -854,7 +870,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
     }
 
     @Override
-    public void onFolder(final dev.jstech.computers.operation.payload.FolderContentPayload folder) {
+    public void onFolder(final FolderContentPayload folder) {
         this.folderComplaints.clear();
         this.folderTexts.keySet().removeIf(path -> dirOf(path).equals(folder.dir()));
         for (final var file : folder.files()) {

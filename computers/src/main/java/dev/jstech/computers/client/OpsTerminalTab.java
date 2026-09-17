@@ -9,6 +9,7 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import java.util.ArrayList;
 import net.minecraft.client.gui.GuiGraphics;
 
 import java.util.List;
@@ -26,7 +27,7 @@ final class OpsTerminalTab extends AbstractTerminalTab {
     /** The live operations followed by the recent log, so a craft in flight shows the moment it starts, not
      *  only once it has finished. Live ones come first; their status (PROCESSING/PENDING) tells them apart. */
     private List<OperationRecord> ops() {
-        final List<OperationRecord> out = new java.util.ArrayList<>(menu.activeOps());
+        final List<OperationRecord> out = new ArrayList<>(menu.activeOps());
         out.addAll(menu.operationsLog());
         return out;
     }

@@ -8,6 +8,7 @@
 package dev.jstech.computers.block.part;
 
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.computers.storage.ChemicalBridges;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
 import net.minecraft.core.Direction;
@@ -163,7 +164,7 @@ public abstract sealed class AbstractBusPart implements ICablePart permits Impor
         return FluidUtil.getFluidContained(stack)
                 .filter(f -> !f.isEmpty())
                 .map(StorageKey::of)
-                .or(() -> dev.jstech.computers.storage.ChemicalBridges.chemicalOf(stack)
+                .or(() -> ChemicalBridges.chemicalOf(stack)
                         .map(StorageKey::chemical))
                 .orElseGet(() -> StorageKey.of(stack));
     }

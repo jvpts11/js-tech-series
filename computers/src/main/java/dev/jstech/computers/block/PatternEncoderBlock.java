@@ -11,7 +11,10 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
+import dev.jstech.computers.menu.PatternEncoderMenu;
+import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
 import dev.jstech.core.tier.HardwareEra;
@@ -28,16 +31,21 @@ import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -50,7 +58,7 @@ public class PatternEncoderBlock extends HorizontalDirectionalBlock implements E
 
     public static final MapCodec<PatternEncoderBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(),
-            dev.jstech.core.id.StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(b -> b.era)
+            StableCodecs.byName(HardwareEra.class).fieldOf("era").forGetter(b -> b.era)
     ).apply(i, PatternEncoderBlock::new));
 
     private final HardwareEra era;
@@ -88,8 +96,8 @@ public class PatternEncoderBlock extends HorizontalDirectionalBlock implements E
 
     /** The body is one model drawn by the block entity; the block itself paints nothing over it. */
     @Override
-    protected net.minecraft.world.level.block.RenderShape getRenderShape(final BlockState state) {
-        return net.minecraft.world.level.block.RenderShape.ENTITYBLOCK_ANIMATED;
+    protected RenderShape getRenderShape(final BlockState state) {
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     /*
@@ -97,10 +105,10 @@ public class PatternEncoderBlock extends HorizontalDirectionalBlock implements E
      * stand on beyond the block itself.
      */
     @Override
-    protected net.minecraft.world.phys.shapes.VoxelShape getShape(
-            final BlockState state, final net.minecraft.world.level.BlockGetter level, final BlockPos pos,
-            final net.minecraft.world.phys.shapes.CollisionContext context) {
-        return net.minecraft.world.phys.shapes.Shapes.block();
+    protected VoxelShape getShape(
+            final BlockState state, final BlockGetter level, final BlockPos pos,
+            final CollisionContext context) {
+        return Shapes.block();
     }
 
     @Override
@@ -148,7 +156,7 @@ public class PatternEncoderBlock extends HorizontalDirectionalBlock implements E
 
     /** What to tell a player whose disc the bay refused. */
     private String refusal(final ItemStack held) {
-        if (held.getItem() instanceof dev.jstech.computers.os.media.FormattedMediaItem fmt
+        if (held.getItem() instanceof FormattedMediaItem fmt
                 && !fmt.writable()) {
             return "That disc is read-only and cannot be written.";
         }
@@ -177,7 +185,7 @@ public class PatternEncoderBlock extends HorizontalDirectionalBlock implements E
             }
             serverPlayer.openMenu(
                     new SimpleMenuProvider(
-                            (id, inventory, p) -> new dev.jstech.computers.menu.PatternEncoderMenu(
+                            (id, inventory, p) -> new PatternEncoderMenu(
                                     id, inventory, encoder),
                             Component.translatable(getDescriptionId())),
                     buf -> buf.writeBlockPos(pos));

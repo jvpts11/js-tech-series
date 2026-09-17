@@ -11,6 +11,7 @@ import dev.jstech.computers.datacenter.LoadBalanceMode;
 import dev.jstech.computers.menu.ServerRouterMenu;
 import dev.jstech.computers.operation.payload.RenameServerRouterPayload;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -110,7 +111,7 @@ public final class ServerRouterScreen extends AbstractContainerScreen<ServerRout
         for (int i = 0; i < count; i++) {
             final int ry = ROW_Y0 + i * ROW_PITCH;
             final Direction face = menu.sectionFace(i);
-            JsTechTheme.textS(g, font, face == null ? "?" : face.getName().toUpperCase(java.util.Locale.ROOT),
+            JsTechTheme.textS(g, font, face == null ? "?" : face.getName().toUpperCase(Locale.ROOT),
                     10, ry + 3, JsTechTheme.text());
             JsTechTheme.textS(g, font, menu.sectionRacks(i) + "R · " + menu.sectionServers(i) + "S",
                     40, ry + 3, JsTechTheme.dim());

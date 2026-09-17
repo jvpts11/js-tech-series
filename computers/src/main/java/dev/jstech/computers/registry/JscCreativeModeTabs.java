@@ -8,13 +8,20 @@
 package dev.jstech.computers.registry;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.os.OsBootstrap;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.media.InstallMedia;
+import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -29,8 +36,8 @@ public final class JscCreativeModeTabs {
     }
 
     /** The blank medium item of a physical format, to stamp an installer onto. */
-    private static net.minecraft.world.item.Item mediumFor(
-            final dev.jstech.computers.os.media.MediaFormat format) {
+    private static Item mediumFor(
+            final MediaFormat format) {
         return switch (format) {
             case FLOPPY -> ComputingModule.FLOPPY_DISK.get();
             case CD -> ComputingModule.CD_ROM.get();
@@ -94,10 +101,10 @@ public final class JscCreativeModeTabs {
                          * The medium follows the software's era through one rule (InstallMedia): Vintage on
                          * a floppy, Legacy on a CD, a Standard system on a bootable flash drive.
                          */
-                        for (final dev.jstech.computers.os.OsDef os
-                                : dev.jstech.computers.os.OsBootstrap.builtinOses()) {
+                        for (final OsDef os
+                                : OsBootstrap.builtinOses()) {
                             final ItemStack disc = new ItemStack(mediumFor(
-                                    dev.jstech.computers.os.media.InstallMedia.forSystem(os.minEra())));
+                                    InstallMedia.forSystem(os.minEra())));
                             MediaItem.setKind(disc, MediaKind.OS_INSTALL);
                             MediaItem.setPayload(disc, os.id());
                             output.accept(disc);
@@ -107,13 +114,13 @@ public final class JscCreativeModeTabs {
                          * the program was written in: a Standard application on a DVD, a Standard service on
                          * a flash drive. Size never decides, so a small server daemon is no longer a floppy.
                          */
-                        for (final dev.jstech.computers.os.ProgramSpec program
-                                : dev.jstech.computers.os.OsBootstrap.builtinPrograms()) {
+                        for (final ProgramSpec program
+                                : OsBootstrap.builtinPrograms()) {
                             if (!program.installable()) {
                                 continue;
                             }
                             final ItemStack disc = new ItemStack(mediumFor(
-                                    dev.jstech.computers.os.media.InstallMedia.forProgram(
+                                    InstallMedia.forProgram(
                                             program.era(), program.kind())));
                             MediaItem.setKind(disc, MediaKind.PROGRAM_INSTALL);
                             MediaItem.setPayload(disc, program.id());
@@ -174,8 +181,8 @@ public final class JscCreativeModeTabs {
                          * Per-era hardware catalog, ordered Vintage to Singularity so the progression
                          * reads cleanly in the tab.
                          */
-                        for (final net.minecraft.world.item.Item hardware
-                                : dev.jstech.computers.HardwareItems.creativeOrder()) {
+                        for (final Item hardware
+                                : HardwareItems.creativeOrder()) {
                             output.accept(hardware);
                         }
                     })

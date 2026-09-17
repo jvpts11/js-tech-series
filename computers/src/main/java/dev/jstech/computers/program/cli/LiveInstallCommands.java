@@ -9,6 +9,7 @@ package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.program.install.LiveInstallState;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,7 +35,7 @@ public final class LiveInstallCommands {
             "grub-install", "grub-mkconfig", "passwd", "exit", "reboot", "help"};
 
     public static List<ICliCommand> all() {
-        final List<ICliCommand> out = new java.util.ArrayList<>();
+        final List<ICliCommand> out = new ArrayList<>();
         for (final String verb : VERBS) {
             out.add(new LiveVerb(verb));
         }

@@ -10,12 +10,15 @@ package dev.jstech.computers.crafting;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.storage.StorageKey;
+import java.util.ArrayList;
+import java.util.function.Function;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 
 import java.util.List;
 import java.util.Optional;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * An ordered pipeline of stages, each either a bench {@link CraftingPattern} or a {@link ProcessingPattern}.
@@ -97,8 +100,8 @@ public record MultiStagePattern(List<Stage> stages, String name, String note) {
     }
 
     /** The same pipeline with every bench stage's tagged cells resolved by {@code chooser}. */
-    public MultiStagePattern resolved(final java.util.function.Function<String, net.minecraft.world.item.ItemStack> chooser) {
-        final List<Stage> out = new java.util.ArrayList<>(stages.size());
+    public MultiStagePattern resolved(final Function<String, ItemStack> chooser) {
+        final List<Stage> out = new ArrayList<>(stages.size());
         for (final Stage stage : stages) {
             out.add(stage.bench().isPresent() ? Stage.bench(stage.bench().get().resolved(chooser)) : stage);
         }

@@ -7,7 +7,9 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.program.install.LiveInstallState;
 import java.util.List;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * What a command reaches of the programs installed on a computer: which there are, installing one, and the manual
@@ -28,12 +30,12 @@ public interface ICliInstallation {
     }
 
     /** Whether the program with the given id is present on this computer (installed, or a service flag). */
-    default boolean hasProgram(final net.minecraft.resources.ResourceLocation id) {
+    default boolean hasProgram(final ResourceLocation id) {
         return false;
     }
 
     /** The live installation in progress on this computer, or null when it booted a real OS. */
-    default dev.jstech.computers.program.install.LiveInstallState liveInstall() {
+    default LiveInstallState liveInstall() {
         return null;
     }
 

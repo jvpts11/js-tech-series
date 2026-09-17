@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.gui.layout.ServerRackLayout;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.item.ServerItem;
@@ -19,7 +20,9 @@ import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.EraThemes;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.Locale;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -136,7 +139,7 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
 
     /** What this cabinet is called: a compute cabinet is not a server rack, and each era has its own name. */
     private String cabinetName() {
-        return title.getString().toUpperCase(java.util.Locale.ROOT);
+        return title.getString().toUpperCase(Locale.ROOT);
     }
 
     /** A raised face: vertical gradient, outline, and a light top edge. */
@@ -400,13 +403,13 @@ public class ServerRackScreen extends AbstractContainerScreen<ServerRackMenu> {
          * A chassis this cabinet does not seat says so the moment it is carried over a row, instead of
          * the slot silently refusing it, so the player learns which cabinet it belongs in before letting go.
          */
-        final net.minecraft.world.item.ItemStack carried = menu.getCarried();
-        final dev.jstech.computers.rack.RackChassis carriedChassis =
-                dev.jstech.computers.item.ServerItem.chassisOf(carried);
+        final ItemStack carried = menu.getCarried();
+        final RackChassis carriedChassis =
+                ServerItem.chassisOf(carried);
         final boolean refused = carriedChassis != null
-                && net.minecraft.client.Minecraft.getInstance().level != null
-                && net.minecraft.client.Minecraft.getInstance().level.getBlockEntity(menu.rackPos())
-                        instanceof dev.jstech.computers.blockentity.ServerRackBlockEntity rack
+                && Minecraft.getInstance().level != null
+                && Minecraft.getInstance().level.getBlockEntity(menu.rackPos())
+                        instanceof ServerRackBlockEntity rack
                 && !rack.acceptsChassis(carried);
         for (int row = 0; row < ROWS; row++) {
             final int top = ServerRackLayout.rowY(row);

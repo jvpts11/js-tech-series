@@ -7,6 +7,11 @@
  */
 package dev.jstech.computers.program;
 
+import dev.jstech.computers.os.install.SetupJob;
+import dev.jstech.computers.program.install.LiveInstallState;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -20,6 +25,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The per-computer state behind the Command Prompt: the command history (so it survives closing the prompt or the Monitor, and a world reload) and the set of programs the player has installed on this computer. Held on the host BlockEntity and saved with its NBT.
@@ -98,8 +104,8 @@ public final class ComputerConsoleState {
     }
 
     /** Every installed package whose recorded version is not {@code current}. */
-    public java.util.List<String> outdatedPackages(final String current) {
-        final java.util.List<String> out = new java.util.ArrayList<>();
+    public List<String> outdatedPackages(final String current) {
+        final List<String> out = new ArrayList<>();
         for (final String id : installed) {
             if (!current.equals(installedVersions.get(id))) {
                 out.add(id);
@@ -116,17 +122,17 @@ public final class ComputerConsoleState {
      * The program being set up right now, if any. One at a time: a machine installs one thing and
      * then the next, and a second request while one runs is told the machine is busy.
      */
-    @org.jetbrains.annotations.Nullable
-    private dev.jstech.computers.os.install.SetupJob setup;
+    @Nullable
+    private SetupJob setup;
 
     /** What the machine is setting up, or null when nothing. */
-    @org.jetbrains.annotations.Nullable
-    public dev.jstech.computers.os.install.SetupJob setup() {
+    @Nullable
+    public SetupJob setup() {
         return setup;
     }
 
     /** Starts a setup; the caller has already checked the machine can take the program. */
-    public void beginSetup(final dev.jstech.computers.os.install.SetupJob job) {
+    public void beginSetup(final SetupJob job) {
         this.setup = job;
     }
 
@@ -139,16 +145,16 @@ public final class ComputerConsoleState {
      * A live installation medium booted on this computer (the manual Arch / Gentoo install), until it reboots
      * into the installed system. Persisted so a half-done install survives a reload.
      */
-    private dev.jstech.computers.program.install.LiveInstallState liveInstall;
+    private LiveInstallState liveInstall;
 
     /** The live installation in progress, or null when the computer is not booted from a live medium. */
-    public dev.jstech.computers.program.install.LiveInstallState liveInstall() {
+    public LiveInstallState liveInstall() {
         return liveInstall;
     }
 
     /** Boots a live medium: starts a fresh manual installation of the given distribution. */
-    public void startLiveInstall(final dev.jstech.computers.program.install.LiveInstallState.Distro distro) {
-        this.liveInstall = new dev.jstech.computers.program.install.LiveInstallState(distro);
+    public void startLiveInstall(final LiveInstallState.Distro distro) {
+        this.liveInstall = new LiveInstallState(distro);
     }
 
     /** Ends the live session (the install completed, or the medium was abandoned). */
@@ -193,7 +199,7 @@ public final class ComputerConsoleState {
 
     /** The builds still compiling: program id to completion tick. */
     public Map<String, Long> pendingBuilds() {
-        return java.util.Collections.unmodifiableMap(pendingBuilds);
+        return Collections.unmodifiableMap(pendingBuilds);
     }
 
     /**
@@ -201,9 +207,9 @@ public final class ComputerConsoleState {
      * just finished (in start order). Each finished id is also queued for {@link #drainFinishedBuilds()},
      * so the shell can announce it on the player's next command even though the build settled silently.
      */
-    public java.util.List<String> settleBuilds(final long nowTick) {
-        final java.util.List<String> done = new java.util.ArrayList<>();
-        final java.util.Iterator<Map.Entry<String, Long>> it = pendingBuilds.entrySet().iterator();
+    public List<String> settleBuilds(final long nowTick) {
+        final List<String> done = new ArrayList<>();
+        final Iterator<Map.Entry<String, Long>> it = pendingBuilds.entrySet().iterator();
         while (it.hasNext()) {
             final Map.Entry<String, Long> e = it.next();
             if (e.getValue() <= nowTick) {
@@ -221,14 +227,14 @@ public final class ComputerConsoleState {
      * Builds that finished but have not been announced to the player yet (persisted, so a build that
      * completes while the world is unloaded is still reported the next time the shell is used).
      */
-    private final java.util.List<String> finishedBuilds = new java.util.ArrayList<>();
+    private final List<String> finishedBuilds = new ArrayList<>();
 
     /** Returns and clears the finished-but-unannounced build ids, in completion order. */
-    public java.util.List<String> drainFinishedBuilds() {
+    public List<String> drainFinishedBuilds() {
         if (finishedBuilds.isEmpty()) {
-            return java.util.List.of();
+            return List.of();
         }
-        final java.util.List<String> out = java.util.List.copyOf(finishedBuilds);
+        final List<String> out = List.copyOf(finishedBuilds);
         finishedBuilds.clear();
         return out;
     }
@@ -259,12 +265,12 @@ public final class ComputerConsoleState {
     private Long sshTarget;
 
     /** The packed position of the machine this session is connected to, or null when local. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public Long sshTarget() {
         return sshTarget;
     }
 
-    public void setSshTarget(@org.jetbrains.annotations.Nullable final Long packedPos) {
+    public void setSshTarget(@Nullable final Long packedPos) {
         this.sshTarget = packedPos;
     }
 
@@ -386,12 +392,12 @@ public final class ComputerConsoleState {
     private final Map<String, Community> community = new LinkedHashMap<>();
 
     /** Every player-written program installed here. */
-    public java.util.Collection<Community> community() {
-        return java.util.List.copyOf(community.values());
+    public Collection<Community> community() {
+        return List.copyOf(community.values());
     }
 
     /** One of them, or null. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public Community communityProgram(final String name) {
         return community.get(name);
     }
@@ -499,13 +505,13 @@ public final class ComputerConsoleState {
         // Always written, even empty: a machine whose player unpinned everything must not get the default back.
         final ListTag pinned = new ListTag();
         for (final String id : settings.pinned()) {
-            pinned.add(net.minecraft.nbt.StringTag.valueOf(id));
+            pinned.add(StringTag.valueOf(id));
         }
         s.put("Pinned", pinned);
         if (!settings.favourites().isEmpty()) {
             final ListTag favourites = new ListTag();
             for (final String id : settings.favourites()) {
-                favourites.add(net.minecraft.nbt.StringTag.valueOf(id));
+                favourites.add(StringTag.valueOf(id));
             }
             s.put("Favourites", favourites);
         }
@@ -560,7 +566,7 @@ public final class ComputerConsoleState {
         setup = null;
         if (tag.contains("Setup")) {
             final CompoundTag job = tag.getCompound("Setup");
-            setup = new dev.jstech.computers.os.install.SetupJob(job.getString("Program"), job.getString("Name"),
+            setup = new SetupJob(job.getString("Program"), job.getString("Name"),
                     job.getString("House"), job.getInt("SizeMb"), job.getString("Source"),
                     job.getBoolean("Removing"), job.getInt("Total"), job.getInt("Left"),
                     job.getString("Via"), job.getString("Package"));
@@ -580,7 +586,7 @@ public final class ComputerConsoleState {
             }
         }
         liveInstall = tag.contains("LiveInstall")
-                ? dev.jstech.computers.program.install.LiveInstallState.deserialize(
+                ? LiveInstallState.deserialize(
                         tag.getString("LiveInstall"))
                 : null;
         pendingBuilds.clear();
@@ -625,19 +631,19 @@ public final class ComputerConsoleState {
         settings.setTaskbarCentered(!s.contains("TaskbarCentered") || s.getBoolean("TaskbarCentered"));
         settings.setDarkMode(s.getBoolean("DarkMode"));
         if (s.contains("Pinned")) {
-            final java.util.List<String> pinned = new java.util.ArrayList<>();
-            for (final net.minecraft.nbt.Tag entry : s.getList("Pinned", net.minecraft.nbt.Tag.TAG_STRING)) {
+            final List<String> pinned = new ArrayList<>();
+            for (final Tag entry : s.getList("Pinned", Tag.TAG_STRING)) {
                 pinned.add(entry.getAsString());
             }
             settings.setPinned(pinned);
         }
-        final java.util.List<String> favourites = new java.util.ArrayList<>();
-        for (final net.minecraft.nbt.Tag entry : s.getList("Favourites", net.minecraft.nbt.Tag.TAG_STRING)) {
+        final List<String> favourites = new ArrayList<>();
+        for (final Tag entry : s.getList("Favourites", Tag.TAG_STRING)) {
             favourites.add(entry.getAsString());
         }
         settings.setFavourites(favourites);
-        final java.util.List<ComputerSettings.Share> shares = new java.util.ArrayList<>();
-        final ListTag sharesTag = s.getList("Shares", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        final List<ComputerSettings.Share> shares = new ArrayList<>();
+        final ListTag sharesTag = s.getList("Shares", Tag.TAG_COMPOUND);
         for (int i = 0; i < sharesTag.size(); i++) {
             final CompoundTag each = sharesTag.getCompound(i);
             shares.add(new ComputerSettings.Share(each.getString("Name"), each.getString("Path"),

@@ -14,6 +14,7 @@ import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.ILatencyScheduler;
+import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.server.level.ServerLevel;
@@ -34,7 +35,7 @@ public final class NetworkSelectOperation extends AbstractTransferOperation {
 
     /** The design default of the WAITING timeout; the live value comes from the balance config. */
     public static final int DEFAULT_WAIT_TIMEOUT_TICKS =
-            dev.jstech.core.operation.OperationBalance.DEFAULT_WAITING_TIMEOUT_TICKS;
+            OperationBalance.DEFAULT_WAITING_TIMEOUT_TICKS;
 
     private final IDataSink destination;
     private final String destinationLabel;
@@ -61,7 +62,7 @@ public final class NetworkSelectOperation extends AbstractTransferOperation {
                                   @Nullable final ILatencyScheduler scheduler,
                                   final Set<NodeUuid> sourceFilter) {
         this(level, network, key, demand, destination, destinationLabel, recordType, operationId, index,
-                scheduler, sourceFilter, dev.jstech.core.operation.OperationBalance.waitingTimeoutTicks());
+                scheduler, sourceFilter, OperationBalance.waitingTimeoutTicks());
     }
 
     public NetworkSelectOperation(final ServerLevel level, final NetworkUuid network, final StorageKey key,

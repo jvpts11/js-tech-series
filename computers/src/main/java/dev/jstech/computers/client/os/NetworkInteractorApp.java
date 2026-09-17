@@ -48,6 +48,7 @@ import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.gui.layout.DesktopZ;
 import dev.jstech.core.operation.OperationPriority;
+import java.util.function.Supplier;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -2484,9 +2485,9 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     /** A number readout drawn as a field: the quantity a dialog is about. */
     private final class QuantityBox extends UiComponent {
-        private final java.util.function.Supplier<String> text;
+        private final Supplier<String> text;
 
-        private QuantityBox(final java.util.function.Supplier<String> text) {
+        private QuantityBox(final Supplier<String> text) {
             this.text = text;
         }
 

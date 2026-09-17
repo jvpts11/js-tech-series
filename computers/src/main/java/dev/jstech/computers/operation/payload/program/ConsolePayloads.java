@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.operation.payload.program;
 
+import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.client.CommandPromptScreen;
+import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.CommandOutputPayload;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -14,10 +18,22 @@ import dev.jstech.computers.operation.payload.ConsoleInitPayload;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.RequestConsoleInitPayload;
 import dev.jstech.computers.operation.payload.RunCommandPayload;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.ShellFamily;
+import dev.jstech.computers.program.Programs;
+import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.CliCommands;
+import dev.jstech.computers.program.cli.CliStyle;
+import dev.jstech.computers.program.cli.SshTerminal;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -51,10 +67,10 @@ public final class ConsolePayloads {
 
     private static void handleRunCommand(final RunCommandPayload payload, final ServerPlayer player,
                                          final ServerLevel level) {
-        if (!(player.containerMenu instanceof dev.jstech.computers.menu.CommandPromptMenu menu)
+        if (!(player.containerMenu instanceof CommandPromptMenu menu)
                 || !menu.hostPos().equals(payload.hostPos())
                 || !(level.getBlockEntity(payload.hostPos())
-                        instanceof dev.jstech.computers.terminal.IComputerTerminalHost host)) {
+                        instanceof IComputerTerminalHost host)) {
             return;
         }
         // "run/open <program>" launches another installed program from the prompt.
@@ -71,25 +87,25 @@ public final class ConsolePayloads {
          * local terminal is only the window. Everything else (ssh itself, exit) stays local.
          */
         final var localComputer =
-                new dev.jstech.computers.program.ServerCliComputer(host, level);
+                new ServerCliComputer(host, level);
         var computer = localComputer;
-        final var session = dev.jstech.computers.program.cli.SshTerminal.targetOf(host, level, payload.line());
+        final var session = SshTerminal.targetOf(host, level, payload.line());
         if (session != null) {
-            computer = new dev.jstech.computers.program.ServerCliComputer(
+            computer = new ServerCliComputer(
                     session, level);
         }
         /*
          * The shell speaks the installed OS kernel's family (DOS verbs on MC-DOS/Frames, POSIX on Linux), or
          * the live installer's verbs while a live medium is booted.
          */
-        final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(
+        final var shell = CliCommands.shellFor(
                 computer, CLI_WIDTH);
         final var response = shell.run(payload.line(), computer);
         final List<CommandOutputPayload.WireLine> wire = new ArrayList<>(response.lines().size());
         for (final var cliLine : response.lines()) {
             wire.add(new CommandOutputPayload.WireLine(cliLine.text(), cliLine.style().id()));
         }
-        final String prompt = dev.jstech.computers.program.cli.SshTerminal.prompt(localComputer, computer);
+        final String prompt = SshTerminal.prompt(localComputer, computer);
         final var handOver = response.handOver();
         PacketDistributor.sendToPlayer(player, new CommandOutputPayload(response.clearScreen(), prompt, wire,
                 handOver == null ? "" : handOver.editor(),
@@ -97,7 +113,7 @@ public final class ConsolePayloads {
         if (computer.firmwareRebootRequested()) {
             // "reboot --firmware": leave the terminal and enter the boot manager on the same monitor.
             player.closeContainer();
-            dev.jstech.computers.block.MonitorBlock.openFirmware(
+            MonitorBlock.openFirmware(
                     player, level, menu.monitorPos(), payload.hostPos());
             return;
         }
@@ -107,26 +123,26 @@ public final class ConsolePayloads {
              * which whatever the boot target now is (a freshly installed OS included) comes up.
              */
             if (level.getBlockEntity(payload.hostPos())
-                    instanceof dev.jstech.computers.os.IOsHost be) {
+                    instanceof IOsHost be) {
                 be.setNeedsPost(true);
             }
             player.closeContainer();
-            dev.jstech.computers.block.MonitorBlock.openPost(
+            MonitorBlock.openPost(
                     player, level, menu.monitorPos(), payload.hostPos());
             return;
         }
         // Persist the typed line on the computer so the history survives closing the prompt or Monitor.
         if (host.console() != null && !payload.line().isBlank()) {
             host.console().pushHistory(payload.line().trim());
-            ((net.minecraft.world.level.block.entity.BlockEntity) host).setChanged();
+            ((BlockEntity) host).setChanged();
         }
     }
 
     static void launchProgram(final ServerPlayer player,
-            final dev.jstech.computers.terminal.IComputerTerminalHost host,
+            final IComputerTerminalHost host,
             final BlockPos monitorPos, final BlockPos hostPos, final String name) {
-        dev.jstech.computers.os.ProgramSpec program = null;
-        for (final var candidate : dev.jstech.computers.program.Programs.all()) {
+        ProgramSpec program = null;
+        for (final var candidate : Programs.all()) {
             if (candidate.commandName().equalsIgnoreCase(name)
                     || candidate.id().getPath().equalsIgnoreCase(name)
                     || candidate.id().toString().equalsIgnoreCase(name)) {
@@ -152,19 +168,19 @@ public final class ConsolePayloads {
         if (player.level() instanceof ServerLevel osLevel
                 && osLevel.getBlockEntity(hostPos) instanceof dev.jstech.computers.os
                         .IOsHost osComputer
-                && !dev.jstech.computers.os.OsRegistry.canRunProgram(
+                && !OsRegistry.canRunProgram(
                         osComputer.installedOsId(), program.id(),
                         osComputer.maxCpuMhz(), osComputer.totalVramMb())) {
             sendConsoleLine(player, program.commandName()
                     + " cannot run on this computer's OS or hardware", OperationRecord.STATUS_FAILED);
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+            player.displayClientMessage(Component.literal(
                     "The " + program.commandName() + " cannot run on this computer's OS or hardware."), false);
             return;
         }
-        if (program.id().equals(dev.jstech.computers.program.Programs.NMS)) {
+        if (program.id().equals(Programs.NMS)) {
             // The NMS is now a desktop window opened from its Frames desktop icon, not a server-side menu.
             sendConsoleLine(player, "open the NMS from its desktop icon on a Frames computer", -1);
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+            player.displayClientMessage(Component.literal(
                     "Open the NMS from its desktop icon."), false);
         } else {
             sendConsoleLine(player, "the " + program.commandName() + " is already open", -1);
@@ -173,10 +189,10 @@ public final class ConsolePayloads {
 
     /** One styled line back to the open Command Prompt (status -1 = dim, FAILED = red, else green). */
     private static void sendConsoleLine(final ServerPlayer player, final String text, final int status) {
-        final dev.jstech.computers.program.cli.CliStyle style = status == OperationRecord.STATUS_FAILED
-                ? dev.jstech.computers.program.cli.CliStyle.ERROR
-                : status < 0 ? dev.jstech.computers.program.cli.CliStyle.DIM
-                : dev.jstech.computers.program.cli.CliStyle.OK;
+        final CliStyle style = status == OperationRecord.STATUS_FAILED
+                ? CliStyle.ERROR
+                : status < 0 ? CliStyle.DIM
+                : CliStyle.OK;
         final List<CommandOutputPayload.WireLine> wire = new ArrayList<>();
         for (final String line : wrapToConsole(text)) {
             wire.add(new CommandOutputPayload.WireLine(line, style.id()));
@@ -205,16 +221,16 @@ public final class ConsolePayloads {
 
     private static void handleRequestConsoleInit(final RequestConsoleInitPayload payload, final ServerPlayer player,
                                                  final ServerLevel level) {
-        if (player.containerMenu instanceof dev.jstech.computers.menu.CommandPromptMenu menu
+        if (player.containerMenu instanceof CommandPromptMenu menu
                 && menu.hostPos().equals(payload.hostPos())
                 && level.getBlockEntity(payload.hostPos())
-                        instanceof dev.jstech.computers.terminal.IComputerTerminalHost host) {
+                        instanceof IComputerTerminalHost host) {
             sendConsoleInit(player, host);
         }
     }
 
     private static void sendConsoleInit(final ServerPlayer player,
-            final dev.jstech.computers.terminal.IComputerTerminalHost host) {
+            final IComputerTerminalHost host) {
         final var console = host.console();
         final List<String> history = console == null ? List.of() : console.history();
         final List<ConsoleInitPayload.WireCommand> commands = new ArrayList<>();
@@ -228,11 +244,11 @@ public final class ConsolePayloads {
          * (the cluster command outside a Cluster Management Computer) is no command here, and must not be
          * hinted as one.
          */
-        final var cli = host instanceof net.minecraft.world.level.block.entity.BlockEntity
-                ? new dev.jstech.computers.program.ServerCliComputer(host, player.serverLevel())
+        final var cli = host instanceof BlockEntity
+                ? new ServerCliComputer(host, player.serverLevel())
                 : null;
-        for (final var command : dev.jstech.computers.program.cli.CliCommands.commandsFor(
-                dev.jstech.computers.program.ServerCliComputer.shellFamilyOf(host), live)) {
+        for (final var command : CliCommands.commandsFor(
+                ServerCliComputer.shellFamilyOf(host), live)) {
             if (commands.size() >= ConsoleInitPayload.MAX_COMMANDS) {
                 break;
             }
@@ -250,14 +266,14 @@ public final class ConsolePayloads {
                 .IOsHost computer) {
             for (int i = 0; i < computer.diskSlots(); i++) {
                 if (computer.diskInSlot(i).getItem()
-                        instanceof dev.jstech.computers.item.DiskItem) {
+                        instanceof DiskItem) {
                     devices.add("sd" + (char) ('a' + i));
                 }
             }
-        } else if (dev.jstech.computers.program.ServerCliComputer.shellFamilyOf(host)
-                == dev.jstech.computers.os.ShellFamily.POSIX
+        } else if (ServerCliComputer.shellFamilyOf(host)
+                == ShellFamily.POSIX
                 && player.level() instanceof ServerLevel serverLevel) {
-            for (final var mount : new dev.jstech.computers.program.ServerCliComputer(
+            for (final var mount : new ServerCliComputer(
                     host, serverLevel).mounts()) {
                 if (devices.size() < ConsoleInitPayload.MAX_DEVICES && mount.ready()) {
                     devices.add(mount.device());
@@ -265,16 +281,16 @@ public final class ConsolePayloads {
             }
         }
         PacketDistributor.sendToPlayer(player, new ConsoleInitPayload(
-                ((net.minecraft.world.level.block.entity.BlockEntity) host).getBlockPos(),
+                ((BlockEntity) host).getBlockPos(),
                 List.copyOf(history), commands, devices));
     }
 
     private static void handleConsoleInit(final ConsoleInitPayload payload, final Player player) {
-        dev.jstech.computers.client.CommandPromptScreen.acceptInit(payload);
+        CommandPromptScreen.acceptInit(payload);
     }
 
     private static void handleCommandOutput(final CommandOutputPayload payload, final Player player) {
-        dev.jstech.computers.client.CommandPromptScreen.accept(payload);
+        CommandPromptScreen.accept(payload);
     }
 
 }

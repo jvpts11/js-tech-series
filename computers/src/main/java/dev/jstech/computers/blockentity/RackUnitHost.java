@@ -7,9 +7,14 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.crafting.PatternWorkbench;
+import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.tier.HardwareEra;
@@ -77,12 +82,12 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
 
     @Override
     @Nullable
-    public dev.jstech.computers.os.install.OsInstallJob installing() {
+    public OsInstallJob installing() {
         return rack.asUnit(row, rack::installing);
     }
 
     @Override
-    public void setInstalling(@Nullable final dev.jstech.computers.os.install.OsInstallJob job) {
+    public void setInstalling(@Nullable final OsInstallJob job) {
         rack.asUnit(row, () -> {
             rack.setInstalling(job);
             return null;
@@ -91,12 +96,12 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
 
     @Override
     @Nullable
-    public dev.jstech.computers.os.install.InstallerFlow installer() {
+    public InstallerFlow installer() {
         return rack.asUnit(row, rack::installer);
     }
 
     @Override
-    public void setInstaller(@Nullable final dev.jstech.computers.os.install.InstallerFlow flow) {
+    public void setInstaller(@Nullable final InstallerFlow flow) {
         rack.asUnit(row, () -> {
             rack.setInstaller(flow);
             return null;
@@ -155,13 +160,13 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
-    public dev.jstech.computers.os.boot.BootSequence bootSequence() {
+    public BootSequence bootSequence() {
         return rack.asUnit(row, rack::bootSequence);
     }
 
     @Override
     @Nullable
-    public dev.jstech.computers.hardware.ComputerBuild currentBuild() {
+    public ComputerBuild currentBuild() {
         return rack.asUnit(row, rack::currentBuild);
     }
 
@@ -372,7 +377,7 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
 
     @Override
     @Nullable
-    public dev.jstech.computers.crafting.PatternWorkbench studio() {
+    public PatternWorkbench studio() {
         return rack.asUnit(row, rack::studio);
     }
 

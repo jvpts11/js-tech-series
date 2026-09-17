@@ -7,7 +7,11 @@
  */
 package dev.jstech.core.multiblock;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -53,7 +57,7 @@ public final class MultiblockPattern {
     }
 
     public Map<Character, IBlockMatcher> mapping() {
-        return java.util.Collections.unmodifiableMap(mapping);
+        return Collections.unmodifiableMap(mapping);
     }
 
     public int controllerX() { return controllerX; }
@@ -73,7 +77,7 @@ public final class MultiblockPattern {
      */
     public static final class Builder {
         private final String name;
-        private final java.util.List<String[]> layers = new java.util.ArrayList<>();
+        private final List<String[]> layers = new ArrayList<>();
         private final Map<Character, IBlockMatcher> mapping = new HashMap<>();
 
         private Builder(String name) {
@@ -133,7 +137,7 @@ public final class MultiblockPattern {
             char[][][] grid = new char[sizeY][sizeZ][sizeX];
             int controllerX = -1, controllerY = -1, controllerZ = -1;
             int controllerCount = 0;
-            var unmappedChars = new java.util.HashSet<Character>();
+            var unmappedChars = new HashSet<Character>();
 
             for (int y = 0; y < sizeY; y++) {
                 String[] layer = layers.get(y);

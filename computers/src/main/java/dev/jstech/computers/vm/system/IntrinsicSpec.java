@@ -8,6 +8,7 @@
 package dev.jstech.computers.vm.system;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -40,7 +41,7 @@ public record IntrinsicSpec(MemberId id, String returns, boolean onTarget, Membe
         }
         if (kind != MemberKind.PURE && function != null) {
             throw new IllegalArgumentException(
-                    id.describe() + " is answered by its " + kind.name().toLowerCase(java.util.Locale.ROOT)
+                    id.describe() + " is answered by its " + kind.name().toLowerCase(Locale.ROOT)
                             + ", not by a function of the language");
         }
     }

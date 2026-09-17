@@ -7,23 +7,30 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
+import dev.jstech.computers.operation.payload.RequestFileContentPayload;
+import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.operation.payload.program.DesktopShellPayloads;
 import dev.jstech.computers.os.Branding;
+import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.client.gui.component.CommandLine;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.tier.HardwareEra;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
@@ -173,7 +180,7 @@ public final class ShellView extends Panel {
         @Override
         public void save(final String path, final String text) {
             PacketDistributor.sendToServer(
-                    new dev.jstech.computers.operation.payload.SaveFilePayload(
+                    new SaveFilePayload(
                             ShellView.this.host, path, text));
             FilesApps.diskChanged();
         }
@@ -194,7 +201,7 @@ public final class ShellView extends Panel {
         this.flavour = keys;
         CodeFileReplies.expectContent(this.opening, path);
         PacketDistributor.sendToServer(
-                new dev.jstech.computers.operation.payload.RequestFileContentPayload(this.host, path));
+                new RequestFileContentPayload(this.host, path));
     }
 
     /** Whether an editor has this terminal. */
@@ -365,7 +372,7 @@ public final class ShellView extends Panel {
         if (this.editor != null) {
             // The editor has the glass: no scrollback, no prompt, exactly as at a real terminal.
             this.editor.render(g, ctx.font(), x(), y(), width(), height(),
-                    dev.jstech.computers.os.edit.InkPalette.DARK);
+                    InkPalette.DARK);
             return;
         }
         final int ground = groundOf(this.osSkin);
@@ -414,7 +421,7 @@ public final class ShellView extends Panel {
             return this.editor.keyPressed(key, modifiers);
         }
         if (this.busy && key == GLFW.GLFW_KEY_C && ((modifiers & GLFW.GLFW_MOD_CONTROL) != 0
-                || net.minecraft.client.gui.screens.Screen.hasControlDown())) {
+                || Screen.hasControlDown())) {
             interrupt();
             return true;
         }
@@ -500,13 +507,13 @@ public final class ShellView extends Panel {
      * <p>Read off the machine on the client, the way the other screens here do it, and the middle generation when
      * the computer is not loaded, which only decides a year for a system nobody has heard of.
      */
-    private dev.jstech.core.tier.HardwareEra era() {
-        final net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+    private HardwareEra era() {
+        final Minecraft mc = Minecraft.getInstance();
         if (mc.level != null && mc.level.getBlockEntity(this.host)
-                instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity computer
+                instanceof AbstractComputerBlockEntity computer
                 && computer.displayEra() != null) {
             return computer.displayEra();
         }
-        return dev.jstech.core.tier.HardwareEra.STANDARD;
+        return HardwareEra.STANDARD;
     }
 }

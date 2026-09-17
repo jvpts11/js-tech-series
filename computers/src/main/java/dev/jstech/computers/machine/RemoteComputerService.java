@@ -8,6 +8,8 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
@@ -235,13 +237,13 @@ public final class RemoteComputerService {
         if (machine instanceof MainframeBlockEntity) {
             return "Mainframe";
         }
-        if (machine instanceof dev.jstech.computers.blockentity.CraftingComputerBlockEntity) {
+        if (machine instanceof CraftingComputerBlockEntity) {
             return "Crafting Computer";
         }
         if (machine instanceof PersonalComputerBlockEntity) {
             return "Personal Computer";
         }
-        if (machine instanceof dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity) {
+        if (machine instanceof ClusterManagementComputerBlockEntity) {
             return "Cluster Management Computer";
         }
         return "Computer";

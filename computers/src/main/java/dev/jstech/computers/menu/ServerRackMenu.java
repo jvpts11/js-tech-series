@@ -8,9 +8,18 @@
 package dev.jstech.computers.menu;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.gui.layout.ServerRackLayout;
+import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.item.RackGadgetItem;
+import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
+import dev.jstech.computers.rack.RaidMode;
+import dev.jstech.core.tier.HardwareEra;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -20,6 +29,7 @@ import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Menu for the Server Rack: one row per rack unit holding the server slot and the five front-panel
@@ -71,12 +81,12 @@ public class ServerRackMenu extends AbstractComputerMenu {
     }
 
     /** The cabinet's era, so its screen wears that decade's materials rather than one look for all three. */
-    public dev.jstech.core.tier.HardwareEra rackEra() {
+    public HardwareEra rackEra() {
         return rack.rackEra();
     }
 
     /** Whether this cabinet is a compute one, which its screen says instead of calling everything a rack. */
-    public dev.jstech.computers.rack.RackChassis.RackType rackType() {
+    public RackChassis.RackType rackType() {
         return rack.rackType();
     }
 
@@ -115,11 +125,11 @@ public class ServerRackMenu extends AbstractComputerMenu {
     }
 
     /** The mounted chassis, read from the synced server slots so the client agrees with the server. */
-    public java.util.List<RackLayout.Unit> mountedUnits() {
-        final java.util.List<RackLayout.Unit> mounted = new java.util.ArrayList<>();
+    public List<RackLayout.Unit> mountedUnits() {
+        final List<RackLayout.Unit> mounted = new ArrayList<>();
         for (int i = 0; i < RACK_SLOTS; i++) {
-            final dev.jstech.computers.rack.RackChassis chassis =
-                    dev.jstech.computers.item.ServerItem.chassisOf(serverInBay(i));
+            final RackChassis chassis =
+                    ServerItem.chassisOf(serverInBay(i));
             if (chassis != null) {
                 mounted.add(new RackLayout.Unit(i, chassis.heightU(),
                         chassis.driveSlots(), chassis.gadgetSlots()));
@@ -135,14 +145,14 @@ public class ServerRackMenu extends AbstractComputerMenu {
     // RAID readout, derived from the synced slots so the client can draw it
 
     /** The front-slot indices the unit topped at {@code topRow} claims with the given role. */
-    private java.util.List<Integer> claimedSlots(final int topRow, final RackLayout.SlotRole role) {
-        final dev.jstech.computers.rack.RackChassis chassis =
-                dev.jstech.computers.item.ServerItem.chassisOf(serverInBay(topRow));
-        final java.util.List<Integer> out = new java.util.ArrayList<>();
+    private List<Integer> claimedSlots(final int topRow, final RackLayout.SlotRole role) {
+        final RackChassis chassis =
+                ServerItem.chassisOf(serverInBay(topRow));
+        final List<Integer> out = new ArrayList<>();
         if (chassis == null) {
             return out;
         }
-        final java.util.List<RackLayout.Unit> mounted = mountedUnits();
+        final List<RackLayout.Unit> mounted = mountedUnits();
         for (int row = topRow; row < topRow + chassis.heightU() && row < RACK_SLOTS; row++) {
             for (int column = 0; column < RackLayout.SLOTS_PER_U; column++) {
                 if (LAYOUT.roleAt(row, column, mounted) == role) {
@@ -154,25 +164,25 @@ public class ServerRackMenu extends AbstractComputerMenu {
     }
 
     /** The RAID mode the unit topped at {@code topRow} runs. */
-    public dev.jstech.computers.rack.RaidMode raidModeAt(final int topRow) {
+    public RaidMode raidModeAt(final int topRow) {
         for (final int index : claimedSlots(topRow, RackLayout.SlotRole.GADGET)) {
             final ItemStack stack = frontSlotStack(index);
-            if (dev.jstech.computers.item.RackGadgetItem.kindOf(stack)
-                    == dev.jstech.computers.item.RackGadgetItem.Kind.RAID_CONTROLLER) {
-                return dev.jstech.computers.item.RackGadgetItem.raidMode(stack);
+            if (RackGadgetItem.kindOf(stack)
+                    == RackGadgetItem.Kind.RAID_CONTROLLER) {
+                return RackGadgetItem.raidMode(stack);
             }
         }
-        return dev.jstech.computers.rack.RaidMode.NONE;
+        return RaidMode.NONE;
     }
 
     /**
      * A short label for the unit's array state ({@code RAID5}, {@code RAID5 DEGRADED},
      * {@code RAID0 FAILED}), or null when the unit runs no array.
      */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public String raidLabel(final int topRow) {
-        final dev.jstech.computers.rack.RaidMode mode = raidModeAt(topRow);
-        if (mode == dev.jstech.computers.rack.RaidMode.NONE) {
+        final RaidMode mode = raidModeAt(topRow);
+        if (mode == RaidMode.NONE) {
             return null;
         }
         int members = 0;
@@ -185,7 +195,7 @@ public class ServerRackMenu extends AbstractComputerMenu {
         int present = 0;
         for (final int index : claimedSlots(topRow, RackLayout.SlotRole.DRIVE)) {
             if (frontSlotStack(index).getItem()
-                    instanceof dev.jstech.computers.item.DiskItem) {
+                    instanceof DiskItem) {
                 present++;
             }
         }
@@ -198,7 +208,7 @@ public class ServerRackMenu extends AbstractComputerMenu {
         return mode.name();
     }
 
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public static ServerRackMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                              final RegistryFriendlyByteBuf buf) {
         if (playerInventory.player.level().getBlockEntity(buf.readBlockPos())
@@ -215,7 +225,7 @@ public class ServerRackMenu extends AbstractComputerMenu {
          * Server Rack alone would open its GUI for a single tick and then close it.
          */
         return access.evaluate((level, pos) -> level.getBlockState(pos).getBlock()
-                        instanceof dev.jstech.computers.block.ServerRackBlock
+                        instanceof ServerRackBlock
                         && player.canInteractWithBlock(pos, 4.0), true);
     }
 

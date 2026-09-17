@@ -11,11 +11,13 @@ import com.mojang.serialization.MapCodec;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.MainframePartBlockEntity;
 import dev.jstech.computers.menu.MainframeMenu;
+import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -24,7 +26,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -34,6 +38,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -78,9 +83,9 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
     }
 
     @Override
-    public java.util.Set<DataTier> acceptedCableTiers() {
+    public Set<DataTier> acceptedCableTiers() {
         // The whole Mainframe footprint takes HBW, so a cable may attach to any face.
-        return java.util.Set.of(DataTier.T2_HBW);
+        return Set.of(DataTier.T2_HBW);
     }
 
     @Override
@@ -121,7 +126,7 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
                 && level.getBlockEntity(pos) instanceof MainframePartBlockEntity part
                 && part.controllerPos() != null
                 && level.getBlockState(part.controllerPos()).getBlock()
-                        instanceof dev.jstech.core.multiblock.AbstractMultiblockControllerBlock controller) {
+                        instanceof AbstractMultiblockControllerBlock controller) {
             controller.dropContentsExternally(serverLevel, part.controllerPos());
         }
         return super.playerWillDestroy(level, pos, state, player);
@@ -133,14 +138,14 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
      * machine; a part has no item of its own and picking one used to hand back nothing at all.
      */
     @Override
-    public net.minecraft.world.item.ItemStack getCloneItemStack(final BlockState state,
-                                                                final net.minecraft.world.phys.HitResult target,
-                                                                final net.minecraft.world.level.LevelReader level,
+    public ItemStack getCloneItemStack(final BlockState state,
+                                                                final HitResult target,
+                                                                final LevelReader level,
                                                                 final BlockPos pos, final Player player) {
         if (level.getBlockEntity(pos) instanceof MainframePartBlockEntity part && part.controllerPos() != null) {
             final BlockState controller = level.getBlockState(part.controllerPos());
             if (controller.getBlock() instanceof MainframeBlock) {
-                return new net.minecraft.world.item.ItemStack(controller.getBlock());
+                return new ItemStack(controller.getBlock());
             }
         }
         return super.getCloneItemStack(state, target, level, pos, player);
@@ -153,7 +158,7 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
                 && level.getBlockEntity(pos) instanceof MainframePartBlockEntity part
                 && part.controllerPos() != null
                 && level.getBlockState(part.controllerPos()).getBlock()
-                        instanceof dev.jstech.core.multiblock.AbstractMultiblockControllerBlock controller) {
+                        instanceof AbstractMultiblockControllerBlock controller) {
             controller.dissolve(serverLevel, part.controllerPos(), state.getValue(FACING));
         }
         super.onRemove(state, level, pos, newState, movedByPiston);

@@ -10,6 +10,7 @@ package dev.jstech.computers.menu;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
+import dev.jstech.computers.gui.layout.NetworkInteractorLayout;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -145,7 +146,7 @@ public class DesktopMenu extends AbstractContainerMenu {
              * row 3), so the real slots line up with their backgrounds instead of diverging on the hotbar.
              */
             final int cellTop = originY
-                    + dev.jstech.computers.gui.layout.NetworkInteractorLayout.rowYOffset(row);
+                    + NetworkInteractorLayout.rowYOffset(row);
             final boolean visible = cellTop >= viewportTop && cellTop + 18 <= viewportBottom;
             final NetworkInteractorSlot slot =
                     new NetworkInteractorSlot(playerInventory, inventoryIndexFor(i),

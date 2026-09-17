@@ -7,8 +7,10 @@
  */
 package dev.jstech.computers.operation.payload.machine;
 
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * The names shown for the system a machine runs.
@@ -19,7 +21,7 @@ public final class MachineLabels {
     }
 
     /** A short, friendly label for an installed OS id, or {@code none} when no OS is installed. */
-    public static String osLabelOf(final net.minecraft.resources.ResourceLocation osId) {
+    public static String osLabelOf(final ResourceLocation osId) {
         if (osId == null) {
             return "none";
         }
@@ -33,8 +35,8 @@ public final class MachineLabels {
         };
     }
 
-    public static String osLabel(final dev.jstech.computers.os.IOsHost host) {
-        final net.minecraft.resources.ResourceLocation osId = host.installedOsId();
+    public static String osLabel(final IOsHost host) {
+        final ResourceLocation osId = host.installedOsId();
         final OsDef os = osId == null ? null : OsRegistry.getOs(osId);
         return os == null ? "" : os.displayName();
     }

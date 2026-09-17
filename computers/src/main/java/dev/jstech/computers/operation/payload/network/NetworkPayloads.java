@@ -8,13 +8,21 @@
 package dev.jstech.computers.operation.payload.network;
 
 import dev.jstech.computers.block.part.AbstractBusPart;
+import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
+import dev.jstech.computers.client.os.NetworkInteractorApp;
+import dev.jstech.computers.client.os.NetworkManagerApp;
+import dev.jstech.computers.client.os.StorageInsightsApp;
+import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.menu.AbstractBusMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.ServerRouterMenu;
+import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
@@ -26,6 +34,7 @@ import dev.jstech.computers.operation.payload.RequestNetworkManagerPayload;
 import dev.jstech.computers.operation.payload.RequestStorageInsightsPayload;
 import dev.jstech.computers.operation.payload.SetBusNamePayload;
 import dev.jstech.computers.operation.payload.StorageInsightsPayload;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.format.Unit;
 import dev.jstech.core.format.UnitFormatter;
@@ -35,6 +44,7 @@ import dev.jstech.core.network.SubframeNode;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
+import java.util.Locale;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -108,7 +118,7 @@ public final class NetworkPayloads {
             menu.setNetworkServers(payload.servers());
         } else {
             // The Network Interactor desktop app (no container menu of its own) consumes the same list.
-            dev.jstech.computers.client.os.NetworkInteractorApp.acceptServers(
+            NetworkInteractorApp.acceptServers(
                     payload.servers());
         }
     }
@@ -128,7 +138,7 @@ public final class NetworkPayloads {
             final NodeUuid node = server.nodeUuid();
             final long free = system.locationOf(node)
                     .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos()))
-                            instanceof dev.jstech.computers.blockentity.ServerRackBlockEntity rack
+                            instanceof ServerRackBlockEntity rack
                             ? rack.getServerStorage(loc.slot()).free() : 0L)
                     .orElse(0L);
             rows.add(new NetworkServersPayload.ServerEntry(node.asString(), serverLabel(level, node), free));
@@ -156,7 +166,7 @@ public final class NetworkPayloads {
             final NodeUuid node = server.nodeUuid();
             final long free = system.locationOf(node)
                     .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos()))
-                            instanceof dev.jstech.computers.blockentity.ServerRackBlockEntity rack
+                            instanceof ServerRackBlockEntity rack
                             ? rack.getServerStorage(loc.slot()).free() : 0L)
                     .orElse(0L);
             rows.add(new NetworkServersPayload.ServerEntry(node.asString(), serverLabel(level, node), free));
@@ -196,7 +206,7 @@ public final class NetworkPayloads {
     }
 
     private static void handleNetworkManager(final NetworkManagerPayload payload, final Player player) {
-        dev.jstech.computers.client.os.NetworkManagerApp.accept(payload);
+        NetworkManagerApp.accept(payload);
     }
 
     private static List<NetworkNodeInfo> collectNodes(final ServerLevel level, final MainframeBlockEntity mf) {
@@ -233,7 +243,7 @@ public final class NetworkPayloads {
                  * in the topology), but the overview names it for what it is.
                  */
                 final int kind = level.getBlockEntity(BlockPos.of(pc.pos()))
-                        instanceof dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity
+                        instanceof ClusterManagementComputerBlockEntity
                         ? NetworkNodeInfo.KIND_CLUSTER_MANAGEMENT : NetworkNodeInfo.KIND_PC;
                 nodes.add(resolveComputerNode(level, kind, pc.nodeUuid().asString(),
                         pc.pos(), fmt.compact(pc.capacity(), Unit.IT_PER_TICK)));
@@ -255,7 +265,7 @@ public final class NetworkPayloads {
                  * to take crafts) only with at least one rated node.
                  */
                 final String scName = level.getBlockEntity(BlockPos.of(sc.pos()))
-                        instanceof dev.jstech.computers.blockentity.HbwInterfaceBlockEntity hub
+                        instanceof HbwInterfaceBlockEntity hub
                         ? hub.customName() : "";
                 nodes.add(new NetworkNodeInfo(NetworkNodeInfo.KIND_SUPERCOMPUTER,
                         ShortId.of(sc.nodeUuid().asString()), scName, sc.parallelCrafts() + " crafts",
@@ -267,9 +277,9 @@ public final class NetworkPayloads {
 
     /** Builds an enriched node row from a resolved computer block entity (name, specs, OS, storage share). */
     private static NetworkNodeInfo computerNodeInfo(final int kind,
-            final dev.jstech.computers.os.IOsHost c,
+            final IOsHost c,
             final String uuid, final String detail) {
-        final int share = dev.jstech.computers.item.DiskItem.publicPermille(c.systemDisk());
+        final int share = DiskItem.publicPermille(c.systemDisk());
         /*
          * Total capacity is only summed for the Mainframe; a generic computer reports its free space, which is
          * the "available storage" the tooltip shows, with total left as 0 (unknown).
@@ -283,7 +293,7 @@ public final class NetworkPayloads {
     private static NetworkNodeInfo resolveComputerNode(final ServerLevel level, final int kind, final String uuid,
                                                        final long posLong, final String detail) {
         if (level.getBlockEntity(BlockPos.of(posLong))
-                instanceof dev.jstech.computers.os.IOsHost c) {
+                instanceof IOsHost c) {
             return computerNodeInfo(kind, c, uuid, detail);
         }
         return new NetworkNodeInfo(kind, ShortId.of(uuid), "", detail, false,
@@ -296,11 +306,11 @@ public final class NetworkPayloads {
         final long total = server.storageItems();
         final long free = system.locationOf(server.nodeUuid())
                 .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos()))
-                        instanceof dev.jstech.computers.blockentity.ServerRackBlockEntity rack
+                        instanceof ServerRackBlockEntity rack
                         ? rack.getServerStorage(loc.slot()).free() : 0L)
                 .orElse(0L);
         return new NetworkNodeInfo(NetworkNodeInfo.KIND_SERVER, ShortId.of(server.nodeUuid().asString()),
-                serverLabel(level, server.nodeUuid()), String.format(java.util.Locale.ROOT, "%,d items", total), true,
+                serverLabel(level, server.nodeUuid()), String.format(Locale.ROOT, "%,d items", total), true,
                 0, 0, free, total, NetworkNodeInfo.SHARE_UNKNOWN, "");
     }
 
@@ -328,13 +338,13 @@ public final class NetworkPayloads {
     }
 
     private static void handleStorageInsights(final StorageInsightsPayload payload, final Player player) {
-        dev.jstech.computers.client.os.StorageInsightsApp.accept(payload);
+        StorageInsightsApp.accept(payload);
     }
 
     /** Builds the Storage Insights dashboard: totals, the biggest and smallest types, and per-server usage. */
     private static StorageInsightsPayload collectStorageInsights(final ServerLevel level, final NetworkUuid net) {
         final Map<StorageKey, Long> totals =
-                dev.jstech.computers.operation.NetworkStorage.of(level, net).query();
+                NetworkStorage.of(level, net).query();
         long totalItems = 0;
         for (final long v : totals.values()) {
             totalItems += v;
@@ -361,7 +371,7 @@ public final class NetworkPayloads {
             }
             final long used = system.locationOf(server.nodeUuid())
                     .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos()))
-                            instanceof dev.jstech.computers.blockentity.ServerRackBlockEntity rack
+                            instanceof ServerRackBlockEntity rack
                             ? rack.getServerStorage(loc.slot()).used() : 0L)
                     .orElse(0L);
             servers.add(new NetworkItemEntry.StorageShare(serverLabel(level, server.nodeUuid()), used));

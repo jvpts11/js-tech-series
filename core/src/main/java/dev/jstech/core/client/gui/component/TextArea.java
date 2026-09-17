@@ -10,6 +10,7 @@ package dev.jstech.core.client.gui.component;
 import dev.jstech.core.client.gui.logic.TextDocument;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -210,7 +211,7 @@ public final class TextArea extends UiComponent {
 
     @Override
     public boolean mouseScrolled(final double mx, final double my, final double delta) {
-        if (net.minecraft.client.gui.screens.Screen.hasShiftDown() && lastFont != null) {
+        if (Screen.hasShiftDown() && lastFont != null) {
             final int room = Math.max(8, room());
             final int max = Math.max(0, widest(lastFont) + 2 - room);
             shift = Math.max(0, Math.min(max, shift - (int) Math.signum(delta) * 24));

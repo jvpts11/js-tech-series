@@ -46,6 +46,13 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
+import software.bernie.geckolib.animatable.GeoBlockEntity;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
 /**
  * The Pattern Encoder: the burner that puts recipe files onto removable media. It is a peripheral of a
@@ -58,7 +65,7 @@ import java.util.Optional;
  * disks, a Legacy one writes CDs, a Standard one writes DVDs, CDs and USB sticks (and no floppies).
  */
 public class PatternEncoderBlockEntity extends BlockEntity implements IPeripheralEndpoint,
-        software.bernie.geckolib.animatable.GeoBlockEntity {
+        GeoBlockEntity {
 
     /** The most jobs waiting behind the one being written. */
     public static final int QUEUE_MAX = 8;
@@ -67,21 +74,21 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
      * The body's only motion: the disc spins and the activity lamp pulses while the head is down. No part
      * ever moves out of the block; everything else the body shows is bone visibility set by the renderer.
      */
-    private static final software.bernie.geckolib.animation.RawAnimation WRITE =
-            software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("animation.pattern_encoder.write");
+    private static final RawAnimation WRITE =
+            RawAnimation.begin().thenLoop("animation.pattern_encoder.write");
 
-    private final software.bernie.geckolib.animatable.instance.AnimatableInstanceCache geckoCache =
-            software.bernie.geckolib.util.GeckoLibUtil.createInstanceCache(this);
+    private final AnimatableInstanceCache geckoCache =
+            GeckoLibUtil.createInstanceCache(this);
 
     @Override
     public void registerControllers(
-            final software.bernie.geckolib.animation.AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new software.bernie.geckolib.animation.AnimationController<>(this, "work", 0,
-                state -> busy() ? state.setAndContinue(WRITE) : software.bernie.geckolib.animation.PlayState.STOP));
+            final AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(new AnimationController<>(this, "work", 0,
+                state -> busy() ? state.setAndContinue(WRITE) : PlayState.STOP));
     }
 
     @Override
-    public software.bernie.geckolib.animatable.instance.AnimatableInstanceCache getAnimatableInstanceCache() {
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
         return geckoCache;
     }
     /** How long a finished or failed job stays on the display before the next one starts. */

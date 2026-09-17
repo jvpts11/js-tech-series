@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload.automation;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.client.os.AutomationManagerApp;
 import dev.jstech.computers.operation.payload.AutomationPayload;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -16,6 +17,12 @@ import dev.jstech.computers.operation.payload.JobActionPayload;
 import dev.jstech.computers.operation.payload.RequestAutomationPayload;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.program.iql.IqlDefinition;
+import dev.jstech.computers.program.iql.IqlDuration;
+import dev.jstech.computers.program.iql.IqlSavedObject;
+import java.util.Locale;
+import java.util.Optional;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -60,7 +67,7 @@ public final class AutomationPayloads {
     }
 
     private static void handleAutomation(final AutomationPayload payload, final Player player) {
-        dev.jstech.computers.client.os.AutomationManagerApp.accept(payload);
+        AutomationManagerApp.accept(payload);
     }
 
     private static AutomationPayload buildAutomation(final MainframeBlockEntity mf) {
@@ -72,7 +79,7 @@ public final class AutomationPayloads {
                 : mf.isIqlEngineInstalled() ? "IQL Engine" : "none";
         final List<AutomationPayload.JobRow> rows = new ArrayList<>();
         for (final var job : mf.iqlCatalog().ofType(
-                dev.jstech.computers.program.iql.IqlDefinition.ObjectType.JOB)) {
+                IqlDefinition.ObjectType.JOB)) {
             if (rows.size() >= AutomationPayload.MAX_JOBS) {
                 break;
             }
@@ -94,8 +101,8 @@ public final class AutomationPayloads {
     }
 
     private static String inferJobType(final String body,
-            final dev.jstech.computers.program.iql.IqlDefinition.TriggerKind kind) {
-        final String b = body.trim().toUpperCase(java.util.Locale.ROOT);
+            final IqlDefinition.TriggerKind kind) {
+        final String b = body.trim().toUpperCase(Locale.ROOT);
         if (b.startsWith("MOVE")) {
             return "Periodic Move";
         }
@@ -107,7 +114,7 @@ public final class AutomationPayloads {
     }
 
     private static String triggerSummary(
-            final dev.jstech.computers.program.iql.IqlDefinition.TriggerKind kind,
+            final IqlDefinition.TriggerKind kind,
             final String spec) {
         return switch (kind) {
             case EVERY -> "every " + spec;
@@ -129,13 +136,13 @@ public final class AutomationPayloads {
         final var def = compileJob(player, mf, payload);
         if (def != null) {
             mf.iqlCatalog().put(
-                    dev.jstech.computers.program.iql.IqlSavedObject.from(def));
+                    IqlSavedObject.from(def));
             mf.markIqlCatalogChanged();
             PacketDistributor.sendToPlayer(player, buildAutomation(mf));
         }
     }
 
-    private static dev.jstech.computers.program.iql.IqlDefinition compileJob(
+    private static IqlDefinition compileJob(
             final ServerPlayer player, final MainframeBlockEntity mf, final CreateAutomationJobPayload p) {
         final String name = p.name().trim();
         if (name.isEmpty()) {
@@ -144,16 +151,16 @@ public final class AutomationPayloads {
         }
         final String item = p.item().trim();
         final long amount = Math.max(1, p.amount());
-        final var type = dev.jstech.computers.program.iql.IqlDefinition.ObjectType.JOB;
-        final var every = dev.jstech.computers.program.iql.IqlDefinition.TriggerKind.EVERY;
-        final var when = dev.jstech.computers.program.iql.IqlDefinition.TriggerKind.WHEN;
+        final var type = IqlDefinition.ObjectType.JOB;
+        final var every = IqlDefinition.TriggerKind.EVERY;
+        final var when = IqlDefinition.TriggerKind.WHEN;
         switch (p.jobType()) {
             case CreateAutomationJobPayload.TYPE_KEEP_STOCK -> {
                 if (item.isEmpty()) {
                     jobError(player, "Keep Stock needs an item.");
                     return null;
                 }
-                return dev.jstech.computers.program.iql.IqlDefinition.create(
+                return IqlDefinition.create(
                         type, name, "CRAFT " + amount + " " + item, when, "qty(" + item + ") < " + amount);
             }
             case CreateAutomationJobPayload.TYPE_BATCH_CRAFT -> {
@@ -161,7 +168,7 @@ public final class AutomationPayloads {
                     jobError(player, "Batch Craft needs an item and a valid interval (e.g. 30s, 5m).");
                     return null;
                 }
-                return dev.jstech.computers.program.iql.IqlDefinition.create(
+                return IqlDefinition.create(
                         type, name, "CRAFT " + amount + " " + item, every, p.interval().trim());
             }
             case CreateAutomationJobPayload.TYPE_PERIODIC_MOVE -> {
@@ -172,7 +179,7 @@ public final class AutomationPayloads {
                     return null;
                 }
                 final String what = item.isEmpty() ? "*" : amount + " " + item;
-                return dev.jstech.computers.program.iql.IqlDefinition.create(
+                return IqlDefinition.create(
                         type, name, "MOVE " + what + " FROM " + from + " TO " + to, every, p.interval().trim());
             }
             case CreateAutomationJobPayload.TYPE_IQL_SCRIPT -> {
@@ -182,13 +189,13 @@ public final class AutomationPayloads {
                     return null;
                 }
                 final ItemStack sysDisk = mf.systemDisk();
-                final var content = sysDisk.isEmpty() ? java.util.Optional.<String>empty()
+                final var content = sysDisk.isEmpty() ? Optional.<String>empty()
                         : DiskFilesystem.read(sysDisk, item);
                 if (content.isEmpty() || content.get().isBlank()) {
                     jobError(player, "Script not found on the Mainframe disk: " + item);
                     return null;
                 }
-                return dev.jstech.computers.program.iql.IqlDefinition.create(
+                return IqlDefinition.create(
                         type, name, content.get(), every, p.interval().trim());
             }
             default -> {
@@ -199,14 +206,14 @@ public final class AutomationPayloads {
 
     private static boolean validInterval(final String spec) {
         try {
-            return dev.jstech.computers.program.iql.IqlDuration.toTicks(spec.trim()) > 0;
+            return IqlDuration.toTicks(spec.trim()) > 0;
         } catch (final RuntimeException e) {
             return false;
         }
     }
 
     private static void jobError(final ServerPlayer player, final String message) {
-        player.displayClientMessage(net.minecraft.network.chat.Component.literal(message), false);
+        player.displayClientMessage(Component.literal(message), false);
     }
 
     private static void handleJobAction(final JobActionPayload payload, final ServerPlayer player,
@@ -224,7 +231,7 @@ public final class AutomationPayloads {
             case JobActionPayload.ACTION_RESUME -> mf.restartJob(payload.name());
             case JobActionPayload.ACTION_DELETE -> {
                 mf.iqlCatalog().remove(
-                        dev.jstech.computers.program.iql.IqlDefinition.ObjectType.JOB,
+                        IqlDefinition.ObjectType.JOB,
                         payload.name());
                 mf.markIqlCatalogChanged();
             }

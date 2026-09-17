@@ -7,9 +7,16 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.os.DesktopEnvironmentDef;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.gui.layout.WindowGeometry;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
 
 /**
  * One open program window on the {@link DesktopScreen}: a draggable, resizable frame hosting a
@@ -45,7 +52,7 @@ public final class DesktopWindow {
      * its owner on the panel, always sits in front of it, and keeps the owner from taking input while
      * it is up, the way an Open or Save window holds the program that opened it.
      */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private DesktopWindow owner;
     private int x;
     private int y;
@@ -110,12 +117,12 @@ public final class DesktopWindow {
     }
 
     /** The window this is a dialog of, or null. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public DesktopWindow owner() {
         return owner;
     }
 
-    public void setOwner(@org.jetbrains.annotations.Nullable final DesktopWindow value) {
+    public void setOwner(@Nullable final DesktopWindow value) {
         this.owner = value;
     }
 
@@ -412,10 +419,10 @@ public final class DesktopWindow {
          * The program's own icon at the left of the bar, the way every desktop of these generations marked
          * which program a window belongs to. A key nothing answers to simply gets no icon.
          */
-        final dev.jstech.computers.os.DesktopEnvironmentDef desktop =
-                dev.jstech.computers.os.OsRegistry.getDesktop(
-                        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("jsc", skin.osPath()));
-        final dev.jstech.computers.os.ProgramSpec program =
+        final DesktopEnvironmentDef desktop =
+                OsRegistry.getDesktop(
+                        ResourceLocation.fromNamespaceAndPath("jsc", skin.osPath()));
+        final ProgramSpec program =
                 desktop == null ? null : desktop.programFor(appKey);
         final boolean titleIcon = program != null && !skin.titleCentered();
         if (titleIcon) {
@@ -466,9 +473,9 @@ public final class DesktopWindow {
         final int cy = wy + TITLE_H + 4;
         final int cw = ww - 8;
         final int ch = wh - TITLE_H - 8;
-        final org.joml.Matrix4f mat = g.pose().last().pose();
-        final dev.jstech.core.gui.layout.WindowGeometry.Rect clip =
-                dev.jstech.core.gui.layout.WindowGeometry.scissor(
+        final Matrix4f mat = g.pose().last().pose();
+        final WindowGeometry.Rect clip =
+                WindowGeometry.scissor(
                         mat.m30(), mat.m31(), mat.m00(), mat.m11(), cx, cy, cx + cw, cy + ch);
         g.enableScissor(clip.x(), clip.y(), clip.x() + clip.w(), clip.y() + clip.h());
         app.applySkin(skin);
@@ -501,13 +508,13 @@ public final class DesktopWindow {
         final float s = Math.min(bw / (float) curW, bh / (float) curH);
         final float dx = bx + (bw - curW * s) / 2f;
         final float dy = by + (bh - curH * s) / 2f;
-        dev.jstech.core.client.gui.component.Draw.pushScissor(g, bx, by, bx + bw, by + bh);
+        Draw.pushScissor(g, bx, by, bx + bw, by + bh);
         g.pose().pushPose();
         g.pose().translate(dx - curX * s, dy - curY * s, 0);
         g.pose().scale(s, s, 1f);
         render(g, font, skin, -10000, -10000, 0f, screenW, screenH, taskbarH, workTop);
         g.pose().popPose();
-        dev.jstech.core.client.gui.component.Draw.popScissor(g);
+        Draw.popScissor(g);
     }
 
     /**

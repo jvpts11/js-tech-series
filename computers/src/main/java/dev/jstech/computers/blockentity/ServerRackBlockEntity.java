@@ -9,26 +9,79 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.DataCableBlock;
+import dev.jstech.computers.block.ServerRackBlock;
+import dev.jstech.computers.block.ServerRackPartBlock;
+import dev.jstech.computers.block.ServerRackStructure;
+import dev.jstech.computers.crafting.PatternWorkbench;
+import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.item.MotherboardItem;
+import dev.jstech.computers.item.RackGadgetItem;
+import dev.jstech.computers.item.RackUnitItem;
+import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OpenWindow;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsDisks;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.boot.BootLines;
+import dev.jstech.computers.os.boot.BootPhases;
+import dev.jstech.computers.os.boot.BootRunner;
+import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.computers.os.install.Installers;
+import dev.jstech.computers.os.install.OsInstallJob;
+import dev.jstech.computers.os.install.OsInstallRunner;
+import dev.jstech.computers.os.install.SetupRunner;
+import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.computers.program.install.LiveInstallState;
+import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RaidMode;
+import dev.jstech.computers.storage.DriveVolumes;
+import dev.jstech.computers.storage.IDataSink;
+import dev.jstech.computers.storage.LocalStore;
+import dev.jstech.computers.storage.ServerStore;
+import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.storage.StorageVolume;
+import dev.jstech.computers.storage.StoreSink;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
+import dev.jstech.core.peripheral.IPeripheralOwnerSupport;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
+import java.util.Arrays;
+import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 import java.util.ArrayList;
@@ -38,6 +91,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.jetbrains.annotations.Nullable;
+import software.bernie.geckolib.animatable.GeoBlockEntity;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
 /**
  * A Server Rack: a passive container (network Category A, no UUID of its own) measured in rack
@@ -52,10 +113,10 @@ import java.util.UUID;
  * components), never by the Server item.
  */
 public class ServerRackBlockEntity extends BlockEntity
-        implements dev.jstech.core.peripheral.IPeripheralOwnerSupport,
-        dev.jstech.computers.os.IOsHost,
-        dev.jstech.computers.terminal.IComputerTerminalHost,
-        software.bernie.geckolib.animatable.GeoBlockEntity {
+        implements IPeripheralOwnerSupport,
+        IOsHost,
+        IComputerTerminalHost,
+        GeoBlockEntity {
 
     // the cabinet as one model: what the renderer needs to know about every row
 
@@ -75,11 +136,11 @@ public class ServerRackBlockEntity extends BlockEntity
     public static final String[] UNIT_BONES = {"", "server_1u_standard", "server_1u_legacy", "server_1u_vintage",
             "storage_2u", "compute_2u", "node_2u", "kvm_switch", "rack_ups", "cooling_unit"};
 
-    private static final software.bernie.geckolib.animation.RawAnimation FANS =
-            software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("animation.rack.fans");
+    private static final RawAnimation FANS =
+            RawAnimation.begin().thenLoop("animation.rack.fans");
 
-    private final software.bernie.geckolib.animatable.instance.AnimatableInstanceCache geckoCache =
-            software.bernie.geckolib.util.GeckoLibUtil.createInstanceCache(this);
+    private final AnimatableInstanceCache geckoCache =
+            GeckoLibUtil.createInstanceCache(this);
 
     /*
      * What the client copy knows about the cabinet: it holds no inventory, so the server sends the unit
@@ -94,26 +155,26 @@ public class ServerRackBlockEntity extends BlockEntity
 
     @Override
     public void registerControllers(
-            final software.bernie.geckolib.animation.AnimatableManager.ControllerRegistrar controllers) {
+            final AnimatableManager.ControllerRegistrar controllers) {
         /*
          * The roof fans turn while any bay is powered; the light bar and the seated units are bone
          * visibility set by the renderer, not animation.
          */
-        controllers.add(new software.bernie.geckolib.animation.AnimationController<>(this, "fans", 0,
+        controllers.add(new AnimationController<>(this, "fans", 0,
                 state -> anyBayOn() ? state.setAndContinue(FANS)
-                        : software.bernie.geckolib.animation.PlayState.STOP));
+                        : PlayState.STOP));
     }
 
     @Override
-    public software.bernie.geckolib.animatable.instance.AnimatableInstanceCache getAnimatableInstanceCache() {
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
         return geckoCache;
     }
 
     /** The era of this cabinet, read from its block. */
-    public dev.jstech.core.tier.HardwareEra rackEra() {
+    public HardwareEra rackEra() {
         return getBlockState().getBlock()
-                instanceof dev.jstech.computers.block.ServerRackBlock rack
-                ? rack.era() : dev.jstech.core.tier.HardwareEra.STANDARD;
+                instanceof ServerRackBlock rack
+                ? rack.era() : HardwareEra.STANDARD;
     }
 
     /** What row {@code slot} holds, as a unit code, on either side. */
@@ -136,9 +197,9 @@ public class ServerRackBlockEntity extends BlockEntity
                 case SUPERCOMPUTER_NODE -> UNIT_NODE_2U;
             };
         }
-        for (final dev.jstech.computers.item.RackUnitItem.Kind kind
-                : dev.jstech.computers.item.RackUnitItem.Kind.values()) {
-            if (dev.jstech.computers.item.RackUnitItem.is(stack, kind)) {
+        for (final RackUnitItem.Kind kind
+                : RackUnitItem.Kind.values()) {
+            if (RackUnitItem.is(stack, kind)) {
                 return switch (kind) {
                     case KVM_SWITCH -> UNIT_KVM_SWITCH;
                     case RACK_UPS -> UNIT_RACK_UPS;
@@ -196,20 +257,20 @@ public class ServerRackBlockEntity extends BlockEntity
     public void syncVisuals() {
         if (level != null && !level.isClientSide()) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
-                    net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+                    Block.UPDATE_CLIENTS);
         }
     }
 
     /** The whole 2 x 3 x 2 footprint: the renderer draws the cabinet from this block alone. */
-    public net.minecraft.world.phys.AABB renderBox() {
+    public AABB renderBox() {
         final BlockState state = getBlockState();
-        if (!state.hasProperty(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING)) {
-            return new net.minecraft.world.phys.AABB(worldPosition);
+        if (!state.hasProperty(HorizontalDirectionalBlock.FACING)) {
+            return new AABB(worldPosition);
         }
-        net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(worldPosition);
-        for (final BlockPos part : dev.jstech.computers.block.ServerRackStructure.allPositions(
-                worldPosition, state.getValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING))) {
-            box = box.minmax(new net.minecraft.world.phys.AABB(part));
+        AABB box = new AABB(worldPosition);
+        for (final BlockPos part : ServerRackStructure.allPositions(
+                worldPosition, state.getValue(HorizontalDirectionalBlock.FACING))) {
+            box = box.minmax(new AABB(part));
         }
         return box;
     }
@@ -225,8 +286,8 @@ public class ServerRackBlockEntity extends BlockEntity
              * Servers and rack equipment (KVM, UPS, cooling) bid for the same rack units, but a
              * computer only mounts in the cabinet its chassis belongs to.
              */
-            final dev.jstech.computers.rack.IMountableRackUnit unit =
-                    dev.jstech.computers.rack.IMountableRackUnit.of(stack);
+            final IMountableRackUnit unit =
+                    IMountableRackUnit.of(stack);
             if (unit == null || !acceptsChassis(stack)) {
                 return false;
             }
@@ -271,37 +332,37 @@ public class ServerRackBlockEntity extends BlockEntity
      * POST flag, and the firmware's preferred boot drive. Recreated on every mount.
      */
     private static final class UnitState {
-        final dev.jstech.computers.program.ComputerConsoleState console =
-                new dev.jstech.computers.program.ComputerConsoleState();
+        final ComputerConsoleState console =
+                new ComputerConsoleState();
         /*
          * Where this machine is on its way up. A machine in a rack is a machine: it tests itself, it stops at
          * its boot manager and its system takes time to come up, all of it on its own clocks, whether or not
          * the monitor is showing this bay.
          */
-        final dev.jstech.computers.os.boot.BootPhases phases = new dev.jstech.computers.os.boot.BootPhases();
+        final BootPhases phases = new BootPhases();
         int bootDiskSlot = -1;
         /** The desktop this machine booted into, fixed at POST so later package changes wait for a reboot. */
-        @org.jetbrains.annotations.Nullable
+        @Nullable
         ResourceLocation bootedDesktopId;
         /** The windows open on this machine's desktop; machine state that rides on the Server item. */
-        final List<dev.jstech.computers.os.OpenWindow> openWindows = new ArrayList<>();
+        final List<OpenWindow> openWindows = new ArrayList<>();
         /** A guided installer that wrote the system but is still waiting for its reboot. */
-        int pendingInstallSlot = dev.jstech.computers.os.IOsHost.NO_PENDING_INSTALL;
+        int pendingInstallSlot = IOsHost.NO_PENDING_INSTALL;
         /*
          * A system being copied onto this machine's drives right now, and the installer it belongs to. Kept per
          * bay and flushed onto the Server item with the rest of its session: a machine in a rack is a machine,
          * and its copy has to survive a save and go on with nobody watching, like any other's.
          */
-        @org.jetbrains.annotations.Nullable
-        dev.jstech.computers.os.install.OsInstallJob installing;
-        @org.jetbrains.annotations.Nullable
-        dev.jstech.computers.os.install.InstallerFlow installer;
+        @Nullable
+        OsInstallJob installing;
+        @Nullable
+        InstallerFlow installer;
         /** The installer's answers, waiting for a level to build it back from after a reload. */
-        @org.jetbrains.annotations.Nullable
-        net.minecraft.nbt.CompoundTag installerMemo;
+        @Nullable
+        CompoundTag installerMemo;
         /** The recipe drafts the Pattern Studio edits on this machine; ride on the Server item like the windows. */
-        final dev.jstech.computers.crafting.PatternWorkbench studio =
-                new dev.jstech.computers.crafting.PatternWorkbench();
+        final PatternWorkbench studio =
+                new PatternWorkbench();
 
         UnitState() {
             // A machine that has just been mounted has never tested itself, so it owes one before anything else.
@@ -315,7 +376,7 @@ public class ServerRackBlockEntity extends BlockEntity
         return unitStates.computeIfAbsent(slot, s -> {
             final UnitState state = new UnitState();
             final ItemStack stack = servers.getStackInSlot(s);
-            final net.minecraft.nbt.CompoundTag saved =
+            final CompoundTag saved =
                     stack.get(ComputingModule.SERVER_CONSOLE.get());
             if (saved != null) {
                 state.console.load(saved);
@@ -324,13 +385,13 @@ public class ServerRackBlockEntity extends BlockEntity
                 state.bootDiskSlot = saved.contains("BootDiskSlot") ? saved.getInt("BootDiskSlot") : -1;
                 state.bootedDesktopId = saved.contains("BootedDesktop")
                         ? ResourceLocation.tryParse(saved.getString("BootedDesktop")) : null;
-                state.openWindows.addAll(dev.jstech.computers.os.OpenWindow.loadAll(
-                        saved.getList("OpenWindows", net.minecraft.nbt.Tag.TAG_COMPOUND)));
+                state.openWindows.addAll(OpenWindow.loadAll(
+                        saved.getList("OpenWindows", Tag.TAG_COMPOUND)));
                 state.pendingInstallSlot = saved.contains("PendingInstall") ? saved.getInt("PendingInstall")
-                        : dev.jstech.computers.os.IOsHost.NO_PENDING_INSTALL;
+                        : IOsHost.NO_PENDING_INSTALL;
                 if (saved.contains("Installing")) {
-                    final net.minecraft.nbt.CompoundTag copying = saved.getCompound("Installing");
-                    state.installing = new dev.jstech.computers.os.install.OsInstallJob(
+                    final CompoundTag copying = saved.getCompound("Installing");
+                    state.installing = new OsInstallJob(
                             copying.getString("Os"), copying.getInt("Slot"), copying.getLong("Reader"),
                             copying.getInt("Total"), copying.getInt("Left"));
                 }
@@ -344,15 +405,15 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     @Override
-    @org.jetbrains.annotations.Nullable
-    public dev.jstech.computers.crafting.PatternWorkbench studio() {
+    @Nullable
+    public PatternWorkbench studio() {
         final int slot = soleComputerSlot();
         return slot < 0 ? null : unitState(slot).studio;
     }
 
     /** The console of the machine mounted at {@code slot}, or null when that row holds none. */
-    @org.jetbrains.annotations.Nullable
-    public dev.jstech.computers.program.ComputerConsoleState consoleOf(final int slot) {
+    @Nullable
+    public ComputerConsoleState consoleOf(final int slot) {
         if (slot < 0 || slot >= CAPACITY_U
                 || !(servers.getStackInSlot(slot).getItem() instanceof ServerItem)) {
             return null;
@@ -365,7 +426,7 @@ public class ServerRackBlockEntity extends BlockEntity
      * server its role: the hardware decides what it can do, the software decides what it does.
      */
     public boolean hasService(final int slot, final String programPath) {
-        final dev.jstech.computers.program.ComputerConsoleState console = consoleOf(slot);
+        final ComputerConsoleState console = consoleOf(slot);
         return console != null && console.isInstalled("jsc:" + programPath);
     }
 
@@ -376,7 +437,7 @@ public class ServerRackBlockEntity extends BlockEntity
         if (state == null || !(stack.getItem() instanceof ServerItem)) {
             return;
         }
-        final net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+        final CompoundTag tag = new CompoundTag();
         state.console.save(tag);
         /*
          * A machine that is already up must still be up after a reload. Keeping the POST flag only in
@@ -389,13 +450,13 @@ public class ServerRackBlockEntity extends BlockEntity
         }
         if (!state.openWindows.isEmpty()) {
             tag.put("OpenWindows",
-                    dev.jstech.computers.os.OpenWindow.saveAll(state.openWindows));
+                    OpenWindow.saveAll(state.openWindows));
         }
-        if (state.pendingInstallSlot != dev.jstech.computers.os.IOsHost.NO_PENDING_INSTALL) {
+        if (state.pendingInstallSlot != IOsHost.NO_PENDING_INSTALL) {
             tag.putInt("PendingInstall", state.pendingInstallSlot);
         }
         if (state.installing != null) {
-            final net.minecraft.nbt.CompoundTag copying = new net.minecraft.nbt.CompoundTag();
+            final CompoundTag copying = new CompoundTag();
             copying.putString("Os", state.installing.osId());
             copying.putInt("Slot", state.installing.targetSlot());
             copying.putLong("Reader", state.installing.readerPos());
@@ -403,12 +464,12 @@ public class ServerRackBlockEntity extends BlockEntity
             copying.putInt("Left", state.installing.ticksLeft());
             tag.put("Installing", copying);
         }
-        final net.minecraft.nbt.CompoundTag pages = installerPages(state);
+        final CompoundTag pages = installerPages(state);
         if (pages != null) {
             tag.put("Installer", pages);
         }
         if (getLevel() != null) {
-            final net.minecraft.nbt.CompoundTag studioTag = new net.minecraft.nbt.CompoundTag();
+            final CompoundTag studioTag = new CompoundTag();
             state.studio.save(studioTag, getLevel().registryAccess());
             tag.put("Studio", studioTag);
         }
@@ -432,7 +493,7 @@ public class ServerRackBlockEntity extends BlockEntity
             return switch (roleOfFrontSlot(slot)) {
                 case DRIVE -> stack.getItem() instanceof DiskItem;
                 case GADGET -> stack.getItem()
-                        instanceof dev.jstech.computers.item.RackGadgetItem;
+                        instanceof RackGadgetItem;
                 case BLOCKED_NO_UNIT, BLOCKED_BUDGET -> false;
             };
         }
@@ -468,15 +529,15 @@ public class ServerRackBlockEntity extends BlockEntity
     };
 
     private void updateBayVisuals() {
-        if (!(level instanceof net.minecraft.server.level.ServerLevel serverLevel)) {
+        if (!(level instanceof ServerLevel serverLevel)) {
             return;
         }
         final BlockState self = getBlockState();
-        if (!(self.getBlock() instanceof dev.jstech.computers.block.ServerRackBlock)) {
+        if (!(self.getBlock() instanceof ServerRackBlock)) {
             return;
         }
-        final net.minecraft.core.Direction facing = self.getValue(
-                net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING);
+        final Direction facing = self.getValue(
+                HorizontalDirectionalBlock.FACING);
         /*
          * The cabinet model still shows 4 visual bays over 8 rack units: bay b lights up when
          * either of its two rows carries part of a mounted unit.
@@ -488,18 +549,18 @@ public class ServerRackBlockEntity extends BlockEntity
                 final boolean occupied = RackLayout.unitAt(bay * 2, mounted) != null
                         || RackLayout.unitAt(bay * 2 + 1, mounted) != null;
                 final int bits = occupied ? 3 : 0;
-                final BlockPos bayPos = dev.jstech.computers.block.ServerRackStructure
+                final BlockPos bayPos = ServerRackStructure
                         .bayBlockPos(worldPosition, facing, w, h);
                 final BlockState bayState = serverLevel.getBlockState(bayPos);
                 final boolean isRackBlock = bayState.getBlock()
-                        instanceof dev.jstech.computers.block.ServerRackBlock
+                        instanceof ServerRackBlock
                         || bayState.getBlock()
-                        instanceof dev.jstech.computers.block.ServerRackPartBlock;
+                        instanceof ServerRackPartBlock;
                 if (isRackBlock && bayState.getValue(
-                        dev.jstech.computers.block.ServerRackBlock.BAYS) != bits) {
+                        ServerRackBlock.BAYS) != bits) {
                     serverLevel.setBlock(bayPos, bayState.setValue(
-                            dev.jstech.computers.block.ServerRackBlock.BAYS, bits),
-                            net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+                            ServerRackBlock.BAYS, bits),
+                            Block.UPDATE_CLIENTS);
                 }
             }
         }
@@ -512,8 +573,8 @@ public class ServerRackBlockEntity extends BlockEntity
      * tick, the thermal load and the port count all read it, and a rack of eight was re-parsing eight
      * hardware inventories twenty times a second.
      */
-    private final dev.jstech.computers.hardware.ComputerBuild[] buildCache =
-            new dev.jstech.computers.hardware.ComputerBuild[CAPACITY_U];
+    private final ComputerBuild[] buildCache =
+            new ComputerBuild[CAPACITY_U];
     private final boolean[] buildCached = new boolean[CAPACITY_U];
 
     /*
@@ -526,8 +587,8 @@ public class ServerRackBlockEntity extends BlockEntity
     private final boolean[] bayItemsCached = new boolean[CAPACITY_U];
 
     /** The build of the machine mounted at {@code slot} (null for none, or an invalid one), parsed once per mount. */
-    @org.jetbrains.annotations.Nullable
-    private dev.jstech.computers.hardware.ComputerBuild buildAt(final int slot) {
+    @Nullable
+    private ComputerBuild buildAt(final int slot) {
         if (!buildCached[slot]) {
             buildCache[slot] = ServerItem.build(servers.getStackInSlot(slot));
             buildCached[slot] = true;
@@ -541,8 +602,8 @@ public class ServerRackBlockEntity extends BlockEntity
      * <p>Worked out once and kept until the bay's parts change, so whoever needs a mounted machine's measures
      * asks the cabinet rather than building it again from the item.
      */
-    @org.jetbrains.annotations.Nullable
-    public dev.jstech.computers.hardware.ComputerBuild buildIn(final int slot) {
+    @Nullable
+    public ComputerBuild buildIn(final int slot) {
         return slot >= 0 && slot < CAPACITY_U ? buildAt(slot) : null;
     }
 
@@ -582,7 +643,7 @@ public class ServerRackBlockEntity extends BlockEntity
          * the clearing setNeedsPost does.
          */
         unitState(slot).openWindows.clear();
-        unitState(slot).pendingInstallSlot = dev.jstech.computers.os.IOsHost.NO_PENDING_INSTALL;
+        unitState(slot).pendingInstallSlot = IOsHost.NO_PENDING_INSTALL;
         flushConsole(slot);
         setChanged();
     }
@@ -595,8 +656,8 @@ public class ServerRackBlockEntity extends BlockEntity
     public static final int DATA_REBUILD_0 = 3;
     public static final int DATA_COUNT = DATA_REBUILD_0 + CAPACITY_U;
 
-    private final net.minecraft.world.inventory.ContainerData data =
-            new net.minecraft.world.inventory.SimpleContainerData(DATA_COUNT);
+    private final ContainerData data =
+            new SimpleContainerData(DATA_COUNT);
 
     public ServerRackBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.SERVER_RACK_BE.get(), pos, state);
@@ -614,7 +675,7 @@ public class ServerRackBlockEntity extends BlockEntity
         return layout;
     }
 
-    public net.minecraft.world.inventory.ContainerData getDataAccess() {
+    public ContainerData getDataAccess() {
         return data;
     }
 
@@ -706,9 +767,9 @@ public class ServerRackBlockEntity extends BlockEntity
                     continue;
                 }
                 final int index = row * RackLayout.SLOTS_PER_U + column;
-                if (dev.jstech.computers.item.RackGadgetItem.kindOf(
+                if (RackGadgetItem.kindOf(
                         frontSlots.getStackInSlot(index))
-                        == dev.jstech.computers.item.RackGadgetItem.Kind.RAID_CONTROLLER) {
+                        == RackGadgetItem.Kind.RAID_CONTROLLER) {
                     return index;
                 }
             }
@@ -726,9 +787,9 @@ public class ServerRackBlockEntity extends BlockEntity
         for (int row = serverSlot; row < serverSlot + chassis.heightU() && row < CAPACITY_U; row++) {
             for (int column = 0; column < RackLayout.SLOTS_PER_U; column++) {
                 if (layout.roleAt(row, column, mounted) == RackLayout.SlotRole.GADGET
-                        && dev.jstech.computers.item.RackGadgetItem.kindOf(
+                        && RackGadgetItem.kindOf(
                                 frontSlots.getStackInSlot(row * RackLayout.SLOTS_PER_U + column))
-                        == dev.jstech.computers.item.RackGadgetItem.Kind.CACHE_CARD) {
+                        == RackGadgetItem.Kind.CACHE_CARD) {
                     return true;
                 }
             }
@@ -740,7 +801,7 @@ public class ServerRackBlockEntity extends BlockEntity
     public RaidMode raidModeOf(final int serverSlot) {
         final int controller = raidControllerSlot(serverSlot);
         return controller < 0 ? RaidMode.NONE
-                : dev.jstech.computers.item.RackGadgetItem.raidMode(
+                : RackGadgetItem.raidMode(
                         frontSlots.getStackInSlot(controller));
     }
 
@@ -758,7 +819,7 @@ public class ServerRackBlockEntity extends BlockEntity
             return false; // not enough drives in the bay to form this array
         }
         final ItemStack stack = frontSlots.getStackInSlot(controller);
-        dev.jstech.computers.item.RackGadgetItem.setRaidMode(stack, mode);
+        RackGadgetItem.setRaidMode(stack, mode);
         stack.set(ComputingModule.RAID_MEMBERS.get(), mode == RaidMode.NONE ? 0 : drives);
         markStorageChanged(serverSlot);
         setChanged();
@@ -849,7 +910,7 @@ public class ServerRackBlockEntity extends BlockEntity
             notifyHotPull(top);
             // The stripe is gone: every member (including the one on its way out) is blanked.
             for (final ItemStack drive : claimedDriveStacks(top)) {
-                dev.jstech.computers.storage.DriveVolumes.erase(drive);
+                DriveVolumes.erase(drive);
             }
             markStorageChanged(top);
             setChanged();
@@ -865,20 +926,20 @@ public class ServerRackBlockEntity extends BlockEntity
                 survivors.add(drive);
             }
         }
-        final dev.jstech.computers.storage.StorageVolume leavingVolume =
-                dev.jstech.computers.storage.DriveVolumes.peek(leaving);
+        final StorageVolume leavingVolume =
+                DriveVolumes.peek(leaving);
         if (!leavingVolume.isEmpty() && !survivors.isEmpty()) {
-            final dev.jstech.computers.storage.LocalStore rest =
-                    new dev.jstech.computers.storage.LocalStore(survivors, () -> { });
+            final LocalStore rest =
+                    new LocalStore(survivors, () -> { });
             // Move only what the survivors actually accept, so a rebuild can never mint items.
             for (final var entry : leavingVolume.snapshot().items().entrySet()) {
                 final long moved = rest.insert(entry.getKey(), entry.getValue());
                 leavingVolume.take(entry.getKey(), moved);
             }
             if (leavingVolume.isEmpty()) {
-                dev.jstech.computers.storage.DriveVolumes.erase(leaving);
+                DriveVolumes.erase(leaving);
             } else {
-                dev.jstech.computers.storage.DriveVolumes.refreshUsage(leaving, leavingVolume);
+                DriveVolumes.refreshUsage(leaving, leavingVolume);
             }
         }
         markStorageChanged(top);
@@ -970,8 +1031,8 @@ public class ServerRackBlockEntity extends BlockEntity
         return mb;
     }
 
-    public dev.jstech.computers.storage.ServerStore getServerStorage(final int slot) {
-        return new dev.jstech.computers.storage.ServerStore(this, slot);
+    public ServerStore getServerStorage(final int slot) {
+        return new ServerStore(this, slot);
     }
 
     public static void serverTick(final Level level, final BlockPos pos,
@@ -998,7 +1059,7 @@ public class ServerRackBlockEntity extends BlockEntity
                 continue;
             }
             // A Server is a node only when it is a valid, powered computer whose bay switch is on.
-            final dev.jstech.computers.hardware.ComputerBuild build = buildAt(i);
+            final ComputerBuild build = buildAt(i);
             if (build == null || !build.isPowered() || !bayPowerOn(i)) {
                 continue;
             }
@@ -1008,9 +1069,9 @@ public class ServerRackBlockEntity extends BlockEntity
              * A machine in a rack is a machine: it comes up through its own self-test, boot manager and system,
              * it keeps setting a program up while it is a powered node, and it keeps a copy of its own going.
              */
-            dev.jstech.computers.os.boot.BootRunner.tick(unitHost(i), unitState(i).phases, level, worldPosition);
-            dev.jstech.computers.os.install.SetupRunner.tick(unitHost(i), level, worldPosition);
-            dev.jstech.computers.os.install.OsInstallRunner.tick(unitHost(i), level, worldPosition);
+            BootRunner.tick(unitHost(i), unitState(i).phases, level, worldPosition);
+            SetupRunner.tick(unitHost(i), level, worldPosition);
+            OsInstallRunner.tick(unitHost(i), level, worldPosition);
 
             final NetworkUuid previous = registered.get(node);
             if (network == null) {
@@ -1061,9 +1122,9 @@ public class ServerRackBlockEntity extends BlockEntity
 
     private NetworkUuid adjacentNetwork(final ServerLevel level, final NetworkSystem system) {
         final Direction facing = getBlockState().getValue(
-                net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING);
+                HorizontalDirectionalBlock.FACING);
         final Set<Long> inside = new HashSet<>();
-        for (final BlockPos p : dev.jstech.computers.block.ServerRackStructure
+        for (final BlockPos p : ServerRackStructure
                 .allPositions(worldPosition, facing)) {
             if (p.equals(worldPosition)) {
                 inside.add(p.asLong());
@@ -1096,7 +1157,7 @@ public class ServerRackBlockEntity extends BlockEntity
                 continue; // a face internal to the cabinet (the front layer's rear)
             }
             if (level.getBlockState(neighbor).getBlock() instanceof DataCableBlock cable
-                    && cable.tier() != dev.jstech.core.network.DataTier.HPC) {
+                    && cable.tier() != DataTier.HPC) {
                 cables.add(neighbor.asLong());
             }
         }
@@ -1173,7 +1234,7 @@ public class ServerRackBlockEntity extends BlockEntity
     public int thermalLoadWatts() {
         int watts = 0;
         for (int i = 0; i < CAPACITY_U; i++) {
-            final dev.jstech.computers.hardware.ComputerBuild build = buildAt(i);
+            final ComputerBuild build = buildAt(i);
             if (build != null && bayPowerOn(i)) {
                 watts += build.powerDraw();
             }
@@ -1185,9 +1246,9 @@ public class ServerRackBlockEntity extends BlockEntity
     public int thermalBudgetWatts() {
         int budget = PASSIVE_HEAT_BUDGET_W;
         for (int i = 0; i < CAPACITY_U; i++) {
-            if (dev.jstech.computers.item.RackUnitItem.is(
+            if (RackUnitItem.is(
                     servers.getStackInSlot(i),
-                    dev.jstech.computers.item.RackUnitItem.Kind.COOLING_UNIT)) {
+                    RackUnitItem.Kind.COOLING_UNIT)) {
                 budget += COOLING_UNIT_BUDGET_W;
             }
         }
@@ -1217,7 +1278,7 @@ public class ServerRackBlockEntity extends BlockEntity
     public RackChassis.RackType rackType() {
         // The block decides: one block entity class serves every cabinet type.
         return getBlockState().getBlock()
-                instanceof dev.jstech.computers.block.ServerRackBlock rack
+                instanceof ServerRackBlock rack
                 ? rack.rackType() : RackChassis.RackType.SERVER;
     }
 
@@ -1246,9 +1307,9 @@ public class ServerRackBlockEntity extends BlockEntity
     /** Whether a KVM Switch is mounted, which is what lets a monitor address more than one machine. */
     public boolean hasKvmSwitch() {
         for (int i = 0; i < CAPACITY_U; i++) {
-            if (dev.jstech.computers.item.RackUnitItem.is(
+            if (RackUnitItem.is(
                     servers.getStackInSlot(i),
-                    dev.jstech.computers.item.RackUnitItem.Kind.KVM_SWITCH)) {
+                    RackUnitItem.Kind.KVM_SWITCH)) {
                 return true;
             }
         }
@@ -1307,7 +1368,7 @@ public class ServerRackBlockEntity extends BlockEntity
     private int unitOverride = -1;
 
     /** Runs {@code body} with every machine-level method of this rack addressing unit {@code row}. */
-    public <T> T asUnit(final int row, final java.util.function.Supplier<T> body) {
+    public <T> T asUnit(final int row, final Supplier<T> body) {
         final int previous = unitOverride;
         unitOverride = row;
         try {
@@ -1318,7 +1379,7 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     /** The machine seated in {@code row} as a host of its own, independent of the monitor's channel. */
-    public dev.jstech.computers.os.IOsHost unitHost(final int row) {
+    public IOsHost unitHost(final int row) {
         return new RackUnitHost(this, row);
     }
 
@@ -1327,8 +1388,8 @@ public class ServerRackBlockEntity extends BlockEntity
         return slot < 0 ? ItemStack.EMPTY : servers.getStackInSlot(slot);
     }
 
-    @org.jetbrains.annotations.Nullable
-    private dev.jstech.computers.hardware.ComputerBuild soleBuild() {
+    @Nullable
+    private ComputerBuild soleBuild() {
         final int slot = soleComputerSlot();
         return slot < 0 ? null : buildAt(slot);
     }
@@ -1359,7 +1420,7 @@ public class ServerRackBlockEntity extends BlockEntity
 
     @Override
     public boolean isRunning() {
-        final dev.jstech.computers.hardware.ComputerBuild build = soleBuild();
+        final ComputerBuild build = soleBuild();
         return build != null && build.isPowered() && bayPowerOn(soleComputerSlot());
     }
 
@@ -1435,13 +1496,13 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     @Override
-    public dev.jstech.computers.os.boot.BootSequence bootSequence() {
-        return dev.jstech.computers.os.boot.BootLines.forMachine(this);
+    public BootSequence bootSequence() {
+        return BootLines.forMachine(this);
     }
 
     @Override
-    @org.jetbrains.annotations.Nullable
-    public dev.jstech.computers.hardware.ComputerBuild currentBuild() {
+    @Nullable
+    public ComputerBuild currentBuild() {
         return soleBuild();
     }
 
@@ -1452,8 +1513,8 @@ public class ServerRackBlockEntity extends BlockEntity
         }
         for (final long endpoint : linkedEndpoints()) {
             if (level.getBlockEntity(BlockPos.of(endpoint))
-                    instanceof dev.jstech.computers.os.media.MediaReaderBlockEntity reader
-                    && reader.insertedKind() == dev.jstech.computers.os.media.MediaKind.OS_INSTALL
+                    instanceof MediaReaderBlockEntity reader
+                    && reader.insertedKind() == MediaKind.OS_INSTALL
                     && reader.insertedPayload() != null) {
                 return true;
             }
@@ -1464,20 +1525,20 @@ public class ServerRackBlockEntity extends BlockEntity
     @Override
     public int pendingInstallSlot() {
         final int slot = soleComputerSlot();
-        return slot < 0 ? dev.jstech.computers.os.IOsHost.NO_PENDING_INSTALL
+        return slot < 0 ? IOsHost.NO_PENDING_INSTALL
                 : unitState(slot).pendingInstallSlot;
     }
 
     @Override
-    @org.jetbrains.annotations.Nullable
-    public dev.jstech.computers.os.install.OsInstallJob installing() {
+    @Nullable
+    public OsInstallJob installing() {
         final int slot = soleComputerSlot();
         return slot < 0 ? null : unitState(slot).installing;
     }
 
     @Override
-    public void setInstalling(@org.jetbrains.annotations.Nullable
-                              final dev.jstech.computers.os.install.OsInstallJob job) {
+    public void setInstalling(@Nullable
+                              final OsInstallJob job) {
         final int slot = soleComputerSlot();
         if (slot >= 0) {
             unitState(slot).installing = job;
@@ -1487,8 +1548,8 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     @Override
-    @org.jetbrains.annotations.Nullable
-    public dev.jstech.computers.os.install.InstallerFlow installer() {
+    @Nullable
+    public InstallerFlow installer() {
         final int slot = soleComputerSlot();
         if (slot < 0) {
             return null;
@@ -1499,12 +1560,12 @@ public class ServerRackBlockEntity extends BlockEntity
          * desktops it offers are read off the world and a rack is loaded before it can reach one.
          */
         if (state.installer == null && state.installerMemo != null && getLevel() instanceof ServerLevel level) {
-            final net.minecraft.nbt.CompoundTag memo = state.installerMemo;
+            final CompoundTag memo = state.installerMemo;
             state.installerMemo = null;
-            final dev.jstech.computers.os.OsDef system = dev.jstech.computers.os.OsRegistry.getOs(
-                    net.minecraft.resources.ResourceLocation.tryParse(memo.getString("Os")));
+            final OsDef system = OsRegistry.getOs(
+                    ResourceLocation.tryParse(memo.getString("Os")));
             if (system != null) {
-                state.installer = dev.jstech.computers.os.install.Installers.restored(unitHost(slot), level,
+                state.installer = Installers.restored(unitHost(slot), level,
                         system, memo.getInt("Copy"), memo.getInt("Stage"), memo.getInt("Slot"),
                         memo.getString("Name"), memo.getString("Desktop"), memo.getInt("Erase"));
             }
@@ -1513,8 +1574,8 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     @Override
-    public void setInstaller(@org.jetbrains.annotations.Nullable
-                             final dev.jstech.computers.os.install.InstallerFlow flow) {
+    public void setInstaller(@Nullable
+                             final InstallerFlow flow) {
         final int slot = soleComputerSlot();
         if (slot >= 0) {
             unitState(slot).installer = flow;
@@ -1542,12 +1603,12 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     /** The installer's answers as they are written onto the Server item, or null when the bay is in none. */
-    @org.jetbrains.annotations.Nullable
-    private static net.minecraft.nbt.CompoundTag installerPages(final UnitState state) {
+    @Nullable
+    private static CompoundTag installerPages(final UnitState state) {
         if (state.installer == null) {
             return state.installerMemo;
         }
-        final net.minecraft.nbt.CompoundTag pages = new net.minecraft.nbt.CompoundTag();
+        final CompoundTag pages = new CompoundTag();
         pages.putString("Os", state.installer.systemId());
         pages.putInt("Copy", state.installer.copyTicks());
         pages.putInt("Stage", state.installer.stageIndex());
@@ -1569,14 +1630,14 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     @Override
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public ResourceLocation bootedDesktopId() {
         final int slot = soleComputerSlot();
         return slot < 0 ? null : unitState(slot).bootedDesktopId;
     }
 
     @Override
-    public void setBootedDesktopId(@org.jetbrains.annotations.Nullable final ResourceLocation id) {
+    public void setBootedDesktopId(@Nullable final ResourceLocation id) {
         final int slot = soleComputerSlot();
         if (slot >= 0) {
             unitState(slot).bootedDesktopId = id;
@@ -1586,21 +1647,21 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     @Override
-    public List<dev.jstech.computers.os.OpenWindow> openWindows() {
+    public List<OpenWindow> openWindows() {
         final int slot = soleComputerSlot();
         return slot < 0 ? List.of() : List.copyOf(unitState(slot).openWindows);
     }
 
     @Override
-    public void setOpenWindows(final List<dev.jstech.computers.os.OpenWindow> windows) {
+    public void setOpenWindows(final List<OpenWindow> windows) {
         final int slot = soleComputerSlot();
         if (slot < 0) {
             return;
         }
         final UnitState state = unitState(slot);
         state.openWindows.clear();
-        for (final dev.jstech.computers.os.OpenWindow window : windows) {
-            if (state.openWindows.size() >= dev.jstech.computers.os.OpenWindow.MAX) {
+        for (final OpenWindow window : windows) {
+            if (state.openWindows.size() >= OpenWindow.MAX) {
                 break;
             }
             state.openWindows.add(window);
@@ -1617,7 +1678,7 @@ public class ServerRackBlockEntity extends BlockEntity
             if (value) {
                 unitState(slot).openWindows.clear(); // a restart closes everything
                 unitState(slot).pendingInstallSlot = // and is what a finished installer was waiting for
-                        dev.jstech.computers.os.IOsHost.NO_PENDING_INSTALL;
+                        IOsHost.NO_PENDING_INSTALL;
             }
             /*
              * Write it through immediately: the flag lives on the Server item, and a world that unloads
@@ -1630,18 +1691,18 @@ public class ServerRackBlockEntity extends BlockEntity
 
     @Override
     public long ramBuffer() {
-        final dev.jstech.computers.hardware.ComputerBuild build = soleBuild();
+        final ComputerBuild build = soleBuild();
         return build == null ? 0L : build.ramBuffer();
     }
 
     @Override
     public int maxCpuMhz() {
-        final dev.jstech.computers.hardware.ComputerBuild build = soleBuild();
+        final ComputerBuild build = soleBuild();
         if (build == null) {
             return 0;
         }
         int max = 0;
-        for (final dev.jstech.computers.hardware.CpuSpec cpu : build.cpus()) {
+        for (final CpuSpec cpu : build.cpus()) {
             max = Math.max(max, cpu.freqMhz());
         }
         return max;
@@ -1649,7 +1710,7 @@ public class ServerRackBlockEntity extends BlockEntity
 
     @Override
     public int totalVramMb() {
-        final dev.jstech.computers.hardware.ComputerBuild build = soleBuild();
+        final ComputerBuild build = soleBuild();
         return build == null ? 0 : build.effectiveVramMb();
     }
 
@@ -1667,7 +1728,7 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     @Override
-    public java.util.List<ItemStack> diskStacks() {
+    public List<ItemStack> diskStacks() {
         final List<ItemStack> out = new ArrayList<>(diskSlots());
         for (int i = 0; i < diskSlots(); i++) {
             out.add(diskInSlot(i));
@@ -1685,7 +1746,7 @@ public class ServerRackBlockEntity extends BlockEntity
 
     @Override
     public ItemStack systemDisk() {
-        return dev.jstech.computers.os.OsDisks.systemDisk(
+        return OsDisks.systemDisk(
                 diskSlots(), this::diskInSlot, bootDiskSlot());
     }
 
@@ -1706,14 +1767,14 @@ public class ServerRackBlockEntity extends BlockEntity
 
     @Override
     public int defaultInstallSlot() {
-        return dev.jstech.computers.os.OsDisks.defaultInstallSlot(
+        return OsDisks.defaultInstallSlot(
                 diskSlots(), this::diskInSlot);
     }
 
     @Override
     public boolean formatDisk(final int slot) {
-        final dev.jstech.computers.os.OsDisks.FormatResult result =
-                dev.jstech.computers.os.OsDisks.formatDisk(
+        final OsDisks.FormatResult result =
+                OsDisks.formatDisk(
                         diskSlots(), this::diskInSlot, this::setDiskInSlot, slot);
         if (!result.formatted()) {
             return false;
@@ -1722,7 +1783,7 @@ public class ServerRackBlockEntity extends BlockEntity
         if (top >= 0 && unitState(top).bootDiskSlot == slot) {
             unitState(top).bootDiskSlot = -1;
         }
-        if (result == dev.jstech.computers.os.OsDisks.FormatResult.ERASED_SYSTEM
+        if (result == OsDisks.FormatResult.ERASED_SYSTEM
                 && console() != null) {
             console().wipeSoftware();
         }
@@ -1737,11 +1798,11 @@ public class ServerRackBlockEntity extends BlockEntity
 
     @Override
     public boolean installOs(final ResourceLocation osId, final int preferredSlot) {
-        final boolean installed = dev.jstech.computers.os.OsDisks.installOs(
+        final boolean installed = OsDisks.installOs(
                 diskSlots(), this::diskInSlot, this::setDiskInSlot, osId, preferredSlot);
         if (installed && level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
-                    net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+                    Block.UPDATE_CLIENTS);
         }
         return installed;
     }
@@ -1752,30 +1813,30 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     @Override
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public ResourceLocation installedOsId() {
         final ItemStack disk = systemDisk();
         return disk.isEmpty() ? null : disk.get(ComputingModule.SYSTEM_OS.get());
     }
 
     @Override
-    @org.jetbrains.annotations.Nullable
-    public dev.jstech.computers.os.OsDef installedOs() {
+    @Nullable
+    public OsDef installedOs() {
         final ResourceLocation osId = installedOsId();
-        return osId == null ? null : dev.jstech.computers.os.OsRegistry.getOs(osId);
+        return osId == null ? null : OsRegistry.getOs(osId);
     }
 
     @Override
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public ResourceLocation installedDesktopId() {
-        return dev.jstech.computers.os.OsDisks.installedDesktopId(
+        return OsDisks.installedDesktopId(
                 installedOs(), console());
     }
 
     @Override
     public boolean validateOsSession() {
-        final dev.jstech.computers.program.ComputerConsoleState console = console();
-        final dev.jstech.computers.program.install.LiveInstallState live =
+        final ComputerConsoleState console = console();
+        final LiveInstallState live =
                 console == null ? null : console.liveInstall();
         if (live != null) {
             if (hasLiveMediumFor(live.distro())) {
@@ -1789,17 +1850,17 @@ public class ServerRackBlockEntity extends BlockEntity
 
     /** Whether a media reader cabled to the rack still holds the live installer for {@code distro}. */
     private boolean hasLiveMediumFor(
-            final dev.jstech.computers.program.install.LiveInstallState.Distro distro) {
+            final LiveInstallState.Distro distro) {
         if (level == null) {
             return true; // not resolvable right now; do not kill the session over a missing level
         }
         final String wanted = distro
-                == dev.jstech.computers.program.install.LiveInstallState.Distro.ARCH
+                == LiveInstallState.Distro.ARCH
                 ? "arch" : "gentoo";
         for (final long endpoint : linkedEndpoints()) {
             if (level.getBlockEntity(BlockPos.of(endpoint))
-                    instanceof dev.jstech.computers.os.media.MediaReaderBlockEntity reader
-                    && reader.insertedKind() == dev.jstech.computers.os.media.MediaKind.OS_INSTALL
+                    instanceof MediaReaderBlockEntity reader
+                    && reader.insertedKind() == MediaKind.OS_INSTALL
                     && reader.insertedPayload() != null
                     && wanted.equals(reader.insertedPayload().getPath())) {
                 return true;
@@ -1809,8 +1870,8 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     @Override
-    @org.jetbrains.annotations.Nullable
-    public dev.jstech.computers.program.ComputerConsoleState console() {
+    @Nullable
+    public ComputerConsoleState console() {
         final int slot = soleComputerSlot();
         return slot < 0 ? null : unitState(slot).console;
     }
@@ -1828,13 +1889,13 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     @Override
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public NetworkUuid networkUuid() {
         final ItemStack stack = soleServerStack();
         if (!(stack.getItem() instanceof ServerItem)) {
             return null;
         }
-        final java.util.UUID node = ServerItem.nodeUuid(stack);
+        final UUID node = ServerItem.nodeUuid(stack);
         return node == null ? null : registered.get(node);
     }
 
@@ -1854,45 +1915,45 @@ public class ServerRackBlockEntity extends BlockEntity
 
     @Override
     public int installedCpus() {
-        final dev.jstech.computers.hardware.ComputerBuild build = soleBuild();
+        final ComputerBuild build = soleBuild();
         return build == null ? 0 : build.cpus().size();
     }
 
     @Override
     public long systemDiskFreeWeight() {
-        return dev.jstech.computers.os.OsDisks.systemDiskFreeWeight(systemDisk());
+        return OsDisks.systemDiskFreeWeight(systemDisk());
     }
 
     @Override
     public long systemDiskFreeMb() {
         final ItemStack disk = systemDisk();
-        return dev.jstech.computers.os.OsDisks.systemDiskFreeWeight(disk)
+        return OsDisks.systemDiskFreeWeight(disk)
                 * diskEra(disk).mbPerItem()
-                / dev.jstech.computers.storage.StorageKey.MB_EQ_PER_ITEM;
+                / StorageKey.MB_EQ_PER_ITEM;
     }
 
     @Override
     public long reservedByOs() {
         // One lookup of the system disk serves both the system and the era the system sits on.
         final ItemStack disk = systemDisk();
-        final net.minecraft.resources.ResourceLocation osId =
+        final ResourceLocation osId =
                 disk.isEmpty() ? null : disk.get(ComputingModule.SYSTEM_OS.get());
-        final dev.jstech.computers.os.OsDef os =
-                osId != null ? dev.jstech.computers.os.OsRegistry.getOs(osId) : null;
+        final OsDef os =
+                osId != null ? OsRegistry.getOs(osId) : null;
         return os != null ? os.footprintItemsOn(diskEra(disk)) : 0L;
     }
 
     /** The era a disk was made for, which sets what an item and a system cost on it; standard for no disk. */
-    private static dev.jstech.core.tier.HardwareEra diskEra(final ItemStack disk) {
+    private static HardwareEra diskEra(final ItemStack disk) {
         return disk.getItem() instanceof DiskItem item
-                ? item.spec().era() : dev.jstech.core.tier.HardwareEra.STANDARD;
+                ? item.spec().era() : HardwareEra.STANDARD;
     }
 
     @Override
-    @org.jetbrains.annotations.Nullable
-    public dev.jstech.core.tier.HardwareEra installedEra() {
-        final int mobo = dev.jstech.computers.item.ServerHardwareHandler.MOBO;
-        final net.minecraft.world.item.component.ItemContainerContents parts =
+    @Nullable
+    public HardwareEra installedEra() {
+        final int mobo = ServerHardwareHandler.MOBO;
+        final ItemContainerContents parts =
                 ServerItem.hardware(soleServerStack());
         /*
          * A server's hardware is a data component, so its container is only as long as what was written
@@ -1902,13 +1963,13 @@ public class ServerRackBlockEntity extends BlockEntity
             return null;
         }
         return parts.getStackInSlot(mobo).getItem()
-                instanceof dev.jstech.computers.item.MotherboardItem m
+                instanceof MotherboardItem m
                 ? m.spec().era() : null;
     }
 
     @Override
-    @org.jetbrains.annotations.Nullable
-    public dev.jstech.core.tier.HardwareEra displayEra() {
+    @Nullable
+    public HardwareEra displayEra() {
         /*
          * The client copy of a rack holds no mounted servers, so the era has to travel to it: screens
          * that dress themselves by era (the boot sequence, the terminal bezel) render client-side.
@@ -1938,7 +1999,7 @@ public class ServerRackBlockEntity extends BlockEntity
 
     @Override
     public long orchestrationCapacity() {
-        final dev.jstech.computers.hardware.ComputerBuild build = soleBuild();
+        final ComputerBuild build = soleBuild();
         return build == null ? 0L : throttled(build.totalCapacity());
     }
 
@@ -1950,7 +2011,7 @@ public class ServerRackBlockEntity extends BlockEntity
 
     @Override
     public int computerQueues() {
-        final dev.jstech.computers.hardware.ComputerBuild build = soleBuild();
+        final ComputerBuild build = soleBuild();
         return build == null || !build.isPowered() ? 0 : build.parallelQueues();
     }
 
@@ -1970,7 +2031,7 @@ public class ServerRackBlockEntity extends BlockEntity
 
     @Override
     public int cpuSlots() {
-        final dev.jstech.computers.hardware.ComputerBuild build = soleBuild();
+        final ComputerBuild build = soleBuild();
         final RackChassis chassis = ServerItem.chassisOf(soleServerStack());
         return build == null || chassis == null ? 0
                 : Math.min(build.motherboard().cpuSlots(), chassis.maxCpus());
@@ -1978,25 +2039,25 @@ public class ServerRackBlockEntity extends BlockEntity
 
     @Override
     public int installedRam() {
-        final dev.jstech.computers.hardware.ComputerBuild build = soleBuild();
+        final ComputerBuild build = soleBuild();
         return build == null ? 0 : build.rams().size();
     }
 
     @Override
     public int ramSlots() {
-        final dev.jstech.computers.hardware.ComputerBuild build = soleBuild();
+        final ComputerBuild build = soleBuild();
         return build == null ? 0 : build.motherboard().ramSlots();
     }
 
     @Override
     public int installedGpus() {
-        final dev.jstech.computers.hardware.ComputerBuild build = soleBuild();
+        final ComputerBuild build = soleBuild();
         return build == null ? 0 : build.gpus().size();
     }
 
     @Override
     public int gpuSlots() {
-        final dev.jstech.computers.hardware.ComputerBuild build = soleBuild();
+        final ComputerBuild build = soleBuild();
         final RackChassis chassis = ServerItem.chassisOf(soleServerStack());
         return build == null || chassis == null ? 0
                 : Math.min(build.motherboard().pcieSlots(), chassis.maxPcie());
@@ -2014,9 +2075,9 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     @Override
-    public dev.jstech.computers.storage.LocalStore localStore() {
+    public LocalStore localStore() {
         final int slot = Math.max(0, soleComputerSlot());
-        return new dev.jstech.computers.storage.LocalStore(
+        return new LocalStore(
                 claimedDriveStacks(slot), () -> {
                     markStorageChanged(slot);
                     setChanged();
@@ -2044,8 +2105,8 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     @Override
-    public dev.jstech.computers.storage.IDataSink localStorage() {
-        return new dev.jstech.computers.storage.StoreSink(localStore());
+    public IDataSink localStorage() {
+        return new StoreSink(localStore());
     }
 
     @Override
@@ -2081,7 +2142,7 @@ public class ServerRackBlockEntity extends BlockEntity
          */
         int ports = 0;
         for (final int slot : computerSlots()) {
-            final dev.jstech.computers.hardware.ComputerBuild build = buildAt(slot);
+            final ComputerBuild build = buildAt(slot);
             if (build != null) {
                 ports = Math.max(ports, build.motherboard().peripheralPorts());
             }
@@ -2092,14 +2153,14 @@ public class ServerRackBlockEntity extends BlockEntity
     @Override
     public Set<Long> occupiedPositions(final long ownerPos) {
         // A peripheral cable may touch any block of the 2x2x? cabinet, not just the controller.
-        final net.minecraft.world.level.block.state.BlockState state = getBlockState();
-        if (!state.hasProperty(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING)) {
+        final BlockState state = getBlockState();
+        if (!state.hasProperty(HorizontalDirectionalBlock.FACING)) {
             return Set.of(ownerPos);
         }
         final Direction facing = state.getValue(
-                net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING);
+                HorizontalDirectionalBlock.FACING);
         final Set<Long> positions = new HashSet<>();
-        for (final BlockPos p : dev.jstech.computers.block.ServerRackStructure
+        for (final BlockPos p : ServerRackStructure
                 .allPositions(BlockPos.of(ownerPos), facing)) {
             positions.add(p.asLong());
         }
@@ -2173,8 +2234,8 @@ public class ServerRackBlockEntity extends BlockEntity
      * The era of the machine the monitor is currently showing, as last received from the server. Only
      * ever written on the client; the server always answers from the mounted hardware itself.
      */
-    @org.jetbrains.annotations.Nullable
-    private dev.jstech.core.tier.HardwareEra clientEra;
+    @Nullable
+    private HardwareEra clientEra;
 
     @Override
     public CompoundTag getUpdateTag(final HolderLookup.Provider registries) {
@@ -2183,7 +2244,7 @@ public class ServerRackBlockEntity extends BlockEntity
          * Only the active channel's era travels. Sending the mounted stacks would put every server's
          * full build on the wire on every block update, for one enum the screens need.
          */
-        final dev.jstech.core.tier.HardwareEra era = installedEra();
+        final HardwareEra era = installedEra();
         tag.putInt("DisplayEra", era == null ? -1 : era.id());
         /*
          * The cabinet model: one byte per row says what is seated there, the mask says which bays are
@@ -2202,21 +2263,21 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     @Override
-    public net.minecraft.network.protocol.Packet<net.minecraft.network.protocol.game.ClientGamePacketListener>
+    public Packet<ClientGamePacketListener>
             getUpdatePacket() {
-        return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
-    public void onDataPacket(final net.minecraft.network.Connection connection,
-                             final net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket packet,
+    public void onDataPacket(final Connection connection,
+                             final ClientboundBlockEntityDataPacket packet,
                              final HolderLookup.Provider registries) {
         /*
          * Apply only the era. Running the full loadAdditional here would deserialize empty inventories
          * over the client copy and reset the transient rack state to its defaults.
          */
         final CompoundTag tag = packet.getTag();
-        clientEra = dev.jstech.core.tier.HardwareEra.find(tag != null ? tag.getInt("DisplayEra") : -1);
+        clientEra = HardwareEra.find(tag != null ? tag.getInt("DisplayEra") : -1);
         if (tag != null) {
             applyVisualTag(tag);
         }
@@ -2231,7 +2292,7 @@ public class ServerRackBlockEntity extends BlockEntity
 
     private void applyVisualTag(final CompoundTag tag) {
         final byte[] units = tag.getByteArray("Units");
-        java.util.Arrays.fill(clientUnits, (byte) UNIT_NONE);
+        Arrays.fill(clientUnits, (byte) UNIT_NONE);
         System.arraycopy(units, 0, clientUnits, 0, Math.min(units.length, clientUnits.length));
         clientBayPowerOff = tag.getInt("BayPowerOff");
         clientServicePanelOff = tag.getBoolean("ServicePanelOff");
@@ -2250,7 +2311,7 @@ public class ServerRackBlockEntity extends BlockEntity
     private void syncDisplayEra() {
         if (level != null && !level.isClientSide()) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
-                    net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+                    Block.UPDATE_CLIENTS);
         }
     }
 }

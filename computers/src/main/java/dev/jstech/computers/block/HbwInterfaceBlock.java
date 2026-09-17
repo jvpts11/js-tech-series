@@ -13,7 +13,9 @@ import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.util.BlockEntityTickers;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -40,16 +42,16 @@ public class HbwInterfaceBlock extends Block implements EntityBlock, IDataNetwor
     }
 
     @Override
-    public java.util.Set<DataTier> acceptedCableTiers() {
+    public Set<DataTier> acceptedCableTiers() {
         // The backbone on one side, the cluster fabric on the other.
-        return java.util.Set.of(DataTier.T2_HBW, DataTier.HPC);
+        return Set.of(DataTier.T2_HBW, DataTier.HPC);
     }
 
     @Override
     protected void onRemove(final BlockState state, final Level level, final BlockPos pos,
                             final BlockState newState, final boolean movedByPiston) {
         if (!state.is(newState.getBlock())
-                && level instanceof net.minecraft.server.level.ServerLevel serverLevel
+                && level instanceof ServerLevel serverLevel
                 && level.getBlockEntity(pos) instanceof HbwInterfaceBlockEntity be) {
             be.onBroken(serverLevel);
         }

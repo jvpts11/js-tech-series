@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.PackageManagerKind;
 import java.util.List;
 import java.util.Map;
 
@@ -19,8 +20,8 @@ import java.util.Map;
 public interface ICliPackages {
 
     /** The installed OS's package manager; {@code NONE} on media-installed platforms. */
-    default dev.jstech.computers.os.PackageManagerKind packageManager() {
-        return dev.jstech.computers.os.PackageManagerKind.NONE;
+    default PackageManagerKind packageManager() {
+        return PackageManagerKind.NONE;
     }
 
     /** The packages the network mirror offers this computer (empty when no mirror is reachable). */

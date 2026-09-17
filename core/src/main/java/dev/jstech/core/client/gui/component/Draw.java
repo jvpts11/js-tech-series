@@ -9,6 +9,7 @@ package dev.jstech.core.client.gui.component;
 
 import dev.jstech.core.gui.layout.WindowGeometry;
 import net.minecraft.client.gui.GuiGraphics;
+import org.joml.Matrix4f;
 
 /**
  * The few strokes a component draws itself, outside the skin: they carry no design of their own.
@@ -20,7 +21,7 @@ public final class Draw {
      * the pose, so a window drawn under a translation would otherwise clip in the wrong place.
      */
     public static void pushScissor(final GuiGraphics g, final int x1, final int y1, final int x2, final int y2) {
-        final org.joml.Matrix4f m = g.pose().last().pose();
+        final Matrix4f m = g.pose().last().pose();
         // The pose's translation and its scale both move the clip, since the clip is in screen units.
         final WindowGeometry.Rect r = WindowGeometry.scissor(m.m30(), m.m31(), m.m00(), m.m11(), x1, y1, x2, y2);
         g.enableScissor(r.x(), r.y(), r.x() + r.w(), r.y() + r.h());

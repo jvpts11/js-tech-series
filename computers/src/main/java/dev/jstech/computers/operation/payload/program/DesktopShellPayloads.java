@@ -7,10 +7,24 @@
  */
 package dev.jstech.computers.operation.payload.program;
 
+import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.client.os.ShellViews;
+import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.install.SetupRunner;
+import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.CliCommands;
+import dev.jstech.computers.program.cli.CliShell;
+import dev.jstech.computers.program.cli.CliStyle;
+import dev.jstech.computers.program.cli.SshTerminal;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -47,16 +61,16 @@ public final class DesktopShellPayloads {
 
     private static void handleDesktopShellRun(final DesktopShellRunPayload payload, final ServerPlayer player,
                                               final ServerLevel level) {
-        final java.util.List<DesktopShellOutputPayload.WireLine> wire = new java.util.ArrayList<>();
+        final List<DesktopShellOutputPayload.WireLine> wire = new ArrayList<>();
         boolean clear = false;
         boolean busy = false;
         String prompt = "C:\\>";
         /* Set when the command was one that gives the terminal to an editor. */
-        dev.jstech.computers.program.cli.CliShell.HandOver handOver = null;
+        CliShell.HandOver handOver = null;
         if (level.getBlockEntity(payload.hostPos())
-                instanceof dev.jstech.computers.terminal.IComputerTerminalHost host) {
+                instanceof IComputerTerminalHost host) {
             final var computer =
-                    new dev.jstech.computers.program.ServerCliComputer(host, level);
+                    new ServerCliComputer(host, level);
             // The window's own shell: its directory is its own, and so is the reply.
             computer.useSession(payload.session());
             /*
@@ -67,7 +81,7 @@ public final class DesktopShellPayloads {
             if (running != null) {
                 busy = drainForeground(running, payload.line(), wire);
                 PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(false, busy,
-                        dev.jstech.computers.program.cli.SshTerminal.prompt(computer, computer),
+                        SshTerminal.prompt(computer, computer),
                         wire, payload.session()));
                 return;
             }
@@ -77,20 +91,20 @@ public final class DesktopShellPayloads {
              */
             final var console = host.console();
             final var setup = console == null ? null : console.setup();
-            if (setup != null && host instanceof dev.jstech.computers.os.IOsHost machine) {
+            if (setup != null && host instanceof IOsHost machine) {
                 if (INTERRUPT.equals(payload.line())) {
-                    dev.jstech.computers.os.install.SetupRunner.cancel(machine, level, payload.hostPos());
+                    SetupRunner.cancel(machine, level, payload.hostPos());
                     PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(false, false,
-                            dev.jstech.computers.program.cli.SshTerminal.prompt(computer, computer),
+                            SshTerminal.prompt(computer, computer),
                             wire, payload.session()));
                     return;
                 }
                 wire.add(new DesktopShellOutputPayload.WireLine(
                         (setup.removing() ? "Removing " : "Setting up ") + setup.name() + "  "
                                 + (setup.permille() / 10) + "%  (Ctrl+C to cancel)",
-                        dev.jstech.computers.program.cli.CliStyle.DIM.id()));
+                        CliStyle.DIM.id()));
                 PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(false, true,
-                        dev.jstech.computers.program.cli.SshTerminal.prompt(computer, computer),
+                        SshTerminal.prompt(computer, computer),
                         wire, payload.session()));
                 return;
             }
@@ -99,12 +113,12 @@ public final class DesktopShellPayloads {
              * only the glass it is read through. Everything else, ssh itself and exit, stays here.
              */
             var shellOn = computer;
-            final var target = dev.jstech.computers.program.cli.SshTerminal.targetOf(
+            final var target = SshTerminal.targetOf(
                     host, level, payload.line());
             if (target != null) {
-                shellOn = new dev.jstech.computers.program.ServerCliComputer(target, level);
+                shellOn = new ServerCliComputer(target, level);
             }
-            final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(
+            final var shell = CliCommands.shellFor(
                     shellOn, CLI_WIDTH);
             final var response = shell.run(payload.line(), shellOn);
             clear = response.clearScreen();
@@ -112,7 +126,7 @@ public final class DesktopShellPayloads {
             for (final var cliLine : response.lines()) {
                 wire.add(new DesktopShellOutputPayload.WireLine(cliLine.text(), cliLine.style().id()));
             }
-            prompt = dev.jstech.computers.program.cli.SshTerminal.prompt(computer, shellOn);
+            prompt = SshTerminal.prompt(computer, shellOn);
             /*
              * The command just run may have been one that starts a program at this terminal, in
              * which case the prompt does not come back with this reply.
@@ -123,20 +137,20 @@ public final class DesktopShellPayloads {
              * monitor either replays the POST (plain reboot) or enters the firmware setup.
              */
             final BlockPos monitorPos = player.containerMenu
-                    instanceof dev.jstech.computers.menu.DesktopMenu desktop
+                    instanceof DesktopMenu desktop
                     ? desktop.monitorPos() : null;
             if (monitorPos != null && computer.firmwareRebootRequested()) {
                 player.closeContainer();
-                dev.jstech.computers.block.MonitorBlock.openFirmware(
+                MonitorBlock.openFirmware(
                         player, level, monitorPos, payload.hostPos());
                 return;
             }
             if (monitorPos != null && computer.rebootRequested()) {
-                if (level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost be) {
+                if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost be) {
                     be.setNeedsPost(true);
                 }
                 player.closeContainer();
-                dev.jstech.computers.block.MonitorBlock.openPost(
+                MonitorBlock.openPost(
                         player, level, monitorPos, payload.hostPos());
                 return;
             }
@@ -154,8 +168,8 @@ public final class DesktopShellPayloads {
      * program's to read, and the interrupt is the one thing that means something to the terminal itself.
      */
     private static boolean drainForeground(
-            final dev.jstech.computers.machine.MachinePrograms processes, final String typed,
-            final java.util.List<DesktopShellOutputPayload.WireLine> wire) {
+            final MachinePrograms processes, final String typed,
+            final List<DesktopShellOutputPayload.WireLine> wire) {
         if (!INTERRUPT.equals(typed)) {
             processes.offerInput(typed);
             return true;
@@ -164,7 +178,7 @@ public final class DesktopShellPayloads {
         processes.release();
         processes.stop(id);
         wire.add(new DesktopShellOutputPayload.WireLine("^C",
-                dev.jstech.computers.program.cli.CliStyle.DIM.id()));
+                CliStyle.DIM.id()));
         return false;
     }
 
@@ -173,6 +187,6 @@ public final class DesktopShellPayloads {
          * A computer has one console and this is what it said, so it goes to every window looking at
          * it: the terminal window and an editor's terminal panel. Each ignores it when it is not open.
          */
-        dev.jstech.computers.client.os.ShellViews.accept(payload);
+        ShellViews.accept(payload);
     }
 }

@@ -8,6 +8,7 @@
 package dev.jstech.computers.os.boot;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsCapability;
 import dev.jstech.computers.os.OsDef;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -88,7 +89,7 @@ public final class BootController {
      * @return the appropriate {@link BootTarget}
      */
     public static BootTarget targetForComputer(@Nullable final BlockEntity be) {
-        if (!(be instanceof dev.jstech.computers.os.IOsHost computer)) {
+        if (!(be instanceof IOsHost computer)) {
             return BootTarget.FIRMWARE;
         }
         /*

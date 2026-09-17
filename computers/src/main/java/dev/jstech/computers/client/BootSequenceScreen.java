@@ -15,6 +15,7 @@ import dev.jstech.computers.operation.payload.PostCompletePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.core.gui.Phosphor;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.Minecraft;
@@ -456,7 +457,7 @@ public final class BootSequenceScreen extends Screen {
     private HardwareEra era() {
         final Minecraft mc = Minecraft.getInstance();
         if (mc.level != null && mc.level.getBlockEntity(computerPos)
-                instanceof dev.jstech.computers.os.IOsHost be) {
+                instanceof IOsHost be) {
             return be.displayEra();
         }
         return HardwareEra.STANDARD;

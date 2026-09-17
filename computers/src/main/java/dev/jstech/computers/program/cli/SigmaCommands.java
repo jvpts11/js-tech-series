@@ -310,7 +310,7 @@ public final class SigmaCommands {
                 return;
             }
             int heapMb = 0;
-            final java.util.List<String> arguments = new java.util.ArrayList<>();
+            final List<String> arguments = new ArrayList<>();
             for (int i = 2; i < ctx.args().size(); i++) {
                 if ("--heap".equals(ctx.args().get(i)) && i < ctx.args().size() - 1) {
                     heapMb = megabytes(ctx.args().get(++i));

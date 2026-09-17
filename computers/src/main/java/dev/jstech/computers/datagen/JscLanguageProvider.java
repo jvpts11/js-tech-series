@@ -10,6 +10,9 @@ package dev.jstech.computers.datagen;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.os.OsBootstrap;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.ProgramSpec;
 import net.minecraft.data.PackOutput;
 import net.neoforged.neoforge.common.data.LanguageProvider;
 
@@ -52,8 +55,8 @@ public class JscLanguageProvider extends LanguageProvider {
          * Program display names come from the single program registry, so a new program's name is written
          * once (on its ProgramSpec) and datagen emits its translation key here automatically.
          */
-        for (final dev.jstech.computers.os.ProgramSpec program
-                : dev.jstech.computers.os.OsBootstrap.builtinPrograms()) {
+        for (final ProgramSpec program
+                : OsBootstrap.builtinPrograms()) {
             add(program.titleKey(), program.displayName());
             /*
              * Every program says what it does, in one line, wherever it is shown: on its install
@@ -93,8 +96,8 @@ public class JscLanguageProvider extends LanguageProvider {
          * Operating-system display names (the ids stay technical; players see these).
          * OS display names, like the programs, come from the single OS registry.
          */
-        for (final dev.jstech.computers.os.OsDef os
-                : dev.jstech.computers.os.OsBootstrap.builtinOses()) {
+        for (final OsDef os
+                : OsBootstrap.builtinOses()) {
             add(os.titleKey(), os.displayName());
         }
         add(ComputingModule.SUPERCOMPUTER_NODE.get(), "Supercomputer Node");

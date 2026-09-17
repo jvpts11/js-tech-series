@@ -7,8 +7,14 @@
  */
 package dev.jstech.computers.operation.payload.program;
 
+import dev.jstech.computers.block.IFirmwareScreenOpener;
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.machine.ProgramLauncher;
+import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
+import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
@@ -20,10 +26,27 @@ import dev.jstech.computers.operation.payload.RunProgramPayload;
 import dev.jstech.computers.operation.payload.UiEventPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.operation.payload.UninstallProgramPayload;
+import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.computers.os.fs.FsPaths;
+import dev.jstech.computers.program.Programs;
+import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.CliStyle;
+import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.iql.IqlDefinition;
+import dev.jstech.computers.program.iql.IqlSavedObject;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.computers.vm.program.IProgramParent;
+import dev.jstech.computers.vm.program.ProgramPriority;
+import dev.jstech.core.peripheral.IPeripheralOwner;
+import dev.jstech.core.tier.HardwareEra;
+import java.util.function.Function;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -72,9 +95,9 @@ public final class ProgramPayloads {
             lines.add(new ProcessListPayload.ProcessLine(ProcessListPayload.KIND_SERVICE, "IQL Engine",
                     running ? "running" : "stopped",
                     running ? "the network's query and job engine" : "stopped, start it to run jobs"));
-            for (final dev.jstech.computers.program.iql.IqlSavedObject job
+            for (final IqlSavedObject job
                     : mainframe.iqlCatalog().ofType(
-                            dev.jstech.computers.program.iql.IqlDefinition.ObjectType.JOB)) {
+                            IqlDefinition.ObjectType.JOB)) {
                 final boolean paused = mainframe.isJobPaused(job.name());
                 final String state = paused ? "paused" : running ? "active" : "idle";
                 lines.add(new ProcessListPayload.ProcessLine(ProcessListPayload.KIND_JOB, job.name(),
@@ -84,7 +107,7 @@ public final class ProgramPayloads {
         PacketDistributor.sendToPlayer(player, new ProcessListPayload(lines));
     }
 
-    private static String jobDetail(final dev.jstech.computers.program.iql.IqlSavedObject job) {
+    private static String jobDetail(final IqlSavedObject job) {
         return switch (job.triggerKind()) {
             case EVERY -> "every " + job.triggerSpec();
             case WHEN -> "when " + job.triggerSpec();
@@ -127,16 +150,16 @@ public final class ProgramPayloads {
 
     private static void handleOpenComputerUi(final OpenComputerUiPayload payload, final Player player) {
         // Only the firmware setup is a client-only screen; the desktop opens as a server-side menu.
-        dev.jstech.computers.block.IFirmwareScreenOpener.Holder.open(
+        IFirmwareScreenOpener.Holder.open(
                 payload.host(), payload.monitorPos(),
-                dev.jstech.computers.os.FirmwareKind.byId(payload.firmwareKind()),
+                FirmwareKind.byId(payload.firmwareKind()),
                 payload.name());
     }
 
     private static void handleOpenProgram(final OpenProgramPayload payload, final ServerPlayer player,
                                           final ServerLevel level) {
         if (!(level.getBlockEntity(payload.hostPos())
-                instanceof dev.jstech.computers.terminal.IComputerTerminalHost terminalHost)) {
+                instanceof IComputerTerminalHost terminalHost)) {
             return;
         }
         /*
@@ -151,30 +174,30 @@ public final class ProgramPayloads {
          * so a player near any monitor cannot open a program bound to a foreign computer.
          */
         final boolean nearMonitor = player.distanceToSqr(
-                net.minecraft.world.phys.Vec3.atCenterOf(payload.monitorPos())) <= 64.0
-                && terminalHost instanceof dev.jstech.core.peripheral.IPeripheralOwner owner
+                Vec3.atCenterOf(payload.monitorPos())) <= 64.0
+                && terminalHost instanceof IPeripheralOwner owner
                 && owner.linkedEndpoints().contains(payload.monitorPos().asLong());
         if (!viaTerminal && !nearMonitor) {
             return;
         }
         final String id = payload.programId();
-        if (id.equals(dev.jstech.computers.program.Programs.COMMAND_PROMPT.toString())
+        if (id.equals(Programs.COMMAND_PROMPT.toString())
                 || id.equals("command_prompt")) {
-            final net.minecraft.network.chat.Component title =
+            final Component title =
                     player.level().getBlockState(payload.hostPos()).getBlock().getName();
             /*
              * The host's board-derived era drives the prompt's GUI skin; capture it at open time. It is
              * not re-synced afterwards because the board is only swapped in the computer's own assembly
              * GUI, never from the running prompt.
              */
-            final dev.jstech.core.tier.HardwareEra hostEra =
+            final HardwareEra hostEra =
                     player.level().getBlockEntity(payload.hostPos())
                             instanceof dev.jstech.computers.os
                                     .IOsHost host ? host.displayEra() : null;
-            player.openMenu(new net.minecraft.world.SimpleMenuProvider(
-                    (windowId, inv, p) -> new dev.jstech.computers.menu.CommandPromptMenu(
+            player.openMenu(new SimpleMenuProvider(
+                    (windowId, inv, p) -> new CommandPromptMenu(
                             windowId, inv, payload.monitorPos(), payload.hostPos(), hostEra), title),
-                    buf -> dev.jstech.computers.menu.CommandPromptMenu.writeOpenBuffer(
+                    buf -> CommandPromptMenu.writeOpenBuffer(
                             buf, payload.monitorPos(), payload.hostPos(), hostEra));
         } else {
             /*
@@ -186,7 +209,7 @@ public final class ProgramPayloads {
     }
 
     private static void handleUiWindow(final UiWindowPayload payload, final Player player) {
-        dev.jstech.computers.client.os.DesktopScreen.acceptWindow(payload);
+        DesktopScreen.acceptWindow(payload);
     }
 
     /**
@@ -195,11 +218,11 @@ public final class ProgramPayloads {
      */
     private static void handleUiEvent(final UiEventPayload payload, final ServerPlayer player,
                                       final ServerLevel level) {
-        if (!(player.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu desktop)
+        if (!(player.containerMenu instanceof DesktopMenu desktop)
                 || !payload.hostPos().equals(desktop.hostPos())
                 || !UiEventPayload.KINDS.contains(payload.kind())
                 || !(level.getBlockEntity(payload.hostPos())
-                        instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity computer)) {
+                        instanceof AbstractComputerBlockEntity computer)) {
             return;
         }
         computer.programs().deliverUiEvent(payload.program(), payload.window(), payload.widget(),
@@ -209,25 +232,25 @@ public final class ProgramPayloads {
     private static void handleRunProgram(final RunProgramPayload payload, final ServerPlayer player,
                                          final ServerLevel level) {
         if (!(level.getBlockEntity(payload.hostPos())
-                instanceof dev.jstech.computers.blockentity.AbstractComputerBlockEntity computer)) {
+                instanceof AbstractComputerBlockEntity computer)) {
             return;
         }
-        final String name = dev.jstech.computers.os.fs.FsPaths.fileName(payload.path());
-        final java.util.List<DesktopShellOutputPayload.WireLine> wire = new java.util.ArrayList<>();
-        final java.util.function.Function<String, dev.jstech.computers.program.cli.ICliComputer.FsResult> disk =
+        final String name = FsPaths.fileName(payload.path());
+        final List<DesktopShellOutputPayload.WireLine> wire = new ArrayList<>();
+        final Function<String, ICliComputer.FsResult> disk =
                 path -> readDiskFile(level, computer, path)
-                        .map(dev.jstech.computers.program.cli.ICliComputer.FsResult::ok)
-                        .orElse(dev.jstech.computers.program.cli.ICliComputer.FsResult.fail("file not found"));
-        final var launch = dev.jstech.computers.machine.ProgramLauncher.launch(computer, payload.path(), disk,
-                java.util.List.of(), dev.jstech.computers.vm.program.IProgramParent.NONE,
-                dev.jstech.computers.vm.program.ProgramPriority.MEDIUM, 0);
+                        .map(ICliComputer.FsResult::ok)
+                        .orElse(ICliComputer.FsResult.fail("file not found"));
+        final var launch = ProgramLauncher.launch(computer, payload.path(), disk,
+                List.of(), IProgramParent.NONE,
+                ProgramPriority.MEDIUM, 0);
         if (!launch.ok()) {
             final String why = switch (launch.refusal()) {
                 case UNREADABLE -> name + ": " + launch.message();
                 case NO_MEMORY -> name + ": not enough memory to run it";
                 case NO_RUNNER, NOT_STARTED -> launch.message();
             };
-            wire.add(new DesktopShellOutputPayload.WireLine(why, dev.jstech.computers.program.cli.CliStyle.ERROR.id()));
+            wire.add(new DesktopShellOutputPayload.WireLine(why, CliStyle.ERROR.id()));
             PacketDistributor.sendToPlayer(player,
                     new DesktopShellOutputPayload(false, false, "", wire, payload.session()));
             return;
@@ -238,7 +261,7 @@ public final class ProgramPayloads {
             computer.programs().hold(launch.id());
         } else {
             wire.add(new DesktopShellOutputPayload.WireLine(launch.message(),
-                    dev.jstech.computers.program.cli.CliStyle.OK.id()));
+                    CliStyle.OK.id()));
         }
         PacketDistributor.sendToPlayer(player,
                 new DesktopShellOutputPayload(false, console, "", wire, payload.session()));
@@ -247,10 +270,10 @@ public final class ProgramPayloads {
     private static void handleUninstallProgram(final UninstallProgramPayload payload, final ServerPlayer player,
                                                final ServerLevel level) {
         if (level.getBlockEntity(payload.hostPos())
-                instanceof dev.jstech.computers.terminal.IComputerTerminalHost host) {
+                instanceof IComputerTerminalHost host) {
             final String id = payload.programId();
             final String name = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
-            new dev.jstech.computers.program.ServerCliComputer(host, level)
+            new ServerCliComputer(host, level)
                     .packageRemove(name);
         }
     }

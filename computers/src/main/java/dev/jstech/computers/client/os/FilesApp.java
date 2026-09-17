@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.layout.FilesLayout;
+import dev.jstech.computers.machine.MachineListing;
 import dev.jstech.computers.operation.payload.CopyFilePayload;
 import dev.jstech.computers.operation.payload.DeleteFilePayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
@@ -20,8 +21,11 @@ import dev.jstech.computers.operation.payload.RenameFilePayload;
 import dev.jstech.computers.operation.payload.RenameVolumePayload;
 import dev.jstech.computers.operation.payload.RequestDiskFilesPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
+import dev.jstech.computers.os.fs.FileOpeners;
+import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.InstallerLayout;
 import dev.jstech.computers.os.fs.SystemLayout;
+import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Breadcrumbs;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.CellGrid;
@@ -672,7 +676,7 @@ public final class FilesApp implements IDesktopApp {
     }
 
     /** What a kind of file is called in the Type column and in a New menu: "Text" for a .txt. */
-    public static String typeLabel(final dev.jstech.computers.os.fs.FileType type) {
+    public static String typeLabel(final FileType type) {
         return typeLabel(new DiskFilesPayload.WireFile("new." + type.extension(), type.extension(), 0, false, false,
                 "", 0));
     }
@@ -1251,7 +1255,7 @@ public final class FilesApp implements IDesktopApp {
         final List<ContextMenu.Item> out = new ArrayList<>();
         out.add(new ContextMenu.Item("Folder", !readOnly, this::newFolder));
         out.add(ContextMenu.Item.separator());
-        for (final dev.jstech.computers.os.fs.FileType type : dev.jstech.computers.os.fs.FileOpeners.creatable()) {
+        for (final FileType type : FileOpeners.creatable()) {
             out.add(new ContextMenu.Item(typeLabel(type) + " (." + type.extension() + ")", !readOnly,
                     () -> newFile(type)));
         }
@@ -1311,7 +1315,7 @@ public final class FilesApp implements IDesktopApp {
         String path = typed.trim().replace('\\', '/');
         String rootKey = "";
         if (path.length() >= 2 && path.charAt(1) == ':') {
-            final String letter = path.substring(0, 2).toUpperCase(java.util.Locale.ROOT);
+            final String letter = path.substring(0, 2).toUpperCase(Locale.ROOT);
             path = path.substring(2);
             if (!letter.equals("C:")) {
                 boolean found = false;
@@ -1404,11 +1408,11 @@ public final class FilesApp implements IDesktopApp {
                 final String path = target.file().path();
                 final List<String> installed = DesktopScreen.installedProgramIds();
                 final List<ContextMenu.Item> openWith = new ArrayList<>();
-                for (final String programId : dev.jstech.computers.os.fs.FileOpeners.available(path, installed)) {
+                for (final String programId : FileOpeners.available(path, installed)) {
                     openWith.add(new ContextMenu.Item(DesktopScreen.openerName(programId), true,
                             () -> DesktopScreen.requestOpenFileWith(programId, path)));
                 }
-                if (!dev.jstech.computers.os.fs.FileOpeners.choices(path, installed).isEmpty()) {
+                if (!FileOpeners.choices(path, installed).isEmpty()) {
                     if (!openWith.isEmpty()) {
                         openWith.add(ContextMenu.Item.separator());
                     }
@@ -1459,10 +1463,10 @@ public final class FilesApp implements IDesktopApp {
      */
     private static boolean isProgram(final DiskFilesPayload.WireFile f) {
         final String extension = f.ext().toLowerCase(Locale.ROOT);
-        if (dev.jstech.computers.machine.MachineListing.claims(extension)) {
+        if (MachineListing.claims(extension)) {
             return true;
         }
-        final var runner = dev.jstech.core.JsCore.languages().runnerOf(extension);
+        final var runner = JsCore.languages().runnerOf(extension);
         // A source file can be run too, but opening one means reading it, so it is not offered as "Run".
         return runner != null && !runner.sourceExtensions().contains(extension);
     }
@@ -1902,7 +1906,7 @@ public final class FilesApp implements IDesktopApp {
      * <p>The kind is chosen before the file exists, because the extension decides which program opens
      * it, and a file made as text and renamed afterwards is a rename the player should not have had to do.
      */
-    public void newFile(final dev.jstech.computers.os.fs.FileType type) {
+    public void newFile(final FileType type) {
         final String name = uniqueName("New File", "." + type.extension());
         pendingRename = name;
         PacketDistributor.sendToServer(new SaveFilePayload(host, join(dir, name), ""));
@@ -2063,10 +2067,10 @@ public final class FilesApp implements IDesktopApp {
     /** What to call a listing, a file of a language the machines know, or a plain description when they know none. */
     private static String languageLabel(final String ext) {
         final String lower = ext.toLowerCase(Locale.ROOT);
-        if (dev.jstech.computers.machine.MachineListing.claims(lower)) {
-            return dev.jstech.computers.machine.MachineListing.LABEL;
+        if (MachineListing.claims(lower)) {
+            return MachineListing.LABEL;
         }
-        final var language = dev.jstech.core.JsCore.languages().byExtension(lower);
+        final var language = JsCore.languages().byExtension(lower);
         if (language != null) {
             return language.displayName()
                     + (language.sourceExtensions().contains(lower) ? " source" : " program");

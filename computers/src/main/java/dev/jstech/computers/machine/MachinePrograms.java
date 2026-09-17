@@ -171,7 +171,7 @@ public final class MachinePrograms {
     /** How a program's state reads to a person: a program stopped on a read is waiting for input. */
     public static String stateOf(final ILanguageProcess process) {
         return process.waitingForInput() ? "input"
-                : process.state().name().toLowerCase(java.util.Locale.ROOT);
+                : process.state().name().toLowerCase(Locale.ROOT);
     }
 
     /**

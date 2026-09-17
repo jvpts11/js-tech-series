@@ -10,7 +10,13 @@ package dev.jstech.computers.menu;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
+import dev.jstech.computers.operation.index.IndexHealth;
+import dev.jstech.computers.operation.payload.CraftCatalogPayload;
+import dev.jstech.computers.operation.payload.CraftPlanPayload;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
+import dev.jstech.computers.operation.payload.NetworkServersPayload;
+import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.operation.payload.ServerBreakdownPayload;
 import dev.jstech.computers.operation.payload.crafting.CraftingPayloads;
 import dev.jstech.computers.operation.payload.network.NetworkPayloads;
 import dev.jstech.computers.operation.payload.operations.OperationsPayloads;
@@ -18,6 +24,9 @@ import dev.jstech.computers.operation.payload.program.ProgramPayloads;
 import dev.jstech.computers.operation.payload.terminal.TerminalLocalPayloads;
 import dev.jstech.computers.operation.payload.terminal.TerminalPayloads;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.tier.HardwareEra;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
@@ -94,21 +103,21 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
 
     private final int invDrop;
 
-    private java.util.List<NetworkItemEntry> networkItems = java.util.List.of();
+    private List<NetworkItemEntry> networkItems = List.of();
 
-    private java.util.List<NetworkItemEntry> localItems = java.util.List.of();
+    private List<NetworkItemEntry> localItems = List.of();
 
-    private java.util.List<dev.jstech.computers.operation.payload.ServerBreakdownPayload.ServerHolding>
-            serverBreakdown = java.util.List.of();
+    private List<ServerBreakdownPayload.ServerHolding>
+            serverBreakdown = List.of();
 
-    private java.util.List<dev.jstech.computers.operation.payload.OperationRecord>
-            operationsLog = java.util.List.of();
+    private List<OperationRecord>
+            operationsLog = List.of();
 
-    private java.util.List<dev.jstech.computers.operation.payload.OperationRecord>
-            activeOps = java.util.List.of();
+    private List<OperationRecord>
+            activeOps = List.of();
 
-    private java.util.List<dev.jstech.computers.operation.payload.NetworkServersPayload.ServerEntry>
-            networkServers = java.util.List.of();
+    private List<NetworkServersPayload.ServerEntry>
+            networkServers = List.of();
 
     private final int[] clientData = new int[DATA_COUNT];
 
@@ -227,7 +236,7 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
             case 28 -> clampInt(host.networkStorageTotal());
             case DATA_CRAFT_COMPUTERS -> craftComputerCount();
             case DATA_ERA -> {
-                final dev.jstech.core.tier.HardwareEra era = host.displayEra();
+                final HardwareEra era = host.displayEra();
                 yield era == null ? -1 : era.id();
             }
             case DATA_INDEX_HEALTH -> host.indexHealthState();
@@ -240,7 +249,7 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
         if (host == null || host.networkUuid() == null || !(level instanceof ServerLevel serverLevel)) {
             return 0;
         }
-        return dev.jstech.core.network.NetworkSystem.get(serverLevel)
+        return NetworkSystem.get(serverLevel)
                 .craftingComputersOf(host.networkUuid()).size();
     }
 
@@ -312,58 +321,58 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
         }
     }
 
-    private java.util.List<dev.jstech.computers.operation.payload
-            .CraftCatalogPayload.Entry> craftCatalog = java.util.List.of();
+    private List<dev.jstech.computers.operation.payload
+            .CraftCatalogPayload.Entry> craftCatalog = List.of();
 
-    private java.util.List<dev.jstech.computers.operation.payload
-            .ProcessListPayload.ProcessLine> processes = java.util.List.of();
+    private List<dev.jstech.computers.operation.payload
+            .ProcessListPayload.ProcessLine> processes = List.of();
 
-    public void setProcesses(final java.util.List<dev.jstech.computers.operation.payload
+    public void setProcesses(final List<dev.jstech.computers.operation.payload
             .ProcessListPayload.ProcessLine> processes) {
         this.processes = processes;
     }
 
-    public java.util.List<dev.jstech.computers.operation.payload
+    public List<dev.jstech.computers.operation.payload
             .ProcessListPayload.ProcessLine> processes() {
         return processes;
     }
 
     @Nullable
-    private dev.jstech.computers.operation.payload.CraftPlanPayload craftPlan;
+    private CraftPlanPayload craftPlan;
 
-    public void setCraftCatalog(final java.util.List<
-            dev.jstech.computers.operation.payload.CraftCatalogPayload.Entry> entries) {
+    public void setCraftCatalog(final List<
+            CraftCatalogPayload.Entry> entries) {
         this.craftCatalog = entries;
     }
 
-    public java.util.List<dev.jstech.computers.operation.payload
+    public List<dev.jstech.computers.operation.payload
             .CraftCatalogPayload.Entry> craftCatalog() {
         return craftCatalog;
     }
 
     public void setCraftPlan(
-            @Nullable final dev.jstech.computers.operation.payload.CraftPlanPayload plan) {
+            @Nullable final CraftPlanPayload plan) {
         this.craftPlan = plan;
     }
 
     @Nullable
-    public dev.jstech.computers.operation.payload.CraftPlanPayload craftPlan() {
+    public CraftPlanPayload craftPlan() {
         return craftPlan;
     }
 
-    public void setNetworkItems(final java.util.List<NetworkItemEntry> items) {
+    public void setNetworkItems(final List<NetworkItemEntry> items) {
         this.networkItems = items;
     }
 
-    public java.util.List<NetworkItemEntry> networkItems() {
+    public List<NetworkItemEntry> networkItems() {
         return networkItems;
     }
 
-    public void setLocalItems(final java.util.List<NetworkItemEntry> items) {
+    public void setLocalItems(final List<NetworkItemEntry> items) {
         this.localItems = items;
     }
 
-    public java.util.List<NetworkItemEntry> localItems() {
+    public List<NetworkItemEntry> localItems() {
         return localItems;
     }
 
@@ -371,15 +380,15 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
      * Per-disk privacy state for the Storage tab's slider, synced with the local snapshot. Empty for a
      * host with no slider (a Server/Mainframe), which the screen reads as "always public".
      */
-    private java.util.List<dev.jstech.computers.operation.payload
-            .LocalStorageSnapshotPayload.DiskInfo> diskPrivacy = java.util.List.of();
+    private List<dev.jstech.computers.operation.payload
+            .LocalStorageSnapshotPayload.DiskInfo> diskPrivacy = List.of();
 
-    public void setDiskPrivacy(final java.util.List<dev.jstech.computers.operation.payload
+    public void setDiskPrivacy(final List<dev.jstech.computers.operation.payload
             .LocalStorageSnapshotPayload.DiskInfo> disks) {
         this.diskPrivacy = disks;
     }
 
-    public java.util.List<dev.jstech.computers.operation.payload
+    public List<dev.jstech.computers.operation.payload
             .LocalStorageSnapshotPayload.DiskInfo> diskPrivacy() {
         return diskPrivacy;
     }
@@ -406,38 +415,38 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
     }
 
     public void setServerBreakdown(
-            final java.util.List<dev.jstech.computers.operation.payload.ServerBreakdownPayload.ServerHolding> rows) {
+            final List<ServerBreakdownPayload.ServerHolding> rows) {
         this.serverBreakdown = rows;
     }
 
-    public java.util.List<dev.jstech.computers.operation.payload.ServerBreakdownPayload.ServerHolding> serverBreakdown() {
+    public List<ServerBreakdownPayload.ServerHolding> serverBreakdown() {
         return serverBreakdown;
     }
 
     public void setNetworkServers(
-            final java.util.List<dev.jstech.computers.operation.payload.NetworkServersPayload.ServerEntry> servers) {
+            final List<NetworkServersPayload.ServerEntry> servers) {
         this.networkServers = servers;
     }
 
-    public java.util.List<dev.jstech.computers.operation.payload.NetworkServersPayload.ServerEntry> networkServers() {
+    public List<NetworkServersPayload.ServerEntry> networkServers() {
         return networkServers;
     }
 
     public void setOperationsLog(
-            final java.util.List<dev.jstech.computers.operation.payload.OperationRecord> ops) {
+            final List<OperationRecord> ops) {
         this.operationsLog = ops;
     }
 
-    public java.util.List<dev.jstech.computers.operation.payload.OperationRecord> operationsLog() {
+    public List<OperationRecord> operationsLog() {
         return operationsLog;
     }
 
     public void setActiveOps(
-            final java.util.List<dev.jstech.computers.operation.payload.OperationRecord> ops) {
+            final List<OperationRecord> ops) {
         this.activeOps = ops;
     }
 
-    public java.util.List<dev.jstech.computers.operation.payload.OperationRecord> activeOps() {
+    public List<OperationRecord> activeOps() {
         return activeOps;
     }
 
@@ -580,8 +589,8 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
     }
 
     /** The index's health state, read back from the id the host synced. */
-    public dev.jstech.computers.operation.index.IndexHealth.State indexHealth() {
-        return dev.jstech.computers.operation.index.IndexHealth.State.byId(data.get(DATA_INDEX_HEALTH));
+    public IndexHealth.State indexHealth() {
+        return IndexHealth.State.byId(data.get(DATA_INDEX_HEALTH));
     }
 
     /** How many item types the index has flagged. */
@@ -627,8 +636,8 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
 
     /** The host computer's board-derived hardware era for the GUI skin, or {@code null} (STANDARD) when none. */
     @Nullable
-    public dev.jstech.core.tier.HardwareEra hardwareEra() {
-        return dev.jstech.core.tier.HardwareEra.find(data.get(DATA_ERA));
+    public HardwareEra hardwareEra() {
+        return HardwareEra.find(data.get(DATA_ERA));
     }
 
     @Override

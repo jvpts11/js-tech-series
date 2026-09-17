@@ -15,12 +15,21 @@ import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.PsuSpec;
 import dev.jstech.computers.hardware.RamSpec;
+import dev.jstech.computers.menu.ServerAssemblyMenu;
+import dev.jstech.computers.rack.IMountableRackUnit;
+import dev.jstech.computers.rack.RackChassis;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -33,9 +42,9 @@ import java.util.UUID;
  * so storage moves with the bay, never with this item.
  */
 public class ServerItem extends Item
-        implements dev.jstech.computers.rack.IMountableRackUnit {
+        implements IMountableRackUnit {
 
-    private final dev.jstech.computers.rack.RackChassis chassis;
+    private final RackChassis chassis;
 
     @Override
     public int heightU() {
@@ -53,38 +62,38 @@ public class ServerItem extends Item
     }
 
     public ServerItem(final Properties properties) {
-        this(properties, dev.jstech.computers.rack.RackChassis.SERVER);
+        this(properties, RackChassis.SERVER);
     }
 
     public ServerItem(final Properties properties,
-                      final dev.jstech.computers.rack.RackChassis chassis) {
+                      final RackChassis chassis) {
         super(properties.stacksTo(1));
         this.chassis = chassis;
     }
 
     /** The physical chassis of this server type: its rack-unit height and front-slot budgets. */
-    public dev.jstech.computers.rack.RackChassis chassis() {
+    public RackChassis chassis() {
         return chassis;
     }
 
     /** The chassis of a stack, or null when the stack is not a server. */
     @Nullable
-    public static dev.jstech.computers.rack.RackChassis chassisOf(final ItemStack stack) {
+    public static RackChassis chassisOf(final ItemStack stack) {
         return stack.getItem() instanceof ServerItem server ? server.chassis() : null;
     }
 
     @Override
-    public net.minecraft.world.InteractionResultHolder<ItemStack> use(
-            final net.minecraft.world.level.Level level, final net.minecraft.world.entity.player.Player player,
-            final net.minecraft.world.InteractionHand hand) {
+    public InteractionResultHolder<ItemStack> use(
+            final Level level, final Player player,
+            final InteractionHand hand) {
         // Reopen the assembly GUI so the player can change this Server's build.
-        if (!level.isClientSide() && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            serverPlayer.openMenu(new net.minecraft.world.SimpleMenuProvider(
-                    (id, inv, p) -> new dev.jstech.computers.menu.ServerAssemblyMenu(id, inv, hand),
+        if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.openMenu(new SimpleMenuProvider(
+                    (id, inv, p) -> new ServerAssemblyMenu(id, inv, hand),
                     Component.translatable("menu.jsc.server_assembly")),
                     buf -> buf.writeEnum(hand));
         }
-        return net.minecraft.world.InteractionResultHolder.sidedSuccess(
+        return InteractionResultHolder.sidedSuccess(
                 player.getItemInHand(hand), level.isClientSide());
     }
 

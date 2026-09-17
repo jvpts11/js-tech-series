@@ -8,6 +8,8 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.IEraChassisBlock;
+import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.item.CpuItem;
@@ -16,10 +18,27 @@ import dev.jstech.computers.item.IExpansionCardItem;
 import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.item.PsuItem;
 import dev.jstech.computers.item.RamItem;
+import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.machine.MachineServices;
+import dev.jstech.computers.machine.NetworkReadService;
+import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
+import dev.jstech.computers.operation.payload.UiWindowPayload;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.boot.BootLines;
+import dev.jstech.computers.os.boot.BootRunner;
+import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootTiming;
+import dev.jstech.computers.os.boot.SystemWelcome;
+import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.computers.os.install.OsInstallJob;
+import dev.jstech.computers.os.install.OsInstallRunner;
+import dev.jstech.computers.os.install.SetupRunner;
+import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
@@ -30,14 +49,22 @@ import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -58,7 +85,7 @@ import java.util.Set;
  * kind settles for itself, and saves each part in turn.
  */
 public abstract class AbstractComputerBlockEntity extends BlockEntity
-        implements IPeripheralOwnerSupport, dev.jstech.computers.os.IOsHost {
+        implements IPeripheralOwnerSupport, IOsHost {
 
     /** The parts installed and what they add up to; it is built with the layout, so the constructor sets it. */
     private final ComputerHardware hardware;
@@ -87,8 +114,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * session and closes its windows, while a draft half laid out is still there afterwards, for whoever
      * sits down next.
      */
-    private final dev.jstech.computers.crafting.PatternWorkbench studio =
-            new dev.jstech.computers.crafting.PatternWorkbench();
+    private final PatternWorkbench studio =
+            new PatternWorkbench();
 
     protected AbstractComputerBlockEntity(final BlockEntityType<?> type, final BlockPos pos,
                                           final BlockState state, final ComputerHardwareLayout layout) {
@@ -264,17 +291,17 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (!(level instanceof ServerLevel server)) {
             return;
         }
-        final dev.jstech.computers.os.boot.BootSequence sequence =
-                dev.jstech.computers.os.boot.BootLines.shutdownFor(this);
+        final BootSequence sequence =
+                BootLines.shutdownFor(this);
         if (sequence.isEmpty()) {
             return;
         }
         final int ticks = BootTiming.shutdownTicks(
-                dev.jstech.computers.os.boot.BootRunner.bootLength(this));
+                BootRunner.bootLength(this));
         ScreenSessions.eachWatcher(server, worldPosition, (player, monitor) -> {
             ScreenSessions.opened(player, monitor, worldPosition);
-            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
-                    new dev.jstech.computers.operation.payload.OpenSystemBootPayload(
+            PacketDistributor.sendToPlayer(player,
+                    new OpenSystemBootPayload(
                             worldPosition, monitor, ticks, ticks, sequence, true));
         });
     }
@@ -312,33 +339,33 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     /** The system being copied onto a disk right now, or nothing. */
     @Override
     @Nullable
-    public dev.jstech.computers.os.install.OsInstallJob installing() {
+    public OsInstallJob installing() {
         return session.installing();
     }
 
     /** Starts, replaces or ends the copy this machine is doing. */
-    public void setInstalling(@Nullable final dev.jstech.computers.os.install.OsInstallJob job) {
+    public void setInstalling(@Nullable final OsInstallJob job) {
         session.setInstalling(job);
     }
 
     @Override
-    public dev.jstech.computers.os.boot.SystemWelcome systemWelcome() {
+    public SystemWelcome systemWelcome() {
         return session.welcome();
     }
 
     @Override
-    public void setSystemWelcome(final dev.jstech.computers.os.boot.SystemWelcome welcome) {
+    public void setSystemWelcome(final SystemWelcome welcome) {
         session.setWelcome(welcome);
     }
 
     /** The installer this machine is in: the page it is on and what has been answered so far. */
     @Nullable
-    public dev.jstech.computers.os.install.InstallerFlow installer() {
+    public InstallerFlow installer() {
         return session.installer();
     }
 
     /** Puts the machine in an installer, or takes it out of one. */
-    public void setInstaller(@Nullable final dev.jstech.computers.os.install.InstallerFlow flow) {
+    public void setInstaller(@Nullable final InstallerFlow flow) {
         session.setInstaller(flow);
     }
 
@@ -360,7 +387,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * looking at boots all the same, which is what a machine does.
      */
     protected void tickBootPhases(final ServerLevel level) {
-        dev.jstech.computers.os.boot.BootRunner.tick(this, power.phases(), level, worldPosition);
+        BootRunner.tick(this, power.phases(), level, worldPosition);
     }
 
     /** Whether the machine is stopped at its boot menu. */
@@ -408,7 +435,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
 
     /** What this machine's system shows while it comes up. */
     @Override
-    public dev.jstech.computers.os.boot.BootSequence bootSequence() {
+    public BootSequence bootSequence() {
         return BootLines.forMachine(this);
     }
 
@@ -419,9 +446,9 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
             return false;
         }
         for (final long endpoint : linkedEndpoints()) {
-            if (level.getBlockEntity(net.minecraft.core.BlockPos.of(endpoint))
-                    instanceof dev.jstech.computers.os.media.MediaReaderBlockEntity reader
-                    && reader.insertedKind() == dev.jstech.computers.os.media.MediaKind.OS_INSTALL
+            if (level.getBlockEntity(BlockPos.of(endpoint))
+                    instanceof MediaReaderBlockEntity reader
+                    && reader.insertedKind() == MediaKind.OS_INSTALL
                     && reader.insertedPayload() != null) {
                 return true;
             }
@@ -455,17 +482,17 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     @Override
-    public dev.jstech.computers.crafting.PatternWorkbench studio() {
+    public PatternWorkbench studio() {
         return studio;
     }
 
     @Override
-    public java.util.List<dev.jstech.computers.os.OpenWindow> openWindows() {
+    public List<OpenWindow> openWindows() {
         return session.openWindows();
     }
 
     @Override
-    public void setOpenWindows(final java.util.List<dev.jstech.computers.os.OpenWindow> windows) {
+    public void setOpenWindows(final List<OpenWindow> windows) {
         session.setOpenWindows(windows);
     }
 
@@ -506,7 +533,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
     @Nullable
     public HardwareEra displayEra() {
-        return getBlockState().getBlock() instanceof dev.jstech.computers.block.IEraChassisBlock chassis
+        return getBlockState().getBlock() instanceof IEraChassisBlock chassis
                 ? chassis.chassisEra()
                 : installedEra();
     }
@@ -648,7 +675,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * Returns the stacks in this computer's disk slots, in slot order. Entries may be empty or hold
      * non-disk items; callers filter as needed (used by the "This PC" disk listing).
      */
-    public java.util.List<ItemStack> diskStacks() {
+    public List<ItemStack> diskStacks() {
         return session.diskStacks();
     }
 
@@ -716,7 +743,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     /** Tells every console open on this computer how a source build is coming along. */
-    public void tickBuildProgress(final net.minecraft.server.level.ServerLevel level) {
+    public void tickBuildProgress(final ServerLevel level) {
         replication.pushBuildProgress(level);
     }
 
@@ -725,8 +752,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      *
      * <p>The list is the machine's own, kept on the server thread: read it, do not keep it.
      */
-    public java.util.List<net.minecraft.server.level.ServerPlayer> consoleViewers(
-            final net.minecraft.server.level.ServerLevel level) {
+    public List<ServerPlayer> consoleViewers(
+            final ServerLevel level) {
         return viewers.at(level);
     }
 
@@ -737,15 +764,15 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * <p>Somebody who has just opened the desktop is owed all of them, which is how a second person at the
      * same machine is shown what the first is already looking at.
      */
-    public java.util.List<dev.jstech.computers.operation.payload.UiWindowPayload> takeWindowsOwed(
-            final net.minecraft.server.level.ServerPlayer viewer) {
+    public List<UiWindowPayload> takeWindowsOwed(
+            final ServerPlayer viewer) {
         return replication.takeOwed(viewer);
     }
 
     /** Tells the machine at {@code host} that this player opened its desktop or prompt; nothing on the client. */
-    public static void screenOpened(final net.minecraft.world.entity.player.Player player, final BlockPos host) {
-        if (player instanceof net.minecraft.server.level.ServerPlayer viewer
-                && !(player instanceof net.neoforged.neoforge.common.util.FakePlayer)
+    public static void screenOpened(final Player player, final BlockPos host) {
+        if (player instanceof ServerPlayer viewer
+                && !(player instanceof FakePlayer)
                 && viewer.level().isLoaded(host)
                 && viewer.level().getBlockEntity(host) instanceof AbstractComputerBlockEntity machine) {
             machine.viewers.opened(viewer);
@@ -753,8 +780,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     /** Tells the machine at {@code host} that this player closed its desktop or prompt. */
-    public static void screenClosed(final net.minecraft.world.entity.player.Player player, final BlockPos host) {
-        if (player instanceof net.minecraft.server.level.ServerPlayer viewer && viewer.level().isLoaded(host)
+    public static void screenClosed(final Player player, final BlockPos host) {
+        if (player instanceof ServerPlayer viewer && viewer.level().isLoaded(host)
                 && viewer.level().getBlockEntity(host) instanceof AbstractComputerBlockEntity machine) {
             machine.viewers.closed(viewer);
         }
@@ -785,7 +812,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * software services (the Mainframe) extend this to switch those off too.
      */
     protected void onSystemErased() {
-        final dev.jstech.computers.program.ComputerConsoleState console = console();
+        final ComputerConsoleState console = console();
         if (console != null) {
             console.wipeSoftware();
         }
@@ -851,9 +878,9 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     protected void tickNode(final ServerLevel level) {
         tickBuildProgress(level);
         tickBootPhases(level);
-        dev.jstech.computers.os.install.OsInstallRunner.tick(this, level, worldPosition);
+        OsInstallRunner.tick(this, level, worldPosition);
         tickSigma();
-        dev.jstech.computers.os.install.SetupRunner.tick(this, level, worldPosition);
+        SetupRunner.tick(this, level, worldPosition);
         attachment.tick(level);
     }
 
@@ -880,18 +907,18 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     /** The Σ# programs this machine is running. */
-    public dev.jstech.computers.machine.MachinePrograms programs() {
+    public MachinePrograms programs() {
         return host.programs();
     }
 
     /** What the Σ# programs on this machine reach through it. */
-    public dev.jstech.computers.machine.MachineServices services() {
+    public MachineServices services() {
         return host.services();
     }
 
     /** The data network as what runs on this machine reads it. */
     @Override
-    public dev.jstech.computers.machine.NetworkReadService networkService() {
+    public NetworkReadService networkService() {
         return host.services().network();
     }
 
@@ -965,7 +992,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * Provided here (no @Override: this base does not itself declare IComputerTerminalHost) so the
      * computer subclasses that ARE hosts inherit it and satisfy the interface's console() method.
      */
-    public dev.jstech.computers.program.ComputerConsoleState console() {
+    public ComputerConsoleState console() {
         return diskConsole.state();
     }
 
@@ -1054,18 +1081,18 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     }
 
     @Override
-    public net.minecraft.network.protocol.Packet<net.minecraft.network.protocol.game.ClientGamePacketListener>
+    public Packet<ClientGamePacketListener>
             getUpdatePacket() {
         /*
          * Without this, a mid-session rename (which calls sendBlockUpdated) never reaches the client, so
          * reopening the assembly screen reads a stale, empty name from the client copy of this block entity.
          */
-        return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
-    public void onDataPacket(final net.minecraft.network.Connection connection,
-                             final net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket packet,
+    public void onDataPacket(final Connection connection,
+                             final ClientboundBlockEntityDataPacket packet,
                              final HolderLookup.Provider registries) {
         /*
          * Apply only the display name from a live block update. The rest of the client state is kept in sync

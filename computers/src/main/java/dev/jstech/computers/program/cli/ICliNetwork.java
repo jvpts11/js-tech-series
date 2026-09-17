@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.program.iql.IIqlCondition;
 import java.util.List;
 
 /**
@@ -44,7 +45,7 @@ public interface ICliNetwork {
      * @param server a server name to scope the read to, or {@code ""} for the whole network
      * @param limit  the maximum number of rows to return
      */
-    default List<ICliComputer.StoredItem> query(final dev.jstech.computers.program.iql.IIqlCondition where,
+    default List<ICliComputer.StoredItem> query(final IIqlCondition where,
                                                 final String server, final int limit) {
         return List.of();
     }
@@ -60,7 +61,7 @@ public interface ICliNetwork {
      * @param limit  the maximum number of rows to return
      */
     default List<ICliComputer.StoredItem> queryObject(final String object,
-                                                      final dev.jstech.computers.program.iql.IIqlCondition where,
+                                                      final IIqlCondition where,
                                                       final String server, final int limit) {
         return List.of();
     }

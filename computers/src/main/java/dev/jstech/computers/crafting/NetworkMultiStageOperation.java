@@ -8,6 +8,7 @@
 package dev.jstech.computers.crafting;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.IPersistentOperation;
 import dev.jstech.computers.operation.payload.OperationRecord;
@@ -78,7 +79,7 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
 
     @Override
     public String typeId() {
-        return dev.jstech.computers.operation.ComputingOperations.MULTI_STAGE;
+        return ComputingOperations.MULTI_STAGE;
     }
 
     @Override

@@ -12,9 +12,19 @@ import dev.jstech.computers.operation.payload.CopyFilePayload;
 import dev.jstech.computers.operation.payload.MediumTransferPayload;
 import dev.jstech.computers.operation.payload.MoveFilePayload;
 import dev.jstech.computers.operation.payload.RenameVolumePayload;
+import dev.jstech.computers.os.FilesystemKind;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.VolumeLabel;
+import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.storage.StorageKey;
+import java.util.Locale;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import static dev.jstech.computers.operation.payload.files.FileAccess.NET_ROOT;
@@ -58,7 +68,7 @@ public final class FileTransferPayloads {
      */
     private static void handleCopyFile(final CopyFilePayload payload, final ServerPlayer player,
                                        final ServerLevel level) {
-        if (!(level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost computer)) {
+        if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
             return;
         }
         final String src = payload.src();
@@ -71,7 +81,7 @@ public final class FileTransferPayloads {
             if (src.startsWith("media:") || destDir.startsWith("media:")) {
                 return;
             }
-            final dev.jstech.computers.program.ServerCliComputer shell = netShell(level, computer);
+            final ServerCliComputer shell = netShell(level, computer);
             if (shell != null && shell.copyPath(src.startsWith(NET_ROOT) ? netDos(src) : localDos(src),
                     destDir.startsWith(NET_ROOT) ? netDos(destDir) : localDos(destDir)).ok()) {
                 computer.setChanged();
@@ -80,16 +90,16 @@ public final class FileTransferPayloads {
         }
         final boolean srcMedia = src.startsWith("media:");
         final boolean dstMedia = destDir.startsWith("media:");
-        final net.minecraft.world.item.ItemStack srcVol =
+        final ItemStack srcVol =
                 srcMedia ? mediaStackFor(level, computer, src) : computer.systemDisk();
-        final net.minecraft.world.item.ItemStack dstVol =
+        final ItemStack dstVol =
                 dstMedia ? mediaStackFor(level, computer, destDir) : computer.systemDisk();
         if (srcVol.isEmpty() || dstVol.isEmpty()) {
             return;
         }
         final String realSrc = srcMedia ? mediaSubPath(src) : src;
         final String realDstDir = dstMedia ? mediaSubPath(destDir) : destDir;
-        final var read = dev.jstech.computers.os.fs.DiskFilesystem.read(srcVol, realSrc);
+        final var read = DiskFilesystem.read(srcVol, realSrc);
         if (read.isEmpty()) {
             return;
         }
@@ -97,26 +107,26 @@ public final class FileTransferPayloads {
         final int dot = name.lastIndexOf('.');
         final String stem = dot > 0 ? name.substring(0, dot) : name;
         final String ext = dot >= 0 && dot < name.length() - 1
-                ? name.substring(dot + 1).toLowerCase(java.util.Locale.ROOT) : "";
-        final dev.jstech.computers.os.fs.FileType type = dev.jstech.computers.os.fs.FileType.of(ext);
-        final dev.jstech.computers.os.FilesystemKind dstKind = dstMedia
-                ? dev.jstech.computers.os.FilesystemKind.HIERARCHICAL
+                ? name.substring(dot + 1).toLowerCase(Locale.ROOT) : "";
+        final FileType type = FileType.of(ext);
+        final FilesystemKind dstKind = dstMedia
+                ? FilesystemKind.HIERARCHICAL
                 : filesystemKindOf(computer);
         // "name - Copy.ext", then "name - Copy (2).ext", the way a desktop names a duplicate.
         String candidate = name;
         final String suffix = ext.isEmpty() ? "" : "." + ext;
         for (int n = 1; n < 100; n++) {
             final String path = realDstDir.isEmpty() ? candidate : realDstDir + "/" + candidate;
-            if (!dev.jstech.computers.os.fs.DiskFilesystem.exists(dstVol, path)) {
+            if (!DiskFilesystem.exists(dstVol, path)) {
                 break;
             }
             candidate = stem + (n == 1 ? " - Copy" : " - Copy (" + n + ")") + suffix;
         }
         final String destPath = realDstDir.isEmpty() ? candidate : realDstDir + "/" + candidate;
         final long free = dstMedia ? mediaFreeWeight(dstVol) : computer.systemDiskFreeWeight();
-        if (dev.jstech.computers.os.fs.DiskFilesystem.write(
+        if (DiskFilesystem.write(
                 dstVol, destPath, type, read.get(), free, dstKind, level.getGameTime())
-                == dev.jstech.computers.os.fs.DiskFilesystem.WriteResult.OK) {
+                == DiskFilesystem.WriteResult.OK) {
             if (dstMedia) {
                 commitMedia(level, computer, destDir);
             } else {
@@ -127,7 +137,7 @@ public final class FileTransferPayloads {
 
     private static void handleMoveFile(final MoveFilePayload payload, final ServerPlayer player,
                                        final ServerLevel level) {
-        if (!(level.getBlockEntity(payload.hostPos()) instanceof dev.jstech.computers.os.IOsHost computer)) {
+        if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
             return;
         }
         final String src = payload.srcPath();
@@ -138,21 +148,21 @@ public final class FileTransferPayloads {
         }
         final boolean srcMedia = src.startsWith("media:");
         final boolean dstMedia = destDir.startsWith("media:");
-        final net.minecraft.world.item.ItemStack srcVol =
+        final ItemStack srcVol =
                 srcMedia ? mediaStackFor(level, computer, src) : computer.systemDisk();
-        final net.minecraft.world.item.ItemStack dstVol =
+        final ItemStack dstVol =
                 dstMedia ? mediaStackFor(level, computer, destDir) : computer.systemDisk();
         if (srcVol.isEmpty() || dstVol.isEmpty()) {
             return;
         }
         final String realSrc = srcMedia ? mediaSubPath(src) : src;
         final String realDstDir = dstMedia ? mediaSubPath(destDir) : destDir;
-        final dev.jstech.computers.os.FilesystemKind srcKind = srcMedia
-                ? dev.jstech.computers.os.FilesystemKind.HIERARCHICAL
+        final FilesystemKind srcKind = srcMedia
+                ? FilesystemKind.HIERARCHICAL
                 : filesystemKindOf(computer);
         if (volumeKey(src).equals(volumeKey(destDir))) {
             // Same volume, an in-place move.
-            if (dev.jstech.computers.os.fs.DiskFilesystem.move(
+            if (DiskFilesystem.move(
                     srcVol, realSrc, realDstDir, srcKind)) {
                 if (srcMedia) {
                     commitMedia(level, computer, src);
@@ -166,7 +176,7 @@ public final class FileTransferPayloads {
          * Cross-volume (disk <-> media): copy the file then delete the source. Directories are
          * not copied across volumes here.
          */
-        final var read = dev.jstech.computers.os.fs.DiskFilesystem.read(srcVol, realSrc);
+        final var read = DiskFilesystem.read(srcVol, realSrc);
         if (read.isEmpty()) {
             return;
         }
@@ -174,17 +184,17 @@ public final class FileTransferPayloads {
                 ? realSrc.substring(realSrc.lastIndexOf('/') + 1) : realSrc;
         final int dot = name.lastIndexOf('.');
         final String ext = dot >= 0 && dot < name.length() - 1
-                ? name.substring(dot + 1).toLowerCase(java.util.Locale.ROOT) : "";
-        final dev.jstech.computers.os.fs.FileType type = dev.jstech.computers.os.fs.FileType.of(ext);
-        final dev.jstech.computers.os.FilesystemKind dstKind = dstMedia
-                ? dev.jstech.computers.os.FilesystemKind.HIERARCHICAL
+                ? name.substring(dot + 1).toLowerCase(Locale.ROOT) : "";
+        final FileType type = FileType.of(ext);
+        final FilesystemKind dstKind = dstMedia
+                ? FilesystemKind.HIERARCHICAL
                 : filesystemKindOf(computer);
         final String destPath = realDstDir.isEmpty() ? name : realDstDir + "/" + name;
         final long free = dstMedia ? mediaFreeWeight(dstVol) : computer.systemDiskFreeWeight();
-        if (dev.jstech.computers.os.fs.DiskFilesystem.write(
+        if (DiskFilesystem.write(
                 dstVol, destPath, type, read.get(), free, dstKind, level.getGameTime())
-                == dev.jstech.computers.os.fs.DiskFilesystem.WriteResult.OK) {
-            dev.jstech.computers.os.fs.DiskFilesystem.delete(srcVol, realSrc);
+                == DiskFilesystem.WriteResult.OK) {
+            DiskFilesystem.delete(srcVol, realSrc);
             if (srcMedia) {
                 commitMedia(level, computer, src);
             } else {
@@ -227,10 +237,10 @@ public final class FileTransferPayloads {
         if (!mediaKey.startsWith("media:")) {
             return;
         }
-        final net.minecraft.world.item.ItemStack media = mediaStackFor(level, computer, mediaKey);
+        final ItemStack media = mediaStackFor(level, computer, mediaKey);
         if (media.isEmpty()
-                || dev.jstech.computers.os.media.MediaItem.kind(media)
-                        != dev.jstech.computers.os.media.MediaKind.DATA) {
+                || MediaItem.kind(media)
+                        != MediaKind.DATA) {
             return;
         }
         // Resolve the .dat path back to the StorageKey it projects from the system disk.
@@ -247,12 +257,12 @@ public final class FileTransferPayloads {
 
     private static void handleRenameVolume(final RenameVolumePayload payload, final ServerPlayer player,
                                            final ServerLevel level) {
-        if (!(level.getBlockEntity(payload.host()) instanceof dev.jstech.computers.os.IOsHost computer)) {
+        if (!(level.getBlockEntity(payload.host()) instanceof IOsHost computer)) {
             return;
         }
         final String key = payload.volumeKey();
         final boolean media = key.startsWith("media:");
-        final net.minecraft.world.item.ItemStack vol;
+        final ItemStack vol;
         if (media) {
             vol = mediaStackFor(level, computer, key);
         } else if (key.startsWith("disk:")) {
@@ -270,7 +280,7 @@ public final class FileTransferPayloads {
         if (vol.isEmpty()) {
             return;
         }
-        dev.jstech.computers.os.VolumeLabel.set(vol, payload.label());
+        VolumeLabel.set(vol, payload.label());
         if (media) {
             commitMedia(level, computer, key);
         } else {

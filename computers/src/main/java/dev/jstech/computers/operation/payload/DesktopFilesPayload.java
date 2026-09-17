@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.program.ComputerSettings;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -36,8 +39,8 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
     public static final int MAX_FILES = 256;
     public static final int MAX_PROGRAMS = 16;
     public static final int MAX_ICON_CELLS = 256;
-    public static final int MAX_PINNED = dev.jstech.computers.program.ComputerSettings.MAX_PINNED;
-    public static final int MAX_DEFAULT_APPS = dev.jstech.computers.program.ComputerSettings.MAX_DEFAULT_APPS;
+    public static final int MAX_PINNED = ComputerSettings.MAX_PINNED;
+    public static final int MAX_DEFAULT_APPS = ComputerSettings.MAX_DEFAULT_APPS;
 
     /** How many player-written programs one desktop shows; the same cap the Mirror's shelf has. */
     public static final int MAX_COMMUNITY = 64;
@@ -134,13 +137,13 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
                 WireIconCell.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ICON_CELLS)).decode(buf);
         final Prefs prefs = Prefs.STREAM_CODEC.decode(buf);
         final int count = Math.min(buf.readVarInt(), MAX_COMMUNITY);
-        final List<WireCommunity> community = new java.util.ArrayList<>(count);
+        final List<WireCommunity> community = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             community.add(new WireCommunity(buf.readUtf(32), buf.readUtf(16), buf.readUtf(128)));
         }
         final List<String> pinned = ByteBufCodecs.stringUtf8(32).apply(ByteBufCodecs.list(MAX_PINNED)).decode(buf);
         final int apps = Math.min(buf.readVarInt(), MAX_DEFAULT_APPS);
-        final Map<String, String> defaultApps = new java.util.LinkedHashMap<>();
+        final Map<String, String> defaultApps = new LinkedHashMap<>();
         for (int i = 0; i < apps; i++) {
             defaultApps.put(buf.readUtf(32), buf.readUtf(64));
         }

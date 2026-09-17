@@ -9,14 +9,19 @@ package dev.jstech.computers.operation.payload.terminal;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.operation.payload.TerminalSelectPayload;
+import dev.jstech.computers.storage.IDataSink;
+import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
+import java.util.function.BooleanSupplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -38,7 +43,7 @@ public final class MoveDestinations {
     /**
      * A resolved SELECT destination: where the pulled items land, the provenance label, whether it is a MOVE (into another Server), and that target Server's node (so it can be excluded as a source).
      */
-    public record Dest(dev.jstech.computers.storage.IDataSink handler, String label,
+    public record Dest(IDataSink handler, String label,
                        boolean move, @Nullable NodeUuid target) {
     }
 
@@ -60,14 +65,14 @@ public final class MoveDestinations {
         }
         final MainframeBlockEntity mf = resolveMainframe(level, net);
         if (mf != null && mf.nodeUuid() != null && mf.nodeUuid().equals(target)) {
-            return new Dest(new dev.jstech.computers.storage.StoreSink(mf.localStore()),
+            return new Dest(new StoreSink(mf.localStore()),
                     "Mainframe", false, null);
         }
         // A Personal Computer on the network: a SELECT into its own local storage (leaves the network).
         for (final NetworkSystem.PersonalComputerNode pc : NetworkSystem.get(level).personalComputersOf(net)) {
             if (pc.nodeUuid().equals(target)
                     && level.getBlockEntity(BlockPos.of(pc.pos())) instanceof PersonalComputerBlockEntity pcBe) {
-                return new Dest(new dev.jstech.computers.storage.StoreSink(pcBe.localStore()),
+                return new Dest(new StoreSink(pcBe.localStore()),
                         pcLabel(pcBe, target), false, null);
             }
         }
@@ -100,8 +105,8 @@ public final class MoveDestinations {
         }
         return system.locationOf(target)
                 .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos()))
-                        instanceof dev.jstech.computers.blockentity.ServerRackBlockEntity rack
-                        ? new Dest(new dev.jstech.computers.storage.StoreSink(
+                        instanceof ServerRackBlockEntity rack
+                        ? new Dest(new StoreSink(
                                 rack.getServerStorage(loc.slot())),
                                 serverLabel(level, target), true, target)
                         : null)
@@ -127,8 +132,8 @@ public final class MoveDestinations {
      * A stop condition for a pull into a computer's own storage: once that computer is gone from the world,
      * nothing more is taken out of the network for it.
      */
-    public static java.util.function.BooleanSupplier gone(final IComputerTerminalHost host) {
-        return host instanceof net.minecraft.world.level.block.entity.BlockEntity be ? be::isRemoved : () -> false;
+    public static BooleanSupplier gone(final IComputerTerminalHost host) {
+        return host instanceof BlockEntity be ? be::isRemoved : () -> false;
     }
 
     public static Set<NodeUuid> toNodes(final List<String> keys) {

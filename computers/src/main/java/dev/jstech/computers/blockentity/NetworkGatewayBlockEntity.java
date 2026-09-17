@@ -25,7 +25,9 @@ import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.PeripheralLinkValidator;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -125,7 +127,7 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
      * <p>A message waits here for the programs on the host machine to be handed it on the next tick, and
      * no longer: one nobody is listening for is dropped rather than piling up for ever.
      */
-    private final java.util.Deque<Message> messages = new java.util.ArrayDeque<>();
+    private final Deque<Message> messages = new ArrayDeque<>();
     /* What the client knows of the server side, for the block's own screen. */
     private String clientHostName = "";
     private boolean clientCcOnline;
@@ -346,11 +348,11 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
     }
 
     /** Everything said to this side since the last time anyone asked, oldest first. */
-    public java.util.List<Message> takeMessages() {
+    public List<Message> takeMessages() {
         if (messages.isEmpty()) {
-            return java.util.List.of();
+            return List.of();
         }
-        final java.util.List<Message> said = java.util.List.copyOf(messages);
+        final List<Message> said = List.copyOf(messages);
         messages.clear();
         return said;
     }

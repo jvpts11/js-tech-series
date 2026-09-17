@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload.firmware;
 
+import dev.jstech.computers.block.IInstallerScreenOpener;
+import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -34,7 +36,7 @@ public final class InstallerPayloads {
     public static void register(final PayloadRegistrar registrar) {
         registrar.playToClient(OpenInstallerPayload.TYPE, OpenInstallerPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
-                        dev.jstech.computers.block.IInstallerScreenOpener.Holder.open(payload)));
+                        IInstallerScreenOpener.Holder.open(payload)));
         // The installer is a plain screen, like the setup and the self-test, so it answers to the screen gate.
         ComputerAccess.accept(registrar, InstallerActionPayload.TYPE, InstallerActionPayload.STREAM_CODEC,
                 ComputerAccess.screen(InstallerActionPayload::hostPos), InstallerPayloads::handleAction);
@@ -113,7 +115,7 @@ public final class InstallerPayloads {
         machine.setInstaller(null);
         machine.setInstalling(null);
         player.closeContainer();
-        dev.jstech.computers.block.MonitorBlock.openFirmware(player, level, payload.monitorPos(),
+        MonitorBlock.openFirmware(player, level, payload.monitorPos(),
                 payload.hostPos());
     }
 
@@ -124,12 +126,12 @@ public final class InstallerPayloads {
         final int slot = flow.targetSlot();
         machine.setInstaller(null);
         machine.setInstalling(null);
-        machine.setPendingInstallSlot(dev.jstech.computers.os.IOsHost.NO_PENDING_INSTALL);
+        machine.setPendingInstallSlot(IOsHost.NO_PENDING_INSTALL);
         if (slot >= 0) {
             machine.setBootDiskSlot(slot);
         }
         machine.setNeedsPost(true);
-        dev.jstech.computers.block.MonitorBlock.openBootTarget(player, level, payload.monitorPos(),
+        MonitorBlock.openBootTarget(player, level, payload.monitorPos(),
                 payload.hostPos());
     }
 }

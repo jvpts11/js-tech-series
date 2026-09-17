@@ -9,10 +9,19 @@ package dev.jstech.computers.item;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsDisks;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.fs.FilesystemContents;
+import dev.jstech.computers.os.fs.FilesystemTooltip;
+import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.computers.storage.DiskPrivacy;
 import dev.jstech.computers.storage.DiskUsage;
 import dev.jstech.computers.storage.DriveVolumes;
 import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 
@@ -42,14 +51,14 @@ public class DiskItem extends SpecItem<DiskSpec> {
         }
         final Integer stored = stack.get(ComputingModule.DISK_PUBLIC_PERMILLE.get());
         return stored == null ? DEFAULT_PUBLIC_PERMILLE
-                : dev.jstech.computers.storage.DiskPrivacy.clampPermille(stored);
+                : DiskPrivacy.clampPermille(stored);
     }
 
     /** Writes a clamped public-share permille onto a disk stack (a no-op for a non-disk stack). */
     public static void setPublicPermille(final ItemStack stack, final int permille) {
         if (stack.getItem() instanceof DiskItem) {
             stack.set(ComputingModule.DISK_PUBLIC_PERMILLE.get(),
-                    dev.jstech.computers.storage.DiskPrivacy.clampPermille(permille));
+                    DiskPrivacy.clampPermille(permille));
         }
     }
 
@@ -74,10 +83,10 @@ public class DiskItem extends SpecItem<DiskSpec> {
          * Files on the disk's filesystem (e.g. .iql scripts, .craft recipes), separate from the
          * item/fluid storage listed below.
          */
-        final dev.jstech.computers.os.fs.FilesystemContents fs = stack.getOrDefault(
+        final FilesystemContents fs = stack.getOrDefault(
                 ComputingModule.FILESYSTEM.get(),
-                dev.jstech.computers.os.fs.FilesystemContents.EMPTY);
-        dev.jstech.computers.os.fs.FilesystemTooltip.append(fs, tooltip);
+                FilesystemContents.EMPTY);
+        FilesystemTooltip.append(fs, tooltip);
         appendContents(stack, tooltip, spec.capacityItems());
     }
 
@@ -87,27 +96,27 @@ public class DiskItem extends SpecItem<DiskSpec> {
      * player wipes a system they meant to keep.
      */
     private static void appendSystem(final ItemStack stack, final List<Component> tooltip) {
-        final net.minecraft.resources.ResourceLocation osId =
+        final ResourceLocation osId =
                 stack.get(ComputingModule.SYSTEM_OS.get());
         if (osId == null) {
             return; // a blank drive says nothing, which is itself the answer
         }
-        final dev.jstech.computers.os.OsDef os =
-                dev.jstech.computers.os.OsRegistry.getOs(osId);
+        final OsDef os =
+                OsRegistry.getOs(osId);
         tooltip.add(Component.literal("System: " + (os != null ? os.displayName() : osId.getPath()))
                 .withStyle(ChatFormatting.AQUA));
 
-        final net.minecraft.nbt.CompoundTag software = stack.get(ComputingModule.DISK_CONSOLE.get());
+        final CompoundTag software = stack.get(ComputingModule.DISK_CONSOLE.get());
         if (software == null) {
             return;
         }
-        final dev.jstech.computers.program.ComputerConsoleState state =
-                new dev.jstech.computers.program.ComputerConsoleState();
+        final ComputerConsoleState state =
+                new ComputerConsoleState();
         state.load(software);
-        final net.minecraft.resources.ResourceLocation desktop =
-                dev.jstech.computers.os.OsDisks.installedDesktopId(os, state);
+        final ResourceLocation desktop =
+                OsDisks.installedDesktopId(os, state);
         if (desktop != null) {
-            final var def = dev.jstech.computers.os.OsRegistry.getDesktop(desktop);
+            final var def = OsRegistry.getDesktop(desktop);
             tooltip.add(Component.literal("Desktop: "
                             + (def != null ? def.displayName() : desktop.getPath()))
                     .withStyle(ChatFormatting.DARK_AQUA));

@@ -8,6 +8,8 @@
 package dev.jstech.computers.item;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.client.CabinetItemRenderer;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Block;
@@ -92,11 +94,11 @@ public class CabinetBlockItem extends BlockItem implements GeoItem {
             private Object renderer;
 
             @Override
-            public net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer getGeoItemRenderer() {
+            public BlockEntityWithoutLevelRenderer getGeoItemRenderer() {
                 if (renderer == null) {
-                    renderer = new dev.jstech.computers.client.CabinetItemRenderer();
+                    renderer = new CabinetItemRenderer();
                 }
-                return (net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer) renderer;
+                return (BlockEntityWithoutLevelRenderer) renderer;
             }
         });
     }

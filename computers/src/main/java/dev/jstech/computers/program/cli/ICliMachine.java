@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.ShellFamily;
 import java.util.List;
 
 /**
@@ -59,8 +60,8 @@ public interface ICliMachine {
     }
 
     /** The command-syntax family of the installed OS's kernel; DOS when nothing says otherwise. */
-    default dev.jstech.computers.os.ShellFamily shellFamily() {
-        return dev.jstech.computers.os.ShellFamily.DOS;
+    default ShellFamily shellFamily() {
+        return ShellFamily.DOS;
     }
 
     /** The system information for {@code screenfetch}, or null when no OS is installed. */

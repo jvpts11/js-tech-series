@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
+import dev.jstech.computers.client.os.PatternStudioApp;
 import dev.jstech.computers.crafting.AnyTagResolver;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.MachineCategory;
@@ -40,6 +41,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -80,7 +82,7 @@ public final class PatternStudioPayloads {
                 ComputerAccess.machine(PatternStudioEditPayload::host), PatternStudioPayloads::handleEdit);
         registrar.playToClient(PatternStudioStatePayload.TYPE, PatternStudioStatePayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
-                        dev.jstech.computers.client.os.PatternStudioApp.accept(payload)));
+                        PatternStudioApp.accept(payload)));
     }
 
     // resolution
@@ -215,7 +217,7 @@ public final class PatternStudioPayloads {
         final ResourceLocation id = recipeId == null || recipeId.isEmpty() ? null : ResourceLocation.tryParse(recipeId);
         if (id != null) {
             final var holder = level.getRecipeManager().byKey(id);
-            if (holder.isPresent() && holder.get().value() instanceof net.minecraft.world.item.crafting.CraftingRecipe recipe) {
+            if (holder.isPresent() && holder.get().value() instanceof CraftingRecipe recipe) {
                 tags = RecipeBook.benchTags(recipe);
             }
         }

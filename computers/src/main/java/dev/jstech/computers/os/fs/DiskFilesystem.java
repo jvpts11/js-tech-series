@@ -11,6 +11,8 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.media.FormattedMediaItem;
+import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.world.item.ItemStack;
@@ -301,13 +303,13 @@ public final class DiskFilesystem {
      * be damaged nor turned into a place to hide files.
      */
     static boolean installerLocked(final ItemStack volume) {
-        if (!(volume.getItem() instanceof dev.jstech.computers.os.media.MediaItem)) {
+        if (!(volume.getItem() instanceof MediaItem)) {
             return false;
         }
-        final dev.jstech.computers.os.media.MediaKind kind =
-                dev.jstech.computers.os.media.MediaItem.kind(volume);
-        return kind != dev.jstech.computers.os.media.MediaKind.DATA
-                && dev.jstech.computers.os.media.MediaItem.payload(volume) != null;
+        final MediaKind kind =
+                MediaItem.kind(volume);
+        return kind != MediaKind.DATA
+                && MediaItem.payload(volume) != null;
     }
 
     public static boolean delete(final ItemStack disk, final String path) {

@@ -7,6 +7,7 @@
  */
 package dev.jstech.industrial.recipe;
 
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.industrial.IndustrialModule;
@@ -70,7 +71,7 @@ public record CompressingRecipe(Ingredient ingredient, ItemStack result, int pro
                 instance.group(
                         Ingredient.CODEC_NONEMPTY.fieldOf("ingredient").forGetter(CompressingRecipe::ingredient),
                         ItemStack.CODEC.fieldOf("result").forGetter(CompressingRecipe::result),
-                        com.mojang.serialization.Codec.INT
+                        Codec.INT
                                 .optionalFieldOf("processing_time", DEFAULT_PROCESSING_TIME)
                                 .forGetter(CompressingRecipe::processingTime)
                 ).apply(instance, CompressingRecipe::new));

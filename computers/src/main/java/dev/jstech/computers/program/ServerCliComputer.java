@@ -8,25 +8,47 @@
 package dev.jstech.computers.program;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.machine.FileService;
+import dev.jstech.computers.machine.InstallService;
+import dev.jstech.computers.machine.IqlService;
+import dev.jstech.computers.machine.MachineConfigService;
 import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.machine.MainframeStatsService;
 import dev.jstech.computers.machine.NetworkPathResolver;
+import dev.jstech.computers.machine.NetworkReadService;
+import dev.jstech.computers.machine.OperationsService;
+import dev.jstech.computers.machine.PackageService;
+import dev.jstech.computers.machine.ProgramService;
+import dev.jstech.computers.machine.RemoteComputerService;
 import dev.jstech.computers.operation.MoveLabels;
+import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.PackageManagerKind;
+import dev.jstech.computers.os.ShellFamily;
+import dev.jstech.computers.program.cli.DosPath;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.cli.PosixPath;
+import dev.jstech.computers.program.install.LiveInstallState;
+import dev.jstech.computers.program.iql.IIqlCondition;
 import dev.jstech.computers.program.iql.IqlOperation;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.peripheral.IPeripheralOwnerSupport;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -35,6 +57,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Backs the Command Prompt's {@link ICliComputer} facade with a real computer and its network. Every command the shell
@@ -73,7 +96,7 @@ public final class ServerCliComputer implements ICliComputer {
         if (hostBlock instanceof PersonalComputerBlockEntity) {
             return "Personal Computer";
         }
-        if (hostBlock instanceof dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity) {
+        if (hostBlock instanceof ClusterManagementComputerBlockEntity) {
             return "Cluster Management Computer";
         }
         return "Computer";
@@ -165,14 +188,14 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     @Override
-    public List<StoredItem> query(final dev.jstech.computers.program.iql.IIqlCondition where,
+    public List<StoredItem> query(final IIqlCondition where,
                                   final String server, final int limit) {
         return networkReads().query(where, server, limit);
     }
 
     @Override
     public List<StoredItem> queryObject(final String object,
-                                        final dev.jstech.computers.program.iql.IIqlCondition where,
+                                        final IIqlCondition where,
                                         final String server, final int limit) {
         return networkReads().queryObject(object, where, server, limit);
     }
@@ -223,32 +246,32 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public OpResult insert(final String item, final long quantity) {
-        return insert(item, quantity, dev.jstech.core.operation.OperationPriority.DEFAULT, MoveLabels.SHELL);
+        return insert(item, quantity, OperationPriority.DEFAULT, MoveLabels.SHELL);
     }
 
     @Override
     public OpResult insert(final String item, final long quantity, final String origin) {
-        return insert(item, quantity, dev.jstech.core.operation.OperationPriority.DEFAULT, origin);
+        return insert(item, quantity, OperationPriority.DEFAULT, origin);
     }
 
     private OpResult insert(final String item, final long quantity,
-                            final dev.jstech.core.operation.OperationPriority priority,
+                            final OperationPriority priority,
                             final String origin) {
         return operations().insert(item, quantity, priority, origin);
     }
 
     @Override
     public OpResult craft(final String item, final long quantity) {
-        return craft(item, quantity, dev.jstech.core.operation.OperationPriority.DEFAULT, MoveLabels.SHELL);
+        return craft(item, quantity, OperationPriority.DEFAULT, MoveLabels.SHELL);
     }
 
     @Override
     public OpResult craft(final String item, final long quantity, final String origin) {
-        return craft(item, quantity, dev.jstech.core.operation.OperationPriority.DEFAULT, origin);
+        return craft(item, quantity, OperationPriority.DEFAULT, origin);
     }
 
     private OpResult craft(final String item, final long quantity,
-                           final dev.jstech.core.operation.OperationPriority priority,
+                           final OperationPriority priority,
                            final String origin) {
         return operations().craft(item, quantity, priority, origin);
     }
@@ -280,7 +303,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public List<String> peripherals() {
-        if (hostBlock instanceof dev.jstech.core.peripheral.IPeripheralOwnerSupport owner) {
+        if (hostBlock instanceof IPeripheralOwnerSupport owner) {
             final List<String> rows = new ArrayList<>();
             for (final long endpoint : owner.peripheralEndpoints()) {
                 final BlockPos pos = BlockPos.of(endpoint);
@@ -303,12 +326,12 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     /** The machine as the thing that installs programs, whichever of the two handles this prompt holds. */
-    @org.jetbrains.annotations.Nullable
-    private dev.jstech.computers.os.IOsHost osHost() {
-        if (host instanceof dev.jstech.computers.os.IOsHost fromHost) {
+    @Nullable
+    private IOsHost osHost() {
+        if (host instanceof IOsHost fromHost) {
             return fromHost;
         }
-        return hostBlock instanceof dev.jstech.computers.os.IOsHost fromBlock ? fromBlock : null;
+        return hostBlock instanceof IOsHost fromBlock ? fromBlock : null;
     }
 
     @Override
@@ -317,7 +340,7 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     @Override
-    public java.util.List<ServiceStatus> services() {
+    public List<ServiceStatus> services() {
         return packages().services();
     }
 
@@ -344,7 +367,7 @@ public final class ServerCliComputer implements ICliComputer {
 
 
     /** The shell family of the OS installed on {@code host} (DOS when it has no OS or is not a computer). */
-    public static dev.jstech.computers.os.ShellFamily shellFamilyOf(final Object host) {
+    public static ShellFamily shellFamilyOf(final Object host) {
         if (host instanceof IOsHost computer) {
             final OsDef os = computer.installedOs();
             final KernelDef kernel = os == null ? null : OsRegistry.getKernel(os.kernelId());
@@ -352,11 +375,11 @@ public final class ServerCliComputer implements ICliComputer {
                 return kernel.shellFamily();
             }
         }
-        return dev.jstech.computers.os.ShellFamily.DOS;
+        return ShellFamily.DOS;
     }
 
     @Override
-    public dev.jstech.computers.os.ShellFamily shellFamily() {
+    public ShellFamily shellFamily() {
         return shellFamilyOf(hostBlock);
     }
 
@@ -387,7 +410,7 @@ public final class ServerCliComputer implements ICliComputer {
     // packages: the Linux package managers over the network's Mirror service
 
     @Override
-    public dev.jstech.computers.os.PackageManagerKind packageManager() {
+    public PackageManagerKind packageManager() {
         return packages().manager();
     }
 
@@ -397,12 +420,12 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     @Override
-    public java.util.List<String> drainBuildNotices() {
+    public List<String> drainBuildNotices() {
         return packages().notices();
     }
 
     @Override
-    public java.util.List<PackageInfo> packagesAvailable() {
+    public List<PackageInfo> packagesAvailable() {
         return packages().available();
     }
 
@@ -424,7 +447,7 @@ public final class ServerCliComputer implements ICliComputer {
 
     /** The build every package the Mirror serves is currently at: the mod's own version. */
     public static String modVersion() {
-        return dev.jstech.computers.machine.PackageService.modVersion();
+        return PackageService.modVersion();
     }
 
     @Override
@@ -443,7 +466,7 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     @Override
-    public boolean hasProgram(final net.minecraft.resources.ResourceLocation id) {
+    public boolean hasProgram(final ResourceLocation id) {
         return installs().has(id);
     }
 
@@ -452,20 +475,20 @@ public final class ServerCliComputer implements ICliComputer {
         if (!(hostBlock instanceof IOsHost computer) || computer.installedOs() == null) {
             return null;
         }
-        final dev.jstech.computers.os.OsDef os = computer.installedOs();
-        final net.minecraft.resources.ResourceLocation desktopId = computer.installedDesktopId();
-        final dev.jstech.computers.os.DesktopEnvironmentDef chrome =
+        final OsDef os = computer.installedOs();
+        final ResourceLocation desktopId = computer.installedDesktopId();
+        final DesktopEnvironmentDef chrome =
                 desktopId == null ? null : OsRegistry.getDesktop(desktopId);
         final ItemStack systemDisk = computer.systemDisk();
         final long totalMb = systemDisk.getItem()
-                instanceof dev.jstech.computers.item.DiskItem disk
+                instanceof DiskItem disk
                 ? disk.spec().capacityItems() * StorageKey.MB_EQ_PER_ITEM : 0L;
         final long freeMb = computer.systemDiskFreeMb();
-        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
+        final ComputerConsoleState console = host.console();
         return new SystemInfo(
                 os.id().getPath(),
                 os.displayName(),
-                shellFamily() == dev.jstech.computers.os.ShellFamily.POSIX
+                shellFamily() == ShellFamily.POSIX
                         ? "Linux 6.8-jsc x86_64" : "JSC " + os.id().getPath(),
                 hostname(),
                 os.shellId(),
@@ -479,7 +502,7 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     @Override
-    public java.util.Map<String, Long> buildsRemaining() {
+    public Map<String, Long> buildsRemaining() {
         return packages().buildsRemaining();
     }
 
@@ -495,7 +518,7 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     @Override
-    public dev.jstech.computers.program.install.LiveInstallState liveInstall() {
+    public LiveInstallState liveInstall() {
         return installs().live();
     }
 
@@ -507,21 +530,21 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public String prompt() {
-        final dev.jstech.computers.program.install.LiveInstallState live = liveInstall();
+        final LiveInstallState live = liveInstall();
         if (live != null) {
             return live.prompt();
         }
-        if (shellFamily() != dev.jstech.computers.os.ShellFamily.POSIX) {
+        if (shellFamily() != ShellFamily.POSIX) {
             return currentLocation().dosPath() + ">";
         }
-        final String cwd = dev.jstech.computers.program.cli.PosixPath.renderForPrompt(currentLocation());
+        final String cwd = PosixPath.renderForPrompt(currentLocation());
         final OsDef os = hostBlock instanceof IOsHost c ? c.installedOs() : null;
         final boolean zsh = os != null && os.shellId().equals("zsh");
         return zsh ? "player@" + hostname() + " " + cwd + " %" : "player@" + hostname() + ":" + cwd + "$";
     }
 
     @Override
-    public java.util.List<MountInfo> mounts() {
+    public List<MountInfo> mounts() {
         return files().mounts();
     }
 
@@ -539,35 +562,35 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     @Override
-    public dev.jstech.computers.program.cli.DosPath.Location currentLocation() {
-        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
+    public DosPath.Location currentLocation() {
+        final ComputerConsoleState console = host.console();
         if (console == null) {
-            return dev.jstech.computers.program.cli.DosPath.Location.root('C');
+            return DosPath.Location.root('C');
         }
-        final dev.jstech.computers.program.ComputerConsoleState.ShellSpot spot =
+        final ComputerConsoleState.ShellSpot spot =
                 session == 0 ? null : console.sessionLocation(session);
         if (spot != null) {
-            final java.util.List<String> parts = spot.dir().isEmpty()
-                    ? java.util.List.of() : java.util.List.of(spot.dir().split("/"));
-            return new dev.jstech.computers.program.cli.DosPath.Location(spot.drive(), parts);
+            final List<String> parts = spot.dir().isEmpty()
+                    ? List.of() : List.of(spot.dir().split("/"));
+            return new DosPath.Location(spot.drive(), parts);
         }
         /*
          * A fresh POSIX session starts in the home directory (a DOS one at the drive root); once the player
          * has changed directory the stored location wins, so "cd /" really lands on the root.
          */
         if (!console.hasTerminalLocation() && console.terminalDrive() == 'C'
-                && shellFamily() == dev.jstech.computers.os.ShellFamily.POSIX) {
-            return dev.jstech.computers.program.cli.PosixPath.home();
+                && shellFamily() == ShellFamily.POSIX) {
+            return PosixPath.home();
         }
         final String dir = console.terminalDir();
-        final java.util.List<String> segments = dir.isEmpty()
-                ? java.util.List.of() : java.util.List.of(dir.split("/"));
-        return new dev.jstech.computers.program.cli.DosPath.Location(console.terminalDrive(), segments);
+        final List<String> segments = dir.isEmpty()
+                ? List.of() : List.of(dir.split("/"));
+        return new DosPath.Location(console.terminalDrive(), segments);
     }
 
     @Override
-    public void setCurrentLocation(final dev.jstech.computers.program.cli.DosPath.Location location) {
-        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
+    public void setCurrentLocation(final DosPath.Location location) {
+        final ComputerConsoleState console = host.console();
         if (console == null) {
             return;
         }
@@ -616,7 +639,7 @@ public final class ServerCliComputer implements ICliComputer {
     @Override
     public FsResult changeDrive(final char drive) {
         return files().changeDrive(drive, letter -> {
-            final dev.jstech.computers.program.ComputerConsoleState console = host.console();
+            final ComputerConsoleState console = host.console();
             if (console != null) {
                 console.setTerminalDrive(letter);
             }
@@ -649,7 +672,7 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     @Override
-    public java.util.List<String> configSummary() {
+    public List<String> configSummary() {
         return config().summary();
     }
 
@@ -674,52 +697,52 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     /** What this machine keeps about itself, as this shell reads and changes it. */
-    private dev.jstech.computers.machine.MachineConfigService config() {
-        return new dev.jstech.computers.machine.MachineConfigService(host, level, files());
+    private MachineConfigService config() {
+        return new MachineConfigService(host, level, files());
     }
 
     /** The other computers of this machine's network, as this shell reaches them. */
-    private dev.jstech.computers.machine.RemoteComputerService remotes() {
-        return new dev.jstech.computers.machine.RemoteComputerService(host, level);
+    private RemoteComputerService remotes() {
+        return new RemoteComputerService(host, level);
     }
 
     /** What is installed on this machine, and the installing itself, as this shell reaches it. */
-    private dev.jstech.computers.machine.InstallService installs() {
-        return new dev.jstech.computers.machine.InstallService(host, level, packages(), iql());
+    private InstallService installs() {
+        return new InstallService(host, level, packages(), iql());
     }
 
     /** The packages this machine installs over its network's Mirror, as this shell reaches them. */
-    private dev.jstech.computers.machine.PackageService packages() {
-        return new dev.jstech.computers.machine.PackageService(host, level, files(), iql());
+    private PackageService packages() {
+        return new PackageService(host, level, files(), iql());
     }
 
     /** The network's own language, as this shell speaks it. */
-    private dev.jstech.computers.machine.IqlService iql() {
-        return new dev.jstech.computers.machine.IqlService(host, level, files(), operations(), networkReads());
+    private IqlService iql() {
+        return new IqlService(host, level, files(), operations(), networkReads());
     }
 
     /** What the Mainframe of this machine's network keeps about the work it has done. */
-    private dev.jstech.computers.machine.MainframeStatsService mainframeStats() {
-        return new dev.jstech.computers.machine.MainframeStatsService(host, level);
+    private MainframeStatsService mainframeStats() {
+        return new MainframeStatsService(host, level);
     }
 
     /** The work this machine asks of its network, as this shell asks for it. */
-    private dev.jstech.computers.machine.OperationsService operations() {
-        return new dev.jstech.computers.machine.OperationsService(host, level, this);
+    private OperationsService operations() {
+        return new OperationsService(host, level, this);
     }
 
     /** The data network this machine is on, as this shell reads it. */
-    private dev.jstech.computers.machine.NetworkReadService networkReads() {
-        return new dev.jstech.computers.machine.NetworkReadService(host, level, this, operations());
+    private NetworkReadService networkReads() {
+        return new NetworkReadService(host, level, this, operations());
     }
 
     /** This machine's drives as this shell reaches them, from where this shell's window stands. */
-    private dev.jstech.computers.machine.FileService files() {
-        return new dev.jstech.computers.machine.FileService(hostBlock, level, networkPaths(), this::currentLocation);
+    private FileService files() {
+        return new FileService(hostBlock, level, networkPaths(), this::currentLocation);
     }
 
     /** The machine on this network that {@code name} picks out, as its own shell; null when none or several. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public ServerCliComputer remoteShell(final String name) {
         return remotes().find(name);
     }
@@ -731,14 +754,14 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     /** The Mainframe of the network this machine is on, or null off any network. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public MainframeBlockEntity mainframe() {
         return mainframe(host.networkUuid());
     }
 
     /** Whether this machine takes programs and commands from the other computers on its network. */
     public boolean remoteAllowed() {
-        final dev.jstech.computers.program.ComputerConsoleState console = host.console();
+        final ComputerConsoleState console = host.console();
         return console != null && console.settings().remoteAllowed();
     }
 
@@ -752,9 +775,9 @@ public final class ServerCliComputer implements ICliComputer {
      * <p>A machine has one prompt, so it has at most one program in front of it; whoever is at the
      * keyboard is typing at that program until it returns.
      */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public MachinePrograms foreground() {
-        final dev.jstech.computers.machine.ProgramService running = sigma();
+        final ProgramService running = sigma();
         return running == null ? null : running.foreground();
     }
 
@@ -765,20 +788,20 @@ public final class ServerCliComputer implements ICliComputer {
 
     @Override
     public OpResult startSigma(final String path, final int heapMb, final List<String> arguments) {
-        final dev.jstech.computers.machine.ProgramService running = sigma();
+        final ProgramService running = sigma();
         return running == null ? OpResult.fail("sigma: this machine cannot run programs")
                 : running.startAtTerminal(path, heapMb, arguments);
     }
 
     @Override
     public OpResult stopSigma(final int id) {
-        final dev.jstech.computers.machine.ProgramService running = sigma();
+        final ProgramService running = sigma();
         return running == null ? OpResult.fail("sigma: this machine cannot run programs") : running.stop(id);
     }
 
     @Override
     public List<SigmaProcess> sigmaProcesses() {
-        final dev.jstech.computers.machine.ProgramService running = sigma();
+        final ProgramService running = sigma();
         return running == null ? List.of() : running.processes();
     }
 
@@ -788,9 +811,9 @@ public final class ServerCliComputer implements ICliComputer {
      * <p>Named for the language rather than for programs, since this shell already answers {@code programs()} with
      * what is installed, which is another thing entirely.
      */
-    @org.jetbrains.annotations.Nullable
-    private dev.jstech.computers.machine.ProgramService sigma() {
+    @Nullable
+    private ProgramService sigma() {
         return hostBlock instanceof AbstractComputerBlockEntity computer
-                ? new dev.jstech.computers.machine.ProgramService(computer, host, level, files(), remotes()) : null;
+                ? new ProgramService(computer, host, level, files(), remotes()) : null;
     }
 }

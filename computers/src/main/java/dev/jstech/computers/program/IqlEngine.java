@@ -10,6 +10,7 @@ package dev.jstech.computers.program;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.iql.IIqlCondition;
+import dev.jstech.computers.program.iql.IIqlView;
 import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.computers.program.iql.IqlDefinitionParser;
 import dev.jstech.computers.program.iql.IqlOperation;
@@ -33,10 +34,10 @@ public final class IqlEngine {
     private static final int RECURSION_GUARD = 32;
 
     private final MainframeBlockEntity mainframe;
-    private final dev.jstech.computers.program.iql.IIqlView computer;
+    private final IIqlView computer;
     private final int queryRowLimit;
 
-    public IqlEngine(final MainframeBlockEntity mainframe, final dev.jstech.computers.program.iql.IIqlView computer,
+    public IqlEngine(final MainframeBlockEntity mainframe, final IIqlView computer,
                      final int queryRowLimit) {
         this.mainframe = mainframe;
         this.computer = computer;
@@ -49,18 +50,18 @@ public final class IqlEngine {
     }
 
     /** A computer seen as what the engine needs: one way to read, one way to act. */
-    private static dev.jstech.computers.program.iql.IIqlView viewOf(final ICliComputer computer) {
-        return new dev.jstech.computers.program.iql.IIqlView() {
+    private static IIqlView viewOf(final ICliComputer computer) {
+        return new IIqlView() {
             @Override
             public List<ICliComputer.StoredItem> queryObject(final String object,
-                                                             final dev.jstech.computers.program.iql.IIqlCondition
+                                                             final IIqlCondition
                                                                      where,
                                                              final String server, final int limit) {
                 return computer.queryObject(object, where, server, limit);
             }
 
             @Override
-            public ICliComputer.OpResult execute(final dev.jstech.computers.program.iql.IqlOperation operation) {
+            public ICliComputer.OpResult execute(final IqlOperation operation) {
                 return computer.execute(operation);
             }
         };

@@ -11,8 +11,11 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.item.RackGadgetItem;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.operation.index.Allocation;
+import dev.jstech.computers.operation.index.IndexHealth;
 import dev.jstech.computers.operation.index.ItemLocation;
 import dev.jstech.computers.operation.index.StorageAllocator;
 import dev.jstech.computers.operation.index.StorageLockTable;
@@ -20,8 +23,13 @@ import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
+import dev.jstech.core.operation.IOperationResult;
+import dev.jstech.core.operation.OperationDispatch;
+import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
+import java.util.HashSet;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
@@ -32,6 +40,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The live catalog of what the network's public storage holds, kept in the Mainframe's RAM.
@@ -42,14 +51,14 @@ public final class NetworkIndex {
     private final StorageLockTable<StorageKey> locks = new StorageLockTable<>();
     private final Map<NodeUuid, Long> indexedModCounts = new LinkedHashMap<>();
     // What the index is currently worth trusting, so hot events and ghost rows stop being invisible.
-    private final dev.jstech.computers.operation.index.IndexHealth health =
-            new dev.jstech.computers.operation.index.IndexHealth();
+    private final IndexHealth health =
+            new IndexHealth();
 
     /** How much read latency the Predictive Cache service saves its bay, in percent. */
     private static final int PREDICTIVE_CACHE_CUT_PERCENT = 15;
 
     /** The index's own health: what a hot event left unconfirmed and what a mass removal orphaned. */
-    public dev.jstech.computers.operation.index.IndexHealth health() {
+    public IndexHealth health() {
         return health;
     }
     /*
@@ -146,7 +155,7 @@ public final class NetworkIndex {
                         + node.asString().substring(0, Math.min(6, node.asString().length())));
             }
         }
-        final java.util.Set<NodeUuid> stale = new java.util.HashSet<>(dirty);
+        final Set<NodeUuid> stale = new HashSet<>(dirty);
         stale.addAll(gone);
         dropServers(stale);
         for (final NodeUuid node : gone) {
@@ -169,7 +178,7 @@ public final class NetworkIndex {
     }
 
     public int vacuum(final ServerLevel level, final NetworkUuid network) {
-        final java.util.Set<NodeUuid> registered = new java.util.HashSet<>();
+        final Set<NodeUuid> registered = new HashSet<>();
         if (network != null) {
             final NetworkSystem system = NetworkSystem.get(level);
             for (final ServerNode server : system.serversOf(network)) {
@@ -226,7 +235,7 @@ public final class NetworkIndex {
         }
     }
 
-    private void dropServers(final java.util.Set<NodeUuid> servers) {
+    private void dropServers(final Set<NodeUuid> servers) {
         final var entries = catalog.entrySet().iterator();
         while (entries.hasNext()) {
             final List<ItemLocation> rows = entries.next().getValue();
@@ -257,7 +266,7 @@ public final class NetworkIndex {
     private static int latencyOf(final ServerRackBlockEntity rack, final int slot, final StorageTier tier) {
         int cut = 0;
         if (rack.hasCacheCard(slot)) {
-            cut += dev.jstech.computers.item.RackGadgetItem.CACHE_LATENCY_CUT_PERCENT;
+            cut += RackGadgetItem.CACHE_LATENCY_CUT_PERCENT;
         }
         if (rack.hasService(slot, "predictive_cache")) {
             cut += PREDICTIVE_CACHE_CUT_PERCENT;
@@ -279,8 +288,8 @@ public final class NetworkIndex {
      * between, so the swap never hides a write.
      */
     public void rebuildAsync(final ServerLevel level, final NetworkUuid network,
-                             final dev.jstech.core.operation.OperationDispatch dispatch,
-                             @org.jetbrains.annotations.Nullable final Runnable onDone) {
+                             final OperationDispatch dispatch,
+                             @Nullable final Runnable onDone) {
         final List<NodeSnapshot> snapshots = new ArrayList<>();
         final NetworkSystem system = NetworkSystem.get(level);
         for (final ServerNode server : system.serversOf(network)) {
@@ -321,8 +330,8 @@ public final class NetworkIndex {
                     onDone.run();
                 }
             });
-            return dev.jstech.core.operation.IOperationResult.success();
-        }, dev.jstech.core.operation.OperationPriority.MEDIUM_HIGH);
+            return IOperationResult.success();
+        }, OperationPriority.MEDIUM_HIGH);
     }
 
     private void indexPc(final PersonalComputerBlockEntity pc, final NodeUuid node) {
@@ -369,7 +378,7 @@ public final class NetworkIndex {
          */
         StorageTier fastest = StorageTier.HDD;
         for (final ItemStack drive : rack.claimedDriveStacks(slot)) {
-            if (drive.getItem() instanceof dev.jstech.computers.item.DiskItem disk) {
+            if (drive.getItem() instanceof DiskItem disk) {
                 fastest = fastest.faster(disk.spec().tier());
             }
         }
@@ -409,7 +418,7 @@ public final class NetworkIndex {
         return total;
     }
 
-    public long grossAvailable(final StorageKey key, final java.util.Set<NodeUuid> allowed) {
+    public long grossAvailable(final StorageKey key, final Set<NodeUuid> allowed) {
         long total = 0L;
         for (final ItemLocation location : catalog.getOrDefault(key, List.of())) {
             if (allowed == null || allowed.contains(location.server())) {
@@ -499,7 +508,7 @@ public final class NetworkIndex {
     }
 
     public Allocation lock(final UUID operation, final StorageKey key, final long demand,
-                           final java.util.Set<NodeUuid> allowed) {
+                           final Set<NodeUuid> allowed) {
         final List<ItemLocation> sources;
         if (allowed == null) {
             sources = locations(key);
@@ -537,7 +546,7 @@ public final class NetworkIndex {
      * @param allowed the servers the hold may draw from, or {@code null} for the whole network
      * @return the amount actually held (0 if the type was already locked or nothing was free to hold)
      */
-    public long manualLock(final StorageKey key, final long demand, final java.util.Set<NodeUuid> allowed) {
+    public long manualLock(final StorageKey key, final long demand, final Set<NodeUuid> allowed) {
         if (demand <= 0L || manualLocks.containsKey(key)) {
             return 0L;
         }
@@ -617,7 +626,7 @@ public final class NetworkIndex {
 
     // DROP (destruction, irreversible; only the Mainframe Maintenance tab calls this)
 
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private static ServerStore storeOf(final ServerLevel level, final NodeUuid server) {
         return NetworkSystem.get(level).locationOf(server)
                 .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack
@@ -626,7 +635,7 @@ public final class NetworkIndex {
     }
 
     public long dropType(final ServerLevel level, final NetworkUuid network, final StorageKey key,
-                         @org.jetbrains.annotations.Nullable final java.util.Set<NodeUuid> allowed) {
+                         @Nullable final Set<NodeUuid> allowed) {
         if (network == null) {
             return 0L;
         }
@@ -650,7 +659,7 @@ public final class NetworkIndex {
         }
         long destroyed = 0L;
         // Copy the keys first: extract mutates the store's view as it goes.
-        for (final StorageKey key : new java.util.ArrayList<>(store.view().keySet())) {
+        for (final StorageKey key : new ArrayList<>(store.view().keySet())) {
             destroyed += store.extract(key, store.count(key));
         }
         return destroyed;

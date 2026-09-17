@@ -10,16 +10,29 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.CraftingComputerBlock;
 import dev.jstech.computers.block.DataCableBlock;
+import dev.jstech.computers.block.part.CablePartType;
+import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.IDataNetworkConnectable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -61,7 +74,7 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
      * One line per bus-discovered machine, synced so the GUI lists WHICH machines the switch found, where
      * (absolute coordinates), and through which bus (whose name is editable from the switch screen).
      */
-    private java.util.List<BusMachineLine> busMachineLines = java.util.List.of();
+    private List<BusMachineLine> busMachineLines = List.of();
 
     /**
      * A machine discovered over the cables: its block name, the bus's name, where both sit, and the switch
@@ -76,7 +89,7 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
         for (int i = 0; i < FACES; i++) {
             faceNames[i] = "";
             faceActive[i] = true;
-            faceCategories[i] = dev.jstech.computers.crafting.MachineCategory.NONE;
+            faceCategories[i] = MachineCategory.NONE;
         }
     }
 
@@ -112,22 +125,22 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
         this.cableFace = cable;
         this.linkedComputer = cable == null ? null
                 : findComputer(level, worldPosition.relative(cable));
-        final java.util.List<BusMachineLine> busBefore = busMachineLines;
-        final java.util.Set<BlockPos> adjacent = new HashSet<>();
+        final List<BusMachineLine> busBefore = busMachineLines;
+        final Set<BlockPos> adjacent = new HashSet<>();
         for (final Direction direction : SIDES) {
             if (direction != cableFace && machinePresent[direction.get3DDataValue()]) {
                 adjacent.add(worldPosition.relative(direction));
             }
         }
-        final java.util.List<BusMachineLine> lines = collectBusMachines(adjacent);
+        final List<BusMachineLine> lines = collectBusMachines(adjacent);
         this.busMachineLines = lines;
         this.busMachineCount = lines.size();
         // The GUI reads this block entity on the client, so push an update tag whenever the survey changes.
-        if (!java.util.Arrays.equals(before, machinePresent)
-                || !java.util.Objects.equals(linkedBefore, linkedComputer)
+        if (!Arrays.equals(before, machinePresent)
+                || !Objects.equals(linkedBefore, linkedComputer)
                 || !busBefore.equals(busMachineLines)) {
             final BlockState state = getBlockState();
-            level.sendBlockUpdated(worldPosition, state, state, net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+            level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
         }
     }
 
@@ -230,19 +243,19 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
      * block a mounted Crafting Input/Receiving Bus points at. The engine uses {@code machineType}/{@code name}
      * to find a machine for a processing pattern and {@code machinePos}/{@code face} to drive its I/O.
      */
-    public java.util.List<DeclaredMachine> declaredMachines() {
-        final java.util.List<DeclaredMachine> out = new java.util.ArrayList<>();
+    public List<DeclaredMachine> declaredMachines() {
+        final List<DeclaredMachine> out = new ArrayList<>();
         if (level == null) {
             return out;
         }
-        final java.util.Set<BlockPos> declared = new HashSet<>();
+        final Set<BlockPos> declared = new HashSet<>();
         for (final Direction direction : SIDES) {
             final int i = direction.get3DDataValue();
             if (direction == cableFace || !machinePresent[i] || !faceActive[i]) {
                 continue;
             }
             final BlockPos machinePos = worldPosition.relative(direction);
-            final var key = net.minecraft.core.registries.BuiltInRegistries.BLOCK
+            final var key = BuiltInRegistries.BLOCK
                     .getKey(level.getBlockState(machinePos).getBlock());
             out.add(new DeclaredMachine(faceNames[i], key.toString(), faceCategories[i], machinePos, direction));
             declared.add(machinePos);
@@ -252,7 +265,7 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
          * that face's category (so generic patterns match them) and are gated by that face's active toggle.
          */
         for (final BusMachineLine line : collectBusMachines(declared)) {
-            final var key = net.minecraft.core.registries.BuiltInRegistries.BLOCK
+            final var key = BuiltInRegistries.BLOCK
                     .getKey(level.getBlockState(line.machinePos()).getBlock());
             out.add(new DeclaredMachine(line.busName(), key.toString(), faceCategories[line.switchFace()],
                     line.machinePos(), Direction.from3DDataValue(line.busFace())));
@@ -267,9 +280,9 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
      * on that face row and the face's active toggle/category govern it. The bus face doubles as the I/O face
      * the engine drives; the bus's editable name doubles as the machine's name.
      */
-    private java.util.List<BusMachineLine> collectBusMachines(final java.util.Set<BlockPos> declared) {
-        final java.util.List<BusMachineLine> lines = new java.util.ArrayList<>();
-        final java.util.Map<BlockPos, Direction> origin = new java.util.HashMap<>();
+    private List<BusMachineLine> collectBusMachines(final Set<BlockPos> declared) {
+        final List<BusMachineLine> lines = new ArrayList<>();
+        final Map<BlockPos, Direction> origin = new HashMap<>();
         final Deque<BlockPos> queue = new ArrayDeque<>();
         for (final Direction direction : SIDES) {
             if (!faceActive[direction.get3DDataValue()]) {
@@ -291,13 +304,13 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
             for (final Direction face : SIDES) {
                 if (cable.getPart(face) instanceof dev.jstech.computers.block.part
                         .AbstractBusPart bus
-                        && (bus.type() == dev.jstech.computers.block.part.CablePartType.INPUT
-                        || bus.type() == dev.jstech.computers.block.part.CablePartType.RECEIVING)) {
+                        && (bus.type() == CablePartType.INPUT
+                        || bus.type() == CablePartType.RECEIVING)) {
                     final BlockPos machinePos = current.relative(face);
                     final var machineBlock = level.getBlockState(machinePos).getBlock();
                     // Network hardware is never a machine, even when a bus happens to point at it.
                     if (machineBlock instanceof DataCableBlock
-                            || machineBlock instanceof dev.jstech.core.network.IDataNetworkConnectable
+                            || machineBlock instanceof IDataNetworkConnectable
                             || !declared.add(machinePos) || level.getBlockEntity(machinePos) == null) {
                         continue;
                     }
@@ -335,9 +348,9 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
             final int cf = tag.getInt("CableFace");
             cableFace = cf < 0 ? null : Direction.from3DDataValue(cf);
             busMachineCount = tag.getInt("BusMachines");
-            final net.minecraft.nbt.ListTag lines =
-                    tag.getList("BusMachineLines", net.minecraft.nbt.Tag.TAG_COMPOUND);
-            final java.util.List<BusMachineLine> parsed = new java.util.ArrayList<>(lines.size());
+            final ListTag lines =
+                    tag.getList("BusMachineLines", Tag.TAG_COMPOUND);
+            final List<BusMachineLine> parsed = new ArrayList<>(lines.size());
             for (int i = 0; i < lines.size(); i++) {
                 final CompoundTag entry = lines.getCompound(i);
                 parsed.add(new BusMachineLine(entry.getString("Block"), entry.getString("Bus"),
@@ -354,7 +367,7 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
     }
 
     /** The bus-discovered machines (block name, bus name, absolute positions), valid on both sides. */
-    public java.util.List<BusMachineLine> busMachineLines() {
+    public List<BusMachineLine> busMachineLines() {
         return busMachineLines;
     }
 
@@ -386,7 +399,7 @@ public class CraftingSwitchBlockEntity extends BlockEntity {
         tag.putBoolean("Linked", linkedComputer != null);
         tag.putInt("CableFace", cableFace == null ? -1 : cableFace.get3DDataValue());
         tag.putInt("BusMachines", busMachineCount);
-        final net.minecraft.nbt.ListTag lines = new net.minecraft.nbt.ListTag();
+        final ListTag lines = new ListTag();
         for (int i = 0; i < busMachineLines.size() && i < 8; i++) {
             final BusMachineLine line = busMachineLines.get(i);
             final CompoundTag entry = new CompoundTag();

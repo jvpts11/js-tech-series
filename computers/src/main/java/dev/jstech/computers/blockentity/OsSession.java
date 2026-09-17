@@ -14,6 +14,7 @@ import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.boot.SystemWelcome;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
@@ -27,6 +28,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -121,7 +123,7 @@ final class OsSession {
     @Nullable
     InstallerFlow installer() {
         if (this.installer == null && this.installerMemo != null
-                && this.machine.getLevel() instanceof net.minecraft.server.level.ServerLevel level) {
+                && this.machine.getLevel() instanceof ServerLevel level) {
             final CompoundTag memo = this.installerMemo;
             this.installerMemo = null;
             final OsDef system = OsRegistry.getOs(ResourceLocation.tryParse(memo.getString("Os")));
@@ -194,14 +196,14 @@ final class OsSession {
     }
 
     /** What the system this machine boots remembers about being greeted. */
-    dev.jstech.computers.os.boot.SystemWelcome welcome() {
+    SystemWelcome welcome() {
         final int slot = this.systemDiskSlot();
-        return slot < 0 ? dev.jstech.computers.os.boot.SystemWelcome.UNSEEN
+        return slot < 0 ? SystemWelcome.UNSEEN
                 : OsDisks.welcomeOn(this.diskInSlot(slot));
     }
 
     /** Writes that back onto the disk the system is on, since the greeting belongs to the system. */
-    void setWelcome(final dev.jstech.computers.os.boot.SystemWelcome welcome) {
+    void setWelcome(final SystemWelcome welcome) {
         final int slot = this.systemDiskSlot();
         if (slot < 0) {
             return;

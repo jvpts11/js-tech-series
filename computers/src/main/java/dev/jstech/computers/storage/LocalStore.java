@@ -8,6 +8,8 @@
 package dev.jstech.computers.storage;
 
 import dev.jstech.computers.item.DiskItem;
+import java.util.ArrayList;
+import java.util.Comparator;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Collections;
@@ -47,8 +49,8 @@ public final class LocalStore implements IWeightedStore {
         if (!balanced) {
             return disks;
         }
-        final List<ItemStack> ordered = new java.util.ArrayList<>(disks);
-        ordered.sort(java.util.Comparator.comparingLong(
+        final List<ItemStack> ordered = new ArrayList<>(disks);
+        ordered.sort(Comparator.comparingLong(
                 (final ItemStack disk) -> diskCapacity(disk) * StorageKey.MB_EQ_PER_ITEM
                         - DriveVolumes.peek(disk).usedWeight()).reversed());
         return ordered;

@@ -10,12 +10,18 @@ package dev.jstech.computers.block;
 import com.mojang.serialization.MapCodec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.menu.PersonalComputerMenu;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.IRearFacingDataPort;
+import dev.jstech.core.peripheral.IPeripheralConnectable;
+import dev.jstech.core.peripheral.PeripheralCableType;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
@@ -38,15 +44,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PersonalComputerBlock extends HorizontalDirectionalBlock
         implements EntityBlock, IRearFacingDataPort, IEraChassisBlock,
-        dev.jstech.core.peripheral.IPeripheralConnectable {
+        IPeripheralConnectable {
 
     @Override
-    public dev.jstech.core.peripheral.PeripheralCableType peripheralType() {
-        return dev.jstech.core.peripheral.PeripheralCableType.COMPUTING;
+    public PeripheralCableType peripheralType() {
+        return PeripheralCableType.COMPUTING;
     }
 
     @Override
-    public dev.jstech.core.tier.HardwareEra chassisEra() {
+    public HardwareEra chassisEra() {
         return era();
     }
 
@@ -62,8 +68,8 @@ public class PersonalComputerBlock extends HorizontalDirectionalBlock
      * consumer board the machine accepts: only a board of this era (and of the era's form factor) installs.
      * The base block is the Standard era; the Vintage and Legacy variants override this.
      */
-    public dev.jstech.core.tier.HardwareEra era() {
-        return dev.jstech.core.tier.HardwareEra.STANDARD;
+    public HardwareEra era() {
+        return HardwareEra.STANDARD;
     }
 
     @Override
@@ -72,8 +78,8 @@ public class PersonalComputerBlock extends HorizontalDirectionalBlock
     }
 
     @Override
-    public java.util.Set<DataTier> acceptedCableTiers() {
-        return java.util.Set.of(DataTier.T1_ETHERNET); // PCs are Ethernet-only; reach HBW via a Personal Router
+    public Set<DataTier> acceptedCableTiers() {
+        return Set.of(DataTier.T1_ETHERNET); // PCs are Ethernet-only; reach HBW via a Personal Router
     }
 
     @Override
@@ -97,7 +103,7 @@ public class PersonalComputerBlock extends HorizontalDirectionalBlock
                 && level.getBlockEntity(pos) instanceof PersonalComputerBlockEntity computer) {
             serverPlayer.openMenu(
                     new SimpleMenuProvider(
-                            (id, inventory, p) -> new dev.jstech.computers.menu.PersonalComputerMenu(
+                            (id, inventory, p) -> new PersonalComputerMenu(
                                     id, inventory, computer),
                             getName()),
                     buf -> buf.writeBlockPos(pos));
@@ -109,7 +115,7 @@ public class PersonalComputerBlock extends HorizontalDirectionalBlock
     protected void onRemove(final BlockState state, final Level level, final BlockPos pos,
                             final BlockState newState, final boolean movedByPiston) {
         if (!state.is(newState.getBlock())
-                && level instanceof net.minecraft.server.level.ServerLevel serverLevel
+                && level instanceof ServerLevel serverLevel
                 && level.getBlockEntity(pos) instanceof PersonalComputerBlockEntity computer) {
             computer.onBroken(serverLevel); // drop this PC's network-node registration
         }
@@ -120,7 +126,7 @@ public class PersonalComputerBlock extends HorizontalDirectionalBlock
     public BlockState playerWillDestroy(final Level level, final BlockPos pos, final BlockState state,
                                         final Player player) {
         // Spill the installed hardware so a broken PC never destroys its components.
-        if (level instanceof net.minecraft.server.level.ServerLevel serverLevel
+        if (level instanceof ServerLevel serverLevel
                 && !player.getAbilities().instabuild
                 && level.getBlockEntity(pos) instanceof PersonalComputerBlockEntity computer) {
             BlockDrops.spill(serverLevel, pos, computer.getHardware());

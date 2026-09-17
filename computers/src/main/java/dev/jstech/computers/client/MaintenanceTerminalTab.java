@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.menu.ComputerTerminalMenu;
+import dev.jstech.computers.operation.index.IndexHealth;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
@@ -48,9 +49,9 @@ final class MaintenanceTerminalTab extends AbstractTerminalTab {
             }
         }
         final var health = menu.indexHealth();
-        if (health != dev.jstech.computers.operation.index.IndexHealth.State.OK) {
+        if (health != IndexHealth.State.OK) {
             final int stripY = cy + MNT_ACTIONS_Y - 1;
-            final int base = health == dev.jstech.computers.operation.index.IndexHealth.State.FRAGMENTED
+            final int base = health == IndexHealth.State.FRAGMENTED
                     ? 0xFF7A3A14 : 0xFF6E5A16;
             g.fill(cx, stripY, cx + cw, stripY + MNT_HEALTH_H, base);
             g.fill(cx, stripY, cx + cw, stripY + 1, 0x55FFFFFF);
@@ -74,13 +75,13 @@ final class MaintenanceTerminalTab extends AbstractTerminalTab {
         tile(g, cx + tileW + 4, cy + MNT_TILE_ROW2_Y, "STORAGE",
                 total <= 0 ? "0" : fmt(used) + "/" + fmt(total), "");
         final var health = menu.indexHealth();
-        if (health == dev.jstech.computers.operation.index.IndexHealth.State.OK) {
+        if (health == IndexHealth.State.OK) {
             g.drawString(font(), "ACTIONS", cx, cy + MNT_ACTIONS_Y, DIM(), false);
         } else {
             // Name the state, how many item types are in doubt, and the run that settles it.
             final int types = menu.indexHealthTypes();
             final String action = health
-                    == dev.jstech.computers.operation.index.IndexHealth.State.FRAGMENTED
+                    == IndexHealth.State.FRAGMENTED
                     ? "VACUUM" : "REINDEX";
             g.drawString(font(), health.name() + " - " + types + " item type"
                     + (types == 1 ? "" : "s") + " affected", cx + 2, cy + MNT_ACTIONS_Y, 0xFFFFFFFF, false);

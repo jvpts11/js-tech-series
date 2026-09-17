@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.gui.component;
 
+import java.util.function.BiConsumer;
 import net.minecraft.client.gui.GuiGraphics;
 
 import java.util.List;
@@ -76,13 +77,13 @@ public final class ColumnHeader extends UiComponent {
     private static final int GRIP = 6;
     /** The column whose left edge the mouse is dragging, or -1. */
     private int dragging = -1;
-    private java.util.function.BiConsumer<Integer, Integer> onResize = (column, edge) -> { };
+    private BiConsumer<Integer, Integer> onResize = (column, edge) -> { };
 
     /**
      * Says what happens when a column's left edge is dragged: called with the column and where its
      * edge now is, for the owner to lay the columns out again.
      */
-    public ColumnHeader setOnResize(final java.util.function.BiConsumer<Integer, Integer> action) {
+    public ColumnHeader setOnResize(final BiConsumer<Integer, Integer> action) {
         onResize = action;
         return this;
     }

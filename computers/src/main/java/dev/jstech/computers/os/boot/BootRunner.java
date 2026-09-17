@@ -7,7 +7,10 @@
  */
 package dev.jstech.computers.os.boot;
 
+import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
@@ -55,7 +58,7 @@ public final class BootRunner {
             return 0;
         }
         final ItemStack disk = machine.systemDisk();
-        final int diskSpeed = disk.getItem() instanceof dev.jstech.computers.item.DiskItem drive
+        final int diskSpeed = disk.getItem() instanceof DiskItem drive
                 ? drive.spec().tier().speedMultiplier() : 1;
         final HardwareEra era = machine.installedEra();
         return BootTiming.bootTicks(system.footprintMb(), diskSpeed, era,
@@ -103,7 +106,7 @@ public final class BootRunner {
              * the other disk has something on it.
              */
             final BootMenu list = BootLines.menuFor(machine, MENU_TICKS);
-            if (!list.isEmpty() && dev.jstech.computers.config.ComputersServerConfig.showBootMenu()) {
+            if (!list.isEmpty() && ComputersServerConfig.showBootMenu()) {
                 phases.beginMenu(now, MENU_TICKS);
                 showMenu(machine, level, pos);
             } else {
@@ -155,7 +158,7 @@ public final class BootRunner {
              */
             if (machine.onScreen()) {
                 ScreenSessions.eachWatcher(level, pos, (player, monitor) ->
-                        dev.jstech.computers.block.MonitorBlock.openSystemBoot(player, level, monitor, pos,
+                        MonitorBlock.openSystemBoot(player, level, monitor, pos,
                                 machine));
             }
             return;
@@ -176,7 +179,7 @@ public final class BootRunner {
             return;
         }
         ScreenSessions.eachWatcher(level, pos, (player, monitor) ->
-                dev.jstech.computers.block.MonitorBlock.openBootMenu(player, level, monitor, pos, machine));
+                MonitorBlock.openBootMenu(player, level, monitor, pos, machine));
     }
 
     /**

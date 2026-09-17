@@ -22,6 +22,7 @@ import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.language.IProgrammingLanguage;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
@@ -83,7 +84,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
             final List<Filter> out = new ArrayList<>();
             for (final IProgrammingLanguage language : JsCore.languages().all()) {
                 final List<String> extensions = new ArrayList<>(language.sourceExtensions());
-                java.util.Collections.sort(extensions);
+                Collections.sort(extensions);
                 out.add(of(language.displayName(), extensions.toArray(new String[0])));
             }
             out.add(ALL);

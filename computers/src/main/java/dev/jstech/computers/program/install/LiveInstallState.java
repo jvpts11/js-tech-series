@@ -7,12 +7,23 @@
  */
 package dev.jstech.computers.program.install;
 
+import dev.jstech.computers.os.install.SetupTiming;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * The manual installation of a source/live distribution, as a state machine the live shell drives: the
@@ -155,13 +166,13 @@ public final class LiveInstallState {
      * steps wrote is what reading them shows. A guide the medium carries is put here when the session starts
      * and is never saved, since it belongs to the medium and not to the install.
      */
-    private final java.util.Map<String, String> files = new java.util.LinkedHashMap<>();
-    private final java.util.Set<String> dirs = new java.util.LinkedHashSet<>();
+    private final Map<String, String> files = new LinkedHashMap<>();
+    private final Set<String> dirs = new LinkedHashSet<>();
     /*
      * The partitions written onto each disk, by the disk's name. A disk with none is a disk nobody has
      * partitioned, which a machine of the older firmware can still be installed onto whole.
      */
-    private final java.util.Map<String, List<Partition>> tables = new java.util.LinkedHashMap<>();
+    private final Map<String, List<Partition>> tables = new LinkedHashMap<>();
     private String cwd = HOME;
     /** The disk the partition editor is open on, empty when it is not open. */
     private String editing = "";
@@ -207,7 +218,7 @@ public final class LiveInstallState {
      * The packages asked for inside the new system. Kept because they were asked for and waited on, so they
      * belong to the system that comes out of this rather than to the session that built it.
      */
-    private final java.util.Set<String> asked = new java.util.LinkedHashSet<>();
+    private final Set<String> asked = new LinkedHashSet<>();
     private boolean password;
 
     public LiveInstallState(final Distro distro) {
@@ -371,14 +382,14 @@ public final class LiveInstallState {
         if (conf == null) {
             return 1;
         }
-        final java.util.regex.Matcher found =
-                java.util.regex.Pattern.compile("MAKEOPTS\\s*=\\s*\"?[^\"\\n]*-j\\s*(\\d+)").matcher(conf);
+        final Matcher found =
+                Pattern.compile("MAKEOPTS\\s*=\\s*\"?[^\"\\n]*-j\\s*(\\d+)").matcher(conf);
         return found.find() ? Math.max(1, Integer.parseInt(found.group(1))) : 1;
     }
 
     /** How long fetching that many megabytes over the network takes this machine. */
     private static long fetchTicks(final int sizeMb, final Env env) {
-        return dev.jstech.computers.os.install.SetupTiming.networkTicks(sizeMb, false,
+        return SetupTiming.networkTicks(sizeMb, false,
                 Math.max(1, env.eraFactor()));
     }
 
@@ -449,7 +460,7 @@ public final class LiveInstallState {
 
     /** A path with its dots resolved and its trailing slash gone, so two ways of writing one agree. */
     private static String tidy(final String path) {
-        final java.util.Deque<String> parts = new java.util.ArrayDeque<>();
+        final Deque<String> parts = new ArrayDeque<>();
         for (final String part : path.split("/")) {
             if (part.isEmpty() || part.equals(".")) {
                 continue;
@@ -491,7 +502,7 @@ public final class LiveInstallState {
             return Result.fail("ls: cannot access '" + (arg.isEmpty() ? asTyped(cwd) : arg)
                     + "': No such file or directory");
         }
-        final java.util.SortedSet<String> here = new java.util.TreeSet<>();
+        final SortedSet<String> here = new TreeSet<>();
         final String prefix = whole.equals("/") ? "/" : whole + "/";
         for (final String dir : dirs) {
             if (dir.startsWith(prefix) && !dir.equals(whole)) {
@@ -730,7 +741,7 @@ public final class LiveInstallState {
 
     /** The partition of that name, or null when nothing on this machine is called it. */
     private Partition partitionOf(final String name) {
-        for (final java.util.Map.Entry<String, List<Partition>> disk : tables.entrySet()) {
+        for (final Map.Entry<String, List<Partition>> disk : tables.entrySet()) {
             for (final Partition part : disk.getValue()) {
                 if (part.on(disk.getKey()).equals(name)) {
                     return part;
@@ -1305,7 +1316,7 @@ public final class LiveInstallState {
         put(out, "esp_device", espDevice);
         put(out, "esp_formatted", espFormatted);
         put(out, "esp_mount", espMount);
-        for (final java.util.Map.Entry<String, List<Partition>> disk : tables.entrySet()) {
+        for (final Map.Entry<String, List<Partition>> disk : tables.entrySet()) {
             final StringBuilder written = new StringBuilder();
             for (final Partition part : disk.getValue()) {
                 if (!written.isEmpty()) {
@@ -1323,7 +1334,7 @@ public final class LiveInstallState {
         for (final String dir : dirs) {
             put(out, "dir:" + dir, "1");
         }
-        for (final java.util.Map.Entry<String, String> file : files.entrySet()) {
+        for (final Map.Entry<String, String> file : files.entrySet()) {
             if (!file.getKey().equals(HOME + "/install.txt")) {
                 put(out, "file:" + file.getKey(), file.getValue());
             }
@@ -1332,7 +1343,7 @@ public final class LiveInstallState {
     }
 
     public static LiveInstallState deserialize(final String s) {
-        final java.util.Map<String, String> saved = read(s);
+        final Map<String, String> saved = read(s);
         final Distro distro = Distro.find(saved.getOrDefault("distro", ""));
         if (distro == null) {
             return null;
@@ -1367,7 +1378,7 @@ public final class LiveInstallState {
         st.espDevice = saved.getOrDefault("esp_device", "");
         st.espFormatted = flag(saved, "esp_formatted");
         st.espMount = saved.getOrDefault("esp_mount", "");
-        for (final java.util.Map.Entry<String, String> line : saved.entrySet()) {
+        for (final Map.Entry<String, String> line : saved.entrySet()) {
             if (line.getKey().startsWith("dir:")) {
                 st.dirs.add(line.getKey().substring(4));
             } else if (line.getKey().startsWith("file:")) {
@@ -1411,8 +1422,8 @@ public final class LiveInstallState {
     }
 
     /** What a saved state says, by name; anything it does not name is simply absent. */
-    private static java.util.Map<String, String> read(final String s) {
-        final java.util.Map<String, String> saved = new java.util.LinkedHashMap<>();
+    private static Map<String, String> read(final String s) {
+        final Map<String, String> saved = new LinkedHashMap<>();
         if (s == null || s.isEmpty()) {
             return saved;
         }
@@ -1425,11 +1436,11 @@ public final class LiveInstallState {
         return saved;
     }
 
-    private static boolean flag(final java.util.Map<String, String> saved, final String name) {
+    private static boolean flag(final Map<String, String> saved, final String name) {
         return "1".equals(saved.get(name));
     }
 
-    private static long number(final java.util.Map<String, String> saved, final String name, final long fallback) {
+    private static long number(final Map<String, String> saved, final String name, final long fallback) {
         try {
             return Long.parseLong(saved.getOrDefault(name, Long.toString(fallback)));
         } catch (final NumberFormatException wrong) {

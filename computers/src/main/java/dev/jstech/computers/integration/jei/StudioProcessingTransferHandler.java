@@ -22,10 +22,13 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.transfer.IRecipeTransferError;
 import mezz.jei.api.recipe.transfer.IRecipeTransferHandlerHelper;
 import mezz.jei.api.recipe.transfer.IUniversalRecipeTransferHandler;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -83,9 +86,9 @@ public final class StudioProcessingTransferHandler implements IUniversalRecipeTr
 
     /** The recipe type id the server maps to a machine, for the recipes the game registers; empty otherwise. */
     private static String recipeTypeOf(final Object recipe) {
-        if (recipe instanceof net.minecraft.world.item.crafting.RecipeHolder<?> holder) {
-            final net.minecraft.resources.ResourceLocation key =
-                    net.minecraft.core.registries.BuiltInRegistries.RECIPE_TYPE.getKey(holder.value().getType());
+        if (recipe instanceof RecipeHolder<?> holder) {
+            final ResourceLocation key =
+                    BuiltInRegistries.RECIPE_TYPE.getKey(holder.value().getType());
             if (key != null) {
                 final String id = key.toString();
                 return id.length() <= SetProcessingPatternPayload.MAX_TYPE ? id : "";

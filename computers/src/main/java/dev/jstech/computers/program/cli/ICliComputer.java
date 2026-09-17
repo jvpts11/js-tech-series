@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.program.cli;
 
+import java.util.List;
+
 /**
  * The view of a computer and its network that a CLI command operates on, made of one part for each thing a command
  * reaches: the machine, its drives, the network it reads, the network's work, packages, installation, settings and
@@ -81,19 +83,19 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
 
         private final boolean ok;
         private final String message;
-        private final java.util.List<FsEntry> entries;
+        private final List<FsEntry> entries;
         private final OpResult opResult;
 
-        private FsResult(final boolean ok, final String message, final java.util.List<FsEntry> entries,
+        private FsResult(final boolean ok, final String message, final List<FsEntry> entries,
                          final OpResult opResult) {
             this.ok = ok;
             this.message = message;
-            this.entries = entries != null ? entries : java.util.List.of();
+            this.entries = entries != null ? entries : List.of();
             this.opResult = opResult;
         }
 
         /** A listing result carrying one or more directory entries. */
-        public static FsResult listing(final java.util.List<FsEntry> entries) {
+        public static FsResult listing(final List<FsEntry> entries) {
             return new FsResult(true, "", entries, null);
         }
 
@@ -124,7 +126,7 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
 
         public boolean ok() { return ok; }
         public String message() { return message; }
-        public java.util.List<FsEntry> entries() { return entries; }
+        public List<FsEntry> entries() { return entries; }
         /** The forwarded IQL result when this is an {@link #iqlResult}, or {@code null} otherwise. */
         public OpResult opResult() { return opResult; }
     }

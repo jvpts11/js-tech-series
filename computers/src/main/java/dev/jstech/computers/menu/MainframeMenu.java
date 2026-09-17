@@ -8,8 +8,11 @@
 package dev.jstech.computers.menu;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.core.network.FailoverRole;
+import dev.jstech.core.tier.HardwareEra;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -18,6 +21,7 @@ import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Menu for the Mainframe: the 18 hardware slots (motherboard, CPUs, RAM, GPUs, PSU, each restricted to its component category by the block entity's item handler) plus the player inventory, with powered/capacity/queues/buffer synced for the screen.
@@ -61,8 +65,8 @@ public class MainframeMenu extends AbstractComputerMenu {
         addDataSlots(this.data);
     }
 
-    @org.jetbrains.annotations.Nullable
-    public dev.jstech.core.tier.HardwareEra hardwareEra() {
+    @Nullable
+    public HardwareEra hardwareEra() {
         return blockEntity.displayEra();
     }
 
@@ -74,7 +78,7 @@ public class MainframeMenu extends AbstractComputerMenu {
         return slots.get(1).hasItem();
     }
 
-    public net.minecraft.core.BlockPos blockPos() {
+    public BlockPos blockPos() {
         return blockEntity.getBlockPos();
     }
 
@@ -94,7 +98,7 @@ public class MainframeMenu extends AbstractComputerMenu {
         return blockEntity.boardDiskSlots();
     }
 
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public static MainframeMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                             final RegistryFriendlyByteBuf buf) {
         if (playerInventory.player.level().getBlockEntity(buf.readBlockPos())
@@ -187,7 +191,7 @@ public class MainframeMenu extends AbstractComputerMenu {
          */
         return access.evaluate((level, pos) ->
                 level.getBlockState(pos).getBlock()
-                        instanceof dev.jstech.computers.block.MainframeBlock
+                        instanceof MainframeBlock
                         && player.canInteractWithBlock(pos, 4.0), true);
     }
 

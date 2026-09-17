@@ -10,6 +10,7 @@ package dev.jstech.computers.os;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
@@ -62,8 +63,8 @@ public record ProgramSpec(
         int minOsRank,
         HostScope hostScope,
         ResourceLocation iconId,
-        dev.jstech.core.tier.HardwareEra minEra,
-        dev.jstech.core.tier.HardwareEra era,
+        HardwareEra minEra,
+        HardwareEra era,
         SoftwareHouse house,
         int ramMb
 ) {
@@ -83,11 +84,11 @@ public record ProgramSpec(
             StableCodecs.byName(HostScope.class).optionalFieldOf("host_scope", HostScope.ANY).forGetter(ProgramSpec::hostScope),
             ResourceLocation.CODEC.optionalFieldOf("icon_id", ResourceLocation.fromNamespaceAndPath("jsc", "generic"))
                     .forGetter(ProgramSpec::iconId),
-            StableCodecs.byName(dev.jstech.core.tier.HardwareEra.class)
-                    .optionalFieldOf("min_era", dev.jstech.core.tier.HardwareEra.VINTAGE)
+            StableCodecs.byName(HardwareEra.class)
+                    .optionalFieldOf("min_era", HardwareEra.VINTAGE)
                     .forGetter(ProgramSpec::minEra),
             // Absent means "derive it from the OS rank", which the compact constructor does.
-            StableCodecs.byName(dev.jstech.core.tier.HardwareEra.class)
+            StableCodecs.byName(HardwareEra.class)
                     .optionalFieldOf("era", null)
                     .forGetter(ProgramSpec::era),
             SoftwareHouse.CODEC.optionalFieldOf("house", SoftwareHouse.BUNDLED).forGetter(ProgramSpec::house),
@@ -118,7 +119,7 @@ public record ProgramSpec(
             iconId = id;
         }
         if (minEra == null) {
-            minEra = dev.jstech.core.tier.HardwareEra.VINTAGE;
+            minEra = HardwareEra.VINTAGE;
         }
         if (era == null) {
             era = eraFromRank(minOsRank);
@@ -137,14 +138,14 @@ public record ProgramSpec(
      * needs: only-on-11 is Standard, XP-or-later is Legacy, anything else is Vintage. The built-in
      * registrations override this per program; the rule is only the default for a program that never said.
      */
-    private static dev.jstech.core.tier.HardwareEra eraFromRank(final int minOsRank) {
+    private static HardwareEra eraFromRank(final int minOsRank) {
         if (minOsRank >= 3) {
-            return dev.jstech.core.tier.HardwareEra.STANDARD;
+            return HardwareEra.STANDARD;
         }
         if (minOsRank >= 2) {
-            return dev.jstech.core.tier.HardwareEra.LEGACY;
+            return HardwareEra.LEGACY;
         }
-        return dev.jstech.core.tier.HardwareEra.VINTAGE;
+        return HardwareEra.VINTAGE;
     }
 
     /**
@@ -155,7 +156,7 @@ public record ProgramSpec(
                                  final boolean preinstalled, final Set<Platform> platforms, final int minDiskMb,
                                  final ProgramKind kind, final int minOsRank, final HostScope hostScope) {
         return new ProgramSpec(id, commandName, displayName, preinstalled, platforms, 0, 0, minDiskMb,
-                kind, minOsRank, hostScope, id, dev.jstech.core.tier.HardwareEra.VINTAGE, null,
+                kind, minOsRank, hostScope, id, HardwareEra.VINTAGE, null,
                 SoftwareHouse.BUNDLED, 0);
     }
 
@@ -164,7 +165,7 @@ public record ProgramSpec(
      * hardware generation it was written for: a desktop environment of the 2010s has no business
      * running on a machine of the 1990s.
      */
-    public ProgramSpec withMinEra(final dev.jstech.core.tier.HardwareEra oldest) {
+    public ProgramSpec withMinEra(final HardwareEra oldest) {
         return new ProgramSpec(id, commandName, displayName, preinstalled, platforms, minCpuMhz, minVramMb,
                 minDiskMb, kind, minOsRank, hostScope, iconId, oldest, era, house, ramMb);
     }
@@ -173,7 +174,7 @@ public record ProgramSpec(
      * The same program, stamped as written in {@code generation}. This decides the medium it ships on and
      * the year on its banner; it never gates where it installs, which stays {@link #minEra()}'s job.
      */
-    public ProgramSpec withEra(final dev.jstech.core.tier.HardwareEra generation) {
+    public ProgramSpec withEra(final HardwareEra generation) {
         return new ProgramSpec(id, commandName, displayName, preinstalled, platforms, minCpuMhz, minVramMb,
                 minDiskMb, kind, minOsRank, hostScope, iconId, minEra, generation, house, ramMb);
     }

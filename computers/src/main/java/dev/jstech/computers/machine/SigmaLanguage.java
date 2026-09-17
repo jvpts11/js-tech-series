@@ -14,6 +14,7 @@ import dev.jstech.computers.sigma.DiagnosticBag;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.sigma.edit.CommentSpans;
 import dev.jstech.computers.sigma.lex.Lexer;
+import dev.jstech.computers.sigma.lex.TokenKind;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.core.language.IProgrammingLanguage;
 import java.util.ArrayList;
@@ -98,7 +99,7 @@ public final class SigmaLanguage implements IProgrammingLanguage {
          */
         for (final dev.jstech.computers.sigma.lex.Token token
                 : new Lexer(new SourceFile("editor", text), bag).tokenize()) {
-            if (token.kind() == dev.jstech.computers.sigma.lex.TokenKind.END_OF_FILE) {
+            if (token.kind() == TokenKind.END_OF_FILE) {
                 break;
             }
             out.add(new IProgrammingLanguage.Token(token.line(), token.column(),
@@ -118,7 +119,7 @@ public final class SigmaLanguage implements IProgrammingLanguage {
     }
 
     /** What an editor should paint that piece of text as. */
-    private static Kind kindOf(final dev.jstech.computers.sigma.lex.TokenKind kind) {
+    private static Kind kindOf(final TokenKind kind) {
         if (kind.isKeyword()) {
             return Kind.KEYWORD;
         }

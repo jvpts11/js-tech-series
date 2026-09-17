@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.program.ComputerSettings;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -38,7 +39,7 @@ public record NetworkInteractorPayload(List<NetworkItemEntry> networkItems, List
         implements CustomPacketPayload {
 
     public static final int MAX_ENTRIES = 512;
-    public static final int MAX_FAVOURITES = dev.jstech.computers.program.ComputerSettings.MAX_FAVOURITES;
+    public static final int MAX_FAVOURITES = ComputerSettings.MAX_FAVOURITES;
     public static final int MAX_ID = 128;
 
     public static final CustomPacketPayload.Type<NetworkInteractorPayload> TYPE =

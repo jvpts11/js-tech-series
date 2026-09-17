@@ -11,6 +11,7 @@ import com.mojang.serialization.MapCodec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.menu.ServerRackMenu;
 import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.multiblock.AbstractMultiblockControllerBlock;
@@ -18,8 +19,11 @@ import dev.jstech.core.multiblock.IMultiblockGeometry;
 import dev.jstech.core.multiblock.MultiblockPatternGeometry;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.IRearFacingDataPort;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
+import java.util.EnumSet;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -37,11 +41,13 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -57,8 +63,8 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
 
     public static final MapCodec<ServerRackBlock> CODEC = simpleCodec(ServerRackBlock::new);
 
-    public static final net.minecraft.world.level.block.state.properties.IntegerProperty BAYS =
-            net.minecraft.world.level.block.state.properties.IntegerProperty.create("bays", 0, 3);
+    public static final IntegerProperty BAYS =
+            IntegerProperty.create("bays", 0, 3);
 
     public ServerRackBlock(final Properties properties) {
         super(properties);
@@ -75,16 +81,16 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
      * The kind of cabinet this block is, which decides the computers it seats. The block entity reads
      * it from here, so the one cabinet code path serves every rack type.
      */
-    public dev.jstech.computers.rack.RackChassis.RackType rackType() {
-        return dev.jstech.computers.rack.RackChassis.RackType.SERVER;
+    public RackChassis.RackType rackType() {
+        return RackChassis.RackType.SERVER;
     }
 
     /**
      * The era of the cabinet. A cabinet seats servers of its own era or earlier, so a Standard rack
      * takes everything and a Vintage rack takes only Vintage servers.
      */
-    public dev.jstech.core.tier.HardwareEra era() {
-        return dev.jstech.core.tier.HardwareEra.STANDARD;
+    public HardwareEra era() {
+        return HardwareEra.STANDARD;
     }
 
     /**
@@ -92,25 +98,25 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
      * shows nothing, so the eleven part blocks and this one never paint a seam over it.
      */
     @Override
-    protected net.minecraft.world.level.block.RenderShape getRenderShape(final BlockState state) {
-        return net.minecraft.world.level.block.RenderShape.ENTITYBLOCK_ANIMATED;
+    protected RenderShape getRenderShape(final BlockState state) {
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     /**
      * The item this cabinet drops when torn down and is picked as. A typed cabinet answers with its own,
      * so dismantling a Supercomputer Rack never hands the player a Server Rack.
      */
-    protected net.minecraft.world.item.Item blockItem() {
+    protected Item blockItem() {
         return ComputingModule.SERVER_RACK_ITEM.get();
     }
 
     @Override
-    public java.util.Set<DataTier> acceptedCableTiers() {
+    public Set<DataTier> acceptedCableTiers() {
         /*
          * A Server Rack takes any data cable tier but the high-compute fabric, which belongs to the
          * supercomputer cabinet alone.
          */
-        return java.util.EnumSet.complementOf(java.util.EnumSet.of(DataTier.HPC));
+        return EnumSet.complementOf(EnumSet.of(DataTier.HPC));
     }
 
     @Override
@@ -140,7 +146,7 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
                 .setValue(ServerRackPartBlock.TOP, ServerRackStructure.isTopLayer(controller, part))
                 .setValue(ServerRackPartBlock.FACING, facing)
                 .setValue(ServerRackPartBlock.COMPUTE,
-                        rackType() == dev.jstech.computers.rack.RackChassis.RackType.SUPERCOMPUTER)
+                        rackType() == RackChassis.RackType.SUPERCOMPUTER)
                 .setValue(ServerRackPartBlock.FRONT,
                         ServerRackStructure.isFrontBayBlock(controller, facing, part));
     }
@@ -316,12 +322,12 @@ public class ServerRackBlock extends AbstractMultiblockControllerBlock
              * nodes are only ever seen through that opening.
              */
             if (player.isShiftKeyDown()
-                    && rack.rackType() == dev.jstech.computers.rack.RackChassis.RackType.SUPERCOMPUTER) {
+                    && rack.rackType() == RackChassis.RackType.SUPERCOMPUTER) {
                 rack.toggleServicePanel();
                 return InteractionResult.sidedSuccess(false);
             }
             serverPlayer.openMenu(new SimpleMenuProvider(
-                    (id, inv, p) -> new dev.jstech.computers.menu.ServerRackMenu(id, inv, rack),
+                    (id, inv, p) -> new ServerRackMenu(id, inv, rack),
                     /*
                      * The cabinet's own name: a compute cabinet is not a Server Rack, and each era has its
                      * own. It used to open every one of them titled "Server Rack".

@@ -8,16 +8,23 @@
 package dev.jstech.computers.crafting;
 
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.operation.NetworkIndex;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.IPersistentOperation;
 import dev.jstech.computers.operation.index.Allocation;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -26,6 +33,7 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
@@ -34,6 +42,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A multi-tick CRAFT: executes a {@link CraftPlanner.Plan} on a Crafting Computer.
@@ -94,7 +103,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
      * request was already fully delivered from the items in flight ({@code complete}) or could not be
      * planned again ({@code complete} false, {@code operation} null).
      */
-    public record Restored(@org.jetbrains.annotations.Nullable NetworkCraftOperation operation, boolean complete) {
+    public record Restored(@Nullable NetworkCraftOperation operation, boolean complete) {
     }
 
     /**
@@ -188,9 +197,9 @@ public final class NetworkCraftOperation implements IPersistentOperation {
                 ? OperationPriority.byId(tag.getByte(PRIORITY_KEY)) : OperationPriority.DEFAULT;
     }
 
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private static NetworkCraftOperation withPriority(
-            @org.jetbrains.annotations.Nullable final NetworkCraftOperation operation,
+            @Nullable final NetworkCraftOperation operation,
             final OperationPriority priority) {
         if (operation != null) {
             operation.setPriority(priority);
@@ -205,7 +214,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
 
     /** The design default of the WAITING timeout; the live value comes from the balance config. */
     public static final int DEFAULT_WAIT_TIMEOUT_TICKS =
-            dev.jstech.core.operation.OperationBalance.DEFAULT_WAITING_TIMEOUT_TICKS;
+            OperationBalance.DEFAULT_WAITING_TIMEOUT_TICKS;
 
     private final ServerLevel level;
     private final NetworkUuid network;
@@ -221,7 +230,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
      * A pattern that travels with the request instead of living in a Recipe ROM: a multi-stage
      * pipeline's bench stage embeds its pattern, so any online computer may execute it.
      */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private final CraftingPattern embeddedPattern;
 
     private final Map<StorageKey, Long> pool = new HashMap<>();
@@ -229,7 +238,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
      * The servers each ingredient's reservation was placed on, so the per-tick drain targets the same
      * servers and every release frees the matching reservation instead of silently missing.
      */
-    private final Map<StorageKey, java.util.Set<NodeUuid>> lockedServers = new HashMap<>();
+    private final Map<StorageKey, Set<NodeUuid>> lockedServers = new HashMap<>();
     private final long[] runsDone;
 
     /*
@@ -237,7 +246,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
      * one, a single exclusively-claimed CC. The per-tick rate is the summed throughput of the live executors.
      */
     private final List<CraftingComputerBlockEntity> executors = new ArrayList<>();
-    private dev.jstech.computers.blockentity.HbwInterfaceBlockEntity orchestrator;
+    private HbwInterfaceBlockEntity orchestrator;
     private boolean exclusiveClaim;
     private boolean locked;
     private boolean waiting = true;
@@ -254,7 +263,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
      * The Mainframe that runs this craft's machine steps as processing operations of their own; null only for
      * plans without machine steps.
      */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private final MainframeBlockEntity mainframe;
     /*
      * The machine steps this craft is running right now, one processing operation each. A downstream step
@@ -299,8 +308,8 @@ public final class NetworkCraftOperation implements IPersistentOperation {
                                  final CraftPlanner.Plan plan, final NetworkIndex index,
                                  final UUID operationId, final List<BlockPos> candidateComputers,
                                  final List<BlockPos> supercomputers, final String requesterLabel,
-                                 @org.jetbrains.annotations.Nullable final CraftingPattern embeddedPattern,
-                                 @org.jetbrains.annotations.Nullable final MainframeBlockEntity mainframe) {
+                                 @Nullable final CraftingPattern embeddedPattern,
+                                 @Nullable final MainframeBlockEntity mainframe) {
         this.mainframe = mainframe;
         this.level = level;
         this.network = network;
@@ -345,7 +354,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
              * gated by executor availability (a lone Crafting Computer serves one at a time; a Supercomputer
              * cluster unlocks parallel crafts), not by the Mainframe's operation queues, because crafting is a subnet.
              */
-            if (++waitTicks > dev.jstech.core.operation.OperationBalance.waitingTimeoutTicks()) {
+            if (++waitTicks > OperationBalance.waitingTimeoutTicks()) {
                 timedOut = true;
                 finish();
                 return;
@@ -505,7 +514,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         return new ICraftIo() {
             @Override
             public long select(final StorageKey key, final long amount,
-                               final dev.jstech.computers.storage.IDataSink into) {
+                               final IDataSink into) {
                 if (done) {
                     return NetworkStorage.of(level, network).select(key, amount, into);
                 }
@@ -583,7 +592,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         boolean covered = true;
         for (final Map.Entry<StorageKey, Long> entry : plan.rawConsumption().entrySet()) {
             final Allocation allocation = index.lock(operationId, entry.getKey(), entry.getValue());
-            lockedServers.put(entry.getKey(), new java.util.HashSet<>(allocation.perServer().keySet()));
+            lockedServers.put(entry.getKey(), new HashSet<>(allocation.perServer().keySet()));
             if (!allocation.covers(entry.getValue())) {
                 covered = false;
                 break;
@@ -637,14 +646,14 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         return false;
     }
 
-    @org.jetbrains.annotations.Nullable
-    private dev.jstech.computers.blockentity.HbwInterfaceBlockEntity
+    @Nullable
+    private HbwInterfaceBlockEntity
             findRunningSupercomputer() {
-        final List<dev.jstech.computers.blockentity.HbwInterfaceBlockEntity> online =
-                new java.util.ArrayList<>();
+        final List<HbwInterfaceBlockEntity> online =
+                new ArrayList<>();
         for (final BlockPos pos : supercomputers) {
             if (level.getBlockEntity(pos)
-                    instanceof dev.jstech.computers.blockentity.HbwInterfaceBlockEntity sc
+                    instanceof HbwInterfaceBlockEntity sc
                     && sc.clusterOnline()) {
                 online.add(sc);
             }
@@ -659,12 +668,12 @@ public final class NetworkCraftOperation implements IPersistentOperation {
      * network never received work. When none has room, the first is returned so the craft waits in
      * line there and its next re-claim lands wherever slots free up first.
      */
-    @org.jetbrains.annotations.Nullable
-    public static dev.jstech.computers.blockentity.HbwInterfaceBlockEntity chooseLeastLoaded(
-            final List<dev.jstech.computers.blockentity.HbwInterfaceBlockEntity> online) {
-        dev.jstech.computers.blockentity.HbwInterfaceBlockEntity best = null;
+    @Nullable
+    public static HbwInterfaceBlockEntity chooseLeastLoaded(
+            final List<HbwInterfaceBlockEntity> online) {
+        HbwInterfaceBlockEntity best = null;
         long bestFree = -1;
-        for (final dev.jstech.computers.blockentity.HbwInterfaceBlockEntity sc : online) {
+        for (final HbwInterfaceBlockEntity sc : online) {
             final long free = sc.parallelCrafts() - sc.craftSlotsInUse();
             if (free > bestFree) {
                 best = sc;
@@ -689,7 +698,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
      * Smart selection picks from the front; the supercomputer fan-out takes as many as its free slots allow.
      */
     private List<CraftingComputerBlockEntity> capableComputers(
-            @org.jetbrains.annotations.Nullable final CraftingPattern root) {
+            @Nullable final CraftingPattern root) {
         final List<CraftingComputerBlockEntity> capable = new ArrayList<>();
         for (final BlockPos pos : candidateComputers) {
             /*
@@ -706,7 +715,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
         return capable;
     }
 
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private CraftingComputerBlockEntity findCapableComputer(final CraftingPattern root,
                                                             final boolean claimExclusive) {
         for (final CraftingComputerBlockEntity cc : capableComputers(root)) {
@@ -755,7 +764,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
 
     /** How much of {@code key} sits on the servers this operation locked, which is what {@link #consumeIngredients} can extract. */
     private long lockedServersHold(final NetworkStorage storage, final StorageKey key) {
-        final java.util.Set<NodeUuid> allowed = lockedServers.get(key);
+        final Set<NodeUuid> allowed = lockedServers.get(key);
         if (allowed == null || allowed.isEmpty()) {
             return 0L;
         }
@@ -896,7 +905,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
             final CraftingComputerBlockEntity drop = executors.isEmpty() ? null : executors.get(0);
             if (overflow > 0 && drop != null) {
                 // Network storage filled mid-craft: surface the items in the world, never void them.
-                net.minecraft.world.Containers.dropItemStack(level,
+                Containers.dropItemStack(level,
                         drop.getBlockPos().getX() + 0.5, drop.getBlockPos().getY() + 1.0,
                         drop.getBlockPos().getZ() + 0.5, prototype.copyWithCount(overflow));
             }
@@ -931,7 +940,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
 
     @Override
     public String typeId() {
-        return dev.jstech.computers.operation.ComputingOperations.CRAFT;
+        return ComputingOperations.CRAFT;
     }
 
     public byte craftStatus() {
@@ -989,7 +998,7 @@ public final class NetworkCraftOperation implements IPersistentOperation {
 
     @Override
     public void setPriority(final OperationPriority priority) {
-        this.priority = java.util.Objects.requireNonNull(priority, "priority");
+        this.priority = Objects.requireNonNull(priority, "priority");
         // The machine steps this craft is driving are its stages: they report the same level.
         for (final MachineRun run : machineRuns) {
             run.op.setPriority(priority);

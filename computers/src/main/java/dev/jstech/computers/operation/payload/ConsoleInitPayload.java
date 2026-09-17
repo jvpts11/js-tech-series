@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -18,7 +19,7 @@ import java.util.List;
 /**
  * Server to client when the Command Prompt opens: this computer's persisted command history (so the prompt remembers across closes and reloads) and the names + usages of every registered command (so the client can offer Tab completion and usage hints without knowing the server's command set).
  */
-public record ConsoleInitPayload(net.minecraft.core.BlockPos hostPos, List<String> history,
+public record ConsoleInitPayload(BlockPos hostPos, List<String> history,
                                  List<WireCommand> commands,
                                  List<String> devices) implements CustomPacketPayload {
 
@@ -32,7 +33,7 @@ public record ConsoleInitPayload(net.minecraft.core.BlockPos hostPos, List<Strin
 
     public static final StreamCodec<RegistryFriendlyByteBuf, ConsoleInitPayload> STREAM_CODEC =
             StreamCodec.composite(
-                    net.minecraft.core.BlockPos.STREAM_CODEC, ConsoleInitPayload::hostPos,
+                    BlockPos.STREAM_CODEC, ConsoleInitPayload::hostPos,
                     ByteBufCodecs.stringUtf8(256).apply(ByteBufCodecs.list(MAX_HISTORY)),
                     ConsoleInitPayload::history,
                     WireCommand.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_COMMANDS)),

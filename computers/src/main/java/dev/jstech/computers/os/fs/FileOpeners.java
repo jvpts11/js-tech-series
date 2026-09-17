@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Which programs can open a kind of file, and which of them does it by default.
@@ -75,7 +76,7 @@ public final class FileOpeners {
      * for a kind that is text. A program an addon brings that opens files adds itself with
      * {@link #registerAnyFileOpener}.
      */
-    private static final List<String> ANY_FILE = new java.util.concurrent.CopyOnWriteArrayList<>(
+    private static final List<String> ANY_FILE = new CopyOnWriteArrayList<>(
             List.of(EDITOR, "virtual_studio_code", "virtual_studio", "exposure"));
 
     private FileOpeners() {

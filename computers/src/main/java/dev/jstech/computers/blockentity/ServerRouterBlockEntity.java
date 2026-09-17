@@ -10,8 +10,10 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.DataCableBlock;
+import dev.jstech.computers.block.ServerRouterBlock;
 import dev.jstech.computers.datacenter.DatacenterSection;
 import dev.jstech.computers.datacenter.LoadBalanceMode;
+import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.network.ConnectivityIndex;
 import dev.jstech.core.network.INetworkBridge;
 import dev.jstech.core.network.NetworkSystem;
@@ -28,6 +30,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -167,9 +170,9 @@ public class ServerRouterBlockEntity extends BlockEntity {
          * potential datacenter section.
          */
         final Direction uplink = getBlockState().getBlock()
-                instanceof dev.jstech.computers.block.ServerRouterBlock
+                instanceof ServerRouterBlock
                 ? getBlockState().getValue(
-                        net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING).getOpposite()
+                        HorizontalDirectionalBlock.FACING).getOpposite()
                 : null;
 
         for (final Direction face : Direction.values()) {
@@ -243,13 +246,13 @@ public class ServerRouterBlockEntity extends BlockEntity {
                  * happens to reach it through that fabric.
                  */
                 if (neighbor instanceof ServerRackBlockEntity rack) {
-                    if (rack.rackType() != dev.jstech.computers.rack.RackChassis.RackType.SUPERCOMPUTER) {
+                    if (rack.rackType() != RackChassis.RackType.SUPERCOMPUTER) {
                         racks.add(rack.getBlockPos().asLong());
                     }
                 } else if (neighbor instanceof ServerRackPartBlockEntity part && part.controllerPos() != null) {
                     if (level.getBlockEntity(part.controllerPos()) instanceof ServerRackBlockEntity controller
                             && controller.rackType()
-                                    != dev.jstech.computers.rack.RackChassis.RackType.SUPERCOMPUTER) {
+                                    != RackChassis.RackType.SUPERCOMPUTER) {
                         racks.add(part.controllerPos().asLong());
                     }
                 } else if (neighbor instanceof MainframeBlockEntity || neighbor instanceof MainframePartBlockEntity) {

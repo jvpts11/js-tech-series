@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.datacenter.LoadBalanceMode;
 import dev.jstech.computers.operation.payload.ClusterManagerActionPayload;
 import dev.jstech.computers.operation.payload.ClusterManagerStatePayload;
 import dev.jstech.computers.operation.payload.ClusterManagerStatePayload.Detail;
@@ -409,8 +410,8 @@ public final class ClusterManagerApp implements IDesktopApp {
     }
 
     private String balanceName() {
-        final var mode = detail() == null ? dev.jstech.computers.datacenter.LoadBalanceMode.ROUND_ROBIN
-                : dev.jstech.computers.datacenter.LoadBalanceMode.byId(detail().balance());
+        final var mode = detail() == null ? LoadBalanceMode.ROUND_ROBIN
+                : LoadBalanceMode.byId(detail().balance());
         return mode.label();
     }
 

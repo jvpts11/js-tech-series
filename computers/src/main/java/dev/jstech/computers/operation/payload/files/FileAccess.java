@@ -7,11 +7,31 @@
  */
 package dev.jstech.computers.operation.payload.files;
 
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.KernelDef;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.fs.StorageProjection;
+import dev.jstech.computers.os.media.FormattedMediaItem;
+import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.storage.DriveVolumes;
+import dev.jstech.computers.storage.ServerStorageContents;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The drives a computer's files live on (its system disk, a medium in a linked reader, a share on the network) and
@@ -30,11 +50,11 @@ public final class FileAccess {
      * reached: the path the explorer holds is handed to it in the shell's own spelling. Null on a
      * machine no shell can run on.
      */
-    @org.jetbrains.annotations.Nullable
-    static dev.jstech.computers.program.ServerCliComputer netShell(
-            final ServerLevel level, final dev.jstech.computers.os.IOsHost computer) {
-        if (computer instanceof dev.jstech.computers.terminal.IComputerTerminalHost terminal) {
-            return new dev.jstech.computers.program.ServerCliComputer(terminal, level);
+    @Nullable
+    static ServerCliComputer netShell(
+            final ServerLevel level, final IOsHost computer) {
+        if (computer instanceof IComputerTerminalHost terminal) {
+            return new ServerCliComputer(terminal, level);
         }
         return null;
     }
@@ -53,8 +73,8 @@ public final class FileAccess {
      * Resolves a {@code media:<readerPos>[/sub]} path to the medium's {@link net.minecraft.world.item.ItemStack}
      * in a linked drive, or {@link net.minecraft.world.item.ItemStack#EMPTY} if not reachable.
      */
-    public static net.minecraft.world.item.ItemStack mediaStackFor(final ServerLevel level,
-            final dev.jstech.computers.os.IOsHost computer,
+    public static ItemStack mediaStackFor(final ServerLevel level,
+            final IOsHost computer,
             final String mediaPath) {
         final String rest = mediaPath.substring("media:".length());
         final int slash = rest.indexOf('/');
@@ -62,13 +82,13 @@ public final class FileAccess {
         try {
             readerPos = Long.parseLong(slash < 0 ? rest : rest.substring(0, slash));
         } catch (final NumberFormatException e) {
-            return net.minecraft.world.item.ItemStack.EMPTY;
+            return ItemStack.EMPTY;
         }
         if (!computer.linkedEndpoints().contains(readerPos)
-                || !(level.getBlockEntity(net.minecraft.core.BlockPos.of(readerPos))
+                || !(level.getBlockEntity(BlockPos.of(readerPos))
                         instanceof dev.jstech.computers.os.media
                                 .MediaReaderBlockEntity reader)) {
-            return net.minecraft.world.item.ItemStack.EMPTY;
+            return ItemStack.EMPTY;
         }
         return reader.mediaSlot().getStackInSlot(0);
     }
@@ -82,7 +102,7 @@ public final class FileAccess {
 
     /** Re-syncs the reader holding {@code media:<readerPos>} after its medium's filesystem changed. */
     static void commitMedia(final ServerLevel level,
-            final dev.jstech.computers.os.IOsHost computer,
+            final IOsHost computer,
             final String mediaPath) {
         final String rest = mediaPath.substring("media:".length());
         final int slash = rest.indexOf('/');
@@ -92,45 +112,45 @@ public final class FileAccess {
         } catch (final NumberFormatException e) {
             return;
         }
-        if (level.getBlockEntity(net.minecraft.core.BlockPos.of(readerPos))
-                instanceof dev.jstech.computers.os.media.MediaReaderBlockEntity reader) {
+        if (level.getBlockEntity(BlockPos.of(readerPos))
+                instanceof MediaReaderBlockEntity reader) {
             reader.setChanged();
-            level.sendBlockUpdated(net.minecraft.core.BlockPos.of(readerPos),
-                    reader.getBlockState(), reader.getBlockState(), net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+            level.sendBlockUpdated(BlockPos.of(readerPos),
+                    reader.getBlockState(), reader.getBlockState(), Block.UPDATE_CLIENTS);
         }
     }
 
     /** Free space on a medium in mB-equivalents (capacity minus its stored files). */
-    static long mediaFreeWeight(final net.minecraft.world.item.ItemStack media) {
+    static long mediaFreeWeight(final ItemStack media) {
         final long cap = media.getItem()
-                instanceof dev.jstech.computers.os.media.FormattedMediaItem fm
+                instanceof FormattedMediaItem fm
                 ? fm.format().capacityItems() : 64L;
         final long capWeight = cap
                 * dev.jstech.computers.storage.StorageKey.MB_EQ_PER_ITEM;
-        final long fsUsed = dev.jstech.computers.os.fs.DiskFilesystem.filesWeight(media);
+        final long fsUsed = DiskFilesystem.filesWeight(media);
         /*
          * A DATA medium can also hold a stored item/fluid snapshot (MEDIA_DATA); both consume the medium's
          * capacity, so deduct both, mirroring IOsHost.systemDiskFreeWeight (stored items +
          * FILESYSTEM). Ignoring MEDIA_DATA let the player write files past the medium's real capacity.
          */
         final long dataUsed = media.getOrDefault(
-                        dev.jstech.computers.ComputingModule.MEDIA_DATA.get(),
-                        dev.jstech.computers.storage.ServerStorageContents.EMPTY)
+                        ComputingModule.MEDIA_DATA.get(),
+                        ServerStorageContents.EMPTY)
                 .usedWeight();
         return Math.max(0L, capWeight - fsUsed - dataUsed);
     }
 
     /** Resolves the filesystem kind of the computer's installed OS, or NONE when absent. */
-    public static dev.jstech.computers.os.FilesystemKind filesystemKindOf(
-            final dev.jstech.computers.os.IOsHost computer) {
-        final dev.jstech.computers.os.OsDef os = computer.installedOs();
+    public static FilesystemKind filesystemKindOf(
+            final IOsHost computer) {
+        final OsDef os = computer.installedOs();
         if (os == null) {
-            return dev.jstech.computers.os.FilesystemKind.NONE;
+            return FilesystemKind.NONE;
         }
-        final dev.jstech.computers.os.KernelDef kernel =
-                dev.jstech.computers.os.OsRegistry.getKernel(os.kernelId());
+        final KernelDef kernel =
+                OsRegistry.getKernel(os.kernelId());
         return kernel != null ? kernel.filesystem()
-                : dev.jstech.computers.os.FilesystemKind.NONE;
+                : FilesystemKind.NONE;
     }
 
     /**
@@ -161,11 +181,11 @@ public final class FileAccess {
             return 0L;
         }
         try {
-            final java.util.Map<StorageKey, Long> next = new java.util.LinkedHashMap<>(
-                    dev.jstech.computers.os.media.MediaItem.data(media).items());
+            final Map<StorageKey, Long> next = new LinkedHashMap<>(
+                    MediaItem.data(media).items());
             next.merge(key, extracted, Long::sum);
-            dev.jstech.computers.os.media.MediaItem.setData(media,
-                    new dev.jstech.computers.storage.ServerStorageContents(next));
+            MediaItem.setData(media,
+                    new ServerStorageContents(next));
         } catch (final RuntimeException e) {
             /*
              * The medium write failed after the items already left local storage; put them back so the
@@ -182,20 +202,20 @@ public final class FileAccess {
      * {@link dev.jstech.computers.os.fs.StorageProjection} over the disk's storage volume
      * and matching the requested path. Returns {@code null} when no projected entry matches (e.g. a stale path).
      */
-    @org.jetbrains.annotations.Nullable
-    public static StorageKey resolveDatKey(final net.minecraft.world.item.ItemStack disk, final String datPath) {
+    @Nullable
+    public static StorageKey resolveDatKey(final ItemStack disk, final String datPath) {
         if (disk.isEmpty()) {
             return null;
         }
-        final dev.jstech.computers.storage.ServerStorageContents storage =
-                dev.jstech.computers.storage.DriveVolumes.contents(disk);
+        final ServerStorageContents storage =
+                DriveVolumes.contents(disk);
         /*
          * The projection emits one entry per key in iteration order, with the same path each time; pair each
          * emitted path with the storage key at the same position to invert the path back to its key.
          */
-        final java.util.List<dev.jstech.computers.os.fs.DiskFilesystem.FileEntry> entries =
-                dev.jstech.computers.os.fs.StorageProjection.project(storage);
-        final java.util.Iterator<StorageKey> keys = storage.items().keySet().iterator();
+        final List<DiskFilesystem.FileEntry> entries =
+                StorageProjection.project(storage);
+        final Iterator<StorageKey> keys = storage.items().keySet().iterator();
         for (final var entry : entries) {
             final StorageKey key = keys.hasNext() ? keys.next() : null;
             if (key != null && entry.path().equals(datPath)) {

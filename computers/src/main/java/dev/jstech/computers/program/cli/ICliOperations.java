@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.program.iql.IqlOperation;
 import java.util.List;
 
 /**
@@ -113,7 +114,7 @@ public interface ICliOperations {
     }
 
     /** Runs a parsed effecting IQL statement (SELECT/INSERT/MOVE/CRAFT/DELETE/DROP/LOCK/...) against the network. */
-    default ICliComputer.OpResult execute(final dev.jstech.computers.program.iql.IqlOperation operation) {
+    default ICliComputer.OpResult execute(final IqlOperation operation) {
         return ICliComputer.OpResult.fail("this machine cannot reach the network");
     }
 

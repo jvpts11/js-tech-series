@@ -7,12 +7,25 @@
  */
 package dev.jstech.computers.operation.payload.crafting;
 
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.crafting.CraftPlanner;
 import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.crafting.MachineCategory;
+import dev.jstech.computers.crafting.MultiStagePattern;
+import dev.jstech.computers.crafting.NetworkRecipe;
+import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.crafting.RecipeChoice;
 import dev.jstech.computers.operation.payload.CraftPlanPayload;
 import dev.jstech.computers.storage.StorageKey;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The arithmetic of a craft plan: the recipe choices, how many runs a machine recipe needs, what it yields and how
@@ -28,19 +41,19 @@ public final class CraftPlanMath {
      * time, and the direct inputs for {@code quantity} against the stock, with whether each input that is
      * short can be crafted by something else on the network.
      */
-    static java.util.List<dev.jstech.computers.crafting.RecipeChoice> recipeChoices(
+    static List<RecipeChoice> recipeChoices(
             final ServerLevel level, final MainframeBlockEntity mainframe,
-            final java.util.List<dev.jstech.computers.crafting.NetworkRecipe> recipes, final StorageKey key,
-            final long quantity, final java.util.List<dev.jstech.computers.crafting.ProcessingPattern> machines,
-            final java.util.Map<StorageKey, Long> stock) {
-        final java.util.List<dev.jstech.computers.crafting.RecipeChoice> out = new java.util.ArrayList<>();
+            final List<NetworkRecipe> recipes, final StorageKey key,
+            final long quantity, final List<ProcessingPattern> machines,
+            final Map<StorageKey, Long> stock) {
+        final List<RecipeChoice> out = new ArrayList<>();
         for (final var recipe : recipes) {
             if (out.size() >= CraftPlanPayload.MAX_OPTIONS) {
                 break;
             }
             final String kind;
-            final java.util.List<String> machineNames = new java.util.ArrayList<>();
-            final java.util.List<CraftPlanPayload.Row> rows;
+            final List<String> machineNames = new ArrayList<>();
+            final List<CraftPlanPayload.Row> rows;
             final int estimate;
             final int stages;
             boolean feasible;
@@ -54,33 +67,33 @@ public final class CraftPlanMath {
                 stages = plan.stages();
                 feasible = plan.feasible();
                 if (recipe.proc().isPresent()) {
-                    kind = dev.jstech.computers.crafting.RecipeChoice.KIND_PROCESSING;
-                    machineNames.add(dev.jstech.computers.crafting.MachineCategory.label(recipe.proc().get().machineType()));
+                    kind = RecipeChoice.KIND_PROCESSING;
+                    machineNames.add(MachineCategory.label(recipe.proc().get().machineType()));
                 } else {
-                    kind = dev.jstech.computers.crafting.RecipeChoice.KIND_MULTI_STAGE;
+                    kind = RecipeChoice.KIND_MULTI_STAGE;
                     for (final var stage : recipe.multi().get().stages()) {
                         machineNames.add(stage.proc().isPresent()
-                                ? dev.jstech.computers.crafting.MachineCategory.label(stage.proc().get().machineType())
+                                ? MachineCategory.label(stage.proc().get().machineType())
                                 : "Bench");
                     }
                 }
             } else {
-                kind = dev.jstech.computers.crafting.RecipeChoice.KIND_BENCH;
+                kind = RecipeChoice.KIND_BENCH;
                 final CraftingPattern bench = recipe.bench().get();
                 final long runs = ceilDiv(quantity, Math.max(1, bench.result().getCount()));
-                rows = new java.util.ArrayList<>();
+                rows = new ArrayList<>();
                 for (final var in : bench.ingredientTotals().entrySet()) {
                     final long need = in.getValue() * runs;
                     rows.add(new CraftPlanPayload.Row(in.getKey().stack(1), need,
                             Math.min(stock.getOrDefault(in.getKey(), 0L), need)));
                 }
                 final var patterns = mainframe.patternsPreferring(bench);
-                final var plan = dev.jstech.computers.crafting.CraftPlanner.plan(key, quantity, patterns, machines, stock);
+                final var plan = CraftPlanner.plan(key, quantity, patterns, machines, stock);
                 estimate = estimateTicks(level, mainframe, plan);
                 stages = Math.max(1, plan.steps().size());
                 feasible = plan.feasible();
             }
-            final java.util.List<dev.jstech.computers.crafting.RecipeChoice.Input> inputs = new java.util.ArrayList<>();
+            final List<RecipeChoice.Input> inputs = new ArrayList<>();
             boolean shortCraftable = true;
             for (final CraftPlanPayload.Row row : rows) {
                 if (inputs.size() >= CraftPlanPayload.MAX_INPUTS) {
@@ -91,35 +104,35 @@ public final class CraftPlanMath {
                 if (!row.satisfied() && !craftable) {
                     shortCraftable = false;
                 }
-                inputs.add(new dev.jstech.computers.crafting.RecipeChoice.Input(
+                inputs.add(new RecipeChoice.Input(
                         row.item().getHoverName().getString(), row.need(), stock.getOrDefault(inputKey, 0L), craftable));
             }
             // A processing run whose short inputs something makes runs as one tree, so it is feasible after all.
             if (!feasible && recipe.proc().isPresent() && shortCraftable) {
-                feasible = dev.jstech.computers.crafting.CraftPlanner
+                feasible = CraftPlanner
                         .plan(key, quantity, mainframe.networkPatterns(), machines, stock).feasible();
             }
-            out.add(new dev.jstech.computers.crafting.RecipeChoice(recipe.displayName(), kind, machineNames, stages,
+            out.add(new RecipeChoice(recipe.displayName(), kind, machineNames, stages,
                     estimate, inputs, feasible));
         }
         return out;
     }
 
     /** A plan preview: the raw-ingredient rows (need vs have), whether it is feasible, and how many are. */
-    record PlanPreview(dev.jstech.computers.crafting.CraftPlanner.Plan plan,
-                       java.util.List<CraftPlanPayload.Row> rows, boolean feasible, long maxFeasible) {
+    record PlanPreview(CraftPlanner.Plan plan,
+                       List<CraftPlanPayload.Row> rows, boolean feasible, long maxFeasible) {
     }
 
     /** Plans {@code quantity} of {@code key} and shapes the dialog's rows; pure over its inputs. */
     static PlanPreview planPreview(final StorageKey key, final long quantity,
-                                   final java.util.List<dev.jstech.computers.crafting.CraftingPattern> patterns,
-                                   final java.util.List<dev.jstech.computers.crafting.ProcessingPattern> machines,
-                                   final java.util.Map<StorageKey, Long> stock) {
-        final var plan = dev.jstech.computers.crafting.CraftPlanner.plan(key, quantity, patterns, machines, stock);
+                                   final List<CraftingPattern> patterns,
+                                   final List<ProcessingPattern> machines,
+                                   final Map<StorageKey, Long> stock) {
+        final var plan = CraftPlanner.plan(key, quantity, patterns, machines, stock);
         // Raw-ingredient rows: total needed (consumed + still missing) vs what the network has.
-        final java.util.Map<StorageKey, Long> need = new java.util.LinkedHashMap<>(plan.rawConsumption());
+        final Map<StorageKey, Long> need = new LinkedHashMap<>(plan.rawConsumption());
         plan.missing().forEach((k, v) -> need.merge(k, v, Long::sum));
-        final java.util.List<CraftPlanPayload.Row> rows = new java.util.ArrayList<>();
+        final List<CraftPlanPayload.Row> rows = new ArrayList<>();
         for (final var entry : need.entrySet()) {
             if (rows.size() >= CraftPlanPayload.MAX_ROWS) {
                 break;
@@ -132,12 +145,12 @@ public final class CraftPlanMath {
         }
         final boolean feasible = plan.feasible();
         final long maxFeasible = feasible ? quantity
-                : dev.jstech.computers.crafting.CraftPlanner.maxFeasible(key, quantity, patterns, machines, stock);
-        return new PlanPreview(plan, java.util.List.copyOf(rows), feasible, maxFeasible);
+                : CraftPlanner.maxFeasible(key, quantity, patterns, machines, stock);
+        return new PlanPreview(plan, List.copyOf(rows), feasible, maxFeasible);
     }
 
     static int estimateTicks(final ServerLevel level, final MainframeBlockEntity mainframe,
-                             final dev.jstech.computers.crafting.CraftPlanner.Plan plan) {
+                             final CraftPlanner.Plan plan) {
         long units = 0;
         long machineTicks = 0;
         for (final var step : plan.steps()) {
@@ -147,9 +160,9 @@ public final class CraftPlanMath {
             }
         }
         long rate = 0;
-        for (final net.minecraft.core.BlockPos pos : mainframe.craftingComputerPositions()) {
+        for (final BlockPos pos : mainframe.craftingComputerPositions()) {
             if (level.getBlockEntity(pos)
-                    instanceof dev.jstech.computers.blockentity.CraftingComputerBlockEntity cc
+                    instanceof CraftingComputerBlockEntity cc
                     && cc.canCraft()) {
                 rate = Math.max(rate, cc.craftingThroughput());
             }
@@ -161,7 +174,7 @@ public final class CraftPlanMath {
     }
 
     /** A machine recipe's plan for the request popup: direct rows (need vs have), feasibility, max, estimate, stages. */
-    record MachinePlan(java.util.List<CraftPlanPayload.Row> rows, boolean feasible, long maxFeasible,
+    record MachinePlan(List<CraftPlanPayload.Row> rows, boolean feasible, long maxFeasible,
                        int estimateTicks, boolean plainMachine, int stages) {
     }
 
@@ -171,10 +184,10 @@ public final class CraftPlanMath {
      * over that stage's demand (later stages consume what earlier ones make). Returns null when the recipe is a
      * bench one or an empty pipeline, so the bench planner handles it.
      */
-    @org.jetbrains.annotations.Nullable
-    static MachinePlan planMachineRecipe(final dev.jstech.computers.crafting.NetworkRecipe recipe,
-                                         final long quantity, final java.util.Map<StorageKey, Long> stock) {
-        final dev.jstech.computers.crafting.ProcessingPattern first;
+    @Nullable
+    static MachinePlan planMachineRecipe(final NetworkRecipe recipe,
+                                         final long quantity, final Map<StorageKey, Long> stock) {
+        final ProcessingPattern first;
         final long firstDemand;
         int estimate;
         final int stages;
@@ -191,7 +204,7 @@ public final class CraftPlanMath {
             estimate = 0;
             stages = multi.stages().size();
             for (final var s : multi.stages()) {
-                estimate += s.proc().map(dev.jstech.computers.crafting.ProcessingPattern
+                estimate += s.proc().map(ProcessingPattern
                         ::timeoutTicks).orElse(20);
             }
             if (stage.proc().isPresent()) {
@@ -200,7 +213,7 @@ public final class CraftPlanMath {
                 // A bench-first pipeline: its raw inputs are the bench pattern's ingredients per run.
                 final var bench = stage.bench().get();
                 final long runs = ceilDiv(firstDemand, Math.max(1, bench.result().getCount()));
-                final java.util.List<CraftPlanPayload.Row> rows = new java.util.ArrayList<>();
+                final List<CraftPlanPayload.Row> rows = new ArrayList<>();
                 long maxRuns = Long.MAX_VALUE;
                 for (final var in : bench.ingredientTotals().entrySet()) {
                     final long need = in.getValue() * runs;
@@ -209,7 +222,7 @@ public final class CraftPlanMath {
                     rows.add(new CraftPlanPayload.Row(in.getKey().stack(1), need, Math.min(have, need)));
                 }
                 final long maxFirst = maxRuns == Long.MAX_VALUE ? 0 : maxRuns * bench.result().getCount();
-                return new MachinePlan(java.util.List.copyOf(rows), maxFirst >= firstDemand,
+                return new MachinePlan(List.copyOf(rows), maxFirst >= firstDemand,
                         Math.min(quantity, forwardYield(multi, maxFirst)), estimate, false, stages);
             }
         } else {
@@ -218,7 +231,7 @@ public final class CraftPlanMath {
         final var primary = first.primaryOutput();
         final long perRun = primary == null ? 1 : Math.max(1, primary.amount());
         final long runs = ceilDiv(firstDemand, perRun);
-        final java.util.List<CraftPlanPayload.Row> rows = new java.util.ArrayList<>();
+        final List<CraftPlanPayload.Row> rows = new ArrayList<>();
         long maxRuns = Long.MAX_VALUE;
         for (final var in : first.inputs()) {
             final long need = in.amount() * runs;
@@ -230,7 +243,7 @@ public final class CraftPlanMath {
         final long maxFirst = maxRuns == Long.MAX_VALUE ? 0 : maxRuns * perRun;
         final long maxFinal = recipe.multi().isPresent()
                 ? forwardYield(recipe.multi().get(), maxFirst) : maxFirst;
-        return new MachinePlan(java.util.List.copyOf(rows), maxFirst >= firstDemand,
+        return new MachinePlan(List.copyOf(rows), maxFirst >= firstDemand,
                 Math.min(quantity, maxFinal), estimate, recipe.proc().isPresent(), stages);
     }
 
@@ -239,7 +252,7 @@ public final class CraftPlanMath {
     }
 
     /** How much of the final result a pipeline yields when its first stage produces {@code firstOutput}. */
-    private static long forwardYield(final dev.jstech.computers.crafting.MultiStagePattern multi,
+    private static long forwardYield(final MultiStagePattern multi,
                                      final long firstOutput) {
         // Walk the stage demands for one unit of final result to get each stage's output per final unit.
         final long[] perUnit = multi.stageDemands(1);

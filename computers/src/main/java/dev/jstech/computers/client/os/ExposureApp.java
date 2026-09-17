@@ -23,9 +23,12 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.TextField;
+import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.function.Consumer;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -84,7 +87,7 @@ public final class ExposureApp implements IDesktopApp {
     private final TextField askField = new TextField(64);
     private final Button askOk;
     private String askTitle = "";
-    private java.util.function.Consumer<String> askAction = value -> { };
+    private Consumer<String> askAction = value -> { };
 
     /* The question asked before a file with changes is closed. */
     private final Popup askClose = new Popup(() -> "Save changes to " + closingName() + "?", 176, 40)
@@ -342,7 +345,7 @@ public final class ExposureApp implements IDesktopApp {
     }
 
     /** Asks for one thing in a small window and does something with the answer. */
-    private void ask(final String title, final String initial, final java.util.function.Consumer<String> action) {
+    private void ask(final String title, final String initial, final Consumer<String> action) {
         this.askTitle = title;
         this.askAction = action;
         this.askField.set(initial);
@@ -358,7 +361,7 @@ public final class ExposureApp implements IDesktopApp {
     }
 
     private void layoutAskClose(final Popup p) {
-        final List<dev.jstech.core.client.gui.component.UiComponent> c = p.children();
+        final List<UiComponent> c = p.children();
         final int by = p.bottom() - 15;
         c.get(0).setBounds(p.right() - 134, by, 38, 11);
         c.get(1).setBounds(p.right() - 92, by, 50, 11);
@@ -458,7 +461,7 @@ public final class ExposureApp implements IDesktopApp {
             return this.outlineRows;
         }
         final List<Outline> rows = new ArrayList<>();
-        if (doc.path().toLowerCase(java.util.Locale.ROOT).endsWith(".sgs")) {
+        if (doc.path().toLowerCase(Locale.ROOT).endsWith(".sgs")) {
             for (final NamedType type : SigmaSemantics.check(
                     List.of(new SourceFile(doc.name(), text))).model().declaredTypes()) {
                 rows.add(new Outline(0, type.name(), 0));
