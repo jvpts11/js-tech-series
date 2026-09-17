@@ -21,20 +21,27 @@ import java.util.Set;
 /**
  * The architectures this mod brings, and the place a mod adds one of its own.
  *
- * <p>x86-64 runs x86 as the real one does, so a program built for the older chips keeps running on the newer
- * ones and not the other way about. The 16-bit x86 of the earliest machines runs only its own, which is what
- * makes a Vintage computer a machine of its time rather than a slower modern one.
+ * <p>Each of the x86 chips runs what was built for the ones before it, as the real ones did, and none of them
+ * runs what was built for the ones after. So a program written for the oldest machine of the line keeps working
+ * on every machine that came later, and a Vintage computer stays a machine of its time: it runs the programs of
+ * its own age and nothing newer, however slowly a newer one would have run them.
  *
  * <p>Architectures are added while the game is setting up and only read afterwards; when the mod grows a proper
  * registration event, in the API step, this is what moves behind it.
  */
 public final class Architectures {
 
-    /** The 16-bit x86 of the first machines: its own programs only, since the language needs a later era. */
+    /** The 16-bit x86 of the first machines, and the only thing they run. */
     public static final ArchitectureSpec X86_16 = own("x86_16", "x86-16", 16);
 
-    /** The 32-bit x86, where the language starts. It is a new instruction set, not a wider version of the first. */
-    public static final ArchitectureSpec X86 = own("x86", "x86", 32);
+    /**
+     * The 32-bit x86, which runs what was built for the 16-bit one as well as its own.
+     *
+     * <p>The real 386 ran what an 8086 ran, and that is the whole character of this family: a program built for
+     * the oldest machine of the line keeps working on every machine after it, and never the other way about. It
+     * is also what lets one program serve all three ages, since the smaller language builds for the oldest.
+     */
+    public static final ArchitectureSpec X86 = own("x86", "x86", 32, X86_16);
 
     /** The 64-bit x86, which runs what was built for the 32-bit one as well as its own. */
     public static final ArchitectureSpec X86_64 = own("x86_64", "x86-64", 64, X86);

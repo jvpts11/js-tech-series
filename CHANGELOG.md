@@ -7,6 +7,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### Added
+- A 32-bit x86 machine now runs what was built for the 16-bit one, as the real 386 ran what an 8086 ran, and a
+  64-bit machine runs both. Nothing runs what was built for a machine after it. This is what lets one program
+  serve every age: `scc` builds for the oldest machine there is unless told otherwise, so a program written in
+  Sigma runs on a Vintage computer and on every computer that came later. `sgsc` still builds for the 32-bit
+  machines, since the full language's library is not something a Vintage computer has.
 - A program is now built for the oldest architecture that has what it turned out to need, rather than for a fixed
   one. The compiler reads the listing back for the instructions it actually used and stamps the oldest machine of
   the line that has all of them, so a program runs everywhere it could have run instead of only on the newest

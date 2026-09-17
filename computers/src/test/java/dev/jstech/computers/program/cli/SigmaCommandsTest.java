@@ -78,16 +78,50 @@ class SigmaCommandsTest {
         assertTrue(this.run("scc Watch.sg").contains("wrote Watch.asm"));
     }
 
-    /** One compiler, two languages: what comes out is the listing, whichever verb was typed. */
+    /**
+     * One compiler, two languages: the same program is the same instructions, whichever verb was typed.
+     *
+     * <p>The one line that differs is the machine each was built for, and that is the whole of the difference:
+     * the smaller language starts at the oldest machine and the bigger one starts where its library does. What
+     * the machine is asked to do is identical, which is what makes the smaller language a subset in fact.
+     */
     @Test
-    void scc_writesTheSameListingSgscWouldForTheSameProgram() {
+    void scc_writesTheSameInstructionsSgscWouldForTheSameProgram() {
         this.computer.add(SigmaCommands.SUBSET_COMPILER);
         this.computer.add(SigmaCommands.COMPILER);
         this.computer.files.put("Watch.sg", SUBSET);
         this.computer.files.put("Watch.sgs", SUBSET);
         this.run("scc Watch.sg -o small.asm");
         this.run("sgsc Watch.sgs -o big.asm");
-        assertEquals(this.computer.files.get("big.asm"), this.computer.files.get("small.asm"));
+        assertEquals(withoutTheTarget(this.computer.files.get("big.asm")),
+                withoutTheTarget(this.computer.files.get("small.asm")));
+    }
+
+    /** The listing with the line naming the machine it was built for taken out. */
+    private static String withoutTheTarget(final String listing) {
+        return listing == null ? null : listing.lines()
+                .filter(line -> !line.strip().startsWith(".arch "))
+                .reduce("", (all, line) -> all + line + "\n");
+    }
+
+    /** A program of the smaller language is built for the oldest machine, and so runs on every later one. */
+    @Test
+    void scc_buildsForTheOldestMachineWithoutBeingAsked() {
+        this.computer.add(SigmaCommands.SUBSET_COMPILER);
+        this.computer.files.put("Watch.sg", SUBSET);
+        this.run("scc Watch.sg");
+        assertTrue(this.computer.files.get("Watch.asm").contains(".arch jsc:x86_16"),
+                this.computer.files.get("Watch.asm"));
+    }
+
+    /** The bigger language starts where its library does, and is never built for the oldest machine. */
+    @Test
+    void sgsc_buildsForTheMachinesItsLibraryNeeds() {
+        this.computer.add(SigmaCommands.COMPILER);
+        this.computer.files.put("Monitor.sgs", SCRIPT);
+        this.run("sgsc Monitor.sgs");
+        assertTrue(this.computer.files.get("Monitor.asm").contains(".arch jsc:x86\n"),
+                this.computer.files.get("Monitor.asm"));
     }
 
     @Test

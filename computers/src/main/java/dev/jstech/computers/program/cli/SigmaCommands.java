@@ -58,8 +58,10 @@ public final class SigmaCommands {
     /** Every verb, for the shell to register. */
     public static List<ICliCommand> all() {
         return List.of(
-                new Compile("sgsc", SOURCE, COMPILER, LanguageLevel.SIGMA_SHARP),
-                new Compile("scc", SUBSET_SOURCE, SUBSET_COMPILER, LanguageLevel.SIGMA),
+                new Compile("sgsc", SOURCE, COMPILER, LanguageLevel.SIGMA_SHARP,
+                        AsmProgram.DEFAULT_ARCHITECTURE),
+                new Compile("scc", SUBSET_SOURCE, SUBSET_COMPILER, LanguageLevel.SIGMA,
+                        Architectures.X86_16.id()),
                 new Run(), new Pack());
     }
 
@@ -86,12 +88,20 @@ public final class SigmaCommands {
         private final String extension;
         private final String packageId;
         private final LanguageLevel level;
+        /*
+         * The oldest machine this language runs on, which is where a program starts before what it turned out
+         * to use is allowed to push it up. The smaller language exists for the oldest machines of all, so its
+         * programs begin there; the full one begins where its own library does.
+         */
+        private final String baseline;
 
-        Compile(final String verb, final String extension, final String packageId, final LanguageLevel level) {
+        Compile(final String verb, final String extension, final String packageId, final LanguageLevel level,
+                final String baseline) {
             this.verb = verb;
             this.extension = extension;
             this.packageId = packageId;
             this.level = level;
+            this.baseline = baseline;
         }
 
         @Override
@@ -141,7 +151,7 @@ public final class SigmaCommands {
              * Asked for by id or by the name it is written under, and refused before anything is compiled: a
              * listing built for an architecture nothing answers to would be a file no machine anywhere runs.
              */
-            String architecture = AsmProgram.DEFAULT_ARCHITECTURE;
+            String architecture = this.baseline;
             if (arch != null) {
                 final Optional<ArchitectureSpec> asked = Architectures.find(arch);
                 if (asked.isEmpty()) {

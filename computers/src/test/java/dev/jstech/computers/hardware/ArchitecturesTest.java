@@ -39,10 +39,18 @@ class ArchitecturesTest {
         assertFalse(Architectures.X86_16.runs(Architectures.X86_64));
     }
 
+    /**
+     * Every chip of the line runs what was built for the ones before it, as the real ones did.
+     *
+     * <p>The newest one reaching the oldest is not written down anywhere: it follows from each one taking on
+     * what the one below it ran, which is what keeps a program written for the first machines working on
+     * machines two ages later without anybody listing the pairs.
+     */
     @Test
-    void x86_doesNotRunWhatWasBuiltForTheSixteenBitOne() {
-        assertFalse(Architectures.X86.runs(Architectures.X86_16));
-        assertFalse(Architectures.X86_64.runs(Architectures.X86_16));
+    void x86_runsWhatWasBuiltForTheSixteenBitOne() {
+        assertTrue(Architectures.X86.runs(Architectures.X86_16));
+        assertTrue(Architectures.X86_64.runs(Architectures.X86_16));
+        assertTrue(Architectures.X86_64.runs(Architectures.X86));
     }
 
     @Test
@@ -138,12 +146,26 @@ class ArchitecturesTest {
         assertTrue(Architectures.has(Architectures.X86, Opcode.ADD));
     }
 
-    /** A newer chip of the same line is a candidate; a chip of another line is another machine. */
+    /**
+     * A program starting at the oldest machine stays there, though newer ones would take it.
+     *
+     * <p>Both chips above it run its programs, so both are candidates and neither is chosen: choosing the
+     * oldest is what makes one program serve all three ages instead of only the age it was compiled on.
+     */
     @Test
-    void oldestWith_looksOnlyAtWhatRunsTheBaselinesPrograms() {
+    void oldestWith_staysAtTheOldestEvenWhereNewerOnesWouldTakeIt() {
+        assertTrue(Architectures.X86.runs(Architectures.X86_16), "the newer ones are candidates");
         assertEquals(Architectures.X86_16,
                 Architectures.oldestWith(Architectures.X86_16, java.util.EnumSet.of(Opcode.ADD)));
-        assertFalse(Architectures.X86.runs(Architectures.X86_16));
+    }
+
+    /** Going the other way is not offered: a program of a later chip never drifts down to an earlier one. */
+    @Test
+    void oldestWith_neverMovesAProgramDownToAnEarlierChip() {
+        assertEquals(Architectures.X86,
+                Architectures.oldestWith(Architectures.X86, java.util.EnumSet.of(Opcode.ADD)));
+        assertFalse(Architectures.X86_16.runs(Architectures.X86),
+                "which is why the oldest of all is not a candidate for it");
     }
 
     /**

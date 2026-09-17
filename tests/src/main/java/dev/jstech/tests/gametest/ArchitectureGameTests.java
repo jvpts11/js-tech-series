@@ -125,6 +125,29 @@ public final class ArchitectureGameTests {
     }
 
     /**
+     * A program built for the first machines runs on every machine that came after them.
+     *
+     * <p>This is the half that makes the smaller language worth having. It is written for computers that could
+     * not hold the full one, and if what it built ran only there it would be a language for one age rather than
+     * the floor of the family: the same listing has to be taken by a machine of each age, exactly as a 386 took
+     * what an 8086 ran.
+     */
+    @GameTest(template = ARENA)
+    public static void aProgramBuiltForTheFirstMachines_runsOnEveryMachineAfterThem(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity oldest = vintage(helper);
+        final PersonalComputerBlockEntity later = legacy(helper, ELSEWHERE);
+        if (oldest == null || later == null) {
+            return;
+        }
+        final MachinePrograms.Started onTheOldest = run(oldest, "jsc:x86_16");
+        helper.assertTrue(onTheOldest.ok(), "the machine it was built for runs it: " + onTheOldest.message());
+        final MachinePrograms.Started onALaterOne = run(later, "jsc:x86_16");
+        helper.assertTrue(onALaterOne.ok(),
+                "and so does one of the age after: " + onALaterOne.message());
+        helper.succeed();
+    }
+
+    /**
      * The whole way through: source compiled for the 64-bit machines runs on one and is refused by a 32-bit one.
      *
      * <p>The other tests hand a machine a listing written by hand. This one has the compiler write it, so what the
