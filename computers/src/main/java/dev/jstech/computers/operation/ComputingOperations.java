@@ -40,19 +40,27 @@ import java.util.Set;
  */
 public final class ComputingOperations {
 
-    private static final String NAMESPACE = "jsc";
+    private static final String NAMESPACE = OperationTypeId.NAMESPACE;
 
-    public static final String SELECT = NAMESPACE + ":select";
-    public static final String INSERT = NAMESPACE + ":insert";
-    public static final String DELETE = NAMESPACE + ":delete";
-    public static final String MOVE = NAMESPACE + ":move";
-    public static final String CRAFT = NAMESPACE + ":craft";
+    /*
+     * The ones a log has a kind for name it rather than spelling their id again, so that the id an Operation
+     * is registered under and the number its rows are written with cannot drift apart.
+     */
+    public static final String SELECT = OperationTypeId.SELECT.registryId();
+    public static final String INSERT = OperationTypeId.INSERT.registryId();
+    public static final String DELETE = OperationTypeId.DELETE.registryId();
+    public static final String MOVE = OperationTypeId.MOVE.registryId();
+    public static final String CRAFT = OperationTypeId.CRAFT.registryId();
+    public static final String ANALYZE = OperationTypeId.ANALYZE.registryId();
+    public static final String REINDEX = OperationTypeId.REINDEX.registryId();
+    public static final String VACUUM = OperationTypeId.VACUUM.registryId();
+    public static final String DROP = OperationTypeId.DROP.registryId();
+
+    /* The rest read as a kind the log already has: a craft, however the network goes about it. */
     public static final String PROCESSING = NAMESPACE + ":processing";
     public static final String MULTI_STAGE = NAMESPACE + ":multi_stage";
-    public static final String ANALYZE = NAMESPACE + ":analyze";
-    public static final String REINDEX = NAMESPACE + ":reindex";
-    public static final String VACUUM = NAMESPACE + ":vacuum";
-    public static final String DROP = NAMESPACE + ":drop";
+
+    /* These two never reach a log at all: taking and letting go of a lock is not a row anybody reads. */
     public static final String LOCK = NAMESPACE + ":lock";
     public static final String UNLOCK = NAMESPACE + ":unlock";
 

@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest;
 
+import dev.jstech.computers.operation.OperationTypeId;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.core.operation.OperationStatus;
 import dev.jstech.tests.JsTests;
@@ -52,6 +53,39 @@ public final class OperationNumberingGameTests {
         }
         helper.assertTrue(WRITTEN_AS.size() == OperationStatus.values().length,
                 "a state exists that the log has no number for");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void type_isTheSameNumberInTheLogAsInTheKind(final GameTestHelper helper) {
+        final Map<OperationTypeId, Byte> written = Map.of(
+                OperationTypeId.SELECT, OperationRecord.TYPE_SELECT,
+                OperationTypeId.INSERT, OperationRecord.TYPE_INSERT,
+                OperationTypeId.DELETE, OperationRecord.TYPE_DELETE,
+                OperationTypeId.MOVE, OperationRecord.TYPE_MOVE,
+                OperationTypeId.CRAFT, OperationRecord.TYPE_CRAFT,
+                OperationTypeId.ANALYZE, OperationRecord.TYPE_ANALYZE,
+                OperationTypeId.REINDEX, OperationRecord.TYPE_REINDEX,
+                OperationTypeId.VACUUM, OperationRecord.TYPE_VACUUM,
+                OperationTypeId.DROP, OperationRecord.TYPE_DROP);
+        for (final Map.Entry<OperationTypeId, Byte> pair : written.entrySet()) {
+            helper.assertTrue(pair.getKey().id() == pair.getValue(),
+                    pair.getKey() + " is " + pair.getKey().id() + " but the log writes it as " + pair.getValue());
+        }
+        helper.assertTrue(written.size() == OperationTypeId.values().length,
+                "a kind exists that the log has no number for");
+        helper.succeed();
+    }
+
+    /* A kind says the word a terminal shows for it, so that nothing has to spell the words out again. */
+    @GameTest(template = ARENA)
+    public static void type_readsByTheWordTheTerminalShows(final GameTestHelper helper) {
+        helper.assertTrue("SELECT".equals(OperationRecord.typeName(OperationRecord.TYPE_SELECT)),
+                "a select did not read as SELECT");
+        helper.assertTrue("CRAFT".equals(OperationRecord.typeName(OperationRecord.TYPE_CRAFT)),
+                "a craft did not read as CRAFT");
+        helper.assertTrue("OP".equals(OperationRecord.typeName(OperationTypeId.UNKNOWN)),
+                "a kind nobody knows did not read as OP");
         helper.succeed();
     }
 

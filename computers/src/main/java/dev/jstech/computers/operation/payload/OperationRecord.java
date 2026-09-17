@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.operation.OperationTypeId;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.OperationPriority;
 import net.minecraft.core.HolderLookup;
@@ -43,15 +44,21 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
     /** The id of a record that never had a live Operation behind it (an instant maintenance record). */
     public static final UUID NO_ID = new UUID(0L, 0L);
 
-    public static final byte TYPE_SELECT = 0;
-    public static final byte TYPE_INSERT = 1;
-    public static final byte TYPE_DELETE = 2;
-    public static final byte TYPE_MOVE = 3;
-    public static final byte TYPE_ANALYZE = 4;
-    public static final byte TYPE_REINDEX = 5;
-    public static final byte TYPE_VACUUM = 6;
-    public static final byte TYPE_DROP = 7;
-    public static final byte TYPE_CRAFT = 8;
+    /*
+     * The numbers the kinds themselves carry, written out here because a switch needs a label the compiler
+     * can read. They used to be a numbering of their own, with nothing tying them to the ids the Operations
+     * are registered under or to the words a terminal shows; a test fails if one of these and the kind it
+     * names stop agreeing.
+     */
+    public static final byte TYPE_SELECT = 1;
+    public static final byte TYPE_INSERT = 2;
+    public static final byte TYPE_DELETE = 3;
+    public static final byte TYPE_MOVE = 4;
+    public static final byte TYPE_CRAFT = 5;
+    public static final byte TYPE_ANALYZE = 6;
+    public static final byte TYPE_REINDEX = 7;
+    public static final byte TYPE_VACUUM = 8;
+    public static final byte TYPE_DROP = 9;
 
     /*
      * The same eight states a state carries a number for, written here as the numbers themselves because a
@@ -76,18 +83,7 @@ public record OperationRecord(UUID id, byte type, StorageKey key, long requested
      * {@code "OP"} for a type this version does not know.
      */
     public static String typeName(final byte type) {
-        return switch (type) {
-            case TYPE_SELECT -> "SELECT";
-            case TYPE_INSERT -> "INSERT";
-            case TYPE_DELETE -> "DELETE";
-            case TYPE_MOVE -> "MOVE";
-            case TYPE_CRAFT -> "CRAFT";
-            case TYPE_ANALYZE -> "ANALYZE";
-            case TYPE_REINDEX -> "REINDEX";
-            case TYPE_VACUUM -> "VACUUM";
-            case TYPE_DROP -> "DROP";
-            default -> "OP";
-        };
+        return OperationTypeId.verbOf(type);
     }
 
     /**
