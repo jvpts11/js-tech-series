@@ -11,9 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.MainframeStructure;
-import dev.jstech.computers.crafting.AnyTagResolver;
 import dev.jstech.computers.crafting.CraftPlanner;
-import dev.jstech.computers.crafting.CraftPlanning;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.ICraftIo;
 import dev.jstech.computers.crafting.MultiStagePattern;
@@ -21,7 +19,6 @@ import dev.jstech.computers.crafting.NetworkCraftOperation;
 import dev.jstech.computers.crafting.NetworkMultiStageOperation;
 import dev.jstech.computers.crafting.NetworkProcessingOperation;
 import dev.jstech.computers.crafting.NetworkRecipe;
-import dev.jstech.computers.crafting.PendingCraftOperation;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.FormFactor;
@@ -30,7 +27,6 @@ import dev.jstech.computers.operation.IPersistentOperation;
 import dev.jstech.computers.operation.NetworkIndex;
 import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkSelectOperation;
-import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.install.OsInstallRunner;
@@ -56,7 +52,6 @@ import dev.jstech.core.operation.OperationStatistics;
 import dev.jstech.core.operation.SelfTestOperationTask;
 import dev.jstech.core.persistence.NetworkRegistrySavedData;
 import dev.jstech.core.tier.HardwareEra;
-import dev.jstech.core.util.Sizes;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NetworkUuidState;
 import dev.jstech.core.uuid.NodeUuid;
@@ -356,6 +351,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             new NetworkIndex();
     /** What the network is carrying out, whose turn it is, and what became of each: all of it lives here. */
     private final MainframeScheduler scheduler = new MainframeScheduler(this);
+    /** What the network knows how to make, and the making of it. */
+    private final MainframeCrafts crafts = new MainframeCrafts(this);
     // Operations that were in flight when the world was saved, waiting for the first booted tick to resume.
     @Nullable
     private ListTag pendingOperations;
@@ -1050,27 +1047,11 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     // CRAFT: recursive autocrafting over the network's Crafting Computers
 
     public List<BlockPos> craftingComputerPositions() {
-        if (networkUuid() == null || !(level instanceof ServerLevel serverLevel)) {
-            return List.of();
-        }
-        final List<BlockPos> positions = new ArrayList<>();
-        for (final var node : NetworkSystem.get(serverLevel)
-                .craftingComputersOf(networkUuid())) {
-            positions.add(BlockPos.of(node.pos()));
-        }
-        return positions;
+        return crafts.craftingComputers();
     }
 
     public List<BlockPos> supercomputerPositions() {
-        if (networkUuid() == null || !(level instanceof ServerLevel serverLevel)) {
-            return List.of();
-        }
-        final List<BlockPos> positions = new ArrayList<>();
-        for (final var node : NetworkSystem.get(serverLevel)
-                .supercomputersOf(networkUuid())) {
-            positions.add(BlockPos.of(node.pos()));
-        }
-        return positions;
+        return crafts.supercomputers();
     }
 
     /**
@@ -1078,59 +1059,28 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
      * The Tasks view uses it to show how many crafts can run at once and how many are currently running.
      */
     public int[] supercomputerCraftSlots() {
-        int used = 0;
-        int total = 0;
-        for (final BlockPos pos : supercomputerPositions()) {
-            if (level != null && level.getBlockEntity(pos)
-                    instanceof HbwInterfaceBlockEntity sc
-                    && sc.clusterOnline()) {
-                total += (int) sc.parallelCrafts();
-                used += sc.craftSlotsInUse();
-            }
-        }
-        return new int[] {used, total};
+        return crafts.craftSlots();
     }
 
     public List<CraftingPattern> networkPatterns() {
-        final List<CraftingPattern> patterns =
-                new ArrayList<>();
-        for (final BlockPos pos : craftingComputerPositions()) {
-            if (level != null && level.getBlockEntity(pos)
-                    instanceof CraftingComputerBlockEntity cc && cc.isRunning()) {
-                patterns.addAll(cc.romPatterns());
-            }
-        }
-        return patterns;
+        return crafts.patterns();
     }
 
     /** The plain machine (processing) patterns on the network, for the recursive craft planner. */
     public List<ProcessingPattern> networkProcessingPatterns() {
-        final List<ProcessingPattern> machines =
-                new ArrayList<>();
-        for (final var recipe : networkMachineRecipes()) {
-            recipe.proc().ifPresent(machines::add);
-        }
-        return machines;
+        return crafts.processingPatterns();
     }
 
     /** Every machine recipe (processing / multi-stage) the network's running Crafting Computers hold. */
     public List<NetworkRecipe> networkMachineRecipes() {
-        final List<NetworkRecipe> recipes =
-                new ArrayList<>();
-        for (final BlockPos pos : craftingComputerPositions()) {
-            if (level != null && level.getBlockEntity(pos)
-                    instanceof CraftingComputerBlockEntity cc && cc.isRunning()) {
-                recipes.addAll(cc.machineRecipes());
-            }
-        }
-        return recipes;
+        return crafts.machineRecipes();
     }
 
     @Nullable
     public NetworkCraftOperation submitNetworkCraft(
             final StorageKey key, final long demand,
             final boolean partial, final String requesterLabel) {
-        return submitNetworkCraft(key, demand, partial, requesterLabel, null);
+        return crafts.craft(key, demand, partial, requesterLabel, null);
     }
 
     /**
@@ -1144,29 +1094,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             final StorageKey key, final long demand,
             final boolean partial, final String requesterLabel,
             @Nullable final CraftingPattern extraPattern) {
-        if (!isRunning() || !hasOs() || !(level instanceof ServerLevel serverLevel) || networkUuid() == null
-                || demand <= 0) {
-            return null;
-        }
-        final var stock = networkIndex.snapshot();
-        /*
-         * A cell that accepts a tag is settled here, against what the network holds right now, so the
-         * planner and the craft itself only ever see exact items.
-         */
-        final var patterns = AnyTagResolver
-                .resolveAll(networkPatterns(), stock);
-        final CraftingPattern extra = extraPattern == null ? null
-                : AnyTagResolver.resolve(extraPattern, stock);
-        if (extra != null && !patterns.contains(extra)) {
-            patterns.add(extra);
-        }
-        // Machine patterns take part in the plan: an ingredient no bench makes may come out of a machine.
-        final var planned = CraftPlanning.plan(
-                key, demand, partial, patterns, networkProcessingPatterns(), stock);
-        if (planned == null) {
-            return null; // nothing on the network makes it, or not enough of it for a full request
-        }
-        return submitPlannedCraft(key, demand, planned.plan(), requesterLabel, extra);
+        return crafts.craft(key, demand, partial, requesterLabel, extraPattern);
     }
 
     /**
@@ -1178,16 +1106,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             final StorageKey key, final long demand,
             final CraftPlanner.Plan plan, final String requesterLabel,
             @Nullable final CraftingPattern extraPattern) {
-        if (!isRunning() || !hasOs() || !(level instanceof ServerLevel serverLevel) || networkUuid() == null
-                || demand <= 0 || plan.steps().isEmpty()) {
-            return null;
-        }
-        final var operation = new NetworkCraftOperation(
-                serverLevel, networkUuid(), key, demand, plan, networkIndex,
-                UUID.randomUUID(), craftingComputerPositions(), supercomputerPositions(),
-                requesterLabel, extraPattern, this);
-        track(operation);
-        return operation;
+        return crafts.plannedCraft(key, demand, plan, requesterLabel, extraPattern);
     }
 
     /**
@@ -1195,53 +1114,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
      * recipe. The cheap answer a prompt needs at once, before the plan itself is made.
      */
     public boolean anythingMakes(final StorageKey key) {
-        for (final var pattern : networkPatterns()) {
-            if (key.equals(StorageKey.of(pattern.result()))) {
-                return true;
-            }
-        }
-        for (final var recipe : networkMachineRecipes()) {
-            if (key.equals(recipe.resultKey())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Plans a recursive craft on a virtual thread. The request shows at once as a pending craft; when the
-     * plan lands, the real craft takes over with the level and the settle callback given meanwhile. Returns
-     * null only when nothing on the network makes {@code key} at all, or the Mainframe cannot run crafts.
-     */
-    @Nullable
-    private PendingCraftOperation submitCraftAsync(
-            final StorageKey key, final long demand,
-            final boolean partial, final String label) {
-        return submitCraftAsync(key, demand, partial, label, null);
-    }
-
-    /**
-     * As above, planned with {@code preferred} ahead of every other bench pattern, so a result that several
-     * bench patterns make is built by the one the player picked (the planner takes the first pattern that
-     * makes a thing).
-     */
-    @Nullable
-    private PendingCraftOperation submitCraftAsync(
-            final StorageKey key, final long demand,
-            final boolean partial, final String label,
-            @Nullable final CraftingPattern preferred) {
-        if (!isRunning() || !hasOs() || !(level instanceof ServerLevel) || networkUuid() == null
-                || demand <= 0 || !anythingMakes(key)) {
-            return null;
-        }
-        final var stock = networkIndex.snapshot();
-        final var patterns = AnyTagResolver
-                .resolveAll(patternsPreferring(preferred), stock);
-        final var pending = new PendingCraftOperation(
-                this, key, demand, partial, label);
-        track(pending);
-        pending.start(ensureDispatch(), patterns, networkProcessingPatterns(), stock);
-        return pending;
+        return crafts.anythingMakes(key);
     }
 
     /**
@@ -1252,7 +1125,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     public NetworkProcessingOperation submitNetworkProcessing(
             final ProcessingPattern pattern, final long demand,
             final String requesterLabel) {
-        return submitNetworkProcessing(pattern, demand, requesterLabel, null);
+        return crafts.machineRun(pattern, demand, requesterLabel, null);
     }
 
     /**
@@ -1264,49 +1137,20 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             final ProcessingPattern pattern, final long demand,
             final String requesterLabel,
             @Nullable final ICraftIo io) {
-        if (!isRunning() || !hasOs() || !(level instanceof ServerLevel serverLevel) || networkUuid() == null
-                || demand <= 0) {
-            return null;
-        }
-        final var operation = new NetworkProcessingOperation(
-                serverLevel, networkUuid(), pattern, demand, craftingComputerPositions(),
-                UUID.randomUUID(), requesterLabel, io);
-        track(operation);
-        return operation;
+        return crafts.machineRun(pattern, demand, requesterLabel, io);
     }
 
     /** Runs a multi-stage recipe: an ordered pipeline of bench/processing stages, one at a time. */
     public NetworkMultiStageOperation submitNetworkMultiStage(
             final MultiStagePattern pattern, final long demand,
             final String requesterLabel) {
-        if (!isRunning() || !hasOs() || !(level instanceof ServerLevel) || networkUuid() == null || demand <= 0) {
-            return null;
-        }
-        // Bench stages that accept a tag are settled against stock now, the way a plain craft's are.
-        final var resolved = AnyTagResolver
-                .resolve(pattern, networkIndex.snapshot());
-        final var operation = new NetworkMultiStageOperation(
-                this, resolved, demand, requesterLabel);
-        track(operation);
-        return operation;
+        return crafts.pipeline(pattern, demand, requesterLabel);
     }
 
     /** The network's bench patterns with {@code preferred} first (when it is one of them, or given at all). */
     public List<CraftingPattern> patternsPreferring(
             @Nullable final CraftingPattern preferred) {
-        final List<CraftingPattern> all = networkPatterns();
-        if (preferred == null) {
-            return all;
-        }
-        final List<CraftingPattern> ordered =
-                new ArrayList<>(all.size() + 1);
-        ordered.add(preferred);
-        for (final var pattern : all) {
-            if (!pattern.equals(preferred)) {
-                ordered.add(pattern);
-            }
-        }
-        return ordered;
+        return crafts.patternsPreferring(preferred);
     }
 
     /**
@@ -1317,18 +1161,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
      */
     public List<NetworkRecipe> recipesFor(
             final StorageKey key) {
-        final List<NetworkRecipe> out = new ArrayList<>();
-        for (final var recipe : networkMachineRecipes()) {
-            if (key.equals(recipe.resultKey()) && recipe.usesMachine()) {
-                out.add(recipe);
-            }
-        }
-        for (final var pattern : networkPatterns()) {
-            if (key.equals(StorageKey.of(pattern.result()))) {
-                out.add(NetworkRecipe.ofBench(pattern));
-            }
-        }
-        return out;
+        return crafts.recipesFor(key);
     }
 
     /**
@@ -1359,55 +1192,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             final StorageKey key, final long demand,
             final boolean partial, final String label, @Nullable final Runnable onSettle,
             final int recipe) {
-        final List<NetworkRecipe> recipes = recipesFor(key);
-        if (recipe < 0 || recipe >= recipes.size()) {
-            return submitCraftRequest(key, demand, partial, label, onSettle, true);
-        }
-        final NetworkRecipe chosen = recipes.get(recipe);
-        final INetworkOperation op;
-        if (chosen.proc().isPresent()) {
-            op = runProcessing(chosen.proc().get(), key, demand, label);
-        } else if (chosen.multi().isPresent()) {
-            op = submitNetworkMultiStage(chosen.multi().get(), demand, label);
-        } else {
-            op = submitCraftAsync(key, demand, partial, label, chosen.bench().orElse(null));
-        }
-        settle(op, onSettle);
-        return op;
-    }
-
-    /** Hooks {@code onSettle} onto whichever kind of craft operation came out, when there is one to hook. */
-    private static void settle(@Nullable final INetworkOperation op,
-                               @Nullable final Runnable onSettle) {
-        if (op == null || onSettle == null) {
-            return;
-        }
-        if (op instanceof NetworkCraftOperation craft) {
-            craft.onSettle(onSettle);
-        } else if (op instanceof NetworkProcessingOperation processing) {
-            processing.onSettle(onSettle);
-        } else if (op instanceof NetworkMultiStageOperation multi) {
-            multi.onSettle(onSettle);
-        } else if (op instanceof PendingCraftOperation pending) {
-            pending.onSettle(onSettle);
-        }
-    }
-
-    /**
-     * Runs a processing recipe for {@code demand} of {@code key}: the whole tree as one craft when an input is
-     * short and other patterns make it (all-or-nothing), else the bare machine run with what the network holds.
-     */
-    @Nullable
-    private INetworkOperation runProcessing(
-            final ProcessingPattern machine,
-            final StorageKey key, final long demand, final String label) {
-        if (!inputsInStock(machine, demand)) {
-            final var planned = submitNetworkCraft(key, demand, false, label);
-            if (planned != null) {
-                return planned;
-            }
-        }
-        return submitNetworkProcessing(machine, demand, label);
+        return crafts.request(key, demand, partial, label, onSettle, recipe);
     }
 
     /**
@@ -1421,32 +1206,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             final StorageKey key, final long demand,
             final boolean partial, final String label, @Nullable final Runnable onSettle,
             final boolean preferMultiStage) {
-        for (final var recipe : networkMachineRecipes()) {
-            if (!key.equals(recipe.resultKey())) {
-                continue;
-            }
-            if (recipe.proc().isPresent()) {
-                final var op = runProcessing(recipe.proc().get(), key, demand, label);
-                settle(op, onSettle);
-                return op;
-            }
-            if (recipe.multi().isPresent() && preferMultiStage) {
-                final var op = submitNetworkMultiStage(recipe.multi().get(), demand, label);
-                if (op != null && onSettle != null) {
-                    op.onSettle(onSettle);
-                }
-                return op;
-            }
-        }
-        /*
-         * No machine makes it directly (or multi-stage was declined): plan a recursive bench-and-machine craft.
-         * The planning runs off the tick; the request is listed as pending until the plan lands.
-         */
-        final var op = submitCraftAsync(key, demand, partial, label);
-        if (op != null && onSettle != null) {
-            op.onSettle(onSettle);
-        }
-        return op;
+        return crafts.request(key, demand, partial, label, onSettle, preferMultiStage);
     }
 
     /**
@@ -1474,35 +1234,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     /** Whether the network has a multi-stage recipe whose end result is {@code key} (so a caller can offer the
      *  player the choice between the pipeline and the flat, recursively-planned path). */
     public boolean hasMultiStageRecipe(final StorageKey key) {
-        for (final var recipe : networkMachineRecipes()) {
-            if (key.equals(recipe.resultKey()) && recipe.multi().isPresent()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** Whether the network currently stocks every input a processing run producing {@code quantity} would use. */
-    private boolean inputsInStock(final ProcessingPattern machine,
-                                  final long quantity) {
-        if (!(level instanceof ServerLevel serverLevel) || networkUuid() == null) {
-            return true;
-        }
-        final var storage = NetworkStorage
-                .of(serverLevel, networkUuid());
-        final var primary = machine.primaryOutput();
-        final long runs = Sizes.ceilDiv(quantity, primary == null ? 1 : Math.max(1, primary.amount()));
-        final Map<StorageKey, Long> need =
-                new HashMap<>();
-        for (final var in : machine.inputs()) {
-            need.merge(in.key(), in.amount() * runs, Long::sum);
-        }
-        for (final var entry : need.entrySet()) {
-            if (storage.count(entry.getKey()) < entry.getValue()) {
-                return false;
-            }
-        }
-        return true;
+        return crafts.hasMultiStageRecipe(key);
     }
 
     /*
@@ -1527,15 +1259,9 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         return networkIndex.manualLockView();
     }
 
-    /** The configured concurrent-job cap for a machine key, from the first Crafting Computer that set one. */
-    /**
-     * The optional ceiling on how many jobs of one machine type may run at once, 0 for no ceiling.
-     *
-     * <p>Declared on a Crafting Computer's Machines tab; the first computer on the network that says anything
-     * about that type decides, and the rest of the network follows it.
-     */
+    /** The ceiling on how many jobs of one machine type may run at once, as the crafting side declares it. */
     int maxJobsFor(final String machineKey) {
-        return resolveMaxJobs(machineKey);
+        return crafts.maxJobsFor(machineKey);
     }
 
     /** The world's clock, which is what the statistics measure an hour and a day against. */
@@ -1549,16 +1275,14 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
                 ? computer.craftingThroughput() : 0L;
     }
 
-    private int resolveMaxJobs(final String machineKey) {
-        for (final BlockPos pos : craftingComputerPositions()) {
-            if (level != null && level.getBlockEntity(pos) instanceof CraftingComputerBlockEntity cc) {
-                final CraftingComputerBlockEntity.MachineConfig cfg = cc.machineConfig(machineKey);
-                if (cfg != CraftingComputerBlockEntity.MachineConfig.DEFAULT) {
-                    return cfg.maxJobs();
-                }
-            }
-        }
-        return CraftingComputerBlockEntity.MachineConfig.DEFAULT.maxJobs();
+    /** Takes an Operation on: the scheduler holds it, ticks it and writes it down when it settles. */
+    void takeOn(final INetworkOperation operation) {
+        scheduler.track(operation);
+    }
+
+    /** The virtual-thread runtime, made if this is the first thing that needs it. */
+    OperationDispatch dispatch() {
+        return ensureDispatch();
     }
 
     /**
