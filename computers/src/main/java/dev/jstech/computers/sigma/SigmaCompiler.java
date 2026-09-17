@@ -89,7 +89,7 @@ public final class SigmaCompiler {
             return new Result(null, bag.sorted(), bag.wasCapped());
         }
         final AsmProgram program = new Emitter(analysis.model(), analysis.rules(), analysis.builtIns(),
-                analysis.declarations(), bag).emit();
+                analysis.declarations(), bag, analysis.lowered()).emit();
         if (bag.hasErrors()) {
             return new Result(null, bag.sorted(), bag.wasCapped());
         }

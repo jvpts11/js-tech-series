@@ -118,7 +118,7 @@ public final class SigmaSemantics {
      * source in the order the sources were given, for an editor asking where in a file a caret is.
      */
     record Analysis(SemanticModel model, BuiltIns builtIns, TypeRules rules, Declarations declarations,
-                    List<CompilationUnit> units) {
+                    List<CompilationUnit> units, dev.jstech.computers.sigma.lower.Lowerer lowered) {
     }
 
     /** Reads and checks into a bag the caller owns, and hands back what the next stage needs. */
@@ -157,7 +157,7 @@ public final class SigmaSemantics {
          * An editor asks anyway, since a file being typed is that tree most of the time.
          */
         if (bag.hasErrors() && !tolerant) {
-            return new Analysis(model, builtIns, rules, declarations, units);
+            return new Analysis(model, builtIns, rules, declarations, units, null);
         }
         declarations.declare(units);
         declarations.fill();
@@ -168,11 +168,13 @@ public final class SigmaSemantics {
          * After the checking and before anything is written: every question about what the player wrote has
          * been asked by now, and the stage that writes the assembly has fewer shapes to know.
          */
-        new dev.jstech.computers.sigma.lower.Lowerer(model, builtIns).lower(units);
+        final dev.jstech.computers.sigma.lower.Lowerer lowered =
+                new dev.jstech.computers.sigma.lower.Lowerer(model, builtIns, rules);
+        lowered.lower(units);
         if (wholeProgram) {
             bag.setFile(sources.isEmpty() ? "" : sources.getFirst().name());
             declarations.checkEntryPoint(1, 1);
         }
-        return new Analysis(model, builtIns, rules, declarations, units);
+        return new Analysis(model, builtIns, rules, declarations, units, lowered);
     }
 }

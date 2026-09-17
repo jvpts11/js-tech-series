@@ -12,6 +12,8 @@ import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.ast.IStmt;
 import dev.jstech.computers.sigma.ast.Operator;
+import dev.jstech.computers.sigma.lower.IrStmt;
+import dev.jstech.computers.sigma.lower.Lowerer;
 import dev.jstech.computers.sigma.ast.TypeRef;
 import dev.jstech.computers.sigma.sem.BodyChecker;
 import dev.jstech.computers.sigma.sem.BuiltIns;
@@ -65,18 +67,21 @@ public final class Emitter {
     private final BuiltIns builtIns;
     private final Declarations declarations;
     private final DiagnosticBag diagnostics;
+    /** What each method's statements came to once the shorthand was gone. */
+    private final Lowerer lowered;
     private final List<AsmMethod> synthesized = new ArrayList<>();
     /** What each method's lambdas keep hold of, worked out from the tree before anything is written. */
     private final Closures closures;
     private int lambdaCount;
 
     public Emitter(final SemanticModel model, final TypeRules rules, final BuiltIns builtIns,
-                   final Declarations declarations, final DiagnosticBag diagnostics) {
+                   final Declarations declarations, final DiagnosticBag diagnostics, final Lowerer lowered) {
         this.model = model;
         this.rules = rules;
         this.builtIns = builtIns;
         this.declarations = declarations;
         this.diagnostics = diagnostics;
+        this.lowered = lowered;
         this.closures = new Closures(model, diagnostics);
     }
 
@@ -243,7 +248,7 @@ public final class Emitter {
         final Body body = new Body(type, returns);
         body.parameters(method.parameters());
         body.openClosure(this.closures.forMethod(type, method.parameters(), method.body(), method));
-        body.block(method.body());
+        body.block(this.lowered.bodyOf(method));
         return new AsmMethod(method.name(), returns.describe(), this.written(method.parameters()),
                 method.modifiers().contains(IDecl.Modifier.STATIC), body.slotCount(), body.finish());
     }
@@ -265,7 +270,7 @@ public final class Emitter {
         if (constructor.body() != null) {
             body.openClosure(this.closures.forMethod(type, constructor.parameters(), constructor.body(),
                     constructor));
-            body.block(constructor.body());
+            body.block(this.lowered.bodyOf(constructor));
         }
         return new AsmMethod(AsmMethod.CONSTRUCTOR, "void", this.written(constructor.parameters()), false,
                 body.slotCount(), body.finish());
@@ -289,11 +294,10 @@ public final class Emitter {
         private final List<String> pending = new ArrayList<>();
         private final Deque<String> breaks = new ArrayDeque<>();
         private final Deque<String> continues = new ArrayDeque<>();
-        /** The places holding what each enclosing lock took, innermost first. */
-        private final Deque<Integer> locks = new ArrayDeque<>();
-        /** How many locks were held where each break and continue target was opened. */
-        private final Deque<Integer> breakLocks = new ArrayDeque<>();
-        private final Deque<Integer> continueLocks = new ArrayDeque<>();
+        /** What each enclosing lock took, innermost first, so a way out can name the same objects back. */
+        private final Deque<IrStmt.Temporary> held = new ArrayDeque<>();
+        /** Where each value the program never named ended up living. */
+        private final Map<IrStmt.Temporary, Integer> temporaries = new IdentityHashMap<>();
         private final NamedType owner;
         private final ITypeSymbol returns;
         private Closure closure;
@@ -502,35 +506,80 @@ public final class Emitter {
 
         // statements
 
-        void block(final IStmt.Block block) {
-            for (final IStmt statement : block.statements()) {
+        void block(final IrStmt block) {
+            for (final IrStmt statement : ((IrStmt.Block) block).statements()) {
                 this.statement(statement);
             }
         }
 
-        private void statement(final IStmt statement) {
+        /**
+         * One statement of the reduced program.
+         *
+         * <p>Every decision has been made before this: how many locks a way out lets go of, what a walk over a
+         * collection asks that collection for, whether each turn of it takes a copy. What is left here is where
+         * things go on the stack and which label a jump names.
+         */
+        private void statement(final IrStmt statement) {
             switch (statement) {
-                case IStmt.Block inner -> this.block(inner);
+                case IrStmt.Block inner -> this.block(inner);
+                case IrStmt.Source written -> this.written(written.written());
+                case IrStmt.If branch -> this.branch(branch);
+                case IrStmt.While loop -> this.whileLoop(loop);
+                case IrStmt.DoWhile loop -> this.doLoop(loop);
+                case IrStmt.For loop -> this.forLoop(loop);
+                case IrStmt.ForEach loop -> this.forEach(loop);
+                case IrStmt.Switch choice -> this.choice(choice);
+                case IrStmt.Keep kept -> {
+                    this.value(kept.value(), null);
+                    if (kept.leaves()) {
+                        this.emit(Opcode.DUP);
+                    }
+                    this.emit(Opcode.STLOC, new IOperand.Slot(this.placeOf(kept.place())));
+                }
+                case IrStmt.MonitorEnter taken -> {
+                    this.emit(Opcode.MONITOR_ENTER);
+                    this.held.push(taken.place());
+                }
+                case IrStmt.MonitorExit given -> {
+                    this.emit(Opcode.LDLOC, new IOperand.Slot(this.placeOf(given.place())));
+                    this.emit(Opcode.MONITOR_EXIT);
+                    this.held.pop();
+                }
+                case IrStmt.Break leaving -> {
+                    this.letGo(leaving.unlocks());
+                    this.emit(Opcode.BR, new IOperand.Label(
+                            leaving.continuing() ? this.continues.peek() : this.breaks.peek()));
+                }
+                case IrStmt.Return give -> this.give(give);
+                case null -> { }
+            }
+        }
+
+        /** A statement with nothing inside it left to reduce, written as it stands. */
+        private void written(final IStmt statement) {
+            switch (statement) {
                 case IStmt.LocalDecl local -> this.local(local);
                 case IStmt.ExprStmt expression -> this.discard(expression.expression());
-                case IStmt.If branch -> this.branch(branch);
-                case IStmt.While loop -> this.whileLoop(loop);
-                case IStmt.DoWhile loop -> this.doLoop(loop);
-                case IStmt.For loop -> this.forLoop(loop);
-                case IStmt.ForEach loop -> this.forEach(loop);
-                case IStmt.Switch choice -> this.choice(choice);
-                case IStmt.Break ignored -> {
-                    this.unlockDownTo(this.breakLocks.peek());
-                    this.emit(Opcode.BR, new IOperand.Label(this.breaks.peek()));
-                }
-                case IStmt.Continue ignored -> {
-                    this.unlockDownTo(this.continueLocks.peek());
-                    this.emit(Opcode.BR, new IOperand.Label(this.continues.peek()));
-                }
-                case IStmt.Return give -> this.give(give);
                 case IStmt.Dispose dispose -> this.dispose(dispose);
-                case IStmt.Lock lock -> this.locked(lock);
-                case IStmt.Empty ignored -> { }
+                default -> { } // an empty statement, and nothing else reaches here
+            }
+        }
+
+        /** Where a value the program never named ends up living, worked out the first time it is asked for. */
+        private int placeOf(final IrStmt.Temporary temporary) {
+            return this.temporaries.computeIfAbsent(temporary, one -> this.hidden());
+        }
+
+        /** Lets go of the locks a way out of the middle of something leaves behind, nearest first. */
+        private void letGo(final int locks) {
+            int left = locks;
+            for (final IrStmt.Temporary place : this.held) {
+                if (left <= 0) {
+                    return;
+                }
+                this.emit(Opcode.LDLOC, new IOperand.Slot(this.placeOf(place)));
+                this.emit(Opcode.MONITOR_EXIT);
+                left--;
             }
         }
 
@@ -539,31 +588,8 @@ public final class Emitter {
          * of the body, a return, a break or a continue that leaves it. The object is kept in a place of
          * its own so that letting go names the same object that was taken, whatever the body did.
          */
-        private void locked(final IStmt.Lock lock) {
-            final int held = this.hidden();
-            this.value(lock.target(), null);
-            this.emit(Opcode.DUP);
-            this.emit(Opcode.STLOC, new IOperand.Slot(held));
-            this.emit(Opcode.MONITOR_ENTER);
-            this.locks.push(held);
-            this.statement(lock.body());
-            this.locks.pop();
-            this.emit(Opcode.LDLOC, new IOperand.Slot(held));
-            this.emit(Opcode.MONITOR_EXIT);
-        }
 
         /** Lets go of every lock taken inside what is being left, innermost first, down to {@code depth}. */
-        private void unlockDownTo(final Integer depth) {
-            int held = this.locks.size();
-            for (final Integer place : this.locks) {
-                if (depth != null && held <= depth) {
-                    break;
-                }
-                this.emit(Opcode.LDLOC, new IOperand.Slot(place));
-                this.emit(Opcode.MONITOR_EXIT);
-                held--;
-            }
-        }
 
         private void local(final IStmt.LocalDecl local) {
             final IBinding.Variable variable = Emitter.this.model.declaredAt(local);
@@ -620,7 +646,7 @@ public final class Emitter {
             }
         }
 
-        private void branch(final IStmt.If statement) {
+        private void branch(final IrStmt.If statement) {
             final String otherwise = this.label();
             this.value(statement.condition(), ITypeSymbol.Primitive.BOOL);
             this.emit(Opcode.BRFALSE, new IOperand.Label(otherwise));
@@ -636,7 +662,7 @@ public final class Emitter {
             this.mark(end);
         }
 
-        private void whileLoop(final IStmt.While loop) {
+        private void whileLoop(final IrStmt.While loop) {
             final String top = this.label();
             final String end = this.label();
             this.mark(top);
@@ -647,7 +673,7 @@ public final class Emitter {
             this.mark(end);
         }
 
-        private void doLoop(final IStmt.DoWhile loop) {
+        private void doLoop(final IrStmt.DoWhile loop) {
             final String top = this.label();
             final String again = this.label();
             final String end = this.label();
@@ -659,8 +685,8 @@ public final class Emitter {
             this.mark(end);
         }
 
-        private void forLoop(final IStmt.For loop) {
-            for (final IStmt initializer : loop.initializers()) {
+        private void forLoop(final IrStmt.For loop) {
+            for (final IrStmt initializer : loop.initializers()) {
                 this.statement(initializer);
             }
             final String top = this.label();
@@ -684,8 +710,8 @@ public final class Emitter {
          * A foreach is a counted loop over the thing it walks, which is why the assembly has no
          * instruction of its own for it.
          */
-        private void forEach(final IStmt.ForEach loop) {
-            final ITypeSymbol source = Emitter.this.model.typeOf(loop.source());
+        private void forEach(final IrStmt.ForEach loop) {
+            final ITypeSymbol source = loop.kind();
             final int held = this.hidden();
             final int index = this.hidden();
             this.value(loop.source(), null);
@@ -705,11 +731,10 @@ public final class Emitter {
             this.emit(Opcode.LDLOC, new IOperand.Slot(held));
             this.emit(Opcode.LDLOC, new IOperand.Slot(index));
             this.element(source);
-            final IBinding.Variable walker = Emitter.this.model.declaredAt(loop);
-            if (walker != null && this.isStruct(walker.type())) {
+            if (loop.copies()) {
                 this.emit(Opcode.COPY); // the loop's own copy: changing it changes nothing in the collection
             }
-            this.emit(Opcode.STLOC, new IOperand.Slot(this.slot(walker)));
+            this.emit(Opcode.STLOC, new IOperand.Slot(this.slot(loop.walker())));
 
             this.inLoop(again, end, loop.body());
             this.mark(again);
@@ -739,15 +764,11 @@ public final class Emitter {
                     List.of("int"), held == null ? "object" : held.describe()));
         }
 
-        private void inLoop(final String again, final String end, final IStmt body) {
+        private void inLoop(final String again, final String end, final IrStmt body) {
             this.continues.push(again);
-            this.continueLocks.push(this.locks.size());
             this.breaks.push(end);
-            this.breakLocks.push(this.locks.size());
             this.statement(body);
-            this.breakLocks.pop();
             this.breaks.pop();
-            this.continueLocks.pop();
             this.continues.pop();
         }
 
@@ -755,7 +776,7 @@ public final class Emitter {
          * Every label is tested first and the sections follow, so a section is entered only by being
          * chosen and a run of labels can share the lines under them.
          */
-        private void choice(final IStmt.Switch choice) {
+        private void choice(final IrStmt.Switch choice) {
             final ITypeSymbol type = Emitter.this.model.typeOf(choice.value());
             final int held = this.hidden();
             this.value(choice.value(), null);
@@ -764,7 +785,7 @@ public final class Emitter {
             final String end = this.label();
             final List<String> starts = new ArrayList<>();
             String fallback = end;
-            for (final IStmt.SwitchSection section : choice.sections()) {
+            for (final IrStmt.Switch.Section section : choice.sections()) {
                 final String start = this.label();
                 starts.add(start);
                 if (section.fallback()) {
@@ -779,24 +800,22 @@ public final class Emitter {
             this.emit(Opcode.BR, new IOperand.Label(fallback));
 
             this.breaks.push(end);
-            this.breakLocks.push(this.locks.size());
             for (int i = 0; i < choice.sections().size(); i++) {
                 this.mark(starts.get(i));
-                for (final IStmt statement : choice.sections().get(i).statements()) {
+                for (final IrStmt statement : choice.sections().get(i).statements()) {
                     this.statement(statement);
                 }
             }
-            this.breakLocks.pop();
             this.breaks.pop();
             this.mark(end);
         }
 
-        private void give(final IStmt.Return give) {
+        private void give(final IrStmt.Return give) {
             if (give.value() != null) {
                 this.copied(give.value(), this.returns);
             }
             // The answer sits under the objects let go of, so it is still on top when the method leaves.
-            this.unlockDownTo(0);
+            this.letGo(give.unlocks());
             this.emit(Opcode.RET);
         }
 
@@ -1609,7 +1628,7 @@ public final class Emitter {
             }
             body.parameters(lambda.parameters());
             if (lambda.block() != null) {
-                body.block(lambda.block());
+                body.block(Emitter.this.lowered.bodyOf(lambda));
             } else {
                 body.value(lambda.body(), gives);
                 body.emit(Opcode.RET);
