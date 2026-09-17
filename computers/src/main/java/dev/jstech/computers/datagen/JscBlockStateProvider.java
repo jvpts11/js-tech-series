@@ -9,7 +9,6 @@ package dev.jstech.computers.datagen;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.block.NetworkGatewayBlock;
 import dev.jstech.computers.os.media.MediaReaderBlock;
 import java.util.List;
@@ -306,14 +305,6 @@ public class JscBlockStateProvider extends BlockStateProvider {
         });
 
         // Interaction buses are not blocks: they are parts mounted on a data cable's face,
-    }
-
-    /**
-     * The model rotation for a block whose access port sits on its rear face: spin the front-facing model
-     * a half-turn so its back lines up with the placement direction.
-     */
-    private static int rearYRot(final Direction facing) {
-        return ((int) facing.toYRot() + 180) % 360;
     }
 
     private void pipeCable(final Block block, final String name) {

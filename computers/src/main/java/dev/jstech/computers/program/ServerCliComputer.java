@@ -50,7 +50,6 @@ import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
@@ -323,15 +322,6 @@ public final class ServerCliComputer implements ICliComputer {
     @Override
     public OpResult install(final String programId) {
         return installs().install(programId);
-    }
-
-    /** The machine as the thing that installs programs, whichever of the two handles this prompt holds. */
-    @Nullable
-    private IOsHost osHost() {
-        if (host instanceof IOsHost fromHost) {
-            return fromHost;
-        }
-        return hostBlock instanceof IOsHost fromBlock ? fromBlock : null;
     }
 
     @Override

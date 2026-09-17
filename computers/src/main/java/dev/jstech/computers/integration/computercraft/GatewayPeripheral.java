@@ -16,15 +16,11 @@ import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.gateway.GatewayLog;
 import dev.jstech.computers.gateway.GatewayRefusedException;
 import dev.jstech.computers.gateway.GatewayService;
-import dev.jstech.computers.gateway.GatewayValues;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 
 /**

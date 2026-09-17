@@ -9,7 +9,6 @@ package dev.jstech.computers.item;
 
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.core.tier.HardwareEra;
-import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;

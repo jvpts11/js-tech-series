@@ -10,7 +10,6 @@ package dev.jstech.computers.program.cli;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
-import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsRegistry;
@@ -232,8 +231,4 @@ public final class ClusterCommand implements ICliCommand {
         return cmc.clusterCard() == null ? "none" : cmc.clusterCard().reach().name().toLowerCase(Locale.ROOT);
     }
 
-    @SuppressWarnings("unused")
-    private static String serverName(final ServerRackBlockEntity rack, final int row) {
-        return ServerItem.customName(rack.getServers().getStackInSlot(row));
-    }
 }

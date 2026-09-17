@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.vm.program;
 
-import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Shape;
 import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.core.id.IStableName;

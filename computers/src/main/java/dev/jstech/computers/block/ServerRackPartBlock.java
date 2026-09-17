@@ -18,7 +18,6 @@ import java.util.EnumSet;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -103,16 +102,6 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IRearFaci
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(TOP, FRONT, COMPUTE, FACING, ServerRackBlock.BAYS);
-    }
-
-    @Nullable
-    private static ServerRackBlockEntity controllerOf(final Level level, final BlockPos pos) {
-        if (level.getBlockEntity(pos) instanceof ServerRackPartBlockEntity part
-                && part.controllerPos() != null
-                && level.getBlockEntity(part.controllerPos()) instanceof ServerRackBlockEntity rack) {
-            return rack;
-        }
-        return null;
     }
 
     @Override

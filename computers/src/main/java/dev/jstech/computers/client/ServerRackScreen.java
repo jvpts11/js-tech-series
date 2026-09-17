@@ -15,7 +15,6 @@ import dev.jstech.computers.menu.ServerRackMenu;
 import dev.jstech.computers.operation.payload.RackBayPowerPayload;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
-import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.EraThemes;
 import dev.jstech.core.client.gui.theme.JsTechTheme;

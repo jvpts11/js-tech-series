@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.os.boot;
 
-import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsCapability;
 import dev.jstech.computers.os.OsDef;

@@ -9,7 +9,6 @@ package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.Programs;
-import dev.jstech.computers.program.iql.IIqlCondition;
 import dev.jstech.computers.program.iql.IqlOperation;
 import dev.jstech.computers.program.iql.IqlParseResult;
 import dev.jstech.computers.program.iql.IqlParser;

@@ -7,7 +7,6 @@
  */
 package dev.jstech.core.energy;
 
-import dev.jstech.core.energy.internal.EnergyNetwork;
 
 /**
  * A node of an energy network: generator, consumer or storage.

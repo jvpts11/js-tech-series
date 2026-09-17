@@ -8,7 +8,6 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.block.CraftingComputerBlock;
 import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.block.part.CablePartType;

@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.blockentity;
 
-import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.IEraChassisBlock;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
@@ -67,7 +66,6 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 

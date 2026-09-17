@@ -8,7 +8,6 @@
 package dev.jstech.computers.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.PostCompletePayload;

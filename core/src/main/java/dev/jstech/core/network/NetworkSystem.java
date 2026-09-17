@@ -18,7 +18,6 @@ import net.minecraft.server.level.ServerLevel;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Central facade for spatial connectivity, UUID lookup, and orchestration capacity queries on a J's Computers network.
