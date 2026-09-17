@@ -43,12 +43,10 @@ import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RaidMode;
-import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.computers.storage.StorageVolume;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.DataTier;
@@ -89,6 +87,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.jetbrains.annotations.Nullable;
@@ -278,6 +277,9 @@ public class ServerRackBlockEntity extends BlockEntity
     public static final int CAPACITY_U = 8;
 
     private final RackLayout layout = new RackLayout(CAPACITY_U);
+
+    /** The drives of a bay treated as one volume: the arrays, what a pull costs, and the rebuilds. */
+    private final RackArrays arrays = new RackArrays(this, CAPACITY_U);
 
     private final ItemStackHandler servers = new ItemStackHandler(CAPACITY_U) {
         @Override
@@ -505,7 +507,7 @@ public class ServerRackBlockEntity extends BlockEntity
                  * Pulling a member out of an array is the moment the array's promise is tested:
                  * a redundant array keeps its data (and hands back a blank drive), a stripe dies.
                  */
-                onArrayMemberRemoved(slot);
+                arrays.onMemberRemoved(slot);
             }
             return super.extractItem(slot, amount, simulate);
         }
@@ -523,7 +525,7 @@ public class ServerRackBlockEntity extends BlockEntity
             final int top = unit != null ? unit.topU() : slot / RackLayout.SLOTS_PER_U;
             markStorageChanged(top);
             // A replacement drive completing a degraded array starts the rebuild.
-            maybeStartRebuild(top);
+            arrays.maybeStartRebuild(top);
             setChanged();
         }
     };
@@ -705,6 +707,31 @@ public class ServerRackBlockEntity extends BlockEntity
                 mountedUnits());
     }
 
+    /** The live stack in one front slot: writing its components writes the bay. */
+    ItemStack frontSlot(final int index) {
+        return frontSlots.getStackInSlot(index);
+    }
+
+    /** The live stack in one server bay, which is the machine mounted there. */
+    ItemStack serverSlot(final int index) {
+        return servers.getStackInSlot(index);
+    }
+
+    /** What a front slot of that row and column is for, given what is mounted in the rack. */
+    RackLayout.SlotRole slotRoleAt(final int row, final int column, final List<RackLayout.Unit> mounted) {
+        return layout.roleAt(row, column, mounted);
+    }
+
+    /** Which network each bay is registered on, by the machine's node id. */
+    Map<UUID, NetworkUuid> registeredNetworks() {
+        return registered;
+    }
+
+    /** Where the Mainframe of that network is, for a bay that has to tell its index something. */
+    Optional<Long> mainframePositionOn(final ServerLevel level, final NetworkUuid network) {
+        return NetworkSystem.get(level).mainframePositionOf(network);
+    }
+
     /**
      * The drive stacks the unit mounted at {@code serverSlot} has claimed, in row-major slot order.
      * The returned stacks are the live front-slot stacks: writing their components writes the bay.
@@ -756,53 +783,17 @@ public class ServerRackBlockEntity extends BlockEntity
 
     /** The front-slot index holding the unit's RAID Controller, or -1 when it has none. */
     public int raidControllerSlot(final int serverSlot) {
-        final RackChassis chassis = ServerItem.chassisOf(servers.getStackInSlot(serverSlot));
-        if (chassis == null) {
-            return -1;
-        }
-        final List<RackLayout.Unit> mounted = mountedUnits();
-        for (int row = serverSlot; row < serverSlot + chassis.heightU() && row < CAPACITY_U; row++) {
-            for (int column = 0; column < RackLayout.SLOTS_PER_U; column++) {
-                if (layout.roleAt(row, column, mounted) != RackLayout.SlotRole.GADGET) {
-                    continue;
-                }
-                final int index = row * RackLayout.SLOTS_PER_U + column;
-                if (RackGadgetItem.kindOf(
-                        frontSlots.getStackInSlot(index))
-                        == RackGadgetItem.Kind.RAID_CONTROLLER) {
-                    return index;
-                }
-            }
-        }
-        return -1;
+        return arrays.controllerSlot(serverSlot);
     }
 
     /** Whether the unit at {@code serverSlot} has a Cache Card in one of its gadget bays. */
     public boolean hasCacheCard(final int serverSlot) {
-        final RackChassis chassis = ServerItem.chassisOf(servers.getStackInSlot(serverSlot));
-        if (chassis == null) {
-            return false;
-        }
-        final List<RackLayout.Unit> mounted = mountedUnits();
-        for (int row = serverSlot; row < serverSlot + chassis.heightU() && row < CAPACITY_U; row++) {
-            for (int column = 0; column < RackLayout.SLOTS_PER_U; column++) {
-                if (layout.roleAt(row, column, mounted) == RackLayout.SlotRole.GADGET
-                        && RackGadgetItem.kindOf(
-                                frontSlots.getStackInSlot(row * RackLayout.SLOTS_PER_U + column))
-                        == RackGadgetItem.Kind.CACHE_CARD) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return arrays.hasCacheCard(serverSlot);
     }
 
     /** The RAID mode the unit at {@code serverSlot} runs, or {@link RaidMode#NONE}. */
     public RaidMode raidModeOf(final int serverSlot) {
-        final int controller = raidControllerSlot(serverSlot);
-        return controller < 0 ? RaidMode.NONE
-                : RackGadgetItem.raidMode(
-                        frontSlots.getStackInSlot(controller));
+        return arrays.modeOf(serverSlot);
     }
 
     /**
@@ -810,197 +801,32 @@ public class ServerRackBlockEntity extends BlockEntity
      * forms with, so a later pull reads as a degraded array rather than a smaller one.
      */
     public boolean setRaidMode(final int serverSlot, final RaidMode mode) {
-        final int controller = raidControllerSlot(serverSlot);
-        if (controller < 0) {
-            return false;
-        }
-        final int drives = claimedDriveStacks(serverSlot).size();
-        if (mode != RaidMode.NONE && drives < mode.minDrives()) {
-            return false; // not enough drives in the bay to form this array
-        }
-        final ItemStack stack = frontSlots.getStackInSlot(controller);
-        RackGadgetItem.setRaidMode(stack, mode);
-        stack.set(ComputingModule.RAID_MEMBERS.get(), mode == RaidMode.NONE ? 0 : drives);
-        markStorageChanged(serverSlot);
-        setChanged();
-        return true;
+        return arrays.setMode(serverSlot, mode);
     }
 
     /** How many drives the unit's array was formed with (0 when it runs no array). */
     public int raidMemberCount(final int serverSlot) {
-        final int controller = raidControllerSlot(serverSlot);
-        if (controller < 0) {
-            return 0;
-        }
-        final Integer members = frontSlots.getStackInSlot(controller).get(ComputingModule.RAID_MEMBERS.get());
-        return members == null ? 0 : members;
+        return arrays.memberCount(serverSlot);
     }
 
     /** Whether the unit's array is missing members but still serving data. */
     public boolean raidDegraded(final int serverSlot) {
-        final RaidMode mode = raidModeOf(serverSlot);
-        final int members = raidMemberCount(serverSlot);
-        final int present = claimedDriveStacks(serverSlot).size();
-        return mode.rebuildable(members, present);
+        return arrays.degraded(serverSlot);
     }
 
     /** Whether the unit's array has lost more members than its mode tolerates. */
     public boolean raidFailed(final int serverSlot) {
-        final RaidMode mode = raidModeOf(serverSlot);
-        final int members = raidMemberCount(serverSlot);
-        return mode != RaidMode.NONE && members > 0
-                && !mode.survives(members, claimedDriveStacks(serverSlot).size());
+        return arrays.failed(serverSlot);
     }
-
-    /**
-     * Tells the network's index that a drive left the bay of the unit topped at {@code topRow}
-     * while the machine was running, so the rows it holds for that machine read as unconfirmed
-     * until a reindex. This is the maintenance loop the rack's hotswap is meant to create.
-     */
-    private void notifyHotPull(final int topRow) {
-        if (!(level instanceof ServerLevel serverLevel)) {
-            return;
-        }
-        /*
-         * A machine running the Integrity Monitor re-reads its own bay after a hot event, so the
-         * index never learns to doubt it. A fragmented index still wants a vacuum by hand.
-         */
-        if (hasService(topRow, "integrity_monitor")) {
-            return;
-        }
-        final ItemStack stack = servers.getStackInSlot(topRow);
-        final UUID node = ServerItem.nodeUuid(stack);
-        final NetworkUuid network = node == null ? null : registered.get(node);
-        if (network == null) {
-            return; // an unnetworked bay has no index to confuse
-        }
-        final NetworkSystem system = NetworkSystem.get(serverLevel);
-        system.mainframePositionOf(network).ifPresent(pos -> {
-            if (serverLevel.getBlockEntity(BlockPos.of(pos)) instanceof MainframeBlockEntity mainframe) {
-                final String name = ServerItem.customName(stack);
-                mainframe.networkIndex().markBayHotPull(new NodeUuid(node),
-                        name.isEmpty() ? "srv-" + node.toString().substring(0, 6) : name);
-            }
-        });
-    }
-
-    /**
-     * A drive is leaving the front slot {@code frontSlot}. A redundant array keeps the volume: the
-     * departing member's share is redistributed across the drives that stay and the drive comes out
-     * blank (its stripes were never a standalone copy, so nothing is duplicated). A stripe has no
-     * redundancy to fall back on, so pulling any member destroys the whole array's contents.
-     */
-    private void onArrayMemberRemoved(final int frontSlot) {
-        final RackLayout.Unit unit = RackLayout.unitAt(frontSlot / RackLayout.SLOTS_PER_U, mountedUnits());
-        if (unit == null) {
-            return;
-        }
-        final int top = unit.topU();
-        final RaidMode mode = raidModeOf(top);
-        if (mode == RaidMode.NONE) {
-            /*
-             * An independent volume travels with its drive, as any computer disk does, and the
-             * network index is left holding rows it has not re-read: that is a hot pull.
-             */
-            notifyHotPull(top);
-            return;
-        }
-        final ItemStack leaving = frontSlots.getStackInSlot(frontSlot);
-        if (mode == RaidMode.RAID0) {
-            notifyHotPull(top);
-            // The stripe is gone: every member (including the one on its way out) is blanked.
-            for (final ItemStack drive : claimedDriveStacks(top)) {
-                DriveVolumes.erase(drive);
-            }
-            markStorageChanged(top);
-            setChanged();
-            return;
-        }
-        // A redundant array is now short a member: it waits for a replacement to rebuild onto.
-        pendingRebuild.add(top);
-        rebuildTicks[top] = 0;
-        rebuildTotal[top] = 0;
-        final List<ItemStack> survivors = new ArrayList<>();
-        for (final ItemStack drive : claimedDriveStacks(top)) {
-            if (drive != leaving) {
-                survivors.add(drive);
-            }
-        }
-        final StorageVolume leavingVolume =
-                DriveVolumes.peek(leaving);
-        if (!leavingVolume.isEmpty() && !survivors.isEmpty()) {
-            final LocalStore rest =
-                    new LocalStore(survivors, () -> { });
-            // Move only what the survivors actually accept, so a rebuild can never mint items.
-            for (final var entry : leavingVolume.snapshot().items().entrySet()) {
-                final long moved = rest.insert(entry.getKey(), entry.getValue());
-                leavingVolume.take(entry.getKey(), moved);
-            }
-            if (leavingVolume.isEmpty()) {
-                DriveVolumes.erase(leaving);
-            } else {
-                DriveVolumes.refreshUsage(leaving, leavingVolume);
-            }
-        }
-        markStorageChanged(top);
-        setChanged();
-    }
-
-    // Rebuild: putting a replacement member back to work
-
-    /** Ticks of rebuild work per item of array capacity (a balancing estimate). */
-    private static final int REBUILD_TICKS_PER_1K_ITEMS = 20;
-    private static final int REBUILD_MIN_TICKS = 40;
-    private static final int REBUILD_MAX_TICKS = 20 * 60 * 3; // three minutes on a huge array
-
-    /** Remaining rebuild ticks per unit, and the total each rebuild started with (for the bar). */
-    private final int[] rebuildTicks = new int[CAPACITY_U];
-    private final int[] rebuildTotal = new int[CAPACITY_U];
-    /** Units whose redundant array lost a member and is waiting for a replacement drive. */
-    private final Set<Integer> pendingRebuild = new HashSet<>();
 
     /** Whether the unit's array is currently rebuilding onto a replacement member. */
     public boolean raidRebuilding(final int serverSlot) {
-        return serverSlot >= 0 && serverSlot < CAPACITY_U && rebuildTicks[serverSlot] > 0;
+        return arrays.rebuilding(serverSlot);
     }
 
     /** Rebuild progress of the unit's array in permille, or 0 when it is not rebuilding. */
     public int raidRebuildPermille(final int serverSlot) {
-        if (!raidRebuilding(serverSlot) || rebuildTotal[serverSlot] <= 0) {
-            return 0;
-        }
-        final int done = rebuildTotal[serverSlot] - rebuildTicks[serverSlot];
-        return (int) (1000L * done / rebuildTotal[serverSlot]);
-    }
-
-    /** Starts a rebuild on the unit if its array just got its missing member back. */
-    private void maybeStartRebuild(final int serverSlot) {
-        if (!pendingRebuild.contains(serverSlot) || raidRebuilding(serverSlot)) {
-            return;
-        }
-        final RaidMode mode = raidModeOf(serverSlot);
-        final int members = raidMemberCount(serverSlot);
-        if (mode == RaidMode.NONE || members <= 0
-                || claimedDriveStacks(serverSlot).size() < members) {
-            return; // still short a member
-        }
-        final long capacityItems = getServerStorage(serverSlot).capacity();
-        final int ticks = (int) Math.max(REBUILD_MIN_TICKS,
-                Math.min(REBUILD_MAX_TICKS, capacityItems * REBUILD_TICKS_PER_1K_ITEMS / 1000L));
-        rebuildTicks[serverSlot] = ticks;
-        rebuildTotal[serverSlot] = ticks;
-        pendingRebuild.remove(serverSlot);
-        setChanged();
-    }
-
-    private void tickRebuilds() {
-        for (int slot = 0; slot < CAPACITY_U; slot++) {
-            if (rebuildTicks[slot] > 0 && --rebuildTicks[slot] == 0) {
-                rebuildTotal[slot] = 0;
-                markStorageChanged(slot);
-                setChanged();
-            }
-        }
+        return arrays.rebuildPermille(serverSlot);
     }
 
     /** The bay-backed storage capacity of the unit at {@code serverSlot}, in items: what the network registers. */
@@ -1047,7 +873,7 @@ public class ServerRackBlockEntity extends BlockEntity
         final NetworkUuid network = adjacentNetwork(level, system);
         data.set(DATA_LINKED, network != null || fabricLinked ? 1 : 0);
         data.set(DATA_BAY_POWER, ~bayPowerOff & 0xFF);
-        tickRebuilds();
+        arrays.tick();
         for (int slot = 0; slot < CAPACITY_U; slot++) {
             data.set(DATA_REBUILD_0 + slot, raidRebuildPermille(slot));
         }
@@ -2180,17 +2006,7 @@ public class ServerRackBlockEntity extends BlockEntity
         }
         bayPowerOff = tag.getInt("BayPowerOff");
         servicePanelOff = tag.getBoolean("ServicePanelOff");
-        // A rebuild in flight survives a reload, as does an array still waiting for its replacement.
-        final int[] savedTicks = tag.getIntArray("RebuildTicks");
-        final int[] savedTotal = tag.getIntArray("RebuildTotal");
-        for (int i = 0; i < CAPACITY_U; i++) {
-            rebuildTicks[i] = i < savedTicks.length ? savedTicks[i] : 0;
-            rebuildTotal[i] = i < savedTotal.length ? savedTotal[i] : 0;
-        }
-        pendingRebuild.clear();
-        for (final int slot : tag.getIntArray("PendingRebuild")) {
-            pendingRebuild.add(slot);
-        }
+        arrays.load(tag);
     }
 
     /*
@@ -2225,9 +2041,7 @@ public class ServerRackBlockEntity extends BlockEntity
         tag.putLongArray("Peripherals", new ArrayList<>(linkedPeripherals));
         tag.putInt("BayPowerOff", bayPowerOff);
         tag.putBoolean("ServicePanelOff", servicePanelOff);
-        tag.putIntArray("RebuildTicks", rebuildTicks.clone());
-        tag.putIntArray("RebuildTotal", rebuildTotal.clone());
-        tag.putIntArray("PendingRebuild", new ArrayList<>(pendingRebuild));
+        arrays.save(tag);
     }
 
     /*
