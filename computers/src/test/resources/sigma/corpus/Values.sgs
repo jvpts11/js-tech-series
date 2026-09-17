@@ -1,0 +1,81 @@
+using System.*;
+using System.Collections.*;
+namespace Corpus;
+struct Vec {
+    public int X;
+    public int Y;
+}
+class Held {
+    public Vec Spot;
+    public static Vec Origin;
+}
+class ValuesCorpus {
+    static Vec Kept;
+
+    static void Main() {
+        Vec one = new Vec();
+        one.X = 1;
+        one.Y = 2;
+
+        Vec copy = one;
+        copy.X = 9;
+        Console.PrintLine("" + one.X + copy.X);
+
+        Kept = one;
+        Held held = new Held();
+        held.Spot = one;
+        Held.Origin = one;
+        Console.PrintLine("" + Kept.X + held.Spot.Y + Held.Origin.X);
+
+        Vec given = Same(one);
+        Console.PrintLine("" + given.X + given.Y);
+
+        Vec[] spots = new Vec[3];
+        spots[0] = one;
+        spots[1] = copy;
+        Console.PrintLine("" + spots[0].X + spots[1].X);
+
+        List<Vec> many = new List<Vec>();
+        many.Add(one);
+        many.Add(copy);
+        Console.PrintLine("" + many.Count);
+
+        int total = 0;
+        foreach (Vec spot in spots) {
+            total = total + spot.X;
+        }
+        foreach (Vec spot in many) {
+            total = total + spot.Y;
+        }
+        Console.PrintLine("" + total);
+
+        int[] numbers = new int[4];
+        numbers[0] = 5;
+        numbers[3] = 7;
+        int sum = 0;
+        foreach (int number in numbers) {
+            sum = sum + number;
+        }
+        Console.PrintLine("" + sum);
+
+        string[] words = new string[2];
+        words[0] = "a";
+        words[1] = "b";
+        string joined = "";
+        foreach (string word in words) {
+            joined = joined + word;
+        }
+        Console.PrintLine(joined);
+
+        List<string> names = new List<string>();
+        names.Add("x");
+        foreach (string name in names) {
+            Console.PrintLine(name);
+        }
+    }
+
+    static Vec Same(Vec spot) {
+        Vec back = spot;
+        return back;
+    }
+}

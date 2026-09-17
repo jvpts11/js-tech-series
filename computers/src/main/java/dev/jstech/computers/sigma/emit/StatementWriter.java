@@ -228,7 +228,6 @@ final class StatementWriter {
      * instruction of its own for it.
      */
     private void forEach(final IrStmt.ForEach loop) {
-        final ITypeSymbol source = loop.kind();
         final int held = this.body.hidden();
         final int index = this.body.hidden();
         this.values.value(loop.source(), null);
@@ -242,12 +241,12 @@ final class StatementWriter {
         this.body.mark(top);
         this.body.emit(Opcode.LDLOC, new IOperand.Slot(index));
         this.body.emit(Opcode.LDLOC, new IOperand.Slot(held));
-        this.length(source);
+        this.length(loop);
         this.body.emit(Opcode.BGE, new IOperand.Label(end));
 
         this.body.emit(Opcode.LDLOC, new IOperand.Slot(held));
         this.body.emit(Opcode.LDLOC, new IOperand.Slot(index));
-        this.element(source);
+        this.element(loop);
         if (loop.copies()) {
             // the loop's own copy: changing it changes nothing in the collection
             this.body.emit(Opcode.COPY);
@@ -264,23 +263,21 @@ final class StatementWriter {
         this.body.mark(end);
     }
 
-    private void length(final ITypeSymbol source) {
-        if (source instanceof ITypeSymbol.ArrayType) {
+    private void length(final IrStmt.ForEach loop) {
+        if (loop.overAnArray()) {
             this.body.emit(Opcode.LDLEN);
         } else {
-            this.body.emit(Opcode.LDFLD,
-                    new IOperand.Field(this.emitter.builtIns.listType().name(), "Count"));
+            this.body.emit(Opcode.LDFLD, new IOperand.Field(loop.holder(), "Count"));
         }
     }
 
-    private void element(final ITypeSymbol source) {
-        if (source instanceof ITypeSymbol.ArrayType) {
+    private void element(final IrStmt.ForEach loop) {
+        if (loop.overAnArray()) {
             this.body.emit(Opcode.LDELEM);
             return;
         }
-        final ITypeSymbol held = this.emitter.rules.elementOf(source);
-        this.body.emit(Opcode.CALL, new IOperand.Method(this.emitter.builtIns.listType().name(), "Get",
-                List.of("int"), held == null ? "object" : held.describe()));
+        this.body.emit(Opcode.CALL,
+                new IOperand.Method(loop.holder(), "Get", List.of("int"), loop.gives()));
     }
 
     private void inLoop(final String again, final String end, final IrStmt body) {

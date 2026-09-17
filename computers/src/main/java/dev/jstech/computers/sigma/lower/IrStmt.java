@@ -10,7 +10,6 @@ package dev.jstech.computers.sigma.lower;
 import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.ast.IStmt;
 import dev.jstech.computers.sigma.sem.IBinding;
-import dev.jstech.computers.sigma.sem.ITypeSymbol;
 import java.util.List;
 
 /**
@@ -82,13 +81,20 @@ public sealed interface IrStmt {
     /**
      * Walking a collection, with everything the walking needs already worked out.
      *
-     * @param source   the collection, worked out once before the first turn
-     * @param kind     what the collection is, which decides how its length and its places are reached
-     * @param walker   the variable each turn puts what it found into
-     * @param copies   whether each turn takes its own copy, which it does when what it found is a value
+     * <p>An array answers to a length of its own and hands over a place by number; anything else answers to a
+     * count and is asked for each element by name. Which of those it is, and what the asking is written with,
+     * are questions about types, and they are answered before anything is written rather than again at every
+     * line that walks something.
+     *
+     * @param source      the collection, worked out once before the first turn
+     * @param overAnArray whether it is an array, which is reached in the shorter of the two ways
+     * @param holder      the type that answers the count and each element, or null when it is an array
+     * @param gives       what each turn finds, as the assembly names it, or null when it is an array
+     * @param walker      the variable each turn puts what it found into
+     * @param copies      whether each turn takes its own copy, which it does when what it found is a value
      */
-    record ForEach(IExpr source, ITypeSymbol kind, IBinding.Variable walker, boolean copies, IrStmt body)
-            implements IrStmt {
+    record ForEach(IExpr source, boolean overAnArray, String holder, String gives, IBinding.Variable walker,
+                   boolean copies, IrStmt body) implements IrStmt {
     }
 
     /**

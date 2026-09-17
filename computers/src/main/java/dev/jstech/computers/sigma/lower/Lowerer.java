@@ -24,10 +24,12 @@ import dev.jstech.computers.sigma.sem.TypeRules;
 import dev.jstech.computers.sigma.sem.SemanticModel;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The stage between knowing what a program means and writing it down: the shapes a player writes turned into
@@ -69,6 +71,15 @@ public final class Lowerer {
     private final Map<Object, Captures> captures = new IdentityHashMap<>();
     /** What each assignment and each step came to, by the expression the player wrote. */
     private final Map<IExpr, IrWrite> writes = new IdentityHashMap<>();
+    /**
+     * The values that are copied when they are stored or handed over, rather than shared.
+     *
+     * <p>A struct is a value: two names for one are two of it, so handing one over hands over a copy. The one
+     * exception is a struct fresh from new, which nobody else is holding yet and so has nothing to be copied
+     * away from. Both of those are questions about types and about what was written, which is why the answer
+     * is kept here rather than asked again at every line that stores something.
+     */
+    private final Set<IExpr> copied = Collections.newSetFromMap(new IdentityHashMap<>());
 
     private int locksOpen;
     /** What the lambdas of the method being walked keep, which is what makes a variable not a slot. */
@@ -119,9 +130,7 @@ public final class Lowerer {
             case IStmt.DoWhile loop -> new IrStmt.DoWhile(loop.condition(), this.inLoop(loop.body()));
             case IStmt.For loop -> new IrStmt.For(this.each(loop.initializers()), loop.condition(),
                     loop.updates(), this.inLoop(loop.body()));
-            case IStmt.ForEach loop -> new IrStmt.ForEach(loop.source(),
-                    this.model.typeOf(loop.source()), this.model.declaredAt(loop),
-                    this.copiesEachTurn(loop), this.inLoop(loop.body()));
+            case IStmt.ForEach loop -> this.walked(loop);
             case IStmt.Switch chosen -> this.chosen(chosen);
             case IStmt.Lock held -> this.held(held);
             case IStmt.Break ignored -> new IrStmt.Break(false, this.leavingTheLoop());
@@ -174,6 +183,23 @@ public final class Lowerer {
         return this.loopLocks.isEmpty() ? 0 : this.locksOpen - this.loopLocks.peek();
     }
 
+    /**
+     * A walk over a collection, with what the walking has to ask it already worked out.
+     *
+     * <p>An array answers to a length of its own and hands over a place by number; anything else answers to a
+     * count and is asked for each element by name. Both are questions about the type being walked, so they are
+     * answered here rather than again at the line that writes the loop.
+     */
+    private IrStmt walked(final IStmt.ForEach loop) {
+        final ITypeSymbol source = this.model.typeOf(loop.source());
+        final boolean overAnArray = source instanceof ITypeSymbol.ArrayType;
+        final ITypeSymbol held = overAnArray ? null : this.rules.elementOf(source);
+        return new IrStmt.ForEach(loop.source(), overAnArray,
+                overAnArray ? null : this.builtIns.listType().name(),
+                overAnArray || held == null ? "object" : held.describe(),
+                this.model.declaredAt(loop), this.copiesEachTurn(loop), this.inLoop(loop.body()));
+    }
+
     /** Whether each turn of a walk takes its own copy, which it does when what it finds is a value. */
     private boolean copiesEachTurn(final IStmt.ForEach loop) {
         final IBinding.Variable walker = this.model.declaredAt(loop);
@@ -194,6 +220,11 @@ public final class Lowerer {
     /** What each assignment and each step came to, for the stage that writes them down. */
     public IrWrite writeOf(final IExpr expression) {
         return this.writes.get(expression);
+    }
+
+    /** Whether storing or handing over what this expression comes to takes a copy of it. */
+    public boolean copies(final IExpr expression) {
+        return this.copied.contains(expression);
     }
 
     /** Asks what a method's lambdas keep, for the bodies that have one to ask about. */
@@ -428,6 +459,15 @@ public final class Lowerer {
             default -> { }
         }
         this.model.setLowered(expression, this.lowered(expression));
+        if (!(expression instanceof IExpr.New) && this.isStruct(this.model.typeOf(expression))) {
+            this.copied.add(expression);
+        }
+    }
+
+    /** Whether a value of that type is a struct, which is copied whenever it is stored or handed over. */
+    private boolean isStruct(final ITypeSymbol type) {
+        return this.rules.named(type) instanceof NamedType named
+                && named.kind() == NamedType.Kind.STRUCT;
     }
 
     /**

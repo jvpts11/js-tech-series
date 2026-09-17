@@ -113,7 +113,7 @@ final class ExpressionWriter {
      */
     void copied(final IExpr expression, final ITypeSymbol wanted) {
         this.value(expression, wanted);
-        if (!(expression instanceof IExpr.New) && this.isStruct(this.emitter.model.typeOf(expression))) {
+        if (this.emitter.lowered.copies(expression)) {
             this.body.emit(Opcode.COPY);
         }
     }
