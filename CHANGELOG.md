@@ -7,6 +7,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### Added
+- Sigma has a library of its own, `Standard`, and it is the only one it can reach. Eight types with a handful of
+  members each: `Console`, `File`, `Program`, `Math`, `Convert`, `Time`, `Computer` and `Script`. They are the same
+  types the full language has, under a second namespace rather than copies of them, so a call written in Sigma
+  compiles to exactly the line of assembly Sigma Sharp would write for it. What Sigma does not get is the other
+  thirty-eight types and most of the members of these eight. `Script` lives there too, since it is how a program
+  that stays up is written and Sigma cannot reach `System` at all.
 - The compiler now knows two languages: Sigma Sharp, which is everything it has always taken, and Sigma, a smaller
   one for the machines that could never be programmed at all. Sigma is a true subset, so anything written in it is
   also Sigma Sharp and compiles on a newer machine untouched. It keeps classes with inheritance, `virtual` and

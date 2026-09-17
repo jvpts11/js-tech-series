@@ -45,7 +45,7 @@ class SigmaSemanticsTest {
     /** What every file starts with, on one line so the sources keep their line numbers. */
     private static final String PRELUDE = "using System.*; using System.IO.*; using System.Collections.*; "
             + "using System.Utils.*; using System.Machine.*; using System.Network.*; using System.Operations.*; "
-            + "namespace Tests; ";
+            + "using Standard.*; namespace Tests; ";
 
     private static SigmaSemantics.Result check(final String source) {
         return SigmaSemantics.check(List.of(new SourceFile("Test.sgs", PRELUDE + source)));

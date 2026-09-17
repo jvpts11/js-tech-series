@@ -17,6 +17,7 @@ import dev.jstech.computers.sigma.ast.INode;
 import dev.jstech.computers.sigma.ast.IStmt;
 import dev.jstech.computers.sigma.ast.TypeRef;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -36,8 +37,20 @@ public final class SubsetRules {
     /** The types the subset's library does not carry, whatever a program tries to name them for. */
     private static final Set<String> ABSENT_TYPES = Set.of("List", "Map", "Thread");
 
-    /** The namespace of windows, which those machines had no way of drawing. */
-    private static final String ABSENT_NAMESPACE = "System.UI";
+    /**
+     * What each type of the subset's library offers, which is a fraction of what the same type offers the full
+     * language. The rest of a type is not hidden so much as absent: these machines had no floating point worth
+     * rounding, no second process to message and no list to hand anybody.
+     */
+    private static final Map<String, Set<String>> LIBRARY = Map.of(
+            "Console", Set.of("Print", "PrintLine", "Clear", "ReadLine", "ReadInt", "ReadBool"),
+            "File", Set.of("Exists", "Read", "Write", "Append", "Delete"),
+            "Program", Set.of("Name", "Args", "Exit"),
+            "Math", Set.of("Abs", "Min", "Max", "Floor", "Sqrt", "Pow"),
+            "Convert", Set.of("ToInt", "ToDouble", "ToBool", "ToString"),
+            "Time", Set.of("Tick", "Day"),
+            "Computer", Set.of("Name", "RamMb", "Online"),
+            "Script", Set.of("OnInit", "OnTick", "OnDestroy"));
 
     private final DiagnosticBag diagnostics;
 
@@ -53,9 +66,16 @@ public final class SubsetRules {
         for (final CompilationUnit unit : units) {
             this.diagnostics.setFile(unit.file());
             for (final CompilationUnit.Using using : unit.usings()) {
-                if (using.name().equals(ABSENT_NAMESPACE) || using.name().startsWith(ABSENT_NAMESPACE + ".")) {
+                /*
+                 * One namespace, and it is the only one. A program's own namespaces are its own business; what
+                 * it may not do is reach into the full language's library, because the machines this language is
+                 * for never had most of it.
+                 */
+                final String reached = using.name();
+                if (reached.equals("System") || reached.startsWith("System.")) {
                     this.diagnostics.error(using.line(), using.column(), SigmaError.NOT_IN_THE_SUBSET,
-                            "windows", "these machines draw on the terminal and nowhere else");
+                            "the '" + reached + "' library",
+                            "everything Sigma has is in " + BuiltIns.SUBSET_LIBRARY);
                 }
             }
             for (final IDecl.ITypeDecl type : unit.types()) {
@@ -234,7 +254,10 @@ public final class SubsetRules {
                 this.expression(call.callee());
                 this.arguments(call.arguments());
             }
-            case IExpr.Member member -> this.expression(member.target());
+            case IExpr.Member member -> {
+                this.libraryMember(member);
+                this.expression(member.target());
+            }
             case IExpr.Index index -> {
                 this.expression(index.target());
                 this.expression(index.index());
@@ -269,6 +292,25 @@ public final class SubsetRules {
             for (final IExpr argument : arguments) {
                 this.expression(argument);
             }
+        }
+    }
+
+    /**
+     * A member of one of the library's types that the subset's smaller version of it does not have.
+     *
+     * <p>Read off the name as it was written, because these are all static and a program reaches them by writing
+     * the type: {@code Console.ReadLong} and nothing else. That is also the limit of it, and it is the right
+     * limit here, since the checker proper reports anything this misses as a member that is simply not there.
+     */
+    private void libraryMember(final IExpr.Member member) {
+        if (!(member.target() instanceof IExpr.Name owner)) {
+            return;
+        }
+        final Set<String> offered = LIBRARY.get(owner.identifier());
+        if (offered != null && !offered.contains(member.name())) {
+            this.refuse(member, "'" + owner.identifier() + "." + member.name() + "'",
+                    "Sigma's " + owner.identifier() + " has "
+                            + String.join(", ", new java.util.TreeSet<>(offered)));
         }
     }
 

@@ -134,6 +134,17 @@ public final class BuiltIns {
      */
     /** The root of the language's own namespaces. */
     public static final String SYSTEM = "System";
+    /**
+     * The one namespace the smaller language can reach.
+     *
+     * <p>Its types are a handful on purpose: these are the machines that had a screen, a disk, a clock and not
+     * much else, and a library they could not have held would be a lie about them. Every name in it is a type the
+     * full language also has, under the namespace it has always had, so a call written in the subset compiles to
+     * the very same line of assembly; what the subset does not get is the other thirty-eight types, and most of
+     * the members of these.
+     */
+    public static final String SUBSET_LIBRARY = "Standard";
+
     private static final String COLLECTIONS = "System.Collections";
     private static final String IO = "System.IO";
     private static final String UTILS = "System.Utils";
@@ -144,9 +155,19 @@ public final class BuiltIns {
     private static final String UI = "System.UI";
 
     private static final Map<String, String> HOMES = Map.ofEntries(
-            Map.entry("IScript", SYSTEM), Map.entry("Script", SYSTEM),
+            Map.entry("IScript", SYSTEM), Map.entry("Script", SUBSET_LIBRARY),
             Map.entry("Action", SYSTEM), Map.entry("Func", SYSTEM),
             Map.entry("List", COLLECTIONS), Map.entry("Map", COLLECTIONS));
+
+    /**
+     * Every type of the subset's library, by the name it has in both languages.
+     *
+     * <p>A type keeps its own name here rather than taking a second one, because it is the same type: naming the
+     * machine {@code Machine} under one namespace and {@code Computer} under the other would be two names for one
+     * thing with nothing gained, and a program moved between the languages would have to be rewritten to say it.
+     */
+    private static final Set<String> SUBSET_TYPES =
+            Set.of("Console", "File", "Program", "Math", "Convert", "Time", "Computer", "Script");
 
     /**
      * The type known by exactly {@code fullName}, its namespace in front ({@code System.IO.Console}),
@@ -154,6 +175,24 @@ public final class BuiltIns {
      * asks for whichever. A bare name of a type that lives in a namespace is not found here.
      */
     public NamedType qualified(final String fullName, final int arity) {
+        /*
+         * The smaller language's whole library lives under one namespace, and it is the same handful of types
+         * the bigger one keeps scattered across System.IO, System.Utils and the rest. They are one type seen
+         * under two names rather than two types: a call written in the subset has to compile to the very same
+         * line of assembly the full language would write, or a program carried from an old machine to a new one
+         * would not be the same program.
+         */
+        if (fullName.startsWith(SUBSET_LIBRARY + ".")) {
+            final String simple = fullName.substring(SUBSET_LIBRARY.length() + 1);
+            if (SUBSET_TYPES.contains(simple)) {
+                // None of these takes arguments, so the count asked for decides nothing and may be "whichever".
+                for (final NamedType type : this.types.values()) {
+                    if (type.name().equals(simple)) {
+                        return type;
+                    }
+                }
+            }
+        }
         NamedType any = null;
         for (final NamedType type : this.types.values()) {
             if (!type.fullName().equals(fullName)) {
@@ -171,6 +210,9 @@ public final class BuiltIns {
 
     /** Whether {@code prefix} is one of the language's namespaces, or the start of one: System, System.IO. */
     public boolean isNamespace(final String prefix) {
+        if (SUBSET_LIBRARY.equals(prefix)) {
+            return true;
+        }
         for (final String home : HOMES.values()) {
             if (home.equals(prefix) || home.startsWith(prefix + ".")) {
                 return true;

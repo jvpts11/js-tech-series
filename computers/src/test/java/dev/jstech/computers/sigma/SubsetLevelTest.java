@@ -22,18 +22,39 @@ import org.junit.jupiter.api.Test;
  */
 class SubsetLevelTest {
 
-    /** What every file starts with, on one line so the sources keep their line numbers. */
-    private static final String PRELUDE = "using System.*; using System.IO.*; using System.Collections.*; "
-            + "using System.Utils.*; using System.Machine.*; using System.Network.*; using System.Operations.*; "
-            + "namespace Tests; ";
+    /**
+     * What every file starts with, on one line so the sources keep their line numbers.
+     *
+     * <p>One using, because the smaller language has one library. That it is also enough for the full language
+     * is the point: these sources are handed to both, and the same line has to open the same types in each.
+     */
+    private static final String PRELUDE = "using Standard.*; namespace Tests; ";
+
+    /**
+     * The same, for the sources that reach into the full language's own library.
+     *
+     * <p>Those are the tests of things the subset does not have at all, and some of them are types rather than
+     * shapes, so the source has to be able to name them for the full language to take it. The subset then has two
+     * things to say about that source, the library it reached for and the thing it wrote, which is correct.
+     */
+    private static final String FULL_PRELUDE =
+            "using Standard.*; using System.*; using System.Collections.*; namespace Tests; ";
 
     private static SigmaSemantics.Result subset(final String source) {
-        return SigmaSemantics.checkProgram(List.of(new SourceFile("Test.sg", PRELUDE + source)),
+        return subset(PRELUDE, source);
+    }
+
+    private static SigmaSemantics.Result subset(final String prelude, final String source) {
+        return SigmaSemantics.checkProgram(List.of(new SourceFile("Test.sg", prelude + source)),
                 LanguageLevel.SIGMA);
     }
 
     private static SigmaSemantics.Result full(final String source) {
-        return SigmaSemantics.checkProgram(List.of(new SourceFile("Test.sgs", PRELUDE + source)));
+        return full(PRELUDE, source);
+    }
+
+    private static SigmaSemantics.Result full(final String prelude, final String source) {
+        return SigmaSemantics.checkProgram(List.of(new SourceFile("Test.sgs", prelude + source)));
     }
 
     /** Takes it in the subset, and proves the same source is the full language too. */
@@ -46,10 +67,14 @@ class SubsetLevelTest {
 
     /** Refused in the subset for being outside it, and accepted by the full language. */
     private static void assertOnlyInTheFullLanguage(final String source) {
-        final SigmaSemantics.Result small = subset(source);
+        assertOnlyInTheFullLanguage(PRELUDE, source);
+    }
+
+    private static void assertOnlyInTheFullLanguage(final String prelude, final String source) {
+        final SigmaSemantics.Result small = subset(prelude, source);
         assertTrue(small.diagnostics().stream().anyMatch(d -> "S3052".equals(d.code())),
                 () -> "the subset took it: " + String.join("\n", small.lines()));
-        final SigmaSemantics.Result big = full(source);
+        final SigmaSemantics.Result big = full(prelude, source);
         assertTrue(big.ok(), () -> "the full language refused it: " + String.join("\n", big.lines()));
     }
 
@@ -93,7 +118,7 @@ class SubsetLevelTest {
     @Test
     void subset_hasNoDelegatesOrEvents() {
         assertOnlyInTheFullLanguage("delegate void Told(); class M { static void Main() { } }");
-        assertOnlyInTheFullLanguage("class Bell { public event Action Rang; } "
+        assertOnlyInTheFullLanguage(FULL_PRELUDE, "class Bell { public event Action Rang; } "
                 + "class M { static void Main() { } }");
     }
 
@@ -118,12 +143,13 @@ class SubsetLevelTest {
 
     @Test
     void subset_hasNoLambdas() {
-        assertOnlyInTheFullLanguage("class M { static void Main() { Action a = () => { }; } }");
+        assertOnlyInTheFullLanguage(FULL_PRELUDE, "class M { static void Main() { Action a = () => { }; } }");
     }
 
     @Test
     void subset_hasNoListOrMap() {
-        assertOnlyInTheFullLanguage("class M { static void Main() { List<int> n = new List<int>(); } }");
+        assertOnlyInTheFullLanguage(FULL_PRELUDE,
+                "class M { static void Main() { List<int> n = new List<int>(); } }");
     }
 
     @Test
@@ -147,6 +173,40 @@ class SubsetLevelTest {
         assertOnlyInTheFullLanguage("class M { static void Main() { int n = 1; string s = $\"n is {n}\"; } }");
     }
 
+    /** One using opens the whole of the subset's library, and the same line opens it in the full language too. */
+    @Test
+    void subset_reachesItsLibraryWithTheOneUsing() {
+        assertInBoth("class M { static void Main() { Console.PrintLine(\"hello\"); } }");
+    }
+
+    /** The library is the same types the full language has, so the one call compiles the same on either side. */
+    @Test
+    void subset_callsTheSameLibraryTheFullLanguageDoes() {
+        final String source = "class M { static void Main() { Console.PrintLine(Convert.ToString(Math.Abs(-2))); } }";
+        assertInBoth(source);
+    }
+
+    @Test
+    void subset_hasOnlyPartOfEachTypeItHas() {
+        assertOnlyInTheFullLanguage("class M { static void Main() { long n = Console.ReadLong(); } }");
+        assertOnlyInTheFullLanguage("class M { static void Main() { double n = Math.Round(1.5); } }");
+    }
+
+    @Test
+    void subset_namesWhatItsOwnVersionOfATypeHas() {
+        final SigmaSemantics.Result result = subset(
+                "class M { static void Main() { long n = Console.ReadLong(); } }");
+        assertTrue(result.lines().stream().anyMatch(line -> line.contains("PrintLine")),
+                () -> "the message does not say what Console has: " + String.join("\n", result.lines()));
+    }
+
+    @Test
+    void subset_cannotReachTheFullLanguagesLibraryAtAll() {
+        final SigmaSemantics.Result result = subset(FULL_PRELUDE, "class M { static void Main() { } }");
+        assertTrue(result.lines().stream().anyMatch(line -> line.contains("Standard")),
+                () -> "the message does not point at the one library: " + String.join("\n", result.lines()));
+    }
+
     @Test
     void subset_saysWhatToWriteInstead() {
         final SigmaSemantics.Result result = subset(
@@ -158,8 +218,9 @@ class SubsetLevelTest {
     /** The full language is not narrowed by any of this: it goes on taking everything it took before. */
     @Test
     void fullLanguage_isLeftAlone() {
-        final SigmaSemantics.Result result = full("class M { static void Main() { List<int> n = new List<int>(); "
-                + "var total = 0; foreach (int x in n) { total = total + x; } } }");
+        final SigmaSemantics.Result result = full(FULL_PRELUDE,
+                "class M { static void Main() { List<int> n = new List<int>(); "
+                        + "var total = 0; foreach (int x in n) { total = total + x; } } }");
         assertEquals(List.of(), result.diagnostics().stream().map(Diagnostic::code).toList());
     }
 }
