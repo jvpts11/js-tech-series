@@ -42,6 +42,7 @@ import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
+import dev.jstech.computers.rack.RackThermals;
 import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
@@ -1048,13 +1049,6 @@ public class ServerRackBlockEntity extends BlockEntity
      * would. The watt figures are balancing estimates.
      */
 
-    /** Heat a bare cabinet sheds on its own, in watts. */
-    private static final int PASSIVE_HEAT_BUDGET_W = 1000;
-    /** Heat one Cooling Unit adds to the budget, in watts. */
-    private static final int COOLING_UNIT_BUDGET_W = 1500;
-    /** However hot it gets, a machine keeps this share of its capacity. */
-    private static final int MIN_THROTTLE_PERCENT = 25;
-
     /** The total power draw of every machine mounted in this rack, in watts. */
     public int thermalLoadWatts() {
         int watts = 0;
@@ -1069,32 +1063,21 @@ public class ServerRackBlockEntity extends BlockEntity
 
     /** The heat this cabinet can shed: its own dissipation plus every Cooling Unit mounted. */
     public int thermalBudgetWatts() {
-        int budget = PASSIVE_HEAT_BUDGET_W;
+        int cooling = 0;
         for (int i = 0; i < CAPACITY_U; i++) {
-            if (RackUnitItem.is(
-                    servers.getStackInSlot(i),
-                    RackUnitItem.Kind.COOLING_UNIT)) {
-                budget += COOLING_UNIT_BUDGET_W;
+            if (RackUnitItem.is(servers.getStackInSlot(i), RackUnitItem.Kind.COOLING_UNIT)) {
+                cooling++;
             }
         }
-        return budget;
+        return RackThermals.budgetWatts(cooling);
     }
 
-    /**
-     * How much of its capacity a machine in this rack actually delivers, in percent. A cabinet
-     * inside its thermal budget runs at full speed; past it every machine throttles by the same
-     * proportion, down to a floor: hot hardware slows down, it does not stop.
-     */
+    /** How much of its capacity a machine in this rack actually delivers, in percent. */
     public int thermalThrottlePercent() {
-        final int load = thermalLoadWatts();
-        final int budget = thermalBudgetWatts();
-        if (load <= budget || load <= 0) {
-            return 100;
-        }
-        return Math.max(MIN_THROTTLE_PERCENT, (int) (100L * budget / load));
+        return RackThermals.throttlePercent(thermalLoadWatts(), thermalBudgetWatts());
     }
 
-    /** Whether the cabinet is over its thermal budget and throttling the machines in it. */
+    /** Whether the cabinet is over its thermal budget and holding the machines in it back. */
     public boolean thermalThrottled() {
         return thermalThrottlePercent() < 100;
     }
