@@ -348,10 +348,6 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         }
     }
 
-    private int tabCount() {
-        return menu.mainframeHost() ? 6 : 4;
-    }
-
     private int[] railTabs() {
         // The Command Prompt launcher sits at the bottom of every computer's rail.
         final int[] base = baseRailTabs();
@@ -387,10 +383,6 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
 
     // The rail now scrolls instead of shrinking, so every entry keeps its full height and its name.
     private int railScroll;
-
-    private int tabH() {
-        return TAB_H;
-    }
 
     private int railVisible() {
         final int railH = menu.invY() - TAB_Y0 - 2;

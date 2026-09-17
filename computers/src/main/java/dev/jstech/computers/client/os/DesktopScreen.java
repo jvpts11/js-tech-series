@@ -30,7 +30,6 @@ import dev.jstech.computers.operation.payload.NiShiftInsertPayload;
 import dev.jstech.computers.operation.payload.RenameFilePayload;
 import dev.jstech.computers.operation.payload.RequestDesktopFilesPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
-import dev.jstech.computers.operation.payload.SetDesktopPrefsPayload;
 import dev.jstech.computers.operation.payload.SetIconPositionPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
@@ -2795,19 +2794,6 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
                 new DesktopShellRunPayload(host, "uninstall " + spec.commandName()));
     }
 
-    /** Cycles to the next wallpaper style and persists the choice on the computer. */
-    private void cycleWallpaper() {
-        int idx = 0;
-        for (int i = 0; i < WallpaperPainter.STYLES.length; i++) {
-            if (WallpaperPainter.STYLES[i].equals(desktopWallpaper)) {
-                idx = i;
-                break;
-            }
-        }
-        desktopWallpaper = WallpaperPainter.STYLES[(idx + 1) % WallpaperPainter.STYLES.length];
-        PacketDistributor.sendToServer(new SetDesktopPrefsPayload(host, desktopWallpaper, computerName));
-    }
-
     private void startDeskRename(final int idx) {
         if (idx < 0 || idx >= desktopItems.size()) {
             return;
@@ -3362,29 +3348,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         return Math.max(3, (w - 24) / 6);
     }
 
-    /** The padding at each end of the notification area, which the panels lay their own contents against. */
-    private static final int TRAY_PAD = PanelTray.PAD;
-
-    private int trayStatusWidth() {
-        return tray.statusWidth();
-    }
-
-    private int trayLeft(final int sw) {
-        return tray.left(sw);
-    }
-
     /** Where a panel's task buttons must stop: clear of the notification area at its right end. */
     private int taskStripRight(final int sw) {
         return tray.taskStripRight(sw);
-    }
-
-    private void drawTray(final GuiGraphics g, final int panelY, final int sw, final int textColor) {
-        tray.draw(g, panelY, sw, textColor);
-    }
-
-    /** The status group alone, for a panel that puts its clock somewhere else of its own. */
-    private void drawTrayStatus(final GuiGraphics g, final int x, final int panelY, final int textColor) {
-        tray.drawStatus(g, x, panelY, textColor);
     }
 
     /** Whether the host computer is on a data network right now, as its block entity tells the client. */
