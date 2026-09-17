@@ -7,6 +7,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### Added
+- The compiler now knows two languages: Sigma Sharp, which is everything it has always taken, and Sigma, a smaller
+  one for the machines that could never be programmed at all. Sigma is a true subset, so anything written in it is
+  also Sigma Sharp and compiles on a newer machine untouched. It keeps classes with inheritance, `virtual` and
+  `override`, structs, enums, arrays, the loops, `out`, `is` and `as`; it has no interfaces, records, delegates,
+  events, properties, lambdas, `foreach`, `List`, `Map`, generics, `var`, `lock`, threads, windows, `abstract`, or
+  strings with holes in them. Every refusal says what to write instead, because there is a way to write all of it:
+  an interface is a class whose methods are virtual, a record is a struct, a `foreach` is a `for` over the array's
+  `Length`, a `Map` is two arrays. Nothing already written changes: the full language is what every compiler and
+  editor still uses.
 - A program that stays up can now be written by standing on the class `Script` instead of implementing `IScript`.
   `Script` already has `OnInit`, `OnTick` and `OnDestroy`, doing nothing, so a script written this way fills in only
   the ones it uses and says `override` on each, while one written on the interface goes on writing all three with no

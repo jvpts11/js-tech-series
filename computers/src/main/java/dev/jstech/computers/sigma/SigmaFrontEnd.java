@@ -69,7 +69,13 @@ public final class SigmaFrontEnd {
      * files and everything they have to say belongs in one list, in one order.
      */
     public static CompilationUnit parse(final SourceFile source, final DiagnosticBag diagnostics) {
+        return parse(source, diagnostics, LanguageLevel.SIGMA_SHARP);
+    }
+
+    /** The same, for a source that may only be as much of the language as {@code level} allows. */
+    public static CompilationUnit parse(final SourceFile source, final DiagnosticBag diagnostics,
+                                        final LanguageLevel level) {
         final List<Token> tokens = new Lexer(source, diagnostics).tokenize();
-        return new Parser(tokens, diagnostics).parse(source.name());
+        return new Parser(tokens, diagnostics, level).parse(source.name());
     }
 }

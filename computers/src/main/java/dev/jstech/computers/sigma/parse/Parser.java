@@ -57,11 +57,23 @@ public final class Parser {
 
     private final List<Token> tokens;
     private final DiagnosticBag diagnostics;
+    /*
+     * How much of the language this source may be. Almost everything the subset lacks is a shape in the tree and
+     * is refused by reading the tree afterwards; an interpolated string is the one that is not, because it is read
+     * into the same additions somebody would have written by hand, and by then there is nothing left to see.
+     */
+    private final dev.jstech.computers.sigma.LanguageLevel level;
     private int position;
 
     public Parser(final List<Token> tokens, final DiagnosticBag diagnostics) {
+        this(tokens, diagnostics, dev.jstech.computers.sigma.LanguageLevel.SIGMA_SHARP);
+    }
+
+    public Parser(final List<Token> tokens, final DiagnosticBag diagnostics,
+                  final dev.jstech.computers.sigma.LanguageLevel level) {
         this.tokens = new ArrayList<>(tokens);
         this.diagnostics = diagnostics;
+        this.level = level;
     }
 
     /**
@@ -1247,6 +1259,10 @@ public final class Parser {
      * the sum is a string whatever the first hole is.
      */
     private IExpr parseInterpolated(final Token token) {
+        if (!this.level.full()) {
+            this.diagnostics.error(token.line(), token.column(), SigmaError.NOT_IN_THE_SUBSET,
+                    "strings with holes in them", "add the pieces together with +");
+        }
         @SuppressWarnings("unchecked")
         final List<Object> parts = (List<Object>) token.value();
         IExpr sum = null;

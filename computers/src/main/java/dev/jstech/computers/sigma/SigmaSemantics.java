@@ -12,6 +12,7 @@ import dev.jstech.computers.sigma.sem.BodyChecker;
 import dev.jstech.computers.sigma.sem.BuiltIns;
 import dev.jstech.computers.sigma.sem.Declarations;
 import dev.jstech.computers.sigma.sem.SemanticModel;
+import dev.jstech.computers.sigma.sem.SubsetRules;
 import dev.jstech.computers.sigma.sem.TypeRules;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -77,6 +78,12 @@ public final class SigmaSemantics {
         return analyse(sources, true);
     }
 
+    /** The same, for sources that may only be as much of the language as {@code level} allows. */
+    public static Result checkProgram(final List<SourceFile> sources, final LanguageLevel level) {
+        final DiagnosticBag bag = new DiagnosticBag(sources.isEmpty() ? "" : sources.getFirst().name());
+        return result(sources, bag, analyse(sources, bag, true, false, level));
+    }
+
     /**
      * Checks what it can of sources that may not parse, for an editor.
      *
@@ -120,13 +127,25 @@ public final class SigmaSemantics {
         return analyse(sources, bag, wholeProgram, false);
     }
 
+    static Analysis analyse(final List<SourceFile> sources, final DiagnosticBag bag,
+                            final boolean wholeProgram, final boolean tolerant) {
+        return analyse(sources, bag, wholeProgram, tolerant, LanguageLevel.SIGMA_SHARP);
+    }
+
     private static Analysis analyse(final List<SourceFile> sources, final DiagnosticBag bag,
-                                    final boolean wholeProgram, final boolean tolerant) {
+                                    final boolean wholeProgram, final boolean tolerant,
+                                    final LanguageLevel level) {
         final List<CompilationUnit> units = new ArrayList<>();
         for (final SourceFile source : sources) {
             bag.setFile(source.name());
-            units.add(SigmaFrontEnd.parse(source, bag));
+            units.add(SigmaFrontEnd.parse(source, bag, level));
         }
+        /*
+         * Before anything is resolved, so a source that reached for something the subset does not have is told
+         * that and not a string of consequences: a foreach over a List reports the two it wrote, not four more
+         * about a type that was never going to be found.
+         */
+        new SubsetRules(bag).check(units, level);
 
         final SemanticModel model = new SemanticModel();
         final BuiltIns builtIns = new BuiltIns();
