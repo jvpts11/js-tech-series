@@ -73,6 +73,9 @@ final class ClientReplication {
      */
     private final Map<String, Integer> buildQuarterReported = new HashMap<>();
     private int liveKernelQuarterReported;
+    /** The step of a by-hand install the count above belongs to, by the tick that step ends on. */
+    private long liveStepSeen = -1L;
+    private boolean liveStepWatched;
 
     ClientReplication(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
@@ -352,7 +355,20 @@ final class ClientReplication {
          * the two would have parted the first time either changed.
          */
         final LiveInstallState live = console.liveInstall();
+        /*
+         * A new step starts its own count. The count used to be kept for the whole session, so the first
+         * step that ran to its end left it at the top, and every step after that printed what it says
+         * straight away and then nothing: a merge stood at "Unpacking source..." for ever, with the rest of
+         * what it had to say waiting behind a count that could not go any higher.
+         */
+        if (live != null && live.busyUntil() != this.liveStepSeen) {
+            this.liveStepSeen = live.busyUntil();
+            this.liveKernelQuarterReported = 0;
+            this.liveStepWatched = false;
+        }
         if (live != null && live.busy(now)) {
+            // Seen running, so its end is this session's to print; a step found already over is old news.
+            this.liveStepWatched = true;
             final long left = live.busyUntil() - now;
             final int pct = (int) Math.max(0, Math.min(99, 100 - left * 100 / Math.max(1L, live.busyTotal())));
             final int quarter = pct / 25;
@@ -363,7 +379,7 @@ final class ClientReplication {
                 }
             }
         } else if (live != null && live.busyUntil() >= 0 && !live.busy(now)
-                && this.liveKernelQuarterReported > 0 && this.liveKernelQuarterReported < 4) {
+                && this.liveStepWatched && this.liveKernelQuarterReported < 4) {
             for (int quarter = this.liveKernelQuarterReported + 1; quarter <= 4; quarter++) {
                 for (final String line : live.busyLinesThrough(quarter)) {
                     wire.add(new DesktopShellOutputPayload.WireLine(line, ok));

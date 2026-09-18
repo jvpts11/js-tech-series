@@ -265,7 +265,15 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         final int action = e.kind() == FirmwareStatePayload.KIND_DISK
                 ? FirmwareActionPayload.ACTION_BOOT_DISK : FirmwareActionPayload.ACTION_BOOT_MEDIA;
         PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos, action, e.ref(), -1));
-        onClose();
+        /*
+         * And nothing else: the machine puts the next screen up, and this one goes when that one arrives.
+         * Closing here as well sent the server a close right behind the request, and the server handles them
+         * in that order: it opened the self-test for this player and then closed it again, while the client,
+         * which had already been told to show it, showed it. The player sat at a screen the server did not
+         * know they were looking at, so the self-test ended and handed over to nobody, and a terminal
+         * reached that way answered nothing at all, since no line typed into it came from a screen the
+         * server had open.
+         */
     }
 
     /**

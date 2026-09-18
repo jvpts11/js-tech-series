@@ -85,7 +85,11 @@ public final class KvmChannelScreen extends AbstractComputerScreen<MonitorSessio
         }
         PacketDistributor.sendToServer(new KvmSelectPayload(rackPos, monitorPos,
                 channels.get(index).slot()));
-        onClose();
+        /*
+         * The rack puts the chosen machine's screen up, and this one goes when that one arrives. Closing
+         * here as well sent a close right behind the choice, which the server took for the screen it had
+         * just opened: the player then sat at a machine the server did not know they were looking at.
+         */
     }
 
     @Override

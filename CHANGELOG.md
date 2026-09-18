@@ -465,6 +465,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- Booting a disk or a medium from the setup, or choosing a machine on a rack's switch, could leave the player
+  at a screen the machine did not know they were looking at. The screen closed itself right behind the request,
+  so the server opened the next screen and then closed it again while the client went on showing it: a
+  self-test reached that way ended and handed over to nobody until the monitor was left and opened again, and a
+  terminal reached that way answered nothing. The machine now puts the next screen up and the old one simply
+  gives way to it.
+- A step of a by-hand install printed its first lines and then stopped for good once any earlier step had run
+  to its end, so a merge stood at "Unpacking source..." with the rest of what it had to say never arriving.
 - A machine running a live medium could throw the whole installation away without a word. Whether the medium
   was still in the drive was asked on every line typed and every tick, and the question ended the session the
   moment it did not like the answer, so a drive one tick late to load read as an empty drive: the installation
