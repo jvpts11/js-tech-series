@@ -36,8 +36,32 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
      */
     protected static final int OFF_SCREEN = -10_000;
 
+    /** The size a machine's own words are written at, and the step from one line of them to the next. */
+    protected static final float WALL_SCALE = TextWall.SCALE;
+    protected static final int WALL_ROW = TextWall.ROW;
+
     protected AbstractComputerScreen(final T menu, final Inventory playerInventory, final Component title) {
         super(menu, playerInventory, title);
+    }
+
+    /** Draws one line of a text wall with its top left corner at {@code (x, y)}. */
+    protected void wall(final GuiGraphics g, final String line, final int x, final int y, final int color) {
+        TextWall.draw(g, font, line, x, y, color);
+    }
+
+    /** The same, centred on {@code cx}. */
+    protected void wallCentered(final GuiGraphics g, final String line, final int cx, final int y, final int color) {
+        TextWall.centered(g, font, line, cx, y, color);
+    }
+
+    /** The same, ending at {@code right} rather than starting at a left edge. */
+    protected void wallRight(final GuiGraphics g, final String line, final int right, final int y, final int color) {
+        TextWall.right(g, font, line, right, y, color);
+    }
+
+    /** How wide that line comes out at wall size, in screen pixels. */
+    protected int wallWidth(final String line) {
+        return TextWall.width(font, line);
     }
 
     /**

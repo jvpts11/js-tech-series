@@ -447,8 +447,12 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         this.popup = new DesktopPopup(title, message, this.font);
     }
 
-    /** A notice from the system itself: it rises over the notification area and goes away on its own. */
-    private record Balloon(String title, String body, long until) {
+    /**
+     * A notice from the system itself: it rises over the notification area and goes away on its own.
+     *
+     * @param opens the program a click on it opens, or empty when clicking it only puts it away
+     */
+    private record Balloon(String title, String body, long until, String opens) {
     }
 
     /** How long a balloon stays up before it fades away, in milliseconds. */
@@ -462,7 +466,25 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      * player something, not asking them to answer, so the desktop stays usable underneath it.
      */
     void showBalloon(final String title, final String body) {
-        this.balloon = new Balloon(title, body, System.currentTimeMillis() + BALLOON_MS);
+        this.showBalloon(title, body, "");
+    }
+
+    /**
+     * The same, for a notice that is also an invitation: clicking it opens the program it is about.
+     *
+     * <p>Which is how a machine of one edition said hello on its first start. It did not put a window in
+     * front of anybody; it said one sentence from the corner and left the offer open for as long as the
+     * sentence was up.
+     */
+    void showBalloon(final String title, final String body, final String opens) {
+        this.balloon = new Balloon(title, body, System.currentTimeMillis() + BALLOON_MS, opens);
+    }
+
+    /** Raises that balloon on whichever desktop is looking at that machine, if one is. */
+    public static void raise(final BlockPos host, final String title, final String body, final String opens) {
+        if (active != null && active.host.equals(host)) {
+            active.showBalloon(title, body, opens);
+        }
     }
 
     private boolean startOpen;
@@ -3097,7 +3119,19 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
         if (mx < r[0] || mx > r[0] + r[2] || my < r[1] || my > r[1] + r[3]) {
             return false;
         }
+        /*
+         * The close box only puts it away; anywhere else on a balloon that carries an offer takes it up, which
+         * is what made those balloons worth clicking rather than worth dismissing.
+         */
+        final String opens = balloon == null ? "" : balloon.opens();
+        final boolean onClose = mx >= r[0] + r[2] - 14;
         balloon = null;
+        if (!opens.isEmpty() && !onClose) {
+            final IDesktopApp app = factoryFor(opens);
+            if (app != null) {
+                openApp(opens, app);
+            }
+        }
         return true;
     }
 

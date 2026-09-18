@@ -199,15 +199,15 @@ public final class FirstBootGameTests {
         helper.assertTrue(computer.installOs(FRAMES_11), "Frames 11 installs on the machine");
         computer.console().setComputerName("STUDIO-11");
 
-        final BootSequence first = BootLines.forMachine(computer);
+        final BootSequence first = BootLines.forMachine(computer, helper.getLevel());
         helper.assertTrue("Hi.".equals(first.title()), "the first start greets: " + first.title());
         helper.assertTrue(first.subtitle().startsWith("STUDIO-11"),
                 "and greets this machine by its own name: " + first.subtitle());
 
         computer.setSystemWelcome(computer.systemWelcome().met());
-        final BootSequence later = BootLines.forMachine(computer);
-        helper.assertFalse("Hi.".equals(later.title()),
-                "a later start comes up behind the maker's name: " + later.title());
+        final BootSequence later = BootLines.forMachine(computer, helper.getLevel());
+        helper.assertTrue(later.title().isEmpty(),
+                "a later start comes up behind the maker's mark and says nothing: " + later.title());
         helper.succeed();
     }
 

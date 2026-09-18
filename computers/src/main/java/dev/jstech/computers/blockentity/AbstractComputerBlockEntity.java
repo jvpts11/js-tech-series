@@ -283,7 +283,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         final boolean wasOn = isRunning();
         power.toggle();
         if (wasOn && !isRunning()) {
-            showShutdown();
+            showShutdown(false);
         }
     }
 
@@ -292,38 +292,65 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         final boolean wasOn = isRunning();
         power.setPowered(on);
         if (wasOn && !on) {
-            showShutdown();
+            showShutdown(false);
         }
     }
 
     /**
-     * Puts the system's own goodbye in front of whoever is watching the machine being switched off.
+     * Starts the machine over: the system says goodbye first, and the self-test begins when it has finished.
      *
-     * <p>Only this path: a machine that went dark because its parts no longer make a computer lost its power
-     * rather than being shut down, and nothing says goodbye when the plug comes out. The systems of the earliest
-     * ages have nothing to show either, so their monitors simply go dark where they stand.
+     * <p>A restart is not a power cut. The system that is running closes its programs and shows what it shows
+     * while it does, exactly as it does on the way to being switched off, and only then does the machine test
+     * itself again. A machine with nothing running, or with a system of an age that had no such screen, starts
+     * over at once, which is also what those machines did.
      */
-    private void showShutdown() {
-        if (!(level instanceof ServerLevel server)) {
+    @Override
+    public void restart() {
+        if (!(level instanceof ServerLevel server) || !isRunning()) {
+            setNeedsPost(true);
             return;
         }
-        final BootSequence sequence =
-                BootLines.shutdownFor(this);
-        if (sequence.isEmpty()) {
+        final int ticks = showShutdown(true);
+        if (ticks <= 0) {
+            setNeedsPost(true);
             return;
+        }
+        power.beginDown(server.getGameTime(), ticks);
+    }
+
+    /**
+     * Puts the system's own goodbye in front of whoever is watching, and answers how long it runs for.
+     *
+     * <p>Only the two ways a machine really stops: switched off, or started over. A machine that went dark
+     * because its parts no longer make a computer lost its power rather than being shut down, and nothing says
+     * goodbye when the plug comes out. The systems of the earliest ages have nothing to show either, so their
+     * monitors simply go dark where they stand, which is what a length of zero means here.
+     *
+     * @param restarting the machine is coming straight back up, which every system words differently
+     */
+    private int showShutdown(final boolean restarting) {
+        if (!(level instanceof ServerLevel server)) {
+            return 0;
+        }
+        final BootSequence sequence = BootLines.shutdownFor(this, restarting);
+        if (sequence.isEmpty()) {
+            return 0;
         }
         final int ticks = BootTiming.shutdownTicks(
                 BootRunner.bootLength(this));
         ScreenSessions.eachWatcher(server, worldPosition, (player, monitor) -> {
             PacketDistributor.sendToPlayer(player,
                     new OpenSystemBootPayload(
-                            worldPosition, monitor, ticks, ticks, sequence, true,
+                            worldPosition, monitor, ticks, ticks, sequence, !restarting,
                             installedOs() == null ? BootSplash.PLAIN
-                                    : BootSplash.of(installedOs().platform(), installedOs().familyRank())));
+                                    : BootSplash.of(installedOs().platform(), installedOs().familyRank()),
+                            /* A machine on its way down shows no desktop coming up, so it names none. */
+                            "", installedOs() == null ? "" : installedOs().displayName()));
             // The words and the screen that shows them, as everywhere else: one without the other shows nothing.
             MonitorBlock.openSession(player, server, monitor, worldPosition, this,
                     MonitorSessionMenu.Phase.SYSTEM_BOOT);
         });
+        return ticks;
     }
 
     public void toggleAutoStart() {
@@ -464,10 +491,27 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return power.bootTotal();
     }
 
+    /** Whether the machine is closing its system down on its way to starting over. */
+    @Override
+    public boolean goingDown() {
+        return power.goingDown();
+    }
+
+    /** How long that closing-down takes in all, and how much of it a monitor opened now would join. */
+    @Override
+    public int downTotal() {
+        return power.downTotal();
+    }
+
+    @Override
+    public int downRemaining() {
+        return level == null ? 0 : power.downRemaining(level.getGameTime());
+    }
+
     /** What this machine's system shows while it comes up. */
     @Override
     public BootSequence bootSequence() {
-        return BootLines.forMachine(this);
+        return BootLines.forMachine(this, level instanceof ServerLevel server ? server : null);
     }
 
     /** Whether a drive this machine reaches holds something it could boot instead of one of its own disks. */

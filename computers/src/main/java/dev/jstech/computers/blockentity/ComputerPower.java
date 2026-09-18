@@ -65,6 +65,31 @@ final class ComputerPower {
     }
 
     /**
+     * The machine closes its programs for that long, and then starts over.
+     *
+     * <p>The session goes with it, exactly as a cold start takes it: a restart closes everything, and the
+     * desktop the player was in is not there to come back to on the other side of the self-test.
+     */
+    void beginDown(final long now, final int ticks) {
+        this.phases.beginDown(now, ticks);
+        this.endSession.run();
+    }
+
+    /** Whether the machine is closing down before starting over. */
+    boolean goingDown() {
+        return this.phases.goingDown();
+    }
+
+    /** How long that closing-down takes in all, and how much of it is left. */
+    int downTotal() {
+        return this.phases.downTotal();
+    }
+
+    int downRemaining(final long now) {
+        return this.phases.downRemaining(now);
+    }
+
+    /**
      * The ticks the self-test still has to run, so a monitor opened halfway through shows the rest of it
      * rather than starting over. A machine that has not worked its length out yet answers nothing.
      */

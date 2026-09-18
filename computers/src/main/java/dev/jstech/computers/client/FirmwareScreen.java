@@ -282,7 +282,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                  * installer anyway, which then played a write the server refused without saying so.
                  */
                 notice(e.installMode() < 0 ? "There is no installer on that medium."
-                        : systemNameOf(e.label()) + " needs " + reasonOf(e.detail()) + " hardware.");
+                        : systemNameOf(e.label()) + " needs " + e.note() + " hardware.");
                 return;
             }
             /*
@@ -314,10 +314,33 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         return label.replace(" installer", "").replace(" (live)", "");
     }
 
-    /** The "why not" the server appends to a medium's detail after a dash, or the whole detail. */
-    private static String reasonOf(final String detail) {
-        final int dash = detail.indexOf(" - ");
-        return dash < 0 ? detail : detail.substring(dash + 3);
+    /**
+     * The boot disk as the hardware page names it: the slot, and the system that slot actually boots.
+     *
+     * <p>A slot number on its own tells a player which disk the machine reaches for and not what it will get,
+     * which on a machine with a system on each disk is the only part of the answer worth having.
+     */
+    private String bootDiskLine() {
+        if (state == null || state.bootSlot() < 0) {
+            return "automatic";
+        }
+        final String slot = "Disk " + state.bootSlot();
+        for (final FirmwareStatePayload.Entry e : state.entries()) {
+            if (e.kind() == FirmwareStatePayload.KIND_DISK && e.ref() == state.bootSlot()) {
+                return slot + "  (" + e.label() + ")";
+            }
+        }
+        return slot;
+    }
+
+    /**
+     * Where an entry lives, as a setup page names it: the disk by its slot and its model, or a drive by the
+     * kind of drive it is, with whatever stands in the way of booting it said after.
+     */
+    private static String entryWhere(final FirmwareStatePayload.Entry e) {
+        final String where = e.kind() == FirmwareStatePayload.KIND_DISK
+                ? "Disk " + e.ref() + " · " + e.device() : e.device();
+        return e.note().isEmpty() ? where : where + " - " + e.note();
     }
 
     /**
@@ -443,7 +466,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 final boolean sel = i == selected;
                 final String mark = page == PAGE_ORDER && state.bootSlot() == e.ref()
                         && e.kind() == FirmwareStatePayload.KIND_DISK ? "*" : " ";
-                final String line = (sel ? ">" : " ") + mark + (i + 1) + ". " + e.label() + "  (" + e.detail() + ")";
+                final String line = (sel ? ">" : " ") + mark + (i + 1) + ". " + e.label()
+                        + "  (" + entryWhere(e) + ")";
                 rowHits.add(new int[]{tx, ty, W - 28, ROW_H});
                 g.drawString(font, line, tx, ty, e.bootable() || page == PAGE_ORDER ? (sel ? CLI_BRIGHT : CLI_TEXT) : CLI_DIM, false);
                 ty += ROW_H;
@@ -566,7 +590,12 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         g.fill(x, y, x + W, y + 20, UEFI_HEAD);
         g.fill(x, y + 20, x + W, y + 22, UEFI_ACCENT);
         g.drawString(font, Branding.HARDWARE_HOUSE, x + 10, y + 6, UEFI_TEXT, false);
-        g.drawString(font, "UEFI", x + W - font.width("UEFI") - 10, y + 6, UEFI_DIM, false);
+        /*
+         * The firmware's own version, from the one place that decides it, so this header and the self-test
+         * that ran before it cannot disagree about which firmware the player is looking at.
+         */
+        final String version = "UEFI " + Branding.biosVersion(era());
+        g.drawString(font, version, x + W - font.width(version) - 10, y + 6, UEFI_DIM, false);
 
         final int top = y + 30;
         final int navX = x + 10;
@@ -627,7 +656,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 final String first = page == PAGE_ORDER && state.bootSlot() == e.ref()
                         && e.kind() == FirmwareStatePayload.KIND_DISK ? "  [first]" : "";
                 g.drawString(font, e.label() + first, mainX + 20, ry + 3, e.bootable() || page == PAGE_ORDER ? UEFI_TEXT : UEFI_DIM, false);
-                final String detail = e.detail();
+                final String detail = entryWhere(e);
                 final String shown = font.width(detail) > mainW - 130 ? trimTo(detail, mainW - 130) : detail;
                 g.drawString(font, shown, mainX + mainW - font.width(shown) - 8, ry + 3, UEFI_DIM, false);
                 ry += ROW_H + 4;
@@ -685,11 +714,12 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 {"Architecture", arch},
                 {"Cores", cores},
                 {"Memory", ram},
-                {"Video", video},
+                /* The newest firmware calls the card graphics; the boards before it called it the video adapter. */
+                {kind == FirmwareKind.UEFI ? "Graphics" : "Video", video},
                 {"Board", board},
                 {"Hardware Era", eraLabel()},
                 {"Monitors", monitors},
-                {"Boot Disk", state == null || state.bootSlot() < 0 ? "automatic" : "Disk " + state.bootSlot()},
+                {"Boot Disk", bootDiskLine()},
                 {"Install Target", state == null || state.installTargetSlot() < 0 ? "no disk" : "Disk " + state.installTargetSlot()},
         };
         for (final String[] pair : kv) {

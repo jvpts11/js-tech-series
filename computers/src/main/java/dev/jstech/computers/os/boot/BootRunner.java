@@ -11,6 +11,7 @@ import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.operation.payload.DesktopBalloonPayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
@@ -22,6 +23,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * Carries a machine up: the power-on self-test, the wait at a boot manager, and the system coming up.
@@ -41,12 +43,16 @@ public final class BootRunner {
     /** How long a boot manager waits before booting its first entry: the five seconds those menus always gave. */
     public static final int MENU_TICKS = 100;
 
+    /** Where in its family the one edition sits that greets with a notice instead of a window. */
+    private static final int BALLOON_GREETER_RANK = 2;
+
     private BootRunner() {
     }
 
     /** One tick of wherever this machine is on its way up. */
     public static void tick(final IOsHost machine, final BootPhases phases, final ServerLevel level,
                             final BlockPos pos) {
+        down(machine, phases, level, pos);
         post(machine, phases, level, pos);
         halted(machine, phases, level, pos);
         menu(machine, phases, level);
@@ -68,6 +74,46 @@ public final class BootRunner {
     }
 
     /**
+     * Carries a restart's closing-down along, and starts the self-test when the system has finished saying
+     * goodbye.
+     *
+     * <p>A restart used to jump straight to the self-test, which meant the one screen a system of any age put
+     * up on its way down was the one screen a player could never see: switching a machine off showed it and
+     * restarting one did not, although restarting is the way anybody actually reboots a computer here.
+     */
+    private static void down(final IOsHost machine, final BootPhases phases, final ServerLevel level,
+                             final BlockPos pos) {
+        if (!phases.goingDown()) {
+            return;
+        }
+        if (!machine.isRunning()) {
+            phases.endDown();
+            return;
+        }
+        if (!phases.downDone(level.getGameTime())) {
+            return;
+        }
+        phases.endDown();
+        machine.setNeedsPost(true);
+        /*
+         * Timed here rather than on the next tick, so the screen put in front of whoever is watching joins a
+         * self-test of the length this machine's self-test actually has. Opened before it was timed, it drew
+         * the fallback length instead and read out its lines over a test that had already ended.
+         */
+        timePost(machine, phases, level.getGameTime());
+        if (machine.onScreen()) {
+            ScreenSessions.eachWatcher(level, pos,
+                    (player, monitor) -> MonitorBlock.openPost(player, level, monitor, pos));
+        }
+    }
+
+    /** Works out how long this machine's own self-test takes and says when it ends. */
+    private static void timePost(final IOsHost machine, final BootPhases phases, final long now) {
+        phases.timePost(now + BootTiming.postTicks(memoryModules(machine), postDevices(machine),
+                machine.installedEra()));
+    }
+
+    /**
      * Carries the self-test along: works out how long this machine's own takes the first tick after the power
      * goes on, and ends it when its time is up, booting whoever is watching.
      */
@@ -78,8 +124,7 @@ public final class BootRunner {
         }
         final long now = level.getGameTime();
         if (phases.postUntimed()) {
-            phases.timePost(now + BootTiming.postTicks(memoryModules(machine), postDevices(machine),
-                    machine.installedEra()));
+            timePost(machine, phases, now);
             return;
         }
         if (!phases.postDone(now)) {
@@ -210,10 +255,34 @@ public final class BootRunner {
             return;
         }
         phases.endBoot();
-        greet(machine);
+        final boolean balloon = greet(machine);
         if (machine.onScreen()) {
             ScreenSessions.bootWatchers(level, pos);
+            /*
+             * After the desktop is in front of them, never before: a notice raised at a screen that does not
+             * exist yet is a notice nobody ever sees.
+             */
+            if (balloon) {
+                sayHello(machine, level, pos);
+            }
         }
+    }
+
+    /**
+     * The notice one edition greeted its owner with, raised from the corner of the desktop it just opened.
+     *
+     * <p>A sentence and an offer rather than a window: that edition did not interrupt anybody on a first
+     * start, it said the machine was ready and left the way to Welcome one click away for as long as the
+     * notice was up.
+     */
+    private static void sayHello(final IOsHost machine, final ServerLevel level, final BlockPos pos) {
+        final OsDef system = machine.installedOs();
+        final String name = machine.customName().isEmpty() ? "This computer" : machine.customName();
+        ScreenSessions.eachWatcher(level, pos, (player, monitor) ->
+                PacketDistributor.sendToPlayer(player, new DesktopBalloonPayload(pos,
+                        "Welcome to " + (system == null ? "this computer" : system.displayName()),
+                        name + " is ready. Click here to see what is on this computer.",
+                        WelcomeFacts.WINDOW_KEY)));
     }
 
     /** Puts the boot menu in front of whoever is watching. */
@@ -231,19 +300,30 @@ public final class BootRunner {
      *
      * <p>The window is the machine's, like every other window on it, so a machine that came up with nobody
      * watching still has its welcome waiting when somebody opens the monitor. It is never put up twice.
+     *
+     * <p>One edition greeted differently, and the difference is the whole of what that start felt like: it
+     * raised a notice from the corner and waited to be asked. That one answers yes here, and the notice is
+     * sent once the desktop it belongs to is open.
+     *
+     * @return whether this machine owes a notice rather than a window
      */
-    private static void greet(final IOsHost machine) {
+    private static boolean greet(final IOsHost machine) {
         if (!WelcomeFacts.greeter(machine) || !machine.systemWelcome().greets()) {
-            return;
+            return false;
+        }
+        final OsDef system = machine.installedOs();
+        if (system != null && system.familyRank() == BALLOON_GREETER_RANK) {
+            return true;
         }
         final List<OpenWindow> windows = new ArrayList<>(machine.openWindows());
         for (final OpenWindow open : windows) {
             if (open.key().equals(WelcomeFacts.WINDOW_KEY)) {
-                return;
+                return false;
             }
         }
         windows.add(new OpenWindow(WelcomeFacts.WINDOW_KEY, 40, 30, 250, 136, false, false));
         machine.setOpenWindows(windows);
+        return false;
     }
 
     /** How many memory modules the self-test has to count. */

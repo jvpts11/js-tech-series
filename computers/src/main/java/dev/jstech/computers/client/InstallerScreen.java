@@ -8,8 +8,10 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.menu.MonitorSessionMenu;
+import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.InstallerActionPayload;
 import dev.jstech.computers.operation.payload.OpenInstallerPayload;
+import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
 import dev.jstech.computers.os.install.InstallerChrome;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.InstallerPage;
@@ -66,6 +68,9 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     private final BlockPos monitorPos;
 
     private InstallerFlow flow;
+    /** What the machine is made of, which one of these installers checks before it will start. */
+    @Nullable
+    private FirmwareStatePayload state;
     private int ticksDone;
     /** Which row of the page's list is under the cursor. */
     private int selection;
@@ -80,6 +85,8 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     private int listLeft;
     private int listWidth;
     private int listRows;
+    /** How tall a row of the list drawn last was, so a click lands on the one the player is looking at. */
+    private int listRowHeight = ROW;
     private int[] nextButton;
     private int[] backButton;
     private int[] cancelButton;
@@ -88,6 +95,9 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     /** The page the machine last sent, kept until the session that shows it is built. */
     @Nullable
     private static OpenInstallerPayload pending;
+
+    /** The screen currently open, so the machine's own description of itself finds it. */
+    private static InstallerScreen active;
 
     public InstallerScreen(final MonitorSessionMenu session, final Inventory inventory, final Component title) {
         super(session, inventory, title);
@@ -105,6 +115,33 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     /** The page the machine has reached, said before the session that shows it is opened. */
     public static void expect(final OpenInstallerPayload payload) {
         pending = payload;
+    }
+
+    /**
+     * Routes the machine's own description of itself to the installer, which one of these reads out.
+     *
+     * <p>The same answer the self-test and the setup are sent: an installer that checks a machine before it
+     * starts is asking the same questions the firmware asked a moment earlier, so it asks the same way.
+     */
+    public static void accept(final FirmwareStatePayload payload) {
+        if (active != null && active.computerPos.equals(payload.hostPos())) {
+            active.state = payload;
+        }
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        active = this;
+        PacketDistributor.sendToServer(new RequestFirmwareStatePayload(this.computerPos));
+    }
+
+    @Override
+    public void removed() {
+        if (active == this) {
+            active = null;
+        }
+        super.removed();
     }
 
     /** The machine's own generation, so the bezel is the monitor that machine would really have. */
@@ -259,7 +296,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             return true;
         }
         if (this.listRows > 0 && mouseX >= this.listLeft && mouseX < this.listLeft + this.listWidth) {
-            final int row = (int) ((mouseY - this.listTop) / ROW);
+            final int row = (int) ((mouseY - this.listTop) / Math.max(1, this.listRowHeight));
             if (row >= 0 && row < this.listRows) {
                 this.selection = row;
                 this.chose();
@@ -443,33 +480,141 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         this.listTop = top;
         this.listWidth = width;
         this.listRows = rows;
+        this.listRowHeight = this.row();
+    }
+
+    /**
+     * Whether this page is one of the ones drawn as plain text, which are written at the size a machine's own
+     * output is written at.
+     *
+     * <p>The installers that ran in text ran in a terminal and fitted a screenful of it; the ones with a shape
+     * of their own drew their words inside boxes they had already sized, so those stay as they are.
+     */
+    private boolean textMode() {
+        return this.flow.chrome() == InstallerChrome.FULL_TEXT
+                || this.flow.chrome() == InstallerChrome.BOXED_TEXT;
+    }
+
+    /** Writes one line of a page in whichever size that page is written at. */
+    private void say(final GuiGraphics g, final String text, final int x, final int y, final int colour) {
+        if (this.textMode()) {
+            wall(g, text, x, y, colour);
+        } else {
+            g.drawString(font, text, x, y, colour, false);
+        }
+    }
+
+    /** The same, ending at {@code rightEdge}. */
+    private void sayRight(final GuiGraphics g, final String text, final int rightEdge, final int y,
+                          final int colour) {
+        this.say(g, text, rightEdge - this.width(text), y, colour);
+    }
+
+    /** How wide that line comes out in the size this page is written at. */
+    private int width(final String text) {
+        return this.textMode() ? wallWidth(text) : font.width(text);
+    }
+
+    /** How far apart this page's rows sit, which the mouse also has to know to find the one under it. */
+    private int row() {
+        return this.textMode() ? WALL_ROW + 2 : ROW;
+    }
+
+    /** A label cut to the room it has, measured in the size this page is written at. */
+    private String fit(final String text, final int room) {
+        return InstallerFrames.clip(font, text, this.textMode() ? TextWall.room(room) : room);
     }
 
     private void drawWelcome(final GuiGraphics g, final InstallerFrames.Frame f) {
-        final InstallerFrames.Paint p = f.paint();
-        final InstallerFlow.Disk disk = this.flow.target();
-        int ty = f.y();
-        g.drawString(font, "Setup prepares " + this.flow.systemName() + " to run on this computer.",
-                f.x(), ty, p.text(), false);
-        ty += 18;
-        g.drawString(font, this.flow.systemName() + " needs " + size(this.flow.footprintMb()) + ".",
-                f.x(), ty, p.dim(), false);
-        ty += 16;
-        if (disk == null) {
-            g.drawString(font, "No disk in this machine has room for it.", f.x(), ty, p.accent(), false);
+        /*
+         * One of them opens by checking the machine rather than by greeting it, and every line it checks is a
+         * rule the game already keeps. A welcome with that installer's heading over it and no check under it
+         * was the heading promising something the page never did.
+         */
+        if (this.flow.style() == InstallerStyle.FRAMES_95) {
+            this.drawCheck(g, f);
             return;
         }
-        g.drawString(font, "Setup found a disk:", f.x(), ty, p.dim(), false);
+        final InstallerFrames.Paint p = f.paint();
+        final InstallerFlow.Disk disk = this.flow.target();
+        final int step = this.row();
+        int ty = f.y();
+        this.say(g, "Setup prepares " + this.flow.systemName() + " to run on this computer.",
+                f.x(), ty, p.text());
+        ty += step * 2;
+        this.say(g, "- To set up " + this.flow.systemName() + " now, press ENTER.", f.x(), ty, p.text());
+        ty += step;
+        this.say(g, "- To quit Setup without installing, press F3.", f.x(), ty, p.text());
+        ty += step * 2;
+        if (disk == null) {
+            this.say(g, "No disk in this machine has room for it.", f.x(), ty, p.accent());
+            return;
+        }
+        this.say(g, "Setup found a disk for " + this.flow.systemName() + ":", f.x(), ty, p.dim());
+        ty += step;
         // Cut to the page, since a drive names itself at whatever length its maker chose.
-        g.drawString(font, InstallerFrames.clip(font, "Disk " + disk.slot() + "  " + disk.label(), f.w()),
-                f.x(), ty + 12, p.bright(), false);
-        g.drawString(font, holds(disk) + ", " + size(this.flow.freeOn(disk)) + " free",
-                f.x(), ty + 23, p.dim(), false);
+        this.say(g, this.fit("Disk " + disk.slot() + "  " + disk.label(), f.w()), f.x() + 8, ty, p.bright());
+        ty += step;
+        this.say(g, holds(disk) + ", " + size(this.flow.freeOn(disk)) + " free", f.x() + 8, ty, p.dim());
+    }
+
+    /**
+     * The check one installer ran before it would start: the machine, line by line, each one ticked.
+     *
+     * <p>Every line is a rule the game keeps anyway, which is the point of showing them: the player watches
+     * the installer satisfy itself about the generation, the processor, the memory, the room on the disk and
+     * the medium in the drive, and knows what the refusal would have been about if one came.
+     */
+    private void drawCheck(final GuiGraphics g, final InstallerFrames.Frame f) {
+        final InstallerFrames.Paint p = f.paint();
+        final FirmwareStatePayload.Machine machine = this.state == null ? null : this.state.machine();
+        final InstallerFlow.Disk disk = this.flow.target();
+        final String unknown = "reading ...";
+        final String[][] rows = {
+                {"Generation", machine == null || machine.eraLabel().isEmpty() ? unknown : machine.eraLabel()},
+                {"Processor", machine == null || machine.cpuName().isEmpty() ? unknown : machine.cpuName()},
+                {"Memory", machine == null ? unknown : size(machine.ramMb())},
+                {"Disk " + (disk == null ? "-" : Integer.toString(disk.slot())),
+                        disk == null ? "no disk with room" : size(this.flow.freeOn(disk)) + " free"},
+                {"Installation medium", this.flow.systemName()},
+        };
+        final int step = this.row();
+        int ty = f.y();
+        for (final String[] line : rows) {
+            final boolean good = !unknown.equals(line[1]) && !"no disk with room".equals(line[1]);
+            final String label = line[0] + " ";
+            this.say(g, label, f.x(), ty, p.text());
+            /*
+             * The dots between the question and the answer, which is how a check of that age tied the two
+             * together across a screen that had no columns to line them up in.
+             */
+            final int answerAt = f.x() + f.w() - 20 - this.width(line[1]);
+            this.leader(g, f.x() + this.width(label), answerAt - 3, ty, p.dim());
+            this.say(g, line[1], answerAt, ty, p.text());
+            if (good) {
+                this.sayRight(g, "OK", f.x() + f.w(), ty, p.accent());
+            }
+            ty += step;
+        }
+        ty += step;
+        this.say(g, this.flow.systemName() + " needs " + size(this.flow.footprintMb()) + " on a disk.",
+                f.x(), ty, p.dim());
+    }
+
+    /** The row of dots between a question and its answer, drawn to fill exactly the gap between them. */
+    private void leader(final GuiGraphics g, final int from, final int to, final int y, final int colour) {
+        final int step = Math.max(1, this.width("."));
+        final int dots = (to - from) / step;
+        if (dots <= 1) {
+            return;
+        }
+        this.say(g, ".".repeat(dots), from, y, colour);
     }
 
     private void drawDisks(final GuiGraphics g, final InstallerFrames.Frame f) {
         final InstallerFrames.Paint p = f.paint();
         final boolean table = this.flow.chrome() == InstallerChrome.CARD;
+        final int step = this.row();
         int ty = f.y();
         if (table) {
             g.drawString(font, "Disk", f.x() + 4, ty, p.dim(), false);
@@ -484,9 +629,9 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             final InstallerFlow.Disk disk = this.flow.disks().get(i);
             final boolean here = i == this.selection;
             if (here) {
-                g.fill(f.x(), ty - 1, f.x() + f.w(), ty + ROW - 1, p.select());
+                g.fill(f.x(), ty - 1, f.x() + f.w(), ty + step - 1, p.select());
                 if (table) {
-                    g.fill(f.x(), ty - 1, f.x() + 2, ty + ROW - 1, p.accent());
+                    g.fill(f.x(), ty - 1, f.x() + 2, ty + step - 1, p.accent());
                 }
             }
             final int row = here ? p.selectText() : p.text();
@@ -507,42 +652,42 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
                 right(g, disk.hasSystem() ? disk.holds() : "Nothing", f.x() + f.w() - 4, ty, faint);
             } else {
                 final String state = holds(disk) + ", " + size(this.flow.freeOn(disk)) + " free";
-                g.drawString(font, InstallerFrames.clip(font, "Disk " + disk.slot() + "  " + disk.label(),
-                        f.w() - font.width(state) - COLUMN_GAP), f.x(), ty, row, false);
-                right(g, state, f.x() + f.w(), ty, faint);
+                this.say(g, this.fit("Disk " + disk.slot() + "  " + disk.label(),
+                        f.w() - this.width(state) - COLUMN_GAP), f.x(), ty, row);
+                this.sayRight(g, state, f.x() + f.w(), ty, faint);
             }
-            ty += ROW;
+            ty += step;
         }
-        ty += 6;
-        g.drawString(font, this.flow.systemName() + " needs " + size(this.flow.footprintMb()) + ".",
-                f.x(), ty, p.dim(), false);
+        ty += step;
+        this.say(g, this.flow.systemName() + " needs " + size(this.flow.footprintMb()) + ".",
+                f.x(), ty, p.dim());
         final InstallerFlow.Disk disk = this.chosenDisk();
         if (disk != null && !this.flow.roomOn(disk)) {
-            g.drawString(font, "No room here. Erase this disk, or choose another.", f.x(), ty + 10, p.accent(),
-                    false);
+            this.say(g, "No room here. Erase this disk, or choose another.", f.x(), ty + step, p.accent());
         } else if (disk != null && disk.hasSystem()) {
-            g.drawString(font, disk.holds() + " on this disk is erased first.", f.x(), ty + 10, p.accent(), false);
+            this.say(g, disk.holds() + " on this disk is erased first.", f.x(), ty + step, p.accent());
         }
         if (this.flow.page() == InstallerPage.SETTINGS) {
             final String label = "Computer name:  ";
-            final int room = f.w() - font.width(label);
-            g.drawString(font, label + this.tailThatFits(room) + this.caret(), f.x(), ty + 22, p.bright(), false);
+            final int room = f.w() - this.width(label);
+            this.say(g, label + this.tailThatFits(room) + this.caret(), f.x(), ty + step * 2, p.bright());
         }
     }
 
     private void drawName(final GuiGraphics g, final InstallerFrames.Frame f) {
         final InstallerFrames.Paint p = f.paint();
+        final int step = this.row();
         int ty = f.y();
-        g.drawString(font, "This name identifies the computer at the", f.x(), ty, p.dim(), false);
-        g.drawString(font, "prompt and on the network.", f.x(), ty + 10, p.dim(), false);
-        ty += 28;
-        g.drawString(font, "Computer name:", f.x(), ty, p.text(), false);
+        this.say(g, "This name identifies the computer at the", f.x(), ty, p.dim());
+        this.say(g, "prompt and on the network.", f.x(), ty + step, p.dim());
+        ty += step * 3;
+        this.say(g, "Computer name:", f.x(), ty, p.text());
         final int fx = f.x();
-        final int fy = ty + 12;
+        final int fy = ty + step + 2;
         final int fw = Math.min(150, f.w());
         g.fill(fx, fy, fx + fw, fy + 13, 0xFFFFFFFF);
         g.fill(fx, fy + 12, fx + fw, fy + 13, p.accent());
-        g.drawString(font, this.tailThatFits(fw - 6) + this.caret(), fx + 3, fy + 3, 0xFF202434, false);
+        this.say(g, this.tailThatFits(fw - 6) + this.caret(), fx + 3, fy + 3, 0xFF202434);
     }
 
     /**
@@ -553,9 +698,9 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
      * of the box and over whatever is drawn beside it.
      */
     private String tailThatFits(final int room) {
-        final int left = Math.max(0, room - font.width("_"));
+        final int left = Math.max(0, room - this.width("_"));
         String tail = this.typed;
-        while (!tail.isEmpty() && font.width(tail) > left) {
+        while (!tail.isEmpty() && this.width(tail) > left) {
             tail = tail.substring(1);
         }
         return tail;
@@ -568,33 +713,43 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
 
     private void drawDesktops(final GuiGraphics g, final InstallerFrames.Frame f) {
         final InstallerFrames.Paint p = f.paint();
+        final int step = this.row();
         int ty = f.y();
         if (this.flow.mirrorAnswers()) {
-            g.drawString(font, "The Mirror on " + this.flow.mirrorHost() + " answers.", f.x(), ty, p.dim(), false);
+            this.say(g, "The Mirror on " + this.flow.mirrorHost() + " answers. Choose a desktop to install",
+                    f.x(), ty, p.dim());
+            this.say(g, "with " + this.flow.systemName() + ", or none to boot to the terminal.",
+                    f.x(), ty + step, p.dim());
         } else {
-            g.drawString(font, "No Mirror answers, so it comes up at its terminal.", f.x(), ty, p.dim(), false);
+            this.say(g, "No Mirror answers, so it comes up at its terminal.", f.x(), ty, p.dim());
         }
-        ty += 16;
+        ty += step * 2 + 4;
         this.listAt(f.x(), ty, f.w(), this.flow.desktops().size() + 1);
         for (int i = 0; i <= this.flow.desktops().size(); i++) {
             final boolean here = i == this.selection;
             if (here) {
-                g.fill(f.x(), ty - 1, f.x() + f.w(), ty + ROW - 1, p.select());
+                g.fill(f.x(), ty - 1, f.x() + f.w(), ty + step - 1, p.select());
             }
             final int row = here ? p.selectText() : p.text();
+            /*
+             * The mark of what is chosen, written out rather than drawn: these installers ran in text, and a
+             * filled bracket was the whole of what a chosen option looked like there.
+             */
+            final String mark = here ? "(X) " : "( ) ";
             if (i == 0) {
-                g.drawString(font, "None, the terminal only", f.x() + 2, ty, row, false);
+                this.say(g, mark + "None, the terminal only", f.x() + 2, ty, row);
             } else {
                 final InstallerFlow.Desktop desktop = this.flow.desktops().get(i - 1);
-                g.drawString(font, desktop.name(), f.x() + 2, ty, row, false);
-                right(g, size(desktop.sizeMb()), f.x() + f.w(), ty, here ? p.selectText() : p.dim());
+                this.say(g, mark + desktop.name(), f.x() + 2, ty, row);
+                this.sayRight(g, size(desktop.sizeMb()), f.x() + f.w(), ty, here ? p.selectText() : p.dim());
             }
-            ty += ROW;
+            ty += step;
         }
     }
 
     private void drawHub(final GuiGraphics g, final InstallerFrames.Frame f) {
         final InstallerFrames.Paint p = f.paint();
+        final int step = this.row();
         int ty = f.y();
         final List<Integer> pages = this.hubPages();
         this.listAt(f.x(), ty, f.w(), 0);
@@ -603,16 +758,15 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             final boolean wanted = this.flow.wants(page);
             final boolean here = i == this.selection;
             if (here) {
-                g.fill(f.x(), ty - 1, f.x() + f.w(), ty + 20, p.select());
+                g.fill(f.x(), ty - 1, f.x() + f.w(), ty + step * 2 - 1, p.select());
             }
-            g.drawString(font, (i + 1) + ") " + (wanted ? "[!]" : "[x]") + " "
+            this.say(g, (i + 1) + ") " + (wanted ? "[!]" : "[x]") + " "
                             + this.flow.style().heading(page, this.flow.systemName()),
-                    f.x() + 2, ty, here ? p.selectText() : wanted ? p.accent() : p.text(), false);
-            g.drawString(font, this.answerFor(page), f.x() + 22, ty + 10, here ? p.selectText() : p.dim(), false);
-            ty += 22;
+                    f.x() + 2, ty, here ? p.selectText() : wanted ? p.accent() : p.text());
+            this.say(g, this.answerFor(page), f.x() + 22, ty + step, here ? p.selectText() : p.dim());
+            ty += step * 2 + 2;
         }
-        g.drawString(font, "A letter begins the installation once nothing is still wanted.", f.x(), ty + 4,
-                p.dim(), false);
+        this.say(g, "A letter begins the installation once nothing is still wanted.", f.x(), ty + 4, p.dim());
     }
 
     /** What each question on the list has been answered with so far, in a few words. */
@@ -627,58 +781,160 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         };
     }
 
+    /**
+     * The copy, in the shape the installer doing it reported one.
+     *
+     * <p>These never looked alike. One put a single bar in a box and named the drive it was reading; another
+     * listed every step and dotted its way across to a "done"; another had one gauge and a percentage on it;
+     * the graphical ones kept their list down the side and said only what they were doing now. Drawing one
+     * list and one bar for all of them made the most-watched minute of every installation the same minute.
+     */
     private void drawWork(final GuiGraphics g, final InstallerFrames.Frame f) {
-        final InstallerFrames.Paint p = f.paint();
-        /*
-         * The frame with the steps down its side has already listed them; repeating them in the middle of the
-         * screen would be the same account twice, so there it only says what it is working on.
-         */
-        if (this.flow.chrome() == InstallerChrome.SIDE_PANEL) {
-            final InstallerFlow.Step step = this.flow.steps().get(this.flow.stepAt(this.ticksDone));
-            g.drawString(font, InstallerFrames.clip(font, step.label(), f.w()), f.x(), f.y(), p.text(), false);
-            final InstallerFlow.Disk disk = this.flow.target();
-            if (disk != null) {
-                /*
-                 * Cut to the panel it is written in. A drive names itself at whatever length its maker chose,
-                 * and this line was drawn at full length whatever the room: on a long name it ran out past the
-                 * edge of the glass and off the monitor.
-                 */
-                g.drawString(font, InstallerFrames.clip(font,
-                                "Installing on Disk " + disk.slot() + ", " + disk.label(), f.w()),
-                        f.x(), f.y() + 12, p.dim(), false);
+        switch (this.flow.style()) {
+            case FRAMES_XP -> {
+                if (this.flow.chrome() == InstallerChrome.SIDE_PANEL) {
+                    this.drawWorkBeside(g, f);
+                } else {
+                    this.drawWorkBar(g, f);
+                }
             }
-            return;
+            case MC_DOS, FRAMES_95, DEBIAN -> this.drawWorkBar(g, f);
+            case FRAMES_11 -> this.drawWorkSteps(g, f);
+            default -> this.drawWorkLog(g, f);
         }
+    }
+
+    /**
+     * One bar and the drive being read: what the installers that reported a single figure showed.
+     *
+     * <p>A player watching one of these learns two things, which is what those screens gave them: how far it
+     * has got, and that the medium is still being read, so taking it out now would stop the whole thing.
+     */
+    private void drawWorkBar(final GuiGraphics g, final InstallerFrames.Frame f) {
+        final InstallerFrames.Paint p = f.paint();
+        final int step = this.row();
+        final InstallerFlow.Disk disk = this.flow.target();
+        final int percent = this.flow.permille(this.ticksDone) / 10;
+        int ty = f.y();
+        if (disk != null) {
+            this.say(g, this.fit("Setup is copying " + this.flow.systemName() + " to Disk " + disk.slot()
+                    + ", " + disk.label() + ".", f.w()), f.x(), ty, p.text());
+            ty += step * 2;
+        }
+        final InstallerFlow.Step running = this.flow.steps().get(this.flow.stepAt(this.ticksDone));
+        this.say(g, running.label(), f.x(), ty, p.bright());
+        ty += step + 4;
+        /* The bar itself, sunk into the page the way those installers drew one. */
+        final int barH = 9;
+        g.fill(f.x() - 1, ty - 1, f.x() + f.w() + 1, ty + barH + 1, p.dim());
+        g.fill(f.x(), ty, f.x() + f.w(), ty + barH, 0xFF000000);
+        g.fill(f.x(), ty, f.x() + f.w() * this.flow.permille(this.ticksDone) / 1000, ty + barH, p.accent());
+        ty += barH + 6;
+        this.say(g, percent + "% complete", f.x(), ty, p.text());
+        this.sayRight(g, "About " + this.secondsLeft() + " seconds left", f.x() + f.w(), ty, p.dim());
+        ty += step;
+        this.say(g, "Reading " + this.mediumName() + ". Leave it in.", f.x(), ty, p.dim());
+    }
+
+    /**
+     * Every step with dots running out to what came of it: how the installers that ran in a terminal reported.
+     */
+    private void drawWorkLog(final GuiGraphics g, final InstallerFrames.Frame f) {
+        final InstallerFrames.Paint p = f.paint();
+        final int step = this.row();
         final int running = this.flow.stepAt(this.ticksDone);
         int ty = f.y();
         for (int i = 0; i < this.flow.steps().size(); i++) {
-            final InstallerFlow.Step step = this.flow.steps().get(i);
+            final InstallerFlow.Step line = this.flow.steps().get(i);
             final boolean done = i < running;
-            g.drawString(font, InstallerFrames.clip(font, step.label(), f.w() - 40), f.x(), ty,
+            final String answer = done ? "done" : i == running
+                    ? this.flow.stepPermille(this.ticksDone) / 10 + "%" : "";
+            final String label = this.fit(line.label(), f.w() - 60);
+            this.say(g, label, f.x(), ty, done || i == running ? p.text() : p.dim());
+            if (!answer.isEmpty()) {
+                final int answerAt = f.x() + f.w() - this.width(answer);
+                this.leader(g, f.x() + this.width(label) + 3, answerAt - 3, ty, p.dim());
+                this.say(g, answer, answerAt, ty, done ? p.dim() : p.accent());
+            }
+            ty += step;
+        }
+        ty += step;
+        this.say(g, "About " + this.secondsLeft() + " seconds left. Leave the medium in.", f.x(), ty, p.dim());
+    }
+
+    /** The steps with a figure against each and one bar under them, as the newest installer shows them. */
+    private void drawWorkSteps(final GuiGraphics g, final InstallerFrames.Frame f) {
+        final InstallerFrames.Paint p = f.paint();
+        final int running = this.flow.stepAt(this.ticksDone);
+        int ty = f.y();
+        for (int i = 0; i < this.flow.steps().size(); i++) {
+            final InstallerFlow.Step line = this.flow.steps().get(i);
+            final boolean done = i < running;
+            g.drawString(font, InstallerFrames.clip(font, line.label(), f.w() - 40), f.x(), ty,
                     done || i == running ? p.text() : p.dim(), false);
             if (done) {
-                right(g, "done", f.x() + f.w(), ty, p.dim());
+                right(g, "100%", f.x() + f.w(), ty, p.dim());
             } else if (i == running) {
                 right(g, this.flow.stepPermille(this.ticksDone) / 10 + "%", f.x() + f.w(), ty, p.accent());
             }
             ty += ROW;
         }
         ty += 8;
-        g.fill(f.x(), ty, f.x() + f.w(), ty + 6, p.dim());
+        g.fill(f.x(), ty, f.x() + f.w(), ty + 6, 0xFFE3E5EE);
         g.fill(f.x(), ty, f.x() + f.w() * this.flow.permille(this.ticksDone) / 1000, ty + 6, p.accent());
-        final int left = Math.max(0, (this.flow.ticksTotal() - this.ticksDone) / 20);
-        g.drawString(font, "About " + left + " seconds left. Leave the medium in.", f.x(), ty + 12, p.dim(),
-                false);
+        g.drawString(font, "Your PC restarts when setup is finished. About " + this.secondsLeft()
+                + " seconds left.", f.x(), ty + 12, p.dim(), false);
+    }
+
+    /** The graphical phase, whose frame has already listed the steps down its own side. */
+    private void drawWorkBeside(final GuiGraphics g, final InstallerFrames.Frame f) {
+        final InstallerFrames.Paint p = f.paint();
+        final InstallerFlow.Step step = this.flow.steps().get(this.flow.stepAt(this.ticksDone));
+        g.drawString(font, InstallerFrames.clip(font, step.label(), f.w()), f.x(), f.y(), p.text(), false);
+        final InstallerFlow.Disk disk = this.flow.target();
+        if (disk != null) {
+            /*
+             * Cut to the panel it is written in. A drive names itself at whatever length its maker chose,
+             * and this line was drawn at full length whatever the room: on a long name it ran out past the
+             * edge of the glass and off the monitor.
+             */
+            g.drawString(font, InstallerFrames.clip(font,
+                            "Installing on Disk " + disk.slot() + ", " + disk.label(), f.w()),
+                    f.x(), f.y() + 12, p.dim(), false);
+        }
+    }
+
+    /** How long the whole installation still has, in the seconds every one of these counts in. */
+    private int secondsLeft() {
+        return Math.max(0, (this.flow.ticksTotal() - this.ticksDone) / 20);
+    }
+
+    /**
+     * The drive the system is being read from, by the name the firmware gave it, or the plain words for it.
+     *
+     * <p>Asked of the machine rather than assumed, because which drive it is is exactly what those installers
+     * were telling the player: the one they must not open until this is over.
+     */
+    private String mediumName() {
+        if (this.state != null) {
+            for (final FirmwareStatePayload.Entry entry : this.state.entries()) {
+                if (entry.kind() == FirmwareStatePayload.KIND_MEDIA && !entry.osId().isEmpty()) {
+                    return "the " + entry.device();
+                }
+            }
+        }
+        return "the installation medium";
     }
 
     private void drawDone(final GuiGraphics g, final InstallerFrames.Frame f) {
         final InstallerFrames.Paint p = f.paint();
+        final int step = this.row();
         int ty = f.y();
-        g.drawString(font, this.flow.systemName() + " is installed.", f.x(), ty, p.bright(), false);
-        ty += 18;
-        g.drawString(font, "Take the installation medium out of the drive,", f.x(), ty, p.text(), false);
-        g.drawString(font, "or the machine starts Setup again.", f.x(), ty + 10, p.text(), false);
-        g.drawString(font, "Restart to start " + this.flow.systemName() + ".", f.x(), ty + 28, p.accent(), false);
+        this.say(g, this.flow.systemName() + " is installed.", f.x(), ty, p.bright());
+        ty += step * 2;
+        this.say(g, "Take the installation medium out of the drive,", f.x(), ty, p.text());
+        this.say(g, "or the machine starts Setup again.", f.x(), ty + step, p.text());
+        this.say(g, "Restart to start " + this.flow.systemName() + ".", f.x(), ty + step * 3, p.accent());
     }
 
     private void drawEraseAsk(final GuiGraphics g, final int x, final int y, final InstallerFrames.Frame f) {

@@ -105,6 +105,30 @@ public final class Installers {
         return mainframe == null ? "" : nameOf(mainframe);
     }
 
+    /**
+     * What the Mainframe of this machine's network is running, named, or nothing when it runs nothing.
+     *
+     * <p>Beside {@link #networkHost} and {@link #mirrorHost} because it answers the same kind of question about
+     * the same Mainframe: what a machine finds when it looks up its own network.
+     */
+    public static String servicesOn(final IOsHost machine, final ServerLevel level) {
+        final MainframeBlockEntity mainframe = mainframeOf(machine, level);
+        if (mainframe == null) {
+            return "";
+        }
+        final List<String> running = new ArrayList<>();
+        if (mainframe.isIqlEngineInstalled()) {
+            running.add("IQL Engine");
+        }
+        if (mainframe.isAutomationEngineInstalled()) {
+            running.add("Automation Engine");
+        }
+        if (mainframe.isMirrorInstalled()) {
+            running.add("Mirror");
+        }
+        return String.join(", ", running);
+    }
+
     /** The Mainframe orchestrating this machine's network, or null when it belongs to none. */
     @Nullable
     private static MainframeBlockEntity mainframeOf(final IOsHost machine, final ServerLevel level) {

@@ -1319,7 +1319,7 @@ public class ServerRackBlockEntity extends BlockEntity
 
     @Override
     public BootSequence bootSequence() {
-        return BootLines.forMachine(this);
+        return BootLines.forMachine(this, level instanceof ServerLevel server ? server : null);
     }
 
     @Override

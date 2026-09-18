@@ -30,8 +30,8 @@ import java.util.List;
  * what comes after this is a dark monitor rather than a system, so the screen sees itself out.
  */
 public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int remainingTicks, int totalTicks,
-                                    BootSequence sequence, boolean endsDark,
-                                    BootSplash splash) implements CustomPacketPayload {
+                                    BootSequence sequence, boolean endsDark, BootSplash splash,
+                                    String desktopId, String systemName) implements CustomPacketPayload {
 
     /** The longest a step's words may be; anything past it is a sentence, not a step. */
     public static final int MAX_TEXT = 64;
@@ -60,8 +60,12 @@ public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int r
         for (final BootSequence.Line line : lines) {
             buf.writeUtf(clip(line.label()), MAX_TEXT);
             buf.writeUtf(clip(line.value()), MAX_TEXT);
+            buf.writeUtf(clip(line.mark()), MAX_TEXT);
+            buf.writeBoolean(line.good());
         }
         buf.writeBoolean(p.endsDark());
+        buf.writeUtf(clip(p.desktopId()), MAX_TEXT);
+        buf.writeUtf(clip(p.systemName()), MAX_TEXT);
     }
 
     private static OpenSystemBootPayload decode(final RegistryFriendlyByteBuf buf) {
@@ -75,10 +79,13 @@ public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int r
         final int count = Math.min(buf.readVarInt(), BootSequence.MOST_LINES);
         final List<BootSequence.Line> lines = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
-            lines.add(new BootSequence.Line(buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT)));
+            lines.add(new BootSequence.Line(buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT),
+                    buf.readUtf(MAX_TEXT), buf.readBoolean()));
         }
+        final boolean endsDark = buf.readBoolean();
         return new OpenSystemBootPayload(host, monitor, remaining, total,
-                new BootSequence(title, subtitle, lines), buf.readBoolean(), splash);
+                new BootSequence(title, subtitle, lines), endsDark, splash,
+                buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT));
     }
 
     /*

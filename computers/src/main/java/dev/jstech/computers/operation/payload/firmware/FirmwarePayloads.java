@@ -20,12 +20,14 @@ import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.BootSequenceScreen;
 import dev.jstech.computers.client.FirmwareScreen;
+import dev.jstech.computers.client.InstallerScreen;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.GpuItem;
 import dev.jstech.computers.item.HardwareTooltip;
 import dev.jstech.computers.item.MotherboardItem;
+import dev.jstech.computers.item.RamItem;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
@@ -34,6 +36,7 @@ import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
 import dev.jstech.computers.operation.payload.OpenInstallerPayload;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.operation.payload.OpenPostPayload;
 import dev.jstech.computers.operation.payload.OpenBootMenuPayload;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
@@ -97,9 +100,13 @@ public final class FirmwarePayloads {
                 FirmwarePayloads::handleRequestFirmwareState);
         registrar.playToClient(FirmwareStatePayload.TYPE, FirmwareStatePayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) -> {
-                    // The same hardware state feeds the setup screen and the POST's device-detection lines.
+                    /*
+                     * One answer, three readers: the setup page that lists the parts, the self-test that reads
+                     * them out as it finds them, and the installer that checks them before it will begin.
+                     */
                     FirmwareScreen.accept(payload);
                     BootSequenceScreen.accept(payload);
+                    InstallerScreen.accept(payload);
                 }));
         ComputerAccess.accept(registrar, FirmwareActionPayload.TYPE, FirmwareActionPayload.STREAM_CODEC,
                 ComputerAccess.screen(FirmwareActionPayload::hostPos), FirmwarePayloads::handleFirmwareAction);
@@ -137,7 +144,7 @@ public final class FirmwarePayloads {
                         ISystemBootScreenOpener.Holder.open(
                                 payload.hostPos(), payload.monitorPos(), payload.sequence(),
                                 payload.remainingTicks(), payload.totalTicks(), payload.endsDark(),
-                                payload.splash())));
+                                payload.splash(), payload.desktopId(), payload.systemName())));
         // A copy already under way: the monitor shows where the machine has got to, not a fresh one.
         registrar.playToClient(OsInstallProgressPayload.TYPE, OsInstallProgressPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
@@ -157,8 +164,14 @@ public final class FirmwarePayloads {
         }
     }
 
-    /** Everything the boot manager lists for {@code computer}: disks, linked media, boot order, hardware. */
-    static FirmwareStatePayload buildFirmwareState(final ServerLevel level,
+    /**
+     * Everything the boot manager lists for {@code computer}: disks, linked media, boot order, hardware.
+     *
+     * <p>Public because it is the one answer to "what is in this machine", and three screens draw from it: the
+     * self-test reading its parts out, the setup listing them, and the installer checking them. Anything that
+     * wants to know what a machine would say about itself asks here rather than working it out again.
+     */
+    public static FirmwareStatePayload buildFirmwareState(final ServerLevel level,
                                                   final IOsHost computer, final BlockPos pos) {
         final HardwareEra era = computer.displayEra() != null ? computer.displayEra() : HardwareEra.STANDARD;
         final List<FirmwareStatePayload.Entry> entries = new ArrayList<>();
@@ -170,28 +183,30 @@ public final class FirmwarePayloads {
             final ResourceLocation osId =
                     OsDisks.systemOn(disk);
             final OsDef os = osId == null ? null : OsRegistry.getOs(osId);
+            final DiskSpec spec = ((DiskItem) disk.getItem()).spec();
             entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_DISK, i,
                     os == null ? "" : os.id().toString(),
-                    os == null ? "(no system)" : os.displayName(),
-                    "Disk " + i + ": " + disk.getHoverName().getString(),
-                    os != null, -1));
+                    os == null ? "no system" : os.displayName(),
+                    disk.getHoverName().getString(),
+                    spec == null ? "" : DiskSpec.sizeLabel(spec.capacityMb()),
+                    "", os != null, -1));
         }
         for (final long endpoint : computer.linkedEndpoints()) {
             if (!(level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader)) {
                 continue;
             }
-            final String drive = reader.driveType().name().toLowerCase(Locale.ROOT).replace('_', ' ');
+            final String drive = reader.driveType().driveName();
             final ItemStack media = reader.mediaSlot().getStackInSlot(0);
             if (media.isEmpty()) {
                 entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, endpoint, "",
-                        "(no medium)", drive, false, -1));
+                        "empty", drive, "", "", false, -1));
                 continue;
             }
             final OsDef os = reader.insertedKind() == MediaKind.OS_INSTALL && reader.insertedPayload() != null
                     ? OsRegistry.getOs(reader.insertedPayload()) : null;
             if (os == null) {
                 entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, endpoint, "",
-                        media.getHoverName().getString(), drive, false, -1));
+                        media.getHoverName().getString(), drive, "", "", false, -1));
                 continue;
             }
             final boolean eraOk = OsGating.canInstall(os.minEra(), era);
@@ -199,7 +214,7 @@ public final class FirmwarePayloads {
                     os.id().toString(),
                     os.displayName() + (os.installMode() == InstallMode.GUIDED
                             ? " installer" : " (live)"),
-                    drive + (eraOk ? "" : " - " + eraName(os.minEra()) + " era or newer"), eraOk,
+                    drive, "", eraOk ? "" : eraName(os.minEra()) + " era or newer", eraOk,
                     os.installMode().id()));
         }
         return new FirmwareStatePayload(pos, era.id(), machineOf(level, computer, pos), computer.bootDiskSlot(),
@@ -224,6 +239,7 @@ public final class FirmwarePayloads {
         String cpuName = "";
         String boardName = "";
         String gpuName = "";
+        String ramName = "";
         final ItemStackHandler hardware = machine.getHardware();
         for (int i = 0; i < hardware.getSlots(); i++) {
             final ItemStack part = hardware.getStackInSlot(i);
@@ -236,6 +252,8 @@ public final class FirmwarePayloads {
                 boardName = part.getHoverName().getString();
             } else if (part.getItem() instanceof GpuItem && gpuName.isEmpty()) {
                 gpuName = part.getHoverName().getString();
+            } else if (part.getItem() instanceof RamItem && ramName.isEmpty()) {
+                ramName = part.getHoverName().getString();
             }
         }
         int monitors = 0;
@@ -251,7 +269,7 @@ public final class FirmwarePayloads {
                 cpu == null ? 0 : cpu.freqMhz(),
                 cpu == null ? "" : cpu.architecture().name(), cpu == null ? 0 : cpu.architecture().bits(),
                 boardName, (int) Math.min(Integer.MAX_VALUE, computer.ramTotalMb()),
-                build == null ? 0 : build.rams().size(), machine.boardRamSlots(), gpuName, monitors,
+                build == null ? 0 : build.rams().size(), machine.boardRamSlots(), ramName, gpuName, monitors,
                 machine.maxEndpoints(), era == null ? "" : HardwareTooltip.label(era));
     }
 

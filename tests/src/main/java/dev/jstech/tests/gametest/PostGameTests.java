@@ -12,6 +12,8 @@ import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.operation.payload.FirmwareStatePayload;
+import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -155,6 +157,60 @@ public final class PostGameTests {
                         "an older firmware takes longer over the same work: " + old.postRemaining()
                                 + " against " + modern.postRemaining()))
                 .thenSucceed();
+    }
+
+    /**
+     * What the self-test reads out is the machine itself, part by part, and not the kind of block it is.
+     *
+     * <p>Every line of that screen is one of these fields, so a field that comes back empty is a line the
+     * player never sees: the board and the video card were both being sent and neither was being drawn, and
+     * the memory was counted without ever naming the modules it was counted over.
+     */
+    @GameTest(template = ARENA)
+    public static void post_readsOutTheParts_notTheKindOfMachine(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(WHERE);
+        final FirmwareStatePayload state =
+                FirmwarePayloads.buildFirmwareState(helper.getLevel(), computer, helper.absolutePos(WHERE));
+        final FirmwareStatePayload.Machine machine = state.machine();
+        helper.assertFalse(machine.cpuName().isEmpty(), "the processor is named by its own model");
+        helper.assertFalse(machine.boardName().isEmpty(), "the board is named");
+        helper.assertFalse(machine.ramName().isEmpty(), "and the memory modules are named");
+        helper.assertTrue(machine.memoryModules().startsWith(machine.ramModules() + "x "),
+                "which the self-test reads out as a count of them: " + machine.memoryModules());
+        helper.assertTrue(machine.ramMb() > 0, "with the memory counted over what is seated");
+        helper.succeed();
+    }
+
+    /**
+     * A drive is listed as the three things a firmware printed about one: what it is, how big, what is on it.
+     *
+     * <p>They travel apart because the three screens that show them put them together three different ways,
+     * and one composed sentence cannot be laid out in columns by any of them.
+     */
+    @GameTest(template = ARENA)
+    public static void post_listsEachDrive_byModelAndSizeAndContents(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(WHERE);
+        final FirmwareStatePayload state =
+                FirmwarePayloads.buildFirmwareState(helper.getLevel(), computer, helper.absolutePos(WHERE));
+        FirmwareStatePayload.Entry disk = null;
+        for (final FirmwareStatePayload.Entry entry : state.entries()) {
+            if (entry.kind() == FirmwareStatePayload.KIND_DISK) {
+                disk = entry;
+                break;
+            }
+        }
+        if (disk == null) {
+            helper.fail("the machine has a disk in it and the firmware found none");
+            return;
+        }
+        helper.assertFalse(disk.device().isEmpty(), "the drive is named by its own model: " + disk.device());
+        helper.assertFalse(disk.size().isEmpty(), "and by how much it holds: " + disk.size());
+        helper.assertFalse(disk.label().isEmpty(), "and by what is on it: " + disk.label());
+        helper.succeed();
     }
 
     private static PersonalComputerBlockEntity vintage(final GameTestHelper helper, final BlockPos at) {

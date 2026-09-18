@@ -23,6 +23,7 @@ import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.HardwareTooltip;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
+import dev.jstech.computers.operation.payload.DesktopBalloonPayload;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
@@ -100,6 +101,11 @@ public final class DesktopPayloads {
                 ClientPayloadHandlers.onMainThread(DesktopPayloads::handleSettingsSnapshot));
         ComputerAccess.accept(registrar, SetIconPositionPayload.TYPE, SetIconPositionPayload.STREAM_CODEC,
                 ComputerAccess.machine(SetIconPositionPayload::hostPos), DesktopPayloads::handleSetIconPosition);
+        // A notice the machine raises from the corner of its own desktop, which takes nothing over.
+        registrar.playToClient(DesktopBalloonPayload.TYPE, DesktopBalloonPayload.STREAM_CODEC,
+                ClientPayloadHandlers.onMainThread((payload, player) ->
+                        DesktopScreen.raise(payload.hostPos(), payload.title(), payload.body(),
+                                payload.opens())));
     }
 
     private static void handleRequestDesktopFiles(final RequestDesktopFilesPayload payload, final ServerPlayer player,

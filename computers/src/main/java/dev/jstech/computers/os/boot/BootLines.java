@@ -22,8 +22,12 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.tier.HardwareEra;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 
@@ -43,11 +47,19 @@ public final class BootLines {
     /** The kernel these machines run, named after the mod so it is plainly this world's own. */
     private static final String KERNEL_VERSION = "6.8-jsc";
 
+    /** The init the machines of the other Linux line run, which prints in a hand of its own. */
+    private static final String OPENRC_VERSION = "0.54";
+
+    /** What a service manager writes at the head of a line that went well, and the star its rival uses. */
+    private static final String MARK_OK = "[  OK  ]";
+    private static final String MARK_STAR = " *";
+    private static final String MARK_DONE = "[ ok ]";
+
     private BootLines() {
     }
 
     /** The sequence this machine's system shows while it comes up. */
-    public static BootSequence forMachine(final IOsHost machine) {
+    public static BootSequence forMachine(final IOsHost machine, @Nullable final ServerLevel level) {
         final OsDef system = machine.installedOs();
         if (system == null) {
             return BootSequence.NONE;
@@ -57,8 +69,8 @@ public final class BootLines {
                 era != null ? era : HardwareEra.STANDARD);
         return switch (system.platform()) {
             case MC_DOS -> dos(machine, system, copyright);
-            case MC_NET -> net(machine, system, copyright);
-            case LINUX -> linux(machine, system);
+            case MC_NET -> net(machine, system, copyright, level);
+            case LINUX -> linux(machine, system, level);
             case FRAMES -> frames(machine, system);
             default -> new BootSequence.Builder().title(system.displayName()).subtitle(copyright).build();
         };
@@ -74,6 +86,10 @@ public final class BootLines {
      * <p>The newest of them says one thing, and only the once: the first time it comes up it greets the machine
      * by name instead of showing the maker's, and it does it inside the same wait, so a first start is no longer
      * than any other.
+     *
+     * <p>Which is why the ordinary start carries no words at all. The maker and the edition are in the picture
+     * already, drawn as that system drew them, and writing them out again in the game's font underneath was
+     * the picture saying its own name twice.
      */
     private static BootSequence frames(final IOsHost machine, final OsDef system) {
         if (firstTime(machine, system)) {
@@ -83,10 +99,7 @@ public final class BootLines {
                             + " is getting ready for you")
                     .build();
         }
-        return new BootSequence.Builder()
-                .title(system.house().name())
-                .subtitle(system.displayName())
-                .build();
+        return BootSequence.NONE;
     }
 
     /** Whether this is the newest edition coming up for the first time, which is the one start that greets. */
@@ -163,17 +176,99 @@ public final class BootLines {
      *
      * <p>The earliest systems had no such screen: switching the machine off switched it off, and the glass went
      * dark where it stood. The later ones close their programs first and say so, so they are the ones with
-     * something to show.
+     * something to show, and each says it in its own words: the picture systems put one sentence over their
+     * own picture, and the ones that read their start out read their stopping out the same way.
+     *
+     * @param restarting the machine is coming straight back up, which is a different word on every one of them
      */
-    public static BootSequence shutdownFor(final IOsHost machine) {
+    public static BootSequence shutdownFor(final IOsHost machine, final boolean restarting) {
         final OsDef system = machine.installedOs();
-        if (system == null || system.platform() != Platform.FRAMES) {
+        if (system == null) {
             return BootSequence.NONE;
         }
-        return new BootSequence.Builder()
-                .title(system.displayName())
-                .subtitle(system.displayName() + " is shutting down...")
-                .build();
+        return switch (system.platform()) {
+            case FRAMES -> new BootSequence.Builder()
+                    .title(system.displayName())
+                    .subtitle(framesGoodbye(system, restarting))
+                    .build();
+            case LINUX -> linuxDown(system, restarting);
+            default -> BootSequence.NONE;
+        };
+    }
+
+    /**
+     * What an edition of the Frames line says while it closes, which changed with every one of them.
+     *
+     * <p>The oldest spoke to the person in front of it, the one after it named the system, and the newest says
+     * the one word and nothing else. They are quoted rather than composed because the wording is the thing.
+     */
+    private static String framesGoodbye(final OsDef system, final boolean restarting) {
+        return switch (system.familyRank()) {
+            case 1 -> restarting ? "Please wait while your computer restarts."
+                    : "Please wait while your computer shuts down.";
+            case 2 -> restarting ? "Frames is restarting..." : "Frames is shutting down...";
+            default -> restarting ? "Restarting" : "Shutting down";
+        };
+    }
+
+    /**
+     * A Linux machine stops in reverse: the desktop, then the network, then the disks, then the power.
+     *
+     * <p>Each init says it in its own hand, the same hand it started in, which is the point of showing it at
+     * all: a machine that reads its start out reads its stop out too.
+     */
+    private static BootSequence linuxDown(final OsDef system, final boolean restarting) {
+        final boolean openRc = system.packageManager() == PackageManagerKind.EMERGE;
+        final BootSequence.Builder out = new BootSequence.Builder().title("").subtitle("");
+        final String[] steps = {
+                "Stopped target Graphical Interface.",
+                "Stopped target Network is Online.",
+                "Stopped target Network.",
+                "Unmounted /boot/efi.",
+                "Reached target Unmount All Filesystems.",
+                "Reached target System Shutdown.",
+                "Reached target Late Shutdown Services.",
+        };
+        for (final String step : steps) {
+            if (openRc) {
+                out.marked(MARK_STAR, openRcWording(step), MARK_DONE, true);
+            } else {
+                out.marked(MARK_OK, step, true);
+            }
+        }
+        out.marked(stamp(steps.length + 1),
+                restarting ? "reboot: Restarting system" : "reboot: Power down", false);
+        return out.build();
+    }
+
+    /**
+     * The same step in the other init's words, which stops services rather than reaching targets.
+     *
+     * <p>Borrowing systemd's sentences for a machine running OpenRC was the thing that made the two look like
+     * one system in two colours, when the whole reason a player can tell those distributions apart on sight is
+     * that they do not say the same words.
+     */
+    private static String openRcWording(final String step) {
+        return switch (step) {
+            case "Stopped target Graphical Interface." -> "Stopping display manager ...";
+            case "Stopped target Network is Online." -> "Bringing down interface eth0 ...";
+            case "Stopped target Network." -> "Stopping netmount ...";
+            case "Unmounted /boot/efi." -> "Unmounting /boot ...";
+            case "Reached target Unmount All Filesystems." -> "Unmounting filesystems ...";
+            case "Reached target System Shutdown." -> "Saving the system clock ...";
+            default -> "Stopping local ...";
+        };
+    }
+
+    /**
+     * The time a kernel writes at the head of each of its lines.
+     *
+     * <p>Worked out from where the line sits rather than taken from a clock, so the same machine reads out the
+     * same log twice and a screen rebuilt half way through it does not jump.
+     */
+    private static String stamp(final int index) {
+        final double seconds = index * 0.0937 + (index * index % 7) * 0.0031;
+        return String.format(Locale.ROOT, "[%12.6f]", seconds);
     }
 
     /**
@@ -184,48 +279,90 @@ public final class BootLines {
      * actually has: a network target only when a cable reaches a Mainframe, a mirror only when that Mainframe
      * runs one, a display manager only when a desktop is installed.
      */
-    private static BootSequence linux(final IOsHost machine, final OsDef system) {
+    private static BootSequence linux(final IOsHost machine, final OsDef system,
+                                      @Nullable final ServerLevel level) {
         final boolean openRc = system.packageManager() == PackageManagerKind.EMERGE;
-        final String arch = kernelArch(machine);
+        final String desktop = machine.installedDesktopId() == null ? ""
+                : machine.installedDesktopId().getPath().replace('_', ' ');
+        return openRc ? openRc(machine, system, desktop) : systemd(machine, desktop, level);
+    }
+
+    /**
+     * The kernel reading itself out, then systemd reporting each target it reaches.
+     *
+     * <p>The kernel's own lines are stamped with the time they happened and the init's are marked with whether
+     * the thing started, which is the whole of how that log reads: a player skims the left column and sees at a
+     * glance which part of the machine is talking.
+     */
+    private static BootSequence systemd(final IOsHost machine, final String desktop,
+                                        @Nullable final ServerLevel level) {
         final BootSequence.Builder out = new BootSequence.Builder()
-                .title(openRc
-                        ? "OpenRC is starting up " + system.displayName() + " Linux (" + arch + ")"
-                        : "Loading Linux " + KERNEL_VERSION + " ...")
-                .subtitle("");
-        if (openRc) {
-            out.line("Mounting /proc ...", "ok");
-            out.line("Starting udev ...", "ok");
-            out.line("Checking local filesystems ...", "ok");
-            out.line("Mounting local filesystems ...", "ok");
-            out.line("Setting hostname ...", machine.customName().isEmpty() ? "localhost" : machine.customName());
-        } else {
-            out.line("Linux version " + KERNEL_VERSION + " (" + arch + ")");
-            out.line("CPU: " + cpuName(machine));
-            out.line("Memory: " + machine.ramTotalMb() + " MB available");
-            int drive = 0;
-            for (int slot = 0; slot < machine.diskSlots(); slot++) {
-                final ItemStack disk = machine.diskInSlot(slot);
-                if (disk.getItem() instanceof DiskItem) {
-                    out.line("sd" + (char) ('a' + drive++) + ":", disk.getHoverName().getString());
-                }
+                .title("Loading Linux " + KERNEL_VERSION + " ...")
+                .subtitle("Loading initial ramdisk ...");
+        int at = 0;
+        out.marked(stamp(at++), "Linux version " + KERNEL_VERSION + " (" + kernelArch(machine) + ")", false);
+        out.marked(stamp(at++), "CPU: " + cpuName(machine), false);
+        out.marked(stamp(at++), "Memory: " + machine.ramTotalMb() + " MB available", false);
+        int drive = 0;
+        for (int slot = 0; slot < machine.diskSlots(); slot++) {
+            final ItemStack disk = machine.diskInSlot(slot);
+            if (disk.getItem() instanceof DiskItem) {
+                out.marked(stamp(at++), "sd" + (char) ('a' + drive++) + ": "
+                        + disk.getHoverName().getString(), false);
             }
-            out.line("Started Journal Service.", "OK");
-            out.line("Reached target Local File Systems.", "OK");
         }
+        out.marked(MARK_OK, "Started Journal Service.", true);
+        out.marked(MARK_OK, "Reached target Local File Systems.", true);
         /*
          * The claim is about the network, not about what happens to be reading it, so it is put to the machine
          * rather than to the shell running on it: a machine on a cable is on a network whether or not anything
          * is up yet to ask about it.
          */
         if (machine.networkAttached()) {
-            out.line("Reached target Network is Online.", "OK");
+            out.marked(MARK_OK, "Reached target Network is Online.", true);
         }
-        final String desktop = machine.installedDesktopId() == null ? ""
-                : machine.installedDesktopId().getPath().replace('_', ' ');
+        final String mirror = mirrorOf(machine, level);
+        if (!mirror.isEmpty()) {
+            out.marked(MARK_OK, "Found package mirror on " + mirror + ".", true);
+        }
         if (!desktop.isEmpty()) {
-            out.line("Started " + desktop + " Display Manager.", "OK");
+            /*
+             * A service manager says it is starting a thing before it says the thing started, and the line with
+             * nothing in its mark is the one still under way. It is the only pair on the screen, and it is what
+             * makes the last moment of a start read as a moment rather than as another finished step.
+             */
+            out.marked("", "Starting " + desktop + " Display Manager...", false);
+            out.marked(MARK_OK, "Started " + desktop + " Display Manager.", true);
         }
         return out.build();
+    }
+
+    /** The other init: a star for every service it brings up, and its own column saying each one is up. */
+    private static BootSequence openRc(final IOsHost machine, final OsDef system, final String desktop) {
+        final BootSequence.Builder out = new BootSequence.Builder()
+                .title("OpenRC " + OPENRC_VERSION + " is starting up " + system.displayName()
+                        + " Linux (" + kernelArch(machine) + ")")
+                .subtitle("");
+        out.marked(MARK_STAR, "Mounting /proc ...", MARK_DONE, true);
+        out.marked(MARK_STAR, "Starting udev ...", MARK_DONE, true);
+        out.marked(MARK_STAR, "Checking local filesystems ...", MARK_DONE, true);
+        out.marked(MARK_STAR, "Mounting local filesystems ...", MARK_DONE, true);
+        out.marked(MARK_STAR, "Setting hostname to "
+                + (machine.customName().isEmpty() ? "localhost" : machine.customName()) + " ...",
+                MARK_DONE, true);
+        if (machine.networkAttached()) {
+            out.marked(MARK_STAR, "Bringing up interface eth0 ...", MARK_DONE, true);
+        }
+        if (!desktop.isEmpty()) {
+            out.marked(MARK_STAR, "Starting " + desktop + " ...", MARK_DONE, true);
+        }
+        out.marked(MARK_STAR, "Starting local ...", MARK_DONE, true);
+        return out.build();
+    }
+
+    /** The Mirror serving this machine by the name it answers to, or nothing when none does. */
+    private static String mirrorOf(final IOsHost machine, @Nullable final ServerLevel level) {
+        return level == null ? "" : Installers.mirrorHost(machine, level);
     }
 
     /** What a kernel of this machine calls the architecture it is running on. */
@@ -256,22 +393,30 @@ public final class BootLines {
                                     final String copyright) {
         final BootSequence.Builder out = new BootSequence.Builder()
                 .title("Starting " + system.displayName() + "...")
-                .subtitle(copyright);
+                .subtitle("");
+        /*
+         * A system of this age loaded its drivers one at a time and each one printed its own name and what it
+         * had found, which is why the drive letters come after them and not before: the letters exist because
+         * those drivers gave them out.
+         */
         final int extendedKb = Math.max(0, machine.ramTotalMb() * 1024 - BASE_MEMORY_KB);
-        out.line("HIMEM", String.format(Locale.ROOT, "%,d KB extended memory", extendedKb));
+        out.line("MCMEM.SYS testing extended memory ... done");
+        out.line(String.format(Locale.ROOT, "%,d KB extended memory available", extendedKb));
+        final String network = networkName(machine);
+        if (!network.isEmpty()) {
+            out.line("NETLINK.SYS  network link up, Mainframe " + network);
+        }
         char letter = 'C';
         for (int slot = 0; slot < machine.diskSlots(); slot++) {
             final ItemStack disk = machine.diskInSlot(slot);
             if (!(disk.getItem() instanceof DiskItem)) {
                 continue;
             }
-            out.line(letter + ":", disk.getHoverName().getString());
+            out.marked("Drive " + letter + ":", disk.getHoverName().getString(), freeOn(disk), false);
             letter++;
         }
-        final String network = networkName(machine);
-        if (!network.isEmpty()) {
-            out.line("NET", network);
-        }
+        out.line(system.displayName() + " Version 1.0");
+        out.line(copyright);
         return out.build();
     }
 
@@ -283,38 +428,62 @@ public final class BootLines {
      * instead of the other. Every line here is a claim about the network, and a machine that cannot put the
      * question has no grounds for any of them, least of all for the one that says the cable is dead.
      */
-    private static BootSequence net(final IOsHost machine, final OsDef system,
-                                    final String copyright) {
+    private static BootSequence net(final IOsHost machine, final OsDef system, final String copyright,
+                                    @Nullable final ServerLevel level) {
         final BootSequence.Builder out = new BootSequence.Builder()
-                .title(system.displayName() + " 1.0")
+                .title(system.displayName() + " 1.0    "
+                        + (machine.customName().isEmpty() ? "" : machine.customName()))
                 .subtitle(copyright);
+        out.line("Loading kernel", "done");
         final NetworkReadService network = machine.networkService();
         if (network == null) {
             return out.build();
         }
         final ICliComputer.NetSummary summary = network.summary();
         if (summary == null || !summary.linked()) {
-            out.line("network link", "down");
-            out.line("mainframe", "skipped");
-            out.line("index", "skipped");
-            out.line("storage", "skipped");
+            out.line("Network link", "down");
+            out.line("Mainframe", "skipped");
+            out.line("Network index", "skipped");
+            /*
+             * The reason, in words, and not only the word that says a step was skipped. A player looking at a
+             * column of "skipped" learns that something did not happen and nothing about what to do about it,
+             * and what to do about it here is plug a data cable in.
+             */
+            out.line("No data cable reaches this computer.");
+            out.line(system.displayName() + " opens with local storage only.");
             return out.build();
         }
-        out.line("network link", "done");
+        out.line("Network link", "up");
         if (!summary.mainframePresent()) {
-            out.line("mainframe", "none answering");
-            out.line("index", "not available");
-            out.line("storage", "not available");
+            out.line("Mainframe", "none answering");
+            out.line("Network index", "not available");
+            out.line("No Mainframe answers on this network.");
+            out.line(system.displayName() + " opens with local storage only.");
             return out.build();
         }
-        out.line("mainframe", network.current());
-        out.line("index", String.format(Locale.ROOT, "%,d item types", summary.indexedTypes()));
+        out.line("Mainframe", network.current());
+        out.line("Network index", String.format(Locale.ROOT, "%,d item types", summary.indexedTypes()));
         final long capacity = network.capacity();
         final long used = network.used();
         final int percent = capacity > 0 ? (int) (used * 100L / capacity) : 0;
-        out.line("storage", summary.servers() + (summary.servers() == 1 ? " server, " : " servers, ")
+        out.line("Storage", summary.servers() + (summary.servers() == 1 ? " server, " : " servers, ")
                 + percent + "% full");
+        final String services = level == null ? "" : Installers.servicesOn(machine, level);
+        if (!services.isEmpty()) {
+            out.line("Services on " + network.current(), services);
+        }
+        out.line("Starting the network terminal ...");
         return out.build();
+    }
+
+    /** How much room a drive still has, in the words the system of that age printed beside its letter. */
+    private static String freeOn(final ItemStack disk) {
+        if (!(disk.getItem() instanceof DiskItem drive)) {
+            return "";
+        }
+        final HardwareEra era = drive.spec().era();
+        final long freeMb = OsDisks.systemDiskFreeWeight(disk) / StorageKey.MB_EQ_PER_ITEM * era.mbPerItem();
+        return DiskSpec.sizeLabel(freeMb) + " free";
     }
 
     /** The network this machine is on, by the name it answers to, or nothing when no cable reaches one. */

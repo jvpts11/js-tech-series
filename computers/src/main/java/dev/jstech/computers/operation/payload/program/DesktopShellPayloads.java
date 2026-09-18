@@ -146,8 +146,16 @@ public final class DesktopShellPayloads {
                 return;
             }
             if (monitorPos != null && computer.rebootRequested()) {
+                /*
+                 * The system closes down in front of whoever is watching and the self-test follows when it has
+                 * finished; one with nothing to show on its way down starts over at once, and then the POST is
+                 * opened here as it always was.
+                 */
                 if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost be) {
-                    be.setNeedsPost(true);
+                    be.restart();
+                    if (!be.needsPost()) {
+                        return;
+                    }
                 }
                 player.closeContainer();
                 MonitorBlock.openPost(

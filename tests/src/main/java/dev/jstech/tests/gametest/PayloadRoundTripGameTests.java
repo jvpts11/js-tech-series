@@ -141,12 +141,13 @@ public final class PayloadRoundTripGameTests {
     public static void firmware_stateRoundTrips(final GameTestHelper helper) {
         roundTrip(helper, FirmwareStatePayload.STREAM_CODEC, new FirmwareStatePayload(HOST, 2,
                 new FirmwareStatePayload.Machine("RENDER-01", "Integra Apex 7 4790K", 4, 4000, "x86-64", 64,
-                        "MF ATX Standard Motherboard", 16384, 2, 4, "Visara Vertex GTX 780 Ti", 1, 2, "Standard"),
+                        "MF ATX Standard Motherboard", 16384, 2, 4, "Stratix DDR3-8192",
+                        "Visara Vertex GTX 780 Ti", 1, 2, "Standard"),
                 0, -1,
                 List.of(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_DISK, 0L, "jsc:frames_11",
-                                "Vaultis Swift SSD 500 GB", "Frames 11", true, 0),
+                                "Frames 11", "Vaultis Swift SSD 500 GB", "500 GB", "", true, 0),
                         new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, 123L, "jsc:ubuntu",
-                                "CD drive", "Ubuntu installer", true, 1)),
+                                "Ubuntu installer", "CD drive", "", "", true, 1)),
                 new FirmwareStatePayload.RaidInfo(true, 1, 2, 2, List.of(512L, 512L))));
         helper.succeed();
     }

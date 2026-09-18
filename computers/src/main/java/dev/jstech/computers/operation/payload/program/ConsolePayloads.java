@@ -119,12 +119,16 @@ public final class ConsolePayloads {
         }
         if (computer.rebootRequested()) {
             /*
-             * A plain "reboot": the terminal closes and the POST replays on the same monitor, after
-             * which whatever the boot target now is (a freshly installed OS included) comes up.
+             * A plain "reboot": the system closes down in front of whoever is watching, and the POST replays on
+             * the same monitor when it has finished, after which whatever the boot target now is (a freshly
+             * installed OS included) comes up. A machine whose system has nothing to show on its way down goes
+             * straight to the self-test, which is what the restart itself falls back to.
              */
-            if (level.getBlockEntity(payload.hostPos())
-                    instanceof IOsHost be) {
-                be.setNeedsPost(true);
+            if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost be) {
+                be.restart();
+                if (!be.needsPost()) {
+                    return;
+                }
             }
             player.closeContainer();
             MonitorBlock.openPost(

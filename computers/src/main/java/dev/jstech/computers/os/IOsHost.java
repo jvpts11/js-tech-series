@@ -50,6 +50,37 @@ public interface IOsHost extends IPeripheralOwner {
     void setNeedsPost(boolean value);
 
     /**
+     * Starts the machine over, letting whatever is running say goodbye first.
+     *
+     * <p>Different from asking for a self-test outright: a running system closes its programs and shows what
+     * it shows while it does, and the self-test begins when it has finished. A host with nothing to show, or
+     * nothing running, starts over at once, which is what the plain form does.
+     */
+    default void restart() {
+        setNeedsPost(true);
+    }
+
+    /**
+     * Whether the machine is closing its system down on its way to starting over.
+     *
+     * <p>A phase of its own, and a monitor opened during it has to find the machine in it: without this, a
+     * player who looked away mid-restart came back to the desktop of a system that was being closed.
+     */
+    default boolean goingDown() {
+        return false;
+    }
+
+    /** How long that closing-down takes in all, so a screen joining it knows how far along it is. */
+    default int downTotal() {
+        return 0;
+    }
+
+    /** The ticks it still has to run, so a monitor opened part way through joins it where it is. */
+    default int downRemaining() {
+        return 0;
+    }
+
+    /**
      * Whether this machine is standing at the end of a self-test that found nothing to boot.
      *
      * <p>A machine that answers yes is waiting for a key at its own failure, and a monitor opened on it shows

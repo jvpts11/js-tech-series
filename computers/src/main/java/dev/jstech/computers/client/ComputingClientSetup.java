@@ -82,8 +82,9 @@ public final class ComputingClientSetup {
          * the menu opening is what puts the screen up.
          */
         ISystemBootScreenOpener.Holder.set(
-                (pos, monitorPos, sequence, remaining, total, endsDark, splash) ->
-                        SystemBootScreen.expect(sequence, remaining, total, endsDark, splash));
+                (pos, monitorPos, sequence, remaining, total, endsDark, splash, desktopId, systemName) ->
+                        SystemBootScreen.expect(sequence, remaining, total, endsDark, splash, desktopId,
+                                systemName));
         IInstallProgressScreenOpener.Holder.set(
                 (pos, monitorPos, kind, osName, targetLabel, ticksLeft, ticksTotal) -> {
                     OsInstallScreen.expectWorking(kind, osName, targetLabel, ticksLeft, ticksTotal);

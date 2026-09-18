@@ -51,20 +51,53 @@ final class InstallerFrames {
         };
     }
 
-    /** The whole screen in text: a heading at the top, the keys along the foot. */
+    /**
+     * The whole screen in text: a heading at the top, the keys along the foot.
+     *
+     * <p>One of them wears its heading in a coloured band across the top instead, with its help one word away
+     * at the other end and its two buttons written out in the middle of the foot, which is what that installer
+     * looked like and not a variation on the others.
+     */
     private static Frame fullText(final GuiGraphics g, final Font font, final InstallerFlow flow,
                                   final int sx, final int sy, final int sw, final int sh) {
         final Ink ink = Ink.of(flow.style());
         g.fill(sx, sy, sx + sw, sy + sh, ink.back());
-        g.drawString(font, flow.style().title(flow.systemName()), sx + 8, sy + 8, ink.bright(), false);
-        g.drawString(font, flow.style().heading(flow.page(), flow.systemName()), sx + 8, sy + 22, ink.text(),
-                false);
+        if (flow.style() == InstallerStyle.UBUNTU) {
+            return banded(g, font, flow, ink, sx, sy, sw, sh);
+        }
+        TextWall.draw(g, font, flow.style().title(flow.systemName()), sx + 8, sy + 8, ink.bright());
+        TextWall.draw(g, font, flow.style().heading(flow.page(), flow.systemName()), sx + 8, sy + 20,
+                ink.text());
         final String hint = flow.style().hint(flow.page());
         if (!hint.isEmpty()) {
             g.fill(sx, sy + sh - TITLE_BAR, sx + sw, sy + sh, ink.bar());
-            g.drawString(font, hint, sx + 6, sy + sh - TITLE_BAR + 3, ink.barText(), false);
+            TextWall.draw(g, font, hint, sx + 6, sy + sh - TITLE_BAR + 4, ink.barText());
         }
-        return new Frame(sx + 16, sy + 40, sw - 32, sh - 58, ink.paint(), null, null, null, null);
+        return new Frame(sx + 16, sy + 36, sw - 32, sh - 54, ink.paint(), null, null, null, null);
+    }
+
+    /**
+     * The server installer: its heading in a coloured band at the top, its help at the other end of that band,
+     * and the two things a page can do written out in the middle of the foot.
+     */
+    private static Frame banded(final GuiGraphics g, final Font font, final InstallerFlow flow, final Ink ink,
+                                final int sx, final int sy, final int sw, final int sh) {
+        final int band = 19;
+        g.fill(sx, sy, sx + sw, sy + band, ink.bar());
+        TextWall.draw(g, font, flow.style().heading(flow.page(), flow.systemName()), sx + 10, sy + 6,
+                ink.barText());
+        TextWall.right(g, font, "[ Help ]", sx + sw - 10, sy + 6, ink.barText());
+        /*
+         * The buttons of that installer are written out rather than drawn: it ran in a terminal, and the
+         * brackets around a word were the whole of what a button looked like there.
+         */
+        final boolean finishing = flow.page() == InstallerPage.COPY || flow.page() == InstallerPage.DONE;
+        final String first = finishing ? "[ Reboot Now ]" : "[ Done       ]";
+        TextWall.centered(g, font, first, sx + sw / 2, sy + sh - 22, ink.accent());
+        if (!finishing) {
+            TextWall.centered(g, font, "[ Back       ]", sx + sw / 2, sy + sh - 12, ink.text());
+        }
+        return new Frame(sx + 12, sy + band + 10, sw - 24, sh - band - 40, ink.paint(), null, null, null, null);
     }
 
     /** A grey window over a coloured ground, its title in a tab on the top edge. */
@@ -79,12 +112,13 @@ final class InstallerFrames {
         g.fill(wx + 3, wy + 3, wx + ww + 3, wy + wh + 3, 0xFF000000);
         g.fill(wx, wy, wx + ww, wy + wh, ink.panel());
         final String tab = " " + flow.style().heading(flow.page(), flow.systemName()) + " ";
-        final int tabX = wx + (ww - font.width(tab)) / 2;
-        g.fill(tabX, wy - 5, tabX + font.width(tab), wy + 5, ink.panel());
-        g.drawString(font, tab, tabX, wy - 4, ink.panelText(), false);
+        final int tabW = TextWall.width(font, tab);
+        final int tabX = wx + (ww - tabW) / 2;
+        g.fill(tabX, wy - 5, tabX + tabW, wy + 5, ink.panel());
+        TextWall.draw(g, font, tab, tabX, wy - 4, ink.panelText());
         final String hint = flow.style().hint(flow.page());
         if (!hint.isEmpty()) {
-            g.drawString(font, hint, sx + 8, sy + sh - 11, 0xFFFFFFFF, false);
+            TextWall.draw(g, font, hint, sx + 8, sy + sh - 11, 0xFFFFFFFF);
         }
         final Paint paint = ink.paint();
         return new Frame(wx + 8, wy + 12, ww - 16, wh - 20,

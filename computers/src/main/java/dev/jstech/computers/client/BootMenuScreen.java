@@ -31,6 +31,16 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
     private static final int W = 340;
     private static final int H = 214;
 
+    /** How far the ruled box and the help under it stand from the edges of the glass. */
+    private static final int MARGIN = 14;
+
+    /** How tall that box is: enough for every system a machine here can carry, listed at once. */
+    private static final int BOX_H = 92;
+
+    /** The one grey these managers drew everything in, and the ground they drew it on. */
+    private static final int TEXT = 0xFFBDBDBD;
+    private static final int FRAME = 0xFFBDBDBD;
+
     /** The list the machine last sent, kept until the session that shows it is built. */
     @Nullable
     private static Standing pending;
@@ -127,24 +137,43 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
         MonitorFrame.renderBody(g, x, y, W, H, screenEra(), font);
         g.fill(x, y, x + W, y + H, 0xFF000000);
 
-        g.drawString(font, this.menu.title(), x + 12, y + 12, 0xFFE6ECF6, false);
-        int ty = y + 34;
+        /*
+         * A boot manager of this kind drew a ruled box with the systems inside it and put its help underneath,
+         * which is what tells a player at a glance that the list is the thing to act on and the rest is not.
+         */
+        wallCentered(g, this.menu.title(), x + W / 2, y + 12, TEXT);
+        final int boxTop = y + 30;
+        final int boxBottom = boxTop + BOX_H;
+        rule(g, x + MARGIN, boxTop, W - 2 * MARGIN, BOX_H);
+        int ty = boxTop + 5;
         for (int i = 0; i < this.menu.entries().size(); i++) {
             final BootMenu.Entry entry = this.menu.entries().get(i);
             final boolean on = i == this.at;
             if (on) {
-                g.fill(x + 10, ty - 2, x + W - 10, ty + 9, 0xFF7D8A9C);
+                g.fill(x + MARGIN + 2, ty - 1, x + W - MARGIN - 2, ty + WALL_ROW, FRAME);
             }
-            g.drawString(font, entry.label(), x + 14, ty, on ? 0xFF000000 : 0xFFE6ECF6, false);
-            ty += 12;
+            /* The star marks the entry the machine boots on its own, which is not always the one highlighted. */
+            final String mark = i == this.menu.defaultIndex() ? "*" : " ";
+            wall(g, mark + entry.label(), x + MARGIN + 6, ty, on ? 0xFF000000 : TEXT);
+            ty += WALL_ROW + 2;
         }
-        g.drawString(font, "Use the Up and Down keys to select which entry is highlighted.",
-                x + 12, y + H - 34, 0xFF7D8A9C, false);
-        final String below = this.held
-                ? "Press Enter to boot the selected system."
-                : "The highlighted entry will be booted automatically in "
-                        + this.menu.secondsLeft(this.remaining) + "s.";
-        g.drawString(font, below, x + 12, y + H - 22, 0xFF7D8A9C, false);
+        int hy = boxBottom + 8;
+        wall(g, "   Use the Up and Down keys to select which entry is", x + MARGIN, hy, TEXT);
+        hy += WALL_ROW;
+        wall(g, "   highlighted. Press Enter to boot the selected entry.", x + MARGIN, hy, TEXT);
+        hy += WALL_ROW;
+        wall(g, this.held
+                ? "The highlighted entry will be executed when you press Enter."
+                : "The highlighted entry will be executed automatically in "
+                        + this.menu.secondsLeft(this.remaining) + "s.", x + MARGIN, hy, TEXT);
+    }
+
+    /** The single rule around the list, which is the whole of that manager's furniture. */
+    private void rule(final GuiGraphics g, final int x, final int y, final int w, final int h) {
+        g.fill(x, y, x + w, y + 1, FRAME);
+        g.fill(x, y + h - 1, x + w, y + h, FRAME);
+        g.fill(x, y, x + 1, y + h, FRAME);
+        g.fill(x + w - 1, y, x + w, y + h, FRAME);
     }
 
     /**

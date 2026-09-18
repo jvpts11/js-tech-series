@@ -7,6 +7,31 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### Added
+- Restarting a computer now shows the system closing down first, and the self-test begins when it has finished.
+  The one screen a system of any age put up on its way down was the one screen nobody could see: switching a
+  machine off showed it and restarting one did not, although restarting is how anybody reboots a computer here.
+  A system with nothing to show on its way down still starts over where it stands. Opening the monitor halfway
+  through joins the goodbye where it is, instead of handing the player the desktop of a system being closed.
+- The Linux family says goodbye too, each init in its own hand: systemd stops its targets and OpenRC stops its
+  services with the same stars and column it started them with, ending on the line that powers the machine down
+  or starts it over.
+- The oldest Frames edition ends where that era ended: black, with the one sentence saying it is now safe to
+  turn the computer off, held for a moment before the monitor goes dark.
+- Each Linux desktop now has a loading screen of its own between the system's last line and the desktop itself.
+  KDE Plasma, GNOME and Cinnamon each have one, and each wears the look of the generation it is running on: the
+  modern ones fill the glass and say almost nothing, and the older ones come up in a bordered box with a
+  coloured band and a row of squares lighting up as the panel, the desktop and the file manager start.
+- A self-test now reads out the board the machine is built on and the video card in it, and names the memory
+  modules it counted over. It was being told all three and drawing none of them.
+- A drive is now listed the way a firmware listed one: the model, how much it holds, and what is on it, in
+  columns. The three travel apart because the self-test, the boot menu and the setup page each put them
+  together differently, and one composed sentence cannot be laid out in columns by any of them.
+- A modern machine with nothing to boot now says what each device holds and what to do about it, instead of two
+  lines saying nothing was found.
+- Frames 95's Setup checks the machine before it starts, line by line: the generation, the processor, the
+  memory, the room on the disk and the medium in the drive, each ticked as it passes.
+- Frames XP greets a new machine from the corner of its own desktop rather than with a window, and a click on
+  the notice opens Welcome, which is how that edition said hello.
 - A 32-bit x86 machine now runs what was built for the 16-bit one, as the real 386 ran what an 8086 ran, and a
   64-bit machine runs both. Nothing runs what was built for a machine after it. This is what lets one program
   serve every age: `scc` builds for the oldest machine there is unless told otherwise, so a program written in
@@ -112,6 +137,41 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the system.
 
 ### Changed
+- Everything a machine writes on its own glass is drawn at three quarters of the game's font: the self-test,
+  the boot manager's list, a system reading its start out, and the installers that ran in text. Those machines
+  fitted a screenful of text on a screen this size, and at full size a self-test that listed a board, a video
+  card and four drives ran off the bottom of the monitor.
+- systemd and OpenRC print the way they really print. The kernel stamps each of its lines with the time it
+  happened, systemd marks every target it reaches, and OpenRC uses its own star and its own column, in its own
+  words: it stops services and brings interfaces up, where it used to borrow systemd's sentences and read as
+  the same system in another colour.
+- MC-DOS and MC-NET read out what those systems really read out: the drivers naming themselves as they load,
+  the memory above the line, the drive letters with what is on them, and, on the network machines, the link,
+  the Mainframe, the index, the storage and the services it runs, each dotted across to its answer. A network
+  with nobody answering says so in words rather than printing a column of "skipped".
+- Every installer's copy page is its own again. One put a single bar in a box and named the drive it was
+  reading, another dotted every step across to a "done", another had one gauge and a figure on it. Drawing one
+  list and one bar for all of them made the most-watched minute of every installation the same minute.
+- The server installer wears its heading in its own coloured band across the top, with its help at the other
+  end of it and its two buttons written out at the foot, which is where that installer put all three.
+- Each firmware's one-time boot menu is drawn the way that firmware drew one: a double-ruled box on the
+  earliest tube in the tube's own green, the setup's blue box with a grey title bar on the boards after it, and
+  a dialog on the newest machines with a mark beside each entry saying whether it boots a system or installs
+  one. All three were the same blue box before, which on a green-phosphor monitor was a box of a colour that
+  monitor could not show.
+- The boot manager's list sits in a ruled box with its help underneath, as that manager drew it, and the entry
+  the machine would boot by itself is marked.
+- The newest Frames edition comes up on the same ground its firmware posted on, so the moment the firmware
+  hands the machine over passes without a flash of a different black.
+- Frames 95's bar runs rather than fills. That bar never told anybody how far along the load was: it was one
+  band of colour running left to right and starting over, for as long as the machine took.
+- Frames XP goes down on the blue bands it welcomed you on, with its mark to one side and the message beside
+  it, and says a different thing when it is restarting. It used to go down on the black screen that only ever
+  belonged to coming up.
+- The firmware's version comes from one place: the setup's header now reads the same version the self-test
+  that ran a moment earlier printed.
+- The hardware page names the system on the boot disk beside the slot, since a slot number on a machine with a
+  system on each disk says which disk the machine reaches for and not what it will get.
 - The marks on a machine's screens are pictures now rather than words set in the game's own font: the maker's
   on every modern self-test and on the badge an older board wore, and each Frames edition's on its start, its
   shutdown and the installer that puts it there. A lockup is lettering with weights and a face of its own, and
@@ -384,6 +444,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- The newest Frames edition's first-boot greeting was worked out on every first start and never drawn. The
+  machine built the words, and the screen returned to draw that edition's picture before it reached them, so
+  the one start that edition says anything on said nothing.
+- The Legacy self-test's key hints said the wrong thing and blinked. The boards of that age printed a sentence
+  with the two keys lifted out of it and left it there; only the earliest ones blinked.
+- A monitor opened during a restart no longer shows the desktop of the system that is being closed.
+- The self-test opened by a restart is drawn for as long as that machine's self-test actually takes, rather
+  than for a fallback length it had no way of knowing was wrong.
 - A run of the client tests came back saying all was well whatever had happened in it. Every test could fail
   and the process still ended the way a clean run ends, so nothing watching one ever learned anything from it
   and the nightly run could not have reported a failure. A run with a failed test now ends with a code that

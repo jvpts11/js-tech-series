@@ -50,6 +50,21 @@ public enum MediaDriveType implements IStableName {
         return serializedName;
     }
 
+    /**
+     * What a firmware calls this drive when it lists it beside the disks.
+     *
+     * <p>A self-test names the hardware it found the way the hardware was sold, so these are written out
+     * rather than taken from the constant's own name, which reads as a machine's spelling and not a drive's.
+     */
+    public String driveName() {
+        return switch (this) {
+            case FLOPPY_DRIVE -> "Floppy drive";
+            case CD_DRIVE -> "CD drive";
+            case DVD_DRIVE -> "DVD drive";
+            case DOCK_STATION -> "Dock Station";
+        };
+    }
+
     /** Returns whether this drive can read media of the given format. */
     public boolean accepts(final MediaFormat format) {
         return accepted.contains(format);

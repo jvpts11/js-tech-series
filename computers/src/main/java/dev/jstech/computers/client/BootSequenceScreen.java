@@ -30,9 +30,10 @@ import java.util.Locale;
 
 /**
  * The power-on self-test: what the monitor shows between switching the computer on (or a reboot) and the
- * boot target opening. Lines appear over a few seconds in the firmware's era style (memory count, detected
- * drives, the boot device) and DEL at any point enters the firmware setup instead. When the sequence ends
- * the client reports {@link PostCompletePayload} and the server swaps this screen for whatever boots.
+ * boot target opening. Lines appear over a few seconds in the firmware's era style (the processor and the
+ * board, the memory counted over the modules seated, every drive with what it holds, the boot device) and
+ * DEL at any point enters the firmware setup instead. When the sequence ends the client reports
+ * {@link PostCompletePayload} and the server swaps this screen for whatever boots.
  */
 public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
@@ -41,6 +42,14 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
 
     /** How long a self-test is drawn for when the machine did not say, which only a stale packet leaves. */
     private static final int FALLBACK_TICKS = 70;
+
+    /** Where the wall of text begins, and how much air is left at the right edge. */
+    private static final int MARGIN = 10;
+
+    /** The columns a drive row is printed in, from the wall's left edge: role, device, size, contents. */
+    private static final int COL_DEVICE = 52;
+    private static final int COL_SIZE = 176;
+    private static final int COL_HOLDS = 222;
 
     /** The self-test the machine last reported, kept until the session that shows it is built. */
     @Nullable
@@ -96,6 +105,35 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
 
     /** One machine testing itself: which firmware it wears, what it is called, and where it has got to. */
     private record Testing(FirmwareKind kind, String machineName, int remainingTicks, boolean halted) {
+    }
+
+    /**
+     * One printed line of a self-test.
+     *
+     * <p>A machine of these ages printed in one weight and lifted what it had just found out of it, so a line
+     * is what leads into the finding, the finding itself, and whatever trails after it. A line the firmware
+     * puts at both ends of the glass carries what belongs on the right as well.
+     *
+     * <p>A drive row is columns instead, because a variable-width font cannot be made to line up with spaces
+     * and a list of drives that does not line up is a list nobody can read down.
+     */
+    private record PostLine(String head, String hot, String tail, String right, String[] cols) {
+
+        static PostLine of(final String text) {
+            return new PostLine(text, "", "", "", null);
+        }
+
+        static PostLine blank() {
+            return new PostLine("", "", "", "", null);
+        }
+
+        static PostLine found(final String head, final String hot, final String tail) {
+            return new PostLine(head, hot, tail, "", null);
+        }
+
+        static PostLine columns(final String role, final String device, final String size, final String holds) {
+            return new PostLine("", "", "", "", new String[]{role, device, size, holds});
+        }
     }
 
     /** The machine's own generation, so the bezel is the monitor that machine would really have. */
@@ -208,17 +246,17 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
          */
         final int text = switch (kind) {
             case CLI_BIOS -> Phosphor.green(0xFFB8B8B8);
-            case BLUE_BIOS -> 0xFFE8E8E8;
+            case BLUE_BIOS -> 0xFFBDBDBD;
             case UEFI -> 0xFFE6ECF6;
         };
         final int dim = switch (kind) {
             case CLI_BIOS -> Phosphor.green(0xFF707070);
-            case BLUE_BIOS -> 0xFFB9C4D6;
+            case BLUE_BIOS -> 0xFF8A8A8A;
             case UEFI -> 0xFF8090A8;
         };
         final int accent = switch (kind) {
             case CLI_BIOS -> Phosphor.green(0xFFE8E8E8);
-            case BLUE_BIOS -> 0xFFFFE14D;
+            case BLUE_BIOS -> 0xFFFFFFFF;
             case UEFI -> 0xFF5FA8D3;
         };
         g.fill(x, y, x + W, y + H, bg);
@@ -229,122 +267,174 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
             renderClassic(g, x, y, text, dim, accent);
         }
         if (kind == FirmwareKind.BLUE_BIOS) {
-            renderMakerBadge(g, x, y, accent, dim);
+            /*
+             * The badge the boards of that age wore in the corner of their self-test: a framed block, printed
+             * on the board and put on the glass, rather than the house's name set in the machine's own font.
+             */
+            SplashLogos.badge(g, x + W - MARGIN, y + 8);
         }
         if (bootMenu) {
             renderBootMenu(g, x, y, text, dim, accent);
         }
     }
 
-    /**
-     * The one-time boot menu, drawn over the self-test the way a firmware's own does.
-     *
-     * <p>Whatever is picked here is for this boot and no other: the order saved in setup is not touched, which
-     * is the whole point of having it apart from the setup.
-     */
-    private void renderBootMenu(final GuiGraphics g, final int x, final int y, final int text, final int dim,
-                                final int accent) {
-        final List<Choice> choices = bootable();
-        final int boxW = 200;
-        final int boxH = 30 + choices.size() * 11;
-        final int bx = x + (W - boxW) / 2;
-        final int by = y + (H - boxH) / 2;
-        g.fill(bx, by, bx + boxW, by + boxH, 0xFF000060);
-        g.fill(bx, by, bx + boxW, by + 1, accent);
-        g.fill(bx, by + boxH - 1, bx + boxW, by + boxH, accent);
-        g.drawString(font, "Boot Menu  (this boot only)", bx + 6, by + 6, accent, false);
-        int ly = by + 20;
-        for (int i = 0; i < choices.size(); i++) {
-            final Choice choice = choices.get(i);
-            final boolean on = i == menuAt;
-            final String where = choice.slot() >= 0 ? "Disk " + choice.slot() : "Drive";
-            g.drawString(font, (on ? "> " : "  ") + where + "    " + choice.entry().label(), bx + 6, ly,
-                    on ? accent : text, false);
-            ly += 11;
-        }
-        g.drawString(font, "Up/Down: Select     Enter: Boot", bx + 6, by + boxH - 11, dim, false);
-    }
-
-    /** The maker's badge in the top right, where a board of that age printed its firmware house's mark. */
-    private void renderMakerBadge(final GuiGraphics g, final int x, final int y, final int accent, final int dim) {
-        /*
-         * The badge the boards of that age wore in the corner of their self-test: a framed block, printed on
-         * the board and put on the glass, rather than the house's name set in the machine's own font.
-         */
-        SplashLogos.badge(g, x + W - 10, y + 8);
-    }
-
-    /** The classic POST wall of text: BIOS banner, memory count, drive detection, boot line. */
+    /** The classic POST wall of text: the banner, the machine, what is in it, and what it will boot. */
     private void renderClassic(final GuiGraphics g, final int x, final int y, final int text, final int dim,
                                final int accent) {
-        final List<String[]> lines = classicLines();
+        final List<PostLine> lines = classicLines();
+        final int left = x + MARGIN;
+        final int right = x + W - MARGIN;
         int ty = y + 10;
         for (int i = 0; i < lines.size(); i++) {
-            if (ticks < 4 + i * 4) {
+            if (ticks < 4 + i * 3) {
                 break; // lines appear one by one, like a machine actually finding its hardware
             }
-            final String[] line = lines.get(i);
-            g.drawString(font, line[0], x + 10, ty, "1".equals(line[1]) ? accent : text, false);
-            ty += 10;
-        }
-        // The setup hint blinks at the bottom for the whole sequence.
-        if ((ticks / 10) % 2 == 0 && !setupRequested) {
-            g.drawString(font, "DEL  Setup      F12  Boot Menu", x + 10, y + H - 14, dim, false);
-        }
-        if (setupRequested) {
-            g.drawString(font, "Entering SETUP ...", x + 10, y + H - 14, accent, false);
-        }
-    }
-
-    private List<String[]> classicLines() {
-        final List<String[]> out = new ArrayList<>();
-        out.add(new String[]{Branding.biosBanner(bezelEra()) + " - " + machineName, "1"});
-        out.add(new String[]{Branding.firmwareCopyright(bezelEra()), "0"});
-        out.add(new String[]{"", "0"});
-        if (state != null) {
-            final FirmwareStatePayload.Machine machine = state.machine();
-            /*
-             * The processor by its own model, then what it is: a self-test reads out the machine it found, and
-             * the model is the part of it a player recognises.
-             */
-            out.add(new String[]{"Main Processor : "
-                    + (machine.cpuName().isEmpty() ? "not detected" : machine.cpuName()), "0"});
-            if (machine.hasCpu()) {
-                out.add(new String[]{"                 " + machine.cores()
-                        + (machine.cores() == 1 ? " core   " : " cores  ")
-                        + machine.cpuMhz() + " MHz   " + machine.cpuArch(), "0"});
-            }
-            // The memory test counts up while the POST runs, settling on the installed total.
-            final long total = (long) machine.ramMb() * 1024L;
-            final long counted = Math.min(total, total * Math.max(0, ticks - 12) / 28L);
-            out.add(new String[]{"Memory Test : " + String.format(Locale.ROOT, "%,d", counted) + " KB OK", "0"});
-            out.add(new String[]{"", "0"});
-            out.add(new String[]{"Detecting drives ...", "0"});
-            int slot = 0;
-            for (final FirmwareStatePayload.Entry entry : state.entries()) {
-                final String role = entry.kind() == 0 ? ("  Disk " + slot++) : "  Media";
-                out.add(new String[]{role + " : " + entry.label()
-                        + (entry.detail().isEmpty() ? "" : " (" + entry.detail() + ")"), "0"});
-            }
-            out.add(new String[]{"", "0"});
-            if (completed) {
-                /*
-                 * What it is about to boot, by name, or the era's own way of saying there is nothing: a machine
-                 * of this age told you which drive it was reaching for, and which one it had given up on.
-                 */
-                final String booting = bootingFrom();
-                if (!booting.isEmpty()) {
-                    out.add(new String[]{"Booting from " + booting + " ...", "1"});
-                } else {
-                    for (final String line : noBootLines()) {
-                        out.add(new String[]{line, "1"});
-                    }
+            final PostLine line = lines.get(i);
+            if (line.cols() != null) {
+                final String[] cols = line.cols();
+                wall(g, cols[0], left + 6, ty, text);
+                wall(g, cols[1], left + COL_DEVICE, ty, text);
+                wall(g, cols[2], left + COL_SIZE, ty, dim);
+                wall(g, cols[3], left + COL_HOLDS, ty, text);
+            } else {
+                int tx = left;
+                if (!line.head().isEmpty()) {
+                    wall(g, line.head(), tx, ty, text);
+                    tx += wallWidth(line.head());
+                }
+                if (!line.hot().isEmpty()) {
+                    wall(g, line.hot(), tx, ty, accent);
+                    tx += wallWidth(line.hot());
+                }
+                if (!line.tail().isEmpty()) {
+                    wall(g, line.tail(), tx, ty, text);
+                }
+                if (!line.right().isEmpty()) {
+                    wallRight(g, line.right(), right, ty, dim);
                 }
             }
-        } else {
-            out.add(new String[]{"Reading system configuration ...", "0"});
+            ty += WALL_ROW;
+        }
+        renderClassicHint(g, x, y, dim, accent);
+    }
+
+    /**
+     * The key hints along the bottom, in the words and the manner of that machine's own firmware.
+     *
+     * <p>The earliest boards blinked theirs; the ones after them printed a sentence and left it there, with the
+     * two keys lifted out of it. Blinking both was one habit borrowed across a decade it did not belong to.
+     */
+    private void renderClassicHint(final GuiGraphics g, final int x, final int y, final int dim,
+                                   final int accent) {
+        final int ty = y + H - 14;
+        if (setupRequested) {
+            wall(g, "Entering SETUP ...", x + MARGIN, ty, accent);
+            return;
+        }
+        if (kind == FirmwareKind.CLI_BIOS) {
+            if ((ticks / 10) % 2 == 0) {
+                wall(g, "DEL  Setup      F12  Boot Menu", x + MARGIN, ty, dim);
+            }
+            return;
+        }
+        final int key = 0xFFFFE14D;
+        int tx = x + MARGIN;
+        tx = hintRun(g, "Press ", tx, ty, dim);
+        tx = hintRun(g, "DEL", tx, ty, key);
+        tx = hintRun(g, " to enter SETUP, ", tx, ty, dim);
+        tx = hintRun(g, "F12", tx, ty, key);
+        hintRun(g, " for Boot Menu", tx, ty, dim);
+    }
+
+    /** Draws one run of the hint line and answers where the next one starts. */
+    private int hintRun(final GuiGraphics g, final String run, final int x, final int y, final int color) {
+        wall(g, run, x, y, color);
+        return x + wallWidth(run);
+    }
+
+    /**
+     * What this machine's firmware prints while it tests itself.
+     *
+     * <p>The two ages print the same facts in their own hand: the earliest board names the parts in a column of
+     * short labels, the one after it writes them out and puts the machine and its board on a line of their own.
+     */
+    private List<PostLine> classicLines() {
+        final boolean legacy = kind == FirmwareKind.BLUE_BIOS;
+        final List<PostLine> out = new ArrayList<>();
+        out.add(new PostLine("", Branding.biosBanner(bezelEra()), "", legacy ? "" : machineTitle(), null));
+        out.add(PostLine.of(Branding.firmwareCopyright(bezelEra())));
+        out.add(PostLine.blank());
+        if (state == null) {
+            out.add(PostLine.of("Reading system configuration ..."));
+            return out;
+        }
+        final FirmwareStatePayload.Machine machine = state.machine();
+        if (legacy) {
+            out.add(PostLine.found("", machineTitle(), machine.boardName().isEmpty()
+                    ? "" : "   " + machine.boardName()));
+            out.add(PostLine.blank());
+        }
+        /*
+         * The processor by its own model, then what it is: a self-test reads out the machine it found, and the
+         * model is the part of it a player recognises.
+         */
+        final String noCpu = "not detected";
+        out.add(PostLine.found(legacy ? "Main Processor : " : "Processor : ",
+                machine.cpuName().isEmpty() ? noCpu : machine.cpuName(),
+                machine.hasCpu() ? cpuDetail(machine, legacy) : ""));
+        if (!legacy) {
+            out.add(PostLine.of("Board     : " + (machine.boardName().isEmpty()
+                    ? "not detected" : machine.boardName())));
+        }
+        out.add(PostLine.of(memoryLine(machine, legacy)));
+        out.add(PostLine.of((legacy ? "Video Adapter  : " : "Video     : ")
+                + (machine.gpuName().isEmpty() ? "none" : machine.gpuName())));
+        out.add(PostLine.blank());
+        out.add(PostLine.of(legacy ? "Detecting drives ..." : "Detecting drives..."));
+        int slot = 0;
+        for (final FirmwareStatePayload.Entry entry : state.entries()) {
+            final String role = entry.kind() == FirmwareStatePayload.KIND_DISK ? "Disk " + slot++ : entry.device();
+            final String device = entry.kind() == FirmwareStatePayload.KIND_DISK ? entry.device() : "";
+            out.add(PostLine.columns(role, device, entry.size(), entry.label()));
+        }
+        out.add(PostLine.blank());
+        if (completed) {
+            /*
+             * What it is about to boot, by name, or the era's own way of saying there is nothing: a machine of
+             * this age told you which drive it was reaching for, and which one it had given up on.
+             */
+            final String booting = bootingFrom();
+            if (!booting.isEmpty()) {
+                out.add(PostLine.found("", "Booting from " + booting + " ...", ""));
+            } else {
+                for (final String line : noBootLines()) {
+                    out.add(PostLine.found("", line, ""));
+                }
+            }
         }
         return out;
+    }
+
+    /** What the firmware says about the processor beside its model: cores, clock and architecture. */
+    private static String cpuDetail(final FirmwareStatePayload.Machine machine, final boolean legacy) {
+        if (legacy) {
+            return "  " + machine.cpuMhz() + " MHz  " + machine.cpuArch();
+        }
+        return "   " + machine.cores() + (machine.cores() == 1 ? " core   " : " cores   ")
+                + machine.cpuMhz() + " MHz   " + machine.cpuArch();
+    }
+
+    /** The memory line: what the count has reached, and which modules it is counting over. */
+    private String memoryLine(final FirmwareStatePayload.Machine machine, final boolean legacy) {
+        // The memory test counts up while the POST runs, settling on the installed total.
+        final long total = (long) machine.ramMb() * 1024L;
+        final long counted = Math.min(total, total * Math.max(0, ticks - 12) / 28L);
+        final String amount = String.format(Locale.ROOT, "%,d", counted);
+        final String modules = machine.memoryModules();
+        if (legacy) {
+            return "Memory Testing : " + amount + "K OK" + (modules.isEmpty() ? "" : "  " + modules);
+        }
+        return "Memory    : " + amount + " KB OK" + (modules.isEmpty() ? "" : "      " + modules);
     }
 
     /** One thing the one-time menu can boot: the entry, and the disk slot it sits in, or -1 for a medium. */
@@ -365,6 +455,130 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
             }
         }
         return out;
+    }
+
+    /** What a menu row calls the place an entry boots from: the disk by its slot, or the drive by its kind. */
+    private static String whereOf(final Choice choice) {
+        return choice.slot() >= 0 ? "Disk " + choice.slot() : choice.entry().device();
+    }
+
+    /**
+     * The one-time boot menu, drawn over the self-test the way that machine's own firmware drew it.
+     *
+     * <p>Whatever is picked here is for this boot and no other: the order saved in setup is not touched, which
+     * is the whole point of having it apart from the setup.
+     */
+    private void renderBootMenu(final GuiGraphics g, final int x, final int y, final int text, final int dim,
+                                final int accent) {
+        switch (kind) {
+            case CLI_BIOS -> renderTubeMenu(g, x, y, text, accent);
+            case BLUE_BIOS -> renderBlueMenu(g, x, y);
+            case UEFI -> renderUefiMenu(g, x, y, text, dim, accent);
+        }
+    }
+
+    /** The earliest machines: a double-ruled box on the tube, its entries numbered as that firmware numbered. */
+    private void renderTubeMenu(final GuiGraphics g, final int x, final int y, final int text, final int accent) {
+        final List<Choice> choices = bootable();
+        final int boxW = 210;
+        final int boxH = 28 + choices.size() * WALL_ROW + 12;
+        final int bx = x + (W - boxW) / 2;
+        final int by = y + (H - boxH) / 2;
+        g.fill(bx, by, bx + boxW, by + boxH, 0xFF000000);
+        rule(g, bx, by, boxW, boxH, accent);
+        rule(g, bx + 2, by + 2, boxW - 4, boxH - 4, accent);
+        wall(g, "Boot Menu  (this boot only)", bx + 8, by + 8, accent);
+        int ly = by + 24;
+        for (int i = 0; i < choices.size(); i++) {
+            final Choice choice = choices.get(i);
+            final boolean on = i == menuAt;
+            wall(g, (on ? "> " : "  ") + (i + 1) + ". " + whereOf(choice), bx + 8, ly, on ? accent : text);
+            wall(g, choice.entry().label(), bx + 92, ly, on ? accent : text);
+            ly += WALL_ROW;
+        }
+        wall(g, "Up/Down  select     Enter  boot", bx + 8, by + boxH - 12, text);
+    }
+
+    /** The boards after them: the setup's own blue, a grey title bar, and the choice filled light. */
+    private void renderBlueMenu(final GuiGraphics g, final int x, final int y) {
+        final int ground = 0xFF0000A8;
+        final int frame = 0xFFB9B9B9;
+        final int chosen = 0xFFD9D9D9;
+        final List<Choice> choices = bootable();
+        final int boxW = 212;
+        final int rowH = WALL_ROW + 3;
+        final int boxH = 14 + choices.size() * rowH + 18;
+        final int bx = x + (W - boxW) / 2;
+        final int by = y + (H - boxH) / 2;
+        g.fill(bx, by, bx + boxW, by + boxH, ground);
+        rule(g, bx, by, boxW, boxH, frame);
+        g.fill(bx + 1, by + 1, bx + boxW - 1, by + 13, frame);
+        wallCentered(g, "Boot Menu", bx + boxW / 2, by + 4, ground);
+        int ly = by + 16;
+        for (int i = 0; i < choices.size(); i++) {
+            final Choice choice = choices.get(i);
+            final boolean on = i == menuAt;
+            if (on) {
+                g.fill(bx + 2, ly - 1, bx + boxW - 2, ly + rowH - 2, chosen);
+            }
+            wall(g, whereOf(choice), bx + 8, ly, on ? ground : 0xFFFFFFFF);
+            wall(g, choice.entry().label(), bx + 84, ly, on ? ground : 0xFFFFFFFF);
+            ly += rowH;
+        }
+        g.fill(bx + 1, ly + 1, bx + boxW - 1, ly + 2, 0xFF6FB7FF);
+        wall(g, "Up/Down: Select     Enter: Boot", bx + 8, ly + 6, 0xFFFFE14D);
+    }
+
+    /** The modern machines: a dialog over the dimmed splash, each entry marked by what it is. */
+    private void renderUefiMenu(final GuiGraphics g, final int x, final int y, final int text, final int dim,
+                                final int accent) {
+        final List<Choice> choices = bootable();
+        final int boxW = 212;
+        final int rowH = WALL_ROW + 6;
+        final int boxH = 16 + choices.size() * (rowH + 3) + 16;
+        final int bx = x + (W - boxW) / 2;
+        final int by = y + (H - boxH) / 2;
+        g.fill(bx, by, bx + boxW, by + boxH, 0xFF2A2D3E);
+        g.fill(bx, by, bx + boxW, by + 14, 0xFF3A4060);
+        g.fill(bx, by, bx + 2, by + 14, accent);
+        wall(g, "Boot Menu", bx + 7, by + 4, text);
+        wallRight(g, "this boot only", bx + boxW - 7, by + 4, dim);
+        int ly = by + 17;
+        for (int i = 0; i < choices.size(); i++) {
+            final Choice choice = choices.get(i);
+            final boolean on = i == menuAt;
+            g.fill(bx + 5, ly, bx + boxW - 5, ly + rowH, on ? 0xFF23405A : 0xFF3A4060);
+            if (on) {
+                g.fill(bx + 5, ly, bx + 7, ly + rowH, accent);
+            }
+            /*
+             * Green for a disk that carries a system, amber for a medium: what a player wants to know at a
+             * glance is which of these boots what is already installed and which one installs something new.
+             */
+            final int dot = choice.slot() >= 0 ? 0xFF5FE07A : 0xFFF0B23A;
+            g.fill(bx + 12, ly + 5, bx + 16, ly + 9, dot);
+            wall(g, choice.entry().label(), bx + 21, ly + 3, text);
+            wallRight(g, deviceOf(choice), bx + boxW - 9, ly + 3, dim);
+            ly += rowH + 3;
+        }
+        wall(g, "Up/Down Select   Enter Boot", bx + 7, ly + 3, dim);
+    }
+
+    /** How a modern dialog names where an entry lives: the disk by slot and model, or the drive on its own. */
+    private static String deviceOf(final Choice choice) {
+        if (choice.slot() < 0) {
+            return choice.entry().device();
+        }
+        return "Disk " + choice.slot() + " " + choice.entry().device();
+    }
+
+    /** A one-pixel frame around a box, which is how every firmware here draws one. */
+    private static void rule(final GuiGraphics g, final int x, final int y, final int w, final int h,
+                             final int color) {
+        g.fill(x, y, x + w, y + 1, color);
+        g.fill(x, y + h - 1, x + w, y + h, color);
+        g.fill(x, y, x + 1, y + h, color);
+        g.fill(x + w - 1, y, x + w, y + h, color);
     }
 
     /** Up and down walk the menu, Enter boots what is on, and anything else puts the menu away. */
@@ -450,43 +664,80 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         }
         final FirmwareStatePayload.Machine m = state.machine();
         final String memory = m.ramMb() >= 1024 ? m.ramMb() / 1024 + " GB" : m.ramMb() + " MB";
-        return m.cpuName() + "  -  " + m.cores() + (m.cores() == 1 ? " core" : " cores")
-                + "  -  " + memory + "  -  " + m.cpuArch();
+        return m.cpuName() + " · " + m.cores() + (m.cores() == 1 ? " core" : " cores")
+                + " · " + memory + " · " + m.cpuArch();
     }
 
-    /** The modern machines hide the wall of text: logo line, a progress bar, the setup hint. */
+    /**
+     * The modern machines hide the wall of text: the maker's mark, the machine's own name, a bar under it,
+     * and along the foot what it is made of on one side and the two keys on the other.
+     */
     private void renderUefi(final GuiGraphics g, final int x, final int y, final int text, final int dim,
                             final int accent) {
         /*
-         * The maker's mark, then the machine's own name, then what it is made of. The mark is a picture rather
-         * than the house's name set in the game's font: it is a lockup with its own lettering, and writing the
-         * words out in one size was the thing that made this screen read as a placeholder. No screen inside the
-         * fiction names the mod, and the machine in front of the player is the one it names.
+         * The mark is a picture rather than the house's name set in the game's font: it is a lockup with its
+         * own lettering, and writing the words out in one size was the thing that made this screen read as a
+         * placeholder. No screen inside the fiction names the mod, and the machine in front of the player is
+         * the one it names.
          */
-        SplashLogos.draw(g, SplashLogos.JSC, x + W / 2, y + H / 2 - 52);
-        g.drawCenteredString(font, machineTitle(), x + W / 2, y + H / 2 - 8, text);
-        g.drawCenteredString(font, buildSummary(), x + W / 2, y + H / 2 + 4, dim);
-        // Progress: a thin bar filling across the POST duration.
+        final int cx = x + W / 2;
+        SplashLogos.draw(g, SplashLogos.JSC, cx, y + H / 2 - 46);
+        wallCentered(g, machineTitle(), cx, y + H / 2 + 8, 0xFFA8B2C6);
         final int barW = 120;
-        final int bx = x + (W - barW) / 2;
-        final int by = y + H / 2 + 20;
+        final int bx = cx - barW / 2;
+        final int by = y + H / 2 + 24;
         g.fill(bx, by, bx + barW, by + 3, 0xFF2A2D3E);
         final int fill = Math.min(barW, barW * ticks / postTicks);
         g.fill(bx, by, bx + fill, by + 3, accent);
         if (completed && bootingFrom().isEmpty()) {
-            int ly = y + H / 2 + 32;
-            for (final String line : noBootLines()) {
-                g.drawCenteredString(font, line, x + W / 2, ly, text);
-                ly += 11;
-            }
+            renderUefiNoBoot(g, x, y, text, dim);
             return;
         }
+        /*
+         * Along the foot: what the machine is made of where a board of this age prints it, and the two keys
+         * at the other end, blinking as they do until one of them is pressed.
+         */
+        final int fy = y + H - 16;
+        wall(g, buildSummary(), x + MARGIN, fy, dim);
         if (setupRequested) {
-            g.drawCenteredString(font, "Entering Setup ...", x + W / 2, y + H - 18, accent);
+            wallRight(g, "Entering Setup ...", x + W - MARGIN, fy, accent);
         } else if ((ticks / 10) % 2 == 0) {
-            g.drawCenteredString(font, "DEL  Setup      F12  Boot Menu", x + W / 2, y + H - 18, dim);
+            int tx = x + W - MARGIN - wallWidth("DEL Setup   F12 Boot Menu");
+            tx = hintRun(g, "DEL", tx, fy, text);
+            tx = hintRun(g, " Setup   ", tx, fy, dim);
+            tx = hintRun(g, "F12", tx, fy, text);
+            hintRun(g, " Boot Menu", tx, fy, dim);
         }
     }
 
-    /** The host computer's hardware era, so the monitor bezel matches the machine. */
+    /**
+     * A modern machine with nothing to boot says so in a dialog that names every device and what is on it.
+     *
+     * <p>Two lines saying no device was found tell a player that something is wrong and nothing about what:
+     * the disks are there, they are simply empty, and the one thing worth knowing is which of them is.
+     */
+    private void renderUefiNoBoot(final GuiGraphics g, final int x, final int y, final int text, final int dim) {
+        final List<FirmwareStatePayload.Entry> entries = state == null ? List.of() : state.entries();
+        final int boxW = 224;
+        final int boxH = 16 + Math.max(1, entries.size()) * WALL_ROW + 22;
+        final int bx = x + (W - boxW) / 2;
+        final int by = y + (H - boxH) / 2;
+        g.fill(bx, by, bx + boxW, by + boxH, 0xFF2A2D3E);
+        g.fill(bx, by, bx + boxW, by + 14, 0xFF3A4060);
+        g.fill(bx, by, bx + 2, by + 14, 0xFFF0B23A);
+        wall(g, "No bootable device", bx + 7, by + 4, 0xFFF0B23A);
+        int ly = by + 18;
+        if (entries.isEmpty()) {
+            wall(g, "No disk and no drive is attached to this computer.", bx + 8, ly, dim);
+            ly += WALL_ROW;
+        }
+        int slot = 0;
+        for (final FirmwareStatePayload.Entry entry : entries) {
+            final String where = entry.kind() == FirmwareStatePayload.KIND_DISK
+                    ? "Disk " + slot++ + " · " + entry.device() : entry.device();
+            wall(g, where + ": " + entry.label(), bx + 8, ly, text);
+            ly += WALL_ROW;
+        }
+        wall(g, "Insert installation media and press Enter, or DEL for Setup", bx + 8, ly + 4, dim);
+    }
 }

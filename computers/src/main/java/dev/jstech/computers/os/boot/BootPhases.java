@@ -45,6 +45,15 @@ public final class BootPhases {
     private boolean atMenu;
     private long menuEndsAt;
 
+    /*
+     * The machine closing its programs on its way to starting over. A restart is not a power cut: the system
+     * that is running gets to say goodbye first, and only when it has finished does the self-test begin. The
+     * clock is its own because nothing else about the machine is happening while it runs.
+     */
+    private boolean goingDown;
+    private long downEndsAt;
+    private int downTicksTotal;
+
     /* The system coming up, after the self-test and before the desktop or the prompt. */
     private boolean booting;
     private long bootEndsAt;
@@ -67,9 +76,51 @@ public final class BootPhases {
         this.postEndsAt = 0L;
         if (value) {
             this.halted = false;
+            endDown();
             endMenu();
             endBoot();
         }
+    }
+
+    /** Whether the machine is closing down before starting over. */
+    public boolean goingDown() {
+        return this.goingDown;
+    }
+
+    /**
+     * Starts the machine closing down, with that long before the self-test begins.
+     *
+     * <p>Whatever it was standing at or bringing up is over: a machine on its way down is not on its way up.
+     */
+    public void beginDown(final long now, final int ticks) {
+        this.halted = false;
+        endMenu();
+        endBoot();
+        this.goingDown = true;
+        this.downTicksTotal = Math.max(1, ticks);
+        this.downEndsAt = now + this.downTicksTotal;
+    }
+
+    /** Whether the machine has finished closing down and it is time to test itself again. */
+    public boolean downDone(final long now) {
+        return this.goingDown && now >= this.downEndsAt;
+    }
+
+    /** How long this closing-down takes in all, so a screen joining it knows how far along it is. */
+    public int downTotal() {
+        return this.goingDown ? this.downTicksTotal : 0;
+    }
+
+    /** The ticks it still has to run, so a monitor opened part way through joins it where it is. */
+    public int downRemaining(final long now) {
+        return this.goingDown ? (int) Math.max(0L, this.downEndsAt - now) : 0;
+    }
+
+    /** Leaves the closing-down, whichever way it was left. */
+    public void endDown() {
+        this.goingDown = false;
+        this.downEndsAt = 0L;
+        this.downTicksTotal = 0;
     }
 
     /** Whether the machine is standing at the end of a self-test that found nothing to boot. */
@@ -193,6 +244,7 @@ public final class BootPhases {
      * and a machine coming on owes a self-test before anything else.
      */
     public void powered(final boolean on) {
+        endDown();
         endMenu();
         endBoot();
         if (on) {

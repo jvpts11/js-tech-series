@@ -222,6 +222,8 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         BOOTING,
         /** A guided installer has written the system and still waits for the reboot that boots it. */
         INSTALLER,
+        /** The system is closing down before the machine starts over: the screen joins that. */
+        GOING_DOWN,
         /** Hand over to whatever the boot target is (firmware, shell, desktop). */
         BOOT
     }
@@ -244,6 +246,14 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
          */
         if (computer.needsPost() || computer.haltedAtPost()) {
             return Entry.POST;
+        }
+        /*
+         * A machine closing down is doing exactly one thing, and it comes before everything below: without
+         * this, looking away during a restart and looking back put the player on the desktop of a system that
+         * was in the middle of being closed.
+         */
+        if (computer.goingDown()) {
+            return Entry.GOING_DOWN;
         }
         if (computer.installing() != null) {
             return Entry.INSTALLING;
@@ -306,6 +316,10 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                     openSystemBoot(player, level, monitorPos, owner, computer);
                     return;
                 }
+                case GOING_DOWN -> {
+                    openSystemDown(player, level, monitorPos, owner, computer);
+                    return;
+                }
                 case INSTALLER -> {
                     openInstallerPrompt(player, level, monitorPos, owner, computer);
                     return;
@@ -337,7 +351,41 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                                       final BlockPos owner, final IOsHost computer) {
         PacketDistributor.sendToPlayer(player, new OpenSystemBootPayload(
                 owner, monitorPos, computer.bootRemaining(), computer.bootTotal(),
-                computer.bootSequence(), false, splashOf(computer)));
+                computer.bootSequence(), false, splashOf(computer), desktopOf(computer),
+                systemNameOf(computer)));
+        openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.SYSTEM_BOOT);
+    }
+
+    /**
+     * The desktop this machine brings up after its system, by the last part of its id, or nothing.
+     *
+     * <p>What the machine booted with rather than what is installed on it: a desktop added a moment ago waits
+     * for a restart, so the screen that shows a desktop coming up has to show the one that really is.
+     */
+    private static String desktopOf(final IOsHost computer) {
+        final ResourceLocation desktop = computer.bootedDesktopId();
+        return desktop == null ? "" : desktop.getPath();
+    }
+
+    /** The system by the name it prints of itself, which a desktop's loading screen names at its foot. */
+    private static String systemNameOf(final IOsHost computer) {
+        final OsDef system = computer.installedOs();
+        return system == null ? "" : system.displayName();
+    }
+
+    /**
+     * Sends the client the system this machine is closing down, at the point it has reached.
+     *
+     * <p>The same screen as a system coming up and for the same reason: the machine is the one keeping the
+     * time, so a monitor opened half way through a restart joins the goodbye where it is rather than starting
+     * it over or missing it. Nothing dark follows it, because what follows it is the self-test.
+     */
+    public static void openSystemDown(final ServerPlayer player, final Level level, final BlockPos monitorPos,
+                                      final BlockPos owner, final IOsHost computer) {
+        PacketDistributor.sendToPlayer(player, new OpenSystemBootPayload(
+                owner, monitorPos, computer.downRemaining(), computer.downTotal(),
+                BootLines.shutdownFor(computer, true), false, splashOf(computer), "",
+                systemNameOf(computer)));
         openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.SYSTEM_BOOT);
     }
 
