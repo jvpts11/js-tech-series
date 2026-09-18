@@ -9,7 +9,9 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.payload.program.DesktopShellPayloads;
@@ -22,6 +24,7 @@ import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.program.cli.ICliCommand;
 import dev.jstech.computers.program.tty.TtyScript;
 import dev.jstech.computers.program.tty.TtyScriptProcess;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.tests.JsTests;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,6 +32,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -52,6 +56,11 @@ public final class TerminalToolGameTests {
 
     /** How long the test tool works for, in ticks. */
     private static final int WORK = 20;
+
+    /** Long enough for a server just mounted in a rack to be a running machine. */
+    private static final int SETTLE = 8;
+
+    private static final ResourceLocation MC_NET = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_net");
 
     /** The machines whose tool ran to its end, by the name each answers to, since a tool has nowhere to say. */
     private static final Set<String> FETCHED = ConcurrentHashMap.newKeySet();
@@ -140,7 +149,34 @@ public final class TerminalToolGameTests {
                 .thenSucceed();
     }
 
-    private static TerminalTools.Turn start(final GameTestHelper helper, final PersonalComputerBlockEntity computer) {
+    /**
+     * A server mounted in a rack is a machine like any other: what is left running in front of its terminal
+     * runs to its end by itself, with nobody at the rack.
+     */
+    @GameTest(template = ARENA)
+    public static void aServerInARack_movesItsToolAlongByItself(final GameTestHelper helper) {
+        helper.setBlock(WHERE, ComputingModule.SERVER_RACK.get());
+        if (!(helper.getBlockEntity(WHERE) instanceof ServerRackBlockEntity rack)) {
+            throw new IllegalStateException("no rack at " + WHERE);
+        }
+        rack.getServers().setStackInSlot(0, ComputingModule.defaultServer());
+        rack.insertDrive(0, new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1)));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertTrue(rack.installOs(MC_NET), "the server takes a system");
+                    helper.assertTrue(start(helper, rack).keyboard().busy(), "the tool has the server's keyboard");
+                })
+                .thenExecuteAfter(WORK / 2, () -> helper.assertFalse(FETCHED.contains(idOf(helper, rack)),
+                        "half way through it has fetched nothing"))
+                .thenExecuteAfter(WORK, () -> {
+                    helper.assertTrue(FETCHED.contains(idOf(helper, rack)),
+                            "the rack moved its server's tool along, to the end");
+                    helper.assertFalse(rack.consoleOf(0).foreground().running(), "and the prompt is back");
+                })
+                .thenSucceed();
+    }
+
+    private static TerminalTools.Turn start(final GameTestHelper helper, final IComputerTerminalHost computer) {
         FETCHED.remove(idOf(helper, computer));
         final ServerCliComputer cli = new ServerCliComputer(computer, helper.getLevel());
         final CliShell.Response response = CliCommands.shellFor(cli, WIDTH).run(FetchForTests.NAME, cli);
@@ -150,7 +186,7 @@ public final class TerminalToolGameTests {
         return TerminalTools.started(computer, helper.getLevel(), FetchForTests.NAME, response.started());
     }
 
-    private static String idOf(final GameTestHelper helper, final PersonalComputerBlockEntity computer) {
+    private static String idOf(final GameTestHelper helper, final IComputerTerminalHost computer) {
         return new ServerCliComputer(computer, helper.getLevel()).nodeId();
     }
 

@@ -130,7 +130,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   and Enter by itself taking the default, and a password typed at one is not shown. Ctrl+C stops it, and what
   it had not finished stays not done. It keeps running with nobody at the screen, and it is still running after
   the world has been saved and loaded. Both terminals do this, the prompt that fills a monitor and the window
-  on a desktop, and any command can start one.
+  on a desktop, and any command can start one. A server mounted in a rack does the same, and goes on with
+  what it was left running while the rack's switch is turned to one of its neighbours.
 - The Gentoo install follows its handbook. The disk mounts at `/mnt/gentoo`, the stage 3 is fetched into it and
   unpacked there, and inside the chroot the package tree comes with `emerge-webrsync` before anything merges.
   `eselect profile`, `emerge --update --deep --newuse @world`, `eselect kernel`, the time zone and `locale-gen`

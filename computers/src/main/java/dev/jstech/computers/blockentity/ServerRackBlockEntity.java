@@ -72,6 +72,7 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.item.ItemStack;
@@ -117,6 +118,7 @@ public class ServerRackBlockEntity extends BlockEntity
         implements IPeripheralOwnerSupport,
         IOsHost,
         IComputerTerminalHost,
+        IWatchedConsole,
         GeoBlockEntity {
 
     // the cabinet as one model: what the renderer needs to know about every row
@@ -375,6 +377,19 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     private final Map<Integer, UnitState> unitStates = new HashMap<>();
+
+    /** Who is at the rack's glass, and what keeps each server's terminal moving. */
+    private final RackTerminals terminals = new RackTerminals(this);
+
+    @Override
+    public void consoleOpenedBy(final ServerPlayer viewer) {
+        terminals.opened(viewer);
+    }
+
+    @Override
+    public void consoleClosedBy(final ServerPlayer viewer) {
+        terminals.closed(viewer);
+    }
 
     private UnitState unitState(final int slot) {
         return unitStates.computeIfAbsent(slot, s -> {
@@ -899,6 +914,8 @@ public class ServerRackBlockEntity extends BlockEntity
             BootRunner.tick(unitHost(i), unitState(i).phases, level, worldPosition);
             SetupRunner.tick(unitHost(i), level, worldPosition);
             OsInstallRunner.tick(unitHost(i), level, worldPosition);
+            // And whatever was left running in front of its terminal goes on running, watched or not.
+            terminals.tick(level, i);
 
             final NetworkUuid previous = registered.get(node);
             if (network == null) {

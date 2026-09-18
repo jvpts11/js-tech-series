@@ -15,6 +15,7 @@ import dev.jstech.computers.operation.payload.WireSink;
 import dev.jstech.computers.operation.payload.program.TerminalTools;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.TerminalForeground;
+import dev.jstech.computers.program.tty.ITtyProcess;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import java.util.List;
 import net.minecraft.server.level.ServerLevel;
@@ -32,33 +33,62 @@ import net.neoforged.neoforge.network.PacketDistributor;
  */
 final class TerminalFeed {
 
-    private final AbstractComputerBlockEntity machine;
+    private final IFedTerminal terminal;
 
     /** Whether the question the tool is standing at has been sent, so it goes out once and not every tick. */
     private boolean asked;
 
-    TerminalFeed(final AbstractComputerBlockEntity machine) {
-        this.machine = machine;
+    TerminalFeed(final IFedTerminal terminal) {
+        this.terminal = terminal;
+    }
+
+    /** The feed of a computer, which has the one terminal. */
+    static TerminalFeed of(final AbstractComputerBlockEntity machine) {
+        return new TerminalFeed(new IFedTerminal() {
+            @Override
+            public ComputerConsoleState console() {
+                return machine.console();
+            }
+
+            @Override
+            public List<ServerPlayer> watching(final ServerLevel level) {
+                return machine.consoleViewers(level);
+            }
+
+            @Override
+            public String prompt() {
+                return machine.shellPrompt();
+            }
+
+            @Override
+            public ITtyProcess remake(final ServerLevel level, final String line) {
+                return machine instanceof IComputerTerminalHost host ? TerminalTools.remake(host, level, line) : null;
+            }
+
+            @Override
+            public void changed() {
+                machine.setChanged();
+            }
+        });
     }
 
     void tick(final ServerLevel level) {
-        final ComputerConsoleState console = this.machine.console();
+        final ComputerConsoleState console = this.terminal.console();
         if (console == null || !console.foreground().running()) {
             this.asked = false;
             return;
         }
         final TerminalForeground front = console.foreground();
         final long now = level.getGameTime();
-        front.findAgain(line -> this.machine instanceof IComputerTerminalHost host
-                ? TerminalTools.remake(host, level, line) : null, now);
+        front.findAgain(line -> this.terminal.remake(level, line), now);
         if (front.tool() == null) {
             return;
         }
-        final List<ServerPlayer> viewers = this.machine.consoleViewers(level);
+        final List<ServerPlayer> viewers = this.terminal.watching(level);
         final WireSink out = viewers.isEmpty() ? null : new WireSink();
         final boolean ended = front.advance(now, out);
         if (ended) {
-            this.machine.setChanged();
+            this.terminal.changed();
         }
         if (out == null) {
             return;
@@ -69,7 +99,7 @@ final class TerminalFeed {
             return;
         }
         this.asked = asking;
-        final String prompt = ended ? this.machine.shellPrompt() : "";
+        final String prompt = ended ? this.terminal.prompt() : "";
         for (final ServerPlayer viewer : viewers) {
             PacketDistributor.sendToPlayer(viewer, viewer.containerMenu instanceof DesktopMenu
                     ? new DesktopShellOutputPayload(prompt, out.lines(), keyboard)

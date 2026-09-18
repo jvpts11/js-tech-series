@@ -9,6 +9,7 @@ package dev.jstech.computers.menu;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.blockentity.IWatchedConsole;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.tier.HardwareEra;
@@ -80,13 +81,13 @@ public class CommandPromptMenu extends AbstractContainerMenu {
         this.osLabel = osLabel == null ? "" : osLabel;
         this.session = session;
         this.access = ContainerLevelAccess.create(playerInventory.player.level(), hostPos);
-        AbstractComputerBlockEntity.screenOpened(playerInventory.player, hostPos);
+        IWatchedConsole.opened(playerInventory.player, hostPos);
     }
 
     @Override
     public void removed(final Player player) {
         super.removed(player);
-        AbstractComputerBlockEntity.screenClosed(player, hostPos);
+        IWatchedConsole.closed(player, hostPos);
     }
 
     public static CommandPromptMenu fromNetwork(final int containerId, final Inventory playerInventory,

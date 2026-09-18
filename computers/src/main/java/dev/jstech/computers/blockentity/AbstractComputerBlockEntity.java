@@ -59,13 +59,11 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +85,7 @@ import java.util.Set;
  * kind settles for itself, and saves each part in turn.
  */
 public abstract class AbstractComputerBlockEntity extends BlockEntity
-        implements IPeripheralOwnerSupport, IOsHost {
+        implements IPeripheralOwnerSupport, IOsHost, IWatchedConsole {
 
     /** The parts installed and what they add up to; it is built with the layout, so the constructor sets it. */
     private final ComputerHardware hardware;
@@ -108,7 +106,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     /** What it sends them: the windows its programs have open, and what those programs print. */
     private final ClientReplication replication = new ClientReplication(this);
     /** What moves the tool in front of its terminal along, and sends what that tool prints. */
-    private final TerminalFeed terminalFeed = new TerminalFeed(this);
+    private final TerminalFeed terminalFeed = TerminalFeed.of(this);
 
     /** The name a player gave this computer: the machine's own, and no part's. */
     private String computerName = "";
@@ -855,22 +853,14 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return replication.takeOwed(viewer);
     }
 
-    /** Tells the machine at {@code host} that this player opened its desktop or prompt; nothing on the client. */
-    public static void screenOpened(final Player player, final BlockPos host) {
-        if (player instanceof ServerPlayer viewer
-                && !(player instanceof FakePlayer)
-                && viewer.level().isLoaded(host)
-                && viewer.level().getBlockEntity(host) instanceof AbstractComputerBlockEntity machine) {
-            machine.viewers.opened(viewer);
-        }
+    @Override
+    public void consoleOpenedBy(final ServerPlayer viewer) {
+        this.viewers.opened(viewer);
     }
 
-    /** Tells the machine at {@code host} that this player closed its desktop or prompt. */
-    public static void screenClosed(final Player player, final BlockPos host) {
-        if (player instanceof ServerPlayer viewer && viewer.level().isLoaded(host)
-                && viewer.level().getBlockEntity(host) instanceof AbstractComputerBlockEntity machine) {
-            machine.viewers.closed(viewer);
-        }
+    @Override
+    public void consoleClosedBy(final ServerPlayer viewer) {
+        this.viewers.closed(viewer);
     }
 
     /**
