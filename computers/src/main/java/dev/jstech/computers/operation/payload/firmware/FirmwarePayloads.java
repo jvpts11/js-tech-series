@@ -132,7 +132,8 @@ public final class FirmwarePayloads {
                 ClientPayloadHandlers.onMainThread((payload, player) ->
                         ISystemBootScreenOpener.Holder.open(
                                 payload.hostPos(), payload.monitorPos(), payload.sequence(),
-                                payload.remainingTicks(), payload.totalTicks(), payload.endsDark())));
+                                payload.remainingTicks(), payload.totalTicks(), payload.endsDark(),
+                                payload.splash())));
         // A copy already under way: the monitor shows where the machine has got to, not a fresh one.
         registrar.playToClient(OsInstallProgressPayload.TYPE, OsInstallProgressPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->

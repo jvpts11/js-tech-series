@@ -37,6 +37,7 @@ import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.boot.BootController;
 import dev.jstech.computers.os.boot.BootLines;
+import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.program.ServerCliComputer;
@@ -336,8 +337,14 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                                       final BlockPos owner, final IOsHost computer) {
         PacketDistributor.sendToPlayer(player, new OpenSystemBootPayload(
                 owner, monitorPos, computer.bootRemaining(), computer.bootTotal(),
-                computer.bootSequence(), false));
+                computer.bootSequence(), false, splashOf(computer)));
         openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.SYSTEM_BOOT);
+    }
+
+    /** The picture that machine's system comes up behind, or the plain one when it has no system. */
+    private static BootSplash splashOf(final IOsHost computer) {
+        final OsDef system = computer.installedOs();
+        return system == null ? BootSplash.PLAIN : BootSplash.of(system.platform(), system.familyRank());
     }
 
     /**

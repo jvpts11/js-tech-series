@@ -8,6 +8,7 @@
 package dev.jstech.computers.block;
 
 import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.boot.BootSplash;
 import net.minecraft.core.BlockPos;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +30,8 @@ public interface ISystemBootScreenOpener {
      * @param total      how long the whole thing takes, so the steps and the bar know how far along they are
      * @param endsDark   whether a dark monitor follows rather than a system, as it does for a machine going down
      */
-    void open(BlockPos pos, BlockPos monitorPos, BootSequence sequence, int remaining, int total, boolean endsDark);
+    void open(BlockPos pos, BlockPos monitorPos, BootSequence sequence, int remaining, int total,
+              boolean endsDark, BootSplash splash);
 
     final class Holder {
 
@@ -44,9 +46,10 @@ public interface ISystemBootScreenOpener {
         }
 
         public static void open(final BlockPos pos, final BlockPos monitorPos, final BootSequence sequence,
-                                final int remaining, final int total, final boolean endsDark) {
+                                final int remaining, final int total, final boolean endsDark,
+                                final BootSplash splash) {
             if (instance != null) {
-                instance.open(pos, monitorPos, sequence, remaining, total, endsDark);
+                instance.open(pos, monitorPos, sequence, remaining, total, endsDark, splash);
             }
         }
     }

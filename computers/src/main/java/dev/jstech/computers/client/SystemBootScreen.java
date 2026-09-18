@@ -9,6 +9,7 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.core.gui.Phosphor;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.Minecraft;
@@ -44,6 +45,7 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
     private static Starting pending;
 
     private final BootSequence sequence;
+    private final BootSplash splash;
     private final int totalTicks;
     /** Whether a dark monitor follows this rather than a system, which is what a machine going down leaves. */
     private final boolean endsDark;
@@ -57,8 +59,9 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         this.titleLabelX = OFF_SCREEN;
         this.inventoryLabelY = OFF_SCREEN;
         final Starting starting = pending != null ? pending
-                : new Starting(BootSequence.NONE, FALLBACK_TICKS, FALLBACK_TICKS, false);
+                : new Starting(BootSequence.NONE, FALLBACK_TICKS, FALLBACK_TICKS, false, BootSplash.PLAIN);
         this.sequence = starting.sequence();
+        this.splash = starting.splash();
         this.totalTicks = starting.totalTicks() > 0 ? starting.totalTicks() : FALLBACK_TICKS;
         this.ticks = Math.max(0, this.totalTicks - Math.max(0, starting.remainingTicks()));
         this.endsDark = starting.endsDark();
@@ -66,12 +69,13 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
 
     /** What the machine is bringing up, said before the session that shows it is opened. */
     public static void expect(final BootSequence sequence, final int remainingTicks, final int totalTicks,
-                              final boolean endsDark) {
-        pending = new Starting(sequence, remainingTicks, totalTicks, endsDark);
+                              final boolean endsDark, final BootSplash splash) {
+        pending = new Starting(sequence, remainingTicks, totalTicks, endsDark, splash);
     }
 
-    /** One machine coming up: what it prints, how far along it is, and whether the glass goes dark after. */
-    private record Starting(BootSequence sequence, int remainingTicks, int totalTicks, boolean endsDark) {
+    /** One machine coming up: what it prints, how far along it is, and what it comes up behind. */
+    private record Starting(BootSequence sequence, int remainingTicks, int totalTicks, boolean endsDark,
+                            BootSplash splash) {
     }
 
     @Override
@@ -102,6 +106,16 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         final HardwareEra era = screenEra() == null ? HardwareEra.STANDARD : screenEra();
         MonitorFrame.renderBody(g, x, y, W, H, era, font);
         g.fill(x, y, x + W, y + H, 0xFF05070A);
+
+        /*
+         * A system with a picture of its own comes up behind it and says nothing else. That is what those
+         * screens were: no list of what the machine was finding, just the thing itself for as long as it took.
+         * Every system that never had one goes on reading out its steps below.
+         */
+        if (BootSplashArt.paintsItsOwnGround(this.splash)) {
+            BootSplashArt.draw(g, font, this.splash, x, y, W, H, this.ticks, this.totalTicks, this.endsDark);
+            return;
+        }
 
         /*
          * A machine of the earliest age wears its tube's one colour, as its self-test does; the later ones show

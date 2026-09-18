@@ -79,8 +79,8 @@ public final class ComputingClientSetup {
          * the menu opening is what puts the screen up.
          */
         ISystemBootScreenOpener.Holder.set(
-                (pos, monitorPos, sequence, remaining, total, endsDark) ->
-                        SystemBootScreen.expect(sequence, remaining, total, endsDark));
+                (pos, monitorPos, sequence, remaining, total, endsDark, splash) ->
+                        SystemBootScreen.expect(sequence, remaining, total, endsDark, splash));
         IInstallProgressScreenOpener.Holder.set(
                 (pos, monitorPos, kind, osName, targetLabel, ticksLeft, ticksTotal) ->
                         Minecraft.getInstance().setScreen(OsInstallScreen.working(pos, monitorPos, kind, osName,

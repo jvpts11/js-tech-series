@@ -30,6 +30,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootRunner;
 import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.computers.os.boot.BootTiming;
 import dev.jstech.computers.os.boot.SystemWelcome;
 import dev.jstech.computers.os.install.InstallerFlow;
@@ -315,7 +316,9 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
             ScreenSessions.opened(player, monitor, worldPosition);
             PacketDistributor.sendToPlayer(player,
                     new OpenSystemBootPayload(
-                            worldPosition, monitor, ticks, ticks, sequence, true));
+                            worldPosition, monitor, ticks, ticks, sequence, true,
+                            installedOs() == null ? BootSplash.PLAIN
+                                    : BootSplash.of(installedOs().platform(), installedOs().familyRank())));
         });
     }
 

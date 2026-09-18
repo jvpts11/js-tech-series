@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.boot.BootSplash;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -29,7 +30,8 @@ import java.util.List;
  * what comes after this is a dark monitor rather than a system, so the screen sees itself out.
  */
 public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int remainingTicks, int totalTicks,
-                                    BootSequence sequence, boolean endsDark) implements CustomPacketPayload {
+                                    BootSequence sequence, boolean endsDark,
+                                    BootSplash splash) implements CustomPacketPayload {
 
     /** The longest a step's words may be; anything past it is a sentence, not a step. */
     public static final int MAX_TEXT = 64;
@@ -50,6 +52,7 @@ public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int r
         buf.writeBlockPos(p.monitorPos());
         buf.writeVarInt(p.remainingTicks());
         buf.writeVarInt(p.totalTicks());
+        buf.writeUtf(p.splash().serializedName(), MAX_TEXT);
         buf.writeUtf(clip(p.sequence().title()), MAX_TEXT);
         buf.writeUtf(clip(p.sequence().subtitle()), MAX_TEXT);
         final List<BootSequence.Line> lines = p.sequence().lines();
@@ -66,6 +69,7 @@ public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int r
         final BlockPos monitor = buf.readBlockPos();
         final int remaining = buf.readVarInt();
         final int total = buf.readVarInt();
+        final BootSplash splash = BootSplash.byName(buf.readUtf(MAX_TEXT));
         final String title = buf.readUtf(MAX_TEXT);
         final String subtitle = buf.readUtf(MAX_TEXT);
         final int count = Math.min(buf.readVarInt(), BootSequence.MOST_LINES);
@@ -74,7 +78,7 @@ public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int r
             lines.add(new BootSequence.Line(buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT)));
         }
         return new OpenSystemBootPayload(host, monitor, remaining, total,
-                new BootSequence(title, subtitle, lines), buf.readBoolean());
+                new BootSequence(title, subtitle, lines), buf.readBoolean(), splash);
     }
 
     /*

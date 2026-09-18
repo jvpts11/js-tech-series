@@ -112,6 +112,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the system.
 
 ### Changed
+- The Frames editions now come up behind the picture each of them really came up behind, in place of the one
+  screen every system shared: the sky with the logo over it and the bar along its foot, the black one with
+  the three blocks running through their trough and the small print at its feet, and the maker's mark over a
+  turning ring of dots. Each of them goes down behind the same picture, saying what it is doing. Every other
+  system goes on reading out its own start, which is what those really did, and a system an addon brings gets
+  that too without having to say anything.
 - How long a system takes to install is now read off the machine's own parts rather than off its generation.
   Three things decide it and a player chose all three: the medium it is read from, the disk it is written to,
   and the processor that unpacks it in between. It used to be the medium and the generation alone, so every
