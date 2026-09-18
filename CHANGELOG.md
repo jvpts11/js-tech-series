@@ -376,6 +376,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- Installing a system from the firmware did nothing on the glass. The machine set the installer going and the
+  player was left looking at the setup they had pressed Install on; leaving the monitor and opening it again
+  showed the installer, and every answer after that needed the same, because each one put the page back where
+  it had been. Two halves of the same mistake: what is on the glass is sent and the session that shows it is
+  opened, and the first was being sent without the second, while the second was being done again for a player
+  already in that session, which tore the screen down and built it back out of the page before the one that
+  had just arrived. A copy ending and a machine going down were quiet for the same reason.
 - A screen the monitor put up that was not a system (the self-test, the boot manager, a system coming up, the
   firmware setup, an installer, a rack's channel switch) turned up in front of a player who had walked away,
   interrupting whatever they were doing. The server was never told when one of those closed, so it went on

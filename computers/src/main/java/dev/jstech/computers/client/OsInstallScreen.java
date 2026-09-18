@@ -14,6 +14,7 @@ import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.core.gui.Phosphor;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.Locale;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -111,6 +112,27 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
     public static void expectFailed(final FirmwareKind kind, final String osName, final String targetLabel,
                                     final String failure) {
         pending = new Copying(kind, osName, targetLabel, -1, Phase.FAILED, failure, 0, WORK_TICKS);
+    }
+
+    /**
+     * Gives the beat just written down to the screen already showing that machine.
+     *
+     * <p>The copy and the word that ends it are the same session, so opening one does not tear the other down
+     * and build it again: without this the screen would sit on the bar after the machine had finished.
+     */
+    public static void refreshOpen(final BlockPos hostPos) {
+        if (Minecraft.getInstance().screen instanceof OsInstallScreen open
+                && open.computerPos.equals(hostPos) && pending != null) {
+            open.adopt(pending);
+        }
+    }
+
+    /** Takes that beat: which page it is on, why it was refused, and how far along the copy is. */
+    private void adopt(final Copying copying) {
+        this.phase = copying.phase();
+        this.failure = copying.failure();
+        this.workTicks = Math.max(1, copying.ticksTotal());
+        this.ticks = Math.max(0, copying.ticksTotal() - copying.ticksLeft());
     }
 
     /** One copy: what is being written where, which beat it is on, and how far along. */

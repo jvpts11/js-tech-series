@@ -94,6 +94,18 @@ public class MonitorSessionMenu extends AbstractContainerMenu {
         return this.phase;
     }
 
+    /**
+     * Whether that player is already holding this machine's session of that phase.
+     *
+     * <p>The one question worth asking before opening one: opening a menu tears the client's screen down and
+     * builds it again out of whatever the machine last sent, so doing it to somebody already in the session
+     * throws away the page that has just arrived and puts back the one before it.
+     */
+    public static boolean isShowing(final Player player, final BlockPos host, final Phase phase) {
+        return player.containerMenu instanceof MonitorSessionMenu open
+                && open.hostPos().equals(host) && open.phase() == phase;
+    }
+
     @Override
     public ItemStack quickMoveStack(final Player player, final int index) {
         return ItemStack.EMPTY;

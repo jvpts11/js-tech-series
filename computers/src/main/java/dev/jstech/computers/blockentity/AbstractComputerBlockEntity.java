@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.block.IEraChassisBlock;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
@@ -18,6 +19,7 @@ import dev.jstech.computers.item.IExpansionCardItem;
 import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.item.PsuItem;
 import dev.jstech.computers.item.RamItem;
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.machine.NetworkReadService;
@@ -318,6 +320,9 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
                             worldPosition, monitor, ticks, ticks, sequence, true,
                             installedOs() == null ? BootSplash.PLAIN
                                     : BootSplash.of(installedOs().platform(), installedOs().familyRank())));
+            // The words and the screen that shows them, as everywhere else: one without the other shows nothing.
+            MonitorBlock.openSession(player, server, monitor, worldPosition, this,
+                    MonitorSessionMenu.Phase.SYSTEM_BOOT);
         });
     }
 

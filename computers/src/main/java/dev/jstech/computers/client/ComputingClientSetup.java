@@ -59,18 +59,21 @@ public final class ComputingClientSetup {
                     } else {
                         OsInstallScreen.expectFailed(kind, osName, targetLabel, failure);
                     }
+                    OsInstallScreen.refreshOpen(pos);
                 });
         /*
-         * An installer already on screen is given the new page rather than replaced, so a page that changes
-         * under the player does not throw away what they were in the middle of typing.
+         * Written down first, always, and then given to the screen already showing it. Both, and in that order:
+         * an installer on screen takes the new page in place, so a page that changes under the player does not
+         * throw away what they were in the middle of typing, and the copy kept here is what the screen is built
+         * from if it is ever built again. Only handing it to the open screen left that copy at whatever page had
+         * arrived last with the screen shut, so a rebuild put the player back on it.
          */
         IInstallerScreenOpener.Holder.set(payload -> {
+            InstallerScreen.expect(payload);
             if (Minecraft.getInstance().screen instanceof InstallerScreen open
                     && open.isFor(payload.hostPos())) {
                 open.accept(payload);
-                return;
             }
-            InstallerScreen.expect(payload);
         });
         IBootMenuScreenOpener.Holder.set(
                 (pos, monitorPos, menu, remaining) -> BootMenuScreen.expect(menu, remaining));
@@ -82,8 +85,10 @@ public final class ComputingClientSetup {
                 (pos, monitorPos, sequence, remaining, total, endsDark, splash) ->
                         SystemBootScreen.expect(sequence, remaining, total, endsDark, splash));
         IInstallProgressScreenOpener.Holder.set(
-                (pos, monitorPos, kind, osName, targetLabel, ticksLeft, ticksTotal) ->
-                        OsInstallScreen.expectWorking(kind, osName, targetLabel, ticksLeft, ticksTotal));
+                (pos, monitorPos, kind, osName, targetLabel, ticksLeft, ticksTotal) -> {
+                    OsInstallScreen.expectWorking(kind, osName, targetLabel, ticksLeft, ticksTotal);
+                    OsInstallScreen.refreshOpen(pos);
+                });
         IKvmScreenOpener.Holder.set(KvmChannelScreen::expect);
 
         /*

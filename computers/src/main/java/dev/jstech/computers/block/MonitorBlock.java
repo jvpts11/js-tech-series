@@ -354,10 +354,17 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
      * <p>All of them are one menu with a phase, so the server is told when a player closes one and stops
      * counting them as watching. That is what stopped an installer's next page turning up in front of
      * somebody who had walked away from the machine.
+     *
+     * <p>A player already in that session on that machine is left where they are. Opening a menu tears the
+     * screen down and builds it again, so doing it for every page of an installer threw away the page that had
+     * just arrived and put the one before it back: what a player saw was a Next that did nothing.
      */
     public static void openSession(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                     final BlockPos owner, final IOsHost computer,
                                     final MonitorSessionMenu.Phase phase) {
+        if (MonitorSessionMenu.isShowing(player, owner, phase)) {
+            return;
+        }
         final HardwareEra era = computer.displayEra();
         // The machine's own name: these screens write their own headings, so nothing draws this one.
         final Component title = level.getBlockState(owner).getBlock().getName();
