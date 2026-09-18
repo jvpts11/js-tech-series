@@ -54,6 +54,16 @@ final class ComputerPower {
         return this.phases.needsPost();
     }
 
+    /** Whether the machine is standing at the end of a self-test that found nothing to boot. */
+    boolean halted() {
+        return this.phases.halted();
+    }
+
+    /** A key was pressed at that failure, so the machine stops standing there. */
+    void resume() {
+        this.phases.resume();
+    }
+
     /**
      * The ticks the self-test still has to run, so a monitor opened halfway through shows the rest of it
      * rather than starting over. A machine that has not worked its length out yet answers nothing.

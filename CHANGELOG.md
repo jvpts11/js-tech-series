@@ -358,6 +358,18 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- A machine whose self-test found nothing to boot only stood at its failure for whoever was already watching.
+  Opening the monitor afterwards dropped the player into the firmware setup with no word about why the machine
+  had not started, and the failure closed itself after three seconds even for somebody looking straight at it.
+  Standing there is now something the machine is doing, so every monitor opened on it finds it there, and it
+  waits for a key however long that takes.
+- The firmware setup read the machine once, when it opened. Taking an installation disc out of a drive and
+  putting another in left the boot list naming the disc that had been removed, so booting it installed the
+  system that was no longer in the machine. The setup asks the machine what it holds while it is open.
+- The boot manager could not be left. Every key it did not use it swallowed, Escape included, so the only way
+  off the list was to boot something: looking at what the other disk held was a decision with no way back.
+  Escape leaves the monitor now, and the machine goes on standing at its boot manager, where opening the
+  monitor again finds it.
 - The shell of a live installation medium turned away `echo` and `pacman`, although the sequence behind it
   answered both. That made two of the steps impossible to take: the line that sets the build options in
   `/etc/portage/make.conf`, which is how a Gentoo kernel is told to compile more than one thing at a time,

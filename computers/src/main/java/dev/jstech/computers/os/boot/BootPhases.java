@@ -30,6 +30,15 @@ public final class BootPhases {
     private long postEndsAt;
 
     /*
+     * The self-test ended and there was nothing to boot. The machine stands at its own failure with no clock
+     * running, exactly as one does, until somebody presses a key. It is a phase and not a passing moment
+     * because a monitor opened later has to find the machine still standing there: without it, the machine
+     * looked like one that had simply finished booting, and looking at it dropped the player into the setup
+     * without a word about what had happened.
+     */
+    private boolean halted;
+
+    /*
      * Stopped at the boot manager's menu. Its clock is separate because a key stops it and the machine then
      * waits for a choice with no end in sight, which is a thing a deadline cannot say.
      */
@@ -57,9 +66,25 @@ public final class BootPhases {
         this.needsPost = value;
         this.postEndsAt = 0L;
         if (value) {
+            this.halted = false;
             endMenu();
             endBoot();
         }
+    }
+
+    /** Whether the machine is standing at the end of a self-test that found nothing to boot. */
+    public boolean halted() {
+        return this.halted;
+    }
+
+    /** Leaves the machine at its own failure, where it waits for a key rather than for a clock. */
+    public void halt() {
+        this.halted = true;
+    }
+
+    /** A key was pressed at the failure: the machine goes on to whatever it can still be asked for. */
+    public void resume() {
+        this.halted = false;
     }
 
     /** Whether the machine has yet to work out how long its self-test will take. */
@@ -92,6 +117,7 @@ public final class BootPhases {
 
     /** Stops the machine at its boot menu, with that long before it goes on by itself. */
     public void beginMenu(final long now, final int ticks) {
+        this.halted = false;
         this.atMenu = true;
         this.menuEndsAt = ticks > 0 ? now + ticks : 0L;
     }
@@ -129,6 +155,7 @@ public final class BootPhases {
 
     /** Starts the system coming up; how long it takes is worked out on the next tick. */
     public void beginBoot() {
+        this.halted = false;
         this.booting = true;
         this.bootEndsAt = 0L;
     }

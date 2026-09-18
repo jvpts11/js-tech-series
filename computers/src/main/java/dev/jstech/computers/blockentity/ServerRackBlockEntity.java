@@ -1251,6 +1251,20 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     @Override
+    public boolean haltedAtPost() {
+        final int slot = soleComputerSlot();
+        return slot >= 0 && unitState(slot).phases.halted();
+    }
+
+    @Override
+    public void resumeFromHalt() {
+        final int slot = soleComputerSlot();
+        if (slot >= 0) {
+            unitState(slot).phases.resume();
+        }
+    }
+
+    @Override
     public int postRemaining() {
         final int slot = soleComputerSlot();
         return slot < 0 || level == null ? 0 : unitState(slot).phases.postRemaining(level.getGameTime());

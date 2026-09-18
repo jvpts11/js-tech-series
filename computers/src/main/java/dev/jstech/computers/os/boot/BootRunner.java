@@ -95,6 +95,12 @@ public final class BootRunner {
          * one does: whoever is watching reads what happened instead of being dropped into the setup.
          */
         if (!machine.hasOs() && !machine.hasBootableMedium()) {
+            /*
+             * Written down rather than simply left: the machine is standing at its own failure, and a monitor
+             * opened after the fact has to find it there. It used to be a moment only the player already
+             * watching ever saw, so looking at such a machine later opened its setup with no word about why.
+             */
+            phases.halt();
             return;
         }
         /*

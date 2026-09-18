@@ -333,6 +333,17 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return power.needsPost();
     }
 
+    /** Whether the machine is standing at the end of a self-test that found nothing to boot. */
+    @Override
+    public boolean haltedAtPost() {
+        return power.halted();
+    }
+
+    @Override
+    public void resumeFromHalt() {
+        power.resume();
+    }
+
     /** The ticks the self-test still has to run, for a monitor opened while it is under way. */
     @Override
     public int postRemaining() {

@@ -55,6 +55,19 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
+    public boolean haltedAtPost() {
+        return rack.asUnit(row, rack::haltedAtPost);
+    }
+
+    @Override
+    public void resumeFromHalt() {
+        rack.asUnit(row, () -> {
+            rack.resumeFromHalt();
+            return null;
+        });
+    }
+
+    @Override
     public void setNeedsPost(final boolean value) {
         rack.asUnit(row, () -> {
             rack.setNeedsPost(value);

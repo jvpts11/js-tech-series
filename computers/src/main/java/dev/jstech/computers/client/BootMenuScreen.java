@@ -66,6 +66,16 @@ public final class BootMenuScreen extends Screen {
 
     @Override
     public boolean keyPressed(final int keyCode, final int scanCode, final int modifiers) {
+        /*
+         * Escape leaves the monitor, the way it leaves every other screen. The machine is the one standing at
+         * the boot manager, not this screen, so walking away from the keyboard changes nothing about where it
+         * has got to: opening the monitor again comes back to the same list. Without this the only way out of
+         * the menu was to boot something, which made looking at it a decision a player could not take back.
+         */
+        if (keyCode == InputConstants.KEY_ESCAPE) {
+            this.onClose();
+            return true;
+        }
         // Any key at all stops the count, which is what a boot manager has always done.
         if (!this.held) {
             this.held = true;

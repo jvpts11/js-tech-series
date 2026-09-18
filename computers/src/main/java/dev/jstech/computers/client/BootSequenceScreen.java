@@ -62,14 +62,23 @@ public final class BootSequenceScreen extends Screen {
     /** Which entry the menu is on. */
     private int menuAt;
 
+    /**
+     * @param halted the machine is standing at a self-test that found nothing to boot, so this opens at the
+     *               end of it rather than playing one through: the test is over, and what is on the glass is
+     *               the failure it ended on
+     */
     public BootSequenceScreen(final BlockPos computerPos, final BlockPos monitorPos, final FirmwareKind kind,
-                              final String machineName, final int remainingTicks) {
+                              final String machineName, final int remainingTicks, final boolean halted) {
         super(Component.literal("Power-On Self-Test"));
         this.computerPos = computerPos;
         this.monitorPos = monitorPos;
         this.kind = kind;
         this.machineName = machineName;
         this.postTicks = remainingTicks > 0 ? remainingTicks : FALLBACK_TICKS;
+        if (halted) {
+            this.ticks = this.postTicks;
+            this.completed = true;
+        }
     }
 
     @Override
@@ -106,7 +115,14 @@ public final class BootSequenceScreen extends Screen {
         if (!completed && ticks >= postTicks) {
             completed = true;
         }
-        if (ticks >= postTicks + GRACE_TICKS && Minecraft.getInstance().screen == this) {
+        /*
+         * A machine with nothing to boot stands at its failure until a key is pressed, so this stays on the
+         * glass however long that takes. Anything else gets the way out: a machine switched off mid-test
+         * leaves this here with nothing else to show, and the grace is how it stops waiting forever.
+         */
+        final boolean waitingAtAFailure = completed && bootingFrom().isEmpty();
+        if (!waitingAtAFailure && ticks >= postTicks + GRACE_TICKS
+                && Minecraft.getInstance().screen == this) {
             onClose();
         }
     }

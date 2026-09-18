@@ -90,6 +90,9 @@ public class FirmwareScreen extends Screen {
     private static final String[] PAGES = {"Boot", "Boot Order", "Hardware", "Storage"};
     private static final int ROW_H = 12;
 
+    /** How often the setup asks the machine what it holds, in ticks: often enough to see a disc swapped. */
+    private static final int ASK_EVERY = 10;
+
     /** The screen currently open, so the state reply finds it. */
     private static FirmwareScreen active;
 
@@ -101,6 +104,8 @@ public class FirmwareScreen extends Screen {
     private FirmwareStatePayload state;
     private int page = PAGE_BOOT;
     private int selected;
+    /** Ticks since the machine was last asked what it holds. */
+    private int sinceAsked;
 
     // Hit boxes recomputed each frame for the active layout.
     private final List<int[]> rowHits = new ArrayList<>();
@@ -126,6 +131,24 @@ public class FirmwareScreen extends Screen {
         super.init();
         active = this;
         PacketDistributor.sendToServer(new RequestFirmwareStatePayload(computerPos));
+    }
+
+    /**
+     * Asks the machine what it has again, now and then, while the setup is open.
+     *
+     * <p>A setup reads the machine every time it is looked at, because what is in the machine is what a player
+     * is in there to change: taking one installation disc out of a drive and putting another in used to leave
+     * the boot list saying the disc that had been removed, so booting it installed the wrong system. The list
+     * was read once when the screen opened and never again.
+     */
+    @Override
+    public void tick() {
+        super.tick();
+        this.sinceAsked++;
+        if (this.sinceAsked >= ASK_EVERY) {
+            this.sinceAsked = 0;
+            PacketDistributor.sendToServer(new RequestFirmwareStatePayload(computerPos));
+        }
     }
 
     @Override

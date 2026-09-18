@@ -23,7 +23,7 @@ import net.minecraft.resources.ResourceLocation;
  * asks for the firmware setup; the machine finishes the self-test itself and boots whoever is watching.
  */
 public record OpenPostPayload(BlockPos host, BlockPos monitorPos, int firmwareKind, String name,
-                              int remainingTicks) implements CustomPacketPayload {
+                              int remainingTicks, boolean halted) implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<OpenPostPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "open_post"));
@@ -35,6 +35,7 @@ public record OpenPostPayload(BlockPos host, BlockPos monitorPos, int firmwareKi
                     ByteBufCodecs.VAR_INT, OpenPostPayload::firmwareKind,
                     ByteBufCodecs.STRING_UTF8, OpenPostPayload::name,
                     ByteBufCodecs.VAR_INT, OpenPostPayload::remainingTicks,
+                    ByteBufCodecs.BOOL, OpenPostPayload::halted,
                     OpenPostPayload::new);
 
     @Override

@@ -234,7 +234,13 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         if (!computer.isRunning()) {
             return Entry.NO_POWER;
         }
-        if (computer.needsPost()) {
+        /*
+         * Both of these are the self-test's screen: one is a machine in the middle of it, the other is a
+         * machine standing at the end of one that found nothing to boot. The second used to be invisible to
+         * anybody who was not already watching, so opening the monitor on such a machine fell through to its
+         * setup with no word about why it had not booted.
+         */
+        if (computer.needsPost() || computer.haltedAtPost()) {
             return Entry.POST;
         }
         if (computer.installing() != null) {
@@ -403,9 +409,11 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final HardwareEra era = ownerBe instanceof IOsHost c ? c.displayEra() : null;
         final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
         final int remaining = ownerBe instanceof IOsHost machine ? machine.postRemaining() : 0;
+        // A machine standing at a failed self-test opens at the end of it, not at the start of another one.
+        final boolean halted = ownerBe instanceof IOsHost machine && machine.haltedAtPost();
         ScreenSessions.opened(player, monitorPos, owner);
         PacketDistributor.sendToPlayer(player,
-                new OpenPostPayload(owner, monitorPos, kind.id(), name, remaining));
+                new OpenPostPayload(owner, monitorPos, kind.id(), name, remaining, halted));
     }
 
     /**

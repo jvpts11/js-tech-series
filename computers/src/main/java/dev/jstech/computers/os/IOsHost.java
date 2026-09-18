@@ -49,6 +49,20 @@ public interface IOsHost extends IPeripheralOwner {
 
     void setNeedsPost(boolean value);
 
+    /**
+     * Whether this machine is standing at the end of a self-test that found nothing to boot.
+     *
+     * <p>A machine that answers yes is waiting for a key at its own failure, and a monitor opened on it shows
+     * that rather than its setup. A host with no self-test to stand at answers no.
+     */
+    default boolean haltedAtPost() {
+        return false;
+    }
+
+    /** A key was pressed at that failure: the machine stops standing there. */
+    default void resumeFromHalt() {
+    }
+
     /** The value of {@link #pendingInstallSlot()} when no installation is waiting for its reboot. */
     int NO_PENDING_INSTALL = -2;
 

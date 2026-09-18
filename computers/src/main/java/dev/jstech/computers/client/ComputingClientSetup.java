@@ -50,8 +50,9 @@ public final class ComputingClientSetup {
         // Wire the client-side firmware screen opener so blocks can open it without importing Minecraft.
         IFirmwareScreenOpener.Holder.set((pos, monitorPos, kind, name) ->
                 Minecraft.getInstance().setScreen(new FirmwareScreen(pos, monitorPos, kind, name)));
-        IPostScreenOpener.Holder.set((pos, monitorPos, kind, name, remaining) ->
-                Minecraft.getInstance().setScreen(new BootSequenceScreen(pos, monitorPos, kind, name, remaining)));
+        IPostScreenOpener.Holder.set((pos, monitorPos, kind, name, remaining, halted) ->
+                Minecraft.getInstance().setScreen(
+                        new BootSequenceScreen(pos, monitorPos, kind, name, remaining, halted)));
         IInstallDoneScreenOpener.Holder.set(
                 (pos, monitorPos, kind, osName, targetLabel, targetSlot, failure) -> Minecraft.getInstance().setScreen(
                         failure.isEmpty()

@@ -113,7 +113,7 @@ public final class FirmwarePayloads {
                         IPostScreenOpener.Holder.open(
                                 payload.host(), payload.monitorPos(),
                                 FirmwareKind.byId(payload.firmwareKind()),
-                                payload.name(), payload.remainingTicks())));
+                                payload.name(), payload.remainingTicks(), payload.halted())));
         // A finished installer still waiting for its reboot: the monitor comes back to that prompt.
         registrar.playToClient(OpenInstallDonePayload.TYPE, OpenInstallDonePayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
@@ -544,6 +544,12 @@ public final class FirmwarePayloads {
             return; // powered off mid-POST: the screen just stays dark
         }
         computer.setNeedsPost(false);
+        /*
+         * A key at a failed self-test is what ends the standing about. Until it is pressed the machine is
+         * still at its failure and every monitor opened on it shows that; after it, the machine goes on to
+         * whatever it can still be asked for, which with nothing on any disk is its setup.
+         */
+        computer.resumeFromHalt();
         /*
          * POST is the moment the machine decides what it is running. Fixing it here is what makes a
          * freshly installed (or removed) desktop package wait for a restart instead of appearing the
