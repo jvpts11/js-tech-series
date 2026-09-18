@@ -376,6 +376,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- A run of the client tests came back saying all was well whatever had happened in it. Every test could fail
+  and the process still ended the way a clean run ends, so nothing watching one ever learned anything from it
+  and the nightly run could not have reported a failure. A run with a failed test now ends with a code that
+  fails whatever started it. Asking by name for a test that does not exist is the same: it used to run nothing
+  and end on "ALL PASSED", which reads exactly like a suite that ran and was fine. It says which name found
+  nothing, and that the suite is split over its shards before the name is matched.
 - Installing a system from the firmware did nothing on the glass. The machine set the installer going and the
   player was left looking at the setup they had pressed Install on; leaving the monitor and opening it again
   showed the installer, and every answer after that needed the same, because each one put the page back where

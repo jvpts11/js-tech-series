@@ -68,6 +68,8 @@ public final class ClientTestRunner {
 
     private State state = State.BOOT;
     private int stateTicks;
+    /** Whether a name was asked for and matched nothing, which is a run that proves nothing. */
+    private boolean askedForNothing;
     private final ClientTestReport report = new ClientTestReport();
     private List<ClientTestSuite.Entry> tests;
     private int nextTest;
@@ -146,6 +148,18 @@ public final class ClientTestRunner {
             tests = tests.stream()
                     .filter(t -> t.name().toLowerCase(java.util.Locale.ROOT).contains(needle))
                     .toList();
+            /*
+             * A name that matches nothing is a mistake, not an empty suite: whoever typed it meant to run
+             * something. It used to leave the run with no tests at all and end on "ALL PASSED", which reads
+             * exactly like a suite that ran and was fine. The name is also matched after the suite has been
+             * split over its shards, so a name that matches only tests in another shard finds nothing here.
+             */
+            if (tests.isEmpty()) {
+                this.askedForNothing = true;
+                LOGGER.error("[JSC-CT] no test of shard {}/{} is named like \"{}\"; "
+                        + "the suite is split over its shards before the name is matched, "
+                        + "so -PclientShards=1 puts every test in this one", SHARD, SHARDS, ONLY);
+            }
         }
         LOGGER.info("[JSC-CT] shard {}/{} runs {} tests", SHARD, SHARDS, tests.size());
         deleteOldWorld(mc);
@@ -316,10 +330,29 @@ public final class ClientTestRunner {
         enter(State.NEXT_TEST);
     }
 
+    /**
+     * Ends the run, and says so with the one thing a build listens to.
+     *
+     * <p>A run used to end the same way whatever had happened: every client test could fail and the process
+     * still came back saying all was well, so nothing watching it ever learned anything. The report on disk had
+     * the truth and nobody read it. A failed test, or a name that matched nothing, ends this with a code that
+     * fails whatever started it.
+     */
     private void finish(final Minecraft mc) {
         final Path file = mc.gameDirectory.toPath().resolve("clienttests").resolve("report.txt");
         report.write(file, SHARD, SHARDS);
         enter(State.DONE);
+        if (this.askedForNothing || report.failures() > 0) {
+            LOGGER.error("[JSC-CT] this run failed: {} of {} tests failed{}",
+                    report.failures(), report.total(),
+                    this.askedForNothing ? ", and the name asked for matched no test" : "");
+            /*
+             * Straight out rather than through the usual shutdown, because the usual shutdown is what comes
+             * back saying everything was fine. The report is already written, and the world this leaves behind
+             * is a test world that the next run deletes anyway.
+             */
+            System.exit(1);
+        }
         mc.stop();
     }
 }
