@@ -13,16 +13,12 @@ import dev.jstech.computers.operation.payload.CommandOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.operation.payload.WireLine;
-import dev.jstech.computers.os.OsRegistry;
-import dev.jstech.computers.os.ProgramSpec;
-import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.vm.program.Numbers;
 import dev.jstech.computers.vm.program.UiWidgets;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.core.language.ILanguageProcess;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -67,11 +63,6 @@ final class ClientReplication {
      * wait for ever.
      */
     private static final int MOST_BYTES_A_TICK = 8192;
-    /*
-     * Which progress quarter (25/50/75%) each running build last reported, so the console gets a handful
-     * of emerge-style progress lines instead of one per second. Transient by design.
-     */
-    private final Map<String, Integer> buildQuarterReported = new HashMap<>();
 
     ClientReplication(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
@@ -315,62 +306,6 @@ final class ClientReplication {
     }
 
     /**
-     * Tells every console open on this machine how a source build is coming along, the full-screen prompt
-     * and the desktop's terminal window alike. Looked at once a second, and it only speaks on a 25% step or
-     * on a build finishing, the way emerge itself does.
-     */
-    void pushBuildProgress(final ServerLevel level) {
-        final ComputerConsoleState console = this.machine.console();
-        if (console == null || level.getGameTime() % 20 != 0) {
-            return;
-        }
-        final long now = level.getGameTime();
-        final List<WireLine> wire = new ArrayList<>();
-        final int dim = CliStyle.DIM.id();
-        final int ok = CliStyle.OK.id();
-
-        // Package builds (emerge): progress quarters while compiling.
-        for (final Map.Entry<String, Long> entry : console.pendingBuilds().entrySet()) {
-            final long total = console.buildTotal(entry.getKey());
-            if (total <= 0 || entry.getValue() <= now) {
-                continue; // completions are handled below
-            }
-            final long left = entry.getValue() - now;
-            final int pct = (int) Math.max(0, Math.min(99, 100 - left * 100 / total));
-            final int quarter = pct / 25;
-            if (quarter >= 1 && quarter > this.buildQuarterReported.getOrDefault(entry.getKey(), 0)) {
-                this.buildQuarterReported.put(entry.getKey(), quarter);
-                wire.add(new WireLine(">>> " + buildDisplayName(entry.getKey())
-                        + ": compiling ... " + pct + "% (" + (left / 20) + "s left)", dim));
-            }
-        }
-
-        /*
-         * Completions: announced live to whoever is looking; with no console open the notice stays queued
-         * for the shell to print ahead of the next command instead.
-         */
-        final List<ServerPlayer> viewers = this.machine.consoleViewers(level);
-        if (!console.settleBuilds(now).isEmpty()) {
-            this.machine.setChanged();
-            if (!viewers.isEmpty()) {
-                for (final String id : console.drainFinishedBuilds()) {
-                    this.buildQuarterReported.remove(id);
-                    wire.add(new WireLine(
-                            ">>> " + buildDisplayName(id) + ": build finished, package installed", ok));
-                }
-            }
-        }
-        if (wire.isEmpty() || viewers.isEmpty()) {
-            return;
-        }
-        /*
-         * Every reply says whether a program has the terminal, notices included: one that said otherwise
-         * would hand the keyboard back while a program was still using it.
-         */
-        say(viewers, wire, "", this.machine.programs().held() != 0);
-    }
-
-    /**
      * The same said twice, once in each terminal's own words: a window on a desktop, and the prompt that is
      * the whole glass of a machine that has none. Both are watching this one console, so each viewer is sent
      * the one its own screen speaks.
@@ -408,13 +343,5 @@ final class ClientReplication {
 
     /** What a player has of a canvas: the drawing it was on, and how many of its strokes have gone to them. */
     private record CanvasSent(int epoch, int strokes) {
-    }
-
-    /** What a program is called on a console line: its command name, or its id without the namespace. */
-    private static String buildDisplayName(final String programId) {
-        final ResourceLocation rl = ResourceLocation.tryParse(programId);
-        final ProgramSpec spec = rl == null ? null : OsRegistry.getProgram(rl);
-        return spec != null ? spec.commandName()
-                : (programId.contains(":") ? programId.substring(programId.indexOf(':') + 1) : programId);
     }
 }

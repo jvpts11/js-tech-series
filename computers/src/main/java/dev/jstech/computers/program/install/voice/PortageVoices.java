@@ -180,15 +180,24 @@ public final class PortageVoices {
         }
         return script.effect(merged)
                 .say("")
-                .say(Tint.line(Tint.arrows(), String.format(Locale.ROOT,
-                        " Jobs: %d of %d complete                 Load avg: %d.92, 2.84, 1.37",
-                        merges.size(), merges.size(), Math.max(0, jobs - 1))))
+                .say(Tint.line(Tint.arrows(), jobsLine(merges.size(), jobs)))
                 .say(Tint.line(Tint.arrows(), " Auto-cleaning packages..."))
                 .say("")
                 .say(Tint.line(Tint.arrows(), " No outdated packages were found on your system."))
                 .say("")
                 .say(star("GNU info directory index is up-to-date."))
                 .done();
+    }
+
+    /**
+     * The closing count of jobs with the load beside it, the load pushed to the right-hand edge of the glass
+     * the way the real one pushes it to the edge of the terminal it finds itself in.
+     */
+    private static String jobsLine(final int merged, final int jobs) {
+        final String done = String.format(Locale.ROOT, " Jobs: %d of %d complete", merged, merged);
+        final String load = String.format(Locale.ROOT, "Load avg: %d.92, 2.84, 1.37", Math.max(0, jobs - 1));
+        final int room = Bars.COLUMNS - ">>>".length() - done.length() - load.length();
+        return done + " ".repeat(Math.max(2, room)) + load;
     }
 
     /** What generating the locales a file names prints, a job to each. */

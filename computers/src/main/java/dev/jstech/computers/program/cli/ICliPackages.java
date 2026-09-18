@@ -8,16 +8,45 @@
 package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.os.PackageManagerKind;
+import dev.jstech.computers.program.tty.ITtyProcess;
 import java.util.List;
-import java.util.Map;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * What a command reaches of the packages a computer installs over its network's Mirror: the package manager, what the
- * Mirror offers, installing, removing, updating and publishing, and the source builds still compiling.
+ * Mirror offers, installing, removing, updating and publishing.
  *
  * <p>Every member answers as a computer with no Mirror in reach would.
  */
 public interface ICliPackages {
+
+    /**
+     * What came of asking for a package.
+     *
+     * @param said what the package manager said at once, in its own words
+     * @param tool what it left running in front of the terminal, for a manager whose installing takes the
+     *             terminal while it happens; null when it was all said at once
+     */
+    record Installing(ICliComputer.OpResult said, @Nullable ITtyProcess tool) {
+
+        /** Everything there was to say has been said. */
+        public static Installing said(final ICliComputer.OpResult said) {
+            return new Installing(said, null);
+        }
+
+        /** Nothing to say yet: the tool says it, from here until it ends. */
+        public static Installing running(final ITtyProcess tool) {
+            return new Installing(ICliComputer.OpResult.ok(""), tool);
+        }
+
+        public boolean ok() {
+            return this.said.ok();
+        }
+
+        public String message() {
+            return this.said.message();
+        }
+    }
 
     /** The installed OS's package manager; {@code NONE} on media-installed platforms. */
     default PackageManagerKind packageManager() {
@@ -31,11 +60,14 @@ public interface ICliPackages {
 
     /**
      * Installs the named package from the network mirror: resolves it, checks the OS/hardware gates, and
-     * installs it (or, for a source-based manager, starts the build). The message reads like the package
-     * manager's own output; a missing mirror is the classic "could not resolve" failure.
+     * installs it, or, for a manager that builds from source, leaves the build running in front of the
+     * terminal. The message reads like the package manager's own output; a missing mirror is the classic
+     * "could not resolve" failure.
+     *
+     * @param ask whether the manager was told to list what it would do and ask before doing it
      */
-    default ICliComputer.OpResult packageInstall(final String name) {
-        return ICliComputer.OpResult.fail("could not resolve mirror://");
+    default Installing packageInstall(final String name, final boolean ask) {
+        return Installing.said(ICliComputer.OpResult.fail("could not resolve mirror://"));
     }
 
     /**
@@ -80,17 +112,11 @@ public interface ICliPackages {
         return ICliComputer.OpResult.fail("the network has no Mainframe");
     }
 
-    /** Source builds still compiling on this computer: program id to ticks remaining. */
-    default Map<String, Long> buildsRemaining() {
-        return Map.of();
-    }
-
     /**
-     * What the shell prints ahead of the next command, each returned once and then forgotten: what the machine itself
-     * has to say (programs a save could not bring back), and one notice per source build that finished since the shell
-     * last asked, since a build completes while the player is elsewhere.
+     * What the shell prints ahead of the next command, each returned once and then forgotten: what the machine
+     * itself has to say, such as the programs a save could not bring back.
      */
-    default List<String> drainBuildNotices() {
+    default List<String> drainNotices() {
         return List.of();
     }
 }

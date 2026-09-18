@@ -349,7 +349,8 @@ public final class BuiltinCommands {
             final ICliComputer computer = ctx.computer();
             final String verb = ctx.hasArgs() ? ctx.arg(0).toLowerCase(Locale.ROOT) : "";
             switch (verb) {
-                case "install" -> requireName(ctx, computer::packageInstall);
+                // This manager ships what it installs already built, so everything it has to say is said at once.
+                case "install" -> requireName(ctx, name -> computer.packageInstall(name, false).said());
                 case "remove", "uninstall" -> requireName(ctx, computer::packageRemove);
                 case "update", "upgrade" -> report(ctx, computer.packageUpdate());
                 /*
@@ -433,9 +434,7 @@ public final class BuiltinCommands {
                  * Something another player wrote says so. Whether to install it is then an informed
                  * choice rather than a guess about where it came from.
                  */
-                final String state = info.building() ? "building"
-                        : info.installed() ? "installed"
-                                : info.community() ? "community" : "available";
+                final String state = info.installed() ? "installed" : info.community() ? "community" : "available";
                 ctx.out().row("  " + info.name() + "  [" + state + "]", info.description());
                 shown++;
             }

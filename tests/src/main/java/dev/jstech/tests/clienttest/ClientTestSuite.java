@@ -37,6 +37,7 @@ public final class ClientTestSuite {
             OpenWithClientTests.class,
             PanelStylesClientTests.class,
             SettingsSharingClientTests.class,
+            SourceBuildClientTests.class,
             SystemUiClientTests.class,
             UiSweepClientTests.class);
 

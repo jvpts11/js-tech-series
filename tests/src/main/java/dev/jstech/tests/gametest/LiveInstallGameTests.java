@@ -23,6 +23,7 @@ import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.install.LiveInstallState;
+import dev.jstech.computers.program.install.MakeOpts;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TerminalAt;
 import net.minecraft.core.BlockPos;
@@ -213,6 +214,11 @@ public final class LiveInstallGameTests {
             helper.assertTrue(mainframe.console().liveInstall() == null, "the live session ends");
             helper.assertTrue(osId("gentoo").equals(mainframe.installedOsId()),
                     "and the machine boots what was built: " + mainframe.installedOsId());
+            // The build options are the system's and not the install's: every later build is built by them.
+            final FilesystemContents disk = mainframe.diskInSlot(0).get(ComputingModule.FILESYSTEM.get());
+            helper.assertTrue(disk != null && disk.files().get(MakeOpts.PATH) != null
+                            && disk.files().get(MakeOpts.PATH).content().contains("-j64"),
+                    "and the build options written on the way are on the disk it installed to");
         }).thenSucceed();
     }
 

@@ -38,7 +38,6 @@ final class GentooSteps {
     /** The kernel the sources are of. */
     static final String KERNEL = "6.11.5";
 
-    private static final String MAKE_CONF = "/etc/portage/make.conf";
     private static final String SOURCES_DIR = "/usr/src/linux";
 
     /** How big the archive of a base system is, the usual kind of estimate. */
@@ -47,8 +46,6 @@ final class GentooSteps {
     /** How big a snapshot of the package tree is, and how many files it unpacks to. */
     private static final int TREE_MB = 48;
     private static final int TREE_FILES = 214_483;
-
-    private static final Pattern JOBS = Pattern.compile("MAKEOPTS\\s*=\\s*\"?[^\"\\n]*-j\\s*(\\d+)");
 
     /** What bringing a fresh base system up to date merges: three real packages, two upgraded and one new. */
     private static final String[][] WORLD = {
@@ -66,12 +63,12 @@ final class GentooSteps {
 
     /** How many jobs the build options ask for, which is one until somebody writes otherwise. */
     int makeJobs() {
-        final String conf = this.files.read(this.files.inNewSystem(MAKE_CONF));
-        if (conf == null) {
-            return 1;
-        }
-        final Matcher found = JOBS.matcher(conf);
-        return found.find() ? Math.max(1, Integer.parseInt(found.group(1))) : 1;
+        return MakeOpts.jobs(this.buildOptions());
+    }
+
+    /** The build options as they stand in the new system, or null while it has no such file. */
+    String buildOptions() {
+        return this.files.read(this.files.inNewSystem(MakeOpts.PATH));
     }
 
     /** Pulls the archive of a base system down from the Mirror, into wherever the session is standing. */
@@ -361,7 +358,7 @@ final class GentooSteps {
             "/var", "/proc", "/sys", "/dev", "/run"}) {
             this.files.makeDir(this.files.inNewSystem(dir));
         }
-        this.files.write(this.files.inNewSystem(MAKE_CONF), String.join("\n",
+        this.files.write(this.files.inNewSystem(MakeOpts.PATH), String.join("\n",
                 "# These settings were set by the catalyst build script that automatically",
                 "# built this stage.",
                 "# Please consult /usr/share/portage/config/make.conf.example for a more",

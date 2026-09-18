@@ -966,32 +966,6 @@ public final class OsCliGameTests {
                 .thenSucceed();
     }
 
-    /** A source build (emerge) settles into the installed set once its completion tick has passed. */
-    @GameTest(template = ARENA)
-    public static void linux_sourceBuildSettlesWhenDone(final GameTestHelper helper) {
-        helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> {
-                    final dev.jstech.computers.program.ComputerConsoleState console =
-                            new dev.jstech.computers.program.ComputerConsoleState();
-                    console.startBuild("jsc:example", 100L);
-                    helper.assertTrue(console.settleBuilds(50L).isEmpty(), "a build must not settle early");
-                    helper.assertFalse(console.isInstalled("jsc:example"), "a building package is not installed yet");
-                    helper.assertTrue(console.settleBuilds(100L).contains("jsc:example"),
-                            "the build must settle at its completion tick");
-                    helper.assertTrue(console.isInstalled("jsc:example"), "a settled build is installed");
-                    // Persistence: a pending build survives an NBT round-trip.
-                    console.startBuild("jsc:other", 900L);
-                    final net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
-                    console.save(tag);
-                    final dev.jstech.computers.program.ComputerConsoleState loaded =
-                            new dev.jstech.computers.program.ComputerConsoleState();
-                    loaded.load(tag);
-                    helper.assertTrue(loaded.pendingBuilds().containsKey("jsc:other"),
-                            "a pending build must persist across a reload");
-                })
-                .thenSucceed();
-    }
-
     /**
      * A desktop environment is a package: a TTY Linux boots to the terminal until {@code apt install gnome}
      * puts GNOME on it, after which the computer reports GNOME as its desktop and boots the full desktop.
@@ -1055,50 +1029,6 @@ public final class OsCliGameTests {
                                     && dev.jstech.computers.os.OsRegistry.getDesktop(gnome).panelStyle()
                                     == dev.jstech.computers.os.PanelStyle.GNOME,
                             "the GNOME desktop environment must be registered with the GNOME chrome");
-                })
-                .thenSucceed();
-    }
-
-    /**
-     * On a source-based distribution a package compiles in the background: a repeated emerge reports the
-     * running build instead of restarting it, {@code emerge --status} lists it, and once it finishes the
-     * shell announces the finished build ahead of the next command's output.
-     */
-    @GameTest(template = ARENA, timeoutTicks = 400)
-    public static void linux_emergeAnnouncesAFinishedBuild(final GameTestHelper helper) {
-        final BlockPos pos = new BlockPos(2, 2, 2);
-        final MainframeBlockEntity mainframe = placeMainframeWithOs(helper, pos,
-                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "gentoo"));
-        // Minesweeper's 16 MB footprint on the 2000 MHz test CPU is an 8 s (160 tick) build.
-        final int buildTicks = 160;
-        helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> {
-                    mainframe.installMirror();
-                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
-                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
-                    helper.assertTrue(text(shell.run("emerge mines", cli)).contains("compiling (about " + (buildTicks / 20) + "s)"),
-                            "emerge starts a CPU-scaled source build");
-                    helper.assertTrue(text(shell.run("emerge mines", cli)).contains("already compiling"),
-                            "a second emerge of the same package reports the running build");
-                    final String status = text(shell.run("emerge --status", cli));
-                    helper.assertTrue(status.contains("minesweeper") && status.contains("compiling"),
-                            "emerge --status lists the running build; got " + status);
-                    helper.assertFalse(mainframe.console().isInstalled("jsc:minesweeper"),
-                            "a building package is not installed yet");
-                })
-                .thenExecuteAfter(buildTicks + 10, () -> {
-                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
-                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
-                    final var response = shell.run("pwd", cli);
-                    helper.assertTrue(!response.lines().isEmpty()
-                                    && response.lines().get(0).text().contains("mines: build finished, package installed"),
-                            "the finished build is announced ahead of the next command; got " + text(response));
-                    helper.assertTrue(text(shell.run("pwd", cli)).contains("/home/player"),
-                            "the announcement is made once, then the shell is back to normal output");
-                    helper.assertTrue(mainframe.console().isInstalled("jsc:minesweeper"),
-                            "a finished build is installed");
-                    helper.assertTrue(text(shell.run("emerge --status", cli)).contains("no builds in progress"),
-                            "nothing is left compiling");
                 })
                 .thenSucceed();
     }
@@ -1469,34 +1399,6 @@ public final class OsCliGameTests {
                             helper.absolutePos(pos));
                     helper.assertTrue(text(shell.run("neofetch", cli)).contains("DE: Cinnamon"),
                             "with a desktop environment installed the DE line names it (alias included)");
-                })
-                .thenSucceed();
-    }
-
-    /** A source build settles by itself through the computer's tick, with no command needed to finish it. */
-    @GameTest(template = ARENA, timeoutTicks = 400)
-    public static void linux_buildSettlesByTickingWithoutACommand(final GameTestHelper helper) {
-        final BlockPos pos = new BlockPos(2, 2, 2);
-        final MainframeBlockEntity mainframe = placeMainframeWithOs(helper, pos,
-                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "gentoo"));
-        // Minesweeper's 16 MB footprint on the 2000 MHz test CPU is an 8 s (160 tick) build.
-        helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> {
-                    mainframe.installMirror();
-                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
-                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
-                    shell.run("emerge mines", cli);
-                    helper.assertTrue(mainframe.console().buildTotal("jsc:minesweeper") > 0,
-                            "a running build knows its full duration (for the progress lines)");
-                })
-                .thenExecuteAfter(200, () -> {
-                    // No command ran since: the block's own ticker settled the finished build.
-                    helper.assertTrue(mainframe.console().isInstalled("jsc:minesweeper"),
-                            "the tick settles a finished build without a command");
-                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
-                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
-                    helper.assertTrue(text(shell.run("pwd", cli)).contains("build finished"),
-                            "with no console open the finished notice waits for the next command");
                 })
                 .thenSucceed();
     }

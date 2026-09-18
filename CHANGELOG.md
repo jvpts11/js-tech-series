@@ -194,6 +194,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   connection the machine has, making a filesystem and unpacking onto it go at the disk's speed, and compiling
   is a fixed amount of work got through at the rate the processor manages with as many of its cores as
   `MAKEOPTS` lets it use, never more than it has. A build left alone uses one core.
+- `emerge` on an installed Gentoo is the same tool it is in the installer. It takes the terminal, works out
+  the dependencies, lists what it would merge and asks when it was told `--ask`, fetches the source, and goes
+  through every phase with the compiler's lines going by, and the program is on the machine when the build ends
+  and not before. It used to print one line naming how many seconds were left and finish out of sight.
+  Ctrl+C stops a build and installs nothing. The build options the system was installed with come with it, so
+  `MAKEOPTS="-j4"` in `/etc/portage/make.conf` makes every later build four jobs wide, up to the cores the
+  machine has. `emerge --status` and the notice of a build finished in the background are gone, since nothing
+  builds in the background any more.
 - `wget` fetches from `mirror://mainframe`, the one thing on a world's network there is to fetch from, and
   stamps what it fetched with the world's own clock: the day the world is on and the time of that day
   (`--Day 214 12:00:00--`). A machine with no Mirror on its network is told the host could not be resolved.

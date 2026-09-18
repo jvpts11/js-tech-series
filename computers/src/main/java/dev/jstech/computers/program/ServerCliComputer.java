@@ -411,7 +411,7 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     @Override
-    public List<String> drainBuildNotices() {
+    public List<String> drainNotices() {
         return packages().notices();
     }
 
@@ -432,8 +432,8 @@ public final class ServerCliComputer implements ICliComputer {
 
 
     @Override
-    public OpResult packageInstall(final String name) {
-        return packages().install(name);
+    public Installing packageInstall(final String name, final boolean ask) {
+        return packages().install(name, ask);
     }
 
     /** The build every package the Mirror serves is currently at: the mod's own version. */
@@ -490,11 +490,6 @@ public final class ServerCliComputer implements ICliComputer {
                 totalMb,
                 console == null ? 0 : console.installed().size(),
                 level.getGameTime());
-    }
-
-    @Override
-    public Map<String, Long> buildsRemaining() {
-        return packages().buildsRemaining();
     }
 
     @Override

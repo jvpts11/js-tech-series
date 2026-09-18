@@ -19,8 +19,6 @@ import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.program.cli.SigmaCommands;
 import dev.jstech.core.tier.HardwareEra;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
 import dev.jstech.computers.os.OsDef;
@@ -31,6 +29,8 @@ import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.cli.ICliPackages;
+import dev.jstech.computers.program.tty.TtyScriptProcess;
 import dev.jstech.computers.sigma.pack.Packed;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
@@ -164,21 +164,18 @@ public final class PackageService {
     }
 
     /**
-     * What the Mirror has for this machine: first what it can serve, each saying whether the machine already has it
-     * and whether it is being built right now, then whatever players on this network have published, marked as
-     * theirs. A published package the machine cannot read is left out rather than shown broken.
+     * What the Mirror has for this machine: first what it can serve, each saying whether the machine already has
+     * it, then whatever players on this network have published, marked as theirs. A published package the machine
+     * cannot read is left out rather than shown broken.
      */
     public List<ICliComputer.PackageInfo> available() {
-        this.settleBuilds();
         if (this.mirrorMainframe() == null) {
             return List.of();
         }
-        final ComputerConsoleState console = this.terminal.console();
         final List<ICliComputer.PackageInfo> out = new ArrayList<>();
         for (final ProgramSpec spec : this.offered()) {
-            final boolean building = console != null && console.pendingBuilds().containsKey(spec.id().toString());
             out.add(new ICliComputer.PackageInfo(spec.commandName(), spec.displayName()
-                    + (spec.kind() == ProgramKind.SERVICE ? " (service)" : ""), this.has(spec), building));
+                    + (spec.kind() == ProgramKind.SERVICE ? " (service)" : ""), this.has(spec)));
         }
         final MainframeBlockEntity mirror = this.mirrorMainframe();
         if (mirror != null) {
@@ -190,23 +187,10 @@ public final class PackageService {
                 final String about = packed.manifest().about();
                 out.add(new ICliComputer.PackageInfo(shelved.getKey(),
                         (about.isBlank() ? packed.manifest().label() : about) + " - " + packed.manifest().house(),
-                        false, false, true));
+                        false, true));
             }
         }
         return out;
-    }
-
-    /**
-     * Moves finished source builds into the installed set.
-     *
-     * <p>It is done whenever the packages are touched, and it happens whether or not a Mirror is serving: a build
-     * that finished while the machine was cut off still belongs to the machine.
-     */
-    public void settleBuilds() {
-        final ComputerConsoleState console = this.terminal.console();
-        if (console != null && !console.settleBuilds(this.level.getGameTime()).isEmpty()) {
-            ((BlockEntity) this.terminal).setChanged();
-        }
     }
 
     /**
@@ -246,40 +230,16 @@ public final class PackageService {
                 + " hardware or later");
     }
 
-    /** Source builds still compiling on this machine: the program's id, and how many ticks are left. */
-    public Map<String, Long> buildsRemaining() {
-        this.settleBuilds();
-        final ComputerConsoleState console = this.terminal.console();
-        if (console == null) {
-            return Map.of();
-        }
-        final Map<String, Long> out = new LinkedHashMap<>();
-        final long now = this.level.getGameTime();
-        console.pendingBuilds().forEach((id, readyAt) -> out.put(id, Math.max(0L, readyAt - now)));
-        return out;
-    }
-
     /**
      * What the prompt prints ahead of the next command, each line handed over once: what the machine itself has to
-     * say, which happened as the world loaded, and then one line per source build that finished since it last asked.
+     * say, which happened as the world loaded.
      */
     public List<String> notices() {
-        this.settleBuilds();
         final List<String> out = new ArrayList<>();
-        final BlockEntity machine = (BlockEntity) this.terminal;
-        if (machine instanceof AbstractComputerBlockEntity computer) {
+        if ((BlockEntity) this.terminal instanceof AbstractComputerBlockEntity computer) {
             for (final String notice : computer.programs().drainNotices()) {
                 out.add(">>> " + notice);
             }
-        }
-        final ComputerConsoleState console = this.terminal.console();
-        final List<String> finished = console == null ? List.of() : console.drainFinishedBuilds();
-        if (!finished.isEmpty()) {
-            machine.setChanged();
-        }
-        for (final String id : finished) {
-            final ProgramSpec spec = OsRegistry.getProgram(ResourceLocation.tryParse(id));
-            out.add(">>> " + (spec != null ? spec.commandName() : id) + ": build finished, package installed");
         }
         return out;
     }
@@ -373,15 +333,49 @@ public final class PackageService {
         return runtime != null && this.has(runtime);
     }
 
-    /** Installs the named package from the network's Mirror, in the words the machine's package manager uses. */
-    public ICliComputer.OpResult install(final String name) {
-        this.settleBuilds();
-        final PackageManagerKind manager = this.manager();
-        if (manager == PackageManagerKind.NONE) {
+    /**
+     * Installs the named package from the network's Mirror, in the words the machine's package manager uses.
+     *
+     * <p>A manager that builds what it installs leaves the build running in front of the terminal, and the
+     * program is on the machine when that build ends. Every other answer is given at once.
+     *
+     * @param ask whether the manager was told to list what it would do and ask before doing it
+     */
+    public ICliPackages.Installing install(final String name, final boolean ask) {
+        final String wanted = name == null ? "" : name.trim().toLowerCase(Locale.ROOT);
+        final ICliComputer.OpResult early = this.beforeTheMirror(wanted);
+        if (early != null) {
+            return ICliPackages.Installing.said(early);
+        }
+        final ProgramSpec spec = this.offeredAs(wanted);
+        if (spec == null) {
+            return ICliPackages.Installing.said(ICliComputer.OpResult.fail("unable to locate package " + wanted));
+        }
+        final ICliComputer.OpResult stopped = this.whyNotHere(spec);
+        if (stopped != null) {
+            return ICliPackages.Installing.said(stopped);
+        }
+        final BlockEntity machine = (BlockEntity) this.terminal;
+        final ComputerConsoleState console = this.terminal.console();
+        if (this.manager().compilesFromSource() && machine instanceof IOsHost builder && console != null
+                && !(machine instanceof MainframeBlockEntity && spec.kind() == ProgramKind.SERVICE)
+                && this.fits(builder, spec)) {
+            final String id = spec.id().toString();
+            return ICliPackages.Installing.running(new TtyScriptProcess(SourceBuild.of(spec, builder, ask, () -> {
+                console.install(id);
+                machine.setChanged();
+            })));
+        }
+        return ICliPackages.Installing.said(this.installAtOnce(spec));
+    }
+
+    /** What is answered before the Mirror is looked at: a system with no manager, and a player's own package. */
+    @Nullable
+    private ICliComputer.OpResult beforeTheMirror(final String wanted) {
+        if (this.manager() == PackageManagerKind.NONE) {
             return ICliComputer.OpResult.fail(
                     "this system installs programs from install media, not a package manager");
         }
-        final String wanted = name == null ? "" : name.trim().toLowerCase(Locale.ROOT);
         final ICliComputer.OpResult community = this.installCommunity(wanted);
         if (community != null) {
             return community;
@@ -390,17 +384,24 @@ public final class PackageService {
             return ICliComputer.OpResult.fail("could not resolve mirror:// - connect this computer to a network whose"
                     + " Mainframe runs the Mirror service");
         }
-        ProgramSpec spec = null;
+        return null;
+    }
+
+    /** The program the Mirror offers this machine under that name, or null when it offers none. */
+    @Nullable
+    private ProgramSpec offeredAs(final String wanted) {
         for (final ProgramSpec candidate : this.offered()) {
             if (candidate.commandName().equalsIgnoreCase(wanted)
                     || candidate.id().getPath().equalsIgnoreCase(wanted)) {
-                spec = candidate;
-                break;
+                return candidate;
             }
         }
-        if (spec == null) {
-            return ICliComputer.OpResult.fail("unable to locate package " + wanted);
-        }
+        return null;
+    }
+
+    /** Why that program is not installed on this machine, or null when nothing stands in its way. */
+    @Nullable
+    private ICliComputer.OpResult whyNotHere(final ProgramSpec spec) {
         final ICliComputer.OpResult tooOld = this.eraGate(spec);
         if (tooOld != null) {
             return tooOld;
@@ -420,14 +421,20 @@ public final class PackageService {
         if (this.has(spec)) {
             return ICliComputer.OpResult.ok(spec.commandName() + " is already the newest version");
         }
+        return null;
+    }
+
+    /** Whether that machine meets what the program asks of its hardware and has the room for it. */
+    private boolean fits(final IOsHost host, final ProgramSpec spec) {
+        return OsRegistry.canInstallProgram(host.installedOsId(), spec.id(), host.maxCpuMhz(), host.totalVramMb(),
+                host.systemDiskFreeMb());
+    }
+
+    /** Installs a program the way a manager that ships built packages does, answering at once. */
+    private ICliComputer.OpResult installAtOnce(final ProgramSpec spec) {
+        final PackageManagerKind manager = this.manager();
+        final BlockEntity machine = (BlockEntity) this.terminal;
         final ComputerConsoleState console = this.terminal.console();
-        // Re-running emerge on a package still compiling reports the build instead of restarting it from zero.
-        final Long readyAt = console == null ? null : console.pendingBuilds().get(spec.id().toString());
-        if (readyAt != null) {
-            final long left = Math.max(0L, readyAt - this.level.getGameTime());
-            return ICliComputer.OpResult.ok(">>> " + spec.commandName() + " is already compiling (about "
-                    + (left / 20) + "s left)");
-        }
         // A Mainframe service switches its flag on directly (a prebuilt daemon, so no source build either).
         if (machine instanceof MainframeBlockEntity mf && spec.kind() == ProgramKind.SERVICE) {
             final boolean done = switch (spec.id().getPath()) {
@@ -440,21 +447,12 @@ public final class PackageService {
             return done ? ICliComputer.OpResult.ok("Setting up " + spec.commandName() + " ... done")
                     : ICliComputer.OpResult.fail(spec.commandName() + " could not be set up");
         }
-        if (machine instanceof IOsHost oc
-                && !OsRegistry.canInstallProgram(oc.installedOsId(), spec.id(), oc.maxCpuMhz(), oc.totalVramMb(),
-                        oc.systemDiskFreeMb())) {
+        if (machine instanceof IOsHost oc && !this.fits(oc, spec)) {
             return ICliComputer.OpResult.fail(spec.commandName()
                     + ": unmet requirements (hardware or free disk space)");
         }
         if (console == null) {
             return ICliComputer.OpResult.fail("this computer cannot store installed programs");
-        }
-        if (manager.compilesFromSource()) {
-            final long ticks = this.buildTicks(spec);
-            console.startBuild(spec.id().toString(), this.level.getGameTime() + ticks, ticks);
-            machine.setChanged();
-            return ICliComputer.OpResult.ok(">>> Emerging " + spec.commandName() + " ... compiling (about "
-                    + (ticks / 20) + "s)");
         }
         /*
          * A package from the Mirror is fetched over the network and set up over time, the way the same
@@ -540,7 +538,6 @@ public final class PackageService {
 
     /** Brings every installed package up to the build this version ships. */
     public ICliComputer.OpResult update() {
-        this.settleBuilds();
         final PackageManagerKind manager = this.manager();
         if (manager == PackageManagerKind.NONE) {
             return ICliComputer.OpResult.fail(
@@ -580,20 +577,8 @@ public final class PackageService {
                 + (outdated.size() == 1 ? "" : "s") + ".");
     }
 
-    /**
-     * How long a source build takes: proportional to the package's footprint and inversely to the CPU clock, so
-     * faster hardware compiles faster (balancing estimate, clamped to a few seconds ... half an hour).
-     */
-    private long buildTicks(final ProgramSpec spec) {
-        final BlockEntity machine = (BlockEntity) this.terminal;
-        final int cpu = Math.max(100, machine instanceof IOsHost c ? c.maxCpuMhz() : 100);
-        final long seconds = Math.max(5L, Math.min(1800L, Math.max(16L, spec.minDiskMb()) * 1000L / cpu));
-        return seconds * 20L;
-    }
-
     /** Takes a package off this machine, whether it is a player's or one the Mirror serves. */
     public ICliComputer.OpResult remove(final String name) {
-        this.settleBuilds();
         final String wanted = name == null ? "" : name.trim().toLowerCase(Locale.ROOT);
         final BlockEntity machine = (BlockEntity) this.terminal;
         final ComputerConsoleState theirs = this.terminal.console();
@@ -618,12 +603,6 @@ public final class PackageService {
         }
         if (spec == null) {
             return ICliComputer.OpResult.fail("unable to locate package " + wanted);
-        }
-        final ComputerConsoleState console = this.terminal.console();
-        // A build still compiling is simply cancelled.
-        if (console != null && console.cancelBuild(spec.id().toString())) {
-            machine.setChanged();
-            return ICliComputer.OpResult.ok(">>> " + spec.commandName() + ": build cancelled");
         }
         /*
          * Removing is the same job as installing, run backwards and quicker; a Mainframe service also

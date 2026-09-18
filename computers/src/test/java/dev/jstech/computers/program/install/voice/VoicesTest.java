@@ -173,6 +173,20 @@ class VoicesTest {
         assertFalse(glass.all().contains("make -j"), glass.all());
     }
 
+    /** The load sits at the right-hand edge of the glass, and one column past it is a line broken in two. */
+    @Test
+    void emerge_theClosingCountOfJobs_reachesTheEdgeOfTheTerminalAndNoFurther() {
+        for (final int jobs : new int[] {1, 4, 16}) {
+            final Glass glass = played(PortageVoices.emerge(List.of(new PortageVoices.Merge(
+                    "app-misc/mines", "5.1", "", "mines-5.1.tar.xz", 4.0, "nls", "-debug", 10, 40)),
+                    false, jobs, () -> { }));
+            final String line = glass.everShown.stream().filter(said -> said.contains("Jobs: 1 of 1 complete"))
+                    .findFirst().orElse("");
+            assertEquals(Bars.COLUMNS, line.length(), line);
+            assertTrue(line.endsWith("2.84, 1.37"), line);
+        }
+    }
+
     @Test
     void genkernel_namesEachPhaseAsItStartsAndDisclaimsTheResult() {
         final Glass glass = played(KernelVoices.genkernel("6.11.5", 1_280, () -> { }));

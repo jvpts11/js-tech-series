@@ -11,8 +11,6 @@ import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.SetupJob;
 import dev.jstech.computers.program.install.LiveInstallState;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -198,83 +196,6 @@ public final class ComputerConsoleState {
         this.foreground.clear();
     }
 
-    /*
-     * Packages a source-based package manager (emerge) is still compiling: program id -> the game tick at
-     * which the build finishes and the program becomes installed. Settled lazily by the shell on the next
-     * command, so no per-tick agent is needed.
-     */
-    private final Map<String, Long> pendingBuilds = new LinkedHashMap<>();
-
-    /** Starts (or restarts) a source build of {@code programId} that completes at game tick {@code readyAtTick}. */
-    public void startBuild(final String programId, final long readyAtTick) {
-        pendingBuilds.put(programId, readyAtTick);
-    }
-
-    /** As {@link #startBuild(String, long)}, also recording the build's full duration for progress lines. */
-    public void startBuild(final String programId, final long readyAtTick, final long totalTicks) {
-        pendingBuilds.put(programId, readyAtTick);
-        buildTotals.put(programId, totalTicks);
-    }
-
-    /*
-     * The full duration of each running build, so the console can print percentage progress. Persisted
-     * beside the completion ticks; entries leave with their build.
-     */
-    private final Map<String, Long> buildTotals = new LinkedHashMap<>();
-
-    /** The full duration in ticks of a running build, or 0 when unknown. */
-    public long buildTotal(final String programId) {
-        return buildTotals.getOrDefault(programId, 0L);
-    }
-
-    /** Cancels a build still compiling; returns whether one was pending. */
-    public boolean cancelBuild(final String programId) {
-        buildTotals.remove(programId);
-        return pendingBuilds.remove(programId) != null;
-    }
-
-    /** The builds still compiling: program id to completion tick. */
-    public Map<String, Long> pendingBuilds() {
-        return Collections.unmodifiableMap(pendingBuilds);
-    }
-
-    /**
-     * Moves every build whose completion tick has passed into the installed set, returning the ids that
-     * just finished (in start order). Each finished id is also queued for {@link #drainFinishedBuilds()},
-     * so the shell can announce it on the player's next command even though the build settled silently.
-     */
-    public List<String> settleBuilds(final long nowTick) {
-        final List<String> done = new ArrayList<>();
-        final Iterator<Map.Entry<String, Long>> it = pendingBuilds.entrySet().iterator();
-        while (it.hasNext()) {
-            final Map.Entry<String, Long> e = it.next();
-            if (e.getValue() <= nowTick) {
-                installed.add(e.getKey());
-                done.add(e.getKey());
-                finishedBuilds.add(e.getKey());
-                buildTotals.remove(e.getKey());
-                it.remove();
-            }
-        }
-        return done;
-    }
-
-    /*
-     * Builds that finished but have not been announced to the player yet (persisted, so a build that
-     * completes while the world is unloaded is still reported the next time the shell is used).
-     */
-    private final List<String> finishedBuilds = new ArrayList<>();
-
-    /** Returns and clears the finished-but-unannounced build ids, in completion order. */
-    public List<String> drainFinishedBuilds() {
-        if (finishedBuilds.isEmpty()) {
-            return List.of();
-        }
-        final List<String> out = List.copyOf(finishedBuilds);
-        finishedBuilds.clear();
-        return out;
-    }
-
     /** The chosen desktop wallpaper id ({@code ""} means the OS default). */
     public String wallpaper() {
         return wallpaper;
@@ -359,9 +280,8 @@ public final class ComputerConsoleState {
         sessions.clear();
         terminalDrive = 'C';
         installed.clear();
-        pendingBuilds.clear();
-        buildTotals.clear();
-        finishedBuilds.clear();
+        // Whatever was being built went with the system it was being built for.
+        foreground.clear();
     }
 
     /** Sets the current drive and stores that drive's current directory. */
@@ -502,23 +422,6 @@ public final class ComputerConsoleState {
             }
             tag.put("Community", written);
         }
-        if (!pendingBuilds.isEmpty()) {
-            final CompoundTag builds = new CompoundTag();
-            pendingBuilds.forEach(builds::putLong);
-            tag.put("PendingBuilds", builds);
-        }
-        if (!buildTotals.isEmpty()) {
-            final CompoundTag totals = new CompoundTag();
-            buildTotals.forEach(totals::putLong);
-            tag.put("BuildTotals", totals);
-        }
-        if (!finishedBuilds.isEmpty()) {
-            final ListTag finished = new ListTag();
-            for (final String id : finishedBuilds) {
-                finished.add(StringTag.valueOf(id));
-            }
-            tag.put("FinishedBuilds", finished);
-        }
         if (liveInstall != null) {
             tag.putString("LiveInstall", liveInstall.serialize());
         }
@@ -641,24 +544,6 @@ public final class ComputerConsoleState {
                         tag.getString("LiveInstall"))
                 : null;
         foreground.load(tag.getCompound("Foreground"));
-        pendingBuilds.clear();
-        if (tag.contains("PendingBuilds")) {
-            final CompoundTag builds = tag.getCompound("PendingBuilds");
-            for (final String id : builds.getAllKeys()) {
-                pendingBuilds.put(id, builds.getLong(id));
-            }
-        }
-        buildTotals.clear();
-        if (tag.contains("BuildTotals")) {
-            final CompoundTag totals = tag.getCompound("BuildTotals");
-            for (final String id : totals.getAllKeys()) {
-                buildTotals.put(id, totals.getLong(id));
-            }
-        }
-        finishedBuilds.clear();
-        for (final Tag entry : tag.getList("FinishedBuilds", Tag.TAG_STRING)) {
-            finishedBuilds.add(entry.getAsString());
-        }
         wallpaper = tag.getString("Wallpaper");
         computerName = tag.getString("ComputerName");
         iconCells.clear();

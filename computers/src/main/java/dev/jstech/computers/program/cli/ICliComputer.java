@@ -54,12 +54,11 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
      * <p>{@code community} marks one a player wrote and published, as against one that came with the
      * machines. Both install the same way; a player is entitled to know which is which.
      */
-    record PackageInfo(String name, String description, boolean installed, boolean building,
-                       boolean community) {
+    record PackageInfo(String name, String description, boolean installed, boolean community) {
 
-        public PackageInfo(final String name, final String description, final boolean installed,
-                           final boolean building) {
-            this(name, description, installed, building, false);
+        /** One that came with the machines. */
+        public PackageInfo(final String name, final String description, final boolean installed) {
+            this(name, description, installed, false);
         }
     }
 

@@ -77,7 +77,7 @@ public final class PosixCommands {
         @Override public String usage() {
             return switch (kind) {
                 case PACMAN -> "-S <package> | -R <package> | -Ss [term] | -Q | -Syu";
-                case EMERGE -> "<package> | --unmerge <package> | --search [term] | --sync | --status";
+                case EMERGE -> "[--ask] <package> | --unmerge <package> | --search [term] | --sync";
                 default -> "install <package> | remove <package> | search [term] | list | update";
             };
         }
@@ -92,7 +92,7 @@ public final class PosixCommands {
             switch (kind) {
                 case PACMAN -> {
                     switch (verb) {
-                        case "-S" -> install(ctx, arg);
+                        case "-S" -> install(ctx, arg, false);
                         case "-Ss" -> search(ctx, arg);
                         case "-Q" -> installed(ctx);
                         case "-Syu", "-Sy" -> sync(ctx);
@@ -104,16 +104,15 @@ public final class PosixCommands {
                     switch (verb) {
                         case "--search", "-s" -> search(ctx, arg);
                         case "--sync" -> sync(ctx);
-                        case "--status" -> builds(ctx);
                         case "" -> ctx.out().error("usage: emerge " + usage());
-                        case "--ask", "-a" -> install(ctx, arg);
+                        case "--ask", "-a", "-av" -> install(ctx, arg, true);
                         case "--unmerge", "-C", "--depclean", "-c" -> remove(ctx, arg);
-                        default -> install(ctx, ctx.rest(0));
+                        default -> install(ctx, ctx.rest(0), false);
                     }
                 }
                 default -> {
                     switch (verb) {
-                        case "install" -> install(ctx, arg);
+                        case "install" -> install(ctx, arg, false);
                         case "search" -> search(ctx, arg);
                         case "list" -> installed(ctx);
                         case "update", "upgrade" -> sync(ctx);
@@ -135,14 +134,30 @@ public final class PosixCommands {
                     : "Reading package lists from mirror://mainframe ... Done");
         }
 
-        private void install(final CliContext ctx, final String pkg) {
-            if (pkg.isBlank()) {
+        /**
+         * Installs the first package named, passing over whatever options were typed round it.
+         *
+         * @param ask whether the manager was told to list what it would do and ask first
+         */
+        private void install(final CliContext ctx, final String typed, final boolean ask) {
+            String name = "";
+            for (final String word : typed.trim().split("\\s+")) {
+                if (!word.isEmpty() && !word.startsWith("-")) {
+                    name = word;
+                    break;
+                }
+            }
+            if (name.isEmpty()) {
                 ctx.out().error("usage: " + kind.command() + " " + usage());
                 return;
             }
-            final String name = pkg.trim().split("\\s+")[0];
+            final ICliPackages.Installing result = ctx.computer().packageInstall(name, ask);
+            if (result.tool() != null) {
+                // A manager that builds what it installs holds the terminal from here until the build is over.
+                ctx.out().start(result.tool());
+                return;
+            }
             ctx.out().dim("Resolving mirror://mainframe ...");
-            final ICliComputer.OpResult result = ctx.computer().packageInstall(name);
             if (result.ok()) {
                 lines(ctx, result.message());
             } else {
@@ -189,9 +204,7 @@ public final class PosixCommands {
                     continue;
                 }
                 any = true;
-                ctx.out().row(p.name() + (p.installed() ? "  [installed]"
-                                : p.building() ? "  [building]"
-                                        : p.community() ? "  [community]" : ""),
+                ctx.out().row(p.name() + (p.installed() ? "  [installed]" : p.community() ? "  [community]" : ""),
                         p.description());
             }
             if (!any) {
@@ -210,20 +223,6 @@ public final class PosixCommands {
             if (!any) {
                 ctx.out().dim(ctx.computer().mirrorReachable() ? "no packages installed" : "could not resolve mirror://");
             }
-        }
-
-        private void builds(final CliContext ctx) {
-            final Map<String, Long> builds = ctx.computer().buildsRemaining();
-            if (builds.isEmpty()) {
-                ctx.out().dim("no builds in progress");
-                return;
-            }
-            builds.forEach((id, ticks) -> {
-                // Show the package name the way it was typed (the id path), not the registry namespace.
-                final String name = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
-                ctx.out().row(">>> " + name, ticks <= 0 ? "done" : "compiling ... " + (ticks / 20) + "s left");
-            });
-            ctx.out().dim("(the shell announces each build when it finishes)");
         }
     }
 

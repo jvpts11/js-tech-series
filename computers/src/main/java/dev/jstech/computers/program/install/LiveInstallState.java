@@ -196,6 +196,16 @@ public final class LiveInstallState {
         return this.gentoo.makeJobs();
     }
 
+    /**
+     * The build options the installation wrote, empty for a distribution that has none or a file never written.
+     *
+     * <p>They belong to the system and not to the install: every package it builds from then on is built by them.
+     */
+    public String buildOptions() {
+        final String written = this.distro == Distro.GENTOO ? this.gentoo.buildOptions() : null;
+        return written == null ? "" : written;
+    }
+
     /** How long compiling the kernel takes on this machine, with what the build options ask of it. */
     public long compileTicks(final Env env) {
         return LiveTimes.compile(LiveTimes.KERNEL_WORK, LiveTimes.jobs(this.makeJobs(), env), env);

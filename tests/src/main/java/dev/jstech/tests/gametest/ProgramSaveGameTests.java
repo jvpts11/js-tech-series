@@ -106,7 +106,7 @@ public final class ProgramSaveGameTests {
         helper.assertTrue(computer.programs().isEmpty(),
                 "no program comes back from a save in a form the machine does not read");
         helper.assertTrue(computer.programs().held() == 0, "and the terminal holds nothing");
-        final List<String> told = new ServerCliComputer(computer, helper.getLevel()).drainBuildNotices();
+        final List<String> told = new ServerCliComputer(computer, helper.getLevel()).drainNotices();
         helper.assertTrue(told.stream().anyMatch(line -> line.contains("could not be brought back")),
                 "the terminal says so the next time it is used; got " + told);
         helper.succeed();

@@ -563,7 +563,7 @@ public final class SigmaApiGameTests {
                      */
                     computer.console().install(
                             dev.jstech.computers.program.cli.SigmaCommands.RUNTIME);
-                    final var installed = shell.packageInstall("stockwatch");
+                    final var installed = shell.packageInstall("stockwatch", false);
                     helper.assertTrue(installed.ok(), "it installs: " + installed.message());
                     final var known = computer.console().communityProgram("stockwatch");
                     helper.assertTrue(known != null, "the machine knows it has it");

@@ -24,6 +24,7 @@ import dev.jstech.computers.os.install.SetupTiming;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.program.install.LiveTurn;
+import dev.jstech.computers.program.install.MakeOpts;
 import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
@@ -246,8 +247,8 @@ public final class InstallService {
      *
      * <p>Without this the whole sequence is theatre: the distribution lands on the disk and every decision made
      * getting it there is thrown away, so a machine somebody spent half an hour naming, laying out and fitting
-     * with packages comes up nameless and bare. The name, the filesystem table and the packages are the three
-     * things a person really decided, and each of them goes where that system keeps it.
+     * with packages comes up nameless and bare. The name, the filesystem table, the build options and the
+     * packages are what a person really decided, and each of them goes where that system keeps it.
      */
     private void carryOver(final IOsHost computer, final LiveInstallState state, final int target) {
         final ComputerConsoleState console = computer.console();
@@ -271,12 +272,21 @@ public final class InstallService {
          */
         final String table = state.filesystemTable();
         if (!table.isEmpty()) {
-            writeFstab(computer, target, table);
+            writeSetting(computer, target, "/etc", "/etc/fstab", table);
+        }
+        /*
+         * The build options go with it for the same reason: a system that builds what it installs goes on
+         * building by them, so the jobs somebody gave it while installing are the jobs it compiles with.
+         */
+        final String options = state.buildOptions();
+        if (!options.isEmpty()) {
+            writeSetting(computer, target, "/etc/portage", MakeOpts.PATH, options);
         }
     }
 
-    /** Puts the filesystem table on the disk the system was written to, where that system keeps it. */
-    private static void writeFstab(final IOsHost computer, final int target, final String table) {
+    /** Puts one of the system's own settings files on the disk it was written to, where that system keeps it. */
+    private static void writeSetting(final IOsHost computer, final int target, final String dir, final String path,
+                                     final String content) {
         final int slot = target >= 0 ? target : computer.defaultInstallSlot();
         if (slot < 0) {
             return;
@@ -285,12 +295,9 @@ public final class InstallService {
         if (!(disk.getItem() instanceof DiskItem)) {
             return;
         }
-        final FilesystemContents was = disk.getOrDefault(
-                ComputingModule.FILESYSTEM.get(),
-                FilesystemContents.EMPTY);
+        final FilesystemContents was = disk.getOrDefault(ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
         disk.set(ComputingModule.FILESYSTEM.get(),
-                was.withDir("/etc").with(new StoredFile("/etc/fstab",
-                        FileType.CFG, table)));
+                was.withDir("/etc").withDir(dir).with(new StoredFile(path, FileType.CFG, content)));
     }
 
     /** The format of the disc a program's installer sits on in a linked drive, or null when none does. */

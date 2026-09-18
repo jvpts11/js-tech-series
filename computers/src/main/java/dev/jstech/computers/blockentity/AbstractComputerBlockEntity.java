@@ -825,9 +825,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return installOs(osId, -1);
     }
 
-    /** Tells every console open on this computer how a source build is coming along. */
-    public void tickBuildProgress(final ServerLevel level) {
-        replication.pushBuildProgress(level);
+    /** Moves whatever is running in front of this computer's terminal along, and tells whoever is watching. */
+    public void tickTerminal(final ServerLevel level) {
         terminalFeed.tick(level);
     }
 
@@ -957,7 +956,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     protected abstract void unregisterNode(NetworkSystem system, NetworkUuid network);
 
     protected void tickNode(final ServerLevel level) {
-        tickBuildProgress(level);
+        tickTerminal(level);
         tickBootPhases(level);
         OsInstallRunner.tick(this, level, worldPosition);
         tickSigma();

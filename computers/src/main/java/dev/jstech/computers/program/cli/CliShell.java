@@ -52,10 +52,10 @@ public final class CliShell {
     public Response run(final String line, final ICliComputer computer) {
         final CliOutput out = new CliOutput(width);
         /*
-         * A source build that finished in the background is announced before whatever the player typed
-         * (an empty Enter included), the way a shell shows a finished job ahead of the next prompt.
+         * What the machine has to say for itself is said before whatever the player typed (an empty Enter
+         * included), the way a shell shows a finished job ahead of the next prompt.
          */
-        for (final String notice : computer.drainBuildNotices()) {
+        for (final String notice : computer.drainNotices()) {
             out.ok(notice);
         }
         final List<String> tokens = CliTokenizer.tokenize(line);
