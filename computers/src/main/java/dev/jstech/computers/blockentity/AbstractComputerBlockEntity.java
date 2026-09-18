@@ -313,7 +313,6 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         final int ticks = BootTiming.shutdownTicks(
                 BootRunner.bootLength(this));
         ScreenSessions.eachWatcher(server, worldPosition, (player, monitor) -> {
-            ScreenSessions.opened(player, monitor, worldPosition);
             PacketDistributor.sendToPlayer(player,
                     new OpenSystemBootPayload(
                             worldPosition, monitor, ticks, ticks, sequence, true,

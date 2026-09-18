@@ -49,16 +49,17 @@ public final class ComputingClientSetup {
     @SubscribeEvent
     public static void registerScreens(final RegisterMenuScreensEvent event) {
         // Wire the client-side firmware screen opener so blocks can open it without importing Minecraft.
-        IFirmwareScreenOpener.Holder.set((pos, monitorPos, kind, name) ->
-                Minecraft.getInstance().setScreen(new FirmwareScreen(pos, monitorPos, kind, name)));
+        IFirmwareScreenOpener.Holder.set((pos, monitorPos, kind, name) -> FirmwareScreen.expect(kind, name));
         IPostScreenOpener.Holder.set((pos, monitorPos, kind, name, remaining, halted) ->
-                Minecraft.getInstance().setScreen(
-                        new BootSequenceScreen(pos, monitorPos, kind, name, remaining, halted)));
+                BootSequenceScreen.expect(kind, name, remaining, halted));
         IInstallDoneScreenOpener.Holder.set(
-                (pos, monitorPos, kind, osName, targetLabel, targetSlot, failure) -> Minecraft.getInstance().setScreen(
-                        failure.isEmpty()
-                                ? OsInstallScreen.completed(pos, monitorPos, kind, osName, targetLabel, targetSlot)
-                                : OsInstallScreen.failed(pos, monitorPos, kind, osName, targetLabel, failure)));
+                (pos, monitorPos, kind, osName, targetLabel, targetSlot, failure) -> {
+                    if (failure.isEmpty()) {
+                        OsInstallScreen.expectDone(kind, osName, targetLabel, targetSlot);
+                    } else {
+                        OsInstallScreen.expectFailed(kind, osName, targetLabel, failure);
+                    }
+                });
         /*
          * An installer already on screen is given the new page rather than replaced, so a page that changes
          * under the player does not throw away what they were in the middle of typing.
@@ -69,11 +70,10 @@ public final class ComputingClientSetup {
                 open.accept(payload);
                 return;
             }
-            Minecraft.getInstance().setScreen(new InstallerScreen(payload));
+            InstallerScreen.expect(payload);
         });
         IBootMenuScreenOpener.Holder.set(
-                (pos, monitorPos, menu, remaining) -> Minecraft.getInstance().setScreen(
-                        new BootMenuScreen(pos, monitorPos, menu, remaining)));
+                (pos, monitorPos, menu, remaining) -> BootMenuScreen.expect(menu, remaining));
         /*
          * What is on the glass arrives before the session that shows it, so these hand the content over and
          * the menu opening is what puts the screen up.
@@ -83,10 +83,8 @@ public final class ComputingClientSetup {
                         SystemBootScreen.expect(sequence, remaining, total, endsDark, splash));
         IInstallProgressScreenOpener.Holder.set(
                 (pos, monitorPos, kind, osName, targetLabel, ticksLeft, ticksTotal) ->
-                        Minecraft.getInstance().setScreen(OsInstallScreen.working(pos, monitorPos, kind, osName,
-                                targetLabel, ticksLeft, ticksTotal)));
-        IKvmScreenOpener.Holder.set(payload ->
-                Minecraft.getInstance().setScreen(new KvmChannelScreen(payload)));
+                        OsInstallScreen.expectWorking(kind, osName, targetLabel, ticksLeft, ticksTotal));
+        IKvmScreenOpener.Holder.set(KvmChannelScreen::expect);
 
         /*
          * Every session on a monitor that is not a system shares one menu, so which screen it opens is read
@@ -95,7 +93,12 @@ public final class ComputingClientSetup {
         event.register(ComputingModule.MONITOR_SESSION_MENU.get(),
                 (final MonitorSessionMenu menu, final Inventory inv, final Component title) ->
                         switch (menu.phase()) {
-                            case SYSTEM_BOOT -> new SystemBootScreen(menu, inv, title);
+                            case POST -> new BootSequenceScreen(menu, inv, title);
+                            case INSTALL_PROGRESS -> new OsInstallScreen(menu, inv, title);
+                            case FIRMWARE -> new FirmwareScreen(menu, inv, title);
+                            case INSTALLER -> new InstallerScreen(menu, inv, title);
+                            case BOOT_MENU -> new BootMenuScreen(menu, inv, title);
+                            case KVM -> new KvmChannelScreen(menu, inv, title);
                             default -> new SystemBootScreen(menu, inv, title);
                         });
         event.register(ComputingModule.DESKTOP_MENU.get(), DesktopScreen::new);

@@ -7,22 +7,22 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.FirmwareKind;
-import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.InstallMode;
 import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.core.tier.HardwareEra;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +43,7 @@ import java.util.List;
  * medium onto the default disk, then close), which the client journey tests drive through
  * {@link #installButtonCenter()}.
  */
-public class FirmwareScreen extends Screen {
+public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     private static final int W = 340;
     private static final int H = 214;
@@ -96,6 +96,10 @@ public class FirmwareScreen extends Screen {
     /** The screen currently open, so the state reply finds it. */
     private static FirmwareScreen active;
 
+    /** The setup the machine last described, kept until the session that shows it is built. */
+    @Nullable
+    private static Setup pending;
+
     private final BlockPos computerPos;
     private final BlockPos monitorPos;
     private final FirmwareKind kind;
@@ -117,13 +121,32 @@ public class FirmwareScreen extends Screen {
     private String notice = "";
     private long noticeUntil;
 
-    public FirmwareScreen(final BlockPos computerPos, final BlockPos monitorPos, final FirmwareKind kind,
-                          final String machineName) {
-        super(Component.literal("Firmware Setup"));
-        this.computerPos = computerPos;
-        this.monitorPos = monitorPos;
-        this.kind = kind;
-        this.machineName = machineName;
+    public FirmwareScreen(final MonitorSessionMenu session, final Inventory inventory, final Component title) {
+        super(session, inventory, title);
+        this.imageWidth = W;
+        this.imageHeight = H;
+        this.titleLabelX = OFF_SCREEN;
+        this.inventoryLabelY = OFF_SCREEN;
+        this.computerPos = session.hostPos();
+        this.monitorPos = session.monitorPos();
+        final Setup setup = pending != null ? pending
+                : new Setup(FirmwareKind.forEra(
+                        session.hardwareEra() == null ? HardwareEra.STANDARD : session.hardwareEra()), "");
+        this.kind = setup.kind();
+        this.machineName = setup.machineName();
+    }
+
+    /** Which firmware this machine wears and what it is called, said before its setup is opened. */
+    public static void expect(final FirmwareKind kind, final String machineName) {
+        pending = new Setup(kind, machineName);
+    }
+
+    /** One machine's setup: the look its board's age gives it, and the name written across the top. */
+    private record Setup(FirmwareKind kind, String machineName) {
+
+        Setup {
+            machineName = machineName == null ? "" : machineName;
+        }
     }
 
     @Override
@@ -142,8 +165,8 @@ public class FirmwareScreen extends Screen {
      * was read once when the screen opened and never again.
      */
     @Override
-    public void tick() {
-        super.tick();
+    protected void containerTick() {
+        super.containerTick();
         this.sinceAsked++;
         if (this.sinceAsked >= ASK_EVERY) {
             this.sinceAsked = 0;
@@ -326,13 +349,12 @@ public class FirmwareScreen extends Screen {
     // Render
 
     @Override
-    public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
-        renderBackground(g, mouseX, mouseY, partialTick);
+    protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
         rowHits.clear();
         bootHit = null;
         installHit = null;
-        final int x = (width - W) / 2;
-        final int y = (height - H) / 2;
+        final int x = this.leftPos;
+        final int y = this.topPos;
         MonitorFrame.renderBody(g, x, y, W, H, era(), font);
         switch (kind) {
             case CLI_BIOS  -> renderCliBios(g, x, y, mouseX, mouseY);
@@ -341,11 +363,21 @@ public class FirmwareScreen extends Screen {
         }
     }
 
+    /** The machine's own generation, so the bezel is the monitor that machine would really have. */
+    @Override
+    @Nullable
+    protected HardwareEra screenEra() {
+        return this.getMenu().hardwareEra();
+    }
+
+    /**
+     * The same, never null: a firmware whose machine cannot say its age is read back off the look it wears,
+     * which is the one thing about it that always came from that age.
+     */
     private HardwareEra era() {
-        final Minecraft mc = Minecraft.getInstance();
-        if (mc.level != null && mc.level.getBlockEntity(computerPos)
-                instanceof IOsHost host) {
-            return host.displayEra();
+        final HardwareEra said = this.screenEra();
+        if (said != null) {
+            return said;
         }
         return switch (kind) {
             case CLI_BIOS -> HardwareEra.VINTAGE;

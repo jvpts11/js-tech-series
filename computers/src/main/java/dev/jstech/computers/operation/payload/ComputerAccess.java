@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -108,9 +109,9 @@ public final class ComputerAccess {
         return anyOf(machine(host), (player, payload) -> ScreenSessions.closedDesktopOf(player, host.apply(payload)));
     }
 
-    /** At a plain screen the server opened on that machine: the firmware, the self-test, the installer or the KVM. */
+    /** At one of the monitor's own sessions on that machine: the self-test, the firmware, an installer, the KVM. */
     public static <P> IGate<P> screen(final Function<P, BlockPos> host) {
-        return (player, payload) -> ScreenSessions.admits(player, host.apply(payload));
+        return menu(MonitorSessionMenu.class, MonitorSessionMenu::hostPos, host);
     }
 
     /** In a menu of that kind, open on that block. */

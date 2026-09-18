@@ -7,17 +7,20 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.InstallerActionPayload;
 import dev.jstech.computers.operation.payload.OpenInstallerPayload;
 import dev.jstech.computers.os.install.InstallerChrome;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.InstallerPage;
 import dev.jstech.computers.os.install.InstallerStyle;
+import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -36,7 +39,7 @@ import java.util.List;
  *
  * <p>What the page looks like belongs to {@link InstallerFrames}; what it says belongs here.
  */
-public final class InstallerScreen extends Screen {
+public final class InstallerScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     private static final int W = 340;
     private static final int H = 214;
@@ -82,11 +85,33 @@ public final class InstallerScreen extends Screen {
     private int[] cancelButton;
     private int[] eraseButton;
 
-    public InstallerScreen(final OpenInstallerPayload payload) {
-        super(Component.literal("Setup"));
-        this.computerPos = payload.hostPos();
-        this.monitorPos = payload.monitorPos();
-        this.accept(payload);
+    /** The page the machine last sent, kept until the session that shows it is built. */
+    @Nullable
+    private static OpenInstallerPayload pending;
+
+    public InstallerScreen(final MonitorSessionMenu session, final Inventory inventory, final Component title) {
+        super(session, inventory, title);
+        this.imageWidth = W;
+        this.imageHeight = H;
+        this.titleLabelX = OFF_SCREEN;
+        this.inventoryLabelY = OFF_SCREEN;
+        this.computerPos = session.hostPos();
+        this.monitorPos = session.monitorPos();
+        if (pending != null) {
+            this.accept(pending);
+        }
+    }
+
+    /** The page the machine has reached, said before the session that shows it is opened. */
+    public static void expect(final OpenInstallerPayload payload) {
+        pending = payload;
+    }
+
+    /** The machine's own generation, so the bezel is the monitor that machine would really have. */
+    @Override
+    @Nullable
+    protected HardwareEra screenEra() {
+        return this.getMenu().hardwareEra();
     }
 
     /** Whether this screen is showing that machine, so a page for it updates instead of opening a second screen. */
@@ -120,8 +145,8 @@ public final class InstallerScreen extends Screen {
     }
 
     @Override
-    public void tick() {
-        super.tick();
+    protected void containerTick() {
+        super.containerTick();
         this.blink++;
         /*
          * The clock is the machine's and this only follows it: the work runs to the end of the page it is on and
@@ -245,11 +270,10 @@ public final class InstallerScreen extends Screen {
     }
 
     @Override
-    public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
-        super.render(g, mouseX, mouseY, partialTick);
-        final int x = (this.width - W) / 2;
-        final int y = (this.height - H) / 2;
-        MonitorFrame.renderBody(g, x, y, W, H, null, font);
+    protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
+        final int x = this.leftPos;
+        final int y = this.topPos;
+        MonitorFrame.renderBody(g, x, y, W, H, screenEra(), font);
 
         this.listRows = 0;
         final InstallerFrames.Frame frame = InstallerFrames.paint(g, font, this.flow, this.ticksDone, x, y, W, H);

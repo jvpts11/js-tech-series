@@ -8,16 +8,16 @@
 package dev.jstech.computers.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.core.tier.HardwareEra;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The boot manager's menu: which system this machine will start, chosen before it starts one.
@@ -26,10 +26,14 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * machine go on by itself exactly as it would if nobody had opened a monitor at all. A key stops that count, and
  * then the machine waits there for as long as it takes.
  */
-public final class BootMenuScreen extends Screen {
+public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     private static final int W = 340;
     private static final int H = 214;
+
+    /** The list the machine last sent, kept until the session that shows it is built. */
+    @Nullable
+    private static Standing pending;
 
     private final BlockPos computerPos;
     private final BlockPos monitorPos;
@@ -40,20 +44,40 @@ public final class BootMenuScreen extends Screen {
     /** Whether a key has already told the machine to stop counting. */
     private boolean held;
 
-    public BootMenuScreen(final BlockPos computerPos, final BlockPos monitorPos, final BootMenu menu,
-                          final int remaining) {
-        super(Component.literal("Boot Manager"));
-        this.computerPos = computerPos;
-        this.monitorPos = monitorPos;
-        this.menu = menu;
-        this.remaining = Math.max(0, remaining);
-        this.at = menu.defaultIndex();
-        this.held = remaining <= 0;
+    public BootMenuScreen(final MonitorSessionMenu session, final Inventory inventory, final Component title) {
+        super(session, inventory, title);
+        this.imageWidth = W;
+        this.imageHeight = H;
+        this.titleLabelX = OFF_SCREEN;
+        this.inventoryLabelY = OFF_SCREEN;
+        this.computerPos = session.hostPos();
+        this.monitorPos = session.monitorPos();
+        final Standing standing = pending != null ? pending : new Standing(BootMenu.NONE, 0);
+        this.menu = standing.menu();
+        this.remaining = Math.max(0, standing.remaining());
+        this.at = this.menu.defaultIndex();
+        this.held = standing.remaining() <= 0;
+    }
+
+    /** The list the machine is standing at, said before the session that shows it is opened. */
+    public static void expect(final BootMenu menu, final int remaining) {
+        pending = new Standing(menu, remaining);
+    }
+
+    /** One machine standing at its boot manager: what it lists, and how long before it goes on by itself. */
+    private record Standing(BootMenu menu, int remaining) {
+    }
+
+    /** The machine's own generation, so the bezel is the monitor that machine would really have. */
+    @Override
+    @Nullable
+    protected HardwareEra screenEra() {
+        return this.getMenu().hardwareEra();
     }
 
     @Override
-    public void tick() {
-        super.tick();
+    protected void containerTick() {
+        super.containerTick();
         if (!this.held && this.remaining > 0) {
             this.remaining--;
         }
@@ -97,15 +121,10 @@ public final class BootMenuScreen extends Screen {
     }
 
     @Override
-    public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
-        /*
-         * Screen.render paints the dimmed backdrop itself; painting it again after our own drawing would wash the
-         * menu out, so super runs FIRST and the content after.
-         */
-        super.render(g, mouseX, mouseY, partialTick);
-        final int x = (width - W) / 2;
-        final int y = (height - H) / 2;
-        MonitorFrame.renderBody(g, x, y, W, H, era(), font);
+    protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
+        final int x = this.leftPos;
+        final int y = this.topPos;
+        MonitorFrame.renderBody(g, x, y, W, H, screenEra(), font);
         g.fill(x, y, x + W, y + H, 0xFF000000);
 
         g.drawString(font, "GNU GRUB  version 2.12", x + 12, y + 12, 0xFFE6ECF6, false);
@@ -137,13 +156,4 @@ public final class BootMenuScreen extends Screen {
                 entry.isFirmware() ? 0L : entry.slot(), -1));
     }
 
-    /** The host computer's era, so the monitor bezel matches the machine standing at the menu. */
-    private HardwareEra era() {
-        final Minecraft mc = Minecraft.getInstance();
-        if (mc.level != null && mc.level.getBlockEntity(this.computerPos)
-                instanceof AbstractComputerBlockEntity computer && computer.displayEra() != null) {
-            return computer.displayEra();
-        }
-        return HardwareEra.STANDARD;
-    }
 }

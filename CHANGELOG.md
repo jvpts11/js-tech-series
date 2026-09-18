@@ -364,6 +364,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- A screen the monitor put up that was not a system (the self-test, the boot manager, a system coming up, the
+  firmware setup, an installer, a rack's channel switch) turned up in front of a player who had walked away,
+  interrupting whatever they were doing. The server was never told when one of those closed, so it went on
+  counting that player as watching the machine and put the next page in front of them. Those screens are menus
+  now, like every other computer screen, so closing one tells the machine; they take the monitor of the machine's
+  own generation instead of always the newest; and a recipe viewer sits beside them as it does beside the rest.
 - A drive's name ran over the figures beside it on an installer's disk page. The name was cut to a fixed
   width that took no account of how wide those figures had turned out, so a long name and the size it was
   next to were drawn on top of each other. The room is measured now, on both the table and the wizard.

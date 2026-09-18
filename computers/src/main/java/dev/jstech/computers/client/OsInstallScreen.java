@@ -7,17 +7,20 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.RequestFirmwarePayload;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.core.gui.Phosphor;
+import dev.jstech.core.tier.HardwareEra;
 import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Installing a system, made visible. Before this, the firmware wrote the system and closed the
@@ -29,7 +32,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * cancels cleanly. Arch and Gentoo never come here, since their systems are put on the disk by hand
  * from a live shell, which is their whole point.
  */
-public final class OsInstallScreen extends Screen {
+public final class OsInstallScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     private static final int W = 320;
     private static final int H = 176;
@@ -51,6 +54,10 @@ public final class OsInstallScreen extends Screen {
             "registering the boot entry",
     };
 
+    /** The copy the machine last reported, kept until the session that shows it is built. */
+    @Nullable
+    private static Copying pending;
+
     private final BlockPos computerPos;
     private final BlockPos monitorPos;
     private final FirmwareKind kind;
@@ -67,66 +74,69 @@ public final class OsInstallScreen extends Screen {
     private int[] primary;
     private int[] secondary;
 
-    private OsInstallScreen(final BlockPos computerPos, final BlockPos monitorPos, final FirmwareKind kind,
-                            final String osName, final String targetLabel, final int targetSlot) {
-        super(Component.literal("Install system"));
-        this.computerPos = computerPos;
-        this.monitorPos = monitorPos;
-        this.kind = kind;
-        this.osName = osName == null || osName.isBlank() ? "the installer's system" : osName;
-        this.targetLabel = targetLabel == null || targetLabel.isBlank() ? "the default disk" : targetLabel;
-        this.targetSlot = targetSlot;
+    public OsInstallScreen(final MonitorSessionMenu session, final Inventory inventory, final Component title) {
+        super(session, inventory, title);
+        this.imageWidth = W;
+        this.imageHeight = H;
+        this.titleLabelX = OFF_SCREEN;
+        this.inventoryLabelY = OFF_SCREEN;
+        this.computerPos = session.hostPos();
+        this.monitorPos = session.monitorPos();
+        final Copying copying = pending != null ? pending
+                : new Copying(FirmwareKind.forEra(HardwareEra.STANDARD), "", "", -1, Phase.WORKING, "",
+                        WORK_TICKS, WORK_TICKS);
+        this.kind = copying.kind();
+        this.osName = copying.osName().isBlank() ? "the installer's system" : copying.osName();
+        this.targetLabel = copying.targetLabel().isBlank() ? "the default disk" : copying.targetLabel();
+        this.targetSlot = copying.targetSlot();
+        this.phase = copying.phase();
+        this.failure = copying.failure();
+        this.workTicks = Math.max(1, copying.ticksTotal());
+        this.ticks = Math.max(0, copying.ticksTotal() - copying.ticksLeft());
     }
 
-    /**
-     * The installer reopened at its last beat: the system is on the disk and the machine is still
-     * waiting for the reboot that will boot it. Leaving the monitor does not restart a machine.
-     */
-    public static OsInstallScreen completed(final BlockPos computerPos, final BlockPos monitorPos,
-                                            final FirmwareKind kind, final String osName,
-                                            final String targetLabel, final int targetSlot) {
-        final OsInstallScreen screen = new OsInstallScreen(computerPos, monitorPos, kind, osName, targetLabel,
-                targetSlot);
-        screen.phase = Phase.DONE;
-        return screen;
+    /** The copy the machine is doing, said before the session that shows it is opened. */
+    public static void expectWorking(final FirmwareKind kind, final String osName, final String targetLabel,
+                                     final int ticksLeft, final int ticksTotal) {
+        pending = new Copying(kind, osName, targetLabel, -1, Phase.WORKING, "", ticksLeft, ticksTotal);
     }
 
-    /**
-     * The installer showing a copy the machine is already doing, with what the machine says is left of it.
-     *
-     * <p>The count is the machine's, not this screen's: the copy goes on whether or not anybody is watching, so a
-     * player who closed the monitor and came back is put in front of where it has got to.
-     */
-    public static OsInstallScreen working(final BlockPos computerPos, final BlockPos monitorPos,
-                                          final FirmwareKind kind, final String osName, final String targetLabel,
-                                          final int ticksLeft, final int ticksTotal) {
-        final OsInstallScreen screen = new OsInstallScreen(computerPos, monitorPos, kind, osName, targetLabel, -1);
-        screen.phase = Phase.WORKING;
-        screen.workTicks = Math.max(1, ticksTotal);
-        screen.ticks = Math.max(0, ticksTotal - ticksLeft);
-        return screen;
+    /** The copy that finished and is waiting for the restart that boots it. */
+    public static void expectDone(final FirmwareKind kind, final String osName, final String targetLabel,
+                                  final int targetSlot) {
+        pending = new Copying(kind, osName, targetLabel, targetSlot, Phase.DONE, "", 0, WORK_TICKS);
     }
 
-    /**
-     * The installer at the beat the server put it on: the progress finished on screen, but the write
-     * was refused (a system newer than the machine, a live medium, no room), and the player must hear
-     * that instead of a "complete" that leaves the disk empty and the next boot in the firmware.
-     */
-    public static OsInstallScreen failed(final BlockPos computerPos, final BlockPos monitorPos,
-                                         final FirmwareKind kind, final String osName,
-                                         final String targetLabel, final String failure) {
-        final OsInstallScreen screen = new OsInstallScreen(computerPos, monitorPos, kind, osName, targetLabel, -1);
-        screen.phase = Phase.FAILED;
-        screen.failure = failure;
-        return screen;
+    /** The copy the machine refused, and why, which the player has to hear instead of a false "complete". */
+    public static void expectFailed(final FirmwareKind kind, final String osName, final String targetLabel,
+                                    final String failure) {
+        pending = new Copying(kind, osName, targetLabel, -1, Phase.FAILED, failure, 0, WORK_TICKS);
+    }
+
+    /** One copy: what is being written where, which beat it is on, and how far along. */
+    private record Copying(FirmwareKind kind, String osName, String targetLabel, int targetSlot, Phase phase,
+                           String failure, int ticksLeft, int ticksTotal) {
+
+        Copying {
+            osName = osName == null ? "" : osName;
+            targetLabel = targetLabel == null ? "" : targetLabel;
+            failure = failure == null ? "" : failure;
+        }
+    }
+
+    /** The machine's own generation, so this wears the skin that machine's screens wear. */
+    @Override
+    @Nullable
+    protected HardwareEra screenEra() {
+        return this.getMenu().hardwareEra();
     }
 
     private int left() {
-        return (width - W) / 2;
+        return this.leftPos;
     }
 
     private int top() {
-        return (height - H) / 2;
+        return this.topPos;
     }
 
     /** Progress through the write, 0..1000. */
@@ -135,7 +145,8 @@ public final class OsInstallScreen extends Screen {
     }
 
     @Override
-    public void tick() {
+    protected void containerTick() {
+        super.containerTick();
         /*
          * The copy is the machine's, so this only follows it: the bar walks to the end and waits there, and the
          * machine is what writes the system and puts this screen on its next beat. Walking away no longer throws
@@ -175,8 +186,7 @@ public final class OsInstallScreen extends Screen {
     }
 
     @Override
-    public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
-        renderBackground(g, mouseX, mouseY, partialTick);
+    protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
         final int x = left();
         final int y = top();
         final Palette p = Palette.of(kind);

@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.os.install;
 
+import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.OpenInstallerPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
@@ -153,9 +155,10 @@ public final class OsInstallRunner {
         final OsInstallJob job = machine.installing();
         final int done = job == null ? flow.ticksTotal() : job.ticksTotal() - job.ticksLeft();
         ScreenSessions.eachWatcher(level, pos, (player, monitor) -> {
-            ScreenSessions.opened(player, monitor, pos);
             PacketDistributor.sendToPlayer(player,
                     OpenInstallerPayload.of(pos, monitor, flow, done));
+            MonitorBlock.openSession(player, level, monitor, pos, machine,
+                    MonitorSessionMenu.Phase.INSTALLER);
         });
     }
 
@@ -170,9 +173,10 @@ public final class OsInstallRunner {
         final String name = system != null ? system.displayName() : job.osId();
         final String target = job.targetSlot() < 0 ? "the default disk" : "Disk " + job.targetSlot();
         ScreenSessions.eachWatcher(level, pos, (player, monitor) -> {
-            ScreenSessions.opened(player, monitor, pos);
             PacketDistributor.sendToPlayer(player, new OpenInstallDonePayload(pos, monitor, kind, name, target,
                     failure.isEmpty() ? job.targetSlot() : -1, failure));
+            MonitorBlock.openSession(player, level, monitor, pos, machine,
+                    MonitorSessionMenu.Phase.INSTALL_PROGRESS);
         });
     }
 }

@@ -8,14 +8,17 @@
 package dev.jstech.computers.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.KvmSelectPayload;
 import dev.jstech.computers.operation.payload.OpenKvmPayload;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -24,23 +27,44 @@ import java.util.List;
  * needs the switch to say which of them the screen means, so this is what the monitor shows first:
  * pick a channel (click it, or press its number key) and the machine's own session opens on top.
  */
-public final class KvmChannelScreen extends Screen {
+public final class KvmChannelScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     private static final int W = 260;
     private static final int ROW_H = 20;
     private static final int PAD = 10;
+
+    /** The bar the rack last sent, kept until the session that shows it is built. */
+    @Nullable
+    private static OpenKvmPayload pending;
 
     private final BlockPos rackPos;
     private final BlockPos monitorPos;
     private final int activeChannel;
     private final List<OpenKvmPayload.Channel> channels;
 
-    public KvmChannelScreen(final OpenKvmPayload payload) {
-        super(Component.literal("KVM Switch"));
-        this.rackPos = payload.rackPos();
-        this.monitorPos = payload.monitorPos();
-        this.activeChannel = payload.activeChannel();
-        this.channels = payload.channels();
+    public KvmChannelScreen(final MonitorSessionMenu menu, final Inventory inventory, final Component title) {
+        super(menu, inventory, title);
+        this.imageWidth = W;
+        this.imageHeight = 40;
+        this.titleLabelX = OFF_SCREEN;
+        this.inventoryLabelY = OFF_SCREEN;
+        this.rackPos = menu.hostPos();
+        this.monitorPos = menu.monitorPos();
+        this.activeChannel = pending == null ? -1 : pending.activeChannel();
+        this.channels = pending == null ? List.of() : pending.channels();
+        this.imageHeight = this.panelHeight();
+    }
+
+    /** The bar the rack is showing, said before the session that shows it is opened. */
+    public static void expect(final OpenKvmPayload payload) {
+        pending = payload;
+    }
+
+    /** The rack's own generation, so the switch wears the monitor that rack would really have. */
+    @Override
+    @Nullable
+    protected HardwareEra screenEra() {
+        return this.getMenu().hardwareEra();
     }
 
     private int panelHeight() {
@@ -48,11 +72,11 @@ public final class KvmChannelScreen extends Screen {
     }
 
     private int left() {
-        return (width - W) / 2;
+        return this.leftPos;
     }
 
     private int top() {
-        return (height - panelHeight()) / 2;
+        return this.topPos;
     }
 
     private void select(final int index) {
@@ -89,8 +113,7 @@ public final class KvmChannelScreen extends Screen {
     }
 
     @Override
-    public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
-        renderBackground(g, mouseX, mouseY, partialTick);
+    protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
         final int x = left();
         final int y = top();
         JsTechTheme.window(g, x, y, W, panelHeight());

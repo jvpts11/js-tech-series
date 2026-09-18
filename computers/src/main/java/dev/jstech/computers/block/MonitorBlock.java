@@ -282,7 +282,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         return Entry.BOOT;
     }
 
-    private static void openSession(final ServerPlayer player, final Level level, final BlockPos monitorPos,
+    public static void openSession(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                     final BlockPos owner) {
         if (level.getBlockEntity(owner) instanceof IOsHost computer) {
             switch (entryFor(computer)) {
@@ -320,11 +320,11 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
     /** Sends the client the boot manager this machine is standing at, with what is left of its wait. */
     public static void openBootMenu(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                     final BlockPos owner, final IOsHost computer) {
-        ScreenSessions.opened(player, monitorPos, owner);
         PacketDistributor.sendToPlayer(player, new OpenBootMenuPayload(
                 owner, monitorPos,
                 BootLines.menuFor(computer, computer.menuRemaining()),
                 computer.menuRemaining()));
+        openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.BOOT_MENU);
     }
 
     /**
@@ -355,7 +355,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
      * counting them as watching. That is what stopped an installer's next page turning up in front of
      * somebody who had walked away from the machine.
      */
-    private static void openSession(final ServerPlayer player, final Level level, final BlockPos monitorPos,
+    public static void openSession(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                     final BlockPos owner, final IOsHost computer,
                                     final MonitorSessionMenu.Phase phase) {
         final HardwareEra era = computer.displayEra();
@@ -377,9 +377,9 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
              * machine has reached, with the work it has already done behind it.
              */
             final int done = job == null ? flow.ticksTotal() : job.ticksTotal() - job.ticksLeft();
-            ScreenSessions.opened(player, monitorPos, owner);
             PacketDistributor.sendToPlayer(player, OpenInstallerPayload
                     .of(owner, monitorPos, flow, done));
+            openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.INSTALLER);
             return;
         }
         if (job == null) {
@@ -389,11 +389,11 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
         final OsDef os = OsRegistry
                 .getOs(ResourceLocation.tryParse(job.osId()));
-        ScreenSessions.opened(player, monitorPos, owner);
         PacketDistributor.sendToPlayer(player, new OsInstallProgressPayload(
                 owner, monitorPos, kind.id(), os != null ? os.displayName() : job.osId(),
                 job.targetSlot() < 0 ? "the default disk" : "Disk " + job.targetSlot(),
                 job.ticksLeft(), job.ticksTotal()));
+        openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.INSTALL_PROGRESS);
     }
 
     /** Sends the client the finished installer's reboot prompt for the system it just put on the disk. */
@@ -408,9 +408,9 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                 : OsRegistry.getOs(osId);
         final String osName = os != null ? os.displayName() : "";
         final String targetLabel = slot < 0 ? "the default disk" : "Disk " + slot;
-        ScreenSessions.opened(player, monitorPos, owner);
         PacketDistributor.sendToPlayer(player, new OpenInstallDonePayload(
                 owner, monitorPos, kind.id(), osName, targetLabel, slot, ""));
+        openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.INSTALL_PROGRESS);
     }
 
     /** Sends the client the switch's channel bar: every machine this rack can put on the monitor. */
@@ -427,10 +427,11 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                     rack.bayPowerOn(slot)
                             && ServerItem.build(stack) != null));
         }
-        ScreenSessions.opened(player, monitorPos, rack.getBlockPos());
         PacketDistributor.sendToPlayer(player,
                 new OpenKvmPayload(
                         rack.getBlockPos(), monitorPos, rack.activeChannel(), channels));
+        openSession(player, rack.getLevel(), monitorPos, rack.getBlockPos(), rack,
+                MonitorSessionMenu.Phase.KVM);
     }
 
     /** Sends the client the era-styled power-on self-test for the host computer on this monitor. */
@@ -443,9 +444,11 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final int remaining = ownerBe instanceof IOsHost machine ? machine.postRemaining() : 0;
         // A machine standing at a failed self-test opens at the end of it, not at the start of another one.
         final boolean halted = ownerBe instanceof IOsHost machine && machine.haltedAtPost();
-        ScreenSessions.opened(player, monitorPos, owner);
         PacketDistributor.sendToPlayer(player,
                 new OpenPostPayload(owner, monitorPos, kind.id(), name, remaining, halted));
+        if (ownerBe instanceof IOsHost machine) {
+            openSession(player, level, monitorPos, owner, machine, MonitorSessionMenu.Phase.POST);
+        }
     }
 
     /**
@@ -506,8 +509,10 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final String name = level.getBlockState(owner).getBlock().getName().getString();
         final HardwareEra era = ownerBe instanceof IOsHost c ? c.displayEra() : null;
         final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
-        ScreenSessions.opened(player, monitorPos, owner);
         PacketDistributor.sendToPlayer(player, new OpenComputerUiPayload(owner, monitorPos, kind.id(), name));
+        if (ownerBe instanceof IOsHost machine) {
+            openSession(player, level, monitorPos, owner, machine, MonitorSessionMenu.Phase.FIRMWARE);
+        }
     }
 
     /** Opens the desktop shell (a real container menu) for the host's installed FULL_DESKTOP OS. */

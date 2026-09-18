@@ -12,17 +12,18 @@ import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.PostCompletePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.FirmwareKind;
-import dev.jstech.computers.os.IOsHost;
 import dev.jstech.core.gui.Phosphor;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +35,7 @@ import java.util.Locale;
  * drives, the boot device) and DEL at any point enters the firmware setup instead. When the sequence ends
  * the client reports {@link PostCompletePayload} and the server swaps this screen for whatever boots.
  */
-public final class BootSequenceScreen extends Screen {
+public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     private static final int W = 340;
     private static final int H = 214;
@@ -43,6 +44,10 @@ public final class BootSequenceScreen extends Screen {
     private static final int FALLBACK_TICKS = 70;
     /** Safety: if the server never swaps the screen (nothing could open), close on our own. */
     private static final int GRACE_TICKS = 60;
+
+    /** The self-test the machine last reported, kept until the session that shows it is built. */
+    @Nullable
+    private static Testing pending;
 
     private final BlockPos computerPos;
     private final BlockPos monitorPos;
@@ -62,23 +67,51 @@ public final class BootSequenceScreen extends Screen {
     /** Which entry the menu is on. */
     private int menuAt;
 
-    /**
-     * @param halted the machine is standing at a self-test that found nothing to boot, so this opens at the
-     *               end of it rather than playing one through: the test is over, and what is on the glass is
-     *               the failure it ended on
-     */
-    public BootSequenceScreen(final BlockPos computerPos, final BlockPos monitorPos, final FirmwareKind kind,
-                              final String machineName, final int remainingTicks, final boolean halted) {
-        super(Component.literal("Power-On Self-Test"));
-        this.computerPos = computerPos;
-        this.monitorPos = monitorPos;
-        this.kind = kind;
-        this.machineName = machineName;
-        this.postTicks = remainingTicks > 0 ? remainingTicks : FALLBACK_TICKS;
-        if (halted) {
+    public BootSequenceScreen(final MonitorSessionMenu session, final Inventory inventory,
+                              final Component title) {
+        super(session, inventory, title);
+        this.imageWidth = W;
+        this.imageHeight = H;
+        this.titleLabelX = OFF_SCREEN;
+        this.inventoryLabelY = OFF_SCREEN;
+        this.computerPos = session.hostPos();
+        this.monitorPos = session.monitorPos();
+        final Testing testing = pending != null ? pending
+                : new Testing(FirmwareKind.forEra(HardwareEra.STANDARD), "", FALLBACK_TICKS, false);
+        this.kind = testing.kind();
+        this.machineName = testing.machineName();
+        this.postTicks = testing.remainingTicks() > 0 ? testing.remainingTicks() : FALLBACK_TICKS;
+        /*
+         * A machine standing at a self-test that found nothing to boot opens at the end of that test rather
+         * than playing one through: the test is over, and what is on the glass is the failure it ended on.
+         */
+        if (testing.halted()) {
             this.ticks = this.postTicks;
             this.completed = true;
         }
+    }
+
+    /** The self-test the machine is in, said before the session that shows it is opened. */
+    public static void expect(final FirmwareKind kind, final String machineName, final int remainingTicks,
+                              final boolean halted) {
+        pending = new Testing(kind, machineName, remainingTicks, halted);
+    }
+
+    /** One machine testing itself: which firmware it wears, what it is called, and where it has got to. */
+    private record Testing(FirmwareKind kind, String machineName, int remainingTicks, boolean halted) {
+    }
+
+    /** The machine's own generation, so the bezel is the monitor that machine would really have. */
+    @Override
+    @Nullable
+    protected HardwareEra screenEra() {
+        return this.getMenu().hardwareEra();
+    }
+
+    /** The same, never null, for the wording a firmware of that age would really have put up. */
+    private HardwareEra bezelEra() {
+        final HardwareEra era = this.screenEra();
+        return era == null ? HardwareEra.STANDARD : era;
     }
 
     @Override
@@ -104,8 +137,8 @@ public final class BootSequenceScreen extends Screen {
     }
 
     @Override
-    public void tick() {
-        super.tick();
+    protected void containerTick() {
+        super.containerTick();
         ticks++;
         /*
          * The machine is the one that ends its self-test and puts whoever is watching in front of what boots,
@@ -162,15 +195,10 @@ public final class BootSequenceScreen extends Screen {
     // Render
 
     @Override
-    public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
-        /*
-         * Screen.render paints the dimmed backdrop itself; painting it again after our own drawing would
-         * wash the whole POST out (the double-background bug), so super runs FIRST and the content after.
-         */
-        super.render(g, mouseX, mouseY, partialTick);
-        final int x = (width - W) / 2;
-        final int y = (height - H) / 2;
-        MonitorFrame.renderBody(g, x, y, W, H, era(), font);
+    protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
+        final int x = this.leftPos;
+        final int y = this.topPos;
+        MonitorFrame.renderBody(g, x, y, W, H, screenEra(), font);
 
         /*
          * A Legacy machine posts on black with the maker's badge, the way the boards of that time did; the
@@ -279,8 +307,8 @@ public final class BootSequenceScreen extends Screen {
 
     private List<String[]> classicLines() {
         final List<String[]> out = new ArrayList<>();
-        out.add(new String[]{Branding.biosBanner(era()) + " - " + machineName, "1"});
-        out.add(new String[]{Branding.firmwareCopyright(era()), "0"});
+        out.add(new String[]{Branding.biosBanner(bezelEra()) + " - " + machineName, "1"});
+        out.add(new String[]{Branding.firmwareCopyright(bezelEra()), "0"});
         out.add(new String[]{"", "0"});
         if (state != null) {
             final FirmwareStatePayload.Machine machine = state.machine();
@@ -469,12 +497,4 @@ public final class BootSequenceScreen extends Screen {
     }
 
     /** The host computer's hardware era, so the monitor bezel matches the machine. */
-    private HardwareEra era() {
-        final Minecraft mc = Minecraft.getInstance();
-        if (mc.level != null && mc.level.getBlockEntity(computerPos)
-                instanceof IOsHost be) {
-            return be.displayEra();
-        }
-        return HardwareEra.STANDARD;
-    }
 }

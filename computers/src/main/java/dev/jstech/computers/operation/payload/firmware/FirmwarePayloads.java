@@ -355,7 +355,6 @@ public final class FirmwarePayloads {
                         .forEra(era != null ? era : HardwareEra.STANDARD).id();
                 final int slot = payload.target();
                 final String target = slot < 0 ? "the default disk" : "Disk " + slot;
-                ScreenSessions.opened(player, payload.monitorPos(), payload.hostPos());
                 if (failure != null) {
                     // Refused before a minute of copying: say so instead of playing a bar that writes nothing.
                     PacketDistributor.sendToPlayer(player, new OpenInstallDonePayload(payload.hostPos(),
