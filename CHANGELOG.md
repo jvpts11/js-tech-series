@@ -139,6 +139,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   prints, and the bootloader is a package that has to be merged before `grub-install` exists. Arch is the same
   in its own words: it mounts at `/mnt`, `pacman -S grub efibootmgr` comes before `grub-install`, and
   `ln -sf` for the zone, `hwclock --systohc` and `locale-gen` are there to be run.
+- The live medium of a by-hand install carries `nano`, and it is nano: the title row with the file's name and
+  `Modified`, what it has to say in brackets above the two rows of keys, `^O` asking for the name before it
+  writes, `^X` asking about a file that has changed, `^W` and `^\` to search and to replace, `^K` and `^U` to
+  cut lines and paste them, `^R` to pull another file in, `^C` for where the cursor is, and `^G` for its help.
+  It edits the files of the installation, `make.conf`, `locale.gen`, `fstab`, and what is saved is what the
+  later steps read: `-j4` in the build options is what makes a compile four jobs wide.
 - Two settings in the server configuration, `install_by_hand.gentoo_every_step` and
   `install_by_hand.arch_every_step`, decide how much of the handbook a world asks for. Off, which is the
   default, a restart only refuses what a system cannot boot without: a base system, a filesystem table, a

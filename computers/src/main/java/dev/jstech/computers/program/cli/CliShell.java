@@ -95,18 +95,11 @@ public final class CliShell {
         }
         final boolean clear = command instanceof IClearMarker;
         /*
-         * A command that gives the terminal away says so by being one; which file is the argument it
+         * A command that gives the terminal away says so by being one; which file is in the arguments it
          * was just run with, which the shell already has, so nothing has to be remembered anywhere.
          */
-        /*
-         * The file is named the way the player typed it, against the folder the prompt is in; the
-         * terminal that draws the editor asks the machine for it by its whole path, since it knows
-         * nothing about where the prompt stands.
-         */
-        final CliShell.HandOver handOver = command instanceof IHandOver && !args.isEmpty()
-                ? new HandOver(command.name(),
-                        DosPath.resolve(computer.currentLocation(), args.getFirst()).storagePath())
-                : null;
+        final String file = command instanceof IHandOver giving ? giving.fileOf(computer, args) : null;
+        final CliShell.HandOver handOver = file == null ? null : new HandOver(command.name(), file);
         return new Response(out.lines(), clear, handOver, out.started());
     }
 
@@ -123,10 +116,22 @@ public final class CliShell {
      * <p>Which editor and which file is decided by the machine; drawing it is the screen's half. A
      * terminal that has never heard of the editor named simply carries on with its prompt.
      *
-     * <p>The command says nothing about the file: the shell already has the arguments it just handed
-     * over, so nothing here has to remember anything between one line and the next.
+     * <p>The file comes out of the arguments the shell just handed over, so nothing here has to remember
+     * anything between one line and the next.
      */
     public interface IHandOver {
+
+        /**
+         * The file the terminal is given away on, or null to keep the terminal after all.
+         *
+         * <p>It is named the way the player typed it, against the folder the prompt is in; the terminal that
+         * draws the editor asks the machine for it by its whole name, since it knows nothing about where the
+         * prompt stands. A command whose files are not the disk's names them its own way.
+         */
+        default String fileOf(final ICliComputer computer, final List<String> args) {
+            return args.isEmpty() ? null
+                    : DosPath.resolve(computer.currentLocation(), args.getFirst()).storagePath();
+        }
     }
 
     /** The terminal was given to {@code editor}, on {@code path}. */

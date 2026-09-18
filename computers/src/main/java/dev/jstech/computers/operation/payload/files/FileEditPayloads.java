@@ -68,6 +68,13 @@ public final class FileEditPayloads {
         String msg = "No computer";
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
             final String path = payload.path();
+            if (LiveSessionFiles.names(path)) {
+                // A file of a by-hand install: what is written is what the steps after it read.
+                final boolean written = LiveSessionFiles.write(computer, path, payload.content());
+                PacketDistributor.sendToPlayer(player,
+                        new FileSavedPayload(written, written ? "Saved " + path : "No live medium is booted"));
+                return;
+            }
             if (path.startsWith(NET_ROOT)) {
                 // Another machine's share: its own shell says whether the write may happen.
                 final ServerCliComputer shell = netShell(level, computer);

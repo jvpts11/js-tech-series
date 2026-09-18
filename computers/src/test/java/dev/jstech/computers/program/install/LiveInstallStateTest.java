@@ -611,6 +611,38 @@ class LiveInstallStateTest {
     }
 
     @Test
+    void editable_namesTheFileAnEditorWouldOpenAndPassesOverItsOptions() {
+        final LiveInstallState st = gentooInsideTheNewSystem();
+        assertEquals("/etc/fstab", st.editable(List.of("-w", "/etc/fstab")));
+        assertEquals("notes", st.editable(List.of("+12", "notes")), "a file that is not there yet is a new one");
+        assertNull(st.editable(List.of("/etc")), "a directory is not something an editor opens");
+        assertNull(st.editable(List.of("-w")), "and neither is nothing at all");
+        assertTrue(step(st, "nano /etc").text().contains("is a directory"));
+        assertTrue(step(st, "nano").text().startsWith("Usage: nano"));
+        assertEquals("", step(st, "nano /etc/fstab").text(), "opening one says nothing: the editor has the glass");
+    }
+
+    @Test
+    void writeFileAt_whatAnEditorSavesIsWhatTheLaterStepsRead() {
+        final LiveInstallState st = gentooInsideTheNewSystem();
+        assertEquals(1, st.makeJobs(), "a build left alone uses one core");
+        st.writeFileAt("/etc/portage/make.conf", "COMMON_FLAGS=\"-O2 -pipe\"\nMAKEOPTS=\"-j4\"\n");
+        assertEquals(4, st.makeJobs(), "the build options are read from the file, however it was written");
+        assertTrue(st.fileAt("/etc/portage/make.conf").contains("-j4"));
+        st.writeFileAt("/etc/fstab", st.fileAt("/etc/fstab") + "\n" + ROOT_LINE + "\n");
+        assertTrue(st.filesystemTable().contains(ROOT_LINE), "the table is the new system's, by its own path there");
+    }
+
+    @Test
+    void fileAt_aNameTypedFromWhereTheSessionStands_isThatFolders() {
+        final LiveInstallState st = gentooInsideTheNewSystem();
+        step(st, "cd /etc/portage");
+        st.writeFileAt("make.conf", "MAKEOPTS=\"-j3\"");
+        assertEquals(3, st.makeJobs());
+        assertNull(st.fileAt("nothing-here"), "a file that is not there is not there");
+    }
+
+    @Test
     void aVerbOfTheOtherDistribution_isCommandNotFound() {
         assertTrue(step(new LiveInstallState(LiveInstallState.Distro.GENTOO), "pacstrap /mnt base").text()
                 .contains("command not found"));

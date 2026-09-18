@@ -9,8 +9,8 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.client.os.CodeFileReplies;
-import dev.jstech.computers.client.os.FilesApps;
 import dev.jstech.computers.client.os.TtyEditor;
+import dev.jstech.computers.client.os.TtyEditorWire;
 import dev.jstech.computers.client.os.TtyEditors;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.operation.payload.CommandOutputPayload;
@@ -18,7 +18,6 @@ import dev.jstech.computers.operation.payload.ConsoleInitPayload;
 import dev.jstech.computers.operation.payload.RequestConsoleInitPayload;
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.operation.payload.RunCommandPayload;
-import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.client.term.TermPainter;
@@ -474,6 +473,10 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             }
         }
 
+        if (this.editor != null) {
+            // An editor lists its own keys on its own glass, and none of the prompt's mean anything to it.
+            return;
+        }
         JsTechTheme.textS(g, font, keyboard.busy()
                         ? "CTRL+C interrupt    wheel scroll    ESC close"
                         : "ENTER run    UP/DOWN history    wheel scroll    ESC close",
@@ -726,13 +729,9 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             new CodeFileReplies.IReader() {
                 @Override
                 public void onContent(final String path, final String content, final boolean exists) {
-                    CommandPromptScreen.this.editor = new TtyEditor(
-                            path, content, CommandPromptScreen.this.flavour,
-                            CommandPromptScreen.this.terminalHost);
-                    if (!exists) {
-                        CommandPromptScreen.this.editor.say(
-                                "\"" + CommandPromptScreen.this.editor.name() + "\" [New]");
-                    }
+                    giveTheGlassTo(new TtyEditor(path, content, CommandPromptScreen.this.flavour,
+                            CommandPromptScreen.this.terminalHost));
+                    CommandPromptScreen.this.editor.opened(exists);
                 }
             };
 
@@ -741,20 +740,26 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
     /** What an editor running here can ask this terminal to do for it. */
     private final TtyEditor.IHost terminalHost =
-            new TtyEditor.IHost() {
-                @Override
-                public void save(final String path, final String text) {
-                    PacketDistributor.sendToServer(
-                            new SaveFilePayload(
-                                    menu.hostPos(), path, text));
-                    FilesApps.diskChanged();
-                }
+            new TtyEditorWire(() -> this.menu.hostPos(), () -> giveTheGlassTo(null));
 
-                @Override
-                public void quit() {
-                    CommandPromptScreen.this.editor = null;
-                }
-            };
+    /**
+     * Gives the glass to an editor, or back to the prompt when there is none.
+     *
+     * <p>The prompt's own line goes away with it: a caret blinking under an editor's last row is a second
+     * cursor on a screen that has one.
+     */
+    private void giveTheGlassTo(final TtyEditor to) {
+        this.editor = to;
+        if (this.input != null) {
+            this.input.setVisible(to == null);
+            this.input.setFocused(to == null);
+        }
+    }
+
+    /** Whether an editor has this terminal. */
+    public boolean editing() {
+        return this.editor != null;
+    }
 
     /** Hands this terminal to an editor on {@code path}, which the machine is asked for. */
     private void openEditor(final String path,

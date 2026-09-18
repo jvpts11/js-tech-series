@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.program.install;
 
-import dev.jstech.computers.program.install.voice.BootVoices;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
 import java.util.ArrayList;
@@ -35,6 +34,7 @@ public final class LiveInstallState {
     private final GentooSteps gentoo;
     private final ArchSteps arch;
     private final BootloaderSteps bootloader;
+    private final SettingsSteps settings;
 
     /**
      * Every verb {@link #run} answers to, which is also every verb the shell of a live medium accepts.
@@ -43,11 +43,19 @@ public final class LiveInstallState {
      * this one once, and a verb answered here and refused there is a verb nobody can type.
      */
     public static final List<String> VERBS = List.of(
-            "ls", "cat", "less", "more", "cd", "echo", "mkdir", "lsblk", "blkid", "fdisk", "mkfs.ext4", "mkfs",
+            "ls", "cat", "less", "more", "cd", "echo", "nano", "mkdir", "lsblk", "blkid", "fdisk", "mkfs.ext4", "mkfs",
             "mkfs.fat", "mkfs.vfat", "mount", "umount", "pacstrap", "pacman", "wget", "tar", "genfstab",
             "arch-chroot", "chroot", "source", "export", "env-update", "emerge-webrsync", "emerge", "eselect",
             "genkernel", "make", "locale-gen", "ln", "hwclock", "hostname", "mkinitcpio", "grub-install",
             "grub-mkconfig", "passwd", "exit", "reboot", "help");
+
+    /**
+     * What stands in front of the name of a file of the session wherever a file of the machine is named.
+     *
+     * <p>An editor asks the machine for a file by name, and these are not on any disk: they are the medium's
+     * and the half-built system's, and they go when the session does. The mark is what sends the asking here.
+     */
+    public static final String FILE_SCHEME = "live:";
 
     public LiveInstallState(final Distro distro) {
         this.distro = distro;
@@ -56,6 +64,7 @@ public final class LiveInstallState {
         this.gentoo = new GentooSteps(this.files, this.disks, this.progress);
         this.arch = new ArchSteps(this.files, this.disks, this.progress);
         this.bootloader = new BootloaderSteps(distro, this.files, this.disks, this.progress);
+        this.settings = new SettingsSteps(distro, this.files, this.progress);
     }
 
     /** The two distributions that are installed by hand. */
@@ -163,11 +172,7 @@ public final class LiveInstallState {
      * ways and both are how people do it.
      */
     public String chosenName() {
-        if (!this.progress.chosenName.isEmpty()) {
-            return this.progress.chosenName;
-        }
-        final String written = this.files.read(this.files.inNewSystem("/etc/hostname"));
-        return written != null && written.trim().matches("[A-Za-z0-9][A-Za-z0-9-]{0,14}") ? written.trim() : "";
+        return this.settings.chosenName();
     }
 
     /** The packages the player asked for inside the new system, in the order they asked. */
@@ -183,7 +188,7 @@ public final class LiveInstallState {
 
     /** The host name the live medium reports. */
     public String hostname() {
-        return this.distro == Distro.ARCH ? "archiso" : "livecd";
+        return this.settings.mediumName();
     }
 
     /** How many jobs the build options ask for, which is one until somebody writes otherwise. */
@@ -196,7 +201,23 @@ public final class LiveInstallState {
         return LiveTimes.compile(LiveTimes.KERNEL_WORK, LiveTimes.jobs(this.makeJobs(), env), env);
     }
 
-    /** A file of the session by its whole path, for an editor opened on it; null when there is none. */
+    /**
+     * The file an editor started with those words would open, as it was typed, or null when they name nothing
+     * an editor can open: no file at all, or a directory.
+     *
+     * <p>The words are everything after the editor's name, so its options are among them and are passed over.
+     */
+    public String editable(final List<String> words) {
+        String file = "";
+        for (final String word : words) {
+            if (!word.startsWith("-") && !word.startsWith("+")) {
+                file = word;
+            }
+        }
+        return file.isEmpty() || this.files.isDir(this.files.resolve(file)) ? null : file;
+    }
+
+    /** A file of the session as somebody standing in it names it, for an editor; null when there is none. */
     public String fileAt(final String typed) {
         return this.files.read(this.files.resolve(typed));
     }
@@ -217,6 +238,7 @@ public final class LiveInstallState {
             case "less", "more" -> this.files.cat(first, true);
             case "cd" -> this.files.cd(first);
             case "echo" -> this.files.echo(line.trim());
+            case "nano" -> this.nano(parts);
             case "mkdir" -> this.mkdir(parts);
             case "lsblk" -> this.disks.lsblk(env, this.distro == Distro.ARCH ? 1_126 : 749,
                     this.distro == Distro.ARCH ? "/run/archiso/airootfs" : "/run/initramfs/live");
@@ -227,11 +249,11 @@ public final class LiveInstallState {
             case "mkfs" -> this.disks.mkfsExt4(parts.length > 2 ? parts[parts.length - 1] : "", env);
             case "mount" -> this.disks.mount(parts, this.files);
             case "umount", "source", "export", "env-update" -> LiveTurn.silent();
-            case "ln" -> this.linkZone(line);
-            case "hwclock" -> this.setClock();
+            case "ln" -> this.settings.linkZone(line);
+            case "hwclock" -> this.settings.setClock();
             case "arch-chroot", "chroot" -> this.enter(verb, first);
-            case "hostname" -> this.hostname(parts);
-            case "passwd" -> this.passwd();
+            case "hostname" -> this.settings.hostname(parts);
+            case "passwd" -> this.settings.passwd();
             case "grub-install" -> this.bootloader.install(parts, env);
             case "grub-mkconfig" -> this.bootloader.config(line, env);
             case "exit" -> this.exit();
@@ -301,6 +323,23 @@ public final class LiveInstallState {
         return LiveTurn.running(new FdiskProcess(this.disks, dev, disk.sizeMb()));
     }
 
+    /**
+     * The editor, which says nothing when it opens: the shell gives it the terminal, and whatever it has to
+     * say from then on it says on its own glass. What is answered here is only why it would not open.
+     */
+    private LiveTurn nano(final String[] parts) {
+        final List<String> words = List.of(parts).subList(1, parts.length);
+        if (this.editable(words) != null) {
+            return LiveTurn.silent();
+        }
+        for (final String word : words) {
+            if (!word.startsWith("-") && !word.startsWith("+")) {
+                return LiveTurn.refused("nano: " + word + " is a directory");
+            }
+        }
+        return LiveTurn.refused("Usage: nano [OPTIONS] [[+LINE[,COLUMN]] FILE]...");
+    }
+
     private LiveTurn mkdir(final String[] parts) {
         for (int i = 1; i < parts.length; i++) {
             if (!parts[i].startsWith("-")) {
@@ -323,49 +362,6 @@ public final class LiveInstallState {
             return LiveTurn.refused("chroot: failed to run command '/bin/bash': No such file or directory");
         }
         this.files.enter();
-        return LiveTurn.silent();
-    }
-
-    /** Names the machine, written into the new system's own file so it is there to read back and carry over. */
-    private LiveTurn hostname(final String[] parts) {
-        if (!this.files.inside()) {
-            return LiveTurn.refused("hostname: you cannot change the host name of the live medium");
-        }
-        if (parts.length > 2) {
-            return LiveTurn.refused("hostname: the specified hostname is invalid");
-        }
-        final String name = parts.length > 1 ? parts[1].trim() : "";
-        if (name.isEmpty()) {
-            final String chosen = this.chosenName();
-            return LiveTurn.said(chosen.isEmpty() ? this.hostname() : chosen);
-        }
-        if (!name.matches("[A-Za-z0-9][A-Za-z0-9-]{0,14}")) {
-            return LiveTurn.refused("hostname: the specified hostname is invalid");
-        }
-        this.files.write(this.files.inNewSystem("/etc/hostname"), name);
-        this.progress.chosenName = name;
-        return LiveTurn.silent();
-    }
-
-    private LiveTurn passwd() {
-        if (!this.files.inside()) {
-            return LiveTurn.refused("passwd: this would change the live medium's password, which is gone at the",
-                    "        next restart (step into the new system first)");
-        }
-        return LiveTurn.running(BootVoices.passwd(() -> this.progress.password = true));
-    }
-
-    /** Links the zone the clock reads in, which says nothing when it works, as linking anything does. */
-    private LiveTurn linkZone(final String line) {
-        if (line.contains("/usr/share/zoneinfo/") && line.contains("/etc/localtime")) {
-            this.progress.timezone = true;
-        }
-        return LiveTurn.silent();
-    }
-
-    /** Sets the hardware clock from the system's, without a word, as it does. */
-    private LiveTurn setClock() {
-        this.progress.clockSet = true;
         return LiveTurn.silent();
     }
 

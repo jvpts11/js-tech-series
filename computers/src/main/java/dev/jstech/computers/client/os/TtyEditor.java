@@ -9,10 +9,9 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.os.edit.CodeRuns;
 import dev.jstech.computers.os.edit.InkPalette;
+import dev.jstech.computers.os.edit.TtyLook;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.logic.TextDocument;
-import dev.jstech.core.language.IProgrammingLanguage;
-import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -25,7 +24,7 @@ import net.minecraft.client.gui.GuiGraphics;
  * exists, because it means a machine with no desktop, or one reached over ssh, can still be programmed.
  *
  * <p>What the keys mean is somebody else's answer. This holds the text, the view and the message line,
- * and the two editors that use it differ only in how they read a keyboard.
+ * and the editors that use it differ only in how they read a keyboard and in what they keep round the text.
  */
 public final class TtyEditor {
 
@@ -43,6 +42,18 @@ public final class TtyEditor {
 
         /** What the line at the bottom says: the mode, the file, whatever the editor wants there. */
         String status(TtyEditor editor);
+
+        /** What this editor keeps round the text; a line at the bottom and nothing else unless it says so. */
+        default TtyLook look(final TtyEditor editor) {
+            return TtyLook.PLAIN;
+        }
+
+        /** The file has just been opened, which is when an editor says whether there was one to open. */
+        default void opened(final TtyEditor editor, final boolean existed) {
+            if (!existed) {
+                editor.say("\"" + editor.name() + "\" [New]");
+            }
+        }
     }
 
     /** What an editor asked the terminal to do for it. */
@@ -51,8 +62,17 @@ public final class TtyEditor {
         /** Put the text back on the disk under that name. */
         void save(String path, String text);
 
+        /** Fetch another file of the same machine, for an editor that can pull one into the one it has open. */
+        void read(String path, IFound then);
+
         /** Give the terminal back; the editor is finished with it. */
         void quit();
+    }
+
+    /** Whoever asked for another file, told what was in it, or that it is not there. */
+    public interface IFound {
+
+        void found(String content, boolean existed);
     }
 
     private final String path;
@@ -102,8 +122,7 @@ public final class TtyEditor {
     }
 
     /** The colouring of the open file, read again only when the text changes. */
-    private List<List<CodeRuns.Run>> cached = List.of();
-    private String colouredText;
+    private final TtyInk ink = new TtyInk();
 
     public TtyEditor(final String path, final String text, final IKeys keys, final IHost host) {
         this.path = path;
@@ -179,6 +198,33 @@ public final class TtyEditor {
         this.host.quit();
     }
 
+    /** Tells the flavour the file is open, so it can say what an editor of its kind says then. */
+    public void opened(final boolean existed) {
+        this.keys.opened(this, existed);
+    }
+
+    /** Fetches another file, named the way somebody at this editor would name it. */
+    public void read(final String typed, final IFound then) {
+        this.host.read(beside(typed), then);
+    }
+
+    /**
+     * The whole name of a file typed at this editor.
+     *
+     * <p>It belongs to the same set of files as the one that is open, so whatever says which set that is
+     * carries over. A name from the root is taken as it is; any other is a neighbour of the open file.
+     */
+    String beside(final String typed) {
+        final int colon = this.path.indexOf(':');
+        final int firstSlash = this.path.indexOf('/');
+        final boolean schemed = colon >= 0 && (firstSlash < 0 || colon < firstSlash);
+        final String scheme = schemed ? this.path.substring(0, colon + 1) : "";
+        final String open = this.path.substring(scheme.length());
+        final int slash = open.lastIndexOf('/');
+        final boolean fromTheRoot = typed.startsWith("/");
+        return scheme + (fromTheRoot || slash < 0 ? typed : open.substring(0, slash + 1) + typed);
+    }
+
     /* Drawing */
 
     /**
@@ -190,25 +236,40 @@ public final class TtyEditor {
     public void render(final GuiGraphics g, final Font font, final int x, final int y,
                        final int width, final int height, final InkPalette palette) {
         g.fill(x, y, x + width, y + height, palette.ground());
+        final TtyLook look = this.keys.look(this);
+        /* A title row across the top and rows of keys along the bottom, for an editor that keeps them. */
+        final int head = look.titled() ? LINE_H : 0;
+        final int keysH = look.keys().size() * LINE_H;
+        if (look.titled()) {
+            TtyChrome.title(g, font, x, y, width, LINE_H, look, palette);
+        }
+        TtyChrome.keys(g, font, x, y + height - keysH, width, LINE_H, look.keys(), palette);
         /*
          * With a second buffer showing, the file gets the upper half and keeps its own mode line, and
-         * what is under it gets the rest. The status line at the very bottom belongs to the editor
-         * either way, which is where the echo area is on a real one.
+         * what is under it gets the rest. The status line under them belongs to the editor either way,
+         * which is where the echo area is on a real one.
          */
         final int lowerH = this.lower.isEmpty() ? 0
                 : Math.min(height / 2, (this.lower.size() + 1) * LINE_H + PAD);
-        final int upperH = height - lowerH;
+        final int upperH = height - lowerH - keysH;
         if (lowerH > 0) {
-            drawLower(g, font, x, y + upperH, width, lowerH, palette);
+            TtyChrome.lower(g, font, x, y + upperH, width, lowerH, LINE_H, this.lowerName, this.lower, palette);
         }
-        final int rows = Math.max(1, (upperH - PAD - LINE_H) / LINE_H);
+        final int rows = Math.max(1, (upperH - head - PAD - LINE_H) / LINE_H);
+        drawStatus(g, font, x, y + height - keysH - LINE_H, width, look, palette);
+        if (!look.page().isEmpty()) {
+            Draw.pushScissor(g, x, y + head, x + width, y + height - keysH - LINE_H);
+            drawPage(g, font, look.page(), x + PAD, y + head + PAD, rows, palette);
+            Draw.popScissor(g);
+            return;
+        }
         followCaret(rows);
         followCaretAcross(font, width - 2 * PAD);
 
-        final List<List<CodeRuns.Run>> runs = runs();
-        Draw.pushScissor(g, x, y, x + width, y + height);
+        final List<List<CodeRuns.Run>> runs = this.ink.of(this.path, this.doc);
+        Draw.pushScissor(g, x, y + head, x + width, y + height - keysH - LINE_H);
         final int startX = x + PAD - this.shift;
-        int ry = y + PAD;
+        int ry = y + head + PAD;
         for (int i = this.scroll; i < this.doc.lineCount() && i - this.scroll < rows; i++) {
             drawLine(g, font, this.doc.line(i), i < runs.size() ? runs.get(i) : List.of(),
                     startX, ry, palette);
@@ -224,40 +285,33 @@ public final class TtyEditor {
          * The rows past the end of the file are marked, the way a terminal editor does, so the end of a
          * short file is not mistaken for a screen of blank lines that are really there.
          */
-        for (int i = this.doc.lineCount() - this.scroll; i < rows; i++) {
-            g.drawString(font, "~", x + PAD, y + PAD + i * LINE_H, palette.gutterText(), false);
+        for (int i = this.doc.lineCount() - this.scroll; look.marksTheEnd() && i < rows; i++) {
+            g.drawString(font, "~", x + PAD, y + head + PAD + i * LINE_H, palette.gutterText(), false);
         }
         Draw.popScissor(g);
-        drawStatus(g, font, x, y + height - LINE_H, width, palette);
     }
 
-    /**
-     * The second buffer: its own mode line naming it, then its lines.
-     *
-     * <p>What is in it is text somebody else produced, so it is drawn plainly rather than coloured as
-     * source: it is a compiler talking, not a program.
-     */
-    private void drawLower(final GuiGraphics g, final Font font, final int x, final int y,
-                           final int width, final int height, final InkPalette palette) {
-        g.fill(x, y, x + width, y + LINE_H, palette.gutter());
-        g.drawString(font, font.plainSubstrByWidth("-UUU:%%--F1  " + this.lowerName, width - 6),
-                x + PAD, y, palette.plain(), false);
-        Draw.pushScissor(g, x, y + LINE_H, x + width, y + height);
-        int ry = y + LINE_H + 1;
-        for (final String line : this.lower) {
-            if (ry + LINE_H > y + height) {
-                break;
-            }
-            g.drawString(font, line, x + PAD, ry, palette.plain(), false);
-            ry += LINE_H;
+    /** Lines shown in place of the file, from wherever the wheel has left them. */
+    private void drawPage(final GuiGraphics g, final Font font, final List<String> page, final int x,
+                          final int y, final int rows, final InkPalette palette) {
+        this.scroll = Math.max(0, Math.min(Math.max(0, page.size() - rows), this.scroll));
+        for (int i = this.scroll; i < page.size() && i - this.scroll < rows; i++) {
+            g.drawString(font, page.get(i), x, y + (i - this.scroll) * LINE_H, palette.plain(), false);
         }
-        Draw.popScissor(g);
     }
 
     private void drawStatus(final GuiGraphics g, final Font font, final int x, final int y,
-                            final int width, final InkPalette palette) {
-        g.fill(x, y, x + width, y + LINE_H, palette.gutter());
+                            final int width, final TtyLook look, final InkPalette palette) {
         final String left = this.keys.status(this);
+        if (look.status() == TtyLook.Status.BRACKETED) {
+            TtyChrome.bracketed(g, font, x, y, width, LINE_H, left, palette);
+            return;
+        }
+        if (look.status() == TtyLook.Status.BAR) {
+            TtyChrome.bar(g, font, x, y, width, LINE_H, left, palette);
+            return;
+        }
+        g.fill(x, y, x + width, y + LINE_H, palette.gutter());
         final String where = (this.doc.cursorLine() + 1) + "," + (this.doc.cursorCol() + 1);
         // The message has the whole line but the corner where the position sits, so a question reads whole.
         g.drawString(font, font.plainSubstrByWidth(left, width - 2 * PAD - font.width(where) - 6), x + PAD, y,
@@ -283,40 +337,6 @@ public final class TtyEditor {
             g.drawString(font, piece, rx, textY, palette.of(run.ink()), false);
             rx += font.width(piece);
         }
-    }
-
-    /** The rows, coloured as a listing or by whichever language claims the file, or plain when none does. */
-    private List<List<CodeRuns.Run>> runs() {
-        final String text = this.doc.text();
-        if (text.equals(this.colouredText)) {
-            return this.cached;
-        }
-        final List<String> lines = new ArrayList<>(this.doc.lineCount());
-        for (int i = 0; i < this.doc.lineCount(); i++) {
-            lines.add(this.doc.line(i));
-        }
-        final IProgrammingLanguage language = CodeWorkspace.languageOf(this.path);
-        if (CodeWorkspace.isListing(this.path)) {
-            this.cached = CodeWorkspace.colourListing(lines);
-        } else if (language == null) {
-            this.cached = List.of();
-        } else {
-            final List<CodeRuns.Span> spans = new ArrayList<>();
-            for (final IProgrammingLanguage.Token token : language.tokenize(text)) {
-                spans.add(new CodeRuns.Span(token.line(), token.column(), token.length(),
-                        switch (token.kind()) {
-                            case KEYWORD -> CodeRuns.Ink.KEYWORD;
-                            case NAME -> CodeRuns.Ink.NAME;
-                            case TEXT -> CodeRuns.Ink.TEXT;
-                            case NUMBER -> CodeRuns.Ink.NUMBER;
-                            case COMMENT -> CodeRuns.Ink.COMMENT;
-                            case SYMBOL -> CodeRuns.Ink.SYMBOL;
-                        }));
-            }
-            this.cached = CodeRuns.byLine(lines, spans);
-        }
-        this.colouredText = text;
-        return this.cached;
     }
 
     /**
@@ -355,6 +375,11 @@ public final class TtyEditor {
     /** Hands a character to it. */
     public boolean charTyped(final char c) {
         return this.keys.typed(this, c);
+    }
+
+    /** Shows whatever is on the glass from its first line, for a flavour that has just put a page there. */
+    public void toTheTop() {
+        this.scroll = 0;
     }
 
     /** Moves the view without moving the caret, which is what a wheel does. */

@@ -14,6 +14,8 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.operation.payload.files.FilePayloads;
+import dev.jstech.computers.operation.payload.files.LiveSessionFiles;
 import dev.jstech.computers.operation.payload.program.TerminalTools;
 import dev.jstech.computers.os.boot.BootController;
 import dev.jstech.computers.os.fs.FilesystemContents;
@@ -252,6 +254,35 @@ public final class LiveInstallGameTests {
         term.type("q");
         helper.assertFalse(term.busy(), "the prompt comes back");
         helper.assertFalse(term.type("lsblk").contains("sda1"), "and nothing typed in there reached the disk");
+        helper.succeed();
+    }
+
+    /**
+     * The medium's editor gives the terminal away on a file of the session, which is on no disk, and what it
+     * saves there is what reading the file back shows and what the steps after it read.
+     */
+    @GameTest(template = ARENA)
+    public static void nano_opensAndSavesTheSessionsOwnFiles(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = legacyWithDisk(helper);
+        computer.console().startLiveInstall(LiveInstallState.Distro.GENTOO);
+        final TerminalAt term = new TerminalAt(computer, helper.getLevel());
+        helper.assertTrue(term.type("nano -w /root/notes.txt").isEmpty(), "the editor opens without a word");
+        helper.assertTrue("live:/root/notes.txt".equals(term.givenAwayOn()),
+                "on the file as it was typed, marked as the session's: " + term.givenAwayOn());
+        helper.assertTrue(FilePayloads.readDiskFile(helper.getLevel(), computer, "live:/root/notes.txt").isEmpty(),
+                "which is not there yet, so it opens as a new one");
+        helper.assertTrue(FilePayloads.readDiskFile(helper.getLevel(), computer, "live:/root/install.txt")
+                .orElse("").contains("emerge"), "while the medium's own guide opens with its text");
+        helper.assertTrue(LiveSessionFiles.write(computer, term.givenAwayOn(), "the table wants the root's UUID"),
+                "saving writes into the session");
+        helper.assertTrue(term.type("cat /root/notes.txt").contains("the table wants the root's UUID"),
+                "and the shell reads back what the editor wrote");
+        term.type("cd /root");
+        term.type("nano notes.txt");
+        helper.assertTrue(LiveSessionFiles.read(computer, term.givenAwayOn()).orElse("").contains("UUID"),
+                "a name typed from inside a folder is that folder's");
+        helper.assertTrue(term.type("nano /root").contains("is a directory"), "a directory is refused in words");
+        helper.assertTrue(term.givenAwayOn().isEmpty(), "and the terminal stays with the shell");
         helper.succeed();
     }
 

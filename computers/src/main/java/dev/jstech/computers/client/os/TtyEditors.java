@@ -26,6 +26,7 @@ public final class TtyEditors {
     static {
         register("vim", VimKeys::new);
         register("emacs", EmacsKeys::new);
+        register("nano", NanoKeys::new);
     }
 
     private TtyEditors() {

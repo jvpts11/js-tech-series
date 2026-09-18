@@ -31,14 +31,36 @@ public final class LiveInstallCommands {
     public static List<ICliCommand> all() {
         final List<ICliCommand> out = new ArrayList<>();
         for (final String verb : LiveInstallState.VERBS) {
-            out.add(new LiveVerb(verb));
+            out.add(verb.equals(LiveEditor.VERB) ? new LiveEditor() : new LiveVerb(verb));
         }
         out.add(new Clear());
         return out;
     }
 
+    /**
+     * The medium's editor, which gives the terminal away on a file of the session.
+     *
+     * <p>It is run like any other verb, so that a name it cannot open is refused in words, and then the file
+     * is named to the terminal with the mark that says it is the session's and not the disk's.
+     */
+    static final class LiveEditor extends LiveVerb implements CliShell.IHandOver {
+
+        static final String VERB = "nano";
+
+        LiveEditor() {
+            super(VERB);
+        }
+
+        @Override
+        public String fileOf(final ICliComputer computer, final List<String> args) {
+            final LiveInstallState live = computer.liveInstall();
+            final String file = live == null ? null : live.editable(args);
+            return file == null ? null : LiveInstallState.FILE_SCHEME + file;
+        }
+    }
+
     /** One install verb; the state machine decides what it does at this point of the sequence. */
-    static final class LiveVerb implements ICliCommand {
+    static class LiveVerb implements ICliCommand {
         private final String verb;
 
         LiveVerb(final String verb) {

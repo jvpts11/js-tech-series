@@ -31,6 +31,9 @@ public final class TerminalAt {
     private final IComputerTerminalHost host;
     private final ServerLevel level;
 
+    /** The file the last line gave the terminal away on, empty when it kept it. */
+    private String givenAwayOn = "";
+
     public TerminalAt(final IComputerTerminalHost host, final ServerLevel level) {
         this.host = host;
         this.level = level;
@@ -41,6 +44,7 @@ public final class TerminalAt {
      * whatever tool it left running. What a tool prints after that goes by on the machine's own tick.
      */
     public String type(final String line) {
+        this.givenAwayOn = "";
         final TerminalTools.Turn inFront = TerminalTools.typed(this.host, this.level, line);
         if (inFront != null) {
             return wire(inFront.lines());
@@ -48,6 +52,7 @@ public final class TerminalAt {
         final ServerCliComputer computer = new ServerCliComputer(this.host, this.level);
         final CliShell.Response response =
                 CliCommands.shellFor(computer, TermBuffer.MONITOR_COLUMNS).run(line, computer);
+        this.givenAwayOn = response.handOver() == null ? "" : response.handOver().path();
         final StringBuilder out = new StringBuilder();
         for (final CliLine said : response.lines()) {
             out.append(said.text()).append('\n');
@@ -67,6 +72,14 @@ public final class TerminalAt {
     public String asking() {
         final var tool = this.host.console() == null ? null : this.host.console().foreground().tool();
         return tool == null || tool.asking() == null ? "" : tool.asking().text().text();
+    }
+
+    /**
+     * The file the last line typed gave the terminal away on, by the name the terminal would ask the machine
+     * for it by; empty when the line kept the terminal.
+     */
+    public String givenAwayOn() {
+        return this.givenAwayOn;
     }
 
     /** The shell's own prompt, which says where the session is standing. */

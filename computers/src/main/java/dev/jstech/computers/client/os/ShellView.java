@@ -15,7 +15,6 @@ import dev.jstech.computers.gui.term.TermRow;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
-import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.operation.payload.TerminalKeyboard;
 import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.operation.payload.program.DesktopShellPayloads;
@@ -193,9 +192,7 @@ public final class ShellView extends Panel {
         public void onContent(final String path, final String content, final boolean exists) {
             ShellView.this.editor = new TtyEditor(path, content,
                     ShellView.this.flavour, ShellView.this.terminalHost);
-            if (!exists) {
-                ShellView.this.editor.say("\"" + ShellView.this.editor.name() + "\" [New]");
-            }
+            ShellView.this.editor.opened(exists);
         }
     };
 
@@ -203,25 +200,20 @@ public final class ShellView extends Panel {
     private TtyEditor.IKeys flavour;
 
     /** What an editor running here can ask the terminal to do for it. */
-    private final TtyEditor.IHost terminalHost = new TtyEditor.IHost() {
-        @Override
-        public void save(final String path, final String text) {
-            PacketDistributor.sendToServer(
-                    new SaveFilePayload(
-                            ShellView.this.host, path, text));
-            FilesApps.diskChanged();
-        }
+    private final TtyEditor.IHost terminalHost = new TtyEditorWire(this::machine, this::editorDone);
 
-        @Override
-        public void quit() {
-            ShellView.this.editor = null;
-            /*
-             * The prompt comes back where it was, so the machine is asked for it rather than guessed:
-             * a program may have left the terminal somewhere else while the editor had it.
-             */
-            PacketDistributor.sendToServer(new DesktopShellRunPayload(ShellView.this.host, ""));
-        }
-    };
+    private BlockPos machine() {
+        return this.host;
+    }
+
+    private void editorDone() {
+        this.editor = null;
+        /*
+         * The prompt comes back where it was, so the machine is asked for it rather than guessed:
+         * a program may have left the terminal somewhere else while the editor had it.
+         */
+        PacketDistributor.sendToServer(new DesktopShellRunPayload(this.host, ""));
+    }
 
     /** Hands the terminal to an editor on {@code path}, which the machine is asked for. */
     public void openEditor(final String path, final TtyEditor.IKeys keys) {

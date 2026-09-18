@@ -305,6 +305,10 @@ public final class FilePayloads {
      */
     public static Optional<String> readDiskFile(
             final ServerLevel level, final IOsHost computer, final String path) {
+        if (LiveSessionFiles.names(path)) {
+            // A file of a by-hand install, which is on no disk until the install is finished.
+            return LiveSessionFiles.read(computer, path);
+        }
         if (path.startsWith(NET_ROOT)) {
             final ServerCliComputer shell = netShell(level, computer);
             if (shell == null) {
