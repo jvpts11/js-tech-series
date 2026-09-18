@@ -66,4 +66,21 @@ public final class TextWall {
     public static int room(final int pixels) {
         return Math.round(pixels / SCALE);
     }
+
+    /**
+     * That line cut to the room it has, in screen pixels, ending in dots where it had to be cut.
+     *
+     * <p>A drive, a system and a machine are all named by whoever made them, at whatever length they chose, so
+     * every column that holds one of those names has to be told what it may not run past.
+     */
+    public static String clip(final Font font, final String line, final int pixels) {
+        if (width(font, line) <= pixels) {
+            return line;
+        }
+        String cut = line;
+        while (cut.length() > 1 && width(font, cut + "...") > pixels) {
+            cut = cut.substring(0, cut.length() - 1);
+        }
+        return cut + "...";
+    }
 }

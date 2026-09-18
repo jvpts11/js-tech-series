@@ -450,6 +450,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The Legacy self-test's key hints said the wrong thing and blinked. The boards of that age printed a sentence
   with the two keys lifted out of it and left it there; only the earliest ones blinked.
 - A monitor opened during a restart no longer shows the desktop of the system that is being closed.
+- A long drive or system name no longer runs through the column beside it or off the edge of the glass, on
+  the self-test, on any of the boot menus, or in a system reading its own start out.
+- A machine with more drives or more systems than a screen has rows for no longer grows its list past the
+  bottom of the monitor. The self-test says how many it is not showing, so the lines that matter most (what
+  it is about to boot, or why it cannot) stay on the glass; the boot menus walk their list with the cursor,
+  so every entry can still be reached and booted.
 - The self-test opened by a restart is drawn for as long as that machine's self-test actually takes, rather
   than for a fallback length it had no way of knowing was wrong.
 - A run of the client tests came back saying all was well whatever had happened in it. Every test could fail

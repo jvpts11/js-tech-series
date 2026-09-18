@@ -188,14 +188,19 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
             if (!line.mark().isEmpty()) {
                 wall(g, line.mark(), x + MARGIN, ty, line.good() ? good : dim);
             }
-            wall(g, line.label(), labelAt, ty, text);
+            /*
+             * Cut to whatever is left of the line: a step that names a drive carries a name somebody else
+             * chose the length of, and at full length it runs through the column beside it or off the glass.
+             */
+            final int room = (line.value().isEmpty() ? x + W - MARGIN : valueAt - 4) - labelAt;
+            wall(g, wallClip(line.label(), room), labelAt, ty, text);
             if (!line.value().isEmpty()) {
                 /*
                  * A line with nothing at its head is one of the systems that ran dots out to its answer, which
                  * is how a machine of that age tied a question on the left to what came of it on the right.
                  */
                 if (line.mark().isEmpty()) {
-                    leader(g, labelAt + wallWidth(line.label()) + 3, valueAt - 3, ty, dim);
+                    leader(g, labelAt + wallWidth(wallClip(line.label(), room)) + 3, valueAt - 3, ty, dim);
                 }
                 wall(g, line.value(), valueAt, ty, line.good() ? good : dim);
             }

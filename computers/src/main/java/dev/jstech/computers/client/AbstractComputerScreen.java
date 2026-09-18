@@ -64,6 +64,11 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
         return TextWall.width(font, line);
     }
 
+    /** That line cut to the room it has, so a name somebody else chose cannot run past its column. */
+    protected String wallClip(final String line, final int room) {
+        return TextWall.clip(font, line, room);
+    }
+
     /**
      * The hardware era whose skin this screen should wear, or {@code null} to use the STANDARD default. The base
      * returns {@code null}; a screen running on a host computer overrides this to report its host's era so the GUI

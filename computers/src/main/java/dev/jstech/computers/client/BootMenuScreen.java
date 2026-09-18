@@ -34,7 +34,8 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
     /** How far the ruled box and the help under it stand from the edges of the glass. */
     private static final int MARGIN = 14;
 
-    /** How tall that box is: enough for every system a machine here can carry, listed at once. */
+    /** How many entries fit inside that box, and how tall it is to hold them. */
+    private static final int BOX_ROWS = 8;
     private static final int BOX_H = 92;
 
     /** The one grey these managers drew everything in, and the ground they drew it on. */
@@ -145,8 +146,17 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
         final int boxTop = y + 30;
         final int boxBottom = boxTop + BOX_H;
         rule(g, x + MARGIN, boxTop, W - 2 * MARGIN, BOX_H);
+        /*
+         * A machine with more systems than the box has rows walks its list through the window rather than
+         * drawing entries past the rule and over the help underneath, and the window follows the cursor so
+         * every entry can still be reached and booted.
+         */
+        final int count = this.menu.entries().size();
+        final int rows = Math.min(count, BOX_ROWS);
+        final int from = count <= BOX_ROWS ? 0
+                : Math.max(0, Math.min(count - BOX_ROWS, this.at - BOX_ROWS / 2));
         int ty = boxTop + 5;
-        for (int i = 0; i < this.menu.entries().size(); i++) {
+        for (int i = from; i < from + rows; i++) {
             final BootMenu.Entry entry = this.menu.entries().get(i);
             final boolean on = i == this.at;
             if (on) {
@@ -154,7 +164,8 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
             }
             /* The star marks the entry the machine boots on its own, which is not always the one highlighted. */
             final String mark = i == this.menu.defaultIndex() ? "*" : " ";
-            wall(g, mark + entry.label(), x + MARGIN + 6, ty, on ? 0xFF000000 : TEXT);
+            wall(g, wallClip(mark + entry.label(), W - 2 * MARGIN - 14), x + MARGIN + 6, ty,
+                    on ? 0xFF000000 : TEXT);
             ty += WALL_ROW + 2;
         }
         int hy = boxBottom + 8;
