@@ -81,7 +81,7 @@ class LiveInstallCommandsTest {
          * before that, they are as absent as the real ones are.
          */
         return List.of("mkfs.ext4 /dev/sda", "mount /dev/sda /mnt/gentoo", "cd /mnt/gentoo",
-                "wget mirror://mainframe/gentoo/stage3-amd64-openrc.tar.xz", "tar xpf stage3-*.tar.xz",
+                "wget mirror://mainframe/gentoo/stage3-vel64-openrc.tar.xz", "tar xpf stage3-*.tar.xz",
                 "chroot /mnt/gentoo /bin/bash", "emerge-webrsync", "emerge sys-boot/grub");
     }
 

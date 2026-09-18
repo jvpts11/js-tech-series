@@ -24,7 +24,7 @@ public final class ArchiveVoice {
 
     private static final String[] ETC = {"DIR_COLORS", "bash/", "bash/bashrc", "bash/bash_logout", "conf.d/",
         "conf.d/consolefont", "conf.d/hostname", "conf.d/hwclock", "conf.d/keymaps", "conf.d/modules", "conf.d/net",
-        "csh.cshrc", "env.d/", "env.d/00basic", "env.d/50baselayout", "env.d/gcc/", "environment", "fstab",
+        "csh.cshrc", "env.d/", "env.d/00basic", "env.d/50baselayout", "env.d/scc/", "environment", "fstab",
         "gai.conf", "group", "gshadow", "host.conf", "hosts", "init.d/", "init.d/bootmisc", "init.d/consolefont",
         "init.d/devfs", "init.d/dmesg", "init.d/fsck", "init.d/hostname", "init.d/hwclock", "init.d/keymaps",
         "init.d/killprocs", "init.d/local", "init.d/localmount", "init.d/modules", "init.d/mount-ro",
@@ -40,9 +40,9 @@ public final class ArchiveVoice {
 
     private static final String[] BINARIES = ("awk basename bash bunzip2 bzip2 cat chgrp chmod chown chroot cmp cp "
             + "cut date dd df diff dirname dmesg du echo ed egrep emerge env eselect expr false fgrep find free "
-            + "gawk gcc getent grep groups gunzip gzip head hostname id install kill killall less ln locale login ls "
+            + "gawk getent grep groups gunzip gzip head hostname id install kill killall less ln locale login ls "
             + "lsblk make md5sum mkdir mknod mktemp more mount mv nano nice nproc od passwd paste patch perl pgrep "
-            + "ping pkill portageq printf ps pwd python3.12 readlink realpath rm rmdir rsync sed seq sh sha256sum "
+            + "ping pkill portageq printf ps pwd python3.12 readlink realpath rm rmdir rsync scc sed seq sh sha256sum "
             + "sleep sort split stat strings su sync tail tar tee test top touch tr true tty umount uname uniq "
             + "uptime vi wc wget which whoami xargs xz yes zcat").split(" ");
 
@@ -104,11 +104,12 @@ public final class ArchiveVoice {
         for (final String each : BINARIES) {
             out.add("./usr/bin/" + each);
         }
-        out.addAll(List.of("./usr/lib/", "./usr/lib/gcc/", "./usr/lib/gcc/x86_64-pc-linux-gnu/",
-                "./usr/lib/gcc/x86_64-pc-linux-gnu/14/"));
-        for (final String each : new String[]{"cc1", "cc1plus", "collect2", "crtbegin.o", "crtend.o", "libgcc.a",
-            "libgcc_s.so", "libstdc++.so.6.0.33", "lto1", "lto-wrapper"}) {
-            out.add("./usr/lib/gcc/x86_64-pc-linux-gnu/14/" + each);
+        /* The compiler a base system carries is this world's: Sigma's, with a front end for each of its two. */
+        out.addAll(List.of("./usr/lib/", "./usr/lib/scc/", "./usr/lib/scc/x86_64-pc-linux-gnu/",
+                "./usr/lib/scc/x86_64-pc-linux-gnu/14/"));
+        for (final String each : new String[]{"sg1", "sgs1", "collect2", "crtbegin.asm", "crtend.asm", "libscc.a",
+            "libscc_s.so", "libsigma.so.6.0.33", "lto1", "lto-wrapper"}) {
+            out.add("./usr/lib/scc/x86_64-pc-linux-gnu/14/" + each);
         }
         out.add("./usr/lib/python3.12/");
         for (final String each : PYTHON) {

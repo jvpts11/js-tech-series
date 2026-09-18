@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -93,12 +94,12 @@ class VoicesTest {
 
     @Test
     void wget_namesTheMirrorAndNeverTheWeb() {
-        final Glass glass = played(FetchVoice.wget("/gentoo/stage3-amd64-openrc.tar.xz", 256, 320,
+        final Glass glass = played(FetchVoice.wget("/gentoo/stage3-vel64-openrc.tar.xz", 256, 320,
                 NOON_ON_DAY_214, () -> { }));
-        inOrder(glass, "--Day 214 12:00:00--  mirror://mainframe/gentoo/stage3-amd64-openrc.tar.xz",
+        inOrder(glass, "--Day 214 12:00:00--  mirror://mainframe/gentoo/stage3-vel64-openrc.tar.xz",
                 "Resolving mainframe... done.", "Connecting to mainframe... connected.",
                 "Mirror request sent, awaiting response... 200 OK",
-                "Length: 268435456 (256M) [application/x-xz]", "Saving to: 'stage3-amd64-openrc.tar.xz'",
+                "Length: 268435456 (256M) [application/x-xz]", "Saving to: 'stage3-vel64-openrc.tar.xz'",
                 "100%[==============]", "saved [268435456/268435456]");
         assertFalse(glass.all().contains("http"), glass.all());
     }
@@ -139,7 +140,7 @@ class VoicesTest {
                 ">>> Emerging (1 of 2) app-shells/bash-5.2_p37::gentoo",
                 ">>> Downloading 'mirror://mainframe/distfiles/bash-5.2.tar.gz'", "BLAKE2B SHA512 size ;-)",
                 ">>> Unpacking source...", ">>> Source prepared.", "checking build system type",
-                ">>> Source configured.", "make -j4", "x86_64-pc-linux-gnu-gcc", ">>> Source compiled.",
+                ">>> Source configured.", "make -j4", "x86_64-pc-linux-gnu-scc", ">>> Source compiled.",
                 ">>> Installing (1 of 2)", ">>> app-shells/bash-5.2_p37 merged.",
                 ">>> Emerging (2 of 2) app-editors/vim-9.1.0794::gentoo", ">>> Jobs: 2 of 2 complete");
     }
@@ -200,11 +201,35 @@ class VoicesTest {
     @Test
     void make_scrollsEveryObjectThenLinksThenBuildsTheImage() {
         final Glass glass = played(KernelVoices.make("6.11.5", 4, 1_280, () -> { }));
-        inOrder(glass, "  HOSTCC  scripts/basic/fixdep", "  CC      ", "  AR      ", "  LD      vmlinux",
+        inOrder(glass, "  HOSTSCC scripts/basic/fixdep", "  SCC     ", "  AR      ", "  LD      vmlinux",
                 "  BUILD   arch/x86/boot/bzImage", "Kernel: arch/x86/boot/bzImage is ready  (#1)",
                 "  DEPMOD  /lib/modules/6.11.5-gentoo", "  INSTALL /boot");
         assertTrue(glass.shown.size() > 1_000, "it is the one that scrolls: " + glass.shown.size() + " lines");
-        assertTrue(glass.all().contains("  CC [M]  "), "and some of what it builds is built as modules");
+        assertTrue(glass.all().contains("  SCC [M] "), "and some of what it builds is built as modules");
+    }
+
+    /**
+     * The software of this world is written in Sigma and built by the Sigma compiler into the listings a
+     * machine runs. There is no C in it, so no tool may name a C compiler, a C source, a header or an object.
+     */
+    @Test
+    void noTool_namesACompilerOrAFileOfALanguageThisWorldDoesNotHave() {
+        final List<PortageVoices.Merge> merges = List.of(new PortageVoices.Merge("app-editors/vim", "9.1", "",
+                "vim-9.1.tar.gz", 16.8, "acl", "-X", 20, 400));
+        final List<Glass> played = List.of(played(PortageVoices.emerge(merges, false, 4, () -> { })),
+                played(KernelVoices.make("6.11.5", 4, 1_280, () -> { })),
+                played(KernelVoices.genkernel("6.11.5", 1_280, () -> { })),
+                played(ArchiveVoice.unpack(true, 200, () -> { })),
+                played(PacmanVoices.pacstrap("/mnt", 400, 300, "6.11.5-arch1-1", () -> { })));
+        final Pattern foreign = Pattern.compile(
+                "\\bgcc\\b|\\bg\\+\\+|\\bglibc\\b|\\bCC\\b|\\bHOSTCC\\b|C compiler|GNU C\\b|[\\w-]\\.[cho]\\b");
+        for (final Glass glass : played) {
+            for (final String line : glass.everShown) {
+                assertFalse(foreign.matcher(line).find(), "this is C: " + line);
+            }
+        }
+        assertTrue(played.get(0).all().contains(".sg") && played.get(0).all().contains("-scc "),
+                "what compiles is Sigma, by the Sigma compiler");
     }
 
     @Test
@@ -269,7 +294,7 @@ class VoicesTest {
     void everyBarAndCounter_fitsTheTerminal() {
         final List<Glass> all = List.of(
                 played(DiskVoices.mke2fs("sda3", REAL_RUN_MB, 1, 200, () -> { })),
-                played(FetchVoice.wget("/gentoo/stage3-amd64-openrc.tar.xz", 256, 320, NOON_ON_DAY_214, () -> { })),
+                played(FetchVoice.wget("/gentoo/stage3-vel64-openrc.tar.xz", 256, 320, NOON_ON_DAY_214, () -> { })),
                 played(PacmanVoices.pacstrap("/mnt", 400, 300, "6.11.5-arch1-1", () -> { })),
                 played(KernelVoices.genkernel("6.11.5", 600, () -> { })));
         for (final Glass glass : all) {

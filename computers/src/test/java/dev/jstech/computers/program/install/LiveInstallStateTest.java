@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class LiveInstallStateTest {
 
-    private static final String STAGE3_URL = "mirror://mainframe/gentoo/stage3-amd64-openrc.tar.xz";
+    private static final String STAGE3_URL = "mirror://mainframe/gentoo/stage3-vel64-openrc.tar.xz";
     private static final String ROOT_LINE = "UUID=3a492b72-77a7-483c-b412-d1f4c7d62a48  /  ext4  defaults  0 1";
 
     private long clock;
@@ -266,9 +266,9 @@ class LiveInstallStateTest {
         assertTrue(step(st, "tar xpvf stage3-*.tar.xz").text().contains("Cannot open: No such file"),
                 "there is nothing to unpack until it has been fetched");
         step(st, "wget " + STAGE3_URL);
-        assertTrue(seen().contains("mirror://mainframe/gentoo/stage3-amd64-openrc.tar.xz"), seen());
+        assertTrue(seen().contains("mirror://mainframe/gentoo/stage3-vel64-openrc.tar.xz"), seen());
         assertTrue(seen().contains("100%["), seen());
-        assertTrue(step(st, "ls").text().contains("stage3-amd64-openrc.tar.xz"), "and then it is there to see");
+        assertTrue(step(st, "ls").text().contains("stage3-vel64-openrc.tar.xz"), "and then it is there to see");
         step(st, "tar xpvf stage3-*.tar.xz --xattrs-include='*.*' --numeric-owner");
         assertTrue(this.watched.size() > 900, "every path of a base system went by: " + this.watched.size());
         assertTrue(step(st, "cat /mnt/gentoo/etc/portage/make.conf").text().contains("COMMON_FLAGS"),
@@ -302,7 +302,7 @@ class LiveInstallStateTest {
     @Test
     void gentoo_wgetOfAWebAddress_cannotBeResolved() {
         final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.GENTOO);
-        step(st, "wget https://distfiles.gentoo.org/releases/stage3-amd64-openrc.tar.xz");
+        step(st, "wget https://distfiles.gentoo.org/releases/stage3-vel64-openrc.tar.xz");
         assertTrue(seen().contains("unable to resolve host address 'distfiles.gentoo.org'"), seen());
         assertFalse(step(st, "ls").text().contains("stage3"), "and nothing was fetched");
     }
@@ -322,7 +322,7 @@ class LiveInstallStateTest {
         assertTrue(seen().contains("Total: 3 packages (2 upgrades, 1 new)"), seen());
         assertTrue(seen().contains("Would you like to merge these packages? [Yes/No] y"), seen());
         assertTrue(seen().contains(">>> Emerging (3 of 3) app-editors/vim-9.1.0794::gentoo"), seen());
-        assertTrue(seen().contains("x86_64-pc-linux-gnu-gcc"), seen());
+        assertTrue(seen().contains("x86_64-pc-linux-gnu-scc"), seen());
     }
 
     @Test
@@ -407,7 +407,7 @@ class LiveInstallStateTest {
     void cat_theGuideOnTheMedium_namesTheStepsAndMarksTheOnesABootNeeds() {
         final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.GENTOO);
         final String guide = step(st, "cat /root/install.txt").text();
-        assertTrue(guide.contains(" * wget mirror://mainframe/gentoo/stage3-amd64-openrc.tar.xz"), guide);
+        assertTrue(guide.contains(" * wget mirror://mainframe/gentoo/stage3-vel64-openrc.tar.xz"), guide);
         assertTrue(guide.contains("   eselect profile list"), guide);
         assertFalse(guide.contains("http"), guide);
     }

@@ -53,7 +53,7 @@ public final class PacmanVoices {
      * printed, totalled and counted. Each is named and versioned the way the real one names it.
      */
     private static final List<Package> BASE = packages("iana-etc-20240814-1:0.4 filesystem-2024.04.07-1:0.1 "
-            + "linux-api-headers-6.10-1:1.4 tzdata-2024b-2:0.4 glibc-2.40+r16-5:6.9 gcc-libs-14.2.1-3:37.4 "
+            + "linux-api-namespaces-6.10-1:1.4 tzdata-2024b-2:0.4 libsigma-2.40+r16-5:6.9 scc-libs-14.2.1-3:37.4 "
             + "ncurses-6.5-3:1.1 readline-8.2.013-1:0.3 bash-5.2.037-1:1.8 acl-2.3.2-1:0.1 attr-2.5.2-1:0.1 "
             + "gmp-6.3.0-2:0.4 zlib-1:1.3.1-2:0.1 sqlite-3.46.1-1:1.9 util-linux-libs-2.40.2-1:0.5 "
             + "e2fsprogs-1.47.1-4:1.2 openssl-3.4.0-1:5.0 libcap-2.71-1:0.8 coreutils-9.5-2:2.9 bzip2-1.0.8-6:0.1 "

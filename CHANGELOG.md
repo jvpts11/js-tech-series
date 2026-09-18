@@ -172,6 +172,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   out a different length from the same bar made of another; on a grid a listing lines up, a bar holds still
   while it fills, and the right-hand edge of a status column is an edge. A monitor's terminal is sixty-four
   columns wide, and what runs at it lays its output out to that.
+- The Gentoo stage 3 is `stage3-vel64`, for the Velocion processors these machines have.
+- What a build prints is a Sigma toolchain at work. `emerge`, the kernel build and the archives name `scc`
+  compiling `.sg` sources into `.asm`, check for namespaces where they checked for headers, and unpack
+  `libsigma` and `scc-libs`. There is no C in this world, and no tool pretends there is.
 - A line at a terminal can be coloured in parts, the way real tools colour theirs: an arrow in green before
   plain text, brackets in one colour round a word in another. Any command can write one.
 - The tools of a by-hand Arch or Gentoo install now print what the real ones print. `mke2fs` reports the block

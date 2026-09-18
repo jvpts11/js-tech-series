@@ -33,7 +33,7 @@ final class GentooSteps {
     private final LiveProgress progress;
 
     /** The archive of a base system, as the Mirror names it. */
-    static final String STAGE3 = "stage3-amd64-openrc.tar.xz";
+    static final String STAGE3 = "stage3-vel64-openrc.tar.xz";
 
     /** The kernel the sources are of. */
     static final String KERNEL = "6.11.5";
@@ -259,7 +259,8 @@ final class GentooSteps {
         if (!this.files.inside()) {
             return LiveTurn.refused("locale-gen: command not found");
         }
-        final List<String> locales = new ArrayList<>(List.of("C.UTF-8"));
+        // The locale every system has whatever the file says, by the name that does not borrow a language's.
+        final List<String> locales = new ArrayList<>(List.of("POSIX.UTF-8"));
         final String file = this.files.read(this.files.inNewSystem("/etc/locale.gen"));
         for (final String each : (file == null ? "" : file).split("\n")) {
             if (!each.isBlank() && !each.startsWith("#")) {
@@ -364,14 +365,13 @@ final class GentooSteps {
                 "# Please consult /usr/share/portage/config/make.conf.example for a more",
                 "# detailed example.",
                 "COMMON_FLAGS=\"-O2 -pipe\"",
-                "CFLAGS=\"${COMMON_FLAGS}\"",
-                "CXXFLAGS=\"${COMMON_FLAGS}\"",
-                "FCFLAGS=\"${COMMON_FLAGS}\"",
-                "FFLAGS=\"${COMMON_FLAGS}\"",
+                // One line for each of the two languages this world's software is written in.
+                "SGFLAGS=\"${COMMON_FLAGS}\"",
+                "SGSFLAGS=\"${COMMON_FLAGS}\"",
                 "",
                 "# This sets the language of build output to English.",
                 "# Please keep this setting intact when reporting bugs.",
-                "LC_MESSAGES=C.utf8"));
+                "LC_MESSAGES=POSIX.utf8"));
         this.files.write(this.files.inNewSystem("/etc/locale.gen"), String.join("\n",
                 "# /etc/locale.gen: list all of the locales you want to have on your system.",
                 "#",

@@ -25,18 +25,26 @@ import java.util.Locale;
  */
 public final class PortageVoices {
 
+    /*
+     * What a configure script asks of the machine it finds itself on. The software of this world is written in
+     * Sigma and built by the Sigma Compiler Collection into the assembly a machine runs, so that is the compiler
+     * it looks for, the listings are what it expects to come out, and what it checks for is namespaces, since
+     * the language has those where another would have headers.
+     */
     private static final String[] CHECKS = {"for a BSD-compatible install... /usr/bin/install -c",
         "whether build environment is sane... yes", "for a race-free mkdir -p... /bin/mkdir -p", "for gawk... gawk",
         "whether make sets $(MAKE)... yes", "build system type... x86_64-pc-linux-gnu",
-        "host system type... x86_64-pc-linux-gnu", "for x86_64-pc-linux-gnu-gcc... x86_64-pc-linux-gnu-gcc",
-        "whether the C compiler works... yes", "for C compiler default output file name... a.out",
-        "whether we are cross compiling... no", "for suffix of object files... o",
-        "whether the compiler supports GNU C... yes", "for stdio.h... yes", "for stdlib.h... yes",
-        "for string.h... yes", "for unistd.h... yes", "for sys/types.h... yes", "for wchar.h... yes",
-        "for size_t... yes", "for working alloca.h... yes", "for getopt_long... yes", "for snprintf... yes",
-        "for strcasecmp... yes", "for pkg-config... /usr/bin/x86_64-pc-linux-gnu-pkg-config", "for ncursesw... yes",
+        "host system type... x86_64-pc-linux-gnu", "for x86_64-pc-linux-gnu-scc... x86_64-pc-linux-gnu-scc",
+        "whether the Sigma compiler works... yes", "for Sigma compiler default output file name... a.asm",
+        "whether we are cross compiling... no", "for suffix of listing files... asm",
+        "whether the compiler supports Sigma Sharp... yes", "for namespace System.IO... yes",
+        "for namespace System.Collections... yes", "for namespace System.Threading... yes",
+        "for namespace System.Network... yes", "for namespace System.Machine... yes",
+        "for namespace System.Utils... yes", "for Program.Args... yes", "for working File.Read... yes",
+        "for File.Write... yes", "for Program.Exit... yes", "for Program.OnMessage... yes",
+        "for pkg-config... /usr/bin/x86_64-pc-linux-gnu-pkg-config", "for ncursesw... yes",
         "whether NLS is requested... yes", "for msgfmt... /usr/bin/msgfmt",
-        "for ld used by gcc... /usr/x86_64-pc-linux-gnu/bin/ld", "if the linker is GNU ld... yes",
+        "for ld used by scc... /usr/x86_64-pc-linux-gnu/bin/ld", "if the linker is GNU ld... yes",
         "for shared library run path origin... done"};
 
     private static final String[] SOURCES = ("alloc args buffer charset cmdline color config cursor display edit "
@@ -45,7 +53,7 @@ public final class PortageVoices {
 
     private static final List<String> CONFIGURED = List.of("configure: creating ./config.status",
             "config.status: creating Makefile", "config.status: creating src/Makefile",
-            "config.status: creating config.h", "config.status: executing depfiles commands");
+            "config.status: creating config.sg", "config.status: executing depfiles commands");
 
     private PortageVoices() {
     }
@@ -137,10 +145,10 @@ public final class PortageVoices {
 
     /** The profiles the machine can be set to, with the star on the one in force. */
     public static List<CliLine> profiles(final int chosen) {
-        final String[] names = {"default/linux/amd64/23.0 (stable)", "default/linux/amd64/23.0/systemd (stable)",
-            "default/linux/amd64/23.0/desktop (stable)", "default/linux/amd64/23.0/desktop/gnome (stable)",
-            "default/linux/amd64/23.0/desktop/plasma (stable)", "default/linux/amd64/23.0/no-multilib (stable)",
-            "default/linux/amd64/23.0/hardened (stable)"};
+        final String[] names = {"default/linux/vel64/23.0 (stable)", "default/linux/vel64/23.0/systemd (stable)",
+            "default/linux/vel64/23.0/desktop (stable)", "default/linux/vel64/23.0/desktop/gnome (stable)",
+            "default/linux/vel64/23.0/desktop/plasma (stable)", "default/linux/vel64/23.0/no-multilib (stable)",
+            "default/linux/vel64/23.0/hardened (stable)"};
         final List<CliLine> out = new ArrayList<>();
         out.add(Tint.line(Tint.green("Available profile symlink targets:")));
         for (int i = 0; i < names.length; i++) {
@@ -357,11 +365,12 @@ public final class PortageVoices {
         int hash = index * 0x9E3779B1;
         hash ^= hash >>> 15;
         final String file = SOURCES[Math.floorMod(hash, SOURCES.length)];
+        /* A Sigma source goes in and the listing a machine runs comes out, which is this world's object file. */
         return CliLine.plain(Math.floorMod(hash >>> 8, 6) != 0
-                ? "x86_64-pc-linux-gnu-gcc -DHAVE_CONFIG_H -I. -O2 -pipe -march=native -c -o " + file + ".o "
-                        + file + ".c"
-                : "/bin/sh ./libtool --tag=CC --mode=compile x86_64-pc-linux-gnu-gcc -O2 -pipe -c -o lib" + library
-                        + "_la-" + file + ".lo " + file + ".c");
+                ? "x86_64-pc-linux-gnu-scc -DHAVE_CONFIG -I. -O2 -pipe -march=native -c -o " + file + ".asm "
+                        + file + ".sg"
+                : "/bin/sh ./libtool --tag=SCC --mode=compile x86_64-pc-linux-gnu-scc -O2 -pipe -c -o lib"
+                        + library + "_la-" + file + ".asm " + file + ".sg");
     }
 
     private static CliLine star(final String text) {

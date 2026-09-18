@@ -165,13 +165,13 @@ public final class LiveInstallGameTests {
             term.type("cd /mnt/gentoo");
             helper.assertTrue(term.type("tar xpvf stage3-*.tar.xz").contains("Cannot open: No such file"),
                     "there is nothing to unpack until it has been fetched");
-            helper.assertTrue(term.type("wget mirror://mainframe/gentoo/stage3-amd64-openrc.tar.xz")
+            helper.assertTrue(term.type("wget mirror://mainframe/gentoo/stage3-vel64-openrc.tar.xz")
                     .contains("Resolving mainframe... done."), "the archive starts arriving");
             helper.assertTrue(term.busy(), "and holds the terminal until it has all arrived");
         });
         idle(helper, steps, term);
         steps.thenExecute(() -> {
-            helper.assertTrue(term.type("ls").contains("stage3-amd64-openrc.tar.xz"), "it is where it was fetched to");
+            helper.assertTrue(term.type("ls").contains("stage3-vel64-openrc.tar.xz"), "it is where it was fetched to");
             term.type("tar xpvf stage3-*.tar.xz --xattrs-include='*.*' --numeric-owner");
             helper.assertTrue(term.busy(), "unpacking a whole system takes the terminal for a while");
         });
@@ -303,7 +303,7 @@ public final class LiveInstallGameTests {
                     final String disks = term.type("lsblk");
                     helper.assertTrue(disks.contains("sda") && !disks.contains("sdb"),
                             "the one disk that is really in it: " + disks);
-                    term.type("wget mirror://mainframe/gentoo/stage3-amd64-openrc.tar.xz");
+                    term.type("wget mirror://mainframe/gentoo/stage3-vel64-openrc.tar.xz");
                     helper.assertTrue(term.busy(), "the fetcher tries for a moment");
                 })
                 .thenWaitUntil(() -> helper.assertFalse(term.busy(), "before it gives up"))

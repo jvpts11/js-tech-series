@@ -14,8 +14,9 @@ package dev.jstech.computers.program.install;
  * written from the steps the sequence really accepts, so following it works, and it says which steps a system
  * cannot boot without and which are the rest of the handbook.
  *
- * <p>It is read on a glass sixty-four columns wide, so it is written to that: a step on a line of its own and
- * what it is for underneath, because a line that runs past the edge is broken wherever the edge happens to be.
+ * <p>It is read at a terminal, so it is written well inside a monitor's columns: a step on a line of its own
+ * and what it is for underneath, because a line that runs past the edge is broken wherever the edge happens to
+ * be.
  */
 final class LiveGuide {
 
@@ -82,7 +83,7 @@ final class LiveGuide {
             " * mkfs.ext4 /dev/sda2",
             " * mount /dev/sda2 /mnt/gentoo",
             " * cd /mnt/gentoo",
-            " * wget mirror://mainframe/gentoo/stage3-amd64-openrc.tar.xz",
+            " * wget mirror://mainframe/gentoo/stage3-vel64-openrc.tar.xz",
             " * tar xpvf stage3-*.tar.xz --xattrs-include='*.*'",
             "   nano -w /mnt/gentoo/etc/portage/make.conf",
             "       MAKEOPTS=\"-j4\" makes every compile four jobs wide",

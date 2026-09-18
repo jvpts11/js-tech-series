@@ -54,16 +54,22 @@ public final class KernelVoices {
         {"fs/fat", "cache dir fatent file inode namei_vfat"},
     };
 
-    /** What the build says once every object is made: the link, the symbol table, and the image. */
+    /**
+     * What the build says once every object is made: the link, the symbol table, and the image.
+     *
+     * <p>The kernel of this world is written in Sigma, so what compiles it is the Sigma compiler, what goes in
+     * is a {@code .sg} source and what comes out is the {@code .asm} listing a machine runs.
+     */
     private static final List<String> LINKING = List.of("  AR      built-in.a", "  AR      vmlinux.a",
-            "  LD      vmlinux.o", "  OBJCOPY modules.builtin.modinfo", "  GEN     modules.builtin",
-            "  MODPOST Module.symvers", "  CC      .vmlinux.export.o", "  UPD     include/generated/utsversion.h",
-            "  CC      init/version-timestamp.o", "  KSYMS   .tmp_vmlinux0.kallsyms.S", "  LD      vmlinux",
-            "  NM      System.map", "  SORTTAB vmlinux", "  CC      arch/x86/boot/version.o",
-            "  VOFFSET arch/x86/boot/compressed/../voffset.h", "  OBJCOPY arch/x86/boot/compressed/vmlinux.bin",
+            "  LD      vmlinux.asm", "  OBJCOPY modules.builtin.modinfo", "  GEN     modules.builtin",
+            "  MODPOST Module.symvers", "  SCC     .vmlinux.export.asm",
+            "  UPD     include/generated/utsversion.sg", "  SCC     init/version-timestamp.asm",
+            "  KSYMS   .tmp_vmlinux0.kallsyms.asm", "  LD      vmlinux", "  NM      System.map",
+            "  SORTTAB vmlinux", "  SCC     arch/x86/boot/version.asm",
+            "  VOFFSET arch/x86/boot/compressed/../voffset.sg", "  OBJCOPY arch/x86/boot/compressed/vmlinux.bin",
             "  ZSTD22  arch/x86/boot/compressed/vmlinux.bin.zst", "  LD      arch/x86/boot/compressed/vmlinux",
-            "  ZOFFSET arch/x86/boot/zoffset.h", "  OBJCOPY arch/x86/boot/vmlinux.bin",
-            "  AS      arch/x86/boot/header.o", "  LD      arch/x86/boot/setup.elf",
+            "  ZOFFSET arch/x86/boot/zoffset.sg", "  OBJCOPY arch/x86/boot/vmlinux.bin",
+            "  AS      arch/x86/boot/header.asm", "  LD      arch/x86/boot/setup.elf",
             "  OBJCOPY arch/x86/boot/setup.bin", "  BUILD   arch/x86/boot/bzImage");
 
     /** One object in so many is a directory's archive being closed rather than a file being compiled. */
@@ -137,9 +143,9 @@ public final class KernelVoices {
         final int objects = Math.min(compiling * TtyScript.MAX_LINES_PER_TICK, Math.max(120, compiling * 2));
         return TtyScript.script()
                 .say("  SYNC    include/config/auto.conf")
-                .say("  HOSTCC  scripts/basic/fixdep")
-                .say("  HOSTCC  scripts/kconfig/conf.o")
-                .say("  UPD     include/generated/compile.h")
+                .say("  HOSTSCC scripts/basic/fixdep")
+                .say("  HOSTSCC scripts/kconfig/conf.asm")
+                .say("  UPD     include/generated/compile.sg")
                 .flood(compiling, objects, KernelVoices::object)
                 .flood(share(ticks, 9), LINKING.size(), index -> CliLine.plain(LINKING.get(index)))
                 .say("Kernel: arch/x86/boot/bzImage is ready  (#1)")
@@ -167,8 +173,8 @@ public final class KernelVoices {
         final String[][] from = module ? MODULES : TREE;
         final String[] dir = from[Math.floorMod(mixed >>> 3, from.length)];
         final String[] files = dir[1].split(" ");
-        return CliLine.plain((module ? "  CC [M]  " : "  CC      ") + dir[0] + "/"
-                + files[Math.floorMod(mixed >>> 9, files.length)] + ".o");
+        return CliLine.plain((module ? "  SCC [M] " : "  SCC     ") + dir[0] + "/"
+                + files[Math.floorMod(mixed >>> 9, files.length)] + ".asm");
     }
 
     private static int mix(final int index) {
