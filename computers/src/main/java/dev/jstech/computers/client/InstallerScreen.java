@@ -460,7 +460,9 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             return;
         }
         g.drawString(font, "Setup found a disk:", f.x(), ty, p.dim(), false);
-        g.drawString(font, "Disk " + disk.slot() + "  " + disk.label(), f.x(), ty + 12, p.bright(), false);
+        // Cut to the page, since a drive names itself at whatever length its maker chose.
+        g.drawString(font, InstallerFrames.clip(font, "Disk " + disk.slot() + "  " + disk.label(), f.w()),
+                f.x(), ty + 12, p.bright(), false);
         g.drawString(font, holds(disk) + ", " + size(this.flow.freeOn(disk)) + " free",
                 f.x(), ty + 23, p.dim(), false);
     }
@@ -633,11 +635,17 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
          */
         if (this.flow.chrome() == InstallerChrome.SIDE_PANEL) {
             final InstallerFlow.Step step = this.flow.steps().get(this.flow.stepAt(this.ticksDone));
-            g.drawString(font, step.label(), f.x(), f.y(), p.text(), false);
+            g.drawString(font, InstallerFrames.clip(font, step.label(), f.w()), f.x(), f.y(), p.text(), false);
             final InstallerFlow.Disk disk = this.flow.target();
             if (disk != null) {
-                g.drawString(font, "Installing on Disk " + disk.slot() + ", " + disk.label(), f.x(), f.y() + 12,
-                        p.dim(), false);
+                /*
+                 * Cut to the panel it is written in. A drive names itself at whatever length its maker chose,
+                 * and this line was drawn at full length whatever the room: on a long name it ran out past the
+                 * edge of the glass and off the monitor.
+                 */
+                g.drawString(font, InstallerFrames.clip(font,
+                                "Installing on Disk " + disk.slot() + ", " + disk.label(), f.w()),
+                        f.x(), f.y() + 12, p.dim(), false);
             }
             return;
         }

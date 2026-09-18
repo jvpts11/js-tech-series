@@ -165,8 +165,11 @@ final class InstallerFrames {
         final int cw = sw - panelW - 16;
         if (!flow.stage().asks()) {
             // Nothing to ask: the maker's name over the middle of the ground, the way it waits in life.
-            emblem(g, cx + cw / 2 - 30, sy + 70, 20, flow.style());
-            g.drawString(font, "Midsoft " + flow.systemName(), cx + cw / 2 - 10, sy + 76, 0xFFFFFFFF, true);
+            /*
+             * The whole lockup, not a mark with the name typed beside it: this is the one place in the install
+             * where the maker's name is the picture, and the mock has it as the thing itself.
+             */
+            SplashLogos.draw(g, SplashLogos.FRAMES_XP, cx + cw / 2, sy + 58);
             final Paint plain = new Paint(0xFFFFFFFF, 0xFFFFFFFF, 0xFFDCE6FA, 0xFFF3A660, 0xFF00309C, 0xFFFFFFFF);
             return new Frame(cx, sy + 104, cw, sh - 122, plain, null, null, null, null);
         }
@@ -212,9 +215,14 @@ final class InstallerFrames {
         return new Frame(cx + 10, cy + 42, cw - 20, ch - 68, paint, next, back, null, erase);
     }
 
-    /** The maker's mark of the edition being installed, the same one its desktop wears. */
+    /**
+     * The maker's mark of the edition being installed, the same one its desktop wears.
+     *
+     * <p>A picture rather than four filled squares: the mark is a window with an edge and a lean to it, and
+     * four flat squares are the words of it without the thing itself.
+     */
     static void emblem(final GuiGraphics g, final int x, final int y, final int size, final InstallerStyle style) {
-        FramesEmblem.draw(g, x, y, size, style.serializedName());
+        SplashLogos.mark(g, style.serializedName(), x, y, size);
     }
 
     /** A raised or sunken bevel in the manner of the grey machines: light one way, dark the other. */

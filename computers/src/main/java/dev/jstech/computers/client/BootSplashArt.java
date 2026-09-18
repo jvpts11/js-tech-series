@@ -14,11 +14,11 @@ import net.minecraft.client.gui.GuiGraphics;
 /**
  * The pictures the systems come up behind, and go down behind.
  *
- * <p>Every one of them is drawn rather than loaded, out of fills and the emblem the desktop already draws, so
- * a screen of any size holds them and nothing here needs a texture of its own. They are the one thing about
- * starting a machine that nobody reads: a system's picture is what tells you which system it is before a
- * single word of it is on the glass, so they are each drawn as the thing they are a parody of really looked,
- * rather than as the same bar with a different name over it.
+ * <p>The ground of each is drawn here, out of fills: a sky with its clouds, a black screen, a near-black one.
+ * What sits on that ground is a texture, because a maker's lockup is lettering with weights and a face of its
+ * own and drawing one out of rectangles and the game's font gets the words right and the thing itself wrong.
+ * They are the one thing about starting a machine that nobody reads: a system's picture is what tells you
+ * which system it is before a single word of it is on the glass.
  */
 public final class BootSplashArt {
 
@@ -33,6 +33,15 @@ public final class BootSplashArt {
     private static final int TROUGH = 0xFF1B1B1B;
     private static final int TROUGH_EDGE = 0xFF454545;
     private static final int BLOCK = 0xFF5A8CD8;
+
+    /** The blue the welcome sits on, and the lighter band across it the word is written in. */
+    private static final int WELCOME_TOP = 0xFF2C5FA8;
+    private static final int WELCOME_BOTTOM = 0xFF17407C;
+    private static final int WELCOME_BAND_TOP = 0xFF4E86D0;
+    private static final int WELCOME_BAND_BOTTOM = 0xFF3A6CB4;
+
+    /** How far into the wait that edition put its word up, in hundredths. */
+    private static final int WELCOME_FROM = 70;
 
     /** How many blocks run through that trough, and how long one pass takes in ticks. */
     private static final int BLOCKS = 3;
@@ -57,7 +66,7 @@ public final class BootSplashArt {
                             final boolean going) {
         switch (splash) {
             case FRAMES_95 -> frames95(g, font, x, y, w, h, ticks, total, going);
-            case FRAMES_XP -> framesXp(g, font, x, y, w, h, ticks, going);
+            case FRAMES_XP -> framesXp(g, font, x, y, w, h, ticks, total, going);
             case FRAMES_11 -> frames11(g, font, x, y, w, h, ticks, going);
             default -> { }
         }
@@ -79,15 +88,8 @@ public final class BootSplashArt {
         gradient(g, x, y, w, h, SKY_TOP, SKY_BOTTOM);
         clouds(g, x, y, w, h);
 
-        final int mark = Math.max(20, h / 5);
-        final int textW = font.width("Frames") * 2;
-        final int blockW = mark + 6 + textW;
-        final int bx = x + (w - blockW) / 2;
-        final int by = y + h / 2 - mark;
-        FramesEmblem.draw(g, bx, by, mark, "frames_95");
-        g.drawString(font, "Midsoft", bx + mark + 6, by + 2, 0xFFFFFFFF, true);
-        big(g, font, "Frames", bx + mark + 6, by + 12, 0xFFFFFFFF);
-        g.drawString(font, "95", bx + mark + 6 + textW, by + 12, 0xFFF2C14E, true);
+        final int logoY = y + h / 2 - SplashLogos.H / 2 - 8;
+        SplashLogos.draw(g, SplashLogos.FRAMES_95, x + w / 2, logoY);
 
         // The band along the foot, with the bar running through it the way that one ran.
         final int band = Math.max(6, h / 16);
@@ -97,24 +99,26 @@ public final class BootSplashArt {
 
         if (going) {
             g.drawCenteredString(font, "Please wait while your computer shuts down.",
-                    x + w / 2, y + h / 2 + mark, 0xFFFFFFFF);
+                    x + w / 2, logoY + SplashLogos.H + 10, 0xFFFFFFFF);
         }
     }
 
     /** Black, the logo above the middle, the trough beneath it, and the small print at the feet. */
     private static void framesXp(final GuiGraphics g, final Font font, final int x, final int y, final int w,
-                                 final int h, final int ticks, final boolean going) {
+                                 final int h, final int ticks, final int total, final boolean going) {
+        /*
+         * That edition came up in two beats, and the second is the one people remember by name: the logo over
+         * its trough, and then a blue ground with one word on it while the desktop was made ready. A machine
+         * going down skips it, because it was only ever on the way up.
+         */
+        if (!going && total > 0 && ticks >= total * WELCOME_FROM / 100) {
+            welcome(g, font, x, y, w, h);
+            return;
+        }
         g.fill(x, y, x + w, y + h, 0xFF000000);
 
-        final int mark = Math.max(16, h / 7);
-        final int textW = font.width("Frames") * 2;
-        final int blockW = mark + 6 + textW;
-        final int bx = x + (w - blockW) / 2;
-        final int by = y + h / 2 - mark - 10;
-        FramesEmblem.draw(g, bx, by, mark, "frames_xp");
-        g.drawString(font, "Midsoft", bx + mark + 6, by + 2, 0xFFFFFFFF, false);
-        big(g, font, "Frames", bx + mark + 6, by + 12, 0xFFFFFFFF);
-        g.drawString(font, "xp", bx + mark + 6 + textW, by + 12 + 6, 0xFFE08A2E, false);
+        final int logoY = y + h / 2 - SplashLogos.H - 4;
+        SplashLogos.draw(g, SplashLogos.FRAMES_XP, x + w / 2, logoY);
 
         /*
          * The trough with the blocks running left to right and starting over, which is the one thing everybody
@@ -144,26 +148,44 @@ public final class BootSplashArt {
         }
     }
 
+    /** The blue ground with one word on it, which is how that edition ended every start. */
+    private static void welcome(final GuiGraphics g, final Font font, final int x, final int y, final int w,
+                                final int h) {
+        gradient(g, x, y, w, h, WELCOME_TOP, WELCOME_BOTTOM);
+        // The band across the middle the word sits on, lighter than the ground above and below it.
+        final int band = h / 3;
+        gradient(g, x, y + (h - band) / 2, w, band, WELCOME_BAND_TOP, WELCOME_BAND_BOTTOM);
+        g.fill(x, y + (h - band) / 2, x + w, y + (h - band) / 2 + 1, 0xFFDCE8FA);
+        big(g, font, "welcome", x + w / 2, y + h / 2 - 8);
+    }
+
+    /**
+     * One word at three times the font's size, which is the only way to write large with the game's own
+     * letters. It is a word rather than a lockup, so the font is the right thing to draw it with.
+     */
+    private static void big(final GuiGraphics g, final Font font, final String text, final int cx, final int top) {
+        final float scale = 3.0f;
+        g.pose().pushPose();
+        g.pose().translate(cx - font.width(text) * scale / 2.0f, top, 0);
+        g.pose().scale(scale, scale, 1.0f);
+        g.drawString(font, text, 0, 0, 0xFFFFFFFF, false);
+        g.pose().popPose();
+    }
+
     /** Near black, the maker's mark in the middle, and the ring of dots turning below it. */
     private static void frames11(final GuiGraphics g, final Font font, final int x, final int y, final int w,
                                  final int h, final int ticks, final boolean going) {
         g.fill(x, y, x + w, y + h, 0xFF0A0C10);
 
-        final int mark = Math.max(14, h / 9);
-        final int label = font.width("TECHNOLOGIES");
-        final int blockW = mark + 8 + label;
-        final int bx = x + (w - blockW) / 2;
-        final int by = y + h / 2 - mark;
-        FramesEmblem.draw(g, bx, by, mark, "frames_11");
-        big(g, font, "JSC", bx + mark + 8, by, 0xFFE6ECF6);
-        g.drawString(font, "TECHNOLOGIES", bx + mark + 8, by + mark - 6, 0xFF7D8A9C, false);
+        final int logoY = y + h / 2 - SplashLogos.H / 2 - 10;
+        SplashLogos.draw(g, SplashLogos.JSC, x + w / 2, logoY);
 
         /*
          * The ring: every dot is drawn, and the one at the head of the turn is bright while the rest fade back
          * behind it, which is how that spinner reads without anything being drawn between the frames.
          */
         final int cx = x + w / 2;
-        final int cy = y + h / 2 + mark + 22;
+        final int cy = logoY + SplashLogos.H + 20;
         final int radius = 9;
         final int head = ticks * DOTS / TURN_TICKS % DOTS;
         for (int i = 0; i < DOTS; i++) {
@@ -210,16 +232,6 @@ public final class BootSplashArt {
             final int shade = row < 0 ? 0x55FFFFFF : 0x33FFFFFF;
             g.fill(cx - half, cy + row, cx + half, cy + row + 1, shade);
         }
-    }
-
-    /** A word at twice the font's size, which is the only way to write large with the game's own letters. */
-    private static void big(final GuiGraphics g, final Font font, final String text, final int x, final int y,
-                            final int colour) {
-        g.pose().pushPose();
-        g.pose().translate(x, y, 0);
-        g.pose().scale(2.0f, 2.0f, 1.0f);
-        g.drawString(font, text, 0, 0, colour, false);
-        g.pose().popPose();
     }
 
     private static int blend(final int from, final int to, final float t) {

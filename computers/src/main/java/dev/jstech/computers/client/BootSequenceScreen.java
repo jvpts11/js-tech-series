@@ -267,14 +267,11 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
 
     /** The maker's badge in the top right, where a board of that age printed its firmware house's mark. */
     private void renderMakerBadge(final GuiGraphics g, final int x, final int y, final int accent, final int dim) {
-        final String house = Branding.HARDWARE_HOUSE.toUpperCase(Locale.ROOT);
-        final int space = house.indexOf(' ');
-        final String top = space < 0 ? house : house.substring(0, space);
-        final String rest = space < 0 ? "" : house.substring(space + 1);
-        g.drawString(font, top, x + W - 10 - font.width(top), y + 10, accent, false);
-        if (!rest.isEmpty()) {
-            g.drawString(font, rest, x + W - 10 - font.width(rest), y + 20, dim, false);
-        }
+        /*
+         * The badge the boards of that age wore in the corner of their self-test: a framed block, printed on
+         * the board and put on the glass, rather than the house's name set in the machine's own font.
+         */
+        SplashLogos.badge(g, x + W - 10, y + 8);
     }
 
     /** The classic POST wall of text: BIOS banner, memory count, drive detection, boot line. */
@@ -461,22 +458,23 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
     private void renderUefi(final GuiGraphics g, final int x, final int y, final int text, final int dim,
                             final int accent) {
         /*
-         * The maker's name, then the machine's own, then what it is made of on one line. No screen inside the
-         * fiction names the mod, and the machine that is in front of the player is the one it names.
+         * The maker's mark, then the machine's own name, then what it is made of. The mark is a picture rather
+         * than the house's name set in the game's font: it is a lockup with its own lettering, and writing the
+         * words out in one size was the thing that made this screen read as a placeholder. No screen inside the
+         * fiction names the mod, and the machine in front of the player is the one it names.
          */
-        g.drawCenteredString(font, Branding.HARDWARE_HOUSE.toUpperCase(Locale.ROOT), x + W / 2,
-                y + H / 2 - 30, dim);
-        g.drawCenteredString(font, machineTitle(), x + W / 2, y + H / 2 - 18, text);
-        g.drawCenteredString(font, buildSummary(), x + W / 2, y + H / 2 - 6, dim);
+        SplashLogos.draw(g, SplashLogos.JSC, x + W / 2, y + H / 2 - 52);
+        g.drawCenteredString(font, machineTitle(), x + W / 2, y + H / 2 - 8, text);
+        g.drawCenteredString(font, buildSummary(), x + W / 2, y + H / 2 + 4, dim);
         // Progress: a thin bar filling across the POST duration.
         final int barW = 120;
         final int bx = x + (W - barW) / 2;
-        final int by = y + H / 2 + 8;
+        final int by = y + H / 2 + 20;
         g.fill(bx, by, bx + barW, by + 3, 0xFF2A2D3E);
         final int fill = Math.min(barW, barW * ticks / postTicks);
         g.fill(bx, by, bx + fill, by + 3, accent);
         if (completed && bootingFrom().isEmpty()) {
-            int ly = y + H / 2 + 20;
+            int ly = y + H / 2 + 32;
             for (final String line : noBootLines()) {
                 g.drawCenteredString(font, line, x + W / 2, ly, text);
                 ly += 11;

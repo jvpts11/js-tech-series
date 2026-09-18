@@ -112,6 +112,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the system.
 
 ### Changed
+- The marks on a machine's screens are pictures now rather than words set in the game's own font: the maker's
+  on every modern self-test and on the badge an older board wore, and each Frames edition's on its start, its
+  shutdown and the installer that puts it there. A lockup is lettering with weights and a face of its own, and
+  four filled squares with the name typed beside them were the words of it without the thing itself. They are
+  drawn at the size they were made and never scaled, since lettering put through anything but a whole multiple
+  comes out as a smear.
+- Frames XP ends its start the way it did: the logo over its running trough, and then the blue ground with one
+  word on it while the desktop is made ready.
 - A disk carries as many systems as it has room for, rather than one. Installing a second used to write over
   the first, with nothing anywhere saying what had been lost; it is installed beside it now and becomes what
   the disk boots. Every system on a disk takes its own room, so a disk carrying two is charged for two, and
