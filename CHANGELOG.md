@@ -202,6 +202,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   `MAKEOPTS="-j4"` in `/etc/portage/make.conf` makes every later build four jobs wide, up to the cores the
   machine has. `emerge --status` and the notice of a build finished in the background are gone, since nothing
   builds in the background any more.
+- A desktop can be asked for on Gentoo the way its package tree really names it, `emerge --ask
+  kde-plasma/plasma-meta`, `gnome-base/gnome` or `gnome-extra/cinnamon`, and merging one builds everything it
+  is made of, the toolkit first and the desktop itself last, each package through every phase. The short
+  names (`kde-plasma`, `gnome`, `cinnamon`) still work.
 - `wget` fetches from `mirror://mainframe`, the one thing on a world's network there is to fetch from, and
   stamps what it fetched with the world's own clock: the day the world is on and the time of that day
   (`--Day 214 12:00:00--`). A machine with no Mirror on its network is told the host could not be resolved.

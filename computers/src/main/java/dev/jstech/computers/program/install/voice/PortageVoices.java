@@ -160,7 +160,25 @@ public final class PortageVoices {
      */
     public static TtyScript emerge(final List<Merge> merges, final boolean ask, final int jobs,
                                    final Runnable merged) {
+        return emerge(merges, ask, jobs, 0, merged);
+    }
+
+    /**
+     * As {@link #emerge(List, boolean, int, Runnable)}, on a system that has news waiting to be read, which it
+     * mentions before anything else every time it is run until somebody reads them.
+     *
+     * @param news how many items are waiting, none for a system with nothing to say
+     */
+    public static TtyScript emerge(final List<Merge> merges, final boolean ask, final int jobs, final int news,
+                                   final Runnable merged) {
         final TtyScript.Builder script = TtyScript.script();
+        if (news > 0) {
+            script.say("")
+                    .say(Tint.line(Tint.star(), Tint.yellow("IMPORTANT:"),
+                            " " + news + " news items need reading for repository"))
+                    .say(Tint.line(Tint.star(), "'gentoo'. Use ", Tint.green("eselect news read"),
+                            " to view new items."));
+        }
         if (ask) {
             script.say("")
                     .say(Tint.line(Tint.green("These are the packages that would be merged, in order:")))
@@ -251,26 +269,14 @@ public final class PortageVoices {
         final String unpackedAs = merge.archive().replaceAll("\\.tar\\..*$", "");
         final String source = merge.work() + "/" + unpackedAs;
         final String image = merge.work().replace("/work", "/image");
-        final double seconds = Math.max(1, merge.fetchTicks()) / 20.0;
         script.say("")
                 .say(Tint.line(Tint.arrows(), " Emerging (", Tint.yellow(String.valueOf(at)), " of ",
                         Tint.yellow(String.valueOf(of)), ") ", Tint.green(full), "::gentoo"))
-                .pause(6)
-                .say(Tint.line(Tint.arrows(), " Downloading '" + FetchVoice.MIRROR + "/distfiles/" + merge.archive()
-                        + "'"))
-                .redraw(merge.fetchTicks(), p -> Bars.fetch(merge.archive(), p, merge.sizeMb(),
-                        merge.sizeMb() / seconds, seconds))
-                .say(Bars.ok(merge.archive() + " BLAKE2B SHA512 size ;-) ..."))
-                .pause(5)
-                .say(Tint.line(Tint.arrows(), " Unpacking source..."))
-                .say(Tint.line(Tint.arrows(), " Unpacking " + merge.archive() + " to " + merge.work()))
-                .pause((int) Math.min(52, 8 + merge.sizeMb() * 0.28))
-                .say(Tint.line(Tint.arrows(), " Source unpacked in " + merge.work()))
-                .say(Tint.line(Tint.arrows(), " Preparing source in " + source + " ..."))
-                .pause(7)
-                .say(Bars.ok("Applying " + unpackedAs + "-gentoo-patchset.patch ..."))
-                .pause(4)
-                .say(Tint.line(Tint.arrows(), " Source prepared."));
+                .pause(6);
+        /* A package that is only a list of others has no source of its own to fetch, unpack or patch. */
+        if (!merge.archive().isEmpty()) {
+            fetched(script, merge, source, unpackedAs);
+        }
         if (merge.buildTicks() > 0) {
             built(script, merge, source, jobs);
         }
@@ -301,6 +307,27 @@ public final class PortageVoices {
                 .say(Tint.line(Tint.arrows(), " Completed (", Tint.yellow(String.valueOf(at)), " of ",
                         Tint.yellow(String.valueOf(of)), ") ", Tint.green(full), "::gentoo"))
                 .pause(6);
+    }
+
+    /** The source coming down the wire, checked, unpacked and patched, which every package with a source does. */
+    private static void fetched(final TtyScript.Builder script, final Merge merge, final String source,
+                                final String unpackedAs) {
+        final double seconds = Math.max(1, merge.fetchTicks()) / 20.0;
+        script.say(Tint.line(Tint.arrows(), " Downloading '" + FetchVoice.MIRROR + "/distfiles/" + merge.archive()
+                        + "'"))
+                .redraw(merge.fetchTicks(), p -> Bars.fetch(merge.archive(), p, merge.sizeMb(),
+                        merge.sizeMb() / seconds, seconds))
+                .say(Bars.ok(merge.archive() + " BLAKE2B SHA512 size ;-) ..."))
+                .pause(5)
+                .say(Tint.line(Tint.arrows(), " Unpacking source..."))
+                .say(Tint.line(Tint.arrows(), " Unpacking " + merge.archive() + " to " + merge.work()))
+                .pause((int) Math.min(52, 8 + merge.sizeMb() * 0.28))
+                .say(Tint.line(Tint.arrows(), " Source unpacked in " + merge.work()))
+                .say(Tint.line(Tint.arrows(), " Preparing source in " + source + " ..."))
+                .pause(7)
+                .say(Bars.ok("Applying " + unpackedAs + "-gentoo-patchset.patch ..."))
+                .pause(4)
+                .say(Tint.line(Tint.arrows(), " Source prepared."));
     }
 
     /** The configure page and the compile, which is where a build's time goes. */

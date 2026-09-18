@@ -8,31 +8,26 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.os.IOsHost;
-import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
-import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.install.SetupTiming;
 import dev.jstech.computers.program.install.MakeOpts;
 import dev.jstech.computers.program.install.voice.PortageVoices;
 import dev.jstech.computers.program.tty.TtyScript;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * A package built from source on a machine whose system builds what it installs.
  *
  * <p>It is the same merge the installer of that system runs, in the same words, because it is the same tool:
  * the dependencies worked out, the source fetched, and then every phase of the build with the compiler's lines
- * going by, for as long as this machine takes over it. How long that is comes from the machine. The source is
- * as big as the program is, the fetch is as long as that is over the machine's connection, and the compile is
- * work got through at the rate the processor manages with as many of its cores as the build options let it
- * use, which a system left as it was installed has set to one.
+ * going by, for as long as this machine takes over it. How long that is comes from the machine. Each source is
+ * fetched for as long as it is big over the machine's connection, and the compile is work got through at the
+ * rate the processor manages with as many of its cores as the build options let it use, which a system left
+ * as it was installed has set to one.
  */
 final class SourceBuild {
-
-    /** How much of a program's installed size its source comes to, the usual kind of estimate. */
-    private static final double SOURCE_SHARE = 0.25;
 
     /** No build is quicker than this or slower than that, however the machine was built. */
     private static final long LEAST_SECONDS = 5L;
@@ -41,25 +36,38 @@ final class SourceBuild {
     /** The smallest program still counts as this much to compile, since none of it is nothing. */
     private static final long LEAST_WORK_MB = 16L;
 
+    /** How many items of news such a system has waiting, which it mentions every time until they are read. */
+    private static final int NEWS_WAITING = 2;
+
     private SourceBuild() {
     }
 
     /**
-     * The merge of one program on that machine.
+     * The merge of one program on that machine, with whatever has to be built before it.
      *
      * @param ask    whether to list what would be merged and ask before merging it
      * @param merged what having it merged means to the machine, done when the build ends and not before
      */
     static TtyScript of(final ProgramSpec spec, final IOsHost host, final boolean ask, final Runnable merged) {
         final int jobs = jobs(host);
-        final double sourceMb = Math.max(1.0, spec.minDiskMb() * SOURCE_SHARE);
-        final String name = spec.commandName().toLowerCase(Locale.ROOT);
-        final String version = ProgramVersions.of(spec.id());
-        final PortageVoices.Merge merge = new PortageVoices.Merge(category(spec.kind()) + "/" + name, version, "",
-                name + "-" + version + ".tar.xz", sourceMb, "nls", "-debug",
-                SetupTiming.networkTicks((int) Math.ceil(sourceMb), false, SetupTiming.eraFactor(host.installedEra())),
-                buildTicks(spec, host.maxCpuMhz(), jobs));
-        return PortageVoices.emerge(List.of(merge), ask, jobs, merged);
+        final int factor = SetupTiming.eraFactor(host.installedEra());
+        final List<SourceChains.Link> chain = SourceChains.of(spec);
+        double compiled = 0.0;
+        for (final SourceChains.Link link : chain) {
+            compiled += link.compiles() ? link.sizeMb() : 0.0;
+        }
+        /* The whole build is as long as the program is big; each package has the share of it its source is. */
+        final int whole = buildTicks(spec, host.maxCpuMhz(), jobs);
+        final List<PortageVoices.Merge> merges = new ArrayList<>(chain.size());
+        for (final SourceChains.Link link : chain) {
+            final int build = link.compiles() && compiled > 0.0
+                    ? Math.max(20, (int) Math.round(whole * link.sizeMb() / compiled)) : 0;
+            final int fetch = link.archive().isEmpty() ? 0
+                    : SetupTiming.networkTicks((int) Math.ceil(link.sizeMb()), false, factor);
+            merges.add(new PortageVoices.Merge(link.atom(), link.version(), "", link.archive(), link.sizeMb(),
+                    link.flagsOn(), link.flagsOff(), fetch, build));
+        }
+        return PortageVoices.emerge(merges, ask, jobs, NEWS_WAITING, merged);
     }
 
     /**
@@ -80,15 +88,5 @@ final class SourceBuild {
         final long work = Math.max(LEAST_WORK_MB, spec.minDiskMb()) * 1_000L;
         final long seconds = work / Math.max(100, mhz) / Math.max(1, jobs);
         return (int) (Math.max(LEAST_SECONDS, Math.min(MOST_SECONDS, seconds)) * SetupTiming.TICKS_PER_SECOND);
-    }
-
-    /** Where the package tree files a program of that kind, near enough. */
-    private static String category(final ProgramKind kind) {
-        return switch (kind) {
-            case APP -> "app-misc";
-            case SERVICE -> "net-misc";
-            case HYBRID -> "app-admin";
-            case DESKTOP_ENVIRONMENT -> "x11-wm";
-        };
     }
 }

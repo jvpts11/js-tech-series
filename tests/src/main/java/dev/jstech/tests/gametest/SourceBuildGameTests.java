@@ -145,6 +145,39 @@ public final class SourceBuildGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * A desktop is asked for the way the package tree really names it, and what is built is everything it is
+     * made of: the toolkit, the frameworks and its own pieces, one after another, with the desktop there at the
+     * end of the last of them.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 4_000)
+    public static void emerge_aDesktopByItsRealName_buildsWhatItIsMadeOfAndIsThereAtTheEnd(
+            final GameTestHelper helper) {
+        final MainframeBlockEntity machine = gentooMachine(helper, new BlockPos(2, 2, 2));
+        final TerminalAt term = new TerminalAt(machine, helper.getLevel());
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    machine.installMirror();
+                    // Every core it has, or the test sits through two minutes of one of them compiling a toolkit.
+                    final ItemStack disk = machine.systemDisk();
+                    final FilesystemContents was =
+                            disk.getOrDefault(ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+                    disk.set(ComputingModule.FILESYSTEM.get(), was.withDir("/etc").withDir("/etc/portage")
+                            .with(new StoredFile(MakeOpts.PATH, FileType.CFG, "MAKEOPTS=\"-j6\"")));
+                    helper.assertTrue(term.type("emerge no-such-category/no-such-thing").contains("unable to locate"),
+                            "a name the tree does not have is not found");
+                    term.type("emerge --ask kde-plasma/plasma-meta");
+                    helper.assertTrue(term.busy(), "the desktop's own name in the tree is one it knows");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(term.asking().contains("Would you like to merge"),
+                        "it lists what it would merge and then asks: " + term.asking()))
+                .thenExecute(() -> term.type("y"))
+                .thenWaitUntil(() -> helper.assertFalse(term.busy(), "the desktop is still building"))
+                .thenExecute(() -> helper.assertTrue(machine.console().isInstalled("jsc:kde_plasma"),
+                        "and the desktop is on the machine once the last of it is merged"))
+                .thenSucceed();
+    }
+
     /** A running machine whose system builds what it installs. */
     private static MainframeBlockEntity gentooMachine(final GameTestHelper helper, final BlockPos where) {
         helper.setBlock(where, ComputingModule.MAINFRAME.get());

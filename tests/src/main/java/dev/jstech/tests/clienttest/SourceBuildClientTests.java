@@ -41,9 +41,49 @@ public final class SourceBuildClientTests {
     private SourceBuildClientTests() {
     }
 
+    /**
+     * A desktop asked for by its real name lists everything it is made of before it asks, and told no it
+     * leaves without building any of it.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void emerge_listsWhatADesktopIsMadeOfAndLeavesWhenToldNo(final ClientTestContext ctx) {
+        atTheGentooPrompt(ctx)
+                .then(SETTLE, () -> ctx.type("emerge --ask kde-plasma/plasma-meta"))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .thenWaitUntil(() -> said(ctx, "Total: 6 packages"), SCREEN_WAIT * 3,
+                        "the manager to list the six packages a desktop comes to")
+                .thenScreenshot(2, "emerge-desktop-asks")
+                .thenAssert(0, () -> said(ctx, "dev-qt/qtbase-6.7.3") && said(ctx, "kde-plasma/plasma-meta-6.1.5"),
+                        "the toolkit is first and the desktop itself is last")
+                .then(1, () -> ctx.type("n"))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .thenWaitUntil(() -> said(ctx, "Quitting."), SCREEN_WAIT, "the manager to say it is leaving")
+                .thenWaitUntilServer(level -> !machine(ctx, level).console().foreground().running(), SCREEN_WAIT,
+                        "the terminal to be the shell's again", level -> "still held")
+                .thenScreenshot(2, "emerge-desktop-told-no");
+    }
+
     @ClientTest(timeoutTicks = 3600)
     public static void emerge_printsWhileItBuildsAndGivesThePromptBack(final ClientTestContext ctx) {
-        ctx.thenBuild(0, world -> {
+        atTheGentooPrompt(ctx)
+                .then(SETTLE, () -> ctx.type("emerge --ask mines"))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                // The question itself stands where the prompt would, so what is waited for is the list above it.
+                .thenWaitUntil(() -> said(ctx, "Total: 1 package"), SCREEN_WAIT * 2,
+                        "the manager to list what it would merge and ask")
+                .thenScreenshot(2, "emerge-asks")
+                .then(1, () -> ctx.type("y"))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .thenWaitUntil(() -> said(ctx, "Compiling source"), BUILD_WAIT, "the compile to be under way")
+                .thenScreenshot(30, "emerge-compiling")
+                .thenWaitUntilServer(level -> machine(ctx, level).console().isInstalled("jsc:minesweeper"),
+                        BUILD_WAIT, "the program to be on the machine", level -> "still building")
+                .thenScreenshot(10, "emerge-merged");
+    }
+
+    /** A machine running a system that builds what it installs, with the player at its prompt. */
+    private static ClientTestContext atTheGentooPrompt(final ClientTestContext ctx) {
+        return ctx.thenBuild(0, world -> {
                     /*
                      * Built by hand rather than from the usual fixture, which puts the network's own system on
                      * the disk: a machine with two systems stops at its boot manager to be asked which.
@@ -67,20 +107,7 @@ public final class SourceBuildClientTests {
                 })
                 .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
                 .thenRightClick(SETTLE, MONITOR)
-                .thenAwaitScreen(CommandPromptScreen.class, BOOT_WAIT)
-                .then(SETTLE, () -> ctx.type("emerge --ask mines"))
-                .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
-                // The question itself stands where the prompt would, so what is waited for is the list above it.
-                .thenWaitUntil(() -> said(ctx, "Total: 1 package"), SCREEN_WAIT * 2,
-                        "the manager to list what it would merge and ask")
-                .thenScreenshot(2, "emerge-asks")
-                .then(1, () -> ctx.type("y"))
-                .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
-                .thenWaitUntil(() -> said(ctx, "Compiling source"), BUILD_WAIT, "the compile to be under way")
-                .thenScreenshot(30, "emerge-compiling")
-                .thenWaitUntilServer(level -> machine(ctx, level).console().isInstalled("jsc:minesweeper"),
-                        BUILD_WAIT, "the program to be on the machine", level -> "still building")
-                .thenScreenshot(10, "emerge-merged");
+                .thenAwaitScreen(CommandPromptScreen.class, BOOT_WAIT);
     }
 
     private static boolean said(final ClientTestContext ctx, final String what) {

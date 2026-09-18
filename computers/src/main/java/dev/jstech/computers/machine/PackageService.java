@@ -387,12 +387,19 @@ public final class PackageService {
         return null;
     }
 
-    /** The program the Mirror offers this machine under that name, or null when it offers none. */
+    /**
+     * The program the Mirror offers this machine under that name, or null when it offers none.
+     *
+     * <p>A system with a package tree also knows its programs by their place in it, so a desktop can be asked
+     * for there the way it really is, by its category and its name.
+     */
     @Nullable
     private ProgramSpec offeredAs(final String wanted) {
+        final boolean hasATree = this.manager().compilesFromSource();
         for (final ProgramSpec candidate : this.offered()) {
             if (candidate.commandName().equalsIgnoreCase(wanted)
-                    || candidate.id().getPath().equalsIgnoreCase(wanted)) {
+                    || candidate.id().getPath().equalsIgnoreCase(wanted)
+                    || (hasATree && SourceChains.names(wanted, candidate))) {
                 return candidate;
             }
         }
