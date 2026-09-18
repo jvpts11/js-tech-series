@@ -25,7 +25,10 @@ import dev.jstech.computers.client.term.TermPainter;
 import dev.jstech.computers.client.term.TermPalette;
 import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.gui.term.TermRow;
+import dev.jstech.computers.operation.payload.TerminalKeyboard;
 import dev.jstech.computers.operation.payload.WireLine;
+import dev.jstech.computers.operation.payload.program.DesktopShellPayloads;
+import dev.jstech.computers.operation.payload.program.TerminalTools;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
@@ -33,11 +36,15 @@ import dev.jstech.core.gui.Phosphor;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.HashMap;
 import java.util.Set;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.util.FormattedCharSequence;
+import org.lwjgl.glfw.GLFW;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -86,6 +93,17 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
     /** How much smaller than the game's own the text is drawn, worked out from the room the glass has. */
     private float textScale = TEXT_SCALE;
+
+    /** Who has the keyboard: the prompt, or a tool the machine is running in front of it. */
+    private TerminalKeyboard keyboard = TerminalKeyboard.PROMPT;
+
+    /**
+     * Whether the tool in front has printed a line on this glass yet.
+     *
+     * <p>A bar redraws the line it is on. A monitor opened half way through a fetch has no such line, so the
+     * first thing it is sent goes under what is there rather than over it.
+     */
+    private boolean toolSpoke;
     /** Whether the machine's identity line has been added, so a late init reply adds it only once. */
     private boolean identityShown;
     private final List<String> history = new ArrayList<>();
@@ -278,12 +296,27 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         boolean over = payload.replaceLast();
         for (final WireLine line : payload.lines()) {
             final CliLine said = line.toLine();
-            if (over) {
+            if (over || (line.over() && toolSpoke)) {
                 scrollback.replaceLast(said);
                 over = false;
             } else {
                 scrollback.push(said);
             }
+            toolSpoke = toolSpoke || payload.keyboard().busy();
+        }
+        keyboard = payload.keyboard();
+        if (!keyboard.busy()) {
+            toolSpoke = false;
+        }
+        if (input != null) {
+            /*
+             * An answer asked for unseen is typed and never drawn, not even as dots, which is how the tools
+             * that ask for one have always taken it.
+             */
+            input.setFormatter(keyboard.asking() && keyboard.unseen()
+                    ? (text, at) -> FormattedCharSequence.EMPTY
+                    : (text, at) -> FormattedCharSequence.forward(text, Style.EMPTY));
+            reflowInput();
         }
         // An empty prompt means "unchanged"; otherwise track the new current directory.
         if (!payload.prompt().isEmpty()) {
@@ -336,6 +369,19 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         final String line = input.getValue().trim();
         input.setValue("");
         historyIndex = -1;
+        if (keyboard.busy()) {
+            /*
+             * A tool is in front. It is typed at only when it has asked, and what is typed is not echoed
+             * here: the machine prints the question with its answer for every terminal looking at it, and
+             * the question alone when the answer was not for showing.
+             */
+            if (keyboard.asking()) {
+                scrollOffset = 0;
+                PacketDistributor.sendToServer(new RunCommandPayload(menu.monitorPos(), menu.hostPos(),
+                        line.isEmpty() ? TerminalTools.ENTER : line));
+            }
+            return;
+        }
         push(prompt() + " " + line, CliStyle.PROMPT);
         if (line.isEmpty()) {
             return;
@@ -428,7 +474,9 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             }
         }
 
-        JsTechTheme.textS(g, font, "ENTER run    UP/DOWN history    wheel scroll    ESC close",
+        JsTechTheme.textS(g, font, keyboard.busy()
+                        ? "CTRL+C interrupt    wheel scroll    ESC close"
+                        : "ENTER run    UP/DOWN history    wheel scroll    ESC close",
                 10, imageHeight - 7, JsTechTheme.dim());
     }
 
@@ -464,6 +512,24 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             submit();
             return true;
         }
+        if (keyboard.busy()) {
+            /*
+             * A tool has the terminal, and the one thing the terminal itself still understands is Ctrl+C.
+             * History, completion and the rest belong to a prompt that is not there.
+             */
+            if (key == InputConstants.KEY_C && (mods & GLFW.GLFW_MOD_CONTROL) != 0) {
+                PacketDistributor.sendToServer(new RunCommandPayload(menu.monitorPos(), menu.hostPos(),
+                        DesktopShellPayloads.INTERRUPT));
+                return true;
+            }
+            if (key != 256) {
+                // The line being typed is only there to be edited when the tool has asked for one.
+                if (keyboard.asking() && input != null) {
+                    input.keyPressed(key, scan, mods);
+                }
+                return true;
+            }
+        }
         if (key == 258) { // Tab: complete the command word
             complete();
             return true;
@@ -495,6 +561,10 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     public boolean charTyped(final char c, final int mods) {
         if (this.editor != null) {
             return this.editor.charTyped(c);
+        }
+        // A tool that is working and has asked nothing is not reading the keyboard.
+        if (keyboard.busy() && !keyboard.asking()) {
+            return true;
         }
         return input != null && input.charTyped(c, mods);
     }
@@ -708,6 +778,16 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
     /** The shell prompt: the server-synced prompt for MC-DOS and Linux (drive/directory aware), the jsc prompt otherwise. */
     private String prompt() {
+        /*
+         * A tool in front has the glass. When it has stopped to ask, its question stands where the prompt
+         * would; while it is simply working there is nothing there at all, as at a real terminal.
+         */
+        if (keyboard.asking()) {
+            return keyboard.question().text().stripTrailing();
+        }
+        if (keyboard.busy()) {
+            return "";
+        }
         if (menu.posixShell()) {
             return dosPrompt.equals("C:\\>") ? initialPosixPrompt() : dosPrompt;
         }

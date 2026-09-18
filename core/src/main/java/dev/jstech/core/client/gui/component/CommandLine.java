@@ -14,6 +14,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
@@ -39,11 +40,33 @@ public final class CommandLine extends UiComponent {
     private IntSupplier idleColor = () -> PROMPT;
     private int background = BACKGROUND;
     private int textColor = PROMPT;
+    private BooleanSupplier unseen = () -> false;
+    private BooleanSupplier takesNothing = () -> false;
 
     public CommandLine(final int maxLength, final Consumer<String> onSubmit) {
         this.maxLength = Math.max(1, maxLength);
         this.onSubmit = onSubmit;
         this.input = new TextEditState(this.maxLength);
+    }
+
+    /**
+     * Whether what is typed is kept off the line, the way a password is: taken, and never drawn, not even as
+     * dots, and never kept for the arrow keys to bring back.
+     */
+    public CommandLine setUnseen(final BooleanSupplier value) {
+        unseen = value;
+        return this;
+    }
+
+    /**
+     * Whether Enter on an empty line is an answer in its own right.
+     *
+     * <p>At a shell it is not, and nothing is sent. At a question it usually is: it takes the default, which
+     * is how most of a partition editor's questions are meant to be answered.
+     */
+    public CommandLine setTakesNothing(final BooleanSupplier value) {
+        takesNothing = value;
+        return this;
     }
 
     /** The line shown instead of an empty prompt, with its colour; empty text shows the prompt. */
@@ -93,8 +116,9 @@ public final class CommandLine extends UiComponent {
          * The caret takes the room of one character so the line can be scrolled to keep it in view even
          * when it sits at the very end, which is where it is most of the time.
          */
-        final String full = prompt.get() + " " + input.edit() + " ";
-        final int caretAt = prompt.get().length() + 1 + input.caret();
+        final boolean hidden = unseen.getAsBoolean();
+        final String full = prompt.get() + " " + (hidden ? "" : input.edit()) + " ";
+        final int caretAt = prompt.get().length() + 1 + (hidden ? 0 : input.caret());
         final String shown = Texts.tail(ctx.font(), full, width() - 6);
         final int dropped = full.length() - shown.length();
         g.drawString(ctx.font(), shown, x() + 3, y() + 2, textColor, false);
@@ -158,10 +182,12 @@ public final class CommandLine extends UiComponent {
         final String line = input.edit().trim();
         input.sync("");
         historyIndex = -1;
-        if (line.isEmpty()) {
+        if (line.isEmpty() && !takesNothing.getAsBoolean()) {
             return;
         }
-        if (history.isEmpty() || !history.get(history.size() - 1).equals(line)) {
+        // Neither an empty answer nor one that was not for showing is something to bring back later.
+        if (!line.isEmpty() && !unseen.getAsBoolean()
+                && (history.isEmpty() || !history.get(history.size() - 1).equals(line))) {
             history.add(line);
         }
         onSubmit.accept(line);

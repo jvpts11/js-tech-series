@@ -107,6 +107,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     private final Viewers viewers = new Viewers(this.worldPosition);
     /** What it sends them: the windows its programs have open, and what those programs print. */
     private final ClientReplication replication = new ClientReplication(this);
+    /** What moves the tool in front of its terminal along, and sends what that tool prints. */
+    private final TerminalFeed terminalFeed = new TerminalFeed(this);
 
     /** The name a player gave this computer: the machine's own, and no part's. */
     private String computerName = "";
@@ -828,6 +830,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     /** Tells every console open on this computer how a source build is coming along. */
     public void tickBuildProgress(final ServerLevel level) {
         replication.pushBuildProgress(level);
+        terminalFeed.tick(level);
     }
 
     /**

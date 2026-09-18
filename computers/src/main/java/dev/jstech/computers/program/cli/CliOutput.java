@@ -7,8 +7,10 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.program.tty.ITtyProcess;
 import java.util.ArrayList;
 import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The buffer a command writes its result into. Style helpers keep command code terse and consistent ({@code out.ok(...)}, {@code out.error(...)}), and {@link #row} formats a two-column line so listings line up in the monospace console.
@@ -17,6 +19,9 @@ public final class CliOutput {
 
     private final List<CliLine> lines = new ArrayList<>();
     private final int width;
+
+    /** The tool this command left running in front of the terminal, if it left one. */
+    private ITtyProcess started;
 
     public CliOutput() {
         this(52);
@@ -27,6 +32,27 @@ public final class CliOutput {
      */
     public CliOutput(final int width) {
         this.width = Math.max(16, width);
+    }
+
+    /** How many columns the terminal has, which a tool that sizes a bar or a table to it has to be told. */
+    public int width() {
+        return this.width;
+    }
+
+    /**
+     * Leaves a tool running in front of the terminal.
+     *
+     * <p>What the command printed before this is printed first, and then the prompt stays away until the tool
+     * is over: what it prints arrives while it works, what is typed goes to it, and Ctrl+C stops it.
+     */
+    public void start(final ITtyProcess tool) {
+        this.started = tool;
+    }
+
+    /** The tool this command left running, or null for the nearly-all that simply answer. */
+    @Nullable
+    public ITtyProcess started() {
+        return this.started;
     }
 
     public void line(final String text) {

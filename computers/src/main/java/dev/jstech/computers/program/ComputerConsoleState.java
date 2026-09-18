@@ -175,6 +175,17 @@ public final class ComputerConsoleState {
         this.liveInstall = null;
     }
 
+    /*
+     * The tool running in front of this machine's terminal, if one is: a fetch, an unpack, a compile. Kept
+     * apart from this class because it is a thing of its own, with its own rules about what is written down.
+     */
+    private final TerminalForeground foreground = new TerminalForeground();
+
+    /** What is running in front of the terminal, which may be nothing. */
+    public TerminalForeground foreground() {
+        return this.foreground;
+    }
+
     /** Which run of this machine is on the glass. */
     public long session() {
         return this.session;
@@ -183,6 +194,8 @@ public final class ComputerConsoleState {
     /** The machine started over: whatever a terminal printed belongs to the run that has just ended. */
     public void newSession() {
         this.session++;
+        /* Whatever was running in front of it went down with the machine, unfinished. */
+        this.foreground.clear();
     }
 
     /*
@@ -509,6 +522,11 @@ public final class ComputerConsoleState {
         if (liveInstall != null) {
             tag.putString("LiveInstall", liveInstall.serialize());
         }
+        if (foreground.running()) {
+            final CompoundTag front = new CompoundTag();
+            foreground.save(front);
+            tag.put("Foreground", front);
+        }
         if (!wallpaper.isEmpty()) {
             tag.putString("Wallpaper", wallpaper);
         }
@@ -622,6 +640,7 @@ public final class ComputerConsoleState {
                 ? LiveInstallState.deserialize(
                         tag.getString("LiveInstall"))
                 : null;
+        foreground.load(tag.getCompound("Foreground"));
         pendingBuilds.clear();
         if (tag.contains("PendingBuilds")) {
             final CompoundTag builds = tag.getCompound("PendingBuilds");

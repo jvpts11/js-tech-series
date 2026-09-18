@@ -28,7 +28,7 @@ import net.minecraft.network.codec.StreamCodec;
  * does not arrive truncated, it fails the whole packet, and a line too long to send is a line that should
  * have been wrapped long before it got here.
  */
-public record WireLine(List<Span> spans) {
+public record WireLine(List<Span> spans, boolean over) {
 
     /** The most one line carries, in characters, across all of its runs. */
     public static final int MAX_TEXT = 512;
@@ -37,24 +37,38 @@ public record WireLine(List<Span> spans) {
     public static final int MAX_SPANS = 48;
 
     public static final StreamCodec<RegistryFriendlyByteBuf, WireLine> STREAM_CODEC =
-            Span.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_SPANS)).map(WireLine::new, WireLine::spans);
+            StreamCodec.composite(
+                    Span.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_SPANS)), WireLine::spans,
+                    ByteBufCodecs.BOOL, WireLine::over,
+                    WireLine::new);
 
+    /**
+     * @param over whether the line is drawn over the one before it rather than under it, which is how a bar
+     *             grows where it stands; said of each line, since a tool can print a line, redraw a bar and
+     *             print another line all in one tick
+     */
     public WireLine {
         spans = fitted(spans);
     }
 
+    /** A line under everything before it. */
+    public WireLine(final List<Span> spans) {
+        this(spans, false);
+    }
+
     /** A line that is one run in one colour. */
     public WireLine(final String text, final int style) {
-        this(List.of(new Span(text == null ? "" : text, style)));
+        this(List.of(new Span(text == null ? "" : text, style)), false);
     }
 
     /** The line a command wrote, as it goes on the wire. */
     public static WireLine of(final CliLine line) {
-        final List<Span> out = new ArrayList<>(line.spans().size());
-        for (final CliSpan span : line.spans()) {
-            out.add(new Span(span.text(), span.style().id()));
-        }
-        return new WireLine(out);
+        return new WireLine(spansOf(line), false);
+    }
+
+    /** The same line drawn again, changed, over the one before it. */
+    public static WireLine over(final CliLine line) {
+        return new WireLine(spansOf(line), true);
     }
 
     /** The line as a terminal keeps it, its styles looked up again from their ids. */
@@ -81,6 +95,14 @@ public record WireLine(List<Span> spans) {
     /** The colour the line opens in, which for a line of one run is simply its colour. */
     public int style() {
         return this.spans.isEmpty() ? 0 : this.spans.getFirst().style();
+    }
+
+    private static List<Span> spansOf(final CliLine line) {
+        final List<Span> out = new ArrayList<>(line.spans().size());
+        for (final CliSpan span : line.spans()) {
+            out.add(new Span(span.text(), span.style().id()));
+        }
+        return out;
     }
 
     /** The runs cut to what the wire takes: no more of them than it allows, and no more text between them. */

@@ -15,6 +15,7 @@ import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
+import dev.jstech.computers.operation.payload.TerminalKeyboard;
 import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.install.SetupRunner;
@@ -65,6 +66,7 @@ public final class DesktopShellPayloads {
         final List<WireLine> wire = new ArrayList<>();
         boolean clear = false;
         boolean busy = false;
+        TerminalKeyboard keyboard = TerminalKeyboard.PROMPT;
         String prompt = "C:\\>";
         /* Set when the command was one that gives the terminal to an editor. */
         CliShell.HandOver handOver = null;
@@ -84,6 +86,16 @@ public final class DesktopShellPayloads {
                 PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(false, busy,
                         SshTerminal.prompt(computer, computer),
                         wire, payload.session()));
+                return;
+            }
+            /*
+             * A tool is in front of the terminal: what is typed is the tool's, not the shell's. Sent to every
+             * window rather than the one that typed, since a tool at a machine's console is in all of them.
+             */
+            final TerminalTools.Turn turn = TerminalTools.typed(host, level, payload.line());
+            if (turn != null) {
+                PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(
+                        turn.ended() ? SshTerminal.prompt(computer, computer) : "", turn.lines(), turn.keyboard()));
                 return;
             }
             /*
@@ -134,6 +146,17 @@ public final class DesktopShellPayloads {
              */
             busy = computer.foreground() != null;
             /*
+             * Or one that leaves a tool running in front of it, which says first whatever it has to say at
+             * once; the rest arrives from the machine's own tick.
+             */
+            if (response.started() != null) {
+                final TerminalTools.Turn opening =
+                        TerminalTools.started(host, level, payload.line(), response.started());
+                wire.addAll(opening.lines());
+                keyboard = opening.keyboard();
+                busy = busy || keyboard.busy();
+            }
+            /*
              * The reboot verbs work from the desktop's terminal window too: the desktop closes and the
              * monitor either replays the POST (plain reboot) or enters the firmware setup.
              */
@@ -173,7 +196,7 @@ public final class DesktopShellPayloads {
         }
         PacketDistributor.sendToPlayer(player, new DesktopShellOutputPayload(clear, busy, prompt, wire,
                 handOver == null ? "" : handOver.editor(),
-                handOver == null ? "" : handOver.path(), payload.session()));
+                handOver == null ? "" : handOver.path(), payload.session(), false, false, keyboard));
     }
 
     /**

@@ -16,6 +16,7 @@ import dev.jstech.computers.operation.payload.CommandOutputPayload;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.operation.payload.ConsoleInitPayload;
+import dev.jstech.computers.operation.payload.TerminalKeyboard;
 import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.RequestConsoleInitPayload;
@@ -93,6 +94,17 @@ public final class ConsolePayloads {
             notListening(player);
             return;
         }
+        /*
+         * A tool is in front of the terminal: what is typed is the tool's, not the shell's. Its question is
+         * answered, Ctrl+C stops it, and anything else goes nowhere, as it would at a real terminal.
+         */
+        final TerminalTools.Turn turn = TerminalTools.typed(host, level, payload.line());
+        if (turn != null) {
+            final var here = new ServerCliComputer(host, level);
+            PacketDistributor.sendToPlayer(player, new CommandOutputPayload(
+                    turn.ended() ? SshTerminal.prompt(here, here) : "", turn.lines(), turn.keyboard()));
+            return;
+        }
         // "run/open <program>" launches another installed program from the prompt.
         final String[] parts = payload.line().trim().split("\\s+", 2);
         if (parts.length == 2 && (parts[0].equalsIgnoreCase("run") || parts[0].equalsIgnoreCase("open"))) {
@@ -127,9 +139,19 @@ public final class ConsolePayloads {
         }
         final String prompt = SshTerminal.prompt(localComputer, computer);
         final var handOver = response.handOver();
+        /*
+         * The command may have left a tool running, in which case the prompt does not come back with this
+         * reply: what the tool says first goes out with it, and the rest arrives from the machine's own tick.
+         */
+        TerminalKeyboard keyboard = TerminalKeyboard.PROMPT;
+        if (response.started() != null) {
+            final TerminalTools.Turn opening = TerminalTools.started(host, level, payload.line(), response.started());
+            wire.addAll(opening.lines());
+            keyboard = opening.keyboard();
+        }
         PacketDistributor.sendToPlayer(player, new CommandOutputPayload(response.clearScreen(), prompt, wire,
                 handOver == null ? "" : handOver.editor(),
-                handOver == null ? "" : handOver.path()));
+                handOver == null ? "" : handOver.path(), false, keyboard));
         if (computer.firmwareRebootRequested()) {
             // "reboot --firmware": leave the terminal and enter the boot manager on the same monitor.
             player.closeContainer();
@@ -312,6 +334,14 @@ public final class ConsolePayloads {
         PacketDistributor.sendToPlayer(player, new ConsoleInitPayload(
                 ((BlockEntity) host).getBlockPos(),
                 List.copyOf(history), commands, devices));
+        /*
+         * A monitor opened while a tool is in front has to be told so, or it would show a prompt the machine
+         * is not going to read from: the fetch would go on scrolling past a terminal that looked idle.
+         */
+        final TerminalKeyboard keyboard = TerminalTools.keyboardOf(host.console());
+        if (keyboard.busy()) {
+            PacketDistributor.sendToPlayer(player, new CommandOutputPayload("", List.of(), keyboard));
+        }
     }
 
     private static void handleConsoleInit(final ConsoleInitPayload payload, final Player player) {

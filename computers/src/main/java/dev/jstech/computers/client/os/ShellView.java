@@ -16,8 +16,10 @@ import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
+import dev.jstech.computers.operation.payload.TerminalKeyboard;
 import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.operation.payload.program.DesktopShellPayloads;
+import dev.jstech.computers.operation.payload.program.TerminalTools;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.program.cli.CliLine;
@@ -94,6 +96,22 @@ public final class ShellView extends Panel {
     private boolean busy;
 
     /**
+     * Who has the keyboard when it is not the prompt or a program: a tool the machine is running in front.
+     *
+     * <p>A tool is not typed at unless it has stopped to ask. When it has, its question stands where the
+     * prompt would and the answer goes to it; asked unseen, what is typed is never drawn.
+     */
+    private TerminalKeyboard keyboard = TerminalKeyboard.PROMPT;
+
+    /**
+     * Whether the tool in front has printed a line on this glass yet.
+     *
+     * <p>A bar redraws the line it is on. A window opened half way through a fetch has no such line, so the
+     * first thing it is sent goes under what is there rather than over it.
+     */
+    private boolean toolSpoke;
+
+    /**
      * A view of the console of the computer at {@code host}.
      *
      * @param posix  whether the machine speaks bash rather than the DOS prompt
@@ -133,7 +151,9 @@ public final class ShellView extends Panel {
          * program has the screen until it returns.
          */
         this.console = add(new CommandLine(DesktopShellRunPayload.MAX_LEN - 1, this::submit)
-                .setPrompt(() -> this.busy ? "" : this.prompt));
+                .setPrompt(this::promptNow)
+                .setUnseen(() -> this.keyboard.asking() && this.keyboard.unseen())
+                .setTakesNothing(() -> this.keyboard.asking()));
         focus(this.console);
         ShellViews.register(this);
         // Sync the real prompt (and any pending build notices) before the player types anything.
@@ -277,12 +297,13 @@ public final class ShellView extends Panel {
         // A bar growing on one line: what was printed last is drawn over rather than followed.
         boolean over = payload.replaceLast();
         for (final WireLine line : payload.lines()) {
-            if (over) {
+            if (over || (line.over() && this.toolSpoke)) {
                 this.scrollback.replaceLast(line.toLine());
                 over = false;
             } else {
                 this.scrollback.push(line.toLine());
             }
+            this.toolSpoke = this.toolSpoke || payload.keyboard().busy();
         }
         // Lines the machine printed on its own say nothing about who has the prompt.
         if (payload.informational()) {
@@ -292,7 +313,11 @@ public final class ShellView extends Panel {
         if (!payload.prompt().isEmpty()) {
             this.prompt = payload.prompt();
         }
-        this.busy = payload.busy();
+        this.keyboard = payload.keyboard();
+        if (!this.keyboard.busy()) {
+            this.toolSpoke = false;
+        }
+        this.busy = payload.busy() || this.keyboard.busy();
         if (!this.busy && this.onIdle != null) {
             // A command finished: whoever queued the next line behind it may send it now.
             this.onIdle.run();
@@ -400,8 +425,28 @@ public final class ShellView extends Panel {
         return true;
     }
 
+    /** What stands in front of what is typed: the prompt, a tool's question, or nothing while something runs. */
+    private String promptNow() {
+        if (this.keyboard.asking()) {
+            return this.keyboard.question().text().stripTrailing();
+        }
+        return this.busy ? "" : this.prompt;
+    }
+
     private void submit(final String line) {
         this.scrollOffset = 0;
+        if (this.keyboard.busy()) {
+            /*
+             * A tool is in front. It is typed at only when it has asked, and what is typed is not echoed
+             * here: the machine prints the question with its answer for every window looking at it, and
+             * prints the question alone when the answer was not for showing.
+             */
+            if (this.keyboard.asking()) {
+                PacketDistributor.sendToServer(new DesktopShellRunPayload(this.host,
+                        line.isEmpty() ? TerminalTools.ENTER : line, this.session));
+            }
+            return;
+        }
         if (this.busy) {
             /*
              * A line for the program in front: it shows as typed, with no prompt, and goes to the machine

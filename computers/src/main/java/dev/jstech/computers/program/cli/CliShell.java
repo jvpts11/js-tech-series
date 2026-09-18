@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.program.tty.ITtyProcess;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -122,7 +123,7 @@ public final class CliShell {
                 ? new HandOver(command.name(),
                         DosPath.resolve(computer.currentLocation(), args.getFirst()).storagePath())
                 : null;
-        return new Response(out.lines(), clear, handOver);
+        return new Response(out.lines(), clear, handOver, out.started());
     }
 
     /**
@@ -149,14 +150,19 @@ public final class CliShell {
     }
 
     /**
-     * The result of one line: the output to print, whether to clear the console before printing it, and
-     * the editor the terminal was given to, if it was.
+     * The result of one line: the output to print, whether to clear the console before printing it, the
+     * editor the terminal was given to, if it was, and the tool the command left running, if it left one.
      */
-    public record Response(List<CliLine> lines, boolean clearScreen, HandOver handOver) {
+    public record Response(List<CliLine> lines, boolean clearScreen, HandOver handOver, ITtyProcess started) {
 
         /** A reply that only printed. */
         public Response(final List<CliLine> lines, final boolean clearScreen) {
-            this(lines, clearScreen, null);
+            this(lines, clearScreen, null, null);
+        }
+
+        /** A reply that printed and may have given the terminal to an editor. */
+        public Response(final List<CliLine> lines, final boolean clearScreen, final HandOver handOver) {
+            this(lines, clearScreen, handOver, null);
         }
     }
 }
