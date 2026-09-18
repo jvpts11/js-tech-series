@@ -101,7 +101,7 @@ public final class DiskVoices {
                 + "\" TYPE=\"" + (fat ? "vfat" : "ext4") + "\" PARTUUID=\"" + partUuid + "\"");
     }
 
-    /** A size the way a device listing writes one: the largest unit that fits, a decimal only when it says something. */
+    /** A size as a device listing writes one: the largest unit that fits, a decimal only when it says something. */
     public static String size(final long sizeMb) {
         if (sizeMb >= 1024L * 1024) {
             return trimmed(sizeMb / (1024.0 * 1024.0)) + "T";

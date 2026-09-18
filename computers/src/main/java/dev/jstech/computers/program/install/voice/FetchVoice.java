@@ -64,13 +64,19 @@ public final class FetchVoice {
                 .done();
     }
 
-    /** What the fetcher says when no Mainframe on the network is running the Mirror. */
-    public static TtyScript unreachable(final String path, final WorldStamp stamp) {
+    /**
+     * What the fetcher says when what it was pointed at cannot be found: no Mainframe on the network is
+     * running the Mirror, or the address names somewhere that is not on this world's network at all.
+     */
+    public static TtyScript unreachable(final String url, final WorldStamp stamp) {
+        final int scheme = url.indexOf("://");
+        final String rest = scheme < 0 ? url : url.substring(scheme + 3);
+        final String host = rest.contains("/") ? rest.substring(0, rest.indexOf('/')) : rest;
         return TtyScript.script()
-                .say("--" + stamp.dated() + "--  " + MIRROR + path)
+                .say("--" + stamp.dated() + "--  " + url)
                 .pause(10)
-                .say("Resolving " + HOST + "... failed: Name or service not known.")
-                .say("wget: unable to resolve host address '" + HOST + "'")
+                .say("Resolving " + host + "... failed: Name or service not known.")
+                .say("wget: unable to resolve host address '" + host + "'")
                 .done();
     }
 }

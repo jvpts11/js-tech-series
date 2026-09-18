@@ -21,7 +21,9 @@ import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.computers.os.install.SetupJob;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.os.install.SetupTiming;
+import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.program.install.LiveInstallState;
+import dev.jstech.computers.program.install.LiveTurn;
 import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
@@ -175,12 +177,12 @@ public final class InstallService {
      *
      * @param reboot what to call once the new system is written and the machine should come up on it
      */
-    public ICliComputer.OpResult liveRun(final String line, final Runnable reboot) {
+    public LiveTurn liveRun(final String line, final Runnable reboot) {
         final ComputerConsoleState console = this.terminal.console();
         final LiveInstallState state = console == null ? null : console.liveInstall();
         final BlockEntity machine = (BlockEntity) this.terminal;
         if (state == null || !(machine instanceof IOsHost computer)) {
-            return ICliComputer.OpResult.fail("no live medium is booted");
+            return LiveTurn.refused("no live medium is booted");
         }
         /*
          * The devices the live system sees: every installed disk, in slot order (sda, sdb, ...), with the size
@@ -191,8 +193,9 @@ public final class InstallService {
             final ItemStack stack = computer.diskInSlot(i);
             if (stack.getItem() instanceof DiskItem disk) {
                 final long sizeMb = disk.spec().capacityItems() * disk.spec().era().mbPerItem();
+                /* How fast the disk is goes with it, since making a filesystem and unpacking onto it are its work. */
                 devices.add(new LiveInstallState.Device("sd" + (char) ('a' + i),
-                        (int) Math.min(Integer.MAX_VALUE, sizeMb)));
+                        (int) Math.min(Integer.MAX_VALUE, sizeMb), disk.spec().tier().speedMultiplier()));
             }
         }
         /*
@@ -206,22 +209,23 @@ public final class InstallService {
                 == FirmwareKind.UEFI;
         final HardwareEra era = computer.installedEra() != null ? computer.installedEra()
                 : HardwareEra.STANDARD;
-        final LiveInstallState.Result result = state.run(line, new LiveInstallState.Env(
+        final boolean everyStep = state.distro() == LiveInstallState.Distro.ARCH
+                ? ComputersServerConfig.archEveryStep() : ComputersServerConfig.gentooEveryStep();
+        final LiveTurn result = state.run(line, new LiveInstallState.Env(
                 devices, this.packages.reachable(), this.level.getGameTime(), computer.cpuCores(),
                 computer.maxCpuMhz(), SetupTiming.eraFactor(era),
-                uefi));
+                uefi, this.level.getDayTime(), everyStep));
         machine.setChanged();
-        final String text = String.join("\n", result.lines());
         if (!result.complete()) {
-            return result.ok() ? ICliComputer.OpResult.ok(text) : ICliComputer.OpResult.fail(text);
+            return result;
         }
         // The sequence completed: the hand-installed system lands on the chosen disk and boots first.
         final ResourceLocation osId = ResourceLocation.fromNamespaceAndPath("jsc",
                 state.distro() == LiveInstallState.Distro.ARCH ? "arch" : "gentoo");
         final int target = state.targetIndex();
         if (!computer.installOs(osId, target)) {
-            return ICliComputer.OpResult.fail(text
-                    + "\nThe installation could not be written to the disk (no space or no disk).");
+            return LiveTurn.refused(result.text(),
+                    "The installation could not be written to the disk (no space or no disk).");
         }
         computer.setBootDiskSlot(target);
         carryOver(computer, state, target);
@@ -234,7 +238,7 @@ public final class InstallService {
         this.terminal.console().clearLiveInstall();
         machine.setChanged();
         reboot.run();
-        return ICliComputer.OpResult.ok(text + "\nInstallation complete. Rebooting into the new system ...");
+        return LiveTurn.said(result.text(), "Installation complete. Rebooting into the new system ...");
     }
 
     /**

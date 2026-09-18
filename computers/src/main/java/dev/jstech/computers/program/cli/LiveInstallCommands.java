@@ -8,6 +8,7 @@
 package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.program.install.LiveInstallState;
+import dev.jstech.computers.program.install.LiveTurn;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,16 +51,17 @@ public final class LiveInstallCommands {
 
         @Override public void run(final CliContext ctx) {
             final String line = ctx.hasArgs() ? verb + " " + ctx.rest(0) : verb;
-            final ICliComputer.OpResult result = ctx.computer().liveRun(line);
-            for (final String out : result.message().split("\n", -1)) {
-                if (out.isEmpty()) {
-                    continue;
-                }
-                if (result.ok()) {
-                    ctx.out().line(out);
-                } else {
-                    ctx.out().error(out);
-                }
+            final LiveTurn turn = ctx.computer().liveRun(line);
+            /*
+             * Every line as the tool wrote it, the blank ones included: the gaps in a real tool's output are
+             * part of how it reads, and a refusal arrives already in the colour a refusal is.
+             */
+            for (final CliLine said : turn.lines()) {
+                ctx.out().line(said);
+            }
+            // A step that takes time holds the terminal from here until it is over.
+            if (turn.tool() != null) {
+                ctx.out().start(turn.tool());
             }
         }
     }

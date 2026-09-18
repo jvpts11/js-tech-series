@@ -9,112 +9,269 @@ package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
-import dev.jstech.computers.program.ServerCliComputer;
-import dev.jstech.computers.program.cli.CliCommands;
-import dev.jstech.computers.program.cli.CliShell;
+import dev.jstech.computers.operation.payload.program.TerminalTools;
+import dev.jstech.computers.os.boot.BootController;
+import dev.jstech.computers.os.fs.FilesystemContents;
+import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TerminalAt;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.gametest.framework.GameTestSequence;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
- * A live medium answers every step of its own sequence, on the machine a player would really run it on.
+ * Installing Arch and Gentoo by hand, typed at a real machine's terminal the way a player types it.
  *
- * <p>The sequences are covered step by step where the state machine lives; what these are for is the whole
- * thing seen from the prompt, on a machine of the generation the medium is usually put in: a Legacy computer,
- * whose firmware wants no partition of its own, so the disk is formatted whole exactly as the guide says.
- *
- * <p>Every one of these asserts that the tool <em>said something</em>. A step that goes through in silence is
- * indistinguishable, at the prompt, from a step that never ran, and a sequence of silent steps is a player
- * typing into a machine that appears to be ignoring them.
+ * <p>The sequences are held to account a line at a time where the state machine lives. What these are for is
+ * the whole thing on a machine ticking in a world: a step that takes time holds the terminal while the
+ * machine moves it along, the next line is typed when the prompt comes back, and at the end of it the machine
+ * restarts into the system that was built, carrying what the player chose on the way.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
 public final class LiveInstallGameTests {
 
     private static final String ARENA = "empty";
-
     private static final BlockPos WHERE = new BlockPos(2, 2, 2);
 
-    /** How wide the prompt wraps its output, which is what the terminal itself passes. */
-    private static final int WIDTH = 52;
+    /** Long enough for the drive beside the machine to have linked to it. */
+    private static final int SETTLE = 8;
+
+    /** Long enough for a kernel to compile on the test machine, which is the longest wait there is. */
+    private static final int A_WHOLE_INSTALL = 12_000;
 
     private LiveInstallGameTests() {
     }
 
     /**
-     * The Gentoo sequence, from the first look at the disks to the chroot, each step answering out loud.
-     *
-     * <p>The steps up to the chroot are the ones a player does before anything takes time, so they are the
-     * ones where silence is most obviously wrong: nothing here waits, so every one of them has an answer
-     * ready the moment it is typed.
+     * Arch, end to end, on a machine of the modern firmware: the disk laid out with a partition the firmware
+     * reads, the base system over the network, the table written for it, the bootloader as a package, and a
+     * restart into a system that answers to the name it was given.
+     */
+    @GameTest(template = ARENA, timeoutTicks = A_WHOLE_INSTALL)
+    public static void arch_byHand_bootsTheSystemItBuilt(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = modernMachineWithMedium(helper, "arch");
+        final TerminalAt term = new TerminalAt(mainframe, helper.getLevel());
+        final GameTestSequence steps = helper.startSequence().thenExecuteAfter(SETTLE, () -> {
+            mainframe.installMirror();
+            mainframe.console().startLiveInstall(LiveInstallState.Distro.ARCH);
+            helper.assertTrue(
+                    BootController.targetForComputer(mainframe) == BootController.BootTarget.TERMINAL_ONLY,
+                    "a booted live medium runs in the terminal");
+            helper.assertTrue("root@archiso ~ #".equals(term.prompt()), "a root prompt: " + term.prompt());
+            helper.assertTrue(term.type("cat /root/install.txt").contains("pacstrap"),
+                    "the medium's own guide is there to read");
+            helper.assertTrue(term.type("nmap").contains("command not found"),
+                    "and the live shell knows only what a live medium carries");
+            helper.assertTrue(term.type("pacstrap -K /mnt base linux linux-firmware").contains("not a mountpoint"),
+                    "the base system is refused before anything is mounted, in the real words");
+        });
+        partitioned(helper, steps, term);
+        typed(helper, steps, term, "mkfs.fat -F 32 /dev/sda1");
+        typed(helper, steps, term, "mkfs.ext4 /dev/sda2");
+        typed(helper, steps, term, "mount /dev/sda2 /mnt");
+        typed(helper, steps, term, "mount --mkdir /dev/sda1 /mnt/boot");
+        steps.thenExecute(() -> {
+            helper.assertTrue(term.type("pacstrap -K /mnt base linux linux-firmware")
+                    .contains("==> Creating install root at /mnt"), "the base system starts arriving");
+            helper.assertTrue(term.busy(), "and holds the terminal while it does");
+            term.type("arch-chroot /mnt");
+            helper.assertTrue("root@archiso ~ #".equals(term.prompt()),
+                    "what is typed at a tool that asked nothing goes nowhere: " + term.prompt());
+        });
+        idle(helper, steps, term);
+        typed(helper, steps, term, "genfstab -U /mnt >> /mnt/etc/fstab");
+        steps.thenExecute(() -> {
+            term.type("arch-chroot /mnt");
+            helper.assertTrue("[root@archiso /]#".equals(term.prompt()), "inside the new system: " + term.prompt());
+            final String table = term.type("cat /etc/fstab");
+            helper.assertTrue(table.contains("# /dev/sda2") && table.contains("# /dev/sda1"), table);
+            helper.assertTrue(table.matches("(?s).*UUID=[0-9a-f]{8}-[0-9a-f]{4}-.*"), "the root by its identifier");
+            helper.assertTrue(table.matches("(?s).*UUID=[0-9A-F]{4}-[0-9A-F]{4}\\s.*"), "the other by its serial");
+            term.type("echo workshop > /etc/hostname");
+            term.type("passwd");
+            helper.assertTrue(term.asking().startsWith("New password"), "it asks: " + term.asking());
+            term.type("hunter2");
+            helper.assertTrue(term.asking().startsWith("Retype"), "and asks again: " + term.asking());
+            term.type("hunter2");
+            helper.assertFalse(term.busy(), "and is done once it has been told twice");
+            term.type("pacman -S grub efibootmgr");
+        });
+        steps.thenWaitUntil(() -> helper.assertTrue(term.asking().contains("Proceed with installation?"),
+                "it lists what it would install and then really asks: " + term.asking()));
+        steps.thenExecute(() -> term.type(TerminalTools.ENTER));
+        idle(helper, steps, term);
+        typed(helper, steps, term, "grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB");
+        typed(helper, steps, term, "grub-mkconfig -o /boot/grub/grub.cfg");
+        steps.thenExecute(() -> {
+            term.type("exit");
+            helper.assertTrue(term.type("reboot").contains("Installation complete"), "the restart completes it");
+            helper.assertTrue(mainframe.console().liveInstall() == null, "the live session ends");
+            helper.assertTrue(osId("arch").equals(mainframe.installedOsId()),
+                    "and the machine boots what was built: " + mainframe.installedOsId());
+            /*
+             * What the player decided on the way survives the restart. Without this the whole sequence is
+             * theatre: the distribution lands and every choice made getting it there is thrown away.
+             */
+            helper.assertTrue("workshop".equals(mainframe.console().computerName()),
+                    "the machine keeps the name it was given: " + mainframe.console().computerName());
+            helper.assertTrue("player@workshop ~ %".equals(term.prompt()),
+                    "which is the name its own prompt now shows: " + term.prompt());
+            final FilesystemContents disk = mainframe.diskInSlot(0).get(ComputingModule.FILESYSTEM.get());
+            helper.assertTrue(disk != null && disk.files().get("/etc/fstab") != null
+                            && disk.files().get("/etc/fstab").content().contains("# /dev/sda2"),
+                    "and the table it wrote is on the disk it describes");
+        }).thenSucceed();
+    }
+
+    /**
+     * Gentoo, end to end: the archive fetched and unpacked over the disk, the package tree, the sources, a
+     * kernel compiled for as long as this processor takes over one, the table written by hand, the bootloader
+     * merged from source, and a restart into the system that came of it.
+     */
+    @GameTest(template = ARENA, timeoutTicks = A_WHOLE_INSTALL)
+    public static void gentoo_byHand_bootsTheSystemItBuilt(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = modernMachineWithMedium(helper, "gentoo");
+        final TerminalAt term = new TerminalAt(mainframe, helper.getLevel());
+        final GameTestSequence steps = helper.startSequence().thenExecuteAfter(SETTLE, () -> {
+            mainframe.installMirror();
+            mainframe.console().startLiveInstall(LiveInstallState.Distro.GENTOO);
+            helper.assertTrue("livecd ~ #".equals(term.prompt()), "the medium's root prompt: " + term.prompt());
+        });
+        partitioned(helper, steps, term);
+        typed(helper, steps, term, "mkfs.fat -F 32 /dev/sda1");
+        typed(helper, steps, term, "mkfs.ext4 /dev/sda2");
+        steps.thenExecute(() -> {
+            helper.assertTrue(term.type("mount /dev/sda2 /mnt").contains("mount point does not exist"),
+                    "this distribution mounts where its handbook mounts");
+            term.type("mount /dev/sda2 /mnt/gentoo");
+            term.type("cd /mnt/gentoo");
+            helper.assertTrue(term.type("tar xpvf stage3-*.tar.xz").contains("Cannot open: No such file"),
+                    "there is nothing to unpack until it has been fetched");
+            helper.assertTrue(term.type("wget mirror://mainframe/gentoo/stage3-amd64-openrc.tar.xz")
+                    .contains("Resolving mainframe... done."), "the archive starts arriving");
+            helper.assertTrue(term.busy(), "and holds the terminal until it has all arrived");
+        });
+        idle(helper, steps, term);
+        steps.thenExecute(() -> {
+            helper.assertTrue(term.type("ls").contains("stage3-amd64-openrc.tar.xz"), "it is where it was fetched to");
+            term.type("tar xpvf stage3-*.tar.xz --xattrs-include='*.*' --numeric-owner");
+            helper.assertTrue(term.busy(), "unpacking a whole system takes the terminal for a while");
+        });
+        idle(helper, steps, term);
+        steps.thenExecute(() -> {
+            term.type("mount /dev/sda1 /mnt/gentoo/efi");
+            term.type("chroot /mnt/gentoo /bin/bash");
+            helper.assertTrue("(chroot) livecd / #".equals(term.prompt()), "inside the new system: " + term.prompt());
+            term.type("echo 'MAKEOPTS=\"-j64\"' >> /etc/portage/make.conf");
+            helper.assertTrue(term.type("emerge sys-kernel/gentoo-sources").contains("portage tree is empty"),
+                    "nothing merges before there is a tree to merge from");
+        });
+        typed(helper, steps, term, "emerge-webrsync");
+        typed(helper, steps, term, "emerge sys-kernel/gentoo-sources");
+        steps.thenExecute(() -> {
+            helper.assertTrue(term.type("genkernel all").contains("Gentoo Linux Genkernel"),
+                    "the kernel starts building");
+            helper.assertTrue(term.busy(), "and holds the terminal for as long as this processor takes over it");
+        });
+        idle(helper, steps, term);
+        steps.thenExecute(() -> {
+            helper.assertTrue(term.type("blkid").contains("TYPE=\"ext4\""), "the identifiers to copy the table from");
+            term.type("echo 'UUID=0000 / ext4 defaults,noatime 0 1' >> /etc/fstab");
+            term.type("passwd");
+            term.type("hunter2");
+            term.type("hunter2");
+            helper.assertTrue(term.type("grub-install --efi-directory=/efi").contains("command not found"),
+                    "the bootloader is a package, and it is not merged yet");
+            term.type("emerge --ask sys-boot/grub");
+        });
+        steps.thenWaitUntil(() -> helper.assertTrue(term.asking().contains("Would you like to merge"),
+                "it lists what it would merge and then asks: " + term.asking()));
+        steps.thenExecute(() -> term.type("y"));
+        idle(helper, steps, term);
+        typed(helper, steps, term, "grub-install --efi-directory=/efi");
+        typed(helper, steps, term, "grub-mkconfig -o /boot/grub/grub.cfg");
+        steps.thenExecute(() -> {
+            term.type("exit");
+            helper.assertTrue(term.type("reboot").contains("Installation complete"), "the restart completes it");
+            helper.assertTrue(mainframe.console().liveInstall() == null, "the live session ends");
+            helper.assertTrue(osId("gentoo").equals(mainframe.installedOsId()),
+                    "and the machine boots what was built: " + mainframe.installedOsId());
+        }).thenSucceed();
+    }
+
+    /**
+     * The partition editor is talked to through the terminal: its question stands where the prompt would, Enter
+     * by itself takes a default, and nothing reaches the disk until it is told to write.
      */
     @GameTest(template = ARENA)
-    public static void gentoo_everyStepUpToTheChrootSaysSomething(final GameTestHelper helper) {
+    public static void fdisk_isTalkedToThroughTheTerminal(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = legacyWithDisk(helper);
-        if (computer == null) {
-            return;
-        }
-        computer.console().startLiveInstall(LiveInstallState.Distro.GENTOO);
-        final ServerCliComputer cli = new ServerCliComputer(computer, helper.getLevel());
-        final CliShell shell = CliCommands.shellFor(cli, WIDTH);
-
-        said(helper, shell, cli, "lsblk", "sda");
-        said(helper, shell, cli, "mkfs.ext4 /dev/sda", "");
-        silent(helper, shell, cli, "mount /dev/sda /mnt");
-        /*
-         * This machine is on a network with no Mirror on it, which is the commonest thing to be wrong when
-         * a by-hand install stops working, and every step of it says so in the words the real tool uses
-         * rather than failing quietly and leaving the player to work out which step did not happen.
-         */
-        said(helper, shell, cli, "wget https://distfiles.mainframe/stage3-amd64-openrc.tar.xz",
-                "Name or service not known");
-        said(helper, shell, cli, "tar xpvf stage3-amd64-openrc.tar.xz", "Cannot open");
-        said(helper, shell, cli, "chroot /mnt", "");
-        helper.assertFalse(cli.prompt().contains("chroot"),
-                "and nothing enters a system that was never unpacked: " + cli.prompt());
-        helper.succeed();
-    }
-
-    /** The same for the other medium, whose first steps are the same and whose words are its own. */
-    @GameTest(template = ARENA)
-    public static void arch_everyStepUpToTheChrootSaysSomething(final GameTestHelper helper) {
-        final PersonalComputerBlockEntity computer = legacyWithDisk(helper);
-        if (computer == null) {
-            return;
-        }
         computer.console().startLiveInstall(LiveInstallState.Distro.ARCH);
-        final ServerCliComputer cli = new ServerCliComputer(computer, helper.getLevel());
-        final CliShell shell = CliCommands.shellFor(cli, WIDTH);
-
-        said(helper, shell, cli, "lsblk", "sda");
-        said(helper, shell, cli, "mkfs.ext4 /dev/sda", "");
-        silent(helper, shell, cli, "mount /dev/sda /mnt");
+        final TerminalAt term = new TerminalAt(computer, helper.getLevel());
+        helper.assertTrue(term.type("fdisk /dev/sda").contains("Welcome to fdisk"), "the editor opens from the shell");
+        helper.assertTrue(term.asking().equals("Command (m for help): "), "and asks for a command: " + term.asking());
+        helper.assertTrue(term.type("g").contains("Created a new GPT disklabel"), "a single letter reaches it");
+        term.type("n");
+        helper.assertTrue(term.asking().startsWith("Partition number (1-128, default 1)"), term.asking());
+        term.type(TerminalTools.ENTER);
+        helper.assertTrue(term.asking().startsWith("First sector (2048-"), term.asking());
+        term.type(TerminalTools.ENTER);
+        helper.assertTrue(term.type("+512M").contains("of size 512 MiB"), "a plus and a size, as it has always been");
+        helper.assertFalse(term.type("lsblk").contains("sda1"), "the shell does not hear a line meant for the editor");
+        helper.assertTrue(term.busy(), "which still has the terminal");
+        helper.assertTrue(term.type("w").contains("The partition table has been altered."), "until it is written");
+        helper.assertFalse(term.busy(), "and then the prompt comes back");
+        helper.assertTrue(term.type("lsblk").contains("sda1"), "with the table on the disk");
         helper.succeed();
     }
 
-    /** A live medium booted on a machine names the disks that are really in it, by the size written on them. */
+    /** Leaving the editor without writing leaves the disk as it was, which is the promise it opens with. */
     @GameTest(template = ARENA)
-    public static void lsblk_namesTheDisksThatAreInTheMachine(final GameTestHelper helper) {
+    public static void fdisk_leftWithoutWritingChangesNothing(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = legacyWithDisk(helper);
-        if (computer == null) {
-            return;
-        }
         computer.console().startLiveInstall(LiveInstallState.Distro.GENTOO);
-        final ServerCliComputer cli = new ServerCliComputer(computer, helper.getLevel());
-        final CliShell shell = CliCommands.shellFor(cli, WIDTH);
-        final String out = text(shell.run("lsblk", cli));
-        helper.assertTrue(out.contains("sda"), "the first disk is sda: " + out);
-        helper.assertFalse(out.contains("sdb"), "and a machine with one disk has no second: " + out);
+        final TerminalAt term = new TerminalAt(computer, helper.getLevel());
+        term.type("fdisk /dev/sda");
+        term.type("g");
+        term.type("n 512M");
+        term.type("q");
+        helper.assertFalse(term.busy(), "the prompt comes back");
+        helper.assertFalse(term.type("lsblk").contains("sda1"), "and nothing typed in there reached the disk");
         helper.succeed();
+    }
+
+    /** A machine with no Mirror on its network is told so by the fetcher, in the fetcher's own words. */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void wget_withNoMirrorOnTheNetworkFetchesNothing(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = modernMachineWithMedium(helper, "gentoo");
+        final TerminalAt term = new TerminalAt(mainframe, helper.getLevel());
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    mainframe.console().startLiveInstall(LiveInstallState.Distro.GENTOO);
+                    final String disks = term.type("lsblk");
+                    helper.assertTrue(disks.contains("sda") && !disks.contains("sdb"),
+                            "the one disk that is really in it: " + disks);
+                    term.type("wget mirror://mainframe/gentoo/stage3-amd64-openrc.tar.xz");
+                    helper.assertTrue(term.busy(), "the fetcher tries for a moment");
+                })
+                .thenWaitUntil(() -> helper.assertFalse(term.busy(), "before it gives up"))
+                .thenExecute(() -> helper.assertFalse(term.type("ls").contains("stage3"), "having fetched nothing"))
+                .thenSucceed();
     }
 
     /**
@@ -123,15 +280,11 @@ public final class LiveInstallGameTests {
      * <p>This is the bug that made a whole installation vanish without a word. The question is asked by the
      * gate on every line typed and by the container every tick, and it used to end the session the moment it
      * did not like the answer: a drive one tick late to load read as a drive with nothing in it, the
-     * installation was thrown away, and the terminal stayed on the screen answering nothing at all, for
-     * ever, with no way to tell from the machine that anything had happened to it.
+     * installation was thrown away, and the terminal stayed on the screen answering nothing at all.
      */
     @GameTest(template = ARENA)
     public static void validateOsSession_neverThrowsTheSessionAwayByItself(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = legacyWithDisk(helper);
-        if (computer == null) {
-            return;
-        }
         computer.console().startLiveInstall(LiveInstallState.Distro.GENTOO);
         computer.validateOsSession();
         computer.validateOsSession();
@@ -144,9 +297,6 @@ public final class LiveInstallGameTests {
     @GameTest(template = ARENA)
     public static void settleLiveInstall_endsTheSessionWhenNoDriveHoldsTheMedium(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = legacyWithDisk(helper);
-        if (computer == null) {
-            return;
-        }
         computer.console().startLiveInstall(LiveInstallState.Distro.GENTOO);
         helper.assertTrue(computer.settleLiveInstall(), "no drive holds it, so the session is over");
         helper.assertTrue(computer.console().liveInstall() == null, "and it is gone");
@@ -154,47 +304,83 @@ public final class LiveInstallGameTests {
         helper.succeed();
     }
 
-    /**
-     * Runs one step and insists it answered.
-     *
-     * @param must a word the answer has to carry, or empty when any answer at all will do
-     */
-    private static void said(final GameTestHelper helper, final CliShell shell, final ServerCliComputer cli,
-                             final String line, final String must) {
-        final String out = text(shell.run(line, cli)).trim();
-        helper.assertFalse(out.isEmpty(), "\"" + line + "\" answered nothing at all");
-        if (!must.isEmpty()) {
-            helper.assertTrue(out.contains(must), "\"" + line + "\" answered: " + out);
-        }
+    /** Types a line, and waits for whatever it left running to give the prompt back. */
+    private static void typed(final GameTestHelper helper, final GameTestSequence steps, final TerminalAt term,
+                              final String line) {
+        steps.thenExecute(() -> term.type(line));
+        idle(helper, steps, term);
+    }
+
+    /** Waits for the tool in front to end, the way a player waits for the prompt. */
+    private static void idle(final GameTestHelper helper, final GameTestSequence steps, final TerminalAt term) {
+        steps.thenWaitUntil(() -> helper.assertFalse(term.busy(), "a tool is still in front of the terminal"));
+    }
+
+    /** Lays the disk out for the modern firmware: a partition it reads, and the rest for the system. */
+    private static void partitioned(final GameTestHelper helper, final GameTestSequence steps,
+                                    final TerminalAt term) {
+        steps.thenExecute(() -> {
+            term.type("fdisk /dev/sda");
+            term.type("g");
+            term.type("n 512M");
+            term.type("t 1 uefi");
+            term.type("n");
+            term.type(TerminalTools.ENTER);
+            term.type(TerminalTools.ENTER);
+            term.type(TerminalTools.ENTER);
+            helper.assertTrue(term.type("p").contains("EFI System"), "the editor prints what it was told");
+            term.type("w");
+            helper.assertFalse(term.busy(), "and hands the terminal back once it is written");
+        });
+    }
+
+    private static ResourceLocation osId(final String path) {
+        return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, path);
     }
 
     /**
-     * Runs one step that the real tool performs without a word, and insists it stayed quiet.
-     *
-     * <p>Mounting a filesystem is the one step in either sequence that says nothing when it works, and that
-     * silence is as much a part of the tool as any of the others' output. A line of confirmation here would
-     * be the tell that somebody wrote this from a description rather than from having run it.
+     * A running machine of the modern firmware with a system on it, and beside it a drive holding that
+     * distribution's live medium, which is what a machine running one really has.
      */
-    private static void silent(final GameTestHelper helper, final CliShell shell, final ServerCliComputer cli,
-                               final String line) {
-        final String out = text(shell.run(line, cli)).trim();
-        helper.assertTrue(out.isEmpty(), "\"" + line + "\" should say nothing at all, and said: " + out);
-    }
-
-    private static String text(final CliShell.Response response) {
-        final StringBuilder out = new StringBuilder();
-        for (final var line : response.lines()) {
-            out.append(line.text()).append('\n');
+    private static MainframeBlockEntity modernMachineWithMedium(final GameTestHelper helper, final String distro) {
+        helper.setBlock(WHERE, ComputingModule.MAINFRAME.get());
+        if (!(helper.getBlockEntity(WHERE) instanceof MainframeBlockEntity mainframe)) {
+            throw new IllegalStateException("no mainframe at " + WHERE);
         }
-        return out.toString();
+        final ItemStackHandler parts = mainframe.getInventory();
+        parts.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
+                new ItemStack(ComputingModule.MOTHERBOARD_MTX_P.get()));
+        parts.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
+                new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
+        parts.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
+                new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
+        parts.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(ComputingModule.PSU_650G.get()));
+        // A graphics card gives the machine peripheral ports, which is what the drive beside it links to.
+        parts.setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
+                new ItemStack(ComputingModule.GPU_HD_7970.get()));
+        parts.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
+                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+        mainframe.togglePower();
+        if (!mainframe.installOs(osId("ubuntu"))) {
+            throw new IllegalStateException("the test machine took no system");
+        }
+        final BlockPos beside = WHERE.east();
+        helper.setBlock(beside, ComputingModule.CD_DRIVE.get());
+        if (!(helper.getBlockEntity(beside) instanceof MediaReaderBlockEntity reader)) {
+            throw new IllegalStateException("no drive at " + beside);
+        }
+        final ItemStack medium = new ItemStack(ComputingModule.CD_ROM.get());
+        MediaItem.setKind(medium, MediaKind.OS_INSTALL);
+        MediaItem.setPayload(medium, osId(distro));
+        reader.mediaSlot().setStackInSlot(0, medium);
+        return mainframe;
     }
 
     /** A Legacy machine with one disk in it, which is what a live medium is usually put into. */
     private static PersonalComputerBlockEntity legacyWithDisk(final GameTestHelper helper) {
         helper.setBlock(WHERE, ComputingModule.LEGACY_PERSONAL_COMPUTER.get());
         if (!(helper.getBlockEntity(WHERE) instanceof PersonalComputerBlockEntity computer)) {
-            helper.fail("no legacy personal computer at " + WHERE);
-            return null;
+            throw new IllegalStateException("no legacy personal computer at " + WHERE);
         }
         final ItemStackHandler hardware = computer.getHardware();
         hardware.setStackInSlot(PersonalComputerBlockEntity.MOTHERBOARD_SLOT,

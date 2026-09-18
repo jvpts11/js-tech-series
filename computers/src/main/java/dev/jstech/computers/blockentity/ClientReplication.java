@@ -17,7 +17,6 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.cli.CliStyle;
-import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.vm.program.Numbers;
 import dev.jstech.computers.vm.program.UiWidgets;
 import dev.jstech.computers.vm.program.Values;
@@ -73,10 +72,6 @@ final class ClientReplication {
      * of emerge-style progress lines instead of one per second. Transient by design.
      */
     private final Map<String, Integer> buildQuarterReported = new HashMap<>();
-    private int liveKernelQuarterReported;
-    /** The step of a by-hand install the count above belongs to, by the tick that step ends on. */
-    private long liveStepSeen = -1L;
-    private boolean liveStepWatched;
 
     ClientReplication(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
@@ -348,45 +343,6 @@ final class ClientReplication {
                 wire.add(new WireLine(">>> " + buildDisplayName(entry.getKey())
                         + ": compiling ... " + pct + "% (" + (left / 20) + "s left)", dim));
             }
-        }
-
-        /*
-         * A step of a hand-built install that takes time gets the same treatment. How long it takes is the
-         * installer's to work out, not this one's: reckoning it again here was one formula in two places, and
-         * the two would have parted the first time either changed.
-         */
-        final LiveInstallState live = console.liveInstall();
-        /*
-         * A new step starts its own count. The count used to be kept for the whole session, so the first
-         * step that ran to its end left it at the top, and every step after that printed what it says
-         * straight away and then nothing: a merge stood at "Unpacking source..." for ever, with the rest of
-         * what it had to say waiting behind a count that could not go any higher.
-         */
-        if (live != null && live.busyUntil() != this.liveStepSeen) {
-            this.liveStepSeen = live.busyUntil();
-            this.liveKernelQuarterReported = 0;
-            this.liveStepWatched = false;
-        }
-        if (live != null && live.busy(now)) {
-            // Seen running, so its end is this session's to print; a step found already over is old news.
-            this.liveStepWatched = true;
-            final long left = live.busyUntil() - now;
-            final int pct = (int) Math.max(0, Math.min(99, 100 - left * 100 / Math.max(1L, live.busyTotal())));
-            final int quarter = pct / 25;
-            if (quarter >= 1 && quarter > this.liveKernelQuarterReported) {
-                this.liveKernelQuarterReported = quarter;
-                for (final String line : live.busyLinesThrough(quarter)) {
-                    wire.add(new WireLine(line, ok));
-                }
-            }
-        } else if (live != null && live.busyUntil() >= 0 && !live.busy(now)
-                && this.liveStepWatched && this.liveKernelQuarterReported < 4) {
-            for (int quarter = this.liveKernelQuarterReported + 1; quarter <= 4; quarter++) {
-                for (final String line : live.busyLinesThrough(quarter)) {
-                    wire.add(new WireLine(line, ok));
-                }
-            }
-            this.liveKernelQuarterReported = 4;
         }
 
         /*

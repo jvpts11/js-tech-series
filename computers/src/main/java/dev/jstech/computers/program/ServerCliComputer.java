@@ -37,6 +37,7 @@ import dev.jstech.computers.program.cli.DosPath;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.PosixPath;
 import dev.jstech.computers.program.install.LiveInstallState;
+import dev.jstech.computers.program.install.LiveTurn;
 import dev.jstech.computers.program.iql.IIqlCondition;
 import dev.jstech.computers.program.iql.IqlOperation;
 import dev.jstech.computers.storage.StorageKey;
@@ -513,7 +514,7 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     @Override
-    public OpResult liveRun(final String line) {
+    public LiveTurn liveRun(final String line) {
         // The live medium's reboot is a real one: the shell closes, the POST replays, the new system boots.
         return installs().liveRun(line, this::requestReboot);
     }

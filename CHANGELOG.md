@@ -116,12 +116,34 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   is handed at boot. `hostname` names the machine and writes it into the new system's own file. A reboot before
   any of those says which one is missing, since a bootloader with nothing to start starts nothing.
 - A disk can be partitioned by hand before a distribution is installed on it. `fdisk /dev/sdX` opens the
-  partition editor with its own one-letter commands: `g` for a new table, `n` for a partition (`n 512M`, or
-  nothing for the rest of the disk), `t 1 uefi` to mark the one the firmware boots from, and `p`, `d`, `m`, `w`
-  and `q`. Nothing reaches the disk until `w`, and `q` throws away everything typed since it opened. `lsblk`
-  lists the disks at the size they really are with their partitions underneath, `mkfs.ext4` refuses a disk that
-  someone has partitioned instead of wiping the table, `mkfs.fat` makes the boot partition, and that one mounts
-  at `/mnt/boot`, under the root and after it.
+  partition editor, which takes the terminal over and asks its way through everything the way the real one
+  does: `g` for a new table, `n` for a partition, which asks for its number, where it starts and where it ends,
+  each with a default that Enter takes and the last answered with a plus and a size (`+512M`), `t` to mark the
+  one the firmware boots from, and `p`, `d`, `m`, `w` and `q`. Somebody who has done this before can put the
+  answer on the command's own line (`n 512M`, `t 1 uefi`). Nothing reaches the disk until `w`, and `q` or
+  Ctrl+C throws away everything typed since it opened. `lsblk` lists the disks at the size they really are with
+  their partitions underneath, `mkfs.ext4` refuses a disk that someone has partitioned instead of wiping the
+  table, `mkfs.fat` makes the boot partition, and that one mounts at `boot` or `efi` under the root, after it.
+- A command at a terminal can leave a tool running in front of it, the way a real one does. While the tool runs
+  the prompt is away and what it prints arrives as it happens: lines one after another, a bar that fills in
+  place, a flood of paths going by. A tool can stop and ask, with its question standing where the prompt would
+  and Enter by itself taking the default, and a password typed at one is not shown. Ctrl+C stops it, and what
+  it had not finished stays not done. It keeps running with nobody at the screen, and it is still running after
+  the world has been saved and loaded. Both terminals do this, the prompt that fills a monitor and the window
+  on a desktop, and any command can start one.
+- The Gentoo install follows its handbook. The disk mounts at `/mnt/gentoo`, the stage 3 is fetched into it and
+  unpacked there, and inside the chroot the package tree comes with `emerge-webrsync` before anything merges.
+  `eselect profile`, `emerge --update --deep --newuse @world`, `eselect kernel`, the time zone and `locale-gen`
+  are all there to be run, and `MAKEOPTS` in `/etc/portage/make.conf` is read. The kernel can be built either
+  way, `genkernel all` or `make` in `/usr/src/linux`. The filesystem table is written by hand from what `blkid`
+  prints, and the bootloader is a package that has to be merged before `grub-install` exists. Arch is the same
+  in its own words: it mounts at `/mnt`, `pacman -S grub efibootmgr` comes before `grub-install`, and
+  `ln -sf` for the zone, `hwclock --systohc` and `locale-gen` are there to be run.
+- Two settings in the server configuration, `install_by_hand.gentoo_every_step` and
+  `install_by_hand.arch_every_step`, decide how much of the handbook a world asks for. Off, which is the
+  default, a restart only refuses what a system cannot boot without: a base system, a filesystem table, a
+  kernel, a bootloader with its list of what to start, and a root password. On, it asks for every step of that
+  distribution's handbook and says which are missing. Every step answers the way the real tool does either way.
 - The live medium of a hand-installed distribution carries files, and `ls`, `cd`, `cat` and `less` to read them.
   The guide the real medium ships with is in `/root/install.txt`, written from the steps the shell really
   accepts. What a step wrote is what reading it back shows: the filesystem table is not there until `genfstab`
@@ -155,8 +177,19 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - The Gentoo sequence now fetches the stage 3 and unpacks it as two steps, `wget` then `tar`, which is how the
   handbook has it and what makes the fetcher's counting and the archiver's list of paths two different things
   to watch.
-- A long step's output now arrives while the step runs rather than after it: a package manager fetching a
-  hundred megabytes prints a line per package as each one lands, which is what makes a long step watchable.
+- The steps of a by-hand install that take time now hold the terminal while they do, and what they print
+  arrives while they run. `mkfs.ext4` writes its inode tables as a counter that climbs, `wget` fills its bar,
+  `tar xpvf` names every path it lays out, `pacstrap` and `pacman` retrieve a package at a time, `emerge` lists
+  what it would merge, asks, and goes through its phases with the compiler's lines going by, and the kernel
+  builds for as long as the machine takes over it. Each does what it is for when it ends, so a step stopped
+  with Ctrl+C has not happened.
+- How long a by-hand step takes is the machine's doing. A fetch is as long as the file is big over the
+  connection the machine has, making a filesystem and unpacking onto it go at the disk's speed, and compiling
+  is a fixed amount of work got through at the rate the processor manages with as many of its cores as
+  `MAKEOPTS` lets it use, never more than it has. A build left alone uses one core.
+- `wget` fetches from `mirror://mainframe`, the one thing on a world's network there is to fetch from, and
+  stamps what it fetched with the world's own clock: the day the world is on and the time of that day
+  (`--Day 214 12:00:00--`). A machine with no Mirror on its network is told the host could not be resolved.
 - Building a Gentoo kernel now takes the time it really takes, and getting the sources takes the time getting
   sources takes. It was the other way round.
 - A machine's filesystems are named by real identifiers in the table it writes and in the bootloader's list,
@@ -518,9 +551,6 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - What a terminal has printed now belongs to the run of the machine that printed it, and a restart ends that
   run. A machine came up showing the whole installation that had just been typed into it, and a disk swapped
   for a blank one came up showing the session of the disk that had been taken out.
-- `mount` says what it mounted and where. The real one is silent, and in a sequence somebody types by hand,
-  where the terminal is the only thing telling them anything, three steps in a row that answer nothing are
-  indistinguishable from a machine that has stopped listening.
 - Installing a system from the firmware restarts the machine into the installation instead of opening it over
   the setup. A computer puts a system on a disk by starting from the medium that carries it: the self-test
   runs again and what comes up after it is the installer. Pressing Install used to change the screen and

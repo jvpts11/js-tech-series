@@ -72,22 +72,6 @@ public final class CliShell {
             }
             return new Response(out.lines(), false);
         }
-        /*
-         * A live medium with its partition editor open is not taking commands: the editor is, and its
-         * commands are single letters that no shell would know. Everything typed goes to it until it is
-         * closed, which is exactly what happens on the machine being imitated.
-         */
-        if (computer.liveInstall() != null && computer.liveInstall().editingTable()) {
-            final ICliComputer.OpResult answered = computer.liveRun(line);
-            for (final String said : answered.message().split("\n", -1)) {
-                if (answered.ok()) {
-                    out.ok(said);
-                } else {
-                    out.error(said);
-                }
-            }
-            return new Response(out.lines(), false);
-        }
         final ICliCommand command = find(word);
         /*
          * A command that is not available on this computer (another distribution's package manager, an

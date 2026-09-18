@@ -8,6 +8,7 @@
 package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.program.install.LiveInstallState;
+import dev.jstech.computers.program.install.LiveTurn;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 
@@ -40,10 +41,11 @@ public interface ICliInstallation {
     }
 
     /**
-     * Runs one live-installer line against the install state. The message carries the tool's output lines
-     * (newline-separated); when the sequence completes, the host installs the system and ends the session.
+     * Runs one live-installer line against the installation in progress. What comes back is what it printed
+     * at once and, for a step that takes time, the tool it left running in front of the terminal; when the
+     * sequence completes, the host installs the system and ends the session.
      */
-    default ICliComputer.OpResult liveRun(final String line) {
-        return ICliComputer.OpResult.fail("no live medium is booted");
+    default LiveTurn liveRun(final String line) {
+        return LiveTurn.refused("no live medium is booted");
     }
 }

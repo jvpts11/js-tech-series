@@ -8,6 +8,7 @@
 package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.program.install.LiveInstallState;
+import dev.jstech.computers.program.install.LiveTurn;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
@@ -36,7 +37,29 @@ class LiveInstallCommandsTest {
     private LiveInstallState.Env env() {
         this.clock += APART;
         return new LiveInstallState.Env(
-                List.of(new LiveInstallState.Device("sda", 20_480)), true, this.clock, 4, 2000, 4, false);
+                List.of(new LiveInstallState.Device("sda", 20_480)), true, this.clock, 4, 2000, 4, false, 6_000L,
+                false);
+    }
+
+    /**
+     * One line, and whatever it left running played to its end.
+     *
+     * <p>A step that takes time has not happened until its tool ends, so a prelude that only typed the lines
+     * would arrive at the chroot with nothing unpacked to step into.
+     */
+    private LiveTurn typed(final LiveInstallState state, final String line) {
+        final LiveTurn turn = state.run(line, env());
+        if (turn.tool() != null) {
+            turn.tool().begin(this.clock);
+            for (int guard = 0; !turn.tool().over() && guard < 1_000; guard++) {
+                this.clock += APART;
+                turn.tool().advance(this.clock, null);
+                if (turn.tool().asking() != null) {
+                    turn.tool().answer("q", this.clock, null);
+                }
+            }
+        }
+        return turn;
     }
 
     private static Set<String> registered() {
@@ -50,11 +73,16 @@ class LiveInstallCommandsTest {
     /** The steps that carry a session from the live medium into the new system, for that distribution. */
     private static List<String> intoTheChroot(final LiveInstallState.Distro distro) {
         if (distro == LiveInstallState.Distro.ARCH) {
-            return List.of("mkfs.ext4 /dev/sda", "mount /dev/sda /mnt", "pacstrap /mnt base linux",
-                    "genfstab -U /mnt >> /mnt/etc/fstab", "arch-chroot /mnt");
+            return List.of("mkfs.ext4 /dev/sda", "mount /dev/sda /mnt", "pacstrap -K /mnt base linux",
+                    "genfstab -U /mnt >> /mnt/etc/fstab", "arch-chroot /mnt", "pacman -S grub");
         }
-        return List.of("mkfs.ext4 /dev/sda", "mount /dev/sda /mnt",
-                "tar xpf stage3-amd64.tar.xz -C /mnt", "chroot /mnt");
+        /*
+         * As far as the bootloader's package, since its tools are not on the machine until it is: asked for
+         * before that, they are as absent as the real ones are.
+         */
+        return List.of("mkfs.ext4 /dev/sda", "mount /dev/sda /mnt/gentoo", "cd /mnt/gentoo",
+                "wget mirror://mainframe/gentoo/stage3-amd64-openrc.tar.xz", "tar xpf stage3-*.tar.xz",
+                "chroot /mnt/gentoo /bin/bash", "emerge-webrsync", "emerge sys-boot/grub");
     }
 
     /**
@@ -69,22 +97,22 @@ class LiveInstallCommandsTest {
     private boolean answered(final String verb) {
         for (final LiveInstallState.Distro distro : LiveInstallState.Distro.values()) {
             final LiveInstallState onMedium = new LiveInstallState(distro);
-            if (!notFound(onMedium.run(verb, env()))) {
+            if (!notFound(typed(onMedium, verb))) {
                 return true;
             }
             final LiveInstallState inSystem = new LiveInstallState(distro);
             for (final String step : intoTheChroot(distro)) {
-                inSystem.run(step, env());
+                typed(inSystem, step);
             }
-            if (!notFound(inSystem.run(verb, env()))) {
+            if (!notFound(typed(inSystem, verb))) {
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean notFound(final LiveInstallState.Result result) {
-        return !result.lines().isEmpty() && result.lines().get(0).contains("command not found");
+    private static boolean notFound(final LiveTurn turn) {
+        return !turn.lines().isEmpty() && turn.lines().get(0).text().contains("command not found");
     }
 
     @Test

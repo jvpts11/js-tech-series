@@ -30,9 +30,13 @@ public final class ComputersServerConfig {
     public static final ModConfigSpec SPEC;
 
     private static final ModConfigSpec.BooleanValue SHOW_BOOT_MENU_VALUE;
+    private static final ModConfigSpec.BooleanValue GENTOO_EVERY_STEP_VALUE;
+    private static final ModConfigSpec.BooleanValue ARCH_EVERY_STEP_VALUE;
 
     /** Held apart from the file so a machine can ask while the world is still coming up. */
     private static boolean showBootMenu = true;
+    private static boolean gentooEveryStep;
+    private static boolean archEveryStep;
 
     static {
         final ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -44,6 +48,22 @@ public final class ComputersServerConfig {
                         "Turning this off boots the chosen system at once, the way a machine with the menu hidden "
                                 + "does.")
                 .define("show_boot_menu", true);
+        builder.pop();
+        builder.push("install_by_hand");
+        GENTOO_EVERY_STEP_VALUE = builder
+                .comment("Whether installing Gentoo by hand asks for every step of the handbook.",
+                        "Off, only the steps a system cannot boot without are asked for: the disk, the stage 3, the "
+                                + "package tree, a kernel, the filesystem table, a password and the bootloader.",
+                        "On, the rest are asked for as well: the bind mounts, a profile, the @world update, the "
+                                + "time zone, a locale, the kernel link and a name for the machine.",
+                        "Every step answers the way the real tool does either way; this only decides which of "
+                                + "them a restart refuses to go on without.")
+                .define("gentoo_every_step", false);
+        ARCH_EVERY_STEP_VALUE = builder
+                .comment("Whether installing Arch by hand asks for every step of the installation guide.",
+                        "Off, only the steps a system cannot boot without are asked for. On, the time zone, the "
+                                + "hardware clock, a locale and a name for the machine are asked for as well.")
+                .define("arch_every_step", false);
         builder.pop();
         SPEC = builder.build();
     }
@@ -63,6 +83,16 @@ public final class ComputersServerConfig {
         return showBootMenu;
     }
 
+    /** Whether installing Gentoo by hand asks for the whole handbook rather than only what a system boots by. */
+    public static boolean gentooEveryStep() {
+        return gentooEveryStep;
+    }
+
+    /** Whether installing Arch by hand asks for the whole guide rather than only what a system boots by. */
+    public static boolean archEveryStep() {
+        return archEveryStep;
+    }
+
     private static void onLoad(final ModConfigEvent.Loading event) {
         apply(event.getConfig());
     }
@@ -77,6 +107,8 @@ public final class ComputersServerConfig {
             return;
         }
         showBootMenu = SHOW_BOOT_MENU_VALUE.get();
+        gentooEveryStep = GENTOO_EVERY_STEP_VALUE.get();
+        archEveryStep = ARCH_EVERY_STEP_VALUE.get();
         JsComputers.LOGGER.debug("Boot menu is {}", showBootMenu ? "shown" : "hidden");
     }
 }
