@@ -358,14 +358,18 @@ final class ClientReplication {
             final int quarter = pct / 25;
             if (quarter >= 1 && quarter > this.liveKernelQuarterReported) {
                 this.liveKernelQuarterReported = quarter;
-                wire.add(new DesktopShellOutputPayload.WireLine(
-                        ">>> " + live.busyWhat() + ": working ... " + pct + "% ("
-                                + (left / 20) + "s left)", dim));
+                for (final String line : live.busyLinesThrough(quarter)) {
+                    wire.add(new DesktopShellOutputPayload.WireLine(line, ok));
+                }
             }
         } else if (live != null && live.busyUntil() >= 0 && !live.busy(now)
                 && this.liveKernelQuarterReported > 0 && this.liveKernelQuarterReported < 4) {
+            for (int quarter = this.liveKernelQuarterReported + 1; quarter <= 4; quarter++) {
+                for (final String line : live.busyLinesThrough(quarter)) {
+                    wire.add(new DesktopShellOutputPayload.WireLine(line, ok));
+                }
+            }
             this.liveKernelQuarterReported = 4;
-            wire.add(new DesktopShellOutputPayload.WireLine(live.busyDone(), ok));
         }
 
         /*

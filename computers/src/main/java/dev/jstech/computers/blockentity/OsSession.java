@@ -18,6 +18,7 @@ import dev.jstech.computers.os.boot.SystemWelcome;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
+import dev.jstech.computers.os.media.LiveMedium;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ComputerConsoleState;
@@ -364,16 +365,46 @@ final class OsSession {
      * still be in a linked drive, and anything else needs a system on the boot disk.
      */
     boolean validateOsSession() {
-        final ComputerConsoleState console = this.machine.console();
-        final LiveInstallState live = console == null ? null : console.liveInstall();
-        if (live != null) {
-            if (hasLiveMediumFor(live.distro())) {
-                return true;
-            }
-            console.clearLiveInstall();
-            this.machine.setChanged();
+        final LiveInstallState live = liveInstall();
+        if (live != null && LiveMedium.holding(this.machine.getLevel(), this.machine.linkedEndpoints(),
+                live.distro()) != LiveMedium.Answer.GONE) {
+            /*
+             * Asked, never acted on. This is a predicate: it is called by the network gate on every payload
+             * a screen sends and by the container on every tick, and one that threw the session away on a
+             * reading it took for itself would throw it away the first time a drive was a tick late to load.
+             * Ending the session is the machine's own business, once a tick, in settleLiveInstall.
+             */
+            return true;
         }
         return installedOsId() != null;
+    }
+
+    /**
+     * Ends a live session whose medium has really been taken out, which only the machine itself does.
+     *
+     * <p>Only on a certain answer: a drive nobody can see is not a drive that is empty. The machine tells
+     * the player rather than going quiet, because a terminal that stops answering with nothing on the
+     * screen to say why is the worst thing a machine in this mod can do.
+     */
+    boolean settleLiveInstall() {
+        final LiveInstallState live = liveInstall();
+        if (live == null) {
+            return false;
+        }
+        if (LiveMedium.holding(this.machine.getLevel(), this.machine.linkedEndpoints(), live.distro())
+                != LiveMedium.Answer.GONE) {
+            return false;
+        }
+        this.machine.console().clearLiveInstall();
+        this.machine.setChanged();
+        return true;
+    }
+
+    /** The live installation this machine is running, or nothing when it is not running one. */
+    @Nullable
+    private LiveInstallState liveInstall() {
+        final ComputerConsoleState console = this.machine.console();
+        return console == null ? null : console.liveInstall();
     }
 
     /**
@@ -501,24 +532,6 @@ final class OsSession {
         final BlockPos pos = this.machine.getBlockPos();
         level.sendBlockUpdated(pos, this.machine.getBlockState(), this.machine.getBlockState(),
                 Block.UPDATE_CLIENTS);
-    }
-
-    /** Whether a linked drive still holds the live installer medium for that distribution. */
-    private boolean hasLiveMediumFor(final LiveInstallState.Distro distro) {
-        final Level level = this.machine.getLevel();
-        if (level == null) {
-            return true; // not resolvable right now; do not kill the session over a missing level
-        }
-        final String wanted = distro == LiveInstallState.Distro.ARCH ? "arch" : "gentoo";
-        for (final long endpoint : this.machine.linkedEndpoints()) {
-            if (level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader
-                    && reader.insertedKind() == MediaKind.OS_INSTALL
-                    && reader.insertedPayload() != null
-                    && wanted.equals(reader.insertedPayload().getPath())) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /** The era a disk was made for, which sets what an item and a system image cost on it; standard for none. */

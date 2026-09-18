@@ -56,7 +56,8 @@ public final class ConsolePayloads {
     /** Registers the payloads this class handles. */
     public static void register(final PayloadRegistrar registrar) {
         ComputerAccess.accept(registrar, RunCommandPayload.TYPE, RunCommandPayload.STREAM_CODEC,
-                ComputerAccess.machine(RunCommandPayload::hostPos), ConsolePayloads::handleRunCommand);
+                ComputerAccess.machine(RunCommandPayload::hostPos), ConsolePayloads::handleRunCommand,
+                (player, payload) -> notListening(player));
         registrar.playToClient(CommandOutputPayload.TYPE, CommandOutputPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(ConsolePayloads::handleCommandOutput));
         ComputerAccess.accept(registrar, RequestConsoleInitPayload.TYPE, RequestConsoleInitPayload.STREAM_CODEC,
@@ -65,22 +66,28 @@ public final class ConsolePayloads {
                 ClientPayloadHandlers.onMainThread(ConsolePayloads::handleConsoleInit));
     }
 
+    /**
+     * Tells a terminal that the machine is not listening to it, which is the one thing it must never guess.
+     *
+     * <p>The terminal writes what was typed the moment it is typed and waits for the machine to answer, so a
+     * line that goes nowhere leaves a command on the glass with nothing under it: a prompt, a command, and
+     * silence, over and over, which reads as a machine that has broken rather than as one that this window
+     * no longer reaches.
+     */
+    private static void notListening(final ServerPlayer player) {
+        PacketDistributor.sendToPlayer(player, new CommandOutputPayload(false, "",
+                List.of(new CommandOutputPayload.WireLine(
+                        "This terminal is no longer attached to that computer.",
+                        CliStyle.ERROR.id())), "", ""));
+    }
+
     private static void handleRunCommand(final RunCommandPayload payload, final ServerPlayer player,
                                          final ServerLevel level) {
         if (!(player.containerMenu instanceof CommandPromptMenu menu)
                 || !menu.hostPos().equals(payload.hostPos())
                 || !(level.getBlockEntity(payload.hostPos())
                         instanceof IComputerTerminalHost host)) {
-            /*
-             * Refused, and said so. The terminal writes what was typed the moment it is typed and waits for
-             * the machine to answer, so dropping the line here left the command on the glass with nothing
-             * under it: a prompt, a command, and silence, over and over, which reads as a machine that has
-             * stopped working rather than as one that is no longer listening to this window.
-             */
-            PacketDistributor.sendToPlayer(player, new CommandOutputPayload(false, "",
-                    List.of(new CommandOutputPayload.WireLine(
-                            "This terminal is no longer attached to that computer.",
-                            CliStyle.ERROR.id())), "", ""));
+            notListening(player);
             return;
         }
         // "run/open <program>" launches another installed program from the prompt.

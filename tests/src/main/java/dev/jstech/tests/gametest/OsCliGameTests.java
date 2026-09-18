@@ -1070,8 +1070,9 @@ public final class OsCliGameTests {
         final BlockPos pos = new BlockPos(2, 2, 2);
         final MainframeBlockEntity mainframe = placeMainframeWithOs(helper, pos,
                 ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "ubuntu"));
+        liveMediumBeside(helper, mainframe, pos, "arch");
         helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> {
+                .thenExecuteAfter(SETTLE + 4, () -> {
                     mainframe.installMirror();
                     mainframe.console().startLiveInstall(
                             dev.jstech.computers.program.install.LiveInstallState.Distro.ARCH);
@@ -1105,7 +1106,7 @@ public final class OsCliGameTests {
                     shell.run("mount /dev/sda1 /mnt/boot", cli);
                     helper.assertTrue(text(shell.run("pacstrap /mnt base linux", cli)).contains("Retrieving"),
                             "pacstrap must pull the base system from the mirror");
-                    helper.assertTrue(text(shell.run("arch-chroot /mnt", cli)).contains("Still fetching"),
+                    helper.assertTrue(text(shell.run("arch-chroot /mnt", cli)).contains("still running"),
                             "and nothing enters a system that is still being fetched");
                 })
                 /*
@@ -1120,8 +1121,16 @@ public final class OsCliGameTests {
                     shell.run("arch-chroot /mnt", cli);
                     helper.assertTrue("[root@archiso /]#".equals(cli.prompt()),
                             "once the fetch is done the new system can be entered; got " + cli.prompt());
-                    helper.assertTrue(text(shell.run("cat /etc/fstab", cli)).contains("UUID=jsc-sda2"),
-                            "and the table that step wrote is readable from inside it");
+                    final String table = text(shell.run("cat /etc/fstab", cli));
+                    helper.assertTrue(table.contains("# /dev/sda2") && table.contains("# /dev/sda1"),
+                            "and the table that step wrote is readable from inside it: " + table);
+                    /*
+                     * Both filesystems named by their own identifiers, which is what that flag is for: the
+                     * root's is a full one, and the one the firmware reads is the four-byte serial that
+                     * filesystem is all that has room for.
+                     */
+                    helper.assertTrue(table.matches("(?s).*UUID=[0-9a-f]{8}-[0-9a-f]{4}-.*"), table);
+                    helper.assertTrue(table.matches("(?s).*UUID=[0-9A-F]{4}-[0-9A-F]{4}\t.*"), table);
                     shell.run("hostname workshop", cli);
                     helper.assertTrue(text(shell.run("cat /etc/hostname", cli)).contains("workshop"),
                             "the name went into the new system's own file");
@@ -1151,7 +1160,7 @@ public final class OsCliGameTests {
                     final dev.jstech.computers.os.fs.FilesystemContents fs =
                             mainframe.diskInSlot(0).get(ComputingModule.FILESYSTEM.get());
                     helper.assertTrue(fs != null && fs.files().get("/etc/fstab") != null
-                                    && fs.files().get("/etc/fstab").content().contains("UUID=jsc-sda2"),
+                                    && fs.files().get("/etc/fstab").content().contains("# /dev/sda2"),
                             "and the table it wrote is on the disk it describes");
                 })
                 .thenSucceed();
@@ -1201,15 +1210,16 @@ public final class OsCliGameTests {
      * kernel sources compile for real (CPU-scaled ticks, so genkernel refuses until they are done), then
      * genkernel, GRUB, passwd, reboot, and the installed Gentoo shows its bash prompt.
      */
-    @GameTest(template = ARENA, timeoutTicks = 1000)
+    @GameTest(template = ARENA, timeoutTicks = 1400)
     public static void linux_gentooLiveInstallCompilesTheKernelBeforeBooting(final GameTestHelper helper) {
         final BlockPos pos = new BlockPos(2, 2, 2);
         final MainframeBlockEntity mainframe = placeMainframeWithOs(helper, pos,
                 ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "ubuntu"));
+        liveMediumBeside(helper, mainframe, pos, "gentoo");
         // The test CPU runs at 2000 MHz, which the live installer turns into a 32 s (640 tick) kernel build.
         final int kernelTicks = 640;
         helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> {
+                .thenExecuteAfter(SETTLE + 4, () -> {
                     mainframe.installMirror();
                     mainframe.console().startLiveInstall(
                             dev.jstech.computers.program.install.LiveInstallState.Distro.GENTOO);
@@ -1217,8 +1227,9 @@ public final class OsCliGameTests {
                     final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
                     helper.assertTrue("livecd ~ #".equals(cli.prompt()),
                             "the Gentoo live CD is a root prompt; got " + cli.prompt());
-                    helper.assertTrue(text(shell.run("tar xpf stage3-amd64.tar.xz -C /mnt", cli)).contains("Not a mountpoint"),
-                            "unpacking the stage3 before mounting must fail with the real error");
+                    helper.assertTrue(text(shell.run("tar xpvf stage3-amd64-openrc.tar.xz", cli))
+                                    .contains("Cannot open: No such file or directory"),
+                            "unpacking an archive nobody has fetched must fail with the real error");
                     // The same modern firmware as the other one, so the same layout before anything is unpacked.
                     shell.run("fdisk /dev/sda", cli);
                     shell.run("g", cli);
@@ -1230,11 +1241,19 @@ public final class OsCliGameTests {
                     shell.run("mkfs.ext4 /dev/sda2", cli);
                     shell.run("mount /dev/sda2 /mnt", cli);
                     shell.run("mount /dev/sda1 /mnt/boot", cli);
-                    helper.assertTrue(text(shell.run("tar xpf stage3-amd64.tar.xz -C /mnt", cli)).contains("Fetching"),
+                    helper.assertTrue(text(shell.run("wget https://distfiles.mainframe/stage3-amd64-openrc.tar.xz",
+                                    cli)).contains("200 OK"),
                             "the stage3 tarball must come from the mirror");
                 })
                 // The stage 3 comes over the network and takes as long as it takes, so the rest waits for it.
                 .thenExecuteAfter(180, () -> {
+                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
+                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
+                    helper.assertTrue(text(shell.run("tar xpvf stage3-amd64-openrc.tar.xz", cli)).contains("./etc/"),
+                            "and unpacking it names the paths it lays out");
+                })
+                // Laying a whole system out off the disk takes its own time, and the chroot waits for that too.
+                .thenExecuteAfter(120, () -> {
                     final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
                     final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
                     shell.run("chroot /mnt", cli);
@@ -1242,16 +1261,28 @@ public final class OsCliGameTests {
                     helper.assertTrue(text(shell.run("emerge sys-kernel/gentoo-sources", cli)).contains("portage tree is empty"),
                             "emerging before a sync must fail with the real error");
                     shell.run("emerge --sync", cli);
-                    helper.assertTrue(text(shell.run("emerge sys-kernel/gentoo-sources", cli)).contains("about " + (kernelTicks / 20) + "s"),
-                            "the kernel sources announce their CPU-scaled compile time");
-                    helper.assertTrue(text(shell.run("genkernel all", cli)).contains("still compiling"),
-                            "genkernel must wait for the sources to finish compiling");
+                    helper.assertTrue(text(shell.run("emerge sys-kernel/gentoo-sources", cli))
+                                    .contains("Emerging (1 of 1) sys-kernel/gentoo-sources"),
+                            "the kernel sources are fetched and laid out, which the tool announces");
+                    helper.assertTrue(text(shell.run("genkernel all", cli))
+                                    .contains("sources are still being laid out"),
+                            "genkernel must wait for the sources to arrive");
+                })
+                /*
+                 * The sources arrive quickly; it is genkernel that is the long one, so the bootloader is the
+                 * step that waits for the CPU-scaled build rather than the merge before it.
+                 */
+                .thenExecuteAfter(120, () -> {
+                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
+                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
+                    helper.assertTrue(text(shell.run("genkernel all", cli)).contains("Gentoo Linux Genkernel"),
+                            "once the sources are laid out genkernel builds the kernel");
+                    helper.assertTrue(text(shell.run("grub-install", cli)).contains("still running"),
+                            "and the bootloader waits for the kernel to finish compiling");
                 })
                 .thenExecuteAfter(kernelTicks + 10, () -> {
                     final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
                     final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
-                    helper.assertTrue(text(shell.run("genkernel all", cli)).contains("Kernel compiled successfully"),
-                            "once the sources are compiled genkernel builds the kernel");
                     shell.run("grub-install", cli);
                     shell.run("grub-mkconfig -o /boot/grub/grub.cfg", cli);
                     shell.run("passwd", cli);
@@ -1614,12 +1645,45 @@ public final class OsCliGameTests {
                     reader.mediaSlot().setStackInSlot(0, ItemStack.EMPTY);
                     helper.assertTrue(mainframe.validateOsSession(),
                             "ejecting the medium falls back to the installed disk system");
+                    /*
+                     * Ending it is the machine's own step, not something that happens by being asked whether
+                     * the medium is there: a question that threw the session away would throw it away the
+                     * first time the drive was a tick late to load.
+                     */
+                    helper.assertTrue(mainframe.settleLiveInstall(), "and the machine ends the session itself");
                     helper.assertTrue(mainframe.console().liveInstall() == null,
                             "the live session died with its medium");
                     helper.assertTrue("player@ubuntu:~$".equals(cliFor(mainframe, helper.getLevel()).prompt()),
                             "the console is the disk system's shell again");
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * Puts a drive beside the machine with that distribution's live medium in it.
+     *
+     * <p>Which is what a machine running a live medium really has. A machine told it is running one with no
+     * drive anywhere near it is a machine in a state nothing can put it in, and it ends the session on its
+     * own the moment it looks, exactly as it would for a player who took the disc out.
+     */
+    private static void liveMediumBeside(final GameTestHelper helper, final MainframeBlockEntity mainframe,
+                                         final BlockPos pos, final String distro) {
+        // A GPU gives the Mainframe peripheral ports so the adjacent reader can link to it.
+        mainframe.getInventory().setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
+                new ItemStack(ComputingModule.GPU_HD_7970.get()));
+        final BlockPos readerPos = pos.east();
+        helper.setBlock(readerPos, ComputingModule.CD_DRIVE.get());
+        if (!(helper.getBlockEntity(readerPos)
+                instanceof dev.jstech.computers.os.media.MediaReaderBlockEntity reader)) {
+            helper.fail("no media reader at " + readerPos);
+            return;
+        }
+        final ItemStack media = new ItemStack(ComputingModule.CD_ROM.get());
+        dev.jstech.computers.os.media.MediaItem.setKind(
+                media, dev.jstech.computers.os.media.MediaKind.OS_INSTALL);
+        dev.jstech.computers.os.media.MediaItem.setPayload(
+                media, ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, distro));
+        reader.mediaSlot().setStackInSlot(0, media);
     }
 
     /** Formatting the system disk wipes the software layer: history, installed programs, and services. */

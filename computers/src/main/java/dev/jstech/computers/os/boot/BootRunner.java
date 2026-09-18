@@ -52,11 +52,28 @@ public final class BootRunner {
     /** One tick of wherever this machine is on its way up. */
     public static void tick(final IOsHost machine, final BootPhases phases, final ServerLevel level,
                             final BlockPos pos) {
+        mediumTakenOut(machine, level, pos);
         down(machine, phases, level, pos);
         post(machine, phases, level, pos);
         halted(machine, phases, level, pos);
         menu(machine, phases, level);
         boot(machine, phases, level, pos);
+    }
+
+    /**
+     * The medium a machine was started from has been taken out of the drive.
+     *
+     * <p>Which ends the session the way it ends on a real machine: there is nothing left to run, so the
+     * machine starts again, finds nothing to start with, and shows its firmware. Anybody looking at it
+     * watches that happen, instead of being left at a terminal that has quietly stopped answering, which is
+     * what this used to do and what made a machine look broken rather than unplugged.
+     */
+    private static void mediumTakenOut(final IOsHost machine, final ServerLevel level, final BlockPos pos) {
+        if (!machine.settleLiveInstall()) {
+            return;
+        }
+        machine.restart();
+        ScreenSessions.bootWatchers(level, pos);
     }
 
     /** How long this machine's system takes to come up: its size, over the disk it sits on and the era. */

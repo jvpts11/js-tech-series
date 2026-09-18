@@ -57,6 +57,7 @@ import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.install.SetupTiming;
+import dev.jstech.computers.os.media.LiveMedium;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.install.LiveInstallState;
@@ -408,8 +409,15 @@ public final class FirmwarePayloads {
                 if (level.getBlockEntity(BlockPos.of(payload.ref())) instanceof MediaReaderBlockEntity reader
                         && reader.insertedKind() == MediaKind.OS_INSTALL && reader.insertedPayload() != null) {
                     final OsDef os = OsRegistry.getOs(reader.insertedPayload());
-                    if (os != null && os.installMode()
-                            != InstallMode.GUIDED) {
+                    /*
+                     * Which distribution's medium this is, asked of the medium rather than worked out from
+                     * the one name that is not the other. A system that is installed by hand and is neither
+                     * of these two has no by-hand sequence written for it, so it is installed the guided way
+                     * rather than dropped into a shell that would answer none of its commands.
+                     */
+                    final LiveInstallState.Distro distro =
+                            LiveMedium.distroOf(os == null ? null : os.id());
+                    if (os != null && distro != null && os.installMode() != InstallMode.GUIDED) {
                         /*
                          * A live medium: the machine starts from it, which means it restarts. The self-test
                          * runs again and the medium's shell is what comes up after it, exactly as starting
@@ -418,9 +426,7 @@ public final class FirmwarePayloads {
                          * starting one.
                          */
                         computer.setNeedsPost(true);
-                        computer.console().startLiveInstall(os.id().getPath().equals("arch")
-                                ? LiveInstallState.Distro.ARCH
-                                : LiveInstallState.Distro.GENTOO);
+                        computer.console().startLiveInstall(distro);
                         computer.setChanged();
                         MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos());
                         return;

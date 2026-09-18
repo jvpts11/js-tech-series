@@ -140,7 +140,7 @@ public final class LiveInstallState {
     public static final List<String> VERBS = List.of(
             "ls", "cat", "less", "more", "cd", "echo",
             "lsblk", "fdisk", "mkfs.ext4", "mkfs", "mkfs.fat", "mkfs.vfat", "mount",
-            "pacstrap", "pacman", "tar", "genfstab", "arch-chroot", "chroot",
+            "pacstrap", "pacman", "wget", "curl", "tar", "genfstab", "arch-chroot", "chroot",
             "emerge-webrsync", "emerge", "genkernel", "hostname", "mkinitcpio",
             "grub-install", "grub-mkconfig", "passwd", "exit", "reboot", "help");
 
@@ -152,6 +152,26 @@ public final class LiveInstallState {
 
     /** Where the build options of the source distribution live, inside the system being built. */
     private static final String PORTAGE_CONF = "/etc/portage/make.conf";
+
+    /**
+     * The host every fetch in this sequence names.
+     *
+     * <p>The network in this world is the one the player built, so what a tool resolves and connects to is
+     * the machine serving it rather than an address on the real internet.
+     */
+    private static final String MIRROR = "distfiles.mainframe";
+
+    /** How many files the package tree holds, which the sync reports and nothing else depends on. */
+    private static final int TREE_FILES = 214_483;
+
+    /** The kernel release this distribution's medium installs, which its boot images are named after. */
+    private static final String ARCH_RELEASE = "6.11.5-arch1-1";
+
+    /** The driver number every disk of this kind answers to, which a device listing prints first. */
+    private static final int SCSI_DISK = 8;
+
+    /** How many device numbers one disk takes up, which is what leaves room for its partitions. */
+    private static final int MINORS_PER_DISK = 16;
 
     /**
      * How much work compiling a kernel is, in megahertz-seconds.
@@ -207,6 +227,7 @@ public final class LiveInstallState {
     private String device = "";       // the formatted target, e.g. "sda" or "sda2"
     private boolean formatted;
     private boolean mounted;
+    private boolean fetched;          // gentoo: the stage 3 archive is on the disk, ready to unpack
     private boolean base;             // pacstrap / stage3 done
     private boolean fstab;
     private boolean chroot;
@@ -279,15 +300,16 @@ public final class LiveInstallState {
                 "  1. lsblk                                  see the disks",
                 "  2. mkfs.ext4 /dev/sdX                      make a filesystem",
                 "  3. mount /dev/sdX /mnt                     mount it",
-                "  4. tar xpf stage3-amd64.tar.xz -C /mnt     unpack the stage 3",
-                "  5. chroot /mnt                             enter the new system",
-                "  6. emerge --sync                           fetch the portage tree",
-                "  7. emerge sys-kernel/gentoo-sources        a real compile, and a real wait",
-                "  8. genkernel all                           build the kernel once it is done",
-                "  9. hostname <name>                         name the machine",
-                " 10. grub-install /dev/sdX                   the bootloader",
-                " 11. grub-mkconfig -o /boot/grub/grub.cfg    what it should start",
-                " 12. passwd, then exit, then reboot",
+                "  4. wget " + GentooInstallOutput.STAGE3 + "      fetch the stage 3",
+                "  5. tar xpvf " + GentooInstallOutput.STAGE3 + "   unpack it over /mnt",
+                "  6. chroot /mnt                             enter the new system",
+                "  7. emerge --sync                           fetch the portage tree",
+                "  8. emerge sys-kernel/gentoo-sources        the kernel sources",
+                "  9. genkernel all                           build the kernel: a real compile, a real wait",
+                " 10. hostname <name>                         name the machine",
+                " 11. grub-install /dev/sdX                   the bootloader",
+                " 12. grub-mkconfig -o /boot/grub/grub.cfg    what it should start",
+                " 13. passwd, then exit, then reboot",
                 "",
                 "A machine that boots the modern way needs a partition for the bootloader: fdisk, then",
                 "t <n> uefi, mkfs.fat -F32 /dev/sdXn, and mount it at /mnt/boot.",
@@ -402,6 +424,27 @@ public final class LiveInstallState {
         return found.find() ? Math.max(1, Integer.parseInt(found.group(1))) : 1;
     }
 
+    /**
+     * How many megabytes a second this machine's connection manages, which the fetch lines report.
+     *
+     * <p>Worked back out of how long the fetch is going to take rather than stated on its own, so the rate
+     * a tool prints and the time the player actually waits are the same number seen from two sides.
+     */
+    private static double megabytesPerSecond(final int sizeMb, final long ticks) {
+        return sizeMb / Math.max(0.05, ticks / 20.0);
+    }
+
+    /**
+     * Where a tool's output stops being what it says and starts being what it does.
+     *
+     * <p>Everything up to and including that line is printed at once, because the real tool prints it at
+     * once; everything after it arrives while the work does.
+     */
+    private static int after(final List<String> lines, final String marker) {
+        final int at = lines.indexOf(marker);
+        return at < 0 ? lines.size() : at + 1;
+    }
+
     /** How long fetching that many megabytes over the network takes this machine. */
     private static long fetchTicks(final int sizeMb, final Env env) {
         return SetupTiming.networkTicks(sizeMb, false,
@@ -414,6 +457,33 @@ public final class LiveInstallState {
         busyTotal = Math.max(1L, ticks);
         busyWhat = what;
         busyDone = done;
+    }
+
+    /**
+     * Sets a step running whose output arrives while it runs rather than after it.
+     *
+     * <p>This is how the real tools behave and it is the reason a long step is watchable at all: a package
+     * manager fetching a hundred megabytes does not sit silent and then print everything, it prints a line
+     * per package as each one lands. The lines are kept here and handed out in order as the step proceeds,
+     * so the terminal fills the way it fills on a real machine instead of waiting and then flooding.
+     */
+    private void takesTime(final long now, final long ticks, final String what, final List<String> done) {
+        this.takesTime(now, ticks, what, String.join(String.valueOf(LINE), done));
+    }
+
+    /**
+     * The part of a running step's output that has arrived by the given quarter of the way through it.
+     *
+     * @param quarter how far along the step is, in quarters, where the fourth is the end of it
+     */
+    public List<String> busyLinesThrough(final int quarter) {
+        if (busyDone.isEmpty()) {
+            return List.of();
+        }
+        final String[] all = busyDone.split(String.valueOf(LINE), -1);
+        final int through = Math.max(0, Math.min(all.length, all.length * Math.max(0, quarter) / 4));
+        final int from = Math.max(0, Math.min(through, all.length * Math.max(0, quarter - 1) / 4));
+        return List.of(all).subList(from, through);
     }
 
     /** Whether the partition editor is open, which is a shell of its own with its own one-letter commands. */
@@ -442,13 +512,14 @@ public final class LiveInstallState {
             case "mkfs.ext4", "mkfs" -> mkfs(cmd.equals("mkfs") ? (parts.length > 2 ? parts[2] : "") : arg1, env);
             case "mount" -> mount(arg1, parts.length > 2 ? parts[2] : "");
             case "pacstrap" -> pacstrap(arg1, env);
-            case "tar" -> stage3(line, env);
+            case "wget", "curl" -> fetchStage3(line, env);
+            case "tar" -> unpackStage3(parts, line, env);
             case "genfstab" -> genfstab(line, env);
             case "arch-chroot", "chroot" -> enterChroot(arg1, env);
             case "emerge-webrsync", "emerge" -> emerge(line, env);
             case "genkernel" -> genkernel(env);
             case "grub-install" -> grub(arg1, env);
-            case "grub-mkconfig" -> grubConfig(line);
+            case "grub-mkconfig" -> grubConfig(line, env);
             case "mkinitcpio" -> initramfs();
             case "hostname" -> hostname(parts);
             case "passwd" -> passwd();
@@ -584,12 +655,7 @@ public final class LiveInstallState {
         draft.clear();
         draft.addAll(tables.getOrDefault(dev, List.of()));
         gpt = !draft.isEmpty();
-        return Result.pass("Welcome to fdisk (JSC).",
-                "Changes stay in memory only, until you decide to write them.",
-                "",
-                "Disk /dev/" + dev + ": " + megabytes(disk.sizeMb()),
-                "",
-                "Command (m for help):");
+        return new Result(true, LiveInstallOutput.fdisk(dev, megabytes(disk.sizeMb())), false);
     }
 
     /**
@@ -728,22 +794,41 @@ public final class LiveInstallState {
         return mb + " MiB";
     }
 
+    /**
+     * Lists the machine's block devices, in the columns the real tool lists them in.
+     *
+     * <p>Partitions hang off their disk on a drawn branch, in the plain characters the real tool falls back
+     * to when the terminal is not told it can draw lines, which this one is not.
+     */
     private Result lsblk(final Env env) {
         final List<String> out = new ArrayList<>();
-        out.add(String.format(Locale.ROOT, "%-8s %-10s %-5s %s", "NAME", "SIZE", "TYPE", "MOUNTPOINT"));
-        if (env.devices().isEmpty()) {
-            out.add("(no disks detected)");
-        }
+        out.add(LiveInstallOutput.lsblkHeader());
+        int index = 0;
         for (final Device disk : env.devices()) {
-            out.add(String.format(Locale.ROOT, "%-8s %-10s %-5s %s", disk.name(), megabytes(disk.sizeMb()),
-                    "disk", mountOf(disk.name())));
-            for (final Partition part : tables.getOrDefault(disk.name(), List.of())) {
+            out.add(LiveInstallOutput.lsblkRow(disk.name(), SCSI_DISK, index * MINORS_PER_DISK,
+                    disk.sizeMb(), "disk", mountOf(disk.name())));
+            final List<Partition> parts = tables.getOrDefault(disk.name(), List.of());
+            for (int i = 0; i < parts.size(); i++) {
+                final Partition part = parts.get(i);
                 final String name = part.on(disk.name());
-                out.add(String.format(Locale.ROOT, "%-8s %-10s %-5s %s", "`-" + name,
-                        part.sizeMb() > 0 ? megabytes(part.sizeMb()) : "rest", "part", mountOf(name)));
+                final String branch = (i == parts.size() - 1 ? "`-" : "|-") + name;
+                out.add(LiveInstallOutput.lsblkRow(branch, SCSI_DISK,
+                        index * MINORS_PER_DISK + part.number(),
+                        part.sizeMb() > 0 ? part.sizeMb() : rest(disk, parts),
+                        "part", mountOf(name)));
             }
+            index++;
         }
         return new Result(true, List.copyOf(out), false);
+    }
+
+    /** What is left of a disk once the partitions that asked for a size have had theirs. */
+    private static long rest(final Device disk, final List<Partition> parts) {
+        long left = disk.sizeMb();
+        for (final Partition part : parts) {
+            left -= Math.max(0, part.sizeMb());
+        }
+        return Math.max(0, left);
     }
 
     /** Where that device is mounted right now, which is what the listing's last column says. */
@@ -789,7 +874,7 @@ public final class LiveInstallState {
         espDevice = dev;
         espFormatted = true;
         espMount = "";
-        return Result.pass("mkfs.fat 4.2 (JSC)");
+        return new Result(true, LiveInstallOutput.mkfsFat(), false);
     }
 
     private static String deviceName(final String arg) {
@@ -821,7 +906,18 @@ public final class LiveInstallState {
         formatted = true;
         mounted = false;
         base = false;
-        return Result.pass("mke2fs 1.47 (JSC)", "Creating filesystem on /dev/" + dev, "Writing superblocks and filesystem accounting information: done");
+        final long sizeMb = part != null && part.sizeMb() > 0 ? part.sizeMb() : sizeOf(dev, env);
+        return new Result(true, LiveInstallOutput.mke2fs(dev, sizeMb, sizeMb), false);
+    }
+
+    /** How big that device is, by the disks the machine really has in it. */
+    private static long sizeOf(final String dev, final Env env) {
+        for (final Device disk : env.devices()) {
+            if (dev.startsWith(disk.name())) {
+                return disk.sizeMb();
+            }
+        }
+        return 0;
     }
 
     private Result mount(final String arg, final String point) {
@@ -843,7 +939,7 @@ public final class LiveInstallState {
                         "       (make it first: mkfs.fat -F32 /dev/" + dev + ")");
             }
             espMount = point;
-            return Result.pass("mount: /dev/" + dev + " mounted on " + point + ".");
+            return Result.pass();
         }
         if (!point.equals(MOUNT)) {
             return Result.fail("mount: " + point + ": mount point does not exist.");
@@ -853,13 +949,8 @@ public final class LiveInstallState {
                     "       (format it first: mkfs.ext4 /dev/" + dev + ")");
         }
         mounted = true;
-        /*
-         * The real one says nothing, and here that costs more than it is worth: this is a sequence somebody
-         * types by hand, the terminal is the only thing telling them anything, and three steps in a row that
-         * answer nothing is indistinguishable from a machine that has stopped listening. So it answers the
-         * way the same tool does when it is asked to.
-         */
-        return Result.pass("mount: /dev/" + dev + " mounted on " + MOUNT + ".");
+        /* The real one says nothing when it works, and saying something would be the tell that this is not it. */
+        return Result.pass();
     }
 
     private Result pacstrap(final String point, final Env env) {
@@ -876,39 +967,83 @@ public final class LiveInstallState {
         base = true;
         laidOut();
         final long ticks = fetchTicks(BASE_MB, env);
-        takesTime(env.now(), ticks, "the base system",
-                "==> pacstrap: installation complete. Next: genfstab -U /mnt >> /mnt/etc/fstab");
-        final List<String> out = new ArrayList<>();
-        out.add("==> Creating install root at /mnt");
-        out.add(":: Synchronizing package databases (mirror://mainframe)");
-        for (final String pkg : ARCH_BASE) {
-            out.add(fetching(pkg));
-        }
-        out.add("==> Retrieving " + BASE_MB + " MB over the network (about " + (ticks / 20) + "s)");
-        return new Result(true, List.copyOf(out), false);
+        final List<String> all = ArchInstallOutput.pacstrap(MOUNT, megabytesPerSecond(BASE_MB, ticks));
+        final int said = after(all, ":: Retrieving packages...");
+        takesTime(env.now(), ticks, "the base system", all.subList(said, all.size()));
+        return new Result(true, List.copyOf(all.subList(0, said)), false);
     }
 
-    private Result stage3(final String line, final Env env) {
+    /**
+     * Pulls the archive of a working system down from the mirror, which is its own step.
+     *
+     * <p>A command of its own, as the handbook has it, rather than folded into the unpack: fetching and
+     * unpacking are two tools that print two different things, and one command quietly doing both would be
+     * this mod's summary of the installation rather than the installation.
+     */
+    private Result fetchStage3(final String line, final Env env) {
         if (distro != Distro.GENTOO) {
-            return Result.fail("tar: stage3: Cannot open: No such file or directory");
+            return Result.fail("wget: command not found");
         }
         if (!line.contains("stage3")) {
-            return Result.fail("tar: Cowardly refusing to create an empty archive");
+            return Result.fail("wget: missing URL", "Usage: wget [OPTION]... [URL]...");
         }
-        if (!mounted) {
-            return Result.fail("tar: /mnt: Cannot open: Not a mountpoint");
+        if (busy(env.now())) {
+            return stillWorking(env);
         }
         if (!env.mirror()) {
-            return Result.fail("tar: stage3-amd64.tar.xz: Cannot open: mirror://mainframe could not be resolved");
+            return Result.fail("Resolving " + MIRROR + "... failed: Name or service not known.",
+                    "wget: unable to resolve host address '" + MIRROR + "'");
+        }
+        final long ticks = fetchTicks(BASE_MB, env);
+        final List<String> all =
+                GentooInstallOutput.wget(MIRROR, BASE_MB, megabytesPerSecond(BASE_MB, ticks));
+        final int said = after(all, "Saving to: '" + GentooInstallOutput.STAGE3 + "'");
+        fetched = true;
+        write(cwd + "/" + GentooInstallOutput.STAGE3, "");
+        takesTime(env.now(), ticks, GentooInstallOutput.STAGE3, all.subList(said, all.size()));
+        return new Result(true, List.copyOf(all.subList(0, said)), false);
+    }
+
+    /**
+     * Lays the fetched archive out over the mounted disk, which is what makes the disk a system.
+     *
+     * <p>The archiver says nothing unless it is asked to, and names every path it writes when it is, which
+     * is why the handbook asks it to: a screenful of paths going past is the only sign that a step with no
+     * progress bar and several minutes of work in it is doing anything at all.
+     */
+    private Result unpackStage3(final String[] parts, final String line, final Env env) {
+        if (distro != Distro.GENTOO) {
+            return Result.fail("tar: command not found");
+        }
+        if (!line.contains("stage3")) {
+            return Result.fail("tar: Cowardly refusing to create an empty archive",
+                    "Try 'tar --help' or 'tar --usage' for more information.");
+        }
+        if (busy(env.now())) {
+            return stillWorking(env);
+        }
+        if (!fetched) {
+            return Result.fail("tar: " + GentooInstallOutput.STAGE3 + ": Cannot open: No such file or directory",
+                    "tar: Error is not recoverable: exiting now");
+        }
+        if (!mounted) {
+            return Result.fail("tar: " + MOUNT + ": Cannot open: No such file or directory",
+                    "tar: Error is not recoverable: exiting now");
         }
         base = true;
         laidOut();
-        final long ticks = fetchTicks(BASE_MB, env);
-        takesTime(env.now(), ticks, "the stage 3",
-                ">>> stage3 unpacked. Next: chroot /mnt");
-        return Result.pass("Fetching stage3-amd64.tar.xz from mirror://mainframe",
-                "  stage3-amd64.tar.xz  [" + bar() + "] " + BASE_MB + " MB",
-                "Unpacking into /mnt (about " + (ticks / 20) + "s)");
+        /* Laying it out off the disk it is already on is quicker than pulling it over the network was. */
+        final long ticks = Math.max(20L, fetchTicks(BASE_MB, env) / 3L);
+        final boolean naming = parts.length > 1 && parts[1].replace("-", "").contains("v");
+        if (!naming) {
+            /* Asked to work quietly it works quietly, which is what it does and why the handbook asks it not to. */
+            takesTime(env.now(), ticks, GentooInstallOutput.STAGE3, List.of());
+            return new Result(true, List.of(), false);
+        }
+        final List<String> all = GentooInstallOutput.unpack();
+        final int said = after(all, "./etc/");
+        takesTime(env.now(), ticks, GentooInstallOutput.STAGE3, all.subList(said, all.size()));
+        return new Result(true, List.copyOf(all.subList(0, said)), false);
     }
 
     private Result genfstab(final String line, final Env env) {
@@ -926,9 +1061,10 @@ public final class LiveInstallState {
         }
         fstab = true;
         // The table is written where it was told to go, so reading it back shows what this step really put there.
-        final String table = "# /dev/" + device + "\nUUID=jsc-" + device + "  /  ext4  rw,relatime  0 1";
-        write(MOUNT + "/etc/fstab", table);
-        return new Result(true, List.copyOf(List.of(table.split("\n", -1))), false);
+        final List<String> table = ArchInstallOutput.fstab(device, rootUuid(env), espDevice,
+                espDevice.isEmpty() ? "" : LiveInstallOutput.shortUuid(espDevice, sizeOf(espDevice, env)));
+        write(MOUNT + "/etc/fstab", String.join(String.valueOf(LINE), table));
+        return new Result(true, table, false);
     }
 
     private Result enterChroot(final String point, final Env env) {
@@ -1006,26 +1142,25 @@ public final class LiveInstallState {
         final String named = parts[2];
         final long ticks = fetchTicks(PACKAGE_MB, env);
         asked.add(named);
-        takesTime(env.now(), ticks, named, ":: " + named + " installed.");
-        return Result.pass(":: Retrieving packages...", fetching(named),
-                ":: Installing (about " + (ticks / 20) + "s)");
+        final List<String> all = ArchInstallOutput.pacman(named, megabytesPerSecond(PACKAGE_MB, ticks));
+        final int said = after(all, ":: Retrieving packages...");
+        takesTime(env.now(), ticks, named, all.subList(said, all.size()));
+        return new Result(true, List.copyOf(all.subList(0, said)), false);
     }
 
-    /** What a step says when something the machine is already doing has to finish first. */
+    /** The identifier of the filesystem the system is installed on, which is what names it everywhere. */
+    private String rootUuid(final Env env) {
+        return LiveInstallOutput.uuid(device, sizeOf(device, env));
+    }
+
+    /**
+     * What a step says when something the machine is already doing has to finish first.
+     *
+     * <p>A real terminal would not have given the prompt back at all, so this stands in for the prompt that
+     * is not there: it names what is running and how much of it is left.
+     */
     private Result stillWorking(final Env env) {
-        return Result.fail("Still fetching " + busyWhat + " (" + ((busyUntil - env.now()) / 20) + "s left).");
-    }
-
-    /** The packages a base install fetches, named so the output is an account rather than one line. */
-    private static final String[] ARCH_BASE = {"base", "linux", "linux-firmware", "e2fsprogs", "grub"};
-
-    /** One package's line as a fetch prints it, bar and all. */
-    private static String fetching(final String pkg) {
-        return String.format(Locale.ROOT, " %-16s [%s] 100%%", pkg, bar());
-    }
-
-    private static String bar() {
-        return "######################";
+        return Result.fail(busyWhat + ": still running (" + ((busyUntil - env.now()) / 20) + "s left).");
     }
 
     /** The directories a base system brings with it, which is what makes them there to look in. */
@@ -1047,9 +1182,13 @@ public final class LiveInstallState {
         if (!env.mirror()) {
             return Result.fail("!!! Could not resolve mirror://mainframe", "!!! Synchronization failed");
         }
-        if (line.startsWith("emerge-webrsync") || line.contains("--sync")) {
+        if (line.startsWith("emerge-webrsync")) {
             synced = true;
-            return Result.pass(">>> Synchronizing the portage tree from mirror://mainframe ... done");
+            return new Result(true, GentooInstallOutput.webrsync(MIRROR, TREE_FILES), false);
+        }
+        if (line.contains("--sync")) {
+            synced = true;
+            return new Result(true, GentooInstallOutput.sync(MIRROR, TREE_FILES), false);
         }
         if (!synced) {
             return Result.fail("!!! The portage tree is empty. Run emerge-webrsync or emerge --sync first.");
@@ -1057,27 +1196,40 @@ public final class LiveInstallState {
         if (busy(env.now())) {
             return stillWorking(env);
         }
+        final int jobs = Math.max(1, Math.min(makeJobs(), Math.max(1, env.cores())));
         if (line.contains("gentoo-sources")) {
             sources = true;
-            final int jobs = Math.max(1, Math.min(makeJobs(), Math.max(1, env.cores())));
-            final long ticks = compileTicks(env);
-            takesTime(env.now(), ticks, "sys-kernel/gentoo-sources",
-                    ">>> sys-kernel/gentoo-sources: compiled. Run 'genkernel all' to build the kernel.");
-            return Result.pass(">>> Emerging (1 of 1) sys-kernel/gentoo-sources",
-                    ">>> Compiling with " + jobs + (jobs == 1 ? " job" : " jobs") + " on " + env.cores()
-                            + " cores at " + env.mhz() + " MHz",
-                    ">>> about " + (ticks / 20) + "s; run genkernel when it finishes");
+            /*
+             * Kernel sources are fetched and laid out, never compiled: the package is a directory of source
+             * code, and the half-hour of compiling it that everybody remembers belongs to the next step.
+             */
+            final long ticks = fetchTicks(PACKAGE_MB, env);
+            return merging("sys-kernel/gentoo-sources", GentooInstallOutput.KERNEL,
+                    "linux-" + GentooInstallOutput.KERNEL + ".tar.xz", jobs, true, ticks, env);
         }
         final String named = line.substring("emerge".length()).trim();
         if (named.isEmpty()) {
             return Result.fail("!!! No packages given.");
         }
         // Anything else asked for comes over the Mirror like everything else, and takes as long as it is big.
-        final long ticks = fetchTicks(PACKAGE_MB, env);
         asked.add(named);
-        takesTime(env.now(), ticks, named, ">>> " + named + " merged.");
-        return Result.pass(">>> Emerging " + named,
-                " " + named + "  [" + bar() + "] (about " + (ticks / 20) + "s)");
+        final String atom = named.contains("/") ? named : "app-misc/" + named;
+        final String plain = atom.substring(atom.indexOf('/') + 1);
+        return merging(atom, "1.0", plain + "-1.0.tar.xz", jobs, false, fetchTicks(PACKAGE_MB, env), env);
+    }
+
+    /**
+     * Starts one package merging, printing what the tool has said by the time the work begins.
+     *
+     * <p>The split is where the real one's own is: it tells you what it is about to do and what it is
+     * fetching straight away, and everything from the unpacking onwards arrives as it happens.
+     */
+    private Result merging(final String atom, final String version, final String archive, final int jobs,
+                           final boolean sources, final long ticks, final Env env) {
+        final List<String> all = GentooInstallOutput.emerge(atom, version, archive, jobs, sources);
+        final int said = after(all, ">>> Unpacking source...");
+        takesTime(env.now(), ticks, atom, all.subList(said, all.size()));
+        return new Result(true, List.copyOf(all.subList(0, said)), false);
     }
 
     private Result genkernel(final Env env) {
@@ -1091,11 +1243,19 @@ public final class LiveInstallState {
             return Result.fail("* ERROR: no kernel sources found. emerge sys-kernel/gentoo-sources first.");
         }
         if (busy(env.now())) {
-            return Result.fail("* kernel sources are still compiling ("
+            return Result.fail("* ERROR: the kernel sources are still being laid out ("
                     + ((busyUntil - env.now()) / 20) + "s left)");
         }
         kernelBuilt = true;
-        return Result.pass("* Gentoo Linux Genkernel", "* kernel: >> Compiling 6.8-jsc bzImage ... done", "* Kernel compiled successfully!");
+        /*
+         * This is the long one. Compiling a kernel is what a machine's processor is really for, so it is the
+         * one step whose wait is set by how many cores the player put in and how fast they run.
+         */
+        final int jobs = Math.max(1, Math.min(makeJobs(), Math.max(1, env.cores())));
+        final List<String> all = GentooInstallOutput.genkernel(GentooInstallOutput.KERNEL, jobs);
+        final int said = after(all, "* kernel: >> Initializing ...");
+        takesTime(env.now(), compileTicks(env), "the kernel", all.subList(said, all.size()));
+        return new Result(true, List.copyOf(all.subList(0, said)), false);
     }
 
     /**
@@ -1109,6 +1269,9 @@ public final class LiveInstallState {
     private Result grub(final String arg, final Env env) {
         if (!chroot) {
             return Result.fail("grub-install: error: cannot find EFI directory (run this inside the new system).");
+        }
+        if (busy(env.now())) {
+            return stillWorking(env);
         }
         if (distro == Distro.GENTOO && !kernelBuilt) {
             return Result.fail("grub-install: error: no kernel image found in /boot (run genkernel first).");
@@ -1155,9 +1318,12 @@ public final class LiveInstallState {
      * <p>Generated from the system that is really installed, so reading the file back shows this machine's
      * system on the disk it is on rather than a line written in advance.
      */
-    private Result grubConfig(final String line) {
+    private Result grubConfig(final String line, final Env env) {
         if (!chroot) {
             return Result.fail("grub-mkconfig: command not found");
+        }
+        if (busy(env.now())) {
+            return stillWorking(env);
         }
         if (!bootloader) {
             return Result.fail("/usr/bin/grub-mkconfig: line 1: /boot/grub: No such file or directory",
@@ -1167,16 +1333,25 @@ public final class LiveInstallState {
             return Result.fail("Usage: grub-mkconfig -o /boot/grub/grub.cfg");
         }
         final String name = distro == Distro.ARCH ? "Arch Linux" : "Gentoo Linux";
-        final String config = String.join("\n",
+        final String image = kernelImage();
+        final String uuid = rootUuid(env);
+        final String config = String.join(String.valueOf(LINE),
                 "# generated by grub-mkconfig",
                 "menuentry '" + name + "' {",
                 "        set root='hd0'",
-                "        linux /boot/vmlinuz-linux root=UUID=jsc-" + device + " rw",
+                "        linux " + image + " root=UUID=" + uuid + " rw",
+                "        initrd " + image.replace("vmlinuz", "initramfs") + ".img",
                 "}");
         write(MOUNT + "/boot/grub/grub.cfg", config);
         grubConfig = true;
-        return Result.pass("Generating grub configuration file ...",
-                "Found linux image: /boot/vmlinuz-linux", "done");
+        return new Result(true, LiveInstallOutput.grubMkconfig(List.of(image), false), false);
+    }
+
+    /** Where this distribution puts the kernel it installs, which is not where the other one puts it. */
+    private String kernelImage() {
+        return distro == Distro.ARCH
+                ? "/boot/vmlinuz-linux"
+                : "/boot/vmlinuz-" + GentooInstallOutput.KERNEL + "-gentoo";
     }
 
     /** Builds the image the kernel is handed at boot, which on this distribution is its own step. */
@@ -1188,9 +1363,9 @@ public final class LiveInstallState {
             return Result.fail("mkinitcpio: this must be run inside the new system (arch-chroot /mnt)");
         }
         write(MOUNT + "/boot/initramfs-linux.img", "");
+        write(MOUNT + "/boot/initramfs-linux-fallback.img", "");
         initramfs = true;
-        return Result.pass("==> Building image from preset: /etc/mkinitcpio.d/linux.preset: 'default'",
-                "==> Image generation successful");
+        return new Result(true, ArchInstallOutput.mkinitcpio(ARCH_RELEASE), false);
     }
 
     /**
@@ -1315,6 +1490,7 @@ public final class LiveInstallState {
         put(out, "device", device);
         put(out, "formatted", formatted);
         put(out, "mounted", mounted);
+        put(out, "fetched", fetched);
         put(out, "base", base);
         put(out, "fstab", fstab);
         put(out, "chroot", chroot);
@@ -1373,6 +1549,7 @@ public final class LiveInstallState {
         st.device = saved.getOrDefault("device", "");
         st.formatted = flag(saved, "formatted");
         st.mounted = flag(saved, "mounted");
+        st.fetched = flag(saved, "fetched");
         st.base = flag(saved, "base");
         st.fstab = flag(saved, "fstab");
         st.chroot = flag(saved, "chroot");

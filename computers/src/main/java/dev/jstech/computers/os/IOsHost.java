@@ -205,10 +205,24 @@ public interface IOsHost extends IPeripheralOwner {
     ResourceLocation installedDesktopId();
 
     /**
-     * Whether this machine still has something to run: the installed OS, or a live-install session
-     * whose medium is still present. Implementations drop a dead live session as a side effect.
+     * Whether this machine still has something to run: the installed system, or a live session whose medium
+     * it can still see.
+     *
+     * <p>A question, and nothing more. It is asked by the gate on every payload a screen sends and by the
+     * container every tick, so it must be safe to ask at any moment and must change nothing when it is: a
+     * machine whose drive is a tick late to load says it cannot tell, and being unable to tell keeps the
+     * session rather than ending it. Ending one is {@link #settleLiveInstall()}.
      */
     boolean validateOsSession();
+
+    /**
+     * Ends a live session whose medium has really been taken out, once a tick, and says whether it did.
+     *
+     * <p>A machine that keeps no live session has none to end.
+     */
+    default boolean settleLiveInstall() {
+        return false;
+    }
 
     /** The per-machine console state: history, installed programs, settings. */
     ComputerConsoleState console();

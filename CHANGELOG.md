@@ -137,6 +137,22 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the system.
 
 ### Changed
+- The tools of a by-hand Arch or Gentoo install now print what the real ones print. `mke2fs` reports the block
+  count, the inode count, where the superblock backups landed and how big the journal is, all worked out from
+  the disk by the rules the real tool uses rather than written down; `pacstrap` and `pacman` resolve, list what
+  they are about to install with its versions and its two totals, ask, retrieve a package at a time and run the
+  post-transaction hooks; `emerge` announces every phase it passes through; `genkernel` builds the kernel and
+  then the boot image and disclaims the result the way it really does; `fdisk`, `mkfs.fat`, `mkinitcpio`,
+  `grub-mkconfig` and `lsblk` likewise. `mount` says nothing, because it does not.
+- The Gentoo sequence now fetches the stage 3 and unpacks it as two steps, `wget` then `tar`, which is how the
+  handbook has it and what makes the fetcher's counting and the archiver's list of paths two different things
+  to watch.
+- A long step's output now arrives while the step runs rather than after it: a package manager fetching a
+  hundred megabytes prints a line per package as each one lands, which is what makes a long step watchable.
+- Building a Gentoo kernel now takes the time it really takes, and getting the sources takes the time getting
+  sources takes. It was the other way round.
+- A machine's filesystems are named by real identifiers in the table it writes and in the bootloader's list,
+  the root's a full one and the boot partition's the four-byte serial that filesystem has room for.
 - Everything a machine writes on its own glass is drawn at three quarters of the game's font: the self-test,
   the boot manager's list, a system reading its start out, and the installers that ran in text. Those machines
   fitted a screenful of text on a screen this size, and at full size a self-test that listed a board, a video
@@ -449,6 +465,17 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- A machine running a live medium could throw the whole installation away without a word. Whether the medium
+  was still in the drive was asked on every line typed and every tick, and the question ended the session the
+  moment it did not like the answer, so a drive one tick late to load read as an empty drive: the installation
+  was discarded, the terminal stayed on the screen, and from then on every command typed into it vanished with
+  nothing printed under it. The question now only answers, a drive nobody can see is no longer read as a drive
+  with nothing in it, and ending a session is the machine's own step, which restarts it so the player watches
+  it happen.
+- A terminal the machine has stopped listening to now says so. It writes what was typed the moment it is typed
+  and waits for an answer, so a line refused in silence left a command on the glass with nothing under it, over
+  and over, which reads as a machine that has broken rather than one this window no longer reaches.
+- Booting any live medium that was not Arch started a Gentoo session, whatever the medium actually was.
 - The newest Frames edition's first-boot greeting was worked out on every first start and never drawn. The
   machine built the words, and the screen returned to draw that edition's picture before it reached them, so
   the one start that edition says anything on said nothing.

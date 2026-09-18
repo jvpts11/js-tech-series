@@ -35,6 +35,7 @@ import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.install.SetupRunner;
+import dev.jstech.computers.os.media.LiveMedium;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ComputerConsoleState;
@@ -1657,38 +1658,30 @@ public class ServerRackBlockEntity extends BlockEntity
 
     @Override
     public boolean validateOsSession() {
-        final ComputerConsoleState console = console();
-        final LiveInstallState live =
-                console == null ? null : console.liveInstall();
-        if (live != null) {
-            if (hasLiveMediumFor(live.distro())) {
-                return true;
-            }
-            console.clearLiveInstall();
-            setChanged();
-        }
-        return installedOsId() != null;
+        final LiveInstallState live = liveInstall();
+        /* Asked, never acted on: see the same method on a personal computer for why that matters. */
+        return (live != null
+                && LiveMedium.holding(level, linkedEndpoints(), live.distro()) != LiveMedium.Answer.GONE)
+                || installedOsId() != null;
     }
 
-    /** Whether a media reader cabled to the rack still holds the live installer for {@code distro}. */
-    private boolean hasLiveMediumFor(
-            final LiveInstallState.Distro distro) {
-        if (level == null) {
-            return true; // not resolvable right now; do not kill the session over a missing level
+    @Override
+    public boolean settleLiveInstall() {
+        final LiveInstallState live = liveInstall();
+        if (live == null || LiveMedium.holding(level, linkedEndpoints(), live.distro())
+                != LiveMedium.Answer.GONE) {
+            return false;
         }
-        final String wanted = distro
-                == LiveInstallState.Distro.ARCH
-                ? "arch" : "gentoo";
-        for (final long endpoint : linkedEndpoints()) {
-            if (level.getBlockEntity(BlockPos.of(endpoint))
-                    instanceof MediaReaderBlockEntity reader
-                    && reader.insertedKind() == MediaKind.OS_INSTALL
-                    && reader.insertedPayload() != null
-                    && wanted.equals(reader.insertedPayload().getPath())) {
-                return true;
-            }
-        }
-        return false;
+        console().clearLiveInstall();
+        setChanged();
+        return true;
+    }
+
+    /** The live installation the mounted unit is running, or nothing when it is not running one. */
+    @Nullable
+    private LiveInstallState liveInstall() {
+        final ComputerConsoleState console = console();
+        return console == null ? null : console.liveInstall();
     }
 
     @Override

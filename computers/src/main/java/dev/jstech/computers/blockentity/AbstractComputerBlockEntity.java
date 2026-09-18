@@ -880,6 +880,11 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return session.validateOsSession();
     }
 
+    @Override
+    public boolean settleLiveInstall() {
+        return session.settleLiveInstall();
+    }
+
     /**
      * Formats disk slot {@code slot}: erases the installed system, every file, the item storage and the
      * privacy split on it, leaving a blank disk. The boot-order pointer is cleared when it pointed here.

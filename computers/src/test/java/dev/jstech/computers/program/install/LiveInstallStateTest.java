@@ -121,23 +121,26 @@ class LiveInstallStateTest {
         final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.GENTOO);
         step(st, "mkfs.ext4 /dev/sdb");
         step(st, "mount /dev/sdb /mnt");
-        assertTrue(step(st, "tar xpf stage3-amd64.tar.xz -C /mnt").ok());
+        assertTrue(step(st, "wget https://distfiles.mainframe/stage3-amd64-openrc.tar.xz").ok());
+        assertTrue(step(st, "tar xpvf stage3-amd64-openrc.tar.xz").ok());
         assertTrue(step(st, "chroot /mnt").ok());
         assertFalse(step(st, "emerge sys-kernel/gentoo-sources").ok()); // not synced yet
         assertTrue(step(st, "emerge --sync").ok());
         /*
-         * One job on a 2000 MHz processor is a 32 s build, which is 640 ticks, and genkernel refuses until
-         * they have passed. The clock here is the test's own, so the numbers are the real ones.
+         * The sources are fetched and laid out, which is quick; the kernel is built, which is not. One job
+         * on a 2000 MHz processor is a 32 s build, which is 640 ticks, and the bootloader refuses until they
+         * have passed. The clock here is the test's own, so the numbers are the real ones.
          */
         final long started = this.clock;
         assertTrue(run(st, "emerge sys-kernel/gentoo-sources", true, started).ok());
-        assertFalse(run(st, "genkernel all", true, started + 300).ok(), "still compiling");
-        assertTrue(run(st, "genkernel all", true, started + 700).ok());
-        assertTrue(run(st, "grub-install /dev/sdb", true, started + 700).ok());
-        assertTrue(run(st, "grub-mkconfig -o /boot/grub/grub.cfg", true, started + 700).ok());
-        assertTrue(run(st, "passwd", true, started + 700).ok());
-        run(st, "exit", true, started + 700);
-        assertTrue(run(st, "reboot", true, started + 700).complete());
+        assertFalse(run(st, "genkernel all", true, started).ok(), "the sources are still arriving");
+        assertTrue(run(st, "genkernel all", true, started + 3_000).ok());
+        assertFalse(run(st, "grub-install /dev/sdb", true, started + 3_100).ok(), "still compiling");
+        assertTrue(run(st, "grub-install /dev/sdb", true, started + 3_700).ok());
+        assertTrue(run(st, "grub-mkconfig -o /boot/grub/grub.cfg", true, started + 3_700).ok());
+        assertTrue(run(st, "passwd", true, started + 3_700).ok());
+        run(st, "exit", true, started + 3_700);
+        assertTrue(run(st, "reboot", true, started + 3_700).complete());
         assertEquals(1, st.targetIndex());
     }
 
@@ -146,7 +149,8 @@ class LiveInstallStateTest {
         final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.GENTOO);
         step(st, "mkfs.ext4 /dev/sda");
         step(st, "mount /dev/sda /mnt");
-        step(st, "tar xpf stage3-amd64.tar.xz -C /mnt");
+        step(st, "wget https://distfiles.mainframe/stage3-amd64-openrc.tar.xz");
+        step(st, "tar xpvf stage3-amd64-openrc.tar.xz");
         step(st, "chroot /mnt");
         final LiveInstallState back = LiveInstallState.deserialize(st.serialize());
         assertEquals(st.prompt(), back.prompt());
@@ -205,8 +209,13 @@ class LiveInstallStateTest {
         step(st, "genfstab -U /mnt >> /mnt/etc/fstab");
         final LiveInstallState.Result read = step(st, "cat /mnt/etc/fstab");
         assertTrue(read.ok());
-        assertTrue(String.join("\n", read.lines()).contains("UUID=jsc-sdb"),
-                "and it names the disk the install really used: " + read.lines());
+        final String table = String.join("\n", read.lines());
+        assertTrue(table.contains("# /dev/sdb"), "and it names the disk the install really used: " + table);
+        /*
+         * Named by the filesystem's own identifier, which is the whole reason the step is run with that
+         * flag: a disk moved to another port comes up all the same.
+         */
+        assertTrue(table.matches("(?s).*UUID=[0-9a-f]{8}-[0-9a-f]{4}-.*"), table);
     }
 
     /**
@@ -263,7 +272,7 @@ class LiveInstallStateTest {
 
         final LiveInstallState back = LiveInstallState.deserialize(st.serialize());
         assertEquals("root@archiso /mnt/etc #", back.prompt());
-        assertTrue(String.join("\n", back.run("cat fstab", env(true, 0)).lines()).contains("UUID=jsc-sda"));
+        assertTrue(String.join("\n", back.run("cat fstab", env(true, 0)).lines()).contains("# /dev/sda"));
         assertTrue(back.run("cat /root/install.txt", env(true, 0)).ok(),
                 "and the medium's own guide is back with it");
     }
@@ -455,8 +464,8 @@ class LiveInstallStateTest {
         step(st, "grub-install /dev/sdb");
         assertTrue(step(st, "grub-mkconfig -o /boot/grub/grub.cfg").ok());
         final String written = String.join("\n", step(st, "cat /boot/grub/grub.cfg").lines());
-        assertTrue(written.contains("Arch Linux") && written.contains("jsc-sdb"),
-                "and it names the system and the disk it is on: " + written);
+        assertTrue(written.contains("Arch Linux") && written.contains("root=UUID="),
+                "and it names the system and the filesystem it is on: " + written);
     }
 
     /** A bootloader with nothing to start is a bootloader that starts nothing. */
@@ -484,7 +493,8 @@ class LiveInstallStateTest {
         final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.GENTOO);
         step(st, "mkfs.ext4 /dev/sda");
         step(st, "mount /dev/sda /mnt");
-        step(st, "tar xpf stage3-amd64.tar.xz -C /mnt");
+        step(st, "wget https://distfiles.mainframe/stage3-amd64-openrc.tar.xz");
+        step(st, "tar xpvf stage3-amd64-openrc.tar.xz");
         assertFalse(step(st, "hostname library").ok(), "not from outside the new system");
 
         step(st, "chroot /mnt");
@@ -519,7 +529,8 @@ class LiveInstallStateTest {
 
         step(alone, "mkfs.ext4 /dev/sda");
         step(alone, "mount /dev/sda /mnt");
-        step(alone, "tar xpf stage3-amd64.tar.xz -C /mnt");
+        step(alone, "wget https://distfiles.mainframe/stage3-amd64-openrc.tar.xz");
+        step(alone, "tar xpvf stage3-amd64-openrc.tar.xz");
         step(alone, "chroot /mnt");
         step(alone, "echo 'MAKEOPTS=\"-j4\"' >> /etc/portage/make.conf");
         assertEquals(4, alone.makeJobs(), "and what was written is what it reads back");
@@ -532,7 +543,8 @@ class LiveInstallStateTest {
         final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.GENTOO);
         step(st, "mkfs.ext4 /dev/sda");
         step(st, "mount /dev/sda /mnt");
-        step(st, "tar xpf stage3-amd64.tar.xz -C /mnt");
+        step(st, "wget https://distfiles.mainframe/stage3-amd64-openrc.tar.xz");
+        step(st, "tar xpvf stage3-amd64-openrc.tar.xz");
         step(st, "chroot /mnt");
         step(st, "echo 'MAKEOPTS=\"-j64\"' >> /etc/portage/make.conf");
         assertEquals(64, st.makeJobs(), "the file says what it says");
@@ -554,7 +566,7 @@ class LiveInstallStateTest {
 
         final LiveInstallState.Result tooSoon = run(st, "arch-chroot /mnt", true, 10);
         assertFalse(tooSoon.ok());
-        assertTrue(tooSoon.lines().get(0).contains("Still fetching"), tooSoon.lines().get(0));
+        assertTrue(tooSoon.lines().get(0).contains("still running"), tooSoon.lines().get(0));
         assertTrue(run(st, "arch-chroot /mnt", true, 100_000).ok(), "and once it is there, it is there");
     }
 
@@ -564,7 +576,8 @@ class LiveInstallStateTest {
         final LiveInstallState st = new LiveInstallState(LiveInstallState.Distro.GENTOO);
         step(st, "mkfs.ext4 /dev/sda");
         step(st, "mount /dev/sda /mnt");
-        step(st, "tar xpf stage3-amd64.tar.xz -C /mnt");
+        step(st, "wget https://distfiles.mainframe/stage3-amd64-openrc.tar.xz");
+        step(st, "tar xpvf stage3-amd64-openrc.tar.xz");
         step(st, "chroot /mnt");
         step(st, "echo 'CFLAGS=\"-O2\"' > /etc/portage/make.conf");
         step(st, "echo 'MAKEOPTS=\"-j2\"' >> /etc/portage/make.conf");

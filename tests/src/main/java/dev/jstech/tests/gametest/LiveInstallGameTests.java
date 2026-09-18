@@ -69,16 +69,18 @@ public final class LiveInstallGameTests {
 
         said(helper, shell, cli, "lsblk", "sda");
         said(helper, shell, cli, "mkfs.ext4 /dev/sda", "");
-        said(helper, shell, cli, "mount /dev/sda /mnt", "/mnt");
-        said(helper, shell, cli, "tar xpf stage3-amd64.tar.xz -C /mnt", "");
+        silent(helper, shell, cli, "mount /dev/sda /mnt");
         /*
-         * Unpacking a stage 3 takes time, and nothing enters a system that is still arriving. Asked for it
-         * while the unpack is running, the shell says so and says how long is left, which is the one answer
-         * that keeps a player from thinking the step was ignored.
+         * This machine is on a network with no Mirror on it, which is the commonest thing to be wrong when
+         * a by-hand install stops working, and every step of it says so in the words the real tool uses
+         * rather than failing quietly and leaving the player to work out which step did not happen.
          */
+        said(helper, shell, cli, "wget https://distfiles.mainframe/stage3-amd64-openrc.tar.xz",
+                "Name or service not known");
+        said(helper, shell, cli, "tar xpvf stage3-amd64-openrc.tar.xz", "Cannot open");
         said(helper, shell, cli, "chroot /mnt", "");
         helper.assertFalse(cli.prompt().contains("chroot"),
-                "and the shell is still outside it until the unpack ends: " + cli.prompt());
+                "and nothing enters a system that was never unpacked: " + cli.prompt());
         helper.succeed();
     }
 
@@ -95,7 +97,7 @@ public final class LiveInstallGameTests {
 
         said(helper, shell, cli, "lsblk", "sda");
         said(helper, shell, cli, "mkfs.ext4 /dev/sda", "");
-        said(helper, shell, cli, "mount /dev/sda /mnt", "/mnt");
+        silent(helper, shell, cli, "mount /dev/sda /mnt");
         helper.succeed();
     }
 
@@ -116,6 +118,43 @@ public final class LiveInstallGameTests {
     }
 
     /**
+     * Asking whether the medium is still in the drive never takes the session away.
+     *
+     * <p>This is the bug that made a whole installation vanish without a word. The question is asked by the
+     * gate on every line typed and by the container every tick, and it used to end the session the moment it
+     * did not like the answer: a drive one tick late to load read as a drive with nothing in it, the
+     * installation was thrown away, and the terminal stayed on the screen answering nothing at all, for
+     * ever, with no way to tell from the machine that anything had happened to it.
+     */
+    @GameTest(template = ARENA)
+    public static void validateOsSession_neverThrowsTheSessionAwayByItself(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = legacyWithDisk(helper);
+        if (computer == null) {
+            return;
+        }
+        computer.console().startLiveInstall(LiveInstallState.Distro.GENTOO);
+        computer.validateOsSession();
+        computer.validateOsSession();
+        helper.assertTrue(computer.console().liveInstall() != null,
+                "asking where the medium is must never be what takes it away");
+        helper.succeed();
+    }
+
+    /** Ending a session is the machine's own business, and it does end one whose medium is really gone. */
+    @GameTest(template = ARENA)
+    public static void settleLiveInstall_endsTheSessionWhenNoDriveHoldsTheMedium(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = legacyWithDisk(helper);
+        if (computer == null) {
+            return;
+        }
+        computer.console().startLiveInstall(LiveInstallState.Distro.GENTOO);
+        helper.assertTrue(computer.settleLiveInstall(), "no drive holds it, so the session is over");
+        helper.assertTrue(computer.console().liveInstall() == null, "and it is gone");
+        helper.assertFalse(computer.settleLiveInstall(), "and there is nothing left to end a second time");
+        helper.succeed();
+    }
+
+    /**
      * Runs one step and insists it answered.
      *
      * @param must a word the answer has to carry, or empty when any answer at all will do
@@ -127,6 +166,19 @@ public final class LiveInstallGameTests {
         if (!must.isEmpty()) {
             helper.assertTrue(out.contains(must), "\"" + line + "\" answered: " + out);
         }
+    }
+
+    /**
+     * Runs one step that the real tool performs without a word, and insists it stayed quiet.
+     *
+     * <p>Mounting a filesystem is the one step in either sequence that says nothing when it works, and that
+     * silence is as much a part of the tool as any of the others' output. A line of confirmation here would
+     * be the tell that somebody wrote this from a description rather than from having run it.
+     */
+    private static void silent(final GameTestHelper helper, final CliShell shell, final ServerCliComputer cli,
+                               final String line) {
+        final String out = text(shell.run(line, cli)).trim();
+        helper.assertTrue(out.isEmpty(), "\"" + line + "\" should say nothing at all, and said: " + out);
     }
 
     private static String text(final CliShell.Response response) {
