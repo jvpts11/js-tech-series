@@ -39,6 +39,13 @@ class BootTimingTest {
         assertTrue(full > bare, "a machine with more in it takes longer to find it all");
     }
 
+    /**
+     * Each generation does the same work faster, and the floor never turns that around.
+     *
+     * <p>The second half is the part worth holding: a floor set too high would make a Legacy machine's
+     * self-test longer than a modern one's, and the ordering the whole timing exists to express would run
+     * backwards at the top end where nobody would think to look for it.
+     */
     @Test
     void postTicks_shrinkWithTheGeneration() {
         final int vintage = BootTiming.postTicks(2, 2, HardwareEra.VINTAGE);
@@ -53,10 +60,17 @@ class BootTimingTest {
         assertEquals(73, BootTiming.postTicks(1, 1, HardwareEra.VINTAGE));
     }
 
+    /**
+     * A modern machine does the work so fast that what it takes is the floor, not the work.
+     *
+     * <p>Two modules, a disk and a graphics card is 4.3 seconds of finding on the slowest machine there is,
+     * and a modern one does it four times over, which lands under the least a self-test may take. The floor
+     * is what it takes, and the floor is there so the lines can be read rather than glimpsed.
+     */
     @Test
-    void postTicks_aModernMachine_isAlmostInstant() {
-        // Two modules, a disk and a graphics card: 4.3 seconds of work on a machine that does it four times over.
-        assertEquals(22, BootTiming.postTicks(2, 2, HardwareEra.STANDARD));
+    void postTicks_aModernMachine_sitsAtTheFloor() {
+        assertEquals((int) (BootTiming.POST_MIN_SECONDS * SetupTiming.TICKS_PER_SECOND),
+                BootTiming.postTicks(2, 2, HardwareEra.STANDARD));
     }
 
     @Test

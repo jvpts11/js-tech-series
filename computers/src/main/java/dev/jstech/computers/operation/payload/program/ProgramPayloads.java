@@ -191,14 +191,16 @@ public final class ProgramPayloads {
              * not re-synced afterwards because the board is only swapped in the computer's own assembly
              * GUI, never from the running prompt.
              */
-            final HardwareEra hostEra =
-                    player.level().getBlockEntity(payload.hostPos())
-                            instanceof IOsHost host ? host.displayEra() : null;
+            final IOsHost opened = player.level().getBlockEntity(payload.hostPos())
+                    instanceof IOsHost host ? host : null;
+            final HardwareEra hostEra = opened == null ? null : opened.displayEra();
+            // Which run of the machine this terminal belongs to, so its lines are not another run's.
+            final long session = opened == null || opened.console() == null ? 0L : opened.console().session();
             player.openMenu(new SimpleMenuProvider(
                     (windowId, inv, p) -> new CommandPromptMenu(
-                            windowId, inv, payload.monitorPos(), payload.hostPos(), hostEra), title),
+                            windowId, inv, payload.monitorPos(), payload.hostPos(), hostEra, session), title),
                     buf -> CommandPromptMenu.writeOpenBuffer(
-                            buf, payload.monitorPos(), payload.hostPos(), hostEra));
+                            buf, payload.monitorPos(), payload.hostPos(), hostEra, session));
         } else {
             /*
              * The NMS and other windowed programs open through the shared launcher, which checks they

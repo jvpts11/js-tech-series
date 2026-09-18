@@ -23,15 +23,15 @@ public class LinuxTtyMenu extends CommandPromptMenu {
 
     public LinuxTtyMenu(final int containerId, final Inventory playerInventory, final BlockPos monitorPos,
                         final BlockPos hostPos, @Nullable final HardwareEra era, final String shellId,
-                        final String hostname, final String osLabel) {
+                        final String hostname, final String osLabel, final long session) {
         super(ComputingModule.LINUX_TTY_MENU.get(), containerId, playerInventory, monitorPos, hostPos,
-                era, shellId, hostname, osLabel);
+                era, shellId, hostname, osLabel, session);
     }
 
     public static LinuxTtyMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                            final RegistryFriendlyByteBuf buf) {
         final OpenData data = readOpenBuffer(buf);
         return new LinuxTtyMenu(containerId, playerInventory, data.monitor(), data.host(), data.era(),
-                data.shellId(), data.hostname(), data.osLabel());
+                data.shellId(), data.hostname(), data.osLabel(), data.session());
     }
 }

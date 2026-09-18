@@ -843,7 +843,7 @@ public final class LiveInstallState {
                         "       (make it first: mkfs.fat -F32 /dev/" + dev + ")");
             }
             espMount = point;
-            return Result.pass();
+            return Result.pass("mount: /dev/" + dev + " mounted on " + point + ".");
         }
         if (!point.equals(MOUNT)) {
             return Result.fail("mount: " + point + ": mount point does not exist.");
@@ -853,7 +853,13 @@ public final class LiveInstallState {
                     "       (format it first: mkfs.ext4 /dev/" + dev + ")");
         }
         mounted = true;
-        return Result.pass();
+        /*
+         * The real one says nothing, and here that costs more than it is worth: this is a sequence somebody
+         * types by hand, the terminal is the only thing telling them anything, and three steps in a row that
+         * answer nothing is indistinguishable from a machine that has stopped listening. So it answers the
+         * way the same tool does when it is asked to.
+         */
+        return Result.pass("mount: /dev/" + dev + " mounted on " + MOUNT + ".");
     }
 
     private Result pacstrap(final String point, final Env env) {

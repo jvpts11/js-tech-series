@@ -23,9 +23,19 @@ import net.minecraft.resources.ResourceLocation;
  * @param ref        the entry reference: a disk slot index (boot / boot order) or a media reader's packed
  *                   position (install / boot media); {@code -1} = any linked installer medium
  * @param target     the disk slot to install onto, or {@code -1} for the firmware's default target
+ * @param osId       the system this action is about, for the actions that are about one; empty otherwise
  */
-public record FirmwareActionPayload(BlockPos hostPos, BlockPos monitorPos, int action, long ref, int target)
-        implements CustomPacketPayload {
+public record FirmwareActionPayload(BlockPos hostPos, BlockPos monitorPos, int action, long ref, int target,
+                                    String osId) implements CustomPacketPayload {
+
+    /** The longest a system's id may be on the wire; longer than any the registry holds. */
+    public static final int MAX_ID = 64;
+
+    /** An action that is not about a particular system. */
+    public static FirmwareActionPayload of(final BlockPos hostPos, final BlockPos monitorPos, final int action,
+                                           final long ref, final int target) {
+        return new FirmwareActionPayload(hostPos, monitorPos, action, ref, target, "");
+    }
 
     /** Boot the OS on disk slot {@code ref} (also makes it the preferred boot disk). */
     public static final int ACTION_BOOT_DISK = 0;
@@ -44,10 +54,15 @@ public record FirmwareActionPayload(BlockPos hostPos, BlockPos monitorPos, int a
      */
     public static final int ACTION_RAID_MODE = 5;
     /**
-     * Boot disk slot {@code ref} for this boot only, from the self-test's one-time menu.
+     * Boot the system {@code osId} on disk slot {@code ref} for this boot only.
      *
      * <p>Unlike {@link #ACTION_BOOT_DISK} the order saved in setup is left alone and the machine does not test
      * itself again: it has already done that, and this is the choice of where to go next.
+     *
+     * <p>The choice travels as the disk and the system it names, rather than as a place in a list. Two menus
+     * offer this (the self-test's one-time menu and the boot manager the systems bring with them), they list
+     * different things in different orders, and a position meant a different thing in each: one of them was
+     * sending a disk slot where the other was sending a row number, and the machine read both the same way.
      */
     public static final int ACTION_BOOT_ONCE = 6;
     /** A key was pressed at the boot manager: stop counting and wait there for a choice. */
@@ -65,6 +80,7 @@ public record FirmwareActionPayload(BlockPos hostPos, BlockPos monitorPos, int a
                     ByteBufCodecs.VAR_INT, FirmwareActionPayload::action,
                     ByteBufCodecs.VAR_LONG, FirmwareActionPayload::ref,
                     ByteBufCodecs.VAR_INT, FirmwareActionPayload::target,
+                    ByteBufCodecs.stringUtf8(MAX_ID), FirmwareActionPayload::osId,
                     FirmwareActionPayload::new);
 
     @Override

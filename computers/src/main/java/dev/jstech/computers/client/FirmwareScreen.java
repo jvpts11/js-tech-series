@@ -234,7 +234,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         if (page == PAGE_STORAGE) {
             if (state != null && state.raid().present()
                     && (storageSel == RaidMode.NONE || state.raid().drives() >= storageSel.minDrives())) {
-                PacketDistributor.sendToServer(new FirmwareActionPayload(computerPos, monitorPos,
+                PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos,
                         FirmwareActionPayload.ACTION_RAID_MODE, storageSel.id(), -1));
             }
             return;
@@ -245,7 +245,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         }
         if (page == PAGE_ORDER) {
             if (e.kind() == FirmwareStatePayload.KIND_DISK) {
-                PacketDistributor.sendToServer(new FirmwareActionPayload(computerPos, monitorPos,
+                PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos,
                         FirmwareActionPayload.ACTION_SET_BOOT, e.ref(), -1));
             }
             return;
@@ -264,7 +264,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         }
         final int action = e.kind() == FirmwareStatePayload.KIND_DISK
                 ? FirmwareActionPayload.ACTION_BOOT_DISK : FirmwareActionPayload.ACTION_BOOT_MEDIA;
-        PacketDistributor.sendToServer(new FirmwareActionPayload(computerPos, monitorPos, action, e.ref(), -1));
+        PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos, action, e.ref(), -1));
         onClose();
     }
 
@@ -359,7 +359,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
      */
     private void openInstaller(final String osLabel, final long readerRef) {
         final int target = state == null ? -1 : state.installTargetSlot();
-        PacketDistributor.sendToServer(new FirmwareActionPayload(computerPos, monitorPos,
+        PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos,
                 FirmwareActionPayload.ACTION_INSTALL, readerRef, target));
     }
 
@@ -943,7 +943,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             return;
         }
         confirmFormatRef = Long.MIN_VALUE;
-        PacketDistributor.sendToServer(new FirmwareActionPayload(computerPos, monitorPos,
+        PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos,
                 FirmwareActionPayload.ACTION_FORMAT, e.ref(), -1));
     }
 

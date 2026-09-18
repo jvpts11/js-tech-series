@@ -347,18 +347,12 @@ public final class FirmwarePayloads {
                 computer.setPendingInstallSlot(IOsHost.NO_PENDING_INSTALL);
                 if (computer instanceof AbstractComputerBlockEntity machine) {
                     /*
-                     * The choice names where it sat in the manager's list, not the disk, because a disk carries
-                     * several systems and two entries can share one. The list is built again here from the same
-                     * machine the player was looking at, so the place in it means the same thing on both sides.
+                     * The choice arrives as the disk and the system it names, so nothing here has to rebuild a
+                     * list and hope it comes out in the order the player was looking at. Two menus send this
+                     * and they list different things; a position meant a different thing in each of them.
                      */
-                    final BootMenu list = BootLines.menuFor(machine, 0);
-                    final int at = (int) payload.ref();
-                    if (at < 0 || at >= list.entries().size()) {
-                        return;
-                    }
-                    final BootMenu.Entry chosen = list.entries().get(at);
-                    machine.setBootOnce(chosen.slot(),
-                            ResourceLocation.tryParse(chosen.osId()));
+                    machine.setBootOnce((int) payload.ref(),
+                            ResourceLocation.tryParse(payload.osId()));
                     /*
                      * Chosen at the boot manager, the system still has to come up: the machine leaves the menu and
                      * starts loading, and puts the player in front of that. Chosen anywhere else there is nothing
@@ -416,20 +410,27 @@ public final class FirmwarePayloads {
                     final OsDef os = OsRegistry.getOs(reader.insertedPayload());
                     if (os != null && os.installMode()
                             != InstallMode.GUIDED) {
-                        // A live medium: boot its shell and let the player install the system by hand.
+                        /*
+                         * A live medium: the machine starts from it, which means it restarts. The self-test
+                         * runs again and the medium's shell is what comes up after it, exactly as starting
+                         * from an installer does. It used to jump straight to the shell, so choosing a
+                         * medium in the setup was the one way of starting a machine that never looked like
+                         * starting one.
+                         */
+                        computer.setNeedsPost(true);
                         computer.console().startLiveInstall(os.id().getPath().equals("arch")
                                 ? LiveInstallState.Distro.ARCH
                                 : LiveInstallState.Distro.GENTOO);
                         computer.setChanged();
-                        MonitorBlock.openBootTarget(
-                                player, level, payload.monitorPos(), payload.hostPos());
+                        MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos());
                         return;
                     } else {
                         final int target = payload.target() >= 0 ? payload.target() : computer.defaultInstallSlot();
                         if (installOsFromReader(level, computer, payload.ref(), target)) {
                             computer.setBootDiskSlot(target);
-                            MonitorBlock.openBootTarget(
-                                    player, level, payload.monitorPos(), payload.hostPos());
+                            // Whatever the machine is doing now, which on a machine that keeps its installations
+                            // is the installer it just began rather than the boot target it had before.
+                            MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos());
                             return;
                         }
                     }

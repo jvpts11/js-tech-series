@@ -639,16 +639,20 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
             final boolean tty = posix || live != null;
             final boolean dos = !tty && os != null
                     && os.platform() == Platform.MC_DOS;
+            // Which run of the machine this terminal belongs to, so it does not come up showing another's lines.
+            final long session = host.console() == null ? 0L : host.console().session();
             player.openMenu(new SimpleMenuProvider(
                     (id, inv, p) -> tty
                             ? new LinuxTtyMenu(
-                                    id, inv, monitorPos, owner, era, shellId, hostname, osLabel)
+                                    id, inv, monitorPos, owner, era, shellId, hostname, osLabel, session)
                             : dos
                                     ? new DosTerminalMenu(
-                                            id, inv, monitorPos, owner, era, shellId, hostname, osLabel)
-                                    : new CommandPromptMenu(id, inv, monitorPos, owner, era, shellId, hostname, osLabel),
+                                            id, inv, monitorPos, owner, era, shellId, hostname, osLabel, session)
+                                    : new CommandPromptMenu(id, inv, monitorPos, owner, era, shellId, hostname,
+                                            osLabel, session),
                     title),
-                    buf -> CommandPromptMenu.writeOpenBuffer(buf, monitorPos, owner, era, shellId, hostname, osLabel));
+                    buf -> CommandPromptMenu.writeOpenBuffer(buf, monitorPos, owner, era, shellId, hostname,
+                            osLabel, session));
         }
     }
 

@@ -40,19 +40,27 @@ public class CommandPromptMenu extends AbstractContainerMenu {
     private final String shellId;
     private final String hostname;
     private final String osLabel;
+    /**
+     * Which run of the machine this terminal belongs to.
+     *
+     * <p>What a terminal has printed belongs to the run that printed it, and the screen keeps its lines
+     * between openings so walking away from one and coming back finds what was there. A restart ends the run,
+     * and the lines from before it are not the new system's.
+     */
+    private final long session;
 
     public CommandPromptMenu(final int containerId, final Inventory playerInventory,
                              final BlockPos monitorPos, final BlockPos hostPos,
-                             @Nullable final HardwareEra era) {
-        this(containerId, playerInventory, monitorPos, hostPos, era, "", "", "");
+                             @Nullable final HardwareEra era, final long session) {
+        this(containerId, playerInventory, monitorPos, hostPos, era, "", "", "", session);
     }
 
     public CommandPromptMenu(final int containerId, final Inventory playerInventory,
                              final BlockPos monitorPos, final BlockPos hostPos,
                              @Nullable final HardwareEra era, final String shellId, final String hostname,
-                             final String osLabel) {
+                             final String osLabel, final long session) {
         this(ComputingModule.COMMAND_PROMPT_MENU.get(), containerId, playerInventory, monitorPos, hostPos,
-                era, shellId, hostname, osLabel);
+                era, shellId, hostname, osLabel, session);
     }
 
     /**
@@ -62,7 +70,7 @@ public class CommandPromptMenu extends AbstractContainerMenu {
     protected CommandPromptMenu(final MenuType<?> type, final int containerId,
                                 final Inventory playerInventory, final BlockPos monitorPos, final BlockPos hostPos,
                                 @Nullable final HardwareEra era, final String shellId, final String hostname,
-                                final String osLabel) {
+                                final String osLabel, final long session) {
         super(type, containerId);
         this.monitorPos = monitorPos;
         this.hostPos = hostPos;
@@ -70,6 +78,7 @@ public class CommandPromptMenu extends AbstractContainerMenu {
         this.shellId = shellId == null ? "" : shellId;
         this.hostname = hostname == null ? "" : hostname;
         this.osLabel = osLabel == null ? "" : osLabel;
+        this.session = session;
         this.access = ContainerLevelAccess.create(playerInventory.player.level(), hostPos);
         AbstractComputerBlockEntity.screenOpened(playerInventory.player, hostPos);
     }
@@ -84,12 +93,12 @@ public class CommandPromptMenu extends AbstractContainerMenu {
                                                 final RegistryFriendlyByteBuf buf) {
         final OpenData data = readOpenBuffer(buf);
         return new CommandPromptMenu(containerId, playerInventory, data.monitor(), data.host(), data.era(),
-                data.shellId(), data.hostname(), data.osLabel());
+                data.shellId(), data.hostname(), data.osLabel(), data.session());
     }
 
     /** The shared open-buffer contents, so each terminal menu's {@code fromNetwork} reads them the same way. */
     protected record OpenData(BlockPos monitor, BlockPos host, @Nullable HardwareEra era, String shellId,
-                              String hostname, String osLabel) {
+                              String hostname, String osLabel, long session) {
     }
 
     protected static OpenData readOpenBuffer(final RegistryFriendlyByteBuf buf) {
@@ -99,25 +108,33 @@ public class CommandPromptMenu extends AbstractContainerMenu {
         final String shellId = buf.readUtf(16);
         final String hostname = buf.readUtf(48);
         final String osLabel = buf.readUtf(48);
-        return new OpenData(monitor, host, era, shellId, hostname, osLabel);
+        return new OpenData(monitor, host, era, shellId, hostname, osLabel, buf.readVarLong());
     }
 
     /** Writes the open buffer the client reconstructs from: the two positions plus the host era's id (-1 if none). */
     public static void writeOpenBuffer(final RegistryFriendlyByteBuf buf, final BlockPos monitorPos,
-                                       final BlockPos hostPos, @Nullable final HardwareEra era) {
-        writeOpenBuffer(buf, monitorPos, hostPos, era, "", "", "");
+                                       final BlockPos hostPos, @Nullable final HardwareEra era,
+                                       final long session) {
+        writeOpenBuffer(buf, monitorPos, hostPos, era, "", "", "", session);
     }
 
     /** The full open buffer, including the POSIX shell details (empty strings for a DOS-family OS). */
     public static void writeOpenBuffer(final RegistryFriendlyByteBuf buf, final BlockPos monitorPos,
                                        final BlockPos hostPos, @Nullable final HardwareEra era,
-                                       final String shellId, final String hostname, final String osLabel) {
+                                       final String shellId, final String hostname, final String osLabel,
+                                       final long session) {
         buf.writeBlockPos(monitorPos);
         buf.writeBlockPos(hostPos);
         buf.writeVarInt(era == null ? -1 : era.id());
         buf.writeUtf(shellId == null ? "" : shellId, 16);
         buf.writeUtf(hostname == null ? "" : hostname, 48);
         buf.writeUtf(osLabel == null ? "" : osLabel, 48);
+        buf.writeVarLong(session);
+    }
+
+    /** Which run of the machine this terminal belongs to, so its lines are not another run's. */
+    public long session() {
+        return this.session;
     }
 
     /** Whether the host runs a POSIX-family (Linux) OS, so the terminal wears a login banner and a bash prompt. */

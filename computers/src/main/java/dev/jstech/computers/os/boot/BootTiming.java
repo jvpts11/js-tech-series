@@ -39,8 +39,13 @@ public final class BootTiming {
      * <p>It was one second, which on a modern machine is the whole self-test: the lines appear over it and are
      * gone before anybody has finished looking at the first one. A self-test nobody can read is a self-test
      * that, as far as the player is concerned, did not happen.
+     *
+     * <p>How high it can go is decided by the generations above it. A floor every generation reaches is a
+     * floor that makes them all take the same time, and one set higher than a Legacy machine's own figure
+     * would make that machine's self-test longer than a modern one's, which is the opposite of the rule the
+     * whole timing follows. This sits under the Legacy figure and over the modern one.
      */
-    public static final double POST_MIN_SECONDS = 2.5;
+    public static final double POST_MIN_SECONDS = 2.0;
 
     /** The most it takes, so a machine stuffed with parts does not become a chore. */
     public static final double POST_MAX_SECONDS = 12.0;

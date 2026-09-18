@@ -81,6 +81,20 @@ public interface IOsHost extends IPeripheralOwner {
     }
 
     /**
+     * Whether an installation is waiting for this machine to finish testing itself.
+     *
+     * <p>A machine told to install something is not a machine booting its own system: it was restarted in
+     * order to start from the medium instead. Without this, a computer that already had a system installed
+     * played that system's whole start before showing the installer it had been restarted for, and one with
+     * two systems stopped at its boot manager on the way, asking which of them to boot when the answer was
+     * neither.
+     */
+    default boolean installationWaiting() {
+        return installer() != null || installing() != null
+                || (console() != null && console().liveInstall() != null);
+    }
+
+    /**
      * Whether this machine is standing at the end of a self-test that found nothing to boot.
      *
      * <p>A machine that answers yes is waiting for a key at its own failure, and a monitor opened on it shows

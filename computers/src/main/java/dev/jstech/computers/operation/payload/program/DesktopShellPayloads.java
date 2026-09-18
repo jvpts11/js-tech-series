@@ -153,7 +153,14 @@ public final class DesktopShellPayloads {
                  */
                 if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost be) {
                     be.restart();
-                    if (!be.needsPost()) {
+                    /*
+                     * Whoever asked for it is at the desktop, not at a monitor session, so the machine's own
+                     * goodbye never reached them: the closing-down went on behind the desktop they were still
+                     * sitting in, and nothing moved until they left and came back.
+                     */
+                    if (be.goingDown()) {
+                        player.closeContainer();
+                        MonitorBlock.openSystemDown(player, level, monitorPos, payload.hostPos(), be);
                         return;
                     }
                 }

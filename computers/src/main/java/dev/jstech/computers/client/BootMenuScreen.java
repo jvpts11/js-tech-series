@@ -115,7 +115,7 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
         if (!this.held) {
             this.held = true;
             this.remaining = 0;
-            PacketDistributor.sendToServer(new FirmwareActionPayload(this.computerPos, this.monitorPos,
+            PacketDistributor.sendToServer(FirmwareActionPayload.of(this.computerPos, this.monitorPos,
                     FirmwareActionPayload.ACTION_HOLD_BOOT_MENU, 0L, -1));
         }
         if (this.menu.entries().isEmpty()) {
@@ -196,10 +196,16 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
      */
     private void choose() {
         final BootMenu.Entry entry = this.menu.entries().get(this.at);
-        PacketDistributor.sendToServer(new FirmwareActionPayload(this.computerPos, this.monitorPos,
-                entry.isFirmware() ? FirmwareActionPayload.ACTION_OPEN_SETUP
-                        : FirmwareActionPayload.ACTION_BOOT_ONCE,
-                entry.isFirmware() ? 0L : this.at, -1));
+        /*
+         * The disk and the system, not the row. A disk carries several systems and two entries can share one,
+         * so the choice has to name both; a row number only means anything to a list, and this list is not the
+         * only one that offers this action.
+         */
+        PacketDistributor.sendToServer(entry.isFirmware()
+                ? FirmwareActionPayload.of(this.computerPos, this.monitorPos,
+                        FirmwareActionPayload.ACTION_OPEN_SETUP, 0L, -1)
+                : new FirmwareActionPayload(this.computerPos, this.monitorPos,
+                        FirmwareActionPayload.ACTION_BOOT_ONCE, entry.slot(), -1, entry.osId()));
     }
 
 }

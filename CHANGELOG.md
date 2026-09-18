@@ -454,6 +454,30 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the one start that edition says anything on said nothing.
 - The Legacy self-test's key hints said the wrong thing and blinked. The boards of that age printed a sentence
   with the two keys lifted out of it and left it there; only the earliest ones blinked.
+- A command the machine refuses to run now says so instead of being dropped without a word. The terminal
+  writes what was typed the moment it is typed and waits for an answer, so a refused line left the command on
+  the glass with nothing under it: a prompt, a command and silence, over and over, which reads as a machine
+  that has broken rather than one that is no longer listening to that window.
+- An installation the machine was restarted for comes before the machine's own system. A computer that already
+  had one played that system's whole start before showing the installer it had been restarted for, and a
+  computer with two stopped at its boot manager on the way, asking which of them to boot when the answer was
+  neither.
+- Choosing what to boot for one boot only now travels as the disk and the system it names, rather than as a
+  place in a list. Two menus offer that choice, they list different things in different orders, and a position
+  meant a different thing in each: one was sending a disk number where the other was sending a row, and the
+  machine read both the same way, so one of them always booted the wrong system.
+- Starting from a live medium restarts the machine, as starting from anything else does. It jumped straight to
+  the medium's shell, so choosing one in the setup was the one way of starting a machine that never looked
+  like starting one.
+- A restart asked for at a terminal or a desktop now puts that player in front of the system closing down.
+  The goodbye was only ever sent to players holding a monitor session, and whoever types `reboot` is at a
+  prompt, so nothing moved until they left the machine and came back to it.
+- What a terminal has printed now belongs to the run of the machine that printed it, and a restart ends that
+  run. A machine came up showing the whole installation that had just been typed into it, and a disk swapped
+  for a blank one came up showing the session of the disk that had been taken out.
+- `mount` says what it mounted and where. The real one is silent, and in a sequence somebody types by hand,
+  where the terminal is the only thing telling them anything, three steps in a row that answer nothing are
+  indistinguishable from a machine that has stopped listening.
 - Installing a system from the firmware restarts the machine into the installation instead of opening it over
   the setup. A computer puts a system on a disk by starting from the medium that carries it: the self-test
   runs again and what comes up after it is the installer. Pressing Install used to change the screen and

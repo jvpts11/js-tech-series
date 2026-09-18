@@ -39,6 +39,18 @@ public final class ComputerConsoleState {
     private final Set<String> installed = new LinkedHashSet<>();
     private String wallpaper = "";
     private String computerName = "";
+    /**
+     * Which run of this machine is on the glass, counted up every time the machine starts over.
+     *
+     * <p>What a terminal has printed belongs to the run of the machine that printed it. A restart ends that
+     * run, and the lines from before it are not the new system's: a machine that had an installation typed
+     * into it came up showing the whole installation, and a disk swapped for a blank one came up showing the
+     * session of the disk that had been taken out.
+     *
+     * <p>Deliberately not saved. A machine reloaded from disk is a machine whose terminal nobody is looking
+     * at, and counting from zero again only means the first terminal opened after a reload starts clean.
+     */
+    private long session;
     private final ComputerSettings settings = new ComputerSettings();
 
     /** The per-computer settings owned by the Settings app and the {@code config} command. */
@@ -161,6 +173,16 @@ public final class ComputerConsoleState {
     /** Ends the live session (the install completed, or the medium was abandoned). */
     public void clearLiveInstall() {
         this.liveInstall = null;
+    }
+
+    /** Which run of this machine is on the glass. */
+    public long session() {
+        return this.session;
+    }
+
+    /** The machine started over: whatever a terminal printed belongs to the run that has just ended. */
+    public void newSession() {
+        this.session++;
     }
 
     /*

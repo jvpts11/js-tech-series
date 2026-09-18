@@ -71,6 +71,16 @@ public final class ConsolePayloads {
                 || !menu.hostPos().equals(payload.hostPos())
                 || !(level.getBlockEntity(payload.hostPos())
                         instanceof IComputerTerminalHost host)) {
+            /*
+             * Refused, and said so. The terminal writes what was typed the moment it is typed and waits for
+             * the machine to answer, so dropping the line here left the command on the glass with nothing
+             * under it: a prompt, a command, and silence, over and over, which reads as a machine that has
+             * stopped working rather than as one that is no longer listening to this window.
+             */
+            PacketDistributor.sendToPlayer(player, new CommandOutputPayload(false, "",
+                    List.of(new CommandOutputPayload.WireLine(
+                            "This terminal is no longer attached to that computer.",
+                            CliStyle.ERROR.id())), "", ""));
             return;
         }
         // "run/open <program>" launches another installed program from the prompt.
@@ -126,7 +136,14 @@ public final class ConsolePayloads {
              */
             if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost be) {
                 be.restart();
-                if (!be.needsPost()) {
+                /*
+                 * Whoever typed it is at a terminal, not at a monitor session, so the machine's own goodbye
+                 * never reached them: the closing-down went on behind the prompt they were still sitting in,
+                 * and nothing moved until they left and came back.
+                 */
+                if (be.goingDown()) {
+                    player.closeContainer();
+                    MonitorBlock.openSystemDown(player, level, menu.monitorPos(), payload.hostPos(), be);
                     return;
                 }
             }

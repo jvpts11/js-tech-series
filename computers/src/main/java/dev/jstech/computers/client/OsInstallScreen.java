@@ -183,7 +183,7 @@ public final class OsInstallScreen extends AbstractComputerScreen<MonitorSession
     public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
         if (phase == Phase.DONE && in(primary, mouseX, mouseY)) {
             // Reboot into what was just installed: set it as the boot disk and let the machine come up.
-            PacketDistributor.sendToServer(new FirmwareActionPayload(computerPos, monitorPos,
+            PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos,
                     FirmwareActionPayload.ACTION_BOOT_DISK, targetSlot, -1));
             return true;
         }

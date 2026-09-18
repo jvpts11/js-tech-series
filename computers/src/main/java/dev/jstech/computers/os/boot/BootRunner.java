@@ -150,6 +150,17 @@ public final class BootRunner {
             return;
         }
         /*
+         * An installation the machine was restarted for comes before its own system. It is why the machine
+         * started over at all, so booting what is already installed first, and stopping at a boot manager to
+         * ask which of two systems that should be, is the machine answering a question nobody asked.
+         */
+        if (machine.installationWaiting()) {
+            if (machine.onScreen()) {
+                ScreenSessions.bootWatchers(level, pos);
+            }
+            return;
+        }
+        /*
          * A system on a disk takes time to come up, and that time is the machine's too. A machine booting a
          * medium instead has no system of its own to load, so it hands over as it always did.
          */

@@ -60,7 +60,17 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
      * walking away from a TTY and coming back finds what was there, the way a real one does. The lines
      * are kept here by machine, so opening the prompt again picks up where it was.
      */
-    private static final Map<BlockPos, Deque<Line>> KEPT = new HashMap<>();
+    private static final Map<BlockPos, Kept> KEPT = new HashMap<>();
+
+    /**
+     * What one machine's terminal has printed, and which run of that machine printed it.
+     *
+     * <p>The lines outlive the window, not the machine: a restart ends the run they belong to. Without the
+     * run, a machine came up showing the installation that had just been typed into it, and a disk swapped
+     * for a blank one came up showing the session of the disk that had been taken out.
+     */
+    private record Kept(long session, Deque<Line> lines) {
+    }
     private final Deque<Line> scrollback;
     /** Whether the machine's identity line has been added, so a late init reply adds it only once. */
     private boolean identityShown;
@@ -88,7 +98,11 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         this.imageHeight = 178;
         this.titleLabelX = -10000;
         this.inventoryLabelY = -10000;
-        this.scrollback = KEPT.computeIfAbsent(menu.hostPos(), pos -> new ArrayDeque<>());
+        final Kept had = KEPT.get(menu.hostPos());
+        final Kept kept = had != null && had.session() == menu.session()
+                ? had : new Kept(menu.session(), new ArrayDeque<>());
+        KEPT.put(menu.hostPos(), kept);
+        this.scrollback = kept.lines();
         // A screen that still has its lines has already said whose it is.
         this.identityShown = !this.scrollback.isEmpty();
     }

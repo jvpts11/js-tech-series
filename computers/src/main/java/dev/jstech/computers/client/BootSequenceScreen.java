@@ -280,10 +280,12 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
                  * A disk boots this once and the saved order stays where it is; a medium boots the way it does
                  * from the setup, since booting one is already a thing that happens once.
                  */
-                PacketDistributor.sendToServer(new FirmwareActionPayload(computerPos, monitorPos,
-                        chosen.slot() >= 0 ? FirmwareActionPayload.ACTION_BOOT_ONCE
-                                : FirmwareActionPayload.ACTION_BOOT_MEDIA,
-                        chosen.slot() >= 0 ? chosen.slot() : chosen.entry().ref(), -1));
+                PacketDistributor.sendToServer(chosen.slot() >= 0
+                        ? new FirmwareActionPayload(computerPos, monitorPos,
+                                FirmwareActionPayload.ACTION_BOOT_ONCE, chosen.slot(), -1,
+                                chosen.entry().osId())
+                        : FirmwareActionPayload.of(computerPos, monitorPos,
+                                FirmwareActionPayload.ACTION_BOOT_MEDIA, chosen.entry().ref(), -1));
             }
             default -> bootMenu = false;
         }

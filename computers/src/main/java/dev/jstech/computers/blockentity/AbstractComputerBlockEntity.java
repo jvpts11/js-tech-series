@@ -359,6 +359,14 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
 
     private void endSession() {
         session.drop();
+        /*
+         * The terminal's lines belong to the run of the machine that printed them, and this is where a run
+         * ends: a restart, a power cut, a cold start. Counting the run up is what lets a terminal opened
+         * afterwards start clean instead of coming up showing somebody else's installation.
+         */
+        if (console() != null) {
+            console().newSession();
+        }
     }
 
     /** Whether the machine owes a power-on self-test or is in the middle of one. */
