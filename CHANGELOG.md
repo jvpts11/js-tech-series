@@ -206,6 +206,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   kde-plasma/plasma-meta`, `gnome-base/gnome` or `gnome-extra/cinnamon`, and merging one builds everything it
   is made of, the toolkit first and the desktop itself last, each package through every phase. The short
   names (`kde-plasma`, `gnome`, `cinnamon`) still work.
+- The walkthrough a live medium carries in `/root/install.txt` is laid out for the sixty-four columns it is
+  read on: a step on a line of its own and what it is for underneath. Its longer lines used to be broken in two
+  wherever the edge of the terminal fell, commands included.
 - `wget` fetches from `mirror://mainframe`, the one thing on a world's network there is to fetch from, and
   stamps what it fetched with the world's own clock: the day the world is on and the time of that day
   (`--Day 214 12:00:00--`). A machine with no Mirror on its network is told the host could not be resolved.

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.install;
 
+import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.tty.ITtyProcess;
 import dev.jstech.computers.program.tty.ITtySink;
@@ -409,6 +410,24 @@ class LiveInstallStateTest {
         assertTrue(guide.contains(" * wget mirror://mainframe/gentoo/stage3-amd64-openrc.tar.xz"), guide);
         assertTrue(guide.contains("   eselect profile list"), guide);
         assertFalse(guide.contains("http"), guide);
+    }
+
+    /**
+     * The walkthrough is read on the medium's own terminal, so none of it may run past that terminal's edge: a
+     * line that does is broken wherever the edge happens to be, and a command broken in two is not one a
+     * player can copy.
+     */
+    @Test
+    void theGuideAndTheHelp_fitTheTerminalTheyAreReadOn() {
+        for (final LiveInstallState.Distro distro : LiveInstallState.Distro.values()) {
+            final LiveInstallState st = new LiveInstallState(distro);
+            for (final String shown : List.of(step(st, "cat /root/install.txt").text(), step(st, "help").text())) {
+                for (final String line : shown.split("\n")) {
+                    assertTrue(line.length() <= TermBuffer.MONITOR_COLUMNS,
+                            distro + " runs to " + line.length() + " columns: " + line);
+                }
+            }
+        }
     }
 
     /** Sent into the file the table writer says nothing; run without the redirection it prints and writes nothing. */
