@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
+import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.tests.JsTests;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
@@ -56,11 +57,27 @@ public final class SettingsPayloadGameTests {
         helper.assertTrue(back.disks().get(0).label().length() == SettingsSnapshotPayload.LABEL_MAX
                         && back.disks().get(0).capMb() == 500,
                 "the disk label is cut the same way; got " + back.disks());
-        helper.assertTrue(back.computerName().length() == SettingsSnapshotPayload.LABEL_MAX
+        /*
+         * A computer's name is not one of the labels cut to the panel's width: it may be as long as a name may
+         * be, which is longer than anything else on this packet, and it is cut at that length instead.
+         */
+        helper.assertTrue(back.computerName().equals(snapshot.computerName())
                         && back.installed().equals(List.of("jsc:sgsc")) && back.guiScale() == 75,
-                "everything else travels whole");
+                "everything else travels whole; got the name as " + back.computerName());
         helper.assertTrue(back.cpuArch().equals("x86-64, 64-bit"),
                 "the architecture the screens show travels whole; got " + back.cpuArch());
+        // And a name past even that length is cut to it rather than refused, which would drop the connection.
+        final String pastTheLimit = "n".repeat(InstallerFlow.MOST_NAME_LETTERS + 40);
+        final SettingsSnapshotPayload named = new SettingsSnapshotPayload(new BlockPos(1, 2, 3),
+                "win11", pastTheLimit, 0, false, 75, 100,
+                "C", true, "", true, false, 0, "1 CPU", 100, "x86-64, 64-bit", 256, 0, "frames_11", "Frames",
+                List.of(), List.of(), 40, List.of(), List.of(), false);
+        final RegistryFriendlyByteBuf longBuf =
+                new RegistryFriendlyByteBuf(Unpooled.buffer(), helper.getLevel().registryAccess());
+        SettingsSnapshotPayload.STREAM_CODEC.encode(longBuf, named);
+        final SettingsSnapshotPayload cut = SettingsSnapshotPayload.STREAM_CODEC.decode(longBuf);
+        helper.assertTrue(cut.computerName().length() == InstallerFlow.MOST_NAME_LETTERS,
+                "a name past the limit arrives cut to it; got " + cut.computerName().length());
         helper.assertTrue(back.shares().size() == 1 && back.shares().get(0).path().equals("C:\\pub")
                         && back.shares().get(0).writable() && !back.remoteAllowed(),
                 "the shares and the remote switch travel too; got " + back.shares());

@@ -10,6 +10,8 @@ package dev.jstech.computers.menu;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.core.id.IStableId;
+import dev.jstech.core.id.StableIds;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -71,7 +73,7 @@ public class MonitorSessionMenu extends AbstractContainerMenu {
         buf.writeBlockPos(monitorPos);
         buf.writeBlockPos(hostPos);
         buf.writeVarInt(era == null ? -1 : era.id());
-        buf.writeVarInt(phase.ordinal());
+        buf.writeVarInt(phase.id());
     }
 
     public BlockPos monitorPos() {
@@ -126,35 +128,51 @@ public class MonitorSessionMenu extends AbstractContainerMenu {
                 || monitor.shows(this.hostPos);
     }
 
-    /** Which session a monitor is showing, which is what decides the screen the client opens. */
-    public enum Phase {
+    /**
+     * Which session a monitor is showing, which is what decides the screen the client opens.
+     *
+     * <p>Each says which number it goes by rather than being read by its place in this list, so the order
+     * they are written in here is nobody's business but the reader's.
+     */
+    public enum Phase implements IStableId {
 
         /** The power-on self-test, and the failure it ends on when there is nothing to boot. */
-        POST,
+        POST(0),
 
         /** The boot manager, listing every disk that carries a system. */
-        BOOT_MENU,
+        BOOT_MENU(1),
 
         /** A system coming up, between the self-test ending and the desktop or the prompt opening. */
-        SYSTEM_BOOT,
+        SYSTEM_BOOT(2),
 
         /** The firmware setup: boot order, hardware, storage. */
-        FIRMWARE,
+        FIRMWARE(3),
 
         /** A system's own installer, on the page it has reached. */
-        INSTALLER,
+        INSTALLER(4),
 
         /** The plain copy of a system onto a disk, and what it ends on, finished or refused. */
-        INSTALL_PROGRESS,
+        INSTALL_PROGRESS(5),
 
         /** The switch that says which machine of a rack this monitor shows. */
-        KVM;
+        KVM(6);
 
-        private static final Phase[] BY_ID = values();
+        private static final StableIds<Phase> IDS = StableIds.of(Phase.class);
 
-        /** The phase with that id, or the self-test for an id nothing answers to. */
+        private final int id;
+
+        Phase(final int id) {
+            this.id = id;
+        }
+
+        /** The phase that declares {@code id}; an id no phase declares reads as the self-test. */
         public static Phase byId(final int id) {
-            return id >= 0 && id < BY_ID.length ? BY_ID[id] : POST;
+            return IDS.byId(id, POST);
+        }
+
+        @Override
+        public int id() {
+            return this.id;
         }
     }
 }
