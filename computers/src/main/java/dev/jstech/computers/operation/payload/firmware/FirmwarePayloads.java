@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.firmware;
 
+import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.IBootMenuScreenOpener;
 import dev.jstech.computers.block.IInstallDoneScreenOpener;
@@ -40,6 +41,8 @@ import dev.jstech.computers.operation.payload.PostCompletePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwarePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
+import dev.jstech.computers.os.boot.BootLines;
+import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.InstallMode;
@@ -164,7 +167,7 @@ public final class FirmwarePayloads {
                 continue;
             }
             final ResourceLocation osId =
-                    disk.get(ComputingModule.SYSTEM_OS.get());
+                    OsDisks.systemOn(disk);
             final OsDef os = osId == null ? null : OsRegistry.getOs(osId);
             entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_DISK, i,
                     os == null ? "" : os.id().toString(),
@@ -325,7 +328,19 @@ public final class FirmwarePayloads {
                  */
                 computer.setPendingInstallSlot(IOsHost.NO_PENDING_INSTALL);
                 if (computer instanceof AbstractComputerBlockEntity machine) {
-                    machine.setBootOnce((int) payload.ref());
+                    /*
+                     * The choice names where it sat in the manager's list, not the disk, because a disk carries
+                     * several systems and two entries can share one. The list is built again here from the same
+                     * machine the player was looking at, so the place in it means the same thing on both sides.
+                     */
+                    final BootMenu list = BootLines.menuFor(machine, 0);
+                    final int at = (int) payload.ref();
+                    if (at < 0 || at >= list.entries().size()) {
+                        return;
+                    }
+                    final BootMenu.Entry chosen = list.entries().get(at);
+                    machine.setBootOnce(chosen.slot(),
+                            ResourceLocation.tryParse(chosen.osId()));
                     /*
                      * Chosen at the boot manager, the system still has to come up: the machine leaves the menu and
                      * starts loading, and puts the player in front of that. Chosen anywhere else there is nothing

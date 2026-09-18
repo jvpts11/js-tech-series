@@ -18,7 +18,7 @@ import java.util.List;
  * disks, plus a way into the firmware on the machines whose firmware can be reached that way. A machine with one
  * system still shows it, because the menu is also how a player finds out that the other disk is there.
  */
-public record BootMenu(List<Entry> entries, int defaultIndex, int countdownTicks) {
+public record BootMenu(String title, List<Entry> entries, int defaultIndex, int countdownTicks) {
 
     /** How many entries a menu may hold: more disks than any machine here has, plus the firmware. */
     public static final int MOST_ENTRIES = 12;
@@ -27,9 +27,10 @@ public record BootMenu(List<Entry> entries, int defaultIndex, int countdownTicks
     public static final int FIRMWARE = -1;
 
     /** Nothing to choose between. */
-    public static final BootMenu NONE = new BootMenu(List.of(), 0, 0);
+    public static final BootMenu NONE = new BootMenu("", List.of(), 0, 0);
 
     public BootMenu {
+        title = title == null ? "" : title;
         entries = entries == null ? List.of() : List.copyOf(entries.size() > MOST_ENTRIES
                 ? entries.subList(0, MOST_ENTRIES) : entries);
         defaultIndex = entries.isEmpty() ? 0 : Math.max(0, Math.min(defaultIndex, entries.size() - 1));
@@ -49,13 +50,18 @@ public record BootMenu(List<Entry> entries, int defaultIndex, int countdownTicks
     /**
      * One thing the menu can boot.
      *
+     * <p>A disk carries several systems, so an entry has to say which of them it is: two entries can sit on the
+     * same disk and booting one of them is not booting the other.
+     *
      * @param label what the menu calls it
      * @param slot  the disk it sits on, or {@link #FIRMWARE} for the way into the setup
+     * @param osId  the system on that disk, empty for the way into the setup
      */
-    public record Entry(String label, int slot) {
+    public record Entry(String label, int slot, String osId) {
 
         public Entry {
             label = label == null ? "" : label;
+            osId = osId == null ? "" : osId;
         }
 
         /** Whether this entry opens the firmware rather than booting anything. */
@@ -67,11 +73,22 @@ public record BootMenu(List<Entry> entries, int defaultIndex, int countdownTicks
     /** Builds one up as the machine looks over its disks. */
     public static final class Builder {
 
+        private final String title;
         private final List<Entry> entries = new ArrayList<>();
         private int defaultIndex;
 
-        public Builder entry(final String label, final int slot) {
-            this.entries.add(new Entry(label, slot));
+        public Builder(final String title) {
+            this.title = title;
+        }
+
+        public Builder entry(final String label, final int slot, final String osId) {
+            this.entries.add(new Entry(label, slot, osId));
+            return this;
+        }
+
+        /** The way into the setup, which boots nothing and so names no system. */
+        public Builder firmware(final String label) {
+            this.entries.add(new Entry(label, FIRMWARE, ""));
             return this;
         }
 
@@ -82,7 +99,7 @@ public record BootMenu(List<Entry> entries, int defaultIndex, int countdownTicks
         }
 
         public BootMenu build(final int countdownTicks) {
-            return new BootMenu(this.entries, this.defaultIndex, countdownTicks);
+            return new BootMenu(this.title, this.entries, this.defaultIndex, countdownTicks);
         }
     }
 }

@@ -88,6 +88,12 @@ final class OsSession {
      * dropped with the session: "this boot only" means exactly that, and the order saved in setup is untouched.
      */
     private int bootOnce = -1;
+    /*
+     * And which system on that disk, for a disk carrying several. "This boot only" means this system this time;
+     * the one the disk boots by default is written on the disk and is not touched by choosing here.
+     */
+    @Nullable
+    private ResourceLocation bootOnceOs;
 
     OsSession(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
@@ -178,6 +184,7 @@ final class OsSession {
         this.installerMemo = null;
         // "This boot only" ends with the boot it was for.
         this.bootOnce = -1;
+        this.bootOnceOs = null;
     }
 
     /**
@@ -202,20 +209,25 @@ final class OsSession {
                 : OsDisks.welcomeOn(this.diskInSlot(slot));
     }
 
-    /** Writes that back onto the disk the system is on, since the greeting belongs to the system. */
+    /**
+     * Writes that back onto the disk, against the system it belongs to.
+     *
+     * <p>Against that system and not against the disk: a disk carrying two systems remembers having met each of
+     * them on its own, so installing a second one beside the first does not have it arrive already greeted.
+     */
     void setWelcome(final SystemWelcome welcome) {
         final int slot = this.systemDiskSlot();
         if (slot < 0) {
             return;
         }
-        final ItemStack updated = this.diskInSlot(slot).copy();
-        updated.set(ComputingModule.SYSTEM_WELCOME.get(), welcome);
-        this.putDisk(updated, slot);
+        final ItemStack disk = this.diskInSlot(slot);
+        this.putDisk(OsDisks.remembering(disk, this.installedOsId(), welcome), slot);
     }
 
-    /** Boots that disk for this boot only, leaving the order saved in setup where it is. */
-    void setBootOnce(final int slot) {
+    /** Boots that system on that disk for this boot only, leaving what the disk boots by default alone. */
+    void setBootOnce(final int slot, @Nullable final ResourceLocation osId) {
         this.bootOnce = slot;
+        this.bootOnceOs = osId;
     }
 
     /** The disk slot the firmware boots first, or -1 for "the first disk with a system". */
@@ -263,11 +275,20 @@ final class OsSession {
         return this.machine.getHardware().getStackInSlot(this.machine.layout().diskStart() + slot);
     }
 
-    /** The registry key of the system on the boot disk, or null when no bootable disk is installed. */
+    /**
+     * The system this machine boots, or null when no bootable disk is installed.
+     *
+     * <p>What the boot manager was told this time, when it was told anything, and otherwise what the disk boots
+     * by default. A disk carries several systems now, so which of them is running is a question with an answer
+     * that is not simply "the disk".
+     */
     @Nullable
     ResourceLocation installedOsId() {
         final ItemStack disk = systemDisk();
-        return disk.isEmpty() ? null : disk.get(ComputingModule.SYSTEM_OS.get());
+        if (this.bootOnceOs != null && OsDisks.systemsOn(disk).has(this.bootOnceOs)) {
+            return this.bootOnceOs;
+        }
+        return OsDisks.systemOn(disk);
     }
 
     /** The system on the boot disk, or null when there is no bootable disk or the registry has no entry. */
@@ -284,9 +305,18 @@ final class OsSession {
     long reservedByOs() {
         // One lookup of the system disk serves both the system and the era the system sits on.
         final ItemStack disk = systemDisk();
-        final ResourceLocation osId = disk.isEmpty() ? null : disk.get(ComputingModule.SYSTEM_OS.get());
-        final OsDef os = osId != null ? OsRegistry.getOs(osId) : null;
-        return os != null ? os.footprintItemsOn(diskEra(disk)) : 0L;
+        /*
+         * Every system on the disk, not only the one running: they are all really on it, and each takes its own
+         * room away from what the disk can store.
+         */
+        long reserved = 0L;
+        for (final ResourceLocation osId : OsDisks.systemsOn(disk).ids()) {
+            final OsDef os = OsRegistry.getOs(osId);
+            if (os != null) {
+                reserved += os.footprintItemsOn(diskEra(disk));
+            }
+        }
+        return reserved;
     }
 
     /**
@@ -380,7 +410,7 @@ final class OsSession {
     void uninstallOs() {
         for (int i = 0; i < this.machine.layout().diskCount(); i++) {
             final ItemStack stack = diskInSlot(i);
-            if (!(stack.getItem() instanceof DiskItem) || stack.get(ComputingModule.SYSTEM_OS.get()) == null) {
+            if (!(stack.getItem() instanceof DiskItem) || OsDisks.systemOn(stack) == null) {
                 continue;
             }
             /*
@@ -389,7 +419,7 @@ final class OsSession {
              * uninstall it, rather than pull the disk physically and risk losing the files on it.
              */
             final ItemStack updated = stack.copy();
-            updated.remove(ComputingModule.SYSTEM_OS.get());
+            updated.remove(ComputingModule.DISK_SYSTEMS.get());
             putDisk(updated, i);
             tellClients();
             return;

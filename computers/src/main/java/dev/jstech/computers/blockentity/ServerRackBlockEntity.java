@@ -1638,7 +1638,7 @@ public class ServerRackBlockEntity extends BlockEntity
     @Nullable
     public ResourceLocation installedOsId() {
         final ItemStack disk = systemDisk();
-        return disk.isEmpty() ? null : disk.get(ComputingModule.SYSTEM_OS.get());
+        return OsDisks.systemOn(disk);
     }
 
     @Override
@@ -1759,7 +1759,7 @@ public class ServerRackBlockEntity extends BlockEntity
         // One lookup of the system disk serves both the system and the era the system sits on.
         final ItemStack disk = systemDisk();
         final ResourceLocation osId =
-                disk.isEmpty() ? null : disk.get(ComputingModule.SYSTEM_OS.get());
+                OsDisks.systemOn(disk);
         final OsDef os =
                 osId != null ? OsRegistry.getOs(osId) : null;
         return os != null ? os.footprintItemsOn(diskEra(disk)) : 0L;

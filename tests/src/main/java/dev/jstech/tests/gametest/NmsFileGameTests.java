@@ -66,7 +66,7 @@ public final class NmsFileGameTests {
                 new ItemStack(ComputingModule.PSU_650G.get()));
         hw.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
-        // installOs writes SYSTEM_OS onto the disk component and returns true on success.
+        // installOs writes the systems component onto the disk component and returns true on success.
         final boolean installed = mf.installOs(SO_REDE);
         if (!installed) {
             helper.fail("installOs returned false at " + pos);

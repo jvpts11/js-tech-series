@@ -97,7 +97,7 @@ public class DiskItem extends SpecItem<DiskSpec> {
      */
     private static void appendSystem(final ItemStack stack, final List<Component> tooltip) {
         final ResourceLocation osId =
-                stack.get(ComputingModule.SYSTEM_OS.get());
+                OsDisks.systemOn(stack);
         if (osId == null) {
             return; // a blank drive says nothing, which is itself the answer
         }

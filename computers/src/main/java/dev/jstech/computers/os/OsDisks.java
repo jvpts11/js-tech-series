@@ -39,16 +39,49 @@ public final class OsDisks {
     private OsDisks() {
     }
 
-    /** Whether the stack is a disk stamped with a registered operating system. */
-    public static boolean hasSystem(final ItemStack disk) {
-        final ResourceLocation osId = disk.get(ComputingModule.SYSTEM_OS.get());
-        return osId != null && OsRegistry.getOs(osId) != null;
+    /** The systems that disk carries; a disk nobody has installed anything onto carries none. */
+    public static DiskSystems systemsOn(final ItemStack disk) {
+        return disk.getOrDefault(ComputingModule.DISK_SYSTEMS.get(), DiskSystems.NONE);
     }
 
-    /** What the system on that disk remembers about being greeted; a disk with no mark has met nobody. */
+    /**
+     * The system that disk boots, or nothing when it carries none the machines know.
+     *
+     * <p>What almost every caller wants: a disk may carry several now, and the one it boots is the one that
+     * answers for it everywhere a single system used to.
+     */
+    @Nullable
+    public static ResourceLocation systemOn(final ItemStack disk) {
+        final ResourceLocation osId = systemsOn(disk).boots();
+        return osId != null && OsRegistry.getOs(osId) != null ? osId : null;
+    }
+
+    /** Whether the stack is a disk carrying at least one registered operating system. */
+    public static boolean hasSystem(final ItemStack disk) {
+        for (final ResourceLocation osId : systemsOn(disk).ids()) {
+            if (OsRegistry.getOs(osId) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** What the system that disk boots remembers about being greeted; a disk with no mark has met nobody. */
     public static SystemWelcome welcomeOn(final ItemStack disk) {
-        return disk.getOrDefault(ComputingModule.SYSTEM_WELCOME.get(),
-                SystemWelcome.UNSEEN);
+        return welcomeOn(disk, systemsOn(disk).boots());
+    }
+
+    /** What that system on that disk remembers about being greeted, since each of them remembers its own. */
+    public static SystemWelcome welcomeOn(final ItemStack disk, @Nullable final ResourceLocation osId) {
+        return systemsOn(disk).welcomeOf(osId);
+    }
+
+    /** The same disk with that system's mark written back onto it. */
+    public static ItemStack remembering(final ItemStack disk, @Nullable final ResourceLocation osId,
+                                        final SystemWelcome welcome) {
+        final ItemStack updated = disk.copy();
+        updated.set(ComputingModule.DISK_SYSTEMS.get(), systemsOn(disk).remembering(osId, welcome));
+        return updated;
     }
 
     /**
@@ -143,7 +176,7 @@ public final class OsDisks {
             return false;
         }
         final ItemStack disk = diskInSlot.apply(targetSlot);
-        if (osId.equals(disk.get(ComputingModule.SYSTEM_OS.get()))) {
+        if (systemsOn(disk).has(osId)) {
             return true;
         }
         final DiskItem target = (DiskItem) disk.getItem();
@@ -164,7 +197,7 @@ public final class OsDisks {
         }
         for (int i = 0; i < diskCount; i++) {
             final ItemStack stack = diskInSlot.apply(i);
-            if (stack.getItem() instanceof DiskItem && osId.equals(stack.get(ComputingModule.SYSTEM_OS.get()))) {
+            if (stack.getItem() instanceof DiskItem && systemsOn(stack).has(osId)) {
                 return ALREADY_THERE;
             }
         }
@@ -186,11 +219,16 @@ public final class OsDisks {
             return true; // a disk already carries it: a re-install with nothing to write
         }
         final ItemStack disk = diskInSlot.apply(targetSlot);
-        if (osId.equals(disk.get(ComputingModule.SYSTEM_OS.get()))) {
-            return true; // re-install onto the same disk: nothing to do
+        if (systemsOn(disk).has(osId)) {
+            return true; // already on that disk: a re-install with nothing to write
         }
+        /*
+         * Installed beside whatever the disk already carries rather than over it, and booting by default, which
+         * is what a machine does the moment you finish installing something on it. A disk that carried a system
+         * used to simply lose it here, with nothing anywhere saying so.
+         */
         final ItemStack updated = disk.copy();
-        updated.set(ComputingModule.SYSTEM_OS.get(), osId);
+        updated.set(ComputingModule.DISK_SYSTEMS.get(), systemsOn(disk).with(osId));
         /*
          * A graphical desktop OS lays down the Windows-like system folder skeleton on first install
          * (Program Files, Windows, Users\Public\Desktop, ...). Terminal/network OSes get nothing.
@@ -224,9 +262,11 @@ public final class OsDisks {
         }
         final boolean hadSystem = hasSystem(disk);
         final ItemStack updated = disk.copy();
-        updated.remove(ComputingModule.SYSTEM_OS.get());
-        // The greeting goes with the system: installing again on this disk is a first meeting again.
-        updated.remove(ComputingModule.SYSTEM_WELCOME.get());
+        /*
+         * Every system on it, and with them every greeting each of them remembered: installing again on this
+         * disk is a first meeting again, which is what a format means.
+         */
+        updated.remove(ComputingModule.DISK_SYSTEMS.get());
         updated.remove(ComputingModule.FILESYSTEM.get());
         DriveVolumes.erase(updated);
         updated.remove(ComputingModule.DISK_PUBLIC_PERMILLE.get());
@@ -275,10 +315,17 @@ public final class OsDisks {
         final long capacity = diskItem.spec().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
         final long storageUsed = DriveVolumes.usedWeight(disk);
         final long fsUsed = DiskFilesystem.filesWeight(disk);
-        final ResourceLocation osId = disk.get(ComputingModule.SYSTEM_OS.get());
-        final OsDef os = osId != null ? OsRegistry.getOs(osId) : null;
-        final long osReserved = os != null
-                ? os.footprintItemsOn(diskItem.spec().era()) * StorageKey.MB_EQ_PER_ITEM : 0L;
+        /*
+         * Every system on the disk takes its own room. A disk carrying two used to be charged for one of them,
+         * so it read as having space it did not have and a third install could be accepted onto nothing.
+         */
+        long osReserved = 0L;
+        for (final ResourceLocation osId : systemsOn(disk).ids()) {
+            final OsDef os = OsRegistry.getOs(osId);
+            if (os != null) {
+                osReserved += os.footprintItemsOn(diskItem.spec().era()) * StorageKey.MB_EQ_PER_ITEM;
+            }
+        }
         return Math.max(0L, capacity - storageUsed - fsUsed - osReserved);
     }
 

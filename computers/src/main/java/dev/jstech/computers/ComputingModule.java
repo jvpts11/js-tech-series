@@ -109,7 +109,7 @@ import dev.jstech.computers.menu.ReceivingBusMenu;
 import dev.jstech.computers.menu.ServerAssemblyMenu;
 import dev.jstech.computers.menu.ServerRackMenu;
 import dev.jstech.computers.menu.ServerRouterMenu;
-import dev.jstech.computers.os.boot.SystemWelcome;
+import dev.jstech.computers.os.DiskSystems;
 import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaDriveType;
@@ -334,26 +334,16 @@ public final class ComputingModule {
                             FilesystemContents.STREAM_CODEC));
 
     /*
-     * The OS installed on a system disk: a ResourceLocation identifying the registered OsDef.
-     * Present only on bootable disks; absent on plain data disks.
+     * The systems a disk carries and which of them it boots, with what each of them remembers about having been
+     * met. Present only on bootable disks; absent on plain data disks. It used to be one system written straight
+     * onto the disk, so installing a second wrote over the first, and one mark for the disk rather than one per
+     * system, which would have had a second system arrive already met.
      */
     public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<ResourceLocation>>
-            SYSTEM_OS = COMPONENTS.registerComponentType("system_os", b -> b
-                    .persistent(ResourceLocation.CODEC)
-                    .networkSynchronized(ResourceLocation.STREAM_CODEC));
-
-    /*
-     * What the system on this disk remembers about being greeted. It rides on the disk rather than on the machine
-     * so that erasing and installing again is a first meeting again, and so that a machine with two systems
-     * greets each of them once.
-     */
-    public static final DeferredHolder<DataComponentType<?>,
-            DataComponentType<
-                    SystemWelcome>>
-            SYSTEM_WELCOME = COMPONENTS.registerComponentType("system_welcome", b -> b
-                    .persistent(SystemWelcome.CODEC)
-                    .networkSynchronized(SystemWelcome.STREAM_CODEC));
+            DataComponentType<DiskSystems>>
+            DISK_SYSTEMS = COMPONENTS.registerComponentType("disk_systems", b -> b
+                    .persistent(DiskSystems.CODEC)
+                    .networkSynchronized(DiskSystems.STREAM_CODEC));
 
     /*
      * A user-chosen label for a disk or media volume, shown in This PC and the explorer drive tree and

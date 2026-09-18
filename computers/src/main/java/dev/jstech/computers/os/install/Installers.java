@@ -176,7 +176,7 @@ public final class Installers {
 
     /** The system already on that disk, by the name a person reads, or empty when it carries none. */
     private static String holderOf(final ItemStack disk) {
-        final ResourceLocation osId = disk.get(ComputingModule.SYSTEM_OS.get());
+        final ResourceLocation osId = OsDisks.systemOn(disk);
         @Nullable final OsDef held = osId == null ? null : OsRegistry.getOs(osId);
         return held == null ? "" : held.displayName();
     }

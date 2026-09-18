@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os.boot;
 
+import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.item.DiskItem;
@@ -104,30 +105,46 @@ public final class BootLines {
      */
     public static BootMenu menuFor(final IOsHost machine, final int countdownTicks) {
         final OsDef booting = machine.installedOs();
-        if (booting == null || booting.platform() != Platform.LINUX) {
+        if (booting == null || BootManager.of(booting.platform()) == BootManager.NONE) {
             return BootMenu.NONE;
         }
-        final BootMenu.Builder out = new BootMenu.Builder();
-        final ItemStack bootDisk = machine.systemDisk();
+        final BootManager manager = BootManager.of(booting.platform());
+        final BootMenu.Builder out = new BootMenu.Builder(manager.title());
+        final ResourceLocation runningId = machine.installedOsId();
         int drive = 0;
         for (int slot = 0; slot < machine.diskSlots(); slot++) {
             final ItemStack disk = machine.diskInSlot(slot);
             if (!(disk.getItem() instanceof DiskItem)) {
                 continue;
             }
-            final ResourceLocation id = disk.get(ComputingModule.SYSTEM_OS.get());
-            final OsDef system = id == null ? null : OsRegistry.getOs(id);
             final String device = "/dev/sd" + (char) ('a' + drive++) + "1";
-            if (system == null) {
-                continue;
-            }
-            if (disk == bootDisk) {
-                out.entry(system.displayName(), slot).defaultsToLast();
-            } else {
-                out.entry(system.displayName() + " Boot Manager (on " + device + ")", slot);
+            /*
+             * Every system on every disk, not one per disk. A disk carries several now, and a manager that
+             * listed only the one each disk boots would hide the rest, which is the one thing a boot manager
+             * exists not to do.
+             */
+            for (final ResourceLocation id : OsDisks.systemsOn(disk).ids()) {
+                final OsDef system = OsRegistry.getOs(id);
+                if (system == null) {
+                    continue;
+                }
+                if (id.equals(runningId)) {
+                    out.entry(system.displayName(), slot, id.toString()).defaultsToLast();
+                } else {
+                    out.entry(manager.label(system.displayName(), device, slot), slot, id.toString());
+                }
             }
         }
-        if (out.build(0).isEmpty()) {
+        final BootMenu listed = out.build(0);
+        if (listed.isEmpty()) {
+            return BootMenu.NONE;
+        }
+        /*
+         * A manager with nothing to choose between does not stop a machine that never stopped for one. The
+         * firmware entry is not something to choose: it is the way out, and a machine with one system and a way
+         * out is still a machine with one system.
+         */
+        if (!manager.stopsForOne() && listed.entries().size() < 2) {
             return BootMenu.NONE;
         }
         /*
@@ -136,7 +153,7 @@ public final class BootLines {
          */
         if (FirmwareKind.forEra(machine.installedEra() != null ? machine.installedEra() : HardwareEra.STANDARD)
                 == FirmwareKind.UEFI) {
-            out.entry("Firmware Settings", BootMenu.FIRMWARE);
+            out.firmware(manager.firmwareLabel());
         }
         return out.build(countdownTicks);
     }

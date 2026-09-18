@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest;
 
+import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
@@ -907,7 +908,7 @@ public final class OsCliGameTests {
                                     + mainframe.defaultInstallSlot());
                     helper.assertTrue(mainframe.installOs(ubuntu, -1),
                             "installing a second OS beside the first must succeed (dual boot)");
-                    helper.assertTrue(ubuntu.equals(mainframe.diskInSlot(1).get(ComputingModule.SYSTEM_OS.get())),
+                    helper.assertTrue(ubuntu.equals(OsDisks.systemOn(mainframe.diskInSlot(1))),
                             "the second OS must land on the free disk, not over the first");
                     helper.assertTrue(MC_DOS.equals(mainframe.installedOsId()),
                             "with no preference the first disk with a system boots; got " + mainframe.installedOsId());

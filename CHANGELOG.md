@@ -112,6 +112,18 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the system.
 
 ### Changed
+- A disk carries as many systems as it has room for, rather than one. Installing a second used to write over
+  the first, with nothing anywhere saying what had been lost; it is installed beside it now and becomes what
+  the disk boots. Every system on a disk takes its own room, so a disk carrying two is charged for two, and
+  each of them remembers having been met on its own, so a system installed beside one you have already seen
+  still greets you the first time it comes up.
+- The Frames editions have a boot manager of their own, the Midsoft Boot Manager, whose file on the disk is
+  `kickmgr`. Only the Linux family had one, so a Frames edition installed beside another could not be chosen
+  between. Each family speaks in its own words: GRUB names the device an installation sits on, the Midsoft one
+  names the edition and its disk. A boot manager lists every system on every disk rather than one for each
+  disk, and the Frames one stays out of the way with a single installation, as it did, appearing once there is
+  a second system to choose between. What is picked there is for that boot only; what a disk boots by default
+  is written on the disk.
 - The Frames editions now come up behind the picture each of them really came up behind, in place of the one
   screen every system shared: the sky with the logo over it and the bar along its foot, the black one with
   the three blocks running through their trough and the small print at its feet, and the maker's mark over a

@@ -192,7 +192,9 @@ public final class BootSequenceGameTests {
     }
 
     /**
-     * The boot manager lists the disks that really carry a system, and only the systems that bring one show it.
+     * The boot manager lists every system that is really installed, and stops the machine only where that
+     * family's manager really stopped it: the Frames one went straight through with a single installation and
+     * only ever appeared once there was a second system to choose between.
      */
     @GameTest(template = ARENA)
     public static void bootMenu_listsWhatTheMachineCouldBoot(final GameTestHelper helper) {
@@ -211,7 +213,7 @@ public final class BootSequenceGameTests {
                 TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
                         .placeRunningPersonalComputer(new BlockPos(4, 2, 2));
         helper.assertTrue(BootLines.menuFor(frames, 100).isEmpty(),
-                "and a system that brings no boot manager shows none");
+                "and a Frames machine with one system goes straight through, as that manager did");
         helper.succeed();
     }
 

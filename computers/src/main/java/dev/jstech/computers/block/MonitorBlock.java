@@ -403,7 +403,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final HardwareEra era = computer.displayEra();
         final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
         final ResourceLocation osId = slot < 0 ? computer.installedOsId()
-                : computer.diskInSlot(slot).get(ComputingModule.SYSTEM_OS.get());
+                : OsDisks.systemOn(computer.diskInSlot(slot));
         final OsDef os = osId == null ? null
                 : OsRegistry.getOs(osId);
         final String osName = os != null ? os.displayName() : "";

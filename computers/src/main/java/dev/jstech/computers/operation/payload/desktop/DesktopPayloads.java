@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.desktop;
 
+import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
@@ -287,7 +288,7 @@ public final class DesktopPayloads {
             final long storageUsed = DriveVolumes.usedWeight(stack);
             final long fsUsed = DiskFilesystem.filesWeight(stack);
             final ResourceLocation dOsId =
-                    stack.get(ComputingModule.SYSTEM_OS.get());
+                    OsDisks.systemOn(stack);
             final OsDef dOs =
                     dOsId != null ? OsRegistry.getOs(dOsId) : null;
             final long osReserved = dOs != null ? dOs.footprintItemsOn(diskItem.spec().era()) * mbEq : 0L;

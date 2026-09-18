@@ -246,8 +246,8 @@ public final class RackUnitGameTests {
                     helper.assertTrue(mcNet.equals(rack.installedOsId()),
                             "the installed OS id reads back from the bay drive");
                     helper.assertTrue(rack.getFrontSlots().getStackInSlot(0)
-                                    .get(ComputingModule.SYSTEM_OS.get()) != null,
-                            "the SYSTEM_OS component lives on the drive itself");
+                                    .get(ComputingModule.DISK_SYSTEMS.get()) != null,
+                            "the DISK_SYSTEMS component lives on the drive itself");
                     helper.assertTrue(dev.jstech.computers.os.boot.BootController
                                     .targetForComputer(rack)
                                     != dev.jstech.computers.os.boot.BootController.BootTarget.FIRMWARE,
@@ -268,7 +268,7 @@ public final class RackUnitGameTests {
                     helper.assertTrue(rack.validateOsSession(), "an installed system validates the session");
                     // Hotswap the OS drive out: the system travels with it and the session dies.
                     final ItemStack pulled = rack.getFrontSlots().extractItem(0, 1, false);
-                    helper.assertTrue(pulled.get(ComputingModule.SYSTEM_OS.get()) != null,
+                    helper.assertTrue(pulled.get(ComputingModule.DISK_SYSTEMS.get()) != null,
                             "the pulled drive carries the installed system with it");
                     helper.assertTrue(!rack.validateOsSession(),
                             "pulling the OS drive kills the machine's session");

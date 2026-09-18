@@ -524,7 +524,7 @@ public final class FileService {
                 return ICliComputer.OpResult.fail(
                         "format: cannot format drive C: - the running system lives on it");
             }
-            target.remove(ComputingModule.SYSTEM_OS.get());
+            target.remove(ComputingModule.DISK_SYSTEMS.get());
             target.remove(ComputingModule.FILESYSTEM.get());
             DriveVolumes.erase(target);
             target.remove(ComputingModule.DISK_PUBLIC_PERMILLE.get());

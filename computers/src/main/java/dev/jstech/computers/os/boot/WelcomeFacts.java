@@ -60,7 +60,7 @@ public final class WelcomeFacts {
             if (!(disk.getItem() instanceof DiskItem)) {
                 continue;
             }
-            final ResourceLocation osId = disk.get(ComputingModule.SYSTEM_OS.get());
+            final ResourceLocation osId = OsDisks.systemOn(disk);
             if (osId == null || osId.equals(booted)) {
                 continue;
             }

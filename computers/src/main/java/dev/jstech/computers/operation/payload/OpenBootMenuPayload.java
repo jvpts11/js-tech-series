@@ -48,12 +48,16 @@ public record OpenBootMenuPayload(BlockPos hostPos, BlockPos monitorPos, BootMen
         buf.writeVarInt(p.remainingTicks());
         buf.writeVarInt(p.menu().defaultIndex());
         buf.writeVarInt(p.menu().countdownTicks());
+        buf.writeUtf(p.menu().title().length() <= MAX_LABEL ? p.menu().title()
+                : p.menu().title().substring(0, MAX_LABEL), MAX_LABEL);
         final List<BootMenu.Entry> entries = p.menu().entries();
         buf.writeVarInt(entries.size());
         for (final BootMenu.Entry entry : entries) {
             buf.writeUtf(entry.label().length() <= MAX_LABEL ? entry.label()
                     : entry.label().substring(0, MAX_LABEL), MAX_LABEL);
             buf.writeVarInt(entry.slot());
+            buf.writeUtf(entry.osId().length() <= MAX_LABEL ? entry.osId()
+                    : entry.osId().substring(0, MAX_LABEL), MAX_LABEL);
         }
     }
 
@@ -63,11 +67,12 @@ public record OpenBootMenuPayload(BlockPos hostPos, BlockPos monitorPos, BootMen
         final int remaining = buf.readVarInt();
         final int chosen = buf.readVarInt();
         final int countdown = buf.readVarInt();
+        final String title = buf.readUtf(MAX_LABEL);
         final int count = Math.min(buf.readVarInt(), BootMenu.MOST_ENTRIES);
         final List<BootMenu.Entry> entries = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
-            entries.add(new BootMenu.Entry(buf.readUtf(MAX_LABEL), buf.readVarInt()));
+            entries.add(new BootMenu.Entry(buf.readUtf(MAX_LABEL), buf.readVarInt(), buf.readUtf(MAX_LABEL)));
         }
-        return new OpenBootMenuPayload(host, monitor, new BootMenu(entries, chosen, countdown), remaining);
+        return new OpenBootMenuPayload(host, monitor, new BootMenu(title, entries, chosen, countdown), remaining);
     }
 }

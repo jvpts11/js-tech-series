@@ -127,7 +127,7 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
         MonitorFrame.renderBody(g, x, y, W, H, screenEra(), font);
         g.fill(x, y, x + W, y + H, 0xFF000000);
 
-        g.drawString(font, "GNU GRUB  version 2.12", x + 12, y + 12, 0xFFE6ECF6, false);
+        g.drawString(font, this.menu.title(), x + 12, y + 12, 0xFFE6ECF6, false);
         int ty = y + 34;
         for (int i = 0; i < this.menu.entries().size(); i++) {
             final BootMenu.Entry entry = this.menu.entries().get(i);
@@ -147,13 +147,19 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
         g.drawString(font, below, x + 12, y + H - 22, 0xFF7D8A9C, false);
     }
 
-    /** Boots what is highlighted, or opens the firmware when that is what is highlighted. */
+    /**
+     * Boots what is highlighted, or opens the firmware when that is what is highlighted.
+     *
+     * <p>The entry is named by where it sits in the list rather than by the disk it is on, because a disk
+     * carries several systems now and two entries of this list can share one. The machine builds the same list
+     * from the same disks, so the place in it is the same on both sides.
+     */
     private void choose() {
         final BootMenu.Entry entry = this.menu.entries().get(this.at);
         PacketDistributor.sendToServer(new FirmwareActionPayload(this.computerPos, this.monitorPos,
                 entry.isFirmware() ? FirmwareActionPayload.ACTION_OPEN_SETUP
                         : FirmwareActionPayload.ACTION_BOOT_ONCE,
-                entry.isFirmware() ? 0L : entry.slot(), -1));
+                entry.isFirmware() ? 0L : this.at, -1));
     }
 
 }

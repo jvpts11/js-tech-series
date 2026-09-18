@@ -400,9 +400,9 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return session.canTakeOs(osId, preferredSlot);
     }
 
-    /** Boots that disk for this boot only, leaving the order saved in the firmware where it is. */
-    public void setBootOnce(final int slot) {
-        session.setBootOnce(slot);
+    /** Boots that system on that disk for this boot only, leaving what the disk boots by default alone. */
+    public void setBootOnce(final int slot, @Nullable final ResourceLocation osId) {
+        session.setBootOnce(slot, osId);
     }
 
     /**

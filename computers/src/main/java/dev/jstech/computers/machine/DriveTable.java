@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.machine;
 
+import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.FilesystemKind;
@@ -177,7 +178,7 @@ public final class DriveTable {
         final long capacity = capacityItems * StorageKey.MB_EQ_PER_ITEM;
         final long storageUsed = DriveVolumes.usedWeight(stack);
         final long fsUsed = DiskFilesystem.filesWeight(stack);
-        final ResourceLocation osId = stack.get(ComputingModule.SYSTEM_OS.get());
+        final ResourceLocation osId = OsDisks.systemOn(stack);
         final OsDef os = osId != null ? OsRegistry.getOs(osId) : null;
         final long osReserved = os != null
                 ? os.footprintItemsOn(DiskFilesystem.eraOf(stack)) * StorageKey.MB_EQ_PER_ITEM : 0L;
