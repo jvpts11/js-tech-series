@@ -35,7 +35,60 @@ public final class SetupTiming {
     /** What the network reads at when a program comes from the Mirror rather than a disc. */
     public static final double NETWORK_MB_PER_SECOND = 8.0;
 
+    /**
+     * The processor a system install is measured against: one core at two gigahertz.
+     *
+     * <p>A machine with exactly this much gets no help and no penalty; everything else is read against it, so
+     * a two-core machine at that clock copies twice as fast and a single slow core takes longer.
+     */
+    public static final double CPU_REFERENCE_MHZ_CORES = 2_000.0;
+
+    /**
+     * The least the processor can count for, however little of it there is.
+     *
+     * <p>Without this the earliest machines would be measured at a tenth of the reference and installing
+     * anything on them would be nothing but waiting; a floppy is already slow enough to say what era it is.
+     */
+    public static final double CPU_MIN_FACTOR = 0.5;
+
     private SetupTiming() {
+    }
+
+    /**
+     * What a system install reads and writes at, in megabytes per second, on this machine from that medium.
+     *
+     * <p>Three things decide it, and they are all parts a player chose: the medium it is read from, the disk
+     * it is written to, and the processor that unpacks it in between. The machine's generation is not in here
+     * on its own any more, because it was the only thing in here and that made every machine of an age take
+     * exactly as long as every other. It is in here now through the parts, which is where a generation
+     * actually lives: a Legacy board takes a CD and an IDE disk, and putting a solid-state disk in that same
+     * machine really does cut the wait.
+     *
+     * @param format              the medium the system is read from
+     * @param diskSpeedMultiplier the tier of the disk it is written to, where a mechanical disk is 1
+     * @param cores               how many cores the processor has
+     * @param mhz                 what one of those cores runs at
+     */
+    public static double installRate(final MediaFormat format, final int diskSpeedMultiplier,
+                                     final int cores, final int mhz) {
+        return rateOf(format) * Math.max(1, diskSpeedMultiplier) * cpuFactor(cores, mhz);
+    }
+
+    /** How much faster than the reference processor this one is, never counting for less than the floor. */
+    public static double cpuFactor(final int cores, final int mhz) {
+        final double power = (double) Math.max(0, cores) * Math.max(0, mhz);
+        return Math.max(CPU_MIN_FACTOR, power / CPU_REFERENCE_MHZ_CORES);
+    }
+
+    /**
+     * The ticks a system of {@code sizeMb} takes to be installed on this machine from that medium.
+     *
+     * <p>Clamped like every other setup, so the smallest system is still watched for a moment and the largest
+     * one on the worst hardware there is stays something a player waits out rather than leaves the game over.
+     */
+    public static int installTicks(final int sizeMb, final MediaFormat format, final int diskSpeedMultiplier,
+                                   final int cores, final int mhz) {
+        return ticks(sizeMb, installRate(format, diskSpeedMultiplier, cores, mhz), false);
     }
 
     /** What a medium of that format reads at, in megabytes per second. */

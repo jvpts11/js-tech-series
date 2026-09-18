@@ -91,6 +91,17 @@ public interface IOsHost extends IPeripheralOwner {
     /** The best CPU clock in MHz across installed CPUs, or 0 with no valid build. */
     int maxCpuMhz();
 
+    /**
+     * How many cores this machine has, counted across every processor in it.
+     *
+     * <p>Not how many processors: work is spread over cores, so one four-core processor gets through four
+     * times what a single core does, and that is the number anything timing work on this machine wants.
+     * A host that cannot be asked what it is built of answers with a core for each processor it reports.
+     */
+    default int cpuCores() {
+        return Math.max(1, this.installedCpus());
+    }
+
     /** The total VRAM in MB across installed GPUs, or 0 with no valid build. */
     int totalVramMb();
 

@@ -61,7 +61,7 @@ public final class Installers {
             final long freeMb = OsDisks.systemDiskFreeWeight(stack) / StorageKey.MB_EQ_PER_ITEM * era.mbPerItem();
             disks.add(new InstallerFlow.Disk(slot, stack.getHoverName().getString(),
                     (int) Math.min(Integer.MAX_VALUE, sizeMb), (int) Math.min(Integer.MAX_VALUE, freeMb),
-                    holderOf(stack)));
+                    holderOf(stack), disk.spec().tier().speedMultiplier()));
         }
         return disks;
     }
@@ -127,16 +127,17 @@ public final class Installers {
      * An installation about to be set up on this machine, with the disk and the name it suggests already filled
      * in and the desktops it could offer gathered.
      *
-     * @param copyTicks how long the copy of the system itself takes off the medium it is being read from
+     * @param baseRate what this machine copies at with the disk left out, in megabytes a second: the medium it
+     *                 reads from and the processor that unpacks it. The disk joins it when one is chosen
      */
     public static InstallerFlow beginning(final IOsHost machine, final ServerLevel level, final OsDef system,
-                                          final int copyTicks) {
+                                          final double baseRate) {
         final HardwareEra era = machine.installedEra();
         final String mirror = system.installerStyle().offersDesktop() ? mirrorHost(machine, level) : "";
         final List<InstallerFlow.Desktop> desktops = mirror.isEmpty()
                 ? List.of() : desktopsFor(system, era, SetupTiming.eraFactor(era));
         return InstallerFlow.beginning(system.installerStyle(), system.id().toString(), system.displayName(),
-                system.footprintMb(), copyTicks, disksOf(machine), machineName(machine), desktops, mirror);
+                system.footprintMb(), baseRate, disksOf(machine), machineName(machine), desktops, mirror);
     }
 
     /**

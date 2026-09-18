@@ -20,10 +20,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class InstallerFlowTest {
 
     private static final InstallerFlow.Disk EMPTY_500 =
-            new InstallerFlow.Disk(0, "Vaultis Swift SSD 500 GB", 512_000, 512_000, "");
+            new InstallerFlow.Disk(0, "Vaultis Swift SSD 500 GB", 512_000, 512_000, "", 4);
 
     private static final InstallerFlow.Disk FULL_WITH_UBUNTU =
-            new InstallerFlow.Disk(1, "Vaultis Keep HDD 1 TB", 1_024_000, 512, "Ubuntu");
+            new InstallerFlow.Disk(1, "Vaultis Keep HDD 1 TB", 1_024_000, 512, "Ubuntu", 1);
+
+    /** The mechanical disk of the pair, empty, so choosing between the two is choosing a speed. */
+    private static final InstallerFlow.Disk EMPTY_SLOW =
+            new InstallerFlow.Disk(1, "Vaultis Keep HDD 1 TB", 1_024_000, 1_024_000, "", 1);
 
     private static final InstallerFlow.Desktop GNOME =
             new InstallerFlow.Desktop("jsc:gnome", "GNOME", 192, 60);
@@ -49,11 +53,18 @@ class InstallerFlowTest {
     }
 
     @Test
-    void setComputerName_isTrimmedToWhatANameMayBe() {
+    void setComputerName_keepsTheSpaceOffTheEndsAndTheNameItself() {
         final InstallerFlow flow = frames11(List.of(EMPTY_500));
         flow.setComputerName("  a-very-long-machine-name  ");
+        assertEquals("a-very-long-machine-name", flow.computerName());
+    }
+
+    /** However long a name is typed, what the machine keeps has an end to it. */
+    @Test
+    void setComputerName_pastTheLimit_isCutToIt() {
+        final InstallerFlow flow = frames11(List.of(EMPTY_500));
+        flow.setComputerName("n".repeat(InstallerFlow.MOST_NAME_LETTERS + 50));
         assertEquals(InstallerFlow.MOST_NAME_LETTERS, flow.computerName().length());
-        assertEquals("a-very-long-mac", flow.computerName());
     }
 
     @Test
@@ -245,22 +256,81 @@ class InstallerFlowTest {
     }
 
     private static InstallerFlow frames11(final List<InstallerFlow.Disk> disks) {
-        return InstallerFlow.beginning(InstallerStyle.FRAMES_11, "jsc:frames_11", "Frames 11", 20_480, 100, disks,
+        return InstallerFlow.quoted(InstallerStyle.FRAMES_11, "jsc:frames_11", "Frames 11", 20_480, 100, disks,
                 "STUDIO-11", List.of(), "");
     }
 
     private static InstallerFlow framesXp(final List<InstallerFlow.Disk> disks) {
-        return InstallerFlow.beginning(InstallerStyle.FRAMES_XP, "jsc:frames_xp", "Frames XP", 1_536, 100, disks,
+        return InstallerFlow.quoted(InstallerStyle.FRAMES_XP, "jsc:frames_xp", "Frames XP", 1_536, 100, disks,
                 "OFFICE-XP", List.of(), "");
     }
 
     private static InstallerFlow ubuntu(final List<InstallerFlow.Disk> disks) {
-        return InstallerFlow.beginning(InstallerStyle.UBUNTU, "jsc:ubuntu", "Ubuntu", 8_192, 100, disks,
+        return InstallerFlow.quoted(InstallerStyle.UBUNTU, "jsc:ubuntu", "Ubuntu", 8_192, 100, disks,
                 "RENDER-01", List.of(GNOME), "CORE");
     }
 
     private static InstallerFlow fedora(final List<InstallerFlow.Disk> disks) {
-        return InstallerFlow.beginning(InstallerStyle.FEDORA, "jsc:fedora", "Fedora", 8_192, 100, disks,
+        return InstallerFlow.quoted(InstallerStyle.FEDORA, "jsc:fedora", "Fedora", 8_192, 100, disks,
                 "LAB-02", List.of(GNOME), "CORE");
+    }
+
+    /**
+     * A rate that leaves Frames XP clear of both clamps on either disk, so this is measuring the disk and
+     * not the ceiling: 48 seconds on the mechanical one, 12 on the solid-state one.
+     */
+    private static final double CLEAR_OF_THE_CLAMPS = 32.0;
+
+    private static InstallerFlow timedXp(final List<InstallerFlow.Disk> disks) {
+        return InstallerFlow.beginning(InstallerStyle.FRAMES_XP, "jsc:frames_xp", "Frames XP", 1_536,
+                CLEAR_OF_THE_CLAMPS, disks, "OFFICE-XP", List.of(), "");
+    }
+
+    /**
+     * The disk page is a choice about something: the mechanical disk is the longer copy, and choosing the
+     * solid-state one shortens it before a byte is written rather than after.
+     */
+    @Test
+    void select_timesTheCopyAgainstTheDiskChosen() {
+        final InstallerFlow flow = timedXp(List.of(EMPTY_500, EMPTY_SLOW));
+        flow.select(EMPTY_SLOW.slot());
+        final int onMechanical = flow.copyTicks();
+        flow.select(EMPTY_500.slot());
+        final int onSolidState = flow.copyTicks();
+        assertEquals(48 * SetupTiming.TICKS_PER_SECOND, onMechanical);
+        assertEquals(12 * SetupTiming.TICKS_PER_SECOND, onSolidState);
+        assertEquals(EMPTY_500.speed() / EMPTY_SLOW.speed(), onMechanical / onSolidState,
+                "as much sooner as the disk is faster, with neither end at a clamp");
+    }
+
+    /** A disk the machine has nothing in leaves the time exactly where the last real choice left it. */
+    @Test
+    void select_aSlotWithNoDisk_changesNothing() {
+        final InstallerFlow flow = timedXp(List.of(EMPTY_500));
+        final int chosen = flow.copyTicks();
+        flow.select(9);
+        assertEquals(EMPTY_500.slot(), flow.targetSlot());
+        assertEquals(chosen, flow.copyTicks());
+    }
+
+    /** An installation told a time carries it, whatever disks it is holding. */
+    @Test
+    void quoted_carriesTheTimeItWasGivenAndDoesNotRetimeOnSelect() {
+        final InstallerFlow flow = framesXp(List.of(EMPTY_500, EMPTY_SLOW));
+        assertEquals(100, flow.copyTicks());
+        flow.select(EMPTY_SLOW.slot());
+        assertEquals(100, flow.copyTicks());
+    }
+
+    /**
+     * An installation restored keeps the time it was quoted. The copy is already running at that speed, so
+     * working one out again from the disks as they stand now would make the bar jump under the player.
+     */
+    @Test
+    void restored_keepsTheTimeItWasGivenRatherThanWorkingOneOut() {
+        final InstallerFlow flow = InstallerFlow.restored(InstallerStyle.FRAMES_XP, "jsc:frames_xp", "Frames XP",
+                1_536, 640, List.of(EMPTY_500, EMPTY_SLOW), List.of(), "", 1, EMPTY_SLOW.slot(),
+                "OFFICE-XP", "", InstallerFlow.NO_DISK);
+        assertEquals(640, flow.copyTicks());
     }
 }

@@ -497,11 +497,16 @@ public final class FirmwarePayloads {
              * chooses one, and a disk that is full can be erased on the way. What still stops it before it
              * starts is a machine with no disk at all, which has nothing to offer.
              */
-            final int eraFactor = SetupTiming.eraFactor(hostEra);
-            final int copyTicks = SetupTiming.ticks(
-                    def.footprintMb(), reader.insertedFormat(), false, eraFactor);
+            /*
+             * How fast this machine copies, from the parts it is made of rather than from its generation: the
+             * medium it reads and the processor that unpacks it here, and the disk it writes to added by the
+             * installer once the player has chosen one. A machine of an age used to take exactly as long as
+             * every other machine of that age, so nothing a player put in it ever showed.
+             */
+            final double baseRate = SetupTiming.installRate(reader.insertedFormat(), 1,
+                    machine.cpuCores(), machine.maxCpuMhz());
             final InstallerFlow flow =
-                    Installers.beginning(machine, level, def, copyTicks);
+                    Installers.beginning(machine, level, def, baseRate);
             if (flow.disks().isEmpty()) {
                 return noRoom;
             }

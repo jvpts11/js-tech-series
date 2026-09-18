@@ -8,9 +8,6 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
-import dev.jstech.computers.hardware.ComputerBuild;
-import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
@@ -210,7 +207,7 @@ public final class InstallService {
         final HardwareEra era = computer.installedEra() != null ? computer.installedEra()
                 : HardwareEra.STANDARD;
         final LiveInstallState.Result result = state.run(line, new LiveInstallState.Env(
-                devices, this.packages.reachable(), this.level.getGameTime(), coresOf(computer),
+                devices, this.packages.reachable(), this.level.getGameTime(), computer.cpuCores(),
                 computer.maxCpuMhz(), SetupTiming.eraFactor(era),
                 uefi));
         machine.setChanged();
@@ -308,24 +305,4 @@ public final class InstallService {
         return null;
     }
 
-    /**
-     * How many cores this machine really has, across every processor in it.
-     *
-     * <p>Not how many processors: a compile is spread over cores, and a machine with one four-core processor
-     * gets through four times the work of one with a single core, which is the whole point of the number.
-     */
-    private static int coresOf(final IOsHost computer) {
-        if (!(computer instanceof AbstractComputerBlockEntity machine)) {
-            return Math.max(1, computer.installedCpus());
-        }
-        final ComputerBuild build = machine.currentBuild();
-        if (build == null) {
-            return 1;
-        }
-        int cores = 0;
-        for (final CpuSpec cpu : build.cpus()) {
-            cores += cpu.cores();
-        }
-        return Math.max(1, cores);
-    }
 }

@@ -34,8 +34,14 @@ public final class InstallerFlow {
     /** No desktop: the system comes up at its terminal, which is an answer and not a missing one. */
     public static final int NO_DESKTOP = -1;
 
-    /** How long a computer's name may be, the length the machines of the first age allowed. */
-    public static final int MOST_NAME_LETTERS = 15;
+    /**
+     * How long a computer's name may be.
+     *
+     * <p>It used to be the fifteen letters the machines of the first age allowed, which is period-correct and
+     * no fun at all: a player naming a machine is naming it for themselves, and the name they want rarely
+     * fits in fifteen. It is a length that has an end to it rather than a length anybody runs into.
+     */
+    public static final int MOST_NAME_LETTERS = 256;
 
     /** More disks than any machine wires up, so a list that crosses the wire has an end to it. */
     public static final int MOST_DISKS = 16;
@@ -47,7 +53,14 @@ public final class InstallerFlow {
     private final String systemId;
     private final String systemName;
     private final int footprintMb;
-    private final int copyTicks;
+    /*
+     * What the machine copies at, leaving the disk out: the medium it reads from and the processor that
+     * unpacks it. The disk is the one part of the rate the player is still choosing on the page in front of
+     * them, so it is multiplied in when they choose, and the copy really does get shorter when they pick a
+     * faster one. Zero for an installation restored from a machine that only wrote down how long it had left.
+     */
+    private final double baseRate;
+    private int copyTicks;
     private final List<Disk> disks;
     private final List<Desktop> desktops;
     private final String mirrorHost;
@@ -62,12 +75,14 @@ public final class InstallerFlow {
     private String computerName;
 
     private InstallerFlow(final InstallerStyle style, final String systemId, final String systemName,
-                          final int footprintMb, final int copyTicks, final List<Disk> disks,
-                          final String suggestedName, final List<Desktop> desktops, final String mirrorHost) {
+                          final int footprintMb, final int copyTicks, final double baseRate,
+                          final List<Disk> disks, final String suggestedName, final List<Desktop> desktops,
+                          final String mirrorHost) {
         this.style = style;
         this.systemId = systemId;
         this.systemName = systemName;
         this.footprintMb = Math.max(0, footprintMb);
+        this.baseRate = Math.max(0, baseRate);
         this.copyTicks = Math.max(1, copyTicks);
         this.disks = List.copyOf(disks);
         this.desktops = List.copyOf(desktops);
@@ -77,23 +92,56 @@ public final class InstallerFlow {
         for (final Disk disk : this.disks) {
             if (this.targetSlot == NO_DISK && this.roomOn(disk)) {
                 this.targetSlot = disk.slot();
+                this.timeTheCopy(disk);
             }
         }
         this.rebuildSteps();
     }
 
     /**
+     * Works out how long the copy onto that disk takes, and leaves it as the time this installation quotes.
+     *
+     * <p>Does nothing for an installation that came off the wire or out of a save, which carries the time it
+     * was given rather than the parts to work it out from: only the machine that started it knows those.
+     */
+    private void timeTheCopy(final Disk disk) {
+        if (this.baseRate > 0) {
+            this.copyTicks = Math.max(1,
+                    SetupTiming.ticks(this.footprintMb, this.baseRate * disk.speed(), false));
+        }
+    }
+
+    /**
      * An installation about to be set up, with the first disk that has room already chosen and the machine's
      * own name already in the name field, the way an installer suggests both.
      *
-     * @param copyTicks  how long the copy of the system itself takes
+     * @param baseRate   what the machine copies at with the disk left out: the medium it reads from and the
+     *                   processor that unpacks it. The disk is multiplied in when the player chooses one, so
+     *                   choosing a faster disk really does shorten the copy
      * @param mirrorHost the Mirror answering this machine, empty when none does
      */
     public static InstallerFlow beginning(final InstallerStyle style, final String systemId,
-                                          final String systemName, final int footprintMb, final int copyTicks,
+                                          final String systemName, final int footprintMb, final double baseRate,
                                           final List<Disk> disks, final String suggestedName,
                                           final List<Desktop> desktops, final String mirrorHost) {
-        return new InstallerFlow(style, systemId, systemName, footprintMb, copyTicks, disks, suggestedName,
+        return new InstallerFlow(style, systemId, systemName, footprintMb, 1, baseRate, disks, suggestedName,
+                desktops, mirrorHost);
+    }
+
+    /**
+     * An installation whose copy has already been timed, which carries that time rather than working one out.
+     *
+     * <p>This is what comes off the wire and out of a save: the machine that started it worked the time out
+     * from its own parts, and everything downstream of that is told the answer rather than asked to guess it
+     * again from disks that may have been swapped underneath.
+     *
+     * @param copyTicks how long the copy of the system itself takes, already decided
+     */
+    public static InstallerFlow quoted(final InstallerStyle style, final String systemId, final String systemName,
+                                       final int footprintMb, final int copyTicks, final List<Disk> disks,
+                                       final String suggestedName, final List<Desktop> desktops,
+                                       final String mirrorHost) {
+        return new InstallerFlow(style, systemId, systemName, footprintMb, copyTicks, 0, disks, suggestedName,
                 desktops, mirrorHost);
     }
 
@@ -108,7 +156,11 @@ public final class InstallerFlow {
                                          final List<Desktop> desktops, final String mirrorHost,
                                          final int stageIndex, final int targetSlot, final String computerName,
                                          final String desktopId, final int eraseSlot) {
-        final InstallerFlow flow = beginning(style, systemId, systemName, footprintMb, copyTicks, disks,
+        /*
+         * A restored installation keeps the time it was quoted rather than working one out again: the copy is
+         * already under way at that speed, and a disk swapped underneath it must not make the bar jump.
+         */
+        final InstallerFlow flow = quoted(style, systemId, systemName, footprintMb, copyTicks, disks,
                 computerName, desktops, mirrorHost);
         flow.restoreErase(eraseSlot);
         flow.select(targetSlot);
@@ -417,10 +469,18 @@ public final class InstallerFlow {
         return true;
     }
 
-    /** Chooses the disk the system goes on; a slot the machine has no disk in is ignored. */
+    /**
+     * Chooses the disk the system goes on; a slot the machine has no disk in is ignored.
+     *
+     * <p>Choosing also times the copy again, because the disk is part of how fast it goes: picking the
+     * solid-state one over the mechanical one is picking a shorter wait, and the page has to say so before
+     * the copy starts rather than after it.
+     */
     public void select(final int slot) {
-        if (this.diskAt(slot) != null) {
+        final Disk disk = this.diskAt(slot);
+        if (disk != null) {
             this.targetSlot = slot;
+            this.timeTheCopy(disk);
         }
     }
 
@@ -507,11 +567,14 @@ public final class InstallerFlow {
      * @param sizeMb how big the whole disk is
      * @param freeMb what is free on it as it stands
      * @param holds  the system already on it, empty when it holds none
+     * @param speed  its tier, where a mechanical disk is 1, which is what makes one disk a quicker install
+     *               than another and so makes this page a choice about something
      */
-    public record Disk(int slot, String label, int sizeMb, int freeMb, String holds) {
+    public record Disk(int slot, String label, int sizeMb, int freeMb, String holds, int speed) {
 
         public Disk {
             holds = holds == null ? "" : holds;
+            speed = Math.max(1, speed);
         }
 
         /** Whether the disk carries a system, which is what makes choosing it a thing to confirm. */

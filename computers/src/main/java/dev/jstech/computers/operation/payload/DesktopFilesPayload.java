@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.program.ComputerSettings;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -97,7 +98,13 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
         DiskFilesPayload.WireFile.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_FILES))
                 .encode(buf, payload.files);
         buf.writeUtf(payload.wallpaper, 48);
-        buf.writeUtf(payload.computerName, 48);
+        /*
+         * A name as long as a name may be. Written at that length, and cut to it rather than refused: this
+         * packet is what puts a desktop in front of somebody, and a name a letter too long used to throw here
+         * and leave them with no desktop at all.
+         */
+        buf.writeUtf(clip(payload.computerName, InstallerFlow.MOST_NAME_LETTERS),
+                InstallerFlow.MOST_NAME_LETTERS);
         ByteBufCodecs.stringUtf8(32).apply(ByteBufCodecs.list(MAX_PROGRAMS)).encode(buf, payload.programs);
         WireIconCell.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ICON_CELLS)).encode(buf, payload.iconCells);
         Prefs.STREAM_CODEC.encode(buf, payload.prefs);
@@ -130,7 +137,7 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
         final List<DiskFilesPayload.WireFile> files =
                 DiskFilesPayload.WireFile.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_FILES)).decode(buf);
         final String wallpaper = buf.readUtf(48);
-        final String computerName = buf.readUtf(48);
+        final String computerName = buf.readUtf(InstallerFlow.MOST_NAME_LETTERS);
         final List<String> programs =
                 ByteBufCodecs.stringUtf8(32).apply(ByteBufCodecs.list(MAX_PROGRAMS)).decode(buf);
         final List<WireIconCell> cells =

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program;
 
+import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.SetupJob;
 import dev.jstech.computers.program.install.LiveInstallState;
 import java.util.Collection;
@@ -253,8 +254,18 @@ public final class ComputerConsoleState {
         return computerName;
     }
 
+    /**
+     * Names the computer, cut to the length a name may be.
+     *
+     * <p>Cut here, at the machine that keeps it, rather than only where it is typed. The name rides on
+     * several packets to the screens that show it, some of which refuse a string past their own length by
+     * throwing rather than by trimming, so a name that was never cut at the source would take the player's
+     * desktop down instead of simply reading short.
+     */
     public void setComputerName(final String name) {
-        this.computerName = name == null ? "" : name;
+        final String given = name == null ? "" : name;
+        this.computerName = given.length() <= InstallerFlow.MOST_NAME_LETTERS ? given
+                : given.substring(0, InstallerFlow.MOST_NAME_LETTERS);
     }
 
     /*

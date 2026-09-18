@@ -10,6 +10,7 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.block.IEraChassisBlock;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.DiskItem;
@@ -243,6 +244,20 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     @Nullable
     public ComputerBuild currentBuild() {
         return hardware.current();
+    }
+
+    /** Every core of every processor seated in this machine, which a machine can really be asked. */
+    @Override
+    public int cpuCores() {
+        final ComputerBuild build = currentBuild();
+        if (build == null) {
+            return 1;
+        }
+        int cores = 0;
+        for (final CpuSpec cpu : build.cpus()) {
+            cores += cpu.cores();
+        }
+        return Math.max(1, cores);
     }
 
     public boolean buildValid() {

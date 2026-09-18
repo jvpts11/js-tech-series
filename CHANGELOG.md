@@ -112,6 +112,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the system.
 
 ### Changed
+- How long a system takes to install is now read off the machine's own parts rather than off its generation.
+  Three things decide it and a player chose all three: the medium it is read from, the disk it is written to,
+  and the processor that unpacks it in between. It used to be the medium and the generation alone, so every
+  machine of an age took exactly as long as every other one and nothing anybody put in a computer ever showed.
+  The disk is the one still being chosen while the installer is open, so the time is worked out again the
+  moment a different disk is picked: putting a solid-state disk in a Legacy machine really does cut the wait,
+  and the page says so before the copy starts. The floor and the ceiling are where they were, three seconds
+  and ninety.
 - A program is now built for the oldest architecture that has what it turned out to need, rather than for a fixed
   one. The compiler reads the listing back for the instructions it actually used and stamps the oldest machine of
   the line that has all of them, so a program runs everywhere it could have run instead of only on the newest
@@ -350,6 +358,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- The shell of a live installation medium turned away `echo` and `pacman`, although the sequence behind it
+  answered both. That made two of the steps impossible to take: the line that sets the build options in
+  `/etc/portage/make.conf`, which is how a Gentoo kernel is told to compile more than one thing at a time,
+  and installing a package into the new system afterwards. The shell now takes its verbs from the sequence
+  itself, so there is no second list to forget a verb in.
+- A computer's name could be fifteen letters, which is what the machines of the first age allowed and no fun
+  to be held to. It is 256 now, and the three packets that carry a name onto a screen were all cut to 48,
+  two of them by refusing a longer one rather than by trimming it.
 - Installing a system from the firmware showed the same grey box whatever system it was, so the installer each
   one was drawn for was never reached: Frames XP Setup, the Debian and Fedora wizards, the pages that ask where
   the system goes and what the computer is called. The system was written all the same, which is why it was easy

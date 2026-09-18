@@ -367,9 +367,9 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         }
 
         // Console scrollback, newest at the bottom, honoring the scroll offset.
-        final int top = bareTerminal() ? 8 : 27;
+        final int top = scrollbackTop();
         final int bottom = imageHeight - 23;
-        final int visible = (bottom - top) / LINE_H;
+        final int visible = visibleRows();
         final List<Line> all = new ArrayList<>(scrollback);
         final int total = all.size();
         final int end = Math.max(0, total - scrollOffset);
@@ -588,12 +588,29 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         if (this.editor != null) {
             return this.editor.scrolled(dy);
         }
-        final int top = 27;
-        final int bottom = imageHeight - 23;
-        final int visible = (bottom - top) / LINE_H;
-        final int maxScroll = Math.max(0, scrollback.size() - visible);
+        final int maxScroll = Math.max(0, scrollback.size() - visibleRows());
         scrollOffset = Math.max(0, Math.min(maxScroll, scrollOffset + (int) Math.signum(dy)));
         return true;
+    }
+
+    /**
+     * Where the scrollback starts down the glass. A terminal taking the whole monitor has no header above it,
+     * so it starts higher and fits more rows than one drawn in the window with a title bar.
+     */
+    private int scrollbackTop() {
+        return bareTerminal() ? 8 : 27;
+    }
+
+    /**
+     * How many rows of scrollback the glass shows.
+     *
+     * <p>Read by the drawing and by the wheel, from here, because they used to work it out separately and the
+     * wheel used the windowed header height on a bare terminal too. It therefore thought fewer rows fitted
+     * than really did, let the scroll go that many rows past the top, and the rows at the bottom emptied out
+     * one by one with nothing left to take their place.
+     */
+    private int visibleRows() {
+        return (imageHeight - 23 - scrollbackTop()) / LINE_H;
     }
 
     @Override

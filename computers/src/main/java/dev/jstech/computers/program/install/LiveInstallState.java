@@ -129,6 +129,21 @@ public final class LiveInstallState {
         }
     }
 
+    /**
+     * Every verb {@link #run} answers to, which is also every verb the shell of a live medium accepts.
+     *
+     * <p>It lives here, beside the switch that answers them, because it used to live in the shell as a second
+     * list and the two drifted: {@code echo} and {@code pacman} were answered here and refused there, so the
+     * line that sets the build options and the one that installs a package afterwards could not be typed at
+     * all. One list cannot disagree with itself.
+     */
+    public static final List<String> VERBS = List.of(
+            "ls", "cat", "less", "more", "cd", "echo",
+            "lsblk", "fdisk", "mkfs.ext4", "mkfs", "mkfs.fat", "mkfs.vfat", "mount",
+            "pacstrap", "pacman", "tar", "genfstab", "arch-chroot", "chroot",
+            "emerge-webrsync", "emerge", "genkernel", "hostname", "mkinitcpio",
+            "grub-install", "grub-mkconfig", "passwd", "exit", "reboot", "help");
+
     /** Where a live session starts, and what its prompt writes as a tilde. */
     private static final String HOME = "/root";
 

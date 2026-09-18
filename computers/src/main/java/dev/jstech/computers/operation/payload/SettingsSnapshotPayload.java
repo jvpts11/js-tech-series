@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.install.InstallerFlow;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -101,7 +102,7 @@ public record SettingsSnapshotPayload(
     private static void encode(final RegistryFriendlyByteBuf buf, final SettingsSnapshotPayload p) {
         buf.writeBlockPos(p.hostPos);
         buf.writeUtf(clip(p.wallpaper, LABEL_MAX), LABEL_MAX);
-        buf.writeUtf(clip(p.computerName, LABEL_MAX), LABEL_MAX);
+        buf.writeUtf(clip(p.computerName, InstallerFlow.MOST_NAME_LETTERS), InstallerFlow.MOST_NAME_LETTERS);
         buf.writeInt(p.accent);
         buf.writeBoolean(p.clock12h);
         buf.writeVarInt(p.guiScale);
@@ -158,7 +159,7 @@ public record SettingsSnapshotPayload(
     private static SettingsSnapshotPayload decode(final RegistryFriendlyByteBuf buf) {
         final BlockPos pos = buf.readBlockPos();
         final String wallpaper = buf.readUtf(48);
-        final String computerName = buf.readUtf(48);
+        final String computerName = buf.readUtf(InstallerFlow.MOST_NAME_LETTERS);
         final int accent = buf.readInt();
         final boolean clock12h = buf.readBoolean();
         final int guiScale = buf.readVarInt();

@@ -91,6 +91,7 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
             buf.writeVarInt(disk.sizeMb());
             buf.writeVarInt(disk.freeMb());
             buf.writeUtf(cut(disk.holds(), MAX_LABEL), MAX_LABEL);
+            buf.writeVarInt(disk.speed());
         }
         buf.writeVarInt(Math.min(p.desktops().size(), InstallerFlow.MOST_DESKTOPS));
         for (int i = 0; i < Math.min(p.desktops().size(), InstallerFlow.MOST_DESKTOPS); i++) {
@@ -121,7 +122,7 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
         final List<InstallerFlow.Disk> disks = new ArrayList<>(diskCount);
         for (int i = 0; i < diskCount; i++) {
             disks.add(new InstallerFlow.Disk(buf.readVarInt(), buf.readUtf(MAX_LABEL), buf.readVarInt(),
-                    buf.readVarInt(), buf.readUtf(MAX_LABEL)));
+                    buf.readVarInt(), buf.readUtf(MAX_LABEL), buf.readVarInt()));
         }
         final int desktopCount = Math.min(buf.readVarInt(), InstallerFlow.MOST_DESKTOPS);
         final List<InstallerFlow.Desktop> desktops = new ArrayList<>(desktopCount);
