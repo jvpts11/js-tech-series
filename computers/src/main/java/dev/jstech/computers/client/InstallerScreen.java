@@ -44,6 +44,21 @@ public final class InstallerScreen extends Screen {
     /** How far apart the rows of a list sit, which the mouse also has to know to find the one under it. */
     private static final int ROW = 11;
 
+    /** Where the Size column ends, counted back from the right edge of the table. */
+    private static final int SIZE_COLUMN = 120;
+
+    /** The same for the Free column, which sits between Size and Holds. */
+    private static final int FREE_COLUMN = 60;
+
+    /** The clear space kept between a drive's name and whatever is written to the right of it. */
+    private static final int COLUMN_GAP = 6;
+
+    /** The wash laid over the button under the cursor: enough to read as lit, not enough to change its style. */
+    private static final int HOVER_WASH = 0x30FFFFFF;
+
+    /** How long the caret in a name field spends showing, and then hidden, in ticks. */
+    private static final int CARET_TICKS = 10;
+
     private final BlockPos computerPos;
     private final BlockPos monitorPos;
 
@@ -55,6 +70,8 @@ public final class InstallerScreen extends Screen {
     private int erasePrompt = InstallerFlow.NO_DISK;
     /** The name being typed, which only reaches the machine when the page is left. */
     private String typed = "";
+    /** Ticks since this screen opened, which is what turns the caret on and off. */
+    private int blink;
 
     private int listTop;
     private int listLeft;
@@ -105,6 +122,7 @@ public final class InstallerScreen extends Screen {
     @Override
     public void tick() {
         super.tick();
+        this.blink++;
         /*
          * The clock is the machine's and this only follows it: the work runs to the end of the page it is on and
          * waits there, exactly as the machine does, so the two never disagree about what is happening.
@@ -240,6 +258,13 @@ public final class InstallerScreen extends Screen {
         this.cancelButton = frame.cancel();
         this.eraseButton = frame.erase();
 
+        /*
+         * The button under the cursor says so. Marked here, over the rectangles every frame hands back, rather
+         * than inside each of the five frames: one mark reaches all of them, and a frame drawn later gets it
+         * for nothing. Nothing else about the button moves, because a button of these ages did not move.
+         */
+        this.markHovered(g, mouseX, mouseY);
+
         switch (this.flow.page()) {
             case DISK, SETTINGS -> this.drawDisks(g, frame);
             case NAME -> this.drawName(g, frame);
@@ -251,6 +276,21 @@ public final class InstallerScreen extends Screen {
         }
         if (this.erasePrompt != InstallerFlow.NO_DISK) {
             this.drawEraseAsk(g, x, y, frame);
+        }
+    }
+
+    /**
+     * Lightens whichever button the cursor is over, so a page answers the mouse before it is clicked.
+     *
+     * <p>A thin wash rather than a redraw: the frames each draw their own buttons in their own age's style,
+     * and this has to read as the same button lit up on all of them rather than as a sixth style.
+     */
+    private void markHovered(final GuiGraphics g, final int mouseX, final int mouseY) {
+        for (final int[] box : new int[][]{this.nextButton, this.backButton, this.cancelButton, this.eraseButton}) {
+            if (hit(box, mouseX, mouseY)) {
+                g.fill(box[0], box[1], box[0] + box[2], box[1] + box[3], HOVER_WASH);
+                return;
+            }
         }
     }
 
@@ -407,8 +447,8 @@ public final class InstallerScreen extends Screen {
         int ty = f.y();
         if (table) {
             g.drawString(font, "Disk", f.x() + 4, ty, p.dim(), false);
-            right(g, "Size", f.x() + f.w() - 120, ty, p.dim());
-            right(g, "Free", f.x() + f.w() - 60, ty, p.dim());
+            right(g, "Size", f.x() + f.w() - SIZE_COLUMN, ty, p.dim());
+            right(g, "Free", f.x() + f.w() - FREE_COLUMN, ty, p.dim());
             right(g, "Holds", f.x() + f.w() - 4, ty, p.dim());
             g.fill(f.x(), ty + 9, f.x() + f.w(), ty + 10, 0xFFE3E5EE);
             ty += 13;
@@ -425,15 +465,25 @@ public final class InstallerScreen extends Screen {
             }
             final int row = here ? p.selectText() : p.text();
             final int faint = here ? p.selectText() : p.dim();
+            /*
+             * The name is cut to the room actually left beside whatever is written to its right, measured
+             * rather than guessed. It used to be cut to a fixed width that took no account of how wide the
+             * columns beside it had turned out, so a long drive name ran straight through the figures next
+             * to it and the two were drawn on top of each other.
+             */
             if (table) {
+                final String sizeText = size(disk.sizeMb());
+                final int sizeLeft = f.x() + f.w() - SIZE_COLUMN - font.width(sizeText);
                 g.drawString(font, InstallerFrames.clip(font, "Disk " + disk.slot() + " " + disk.label(),
-                        f.w() - 128), f.x() + 4, ty, row, false);
-                right(g, size(disk.sizeMb()), f.x() + f.w() - 120, ty, faint);
-                right(g, size(this.flow.freeOn(disk)), f.x() + f.w() - 60, ty, faint);
+                        sizeLeft - COLUMN_GAP - (f.x() + 4)), f.x() + 4, ty, row, false);
+                right(g, sizeText, f.x() + f.w() - SIZE_COLUMN, ty, faint);
+                right(g, size(this.flow.freeOn(disk)), f.x() + f.w() - FREE_COLUMN, ty, faint);
                 right(g, disk.hasSystem() ? disk.holds() : "Nothing", f.x() + f.w() - 4, ty, faint);
             } else {
-                g.drawString(font, "Disk " + disk.slot() + "  " + disk.label(), f.x(), ty, row, false);
-                right(g, holds(disk) + ", " + size(this.flow.freeOn(disk)) + " free", f.x() + f.w(), ty, faint);
+                final String state = holds(disk) + ", " + size(this.flow.freeOn(disk)) + " free";
+                g.drawString(font, InstallerFrames.clip(font, "Disk " + disk.slot() + "  " + disk.label(),
+                        f.w() - font.width(state) - COLUMN_GAP), f.x(), ty, row, false);
+                right(g, state, f.x() + f.w(), ty, faint);
             }
             ty += ROW;
         }
@@ -448,7 +498,9 @@ public final class InstallerScreen extends Screen {
             g.drawString(font, disk.holds() + " on this disk is erased first.", f.x(), ty + 10, p.accent(), false);
         }
         if (this.flow.page() == InstallerPage.SETTINGS) {
-            g.drawString(font, "Computer name:  " + this.typed + "_", f.x(), ty + 22, p.bright(), false);
+            final String label = "Computer name:  ";
+            final int room = f.w() - font.width(label);
+            g.drawString(font, label + this.tailThatFits(room) + this.caret(), f.x(), ty + 22, p.bright(), false);
         }
     }
 
@@ -461,9 +513,31 @@ public final class InstallerScreen extends Screen {
         g.drawString(font, "Computer name:", f.x(), ty, p.text(), false);
         final int fx = f.x();
         final int fy = ty + 12;
-        g.fill(fx, fy, fx + Math.min(150, f.w()), fy + 13, 0xFFFFFFFF);
-        g.fill(fx, fy + 12, fx + Math.min(150, f.w()), fy + 13, p.accent());
-        g.drawString(font, this.typed + "_", fx + 3, fy + 3, 0xFF202434, false);
+        final int fw = Math.min(150, f.w());
+        g.fill(fx, fy, fx + fw, fy + 13, 0xFFFFFFFF);
+        g.fill(fx, fy + 12, fx + fw, fy + 13, p.accent());
+        g.drawString(font, this.tailThatFits(fw - 6) + this.caret(), fx + 3, fy + 3, 0xFF202434, false);
+    }
+
+    /**
+     * The end of what has been typed, as much of it as {@code room} pixels hold.
+     *
+     * <p>The end rather than the beginning, because the end is where the typing is happening: a name longer
+     * than the field scrolls under the caret the way a text field does, instead of running out past the edge
+     * of the box and over whatever is drawn beside it.
+     */
+    private String tailThatFits(final int room) {
+        final int left = Math.max(0, room - font.width("_"));
+        String tail = this.typed;
+        while (!tail.isEmpty() && font.width(tail) > left) {
+            tail = tail.substring(1);
+        }
+        return tail;
+    }
+
+    /** The caret, showing and hidden by turns, so a field waiting to be typed in looks like one. */
+    private String caret() {
+        return this.blink / CARET_TICKS % 2 == 0 ? "_" : " ";
     }
 
     private void drawDesktops(final GuiGraphics g, final InstallerFrames.Frame f) {

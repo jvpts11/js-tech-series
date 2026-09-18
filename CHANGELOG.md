@@ -358,6 +358,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- A drive's name ran over the figures beside it on an installer's disk page. The name was cut to a fixed
+  width that took no account of how wide those figures had turned out, so a long name and the size it was
+  next to were drawn on top of each other. The room is measured now, on both the table and the wizard.
+- A name being typed in an installer had a caret that never blinked and a field a long name ran out of. The
+  caret blinks, and a name longer than the box scrolls under it the way a text field does.
+- The buttons of an installer said nothing about the cursor being over them. The one under it is lit now, in
+  every one of the five shapes an installer can wear.
+- Frames 11 Setup opened on its table of disks, so the first thing it showed was a question about erasing
+  something, with nothing having said what was about to happen. It opens on a word first, as the others do.
 - A machine whose self-test found nothing to boot only stood at its failure for whoever was already watching.
   Opening the monitor afterwards dropped the player into the firmware setup with no word about why the machine
   had not started, and the failure closed itself after three seconds even for somebody looking straight at it.

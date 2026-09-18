@@ -61,10 +61,27 @@ class InstallerStyleTest {
 
     @Test
     void asks_onlyThePagesThatWantSomethingFromThePlayer() {
-        final List<InstallerStyle.Stage> stages = InstallerStyle.FRAMES_11.stages();
-        assertTrue(stages.get(0).asks(), "the disk page waits to be answered");
-        assertFalse(stages.get(2).asks(), "the work does not wait for anybody");
-        assertFalse(stages.get(3).asks(), "and neither does the page that says it is done");
+        /*
+         * Named rather than counted. These used to be read by their place in the list, so adding a page at the
+         * front of an installer moved every one of them along and the test began asking the wrong pages.
+         */
+        assertTrue(asks(InstallerStyle.FRAMES_11, InstallerPage.DISK), "the disk page waits to be answered");
+        assertTrue(asks(InstallerStyle.FRAMES_11, InstallerPage.NAME), "so does the one that asks for a name");
+        assertTrue(asks(InstallerStyle.FRAMES_11, InstallerPage.WELCOME),
+                "and so does the word before it starts, which wants a Next rather than an answer");
+        assertFalse(asks(InstallerStyle.FRAMES_11, InstallerPage.COPY), "the work does not wait for anybody");
+        assertFalse(asks(InstallerStyle.FRAMES_11, InstallerPage.DONE),
+                "and neither does the page that says it is done");
+    }
+
+    /** Whether that installer's page waits for the player, found by the page itself and not by its place. */
+    private static boolean asks(final InstallerStyle style, final InstallerPage page) {
+        for (final InstallerStyle.Stage stage : style.stages()) {
+            if (stage.page() == page) {
+                return stage.asks();
+            }
+        }
+        throw new IllegalArgumentException(style + " has no " + page + " page");
     }
 
     @Test

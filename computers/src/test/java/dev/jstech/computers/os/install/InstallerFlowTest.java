@@ -43,6 +43,8 @@ class InstallerFlowTest {
     void beginning_withNoDiskThatFits_choosesNoneAndWillNotMoveOn() {
         final InstallerFlow flow = frames11(List.of(FULL_WITH_UBUNTU));
         assertEquals(InstallerFlow.NO_DISK, flow.targetSlot());
+        flow.next();
+        assertEquals(InstallerPage.DISK, flow.page());
         assertFalse(flow.canContinue());
         assertTrue(flow.wants(InstallerPage.DISK));
     }
@@ -151,6 +153,7 @@ class InstallerFlowTest {
         final InstallerFlow flow = frames11(List.of(EMPTY_500));
         flow.next();
         flow.next();
+        flow.next();
         assertEquals(InstallerPage.COPY, flow.page());
         assertTrue(flow.advance(100));
         assertEquals(InstallerPage.DONE, flow.page());
@@ -171,6 +174,7 @@ class InstallerFlowTest {
     @Test
     void advance_theLastPage_staysThere() {
         final InstallerFlow flow = frames11(List.of(EMPTY_500));
+        flow.next();
         flow.next();
         flow.next();
         flow.advance(100);
@@ -199,6 +203,7 @@ class InstallerFlowTest {
     @Test
     void back_beforeAnythingIsWritten_returnsToTheQuestionBefore() {
         final InstallerFlow flow = frames11(List.of(EMPTY_500));
+        flow.next();
         flow.next();
         assertEquals(InstallerPage.NAME, flow.page());
         flow.back();

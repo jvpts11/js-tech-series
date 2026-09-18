@@ -93,7 +93,13 @@ public enum InstallerStyle implements IStableName {
                     new Stage(InstallerPage.COPY, InstallerChrome.SIDE_PANEL, List.of(
                             "Installing Frames", "Finalizing installation")),
                     new Stage(InstallerPage.DONE, InstallerChrome.SIDE_PANEL, List.of()));
+            /*
+             * The newest one opens on a word before it asks anything. It used to start on the disk table, so
+             * the first thing a player saw was a question about erasing something, with nothing having said
+             * what was about to happen.
+             */
             case FRAMES_11 -> List.of(
+                    new Stage(InstallerPage.WELCOME, InstallerChrome.CARD, List.of()),
                     new Stage(InstallerPage.DISK, InstallerChrome.CARD, List.of()),
                     new Stage(InstallerPage.NAME, InstallerChrome.CARD, List.of()),
                     new Stage(InstallerPage.COPY, InstallerChrome.CARD, List.of(
