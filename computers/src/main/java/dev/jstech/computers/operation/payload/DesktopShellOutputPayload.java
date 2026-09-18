@@ -114,14 +114,4 @@ public record DesktopShellOutputPayload(boolean clear, boolean busy, String prom
     public CustomPacketPayload.Type<DesktopShellOutputPayload> type() {
         return TYPE;
     }
-
-    /** One output line: its text and the id of its {@code CliStyle} for colouring. */
-    public record WireLine(String text, int style) {
-
-        public static final StreamCodec<RegistryFriendlyByteBuf, WireLine> STREAM_CODEC =
-                StreamCodec.composite(
-                        ByteBufCodecs.stringUtf8(512), WireLine::text,
-                        ByteBufCodecs.VAR_INT, WireLine::style,
-                        WireLine::new);
-    }
 }

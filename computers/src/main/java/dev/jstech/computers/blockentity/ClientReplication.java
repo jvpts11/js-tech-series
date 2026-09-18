@@ -12,6 +12,7 @@ import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.CommandOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
+import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.ComputerConsoleState;
@@ -308,12 +309,12 @@ final class ClientReplication {
         if (viewers.isEmpty()) {
             return;
         }
-        final List<DesktopShellOutputPayload.WireLine> wire = new ArrayList<>();
+        final List<WireLine> wire = new ArrayList<>();
         for (final String line : fresh) {
-            wire.add(new DesktopShellOutputPayload.WireLine(line, CliStyle.PLAIN.id()));
+            wire.add(new WireLine(line, CliStyle.PLAIN.id()));
         }
         if (halt != null) {
-            wire.add(new DesktopShellOutputPayload.WireLine(halt, CliStyle.ERROR.id()));
+            wire.add(new WireLine(halt, CliStyle.ERROR.id()));
         }
         say(viewers, wire, over ? this.machine.shellPrompt() : "", !over);
     }
@@ -329,7 +330,7 @@ final class ClientReplication {
             return;
         }
         final long now = level.getGameTime();
-        final List<DesktopShellOutputPayload.WireLine> wire = new ArrayList<>();
+        final List<WireLine> wire = new ArrayList<>();
         final int dim = CliStyle.DIM.id();
         final int ok = CliStyle.OK.id();
 
@@ -344,7 +345,7 @@ final class ClientReplication {
             final int quarter = pct / 25;
             if (quarter >= 1 && quarter > this.buildQuarterReported.getOrDefault(entry.getKey(), 0)) {
                 this.buildQuarterReported.put(entry.getKey(), quarter);
-                wire.add(new DesktopShellOutputPayload.WireLine(">>> " + buildDisplayName(entry.getKey())
+                wire.add(new WireLine(">>> " + buildDisplayName(entry.getKey())
                         + ": compiling ... " + pct + "% (" + (left / 20) + "s left)", dim));
             }
         }
@@ -375,14 +376,14 @@ final class ClientReplication {
             if (quarter >= 1 && quarter > this.liveKernelQuarterReported) {
                 this.liveKernelQuarterReported = quarter;
                 for (final String line : live.busyLinesThrough(quarter)) {
-                    wire.add(new DesktopShellOutputPayload.WireLine(line, ok));
+                    wire.add(new WireLine(line, ok));
                 }
             }
         } else if (live != null && live.busyUntil() >= 0 && !live.busy(now)
                 && this.liveStepWatched && this.liveKernelQuarterReported < 4) {
             for (int quarter = this.liveKernelQuarterReported + 1; quarter <= 4; quarter++) {
                 for (final String line : live.busyLinesThrough(quarter)) {
-                    wire.add(new DesktopShellOutputPayload.WireLine(line, ok));
+                    wire.add(new WireLine(line, ok));
                 }
             }
             this.liveKernelQuarterReported = 4;
@@ -398,7 +399,7 @@ final class ClientReplication {
             if (!viewers.isEmpty()) {
                 for (final String id : console.drainFinishedBuilds()) {
                     this.buildQuarterReported.remove(id);
-                    wire.add(new DesktopShellOutputPayload.WireLine(
+                    wire.add(new WireLine(
                             ">>> " + buildDisplayName(id) + ": build finished, package installed", ok));
                 }
             }
@@ -418,14 +419,10 @@ final class ClientReplication {
      * the whole glass of a machine that has none. Both are watching this one console, so each viewer is sent
      * the one its own screen speaks.
      */
-    private void say(final List<ServerPlayer> viewers, final List<DesktopShellOutputPayload.WireLine> wire,
+    private void say(final List<ServerPlayer> viewers, final List<WireLine> wire,
                      final String prompt, final boolean holdsTerminal) {
         final var desktop = new DesktopShellOutputPayload(false, holdsTerminal, prompt, wire);
-        final List<CommandOutputPayload.WireLine> promptWire = new ArrayList<>(wire.size());
-        for (final var line : wire) {
-            promptWire.add(new CommandOutputPayload.WireLine(line.text(), line.style()));
-        }
-        final var terminal = new CommandOutputPayload(false, prompt, promptWire);
+        final var terminal = new CommandOutputPayload(false, prompt, wire);
         for (final ServerPlayer viewer : viewers) {
             PacketDistributor.sendToPlayer(viewer,
                     viewer.containerMenu instanceof DesktopMenu ? desktop : terminal);

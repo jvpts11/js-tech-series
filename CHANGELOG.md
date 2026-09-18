@@ -137,6 +137,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the system.
 
 ### Changed
+- A terminal is now a grid. Every character sits in a cell of its own, all the cells the same width, on the
+  prompt that fills a monitor and in the terminal window on a desktop alike. The game's letters are as wide as
+  they need to be, so a column of figures never lined up under another and a bar made of one character came
+  out a different length from the same bar made of another; on a grid a listing lines up, a bar holds still
+  while it fills, and the right-hand edge of a status column is an edge. A monitor's terminal is sixty-four
+  columns wide, and what runs at it lays its output out to that.
+- A line at a terminal can be coloured in parts, the way real tools colour theirs: an arrow in green before
+  plain text, brackets in one colour round a word in another. Any command can write one.
 - The tools of a by-hand Arch or Gentoo install now print what the real ones print. `mke2fs` reports the block
   count, the inode count, where the superblock backups landed and how big the journal is, all worked out from
   the disk by the rules the real tool uses rather than written down; `pacstrap` and `pacman` resolve, list what

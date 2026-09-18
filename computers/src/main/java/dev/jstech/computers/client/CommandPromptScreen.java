@@ -21,6 +21,12 @@ import dev.jstech.computers.operation.payload.RunCommandPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.edit.InkPalette;
+import dev.jstech.computers.client.term.TermPainter;
+import dev.jstech.computers.client.term.TermPalette;
+import dev.jstech.computers.gui.term.TermBuffer;
+import dev.jstech.computers.gui.term.TermRow;
+import dev.jstech.computers.operation.payload.WireLine;
+import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.gui.Phosphor;
@@ -35,9 +41,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -50,6 +54,8 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
     private static final int CONSOLE = 0xFF070A0E;
     private static final int MAX_SCROLLBACK = 512;
+
+    /** The largest the text is drawn; a glass too narrow for its columns at this size draws it smaller. */
     private static final float TEXT_SCALE = 0.85f;
     private static final int LINE_H = 9;
 
@@ -69,9 +75,17 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
      * run, a machine came up showing the installation that had just been typed into it, and a disk swapped
      * for a blank one came up showing the session of the disk that had been taken out.
      */
-    private record Kept(long session, Deque<Line> lines) {
+    private record Kept(long session, TermBuffer glass) {
     }
-    private final Deque<Line> scrollback;
+
+    /** What is on the glass: the lines the machine sent, cut into rows of the columns the glass has. */
+    private final TermBuffer scrollback;
+
+    /** Draws the glass a cell at a time, which is what makes a terminal's columns line up. */
+    private final TermPainter painter = new TermPainter();
+
+    /** How much smaller than the game's own the text is drawn, worked out from the room the glass has. */
+    private float textScale = TEXT_SCALE;
     /** Whether the machine's identity line has been added, so a late init reply adds it only once. */
     private boolean identityShown;
     private final List<String> history = new ArrayList<>();
@@ -100,9 +114,9 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         this.inventoryLabelY = -10000;
         final Kept had = KEPT.get(menu.hostPos());
         final Kept kept = had != null && had.session() == menu.session()
-                ? had : new Kept(menu.session(), new ArrayDeque<>());
+                ? had : new Kept(menu.session(), new TermBuffer(MAX_SCROLLBACK, TermBuffer.MONITOR_COLUMNS));
         KEPT.put(menu.hostPos(), kept);
-        this.scrollback = kept.lines();
+        this.scrollback = kept.glass();
         // A screen that still has its lines has already said whose it is.
         this.identityShown = !this.scrollback.isEmpty();
     }
@@ -132,6 +146,13 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
          */
         this.imageWidth = Math.min(this.width - 44, 340);
         this.imageHeight = Math.min(this.height - 60, 214);
+        /*
+         * The glass always has the same columns, so on a window too small to hold them at the usual size the
+         * text is drawn smaller instead of the glass losing columns: what the machine laid out for that many
+         * cells stays laid out.
+         */
+        this.textScale = Math.min(TEXT_SCALE,
+                (this.imageWidth - 20) / (float) (TermBuffer.MONITOR_COLUMNS * TermPainter.CELL));
         super.init();
         // Start the input box just past the "jsc> " prompt so the caret never sits on top of it.
         final int promptW = font.width(prompt() + " ");
@@ -254,11 +275,15 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             scrollback.clear();
         }
         // A bar growing on one line: what was printed last is drawn over rather than followed.
-        if (payload.replaceLast() && !scrollback.isEmpty() && !payload.lines().isEmpty()) {
-            scrollback.removeLast();
-        }
-        for (final CommandOutputPayload.WireLine line : payload.lines()) {
-            push(line.text(), CliStyle.byId(line.style()));
+        boolean over = payload.replaceLast();
+        for (final WireLine line : payload.lines()) {
+            final CliLine said = line.toLine();
+            if (over) {
+                scrollback.replaceLast(said);
+                over = false;
+            } else {
+                scrollback.push(said);
+            }
         }
         // An empty prompt means "unchanged"; otherwise track the new current directory.
         if (!payload.prompt().isEmpty()) {
@@ -291,49 +316,20 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
     /** The console's scrollback, oldest first, what the player can read on the prompt right now. */
     public List<String> scrollbackText() {
-        final List<String> lines = new ArrayList<>(scrollback.size());
-        for (final Line line : scrollback) {
-            lines.add(line.text());
+        final List<String> lines = new ArrayList<>(scrollback.rows().size());
+        for (final TermRow row : scrollback.rows()) {
+            lines.add(row.text());
         }
         return lines;
     }
 
+    /**
+     * A line of one colour, which is what this screen writes on its own account: a banner, the echo of what
+     * was typed. Wrapping is the glass's business, by columns, so a long line never leaks past it and the
+     * wheel scrolls real rows.
+     */
     private void push(final String text, final CliStyle style) {
-        /*
-         * Wrap to the console's usable width so a long line (a help row, a path) never leaks past the
-         * glass. Wrapping happens as lines land, so scrollback and the wheel scroll count real rows.
-         */
-        final int maxPx = font == null ? Integer.MAX_VALUE
-                : Math.max(40, (int) ((imageWidth - 20) / TEXT_SCALE));
-        String rest = text;
-        while (true) {
-            if (font == null || font.width(rest) <= maxPx) {
-                pushRaw(rest, style);
-                return;
-            }
-            String piece = font.plainSubstrByWidth(rest, maxPx);
-            // Prefer breaking at the last space when one sits reasonably far in, like a real terminal.
-            final int space = piece.lastIndexOf(' ');
-            if (space > piece.length() / 2) {
-                piece = piece.substring(0, space);
-            }
-            if (piece.isEmpty()) {
-                pushRaw(rest, style);
-                return;
-            }
-            pushRaw(piece, style);
-            rest = rest.substring(piece.length()).stripLeading();
-            if (rest.isEmpty()) {
-                return;
-            }
-        }
-    }
-
-    private void pushRaw(final String text, final CliStyle style) {
-        scrollback.addLast(new Line(text, style));
-        while (scrollback.size() > MAX_SCROLLBACK) {
-            scrollback.removeFirst();
-        }
+        scrollback.push(new CliLine(text, style));
     }
 
     private void submit() {
@@ -387,16 +383,18 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         final int top = scrollbackTop();
         final int bottom = imageHeight - 23;
         final int visible = visibleRows();
-        final List<Line> all = new ArrayList<>(scrollback);
-        final int total = all.size();
-        final int end = Math.max(0, total - scrollOffset);
+        final List<TermRow> all = scrollback.rows();
+        final int end = Math.max(0, all.size() - scrollOffset);
         final int start = Math.max(0, end - visible);
-        int row = 0;
-        for (int i = start; i < end; i++) {
-            final Line line = all.get(i);
-            drawSmall(g, line.text(), 10, top + row * LINE_H, colorOf(line.style()));
-            row++;
-        }
+        /*
+         * Drawn in the glass's own scale, so a row's pitch and a cell's width are the same whole numbers
+         * whatever size the text comes out at, and the whole glass goes to the card in one batch.
+         */
+        g.pose().pushPose();
+        g.pose().translate(10, top, 0);
+        g.pose().scale(textScale, textScale, 1.0f);
+        painter.draw(g, font, all.subList(start, end), 0, 0, rowPitch(), this::colorOf);
+        g.pose().popPose();
         if (scrollOffset > 0) {
             JsTechTheme.textSRight(g, font, "scrolled +" + scrollOffset, imageWidth - 10, bottom - 7, JsTechTheme.dim());
         }
@@ -434,15 +432,14 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
                 10, imageHeight - 7, JsTechTheme.dim());
     }
 
-    private void drawSmall(final GuiGraphics g, final String text, final int x, final int y, final int color) {
-        if (text.isEmpty()) {
-            return;
-        }
-        g.pose().pushPose();
-        g.pose().translate(x, y, 0);
-        g.pose().scale(TEXT_SCALE, TEXT_SCALE, 1.0f);
-        g.drawString(font, text, 0, 0, color, false);
-        g.pose().popPose();
+    /**
+     * How far apart the rows are, in the glass's own scaled units.
+     *
+     * <p>A whole number of them, so every row lands on a whole unit and no row's text is drawn between two
+     * pixels of the scaled grid, which is what makes small text look smeared.
+     */
+    private int rowPitch() {
+        return Math.round(LINE_H / textScale);
     }
 
     private int colorOf(final CliStyle style) {
@@ -450,28 +447,8 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
          * A Vintage machine draws on a green-phosphor tube, which has ONE colour: every style comes out
          * as that green, brighter or dimmer, so an error still reads as an error without being red.
          */
-        final int color = terminalColor(style);
+        final int color = TermPalette.colorOf(style);
         return screenEra() == HardwareEra.VINTAGE ? Phosphor.green(color) : color;
-    }
-
-    /** The colour a style has on a monitor that can show colour. */
-    private static int terminalColor(final CliStyle style) {
-        return switch (style) {
-            case PROMPT -> 0xFFCDD6E2;        // light gray-white for the echoed user command line
-            case ACCENT, HEADER -> 0xFF39D6C4; // cyan for system messages
-            case OK -> 0xFF5FE07A;             // green for success
-            case ERROR -> 0xFFEF6A5A;          // red for errors
-            case WARN -> 0xFFF0B23A;           // amber for warnings
-            case INFO -> 0xFF2AA7E0;            // blue for informational output
-            case DIM -> 0xFF7D8A9C;            // dim gray for hints and secondary output
-            // The extended palette: brand-tinted terminal colors (screenfetch logos and the like).
-            case ORANGE -> 0xFFE95420;
-            case MAGENTA -> 0xFFE0447C;
-            case BLUE -> 0xFF5A8FD6;
-            case CYAN -> 0xFF2FA6E8;
-            case PURPLE -> 0xFF9E8FD6;
-            default -> 0xFFCDD6E2;             // plain = light gray
-        };
     }
 
     // input
@@ -605,7 +582,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         if (this.editor != null) {
             return this.editor.scrolled(dy);
         }
-        final int maxScroll = Math.max(0, scrollback.size() - visibleRows());
+        final int maxScroll = Math.max(0, scrollback.rows().size() - visibleRows());
         scrollOffset = Math.max(0, Math.min(maxScroll, scrollOffset + (int) Math.signum(dy)));
         return true;
     }
@@ -627,7 +604,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
      * one by one with nothing left to take their place.
      */
     private int visibleRows() {
-        return (imageHeight - 23 - scrollbackTop()) / LINE_H;
+        return (int) ((imageHeight - 23 - scrollbackTop()) / (rowPitch() * textScale));
     }
 
     @Override
@@ -750,9 +727,5 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             return host.displayEra();
         }
         return menu.hardwareEra();
-    }
-
-    /** One scrollback line: its text and the style that colours it. */
-    private record Line(String text, CliStyle style) {
     }
 }

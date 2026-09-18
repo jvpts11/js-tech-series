@@ -67,14 +67,4 @@ public record CommandOutputPayload(boolean clear, String prompt, List<WireLine> 
     public CustomPacketPayload.Type<CommandOutputPayload> type() {
         return TYPE;
     }
-
-    /** One console line on the wire: its text and the id of its {@code CliStyle}. */
-    public record WireLine(String text, int style) {
-
-        public static final StreamCodec<RegistryFriendlyByteBuf, WireLine> STREAM_CODEC =
-                StreamCodec.composite(
-                        ByteBufCodecs.stringUtf8(512), WireLine::text,
-                        ByteBufCodecs.VAR_INT, WireLine::style,
-                        WireLine::new);
-    }
 }

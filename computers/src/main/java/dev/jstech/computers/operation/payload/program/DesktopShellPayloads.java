@@ -15,6 +15,7 @@ import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
+import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.program.ServerCliComputer;
@@ -61,7 +62,7 @@ public final class DesktopShellPayloads {
 
     private static void handleDesktopShellRun(final DesktopShellRunPayload payload, final ServerPlayer player,
                                               final ServerLevel level) {
-        final List<DesktopShellOutputPayload.WireLine> wire = new ArrayList<>();
+        final List<WireLine> wire = new ArrayList<>();
         boolean clear = false;
         boolean busy = false;
         String prompt = "C:\\>";
@@ -99,7 +100,7 @@ public final class DesktopShellPayloads {
                             wire, payload.session()));
                     return;
                 }
-                wire.add(new DesktopShellOutputPayload.WireLine(
+                wire.add(new WireLine(
                         (setup.removing() ? "Removing " : "Setting up ") + setup.name() + "  "
                                 + (setup.permille() / 10) + "%  (Ctrl+C to cancel)",
                         CliStyle.DIM.id()));
@@ -124,7 +125,7 @@ public final class DesktopShellPayloads {
             clear = response.clearScreen();
             handOver = response.handOver();
             for (final var cliLine : response.lines()) {
-                wire.add(new DesktopShellOutputPayload.WireLine(cliLine.text(), cliLine.style().id()));
+                wire.add(WireLine.of(cliLine));
             }
             prompt = SshTerminal.prompt(computer, shellOn);
             /*
@@ -184,7 +185,7 @@ public final class DesktopShellPayloads {
      */
     private static boolean drainForeground(
             final MachinePrograms processes, final String typed,
-            final List<DesktopShellOutputPayload.WireLine> wire) {
+            final List<WireLine> wire) {
         if (!INTERRUPT.equals(typed)) {
             processes.offerInput(typed);
             return true;
@@ -192,7 +193,7 @@ public final class DesktopShellPayloads {
         final int id = processes.held();
         processes.release();
         processes.stop(id);
-        wire.add(new DesktopShellOutputPayload.WireLine("^C",
+        wire.add(new WireLine("^C",
                 CliStyle.DIM.id()));
         return false;
     }

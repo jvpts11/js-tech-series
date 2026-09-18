@@ -8,13 +8,19 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.client.term.TermPainter;
+import dev.jstech.computers.client.term.TermPalette;
+import dev.jstech.computers.gui.term.TermBuffer;
+import dev.jstech.computers.gui.term.TermRow;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
+import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.operation.payload.program.DesktopShellPayloads;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.edit.InkPalette;
+import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.client.gui.component.CommandLine;
 import dev.jstech.core.client.gui.component.Label;
@@ -22,13 +28,9 @@ import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.tier.HardwareEra;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
@@ -51,10 +53,6 @@ public final class ShellView extends Panel {
     private static final int INPUT_TEXT = 0xFFCDD6E2;
     private static final int TAG_COLOR = 0xFF5A6678;
 
-    /** One line of the scrollback, in the colour the shell styled it. */
-    private record Line(String text, int color) {
-    }
-
     private final BlockPos host;
 
     /**
@@ -69,8 +67,17 @@ public final class ShellView extends Panel {
      * this mod's skin answers; the toolkit's own context knows the shared look and not the form.
      */
     private OsSkin osSkin = OsSkin.fallback();
-    private final Deque<Line> scrollback = new ArrayDeque<>();
-    private final ListView<Line> output;
+    /**
+     * What is on the glass, wrapped to the columns the window has now.
+     *
+     * <p>The window is freely resized, and the glass wraps everything again when its width changes and at no
+     * other time, so a console nobody types into costs nothing a frame.
+     */
+    private final TermBuffer scrollback = new TermBuffer(MAX_SCROLLBACK, TermBuffer.MONITOR_COLUMNS);
+
+    /** Draws the glass a cell at a time, which is what makes a terminal's columns line up. */
+    private final TermPainter painter = new TermPainter();
+    private final ListView<TermRow> output;
     private final Label scrolledTag;
     private final CommandLine console;
 
@@ -109,16 +116,16 @@ public final class ShellView extends Panel {
              * print. A shell that cannot tell which system it is on says nothing at all.
              */
             if (systemName != null && !systemName.isEmpty()) {
-                push(systemName, colorOf(CliStyle.ACCENT));
-                push(Branding.systemCopyright(systemName, era()), colorOf(CliStyle.DIM));
+                push(systemName, CliStyle.ACCENT);
+                push(Branding.systemCopyright(systemName, era()), CliStyle.DIM);
                 /*
                  * The way this family told a player where to start, in its own words. A line nobody ever printed
                  * would teach the same thing and sound like nothing; this one does both.
                  */
-                push("Type HELP for a list of commands", colorOf(CliStyle.DIM));
+                push("Type HELP for a list of commands", CliStyle.DIM);
             }
         }
-        this.output = add(new ListView<Line>(() -> this.wrapCache, LINE_H, this::renderLine));
+        this.output = add(new ListView<TermRow>(this.scrollback::rows, LINE_H, this::renderLine));
         this.scrolledTag = add(new Label(() -> this.scrollOffset > 0 ? "scrolled +" + this.scrollOffset : "")
                 .setColor(TAG_COLOR).setAlign(Label.Align.RIGHT));
         /*
@@ -235,7 +242,7 @@ public final class ShellView extends Panel {
     /** Everything the console has printed here, as one piece of text. */
     public String scrollbackText() {
         final StringBuilder text = new StringBuilder();
-        for (final Line line : this.scrollback) {
+        for (final CliLine line : this.scrollback.lines()) {
             text.append(line.text()).append('\n');
         }
         return text.toString();
@@ -254,7 +261,7 @@ public final class ShellView extends Panel {
 
     /** Puts a line in this view's scrollback without asking the machine anything. */
     public void say(final String text, final CliStyle style) {
-        push(text, colorOf(style));
+        push(text, style);
     }
 
     /** Runs a line as though the player had typed it. */
@@ -266,15 +273,16 @@ public final class ShellView extends Panel {
     void accept(final DesktopShellOutputPayload payload) {
         if (payload.clear()) {
             this.scrollback.clear();
-            this.generation++;
         }
         // A bar growing on one line: what was printed last is drawn over rather than followed.
-        if (payload.replaceLast() && !this.scrollback.isEmpty() && !payload.lines().isEmpty()) {
-            this.scrollback.removeLast();
-            this.generation++;
-        }
-        for (final DesktopShellOutputPayload.WireLine line : payload.lines()) {
-            push(line.text(), colorOf(line.style()));
+        boolean over = payload.replaceLast();
+        for (final WireLine line : payload.lines()) {
+            if (over) {
+                this.scrollback.replaceLast(line.toLine());
+                over = false;
+            } else {
+                this.scrollback.push(line.toLine());
+            }
         }
         // Lines the machine printed on its own say nothing about who has the prompt.
         if (payload.informational()) {
@@ -301,55 +309,9 @@ public final class ShellView extends Panel {
         }
     }
 
-    private void push(final String text, final int color) {
-        this.scrollback.addLast(new Line(text, color));
-        while (this.scrollback.size() > MAX_SCROLLBACK) {
-            this.scrollback.removeFirst();
-        }
-        this.generation++;
-    }
-
-    /*
-     * The view is freely resizable, so lines wrap at render time to the current width; the wrapped view
-     * is cached per (width, scrollback generation) so a console nobody types into costs nothing a frame.
-     */
-    private int generation;
-    private List<Line> wrapCache = List.of();
-    private int wrapCacheW = -1;
-    private int wrapCacheGen = -1;
-
-    private List<Line> wrapped(final Font font, final int usableW) {
-        if (this.wrapCacheW == usableW && this.wrapCacheGen == this.generation) {
-            return this.wrapCache;
-        }
-        final List<Line> out = new ArrayList<>();
-        for (final Line line : this.scrollback) {
-            String rest = line.text();
-            while (true) {
-                if (font.width(rest) <= usableW) {
-                    out.add(new Line(rest, line.color()));
-                    break;
-                }
-                String piece = font.plainSubstrByWidth(rest, usableW);
-                final int space = piece.lastIndexOf(' ');
-                if (space > piece.length() / 2) {
-                    piece = piece.substring(0, space);
-                }
-                if (piece.isEmpty()) {
-                    out.add(new Line(rest, line.color()));
-                    break;
-                }
-                out.add(new Line(piece, line.color()));
-                rest = rest.substring(piece.length()).stripLeading();
-                if (rest.isEmpty()) {
-                    break;
-                }
-            }
-        }
-        this.wrapCache = out;
-        this.wrapCacheW = usableW;
-        this.wrapCacheGen = this.generation;
-        return out;
+    /** A line of one colour, which is what this view writes on its own account. */
+    private void push(final String text, final CliStyle style) {
+        this.scrollback.push(new CliLine(text, style));
     }
 
     /** The console ground, kept dark like a real terminal, tinted to the system it runs on. */
@@ -377,8 +339,9 @@ public final class ShellView extends Panel {
         }
         final int ground = groundOf(this.osSkin);
         g.fill(x(), y(), right(), bottom(), ground);
-        // Lines wrap to the view's current width, so nothing leaks past the frame however it is resized.
-        final List<Line> all = wrapped(ctx.font(), Math.max(40, width() - PAD * 2 - 2));
+        // Lines wrap to the columns the view has now, so nothing leaks past the frame however it is resized.
+        this.scrollback.setColumns(TermPainter.columnsIn(Math.max(40, width() - PAD * 2 - 2), 1.0f));
+        final List<TermRow> all = this.scrollback.rows();
         final int inputY = bottom() - LINE_H;
         final int visible = Math.max(1, (height() - PAD - LINE_H - 2) / LINE_H);
         final int maxScroll = Math.max(0, all.size() - visible);
@@ -392,10 +355,10 @@ public final class ShellView extends Panel {
         super.render(g, ctx);
     }
 
-    private void renderLine(final GuiGraphics g, final UiContext ctx, final Line line, final int index,
+    private void renderLine(final GuiGraphics g, final UiContext ctx, final TermRow row, final int index,
                             final int x, final int y, final int w, final int h,
                             final boolean hovered, final boolean selected) {
-        g.drawString(ctx.font(), line.text(), x, y, line.color(), false);
+        this.painter.drawRow(g, ctx.font(), row, x, y, TermPalette::colorOf);
     }
 
     @Override
@@ -444,11 +407,11 @@ public final class ShellView extends Panel {
              * A line for the program in front: it shows as typed, with no prompt, and goes to the machine
              * for the program to read. None of the terminal's own words mean anything here.
              */
-            push(line, INPUT_TEXT);
+            push(line, CliStyle.PROMPT);
             PacketDistributor.sendToServer(new DesktopShellRunPayload(this.host, line, this.session));
             return;
         }
-        push(this.prompt + " " + line, colorOf(CliStyle.PROMPT));
+        push(this.prompt + " " + line, CliStyle.PROMPT);
         final String[] parts = line.split("\\s+", 2);
         final String verb = parts[0].toLowerCase(Locale.ROOT);
         // "run/start/open <program>" launches a desktop window client-side (the server shell has no windows).
@@ -463,42 +426,19 @@ public final class ShellView extends Panel {
     private void handleRun(final String name) {
         final List<String> labels = DesktopScreen.openableLabels();
         if (name.isEmpty()) {
-            push("Programs: " + String.join(", ", labels), 0xFFB7BCCB);
-            push("Usage: run <program>", 0xFF7A8496);
+            push("Programs: " + String.join(", ", labels), CliStyle.PLAIN);
+            push("Usage: run <program>", CliStyle.DIM);
             return;
         }
         final String norm = name.toLowerCase(Locale.ROOT).replace(" ", "");
         for (final String label : labels) {
             if (label.equalsIgnoreCase(name) || label.toLowerCase(Locale.ROOT).replace(" ", "").equals(norm)) {
                 DesktopScreen.requestOpen(label);
-                push("Opening " + label + "...", 0xFF8FE0A8);
+                push("Opening " + label + "...", CliStyle.OK);
                 return;
             }
         }
-        push("No such program: " + name + " (type 'run' to list them)", 0xFFE06A6A);
-    }
-
-    static int colorOf(final int styleId) {
-        return colorOf(CliStyle.byId(styleId));
-    }
-
-    static int colorOf(final CliStyle style) {
-        return switch (style) {
-            case PROMPT -> 0xFFCDD6E2;
-            case ACCENT, HEADER -> 0xFF39D6C4;
-            case OK -> 0xFF5FE07A;
-            case ERROR -> 0xFFEF6A5A;
-            case WARN -> 0xFFF0B23A;
-            case INFO -> 0xFF2AA7E0;
-            case DIM -> 0xFF7D8A9C;
-            // The extended palette: brand-tinted terminal colours (screenfetch logos and the like).
-            case ORANGE -> 0xFFE95420;
-            case MAGENTA -> 0xFFE0447C;
-            case BLUE -> 0xFF5A8FD6;
-            case CYAN -> 0xFF2FA6E8;
-            case PURPLE -> 0xFF9E8FD6;
-            default -> 0xFFCDD6E2;
-        };
+        push("No such program: " + name + " (type 'run' to list them)", CliStyle.ERROR);
     }
 
     /**

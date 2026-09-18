@@ -33,6 +33,11 @@ public final class CliOutput {
         lines.add(new CliLine(text, CliStyle.PLAIN));
     }
 
+    /** A line already put together, which is how one coloured in parts is written. */
+    public void line(final CliLine line) {
+        lines.add(line);
+    }
+
     public void styled(final String text, final CliStyle style) {
         lines.add(new CliLine(text, style));
     }

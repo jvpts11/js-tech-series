@@ -19,6 +19,7 @@ import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.OpenComputerUiPayload;
+import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.operation.payload.OpenProgramPayload;
 import dev.jstech.computers.operation.payload.ProcessActionPayload;
 import dev.jstech.computers.operation.payload.ProcessListPayload;
@@ -238,7 +239,7 @@ public final class ProgramPayloads {
             return;
         }
         final String name = FsPaths.fileName(payload.path());
-        final List<DesktopShellOutputPayload.WireLine> wire = new ArrayList<>();
+        final List<WireLine> wire = new ArrayList<>();
         final Function<String, ICliComputer.FsResult> disk =
                 path -> readDiskFile(level, computer, path)
                         .map(ICliComputer.FsResult::ok)
@@ -252,7 +253,7 @@ public final class ProgramPayloads {
                 case NO_MEMORY -> name + ": not enough memory to run it";
                 case NO_RUNNER, NOT_STARTED -> launch.message();
             };
-            wire.add(new DesktopShellOutputPayload.WireLine(why, CliStyle.ERROR.id()));
+            wire.add(new WireLine(why, CliStyle.ERROR.id()));
             PacketDistributor.sendToPlayer(player,
                     new DesktopShellOutputPayload(false, false, "", wire, payload.session()));
             return;
@@ -262,7 +263,7 @@ public final class ProgramPayloads {
         if (console) {
             computer.programs().hold(launch.id());
         } else {
-            wire.add(new DesktopShellOutputPayload.WireLine(launch.message(),
+            wire.add(new WireLine(launch.message(),
                     CliStyle.OK.id()));
         }
         PacketDistributor.sendToPlayer(player,

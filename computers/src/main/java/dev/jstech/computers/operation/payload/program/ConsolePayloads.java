@@ -14,7 +14,9 @@ import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.CommandOutputPayload;
 import dev.jstech.computers.operation.payload.ComputerAccess;
+import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.operation.payload.ConsoleInitPayload;
+import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.RequestConsoleInitPayload;
 import dev.jstech.computers.operation.payload.RunCommandPayload;
@@ -46,9 +48,10 @@ import java.util.List;
 public final class ConsolePayloads {
 
     /**
-     * How many characters wide a command prompt is: the shell lays its output out to this and long lines wrap at it.
+     * How many characters wide a command prompt is: the shell lays its output out to this and long lines wrap
+     * at it. The number the glass draws, so a table a command lines up here is lined up on the screen too.
      */
-    static final int CLI_WIDTH = 50;
+    static final int CLI_WIDTH = TermBuffer.MONITOR_COLUMNS;
 
     private ConsolePayloads() {
     }
@@ -76,7 +79,7 @@ public final class ConsolePayloads {
      */
     private static void notListening(final ServerPlayer player) {
         PacketDistributor.sendToPlayer(player, new CommandOutputPayload(false, "",
-                List.of(new CommandOutputPayload.WireLine(
+                List.of(new WireLine(
                         "This terminal is no longer attached to that computer.",
                         CliStyle.ERROR.id())), "", ""));
     }
@@ -118,9 +121,9 @@ public final class ConsolePayloads {
         final var shell = CliCommands.shellFor(
                 computer, CLI_WIDTH);
         final var response = shell.run(payload.line(), computer);
-        final List<CommandOutputPayload.WireLine> wire = new ArrayList<>(response.lines().size());
+        final List<WireLine> wire = new ArrayList<>(response.lines().size());
         for (final var cliLine : response.lines()) {
-            wire.add(new CommandOutputPayload.WireLine(cliLine.text(), cliLine.style().id()));
+            wire.add(WireLine.of(cliLine));
         }
         final String prompt = SshTerminal.prompt(localComputer, computer);
         final var handOver = response.handOver();
@@ -220,9 +223,9 @@ public final class ConsolePayloads {
                 ? CliStyle.ERROR
                 : status < 0 ? CliStyle.DIM
                 : CliStyle.OK;
-        final List<CommandOutputPayload.WireLine> wire = new ArrayList<>();
+        final List<WireLine> wire = new ArrayList<>();
         for (final String line : wrapToConsole(text)) {
-            wire.add(new CommandOutputPayload.WireLine(line, style.id()));
+            wire.add(new WireLine(line, style.id()));
         }
         // An empty prompt means "keep the current prompt", so this helper does not change the directory.
         PacketDistributor.sendToPlayer(player, new CommandOutputPayload(false, "", wire));
