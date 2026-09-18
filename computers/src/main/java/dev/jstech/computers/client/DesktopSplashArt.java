@@ -83,12 +83,20 @@ public final class DesktopSplashArt {
     }
 
     /**
-     * Whether this desktop has a picture of its own, which every desktop here does and no plain system has.
+     * Whether this desktop has a loading screen of its own.
+     *
+     * <p>Only the desktops that are a separate thing from the system under them, which here is the Linux
+     * family: they are chosen, installed and replaced on their own, and each one announces itself. A system
+     * that comes with its desktop built in has no such moment, and asking this of one of those used to answer
+     * yes, so every Frames machine finished its start behind another system's loading screen.
      *
      * @param desktopId the desktop by the last part of its id, or empty when none is installed
      */
     public static boolean has(final String desktopId) {
-        return !desktopId.isEmpty();
+        return switch (desktopId) {
+            case "kde_plasma", "gnome", "cinnamon" -> true;
+            default -> false;
+        };
     }
 
     /**
@@ -114,6 +122,7 @@ public final class DesktopSplashArt {
                 }
             }
             case "cinnamon" -> cinnamon(g, font, x, y, w, h, ticks, systemName);
+            /* Only the three reach here; {@link #has} is what keeps anything else from asking. */
             default -> {
                 if (old) {
                     oldBox(g, font, x, y, w, h, progress, GNOME_OLD_GROUND, GNOME_OLD_FACE, "GNOME",

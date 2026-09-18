@@ -29,25 +29,33 @@ final class InstallerFrames {
     /** How tall a button is, and how far one sits from the next. */
     private static final int BUTTON = 14;
 
+    /** The maker's lockup in a page header, at the size that bar has room for. */
+    private static final int HEADER_MARK_W = 72;
+    private static final int HEADER_MARK_H = 18;
+
     private InstallerFrames() {
     }
+
+    /** Which of a frame's buttons the player has the mouse held down on, so it can be drawn pressed. */
+    enum Held { NONE, NEXT, BACK, CANCEL, ERASE }
 
     /**
      * Paints the frame for that page and answers where its content goes.
      *
-     * @param sx the left of the monitor's picture
-     * @param sy the top of the monitor's picture
-     * @param sw how wide the picture is
-     * @param sh how tall it is
+     * @param sx   the left of the monitor's picture
+     * @param sy   the top of the monitor's picture
+     * @param sw   how wide the picture is
+     * @param sh   how tall it is
+     * @param held the button the player is holding down, which is drawn pressed in
      */
     static Frame paint(final GuiGraphics g, final Font font, final InstallerFlow flow, final int ticksDone,
-                       final int sx, final int sy, final int sw, final int sh) {
+                       final int sx, final int sy, final int sw, final int sh, final Held held) {
         return switch (flow.chrome()) {
             case FULL_TEXT -> fullText(g, font, flow, sx, sy, sw, sh);
             case BOXED_TEXT -> boxedText(g, font, flow, sx, sy, sw, sh);
-            case WIZARD -> wizard(g, font, flow, sx, sy, sw, sh);
-            case SIDE_PANEL -> sidePanel(g, font, flow, ticksDone, sx, sy, sw, sh);
-            case CARD -> card(g, font, flow, sx, sy, sw, sh);
+            case WIZARD -> wizard(g, font, flow, sx, sy, sw, sh, held);
+            case SIDE_PANEL -> sidePanel(g, font, flow, ticksDone, sx, sy, sw, sh, held);
+            case CARD -> card(g, font, flow, sx, sy, sw, sh, held);
         };
     }
 
@@ -129,7 +137,7 @@ final class InstallerFrames {
 
     /** A grey dialog with a picture down one side and the buttons along the bottom. */
     private static Frame wizard(final GuiGraphics g, final Font font, final InstallerFlow flow,
-                                final int sx, final int sy, final int sw, final int sh) {
+                                final int sx, final int sy, final int sw, final int sh, final Held held) {
         g.fillGradient(sx, sy, sx + sw, sy + sh, 0xFF000080, 0xFF1084D0);
         g.drawString(font, flow.style().title(flow.systemName()), sx + 14, sy + 8, 0xFFFFFFFF, true);
 
@@ -152,11 +160,11 @@ final class InstallerFrames {
         g.fill(dx + 6, dy + dh - 23, dx + dw - 6, dy + dh - 22, 0xFFFFFFFF);
 
         final int by = dy + dh - 18;
-        final int[] cancel = button(g, font, dx + dw - 6 - 52, by, 52, "Cancel", false);
+        final int[] cancel = button(g, font, dx + dw - 6 - 52, by, 52, "Cancel", false, held == Held.CANCEL);
         final boolean canGo = flow.canContinue() || flow.page() == InstallerPage.DONE;
         final int[] next = button(g, font, dx + dw - 6 - 106, by, 52,
-                flow.page() == InstallerPage.DONE ? "Restart" : "Next >", canGo);
-        final int[] back = button(g, font, dx + dw - 6 - 160, by, 52, "< Back", false);
+                flow.page() == InstallerPage.DONE ? "Restart" : "Next >", canGo, held == Held.NEXT);
+        final int[] back = button(g, font, dx + dw - 6 - 160, by, 52, "< Back", false, held == Held.BACK);
 
         final int cx = dx + 6 + railW + 8;
         final Paint paint = new Paint(0xFF000000, 0xFF000000, 0xFF404040, 0xFF0000A8, 0xFF000080, 0xFFFFFFFF);
@@ -165,13 +173,17 @@ final class InstallerFrames {
 
     /** A coloured ground with the steps listed down one side and the question in a dialog over it. */
     private static Frame sidePanel(final GuiGraphics g, final Font font, final InstallerFlow flow,
-                                   final int ticksDone, final int sx, final int sy, final int sw, final int sh) {
+                                   final int ticksDone, final int sx, final int sy, final int sw, final int sh,
+                                   final Held held) {
         g.fill(sx, sy, sx + sw, sy + sh, 0xFF5A7EDC);
         g.fill(sx, sy, sx + sw, sy + 22, 0xFF00309C);
         g.fill(sx, sy + 22, sx + sw, sy + 23, 0xFF9DB9EB);
-        emblem(g, sx + 8, sy + 5, 12, flow.style());
-        g.drawString(font, "Midsoft", sx + 24, sy + 4, 0xFFBFD0F0, false);
-        g.drawString(font, flow.systemName(), sx + 24, sy + 13, 0xFFFFFFFF, false);
+        /*
+         * The maker's lockup, not its name typed beside a mark. This header is the one place on the page that
+         * says whose system is being installed, and it says it the way that system said it everywhere else.
+         */
+        SplashLogos.draw(g, SplashLogos.FRAMES_XP, sx + 4 + HEADER_MARK_W / 2, sy + 2,
+                HEADER_MARK_W, HEADER_MARK_H);
         g.fill(sx, sy + sh - 14, sx + sw, sy + sh, 0xFF00309C);
         g.fill(sx, sy + sh - 15, sx + sw, sy + sh - 14, 0xFFF3A660);
 
@@ -215,15 +227,15 @@ final class InstallerFrames {
         g.drawString(font, flow.style().title(flow.systemName()), cx + 5, dy + 5, 0xFFFFFFFF, false);
         final int by = dy + dh - 18;
         final boolean canGo = flow.canContinue();
-        final int[] next = button(g, font, cx + cw - 6 - 52, by, 52, "Next >", canGo);
-        final int[] back = button(g, font, cx + cw - 6 - 106, by, 52, "< Back", false);
+        final int[] next = button(g, font, cx + cw - 6 - 52, by, 52, "Next >", canGo, held == Held.NEXT);
+        final int[] back = button(g, font, cx + cw - 6 - 106, by, 52, "< Back", false, held == Held.BACK);
         final Paint paint = new Paint(0xFF000000, 0xFF000000, 0xFF505050, 0xFF0846C0, 0xFF0846C0, 0xFFFFFFFF);
         return new Frame(cx + 8, dy + TITLE_BAR + 8, cw - 16, dh - TITLE_BAR - 32, paint, next, back, null, null);
     }
 
     /** A pale card, the question at the top and the buttons at the bottom right. */
     private static Frame card(final GuiGraphics g, final Font font, final InstallerFlow flow,
-                              final int sx, final int sy, final int sw, final int sh) {
+                              final int sx, final int sy, final int sw, final int sh, final Held held) {
         g.fillGradient(sx, sy, sx + sw, sy + sh, 0xFF1E3E74, 0xFF0B1530);
         final int cx = sx + 14;
         final int cy = sy + 10;
@@ -239,12 +251,18 @@ final class InstallerFrames {
                 false);
 
         final int by = cy + ch - 20;
+        /*
+         * Nothing to press while it is copying. A page with a Back and a Next on it is a page offering a
+         * choice, and there is none here: the work runs to the end and the machine restarts itself.
+         */
+        final boolean working = flow.page() == InstallerPage.COPY;
         final boolean canGo = flow.canContinue() || flow.page() == InstallerPage.DONE;
-        final int[] next = primary(g, font, cx + cw - 10 - 56, by, 56,
-                flow.page() == InstallerPage.DONE ? "Restart" : "Next", canGo);
-        final int[] back = pale(g, font, cx + cw - 10 - 118, by, 56, "Back");
+        final int[] next = working ? null : primary(g, font, cx + cw - 10 - 56, by, 56,
+                flow.page() == InstallerPage.DONE ? "Restart" : "Next", canGo, held == Held.NEXT);
+        final int[] back = working ? null : pale(g, font, cx + cw - 10 - 118, by, 56, "Back",
+                held == Held.BACK);
         final int[] erase = flow.page() == InstallerPage.DISK
-                ? pale(g, font, cx + 10, by, 66, "Erase disk") : null;
+                ? pale(g, font, cx + 10, by, 66, "Erase disk", held == Held.ERASE) : null;
         final Paint paint = new Paint(0xFF202434, 0xFF202434, 0xFF6B7488, 0xFF3A6AE0, 0xFFE7EEFC, 0xFF202434);
         return new Frame(cx + 10, cy + 42, cw - 20, ch - 68, paint, next, back, null, erase);
     }
@@ -279,28 +297,37 @@ final class InstallerFrames {
         g.fill(x + w - 1, y, x + w, y + h, colour);
     }
 
-    /** A bevelled grey button; the one that carries the page forward wears the outline the default one wore. */
+    /**
+     * A bevelled grey button; the one that carries the page forward wears the outline the default one wore.
+     *
+     * <p>A button of those machines went IN when it was pressed: the light edge and the dark edge swapped
+     * places and the label moved a pixel down and right with them, so the whole face looked pushed into the
+     * panel. Washing it lighter is what a modern button does, and on a grey machine it read as a highlight
+     * rather than a press.
+     */
     private static int[] button(final GuiGraphics g, final Font font, final int x, final int y, final int w,
-                                final String label, final boolean strong) {
-        bevel(g, x, y, w, BUTTON, 0xFFC0C0C0, true);
-        if (strong) {
+                                final String label, final boolean strong, final boolean held) {
+        bevel(g, x, y, w, BUTTON, 0xFFC0C0C0, !held);
+        if (strong && !held) {
             outline(g, x - 1, y - 1, w + 2, BUTTON + 2, 0xFF000000);
         }
-        g.drawString(font, label, x + (w - font.width(label)) / 2, y + 3, 0xFF000000, false);
+        final int nudge = held ? 1 : 0;
+        g.drawString(font, label, x + (w - font.width(label)) / 2 + nudge, y + 3 + nudge, 0xFF000000, false);
         return new int[]{x, y, w, BUTTON};
     }
 
+    /* A modern button has no bevel to turn over, so it answers a press by darkening under the finger. */
     private static int[] primary(final GuiGraphics g, final Font font, final int x, final int y, final int w,
-                                 final String label, final boolean on) {
-        g.fill(x, y, x + w, y + BUTTON, on ? 0xFF3A6AE0 : 0xFFCDD1DD);
+                                 final String label, final boolean on, final boolean held) {
+        g.fill(x, y, x + w, y + BUTTON, on ? (held ? 0xFF2B4FAA : 0xFF3A6AE0) : 0xFFCDD1DD);
         g.drawString(font, label, x + (w - font.width(label)) / 2, y + 3, 0xFFFFFFFF, false);
         return new int[]{x, y, w, BUTTON};
     }
 
     private static int[] pale(final GuiGraphics g, final Font font, final int x, final int y, final int w,
-                              final String label) {
-        g.fill(x, y, x + w, y + BUTTON, 0xFFFFFFFF);
-        outline(g, x, y, w, BUTTON, 0xFFCDD1DD);
+                              final String label, final boolean held) {
+        g.fill(x, y, x + w, y + BUTTON, held ? 0xFFE7EAF2 : 0xFFFFFFFF);
+        outline(g, x, y, w, BUTTON, held ? 0xFF9AA2B6 : 0xFFCDD1DD);
         g.drawString(font, label, x + (w - font.width(label)) / 2, y + 3, 0xFF202434, false);
         return new int[]{x, y, w, BUTTON};
     }

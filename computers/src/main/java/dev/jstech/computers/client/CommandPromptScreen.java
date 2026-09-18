@@ -110,11 +110,14 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     @Override
     protected void init() {
         /*
-         * Every console fills the standard monitor viewport (the same one the desktops use), instead of
-         * the small fixed window it used to open in.
+         * A console fills the same glass the firmware, the self-test and the installers do, rather than the
+         * larger one the graphical desktops use. It is the machine talking, not a desktop, and it is the whole
+         * of what a terminal-only system ever shows: on a machine of the earliest age, whose monitor has the
+         * thickest shell of any of them, the larger glass left too little of the window beside it for the
+         * recipe viewer to put its list in, so the list went away on exactly the machines that show a console.
          */
-        this.imageWidth = Math.min(this.width - 44, 384);
-        this.imageHeight = Math.min(this.height - 60, 256);
+        this.imageWidth = Math.min(this.width - 44, 340);
+        this.imageHeight = Math.min(this.height - 60, 214);
         super.init();
         // Start the input box just past the "jsc> " prompt so the caret never sits on top of it.
         final int promptW = font.width(prompt() + " ");

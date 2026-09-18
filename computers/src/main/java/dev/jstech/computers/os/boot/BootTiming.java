@@ -33,8 +33,14 @@ public final class BootTiming {
     /** What finding one device costs: a disk, a graphics card, an expansion card, a drive with something in it. */
     public static final double POST_SECONDS_PER_DEVICE = 0.25;
 
-    /** The least a self-test takes, so it is always seen; a modern machine sits here. */
-    public static final double POST_MIN_SECONDS = 1.0;
+    /**
+     * The least a self-test takes, so it is always read rather than glimpsed; a modern machine sits here.
+     *
+     * <p>It was one second, which on a modern machine is the whole self-test: the lines appear over it and are
+     * gone before anybody has finished looking at the first one. A self-test nobody can read is a self-test
+     * that, as far as the player is concerned, did not happen.
+     */
+    public static final double POST_MIN_SECONDS = 2.5;
 
     /** The most it takes, so a machine stuffed with parts does not become a chore. */
     public static final double POST_MAX_SECONDS = 12.0;

@@ -63,7 +63,13 @@ public final class ScreenSessions {
      * screen session and so writes to the very map this reads.
      */
     public static void bootWatchers(final ServerLevel level, final BlockPos host) {
-        eachWatcher(level, host, (player, monitor) -> MonitorBlock.openBootTarget(player, level, monitor, host));
+        /*
+         * Asked of the machine rather than assumed: what follows a self-test is whatever the machine is now
+         * doing, and that is not always its boot target. A machine told to install something is in its
+         * installer when the test ends, and going straight to the boot target dropped the player into the
+         * firmware instead, with the installation waiting behind a screen nobody was shown.
+         */
+        eachWatcher(level, host, (player, monitor) -> MonitorBlock.openSession(player, level, monitor, host));
     }
 
     /**

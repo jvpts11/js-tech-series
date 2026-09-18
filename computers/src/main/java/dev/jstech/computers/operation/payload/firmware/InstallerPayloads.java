@@ -131,7 +131,12 @@ public final class InstallerPayloads {
             machine.setBootDiskSlot(slot);
         }
         machine.setNeedsPost(true);
-        MonitorBlock.openBootTarget(player, level, payload.monitorPos(),
-                payload.hostPos());
+        /*
+         * A restart is a restart: the machine tests itself again and then brings the system up from the
+         * beginning, exactly as a power-on does. Going straight to the boot target skipped the self-test
+         * altogether, so the one moment a player most expects to see a machine start over was the one moment
+         * it did not.
+         */
+        MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos());
     }
 }

@@ -33,7 +33,6 @@ import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
-import dev.jstech.computers.operation.payload.OpenInstallerPayload;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
@@ -383,53 +382,33 @@ public final class FirmwarePayloads {
             }
             case FirmwareActionPayload.ACTION_FORMAT -> computer.formatDisk((int) payload.ref());
             case FirmwareActionPayload.ACTION_INSTALL -> {
-                final String failure = beginInstall(level, computer, payload.ref(), payload.target());
-                final HardwareEra era = computer.displayEra();
-                final int kind = FirmwareKind
-                        .forEra(era != null ? era : HardwareEra.STANDARD).id();
-                final int slot = payload.target();
-                final String target = slot < 0 ? "the default disk" : "Disk " + slot;
                 /*
-                 * Every one of these sends what is on the glass and then puts the player in the session that
-                 * shows it. Both halves, every time: sending the content alone leaves the player on the setup
-                 * they clicked from, with the machine installing behind a screen that never changed, which is
-                 * what pressing Install looked like when only the first half was here.
+                 * The setup does not run an installation; it restarts the machine into one. A computer put
+                 * a system on a disk by booting the medium that carries it, so the firmware's part is to say
+                 * what this machine starts from next and then start it: the self-test runs again, and what
+                 * comes up after it is the installer rather than the setup the player pressed the button on.
+                 *
+                 * The order matters. Asking for the self-test first clears whatever the machine was holding,
+                 * which is what a restart does; the installation is set up after that, so it survives into
+                 * the machine the self-test hands over to.
                  */
+                computer.setNeedsPost(true);
+                final String failure = beginInstall(level, computer, payload.ref(), payload.target());
                 if (failure != null) {
-                    // Refused before a minute of copying: say so instead of playing a bar that writes nothing.
+                    // Refused before a minute of copying: say so instead of restarting into nothing.
+                    final HardwareEra era = computer.displayEra();
+                    final int kind = FirmwareKind
+                            .forEra(era != null ? era : HardwareEra.STANDARD).id();
+                    final int slot = payload.target();
+                    computer.setNeedsPost(false);
                     PacketDistributor.sendToPlayer(player, new OpenInstallDonePayload(payload.hostPos(),
-                            payload.monitorPos(), kind, "", target, slot, failure));
+                            payload.monitorPos(), kind, "",
+                            slot < 0 ? "the default disk" : "Disk " + slot, slot, failure));
                     MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos(), computer,
                             MonitorSessionMenu.Phase.INSTALL_PROGRESS);
                     return;
                 }
-                final AbstractComputerBlockEntity machine =
-                        computer instanceof AbstractComputerBlockEntity m
-                                ? m : null;
-                final InstallerFlow flow =
-                        machine == null ? null : machine.installer();
-                final OsInstallJob job =
-                        machine == null ? null : machine.installing();
-                if (flow != null) {
-                    // The machine is in its installer; the screen is sent the page it opens on.
-                    PacketDistributor.sendToPlayer(player,
-                            OpenInstallerPayload.of(payload.hostPos(), payload.monitorPos(), flow, 0));
-                    MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos(), computer,
-                            MonitorSessionMenu.Phase.INSTALLER);
-                } else if (job != null) {
-                    // A copy with no installer behind it: the screen is told how long it is so the bar is true.
-                    PacketDistributor.sendToPlayer(player, new OsInstallProgressPayload(payload.hostPos(),
-                            payload.monitorPos(), kind, nameOfSystem(job.osId()), target, job.ticksLeft(),
-                            job.ticksTotal()));
-                    MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos(), computer,
-                            MonitorSessionMenu.Phase.INSTALL_PROGRESS);
-                } else {
-                    // A machine that wrote it there and then, with no copy to follow: straight to the prompt.
-                    PacketDistributor.sendToPlayer(player, new OpenInstallDonePayload(payload.hostPos(),
-                            payload.monitorPos(), kind, "", target, slot, ""));
-                    MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos(), computer,
-                            MonitorSessionMenu.Phase.INSTALL_PROGRESS);
-                }
+                MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos());
             }
             case FirmwareActionPayload.ACTION_BOOT_MEDIA -> {
                 if (level.getBlockEntity(BlockPos.of(payload.ref())) instanceof MediaReaderBlockEntity reader
@@ -472,11 +451,6 @@ public final class FirmwarePayloads {
         return beginInstall(level, computer, readerPos, targetSlot) == null;
     }
 
-    /** A system by the name a person reads, or its id when no mod has brought one under it. */
-    private static String nameOfSystem(final String osId) {
-        final OsDef def = OsRegistry.getOs(ResourceLocation.tryParse(osId));
-        return def != null ? def.displayName() : osId;
-    }
 
     /**
      * Starts putting the system in a linked drive onto a disk, telling why it did not start: {@code null} once

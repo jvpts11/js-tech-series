@@ -80,6 +80,8 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     private String typed = "";
     /** Ticks since this screen opened, which is what turns the caret on and off. */
     private int blink;
+    /** The button the mouse is down on, which is drawn pressed until it is let go of. */
+    private InstallerFrames.Held held = InstallerFrames.Held.NONE;
 
     private int listTop;
     private int listLeft;
@@ -233,7 +235,12 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
                 return true;
             }
             case GLFW.GLFW_KEY_E -> {
-                if (this.offerErase()) {
+                /*
+                 * Only where erasing is the thing E does. On a page with a name field E is a letter, and the
+                 * one before this was reaching past it to the game's own inventory key, which closed the
+                 * installer outright: a player naming a machine could not type an E without losing the page.
+                 */
+                if (!this.naming() && this.offerErase()) {
                     return true;
                 }
             }
@@ -257,6 +264,14 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             }
             return true;
         }
+        /*
+         * A page with a name field swallows everything else. The game closes a container screen on its own
+         * inventory key, and that key is a letter: whichever letter a player has it bound to was the one
+         * letter they could not put in a machine's name.
+         */
+        if (this.naming()) {
+            return true;
+        }
         return super.keyPressed(key, scan, modifiers);
     }
 
@@ -278,21 +293,14 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         if (this.erasePrompt != InstallerFlow.NO_DISK) {
             return true;
         }
-        if (hit(this.nextButton, mouseX, mouseY)) {
-            this.confirm();
-            return true;
-        }
-        if (hit(this.backButton, mouseX, mouseY)) {
-            this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
-                    InstallerActionPayload.ACTION_BACK));
-            return true;
-        }
-        if (hit(this.cancelButton, mouseX, mouseY)) {
-            this.quit();
-            return true;
-        }
-        if (hit(this.eraseButton, mouseX, mouseY)) {
-            this.offerErase();
+        /*
+         * A button is pressed on the way down and acted on when it is let go, which is what a button does and
+         * what lets it be drawn pushed in while it is held. Acting on the way down meant the pressed face was
+         * never on the glass for a single frame: the page had already changed.
+         */
+        final InstallerFrames.Held pressed = this.buttonUnder(mouseX, mouseY);
+        if (pressed != InstallerFrames.Held.NONE) {
+            this.held = pressed;
             return true;
         }
         if (this.listRows > 0 && mouseX >= this.listLeft && mouseX < this.listLeft + this.listWidth) {
@@ -313,7 +321,8 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         MonitorFrame.renderBody(g, x, y, W, H, screenEra(), font);
 
         this.listRows = 0;
-        final InstallerFrames.Frame frame = InstallerFrames.paint(g, font, this.flow, this.ticksDone, x, y, W, H);
+        final InstallerFrames.Frame frame =
+                InstallerFrames.paint(g, font, this.flow, this.ticksDone, x, y, W, H, this.held);
         this.nextButton = frame.next();
         this.backButton = frame.back();
         this.cancelButton = frame.cancel();
@@ -472,6 +481,51 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
 
     private void send(final InstallerActionPayload payload) {
         PacketDistributor.sendToServer(payload);
+    }
+
+    /**
+     * Letting the button go does what it says, as long as the mouse is still on it.
+     *
+     * <p>Sliding off a held button and letting go there cancels it, which is how every button anybody has ever
+     * used behaves and the one way out of a press somebody did not mean.
+     */
+    @Override
+    public boolean mouseReleased(final double mouseX, final double mouseY, final int button) {
+        final InstallerFrames.Held pressed = this.held;
+        this.held = InstallerFrames.Held.NONE;
+        if (pressed == InstallerFrames.Held.NONE) {
+            return super.mouseReleased(mouseX, mouseY, button);
+        }
+        if (this.buttonUnder(mouseX, mouseY) != pressed) {
+            return true;
+        }
+        switch (pressed) {
+            case NEXT -> this.confirm();
+            case BACK -> this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
+                    InstallerActionPayload.ACTION_BACK));
+            case CANCEL -> this.quit();
+            case ERASE -> this.offerErase();
+            default -> {
+            }
+        }
+        return true;
+    }
+
+    /** Which of the frame's buttons is under that point, or none. */
+    private InstallerFrames.Held buttonUnder(final double mouseX, final double mouseY) {
+        if (hit(this.nextButton, mouseX, mouseY)) {
+            return InstallerFrames.Held.NEXT;
+        }
+        if (hit(this.backButton, mouseX, mouseY)) {
+            return InstallerFrames.Held.BACK;
+        }
+        if (hit(this.cancelButton, mouseX, mouseY)) {
+            return InstallerFrames.Held.CANCEL;
+        }
+        if (hit(this.eraseButton, mouseX, mouseY)) {
+            return InstallerFrames.Held.ERASE;
+        }
+        return InstallerFrames.Held.NONE;
     }
 
     /** Remembers where a list was drawn, so a click lands on the row the player is looking at. */
@@ -882,8 +936,12 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         ty += 8;
         g.fill(f.x(), ty, f.x() + f.w(), ty + 6, 0xFFE3E5EE);
         g.fill(f.x(), ty, f.x() + f.w() * this.flow.permille(this.ticksDone) / 1000, ty + 6, p.accent());
-        g.drawString(font, "Your PC restarts when setup is finished. About " + this.secondsLeft()
-                + " seconds left.", f.x(), ty + 12, p.dim(), false);
+        /*
+         * Two lines rather than one that runs off the card. The sentence is long, the card is not wide, and a
+         * time that grows a digit made it longer still.
+         */
+        g.drawString(font, "Your PC restarts when setup is finished.", f.x(), ty + 12, p.dim(), false);
+        g.drawString(font, "About " + this.secondsLeft() + " seconds left.", f.x(), ty + 22, p.dim(), false);
     }
 
     /** The graphical phase, whose frame has already listed the steps down its own side. */

@@ -15,6 +15,8 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.boot.BootTiming;
+import dev.jstech.computers.os.install.SetupTiming;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
@@ -41,8 +43,15 @@ public final class PostGameTests {
 
     private static final BlockPos WHERE = new BlockPos(2, 2, 2);
 
-    /** Longer than any modern machine's self-test, which sits at the one-second floor. */
-    private static final int PAST_THE_POST = 40;
+    /**
+     * Longer than any modern machine's self-test, which sits at the floor every self-test has.
+     *
+     * <p>Read off the rule rather than written down beside it. The floor is a figure to tune in play, and a
+     * test that carries its own copy of it fails the day somebody tunes it, saying a machine never finished
+     * its self-test when all that happened is that the self-test got longer.
+     */
+    private static final int PAST_THE_POST =
+            (int) (BootTiming.POST_MIN_SECONDS * SetupTiming.TICKS_PER_SECOND) + 20;
 
     private static final net.minecraft.resources.ResourceLocation DEBIAN =
             net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "debian");
@@ -50,7 +59,7 @@ public final class PostGameTests {
     private PostGameTests() {
     }
 
-    @GameTest(template = ARENA)
+    @GameTest(template = ARENA, timeoutTicks = 200)
     public static void post_endsWithNobodyWatching(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer =
                 TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))

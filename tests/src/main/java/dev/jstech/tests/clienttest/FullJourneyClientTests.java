@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.client.BootSequenceScreen;
 import dev.jstech.computers.client.CraftingComputerScreen;
 import dev.jstech.computers.client.FirmwareScreen;
 import dev.jstech.computers.client.MainframeScreen;
@@ -245,10 +246,14 @@ public final class FullJourneyClientTests {
                     ctx.click(install[0], install[1]);
                 })
                 /*
-                 * The firmware hands over to the system's own installer. This one has no look of its own yet, so
-                 * it welcomes and copies: one key takes its suggestion and the write takes its time.
+                 * The setup restarts the machine into the installation rather than opening it over itself: a
+                 * computer puts a system on a disk by starting from the medium that carries it. So the
+                 * self-test runs again first, and the installer is what comes up after it. This one has no
+                 * look of its own yet, so it welcomes and copies: one key takes its suggestion and the write
+                 * takes its time.
                  */
-                .thenAwaitScreen(InstallerScreen.class, SCREEN_WAIT)
+                .thenAwaitScreen(BootSequenceScreen.class, BOOT_WAIT)
+                .thenAwaitScreen(InstallerScreen.class, BOOT_WAIT)
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
                 .thenWaitUntilServer(level -> mainframe(ctx, level).hasOs(),
                         osInstallWait(NETWORK_OS, dev.jstech.computers.os.media.MediaFormat.FLOPPY),
@@ -345,8 +350,11 @@ public final class FullJourneyClientTests {
                  * copy is already running, at the point the system reaches that question. So each page is
                  * waited for and then answered with its own suggestion, rather than answering three times
                  * at the start and hoping the pages are there to hear it.
+                 *
+                 * As above, the setup restarts the machine into it: the self-test comes first.
                  */
-                .thenAwaitScreen(InstallerScreen.class, SCREEN_WAIT)
+                .thenAwaitScreen(BootSequenceScreen.class, BOOT_WAIT)
+                .thenAwaitScreen(InstallerScreen.class, BOOT_WAIT)
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
                 .thenWaitUntil(() -> "NAME".equals(ctx.screen(InstallerScreen.class).pageName()),
                         osInstallWait(FRAMES_XP, dev.jstech.computers.os.media.MediaFormat.CD),

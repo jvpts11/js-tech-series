@@ -449,7 +449,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         }
         ty += 14;
         if (page == PAGE_HARDWARE) {
-            renderHardwareLines(g, tx, ty, 11, CLI_TEXT, CLI_BRIGHT, CLI_DIM);
+            renderHardwareLines(g, tx, ty, 11, CLI_TEXT, CLI_BRIGHT, CLI_DIM, W - 28);
         } else if (page == PAGE_STORAGE) {
             renderStorageLines(g, tx, ty, 11, CLI_TEXT, CLI_BRIGHT, CLI_DIM, W - 28);
         } else {
@@ -516,7 +516,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         final String help;
         if (page == PAGE_HARDWARE) {
             drawBox(g, boxX, top, boxW, boxH, "System Information");
-            renderHardwareLines(g, boxX + 8, top + 18, 13, BLUE_TEXT, BLUE_VALUE, BLUE_DIM);
+            renderHardwareLines(g, boxX + 8, top + 18, 13, BLUE_TEXT, BLUE_VALUE, BLUE_DIM, boxW - 16);
             help = "The hardware this firmware detected at power-on.";
         } else if (page == PAGE_STORAGE) {
             drawBox(g, boxX, top, boxW, boxH, "Storage Controller");
@@ -618,7 +618,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
         if (page == PAGE_HARDWARE) {
             panel(g, mainX, top, mainW, panelH, "System Information");
-            renderHardwareLines(g, mainX + 8, top + 22, 15, UEFI_KEY, UEFI_TEXT, UEFI_DIM);
+            renderHardwareLines(g, mainX + 8, top + 22, 15, UEFI_KEY, UEFI_TEXT, UEFI_DIM, mainW - 16);
         } else if (page == PAGE_STORAGE) {
             panel(g, mainX, top, mainW, panelH, "Storage Controller");
             renderStorageLines(g, mainX + 8, top + 22, 15, UEFI_KEY, UEFI_TEXT, UEFI_DIM, mainW - 16);
@@ -689,7 +689,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     /** The hardware page's key/value lines in the caller's palette. */
     private void renderHardwareLines(final GuiGraphics g, final int x, final int y, final int lh,
-                                     final int keyColor, final int valueColor, final int dimColor) {
+                                     final int keyColor, final int valueColor, final int dimColor,
+                                     final int width) {
         int ty = y;
         final FirmwareStatePayload.Machine machine = state == null ? null : state.machine();
         final String detecting = "detecting ...";
@@ -717,14 +718,22 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 /* The newest firmware calls the card graphics; the boards before it called it the video adapter. */
                 {kind == FirmwareKind.UEFI ? "Graphics" : "Video", video},
                 {"Board", board},
-                {"Hardware Era", eraLabel()},
                 {"Monitors", monitors},
+                {"Hardware Era", eraLabel()},
                 {"Boot Disk", bootDiskLine()},
                 {"Install Target", state == null || state.installTargetSlot() < 0 ? "no disk" : "Disk " + state.installTargetSlot()},
         };
+        /*
+         * The values start at a column and end where the page does. A board and a graphics card are named by
+         * whoever made them, at whatever length they chose, and drawn at full length they ran out of the page
+         * and across the help panel beside it.
+         */
+        final int valueAt = Math.min(110, width / 2);
+        final int room = Math.max(20, width - valueAt);
         for (final String[] pair : kv) {
-            g.drawString(font, pair[0], x, ty, keyColor, false);
-            g.drawString(font, pair[1], x + 110, ty, pair[1].startsWith("detecting") ? dimColor : valueColor, false);
+            g.drawString(font, InstallerFrames.clip(font, pair[0], valueAt - 6), x, ty, keyColor, false);
+            g.drawString(font, InstallerFrames.clip(font, pair[1], room), x + valueAt, ty,
+                    pair[1].startsWith("detecting") ? dimColor : valueColor, false);
             ty += lh;
         }
     }

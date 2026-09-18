@@ -172,6 +172,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   that ran a moment earlier printed.
 - The hardware page names the system on the boot disk beside the slot, since a slot number on a machine with a
   system on each disk says which disk the machine reaches for and not what it will get.
+- The marks a machine puts on its glass are drawn at four times the size they are shown at and shrunk to fit.
+  The game draws the whole interface at whatever scale the player chose, so a picture made at the size it
+  occupies there is stretched two, three or four times before anybody sees it, and lettering stretched like
+  that turns to mush. Made large and shrunk, it is sharp at every scale. The installer that shows the maker's
+  name in its header now shows the mark itself there too, as the rest of that system does.
 - The marks on a machine's screens are pictures now rather than words set in the game's own font: the maker's
   on every modern self-test and on the badge an older board wore, and each Frames edition's on its start, its
   shutdown and the installer that puts it there. A lockup is lettering with weights and a face of its own, and
@@ -449,6 +454,37 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   the one start that edition says anything on said nothing.
 - The Legacy self-test's key hints said the wrong thing and blinked. The boards of that age printed a sentence
   with the two keys lifted out of it and left it there; only the earliest ones blinked.
+- Installing a system from the firmware restarts the machine into the installation instead of opening it over
+  the setup. A computer puts a system on a disk by starting from the medium that carries it: the self-test
+  runs again and what comes up after it is the installer. Pressing Install used to change the screen and
+  nothing else, so the machine never appeared to restart at all.
+- The restart at the end of an installation goes through the self-test and brings the system up from the
+  beginning, which is what a restart is. It went straight to the boot target, so the one moment a player most
+  expects to watch a machine start over was the one moment it did not.
+- A machine that finishes its self-test now shows whoever is watching whatever it is actually doing, rather
+  than always its boot target. A machine that was told to install something is in its installer by then, and
+  sending the player to the boot target dropped them into the firmware with the installation waiting behind a
+  screen nobody was shown.
+- The self-test lasts at least two and a half seconds. It was one, which on a modern machine is the whole of
+  it: the lines appeared and were gone before anybody had read the first, so those machines looked as though
+  they never tested themselves.
+- Typing an E no longer closes an installer. The game closes a container screen on its own inventory key, and
+  that key is a letter, so the one letter a player could not put in a machine's name was whichever letter they
+  had it bound to.
+- A Frames machine no longer finishes its start behind a Linux desktop's loading screen. Those screens belong
+  to the desktops that are installed and replaced on their own; a system that comes with its desktop built in
+  has no such moment, and every one of them was being given another system's.
+- The firmware's hardware page keeps its values inside its own panel. A board and a graphics card are named by
+  whoever made them, at whatever length they chose, and at full length they ran across the help panel beside
+  them.
+- The buttons of the grey-machine installers go in when they are pressed, and act when they are let go, which
+  is what a button of those machines did. They were washing lighter instead, which on a grey panel reads as a
+  highlight and not a press, and they acted on the way down, so the pressed face was never on the glass.
+- The newest installer's closing line no longer runs off its card, and its pages show no Back or Next while
+  the copy is running, since there is nothing to choose there.
+- A terminal fills the same glass the firmware, the self-test and the installers do, rather than the larger
+  one the graphical desktops use. On a machine of the earliest age, whose monitor has the thickest shell of
+  any of them, the larger glass left too little of the window beside it for the recipe viewer's list.
 - A monitor opened during a restart no longer shows the desktop of the system that is being closed.
 - A long drive or system name no longer runs through the column beside it or off the edge of the glass, on
   the self-test, on any of the boot menus, or in a system reading its own start out.
