@@ -15,6 +15,8 @@ import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.TerminalForeground;
 import dev.jstech.computers.program.cli.CliCommands;
+import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.cli.SshTerminal;
 import dev.jstech.computers.program.tty.ITtyProcess;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import java.util.List;
@@ -100,6 +102,18 @@ public final class TerminalTools {
         final boolean ended = console.foreground().advance(now, out);
         changed(host);
         return new Turn(out.lines(), keyboardOf(console), ended);
+    }
+
+    /**
+     * Who has the keyboard once a reply is on the glass: the tool that is still in front, or the prompt of the
+     * shell the line was run on, named a run at a time so the terminal shows it in that shell's own colours.
+     *
+     * @param local   the machine the player is at
+     * @param running the shell the line was run on, which is a far machine while a session to one is open
+     */
+    public static TerminalKeyboard settled(final TerminalKeyboard keyboard, final ICliComputer local,
+                                           final ICliComputer running) {
+        return keyboard.busy() ? keyboard : TerminalKeyboard.atPrompt(SshTerminal.promptLine(local, running));
     }
 
     /** Who has the keyboard at that console right now. */

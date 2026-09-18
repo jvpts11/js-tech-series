@@ -8,6 +8,7 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.tty.ITtyProcess;
 import java.util.List;
 import net.minecraft.server.level.ServerLevel;
@@ -30,8 +31,8 @@ interface IFedTerminal {
     /** Whoever has this terminal on screen; the machine's own list, to be read and not kept. */
     List<ServerPlayer> watching(ServerLevel level);
 
-    /** The prompt its shell would show, for giving it back when a tool ends. */
-    String prompt();
+    /** The prompt its shell would show, a run at a time, for giving it back when a tool ends. */
+    CliLine prompt();
 
     /** Makes again the tool that line started, for one that was running when the world was saved. */
     @Nullable

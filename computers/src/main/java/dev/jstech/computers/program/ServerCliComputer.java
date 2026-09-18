@@ -33,6 +33,8 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.computers.os.ShellFamily;
+import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.program.cli.DosPath;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.PosixPath;
@@ -527,6 +529,13 @@ public final class ServerCliComputer implements ICliComputer {
         final OsDef os = hostBlock instanceof IOsHost c ? c.installedOs() : null;
         final boolean zsh = os != null && os.shellId().equals("zsh");
         return zsh ? "player@" + hostname() + " " + cwd + " %" : "player@" + hostname() + ":" + cwd + "$";
+    }
+
+    /** A live medium's prompt is in its shell's own colours; every other prompt here is in one. */
+    @Override
+    public CliLine promptLine() {
+        final LiveInstallState live = liveInstall();
+        return live != null ? live.promptLine() : new CliLine(prompt(), CliStyle.ACCENT);
     }
 
     @Override

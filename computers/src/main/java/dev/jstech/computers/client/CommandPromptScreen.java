@@ -9,6 +9,7 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.client.os.CodeFileReplies;
+import dev.jstech.computers.client.os.ParkedEditors;
 import dev.jstech.computers.client.os.TtyEditor;
 import dev.jstech.computers.client.os.TtyEditorWire;
 import dev.jstech.computers.client.os.TtyEditors;
@@ -22,7 +23,10 @@ import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.client.term.TermPainter;
 import dev.jstech.computers.client.term.TermPalette;
+import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.gui.term.TermBuffer;
+import dev.jstech.computers.gui.term.TermCompletion;
+import dev.jstech.computers.gui.term.TermInput;
 import dev.jstech.computers.gui.term.TermRow;
 import dev.jstech.computers.operation.payload.TerminalKeyboard;
 import dev.jstech.computers.operation.payload.WireLine;
@@ -31,18 +35,18 @@ import dev.jstech.computers.operation.payload.program.TerminalTools;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import dev.jstech.core.gui.LineHistory;
 import dev.jstech.core.gui.Phosphor;
 import dev.jstech.core.tier.HardwareEra;
 import java.util.HashMap;
-import java.util.Set;
 import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
-import net.minecraft.util.FormattedCharSequence;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -56,13 +60,23 @@ import java.util.Map;
 /**
  * The Command Prompt: a full CLI over the computer the Monitor is bound to. A typed line is echoed, sent to the server to run through the shell, and the styled result is appended to the scrollback. Up/Down walk the input history; the mouse wheel scrolls back through output. The same OS skin as the rest of the computing GUIs, square corners and all.
  */
-public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractComputerScreen<M> {
+public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractComputerScreen<M>
+        implements MachineKeyboard.ITakesKeysFirst {
 
     private static final int CONSOLE = 0xFF070A0E;
+
+    /** What a raw console is written on: the whole glass, with no program window around it. */
+    private static final int BARE_GLASS = 0xFF000000;
     private static final int MAX_SCROLLBACK = 512;
 
-    /** The largest the text is drawn; a glass too narrow for its columns at this size draws it smaller. */
-    private static final float TEXT_SCALE = 0.85f;
+    /**
+     * The largest the text is drawn, which is the three quarters a desktop is drawn at unless told otherwise;
+     * a glass too narrow for its columns at this size draws it smaller.
+     */
+    private static final float TEXT_SCALE = 0.75f;
+
+    /** How long the cursor is there for, and then not there for, in milliseconds. */
+    private static final long CURSOR_BLINK_MS = 500L;
     private static final int LINE_H = 9;
 
     /**
@@ -105,23 +119,24 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     private boolean toolSpoke;
     /** Whether the machine's identity line has been added, so a late init reply adds it only once. */
     private boolean identityShown;
-    private final List<String> history = new ArrayList<>();
-    private final List<String> commandNames = new ArrayList<>();
-    private final Map<String, String> commandUsage = new LinkedHashMap<>();
-    private final List<String> deviceNames = new ArrayList<>();
 
-    /** The verbs whose first argument is a device, so Tab completes {@code /dev/sdX} for them. */
-    private static final Set<String> DEVICE_VERBS =
-            Set.of("mkfs.ext4", "mkfs", "mount", "grub-install");
-    private int historyIndex = -1;
+    /** The lines typed at this machine, which the arrow keys walk through. */
+    private final LineHistory history = new LineHistory();
+
+    /** What Tab finishes: the commands the machine's shell knows and the drives it has. */
+    private final TermCompletion completion = new TermCompletion();
+    private final Map<String, String> commandUsage = new LinkedHashMap<>();
     private int scrollOffset;
-    private int completionCycle;
     private boolean programmaticEdit;
 
     private EditBox input;
 
     /** The DOS prompt, synced from the server after each command so it tracks the current directory. */
     private String dosPrompt = "C:\\>";
+
+    /** The same prompt a run at a time, when the machine sent it that way; null for one that came as words. */
+    @Nullable
+    private CliLine promptLine;
 
     public CommandPromptScreen(final M menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
@@ -155,14 +170,11 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     @Override
     protected void init() {
         /*
-         * A console fills the same glass the firmware, the self-test and the installers do, rather than the
-         * larger one the graphical desktops use. It is the machine talking, not a desktop, and it is the whole
-         * of what a terminal-only system ever shows: on a machine of the earliest age, whose monitor has the
-         * thickest shell of any of them, the larger glass left too little of the window beside it for the
-         * recipe viewer to put its list in, so the list went away on exactly the machines that show a console.
+         * A console fills the same glass everything else a machine shows does, the desktop included: a monitor
+         * does not change size when the machine leaves one for the other.
          */
-        this.imageWidth = Math.min(this.width - 44, 340);
-        this.imageHeight = Math.min(this.height - 60, 214);
+        this.imageWidth = MonitorGlass.width(this.width);
+        this.imageHeight = MonitorGlass.height(this.height);
         /*
          * The glass always has the same columns, so on a window too small to hold them at the usual size the
          * text is drawn smaller instead of the glass losing columns: what the machine laid out for that many
@@ -171,29 +183,24 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         this.textScale = Math.min(TEXT_SCALE,
                 (this.imageWidth - 20) / (float) (TermBuffer.MONITOR_COLUMNS * TermPainter.CELL));
         super.init();
-        // Start the input box just past the "jsc> " prompt so the caret never sits on top of it.
-        final int promptW = font.width(prompt() + " ");
-        input = new EditBox(font, leftPos + 10 + promptW, topPos + imageHeight - 18,
-                imageWidth - 18 - promptW, 11, Component.literal("command"));
+        /*
+         * The box holds what is being typed and takes the keys that edit it, and that is all it does. It is
+         * never drawn: the line being typed is the last line on the glass, in the same cells at the same size
+         * as everything above it, so it is laid out and painted with the rest. It sits well off the window so
+         * that a click on the glass cannot land in it and move a cursor nobody can see it moving.
+         */
+        input = new EditBox(font, -4000, -4000, 40, 11, Component.literal("command"));
         input.setBordered(false);
         input.setMaxLength(RunCommandPayload.MAX_LEN);
-        /*
-         * Use the era's primary text color: dark for light-panel eras (Legacy), light for dark-panel
-         * eras (Standard, Vintage). The input strip adopts the era's panel background, so the text
-         * must track the era, since a fixed light color disappears on Legacy's cream panel.
-         * A bare console is always dark glass, so its input is always light; the windowed prompt tracks
-         * the era theme (dark text on Legacy's cream panel, light on the dark eras).
-         */
-        input.setTextColor(colorOf(CliStyle.PROMPT));
         input.setFocused(true);
         // A real edit (typing/backspace) restarts Tab cycling; our own programmatic setValue does not.
         input.setResponder(s -> {
             if (!programmaticEdit) {
-                completionCycle = 0;
+                completion.typedByHand();
             }
         });
         setInitialFocus(input);
-        addRenderableWidget(input);
+        addWidget(input);
         if (scrollback.isEmpty()) {
             /*
              * Opening a terminal starts a session, and a session announces itself. Restoring the old
@@ -233,6 +240,19 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
                 push("", CliStyle.PLAIN);
             }
         }
+        /*
+         * An editor somebody looked away from is still open on the machine, so it is what this look finds. The
+         * glass is given to it again either way, because a window that changed size has a fresh prompt line to
+         * keep out from under it.
+         */
+        if (this.editor == null) {
+            final TtyEditor left = ParkedEditors.take(menu.hostPos(), menu.session());
+            if (left != null) {
+                left.handTo(this.terminalHost);
+                this.editor = left;
+            }
+        }
+        giveTheGlassTo(this.editor);
         // Ask the server for this computer's saved history and the command list (for completion).
         PacketDistributor.sendToServer(new RequestConsoleInitPayload(menu.hostPos()));
     }
@@ -261,17 +281,14 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         if (!menu.hostPos().equals(payload.hostPos())) {
             return;
         }
-        history.clear();
-        history.addAll(payload.history());
-        historyIndex = -1;
-        commandNames.clear();
+        history.replaceWith(payload.history());
+        final List<String> names = new ArrayList<>(payload.commands().size());
         commandUsage.clear();
         for (final ConsoleInitPayload.WireCommand command : payload.commands()) {
-            commandNames.add(command.name());
+            names.add(command.name());
             commandUsage.put(command.name(), command.usage());
         }
-        deviceNames.clear();
-        deviceNames.addAll(payload.devices());
+        completion.know(names, payload.devices());
         /*
          * Say which machine this session is on. It arrives with the init reply (a tick after the
          * window opens) rather than being guessed client-side, and it is what makes a terminal
@@ -307,20 +324,17 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         if (!keyboard.busy()) {
             toolSpoke = false;
         }
-        if (input != null) {
-            /*
-             * An answer asked for unseen is typed and never drawn, not even as dots, which is how the tools
-             * that ask for one have always taken it.
-             */
-            input.setFormatter(keyboard.asking() && keyboard.unseen()
-                    ? (text, at) -> FormattedCharSequence.EMPTY
-                    : (text, at) -> FormattedCharSequence.forward(text, Style.EMPTY));
-            reflowInput();
-        }
-        // An empty prompt means "unchanged"; otherwise track the new current directory.
-        if (!payload.prompt().isEmpty()) {
+        /*
+         * An empty prompt means "unchanged"; otherwise track the new current directory. A prompt that came a
+         * run at a time is the one shown, in the shell's own colours; one that came only as words is shown in
+         * the terminal's.
+         */
+        if (keyboard.namesThePrompt()) {
+            promptLine = keyboard.standing().toLine();
+            dosPrompt = promptLine.text();
+        } else if (!payload.prompt().isEmpty()) {
             dosPrompt = payload.prompt();
-            reflowInput();
+            promptLine = null;
         }
         scrollOffset = 0;
         /*
@@ -336,16 +350,6 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         }
     }
 
-    /** Repositions the input box after the DOS prompt width changes (e.g. after a {@code cd}). */
-    private void reflowInput() {
-        if (input == null) {
-            return;
-        }
-        final int promptW = font.width(prompt() + " ");
-        input.setX(leftPos + 10 + promptW);
-        input.setWidth(Math.max(20, imageWidth - 18 - promptW));
-    }
-
     /** The console's scrollback, oldest first, what the player can read on the prompt right now. */
     public List<String> scrollbackText() {
         final List<String> lines = new ArrayList<>(scrollback.rows().size());
@@ -353,6 +357,11 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             lines.add(row.text());
         }
         return lines;
+    }
+
+    /** What is on the command line now, typed or put there by Tab or the arrow keys. */
+    public String typed() {
+        return input == null ? "" : input.getValue();
     }
 
     /**
@@ -367,7 +376,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     private void submit() {
         final String line = input.getValue().trim();
         input.setValue("");
-        historyIndex = -1;
+        history.rest();
         if (keyboard.busy()) {
             /*
              * A tool is in front. It is typed at only when it has asked, and what is typed is not echoed
@@ -381,13 +390,12 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             }
             return;
         }
-        push(prompt() + " " + line, CliStyle.PROMPT);
+        // The line stays on the glass as it looked while it was being typed, the prompt's colours included.
+        scrollback.push(CliLine.build().add(before()).add(" " + line, CliStyle.PROMPT).done());
         if (line.isEmpty()) {
             return;
         }
-        if (history.isEmpty() || !history.get(history.size() - 1).equals(line)) {
-            history.add(line);
-        }
+        history.add(line);
         scrollOffset = 0;
         PacketDistributor.sendToServer(new RunCommandPayload(menu.monitorPos(), menu.hostPos(), line));
     }
@@ -402,7 +410,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         MonitorFrame.renderBody(g, x, y, imageWidth, imageHeight, screenEra(), font);
         if (bareTerminal()) {
             // A raw console: the whole glass is the terminal, no program window around it.
-            g.fill(x, y, x + imageWidth, y + imageHeight, 0xFF000000);
+            g.fill(x, y, x + imageWidth, y + imageHeight, BARE_GLASS);
             return;
         }
         JsTechTheme.window(g, x, y, imageWidth, imageHeight);
@@ -425,8 +433,9 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         }
 
         // Console scrollback, newest at the bottom, honoring the scroll offset.
+        final TermInput.Laid typing = typing();
         final int top = scrollbackTop();
-        final int bottom = imageHeight - 23;
+        final int bottom = imageHeight - 23 - Math.round((typing.rows().size() - 1) * rowPitch() * textScale);
         final int visible = visibleRows();
         final List<TermRow> all = scrollback.rows();
         final int end = Math.max(0, all.size() - scrollOffset);
@@ -438,28 +447,30 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         g.pose().pushPose();
         g.pose().translate(10, top, 0);
         g.pose().scale(textScale, textScale, 1.0f);
-        painter.draw(g, font, all.subList(start, end), 0, 0, rowPitch(), this::colorOf);
+        painter.draw(g, font, all.subList(start, end), 0, 0, rowPitch(), this::colorOf, glass());
         g.pose().popPose();
         if (scrollOffset > 0) {
             JsTechTheme.textSRight(g, font, "scrolled +" + scrollOffset, imageWidth - 10, bottom - 7, JsTechTheme.dim());
         }
 
-        // Prompt glyph before the input box.
-        JsTechTheme.text(g, font, prompt(), 10, imageHeight - 18, JsTechTheme.accent());
+        if (this.editor != null) {
+            // An editor has the glass, its own keys listed on it, and nothing of the prompt's is under it.
+            return;
+        }
+        drawTyping(g, typing);
 
         // Usage hint: once the verb is recognised, show how it is used, dimmed on the right.
         final String typed = input == null ? "" : input.getValue().trim();
         final int space = typed.indexOf(' ');
         final String verb = (space < 0 ? typed : typed.substring(0, space)).toLowerCase(Locale.ROOT);
-        final String usage = commandUsage.get(verb);
+        final String usage = keyboard.busy() || typing.rows().size() > 1 ? null : commandUsage.get(verb);
         if (usage != null && !usage.isEmpty()) {
             /*
              * The hint shares the input line: it gets the room to the right of what is typed, and is cut
              * short rather than drawn over the prompt when a long usage does not fit.
              */
-            final int promptW = font.width(prompt() + " ");
-            final int typedW = font.width(input == null ? "" : input.getValue());
-            final int room = imageWidth - 10 - (10 + promptW + typedW + 12);
+            final int used = Math.round((typing.rows().get(0).length() + 2) * TermPainter.CELL * textScale);
+            final int room = imageWidth - 10 - (10 + used);
             if (room >= 40) {
                 String hint = verb + " " + usage;
                 if (JsTechTheme.widthS(font, hint) > room) {
@@ -472,15 +483,46 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
                 JsTechTheme.textSRight(g, font, hint, imageWidth - 10, imageHeight - 17, JsTechTheme.dim());
             }
         }
-
-        if (this.editor != null) {
-            // An editor lists its own keys on its own glass, and none of the prompt's mean anything to it.
-            return;
-        }
         JsTechTheme.textS(g, font, keyboard.busy()
                         ? "CTRL+C interrupt    wheel scroll    ESC close"
                         : "ENTER run    UP/DOWN history    wheel scroll    ESC close",
                 10, imageHeight - 7, JsTechTheme.dim());
+    }
+
+    /**
+     * The line being typed, laid out on the glass's grid: the prompt or a tool's question, what has been typed
+     * after it, and the cell the cursor is in. An answer asked for unseen is typed and never drawn, not even
+     * as dots, which is how the tools that ask for one have always taken it.
+     */
+    private TermInput.Laid typing() {
+        final boolean unseen = keyboard.asking() && keyboard.unseen();
+        final boolean shown = input != null && !unseen;
+        return TermInput.lay(before(), shown ? input.getValue() : "", CliStyle.PROMPT,
+                shown ? input.getCursorPosition() : 0, scrollback.columns());
+    }
+
+    /**
+     * Paints the line being typed as the last rows of the glass, in the same cells at the same size as what is
+     * above it, with the cursor under the cell the next character goes in.
+     */
+    private void drawTyping(final GuiGraphics g, final TermInput.Laid typing) {
+        if (keyboard.busy() && !keyboard.asking()) {
+            // A tool is working and has asked nothing: there is no prompt, as there is none at a real one.
+            return;
+        }
+        final float rowHeight = rowPitch() * textScale;
+        final int last = typing.rows().size() - 1;
+        for (int i = 0; i <= last; i++) {
+            g.pose().pushPose();
+            g.pose().translate(10, imageHeight - 17 - (last - i) * rowHeight, 0);
+            g.pose().scale(textScale, textScale, 1.0f);
+            painter.drawOnce(g, font, typing.rows().get(i), 0, 0, this::colorOf, typingGround());
+            if (i == typing.cursorRow() && (Util.getMillis() / CURSOR_BLINK_MS) % 2 == 0) {
+                final int at = typing.cursorColumn() * TermPainter.CELL;
+                g.fill(at, LINE_H - 1, at + TermPainter.CELL - 1, LINE_H, colorOf(CliStyle.PROMPT));
+            }
+            g.pose().popPose();
+        }
     }
 
     /**
@@ -491,6 +533,16 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
      */
     private int rowPitch() {
         return Math.round(LINE_H / textScale);
+    }
+
+    /** What the scrollback is written on, which is what the shadow under it is worked out against. */
+    private int glass() {
+        return bareTerminal() ? BARE_GLASS : CONSOLE;
+    }
+
+    /** What the line being typed is written on: the glass of a raw console, the input strip of a window. */
+    private int typingGround() {
+        return bareTerminal() ? BARE_GLASS : JsTechTheme.panel();
     }
 
     private int colorOf(final CliStyle style) {
@@ -504,11 +556,24 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
     // input
 
+    /** A terminal has a use for every key there is, so none of them is anybody else's while it is open. */
+    @Override
+    public boolean keyFirst(final int key, final int scanCode, final int modifiers) {
+        return keyPressed(key, scanCode, modifiers);
+    }
+
     @Override
     public boolean keyPressed(final int key, final int scan, final int mods) {
-        // While an editor has the terminal every key is its, including the ones that would leave.
+        /*
+         * While an editor has the terminal every key is its. Escape is the one it may hand back: an editor
+         * with no use for it leaves the player free to look away from the monitor, and what was being edited
+         * is kept for when they look again, since walking away from a machine closes nothing on it.
+         */
         if (this.editor != null) {
-            this.editor.keyPressed(key, mods);
+            if (!this.editor.keyPressed(key, mods) && key == 256) {
+                ParkedEditors.park(menu.hostPos(), menu.session(), this.editor);
+                onClose();
+            }
             return true;
         }
         if (key == 257 || key == 335) { // Enter / numpad Enter
@@ -572,82 +637,19 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         return input != null && input.charTyped(c, mods);
     }
 
-    /**
-     * Completes the command word the player is typing against the known command names, cycling
-     * through the matches on repeated Tab. Only the first word (the verb) is completed for now.
-     */
+    /** Tab: the command being typed, or the drive a command is being pointed at, a candidate a press. */
     private void complete() {
-        final String text = input.getValue();
-        if (text.isEmpty()) {
-            return;
-        }
-        if (text.contains(" ")) {
-            completeDevice(text);
-            return; // other arguments are not completed yet; only the leading command word
-        }
-        final String prefix = text.toLowerCase(Locale.ROOT);
-        final List<String> matches = new ArrayList<>();
-        for (final String name : commandNames) {
-            if (name.startsWith(prefix)) {
-                matches.add(name);
-            }
-        }
-        if (matches.isEmpty()) {
-            return;
-        }
-        final String pick = matches.get(completionCycle % matches.size());
-        completionCycle++;
-        programmaticEdit = true;
-        input.setValue(matches.size() == 1 ? pick + " " : pick);
-        input.moveCursorToEnd(false);
-        programmaticEdit = false;
-    }
-
-    /**
-     * Completes a {@code /dev/<device>} first argument for the device verbs (mkfs.ext4, mount,
-     * grub-install), cycling through the drives the server reported, so the Arch/Gentoo install never
-     * needs the device names typed out by hand.
-     */
-    private void completeDevice(final String text) {
-        final int space = text.indexOf(' ');
-        final String verb = text.substring(0, space).toLowerCase(Locale.ROOT);
-        final String arg = text.substring(space + 1);
-        if (!DEVICE_VERBS.contains(verb) || deviceNames.isEmpty() || arg.contains(" ")) {
-            return; // only the first argument of a device verb is completed
-        }
-        final String argPrefix = arg.toLowerCase(Locale.ROOT);
-        final List<String> matches = new ArrayList<>();
-        for (final String device : deviceNames) {
-            final String full = "/dev/" + device;
-            if (full.startsWith(argPrefix) || device.startsWith(argPrefix)) {
-                matches.add(full);
-            }
-        }
-        if (matches.isEmpty()) {
-            return;
-        }
-        final String pick = matches.get(completionCycle % matches.size());
-        completionCycle++;
-        programmaticEdit = true;
-        input.setValue(text.substring(0, space + 1) + pick + (matches.size() == 1 ? " " : ""));
-        input.moveCursorToEnd(false);
-        programmaticEdit = false;
+        completion.next(input.getValue()).ifPresent(line -> {
+            // Put there by the terminal and not typed, so it does not end the round of presses it is part of.
+            programmaticEdit = true;
+            input.setValue(line);
+            input.moveCursorToEnd(false);
+            programmaticEdit = false;
+        });
     }
 
     private void recallHistory(final int direction) {
-        if (history.isEmpty()) {
-            return;
-        }
-        if (historyIndex == -1) {
-            historyIndex = history.size();
-        }
-        historyIndex = Math.max(0, Math.min(history.size(), historyIndex + direction));
-        if (historyIndex >= history.size()) {
-            historyIndex = -1;
-            input.setValue("");
-        } else {
-            input.setValue(history.get(historyIndex));
-        }
+        history.recall(direction).ifPresent(input::setValue);
     }
 
     @Override
@@ -677,22 +679,11 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
      * one by one with nothing left to take their place.
      */
     private int visibleRows() {
-        return (int) ((imageHeight - 23 - scrollbackTop()) / (rowPitch() * textScale));
+        // The line being typed is one row as a rule; every row past that comes out of what the scrollback has.
+        final int typingRows = typing().rows().size() - 1;
+        return Math.max(1, (int) ((imageHeight - 23 - scrollbackTop()) / (rowPitch() * textScale)) - typingRows);
     }
 
-    @Override
-    protected void containerTick() {
-        super.containerTick();
-        /*
-         * Keep the input color in sync if a board swap changes the era while the screen is open. This
-         * must repeat the bare-console rule, not just take the era's text colour: a bare terminal is
-         * dark glass, and on Legacy the era text is dark for its cream panel, and writing that here left
-         * the player typing near-black on black.
-         */
-        if (input != null) {
-            input.setTextColor(colorOf(CliStyle.PROMPT));
-        }
-    }
 
     @Override
     public void removed() {
@@ -711,8 +702,17 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
              * The editor has the glass: over everything, because it is what the terminal is showing
              * now, not something drawn on top of a console that is still there.
              */
-            this.editor.render(g, font, leftPos + 8, topPos + 8, imageWidth - 16, imageHeight - 16,
-                    InkPalette.DARK);
+            /*
+             * At the size the terminal's own text is, with its rows the same distance apart, so taking the
+             * glass over does not change how big anything on it is.
+             */
+            this.editor.setRowPitch(rowPitch());
+            g.pose().pushPose();
+            g.pose().translate(leftPos + 8, topPos + 8, 0);
+            g.pose().scale(textScale, textScale, 1.0f);
+            this.editor.render(g, font, 0, 0, Math.round((imageWidth - 16) / textScale),
+                    Math.round((imageHeight - 16) / textScale), InkPalette.GLASS);
+            g.pose().popPose();
         }
     }
 
@@ -771,32 +771,43 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     }
 
 
-    /** The initial POSIX prompt (home directory) in the installed shell's style, before the server syncs one. */
+    /**
+     * The POSIX prompt for the moment before the machine has said what it is: the home directory, in the
+     * installed shell's style. A live medium's is not guessed at, since each has a prompt of its own in
+     * colours of its own and the machine says which a tick after the terminal opens.
+     */
     private String initialPosixPrompt() {
         if (menu.shellId().equals("live")) {
-            return "root@" + menu.hostname() + " ~ #";
+            return "";
         }
         return menu.shellId().equals("zsh")
                 ? "player@" + menu.hostname() + " ~ %"
                 : "player@" + menu.hostname() + ":~$";
     }
 
-    /** The shell prompt: the server-synced prompt for MC-DOS and Linux (drive/directory aware), the jsc prompt otherwise. */
-    private String prompt() {
-        /*
-         * A tool in front has the glass. When it has stopped to ask, its question stands where the prompt
-         * would; while it is simply working there is nothing there at all, as at a real terminal.
-         */
+    /**
+     * What stands on the glass before what is typed, a run at a time.
+     *
+     * <p>A tool in front has the glass. When it has stopped to ask, its question stands where the prompt
+     * would; while it is simply working there is nothing there at all, as at a real terminal. Otherwise it is
+     * the shell's prompt: in the shell's own colours when the machine sent it that way, and in the
+     * terminal's one colour for a prompt when all it sent was the words.
+     */
+    private CliLine before() {
         if (keyboard.asking()) {
-            return keyboard.question().text().stripTrailing();
+            return keyboard.standing().toLine();
         }
         if (keyboard.busy()) {
-            return "";
+            return CliLine.plain("");
         }
-        if (menu.posixShell()) {
-            return dosPrompt.equals("C:\\>") ? initialPosixPrompt() : dosPrompt;
+        // The Command Prompt program keeps a prompt of its own, whatever shell is behind it.
+        if (promptLine != null && (menu.posixShell() || dosStyle())) {
+            return promptLine;
         }
-        return dosStyle() ? dosPrompt : "jsc>";
+        final String words = menu.posixShell()
+                ? (dosPrompt.equals("C:\\>") ? initialPosixPrompt() : dosPrompt)
+                : dosStyle() ? dosPrompt : "jsc>";
+        return new CliLine(words, CliStyle.ACCENT);
     }
 
     @Override

@@ -64,7 +64,13 @@ public final class SshTerminal {
      * @param running the shell the line was run on, which is the far machine while a session is open
      */
     public static String prompt(final ICliComputer local, final ICliComputer running) {
+        return promptLine(local, running).text();
+    }
+
+    /** The same prompt a run at a time, in the colours the shell it belongs to gives it. */
+    public static CliLine promptLine(final ICliComputer local, final ICliComputer running) {
         final String connected = local.sshSession();
-        return connected.isEmpty() ? running.prompt() : "[" + connected + "] " + running.prompt();
+        return connected.isEmpty() ? running.promptLine()
+                : CliLine.build().add("[" + connected + "] ", CliStyle.ACCENT).add(running.promptLine()).done();
     }
 }

@@ -15,6 +15,7 @@ import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.machine.NetworkReadService;
 import dev.jstech.computers.machine.ServerTickDeadline;
 import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.SshTerminal;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.computers.vm.program.IProgramParent;
@@ -75,12 +76,17 @@ final class ProgramHost {
 
     /** The prompt this machine's shell would show, for giving it back when a program lets go. */
     String shellPrompt() {
+        return this.shellPromptLine().text();
+    }
+
+    /** The same prompt a run at a time, in the colours the machine's shell gives it. */
+    CliLine shellPromptLine() {
         if (this.machine instanceof IComputerTerminalHost host
                 && this.machine.getLevel() instanceof ServerLevel server) {
             final ServerCliComputer shell = new ServerCliComputer(host, server);
-            return SshTerminal.prompt(shell, shell);
+            return SshTerminal.promptLine(shell, shell);
         }
-        return "";
+        return CliLine.plain("");
     }
 
     /**

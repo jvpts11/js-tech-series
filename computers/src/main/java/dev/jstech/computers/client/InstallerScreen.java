@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.InstallerActionPayload;
@@ -43,8 +44,8 @@ import java.util.List;
  */
 public final class InstallerScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
-    private static final int W = 340;
-    private static final int H = 214;
+    private static final int W = MonitorGlass.WIDTH;
+    private static final int H = MonitorGlass.HEIGHT;
 
     /** How far apart the rows of a list sit, which the mouse also has to know to find the one under it. */
     private static final int ROW = 11;

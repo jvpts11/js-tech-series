@@ -145,7 +145,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   writes, `^X` asking about a file that has changed, `^W` and `^\` to search and to replace, `^K` and `^U` to
   cut lines and paste them, `^R` to pull another file in, `^C` for where the cursor is, and `^G` for its help.
   It edits the files of the installation, `make.conf`, `locale.gen`, `fstab`, and what is saved is what the
-  later steps read: `-j4` in the build options is what makes a compile four jobs wide.
+  later steps read: `-j4` in the build options is what makes a compile four jobs wide. It is written on the
+  black of the terminal it took over, at the terminal's size. Escape is looking away from the monitor and not
+  closing the editor: the next look at that machine finds it open on the same file, with what was typed and
+  never written still in it.
 - Two settings in the server configuration, `install_by_hand.gentoo_every_step` and
   `install_by_hand.arch_every_step`, decide how much of the handbook a world asks for. Off, which is the
   default, a restart only refuses what a system cannot boot without: a base system, a filesystem table, a
@@ -170,8 +173,23 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   prompt that fills a monitor and in the terminal window on a desktop alike. The game's letters are as wide as
   they need to be, so a column of figures never lined up under another and a bar made of one character came
   out a different length from the same bar made of another; on a grid a listing lines up, a bar holds still
-  while it fills, and the right-hand edge of a status column is an edge. A monitor's terminal is sixty-four
-  columns wide, and what runs at it lays its output out to that.
+  while it fills, and the right-hand edge of a status column is an edge. A monitor's terminal is eighty
+  columns wide, and what runs at it lays its output out to that. The line being typed is in the same cells as
+  everything above it, and a question wider than the glass carries on at the start of the next row with the
+  answer typed after it.
+- Everything a machine shows on a monitor is one size. The terminal, the setup, the boot manager, a system
+  reading its start out, the installers and the desktop all fill the same glass, and a terminal writes at
+  three quarters of the game's font the way a desktop does. The terminal used to be a smaller screen than the
+  desktop it led to, written at full size.
+- A live medium's prompt has the colours of the real one: Gentoo's `livecd` in red with the path and the `#`
+  in blue, Arch's `root` in red with `@archiso ~ #` in white. A prompt is a coloured line the machine sends
+  like any other, and a terminal that has just opened shows the machine's own prompt from the first frame
+  rather than a guess at it.
+- Text at a terminal and in the editors that run at one has a shadow under it, and the shadow is worked out
+  from the colour of the letter and the colour of what it is written on: the letter's own colour most of the
+  way to the ground's. It is never the letter's colour, never the ground's, and never a colour foreign to the
+  letter, so a red word has a dim red under it on a black glass and a dark word would have a pale tone of
+  itself under it on a light panel.
 - The Gentoo stage 3 is `stage3-vel64`, for the Velocion processors these machines have.
 - What a build prints is a Sigma toolchain at work. `emerge`, the kernel build and the archives name `scc`
   compiling `.sg` sources into `.asm`, check for namespaces where they checked for headers, and unpack
@@ -210,8 +228,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   kde-plasma/plasma-meta`, `gnome-base/gnome` or `gnome-extra/cinnamon`, and merging one builds everything it
   is made of, the toolkit first and the desktop itself last, each package through every phase. The short
   names (`kde-plasma`, `gnome`, `cinnamon`) still work.
-- The walkthrough a live medium carries in `/root/install.txt` is laid out for the sixty-four columns it is
-  read on: a step on a line of its own and what it is for underneath. Its longer lines used to be broken in two
+- The walkthrough a live medium carries in `/root/install.txt` is laid out for the terminal it is read on: a
+  step on a line of its own and what it is for underneath. Its longer lines used to be broken in two
   wherever the edge of the terminal fell, commands included.
 - `wget` fetches from `mirror://mainframe`, the one thing on a world's network there is to fetch from, and
   stamps what it fetched with the world's own clock: the day the world is on and the time of that day
@@ -532,6 +550,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- A key pressed at a machine's screen goes to the machine before it goes to any other mod. With a recipe viewer
+  installed, Ctrl+O at a terminal editor hid the viewer's overlay and never reached the editor, so a file could
+  not be written. A desktop takes a key first only while something on it is there to use it, so the other
+  mod's keys still work over a desktop with nothing open.
+- Tab at a monitor's terminal goes round every command that starts with what was typed, one a press. It stopped
+  at the first, because the second press completed the command the first press had just put on the line. It
+  offers the machine's drives to `fdisk` and `mkfs.fat` as well.
 - Booting a disk or a medium from the setup, or choosing a machine on a rack's switch, could leave the player
   at a screen the machine did not know they were looking at. The screen closed itself right behind the request,
   so the server opened the next screen and then closed it again while the client went on showing it: a

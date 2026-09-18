@@ -137,6 +137,13 @@ public final class NanoKeys implements TtyEditor.IKeys {
             answering(editor, key, control);
             return true;
         }
+        if (key == GLFW.GLFW_KEY_ESCAPE) {
+            /*
+             * With no question standing this editor has no use for Escape, and says so: the terminal is then
+             * free to let the player look away, keeping the editor as it is for when they look back.
+             */
+            return false;
+        }
         editor.say("");
         final boolean wasCutting = this.cutting;
         this.cutting = false;
@@ -208,7 +215,8 @@ public final class NanoKeys implements TtyEditor.IKeys {
             }
             return;
         }
-        if (control && key == GLFW.GLFW_KEY_C) {
+        // Escape backs out of a question the way Control and C does, which is what anybody tries first.
+        if ((control && key == GLFW.GLFW_KEY_C) || key == GLFW.GLFW_KEY_ESCAPE) {
             final boolean midway = this.asking == Asking.REPLACE_EACH && this.replacing != null;
             editor.document().clearSelection();
             editor.say(midway ? NanoWords.replaced(this.replacing.done()) : NanoWords.CANCELLED);

@@ -13,7 +13,9 @@ import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.client.MachineKeyboard;
 import dev.jstech.computers.client.MonitorFrame;
+import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.TaskbarGroups;
 import dev.jstech.computers.menu.DesktopMenu;
@@ -93,7 +95,8 @@ import org.jetbrains.annotations.Nullable;
  * menu, and stackable program windows with a draggable title bar and a close box. Program content is
  * delegated to {@link IDesktopApp} instances. Visual polish is tuned in-game.
  */
-public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
+public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
+        implements MachineKeyboard.ITakesKeysFirst {
 
     private final BlockPos host;
     private final BlockPos monitorPos;
@@ -1196,11 +1199,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
      */
     /** The glass's width on the screen, in screen pixels: what the frame wraps and the scissor clips. */
     private int pw() {
-        return Math.min(width - 44, 384);
+        return MonitorGlass.width(width);
     }
 
     private int ph() {
-        return Math.min(height - 60, 256);
+        return MonitorGlass.height(height);
     }
 
     /**
@@ -4437,6 +4440,20 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu> {
             return true;
         }
         return super.charTyped(c, modifiers);
+    }
+
+    /**
+     * A desktop takes a key ahead of the rest of the game only when something on it is being typed at: one of
+     * its own menus or boxes, or the program in the window in front. Over everything else a key stays whoever's
+     * it was, which is what keeps a recipe viewer's keys working on the items a window shows.
+     */
+    @Override
+    public boolean keyFirst(final int key, final int scanCode, final int modifiers) {
+        if (popup != null || deskMenu.isOpen() || taskMenu.isOpen() || deskFiles.isRenaming() || startOpen) {
+            return keyPressed(key, scanCode, modifiers);
+        }
+        final DesktopWindow w = frontWindow();
+        return w != null && (key != 256 || w.app().wantsEscape()) && w.app().keyPressed(key, scanCode, modifiers);
     }
 
     @Override

@@ -102,7 +102,8 @@ public final class ConsolePayloads {
         if (turn != null) {
             final var here = new ServerCliComputer(host, level);
             PacketDistributor.sendToPlayer(player, new CommandOutputPayload(
-                    turn.ended() ? SshTerminal.prompt(here, here) : "", turn.lines(), turn.keyboard()));
+                    turn.ended() ? SshTerminal.prompt(here, here) : "", turn.lines(),
+                    TerminalTools.settled(turn.keyboard(), here, here)));
             return;
         }
         // "run/open <program>" launches another installed program from the prompt.
@@ -151,7 +152,8 @@ public final class ConsolePayloads {
         }
         PacketDistributor.sendToPlayer(player, new CommandOutputPayload(response.clearScreen(), prompt, wire,
                 handOver == null ? "" : handOver.editor(),
-                handOver == null ? "" : handOver.path(), false, keyboard));
+                handOver == null ? "" : handOver.path(), false,
+                TerminalTools.settled(keyboard, localComputer, computer)));
         if (computer.firmwareRebootRequested()) {
             // "reboot --firmware": leave the terminal and enter the boot manager on the same monitor.
             player.closeContainer();
@@ -336,11 +338,16 @@ public final class ConsolePayloads {
                 List.copyOf(history), commands, devices));
         /*
          * A monitor opened while a tool is in front has to be told so, or it would show a prompt the machine
-         * is not going to read from: the fetch would go on scrolling past a terminal that looked idle.
+         * is not going to read from: the fetch would go on scrolling past a terminal that looked idle. One
+         * opened on an idle machine is told what its prompt is instead, in the shell's own colours, so that
+         * the terminal never has to guess at a prompt it has not been shown yet.
          */
         final TerminalKeyboard keyboard = TerminalTools.keyboardOf(host.console());
         if (keyboard.busy()) {
             PacketDistributor.sendToPlayer(player, new CommandOutputPayload("", List.of(), keyboard));
+        } else if (cli != null) {
+            PacketDistributor.sendToPlayer(player, new CommandOutputPayload(SshTerminal.prompt(cli, cli), List.of(),
+                    TerminalTools.settled(keyboard, cli, cli)));
         }
     }
 

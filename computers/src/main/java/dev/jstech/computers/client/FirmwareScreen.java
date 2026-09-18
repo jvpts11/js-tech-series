@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
@@ -45,8 +46,8 @@ import java.util.List;
  */
 public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
-    private static final int W = 340;
-    private static final int H = 214;
+    private static final int W = MonitorGlass.WIDTH;
+    private static final int H = MonitorGlass.HEIGHT;
 
     // Vintage: green phosphor CLI BIOS
     private static final int CLI_BG     = 0xFF021207;

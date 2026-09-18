@@ -28,6 +28,7 @@ import net.minecraft.client.gui.GuiGraphics;
  */
 public final class TtyEditor {
 
+    /** How far apart the rows are unless the terminal that was taken says otherwise. */
     private static final int LINE_H = 9;
     private static final int PAD = 3;
 
@@ -78,7 +79,16 @@ public final class TtyEditor {
     private final String path;
     private final TextDocument doc = new TextDocument();
     private final IKeys keys;
-    private final IHost host;
+    /** The terminal it has taken, which changes when the player looks away and the next look is another screen. */
+    private IHost host;
+
+    /**
+     * How far apart the rows are.
+     *
+     * <p>A terminal that draws its text smaller says so, and gives a pitch that comes out a whole number of
+     * pixels at that size: rows that land between two pixels are what makes small text look smeared.
+     */
+    private int lineH = LINE_H;
 
     private int scroll;
     /** How far the rows are slid to the left, in pixels, to keep the caret on a long line in view. */
@@ -198,6 +208,16 @@ public final class TtyEditor {
         this.host.quit();
     }
 
+    /** Sets how far apart the rows are, for a terminal whose rows are not the usual distance apart. */
+    public void setRowPitch(final int pitch) {
+        this.lineH = Math.max(LINE_H, pitch);
+    }
+
+    /** Puts the editor on another terminal of the same machine, as it was, for a player who looked away and back. */
+    public void handTo(final IHost terminal) {
+        this.host = terminal;
+    }
+
     /** Tells the flavour the file is open, so it can say what an editor of its kind says then. */
     public void opened(final boolean existed) {
         this.keys.opened(this, existed);
@@ -238,27 +258,27 @@ public final class TtyEditor {
         g.fill(x, y, x + width, y + height, palette.ground());
         final TtyLook look = this.keys.look(this);
         /* A title row across the top and rows of keys along the bottom, for an editor that keeps them. */
-        final int head = look.titled() ? LINE_H : 0;
-        final int keysH = look.keys().size() * LINE_H;
+        final int head = look.titled() ? this.lineH : 0;
+        final int keysH = look.keys().size() * this.lineH;
         if (look.titled()) {
-            TtyChrome.title(g, font, x, y, width, LINE_H, look, palette);
+            TtyChrome.title(g, font, x, y, width, this.lineH, look, palette);
         }
-        TtyChrome.keys(g, font, x, y + height - keysH, width, LINE_H, look.keys(), palette);
+        TtyChrome.keys(g, font, x, y + height - keysH, width, this.lineH, look.keys(), palette);
         /*
          * With a second buffer showing, the file gets the upper half and keeps its own mode line, and
          * what is under it gets the rest. The status line under them belongs to the editor either way,
          * which is where the echo area is on a real one.
          */
         final int lowerH = this.lower.isEmpty() ? 0
-                : Math.min(height / 2, (this.lower.size() + 1) * LINE_H + PAD);
+                : Math.min(height / 2, (this.lower.size() + 1) * this.lineH + PAD);
         final int upperH = height - lowerH - keysH;
         if (lowerH > 0) {
-            TtyChrome.lower(g, font, x, y + upperH, width, lowerH, LINE_H, this.lowerName, this.lower, palette);
+            TtyChrome.lower(g, font, x, y + upperH, width, lowerH, this.lineH, this.lowerName, this.lower, palette);
         }
-        final int rows = Math.max(1, (upperH - head - PAD - LINE_H) / LINE_H);
-        drawStatus(g, font, x, y + height - keysH - LINE_H, width, look, palette);
+        final int rows = Math.max(1, (upperH - head - PAD - this.lineH) / this.lineH);
+        drawStatus(g, font, x, y + height - keysH - this.lineH, width, look, palette);
         if (!look.page().isEmpty()) {
-            Draw.pushScissor(g, x, y + head, x + width, y + height - keysH - LINE_H);
+            Draw.pushScissor(g, x, y + head, x + width, y + height - keysH - this.lineH);
             drawPage(g, font, look.page(), x + PAD, y + head + PAD, rows, palette);
             Draw.popScissor(g);
             return;
@@ -267,7 +287,7 @@ public final class TtyEditor {
         followCaretAcross(font, width - 2 * PAD);
 
         final List<List<CodeRuns.Run>> runs = this.ink.of(this.path, this.doc);
-        Draw.pushScissor(g, x, y + head, x + width, y + height - keysH - LINE_H);
+        Draw.pushScissor(g, x, y + head, x + width, y + height - keysH - this.lineH);
         final int startX = x + PAD - this.shift;
         int ry = y + head + PAD;
         for (int i = this.scroll; i < this.doc.lineCount() && i - this.scroll < rows; i++) {
@@ -279,14 +299,14 @@ public final class TtyEditor {
                 final int cx = startX + font.width(line.substring(0, col));
                 g.fill(cx, ry - 1, cx + font.width("m"), ry + LINE_H - 1, 0x66CDD6E2);
             }
-            ry += LINE_H;
+            ry += this.lineH;
         }
         /*
          * The rows past the end of the file are marked, the way a terminal editor does, so the end of a
          * short file is not mistaken for a screen of blank lines that are really there.
          */
         for (int i = this.doc.lineCount() - this.scroll; look.marksTheEnd() && i < rows; i++) {
-            g.drawString(font, "~", x + PAD, y + head + PAD + i * LINE_H, palette.gutterText(), false);
+            Draw.text(g, font, "~", x + PAD, y + head + PAD + i * this.lineH, palette.gutterText(), palette.ground());
         }
         Draw.popScissor(g);
     }
@@ -296,7 +316,7 @@ public final class TtyEditor {
                           final int y, final int rows, final InkPalette palette) {
         this.scroll = Math.max(0, Math.min(Math.max(0, page.size() - rows), this.scroll));
         for (int i = this.scroll; i < page.size() && i - this.scroll < rows; i++) {
-            g.drawString(font, page.get(i), x, y + (i - this.scroll) * LINE_H, palette.plain(), false);
+            Draw.text(g, font, page.get(i), x, y + (i - this.scroll) * this.lineH, palette.plain(), palette.ground());
         }
     }
 
@@ -304,26 +324,26 @@ public final class TtyEditor {
                             final int width, final TtyLook look, final InkPalette palette) {
         final String left = this.keys.status(this);
         if (look.status() == TtyLook.Status.BRACKETED) {
-            TtyChrome.bracketed(g, font, x, y, width, LINE_H, left, palette);
+            TtyChrome.bracketed(g, font, x, y, width, this.lineH, left, palette);
             return;
         }
         if (look.status() == TtyLook.Status.BAR) {
-            TtyChrome.bar(g, font, x, y, width, LINE_H, left, palette);
+            TtyChrome.bar(g, font, x, y, width, this.lineH, left, palette);
             return;
         }
-        g.fill(x, y, x + width, y + LINE_H, palette.gutter());
+        g.fill(x, y, x + width, y + this.lineH, palette.gutter());
         final String where = (this.doc.cursorLine() + 1) + "," + (this.doc.cursorCol() + 1);
         // The message has the whole line but the corner where the position sits, so a question reads whole.
-        g.drawString(font, font.plainSubstrByWidth(left, width - 2 * PAD - font.width(where) - 6), x + PAD, y,
-                palette.plain(), false);
-        g.drawString(font, where, x + width - font.width(where) - PAD, y, palette.gutterText(), false);
+        Draw.text(g, font, font.plainSubstrByWidth(left, width - 2 * PAD - font.width(where) - 6), x + PAD, y,
+                palette.plain(), palette.gutter());
+        Draw.text(g, font, where, x + width - font.width(where) - PAD, y, palette.gutterText(), palette.gutter());
     }
 
     private void drawLine(final GuiGraphics g, final Font font, final String line,
                           final List<CodeRuns.Run> runs, final int startX, final int textY,
                           final InkPalette palette) {
         if (runs.isEmpty()) {
-            g.drawString(font, line, startX, textY, palette.plain(), false);
+            Draw.text(g, font, line, startX, textY, palette.plain(), palette.ground());
             return;
         }
         int rx = startX;
@@ -334,7 +354,7 @@ public final class TtyEditor {
                 continue;
             }
             final String piece = line.substring(from, to);
-            g.drawString(font, piece, rx, textY, palette.of(run.ink()), false);
+            Draw.text(g, font, piece, rx, textY, palette.of(run.ink()), palette.ground());
             rx += font.width(piece);
         }
     }

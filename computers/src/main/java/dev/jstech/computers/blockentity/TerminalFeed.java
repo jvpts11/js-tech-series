@@ -15,6 +15,7 @@ import dev.jstech.computers.operation.payload.WireSink;
 import dev.jstech.computers.operation.payload.program.TerminalTools;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.TerminalForeground;
+import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.tty.ITtyProcess;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import java.util.List;
@@ -56,8 +57,8 @@ final class TerminalFeed {
             }
 
             @Override
-            public String prompt() {
-                return machine.shellPrompt();
+            public CliLine prompt() {
+                return machine.shellPromptLine();
             }
 
             @Override
@@ -93,13 +94,16 @@ final class TerminalFeed {
         if (out == null) {
             return;
         }
-        final TerminalKeyboard keyboard = TerminalTools.keyboardOf(console);
-        final boolean asking = keyboard.asking();
+        final TerminalKeyboard held = TerminalTools.keyboardOf(console);
+        final boolean asking = held.asking();
         if (out.isEmpty() && !ended && asking == this.asked) {
             return;
         }
         this.asked = asking;
-        final String prompt = ended ? this.terminal.prompt() : "";
+        /* A tool that has just ended gives the prompt back, named a run at a time so it comes back in colour. */
+        final CliLine shown = ended ? this.terminal.prompt() : null;
+        final String prompt = shown == null ? "" : shown.text();
+        final TerminalKeyboard keyboard = shown == null ? held : TerminalKeyboard.atPrompt(shown);
         for (final ServerPlayer viewer : viewers) {
             PacketDistributor.sendToPlayer(viewer, viewer.containerMenu instanceof DesktopMenu
                     ? new DesktopShellOutputPayload(prompt, out.lines(), keyboard)

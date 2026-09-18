@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootSplash;
@@ -28,8 +29,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
-    private static final int W = 340;
-    private static final int H = 214;
+    private static final int W = MonitorGlass.WIDTH;
+    private static final int H = MonitorGlass.HEIGHT;
 
     /** Drawn for this long when the machine did not say, which only a stale packet leaves. */
     private static final int FALLBACK_TICKS = 60;

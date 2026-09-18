@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.install.voice;
 
+import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.program.cli.CliLine;
 import java.util.Locale;
 
@@ -15,13 +16,13 @@ import java.util.Locale;
  *
  * <p>Every one of them is sized to the terminal, because the real ones are. A real tool asks the terminal how
  * wide it is and lays its bar out in what is left after the name and the figures, which is why the same
- * download looks different in a narrow window. These are laid out for the sixty-four columns a monitor has,
- * and none of them is ever longer than that, so none of them ever wraps and redraws two rows instead of one.
+ * download looks different in a narrow window. These are laid out for the columns a monitor has, and none of
+ * them is ever longer than that, so none of them ever wraps and redraws two rows instead of one.
  */
 final class Bars {
 
-    /** The columns these are laid out for. */
-    static final int COLUMNS = 64;
+    /** The columns these are laid out for, which is as many as a monitor's glass has. */
+    static final int COLUMNS = TermBuffer.MONITOR_COLUMNS;
 
     private Bars() {
     }

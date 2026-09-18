@@ -10,6 +10,7 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.operation.payload.program.TerminalTools;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.tty.ITtyProcess;
 import java.util.HashMap;
 import java.util.List;
@@ -71,10 +72,11 @@ final class RackTerminals {
         }
 
         @Override
-        public String prompt() {
+        public CliLine prompt() {
             final ServerRackBlockEntity rack = RackTerminals.this.rack;
             return rack.getLevel() instanceof ServerLevel level
-                    ? rack.asUnit(this.row, () -> new ServerCliComputer(rack, level).prompt()) : "";
+                    ? rack.asUnit(this.row, () -> new ServerCliComputer(rack, level).promptLine())
+                    : CliLine.plain("");
         }
 
         @Override

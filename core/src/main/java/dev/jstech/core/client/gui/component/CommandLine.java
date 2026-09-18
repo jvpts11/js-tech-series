@@ -8,12 +8,11 @@
 package dev.jstech.core.client.gui.component;
 
 import dev.jstech.core.client.gui.logic.TextEditState;
+import dev.jstech.core.gui.LineHistory;
 import java.util.function.Consumer;
 import net.minecraft.client.gui.GuiGraphics;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
@@ -33,8 +32,7 @@ public final class CommandLine extends UiComponent {
     private final int maxLength;
     private final Consumer<String> onSubmit;
     private final TextEditState input;
-    private final List<String> history = new ArrayList<>();
-    private int historyIndex = -1;
+    private final LineHistory history = new LineHistory();
     private Supplier<String> prompt = () -> ">";
     private Supplier<String> idleText = () -> "";
     private IntSupplier idleColor = () -> PROMPT;
@@ -181,31 +179,18 @@ public final class CommandLine extends UiComponent {
     private void submit() {
         final String line = input.edit().trim();
         input.sync("");
-        historyIndex = -1;
+        history.rest();
         if (line.isEmpty() && !takesNothing.getAsBoolean()) {
             return;
         }
         // Neither an empty answer nor one that was not for showing is something to bring back later.
-        if (!line.isEmpty() && !unseen.getAsBoolean()
-                && (history.isEmpty() || !history.get(history.size() - 1).equals(line))) {
+        if (!unseen.getAsBoolean()) {
             history.add(line);
         }
         onSubmit.accept(line);
     }
 
     private void recall(final int direction) {
-        if (history.isEmpty()) {
-            return;
-        }
-        if (historyIndex == -1) {
-            historyIndex = history.size();
-        }
-        historyIndex = Math.max(0, Math.min(history.size(), historyIndex + direction));
-        if (historyIndex >= history.size()) {
-            historyIndex = -1;
-            input.sync("");
-        } else {
-            input.sync(history.get(historyIndex));
-        }
+        history.recall(direction).ifPresent(input::sync);
     }
 }

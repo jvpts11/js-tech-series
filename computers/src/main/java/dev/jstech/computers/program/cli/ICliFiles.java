@@ -36,6 +36,15 @@ public interface ICliFiles {
     }
 
     /**
+     * The same prompt as the glass shows it, a run at a time, for a shell whose prompt is in more than one
+     * colour: a root prompt with the machine's name in red and where it stands in blue. By default it is all in
+     * the one colour a terminal gives a prompt.
+     */
+    default CliLine promptLine() {
+        return new CliLine(prompt(), CliStyle.ACCENT);
+    }
+
+    /**
      * Changes the shell's current directory. {@code input} is a DOS path relative to the current
      * location (or absolute); implementations resolve it, verify the target directory exists, and
      * persist the new location. A blank input or {@code \} means the drive root.

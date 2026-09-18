@@ -19,11 +19,19 @@ import net.minecraft.client.gui.GuiGraphics;
  * a second buffer under the file.
  *
  * <p>A terminal has two colours and one trick, which is swapping them, so everything here that has to stand
- * out is drawn in the text's colour with the ground's colour written on it.
+ * out is drawn in the text's colour with the ground's colour written on it. What is written on a bar like
+ * that has no shadow under it: the bar is only as tall as its letters, and a shadow would hang out of it.
  */
 final class TtyChrome {
 
     private static final int PAD = 3;
+
+    /**
+     * How tall the letters are, which is how tall anything painted behind them is. Rows may be further apart
+     * than that, on a terminal that spaces them to land on whole pixels, and a bar as tall as the row would
+     * then hang below its own text.
+     */
+    private static final int LETTERS = 9;
 
     private TtyChrome() {
     }
@@ -31,7 +39,7 @@ final class TtyChrome {
     /** The title row: what the editor is, the file in the middle, and whether it has been changed. */
     static void title(final GuiGraphics g, final Font font, final int x, final int y, final int width,
                       final int rowHeight, final TtyLook look, final InkPalette palette) {
-        g.fill(x, y, x + width, y + rowHeight, palette.plain());
+        g.fill(x, y - 1, x + width, y + LETTERS, palette.plain());
         g.drawString(font, look.titleLeft(), x + PAD, y, palette.ground(), false);
         final int rightW = font.width(look.titleRight());
         final int leftEnd = x + PAD + font.width(look.titleLeft()) + 6;
@@ -51,18 +59,18 @@ final class TtyChrome {
         }
         final String shown = font.plainSubstrByWidth(said, width - 2 * PAD);
         final int at = x + (width - font.width(shown)) / 2;
-        g.fill(at - 2, y, at + font.width(shown) + 2, y + rowHeight, palette.plain());
+        g.fill(at - 2, y - 1, at + font.width(shown) + 2, y + LETTERS, palette.plain());
         g.drawString(font, shown, at, y, palette.ground(), false);
     }
 
     /** A question being answered: a bar the whole width, read from the left, with a caret after the answer. */
     static void bar(final GuiGraphics g, final Font font, final int x, final int y, final int width,
                     final int rowHeight, final String asked, final InkPalette palette) {
-        g.fill(x, y, x + width, y + rowHeight, palette.plain());
+        g.fill(x, y - 1, x + width, y + LETTERS, palette.plain());
         final String shown = font.plainSubstrByWidth(asked, width - 2 * PAD - font.width("m"));
         g.drawString(font, shown, x + PAD, y, palette.ground(), false);
         final int caret = x + PAD + font.width(shown);
-        g.fill(caret, y, caret + font.width("m"), y + rowHeight - 1, palette.ground());
+        g.fill(caret, y, caret + font.width("m"), y + LETTERS - 1, palette.ground());
     }
 
     /** The rows of keys: each key written the way a terminal makes things stand out, and what it does after it. */
@@ -76,10 +84,10 @@ final class TtyChrome {
                 if (!key.chord().isEmpty()) {
                     final int chordW = font.width(key.chord());
                     // A pixel of the bar either side of the letters, without which they run into its edges.
-                    g.fill(cx - 1, ry - 1, cx + chordW + 1, ry + rowHeight - 1, palette.plain());
+                    g.fill(cx - 1, ry - 1, cx + chordW + 1, ry + LETTERS - 1, palette.plain());
                     g.drawString(font, key.chord(), cx, ry, palette.ground(), false);
-                    g.drawString(font, font.plainSubstrByWidth(key.does(), Math.max(0, column - chordW - 8)),
-                            cx + chordW + 4, ry, palette.plain(), false);
+                    Draw.text(g, font, font.plainSubstrByWidth(key.does(), Math.max(0, column - chordW - 8)),
+                            cx + chordW + 4, ry, palette.plain(), palette.ground());
                 }
                 cx += column;
             }
@@ -97,15 +105,15 @@ final class TtyChrome {
                       final int height, final int rowHeight, final String name, final List<String> lines,
                       final InkPalette palette) {
         g.fill(x, y, x + width, y + rowHeight, palette.gutter());
-        g.drawString(font, font.plainSubstrByWidth("-UUU:%%--F1  " + name, width - 6), x + PAD, y,
-                palette.plain(), false);
+        Draw.text(g, font, font.plainSubstrByWidth("-UUU:%%--F1  " + name, width - 6), x + PAD, y,
+                palette.plain(), palette.gutter());
         Draw.pushScissor(g, x, y + rowHeight, x + width, y + height);
         int ry = y + rowHeight + 1;
         for (final String line : lines) {
             if (ry + rowHeight > y + height) {
                 break;
             }
-            g.drawString(font, line, x + PAD, ry, palette.plain(), false);
+            Draw.text(g, font, line, x + PAD, ry, palette.plain(), palette.ground());
             ry += rowHeight;
         }
         Draw.popScissor(g);

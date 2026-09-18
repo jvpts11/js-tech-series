@@ -42,6 +42,7 @@ import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
@@ -1015,6 +1016,11 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     /** The prompt this machine's shell would show, for giving it back when a program lets go. */
     String shellPrompt() {
         return host.shellPrompt();
+    }
+
+    /** The same prompt a run at a time, in the colours the machine's shell gives it. */
+    CliLine shellPromptLine() {
+        return host.shellPromptLine();
     }
 
     /**

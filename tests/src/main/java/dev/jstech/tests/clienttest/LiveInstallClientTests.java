@@ -81,6 +81,82 @@ public final class LiveInstallClientTests {
                 .thenScreenshot(2, "nano-read-back");
     }
 
+    /**
+     * Escape in nano is the player looking away from the monitor, not the editor closing: the screen goes,
+     * and the next look at the same machine finds the editor open on the same file with what was typed and
+     * never written still in it, ready to be written.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void nano_lookedAwayFromWithEscape_isStillOpenOnTheNextLook(final ClientTestContext ctx) {
+        atTheLivePrompt(ctx, "gentoo", LiveInstallState.Distro.GENTOO)
+                .then(SETTLE, () -> ctx.type("nano /root/notes.txt"))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .thenWaitUntil(() -> prompt(ctx).editing(), SCREEN_WAIT, "nano to take the terminal")
+                .then(SETTLE, () -> ctx.type("typed and never written"))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
+                .thenAwaitNoScreen(SCREEN_WAIT)
+                .thenRightClick(SETTLE, MONITOR)
+                .thenAwaitScreen(CommandPromptScreen.class, BOOT_WAIT)
+                .thenAssert(SETTLE, () -> prompt(ctx).editing(), "the editor is still open on the machine")
+                .thenScreenshot(2, "nano-found-again")
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_O, GLFW.GLFW_MOD_CONTROL))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .thenWaitUntilServer(level -> written(ctx, level).contains("typed and never written"), SCREEN_WAIT,
+                        "what was typed before looking away to be written", level -> written(ctx, level))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_X, GLFW.GLFW_MOD_CONTROL))
+                .thenWaitUntil(() -> !prompt(ctx).editing(), SCREEN_WAIT, "nano to give the terminal back");
+    }
+
+    /**
+     * The partition editor's longest question is wider than the glass. It carries on at the start of the next
+     * row, in the same cells as everything above it, and the answer is typed after it.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void fdisk_aQuestionWiderThanTheGlassTakesTwoRows(final ClientTestContext ctx) {
+        atTheLivePrompt(ctx, "gentoo", LiveInstallState.Distro.GENTOO)
+                .then(SETTLE, () -> ctx.type("fdisk /dev/sda"))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .thenWaitUntil(() -> said(ctx, "Welcome to fdisk"), SCREEN_WAIT, "the partition editor to open")
+                .then(SETTLE, () -> ctx.type("g"))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .then(SETTLE, () -> ctx.type("n"))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .then(SETTLE, () -> ctx.type("+512M"))
+                .thenScreenshot(2, "fdisk-long-question")
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .thenWaitUntil(() -> said(ctx, "of size 512 MiB"), SCREEN_WAIT, "the partition to be made")
+                .thenScreenshot(2, "fdisk-partition-made");
+    }
+
+    /**
+     * Tab goes round the commands that start with what was typed: a second press moves on to the next one
+     * rather than finishing the one the first press put on the line, and typing ends the round.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void tab_goesRoundTheCommandsThatStartWithWhatWasTyped(final ClientTestContext ctx) {
+        final String[] first = new String[1];
+        atTheLivePrompt(ctx, "gentoo", LiveInstallState.Distro.GENTOO)
+                .then(SETTLE * 3, () -> ctx.type("mkfs."))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_TAB))
+                .thenAssert(1, () -> prompt(ctx).typed().startsWith("mkfs.") && prompt(ctx).typed().length() > 5,
+                        "the first press finishes a command that starts that way")
+                .then(1, () -> first[0] = prompt(ctx).typed())
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_TAB))
+                .thenAssert(1, () -> prompt(ctx).typed().startsWith("mkfs.") && !prompt(ctx).typed().equals(first[0]),
+                        "the second press moves on to another command that starts that way")
+                .then(1, () -> ctx.type(" "))
+                .then(1, () -> ctx.key(GLFW.GLFW_KEY_TAB))
+                .thenAssert(1, () -> prompt(ctx).typed().contains(" /dev/sd"),
+                        "after the command, the press offers the machine's drives");
+    }
+
+    private static boolean said(final ClientTestContext ctx, final String what) {
+        final CommandPromptScreen<?> screen = ctx.screen(CommandPromptScreen.class);
+        return screen != null && screen.scrollbackText().stream().anyMatch(line -> line.contains(what));
+    }
+
     private static CommandPromptScreen<?> prompt(final ClientTestContext ctx) {
         return ctx.screen(CommandPromptScreen.class);
     }

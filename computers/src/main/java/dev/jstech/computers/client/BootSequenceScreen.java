@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.PostCompletePayload;
@@ -40,8 +41,8 @@ import java.util.List;
  */
 public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
-    private static final int W = 340;
-    private static final int H = 214;
+    private static final int W = MonitorGlass.WIDTH;
+    private static final int H = MonitorGlass.HEIGHT;
 
     /** How long a self-test is drawn for when the machine did not say, which only a stale packet leaves. */
     private static final int FALLBACK_TICKS = 70;

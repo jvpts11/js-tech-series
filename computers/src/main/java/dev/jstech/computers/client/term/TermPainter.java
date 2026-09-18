@@ -10,6 +10,7 @@ package dev.jstech.computers.client.term;
 import dev.jstech.computers.gui.term.TermRow;
 import dev.jstech.computers.program.cli.CliSpan;
 import dev.jstech.computers.program.cli.CliStyle;
+import dev.jstech.core.gui.TextShadow;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +30,7 @@ import org.joml.Matrix4f;
  * cell, and once it does all of that goes away: tables line up, bars hold still, and the right-hand edge of a
  * status column is an edge.
  *
- * <p>One character at a time would be one draw at a time, which is a great many for a glass of sixty-four
+ * <p>One character at a time would be one draw at a time, which is a great many for a glass of eighty
  * columns. So a row is worked out once, into the fewest strings that land on the grid when drawn the ordinary
  * way: a run of characters that each fill their cell is one string, and only a narrow one, which has to be
  * nudged to the middle of its cell, starts another. The whole glass then goes to the card in one batch.
@@ -47,16 +48,14 @@ public final class TermPainter {
      *
      * @param pitch   how far apart the rows are, in the same units as the pose
      * @param colorOf the colour a style has on this glass, which a one-colour tube answers differently
+     * @param ground  the colour of the glass the rows are on, which is what their shadow is worked out against
      */
     public void draw(final GuiGraphics g, final Font font, final List<TermRow> rows, final int x, final int y,
-                     final int pitch, final ToIntFunction<CliStyle> colorOf) {
+                     final int pitch, final ToIntFunction<CliStyle> colorOf, final int ground) {
         final Matrix4f pose = g.pose().last().pose();
         int at = y;
         for (final TermRow row : rows) {
-            for (final Piece piece : this.worked.computeIfAbsent(row, r -> piecesOf(r, font))) {
-                font.drawInBatch(piece.text(), x + piece.x(), at, colorOf.applyAsInt(piece.style()), false, pose,
-                        g.bufferSource(), Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
-            }
+            pieces(g, font, this.worked.computeIfAbsent(row, r -> piecesOf(r, font)), x, at, colorOf, ground, pose);
             at += pitch;
         }
         g.flush();
@@ -64,24 +63,37 @@ public final class TermPainter {
 
     /** One row of the glass on its own, for a view that is handed its rows one at a time. */
     public void drawRow(final GuiGraphics g, final Font font, final TermRow row, final int x, final int y,
-                        final ToIntFunction<CliStyle> colorOf) {
-        final Matrix4f pose = g.pose().last().pose();
-        for (final Piece piece : this.worked.computeIfAbsent(row, r -> piecesOf(r, font))) {
-            font.drawInBatch(piece.text(), x + piece.x(), y, colorOf.applyAsInt(piece.style()), false, pose,
-                    g.bufferSource(), Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
-        }
+                        final ToIntFunction<CliStyle> colorOf, final int ground) {
+        pieces(g, font, this.worked.computeIfAbsent(row, r -> piecesOf(r, font)), x, y, colorOf, ground,
+                g.pose().last().pose());
         g.flush();
     }
 
     /** One row on its own, for the line being typed, which changes too often to be worth remembering. */
     public void drawOnce(final GuiGraphics g, final Font font, final TermRow row, final int x, final int y,
-                         final ToIntFunction<CliStyle> colorOf) {
-        final Matrix4f pose = g.pose().last().pose();
-        for (final Piece piece : piecesOf(row, font)) {
+                         final ToIntFunction<CliStyle> colorOf, final int ground) {
+        pieces(g, font, piecesOf(row, font), x, y, colorOf, ground, g.pose().last().pose());
+        g.flush();
+    }
+
+    /**
+     * One row into the batch: every piece's shadow, and then every piece over them.
+     *
+     * <p>The shadow is a second copy a unit down and to the right, in a colour worked out from the letter and
+     * the glass rather than the dark copy of the letter the game would use, which is only a shadow on a dark
+     * ground. It goes in ahead of the letters so that no letter is ever under its neighbour's.
+     */
+    private static void pieces(final GuiGraphics g, final Font font, final List<Piece> row, final int x, final int y,
+                               final ToIntFunction<CliStyle> colorOf, final int ground, final Matrix4f pose) {
+        for (final Piece piece : row) {
+            font.drawInBatch(piece.text(), x + piece.x() + 1, y + 1,
+                    TextShadow.of(colorOf.applyAsInt(piece.style()), ground), false, pose, g.bufferSource(),
+                    Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
+        }
+        for (final Piece piece : row) {
             font.drawInBatch(piece.text(), x + piece.x(), y, colorOf.applyAsInt(piece.style()), false, pose,
                     g.bufferSource(), Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
         }
-        g.flush();
     }
 
     /** How many cells fit across that many pixels at that scale. */

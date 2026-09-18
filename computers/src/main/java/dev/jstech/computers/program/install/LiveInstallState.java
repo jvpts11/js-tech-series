@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.install;
 
+import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableNames;
 import java.util.ArrayList;
@@ -158,11 +159,12 @@ public final class LiveInstallState {
      * off outside, because from in there that is where you are.
      */
     public String prompt() {
-        final String where = this.files.cwdForPrompt();
-        if (this.distro == Distro.ARCH) {
-            return this.files.inside() ? "[root@archiso " + where + "]#" : "root@archiso " + where + " #";
-        }
-        return this.files.inside() ? "(chroot) livecd " + where + " #" : "livecd " + where + " #";
+        return this.promptLine().text();
+    }
+
+    /** The same prompt in the colours each medium's shell really gives it. */
+    public CliLine promptLine() {
+        return LivePrompt.of(this.distro, this.files.inside(), this.files.cwdForPrompt());
     }
 
     /**

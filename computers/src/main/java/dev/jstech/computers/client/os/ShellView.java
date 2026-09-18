@@ -375,7 +375,7 @@ public final class ShellView extends Panel {
     private void renderLine(final GuiGraphics g, final UiContext ctx, final TermRow row, final int index,
                             final int x, final int y, final int w, final int h,
                             final boolean hovered, final boolean selected) {
-        this.painter.drawRow(g, ctx.font(), row, x, y, TermPalette::colorOf);
+        this.painter.drawRow(g, ctx.font(), row, x, y, TermPalette::colorOf, groundOf(this.osSkin));
     }
 
     @Override
@@ -398,7 +398,13 @@ public final class ShellView extends Panel {
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
         if (this.editor != null) {
-            return this.editor.keyPressed(key, modifiers);
+            /*
+             * Every key is the editor's, and one it has no use for goes nowhere. On a desktop that matters for
+             * Escape, which would otherwise close the desktop under an editor holding text nobody has written:
+             * a window is left with the mouse, so there is always another way out of this one.
+             */
+            this.editor.keyPressed(key, modifiers);
+            return true;
         }
         if (this.busy && key == GLFW.GLFW_KEY_C && ((modifiers & GLFW.GLFW_MOD_CONTROL) != 0
                 || Screen.hasControlDown())) {
@@ -420,7 +426,7 @@ public final class ShellView extends Panel {
     /** What stands in front of what is typed: the prompt, a tool's question, or nothing while something runs. */
     private String promptNow() {
         if (this.keyboard.asking()) {
-            return this.keyboard.question().text().stripTrailing();
+            return this.keyboard.standing().text().stripTrailing();
         }
         return this.busy ? "" : this.prompt;
     }

@@ -40,8 +40,11 @@ public final class TermBuffer {
      * <p>Fixed rather than worked out from the window, because the tools that run at a terminal measure it
      * and size their bars and tables to it, the way real ones do, and the machine has to tell them the same
      * number the screen is going to draw, wherever the player happens to be standing.
+     *
+     * <p>Eighty, which is what a terminal has had since there were terminals and what the tools that run at
+     * one lay their output out for. It is also what fits: a monitor's glass at the size its text is drawn.
      */
-    public static final int MONITOR_COLUMNS = 64;
+    public static final int MONITOR_COLUMNS = 80;
 
     /** How far apart tab stops are, which is what the tools that indent with a tab are counting on. */
     private static final int TAB = 8;
@@ -164,7 +167,7 @@ public final class TermBuffer {
     }
 
     /** The line a cell at a time, its tabs opened out to the next stop. */
-    private static List<Cell> cellsOf(final CliLine line) {
+    static List<Cell> cellsOf(final CliLine line) {
         final List<Cell> cells = new ArrayList<>();
         for (final CliSpan span : line.spans()) {
             final String text = span.text();
@@ -183,7 +186,7 @@ public final class TermBuffer {
     }
 
     /** The cells from one to another as a row, runs of one colour joined back together. */
-    private static TermRow rowOf(final List<Cell> cells, final int from, final int to) {
+    static TermRow rowOf(final List<Cell> cells, final int from, final int to) {
         final List<CliSpan> runs = new ArrayList<>();
         final StringBuilder run = new StringBuilder();
         CliSpan of = null;
@@ -207,6 +210,6 @@ public final class TermBuffer {
     }
 
     /** One character and the run it came out of, which is where its colour is. */
-    private record Cell(char ch, CliSpan of) {
+    record Cell(char ch, CliSpan of) {
     }
 }

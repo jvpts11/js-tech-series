@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.os.boot.BootMenu;
@@ -28,8 +29,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
-    private static final int W = 340;
-    private static final int H = 214;
+    private static final int W = MonitorGlass.WIDTH;
+    private static final int H = MonitorGlass.HEIGHT;
 
     /** How far the ruled box and the help under it stand from the edges of the glass. */
     private static final int MARGIN = 14;
