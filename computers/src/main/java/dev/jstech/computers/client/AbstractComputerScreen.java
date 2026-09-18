@@ -27,6 +27,15 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
     /** The skin this screen paints with for the current render pass; STANDARD until {@link #init} resolves it. */
     protected EraTheme theme = EraThemes.STANDARD;
 
+    /**
+     * Where a label goes when the screen draws none.
+     *
+     * <p>A computer screen that fills a monitor writes its own headings and has no use for the two a
+     * container screen puts up by itself, and there is no switch for turning them off; putting them far
+     * enough out is how it is done.
+     */
+    protected static final int OFF_SCREEN = -10_000;
+
     protected AbstractComputerScreen(final T menu, final Inventory playerInventory, final Component title) {
         super(menu, playerInventory, title);
     }

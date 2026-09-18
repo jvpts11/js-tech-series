@@ -18,6 +18,7 @@ import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.menu.DosTerminalMenu;
 import dev.jstech.computers.menu.LinuxTtyMenu;
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.OpenBootMenuPayload;
 import dev.jstech.computers.operation.payload.OpenComputerUiPayload;
 import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
@@ -325,13 +326,37 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                 computer.menuRemaining()));
     }
 
-    /** Sends the client the system this machine is bringing up, at the point the machine has reached. */
+    /**
+     * Sends the client the system this machine is bringing up, at the point the machine has reached.
+     *
+     * <p>What is on the glass goes first and the session that shows it second, in that order, so the screen
+     * is built with the machine's own lines already in hand rather than blank for a tick.
+     */
     public static void openSystemBoot(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                       final BlockPos owner, final IOsHost computer) {
-        ScreenSessions.opened(player, monitorPos, owner);
         PacketDistributor.sendToPlayer(player, new OpenSystemBootPayload(
                 owner, monitorPos, computer.bootRemaining(), computer.bootTotal(),
                 computer.bootSequence(), false));
+        openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.SYSTEM_BOOT);
+    }
+
+    /**
+     * Opens one of a monitor's sessions: the self-test, the boot manager, a system coming up, the firmware
+     * setup, an installer, or a rack's channel switch.
+     *
+     * <p>All of them are one menu with a phase, so the server is told when a player closes one and stops
+     * counting them as watching. That is what stopped an installer's next page turning up in front of
+     * somebody who had walked away from the machine.
+     */
+    private static void openSession(final ServerPlayer player, final Level level, final BlockPos monitorPos,
+                                    final BlockPos owner, final IOsHost computer,
+                                    final MonitorSessionMenu.Phase phase) {
+        final HardwareEra era = computer.displayEra();
+        // The machine's own name: these screens write their own headings, so nothing draws this one.
+        final Component title = level.getBlockState(owner).getBlock().getName();
+        player.openMenu(new SimpleMenuProvider(
+                (id, inv, p) -> new MonitorSessionMenu(id, inv, monitorPos, owner, era, phase), title),
+                buf -> MonitorSessionMenu.writeOpenBuffer(buf, monitorPos, owner, era, phase));
     }
 
     /** Sends the client the copy this machine is in the middle of, at the point the machine has reached. */

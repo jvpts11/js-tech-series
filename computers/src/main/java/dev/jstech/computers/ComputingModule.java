@@ -101,6 +101,7 @@ import dev.jstech.computers.menu.ImportBusMenu;
 import dev.jstech.computers.menu.InputBusMenu;
 import dev.jstech.computers.menu.LinuxTtyMenu;
 import dev.jstech.computers.menu.MainframeMenu;
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.menu.NetworkGatewayMenu;
 import dev.jstech.computers.menu.PatternEncoderMenu;
 import dev.jstech.computers.menu.PersonalComputerMenu;
@@ -687,6 +688,16 @@ public final class ComputingModule {
             MenuType<CommandPromptMenu>> COMMAND_PROMPT_MENU =
             MENUS.register("command_prompt", () -> IMenuTypeExtension.create(
                     CommandPromptMenu::fromNetwork));
+
+    /*
+     * Every session on a monitor that is not a system: the self-test, the boot manager, the firmware setup,
+     * a system coming up, an installer, and the rack's channel switch. One menu with a phase rather than one
+     * per screen, because they carry exactly the same thing and differ only in what is drawn on the glass.
+     */
+    public static final DeferredHolder<MenuType<?>,
+            MenuType<MonitorSessionMenu>> MONITOR_SESSION_MENU =
+            MENUS.register("monitor_session", () -> IMenuTypeExtension.create(
+                    MonitorSessionMenu::fromNetwork));
 
     /*
      * Each terminal platform opens its own screen: MC-DOS and the Linux TTY carry the Command Prompt's

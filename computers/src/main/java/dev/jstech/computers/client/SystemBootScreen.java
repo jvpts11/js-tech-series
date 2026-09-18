@@ -7,15 +7,16 @@
  */
 package dev.jstech.computers.client;
 
-import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.core.gui.Phosphor;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The system coming up: what the monitor shows between the self-test ending and the desktop or the prompt opening.
@@ -24,7 +25,7 @@ import net.minecraft.network.chat.Component;
  * here from its own parts and its own network. This screen joins it wherever it has got to and waits: the machine
  * is what puts the system in front of the player when it is ready, so closing this changes nothing.
  */
-public final class SystemBootScreen extends Screen {
+public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     private static final int W = 340;
     private static final int H = 214;
@@ -32,8 +33,16 @@ public final class SystemBootScreen extends Screen {
     /** Drawn for this long when the machine did not say, which only a stale packet leaves. */
     private static final int FALLBACK_TICKS = 60;
 
-    private final BlockPos computerPos;
-    private final BlockPos monitorPos;
+    /**
+     * What the machine last said it was bringing up, kept until the screen showing it is built.
+     *
+     * <p>The machine sends what is on the glass and then opens the session, in that order, so by the time
+     * this screen is made the lines it draws are already here. It is one machine's worth because one monitor
+     * is being looked at at a time.
+     */
+    @Nullable
+    private static Starting pending;
+
     private final BootSequence sequence;
     private final int totalTicks;
     /** Whether a dark monitor follows this rather than a system, which is what a machine going down leaves. */
@@ -41,20 +50,33 @@ public final class SystemBootScreen extends Screen {
 
     private int ticks;
 
-    public SystemBootScreen(final BlockPos computerPos, final BlockPos monitorPos, final BootSequence sequence,
-                            final int remainingTicks, final int totalTicks, final boolean endsDark) {
-        super(Component.literal("Starting"));
-        this.computerPos = computerPos;
-        this.monitorPos = monitorPos;
-        this.sequence = sequence;
-        this.totalTicks = totalTicks > 0 ? totalTicks : FALLBACK_TICKS;
-        this.ticks = Math.max(0, this.totalTicks - Math.max(0, remainingTicks));
-        this.endsDark = endsDark;
+    public SystemBootScreen(final MonitorSessionMenu menu, final Inventory inventory, final Component title) {
+        super(menu, inventory, title);
+        this.imageWidth = W;
+        this.imageHeight = H;
+        this.titleLabelX = OFF_SCREEN;
+        this.inventoryLabelY = OFF_SCREEN;
+        final Starting starting = pending != null ? pending
+                : new Starting(BootSequence.NONE, FALLBACK_TICKS, FALLBACK_TICKS, false);
+        this.sequence = starting.sequence();
+        this.totalTicks = starting.totalTicks() > 0 ? starting.totalTicks() : FALLBACK_TICKS;
+        this.ticks = Math.max(0, this.totalTicks - Math.max(0, starting.remainingTicks()));
+        this.endsDark = starting.endsDark();
+    }
+
+    /** What the machine is bringing up, said before the session that shows it is opened. */
+    public static void expect(final BootSequence sequence, final int remainingTicks, final int totalTicks,
+                              final boolean endsDark) {
+        pending = new Starting(sequence, remainingTicks, totalTicks, endsDark);
+    }
+
+    /** One machine coming up: what it prints, how far along it is, and whether the glass goes dark after. */
+    private record Starting(BootSequence sequence, int remainingTicks, int totalTicks, boolean endsDark) {
     }
 
     @Override
-    public void tick() {
-        super.tick();
+    protected void containerTick() {
+        super.containerTick();
         if (this.ticks < this.totalTicks) {
             this.ticks++;
             return;
@@ -74,15 +96,10 @@ public final class SystemBootScreen extends Screen {
     }
 
     @Override
-    public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
-        /*
-         * Screen.render paints the dimmed backdrop itself; painting it again after our own drawing would wash the
-         * whole sequence out, so super runs FIRST and the content after.
-         */
-        super.render(g, mouseX, mouseY, partialTick);
-        final int x = (width - W) / 2;
-        final int y = (height - H) / 2;
-        final HardwareEra era = era();
+    protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
+        final int x = this.leftPos;
+        final int y = this.topPos;
+        final HardwareEra era = screenEra() == null ? HardwareEra.STANDARD : screenEra();
         MonitorFrame.renderBody(g, x, y, W, H, era, font);
         g.fill(x, y, x + W, y + H, 0xFF05070A);
 
@@ -140,16 +157,13 @@ public final class SystemBootScreen extends Screen {
 
     /** The monitor this is drawn on, for whatever asks. */
     public BlockPos monitor() {
-        return this.monitorPos;
+        return this.getMenu().monitorPos();
     }
 
-    /** The host computer's era, so the monitor bezel matches the machine the system is coming up on. */
-    private HardwareEra era() {
-        final Minecraft mc = Minecraft.getInstance();
-        if (mc.level != null && mc.level.getBlockEntity(this.computerPos)
-                instanceof AbstractComputerBlockEntity computer && computer.displayEra() != null) {
-            return computer.displayEra();
-        }
-        return HardwareEra.STANDARD;
+    /** The machine's own generation, so the bezel is the monitor that machine would really have. */
+    @Override
+    @Nullable
+    protected HardwareEra screenEra() {
+        return this.getMenu().hardwareEra();
     }
 }

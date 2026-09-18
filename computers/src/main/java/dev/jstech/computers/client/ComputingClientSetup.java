@@ -19,6 +19,7 @@ import dev.jstech.computers.block.IPostScreenOpener;
 import dev.jstech.computers.block.ISystemBootScreenOpener;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.menu.CommandPromptMenu;
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -73,9 +74,13 @@ public final class ComputingClientSetup {
         IBootMenuScreenOpener.Holder.set(
                 (pos, monitorPos, menu, remaining) -> Minecraft.getInstance().setScreen(
                         new BootMenuScreen(pos, monitorPos, menu, remaining)));
+        /*
+         * What is on the glass arrives before the session that shows it, so these hand the content over and
+         * the menu opening is what puts the screen up.
+         */
         ISystemBootScreenOpener.Holder.set(
-                (pos, monitorPos, sequence, remaining, total, endsDark) -> Minecraft.getInstance().setScreen(
-                        new SystemBootScreen(pos, monitorPos, sequence, remaining, total, endsDark)));
+                (pos, monitorPos, sequence, remaining, total, endsDark) ->
+                        SystemBootScreen.expect(sequence, remaining, total, endsDark));
         IInstallProgressScreenOpener.Holder.set(
                 (pos, monitorPos, kind, osName, targetLabel, ticksLeft, ticksTotal) ->
                         Minecraft.getInstance().setScreen(OsInstallScreen.working(pos, monitorPos, kind, osName,
@@ -83,6 +88,16 @@ public final class ComputingClientSetup {
         IKvmScreenOpener.Holder.set(payload ->
                 Minecraft.getInstance().setScreen(new KvmChannelScreen(payload)));
 
+        /*
+         * Every session on a monitor that is not a system shares one menu, so which screen it opens is read
+         * off the phase it carries rather than off a menu type of its own.
+         */
+        event.register(ComputingModule.MONITOR_SESSION_MENU.get(),
+                (final MonitorSessionMenu menu, final Inventory inv, final Component title) ->
+                        switch (menu.phase()) {
+                            case SYSTEM_BOOT -> new SystemBootScreen(menu, inv, title);
+                            default -> new SystemBootScreen(menu, inv, title);
+                        });
         event.register(ComputingModule.DESKTOP_MENU.get(), DesktopScreen::new);
         event.register(ComputingModule.MAINFRAME_MENU.get(), MainframeScreen::new);
         event.register(ComputingModule.PERSONAL_COMPUTER_MENU.get(), PersonalComputerScreen::new);

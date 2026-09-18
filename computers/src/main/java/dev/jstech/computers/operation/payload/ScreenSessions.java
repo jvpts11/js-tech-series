@@ -11,6 +11,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.menu.DesktopMenu;
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -100,6 +101,23 @@ public final class ScreenSessions {
             if (player != null) {
                 action.accept(player, each.getValue().monitor());
             }
+        }
+        /*
+         * And whoever has one of the monitor's sessions open as a menu. These are being moved over to menus one
+         * at a time, so for now a machine's watchers can be standing in either place; a menu is the better half
+         * of it, since the server is told the moment one closes rather than having to be remembered here.
+         */
+        final List<ServerPlayer> atSessions = new ArrayList<>();
+        for (final ServerPlayer player : level.players()) {
+            if (player.containerMenu instanceof MonitorSessionMenu session
+                    && session.hostPos().equals(host)) {
+                atSessions.add(player);
+            }
+        }
+        for (final ServerPlayer player : atSessions) {
+            final BlockPos monitor = player.containerMenu instanceof MonitorSessionMenu session
+                    ? session.monitorPos() : host;
+            action.accept(player, monitor);
         }
     }
 
