@@ -17,7 +17,6 @@ import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.core.gui.Phosphor;
 import dev.jstech.core.tier.HardwareEra;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -42,8 +41,6 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
 
     /** How long a self-test is drawn for when the machine did not say, which only a stale packet leaves. */
     private static final int FALLBACK_TICKS = 70;
-    /** Safety: if the server never swaps the screen (nothing could open), close on our own. */
-    private static final int GRACE_TICKS = 60;
 
     /** The self-test the machine last reported, kept until the session that shows it is built. */
     @Nullable
@@ -149,15 +146,12 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
             completed = true;
         }
         /*
-         * A machine with nothing to boot stands at its failure until a key is pressed, so this stays on the
-         * glass however long that takes. Anything else gets the way out: a machine switched off mid-test
-         * leaves this here with nothing else to show, and the grace is how it stops waiting forever.
+         * This never sees itself out. It used to, as a way out if the machine never swapped the screen, and that
+         * became the reason the machine could not: the session a player holds is how the machine knows who is
+         * watching, so closing it is leaving, and leaving guarantees that nothing comes. A self-test ends by the
+         * machine handing over, a failed one waits for a key, and a machine switched off mid-test is left on the
+         * glass until somebody presses Escape, which is the way out of every other screen here.
          */
-        final boolean waitingAtAFailure = completed && bootingFrom().isEmpty();
-        if (!waitingAtAFailure && ticks >= postTicks + GRACE_TICKS
-                && Minecraft.getInstance().screen == this) {
-            onClose();
-        }
     }
 
     @Override

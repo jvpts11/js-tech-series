@@ -48,6 +48,7 @@ public final class BootRunner {
     public static void tick(final IOsHost machine, final BootPhases phases, final ServerLevel level,
                             final BlockPos pos) {
         post(machine, phases, level, pos);
+        halted(machine, phases, level, pos);
         menu(machine, phases, level);
         boot(machine, phases, level, pos);
     }
@@ -115,6 +116,41 @@ public final class BootRunner {
             final BootMenu list = BootLines.menuFor(machine, MENU_TICKS);
             if (!list.isEmpty() && ComputersServerConfig.showBootMenu()) {
                 phases.beginMenu(now, MENU_TICKS);
+                showMenu(machine, level, pos);
+            } else {
+                phases.beginBoot();
+            }
+            return;
+        }
+        if (machine.onScreen()) {
+            ScreenSessions.bootWatchers(level, pos);
+        }
+    }
+
+    /**
+     * A machine standing at a self-test that found nothing to boot, once something to boot turns up.
+     *
+     * <p>It is waiting for exactly one thing, so when that thing arrives it stops waiting. A machine is powered
+     * the moment it is built and its self-test ends seconds later, which is usually before anybody has plugged a
+     * drive into it: without this it would stand at a failure that stopped being true, and opening its monitor
+     * would show that failure rather than the machine it had become.
+     *
+     * <p>Switching it off and on again would do the same, and still does. This only spares a player doing it for
+     * a machine that is plainly ready.
+     */
+    private static void halted(final IOsHost machine, final BootPhases phases, final ServerLevel level,
+                               final BlockPos pos) {
+        if (!phases.halted() || !machine.isRunning()) {
+            return;
+        }
+        if (!machine.hasOs() && !machine.hasBootableMedium()) {
+            return;
+        }
+        phases.resume();
+        if (machine.hasOs()) {
+            final BootMenu list = BootLines.menuFor(machine, MENU_TICKS);
+            if (!list.isEmpty() && ComputersServerConfig.showBootMenu()) {
+                phases.beginMenu(level.getGameTime(), MENU_TICKS);
                 showMenu(machine, level, pos);
             } else {
                 phases.beginBoot();

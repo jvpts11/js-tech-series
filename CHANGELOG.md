@@ -398,6 +398,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   every one of the five shapes an installer can wear.
 - Frames 11 Setup opened on its table of disks, so the first thing it showed was a question about erasing
   something, with nothing having said what was about to happen. It opens on a word first, as the others do.
+- A machine standing at a self-test that found nothing to boot now carries on when something to boot turns up,
+  rather than standing there for good. A machine is powered the moment it is built and its self-test ends
+  seconds later, which is usually before anybody has plugged a drive into it, so it would otherwise be found
+  at a failure that had stopped being true. Switching it off and on again would have done the same and still
+  does; this only spares doing it to a machine that is plainly ready.
+- The power-on self-test no longer sees itself out. It used to close after a few seconds as a way out if the
+  machine never swapped the screen, and that became the reason the machine could not: the screen a player
+  holds is how the machine knows who is watching, so closing it was leaving, and leaving guaranteed nothing
+  came. Opening the monitor of a machine with nothing to boot left the player looking at the world.
 - A machine whose self-test found nothing to boot only stood at its failure for whoever was already watching.
   Opening the monitor afterwards dropped the player into the firmware setup with no word about why the machine
   had not started, and the failure closed itself after three seconds even for somebody looking straight at it.
