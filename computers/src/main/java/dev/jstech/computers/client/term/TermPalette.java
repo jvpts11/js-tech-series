@@ -36,6 +36,7 @@ public final class TermPalette {
             case BLUE -> 0xFF5A8FD6;
             case CYAN -> 0xFF2FA6E8;
             case PURPLE -> 0xFF9E8FD6;
+            case BRIGHT -> 0xFFFFFFFF;         // the terminal's bold: what a tool wants read first
             default -> 0xFFCDD6E2;             // plain = light gray
         };
     }
