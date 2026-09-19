@@ -60,10 +60,8 @@ public final class ShellApp implements IDesktopApp {
 
     public ShellApp(final BlockPos host, @Nullable final ResourceLocation desktopId) {
         final DesktopEnvironmentDef chrome = desktopId == null ? null : OsRegistry.getDesktop(desktopId);
-        final boolean posix = chrome != null && switch (chrome.panelStyle()) {
-            case KDE, GNOME, CINNAMON -> true;
-            default -> false;
-        };
+        // The desktop says which family it stands on; a list kept here was what left the next desktop out.
+        final boolean posix = chrome != null && chrome.panelStyle().unixLike();
         final ProgramSpec promptSpec = Programs.get(Programs.COMMAND_PROMPT);
         /*
          * Frames 11 ships its own modern shell ("Megashell"); every other desktop names the window after its

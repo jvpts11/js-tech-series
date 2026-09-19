@@ -7,9 +7,12 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.MkdirPayload;
 import dev.jstech.computers.operation.payload.RequestDiskFilesPayload;
+import dev.jstech.computers.os.DesktopEnvironmentDef;
+import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Breadcrumbs;
@@ -29,6 +32,7 @@ import java.util.function.Consumer;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
@@ -772,7 +776,13 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
     @Override
     public void applySkin(final OsSkin value) {
         this.skin = value;
-        this.posix = value.form() == OsSkin.Form.KDE2 || value.form() == OsSkin.Form.GNOME1;
+        /*
+         * The desktop says which family it stands on. This used to be read off the look of the skin, which only
+         * the two period desktops wear, so every other Unix desktop showed drive letters and a Local Disk.
+         */
+        final DesktopEnvironmentDef desktop =
+                OsRegistry.getDesktop(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, value.osPath()));
+        this.posix = desktop != null && desktop.panelStyle().unixLike();
     }
 
     @Override

@@ -11,6 +11,8 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.client.os.DesktopWindow;
+import dev.jstech.computers.client.os.ShellApp;
 import dev.jstech.computers.gui.layout.CdeExitLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.hardware.DiskSize;
@@ -258,6 +260,32 @@ public final class CdeClientTests {
                 .thenWaitUntil(() -> !desktop(ctx).powerDialogOpen(), SCREEN_WAIT, "Cancel to put the dialog away")
                 .thenAssert(1, () -> desktop(ctx).shownWindowLabels().contains("File Manager"),
                         "and the File Manager is still open");
+    }
+
+    /**
+     * The Terminal of a UNIX desktop is a UNIX terminal: it opens on the shell's own prompt and greets nobody,
+     * and nothing in it speaks the way a Frames command prompt does.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void terminal_opensOnTheShellPromptAndNotAsAFramesPrompt(final ClientTestContext ctx) {
+        atCde(ctx)
+                .then(SETTLE, () -> clickAt(ctx,
+                        desktop(ctx).frontPanelArrowPoint(CdeFrontPanelLayout.Control.EDITOR)))
+                .thenWaitUntil(() -> desktop(ctx).subpanelLabels().contains("Terminal"), SCREEN_WAIT,
+                        "Personal Applications to come up")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).subpanelPoint("Terminal")))
+                .thenWaitUntil(() -> terminal(ctx) != null && terminal(ctx).prompt().endsWith("$"), SCREEN_WAIT * 2,
+                        "the Terminal to come up on the shell's prompt")
+                .thenAssert(1, () -> !terminal(ctx).scrollbackText().contains("Midsoft")
+                                && !terminal(ctx).scrollbackText().contains("HELP")
+                                && !terminal(ctx).scrollbackText().contains("CDE"),
+                        "a UNIX terminal says nothing of the desktop, of Midsoft or of HELP when it opens")
+                .thenScreenshot(SETTLE, "cde-terminal");
+    }
+
+    private static ShellApp terminal(final ClientTestContext ctx) {
+        final DesktopWindow window = desktop(ctx).windowFor("Terminal");
+        return window != null && window.app() instanceof ShellApp shell ? shell : null;
     }
 
     /** A double click on the menu button closes the window, as it always did on a Motif title bar. */

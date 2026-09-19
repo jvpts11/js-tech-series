@@ -269,6 +269,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   Calculator) and Applications (the Application Manager and the Performance Meter). A subpanel lists only what
   the machine has, starts what is chosen on it and stays up, and goes down when its arrow is pressed again or
   another arrow raises its own.
+- CDE's Terminal is a Unix terminal: it opens on the shell's own prompt, `player@host:~ $`, and greets nobody.
+  A desktop now says for itself whether it stands on a Unix family, so the next desktop cannot be left off a
+  list the way CDE was.
 - Escape puts the power dialog away on every desktop instead of closing the monitor behind it, and no key
   reaches a program while that dialog is up.
 - The File Manager and the file dialogs open a desktop's Desktop folder and Home where the system really
@@ -686,6 +689,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- The Save and Open dialogs of KDE Plasma, GNOME and Cinnamon show the machine's one tree from `/`, with Home and
+  Desktop among their places. Only the two period desktops did; every other Linux desktop showed drive letters, a
+  Local Disk (C:) and This PC, because the dialog told a Unix desktop by the look of its windows.
 - A character joined to text reads as the character. A program that wrote `"<" + c + ">"` with `c` holding
   `'a'` printed `<97>`, the number the character runs as.
 - Text a program prints with line breaks in it is printed as that many lines, and a break at the very end only
