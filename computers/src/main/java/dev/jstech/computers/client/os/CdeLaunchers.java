@@ -50,6 +50,10 @@ final class CdeLaunchers {
     private static final int ROW_H = 16;
     private static final int PAD = 3;
 
+    /** The Application Manager's picture, which is CDE's own and no program's. */
+    private static final ResourceLocation APPLICATION_MANAGER =
+            ResourceLocation.fromNamespaceAndPath("jsc", "application_manager");
+
     CdeLaunchers(final DesktopScreen desktop) {
         this.desktop = desktop;
     }
@@ -172,7 +176,8 @@ final class CdeLaunchers {
             program(out, "command_prompt");
             program(out, "calculator");
         } else if (this.open == Control.APPLICATIONS) {
-            out.add(new Row(ApplicationManagerApp.KEY, null, () -> desktop.openApplicationManager(null)));
+            out.add(new Row(ApplicationManagerApp.KEY, APPLICATION_MANAGER,
+                    () -> desktop.openApplicationManager(null)));
             program(out, "system_monitor");
             program(out, "workstation_info");
         }

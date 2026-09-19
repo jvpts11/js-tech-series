@@ -277,6 +277,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   beside the desktops it already could. Under the Front Panel the machine is still that distribution, with its
   own shell, its own tree and the player's home in `/home/player`. Gentoo builds it from source in the real
   order: Motif, the Korn shell, then CDE.
+- CDE has icons of its own, drawn the way CDE's were, with a black keyline, Motif's greys and few colours: a
+  filing cabinet for the File Manager, a written sheet and pencil for the Text Editor, a terminal with cream glass,
+  the Calculator, the Performance Meter's rising bars, a painter's palette for the Style Manager, a workstation
+  for Workstation Info and four coloured squares for the Application Manager. The network programs keep their
+  shapes in CDE's colours, and the CDE package has an icon of its own on every desktop.
 - CDE's Front Panel names a control after the pointer has rested on it for half a second, in a small raised
   plate just above the panel: Clock, Calendar, File Manager, Text Editor, Style Manager, Applications. The panel
   is pictures and nothing else, so this is how a player learns what each one opens.
