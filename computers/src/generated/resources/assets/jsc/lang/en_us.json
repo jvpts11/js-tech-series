@@ -228,6 +228,7 @@
   "program.jsc.automation_manager.desc": "Write and supervise the rules the Automation Engine runs.",
   "program.jsc.calculator": "Calculator",
   "program.jsc.calculator.desc": "A calculator.",
+  "program.jsc.cde": "CDE",
   "program.jsc.cinnamon": "Cinnamon",
   "program.jsc.cinnamon.desc": "The Cinnamon desktop environment.",
   "program.jsc.cluster_manager": "Cluster Manager",

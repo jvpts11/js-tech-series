@@ -43,6 +43,8 @@ public record SoftwareHouse(String name, String legalName) {
     public static final SoftwareHouse DAEMON_FOUNDATION =
             new SoftwareHouse("Daemon Foundation", "the Daemon Foundation");
     public static final SoftwareHouse BELLWETHER_LABS = new SoftwareHouse("Bellwether Labs", "Bellwether Labs");
+    public static final SoftwareHouse OPEN_DESK_CONSORTIUM =
+            new SoftwareHouse("Open Desk Consortium", "the Open Desk Consortium");
     public static final SoftwareHouse KDE_GUILD = new SoftwareHouse("KDE Guild", "the KDE Guild");
     public static final SoftwareHouse GNOME_TRUST = new SoftwareHouse("GNOME Trust", "the GNOME Trust");
     /** Cinnamon's house. */

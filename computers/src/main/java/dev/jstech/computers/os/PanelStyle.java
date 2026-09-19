@@ -30,5 +30,12 @@ public enum PanelStyle {
     GNOME,
 
     /** Bottom panel with a favourites-rail / categories / apps menu (Cinnamon). */
-    CINNAMON
+    CINNAMON,
+
+    /**
+     * A Front Panel at the bottom centre with the four workspaces in its middle, no list of open windows at
+     * all (a minimised window is an icon on its workspace), and the applications found through a manager that
+     * opens like a folder (CDE).
+     */
+    CDE
 }

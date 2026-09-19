@@ -178,13 +178,21 @@ public final class OsBootstrap {
      * Desktop apps that run under any desktop environment: the Frames editions and a Linux desktop alike. On
      * Frames they arrive on install media; on Linux the same programs are packages the Mirror serves.
      */
-    private static final Set<Platform> DESKTOPS = Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD);
+    private static final Set<Platform> DESKTOPS =
+            Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD, Platform.UNIX);
+    /**
+     * The same without UNIX, for the few desktop programs written for machines later than any UNIX desktop
+     * reaches: the automation front-end, which asks for the newest Frames, and the two later code editors.
+     */
+    private static final Set<Platform> LATER_DESKTOPS = Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD);
     private static final Set<Platform> LINUX_ONLY = Set.of(Platform.LINUX);
+    /** Where CDE runs: on UNIX, which has no other desktop, and on FreeBSD beside the ones it already takes. */
+    private static final Set<Platform> CDE_SYSTEMS = Set.of(Platform.UNIX, Platform.FREEBSD);
     /**
      * What is made for the systems met at a Unix prompt, whichever of them it is: the desktop environments and
      * the small tools the Mirror serves. FreeBSD takes all of it from its own packages and ports.
      */
-    private static final Set<Platform> UNIX_LIKE = Set.of(Platform.LINUX, Platform.FREEBSD);
+    private static final Set<Platform> LINUX_AND_FREEBSD = Set.of(Platform.LINUX, Platform.FREEBSD);
     private static final Set<Platform> FRAMES_ONLY = Set.of(Platform.FRAMES);
 
     /** The nine built-in desktop apps every desktop environment can bundle, in rail order. */
@@ -215,7 +223,16 @@ public final class OsBootstrap {
             new DesktopEnvironmentDef(rl("cinnamon"), "Cinnamon", PanelStyle.CINNAMON, BUILTIN_APPS, Map.of(
                     rl("files"), "Nemo", rl("editor"), "xed", rl("command_prompt"), "Terminal",
                     rl("calculator"), "Calculator", rl("system_monitor"), "System Monitor",
-                    rl("settings"), "System Settings", rl("this_pc"), "System Info"), SoftwareHouse.SPEARMINT)
+                    rl("settings"), "System Settings", rl("this_pc"), "System Info"), SoftwareHouse.SPEARMINT),
+            /*
+             * CDE keeps its own names for what it bundles, which are plainer than anybody else's: it called a
+             * file manager the File Manager. Its settings are the Style Manager, as they were.
+             */
+            new DesktopEnvironmentDef(rl("cde"), "CDE", PanelStyle.CDE, BUILTIN_APPS, Map.of(
+                    rl("files"), "File Manager", rl("editor"), "Text Editor", rl("command_prompt"), "Terminal",
+                    rl("calculator"), "Calculator", rl("system_monitor"), "Performance Meter",
+                    rl("settings"), "Style Manager", rl("this_pc"), "Workstation Info"),
+                    SoftwareHouse.OPEN_DESK_CONSORTIUM)
     );
 
     /** The built-in desktop environments, so tooling reads them from one source. */
@@ -228,10 +245,7 @@ public final class OsBootstrap {
             JsComputersApi.registerDesktop(desktop);
         }
     }
-    /*
-     * What runs on every system. UNIX is among them and in none of the narrower sets yet: at its terminal it
-     * takes what every system takes, and the desktop programs come to it with its own desktop.
-     */
+    /* What runs on every system, at a terminal as well as on a desktop. */
     private static final Set<Platform> ALL_PLATFORMS = Set.of(Platform.MC_DOS, Platform.MC_NET, Platform.FRAMES,
             Platform.LINUX, Platform.FREEBSD, Platform.UNIX);
 
@@ -320,7 +334,7 @@ public final class OsBootstrap {
             ProgramSpec.of(rl("automation_engine"), "autoeng", "Automation Engine", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 3, HostScope.MAINFRAME)
                     .withEra(STANDARD).withHouse(SoftwareHouse.RED_CAP).withRam(64),
             // The Automation Manager is a modern automation front-end -> Frames 11 (rank 3).
-            ProgramSpec.of(rl("automation_manager"), "automgr", "Automation Manager", false, DESKTOPS, 64, ProgramKind.APP, 3, HostScope.ANY)
+            ProgramSpec.of(rl("automation_manager"), "automgr", "Automation Manager", false, LATER_DESKTOPS, 64, ProgramKind.APP, 3, HostScope.ANY)
                     .withEra(STANDARD).withHouse(SoftwareHouse.RED_CAP).withRam(96),
             /*
              * Server services: headless daemons that only make sense on a machine mounted in a rack,
@@ -354,7 +368,7 @@ public final class OsBootstrap {
              * screenfetch: the little system-identity tool, a package the Mirror serves to any Linux (its
              * absence teaching the package manager: 'command not found' until you apt/dnf/pacman/emerge it).
              */
-            ProgramSpec.of(rl("screenfetch"), "screenfetch", "screenfetch", false, UNIX_LIKE, 4, ProgramKind.APP, 0, HostScope.ANY)
+            ProgramSpec.of(rl("screenfetch"), "screenfetch", "screenfetch", false, LINUX_AND_FREEBSD, 4, ProgramKind.APP, 0, HostScope.ANY)
                     .withEra(LEGACY).withHouse(SoftwareHouse.ARCH_COLLECTIVE).withRam(1),
             /*
              * The Σ# toolchain: the compiler and the runtime, two packages the Mirror serves to any
@@ -385,14 +399,14 @@ public final class OsBootstrap {
              * and its console welded into the bottom of the window, so a program is written, compiled and
              * run without leaving it. Frames XP or newer, and any Linux desktop.
              */
-            ProgramSpec.of(rl("virtual_studio_code"), "virtualcode", "Virtual Studio Code", false, DESKTOPS, 128, ProgramKind.APP, 2, HostScope.ANY)
+            ProgramSpec.of(rl("virtual_studio_code"), "virtualcode", "Virtual Studio Code", false, LATER_DESKTOPS, 128, ProgramKind.APP, 2, HostScope.ANY)
                     .withMinEra(LEGACY).withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(48),
             /*
              * Exposure: the editor that compiles every program on the disk instead of the one in front
              * of you, so changing something shared shows which of the others stopped building. It offers
              * nothing as you type, which is the trade.
              */
-            ProgramSpec.of(rl("exposure"), "exposure", "Exposure", false, DESKTOPS, 192, ProgramKind.APP, 2, HostScope.ANY)
+            ProgramSpec.of(rl("exposure"), "exposure", "Exposure", false, LATER_DESKTOPS, 192, ProgramKind.APP, 2, HostScope.ANY)
                     .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.DAYLIGHT_FOUNDATION).withRam(64),
             /*
              * Vim takes over the terminal it was started from instead of opening a window of its own,
@@ -416,12 +430,19 @@ public final class OsBootstrap {
              * run on Legacy machines; Cinnamon is a much later desktop and needs Standard hardware. A
              * Vintage computer therefore has no graphical desktop at all and lives at the TTY.
              */
-            ProgramSpec.of(rl("kde_plasma"), "kde-plasma", "KDE Plasma", false, UNIX_LIKE, 256, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
+            ProgramSpec.of(rl("kde_plasma"), "kde-plasma", "KDE Plasma", false, LINUX_AND_FREEBSD, 256, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
                     .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.KDE_GUILD).withRam(224),
-            ProgramSpec.of(rl("gnome"), "gnome", "GNOME", false, UNIX_LIKE, 192, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
+            ProgramSpec.of(rl("gnome"), "gnome", "GNOME", false, LINUX_AND_FREEBSD, 192, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
                     .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.GNOME_TRUST).withRam(256),
-            ProgramSpec.of(rl("cinnamon"), "cinnamon", "Cinnamon", false, UNIX_LIKE, 160, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
-                    .withMinEra(STANDARD).withEra(STANDARD).withHouse(SoftwareHouse.SPEARMINT).withRam(160)
+            ProgramSpec.of(rl("cinnamon"), "cinnamon", "Cinnamon", false, LINUX_AND_FREEBSD, 160, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
+                    .withMinEra(STANDARD).withEra(STANDARD).withHouse(SoftwareHouse.SPEARMINT).withRam(160),
+            /*
+             * CDE: the desktop of the Unix workstations, and the only one UNIX has. A fraction of what the
+             * later desktops weigh, which is how a Legacy machine with a few megabytes to spare runs one. UNIX
+             * takes it from a medium like everything else it installs; FreeBSD takes it from its packages.
+             */
+            ProgramSpec.of(rl("cde"), "cde", "CDE", false, CDE_SYSTEMS, 32, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.OPEN_DESK_CONSORTIUM).withRam(16)
     );
 
     /** The built-in program descriptors, so datagen (lang, install media) reads them from one source. */

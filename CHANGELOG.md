@@ -220,6 +220,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   network to install from. `uname -a` answers the way System V did, the system, the node, the release, the
   version and the machine, and names the Integra Architecture down to `IA-16` on a 16-bit processor. Until its own
   installer arrives it installs through the plain guided one.
+- CDE, from the Open Desk Consortium: the desktop of the Unix workstations, and the only one UNIX has. It asks
+  for a machine of the Legacy generation, 32 MB of disk and 16 MB of memory, a fraction of what the later
+  desktops weigh. UNIX takes it from its medium with `installpkg`; FreeBSD takes it with `pkg install cde`,
+  beside the desktops it already could. It keeps its own plain names for what it bundles: File Manager, Text
+  Editor, Terminal, Calculator, Performance Meter, Style Manager and Workstation Info. With it, UNIX runs the
+  desktop programs that ask for Frames XP or a Linux desktop (Network Management Studio, the Crafting Manager,
+  Pattern Studio, Storage Insights, the Craft Planner, the Cluster and Gateway Managers, Remote Control,
+  Minesweeper); the Automation Manager, Virtual Studio Code and Exposure stay with the later desktops.
 - `installpkg`, the way UNIX installs a program: put the medium the package came on in a linked drive and say
   `installpkg`. With one medium in it takes what that medium carries; with several it lists them and asks to be
   told which by name, and with none it says so. The medium itself is met under `/mnt` by its drive letter. A
