@@ -9,7 +9,6 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.layout.FilesLayout;
 import dev.jstech.computers.machine.MachineListing;
-import dev.jstech.computers.operation.payload.DeleteFilePayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.EjectMediaPayload;
 import dev.jstech.computers.operation.payload.InstallFromMediaPayload;
@@ -491,6 +490,9 @@ public final class FilesApp implements IDesktopApp {
     /** The explorer's key for the other machines' shared folders. */
     private static final String NET_ROOT = "net:";
 
+    /** The tree's key for the trash, which is no folder the explorer lists but a window the desktop opens. */
+    private static final String TRASH_PLACE = "trash:";
+
     private boolean onNetwork() {
         return dir.startsWith(NET_ROOT);
     }
@@ -765,6 +767,8 @@ public final class FilesApp implements IDesktopApp {
         out.add(new TreeItem("Quick access", "", true, false, -1));
         out.add(new TreeItem("Desktop", desktopDirAt(host, !linux()), false, false, -1));
         out.add(new TreeItem("Storage", "Storage", false, false, -1));
+        // The trash is a place of the desktop, opened in a window of its own; a file dropped on it is deleted.
+        out.add(new TreeItem(DeskTrash.titleHere(), TRASH_PLACE, false, false, -1));
         out.add(new TreeItem(linux() ? "Devices" : "This PC", "", true, false, -1));
         for (int i = 0; i < volumes.size(); i++) {
             final DiskFilesPayload.WireVolume v = volumes.get(i);
@@ -969,8 +973,17 @@ public final class FilesApp implements IDesktopApp {
         final boolean cur = item.target().isEmpty() ? (dir.isEmpty() && isVolumeItem(item))
                 : isVolumeItem(item) ? isCurrentVolume(item.target()) : dir.equals(item.target());
         ctx.skin().listRow(g, x, y, w, h, hovered, cur);
-        FileIcons.draw(g, x + 2, y + 1, item.target().equals("Storage") ? FileIcons.Kind.DAT
-                : (isVolumeItem(item) ? (item.removable() ? FileIcons.Kind.BIN : FileIcons.Kind.HOME) : FileIcons.Kind.FOLDER));
+        if (item.target().equals(TRASH_PLACE)) {
+            final DesktopScreen desktop = DesktopScreen.current();
+            final boolean full = desktop != null && desktop.trashFull();
+            ProgramIcons.draw(g, x + 2, y, FilesLayout.ICON_W, FilesLayout.ROW_H,
+                    ResourceLocation.fromNamespaceAndPath("jsc", full ? "trash_full" : "trash"),
+                    desktop == null ? skin.iconSet() : desktop.icons());
+        } else {
+            FileIcons.draw(g, x + 2, y + 1, item.target().equals("Storage") ? FileIcons.Kind.DAT
+                    : (isVolumeItem(item) ? (item.removable() ? FileIcons.Kind.BIN : FileIcons.Kind.HOME)
+                    : FileIcons.Kind.FOLDER));
+        }
         if (!(isVolumeItem(item) && item.volumeIndex() == volRenaming)) {
             final int maxW = w + 2 - (FilesLayout.ICON_W + 8) - (item.removable() ? 8 : 0);
             g.drawString(ctx.font(), Texts.clip(ctx.font(), item.label(), maxW), x + 3 + FilesLayout.ICON_W, y + 2,
@@ -1150,6 +1163,13 @@ public final class FilesApp implements IDesktopApp {
             return;
         }
         final TreeItem item = items.get(index);
+        if (item.target().equals(TRASH_PLACE)) {
+            final DesktopScreen desktop = DesktopScreen.current();
+            if (button == 0 && desktop != null) {
+                desktop.openTrash();
+            }
+            return;
+        }
         if (button == 1) {
             if (isVolumeItem(item)) {
                 final int volume = item.volumeIndex();
@@ -1244,6 +1264,18 @@ public final class FilesApp implements IDesktopApp {
             out.add(entry.label());
         }
         return out;
+    }
+
+    /** The middle of the listed row so named, or null when nothing listed has that name or it is scrolled away. */
+    @Nullable
+    public int[] rowPoint(final String name) {
+        for (int i = fileList.scroll(); i < rows.size() && i < fileList.scroll() + fileList.visibleRows(); i++) {
+            if (rows.get(i).name().equals(name)) {
+                final int[] r = fileList.rowRect(i);
+                return new int[] {r[0] + 20, r[1] + r[3] / 2};
+            }
+        }
+        return null;
     }
 
     /** The middle of the menu's entry with that label, or null. */
@@ -1569,7 +1601,15 @@ public final class FilesApp implements IDesktopApp {
             bandActive = false;
             return;
         }
-        if (dragging && dragRow >= 0 && dragRow < rows.size()) {
+        if (dragging && dragRow >= 0 && dragRow < rows.size() && onTrashPlace(mouseX, mouseY)) {
+            // Dropped on the trash in the tree: deleted, as Delete on its menu would.
+            final Row src = rows.get(dragRow);
+            if (src.file() != null && src.file().readOnly()) {
+                lockedError(src);
+            } else if (src.file() != null) {
+                DeskTrash.delete(host, List.of(src.file().path()));
+            }
+        } else if (dragging && dragRow >= 0 && dragRow < rows.size()) {
             final Row src = rows.get(dragRow);
             // Where did the drag land: a removable-drive destination (left tree or a media row), or a folder?
             final String mediaDest = mediaDropTarget(mouseX, mouseY);
@@ -1629,6 +1669,16 @@ public final class FilesApp implements IDesktopApp {
             }
         }
         return dir;
+    }
+
+    /** Whether the point is on the trash's place in the tree. */
+    private boolean onTrashPlace(final double mx, final double my) {
+        if (!treeList.contains(mx, my)) {
+            return false;
+        }
+        final int index = treeList.rowAt(mx, my);
+        final List<TreeItem> items = tree();
+        return index >= 0 && index < items.size() && items.get(index).target().equals(TRASH_PLACE);
     }
 
     /** The row of the list or the tile of the icon view under the point, whichever is shown, or -1. */
@@ -1866,6 +1916,7 @@ public final class FilesApp implements IDesktopApp {
          */
         if (bandRows.size() > 1 && bandRows.contains(ctxRow)) {
             boolean locked = false;
+            final List<String> doomed = new ArrayList<>();
             for (final int index : bandRows) {
                 if (index < 0 || index >= rows.size()) {
                     continue;
@@ -1878,13 +1929,13 @@ public final class FilesApp implements IDesktopApp {
                     locked = true; // a projection in the sweep is skipped, not silently lost
                     continue;
                 }
-                PacketDistributor.sendToServer(new DeleteFilePayload(host, r.file().path()));
+                doomed.add(r.file().path());
             }
             if (locked) {
                 DesktopScreen.showDatLockedError();
             }
             bandRows.clear();
-            FilesApps.diskChanged();
+            DeskTrash.delete(host, doomed);
             return;
         }
         if (ctxRow < 0 || ctxRow >= rows.size()) {
@@ -1898,8 +1949,8 @@ public final class FilesApp implements IDesktopApp {
             lockedError(r);
             return;
         }
-        PacketDistributor.sendToServer(new DeleteFilePayload(host, r.file().path()));
-        FilesApps.diskChanged();
+        // Into the trash from the system disk; for good, once asked, from a medium or a share.
+        DeskTrash.delete(host, List.of(r.file().path()));
     }
 
     /** The right refusal for a projected entry: a stored item points at the Network Interactor, an installer's file at setup. */

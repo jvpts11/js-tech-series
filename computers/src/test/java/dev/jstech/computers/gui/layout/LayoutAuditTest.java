@@ -45,7 +45,7 @@ class LayoutAuditTest {
             "CraftingSwitchLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
             "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout",
-            "CdeStyleLayout", "WorkstationInfoLayout");
+            "CdeStyleLayout", "WorkstationInfoLayout", "TrashLayout");
 
     private record AuditCase(String label, GuiLayout layout, boolean fixedSize) {
     }
@@ -143,6 +143,17 @@ class LayoutAuditTest {
         c.add(new AuditCase("CdeStyleLayout(backdrop)",
                 CdeStyleLayout.backdropLayout(CdeBackdrop.values().length), true));
         c.add(new AuditCase("WorkstationInfoLayout", WorkstationInfoLayout.layout(), true));
+        // The trash window in each of its three looks, at its smallest and at its first size.
+        for (final int[] size : new int[][]{
+                {TrashLayout.MIN_W - TrashLayout.FRAME_W, TrashLayout.MIN_H - TrashLayout.FRAME_H},
+                {TrashLayout.DEFAULT_W - TrashLayout.FRAME_W, TrashLayout.DEFAULT_H - TrashLayout.FRAME_H}}) {
+            c.add(new AuditCase("TrashLayout.frames(" + size[0] + ")", TrashLayout.framesLayout(size[0], size[1]),
+                    false));
+            c.add(new AuditCase("TrashLayout.linux(" + size[0] + ")", TrashLayout.linuxLayout(size[0], size[1]),
+                    false));
+            c.add(new AuditCase("TrashLayout.cde(" + size[0] + ")", TrashLayout.cdeLayout(size[0], size[1]),
+                    false));
+        }
         return c;
     }
 

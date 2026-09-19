@@ -369,6 +369,11 @@ public final class OsSkin implements ISkin {
         return listHoverBg;
     }
 
+    /** The selected-row background, which is what the text of a selected row is written on. */
+    public int listSelect() {
+        return listSelectBg;
+    }
+
     // window chrome
 
     /**

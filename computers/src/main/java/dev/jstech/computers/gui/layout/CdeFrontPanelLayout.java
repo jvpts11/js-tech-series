@@ -19,10 +19,10 @@ import dev.jstech.core.gui.layout.GuiLayout;
  */
 public final class CdeFrontPanelLayout {
 
-    /** The controls, left to right, with the switch standing between the fourth and the fifth. */
+    /** The controls, left to right, with the switch standing between the fourth and the fifth, the trash last. */
     public enum Control {
         CLOCK(0, "Clock"), DATE(1, "Calendar"), FILES(2, "File Manager"), EDITOR(3, "Text Editor"),
-        STYLE(4, "Style Manager"), APPLICATIONS(5, "Applications");
+        STYLE(4, "Style Manager"), APPLICATIONS(5, "Applications"), TRASH(6, "Trash Can");
 
         /** Its place along the panel, counted from the left and said outright rather than read off the order. */
         private final int place;

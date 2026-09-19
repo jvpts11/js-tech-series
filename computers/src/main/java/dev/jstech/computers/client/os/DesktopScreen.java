@@ -149,6 +149,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private final DesktopIcons iconGrid = new DesktopIcons(this);
     /** Making, renaming and deleting the things that live on the desktop. */
     private final DeskFiles deskFiles = new DeskFiles(this);
+    /** The trash: its icon, full or empty, and what deleting a thing on this desktop means. */
+    private final DeskTrash trash = new DeskTrash(this);
+    /** What the wallpaper wears as icons ahead of the desktop folder's files: the trash, then every program. */
+    private final List<Launcher> iconLaunchers = new ArrayList<>();
 
     /*
      * Per-OS memory model: the system, its desktop and its services hold their share of the machine's RAM
@@ -660,6 +664,78 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
 
     List<Launcher> launcherList() {
         return launchers;
+    }
+
+    /**
+     * What the wallpaper wears as icons, before the files of the desktop folder: the trash first of all, on every
+     * desktop but CDE, and then the programs. The menus list the programs alone, as the desktops' menus did.
+     */
+    List<Launcher> deskIcons() {
+        return iconLaunchers;
+    }
+
+    /** The style this desktop is drawn in, which decides the look and the words of what opens on it. */
+    PanelStyle panelStyle() {
+        return panel;
+    }
+
+    /** Whether anything is in the trash, which is the picture its icon and its Front Panel control wear. */
+    public boolean trashFull() {
+        return trash.full();
+    }
+
+    /** Whether the icon in that slot of the wallpaper is the trash's. */
+    boolean isTrashIcon(final int slot) {
+        return slot >= 0 && slot < iconLaunchers.size() && trash.is(iconLaunchers.get(slot));
+    }
+
+    /** Opens the trash, or brings its window forward. */
+    void openTrash() {
+        trash.open();
+    }
+
+    /** Opens that window, or brings it forward when one of that key is already up. */
+    void openOnce(final String key, final Supplier<IDesktopApp> make) {
+        final DesktopWindow open = windowFor(key);
+        if (open != null) {
+            focusWindow(open);
+            return;
+        }
+        final IDesktopApp app = make.get();
+        app.applySkin(skin);
+        openApp(key, app);
+    }
+
+    /**
+     * Asks the player a question over the whole desktop, running {@code yes} only when the answer is Yes: what
+     * deletes a thing for good asks this first.
+     */
+    static void ask(final String title, final String message, final Runnable yes) {
+        if (active != null) {
+            active.popup = new QuestionPopup(title, message, active.font, yes);
+        }
+    }
+
+    /** Tells the player something over the whole desktop, in a note they close with OK. */
+    static void tell(final String title, final String message) {
+        if (active != null) {
+            active.popup = new QuestionPopup(title, message, active.font, null);
+        }
+    }
+
+    /** The question or note up over the desktop, for a test to answer; null while none is. */
+    @Nullable
+    public QuestionPopup question() {
+        return popup instanceof QuestionPopup q && q.isOpen() ? q : null;
+    }
+
+    /** Makes the wallpaper's icons again, after the programs or the trash's picture changed. */
+    private void rebuildDeskIcons() {
+        iconLaunchers.clear();
+        if (trash.onWallpaper()) {
+            iconLaunchers.add(trash.launcher());
+        }
+        iconLaunchers.addAll(launchers);
     }
 
     int screenW() {
@@ -2188,6 +2264,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
                             JsComputers.MODID, "sigma_" + one.icon()),
                     null, one.entry()));
         }
+        rebuildDeskIcons();
     }
 
     /** A player's own program on this desktop: what to call it, what to draw, and what to run. */
@@ -2202,6 +2279,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             if (l.label().equals(label)) {
                 return l.programId();
             }
+        }
+        if (label.equals(trash.title())) {
+            return trash.icon();
         }
         // A window whose program has no launcher (the Task Manager) still shows its own icon on the panel.
         final ProgramSpec spec = chrome == null ? null : chrome.programFor(label);
@@ -2324,9 +2404,13 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         for (final DesktopFilesPayload.WireCommunity one : payload.community()) {
             active.communityPrograms.add(new CommunityLauncher(one.name(), one.icon(), one.entry()));
         }
+        // The trash's picture changes with what is in it, and the icons are made again when it does.
+        final boolean trashChanged = active.trash.setFull(payload.trashFull());
         if (!before.equals(new HashSet<>(active.installedPrograms))
                 || !theirsBefore.equals(active.communityPrograms)) {
             active.buildLaunchers();
+        } else if (trashChanged) {
+            active.rebuildDeskIcons();
         }
         // Enter rename on a freshly created item once it appears in the listing.
         active.deskFiles.takePendingRename();
@@ -2575,10 +2659,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
                 && deskDragX < sw && deskDragY < tbY && overWallpaper(deskDragX, deskDragY)) {
             iconGrid.drawDropCell(g, iconGrid.cellAt(deskDragX, deskDragY, perCol));
         }
-        if (deskDragSlot < launchers.size() + desktopItems.size()) {
-            final String label = deskDragSlot < launchers.size()
-                    ? launchers.get(deskDragSlot).label()
-                    : DesktopIcons.baseName(desktopItems.get(deskDragSlot - launchers.size()).path());
+        if (deskDragSlot < iconLaunchers.size() + desktopItems.size()) {
+            final String label = deskDragSlot < iconLaunchers.size()
+                    ? iconLaunchers.get(deskDragSlot).label()
+                    : DesktopIcons.baseName(desktopItems.get(deskDragSlot - iconLaunchers.size()).path());
             final int gx = (int) deskDragX + 6;
             final int gy = (int) deskDragY + 2;
             g.fill(gx, gy, gx + font.width(label) + 6, gy + 12, 0xD0303848);
@@ -2793,13 +2877,24 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
      * underlying file, so for them only the pin-to-cell path applies.
      */
     private void handleDeskDrop(final double dx, final double dy) {
-        final int total = launchers.size() + desktopItems.size();
+        final int total = iconLaunchers.size() + desktopItems.size();
         if (deskDragSlot < 0 || deskDragSlot >= total) {
             return;
         }
-        final boolean isLauncher = deskDragSlot < launchers.size();
+        final boolean isLauncher = deskDragSlot < iconLaunchers.size();
         final DiskFilesPayload.WireFile src =
-                isLauncher ? null : desktopItems.get(deskDragSlot - launchers.size());
+                isLauncher ? null : desktopItems.get(deskDragSlot - iconLaunchers.size());
+
+        // (0) Dropped on the trash, its icon or CDE's control for it: the file is deleted.
+        if (src != null && overTrash(dx, dy)) {
+            if (src.readOnly()) {
+                showError("Error", DAT_LOCKED_MESSAGE);
+            } else {
+                clearMovedIconCell(src);
+                DeskTrash.delete(host, List.of(src.path()));
+            }
+            return;
+        }
 
         // (1) Drop onto an open Files explorer window: move the file into the folder it is showing.
         final DesktopWindow explorer = explorerWindowAt(dx, dy);
@@ -2821,8 +2916,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         // (2) Drop onto a desktop folder icon: move the file inside it.
         final int perCol = iconGrid.perColumn();
         final int target = iconGrid.slotAt(dx, dy, perCol);
-        if (target >= launchers.size() && target != deskDragSlot && src != null) {
-            final DiskFilesPayload.WireFile dst = desktopItems.get(target - launchers.size());
+        if (target >= iconLaunchers.size() && target != deskDragSlot && src != null) {
+            final DiskFilesPayload.WireFile dst = desktopItems.get(target - iconLaunchers.size());
             if (dst.directory()) {
                 if (src.readOnly()) {
                     showError("Error", DAT_LOCKED_MESSAGE);
@@ -2848,6 +2943,14 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             iconGrid.pin(key, cell);
             PacketDistributor.sendToServer(new SetIconPositionPayload(host, key, cell));
         }
+    }
+
+    /** Whether a desktop point is on the trash: its icon on the wallpaper, or CDE's control for it on the panel. */
+    private boolean overTrash(final double dx, final double dy) {
+        if (is(PanelStyle.CDE)) {
+            return CdeFrontPanelLayout.controlAt(dx, dy, sw(), sh()) == CdeFrontPanelLayout.Control.TRASH;
+        }
+        return isTrashIcon(iconGrid.slotAt(dx, dy, iconGrid.perColumn())) && overWallpaper(dx, dy);
     }
 
     /** Whether {@code destDir} is already the parent folder of {@code srcPath} (a no-op move). */
@@ -2884,6 +2987,16 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
                 && dy >= front.y() && dy <= front.y() + front.height();
         if (insideOrigin) {
             return false;
+        }
+        // Dropped on the trash: deleted, as a delete from the explorer's own menu would.
+        if (overTrash(dx, dy)) {
+            if (dragged.readOnly()) {
+                showError("Error", DAT_LOCKED_MESSAGE);
+            } else {
+                DeskTrash.delete(host, List.of(dragged.path()));
+            }
+            origin.cancelDrag();
+            return true;
         }
         // Dropped onto a different explorer window: move into the folder that window shows.
         final DesktopWindow otherExplorer = explorerWindowAt(dx, dy);
@@ -2927,11 +3040,16 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
 
     /** Opens an icon slot: a launcher starts its program; a desktop file/folder opens or navigates. */
     private void openSlot(final int slot) {
-        if (slot < launchers.size()) {
-            runLauncher(launchers.get(slot));
+        if (slot < iconLaunchers.size()) {
+            final Launcher launcher = iconLaunchers.get(slot);
+            if (trash.is(launcher)) {
+                trash.open();
+            } else {
+                runLauncher(launcher);
+            }
             return;
         }
-        final int di = slot - launchers.size();
+        final int di = slot - iconLaunchers.size();
         if (di < 0 || di >= desktopItems.size()) {
             return;
         }
@@ -3247,8 +3365,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
      */
     private void openDeskContext(final int slot, final int x, final int y) {
         final List<ContextMenu.Item> entries = new ArrayList<>();
-        if (slot >= 0 && slot < launchers.size()) {
-            final Launcher launcher = launchers.get(slot);
+        if (slot >= 0 && slot < iconLaunchers.size() && trash.is(iconLaunchers.get(slot))) {
+            entries.addAll(trash.menu());
+        } else if (slot >= 0 && slot < iconLaunchers.size()) {
+            final Launcher launcher = iconLaunchers.get(slot);
             entries.add(deskItem("Open", true, () -> runLauncher(launcher)));
             /*
              * Only what the machine could actually take off: the programs that ship with a system are
@@ -3265,10 +3385,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
                 entries.add(ContextMenu.Item.separator());
                 entries.add(deskItem("Uninstall", true, () -> uninstallLauncher(spec)));
             }
-        } else if (slot >= launchers.size() && slot - launchers.size() < desktopItems.size()) {
-            final int di = slot - launchers.size();
+        } else if (slot >= iconLaunchers.size() && slot - iconLaunchers.size() < desktopItems.size()) {
+            final int di = slot - iconLaunchers.size();
             final DiskFilesPayload.WireFile file = desktopItems.get(di);
-            entries.add(deskItem("Open", true, () -> openSlot(launchers.size() + di)));
+            entries.add(deskItem("Open", true, () -> openSlot(iconLaunchers.size() + di)));
             if (!file.directory()) {
                 entries.add(ContextMenu.Item.submenu("Open with", openWithItems(file.path())));
             }
@@ -3333,6 +3453,36 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             out.add(FsPaths.fileName(file.path()));
         }
         return out;
+    }
+
+    /** The names under the wallpaper's icons ahead of the files, in their order, the trash first where it stands. */
+    public List<String> deskIconLabels() {
+        final List<String> out = new ArrayList<>();
+        for (final Launcher l : iconLaunchers) {
+            out.add(l.label());
+        }
+        return out;
+    }
+
+    /** The desktop-local middle of the wallpaper icon so named, a program's, the trash's or a file's; or null. */
+    @Nullable
+    public int[] deskIconPoint(final String name) {
+        final int icons = iconLaunchers.size();
+        for (int slot = 0; slot < icons + desktopItems.size(); slot++) {
+            final String label = slot < icons ? iconLaunchers.get(slot).label()
+                    : FsPaths.fileName(desktopItems.get(slot - icons).path());
+            if (label.equals(name)) {
+                return iconGrid.centreOf(slot);
+            }
+        }
+        return null;
+    }
+
+    /** The trash window that is up, or null while none is. */
+    @Nullable
+    public TrashApp trashWindow() {
+        final DesktopWindow open = windowFor(trash.title());
+        return open != null && open.app() instanceof TrashApp app ? app : null;
     }
 
     /** The scale the desktop is drawn at, as a factor, which a test needs to land a click on a scaled desktop. */
@@ -4389,7 +4539,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private void startChoose(final Launcher launcher) {
         if (this.startWithRightButton) {
             closeStart();
-            openDeskContext(launchers.indexOf(launcher), this.startClickX, this.startClickY);
+            // The menu is the icon's, so it is found among the icons; the same launcher stands in both lists.
+            openDeskContext(iconLaunchers.indexOf(launcher), this.startClickX, this.startClickY);
             return;
         }
         runLauncher(launcher);
@@ -5410,6 +5561,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         if (is(PanelStyle.CDE) && ApplicationManagerApp.owns(key)) {
             return new ApplicationManagerApp(ApplicationManagerApp.groupOf(key));
         }
+        // Nor has the trash, which is a place of the desktop and no program.
+        if (key.equals(trash.title())) {
+            return trash.window();
+        }
         for (final Launcher l : launchers) {
             if (l.label().equals(key) && l.factory() != null) {
                 return l.factory().get();
@@ -5476,6 +5631,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
          * back when this desktop is restored.
          */
         FilesApps.forgetAll();
+        TrashApp.forgetAll();
         /*
          * The layout goes to the machine: the windows the player leaves behind are what the machine
          * has open, for whoever looks next and after the game is closed. Not when the desktop is closing

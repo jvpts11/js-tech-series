@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Control;
@@ -14,6 +15,7 @@ import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.os.WorkspaceSet;
 import javax.annotation.Nullable;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * CDE's Front Panel: a raised slab at the bottom centre of the desktop, and the whole of what CDE had where
@@ -149,6 +151,7 @@ final class CdePanels {
             case EDITOR -> open(EDITOR);
             case STYLE -> open(STYLE);
             case APPLICATIONS -> desktop.openApplicationManager(null);
+            case TRASH -> desktop.openTrash();
             default -> { }
         }
     }
@@ -214,6 +217,10 @@ final class CdePanels {
             case EDITOR -> page(g, cx - 8, top);
             case STYLE -> paintPots(g, cx - 10, top + 2);
             case APPLICATIONS -> tiles(g, cx - 9, top + 3);
+            // The can wears CDE's own picture of it, full or empty, as it did on the real panel.
+            case TRASH -> ProgramIcons.draw(g, cx - ProgramIcons.SIZE / 2, top + 2, ProgramIcons.SIZE,
+                    ProgramIcons.SIZE, ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
+                            desktop.trashFull() ? "trash_full" : "trash"), "cde");
         }
     }
 

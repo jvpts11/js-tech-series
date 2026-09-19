@@ -20,6 +20,7 @@ import dev.jstech.computers.operation.payload.desktop.WorkstationInfoPayloads;
 import dev.jstech.computers.operation.payload.files.FileEditPayloads;
 import dev.jstech.computers.operation.payload.files.FilePayloads;
 import dev.jstech.computers.operation.payload.files.FileTransferPayloads;
+import dev.jstech.computers.operation.payload.files.TrashPayloads;
 import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
 import dev.jstech.computers.operation.payload.firmware.InstallerPayloads;
 import dev.jstech.computers.operation.payload.gateway.GatewayManagerPayloads;
@@ -58,6 +59,7 @@ public final class ComputingPayloads {
         FilePayloads.register(registrar);
         FileEditPayloads.register(registrar);
         FileTransferPayloads.register(registrar);
+        TrashPayloads.register(registrar);
         DesktopPayloads.register(registrar);
         ThisPcPayloads.register(registrar);
         WelcomePayloads.register(registrar);

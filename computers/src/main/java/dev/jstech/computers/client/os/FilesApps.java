@@ -75,6 +75,7 @@ public final class FilesApps {
      */
     public static void diskChanged() {
         refreshAll();
+        TrashApp.refreshAll();
         DesktopScreen.refreshActive();
     }
 }

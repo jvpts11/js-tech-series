@@ -108,7 +108,7 @@ final class DesktopIcons {
 
     /** The stable id of the icon at slot {@code i}: {@code app:<label>} or {@code file:<name>}. */
     String keyOf(final int i) {
-        final List<DesktopScreen.Launcher> launchers = desktop.launcherList();
+        final List<DesktopScreen.Launcher> launchers = desktop.deskIcons();
         if (i < launchers.size()) {
             return "app:" + launchers.get(i).label();
         }
@@ -121,7 +121,7 @@ final class DesktopIcons {
      * no pinned icon has claimed.
      */
     int[] cells(final int perCol) {
-        final int total = desktop.launcherList().size() + desktop.deskFiles().size();
+        final int total = desktop.deskIcons().size() + desktop.deskFiles().size();
         final List<String> keys = new ArrayList<>(total);
         for (int i = 0; i < total; i++) {
             keys.add(keyOf(i));
@@ -140,6 +140,12 @@ final class DesktopIcons {
 
     int yOf(final int packedCell) {
         return desktop.workAreaTop() + 10 + DesktopIconLayout.row(packedCell) * PITCH_Y;
+    }
+
+    /** The desktop-local middle of the picture in slot {@code slot}, where a click on it lands. */
+    int[] centreOf(final int slot) {
+        final int cell = cells(perColumn())[slot];
+        return new int[] {xOf(cell) + ICON_W / 2, yOf(cell) + 11};
     }
 
     /** The icon slot under a desktop-local point, or -1 for the bare wallpaper. */
@@ -192,7 +198,7 @@ final class DesktopIcons {
         selected.clear();
         final int perCol = perColumn();
         final int[] cells = cells(perCol);
-        final int total = Math.min(cells.length, desktop.launcherList().size() + desktop.deskFiles().size());
+        final int total = Math.min(cells.length, desktop.deskIcons().size() + desktop.deskFiles().size());
         for (int i = 0; i < total; i++) {
             final int ix = xOf(cells[i]);
             final int iy = yOf(cells[i]);
@@ -210,7 +216,7 @@ final class DesktopIcons {
      * clipped by it.
      */
     void render(final GuiGraphics g, final int lmx, final int lmy) {
-        final List<DesktopScreen.Launcher> launchers = desktop.launcherList();
+        final List<DesktopScreen.Launcher> launchers = desktop.deskIcons();
         final List<DiskFilesPayload.WireFile> files = desktop.deskFiles();
         final int total = launchers.size() + files.size();
         final int perCol = perColumn();
@@ -274,19 +280,19 @@ final class DesktopIcons {
             g.fill(cellX, cellY, cellX + CELL_W, cellY + CELL_H, 0x28FFFFFF);
         }
         /*
-         * A green outline on the folder under the cursor while a real file or folder is being dragged. A
-         * launcher has no file to move into a folder, so dragging one lights nothing.
+         * A green outline on the folder, or the trash, under the cursor while a real file or folder is being
+         * dragged. A launcher has no file to move into a folder, so dragging one lights nothing.
          */
         if (dragging && desktop.draggedIconSlot() >= launcherCount
-                && i == dropTarget && i >= launcherCount && i != desktop.draggedIconSlot()
-                && files.get(i - launcherCount).directory()) {
+                && i == dropTarget && i != desktop.draggedIconSlot()
+                && (i >= launcherCount ? files.get(i - launcherCount).directory() : desktop.isTrashIcon(i))) {
             g.fill(cellX, cellY, cellX + CELL_W, cellY + 1, 0xFF49E07A);
             g.fill(cellX, cellY + CELL_H - 1, cellX + CELL_W, cellY + CELL_H, 0xFF49E07A);
             g.fill(cellX, cellY, cellX + 1, cellY + CELL_H, 0xFF49E07A);
             g.fill(cellX + CELL_W - 1, cellY, cellX + CELL_W, cellY + CELL_H, 0xFF49E07A);
         }
         if (i < launcherCount) {
-            ProgramIcons.draw(g, ix, iy, 24, 22, desktop.launcherList().get(i).programId(), desktop.icons());
+            ProgramIcons.draw(g, ix, iy, 24, 22, desktop.deskIcons().get(i).programId(), desktop.icons());
         } else {
             drawFileIcon(g, ix, iy, files.get(i - launcherCount));
         }

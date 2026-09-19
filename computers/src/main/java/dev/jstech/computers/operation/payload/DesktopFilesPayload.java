@@ -31,12 +31,13 @@ import java.util.Map;
  * free auto-layout cell. {@code pinned} names the programs pinned to the panel, by program id path, in
  * the order they sit there. {@code defaultApps} holds the program chosen with Always for each extension.
  * {@code cdeStyle} is CDE's palette and backdrops as the machine keeps them, which only CDE reads.
+ * {@code trashFull} says whether anything is in the desktop's trash, which is the picture its icon wears.
  */
 public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String wallpaper, String cdeStyle,
                                   String computerName, List<String> programs,
                                   List<WireIconCell> iconCells, Prefs prefs,
                                   List<WireCommunity> community, List<String> pinned,
-                                  Map<String, String> defaultApps)
+                                  Map<String, String> defaultApps, boolean trashFull)
         implements CustomPacketPayload {
 
     public static final int MAX_FILES = 256;
@@ -89,7 +90,7 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "desktop_files"));
 
     /*
-     * Written out by hand: composite takes six pairs and this carries ten things. The alternative was
+     * Written out by hand: composite takes six pairs and this carries eleven things. The alternative was
      * to bundle two of them into a record nobody else wants, which would have cost a reader more than
      * these two short methods do.
      */
@@ -129,6 +130,7 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             buf.writeUtf(clip(one.getKey(), 32), 32);
             buf.writeUtf(clip(one.getValue(), 64), 64);
         }
+        buf.writeBoolean(payload.trashFull);
     }
 
     private static String clip(final String text, final int max) {
@@ -158,8 +160,9 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
         for (int i = 0; i < apps; i++) {
             defaultApps.put(buf.readUtf(32), buf.readUtf(64));
         }
+        final boolean trashFull = buf.readBoolean();
         return new DesktopFilesPayload(files, wallpaper, cdeStyle, computerName, programs, cells, prefs, community,
-                pinned, defaultApps);
+                pinned, defaultApps, trashFull);
     }
 
     /* Copied on the way in, so what the desktop is handed cannot change under it after it arrives. */

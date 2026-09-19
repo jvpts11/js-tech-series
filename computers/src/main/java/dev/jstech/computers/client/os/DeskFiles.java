@@ -7,12 +7,12 @@
  */
 package dev.jstech.computers.client.os;
 
-import dev.jstech.computers.operation.payload.DeleteFilePayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.MkdirPayload;
 import dev.jstech.computers.operation.payload.RenameFilePayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.os.fs.FileType;
+import java.util.List;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +78,7 @@ final class DeskFiles {
             return;
         }
         renaming = idx;
-        desktop.pickIcon(desktop.launcherList().size() + idx);
+        desktop.pickIcon(desktop.deskIcons().size() + idx);
         typed.setLength(0);
         typed.append(DesktopIcons.baseName(f.path()));
     }
@@ -123,7 +123,10 @@ final class DeskFiles {
         }
     }
 
-    /** Deletes the desktop file at {@code idx}. A read-only projection of stored items cannot be deleted. */
+    /**
+     * Deletes the desktop file at {@code idx}, which puts it in the trash. A read-only projection of stored items
+     * cannot be deleted.
+     */
     void delete(final int idx) {
         final var files = desktop.deskFiles();
         if (idx < 0 || idx >= files.size()) {
@@ -134,8 +137,7 @@ final class DeskFiles {
             desktop.showLocked();
             return;
         }
-        PacketDistributor.sendToServer(new DeleteFilePayload(desktop.hostPos(), f.path()));
-        FilesApps.diskChanged();
+        DeskTrash.delete(desktop.hostPos(), List.of(f.path()));
     }
 
     /**

@@ -41,6 +41,7 @@ public final class ClientTestSuite {
             SettingsSharingClientTests.class,
             SourceBuildClientTests.class,
             SystemUiClientTests.class,
+            TrashClientTests.class,
             UiSweepClientTests.class,
             UnixClientTests.class);
 

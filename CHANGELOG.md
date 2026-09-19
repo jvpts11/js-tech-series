@@ -283,8 +283,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   for Workstation Info and four coloured squares for the Application Manager. The network programs keep their
   shapes in CDE's colours, and the CDE package has an icon of its own on every desktop.
 - CDE's Front Panel names a control after the pointer has rested on it for half a second, in a small raised
-  plate just above the panel: Clock, Calendar, File Manager, Text Editor, Style Manager, Applications. The panel
-  is pictures and nothing else, so this is how a player learns what each one opens.
+  plate just above the panel: Clock, Calendar, File Manager, Text Editor, Style Manager, Applications, Trash
+  Can. The panel is pictures and nothing else, so this is how a player learns what each one opens.
 - Workstation Info, CDE's window about the machine, on the third line of the Applications subpanel and in the
   Application Manager's Desktop_Tools. In three wells it shows who is at the workstation, its host name and the
   id of the data network it is on (or that it is on none); the system with its release, the architecture and
@@ -305,6 +305,26 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - CDE's Terminal window is paper, as a workstation's was: a warm white ground written on in dark inks, each of
   the console's colours (success, error, warning, the hints) given an ink that reads on it. A terminal panel
   inside an editor keeps its dark glass.
+- The trash. A file or folder deleted on a desktop is no longer gone for good: it waits in that desktop's trash,
+  still taking its room on the disk, until it is put back or the trash is emptied. Each family keeps it its own
+  way and under its own name: the Recycle Bin on Frames, a `RECYCLER` folder at the root of the disk with an
+  `INFO2` index of where each file came from; the Trash on the Linux and FreeBSD desktops, in
+  `~/.local/share/Trash` with the files under `files` and a note for each under `info`; and the Trash Can on CDE,
+  in `~/.dt/Trash`, on whichever system runs it. `rm` and `del` at a prompt still delete for good, as they do on
+  the real systems.
+- The trash is the first icon on every desktop, with a picture for empty and one for full drawn for every desktop
+  and period, and a place in the file manager's sidebar. On CDE it is a control at the right end of the Front
+  Panel instead. A file dropped on any of them is deleted, and the icon's own menu empties the trash without
+  opening it.
+- The trash opens in the look of its desktop's file manager. On Frames it is the explorer with the Recycle Bin's
+  tasks and details down the side and a list giving each file's name, original location and size. On KDE
+  Plasma, GNOME and Cinnamon it is a bar with Empty Trash over the places and the files as icons, each file's
+  menu in its own desktop's words (Restore to Former Location in Dolphin). On CDE it is the Trash Can, with its
+  File, Selected and View menus and CDE's own Put Back and Shred. Restoring puts a thing back where it came
+  from, making again any folder on the way that has gone since. Emptying the trash, or deleting something in it
+  for good, asks first.
+- A file on a disc in a drive or on another machine's share has no trash to go to: deleting it asks first, in a
+  Confirm File Delete question, and then deletes it for good, as Windows did.
 - Escape puts the power dialog away on every desktop instead of closing the monitor behind it, and no key
   reaches a program while that dialog is up.
 - The File Manager and the file dialogs open a desktop's Desktop folder and Home where the system really

@@ -34,6 +34,7 @@ import dev.jstech.computers.operation.payload.SetDesktopPrefsPayload;
 import dev.jstech.computers.operation.payload.SetIconPositionPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
+import dev.jstech.computers.operation.payload.files.TrashPayloads;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
@@ -42,7 +43,9 @@ import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.fs.DiskTrash;
 import dev.jstech.computers.os.fs.SystemLayout;
+import dev.jstech.computers.os.fs.TrashFolder;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ComputerSettings;
 import dev.jstech.computers.program.Programs;
@@ -119,8 +122,11 @@ public final class DesktopPayloads {
         final List<DesktopFilesPayload.WireIconCell> iconCells = new ArrayList<>();
         final List<String> pinned = new ArrayList<>();
         final Map<String, String> defaultApps = new LinkedHashMap<>();
+        boolean trashFull = false;
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
             final ItemStack disk = computer.systemDisk();
+            final TrashFolder trash = TrashPayloads.trashOf(computer);
+            trashFull = trash != null && !disk.isEmpty() && DiskTrash.holdsAnything(disk, trash);
             final FilesystemKind kind =
                     filesystemKindOf(computer);
             prefs[0] = computer.console().wallpaper();
@@ -220,7 +226,8 @@ public final class DesktopPayloads {
         PacketDistributor.sendToPlayer(player, new DesktopFilesPayload(wire, prefs[0], prefs[2], prefs[1], programs,
                 iconCells,
                 new DesktopFilesPayload.Prefs(deskPrefs[0], deskPrefs[1], deskPrefs[2] != 0,
-                        deskPrefs[3] != 0, deskPrefs[4] != 0, deskPrefs[5]), community, pinned, defaultApps));
+                        deskPrefs[3] != 0, deskPrefs[4] != 0, deskPrefs[5]), community, pinned, defaultApps,
+                trashFull));
     }
 
     private static void handleSetDesktopPrefs(final SetDesktopPrefsPayload payload, final ServerPlayer player,
