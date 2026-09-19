@@ -197,9 +197,9 @@ public final class DesktopPayloads {
          * The machine's open windows travel with the desktop listing, so the desktop that is opening
          * restores them from the machine and not from a cache in this client.
          */
+        final IOsHost shown = level.getBlockEntity(payload.hostPos()) instanceof IOsHost machine ? machine : null;
         PacketDistributor.sendToPlayer(player, DesktopWindowsPayload.of(payload.hostPos(),
-                level.getBlockEntity(payload.hostPos()) instanceof IOsHost machine
-                        ? machine.openWindows() : List.of()));
+                shown == null ? List.of() : shown.openWindows(), shown == null ? 0 : shown.desktopWorkspace()));
         /*
          * Programs the player installed from the Mirror get a launcher of their own, so the icon on
          * the desktop is not only for what came with the machines.
@@ -398,6 +398,8 @@ public final class DesktopPayloads {
              */
             if (!computer.needsPost()) {
                 computer.setOpenWindows(computer.windowsWithinBudget(payload.toOpenWindows()));
+                // Which workspace was up is part of the layout left behind, so it is kept with the windows.
+                computer.setDesktopWorkspace(payload.workspace());
             }
         }
     }

@@ -14,6 +14,7 @@ import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -43,7 +44,20 @@ public final class CdeClientTests {
      */
     @ClientTest(timeoutTicks = 3600)
     public static void frontPanel_opensProgramsFromItsControlsAndItsSubpanel(final ClientTestContext ctx) {
-        ctx.thenBuild(0, world -> {
+        atCde(ctx)
+                .thenScreenshot(SETTLE * 2, "cde-desktop")
+                .then(SETTLE, () -> press(ctx, CdeFrontPanelLayout.Control.FILES))
+                .thenWaitUntil(() -> desktop(ctx).openWindowLabels().contains("File Manager"), SCREEN_WAIT,
+                        "the Files control to open the File Manager")
+                .thenScreenshot(SETTLE, "cde-file-manager")
+                .then(SETTLE, () -> press(ctx, CdeFrontPanelLayout.Control.APPLICATIONS))
+                .thenWaitUntil(() -> desktop(ctx).isStartOpen(), SCREEN_WAIT, "the Applications subpanel to rise")
+                .thenScreenshot(SETTLE, "cde-applications");
+    }
+
+    /** A UNIX machine with CDE installed, brought up, with the player at its monitor and the desktop open. */
+    private static ClientTestContext atCde(final ClientTestContext ctx) {
+        return ctx.thenBuild(0, world -> {
                     world.setBlock(MACHINE, ComputingModule.MAINFRAME.get());
                     final MainframeBlockEntity machine = world.blockEntity(MACHINE, MainframeBlockEntity.class);
                     final ItemStackHandler inv = machine.getInventory();
@@ -66,15 +80,37 @@ public final class CdeClientTests {
                 })
                 .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
                 .thenRightClick(SETTLE, MONITOR)
-                .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
-                .thenScreenshot(SETTLE * 2, "cde-desktop")
+                .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT);
+    }
+
+    /**
+     * The workspaces are real: a window stays on the one it was opened on, another workspace shows a desktop
+     * without it, and what is opened there belongs there.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void workspaces_keepTheirOwnWindows(final ClientTestContext ctx) {
+        atCde(ctx)
                 .then(SETTLE, () -> press(ctx, CdeFrontPanelLayout.Control.FILES))
-                .thenWaitUntil(() -> desktop(ctx).openWindowLabels().contains("File Manager"), SCREEN_WAIT,
-                        "the Files control to open the File Manager")
-                .thenScreenshot(SETTLE, "cde-file-manager")
-                .then(SETTLE, () -> press(ctx, CdeFrontPanelLayout.Control.APPLICATIONS))
-                .thenWaitUntil(() -> desktop(ctx).isStartOpen(), SCREEN_WAIT, "the Applications subpanel to rise")
-                .thenScreenshot(SETTLE, "cde-applications");
+                .thenWaitUntil(() -> desktop(ctx).shownWindowLabels().contains("File Manager"), SCREEN_WAIT,
+                        "the File Manager to open on workspace One")
+                .then(SETTLE, () -> pressWorkspace(ctx, 1))
+                .thenWaitUntil(() -> desktop(ctx).shownWorkspace() == 1, SCREEN_WAIT, "workspace Two to come up")
+                .thenAssert(1, () -> desktop(ctx).shownWindowLabels().isEmpty(), "workspace Two shows no window")
+                .thenAssert(1, () -> desktop(ctx).openWindowLabels().contains("File Manager"),
+                        "and the File Manager is still open, on its own workspace")
+                .then(SETTLE, () -> press(ctx, CdeFrontPanelLayout.Control.EDITOR))
+                .thenWaitUntil(() -> desktop(ctx).shownWindowLabels().contains("Text Editor"), SCREEN_WAIT,
+                        "the Text Editor to open on workspace Two")
+                .thenScreenshot(SETTLE, "cde-workspace-two")
+                .then(SETTLE, () -> pressWorkspace(ctx, 0))
+                .thenWaitUntil(() -> desktop(ctx).shownWorkspace() == 0, SCREEN_WAIT, "workspace One to come back")
+                .thenAssert(1, () -> desktop(ctx).shownWindowLabels().equals(List.of("File Manager")),
+                        "workspace One shows the File Manager alone");
+    }
+
+    private static void pressWorkspace(final ClientTestContext ctx, final int index) {
+        final int[] at = desktop(ctx).workspacePoint(index);
+        ctx.click(at[0] + 0.5, at[1] + 0.5);
     }
 
     /** Clicks a control of the Front Panel where it is drawn on the screen. */

@@ -144,6 +144,18 @@ public interface IOsHost extends IPeripheralOwner {
 
     void setOpenWindows(List<OpenWindow> windows);
 
+    /**
+     * Which of the desktop's workspaces is up, counted from nought. Machine state like the windows it sorts,
+     * and cleared with them: a machine that comes up again comes up on the first. A host whose desktops never
+     * have more than one keeps the first for good.
+     */
+    default int desktopWorkspace() {
+        return 0;
+    }
+
+    default void setDesktopWorkspace(final int workspace) {
+    }
+
     /** The RAM buffer of the current build, in items. */
     long ramBuffer();
 

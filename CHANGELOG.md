@@ -237,6 +237,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   with EXIT beside them, the Style Manager, and the Applications control, whose arrow raises a subpanel listing
   every program on the machine. It lists no open windows, because CDE never did. The right button on the slab
   opens the panel's own menu, where the Task Manager is.
+- CDE's four workspaces are real. A program opens on the workspace that is up and stays there; pressing
+  One, Two, Three or Four on the Front Panel shows only what belongs to that workspace, and the rest stay
+  exactly as they were left. Which workspace each window is on, and which one is up, are the machine's own
+  state like the windows themselves: the next person to look at that monitor finds the same workspace up, a
+  saved world brings it back, and a machine that is switched off or restarted comes up again on the first.
+  A window that is not on the workspace that is up is not drawn at all.
 - The File Manager and the file dialogs open a desktop's Desktop folder and Home where the system really
   keeps them, which is under `/usr/player` on UNIX and not under `/home/player`.
 - `installpkg`, the way UNIX installs a program: put the medium the package came on in a linked drive and say

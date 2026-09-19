@@ -10,7 +10,10 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
+import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
+import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.Platform;
@@ -25,9 +28,13 @@ import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
+import io.netty.buffer.Unpooled;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -121,6 +128,52 @@ public final class CdeGameTests {
                             "the desktop the machine comes up at is CDE; got " + machine.installedDesktopId());
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * Which workspace a window is on, and which one is up, are the machine's to keep: they come back from a
+     * save, they cross the wire whole, and a machine that goes down comes up again on the first workspace.
+     */
+    @GameTest(template = ARENA)
+    public static void workspaces_areMachineStateThatGoesWithThePower(final GameTestHelper helper) {
+        final MainframeBlockEntity machine = machine(helper, "unix");
+        if (machine == null) {
+            return;
+        }
+        helper.assertTrue(OpenWindow.WORKSPACES == CdeFrontPanelLayout.WORKSPACES,
+                "the panel offers exactly the workspaces a window can be on");
+        final List<OpenWindow> left = List.of(
+                new OpenWindow("File Manager", 40, 30, 200, 140, false, false, "", 0),
+                new OpenWindow("Text Editor", 60, 50, 180, 120, false, false, "", 2),
+                new OpenWindow("Terminal", 20, 20, 220, 140, false, false, "", OpenWindow.EVERY_WORKSPACE));
+        machine.setOpenWindows(left);
+        machine.setDesktopWorkspace(2);
+
+        final CompoundTag saved = machine.saveWithoutMetadata(helper.getLevel().registryAccess());
+        machine.setOpenWindows(List.of());
+        machine.setDesktopWorkspace(0);
+        machine.loadWithComponents(saved, helper.getLevel().registryAccess());
+        helper.assertTrue(machine.desktopWorkspace() == 2, "the workspace that was up comes back from a save");
+        helper.assertTrue(machine.openWindows().equals(left), "with every window on the workspace it was left on: "
+                + machine.openWindows());
+
+        final RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(),
+                helper.getLevel().registryAccess());
+        DesktopWindowsPayload.STREAM_CODEC.encode(buf,
+                DesktopWindowsPayload.of(machine.getBlockPos(), machine.openWindows(), machine.desktopWorkspace()));
+        final DesktopWindowsPayload arrived = DesktopWindowsPayload.STREAM_CODEC.decode(buf);
+        helper.assertTrue(arrived.workspace() == 2 && arrived.toOpenWindows().equals(left),
+                "and the same crosses the wire whole, the window on every workspace included");
+
+        helper.assertTrue(new OpenWindow("x", 0, 0, 10, 10, false, false, "", 9).workspace() == 3,
+                "a workspace no desktop has is brought inside what it has, so it cannot hide a window");
+        helper.assertTrue(left.get(2).on(0) && left.get(2).on(3) && left.get(1).on(2) && !left.get(1).on(0),
+                "a window shows on its own workspace, and one on all of them shows on each");
+
+        machine.togglePower();
+        helper.assertTrue(machine.openWindows().isEmpty() && machine.desktopWorkspace() == 0,
+                "switched off, the machine keeps neither the windows nor the workspace they were sorted by");
+        helper.succeed();
     }
 
     private static ResourceLocation jsc(final String path) {

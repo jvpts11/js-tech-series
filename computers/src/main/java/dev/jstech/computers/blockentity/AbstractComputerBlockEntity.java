@@ -586,6 +586,16 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         session.setOpenWindows(windows);
     }
 
+    @Override
+    public int desktopWorkspace() {
+        return session.desktopWorkspace();
+    }
+
+    @Override
+    public void setDesktopWorkspace(final int workspace) {
+        session.setDesktopWorkspace(workspace);
+    }
+
     public long capacity() {
         return hardware.capacity();
     }

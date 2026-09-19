@@ -71,6 +71,12 @@ final class CdePanels {
             desktop.askToPowerOff();
             return true;
         }
+        for (int i = 0; i < CdeFrontPanelLayout.WORKSPACES; i++) {
+            if (CdeFrontPanelLayout.workspace(i, sw, sh).holds(mx, my)) {
+                desktop.switchWorkspace(i);
+                return true;
+            }
+        }
         for (final Control control : Control.values()) {
             if (CdeFrontPanelLayout.control(control, sw, sh).holds(mx, my)) {
                 press(control);

@@ -229,6 +229,19 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
+    public int desktopWorkspace() {
+        return rack.asUnit(row, rack::desktopWorkspace);
+    }
+
+    @Override
+    public void setDesktopWorkspace(final int workspace) {
+        rack.asUnit(row, () -> {
+            rack.setDesktopWorkspace(workspace);
+            return null;
+        });
+    }
+
+    @Override
     public long ramBuffer() {
         return rack.asUnit(row, rack::ramBuffer);
     }

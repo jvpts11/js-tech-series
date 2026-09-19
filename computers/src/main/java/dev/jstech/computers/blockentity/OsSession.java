@@ -53,6 +53,8 @@ final class OsSession {
      * machine: whoever opens the monitor next sees them, and they survive the game being closed.
      */
     private final List<OpenWindow> openWindows = new ArrayList<>();
+    /* Which of the desktop's workspaces is up. It belongs with the windows it sorts and goes when they do. */
+    private int desktopWorkspace;
     /*
      * A guided installer that finished writing the system but has not rebooted yet. Persisted: the
      * machine is still in the installer after a reload, the same way it keeps its booted desktop.
@@ -175,9 +177,19 @@ final class OsSession {
         this.machine.setChanged();
     }
 
+    int desktopWorkspace() {
+        return this.desktopWorkspace;
+    }
+
+    void setDesktopWorkspace(final int workspace) {
+        this.desktopWorkspace = OpenWindow.clampWorkspace(workspace);
+        this.machine.setChanged();
+    }
+
     /** What a cold start and a power cut leave of the session: no desktop, and no installer waiting. */
     void drop() {
         this.openWindows.clear();
+        this.desktopWorkspace = 0;
         this.pendingInstall = IOsHost.NO_PENDING_INSTALL;
         // A copy dies with the power, as it would on any machine, and nothing of it reaches the disk.
         this.installing = null;
@@ -471,6 +483,9 @@ final class OsSession {
         if (!this.openWindows.isEmpty()) {
             tag.put("OpenWindows", OpenWindow.saveAll(this.openWindows));
         }
+        if (this.desktopWorkspace != 0) {
+            tag.putInt("DesktopWorkspace", this.desktopWorkspace);
+        }
         if (this.pendingInstall != IOsHost.NO_PENDING_INSTALL) {
             tag.putInt("PendingInstall", this.pendingInstall);
         }
@@ -505,6 +520,7 @@ final class OsSession {
                 ? ResourceLocation.tryParse(tag.getString("BootedDesktop")) : null;
         this.openWindows.clear();
         this.openWindows.addAll(OpenWindow.loadAll(tag.getList("OpenWindows", Tag.TAG_COMPOUND)));
+        this.desktopWorkspace = OpenWindow.clampWorkspace(tag.getInt("DesktopWorkspace"));
         this.pendingInstall = tag.contains("PendingInstall")
                 ? tag.getInt("PendingInstall") : IOsHost.NO_PENDING_INSTALL;
         if (tag.contains("Installing")) {

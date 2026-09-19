@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.os.DesktopEnvironmentDef;
+import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.core.client.gui.component.Draw;
@@ -65,6 +66,8 @@ public final class DesktopWindow {
     private int pressedBtn;
     // Whether the skin last drawn with keeps the way out at the left end of the bar, as Motif does.
     private boolean menuAtLeft;
+    // Which workspace the window is on, counted from nought, or OpenWindow.EVERY_WORKSPACE for all of them.
+    private int workspace;
     // Geometry saved before maximizing, to restore on un-maximize.
     private int restoreX;
     private int restoreY;
@@ -582,6 +585,19 @@ public final class DesktopWindow {
             return 1;
         }
         return 0;
+    }
+
+    public int workspace() {
+        return workspace;
+    }
+
+    public void setWorkspace(final int workspace) {
+        this.workspace = workspace;
+    }
+
+    /** Whether the window shows while that workspace is up. */
+    public boolean on(final int shown) {
+        return workspace == OpenWindow.EVERY_WORKSPACE || workspace == shown;
     }
 
     /** Marks which title-bar button is held down (1/2/3); it is drawn pushed-in until released (0 clears). */

@@ -352,6 +352,8 @@ public class ServerRackBlockEntity extends BlockEntity
         ResourceLocation bootedDesktopId;
         /** The windows open on this machine's desktop; machine state that rides on the Server item. */
         final List<OpenWindow> openWindows = new ArrayList<>();
+        /** Which of that desktop's workspaces is up, which goes wherever the windows it sorts go. */
+        int desktopWorkspace;
         /** A guided installer that wrote the system but is still waiting for its reboot. */
         int pendingInstallSlot = IOsHost.NO_PENDING_INSTALL;
         /*
@@ -406,6 +408,7 @@ public class ServerRackBlockEntity extends BlockEntity
                         ? ResourceLocation.tryParse(saved.getString("BootedDesktop")) : null;
                 state.openWindows.addAll(OpenWindow.loadAll(
                         saved.getList("OpenWindows", Tag.TAG_COMPOUND)));
+                state.desktopWorkspace = OpenWindow.clampWorkspace(saved.getInt("DesktopWorkspace"));
                 state.pendingInstallSlot = saved.contains("PendingInstall") ? saved.getInt("PendingInstall")
                         : IOsHost.NO_PENDING_INSTALL;
                 if (saved.contains("Installing")) {
@@ -470,6 +473,9 @@ public class ServerRackBlockEntity extends BlockEntity
         if (!state.openWindows.isEmpty()) {
             tag.put("OpenWindows",
                     OpenWindow.saveAll(state.openWindows));
+        }
+        if (state.desktopWorkspace != 0) {
+            tag.putInt("DesktopWorkspace", state.desktopWorkspace);
         }
         if (state.pendingInstallSlot != IOsHost.NO_PENDING_INSTALL) {
             tag.putInt("PendingInstall", state.pendingInstallSlot);
@@ -662,6 +668,7 @@ public class ServerRackBlockEntity extends BlockEntity
          * the clearing setNeedsPost does.
          */
         unitState(slot).openWindows.clear();
+        unitState(slot).desktopWorkspace = 0;
         unitState(slot).pendingInstallSlot = IOsHost.NO_PENDING_INSTALL;
         flushConsole(slot);
         setChanged();
@@ -1520,12 +1527,30 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     @Override
+    public int desktopWorkspace() {
+        final int slot = soleComputerSlot();
+        return slot < 0 ? 0 : unitState(slot).desktopWorkspace;
+    }
+
+    @Override
+    public void setDesktopWorkspace(final int workspace) {
+        final int slot = soleComputerSlot();
+        if (slot < 0) {
+            return;
+        }
+        unitState(slot).desktopWorkspace = OpenWindow.clampWorkspace(workspace);
+        flushConsole(slot);
+        setChanged();
+    }
+
+    @Override
     public void setNeedsPost(final boolean value) {
         final int slot = soleComputerSlot();
         if (slot >= 0) {
             unitState(slot).phases.setNeedsPost(value);
             if (value) {
                 unitState(slot).openWindows.clear(); // a restart closes everything
+                unitState(slot).desktopWorkspace = 0;
                 unitState(slot).pendingInstallSlot = // and is what a finished installer was waiting for
                         IOsHost.NO_PENDING_INSTALL;
             }
