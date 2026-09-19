@@ -78,7 +78,7 @@ public final class ShellApp implements IDesktopApp {
          * the same thing by the same name, so the desktop is where the name comes from; a Unix terminal opens on
          * a bare prompt and greets nobody.
          */
-        this.view = new ShellView(host, posix, chrome == null || posix ? "" : chrome.displayName());
+        this.view = new ShellView(host, posix, chrome == null || posix ? "" : chrome.displayName()).asOwnWindow();
         this.view.setOnIdle(this::typeNext);
     }
 

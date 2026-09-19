@@ -272,6 +272,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - CDE's Terminal is a Unix terminal: it opens on the shell's own prompt, `player@host:~ $`, and greets nobody.
   A desktop now says for itself whether it stands on a Unix family, so the next desktop cannot be left off a
   list the way CDE was.
+- CDE's Terminal window is paper, as a workstation's was: a warm white ground written on in dark inks, each of
+  the console's colours (success, error, warning, the hints) given an ink that reads on it. A terminal panel
+  inside an editor keeps its dark glass.
 - Escape puts the power dialog away on every desktop instead of closing the monitor behind it, and no key
   reaches a program while that dialog is up.
 - The File Manager and the file dialogs open a desktop's Desktop folder and Home where the system really

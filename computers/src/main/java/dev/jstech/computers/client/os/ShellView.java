@@ -51,7 +51,6 @@ public final class ShellView extends Panel {
     private static final int LINE_H = 9;
     private static final int PAD = 3;
     private static final int MAX_SCROLLBACK = 256;
-    private static final int INPUT_TEXT = 0xFFCDD6E2;
     private static final int TAG_COLOR = 0xFF5A6678;
 
     private final BlockPos host;
@@ -82,6 +81,8 @@ public final class ShellView extends Panel {
     private final Label scrolledTag;
     private final CommandLine console;
 
+    /** Whether this view is a terminal window of its own rather than a panel inside another program. */
+    private boolean ownWindow;
     /** How many lines up from the bottom the output is scrolled. */
     private int scrollOffset;
     /** The prompt, synced from the server after each command so it tracks the current directory. */
@@ -331,6 +332,21 @@ public final class ShellView extends Panel {
         this.scrollback.push(new CliLine(text, style));
     }
 
+    /**
+     * Says that this view is a terminal window of its own and not a panel inside another program, so it wears
+     * the ground the desktop's own terminal had. Only CDE's differs: its terminal window was paper, written on
+     * in dark inks, where a panel inside an editor stays the dark glass the editor is built around.
+     */
+    public ShellView asOwnWindow() {
+        this.ownWindow = true;
+        return this;
+    }
+
+    /** The ground this view is drawn on. */
+    private int ground() {
+        return this.ownWindow && this.osSkin.form() == OsSkin.Form.MOTIF ? TermPalette.PAPER : groundOf(this.osSkin);
+    }
+
     /** The console ground, kept dark like a real terminal, tinted to the system it runs on. */
     public static int groundOf(final OsSkin skin) {
         return switch (skin.form()) {
@@ -343,20 +359,20 @@ public final class ShellView extends Panel {
              */
             case KDE2 -> 0xFF0C1420;
             case GNOME1 -> 0xFF1A141E;
-            // A slate with the cast of CDE's own backdrop, dark like the rest so the console's colours read.
+            // A slate with the cast of CDE's own backdrop, for a panel inside another program.
             case MOTIF -> 0xFF16202A;
         };
     }
 
     @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
+        final int ground = ground();
         if (this.editor != null) {
             // The editor has the glass: no scrollback, no prompt, exactly as at a real terminal.
             this.editor.render(g, ctx.font(), x(), y(), width(), height(),
-                    InkPalette.DARK);
+                    InkPalette.forGround(!TermPalette.lightGround(ground)));
             return;
         }
-        final int ground = groundOf(this.osSkin);
         g.fill(x(), y(), right(), bottom(), ground);
         // Lines wrap to the columns the view has now, so nothing leaks past the frame however it is resized.
         this.scrollback.setColumns(TermPainter.columnsIn(Math.max(40, width() - PAD * 2 - 2), 1.0f));
@@ -370,14 +386,16 @@ public final class ShellView extends Panel {
         this.output.setScroll(maxScroll - this.scrollOffset);
         this.scrolledTag.setBounds(x() + PAD, inputY, width() - PAD * 2 - 1, 8);
         this.console.setBounds(x(), inputY - 2, width(), LINE_H + 2);
-        this.console.setStyle(ground, INPUT_TEXT);
+        // What is typed is written in the ink the echoed command will have, whichever kind of ground this is.
+        this.console.setStyle(ground, TermPalette.inksFor(ground).applyAsInt(CliStyle.PROMPT));
         super.render(g, ctx);
     }
 
     private void renderLine(final GuiGraphics g, final UiContext ctx, final TermRow row, final int index,
                             final int x, final int y, final int w, final int h,
                             final boolean hovered, final boolean selected) {
-        this.painter.drawRow(g, ctx.font(), row, x, y, TermPalette::colorOf, groundOf(this.osSkin));
+        final int ground = ground();
+        this.painter.drawRow(g, ctx.font(), row, x, y, TermPalette.inksFor(ground), ground);
     }
 
     @Override

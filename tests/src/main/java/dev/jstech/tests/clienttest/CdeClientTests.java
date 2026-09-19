@@ -280,6 +280,10 @@ public final class CdeClientTests {
                                 && !terminal(ctx).scrollbackText().contains("HELP")
                                 && !terminal(ctx).scrollbackText().contains("CDE"),
                         "a UNIX terminal says nothing of the desktop, of Midsoft or of HELP when it opens")
+                .then(SETTLE, () -> terminal(ctx).typeLines(List.of("uname -sr", "ls /", "nosuch")))
+                .thenWaitUntil(() -> terminal(ctx).scrollbackText().contains("UNIX 3.2")
+                        && terminal(ctx).scrollbackText().contains("not found: nosuch"), SCREEN_WAIT * 3,
+                        "the shell to answer on the paper of the terminal window")
                 .thenScreenshot(SETTLE, "cde-terminal");
     }
 
