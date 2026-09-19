@@ -11,6 +11,7 @@ import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Control;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
+import dev.jstech.computers.os.WorkspaceSet;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
@@ -38,6 +39,11 @@ final class CdePanels {
 
     CdePanels(final DesktopScreen desktop) {
         this.desktop = desktop;
+    }
+
+    /** What workspace {@code index} is called, counted from nought: the four names CDE's switch came with. */
+    static String workspaceName(final int index) {
+        return WORKSPACE_NAMES[WorkspaceSet.clampIndex(index)];
     }
 
     void render(final GuiGraphics g, final int sw, final int sh, final CdePalette p) {

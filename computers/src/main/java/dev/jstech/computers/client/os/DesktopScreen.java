@@ -45,6 +45,7 @@ import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.computers.os.fs.FileOpeners;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FsPaths;
@@ -136,6 +137,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private final CdeLaunchers cdeLaunchers = new CdeLaunchers(this);
     /** The icons CDE stands put-away windows as on their workspace, which is all the task list it ever had. */
     private final CdeWindowIcons cdeWindowIcons = new CdeWindowIcons(this);
+    /** The menu behind the button at the left of a Motif title bar: everything CDE lets be done to a window. */
+    private final CdeWindowMenu cdeWindowMenu = new CdeWindowMenu(this);
     /** The flyout that lists one program's windows over its button on the panel. */
     private final TaskPopup taskPopup = new TaskPopup(this);
     /** The icons on the wallpaper: where each one sits, what it looks like, and which ones are picked. */
@@ -727,7 +730,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         if (!hasWorkspaces()) {
             return;
         }
-        shownWorkspace = OpenWindow.clampWorkspace(workspace);
+        shownWorkspace = WorkspaceSet.clampIndex(workspace);
+        cdeWindowMenu.close();
         closeStart();
     }
 
@@ -912,6 +916,32 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         focusWindow(w);
     }
 
+    /** Sends a window behind every other, its dialogs with it and still in front of it. */
+    void lowerOne(final DesktopWindow w) {
+        final List<DesktopWindow> sent = new ArrayList<>();
+        for (final DesktopWindow other : windows) {
+            if (other == w || other.owner() == w) {
+                sent.add(other);
+            }
+        }
+        windows.removeAll(sent);
+        sent.remove(w);
+        windows.addAll(0, sent);
+        windows.add(0, w);
+    }
+
+    /**
+     * Says which workspaces a window is on, its dialogs with it. One taken off the workspace that is up simply
+     * leaves it, as it did on CDE, and is found again on any workspace it is still on.
+     */
+    void occupy(final DesktopWindow w, final int workspaces) {
+        for (final DesktopWindow other : windows) {
+            if (other == w || other.owner() == w) {
+                other.setWorkspaces(workspaces);
+            }
+        }
+    }
+
     void closeAllOf(final String key) {
         closeGroup(key);
     }
@@ -921,7 +951,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
      * thing on the panel that opens by itself, so it must never sit over something the player asked for.
      */
     boolean menuOrDialogOpen() {
-        return startOpen || panelCtxOpen || taskMenu.isOpen() || popup != null || powerOpen || crashing;
+        return startOpen || panelCtxOpen || taskMenu.isOpen() || cdeWindowMenu.isOpen() || popup != null
+                || powerOpen || crashing;
     }
 
     /** The program whose windows the panel's popup is showing, or null while none is up. */
@@ -1506,6 +1537,45 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         return new int[] {0, 0};
     }
 
+    /** What the window menu CDE has up lists, top to bottom, or nothing when none is up. */
+    public List<String> windowMenuLabels() {
+        return cdeWindowMenu.labels();
+    }
+
+    /** Screen position of the entry so labelled on the window menu that is up, or null. */
+    public int[] windowMenuPoint(final String label) {
+        final int[] at = cdeWindowMenu.entryCentre(label);
+        return at == null ? null : new int[] {sx(at[0]), sy(at[1])};
+    }
+
+    /** Screen position of the box of workspace {@code index} on the Occupy Workspace dialog that is up, or null. */
+    public int[] occupyBoxPoint(final int index) {
+        final OccupyWorkspaceDialog dialog = occupyDialog();
+        return dialog == null ? null : screenPoint(dialog.boxCentre(index));
+    }
+
+    /** Screen position of OK on the Occupy Workspace dialog that is up, or null. */
+    public int[] occupyOkPoint() {
+        final OccupyWorkspaceDialog dialog = occupyDialog();
+        return dialog == null ? null : screenPoint(dialog.okCentre());
+    }
+
+    /** The workspaces the window so labelled is on, counted from nought. */
+    public List<Integer> workspacesOf(final String label) {
+        final List<Integer> out = new ArrayList<>();
+        for (final DesktopWindow w : windows) {
+            if (!w.dialog() && w.appKey().equals(label)) {
+                for (int i = 0; i < WorkspaceSet.COUNT; i++) {
+                    if (w.on(i)) {
+                        out.add(i);
+                    }
+                }
+                break;
+            }
+        }
+        return out;
+    }
+
     /** Screen position of the icon CDE stands the {@code index}-th put-away window of this workspace as. */
     public int[] putAwayIconPoint(final int index) {
         final CdeFrontPanelLayout.Rect tile = CdeWindowIconLayout.tile(index, sw(), workTop());
@@ -1763,7 +1833,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             w.moveTo(ow.x(), ow.y(), screen.workTop(), screen.sw(), screen.workBottom());
             w.setMinimized(ow.minimized());
             w.setMaximized(ow.maximized());
-            w.setWorkspace(screen.hasWorkspaces() ? ow.workspace() : 0);
+            w.setWorkspaces(screen.hasWorkspaces() ? ow.workspaces() : WorkspaceSet.only(0));
             screen.windows.add(w);
             /*
              * A kept instance still has everything it had; a fresh one, made because the game itself
@@ -1793,7 +1863,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         final StringBuilder signature = new StringBuilder().append(shownWorkspace).append('|');
         for (final DesktopWindow w : windows) {
             if (!w.dialog()) {
-                signature.append(w.appKey()).append(w.minimized() ? '-' : '+').append(w.workspace()).append(';');
+                signature.append(w.appKey()).append(w.minimized() ? '-' : '+').append(w.workspaces()).append(';');
             }
         }
         final String now = signature.toString();
@@ -1824,7 +1894,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             if (!w.dialog() && !(w.app() instanceof SigmaWindowApp)) {
                 out.add(new OpenWindow(
                         w.appKey(), w.floatX(), w.floatY(), w.floatW(), w.floatH(), w.minimized(), w.maximized(),
-                        w.app().saveState(), w.workspace()));
+                        w.app().saveState(), w.workspaces()));
             }
         }
         return out;
@@ -2364,6 +2434,13 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.POPUP);
             taskMenu.render(g, new UiContext(skin, font, lmx, lmy, partialTick));
+            g.pose().popPose();
+        }
+        // So does a window's own menu on CDE, which hangs from the button at the left of its title bar.
+        if (cdeWindowMenu.isOpen()) {
+            g.pose().pushPose();
+            g.pose().translate(0, 0, DesktopZ.POPUP);
+            cdeWindowMenu.render(g, lmx, lmy, cdePalette());
             g.pose().popPose();
         }
     }
@@ -3789,7 +3866,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         final DesktopWindow root = w.owner() != null ? w.owner() : w;
         // A window asked for by name from another workspace takes the desktop there, as CDE did.
         if (!root.on(shownWorkspace)) {
-            shownWorkspace = OpenWindow.clampWorkspace(root.workspace());
+            shownWorkspace = WorkspaceSet.first(root.workspaces());
         }
         for (final DesktopWindow other : groupWindows(root.groupKey())) {
             if (other == root || other.owner() == root) {
@@ -3889,7 +3966,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         dialog.applySkin(skin);
         final DesktopWindow made = new DesktopWindow(dialog, ownerWin.appKey(), x, y, w, h);
         made.setOwner(ownerWin);
-        made.setWorkspace(ownerWin.workspace());
+        made.setWorkspaces(ownerWin.workspaces());
         ownerWin.setMinimized(false);
         bringWindowToFront(ownerWin);
         windows.add(made);
@@ -4143,6 +4220,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         }
         if (taskMenu.isOpen()) {
             taskMenu.mouseClicked(lx(mouseXAbs), ly(mouseYAbs), button);
+            return true;
+        }
+        // A window's own menu on CDE takes the click too, unless it is on the very button the menu hangs from.
+        if (cdeWindowMenu.isOpen() && cdeWindowMenu.clicked(lx(mouseXAbs), ly(mouseYAbs))) {
             return true;
         }
         if (taskPopup.key() != null && taskPopup.click(lx(mouseXAbs), ly(mouseYAbs), button)) {
@@ -4429,6 +4510,14 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
                 && cdeWindowIcons.clicked(mouseX, mouseY, putAwayHere(), sw(), workTop())) {
             return Click.TAKEN;
         }
+        // The right button on such an icon raises the window's own menu, which is how it is closed from there.
+        if (is(PanelStyle.CDE) && button == 1) {
+            final DesktopWindow putAway = cdeWindowIcons.at(mouseX, mouseY, putAwayHere(), sw(), workTop());
+            if (putAway != null) {
+                cdeWindowMenu.openFor(putAway, (int) mouseX, (int) mouseY);
+                return Click.TAKEN;
+            }
+        }
 
         final int perCol = iconGrid.perColumn();
         final int slot = iconGrid.slotAt(mouseX, mouseY, perCol);
@@ -4550,12 +4639,15 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             final int btn = pb.pressedButton();
             pb.setPressedButton(0);
             pressedBtnWindow = null;
-            if (btn != 0 && pb.buttonAt(lx(mouseX), ly(mouseY)) == btn) {
-                if (btn == 3) {
+            if (btn != DesktopWindow.BUTTON_NONE && pb.buttonAt(lx(mouseX), ly(mouseY)) == btn) {
+                if (btn == DesktopWindow.BUTTON_CLOSE && is(PanelStyle.CDE)) {
+                    // Motif's button opens the window's menu, and closes the window on a double click.
+                    cdeWindowMenu.pressed(pb);
+                } else if (btn == DesktopWindow.BUTTON_CLOSE) {
                     closeWindow(pb);
-                } else if (btn == 1) {
+                } else if (btn == DesktopWindow.BUTTON_MINIMIZE) {
                     pb.setMinimized(true);
-                } else if (btn == 2) {
+                } else if (btn == DesktopWindow.BUTTON_MAXIMIZE) {
                     pb.toggleMaximize();
                 }
             }
@@ -4639,6 +4731,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
      */
     @Override
     public boolean keyFirst(final int key, final int scanCode, final int modifiers) {
+        // Motif's keys for a window's menu come before the window's own program, as a window manager's do.
+        if (is(PanelStyle.CDE) && popup == null && cdeWindowMenu.keyPressed(key, modifiers, frontWindow())) {
+            return true;
+        }
         if (popup != null || deskMenu.isOpen() || taskMenu.isOpen() || deskFiles.isRenaming() || startOpen) {
             return keyPressed(key, scanCode, modifiers);
         }
@@ -4746,6 +4842,22 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             return true;
         }
         return super.mouseScrolled(mouseX, mouseY, dx, dy);
+    }
+
+    /** The Occupy Workspace dialog that is up, front-most first, or null. */
+    @Nullable
+    private OccupyWorkspaceDialog occupyDialog() {
+        for (int i = windows.size() - 1; i >= 0; i--) {
+            if (windows.get(i).app() instanceof OccupyWorkspaceDialog dialog) {
+                return dialog;
+            }
+        }
+        return null;
+    }
+
+    /** A desktop-local point as the screen position a click is given in. */
+    private int[] screenPoint(final int[] local) {
+        return new int[] {sx(local[0]), sy(local[1])};
     }
 
     /** The topmost window that is on show, which receives keyboard and scroll input. */
@@ -4986,7 +5098,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         final int y = Math.max(top + 6, top + (workH - h) / 2 + windows.size() * 12);
         final DesktopWindow opened = new DesktopWindow(app, key, x, y, w, h);
         // A program opens on the workspace that is up, which is where whoever started it is looking.
-        opened.setWorkspace(shownWorkspace);
+        opened.setWorkspaces(WorkspaceSet.only(shownWorkspace));
         windows.add(opened);
     }
 

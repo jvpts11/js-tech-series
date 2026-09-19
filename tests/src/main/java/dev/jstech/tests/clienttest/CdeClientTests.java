@@ -138,6 +138,59 @@ public final class CdeClientTests {
                         "a double click on its icon to bring the window back");
     }
 
+    /**
+     * The button at the left of a Motif title bar raises the window's menu, and Occupy Workspace on it is how a
+     * window comes to be on another workspace as well: ticked on Three, the File Manager shows there too, and
+     * stays on One.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void windowMenu_putsAWindowOnAnotherWorkspaceAsWell(final ClientTestContext ctx) {
+        atCde(ctx)
+                .then(SETTLE, () -> press(ctx, CdeFrontPanelLayout.Control.FILES))
+                .thenWaitUntil(() -> desktop(ctx).shownWindowLabels().contains("File Manager"), SCREEN_WAIT,
+                        "the File Manager to open")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).windowButtonPoint("File Manager", 3)))
+                .thenWaitUntil(() -> !desktop(ctx).windowMenuLabels().isEmpty(), SCREEN_WAIT,
+                        "the menu button to raise the window's menu")
+                .thenAssert(1, () -> desktop(ctx).windowMenuLabels().equals(List.of("Restore", "Minimize",
+                                "Maximize", "Lower", "Occupy Workspace...", "Occupy All Workspaces", "Close")),
+                        "the menu lists what can be done to a window, and nothing else")
+                .thenAssert(1, () -> desktop(ctx).shownWindowLabels().contains("File Manager"),
+                        "and one click on the button does not close the window")
+                .thenScreenshot(SETTLE, "cde-window-menu")
+                .then(DOUBLE_CLICK_GONE, () -> clickAt(ctx, desktop(ctx).windowMenuPoint("Occupy Workspace...")))
+                .thenWaitUntil(() -> desktop(ctx).occupyBoxPoint(2) != null, SCREEN_WAIT,
+                        "Occupy Workspace to ask which workspaces")
+                .thenScreenshot(SETTLE, "cde-occupy-workspace")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).occupyBoxPoint(2)))
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).occupyOkPoint()))
+                .thenWaitUntil(() -> desktop(ctx).workspacesOf("File Manager").equals(List.of(0, 2)), SCREEN_WAIT,
+                        "OK to put the File Manager on One and Three")
+                .then(SETTLE, () -> pressWorkspace(ctx, 2))
+                .thenWaitUntil(() -> desktop(ctx).shownWorkspace() == 2, SCREEN_WAIT, "workspace Three to come up")
+                .thenAssert(1, () -> desktop(ctx).shownWindowLabels().contains("File Manager"),
+                        "the File Manager shows on Three")
+                .then(SETTLE, () -> pressWorkspace(ctx, 1))
+                .thenWaitUntil(() -> desktop(ctx).shownWorkspace() == 1, SCREEN_WAIT, "workspace Two to come up")
+                .thenAssert(1, () -> desktop(ctx).shownWindowLabels().isEmpty(), "and not on Two");
+    }
+
+    /** A double click on the menu button closes the window, as it always did on a Motif title bar. */
+    @ClientTest(timeoutTicks = 3600)
+    public static void menuButton_closesTheWindowOnADoubleClick(final ClientTestContext ctx) {
+        atCde(ctx)
+                .then(SETTLE, () -> press(ctx, CdeFrontPanelLayout.Control.FILES))
+                .thenWaitUntil(() -> desktop(ctx).shownWindowLabels().contains("File Manager"), SCREEN_WAIT,
+                        "the File Manager to open")
+                .then(SETTLE, () -> {
+                    final int[] at = desktop(ctx).windowButtonPoint("File Manager", 3);
+                    clickAt(ctx, at);
+                    clickAt(ctx, at);
+                })
+                .thenWaitUntil(() -> !desktop(ctx).openWindowLabels().contains("File Manager"), SCREEN_WAIT,
+                        "the double click to close the File Manager");
+    }
+
     private static void clickAt(final ClientTestContext ctx, final int[] at) {
         ctx.click(at[0] + 0.5, at[1] + 0.5);
     }

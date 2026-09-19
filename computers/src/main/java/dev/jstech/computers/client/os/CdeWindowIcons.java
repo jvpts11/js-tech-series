@@ -83,6 +83,13 @@ final class CdeWindowIcons {
         return true;
     }
 
+    /** The window whose icon is under that point, or null when the point is on none of them. */
+    DesktopWindow at(final double mx, final double my, final List<DesktopWindow> putAway, final int width,
+                     final int top) {
+        final int index = CdeWindowIconLayout.indexAt(mx, my, putAway.size(), width, top);
+        return index < 0 ? null : putAway.get(index);
+    }
+
     /** A window's name in the small text, cut with an ellipsis when it is wider than its strip. */
     private String fit(final String name, final int room) {
         if (Texts.smallWidth(desktop.textFont(), name) <= room) {

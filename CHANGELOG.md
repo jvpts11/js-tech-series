@@ -248,6 +248,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   no list of open windows, so this is how a window that was put away is found again. What is kept on the
   desktop itself (the programs' icons, the files of the Desktop folder) is laid out from the right edge on CDE,
   as CDE did, which leaves the top left to those icons.
+- The button at the left of a CDE title bar opens the window's menu, as it does on Motif, and a double click on
+  it closes the window. The menu lists what can really be done: Restore, Minimize, Maximize, Lower (send the
+  window behind the others), Occupy Workspace, Occupy All Workspaces and Close. Alt+F5, Alt+F9 and Alt+F10
+  restore, minimise and maximise the window that has the keyboard. The right button on the icon of a minimised
+  window raises the same menu.
+- Occupy Workspace asks which of the four workspaces a window is on, each with a box to tick, so a window can be
+  moved to another workspace or kept on several at once; the last box cannot be cleared, since a window on no
+  workspace could not be found again. Which workspaces a window is on is kept with the machine like the rest.
 - The File Manager and the file dialogs open a desktop's Desktop folder and Home where the system really
   keeps them, which is under `/usr/player` on UNIX and not under `/home/player`.
 - `installpkg`, the way UNIX installs a program: put the medium the package came on in a linked drive and say

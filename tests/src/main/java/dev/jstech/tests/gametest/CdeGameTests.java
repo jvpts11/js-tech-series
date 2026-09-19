@@ -18,6 +18,7 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.computers.os.boot.BootController;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
@@ -140,12 +141,14 @@ public final class CdeGameTests {
         if (machine == null) {
             return;
         }
-        helper.assertTrue(OpenWindow.WORKSPACES == CdeFrontPanelLayout.WORKSPACES,
+        helper.assertTrue(WorkspaceSet.COUNT == CdeFrontPanelLayout.WORKSPACES,
                 "the panel offers exactly the workspaces a window can be on");
+        final int oneAndFour = WorkspaceSet.only(0) | WorkspaceSet.only(3);
         final List<OpenWindow> left = List.of(
-                new OpenWindow("File Manager", 40, 30, 200, 140, false, false, "", 0),
-                new OpenWindow("Text Editor", 60, 50, 180, 120, false, false, "", 2),
-                new OpenWindow("Terminal", 20, 20, 220, 140, false, false, "", OpenWindow.EVERY_WORKSPACE));
+                new OpenWindow("File Manager", 40, 30, 200, 140, false, false, "", WorkspaceSet.only(0)),
+                new OpenWindow("Text Editor", 60, 50, 180, 120, false, false, "", WorkspaceSet.only(2)),
+                new OpenWindow("Terminal", 20, 20, 220, 140, false, false, "", WorkspaceSet.EVERY),
+                new OpenWindow("Calculator", 30, 30, 120, 140, true, false, "", oneAndFour));
         machine.setOpenWindows(left);
         machine.setDesktopWorkspace(2);
 
@@ -163,12 +166,14 @@ public final class CdeGameTests {
                 DesktopWindowsPayload.of(machine.getBlockPos(), machine.openWindows(), machine.desktopWorkspace()));
         final DesktopWindowsPayload arrived = DesktopWindowsPayload.STREAM_CODEC.decode(buf);
         helper.assertTrue(arrived.workspace() == 2 && arrived.toOpenWindows().equals(left),
-                "and the same crosses the wire whole, the window on every workspace included");
+                "and the same crosses the wire whole, the windows on several workspaces included");
 
-        helper.assertTrue(new OpenWindow("x", 0, 0, 10, 10, false, false, "", 9).workspace() == 3,
-                "a workspace no desktop has is brought inside what it has, so it cannot hide a window");
+        helper.assertTrue(new OpenWindow("x", 0, 0, 10, 10, false, false, "", 1 << 9).on(0),
+                "a window on no workspace a desktop has is put on the first, so it cannot be lost");
         helper.assertTrue(left.get(2).on(0) && left.get(2).on(3) && left.get(1).on(2) && !left.get(1).on(0),
                 "a window shows on its own workspace, and one on all of them shows on each");
+        helper.assertTrue(left.get(3).on(0) && left.get(3).on(3) && !left.get(3).on(1) && !left.get(3).on(2),
+                "and one that occupies two of them shows on those two and on no other");
 
         machine.togglePower();
         helper.assertTrue(machine.openWindows().isEmpty() && machine.desktopWorkspace() == 0,

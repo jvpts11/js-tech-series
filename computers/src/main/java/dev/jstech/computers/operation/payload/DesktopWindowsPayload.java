@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.os.OpenWindow;
+import dev.jstech.computers.os.WorkspaceSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -41,13 +42,12 @@ public record DesktopWindowsPayload(BlockPos host, List<WireWindow> windows, int
      * One window on the wire. The two booleans travel as flags so the codec stays a plain composite,
      * and the program's state is already cut to what the wire carries by the time it is a window.
      */
-    public record WireWindow(String key, int x, int y, int w, int h, int flags, String state, int workspace) {
+    public record WireWindow(String key, int x, int y, int w, int h, int flags, String state, int workspaces) {
 
         /*
          * More fields than a composite takes, so the two halves are written out; the key and the state
          * are cut to their caps before writing, since a string over its cap is not a bad packet but a
-         * dropped connection. The workspace is written one up, so "every workspace", which is minus
-         * one, travels as nought and not as a five-byte negative.
+         * dropped connection. The workspaces travel as the set they are kept as, which is one byte.
          */
         public static final StreamCodec<RegistryFriendlyByteBuf, WireWindow> STREAM_CODEC = StreamCodec.of(
                 (buf, window) -> {
@@ -58,11 +58,11 @@ public record DesktopWindowsPayload(BlockPos host, List<WireWindow> windows, int
                     buf.writeVarInt(window.h());
                     buf.writeVarInt(window.flags());
                     buf.writeUtf(OpenWindow.clipState(window.state()), OpenWindow.STATE_MAX);
-                    buf.writeVarInt(window.workspace() + 1);
+                    buf.writeVarInt(WorkspaceSet.normalised(window.workspaces()));
                 },
                 buf -> new WireWindow(buf.readUtf(64), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
                         buf.readVarInt(), buf.readVarInt(), buf.readUtf(OpenWindow.STATE_MAX),
-                        buf.readVarInt() - 1));
+                        buf.readVarInt()));
 
         private static String clip(final String text, final int max) {
             return text.length() <= max ? text : text.substring(0, max);
@@ -71,12 +71,12 @@ public record DesktopWindowsPayload(BlockPos host, List<WireWindow> windows, int
         public static WireWindow of(final OpenWindow window) {
             return new WireWindow(window.key(), window.x(), window.y(), window.w(), window.h(),
                     (window.minimized() ? FLAG_MINIMIZED : 0) | (window.maximized() ? FLAG_MAXIMIZED : 0),
-                    OpenWindow.clipState(window.state()), window.workspace());
+                    OpenWindow.clipState(window.state()), window.workspaces());
         }
 
         public OpenWindow toOpenWindow() {
             return new OpenWindow(key, x, y, w, h,
-                    (flags & FLAG_MINIMIZED) != 0, (flags & FLAG_MAXIMIZED) != 0, state, workspace);
+                    (flags & FLAG_MINIMIZED) != 0, (flags & FLAG_MAXIMIZED) != 0, state, workspaces);
         }
     }
 
@@ -108,7 +108,7 @@ public record DesktopWindowsPayload(BlockPos host, List<WireWindow> windows, int
     /* Copied on the way in, so what the desktop is handed cannot change under it after it arrives. */
     public DesktopWindowsPayload {
         windows = List.copyOf(windows);
-        workspace = OpenWindow.clampWorkspace(workspace);
+        workspace = WorkspaceSet.clampIndex(workspace);
     }
 
     @Override

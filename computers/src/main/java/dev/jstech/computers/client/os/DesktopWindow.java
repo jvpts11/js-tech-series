@@ -8,9 +8,9 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.os.DesktopEnvironmentDef;
-import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.gui.layout.WindowGeometry;
 import net.minecraft.client.gui.Font;
@@ -42,6 +42,15 @@ public final class DesktopWindow {
     public static final int RESIZE_TOP = 4;
     public static final int RESIZE_BOTTOM = 8;
 
+    /**
+     * The title-bar buttons, by the numbers {@link #buttonAt} answers with. The way out is the button a Motif
+     * bar keeps at its left end, where it opens the window's menu before it closes anything.
+     */
+    public static final int BUTTON_NONE = 0;
+    public static final int BUTTON_MINIMIZE = 1;
+    public static final int BUTTON_MAXIMIZE = 2;
+    public static final int BUTTON_CLOSE = 3;
+
     /** Hands each window the order it was opened in, which is the order the panel lists programs in. */
     private static int nextSerial;
 
@@ -66,8 +75,8 @@ public final class DesktopWindow {
     private int pressedBtn;
     // Whether the skin last drawn with keeps the way out at the left end of the bar, as Motif does.
     private boolean menuAtLeft;
-    // Which workspace the window is on, counted from nought, or OpenWindow.EVERY_WORKSPACE for all of them.
-    private int workspace;
+    // Which workspaces the window is on, as a WorkspaceSet: one of them, several, or all.
+    private int workspaces = WorkspaceSet.only(0);
     // Geometry saved before maximizing, to restore on un-maximize.
     private int restoreX;
     private int restoreY;
@@ -575,35 +584,35 @@ public final class DesktopWindow {
 
     /** The middle of a title-bar button, in desktop pixels, by the numbers {@link #buttonAt} answers with. */
     public int[] buttonCentre(final int button) {
-        final int bx = button == 1 ? minX() : button == 2 ? maxX() : closeX();
+        final int bx = button == BUTTON_MINIMIZE ? minX() : button == BUTTON_MAXIMIZE ? maxX() : closeX();
         return new int[] {bx + BTN / 2, curY + 2 + BTN / 2};
     }
 
-    /** Which title-bar button is under the point: 1 = minimize, 2 = maximize, 3 = close, 0 = none. */
+    /** Which title-bar button is under the point, or {@link #BUTTON_NONE}. */
     public int buttonAt(final double mx, final double my) {
         if (closeBoxHit(mx, my)) {
-            return 3;
+            return BUTTON_CLOSE;
         }
         if (maximizeBoxHit(mx, my)) {
-            return 2;
+            return BUTTON_MAXIMIZE;
         }
         if (minimizeBoxHit(mx, my)) {
-            return 1;
+            return BUTTON_MINIMIZE;
         }
-        return 0;
+        return BUTTON_NONE;
     }
 
-    public int workspace() {
-        return workspace;
+    public int workspaces() {
+        return workspaces;
     }
 
-    public void setWorkspace(final int workspace) {
-        this.workspace = workspace;
+    public void setWorkspaces(final int set) {
+        this.workspaces = WorkspaceSet.normalised(set);
     }
 
     /** Whether the window shows while that workspace is up. */
     public boolean on(final int shown) {
-        return workspace == OpenWindow.EVERY_WORKSPACE || workspace == shown;
+        return WorkspaceSet.holds(workspaces, shown);
     }
 
     /** Marks which title-bar button is held down (1/2/3); it is drawn pushed-in until released (0 clears). */

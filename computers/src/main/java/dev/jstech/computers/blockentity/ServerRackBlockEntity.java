@@ -26,6 +26,7 @@ import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootPhases;
 import dev.jstech.computers.os.boot.BootRunner;
@@ -408,7 +409,7 @@ public class ServerRackBlockEntity extends BlockEntity
                         ? ResourceLocation.tryParse(saved.getString("BootedDesktop")) : null;
                 state.openWindows.addAll(OpenWindow.loadAll(
                         saved.getList("OpenWindows", Tag.TAG_COMPOUND)));
-                state.desktopWorkspace = OpenWindow.clampWorkspace(saved.getInt("DesktopWorkspace"));
+                state.desktopWorkspace = WorkspaceSet.clampIndex(saved.getInt("DesktopWorkspace"));
                 state.pendingInstallSlot = saved.contains("PendingInstall") ? saved.getInt("PendingInstall")
                         : IOsHost.NO_PENDING_INSTALL;
                 if (saved.contains("Installing")) {
@@ -1538,7 +1539,7 @@ public class ServerRackBlockEntity extends BlockEntity
         if (slot < 0) {
             return;
         }
-        unitState(slot).desktopWorkspace = OpenWindow.clampWorkspace(workspace);
+        unitState(slot).desktopWorkspace = WorkspaceSet.clampIndex(workspace);
         flushConsole(slot);
         setChanged();
     }

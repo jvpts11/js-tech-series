@@ -14,6 +14,7 @@ import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.computers.os.boot.SystemWelcome;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
@@ -182,7 +183,7 @@ final class OsSession {
     }
 
     void setDesktopWorkspace(final int workspace) {
-        this.desktopWorkspace = OpenWindow.clampWorkspace(workspace);
+        this.desktopWorkspace = WorkspaceSet.clampIndex(workspace);
         this.machine.setChanged();
     }
 
@@ -520,7 +521,7 @@ final class OsSession {
                 ? ResourceLocation.tryParse(tag.getString("BootedDesktop")) : null;
         this.openWindows.clear();
         this.openWindows.addAll(OpenWindow.loadAll(tag.getList("OpenWindows", Tag.TAG_COMPOUND)));
-        this.desktopWorkspace = OpenWindow.clampWorkspace(tag.getInt("DesktopWorkspace"));
+        this.desktopWorkspace = WorkspaceSet.clampIndex(tag.getInt("DesktopWorkspace"));
         this.pendingInstall = tag.contains("PendingInstall")
                 ? tag.getInt("PendingInstall") : IOsHost.NO_PENDING_INSTALL;
         if (tag.contains("Installing")) {
