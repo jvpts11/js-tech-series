@@ -8,6 +8,7 @@
 package dev.jstech.tests.clienttest;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.platform.Window;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
@@ -23,6 +24,8 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWCursorPosCallback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -444,6 +447,21 @@ public final class ClientTestContext {
         final Screen screen = screen(Screen.class);
         screen.mouseClicked(x, y, 0);
         screen.mouseReleased(x, y, 0);
+    }
+
+    /**
+     * Rests the pointer at screen coordinates ({@code x}, {@code y}) without pressing anything, the way moving the
+     * mouse there would. The move is handed to the handler the game gave the window for cursor moves, so what
+     * follows is exactly what a real move does: the next frame is drawn with the pointer there.
+     */
+    public void pointAt(final double x, final double y) {
+        final Window window = Minecraft.getInstance().getWindow();
+        final long handle = window.getWindow();
+        final GLFWCursorPosCallback moved = GLFW.glfwSetCursorPosCallback(handle, null);
+        GLFW.glfwSetCursorPosCallback(handle, moved);
+        if (moved != null) {
+            moved.invoke(handle, x * window.getGuiScale(), y * window.getGuiScale());
+        }
     }
 
     /** Presses and releases the right mouse button at screen coordinates ({@code x}, {@code y}). */

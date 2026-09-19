@@ -9,11 +9,14 @@ package dev.jstech.computers.gui.layout;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Control;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.core.gui.layout.GuiLayout;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class CdeFrontPanelLayoutTest {
@@ -78,6 +81,37 @@ class CdeFrontPanelLayoutTest {
         assertEquals(one.y(), exit.y());
         assertTrue(exit.y() + exit.h() >= four.y() + four.h());
         assertTrue(exit.x() >= four.x() + four.w());
+    }
+
+    @Test
+    void everyControl_hasANameOfItsOwn() {
+        final Set<String> tips = new HashSet<>();
+        for (final Control control : Control.values()) {
+            assertFalse(control.tip().isBlank(), control.name());
+            assertTrue(tips.add(control.tip()), control + " shares its name");
+        }
+    }
+
+    @Test
+    void controlAt_findsEachControlAndNoneOffThem() {
+        for (final Control control : Control.values()) {
+            final Rect r = CdeFrontPanelLayout.control(control, 512, 341);
+            assertEquals(control, CdeFrontPanelLayout.controlAt(r.x() + 1, r.y() + 1, 512, 341));
+        }
+        final Rect well = CdeFrontPanelLayout.switchWell(512, 341);
+        assertNull(CdeFrontPanelLayout.controlAt(well.x() + 2, well.y() + 2, 512, 341));
+    }
+
+    @Test
+    void tip_standsAboveThePanelAndOnTheDesktopAtEitherEnd() {
+        for (final int[] size : DESKTOPS) {
+            final Rect panel = CdeFrontPanelLayout.panel(size[0], size[1]);
+            for (final Control control : Control.values()) {
+                final Rect tip = CdeFrontPanelLayout.tip(control, 90, 12, size[0], size[1]);
+                assertTrue(tip.y() + tip.h() <= panel.y(), control + " tip covers the panel");
+                assertTrue(tip.x() >= 0 && tip.x() + tip.w() <= size[0], control + " tip leaves the desktop");
+            }
+        }
     }
 
     @Test

@@ -1624,6 +1624,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         return new int[] {sx(r.x() + r.w() / 2), sy(r.y() + CdeFrontPanelLayout.ARROW_H / 2 + 1)};
     }
 
+    /** The name the Front Panel is showing over the control the pointer rests on, or empty while it shows none. */
+    public String frontPanelTip() {
+        return cdePanels.shownTip();
+    }
+
     /** What the subpanel standing on the Front Panel lists, top to bottom, or nothing when none is up. */
     public List<String> subpanelLabels() {
         return cdeLaunchers.labels();
@@ -2502,6 +2507,13 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     /** The three menus that share a height above the panel: the launcher, the panel's own, and the desktop's. */
     private void renderMenus(final GuiGraphics g, final int tbY, final int lmx, final int lmy,
                              final float partialTick) {
+        // The name of a Front Panel control rides at the menus' height, so no window can stand over it.
+        if (is(PanelStyle.CDE) && !menuOrDialogOpen()) {
+            g.pose().pushPose();
+            g.pose().translate(0, 0, DesktopZ.MENU);
+            cdePanels.renderTip(g, sw(), sh(), cdePalette());
+            g.pose().popPose();
+        }
         if (!startOpen && !deskMenu.isOpen() && !panelCtxOpen && !cdeLaunchers.isOpen()) {
             return;
         }

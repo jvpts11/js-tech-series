@@ -21,17 +21,26 @@ public final class CdeFrontPanelLayout {
 
     /** The controls, left to right, with the switch standing between the fourth and the fifth. */
     public enum Control {
-        CLOCK(0), DATE(1), FILES(2), EDITOR(3), STYLE(4), APPLICATIONS(5);
+        CLOCK(0, "Clock"), DATE(1, "Calendar"), FILES(2, "File Manager"), EDITOR(3, "Text Editor"),
+        STYLE(4, "Style Manager"), APPLICATIONS(5, "Applications");
 
         /** Its place along the panel, counted from the left and said outright rather than read off the order. */
         private final int place;
 
-        Control(final int place) {
+        /** What resting the pointer on it says, since the panel is pictures and nothing else. */
+        private final String tip;
+
+        Control(final int place, final String tip) {
             this.place = place;
+            this.tip = tip;
         }
 
         public int place() {
             return this.place;
+        }
+
+        public String tip() {
+            return this.tip;
         }
 
         /** Whether the control stands left of the workspace switch. */
@@ -103,6 +112,26 @@ public final class CdeFrontPanelLayout {
     public static Rect exit(final int sw, final int sh) {
         final Rect well = switchWell(sw, sh);
         return new Rect(well.x() + well.w() - PAD - EXIT_W, well.y() + PAD, EXIT_W, well.h() - PAD * 2);
+    }
+
+    /** The control under that point, or null when the point is on no control. */
+    public static Control controlAt(final double px, final double py, final int sw, final int sh) {
+        for (final Control control : Control.values()) {
+            if (control(control, sw, sh).holds(px, py)) {
+                return control;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Where a tip of that width stands for a control: centred over it, just above the panel, and kept on the
+     * desktop at either end.
+     */
+    public static Rect tip(final Control control, final int width, final int height, final int sw, final int sh) {
+        final Rect r = control(control, sw, sh);
+        final int x = Math.max(0, Math.min(sw - width, r.x() + (r.w() - width) / 2));
+        return new Rect(x, panel(sw, sh).y() - height - 2, width, height);
     }
 
     /** The whole panel as solids that may not overlap, on a desktop that size. */

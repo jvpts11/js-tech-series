@@ -12,6 +12,7 @@ import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Control;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
 import dev.jstech.computers.os.WorkspaceSet;
+import javax.annotation.Nullable;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
@@ -37,8 +38,56 @@ final class CdePanels {
 
     private final DesktopScreen desktop;
 
+    /** The control the pointer rests on and since when, which is what a tip waits for; null while on none. */
+    @Nullable
+    private Control resting;
+    private long restingSince;
+
+    /** The tip on show, or empty while none is. */
+    private String shownTip = "";
+
+    /** How long the pointer rests on a control before its name comes up. */
+    private static final long TIP_AFTER_MS = 500L;
+    private static final int TIP_H = 12;
+    private static final int TIP_PAD = 4;
+
     CdePanels(final DesktopScreen desktop) {
         this.desktop = desktop;
+    }
+
+    /** The tip on show, or empty while none is, for a test to read. */
+    String shownTip() {
+        return this.shownTip;
+    }
+
+    /**
+     * The name of the control the pointer has rested on, in a small raised plate just above the panel. The panel
+     * is pictures and nothing else, so this is how a player learns what each one opens. A control whose subpanel
+     * is up needs no name: its subpanel is headed with it.
+     */
+    void renderTip(final GuiGraphics g, final int sw, final int sh, final CdePalette p) {
+        Control over = null;
+        for (final Control control : Control.values()) {
+            final Rect r = CdeFrontPanelLayout.control(control, sw, sh);
+            if (desktop.hoverIn(r.x(), r.y(), r.w(), r.h())) {
+                over = control;
+                break;
+            }
+        }
+        final long now = System.currentTimeMillis();
+        if (over != this.resting) {
+            this.resting = over;
+            this.restingSince = now;
+        }
+        if (over == null || now - this.restingSince < TIP_AFTER_MS || desktop.subpanelOpen(over)) {
+            this.shownTip = "";
+            return;
+        }
+        this.shownTip = over.tip();
+        final int w = desktop.textFont().width(this.shownTip) + TIP_PAD * 2;
+        final Rect at = CdeFrontPanelLayout.tip(over, w, TIP_H, sw, sh);
+        MotifChrome.raised(g, at.x(), at.y(), at.w(), at.h(), p.window(), p);
+        g.drawString(desktop.textFont(), this.shownTip, at.x() + TIP_PAD, at.y() + 2, p.ink(), false);
     }
 
     /** What workspace {@code index} is called, counted from nought: the four names CDE's switch came with. */

@@ -409,6 +409,19 @@ public final class CdeClientTests {
                 .thenScreenshot(SETTLE, "cde-workstation-info");
     }
 
+    /** The Front Panel is pictures only, so resting the pointer on a control names it after a moment. */
+    @ClientTest(timeoutTicks = 3600)
+    public static void frontPanel_namesAControlThePointerRestsOn(final ClientTestContext ctx) {
+        atCde(ctx)
+                .then(SETTLE, () -> {
+                    final int[] at = desktop(ctx).frontPanelPoint(CdeFrontPanelLayout.Control.STYLE);
+                    ctx.pointAt(at[0] + 0.5, at[1] + 0.5);
+                })
+                .thenWaitUntil(() -> desktop(ctx).frontPanelTip().equals("Style Manager"), SCREEN_WAIT,
+                        "the Style control to be named once the pointer has rested on it")
+                .thenScreenshot(2, "cde-panel-tip");
+    }
+
     /** A double click on the menu button closes the window, as it always did on a Motif title bar. */
     @ClientTest(timeoutTicks = 3600)
     public static void menuButton_closesTheWindowOnADoubleClick(final ClientTestContext ctx) {

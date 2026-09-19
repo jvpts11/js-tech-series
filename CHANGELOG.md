@@ -277,6 +277,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   beside the desktops it already could. Under the Front Panel the machine is still that distribution, with its
   own shell, its own tree and the player's home in `/home/player`. Gentoo builds it from source in the real
   order: Motif, the Korn shell, then CDE.
+- CDE's Front Panel names a control after the pointer has rested on it for half a second, in a small raised
+  plate just above the panel: Clock, Calendar, File Manager, Text Editor, Style Manager, Applications. The panel
+  is pictures and nothing else, so this is how a player learns what each one opens.
 - Workstation Info, CDE's window about the machine, on the third line of the Applications subpanel and in the
   Application Manager's Desktop_Tools. In three wells it shows who is at the workstation, its host name and the
   id of the data network it is on (or that it is on none); the system with its release, the architecture and
