@@ -57,6 +57,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   an interface is a class whose methods are virtual, a record is a struct, a `foreach` is a `for` over the array's
   `Length`, a `Map` is two arrays. Nothing already written changes: the full language is what every compiler and
   editor still uses.
+- The two compilers have marks of their own, in the manner of the languages they are named after: a blue
+  hexagon with a Σ for `scc` and a purple one with Σ# for `sgsc`, each drawn for every desktop. `sgsc` still
+  wore the cannon of the language's old name, and `scc` had no icon at all.
 - A program that stays up can now be written by standing on the class `Script` instead of implementing `IScript`.
   `Script` already has `OnInit`, `OnTick` and `OnDestroy`, doing nothing, so a script written this way fills in only
   the ones it uses and says `override` on each, while one written on the interface goes on writing all three with no
