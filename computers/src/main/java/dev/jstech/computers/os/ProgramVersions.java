@@ -51,6 +51,7 @@ public final class ProgramVersions {
             Map.entry("kde_plasma", "5.27"),
             Map.entry("gnome", "45.2"),
             Map.entry("cinnamon", "6.0"),
+            Map.entry("cde", "2.5.2"),
             Map.entry("command_prompt", "6.1"),
             Map.entry("files", "6.1"),
             Map.entry("editor", "6.1"),

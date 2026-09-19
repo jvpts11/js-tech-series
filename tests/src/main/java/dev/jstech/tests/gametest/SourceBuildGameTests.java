@@ -12,13 +12,16 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.machine.PackageService;
 import dev.jstech.computers.operation.payload.program.DesktopShellPayloads;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.computers.program.install.MakeOpts;
+import dev.jstech.computers.program.install.MirrorPackage;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TerminalAt;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -176,6 +179,24 @@ public final class SourceBuildGameTests {
                 .thenExecute(() -> helper.assertTrue(machine.console().isInstalled("jsc:kde_plasma"),
                         "and the desktop is on the machine once the last of it is merged"))
                 .thenSucceed();
+    }
+
+    /**
+     * CDE is built from source the way the real tree builds it: Motif, which it is drawn with, then the Korn shell
+     * it is scripted with, then CDE itself, under the names the tree files them by.
+     */
+    @GameTest(template = ARENA)
+    public static void cde_isBuiltFromMotifAndTheKornShellThenItself(final GameTestHelper helper) {
+        final MainframeBlockEntity machine = gentooMachine(helper, new BlockPos(2, 2, 2));
+        machine.installMirror();
+        final PackageService packages = machine.services().packages();
+        final MirrorPackage cde = packages == null ? null : packages.whileInstalling("x11-wm/cde", true);
+        helper.assertTrue(cde != null, "the tree knows CDE by its own name");
+        final List<String> atoms = cde.pieces().stream().map(MirrorPackage.Piece::atom).toList();
+        helper.assertTrue(atoms.equals(List.of("x11-libs/motif", "app-shells/ksh", "x11-wm/cde")),
+                "what building it merges, in order: " + atoms);
+        helper.assertTrue(packages.whileInstalling("cde", true) != null, "and by its name alone, as emerge takes it");
+        helper.succeed();
     }
 
     /** A running machine whose system builds what it installs. */

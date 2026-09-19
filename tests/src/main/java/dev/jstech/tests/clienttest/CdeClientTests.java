@@ -138,6 +138,27 @@ public final class CdeClientTests {
                 .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT);
     }
 
+    /**
+     * CDE on a Linux distribution is CDE, over a Linux: the same Front Panel and frames, and under them the
+     * distribution's own shell and its own tree, with the player's home where a Linux keeps it.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void onALinuxDistribution_cdeStandsOverThatSystemsShellAndTree(final ClientTestContext ctx) {
+        switchedOn(ctx, "debian").thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
+                .then(SETTLE, () -> clickAt(ctx,
+                        desktop(ctx).frontPanelArrowPoint(CdeFrontPanelLayout.Control.EDITOR)))
+                .thenWaitUntil(() -> desktop(ctx).subpanelLabels().contains("Terminal"), SCREEN_WAIT,
+                        "Personal Applications to come up")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).subpanelPoint("Terminal")))
+                .thenWaitUntil(() -> terminal(ctx) != null && terminal(ctx).prompt().endsWith("$"), SCREEN_WAIT * 2,
+                        "the Terminal to come up on the distribution's prompt")
+                .then(SETTLE, () -> terminal(ctx).typeLines(List.of("uname -s", "pwd")))
+                .thenWaitUntil(() -> terminal(ctx).scrollbackText().contains("Linux")
+                        && terminal(ctx).scrollbackText().contains("/home/player"), SCREEN_WAIT * 3,
+                        "the shell under CDE to be the distribution's, in a Linux home")
+                .thenScreenshot(SETTLE, "cde-on-debian");
+    }
+
     /** A UNIX machine with CDE installed, brought up, with the player at its monitor and the desktop open. */
     private static ClientTestContext atCde(final ClientTestContext ctx) {
         return switchedOn(ctx).thenAwaitScreen(DesktopScreen.class, BOOT_WAIT);
@@ -145,6 +166,11 @@ public final class CdeClientTests {
 
     /** The same machine just switched on, with the player at its monitor while it is still coming up. */
     private static ClientTestContext switchedOn(final ClientTestContext ctx) {
+        return switchedOn(ctx, "unix");
+    }
+
+    /** A machine carrying that system and CDE, just switched on, with the player at its monitor. */
+    private static ClientTestContext switchedOn(final ClientTestContext ctx, final String system) {
         return ctx.thenBuild(0, world -> {
                     world.setBlock(MACHINE, ComputingModule.MAINFRAME.get());
                     final MainframeBlockEntity machine = world.blockEntity(MACHINE, MainframeBlockEntity.class);
@@ -161,7 +187,7 @@ public final class CdeClientTests {
                             new ItemStack(ComputingModule.GPU_HD_7970.get()));
                     inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
                             new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
-                    machine.installOs(jsc("unix"));
+                    machine.installOs(jsc(system));
                     machine.console().install(jsc("cde").toString());
                     machine.togglePower();
                     world.placeMonitor(MONITOR, Direction.EAST);

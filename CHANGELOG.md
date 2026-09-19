@@ -272,6 +272,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - CDE's Terminal is a Unix terminal: it opens on the shell's own prompt, `player@host:~ $`, and greets nobody.
   A desktop now says for itself whether it stands on a Unix family, so the next desktop cannot be left off a
   list the way CDE was.
+- CDE runs on the Linux distributions too, as it can on a real one today: each distribution takes it from the
+  Mirror with its own package manager, `apt install cde` on Debian and Ubuntu and the same word to the others,
+  beside the desktops it already could. Under the Front Panel the machine is still that distribution, with its own shell,
+  its own tree and the player's home in `/home/player`. Gentoo builds it from source in the real order: Motif, the
+  Korn shell, then CDE.
 - CDE comes up behind a screen of its own, as the Linux desktops do. With no login to show, the console's lines
   are followed by a raised plate with the desktop's name and its maker's over the backdrop the desktop is about
   to stand on, and a line naming the workstation it is starting on, which is the host name its prompt says.

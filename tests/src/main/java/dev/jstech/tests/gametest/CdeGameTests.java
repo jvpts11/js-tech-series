@@ -72,8 +72,9 @@ public final class CdeGameTests {
         helper.assertTrue(desktop != null && desktop.panelStyle() == PanelStyle.CDE, "CDE draws its own panel");
         final ProgramSpec spec = OsRegistry.getProgram(CDE);
         helper.assertTrue(spec != null && spec.platforms().contains(Platform.UNIX)
-                        && spec.platforms().contains(Platform.FREEBSD) && !spec.platforms().contains(Platform.LINUX),
-                "it runs on UNIX and FreeBSD and nowhere else: " + (spec == null ? "none" : spec.platforms()));
+                        && spec.platforms().contains(Platform.FREEBSD) && spec.platforms().contains(Platform.LINUX)
+                        && !spec.platforms().contains(Platform.FRAMES),
+                "it runs on every Unix family and on nothing else: " + (spec == null ? "none" : spec.platforms()));
         helper.assertTrue("File Manager".equals(desktop.nameOf(OsRegistry.getProgram(jsc("files"))))
                         && "Style Manager".equals(desktop.nameOf(OsRegistry.getProgram(jsc("settings")))),
                 "and it calls its programs what it always called them");
@@ -132,6 +133,34 @@ public final class CdeGameTests {
                     TestWorldBuilder.finishSetup(machine, helper.getLevel(), helper.absolutePos(WHERE));
                     helper.assertTrue(CDE.equals(machine.installedDesktopId()),
                             "the desktop the machine comes up at is CDE; got " + machine.installedDesktopId());
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A Linux distribution takes it too, as a real one can: from the Mirror, by the distribution's own package
+     * manager, beside the desktops it already could, and then it comes up at CDE.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void linux_takesCdeFromItsPackageManager(final GameTestHelper helper) {
+        final MainframeBlockEntity machine = machine(helper, "debian");
+        if (machine == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerCliComputer cli = new ServerCliComputer(machine, helper.getLevel());
+                    final CliShell shell = CliCommands.shellFor(cli, 52);
+                    machine.installMirror();
+                    final String said = text(shell.run("apt install cde", cli));
+                    helper.assertTrue(!said.contains("Unable to locate") && !said.contains("not found"),
+                            "apt finds the package; got " + said);
+                    TestWorldBuilder.finishSetup(machine, helper.getLevel(), helper.absolutePos(WHERE));
+                    helper.assertTrue(CDE.equals(machine.installedDesktopId()),
+                            "the desktop the machine comes up at is CDE; got " + machine.installedDesktopId());
+                    machine.setBootedDesktopId(machine.installedDesktopId());
+                    helper.assertTrue(BootController.targetForComputer(machine)
+                            == BootController.BootTarget.FULL_DESKTOP, "and after a restart it comes up at CDE");
                 })
                 .thenSucceed();
     }

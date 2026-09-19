@@ -58,7 +58,12 @@ final class SourceChains {
                     new Piece("gnome-extra/cjs", "6.2.0", "cjs-6.2.0.tar.gz", 0.7, "cairo readline", "-debug", true),
                     new Piece("x11-wm/muffin", "6.2.0", "muffin-6.2.0.tar.gz", 2.9, "introspection", "-debug", true),
                     new Piece("gnome-extra/cinnamon", "6.2.9", "cinnamon-6.2.9.tar.gz", 8.4, "nls networkmanager",
-                            "-debug", true)));
+                            "-debug", true)),
+            /* CDE is drawn with Motif and scripted with its own Korn shell, and is little beside those two. */
+            "cde", List.of(
+                    new Piece("x11-libs/motif", "2.3.8", "motif-2.3.8.tar.gz", 3.2, "jpeg png xft", "-debug", true),
+                    new Piece("app-shells/ksh", "1.0.10", "ksh-1.0.10.tar.gz", 1.1, "nls", "-debug", true),
+                    new Piece("x11-wm/cde", "2.5.2", "cde-2.5.2.tar.gz", 6.4, "nls xinetd", "-debug", true)));
 
     private SourceChains() {
     }

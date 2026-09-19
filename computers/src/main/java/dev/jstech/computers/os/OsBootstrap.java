@@ -186,8 +186,11 @@ public final class OsBootstrap {
      */
     private static final Set<Platform> LATER_DESKTOPS = Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD);
     private static final Set<Platform> LINUX_ONLY = Set.of(Platform.LINUX);
-    /** Where CDE runs: on UNIX, which has no other desktop, and on FreeBSD beside the ones it already takes. */
-    private static final Set<Platform> CDE_SYSTEMS = Set.of(Platform.UNIX, Platform.FREEBSD);
+    /**
+     * Where CDE runs: on UNIX, which has no other desktop, and on FreeBSD and the Linux distributions beside the
+     * ones they already take. It was written for the Unix workstations and has been built for the others since.
+     */
+    private static final Set<Platform> CDE_SYSTEMS = Set.of(Platform.UNIX, Platform.FREEBSD, Platform.LINUX);
     /**
      * What is made for the systems met at a Unix prompt, whichever of them it is: the desktop environments and
      * the small tools the Mirror serves. FreeBSD takes all of it from its own packages and ports.
@@ -439,7 +442,8 @@ public final class OsBootstrap {
             /*
              * CDE: the desktop of the Unix workstations, and the only one UNIX has. A fraction of what the
              * later desktops weigh, which is how a Legacy machine with a few megabytes to spare runs one. UNIX
-             * takes it from a medium like everything else it installs; FreeBSD takes it from its packages.
+             * takes it from a medium like everything else it installs; FreeBSD takes it from its packages, and
+             * a Linux distribution from the Mirror by its own package manager, as one still can.
              */
             ProgramSpec.of(rl("cde"), "cde", "CDE", false, CDE_SYSTEMS, 32, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
                     .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.OPEN_DESK_CONSORTIUM).withRam(16)
