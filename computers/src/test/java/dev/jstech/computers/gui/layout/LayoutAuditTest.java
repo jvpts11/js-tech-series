@@ -42,7 +42,7 @@ class LayoutAuditTest {
             "ComputerTerminalLayout", "ServerRouterLayout", "NetworkInteractorLayout",
             "CraftingSwitchLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
-            "CdeFrontPanelLayout", "CdeWindowIconLayout");
+            "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout");
 
     private record AuditCase(String label, GuiLayout layout, boolean fixedSize) {
     }
@@ -128,6 +128,8 @@ class LayoutAuditTest {
             c.add(new AuditCase("CdeWindowIconLayout(" + desktop[0] + ")",
                     CdeWindowIconLayout.layout(CdeWindowIconLayout.perRow(desktop[0]) + 2, desktop[0],
                             desktop[1] - CdeFrontPanelLayout.BAND_H), false));
+            c.add(new AuditCase("CdeExitLayout(" + desktop[0] + ")",
+                    CdeExitLayout.layout(desktop[0], desktop[1]), false));
         }
         return c;
     }

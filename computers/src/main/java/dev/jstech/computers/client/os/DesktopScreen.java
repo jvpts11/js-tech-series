@@ -19,6 +19,7 @@ import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.TaskbarGroups;
+import dev.jstech.computers.gui.layout.CdeExitLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.gui.layout.CdeWindowIconLayout;
 import dev.jstech.computers.menu.DesktopMenu;
@@ -1535,6 +1536,23 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             }
         }
         return new int[] {0, 0};
+    }
+
+    /** Screen position of the middle of EXIT on the Front Panel. */
+    public int[] exitPoint() {
+        final CdeFrontPanelLayout.Rect r = CdeFrontPanelLayout.exit(sw(), sh());
+        return new int[] {sx(r.x() + r.w() / 2), sy(r.y() + r.h() / 2)};
+    }
+
+    /** Whether the dialog that shuts the machine down or restarts it is up. */
+    public boolean powerDialogOpen() {
+        return powerOpen;
+    }
+
+    /** Screen position of a button of CDE's Exit dialog, by the numbers {@link CdeExitLayout} gives them. */
+    public int[] exitDialogPoint(final int button) {
+        final CdeFrontPanelLayout.Rect r = CdeExitLayout.button(button, sw(), sh());
+        return new int[] {sx(r.x() + r.w() / 2), sy(r.y() + r.h() / 2)};
     }
 
     /** What the window menu CDE has up lists, top to bottom, or nothing when none is up. */
@@ -4025,6 +4043,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         }
         powerSurfaceW = surfaceW;
         powerSurfaceH = surfaceH;
+        // CDE asks its own way: how many programs are open, then Shut Down, Restart or Cancel.
+        if (is(PanelStyle.CDE)) {
+            CdeExitDialog.render(g, font, surfaceW, surfaceH, openPrograms(), cdePalette());
+            return true;
+        }
         final int x = powerX();
         final int y = powerY();
         g.fill(0, 0, surfaceW, surfaceH, 0x99000000);
@@ -4055,26 +4078,51 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         }
         final double mouseX = lx(mouseXAbs);
         final double mouseY = ly(mouseYAbs);
+        if (is(PanelStyle.CDE)) {
+            // A question with a Cancel of its own stays up until one of its buttons answers it.
+            final int pressed = CdeExitLayout.buttonAt(mouseX, mouseY, powerSurfaceW, powerSurfaceH);
+            if (pressed == CdeExitLayout.SHUT_DOWN || pressed == CdeExitLayout.RESTART) {
+                sendPower(pressed == CdeExitLayout.SHUT_DOWN ? MachinePowerPayload.ACTION_SHUTDOWN
+                        : MachinePowerPayload.ACTION_RESTART);
+            } else if (pressed == CdeExitLayout.CANCEL) {
+                powerOpen = false;
+            }
+            return true;
+        }
         final int x = powerX();
         final int y = powerY();
         for (int i = 0; i < POWER_CHOICES.length; i++) {
             final int rowY = y + 18 + i * POWER_ROW_H;
             if (mouseX >= x + 4 && mouseX < x + POWER_W - 4
                     && mouseY >= rowY && mouseY < rowY + POWER_ROW_H - 2) {
-                /*
-                 * The machine is going down or restarting: the desktop closing after this must not
-                 * hand its windows back to a machine whose session has just ended.
-                 */
-                powerCycling = true;
-                PacketDistributor.sendToServer(
-                        new MachinePowerPayload(host, monitorPos, i));
-                powerOpen = false;
+                sendPower(i);
                 return true;
             }
         }
         // A click anywhere else dismisses it: no accidental shutdowns.
         powerOpen = false;
         return true;
+    }
+
+    /**
+     * Tells the machine what was chosen. It is going down, restarting or being left: the desktop closing after
+     * this must not hand its windows back to a machine whose session has just ended.
+     */
+    private void sendPower(final int action) {
+        powerCycling = true;
+        PacketDistributor.sendToServer(new MachinePowerPayload(host, monitorPos, action));
+        powerOpen = false;
+    }
+
+    /** How many programs are open, on every workspace; a dialog is a question a program asks, not a program. */
+    private int openPrograms() {
+        int open = 0;
+        for (final DesktopWindow w : windows) {
+            if (!w.dialog()) {
+                open++;
+            }
+        }
+        return open;
     }
 
     /** Toggles the Start menu open/closed, always opening with an empty search box. */
@@ -4732,10 +4780,12 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     @Override
     public boolean keyFirst(final int key, final int scanCode, final int modifiers) {
         // Motif's keys for a window's menu come before the window's own program, as a window manager's do.
-        if (is(PanelStyle.CDE) && popup == null && cdeWindowMenu.keyPressed(key, modifiers, frontWindow())) {
+        if (is(PanelStyle.CDE) && popup == null && !powerOpen
+                && cdeWindowMenu.keyPressed(key, modifiers, frontWindow())) {
             return true;
         }
-        if (popup != null || deskMenu.isOpen() || taskMenu.isOpen() || deskFiles.isRenaming() || startOpen) {
+        if (popup != null || powerOpen || deskMenu.isOpen() || taskMenu.isOpen() || deskFiles.isRenaming()
+                || startOpen) {
             return keyPressed(key, scanCode, modifiers);
         }
         final DesktopWindow w = frontWindow();
@@ -4749,6 +4799,18 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             popup.keyPressed(key, scanCode, modifiers);
             if (!popup.isOpen()) {
                 popup = null;
+            }
+            return true;
+        }
+        /*
+         * The power dialog decides the fate of the whole machine, so it keeps the keyboard as it keeps the
+         * mouse: Escape thinks again, and on CDE Enter takes the button that wears the ring, Shut Down.
+         */
+        if (powerOpen) {
+            if (key == 256) {
+                powerOpen = false;
+            } else if (is(PanelStyle.CDE) && (key == 257 || key == 335)) {
+                sendPower(MachinePowerPayload.ACTION_SHUTDOWN);
             }
             return true;
         }

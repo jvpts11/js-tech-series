@@ -256,6 +256,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Occupy Workspace asks which of the four workspaces a window is on, each with a box to tick, so a window can be
   moved to another workspace or kept on several at once; the last box cannot be cleared, since a window on no
   workspace could not be found again. Which workspaces a window is on is kept with the machine like the rest.
+- EXIT on CDE's Front Panel asks the way CDE did: it says how many programs are still open on the workstation,
+  across all four workspaces, warns that what is not saved will be lost, and offers Shut Down, Restart and
+  Cancel. There is no logging out, since nobody logs in. Enter takes Shut Down, and a click beside the buttons
+  answers nothing.
+- Escape puts the power dialog away on every desktop instead of closing the monitor behind it, and no key
+  reaches a program while that dialog is up.
 - The File Manager and the file dialogs open a desktop's Desktop folder and Home where the system really
   keeps them, which is under `/usr/player` on UNIX and not under `/home/player`.
 - `installpkg`, the way UNIX installs a program: put the medium the package came on in a linked drive and say

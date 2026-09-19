@@ -1,0 +1,58 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Computers.
+ */
+package dev.jstech.computers.client.os;
+
+import dev.jstech.computers.gui.CdeExitMessage;
+import dev.jstech.computers.gui.CdePalette;
+import dev.jstech.computers.gui.layout.CdeExitLayout;
+import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
+import java.util.List;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+
+/**
+ * What EXIT on CDE's Front Panel asks: shut the workstation down, restart it, or think again. There is no
+ * logging out because nobody logged in, and it says how many programs are still open before anything is lost.
+ *
+ * <p>It only draws and says which button a point is on. What each button does to the machine is the desktop's to
+ * carry out, the same way for every desktop.
+ */
+final class CdeExitDialog {
+
+    private static final String TITLE = "Exit";
+    private static final String[] BUTTONS = {"Shut Down", "Restart", "Cancel"};
+    private static final int DIM = 0x66000000;
+    private static final int MENU_BUTTON = 12;
+
+    private CdeExitDialog() {
+    }
+
+    /** Draws the dialog over a desktop that size, for a machine with that many programs open. */
+    static void render(final GuiGraphics g, final Font font, final int sw, final int sh, final int open,
+                       final CdePalette p) {
+        g.fill(0, 0, sw, sh, DIM);
+        final Rect d = CdeExitLayout.dialog(sw, sh);
+        MotifChrome.windowFrame(g, d.x(), d.y(), d.w(), d.h(), p);
+        // A dialog's bar keeps the menu button and nothing else, since a question is neither put away nor grown.
+        MotifChrome.titleBar(g, d.x(), d.y(), d.w(), CdeExitLayout.TITLE_H, true, MENU_BUTTON + 2, 0, p);
+        MotifChrome.control(g, d.x() + 1, d.y() + 1, MENU_BUTTON, MENU_BUTTON, OsSkin.Control.CLOSE, false, p);
+        g.drawString(font, TITLE, d.x() + (d.w() - font.width(TITLE)) / 2, d.y() + 3, p.activeInk(), false);
+        final List<String> lines = CdeExitMessage.lines(open);
+        for (int i = 0; i < lines.size() && i < CdeExitLayout.LINES; i++) {
+            final String line = lines.get(i);
+            g.drawString(font, line, d.x() + (d.w() - font.width(line)) / 2, CdeExitLayout.lineY(i, sw, sh),
+                    p.ink(), false);
+        }
+        for (int i = 0; i < CdeExitLayout.BUTTONS; i++) {
+            final Rect r = CdeExitLayout.button(i, sw, sh);
+            MotifChrome.button(g, r.x(), r.y(), r.w(), r.h(), false, i == CdeExitLayout.SHUT_DOWN, p);
+            g.drawString(font, BUTTONS[i], r.x() + (r.w() - font.width(BUTTONS[i])) / 2, r.y() + 3, p.ink(),
+                    false);
+        }
+    }
+}

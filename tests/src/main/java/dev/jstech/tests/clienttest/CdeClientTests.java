@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.gui.layout.CdeExitLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
@@ -175,6 +176,28 @@ public final class CdeClientTests {
                 .thenAssert(1, () -> desktop(ctx).shownWindowLabels().isEmpty(), "and not on Two");
     }
 
+    /**
+     * EXIT on the Front Panel asks before anything goes down, and Cancel on it means what it says: the dialog
+     * goes, the desktop stays, and the program that was open is still open.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void exit_asksAndCancelLeavesTheDesktopAsItWas(final ClientTestContext ctx) {
+        atCde(ctx)
+                .then(SETTLE, () -> press(ctx, CdeFrontPanelLayout.Control.FILES))
+                .thenWaitUntil(() -> desktop(ctx).shownWindowLabels().contains("File Manager"), SCREEN_WAIT,
+                        "the File Manager to open")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).exitPoint()))
+                .thenWaitUntil(() -> desktop(ctx).powerDialogOpen(), SCREEN_WAIT, "EXIT to ask")
+                .thenScreenshot(SETTLE, "cde-exit")
+                .then(SETTLE, () -> clickAt(ctx, aboveTheExitButtons(ctx)))
+                .thenAssert(SETTLE, () -> desktop(ctx).powerDialogOpen(),
+                        "a click beside the buttons does not answer the question")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).exitDialogPoint(CdeExitLayout.CANCEL)))
+                .thenWaitUntil(() -> !desktop(ctx).powerDialogOpen(), SCREEN_WAIT, "Cancel to put the dialog away")
+                .thenAssert(1, () -> desktop(ctx).shownWindowLabels().contains("File Manager"),
+                        "and the File Manager is still open");
+    }
+
     /** A double click on the menu button closes the window, as it always did on a Motif title bar. */
     @ClientTest(timeoutTicks = 3600)
     public static void menuButton_closesTheWindowOnADoubleClick(final ClientTestContext ctx) {
@@ -189,6 +212,12 @@ public final class CdeClientTests {
                 })
                 .thenWaitUntil(() -> !desktop(ctx).openWindowLabels().contains("File Manager"), SCREEN_WAIT,
                         "the double click to close the File Manager");
+    }
+
+    /** A point on the Exit dialog's words, over the middle button: inside the dialog and on none of its buttons. */
+    private static int[] aboveTheExitButtons(final ClientTestContext ctx) {
+        final int[] restart = desktop(ctx).exitDialogPoint(CdeExitLayout.RESTART);
+        return new int[] {restart[0], restart[1] - 30};
     }
 
     private static void clickAt(final ClientTestContext ctx, final int[] at) {

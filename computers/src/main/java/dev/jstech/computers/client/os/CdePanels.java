@@ -133,7 +133,12 @@ final class CdePanels {
                     r.y() + (r.h() - 7) / 2, up ? p.activeInk() : p.ink(), false);
         }
         final Rect exit = CdeFrontPanelLayout.exit(sw, sh);
-        MotifChrome.raised(g, exit.x(), exit.y(), exit.w(), exit.h(), p.window(), p);
+        // Pushed in for as long as the question it raised is still up.
+        if (desktop.powerDialogOpen()) {
+            MotifChrome.sunken(g, exit.x(), exit.y(), exit.w(), exit.h(), p.inset(), p);
+        } else {
+            MotifChrome.raised(g, exit.x(), exit.y(), exit.w(), exit.h(), p.window(), p);
+        }
         final String word = "EXIT";
         g.drawString(desktop.textFont(), word, exit.x() + (exit.w() - desktop.textFont().width(word)) / 2,
                 exit.y() + (exit.h() - 7) / 2, p.ink(), false);
