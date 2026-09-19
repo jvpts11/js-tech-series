@@ -243,6 +243,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   state like the windows themselves: the next person to look at that monitor finds the same workspace up, a
   saved world brings it back, and a machine that is switched off or restarted comes up again on the first.
   A window that is not on the workspace that is up is not drawn at all.
+- A window minimised on CDE stands as an icon at the top left of its workspace, the program's picture on a
+  raised tile with the window's name under it, and a double click on the icon brings the window back. CDE has
+  no list of open windows, so this is how a window that was put away is found again. What is kept on the
+  desktop itself (the programs' icons, the files of the Desktop folder) is laid out from the right edge on CDE,
+  as CDE did, which leaves the top left to those icons.
 - The File Manager and the file dialogs open a desktop's Desktop folder and Home where the system really
   keeps them, which is under `/usr/player` on UNIX and not under `/home/player`.
 - `installpkg`, the way UNIX installs a program: put the medium the package came on in a linked drive and say

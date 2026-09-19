@@ -30,6 +30,8 @@ public final class CdeClientTests {
     private static final int SETTLE = 4;
     private static final int SCREEN_WAIT = 80;
     private static final int BOOT_WAIT = 1_200;
+    /** Ticks enough for a first click to have gone stale, so the two after it are a double click of their own. */
+    private static final int DOUBLE_CLICK_GONE = 10;
 
     private static final BlockPos MACHINE = new BlockPos(5, 2, 2);
     private static final BlockPos MONITOR = new BlockPos(6, 2, 2);
@@ -106,6 +108,38 @@ public final class CdeClientTests {
                 .thenWaitUntil(() -> desktop(ctx).shownWorkspace() == 0, SCREEN_WAIT, "workspace One to come back")
                 .thenAssert(1, () -> desktop(ctx).shownWindowLabels().equals(List.of("File Manager")),
                         "workspace One shows the File Manager alone");
+    }
+
+    /**
+     * CDE lists no open windows, so a window that is put away has to be found some other way: it stands at the
+     * top left of its workspace as an icon, clear of what the player keeps on the workspace, and a double click
+     * on the icon brings it back where one click does not.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void aWindowPutAway_standsAsAnIconThatBringsItBack(final ClientTestContext ctx) {
+        atCde(ctx)
+                .then(SETTLE, () -> press(ctx, CdeFrontPanelLayout.Control.FILES))
+                .thenWaitUntil(() -> desktop(ctx).shownWindowLabels().contains("File Manager"), SCREEN_WAIT,
+                        "the File Manager to open")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).windowButtonPoint("File Manager", 1)))
+                .thenWaitUntil(() -> desktop(ctx).shownWindowLabels().isEmpty(), SCREEN_WAIT,
+                        "the minimise button to put the window away")
+                .thenAssert(1, () -> desktop(ctx).openWindowLabels().contains("File Manager"),
+                        "put away, the window is still open")
+                .thenScreenshot(SETTLE, "cde-window-icon")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).putAwayIconPoint(0)))
+                .thenAssert(DOUBLE_CLICK_GONE, () -> desktop(ctx).shownWindowLabels().isEmpty(),
+                        "one click on the icon leaves the window put away")
+                .then(1, () -> {
+                    clickAt(ctx, desktop(ctx).putAwayIconPoint(0));
+                    clickAt(ctx, desktop(ctx).putAwayIconPoint(0));
+                })
+                .thenWaitUntil(() -> desktop(ctx).shownWindowLabels().contains("File Manager"), SCREEN_WAIT,
+                        "a double click on its icon to bring the window back");
+    }
+
+    private static void clickAt(final ClientTestContext ctx, final int[] at) {
+        ctx.click(at[0] + 0.5, at[1] + 0.5);
     }
 
     private static void pressWorkspace(final ClientTestContext ctx, final int index) {

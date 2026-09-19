@@ -42,7 +42,7 @@ class LayoutAuditTest {
             "ComputerTerminalLayout", "ServerRouterLayout", "NetworkInteractorLayout",
             "CraftingSwitchLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
-            "CdeFrontPanelLayout");
+            "CdeFrontPanelLayout", "CdeWindowIconLayout");
 
     private record AuditCase(String label, GuiLayout layout, boolean fixedSize) {
     }
@@ -124,6 +124,10 @@ class LayoutAuditTest {
         for (final int[] desktop : new int[][]{{384, 256}, {512, 341}}) {
             c.add(new AuditCase("CdeFrontPanelLayout(" + desktop[0] + ")",
                     CdeFrontPanelLayout.layout(desktop[0], desktop[1]), false));
+            // Its window icons, with more of them than one row of the workspace holds.
+            c.add(new AuditCase("CdeWindowIconLayout(" + desktop[0] + ")",
+                    CdeWindowIconLayout.layout(CdeWindowIconLayout.perRow(desktop[0]) + 2, desktop[0],
+                            desktop[1] - CdeFrontPanelLayout.BAND_H), false));
         }
         return c;
     }

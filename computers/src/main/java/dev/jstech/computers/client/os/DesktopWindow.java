@@ -573,6 +573,12 @@ public final class DesktopWindow {
         return !dialog() && inBtn(mx, my, minX());
     }
 
+    /** The middle of a title-bar button, in desktop pixels, by the numbers {@link #buttonAt} answers with. */
+    public int[] buttonCentre(final int button) {
+        final int bx = button == 1 ? minX() : button == 2 ? maxX() : closeX();
+        return new int[] {bx + BTN / 2, curY + 2 + BTN / 2};
+    }
+
     /** Which title-bar button is under the point: 1 = minimize, 2 = maximize, 3 = close, 0 = none. */
     public int buttonAt(final double mx, final double my) {
         if (closeBoxHit(mx, my)) {

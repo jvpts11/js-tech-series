@@ -20,6 +20,7 @@ import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.TaskbarGroups;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
+import dev.jstech.computers.gui.layout.CdeWindowIconLayout;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
@@ -55,6 +56,7 @@ import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.gui.layout.DesktopZ;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -132,6 +134,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     /** CDE's Front Panel, which stands where the others have a bar, and the subpanel that rises out of it. */
     private final CdePanels cdePanels = new CdePanels(this);
     private final CdeLaunchers cdeLaunchers = new CdeLaunchers(this);
+    /** The icons CDE stands put-away windows as on their workspace, which is all the task list it ever had. */
+    private final CdeWindowIcons cdeWindowIcons = new CdeWindowIcons(this);
     /** The flyout that lists one program's windows over its button on the panel. */
     private final TaskPopup taskPopup = new TaskPopup(this);
     /** The icons on the wallpaper: where each one sits, what it looks like, and which ones are picked. */
@@ -732,6 +736,22 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         return is(PanelStyle.CDE);
     }
 
+    /** The windows put away on the workspace that is up, in the order they were opened, dialogs aside. */
+    private List<DesktopWindow> putAwayHere() {
+        final List<DesktopWindow> out = new ArrayList<>();
+        for (final DesktopWindow w : windows) {
+            if (w.minimized() && !w.dialog() && w.owner() == null && w.on(shownWorkspace)) {
+                out.add(w);
+            }
+        }
+        /*
+         * By when each was opened and not by how they are stacked, since bringing one back restacks the
+         * list and the icons beside it must not jump about when that happens.
+         */
+        out.sort(Comparator.comparingInt(DesktopWindow::serial));
+        return out;
+    }
+
     /** Whether a window is out of sight: put away, or on a workspace that is not up. */
     private boolean away(final DesktopWindow w) {
         return w.minimized() || !w.on(shownWorkspace);
@@ -865,6 +885,22 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
 
     int workAreaTop() {
         return workTop();
+    }
+
+    int workAreaBottom() {
+        return workBottom();
+    }
+
+    int workAreaWidth() {
+        return sw();
+    }
+
+    /**
+     * Whether what is kept on the desktop is laid out from the right edge. CDE did that, and here it also
+     * leaves the top left to the icons of the windows that were put away.
+     */
+    boolean objectsStandRight() {
+        return is(PanelStyle.CDE);
     }
 
     /** Ending or bringing forward a window on the panel's behalf. */
@@ -1459,6 +1495,23 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         return new int[] {sx(r.x() + r.w() / 2), sy(r.y() + r.h() / 2)};
     }
 
+    /** Screen position of a title-bar button (1 minimise, 2 maximise, 3 the way out) of the window so labelled. */
+    public int[] windowButtonPoint(final String label, final int button) {
+        for (final DesktopWindow w : windows) {
+            if (w.appKey().equals(label)) {
+                final int[] at = w.buttonCentre(button);
+                return new int[] {sx(at[0]), sy(at[1])};
+            }
+        }
+        return new int[] {0, 0};
+    }
+
+    /** Screen position of the icon CDE stands the {@code index}-th put-away window of this workspace as. */
+    public int[] putAwayIconPoint(final int index) {
+        final CdeFrontPanelLayout.Rect tile = CdeWindowIconLayout.tile(index, sw(), workTop());
+        return new int[] {sx(tile.x() + tile.w() / 2), sy(tile.y() + tile.h() / 2)};
+    }
+
     /** Which workspace is up, counted from nought. */
     public int shownWorkspace() {
         return shownWorkspace;
@@ -2042,7 +2095,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
          * out in columns (top-down, then left-to-right) like a Windows desktop. Each icon's cell comes
          * from the free-positioning layout (a pinned cell, else the next auto-flow cell).
          */
-        final int perCol = iconGrid.perColumn(sh);
+        final int perCol = iconGrid.perColumn();
         /*
          * Each desktop layer draws at its own strictly-increasing Z (DesktopZ): the depth buffer keeps a back
          * layer behind a front one, so a back layer's batched text (an icon label) can never paint over a
@@ -2054,7 +2107,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
          */
         g.pose().pushPose();
         g.pose().translate(0, 0, DesktopZ.ICONS);
-        iconGrid.render(g, sh, lmx, lmy);
+        iconGrid.render(g, lmx, lmy);
+        // CDE stands a window that was put away on its workspace as an icon, having no panel to list it on.
+        if (is(PanelStyle.CDE)) {
+            cdeWindowIcons.render(g, putAwayHere(), sw, workTop(), cdePalette());
+        }
         g.pose().popPose();
 
         renderWindows(g, lmx, lmy, partialTick, sw, sh);
@@ -2442,7 +2499,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         }
 
         // (2) Drop onto a desktop folder icon: move the file inside it.
-        final int perCol = iconGrid.perColumn(sh());
+        final int perCol = iconGrid.perColumn();
         final int target = iconGrid.slotAt(dx, dy, perCol);
         if (target >= launchers.size() && target != deskDragSlot && src != null) {
             final DiskFilesPayload.WireFile dst = desktopItems.get(target - launchers.size());
@@ -4367,8 +4424,13 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         if (deskFiles.isRenaming()) {
             deskFiles.commitRename();
         }
+        // On CDE a double click on the icon of a window that was put away brings that window back.
+        if (is(PanelStyle.CDE) && button == 0
+                && cdeWindowIcons.clicked(mouseX, mouseY, putAwayHere(), sw(), workTop())) {
+            return Click.TAKEN;
+        }
 
-        final int perCol = iconGrid.perColumn(sh());
+        final int perCol = iconGrid.perColumn();
         final int slot = iconGrid.slotAt(mouseX, mouseY, perCol);
 
         if (button == 1) {
@@ -4450,7 +4512,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         if (bandActive) {
             bandX = lx(mouseXAbs);
             bandY = ly(mouseYAbs);
-            iconGrid.selectWithin(bandRect(), sh());
+            iconGrid.selectWithin(bandRect());
             return true;
         }
         /*

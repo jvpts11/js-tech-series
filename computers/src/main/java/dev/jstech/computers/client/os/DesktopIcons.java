@@ -63,8 +63,11 @@ final class DesktopIcons {
     private static final int CELL_W = 46;
     private static final int CELL_H = 40;
 
-    /** The cell's top-left corner relative to the icon's own: the 24px icon sits centred in the cell. */
-    private static final int CELL_DX = (24 - CELL_W) / 2;
+    /** How wide an icon's picture is drawn. */
+    private static final int ICON_W = 24;
+
+    /** The cell's top-left corner relative to the icon's own: the icon sits centred in the cell. */
+    private static final int CELL_DX = (ICON_W - CELL_W) / 2;
     private static final int CELL_DY = -2;
 
     /**
@@ -98,9 +101,9 @@ final class DesktopIcons {
         return selected;
     }
 
-    /** How many icons a column holds: the screen minus one panel band, wherever that panel sits. */
-    int perColumn(final int sh) {
-        return Math.max(1, (sh - DesktopScreen.TASKBAR_H - 12) / PITCH_Y);
+    /** How many icons a column holds: the work area, which is the screen minus the panel wherever it sits. */
+    int perColumn() {
+        return Math.max(1, (desktop.workAreaBottom() - desktop.workAreaTop() - 12) / PITCH_Y);
     }
 
     /** The stable id of the icon at slot {@code i}: {@code app:<label>} or {@code file:<name>}. */
@@ -126,9 +129,13 @@ final class DesktopIcons {
         return DesktopIconLayout.resolve(keys, pinned, perCol);
     }
 
-    /** Where a packed cell puts its icon's top-left corner. */
-    static int xOf(final int packedCell) {
-        return ORIGIN_X + DesktopIconLayout.col(packedCell) * PITCH_X;
+    /**
+     * Where a packed cell puts its icon's top-left corner. The columns count from the left edge, or from the
+     * right one on a desktop that stands its objects there, where column nought is the one against the edge.
+     */
+    int xOf(final int packedCell) {
+        final int across = ORIGIN_X + DesktopIconLayout.col(packedCell) * PITCH_X;
+        return desktop.objectsStandRight() ? desktop.workAreaWidth() - across - ICON_W : across;
     }
 
     int yOf(final int packedCell) {
@@ -151,7 +158,9 @@ final class DesktopIcons {
 
     /** The packed grid cell under a desktop-local point, clamped to the grid. */
     int cellAt(final double mx, final double my, final int perCol) {
-        final int col = Math.max(0, (int) Math.floor((mx - (ORIGIN_X - PITCH_X / 2.0)) / PITCH_X));
+        // Counted from whichever edge the columns start at, so a mirrored grid is the same sum.
+        final double across = desktop.objectsStandRight() ? desktop.workAreaWidth() - mx : mx;
+        final int col = Math.max(0, (int) Math.floor((across - (ORIGIN_X - PITCH_X / 2.0)) / PITCH_X));
         final int row = Math.max(0, Math.min(perCol - 1,
                 (int) Math.floor((my - desktop.workAreaTop() - (10 - PITCH_Y / 2.0)) / PITCH_Y)));
         return DesktopIconLayout.pack(col, row);
@@ -179,9 +188,9 @@ final class DesktopIcons {
     }
 
     /** Picks every icon whose cell the band rectangle {x, y, w, h} touches. */
-    void selectWithin(final int[] band, final int sh) {
+    void selectWithin(final int[] band) {
         selected.clear();
-        final int perCol = perColumn(sh);
+        final int perCol = perColumn();
         final int[] cells = cells(perCol);
         final int total = Math.min(cells.length, desktop.launcherList().size() + desktop.deskFiles().size());
         for (int i = 0; i < total; i++) {
@@ -200,11 +209,11 @@ final class DesktopIcons {
      * icon's full name is drawn after all of them, so it sits over the icon below instead of being
      * clipped by it.
      */
-    void render(final GuiGraphics g, final int sh, final int lmx, final int lmy) {
+    void render(final GuiGraphics g, final int lmx, final int lmy) {
         final List<DesktopScreen.Launcher> launchers = desktop.launcherList();
         final List<DiskFilesPayload.WireFile> files = desktop.deskFiles();
         final int total = launchers.size() + files.size();
-        final int perCol = perColumn(sh);
+        final int perCol = perColumn();
         final int[] cells = cells(perCol);
         final boolean dragging = desktop.draggingIcon();
         final int dropTarget = dragging
