@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 class ProjectFileTest {
 
     private static ProjectFile stockWatch() {
-        return new ProjectFile("StockWatch", ProjectFile.Kind.SCRIPT, "jsc:sigma",
+        return new ProjectFile("StockWatch", ProjectFile.Kind.SCRIPT, "jsc:sigma_sharp",
                 List.of("StockWatch.sgs", "Helpers.sgs"), List.of("Helpers"), "build/StockWatch.asm");
     }
 
@@ -42,7 +42,7 @@ class ProjectFileTest {
 
     @Test
     void read_aProjectWithNoPlatformLine_isBuiltForTheOldestThatRunsIt() {
-        final ProjectFile back = ProjectFile.read("name: Old\nkind: console\nlanguage: jsc:sigma\n"
+        final ProjectFile back = ProjectFile.read("name: Old\nkind: console\nlanguage: jsc:sigma_sharp\n"
                 + "sources: Old.sgs\nreferences: \nentry: build/Old.asm\n");
         assertEquals(AsmProgram.DEFAULT_ARCHITECTURE, back.platform());
     }
@@ -105,8 +105,10 @@ class ProjectFileTest {
     @Test
     void buildsAListing_isFalseForALibraryAndForNoEntry() {
         assertTrue(stockWatch().buildsAListing());
-        assertFalse(new ProjectFile("L", ProjectFile.Kind.LIBRARY, "jsc:sigma", List.of(), List.of(), "").buildsAListing());
-        assertFalse(new ProjectFile("E", ProjectFile.Kind.CONSOLE, "jsc:sigma", List.of(), List.of(), "").buildsAListing());
+        assertFalse(new ProjectFile("L", ProjectFile.Kind.LIBRARY, "jsc:sigma_sharp", List.of(), List.of(), "")
+                .buildsAListing());
+        assertFalse(new ProjectFile("E", ProjectFile.Kind.CONSOLE, "jsc:sigma_sharp", List.of(), List.of(), "")
+                .buildsAListing());
     }
 
     @Test

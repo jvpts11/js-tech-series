@@ -30,7 +30,7 @@ class ProjectTemplateTest {
         assertEquals(ProjectFile.Kind.CONSOLE, file.kind());
         assertEquals(List.of("Sorter.sgs"), file.sources());
         assertEquals("build/Sorter.asm", file.entry());
-        assertEquals("jsc:sigma", file.language());
+        assertEquals("jsc:sigma_sharp", file.language());
         assertEquals("Sorter.sgsproj", file.fileName());
     }
 
@@ -39,7 +39,7 @@ class ProjectTemplateTest {
     void project_inTheSmallerLanguage_isItsOwnKindOfFileBuiltForTheOldestMachines() {
         final ProjectFile file = ProjectTemplate.CONSOLE_APP.project("Sorter", SIGMA);
         assertEquals(List.of("Sorter.sg"), file.sources());
-        assertEquals("jsc:sigma_subset", file.language());
+        assertEquals("jsc:sigma", file.language());
         assertEquals("Sorter.sgproj", file.fileName());
         assertEquals("jsc:x86_16", file.platform());
         assertEquals("jsc:x86", ProjectTemplate.CONSOLE_APP.project("Sorter", SHARP).platform());

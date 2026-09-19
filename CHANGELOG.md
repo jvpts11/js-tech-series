@@ -449,7 +449,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   `.sgsproj`; `sgsc` compiles, `sigma run` runs, and `sgpack` packs a program for the Mirror. The programs to
   install are the Σ# Compiler and the Sigma Runtime, from the Sigma Foundation. The compiler's error codes start
   with S (`S2001`) and a listing's with A (`A4012`), their numbers unchanged. Files saved as `.can` and projects
-  as `.canproj` are no longer taken for programs; renaming them brings them back.
+  as `.canproj` are no longer taken for programs; renaming them brings them back. For addon authors and for
+  project files, the two languages are registered as `jsc:sigma` (Sigma) and `jsc:sigma_sharp` (Sigma Sharp); a
+  project file written before this names Sigma Sharp as `jsc:sigma` on its `language:` line and has to be told
+  `jsc:sigma_sharp`.
 - A listing that calls, makes or reads something no computer has is refused before it starts, where it used to start
   and stop at that line: the terminal says what nothing answers and on which line (`A4013`), or that the listing
   writes a value that can only be read (`A4014`). A listing the machine cannot read at all now says why, rather than

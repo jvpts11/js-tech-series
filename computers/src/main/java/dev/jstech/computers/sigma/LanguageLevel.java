@@ -23,9 +23,9 @@ import java.util.Locale;
 public enum LanguageLevel {
 
     /** The subset the earliest machines take. */
-    SIGMA("Sigma", "Σ", "jsc:sigma_subset", "sg", "sgproj", "scc"),
+    SIGMA("Sigma", "Σ", "jsc:sigma", "sg", "sgproj", "scc"),
     /** Everything the language has. */
-    SIGMA_SHARP("Sigma Sharp", "Σ#", "jsc:sigma", "sgs", "sgsproj", "sgsc");
+    SIGMA_SHARP("Sigma Sharp", "Σ#", "jsc:sigma_sharp", "sgs", "sgsproj", "sgsc");
 
     private final String displayName;
     private final String mark;
