@@ -300,6 +300,28 @@ public final class InstallService {
                 was.withDir("/etc").withDir(dir).with(new StoredFile(path, FileType.CFG, content)));
     }
 
+    /**
+     * The programs whose install media sit in this machine's linked drives right now, in the order the drives
+     * were linked. What a tool that installs "whatever is in the drive" has to choose from.
+     */
+    public List<ProgramSpec> onMedia() {
+        final List<ProgramSpec> out = new ArrayList<>();
+        if (!(this.terminal instanceof IOsHost computer)) {
+            return out;
+        }
+        for (final long endpoint : computer.linkedEndpoints()) {
+            if (this.level.getBlockEntity(BlockPos.of(endpoint)) instanceof MediaReaderBlockEntity reader
+                    && reader.insertedKind() == MediaKind.PROGRAM_INSTALL) {
+                final ProgramSpec spec = reader.insertedPayload() == null ? null
+                        : Programs.get(reader.insertedPayload());
+                if (spec != null) {
+                    out.add(spec);
+                }
+            }
+        }
+        return out;
+    }
+
     /** The format of the disc a program's installer sits on in a linked drive, or null when none does. */
     @Nullable
     private MediaFormat installMediumFor(final ResourceLocation programId) {

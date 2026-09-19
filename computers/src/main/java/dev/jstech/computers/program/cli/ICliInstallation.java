@@ -30,6 +30,11 @@ public interface ICliInstallation {
         return ICliComputer.OpResult.fail("this computer cannot install programs");
     }
 
+    /** The programs whose install media sit in this computer's drives right now, in the order of the drives. */
+    default List<ICliComputer.ProgramInfo> programsOnMedia() {
+        return List.of();
+    }
+
     /** Whether the program with the given id is present on this computer (installed, or a service flag). */
     default boolean hasProgram(final ResourceLocation id) {
         return false;

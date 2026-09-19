@@ -46,6 +46,8 @@ public final class CliCommands {
         if (family == ShellFamily.POSIX) {
             final List<ICliCommand> commands = new ArrayList<>(BuiltinCommands.shared());
             commands.addAll(PosixCommands.all());
+            // Each of these says for itself which family it belongs to, as the package managers do.
+            commands.addAll(SystemVCommands.all());
             commands.addAll(EXTRA);
             return commands;
         }

@@ -220,6 +220,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   network to install from. `uname -a` answers the way System V did, the system, the node, the release, the
   version and the machine, and names the Integra Architecture down to `IA-16` on a 16-bit processor. Until its own
   installer arrives it installs through the plain guided one.
+- `installpkg`, the way UNIX installs a program: put the medium the package came on in a linked drive and say
+  `installpkg`. With one medium in it takes what that medium carries; with several it lists them and asks to be
+  told which by name, and with none it says so. The medium itself is met under `/mnt` by its drive letter. A
+  program that runs on UNIX says `installpkg` among the ways of installing it on its medium.
 - UNIX starts and stops in very few words. It signs itself, counts the machine's memory in bytes and says how
   much is left after what it keeps, checks its root filesystem and says it is ready; the console then signs
   the player in as `desk Console Login: player` and says where its help is. Stopping, it warns the console in

@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
@@ -21,11 +22,15 @@ import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.boot.BootController;
 import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -140,6 +145,57 @@ public final class UnixGameTests {
                     helper.assertTrue(text(shell.run("apt install vim", cli)).contains("not found")
                                     && text(shell.run("pkg install vim", cli)).contains("not found"),
                             "and no manager of another family is here");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * installpkg takes the package on the medium in the drive, which is the only way this system installs
+     * anything, and the medium itself is met under /mnt.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void installpkg_installsWhatTheMediumInTheDriveCarries(final GameTestHelper helper) {
+        final BlockPos readerPos = WHERE.east();
+        helper.setBlock(WHERE, ComputingModule.MAINFRAME.get());
+        if (!(helper.getBlockEntity(WHERE) instanceof MainframeBlockEntity machine)) {
+            helper.fail("no machine at " + WHERE);
+            return;
+        }
+        TestWorldBuilder.installMainframeBuild(machine);
+        machine.uninstallOs();
+        // A graphics card gives the machine peripheral ports, which is what the drive beside it links to.
+        machine.getInventory().setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
+                new ItemStack(ComputingModule.GPU_HD_7970.get()));
+        helper.assertTrue(machine.installOs(UNIX), "UNIX installs on the machine");
+        machine.togglePower();
+        helper.setBlock(readerPos, ComputingModule.CD_DRIVE.get());
+        if (!(helper.getBlockEntity(readerPos) instanceof MediaReaderBlockEntity reader)) {
+            helper.fail("no drive at " + readerPos);
+            return;
+        }
+        final ResourceLocation scc = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "scc");
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    final ServerCliComputer cli = new ServerCliComputer(machine, helper.getLevel());
+                    final CliShell shell = CliCommands.shellFor(cli, 52);
+                    helper.assertTrue(text(shell.run("installpkg", cli)).contains("no package medium in a drive"),
+                            "with nothing in the drive it says so");
+                    final ItemStack disc = new ItemStack(ComputingModule.CD_ROM.get());
+                    MediaItem.setKind(disc, MediaKind.PROGRAM_INSTALL);
+                    MediaItem.setPayload(disc, scc);
+                    reader.mediaSlot().setStackInSlot(0, disc);
+                    // A program made for every family ships on a disc in the older dialect, so its manifest is .PKG.
+                    helper.assertTrue(text(shell.run("ls /mnt/d", cli)).contains("SCC.PKG"),
+                            "the medium is met under /mnt; got " + text(shell.run("ls /mnt/d", cli)));
+                    final String said = text(shell.run("installpkg", cli));
+                    helper.assertTrue(said.contains("Installing the scc package.") && said.contains("Setting up scc"),
+                            "it takes what the medium carries; got " + said);
+                    TestWorldBuilder.finishSetup(machine, helper.getLevel(), helper.absolutePos(WHERE));
+                    helper.assertTrue(cli.hasProgram(scc), "and the program is installed");
+                    helper.assertTrue(text(shell.run("ls /usr/bin", cli)).contains("scc"),
+                            "where System V put such things; got " + text(shell.run("ls /usr/bin", cli)));
+                    helper.assertTrue(text(shell.run("installpkg vim", cli)).contains("no such package"),
+                            "and a package that is on no medium is refused by name");
                 })
                 .thenSucceed();
     }

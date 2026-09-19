@@ -35,6 +35,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.UnixTree;
 import dev.jstech.computers.program.cli.CliLine;
@@ -329,6 +330,15 @@ public final class ServerCliComputer implements ICliComputer {
     @Override
     public OpResult install(final String programId) {
         return installs().install(programId);
+    }
+
+    @Override
+    public List<ProgramInfo> programsOnMedia() {
+        final List<ProgramInfo> out = new ArrayList<>();
+        for (final ProgramSpec spec : installs().onMedia()) {
+            out.add(new ProgramInfo(spec.commandName(), spec.id().toString()));
+        }
+        return out;
     }
 
     @Override

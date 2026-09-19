@@ -179,6 +179,10 @@ public class FormattedMediaItem extends MediaItem {
         if (spec.platforms().contains(Platform.FREEBSD)) {
             commands.add(command(PackageManagerKind.PKG, spec));
         }
+        // System V has no manager that asks a network: its tool reads the medium this is written on.
+        if (spec.platforms().contains(Platform.UNIX)) {
+            commands.add("installpkg");
+        }
         return commands;
     }
 
