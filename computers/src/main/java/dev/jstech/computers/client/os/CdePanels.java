@@ -51,13 +51,9 @@ final class CdePanels {
         MotifChrome.raised(g, panel.x(), panel.y(), panel.w(), panel.h(), p.window(), p);
         for (final Control control : Control.values()) {
             final Rect r = CdeFrontPanelLayout.control(control, sw, sh);
-            final boolean open = control == Control.APPLICATIONS && desktop.launcherOpen();
-            if (open) {
-                MotifChrome.sunken(g, r.x(), r.y(), r.w(), r.h(), p.inset(), p);
-            } else {
-                MotifChrome.raised(g, r.x(), r.y(), r.w(), r.h(), p.window(), p);
-            }
-            if (control == Control.APPLICATIONS) {
+            final boolean open = desktop.subpanelOpen(control);
+            MotifChrome.raised(g, r.x(), r.y(), r.w(), r.h(), p.window(), p);
+            if (CdeLaunchers.hasSubpanel(control)) {
                 arrow(g, r, open, p);
             }
             picture(g, control, r, p);
@@ -87,8 +83,8 @@ final class CdePanels {
             final Rect r = CdeFrontPanelLayout.control(control, sw, sh);
             if (r.holds(mx, my)) {
                 // The arrow at the head of a control raises what is behind it; the control itself opens its program.
-                if (control == Control.APPLICATIONS && my < r.y() + CdeFrontPanelLayout.ARROW_H + 2) {
-                    desktop.toggleLauncher();
+                if (CdeLaunchers.hasSubpanel(control) && my < r.y() + CdeFrontPanelLayout.ARROW_H + 2) {
+                    desktop.toggleSubpanel(control);
                 } else {
                     press(control);
                 }
@@ -96,11 +92,6 @@ final class CdePanels {
             }
         }
         return true;
-    }
-
-    /** Where the menu of applications rises from: the top left corner of the control that opens it. */
-    Rect applicationsControl(final int sw, final int sh) {
-        return CdeFrontPanelLayout.control(Control.APPLICATIONS, sw, sh);
     }
 
     private void press(final Control control) {

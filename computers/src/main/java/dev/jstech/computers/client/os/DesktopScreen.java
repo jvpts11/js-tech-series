@@ -763,9 +763,35 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         return w.minimized() || !w.on(shownWorkspace);
     }
 
-    /** Opens the launcher when it is shut and shuts it when it is open, for a panel that has its own button. */
-    void toggleLauncher() {
-        toggleStart();
+    /** The arrow at the head of a Front Panel control was pressed: its subpanel comes up, or goes back down. */
+    void toggleSubpanel(final CdeFrontPanelLayout.Control control) {
+        cdeLaunchers.toggle(control);
+    }
+
+    boolean subpanelOpen(final CdeFrontPanelLayout.Control control) {
+        return cdeLaunchers.isOpen(control);
+    }
+
+    /** Where this system keeps what is on the desktop, and the home that folder stands in. */
+    String desktopDirectory() {
+        return desktopDir;
+    }
+
+    String homeDir() {
+        final int slash = desktopDir.lastIndexOf('/');
+        return slash <= 0 ? desktopDir : desktopDir.substring(0, slash);
+    }
+
+    /** Opens a file manager at that folder, under the name this desktop gives its file manager. */
+    void openFolder(final String dir) {
+        String label = "Files";
+        for (final Launcher launcher : launchers) {
+            if (launcher.programId() != null && launcher.programId().getPath().equals("files")) {
+                label = launcher.label();
+                break;
+            }
+        }
+        openApp(label, new FilesApp(host, desktopId.getPath(), dir, monitorPos));
     }
 
     /** Whether the host computer is on a data network right now, as its block entity tells the client. */
@@ -1567,6 +1593,17 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         return new int[] {sx(r.x() + r.w() / 2), sy(r.y() + CdeFrontPanelLayout.ARROW_H / 2 + 1)};
     }
 
+    /** What the subpanel standing on the Front Panel lists, top to bottom, or nothing when none is up. */
+    public List<String> subpanelLabels() {
+        return cdeLaunchers.labels();
+    }
+
+    /** Screen position of the line so labelled on the subpanel that is up, or null. */
+    public int[] subpanelPoint(final String label) {
+        final int[] at = cdeLaunchers.rowCentre(label, sw(), sh());
+        return at == null ? null : screenPoint(at);
+    }
+
     /** The names under the icons of the Application Manager window so titled, or nothing when it is not up. */
     public List<String> applicationManagerNames(final String windowTitle) {
         final DesktopWindow w = windowFor(windowTitle);
@@ -2359,7 +2396,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     /** The three menus that share a height above the panel: the launcher, the panel's own, and the desktop's. */
     private void renderMenus(final GuiGraphics g, final int tbY, final int lmx, final int lmy,
                              final float partialTick) {
-        if (!startOpen && !deskMenu.isOpen() && !panelCtxOpen) {
+        if (!startOpen && !deskMenu.isOpen() && !panelCtxOpen && !cdeLaunchers.isOpen()) {
             return;
         }
         g.pose().pushPose();
@@ -2367,6 +2404,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         if (startOpen) {
             renderStartMenu(g, tbY);
         }
+        // A subpanel of CDE's Front Panel is no launcher that comes and goes: it stays up until its arrow says so.
+        cdeLaunchers.render(g, sw(), sh(), cdePalette());
         if (panelCtxOpen) {
             renderPanelContext(g, lmx, lmy);
         }
@@ -3693,7 +3732,6 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             return;
         }
         switch (panel) {
-            case CDE -> cdeLaunchers.render(g, cdePanels.applicationsControl(sw(), sh()), cdePalette());
             case FRAMES_XP -> renderStartMenuXp(g, tbY);
             case FRAMES_11 -> renderStartMenu11(g, tbY);
             case KDE -> renderStartMenuKde(g, tbY);
@@ -4383,11 +4421,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
          * button and no row of open programs to test, and the band either side of the slab is plain desktop.
          */
         if (is(PanelStyle.CDE)) {
-            if (startOpen) {
-                if (cdeLaunchers.click((int) mouseX, (int) mouseY, cdePanels.applicationsControl(sw(), sh()))) {
-                    return true;
-                }
-                startOpen = false;
+            // A click beside a subpanel leaves it up: only its own arrow puts it away again.
+            if (button == 0 && cdeLaunchers.click(mouseX, mouseY, sw(), sh())) {
+                return true;
             }
             // The right button on the slab opens the panel's own menu, where the Task Manager has always been.
             if (button == 1 && CdeFrontPanelLayout.panel(sw(), sh()).holds(mouseX, mouseY)) {

@@ -263,8 +263,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - CDE's Application Manager. The Applications control on the Front Panel opens it: every program on the machine
   sorted into Desktop_Apps, Desktop_Tools, Network and Games, so nobody has to know a program's name to find it.
   A double click on a group opens it in a window of its own and a double click on a program starts it. A group
-  with nothing in it is not drawn, and a program installed while a window is open appears in it at once. The
-  arrow at the head of the control still raises the subpanel that lists the programs.
+  with nothing in it is not drawn, and a program installed while a window is open appears in it at once.
+- Three controls of CDE's Front Panel carry a subpanel, raised by the arrow at their head: Files (Home and
+  Desktop, each opening a File Manager there), the Text Editor (Personal Applications: Text Editor, Terminal,
+  Calculator) and Applications (the Application Manager and the Performance Meter). A subpanel lists only what
+  the machine has, starts what is chosen on it and stays up, and goes down when its arrow is pressed again or
+  another arrow raises its own.
 - Escape puts the power dialog away on every desktop instead of closing the monitor behind it, and no key
   reaches a program while that dialog is up.
 - The File Manager and the file dialogs open a desktop's Desktop folder and Home where the system really

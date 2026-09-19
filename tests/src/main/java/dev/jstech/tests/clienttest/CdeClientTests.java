@@ -58,9 +58,37 @@ public final class CdeClientTests {
                 .thenScreenshot(SETTLE, "cde-file-manager")
                 .then(SETTLE, () -> clickAt(ctx,
                         desktop(ctx).frontPanelArrowPoint(CdeFrontPanelLayout.Control.APPLICATIONS)))
-                .thenWaitUntil(() -> desktop(ctx).isStartOpen(), SCREEN_WAIT,
+                // A subpanel lists only what the machine has, and nothing on UNIX stands behind a third line yet.
+                .thenWaitUntil(() -> desktop(ctx).subpanelLabels().equals(List.of("Application Manager",
+                                "Performance Meter")), SCREEN_WAIT,
                         "the arrow over Applications to raise its subpanel")
                 .thenScreenshot(SETTLE, "cde-applications");
+    }
+
+    /**
+     * A subpanel is a place to keep things and not a menu: what is chosen on it starts, the subpanel stays up,
+     * and only the arrow it came up by puts it away again.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void subpanel_startsWhatIsChosenAndStaysUpUntilItsArrowIsPressed(final ClientTestContext ctx) {
+        atCde(ctx)
+                .then(SETTLE, () -> clickAt(ctx,
+                        desktop(ctx).frontPanelArrowPoint(CdeFrontPanelLayout.Control.EDITOR)))
+                .thenWaitUntil(() -> desktop(ctx).subpanelLabels().equals(List.of("Text Editor", "Terminal",
+                        "Calculator")), SCREEN_WAIT, "the arrow over the Text Editor to raise Personal Applications")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).subpanelPoint("Calculator")))
+                .thenWaitUntil(() -> desktop(ctx).shownWindowLabels().contains("Calculator"), SCREEN_WAIT,
+                        "the Calculator to start from the subpanel")
+                .thenAssert(1, () -> !desktop(ctx).subpanelLabels().isEmpty(), "and the subpanel is still up")
+                .thenScreenshot(SETTLE, "cde-personal-applications")
+                .then(SETTLE, () -> clickAt(ctx,
+                        desktop(ctx).frontPanelArrowPoint(CdeFrontPanelLayout.Control.FILES)))
+                .thenWaitUntil(() -> desktop(ctx).subpanelLabels().equals(List.of("Home", "Desktop")), SCREEN_WAIT,
+                        "the arrow over Files to raise its own subpanel in place of the other")
+                .then(SETTLE, () -> clickAt(ctx,
+                        desktop(ctx).frontPanelArrowPoint(CdeFrontPanelLayout.Control.FILES)))
+                .thenWaitUntil(() -> desktop(ctx).subpanelLabels().isEmpty(), SCREEN_WAIT,
+                        "the same arrow pressed again to put the subpanel away");
     }
 
     /**
