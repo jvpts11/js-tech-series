@@ -8,6 +8,7 @@
 package dev.jstech.computers.os;
 
 import dev.jstech.core.id.IStableName;
+import java.util.Set;
 
 /**
  * The OS platform (family) a computer runs, and the axis a program is gated on.
@@ -17,8 +18,8 @@ import dev.jstech.core.id.IStableName;
  * hardware era: it is about binary/API compatibility (a program built for one platform family does not
  * run on another), not about how advanced the hardware is.
  *
- * <p>The three current platforms are all Windows-family surfaces. Future Linux-family operating systems
- * will add their own platform values, at which point cross-platform programs will list several.
+ * <p>A program that runs on several lists them all, which is most of them: what a desktop program needs is a
+ * desktop, and every family that has one can hold it.
  */
 public enum Platform implements IStableName {
 
@@ -32,7 +33,13 @@ public enum Platform implements IStableName {
     FRAMES("frames", "Frames"),
 
     /** The Linux platform: every distribution on the Linux kernel (TTY, or a desktop environment on top). */
-    LINUX("linux", "Linux");
+    LINUX("linux", "Linux"),
+
+    /**
+     * FreeBSD, which is a system and a platform both: one kernel, one base system and one ports tree, made in
+     * one place. What is built for it is not what is built for Linux, however alike the two look at a prompt.
+     */
+    FREEBSD("freebsd", "FreeBSD");
 
     private final String serializedName;
     private final String label;
@@ -50,5 +57,18 @@ public enum Platform implements IStableName {
     /** A human-readable name for tooltips and UI. */
     public String label() {
         return label;
+    }
+
+    /**
+     * Whether this is one of the families met at a Unix prompt, whose media carry a shell script where the
+     * others carry a setup program, and whose files sit under one root rather than on lettered drives.
+     */
+    public boolean unixLike() {
+        return this == LINUX || this == FREEBSD;
+    }
+
+    /** Whether everything in that set is of those families, so what is made for it is made for them alone. */
+    public static boolean onlyUnixLike(final Set<Platform> platforms) {
+        return !platforms.isEmpty() && platforms.stream().allMatch(Platform::unixLike);
     }
 }

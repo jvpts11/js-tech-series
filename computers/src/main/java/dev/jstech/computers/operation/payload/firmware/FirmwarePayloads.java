@@ -340,6 +340,14 @@ public final class FirmwarePayloads {
                         player, level, payload.monitorPos(), payload.hostPos());
                 return;
             }
+            case FirmwareActionPayload.ACTION_RESTART_FROM_MENU -> {
+                // Only a machine standing at its boot manager has one to restart from; anything else is ignored.
+                if (computer.atBootMenu()) {
+                    computer.restartFromBootMenu();
+                    MonitorBlock.openPost(player, level, payload.monitorPos(), payload.hostPos());
+                }
+                return;
+            }
             case FirmwareActionPayload.ACTION_BOOT_ONCE -> {
                 /*
                  * The one-time menu: boot that disk now and leave the saved order where it is. The machine has

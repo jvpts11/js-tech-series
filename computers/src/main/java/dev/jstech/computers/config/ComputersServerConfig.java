@@ -44,7 +44,8 @@ public final class ComputersServerConfig {
                 + "series' own file beside this one.");
         builder.push("boot");
         SHOW_BOOT_MENU_VALUE = builder
-                .comment("Whether a machine with a Linux system shows its boot menu every time it starts.",
+                .comment("Whether a machine whose system brings a boot manager stops at it every time it starts: "
+                                + "GRUB on a Linux, the loader on FreeBSD, the Midsoft Boot Manager with two systems.",
                         "Turning this off boots the chosen system at once, the way a machine with the menu hidden "
                                 + "does.")
                 .define("show_boot_menu", true);
@@ -53,16 +54,16 @@ public final class ComputersServerConfig {
         GENTOO_EVERY_STEP_VALUE = builder
                 .comment("Whether installing Gentoo by hand asks for every step of the handbook.",
                         "Off, only the steps a system cannot boot without are asked for: the disk, the stage 3, the "
-                                + "package tree, a kernel, the filesystem table, a password and the bootloader.",
+                                + "package tree, a kernel, the filesystem table and the bootloader.",
                         "On, the rest are asked for as well: the bind mounts, a profile, the @world update, the "
-                                + "time zone, a locale, the kernel link and a name for the machine.",
+                                + "kernel link and a name for the machine.",
                         "Every step answers the way the real tool does either way; this only decides which of "
                                 + "them a restart refuses to go on without.")
                 .define("gentoo_every_step", false);
         ARCH_EVERY_STEP_VALUE = builder
                 .comment("Whether installing Arch by hand asks for every step of the installation guide.",
-                        "Off, only the steps a system cannot boot without are asked for. On, the time zone, the "
-                                + "hardware clock, a locale and a name for the machine are asked for as well.")
+                        "Off, only the steps a system cannot boot without are asked for. On, the hardware clock "
+                                + "and a name for the machine are asked for as well.")
                 .define("arch_every_step", false);
         builder.pop();
         SPEC = builder.build();
@@ -78,7 +79,7 @@ public final class ComputersServerConfig {
         modEventBus.addListener(ComputersServerConfig::onReload);
     }
 
-    /** Whether a machine with a Linux system stops at its boot menu on the way up. */
+    /** Whether a machine whose system brings a boot manager stops at it on the way up. */
     public static boolean showBootMenu() {
         return showBootMenu;
     }

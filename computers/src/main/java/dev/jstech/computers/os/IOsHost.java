@@ -329,6 +329,13 @@ public interface IOsHost extends IPeripheralOwner {
     default void leaveBootMenu() {
     }
 
+    /**
+     * Leaves the menu to start the machine over from its self-test, which is what a boot manager's own Reboot
+     * is for. No system is up yet to say goodbye, so nothing is shown closing: the machine simply starts again.
+     */
+    default void restartFromBootMenu() {
+    }
+
     /** Whether the system is coming up on this machine right now. */
     default boolean booting() {
         return false;
@@ -353,6 +360,15 @@ public interface IOsHost extends IPeripheralOwner {
     @Nullable
     default ComputerBuild currentBuild() {
         return null;
+    }
+
+    /**
+     * How many bits wide this machine's processor is, which is what a system names its architecture from. A
+     * machine that cannot say what it is built of is taken for one of today's.
+     */
+    default int processorBits() {
+        final ComputerBuild build = this.currentBuild();
+        return build == null || build.cpus().isEmpty() ? 64 : build.cpus().getFirst().architecture().bits();
     }
 
     /** Whether a drive this machine reaches holds something it could boot instead of one of its own disks. */

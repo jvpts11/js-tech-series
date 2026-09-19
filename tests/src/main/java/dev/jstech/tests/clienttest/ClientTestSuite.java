@@ -25,6 +25,7 @@ public final class ClientTestSuite {
             DesktopMenuClientTests.class,
             ExposureClientTests.class,
             FilesSyncClientTests.class,
+            FreeBsdClientTests.class,
             FullJourneyClientTests.class,
             GatewayManagerClientTests.class,
             InstallMediaClientTests.class,

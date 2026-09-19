@@ -28,6 +28,7 @@ import dev.jstech.computers.operation.payload.OpenPostPayload;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
 import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
+import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
@@ -605,32 +606,31 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
             final HardwareEra era = host.displayEra();
             final Component title = level.getBlockState(owner).getBlock().getName();
             /*
-             * A POSIX (Linux) OS gets a login banner and a bash-style prompt: tell the client which shell,
-             * host name and OS it is booting so it can draw them before the first command round-trip.
+             * A system met at a Unix prompt gets a login banner and a prompt in its shell's shape: tell the
+             * client which shell, host name and system it is, and what that system runs on, so it can draw
+             * them before the first command round-trip.
              */
             final OsDef os = host.installedOs();
             final LiveInstallState live =
                     host.console() == null ? null : host.console().liveInstall();
             final boolean posix = ServerCliComputer.shellFamilyOf(host)
                     == ShellFamily.POSIX;
-            final String shellId;
-            final String hostname;
-            final String osLabel;
+            final ConsoleIdentity console;
             if (live != null) {
                 // A booted live medium: a root shell on the installer, named after the medium.
-                shellId = "live";
-                hostname = live.hostname();
-                osLabel = (live.distro() == LiveInstallState.Distro.ARCH
-                        ? "Arch Linux" : "Gentoo") + " live";
+                console = new ConsoleIdentity(ConsoleIdentity.LIVE, live.hostname(),
+                        (live.distro() == LiveInstallState.Distro.ARCH ? "Arch Linux" : "Gentoo") + " live",
+                        Platform.LINUX, host.processorBits());
             } else {
-                shellId = posix && os != null ? os.shellId() : "";
-                hostname = posix
+                final String hostname = posix
                         && host instanceof IComputerTerminalHost terminalHost
                         && level instanceof ServerLevel serverLevel
                         ? new ServerCliComputer(terminalHost, serverLevel)
                                 .hostname()
                         : "";
-                osLabel = os == null ? "" : os.displayName();
+                console = new ConsoleIdentity(posix && os != null ? os.shellId() : "", hostname,
+                        os == null ? "" : os.displayName(), os == null ? null : os.platform(),
+                        host.processorBits());
             }
             /*
              * Each platform gets its own console screen: the Linux TTY (installed distributions and live
@@ -643,16 +643,12 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
             final long session = host.console() == null ? 0L : host.console().session();
             player.openMenu(new SimpleMenuProvider(
                     (id, inv, p) -> tty
-                            ? new LinuxTtyMenu(
-                                    id, inv, monitorPos, owner, era, shellId, hostname, osLabel, session)
+                            ? new LinuxTtyMenu(id, inv, monitorPos, owner, era, console, session)
                             : dos
-                                    ? new DosTerminalMenu(
-                                            id, inv, monitorPos, owner, era, shellId, hostname, osLabel, session)
-                                    : new CommandPromptMenu(id, inv, monitorPos, owner, era, shellId, hostname,
-                                            osLabel, session),
+                                    ? new DosTerminalMenu(id, inv, monitorPos, owner, era, console, session)
+                                    : new CommandPromptMenu(id, inv, monitorPos, owner, era, console, session),
                     title),
-                    buf -> CommandPromptMenu.writeOpenBuffer(buf, monitorPos, owner, era, shellId, hostname,
-                            osLabel, session));
+                    buf -> CommandPromptMenu.writeOpenBuffer(buf, monitorPos, owner, era, console, session));
         }
     }
 

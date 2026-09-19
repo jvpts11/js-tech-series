@@ -199,6 +199,26 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   answering, and the one about the network only appears on a machine that is on one. Every button opens a program
   that is really there, under the name that edition gives it. Unticking "Show this at startup" is remembered with
   the system.
+- FreeBSD, from the Daemon Foundation: a system of its own beside the Linux distributions, for machines of the
+  Legacy generation and later. It comes up at a terminal running `sh`, with the prompt its home directory sets
+  up (`player@desk:~ $`), and takes KDE Plasma, GNOME or Cinnamon from the Mirror like the distributions do. Its
+  manager is `pkg`, in pkg's own words: `pkg install`, `pkg delete`, `pkg search`, `pkg info` and `pkg update`,
+  looking at the repository catalogue before it does anything and naming itself when something goes wrong. What
+  is installed goes under `/usr/local`, apart from the base system, and `/etc/rc.conf` names the machine it is
+  on. Until its own installer arrives it installs through the plain guided one.
+- FreeBSD starts and stops in its own words. The kernel names its release and the architecture of the processor
+  under it, which in this world is Velocion's `vel64` on a 64-bit processor and the Integra Architecture,
+  `IA-32`, on a 32-bit one; then the memory and the disks that are really in the machine as `ada0`, `ada1`, the
+  network only when a cable reaches one, the Mirror only when one answers, and a display manager only when a
+  desktop is installed. It stops down to "The operating system has halted.", or "Rebooting..." when it is coming
+  straight back. The console greets as FreeBSD does: `FreeBSD/vel64 (desk) (ttyv0)`, the login, the release.
+- FreeBSD's boot loader. After the self-test the machine stops at a ruled box headed "Welcome to FreeBSD" with
+  the red sphere beside it, counting down to a boot on every start. It lists only what it can do here: `Boot`,
+  which is what Enter does, `Reboot`, which runs the self-test again, and the firmware settings on the machines
+  whose firmware is reached that way. An entry is chosen by its number, and any other key stops the count. The
+  setting that hides GRUB's menu hides this one too.
+- `uname` takes `-s`, `-n`, `-r` and `-m` as well as `-a`, alone or together (`uname -sr`), and answers for the
+  system it runs on: a Linux says `Linux` and `x86_64` or `i686`, FreeBSD says `FreeBSD` and `vel64` or `IA-32`.
 
 ### Changed
 - A terminal is now a grid. Every character sits in a cell of its own, all the cells the same width, on the
@@ -861,6 +881,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   request as partial: when it runs dry while the request is short, the network gives it another lot's worth.
 - `Program.Send` answers false for a program that has already returned. It used to answer true while the
   program was still listed for its terminal or its parent to read, though nothing ever read the line.
+- A Linux console's welcome, `uname -a` and the kernel line of `screenfetch` name the architecture the processor
+  really understands, `i686` on a 32-bit machine, as the boot log beside them already did. They used to say
+  `x86_64` on every machine.
+- The notes on the two `install_by_hand` settings in the server configuration no longer list a password, a time
+  zone and a locale among the steps, which the by-hand installs stopped asking for.
 
 ## [0.3.0a] - 2026-09-13 - The Programming Update
 

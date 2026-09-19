@@ -17,6 +17,7 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -196,6 +197,15 @@ public final class Installers {
         }
         final String custom = machine.customName();
         return custom == null || custom.isBlank() ? "computer" : custom;
+    }
+
+    /**
+     * The name this computer answers to on a network and at a Unix prompt: its own name lowered and hyphenated,
+     * or its system's when it was never given one. What a system writes about its host name on its way up has
+     * to be this, since it is what the prompt will say a moment later.
+     */
+    public static String hostName(final IOsHost machine) {
+        return machine instanceof IComputerTerminalHost terminal ? terminal.hostname() : machineName(machine);
     }
 
     /** The system already on that disk, by the name a person reads, or empty when it carries none. */

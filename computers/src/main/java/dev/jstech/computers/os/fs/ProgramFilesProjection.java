@@ -15,6 +15,7 @@ import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.os.SoftwareHouse;
+import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.program.ComputerConsoleState;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -57,8 +58,26 @@ public final class ProgramFilesProjection {
             frames(host, os, out);
         } else if (os.platform() == Platform.LINUX) {
             linux(host, os, out);
+        } else if (os.platform() == Platform.FREEBSD) {
+            freebsd(host, out);
         }
         return out;
+    }
+
+    /*
+     * FreeBSD keeps what it is made of apart from what is added to it: the base system has the root and /usr to
+     * itself, and everything installed afterwards, from a package or from ports, goes under /usr/local. It is
+     * the first thing anybody coming from a Linux notices, and looking in /usr/bin for a program is how.
+     */
+    private static void freebsd(final IOsHost host, final List<InstallerLayout.Entry> out) {
+        out.add(file("etc/rc.conf", FileType.CFG));
+        out.add(dir("usr/local"));
+        out.add(dir("usr/local/share"));
+        for (final ProgramSpec spec : installed(host)) {
+            out.add(file("usr/local/bin/" + spec.commandName(), FileType.BIN));
+            out.add(dir("usr/local/share/" + spec.commandName()));
+            out.add(file("usr/local/share/" + spec.commandName() + "/readme", FileType.TXT));
+        }
     }
 
     private static void frames(final IOsHost host, final OsDef os, final List<InstallerLayout.Entry> out) {
@@ -188,10 +207,17 @@ public final class ProgramFilesProjection {
                     + "ID=" + os.id().getPath() + "\nPRETTY_NAME=\"" + os.displayName() + " "
                     + ProgramVersions.of(os.id()) + "\"\n");
         }
+        if (path.equals("etc/rc.conf")) {
+            // What the startup scripts read, which is this machine: its name, and its network when it has one.
+            return Optional.of("hostname=\"" + Installers.hostName(host) + "\"\n"
+                    + (host.networkAttached() ? "ifconfig_em0=\"DHCP\"\n" : "")
+                    + "dumpdev=\"AUTO\"\n");
+        }
         for (final ProgramSpec spec : installed(host)) {
             final String frames = "/" + spec.displayName() + "/readme.txt";
             if (path.endsWith(frames) && (path.startsWith(PROGRAM_FILES) || path.startsWith(PROGRAM_FILES_X86))
-                    || path.equals("usr/share/" + spec.commandName() + "/readme")) {
+                    || path.equals("usr/share/" + spec.commandName() + "/readme")
+                    || path.equals("usr/local/share/" + spec.commandName() + "/readme")) {
                 return Optional.of(readme(spec));
             }
         }

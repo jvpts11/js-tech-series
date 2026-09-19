@@ -1318,6 +1318,15 @@ public class ServerRackBlockEntity extends BlockEntity
     }
 
     @Override
+    public void restartFromBootMenu() {
+        final int slot = soleComputerSlot();
+        if (slot >= 0) {
+            unitState(slot).phases.endMenu();
+            setNeedsPost(true);
+        }
+    }
+
+    @Override
     public boolean booting() {
         final int slot = soleComputerSlot();
         return slot >= 0 && unitState(slot).phases.booting();

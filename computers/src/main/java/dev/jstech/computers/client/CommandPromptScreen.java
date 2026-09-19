@@ -32,8 +32,10 @@ import dev.jstech.computers.operation.payload.TerminalKeyboard;
 import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.operation.payload.program.DesktopShellPayloads;
 import dev.jstech.computers.operation.payload.program.TerminalTools;
+import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliStyle;
+import dev.jstech.computers.program.cli.ConsoleGreeting;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.core.gui.LineHistory;
 import dev.jstech.core.gui.Phosphor;
@@ -208,21 +210,9 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
              * been opened; the command history (arrow keys) still persists, which is the part worth
              * keeping; a fresh terminal emulator behaves exactly like this.
              */
-            if (menu.shellId().equals("live")) {
-                // A booted installer medium: the live ISO's banner, already logged in as root.
-                push(menu.osLabel() + " installation medium (tty1)", CliStyle.ACCENT);
-                push("", CliStyle.PLAIN);
-                push(menu.hostname() + " login: root (automatic login)", CliStyle.PLAIN);
-                push("Type 'help' for the installation walkthrough.", CliStyle.DIM);
-                push("", CliStyle.PLAIN);
-            } else if (menu.posixShell()) {
-                // A Linux TTY: the getty banner and an automatic login, then the shell greeting.
-                push(menu.osLabel() + " " + menu.hostname() + " tty1", CliStyle.ACCENT);
-                push("", CliStyle.PLAIN);
-                push(menu.hostname() + " login: player", CliStyle.PLAIN);
-                push("Password:", CliStyle.PLAIN);
-                push("Welcome to " + menu.osLabel() + " (Linux 6.8-jsc x86_64)", CliStyle.DIM);
-                push("", CliStyle.PLAIN);
+            if (menu.posixShell()) {
+                // A Unix console: the banner, the login and the welcome, each family's in its own shape.
+                ConsoleGreeting.of(menu.console()).forEach(scrollback::push);
             } else if (dosStyle()) {
                 /*
                  * MC-DOS wears a period boot banner instead of the generic shell greeting. The lines are
@@ -777,12 +767,10 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
      * colours of its own and the machine says which a tick after the terminal opens.
      */
     private String initialPosixPrompt() {
-        if (menu.shellId().equals("live")) {
+        if (menu.console().live()) {
             return "";
         }
-        return menu.shellId().equals("zsh")
-                ? "player@" + menu.hostname() + " ~ %"
-                : "player@" + menu.hostname() + ":~$";
+        return ConsoleIdentity.promptOf(menu.shellId(), menu.hostname(), "~");
     }
 
     /**

@@ -158,6 +158,14 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
+    public void restartFromBootMenu() {
+        rack.asUnit(row, () -> {
+            rack.restartFromBootMenu();
+            return null;
+        });
+    }
+
+    @Override
     public boolean booting() {
         return rack.asUnit(row, rack::booting);
     }

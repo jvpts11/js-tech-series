@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.boot.BootManager;
 import dev.jstech.computers.os.boot.BootMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -48,6 +49,8 @@ public record OpenBootMenuPayload(BlockPos hostPos, BlockPos monitorPos, BootMen
         buf.writeVarInt(p.remainingTicks());
         buf.writeVarInt(p.menu().defaultIndex());
         buf.writeVarInt(p.menu().countdownTicks());
+        // Whose menu it is, by name, since that decides how the screen draws it and which keys it takes.
+        buf.writeUtf(p.menu().manager().serializedName(), MAX_LABEL);
         buf.writeUtf(p.menu().title().length() <= MAX_LABEL ? p.menu().title()
                 : p.menu().title().substring(0, MAX_LABEL), MAX_LABEL);
         final List<BootMenu.Entry> entries = p.menu().entries();
@@ -67,12 +70,14 @@ public record OpenBootMenuPayload(BlockPos hostPos, BlockPos monitorPos, BootMen
         final int remaining = buf.readVarInt();
         final int chosen = buf.readVarInt();
         final int countdown = buf.readVarInt();
+        final BootManager manager = BootManager.named(buf.readUtf(MAX_LABEL));
         final String title = buf.readUtf(MAX_LABEL);
         final int count = Math.min(buf.readVarInt(), BootMenu.MOST_ENTRIES);
         final List<BootMenu.Entry> entries = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             entries.add(new BootMenu.Entry(buf.readUtf(MAX_LABEL), buf.readVarInt(), buf.readUtf(MAX_LABEL)));
         }
-        return new OpenBootMenuPayload(host, monitor, new BootMenu(title, entries, chosen, countdown), remaining);
+        return new OpenBootMenuPayload(host, monitor, new BootMenu(manager, title, entries, chosen, countdown),
+                remaining);
     }
 }

@@ -119,9 +119,22 @@ public record OsDef(
     public static OsDef linuxDistro(final ResourceLocation id, final int footprintMb, final String displayName,
                                     final String shellId, final PackageManagerKind packageManager,
                                     final InstallMode installMode, final SoftwareHouse house) {
-        return new OsDef(id, OsCapability.TERMINAL_ONLY, HardwareEra.LEGACY,
-                ResourceLocation.fromNamespaceAndPath("jsc", "linux"), footprintMb, Optional.empty(),
-                Platform.LINUX, displayName, shellId, packageManager, installMode, Optional.empty(), house, 0,
+        return terminalSystem(id, ResourceLocation.fromNamespaceAndPath("jsc", "linux"), Platform.LINUX,
+                HardwareEra.LEGACY, footprintMb, displayName, shellId, packageManager, installMode, house);
+    }
+
+    /**
+     * A system that comes up at a terminal on a kernel and a platform of its own, and takes a desktop as a
+     * package afterwards if it takes one at all: what a Linux distribution is, and what the systems that are
+     * no Linux but are met at the same kind of prompt are too.
+     */
+    public static OsDef terminalSystem(final ResourceLocation id, final ResourceLocation kernelId,
+                                       final Platform platform, final HardwareEra minEra, final int footprintMb,
+                                       final String displayName, final String shellId,
+                                       final PackageManagerKind packageManager, final InstallMode installMode,
+                                       final SoftwareHouse house) {
+        return new OsDef(id, OsCapability.TERMINAL_ONLY, minEra, kernelId, footprintMb, Optional.empty(), platform,
+                displayName, shellId, packageManager, installMode, Optional.empty(), house, 0,
                 InstallerStyle.PLAIN, 0);
     }
 

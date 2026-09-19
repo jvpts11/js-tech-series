@@ -10,6 +10,7 @@ package dev.jstech.computers.gui.layout;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.core.gui.layout.GuiLayout;
 import java.io.File;
 import java.lang.reflect.Method;
@@ -40,7 +41,7 @@ class LayoutAuditTest {
             "BusLayout", "ClusterManagementComputerLayout", "CraftingComputerLayout", "NmsLayout",
             "ComputerTerminalLayout", "ServerRouterLayout", "NetworkInteractorLayout",
             "CraftingSwitchLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
-            "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout");
+            "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout");
 
     private record AuditCase(String label, GuiLayout layout, boolean fixedSize) {
     }
@@ -110,6 +111,13 @@ class LayoutAuditTest {
                 .minContentHeight() - 1}) {
             c.add(new AuditCase("PatternStudioLayout(" + h + ")",
                     dev.jstech.computers.gui.layout.PatternStudioLayout.layout(322, h), false));
+        }
+        /*
+         * A boot loader is drawn on the monitor's glass, which is one size for everything a machine shows and
+         * wider than the budget a panel is held to, so it is audited for being clean and not for fitting one.
+         */
+        for (final int entries : new int[]{2, 3, BootMenu.MOST_ENTRIES}) {
+            c.add(new AuditCase("LoaderMenuLayout(" + entries + ")", LoaderMenuLayout.layout(entries), false));
         }
         return c;
     }

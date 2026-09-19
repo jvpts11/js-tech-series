@@ -18,7 +18,8 @@ import java.util.List;
  * disks, plus a way into the firmware on the machines whose firmware can be reached that way. A machine with one
  * system still shows it, because the menu is also how a player finds out that the other disk is there.
  */
-public record BootMenu(String title, List<Entry> entries, int defaultIndex, int countdownTicks) {
+public record BootMenu(BootManager manager, String title, List<Entry> entries, int defaultIndex,
+                       int countdownTicks) {
 
     /** How many entries a menu may hold: more disks than any machine here has, plus the firmware. */
     public static final int MOST_ENTRIES = 12;
@@ -26,10 +27,14 @@ public record BootMenu(String title, List<Entry> entries, int defaultIndex, int 
     /** A disk slot that is not a disk at all: the way into the firmware's own setup. */
     public static final int FIRMWARE = -1;
 
+    /** Another that is no disk: starting the machine over, which the managers that offer it list among the rest. */
+    public static final int RESTART = -2;
+
     /** Nothing to choose between. */
-    public static final BootMenu NONE = new BootMenu("", List.of(), 0, 0);
+    public static final BootMenu NONE = new BootMenu(BootManager.NONE, "", List.of(), 0, 0);
 
     public BootMenu {
+        manager = manager == null ? BootManager.NONE : manager;
         title = title == null ? "" : title;
         entries = entries == null ? List.of() : List.copyOf(entries.size() > MOST_ENTRIES
                 ? entries.subList(0, MOST_ENTRIES) : entries);
@@ -68,17 +73,23 @@ public record BootMenu(String title, List<Entry> entries, int defaultIndex, int 
         public boolean isFirmware() {
             return this.slot == FIRMWARE;
         }
+
+        /** Whether this entry starts the machine over rather than booting anything. */
+        public boolean isRestart() {
+            return this.slot == RESTART;
+        }
     }
 
     /** Builds one up as the machine looks over its disks. */
     public static final class Builder {
 
-        private final String title;
+        private final BootManager manager;
         private final List<Entry> entries = new ArrayList<>();
         private int defaultIndex;
 
-        public Builder(final String title) {
-            this.title = title;
+        /** A menu of that manager's, which is who decides how it is drawn and what it is headed with. */
+        public Builder(final BootManager manager) {
+            this.manager = manager;
         }
 
         public Builder entry(final String label, final int slot, final String osId) {
@@ -92,6 +103,12 @@ public record BootMenu(String title, List<Entry> entries, int defaultIndex, int 
             return this;
         }
 
+        /** Starting the machine over, for a manager that lists it. */
+        public Builder restart(final String label) {
+            this.entries.add(new Entry(label, RESTART, ""));
+            return this;
+        }
+
         /** Marks the entry added last as the one that boots when nobody chooses. */
         public Builder defaultsToLast() {
             this.defaultIndex = Math.max(0, this.entries.size() - 1);
@@ -99,7 +116,8 @@ public record BootMenu(String title, List<Entry> entries, int defaultIndex, int 
         }
 
         public BootMenu build(final int countdownTicks) {
-            return new BootMenu(this.title, this.entries, this.defaultIndex, countdownTicks);
+            return new BootMenu(this.manager, this.manager.title(), this.entries, this.defaultIndex,
+                    countdownTicks);
         }
     }
 }

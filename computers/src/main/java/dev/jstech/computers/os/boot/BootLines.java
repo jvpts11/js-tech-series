@@ -13,6 +13,7 @@ import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.install.Installers;
 import net.minecraft.resources.ResourceLocation;
@@ -44,8 +45,8 @@ public final class BootLines {
     /** What a machine of the earliest age reserves below the line, in kilobytes, as those machines did. */
     private static final int BASE_MEMORY_KB = 640;
 
-    /** The kernel these machines run, named after the mod so it is plainly this world's own. */
-    private static final String KERNEL_VERSION = "6.8-jsc";
+    /** The kernel the Linux machines run. */
+    private static final String KERNEL_VERSION = KernelNames.LINUX_VERSION;
 
     /** The init the machines of the other Linux line run, which prints in a hand of its own. */
     private static final String OPENRC_VERSION = "0.54";
@@ -71,6 +72,7 @@ public final class BootLines {
             case MC_DOS -> dos(machine, system, copyright);
             case MC_NET -> net(machine, system, copyright, level);
             case LINUX -> linux(machine, system, level);
+            case FREEBSD -> BsdBootLines.up(machine, system, level);
             case FRAMES -> frames(machine, system);
             default -> new BootSequence.Builder().title(system.displayName()).subtitle(copyright).build();
         };
@@ -122,7 +124,10 @@ public final class BootLines {
             return BootMenu.NONE;
         }
         final BootManager manager = BootManager.of(booting.platform());
-        final BootMenu.Builder out = new BootMenu.Builder(manager.title());
+        if (!manager.listsSystems()) {
+            return loaderMenu(machine, manager, countdownTicks);
+        }
+        final BootMenu.Builder out = new BootMenu.Builder(manager);
         final ResourceLocation runningId = machine.installedOsId();
         int drive = 0;
         for (int slot = 0; slot < machine.diskSlots(); slot++) {
@@ -172,6 +177,48 @@ public final class BootLines {
     }
 
     /**
+     * The menu of a manager that boots its own system and chooses between none: the boot, starting over, and
+     * the firmware on the machines that reach it this way. Only what the machine can really do is listed.
+     */
+    private static BootMenu loaderMenu(final IOsHost machine, final BootManager manager, final int countdownTicks) {
+        final ResourceLocation running = machine.installedOsId();
+        final int slot = running == null ? -1 : slotOf(machine, running);
+        if (slot < 0) {
+            return BootMenu.NONE;
+        }
+        final BootMenu.Builder out = new BootMenu.Builder(manager)
+                .entry("Boot", slot, running.toString())
+                .defaultsToLast()
+                .restart("Reboot");
+        if (FirmwareKind.forEra(machine.installedEra() != null ? machine.installedEra() : HardwareEra.STANDARD)
+                == FirmwareKind.UEFI) {
+            out.firmware(manager.firmwareLabel());
+        }
+        return out.build(countdownTicks);
+    }
+
+    /**
+     * The disk that system really sits on, the firmware's preferred one first, or -1 when no disk carries it.
+     *
+     * <p>Never the preference itself, which is -1 for "whichever disk has a system": an entry has to name a disk,
+     * and -1 in an entry is the way into the firmware.
+     */
+    private static int slotOf(final IOsHost machine, final ResourceLocation system) {
+        final int preferred = machine.bootDiskSlot();
+        if (preferred >= 0 && preferred < machine.diskSlots()
+                && OsDisks.systemsOn(machine.diskInSlot(preferred)).ids().contains(system)) {
+            return preferred;
+        }
+        for (int slot = 0; slot < machine.diskSlots(); slot++) {
+            if (machine.diskInSlot(slot).getItem() instanceof DiskItem
+                    && OsDisks.systemsOn(machine.diskInSlot(slot)).ids().contains(system)) {
+                return slot;
+            }
+        }
+        return -1;
+    }
+
+    /**
      * What this machine's system shows on its way down, or nothing at all.
      *
      * <p>The earliest systems had no such screen: switching the machine off switched it off, and the glass went
@@ -192,6 +239,7 @@ public final class BootLines {
                     .subtitle(framesGoodbye(system, restarting))
                     .build();
             case LINUX -> linuxDown(system, restarting);
+            case FREEBSD -> BsdBootLines.down(machine, restarting);
             default -> BootSequence.NONE;
         };
     }
@@ -367,16 +415,11 @@ public final class BootLines {
 
     /** What a kernel of this machine calls the architecture it is running on. */
     private static String kernelArch(final IOsHost machine) {
-        final ComputerBuild build = machine.currentBuild();
-        if (build == null || build.cpus().isEmpty()) {
-            return "x86_64";
-        }
-        final int bits = build.cpus().getFirst().architecture().bits();
-        return bits >= 64 ? "x86_64" : "i686";
+        return KernelNames.architecture(Platform.LINUX, machine.processorBits());
     }
 
     /** The processor as a kernel names it: its model and how many cores it has. */
-    private static String cpuName(final IOsHost machine) {
+    static String cpuName(final IOsHost machine) {
         final ComputerBuild build = machine.currentBuild();
         if (build == null || build.cpus().isEmpty()) {
             return "unknown";

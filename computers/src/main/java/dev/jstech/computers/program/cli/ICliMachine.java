@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
 import java.util.List;
 
@@ -62,6 +63,19 @@ public interface ICliMachine {
     /** The command-syntax family of the installed OS's kernel; DOS when nothing says otherwise. */
     default ShellFamily shellFamily() {
         return ShellFamily.DOS;
+    }
+
+    /**
+     * The family of the installed system, which is what its tools name the kernel after; Linux when nothing
+     * says otherwise, since that is the family most Unix prompts here belong to.
+     */
+    default Platform platform() {
+        return Platform.LINUX;
+    }
+
+    /** How wide the processor's word is, which is what a system names its architecture after. */
+    default int processorBits() {
+        return 64;
     }
 
     /** The system information for {@code screenfetch}, or null when no OS is installed. */

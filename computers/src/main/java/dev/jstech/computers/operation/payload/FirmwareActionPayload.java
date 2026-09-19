@@ -69,6 +69,8 @@ public record FirmwareActionPayload(BlockPos hostPos, BlockPos monitorPos, int a
     public static final int ACTION_HOLD_BOOT_MENU = 7;
     /** Open the firmware setup from the boot manager, which is one of its entries on the modern machines. */
     public static final int ACTION_OPEN_SETUP = 8;
+    /** Start the machine over from the boot manager, for a manager that lists that among what it offers. */
+    public static final int ACTION_RESTART_FROM_MENU = 9;
 
     public static final CustomPacketPayload.Type<FirmwareActionPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "firmware_action"));

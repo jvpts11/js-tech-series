@@ -463,7 +463,11 @@ public final class PackageService {
             return elsewhere;
         }
         if (this.has(spec)) {
-            return ICliComputer.OpResult.ok(spec.commandName() + " is already the newest version");
+            // Said the way the manager asked says it: pkg checks and finds nothing to do, the others report a version.
+            return ICliComputer.OpResult.ok(this.manager() == PackageManagerKind.PKG
+                    ? "Checking integrity... done (0 conflicting)\n"
+                            + "The most recent versions of packages are already installed"
+                    : spec.commandName() + " is already the newest version");
         }
         return null;
     }
@@ -543,6 +547,16 @@ public final class PackageService {
                     "Packages (1) " + pkg + "-" + ver,
                     "Total Download Size: " + mb + ".00 MiB",
                     ":: Retrieving packages...");
+            case PKG -> String.join("\n",
+                    "The following 1 package(s) will be affected (of 0 checked):",
+                    "",
+                    "New packages to be INSTALLED:",
+                    "        " + pkg + ": " + ver,
+                    "",
+                    "Number of packages to be installed: 1",
+                    "",
+                    mb + " MiB to be downloaded.",
+                    "[1/1] Fetching " + pkg + "-" + ver + ".pkg from mirror://" + this.mirrorHostname());
             default -> "Fetching " + pkg + " " + ver + " from mirror://" + this.mirrorHostname()
                     + " [" + mb + " MB]";
         };
@@ -568,6 +582,15 @@ public final class PackageService {
                     "checking dependencies...",
                     "Packages (1) " + pkg + "-" + ver,
                     ":: Removing " + pkg + " ...");
+            case PKG -> String.join("\n",
+                    "Checking integrity... done (0 conflicting)",
+                    "Deinstallation has been requested for the following 1 packages:",
+                    "",
+                    "Installed packages to be REMOVED:",
+                    "        " + pkg + ": " + ver,
+                    "",
+                    "The operation will free " + spec.minDiskMb() + " MiB.",
+                    "[1/1] Deinstalling " + pkg + "-" + ver + "...");
             default -> "Removing " + pkg + " ...";
         };
     }

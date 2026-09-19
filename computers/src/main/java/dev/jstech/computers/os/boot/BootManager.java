@@ -8,6 +8,8 @@
 package dev.jstech.computers.os.boot;
 
 import dev.jstech.computers.os.Platform;
+import dev.jstech.core.id.IStableName;
+import dev.jstech.core.id.StableNames;
 
 /**
  * The boot manager a family of systems brings with it.
@@ -19,21 +21,32 @@ import dev.jstech.computers.os.Platform;
  * <p>The families with no manager of their own boot what they are pointed at and say nothing: a system of the
  * first age had one disk and no question to ask.
  */
-public enum BootManager {
+public enum BootManager implements IStableName {
 
     /** No manager: the machine boots what the firmware points it at. */
-    NONE("", ""),
+    NONE("none", "", ""),
 
     /** The Linux family's, listed by device and entered from the firmware settings. */
-    GRUB("GNU GRUB  version 2.12", "Firmware Settings"),
+    GRUB("grub", "GNU GRUB  version 2.12", "Firmware Settings"),
 
     /** The Frames family's, which names its editions rather than the devices they sit on. */
-    KICKMGR("Midsoft Boot Manager", "Change firmware settings");
+    KICKMGR("kickmgr", "Midsoft Boot Manager", "Change firmware settings"),
 
+    /**
+     * FreeBSD's loader, which is no chooser of systems at all: it boots the one it belongs to, counting down on
+     * every start, and offers what else can be done from there. It lists only what this machine can really do,
+     * which leaves the boot itself, starting over, and the firmware where the firmware is reached that way.
+     */
+    LOADER("loader", "Welcome to FreeBSD", "Firmware settings");
+
+    private static final StableNames<BootManager> NAMES = StableNames.of(BootManager.class);
+
+    private final String serializedName;
     private final String title;
     private final String firmwareLabel;
 
-    BootManager(final String title, final String firmwareLabel) {
+    BootManager(final String serializedName, final String title, final String firmwareLabel) {
+        this.serializedName = serializedName;
         this.title = title;
         this.firmwareLabel = firmwareLabel;
     }
@@ -43,8 +56,28 @@ public enum BootManager {
         return switch (platform) {
             case LINUX -> GRUB;
             case FRAMES -> KICKMGR;
+            case FREEBSD -> LOADER;
             default -> NONE;
         };
+    }
+
+    /** The manager written under that name, or {@link #NONE} for a name nobody has. */
+    public static BootManager named(final String name) {
+        final BootManager found = NAMES.find(name);
+        return found == null ? NONE : found;
+    }
+
+    @Override
+    public String serializedName() {
+        return this.serializedName;
+    }
+
+    /**
+     * Whether this manager lists the systems on the machine's disks for one of them to be chosen. The loader does
+     * not: another system on the same machine is reached from the firmware's own boot menu, as it really is.
+     */
+    public boolean listsSystems() {
+        return this != LOADER;
     }
 
     /** What the manager writes across the top of its list. */

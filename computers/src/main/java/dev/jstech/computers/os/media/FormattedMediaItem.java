@@ -21,7 +21,6 @@ import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.fs.FilesystemTooltip;
 import dev.jstech.computers.storage.ServerStorageContents;
 import java.util.ArrayList;
-import java.util.Set;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -137,8 +136,7 @@ public class FormattedMediaItem extends MediaItem {
                                 .withStyle(ChatFormatting.DARK_GRAY));
                     }
                     tooltip.add(Component.literal(insertHint(format) + ": run "
-                            + (spec != null && spec.platforms().equals(Set.of(
-                                    Platform.LINUX))
+                            + (spec != null && Platform.onlyUnixLike(spec.platforms())
                                     ? "install.sh" : (format == MediaFormat.FLOPPY || format == MediaFormat.CD
                                             ? "SETUP.EXE" : "setup.exe"))
                             + ", or Install from This PC.")
@@ -177,6 +175,9 @@ public class FormattedMediaItem extends MediaItem {
         }
         if (spec.platforms().contains(Platform.LINUX)) {
             commands.add(command(PackageManagerKind.APT, spec));
+        }
+        if (spec.platforms().contains(Platform.FREEBSD)) {
+            commands.add(command(PackageManagerKind.PKG, spec));
         }
         return commands;
     }

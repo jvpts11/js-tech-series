@@ -7,7 +7,9 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.PackageManagerKind;
+import dev.jstech.computers.os.Platform;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -51,7 +53,8 @@ public final class PosixCommands {
                 new PackageManagerCommand(PackageManagerKind.APT),
                 new PackageManagerCommand(PackageManagerKind.DNF),
                 new PackageManagerCommand(PackageManagerKind.PACMAN),
-                new PackageManagerCommand(PackageManagerKind.EMERGE));
+                new PackageManagerCommand(PackageManagerKind.EMERGE),
+                new PackageManagerCommand(PackageManagerKind.PKG));
     }
 
     /**
@@ -78,6 +81,7 @@ public final class PosixCommands {
             return switch (kind) {
                 case PACMAN -> "-S <package> | -R <package> | -Ss [term] | -Q | -Syu";
                 case EMERGE -> "[--ask] <package> | --unmerge <package> | --search [term] | --sync";
+                case PKG -> "install <package> | delete <package> | search [term] | info | update";
                 default -> "install <package> | remove <package> | search [term] | list | update";
             };
         }
@@ -110,6 +114,17 @@ public final class PosixCommands {
                         default -> install(ctx, ctx.rest(0), false);
                     }
                 }
+                case PKG -> {
+                    // Its own words for the same things: a package is deleted, and what is installed is info.
+                    switch (verb) {
+                        case "install", "add" -> install(ctx, arg, false);
+                        case "search" -> search(ctx, arg);
+                        case "info", "query" -> installed(ctx);
+                        case "update", "upgrade" -> sync(ctx);
+                        case "delete", "remove" -> remove(ctx, arg);
+                        default -> ctx.out().error("usage: pkg " + usage());
+                    }
+                }
                 default -> {
                     switch (verb) {
                         case "install" -> install(ctx, arg, false);
@@ -125,13 +140,34 @@ public final class PosixCommands {
 
         private void sync(final CliContext ctx) {
             if (!ctx.computer().mirrorReachable()) {
-                ctx.out().error("Err: could not resolve mirror://");
+                ctx.out().error(problem("could not resolve mirror://"));
                 ctx.out().dim("  This computer is not on a network whose Mainframe runs the Mirror service.");
+                return;
+            }
+            if (kind == PackageManagerKind.PKG) {
+                catalogue(ctx);
+                ctx.out().line("All repositories are up to date.");
                 return;
             }
             ctx.out().dim(kind == PackageManagerKind.PACMAN
                     ? ":: Synchronizing package databases (mirror://mainframe) ... done"
                     : "Reading package lists from mirror://mainframe ... Done");
+        }
+
+        /** What pkg says before anything that reads the repository, which is that it looked at it first. */
+        private static void catalogue(final CliContext ctx) {
+            ctx.out().line("Updating Mirror repository catalogue...");
+            ctx.out().line("Mirror repository is up to date.");
+        }
+
+        /** A repository that could not be read, the way this manager opens such a line: pkg names itself. */
+        private String problem(final String what) {
+            return (kind == PackageManagerKind.PKG ? "pkg: " : "Err: ") + what;
+        }
+
+        /** A package the manager would not install or remove, opened in its own way too. */
+        private String refusal(final String why) {
+            return (kind == PackageManagerKind.PKG ? "pkg: " : "E: ") + why;
         }
 
         /**
@@ -157,11 +193,18 @@ public final class PosixCommands {
                 ctx.out().start(result.tool());
                 return;
             }
-            ctx.out().dim("Resolving mirror://mainframe ...");
+            if (kind == PackageManagerKind.PKG) {
+                ctx.out().line("Updating Mirror repository catalogue...");
+                if (result.ok()) {
+                    ctx.out().line("Mirror repository is up to date.");
+                }
+            } else {
+                ctx.out().dim("Resolving mirror://mainframe ...");
+            }
             if (result.ok()) {
                 lines(ctx, result.message());
             } else {
-                ctx.out().error("E: " + result.message());
+                ctx.out().error(refusal(result.message()));
             }
         }
 
@@ -175,7 +218,7 @@ public final class PosixCommands {
             if (result.ok()) {
                 lines(ctx, result.message());
             } else {
-                ctx.out().error("E: " + result.message());
+                ctx.out().error(refusal(result.message()));
             }
         }
 
@@ -193,7 +236,7 @@ public final class PosixCommands {
 
         private void search(final CliContext ctx, final String term) {
             if (!ctx.computer().mirrorReachable()) {
-                ctx.out().error("Err: could not resolve mirror://");
+                ctx.out().error(problem("could not resolve mirror://"));
                 return;
             }
             final String needle = term.trim().toLowerCase(Locale.ROOT);
@@ -748,18 +791,57 @@ public final class PosixCommands {
     }
 
     static final class Uname implements ICliCommand {
+
+        /** Every letter the tool takes: all of it, the kernel, the machine's name, the release, the architecture. */
+        private static final String LETTERS = "asnrm";
+
         @Override public String name() { return "uname"; }
 
         @Override public String summary() { return "print system information"; }
 
-        @Override public String usage() { return "[-a]"; }
+        @Override public String usage() { return "[-a|-s|-r|-m|-sr]"; }
 
+        /*
+         * The letters may come together or apart, as they always could: -sr is -s -r. What is printed is in
+         * the order the tool has always printed it, whatever order it was asked in.
+         */
         @Override public void run(final CliContext ctx) {
-            if (ctx.hasArgs() && ctx.arg(0).equals("-a")) {
-                ctx.out().line("Linux " + ctx.computer().hostname() + " 6.8-jsc #1 SMP x86_64 GNU/Linux");
-            } else {
-                ctx.out().line("Linux");
+            final Platform platform = ctx.computer().platform();
+            final int bits = ctx.computer().processorBits();
+            final StringBuilder asked = new StringBuilder();
+            for (int i = 0; i < ctx.argCount(); i++) {
+                if (!ctx.arg(i).startsWith("-") || ctx.arg(i).length() < 2) {
+                    ctx.out().error("uname: extra operand '" + ctx.arg(i) + "'");
+                    return;
+                }
+                asked.append(ctx.arg(i).substring(1));
             }
+            for (int i = 0; i < asked.length(); i++) {
+                if (LETTERS.indexOf(asked.charAt(i)) < 0) {
+                    ctx.out().error("uname: invalid option -- '" + asked.charAt(i) + "'");
+                    return;
+                }
+            }
+            if (asked.indexOf("a") >= 0) {
+                ctx.out().line(KernelNames.everything(platform, ctx.computer().hostname(), bits));
+                return;
+            }
+            // Asked nothing, it names the kernel, which is what -s alone says.
+            final String wanted = asked.isEmpty() ? "s" : asked.toString();
+            final List<String> said = new ArrayList<>();
+            if (wanted.indexOf('s') >= 0) {
+                said.add(KernelNames.name(platform));
+            }
+            if (wanted.indexOf('n') >= 0) {
+                said.add(ctx.computer().hostname());
+            }
+            if (wanted.indexOf('r') >= 0) {
+                said.add(KernelNames.release(platform));
+            }
+            if (wanted.indexOf('m') >= 0) {
+                said.add(KernelNames.architecture(platform, bits));
+            }
+            ctx.out().line(String.join(" ", said));
         }
     }
 

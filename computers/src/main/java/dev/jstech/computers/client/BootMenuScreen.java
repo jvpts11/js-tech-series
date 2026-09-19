@@ -122,6 +122,10 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
         if (this.menu.entries().isEmpty()) {
             return true;
         }
+        if (!this.menu.manager().listsSystems()) {
+            loaderKey(keyCode);
+            return true;
+        }
         switch (keyCode) {
             case InputConstants.KEY_UP -> this.at = (this.at - 1 + this.menu.entries().size())
                     % this.menu.entries().size();
@@ -137,6 +141,10 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
         final int x = this.leftPos;
         final int y = this.topPos;
         MonitorFrame.renderBody(g, x, y, W, H, screenEra(), font);
+        if (!this.menu.manager().listsSystems()) {
+            LoaderMenuPainter.draw(g, font, x, y, this.menu, this.remaining, this.held);
+            return;
+        }
         g.fill(x, y, x + W, y + H, 0xFF000000);
 
         /*
@@ -189,7 +197,27 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
     }
 
     /**
-     * Boots what is highlighted, or opens the firmware when that is what is highlighted.
+     * A key at a loader, which has no cursor to move: Enter boots what it would have booted by itself, and a
+     * number chooses the entry that number is written beside. Anything else has only stopped the count.
+     */
+    private void loaderKey(final int keyCode) {
+        if (keyCode == InputConstants.KEY_RETURN || keyCode == InputConstants.KEY_NUMPADENTER) {
+            this.at = this.menu.defaultIndex();
+            choose();
+            return;
+        }
+        final int chosen = keyCode >= InputConstants.KEY_1 && keyCode <= InputConstants.KEY_9
+                ? keyCode - InputConstants.KEY_1
+                : keyCode >= InputConstants.KEY_NUMPAD1 && keyCode <= InputConstants.KEY_NUMPAD9
+                        ? keyCode - InputConstants.KEY_NUMPAD1 : -1;
+        if (chosen >= 0 && chosen < this.menu.entries().size()) {
+            this.at = chosen;
+            choose();
+        }
+    }
+
+    /**
+     * Does what the entry the cursor is on says: boots it, opens the firmware, or starts the machine over.
      *
      * <p>The entry is named by where it sits in the list rather than by the disk it is on, because a disk
      * carries several systems now and two entries of this list can share one. The machine builds the same list
@@ -197,16 +225,19 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
      */
     private void choose() {
         final BootMenu.Entry entry = this.menu.entries().get(this.at);
+        if (entry.isFirmware() || entry.isRestart()) {
+            PacketDistributor.sendToServer(FirmwareActionPayload.of(this.computerPos, this.monitorPos,
+                    entry.isFirmware() ? FirmwareActionPayload.ACTION_OPEN_SETUP
+                            : FirmwareActionPayload.ACTION_RESTART_FROM_MENU, 0L, -1));
+            return;
+        }
         /*
          * The disk and the system, not the row. A disk carries several systems and two entries can share one,
          * so the choice has to name both; a row number only means anything to a list, and this list is not the
          * only one that offers this action.
          */
-        PacketDistributor.sendToServer(entry.isFirmware()
-                ? FirmwareActionPayload.of(this.computerPos, this.monitorPos,
-                        FirmwareActionPayload.ACTION_OPEN_SETUP, 0L, -1)
-                : new FirmwareActionPayload(this.computerPos, this.monitorPos,
-                        FirmwareActionPayload.ACTION_BOOT_ONCE, entry.slot(), -1, entry.osId()));
+        PacketDistributor.sendToServer(new FirmwareActionPayload(this.computerPos, this.monitorPos,
+                FirmwareActionPayload.ACTION_BOOT_ONCE, entry.slot(), -1, entry.osId()));
     }
 
 }

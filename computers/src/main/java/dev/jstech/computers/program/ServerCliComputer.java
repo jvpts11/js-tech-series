@@ -26,12 +26,15 @@ import dev.jstech.computers.machine.PackageService;
 import dev.jstech.computers.machine.ProgramService;
 import dev.jstech.computers.machine.RemoteComputerService;
 import dev.jstech.computers.operation.MoveLabels;
+import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.KernelDef;
+import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PackageManagerKind;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliStyle;
@@ -376,6 +379,17 @@ public final class ServerCliComputer implements ICliComputer {
         return shellFamilyOf(hostBlock);
     }
 
+    @Override
+    public Platform platform() {
+        final OsDef os = hostBlock instanceof IOsHost computer ? computer.installedOs() : null;
+        return os == null ? Platform.LINUX : os.platform();
+    }
+
+    @Override
+    public int processorBits() {
+        return hostBlock instanceof IOsHost computer ? computer.processorBits() : 64;
+    }
+
     // Set by the reboot verb during a command run; the payload handler reads it once the shell returns.
     private boolean firmwareReboot;
     private boolean reboot;
@@ -482,7 +496,8 @@ public final class ServerCliComputer implements ICliComputer {
                 os.id().getPath(),
                 os.displayName(),
                 shellFamily() == ShellFamily.POSIX
-                        ? "Linux 6.8-jsc x86_64" : "JSC " + os.id().getPath(),
+                        ? KernelNames.kernel(os.platform(), computer.processorBits())
+                        : "JSC " + os.id().getPath(),
                 hostname(),
                 os.shellId(),
                 chrome != null ? chrome.displayName() : "none (tty1)",
@@ -527,8 +542,7 @@ public final class ServerCliComputer implements ICliComputer {
         }
         final String cwd = PosixPath.renderForPrompt(currentLocation());
         final OsDef os = hostBlock instanceof IOsHost c ? c.installedOs() : null;
-        final boolean zsh = os != null && os.shellId().equals("zsh");
-        return zsh ? "player@" + hostname() + " " + cwd + " %" : "player@" + hostname() + ":" + cwd + "$";
+        return ConsoleIdentity.promptOf(os == null ? "" : os.shellId(), hostname(), cwd);
     }
 
     /** A live medium's prompt is in its shell's own colours; every other prompt here is in one. */

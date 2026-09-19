@@ -31,6 +31,9 @@ public enum PackageManagerKind implements IStableName {
     /** Gentoo-style {@code emerge}, which compiles what it installs. */
     EMERGE("emerge", "emerge", ""),
 
+    /** FreeBSD's {@code pkg}, which installs what the Mirror has already built. */
+    PKG("pkg", "pkg", "install"),
+
     /**
      * The Frames package manager: every edition ships with it, so a player who never touches a Linux
      * distribution still installs software from the network Mirror instead of hunting install discs.

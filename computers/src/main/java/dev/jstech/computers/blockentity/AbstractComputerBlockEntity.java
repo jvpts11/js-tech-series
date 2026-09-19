@@ -482,6 +482,12 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         power.beginBoot();
     }
 
+    @Override
+    public void restartFromBootMenu() {
+        power.endMenu();
+        setNeedsPost(true);
+    }
+
     /** Whether the system is coming up on this machine right now. */
     @Override
     public boolean booting() {

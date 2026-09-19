@@ -63,7 +63,12 @@ public final class OsBootstrap {
              * The Linux kernel: preemptive, a single rooted hierarchical filesystem, and POSIX shell syntax.
              * Public through the addon API, so any add-on distribution built on it speaks bash for free.
              */
-            new KernelDef(rl("linux"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.POSIX));
+            new KernelDef(rl("linux"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.POSIX),
+            /*
+             * FreeBSD's own kernel. To a player at a prompt it reads the same as the one above, and that is
+             * the whole of what they share: nothing built for one runs on the other.
+             */
+            new KernelDef(rl("freebsd"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.POSIX));
 
     /**
      * The built-in operating systems, in install order. A static list (built eagerly) so datagen (lang and the
@@ -119,7 +124,15 @@ public final class OsBootstrap {
             OsDef.linuxDistro(rl("arch"), 2_048, "Arch Linux", "zsh", PackageManagerKind.PACMAN, InstallMode.LIVE_MANUAL,
                     SoftwareHouse.ARCH_COLLECTIVE).withRam(12),
             OsDef.linuxDistro(rl("gentoo"), 4_096, "Gentoo", "bash", PackageManagerKind.EMERGE, InstallMode.SOURCE,
-                    SoftwareHouse.GENTOO_FOUNDRY).withRam(12)
+                    SoftwareHouse.GENTOO_FOUNDRY).withRam(12),
+            /*
+             * FreeBSD: the solid server and the lean daily driver. It asks for a machine of the Legacy age at
+             * least and runs on every one after, it takes less memory than any distribution so the same
+             * machine keeps more for its programs, and it comes up at a terminal until a desktop is installed.
+             */
+            OsDef.terminalSystem(rl("freebsd"), rl("freebsd"), Platform.FREEBSD, HardwareEra.LEGACY, 2_048,
+                    "FreeBSD", "sh", PackageManagerKind.PKG, InstallMode.GUIDED, SoftwareHouse.DAEMON_FOUNDATION)
+                    .withRam(16)
             /*
              * OS case (c): PDA/Tablet/Smartphone portables ship with a factory mobile OS. Those item/block
              * types do not exist yet; register the mobile OS here once they do.
@@ -152,8 +165,13 @@ public final class OsBootstrap {
      * Desktop apps that run under any desktop environment: the Frames editions and a Linux desktop alike. On
      * Frames they arrive on install media; on Linux the same programs are packages the Mirror serves.
      */
-    private static final Set<Platform> DESKTOPS = Set.of(Platform.FRAMES, Platform.LINUX);
+    private static final Set<Platform> DESKTOPS = Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD);
     private static final Set<Platform> LINUX_ONLY = Set.of(Platform.LINUX);
+    /**
+     * What is made for the systems met at a Unix prompt, whichever of them it is: the desktop environments and
+     * the small tools the Mirror serves. FreeBSD takes all of it from its own packages and ports.
+     */
+    private static final Set<Platform> UNIX_LIKE = Set.of(Platform.LINUX, Platform.FREEBSD);
     private static final Set<Platform> FRAMES_ONLY = Set.of(Platform.FRAMES);
 
     /** The nine built-in desktop apps every desktop environment can bundle, in rail order. */
@@ -198,7 +216,7 @@ public final class OsBootstrap {
         }
     }
     private static final Set<Platform> ALL_PLATFORMS =
-            Set.of(Platform.MC_DOS, Platform.MC_NET, Platform.FRAMES, Platform.LINUX);
+            Set.of(Platform.MC_DOS, Platform.MC_NET, Platform.FRAMES, Platform.LINUX, Platform.FREEBSD);
 
     /**
      * The built-in program descriptors, in desktop launcher order (the built-in apps first, then the
@@ -319,7 +337,7 @@ public final class OsBootstrap {
              * screenfetch: the little system-identity tool, a package the Mirror serves to any Linux (its
              * absence teaching the package manager: 'command not found' until you apt/dnf/pacman/emerge it).
              */
-            ProgramSpec.of(rl("screenfetch"), "screenfetch", "screenfetch", false, LINUX_ONLY, 4, ProgramKind.APP, 0, HostScope.ANY)
+            ProgramSpec.of(rl("screenfetch"), "screenfetch", "screenfetch", false, UNIX_LIKE, 4, ProgramKind.APP, 0, HostScope.ANY)
                     .withEra(LEGACY).withHouse(SoftwareHouse.ARCH_COLLECTIVE).withRam(1),
             /*
              * The Σ# toolchain: the compiler and the runtime, two packages the Mirror serves to any
@@ -381,11 +399,11 @@ public final class OsBootstrap {
              * run on Legacy machines; Cinnamon is a much later desktop and needs Standard hardware. A
              * Vintage computer therefore has no graphical desktop at all and lives at the TTY.
              */
-            ProgramSpec.of(rl("kde_plasma"), "kde-plasma", "KDE Plasma", false, LINUX_ONLY, 256, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
+            ProgramSpec.of(rl("kde_plasma"), "kde-plasma", "KDE Plasma", false, UNIX_LIKE, 256, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
                     .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.KDE_GUILD).withRam(224),
-            ProgramSpec.of(rl("gnome"), "gnome", "GNOME", false, LINUX_ONLY, 192, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
+            ProgramSpec.of(rl("gnome"), "gnome", "GNOME", false, UNIX_LIKE, 192, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
                     .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.GNOME_TRUST).withRam(256),
-            ProgramSpec.of(rl("cinnamon"), "cinnamon", "Cinnamon", false, LINUX_ONLY, 160, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
+            ProgramSpec.of(rl("cinnamon"), "cinnamon", "Cinnamon", false, UNIX_LIKE, 160, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
                     .withMinEra(STANDARD).withEra(STANDARD).withHouse(SoftwareHouse.SPEARMINT).withRam(160)
     );
 

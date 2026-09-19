@@ -17,7 +17,6 @@ import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.SoftwareHouse;
 import dev.jstech.computers.os.fs.InstallerLayout;
-import java.util.Set;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -98,7 +97,7 @@ public final class InstallerProjection {
     }
 
     private static InstallerLayout.Facts systemFacts(final OsDef os) {
-        final boolean linux = os.platform() == Platform.LINUX;
+        final boolean linux = os.platform().unixLike();
         return new InstallerLayout.Facts(
                 os.displayName(), os.id().getPath(), os.id().getPath(), true, false, linux,
                 Branding.osYear(os.displayName(), os.minEra()), os.house().name(),
@@ -109,7 +108,7 @@ public final class InstallerProjection {
     }
 
     private static InstallerLayout.Facts programFacts(final ProgramSpec spec) {
-        final boolean linux = spec.platforms().equals(Set.of(Platform.LINUX));
+        final boolean linux = Platform.onlyUnixLike(spec.platforms());
         return new InstallerLayout.Facts(
                 spec.displayName(), spec.commandName(), spec.id().getPath(), false,
                 spec.kind() == ProgramKind.SERVICE, linux, Branding.year(spec.era()),
