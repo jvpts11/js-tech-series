@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.sigma.SigmaSemantics;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.sigma.sem.BuiltIns;
@@ -347,7 +348,53 @@ class SigmaCompletionsTest {
     @Test
     void namespaces_offersTheRootsOnABareUsing() {
         final List<String> roots = labels(SigmaCompletions.namespaces(this.builtIns, null, "", ""));
-        assertEquals(List.of("System"), roots);
+        assertEquals(List.of("Standard", "System"), roots);
+    }
+
+    /** The smaller language opens one namespace and nothing else, so that is all a using line offers it. */
+    @Test
+    void within_theSmallerLanguage_aUsingOffersItsOneNamespace() {
+        final List<SigmaCompletions.Item> roots = SigmaCompletions.within(LanguageLevel.SIGMA,
+                SigmaCompletions.namespaces(this.builtIns, null, "", ""));
+        assertEquals(List.of("Standard"), labels(roots));
+    }
+
+    /** Only the handful of types its library has, each listed under the namespace this language knows it by. */
+    @Test
+    void within_theSmallerLanguage_onlyTheTypesOfItsLibraryAreOffered() {
+        final List<SigmaCompletions.Item> types = SigmaCompletions.within(LanguageLevel.SIGMA,
+                SigmaCompletions.types(this.builtIns, null, ""));
+        assertEquals(List.of("Computer", "Console", "Convert", "File", "Math", "Program", "Script", "Time"),
+                labels(types));
+        assertEquals("Standard", named(types, "Console").owner());
+        assertTrue(labels(SigmaCompletions.types(this.builtIns, null, "")).contains("Network"),
+                "which the full language still has");
+    }
+
+    /** A type of the library offers what the smaller version of it has, and nothing the compiler would refuse. */
+    @Test
+    void within_theSmallerLanguage_aTypeOffersOnlyTheMembersItKept() {
+        final List<SigmaCompletions.Item> all = SigmaCompletions.members(this.builtIns, null, "Console", "", true);
+        final List<String> kept = labels(SigmaCompletions.within(LanguageLevel.SIGMA, all));
+        assertEquals(List.of("Clear", "Print", "PrintLine", "ReadBool", "ReadInt", "ReadLine"),
+                kept.stream().distinct().toList());
+        assertTrue(all.size() > kept.size(), "the full language's Console has more than that");
+        assertEquals(all, SigmaCompletions.within(LanguageLevel.SIGMA_SHARP, all), "and the full one loses none");
+    }
+
+    /** What the program itself declares is the program's, whatever language it is written in. */
+    @Test
+    void within_theSmallerLanguage_whatTheProgramDeclaresStays() {
+        final String source = "using Standard.*; namespace Tests; class Silo { public int Stored; "
+                + "public int Room() { return 0; } } class M { static void Main() { Silo silo = new Silo(); } }";
+        final SigmaSemantics.Result result =
+                SigmaSemantics.checkTolerant(List.of(new SourceFile("a.sg", source)));
+        final List<SigmaCompletions.Item> types = SigmaCompletions.within(LanguageLevel.SIGMA,
+                SigmaCompletions.types(this.builtIns, result.model(), "Si"));
+        assertEquals(List.of("Silo"), labels(types));
+        final List<SigmaCompletions.Item> members = SigmaCompletions.within(LanguageLevel.SIGMA,
+                SigmaCompletions.members(this.builtIns, result.model(), "Silo", "", false));
+        assertEquals(List.of("Room", "Stored"), labels(members));
     }
 
     @Test

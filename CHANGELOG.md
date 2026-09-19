@@ -57,6 +57,16 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   an interface is a class whose methods are virtual, a record is a struct, a `foreach` is a `for` over the array's
   `Length`, a `Map` is two arrays. Nothing already written changes: the full language is what every compiler and
   editor still uses.
+- Sigma is written with everything Sigma Sharp is written with. It is a language of its own to the machines, so a
+  `.sg` file is one the systems know: it has its kind in the explorer, it can be made from the New menu, and it
+  opens in the code editors, where it is coloured, checked as it is typed and completed from what Sigma really
+  has (its one namespace, its eight types and the members each of them kept), so nothing is offered that the
+  compiler would then refuse. Virtual Studio's New Project lists every shape of project in both languages, with
+  the language at the end of each line and in the language filter. A Sigma project keeps itself in a `.sgproj`
+  file, holds `.sg` sources, starts from a program that opens `Standard` and a script that stands on `Script`,
+  and is built for the oldest machines unless its Platform target says otherwise. A Sigma Sharp project can
+  reference a Sigma library. Virtual Studio Code and Exposure build a `.sg` file with `scc`, and `sigma run`
+  takes one. An old language is no reason to write it the hard way.
 - The two compilers have marks of their own, in the manner of the languages they are named after: a blue
   hexagon with a Σ for `scc` and a purple one with Σ# for `sgsc`, each drawn for every desktop. `sgsc` still
   wore the cannon of the language's old name, and `scc` had no icon at all.
@@ -333,7 +343,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   update adds to the newer one is what will start moving programs up.
 - `sgsc` now refuses to build for x86-16, naming `scc` instead. Those machines run the smaller language only, and
   the way that stays true is at the compiler: a listing they can load can only have come from a source they could
-  have held.
+  have held. A Sigma Sharp project whose Platform target is x86-16 is told the same by the studio (`S4012`), where
+  it used to build.
+- A `using` line is offered `Standard` beside `System`, since both languages have it.
 - Writing a method with the name and parameters of one a base class already has is now an error rather than a
   silent replacement. Either the one above is `virtual` and the new one wanted `override`, or it is not and the two
   are a collision; the message says which, and says what to add. There is no way to hide a base method. Which

@@ -61,7 +61,7 @@ public final class ProgramSaveGameTests {
             """;
 
     private static String listing(final String source) {
-        final IProgrammingLanguage.CompileResult built = SigmaLanguage.INSTANCE.compile(
+        final IProgrammingLanguage.CompileResult built = SigmaLanguage.SIGMA_SHARP.compile(
                 List.of(new IProgrammingLanguage.SourceText("program.sgs", source)));
         if (!built.ok()) {
             throw new IllegalStateException("the test program does not compile: " + built.complaints());

@@ -66,13 +66,15 @@ public class JsComputers {
     /**
      * What this mod puts in the Core's registries, at the one moment they are open.
      *
-     * <p>Sigma Sharp is a language like any other as far as the machines are concerned: it goes in the same
-     * registry an addon would use, and can be taken out of it by one. What it compiles to is not its own:
-     * the machines run listings themselves, so that extension is kept back from every language first.
+     * <p>Sigma Sharp and Sigma are languages like any other as far as the machines are concerned: they go in the
+     * same registry an addon would use, and can be taken out of it by one. The full language goes in first, so it
+     * is the one a list of languages opens on. What they compile to is not their own: the machines run listings
+     * themselves, so that extension is kept back from every language first.
      */
     private static void addToTheCore(final CoreRegisterEvent event) {
         ComputingOperations.register(event.operations());
         event.languages().reserve(MachineListing.EXTENSION);
-        event.languages().register(SigmaLanguage.INSTANCE);
+        event.languages().register(SigmaLanguage.SIGMA_SHARP);
+        event.languages().register(SigmaLanguage.SIGMA);
     }
 }

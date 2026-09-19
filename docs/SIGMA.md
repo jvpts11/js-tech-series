@@ -25,6 +25,26 @@ uses and says `override` on each. The two are the same program to the machine; t
 
 Every file starts with the namespaces it uses (`using System.IO.*;`) and its own (`namespace Mine;`).
 
+## Σ, the smaller language
+
+Σ is what the earliest machines are programmed in, and it is a true subset of Σ#: anything written in it is
+also Σ#, and compiles on a newer machine untouched. A source ends in `.sg`, `scc file.sg` compiles it, and
+what comes out is built for the 16-bit machines unless told otherwise, so it runs on every machine there is.
+`sgsc` does not build for those machines at all.
+
+It keeps classes with inheritance, `virtual` and `override`, structs, enums, arrays, the loops, `out`, `is`
+and `as`. It has no interfaces, records, delegates, events, properties, lambdas, `foreach`, `List`, `Map`,
+generics, `var`, `lock`, threads, windows, `abstract`, or strings with holes in them, and every refusal says
+what to write instead. Its whole library is one namespace, `Standard` (`using Standard.*;`), with
+`Console`, `File`, `Program`, `Math`, `Convert`, `Time`, `Computer` and `Script`, each a handful of members.
+
+An old language is no reason to write it the hard way. On a machine that runs them, the editors treat a
+`.sg` file as they treat a `.sgs` one: coloured, checked as it is typed, and completed from what Σ really
+has, so nothing is offered that the compiler would then refuse. Virtual Studio's New Project lists every
+shape of project in both languages; a Σ project keeps itself in a `.sgproj` file, holds `.sg` sources, and
+starts out built for the oldest machines. A Σ# project may reference a Σ library, since Σ# reads it; a Σ
+project cannot reference a Σ# one.
+
 ## Classes standing on other classes
 
 A class may stand on one other class and on as many interfaces as it likes, written after a colon.

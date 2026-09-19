@@ -698,6 +698,7 @@ public final class FilesApp implements IDesktopApp {
             case "cpk" -> "Program package";
             case "sln" -> "Solution";
             case "sgsproj" -> "Σ# project";
+            case "sgproj" -> "Σ project";
             /*
              * A language names its own files. Whatever is registered gets this for nothing, and the
              * explorer stops needing to know which language the machines happen to speak.

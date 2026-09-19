@@ -264,12 +264,12 @@ public final class LanguageApiGameTests {
     public static void machine_runsListingsNoLanguageClaims(final GameTestHelper helper) {
         helper.assertTrue(JsCore.languages().isReserved("asm") && JsCore.languages().byExtension("asm") == null,
                 "no language claims .asm");
-        helper.assertTrue(SigmaLanguage.INSTANCE.binaryExtensions().isEmpty()
+        helper.assertTrue(SigmaLanguage.SIGMA_SHARP.binaryExtensions().isEmpty()
                 && JsCore.languages().runnerOf("sgs") == null, "and Σ# runs nothing itself");
         final PersonalComputerBlockEntity computer =
                 TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
                         .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
-        final IProgrammingLanguage.CompileResult built = SigmaLanguage.INSTANCE.compile(
+        final IProgrammingLanguage.CompileResult built = SigmaLanguage.SIGMA_SHARP.compile(
                 List.of(new IProgrammingLanguage.SourceText("hello.sgs", HELLO)));
         helper.assertTrue(built.ok(), "the program compiles: " + built.complaints());
         final MachinePrograms.Started listing = computer.programs().start("hello.asm", built.binary(), 1, computer);
@@ -280,6 +280,44 @@ public final class LanguageApiGameTests {
         helper.assertTrue(computer.programs().byId(listing.id()).process().console().equals(List.of("hello"))
                         && computer.programs().byId(source.id()).process().console().equals(List.of("hello")),
                 "and both say hello");
+        helper.succeed();
+    }
+
+    /**
+     * The smaller language is a language of the registry in its own right, found by what its files end in, so an
+     * editor colours it, complains about it and builds it as it does the full one. It is held to its own cut, it
+     * builds for the oldest machines unless told otherwise, and the machine runs its source like any other.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void sigma_isALanguageOfItsOwnHeldToItsOwnCut(final GameTestHelper helper) {
+        final IProgrammingLanguage sigma = JsCore.languages().byExtension("sg");
+        helper.assertTrue(sigma == SigmaLanguage.SIGMA && JsCore.languages().byExtension("sgs")
+                == SigmaLanguage.SIGMA_SHARP, "each extension finds its own language");
+        helper.assertTrue("Σ".equals(sigma.displayName()) && !sigma.tokenize("class A { }").isEmpty(),
+                "which names itself and colours its sources");
+        final String small = "using Standard.*; namespace T; class T { static void Main() { "
+                + "Console.PrintLine(\"hello\"); } }";
+        final IProgrammingLanguage.CompileResult built =
+                sigma.compile(List.of(new IProgrammingLanguage.SourceText("t.sg", small)));
+        helper.assertTrue(built.ok() && built.binary().contains(".arch jsc:x86_16"),
+                "it builds for the oldest machines: " + built.complaints());
+        final IProgrammingLanguage.CompileResult refused = sigma.compile(List.of(
+                new IProgrammingLanguage.SourceText("t.sg", "namespace T; interface IThing { } class T { "
+                        + "static void Main() { } }")));
+        helper.assertTrue(!refused.ok() && refused.complaints().stream().anyMatch(c -> "S3052".equals(c.code())),
+                "and is refused what it does not have: " + refused.complaints());
+        final IProgrammingLanguage.CompileResult tooOld = SigmaLanguage.SIGMA_SHARP.compile(
+                List.of(new IProgrammingLanguage.SourceText("hello.sgs", HELLO)), "jsc:x86_16");
+        helper.assertTrue(!tooOld.ok() && tooOld.complaints().stream().anyMatch(c -> "S4012".equals(c.code())),
+                "the full language is not built for the oldest machines: " + tooOld.complaints());
+        final PersonalComputerBlockEntity computer =
+                TestWorldBuilder.at(helper.getLevel(), helper.absolutePos(BlockPos.ZERO))
+                        .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        final MachinePrograms.Started source = computer.programs().start("t.sg", small, 1, computer);
+        helper.assertTrue(source.ok(), "the machine runs a source of it: " + source.message());
+        computer.programs().tick(4096);
+        helper.assertTrue(computer.programs().byId(source.id()).process().console().equals(List.of("hello")),
+                "and it says hello");
         helper.succeed();
     }
 

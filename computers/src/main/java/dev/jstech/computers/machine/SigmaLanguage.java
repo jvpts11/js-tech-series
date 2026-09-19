@@ -7,15 +7,16 @@
  */
 package dev.jstech.computers.machine;
 
-import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.sigma.SigmaCompiler;
+import dev.jstech.computers.hardware.Architectures;
 import dev.jstech.computers.sigma.Diagnostic;
 import dev.jstech.computers.sigma.DiagnosticBag;
+import dev.jstech.computers.sigma.LanguageLevel;
+import dev.jstech.computers.sigma.SigmaCompiler;
+import dev.jstech.computers.sigma.SigmaError;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.sigma.edit.CommentSpans;
 import dev.jstech.computers.sigma.lex.Lexer;
 import dev.jstech.computers.sigma.lex.TokenKind;
-import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.core.language.IProgrammingLanguage;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -24,37 +25,54 @@ import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Σ#, as the machines of the series know it.
+ * Σ and Σ#, as the machines of the series know them.
  *
- * <p>The language compiles and nothing else. What it compiles to is a listing, and a listing belongs to the machine
+ * <p>Two languages and one compiler: the smaller is a true subset of the full one, so each is the same compiler
+ * told how much of the language a source may be. They are two entries in the registry all the same, because an
+ * editor finds a language by what a file ends in, and a {@code .sg} file deserves its colours, its complaints and
+ * its builds as much as a {@code .sgs} one does. Writing for an old machine is no reason to write without them.
+ *
+ * <p>A language compiles and nothing else. What it compiles to is a listing, and a listing belongs to the machine
  * ({@link MachineListing}): the machine runs it, saves it and brings it back, so a machine knows nothing of scripts,
  * heaps or instructions through this. A pack that would rather its computers were written in something else takes
- * this out of the registry and puts its own in, and every part of the machines carries on working.
+ * these out of the registry and puts its own in, and every part of the machines carries on working.
  */
 public final class SigmaLanguage implements IProgrammingLanguage {
 
-    /** The one instance; the registry holds it and everything else asks the registry. */
-    public static final SigmaLanguage INSTANCE = new SigmaLanguage();
+    private final LanguageLevel level;
+    private final ResourceLocation id;
 
-    private static final ResourceLocation ID =
-            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "sigma");
+    /*
+     * The oldest machine a program of this language starts out built for, before what it turned out to use is
+     * allowed to push it up. The smaller language exists for the oldest machines of all.
+     */
+    private final String baseline;
 
-    private SigmaLanguage() {
+    /** The full language; the registry holds it and everything else asks the registry. */
+    public static final SigmaLanguage SIGMA_SHARP = new SigmaLanguage(LanguageLevel.SIGMA_SHARP);
+
+    /** The smaller language, which builds for the earliest machines unless a project says otherwise. */
+    public static final SigmaLanguage SIGMA = new SigmaLanguage(LanguageLevel.SIGMA);
+
+    private SigmaLanguage(final LanguageLevel level) {
+        this.level = level;
+        this.id = ResourceLocation.parse(level.id());
+        this.baseline = Architectures.oldestFor(level).id();
     }
 
     @Override
     public ResourceLocation id() {
-        return ID;
+        return this.id;
     }
 
     @Override
     public String displayName() {
-        return "Σ#";
+        return this.level.mark();
     }
 
     @Override
     public Set<String> sourceExtensions() {
-        return Set.of("sgs");
+        return Set.of(this.level.sourceExtension());
     }
 
     @Override
@@ -63,18 +81,34 @@ public final class SigmaLanguage implements IProgrammingLanguage {
         return Set.of();
     }
 
+    /** How much of the language this entry takes. */
+    public LanguageLevel level() {
+        return this.level;
+    }
+
     @Override
     public CompileResult compile(final List<SourceText> sources) {
-        return compile(sources, AsmProgram.DEFAULT_ARCHITECTURE);
+        return compile(sources, this.baseline);
     }
 
     @Override
     public CompileResult compile(final List<SourceText> sources, final String architecture) {
+        /*
+         * The oldest machines run the smaller language and nothing else, and that is kept true where a listing is
+         * made and not at the machine: one they could load can only have come from a source they could have held.
+         * The prompt's compiler says the same thing, so a studio pointed at those machines is told as plainly.
+         */
+        if (this.level.full() && Architectures.X86_16.id().equals(architecture)) {
+            final String first = sources.isEmpty() ? "" : sources.getFirst().name();
+            return CompileResult.failed(List.of(new Complaint(first, 1, 1,
+                    SigmaError.OLDEST_MACHINES_TAKE_SIGMA.code(),
+                    SigmaError.OLDEST_MACHINES_TAKE_SIGMA.message(Architectures.X86_16.name()))));
+        }
         final List<SourceFile> files = new ArrayList<>();
         for (final SourceText source : sources) {
             files.add(new SourceFile(source.name(), source.text()));
         }
-        final SigmaCompiler.Result built = SigmaCompiler.compile(files, architecture);
+        final SigmaCompiler.Result built = SigmaCompiler.compile(files, architecture, this.level);
         if (built.ok()) {
             return CompileResult.of(built.assembly());
         }

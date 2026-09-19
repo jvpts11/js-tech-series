@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.sigma.SigmaSemantics;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.sigma.edit.SigmaCompletions;
@@ -20,7 +21,6 @@ import dev.jstech.core.client.gui.logic.TextDocument;
 import dev.jstech.core.language.IProgrammingLanguage;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
@@ -87,7 +87,8 @@ public final class CodeCompletions {
     public void offer(final CodeArea area, final String path,
                       final List<IProgrammingLanguage.SourceText> others, final int[] bounds) {
         close();
-        if (!isSigma(path)) {
+        final LanguageLevel level = LanguageLevel.ofSource(path);
+        if (level == null) {
             return;
         }
         final TextDocument doc = area.document();
@@ -97,7 +98,8 @@ public final class CodeCompletions {
         if (where == null || caret == null) {
             return;
         }
-        final List<SigmaCompletions.Item> found = find(path, doc, others, where);
+        // Read the same way for both languages, then cut down to what the one this file is written in has.
+        final List<SigmaCompletions.Item> found = SigmaCompletions.within(level, find(path, doc, others, where));
         if (found.isEmpty()) {
             return;
         }
@@ -166,11 +168,6 @@ public final class CodeCompletions {
         for (int i = 0; i < label.length(); i++) {
             doc.insert(label.charAt(i));
         }
-    }
-
-    /** Whether the file is one this can answer for. */
-    private static boolean isSigma(final String path) {
-        return path != null && path.toLowerCase(Locale.ROOT).endsWith(".sgs");
     }
 
     /** Draws the list, which belongs over everything else the editor drew. */

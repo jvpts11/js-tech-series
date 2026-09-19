@@ -156,7 +156,7 @@ public final class ArchitectureGameTests {
      */
     @GameTest(template = ARENA)
     public static void aProgramBuiltForTheNewerMachines_runsOnOneAndIsRefusedByTheOlder(final GameTestHelper helper) {
-        final IProgrammingLanguage.CompileResult built = SigmaLanguage.INSTANCE.compile(
+        final IProgrammingLanguage.CompileResult built = SigmaLanguage.SIGMA_SHARP.compile(
                 List.of(new IProgrammingLanguage.SourceText("Quiet.sgs", QUIET)), "jsc:x86_64");
         helper.assertTrue(built.ok(), "the corpus program compiles: " + built.complaints());
         helper.assertTrue(built.binary().contains(".arch jsc:x86_64"),

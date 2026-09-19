@@ -8,6 +8,7 @@
 package dev.jstech.computers.hardware;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.vm.listing.Opcode;
 import dev.jstech.core.tier.HardwareEra;
 
@@ -172,6 +173,17 @@ public final class Architectures {
             case LEGACY -> X86;
             case STANDARD, ADVANCED, EXA, SINGULARITY -> X86_64;
         };
+    }
+
+    /**
+     * The oldest machine a program of that language starts out built for, before what it turned out to use is
+     * allowed to push it up.
+     *
+     * <p>The smaller language exists for the oldest machines of all, so its programs begin there and run on
+     * everything after. The full one begins where its own library does, on the 32-bit machines.
+     */
+    public static ArchitectureSpec oldestFor(final LanguageLevel level) {
+        return level.full() ? X86 : X86_16;
     }
 
     /*

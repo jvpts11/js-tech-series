@@ -49,9 +49,12 @@ public final class FileOpeners {
     static {
         final List<String> code = List.of("virtual_studio_code", "virtual_studio", "exposure", EDITOR);
         BY_TYPE.put(FileType.SGS, code);
+        // The smaller language opens in the same editors: an old language is no reason for a worse one.
+        BY_TYPE.put(FileType.SG, code);
         BY_TYPE.put(FileType.ASM, List.of(RUNTIME, "virtual_studio_code", "virtual_studio", "exposure", EDITOR));
         BY_TYPE.put(FileType.SLN, List.of("virtual_studio", EDITOR));
         BY_TYPE.put(FileType.SGSPROJ, List.of("virtual_studio", EDITOR));
+        BY_TYPE.put(FileType.SGPROJ, List.of("virtual_studio", EDITOR));
         BY_TYPE.put(FileType.IQL, List.of("nms", EDITOR));
         BY_TYPE.put(FileType.CRAFT, List.of("crafting_manager"));
         BY_TYPE.put(FileType.TXT, List.of(EDITOR));
@@ -68,7 +71,7 @@ public final class FileOpeners {
      * a compiled program by the compiler, so neither belongs on a menu that creates a blank one.
      */
     private static final List<FileType> CREATABLE =
-            List.of(FileType.TXT, FileType.SGS, FileType.IQL, FileType.CFG, FileType.CSV, FileType.CMD);
+            List.of(FileType.TXT, FileType.SGS, FileType.SG, FileType.IQL, FileType.CFG, FileType.CSV, FileType.CMD);
 
     /**
      * The programs that open a file of any kind that is text, best first: the plain editor, which reads anything,

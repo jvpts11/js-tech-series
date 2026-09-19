@@ -99,6 +99,7 @@ public enum SigmaError {
 
     // A4001 to A4010 are the listing's own problems, reported by reading one back (ListingError).
     NOT_YET_BUILT("S4011", "%s is not built yet"),
+    OLDEST_MACHINES_TAKE_SIGMA("S4012", "%s runs Σ only; write it in Σ, in a Σ project"),
 
     LUA_UNTERMINATED_STRING("L1001", "unfinished string"),
     LUA_UNTERMINATED_LONG("L1002", "unfinished long %s"),

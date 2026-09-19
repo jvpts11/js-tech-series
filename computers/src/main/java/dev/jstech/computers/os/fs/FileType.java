@@ -77,6 +77,8 @@ public enum FileType {
 
     /** Σ# source, user-editable, and what the compiler reads. */
     SGS("sgs", true, false),
+    /** Σ source: the smaller language the earliest machines are programmed in, which every later one reads too. */
+    SG("sg", true, false),
 
     /**
      * The assembly the compiler writes, user-editable, and meant to be read.
@@ -99,6 +101,8 @@ public enum FileType {
     SLN("sln", true, false),
     /** A project: what it is made of and what it builds. */
     SGSPROJ("sgsproj", true, false),
+    /** A project written in Σ, which keeps itself in a file of its own kind so nobody takes it for a Σ# one. */
+    SGPROJ("sgproj", true, false),
 
     /**
      * A file of a kind the machines do not know: whatever a player or a program chose to call it, such as

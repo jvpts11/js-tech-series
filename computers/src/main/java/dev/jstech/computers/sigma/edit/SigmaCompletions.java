@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.sigma.edit;
 
+import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.sigma.ast.CompilationUnit;
 import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.sem.BuiltIns;
@@ -15,6 +16,7 @@ import dev.jstech.computers.sigma.sem.IMemberSymbol;
 import dev.jstech.computers.sigma.sem.ITypeSymbol;
 import dev.jstech.computers.sigma.sem.NamedType;
 import dev.jstech.computers.sigma.sem.SemanticModel;
+import dev.jstech.computers.sigma.sem.SubsetRules;
 import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.PropertySpec;
 import dev.jstech.computers.vm.system.SystemApi;
@@ -85,7 +87,45 @@ public final class SigmaCompletions {
     public record Target(ITypeSymbol type, boolean staticSide) {
     }
 
+    /** What a candidate's owner reads as when it is one of the program's own types. */
+    private static final String OWN = "this program";
+
+    /** What the line under a namespace says it is. */
+    private static final String NAMESPACE = "namespace";
+
     private SigmaCompletions() {
+    }
+
+    /**
+     * Those candidates as the language a file is written in has them.
+     *
+     * <p>The full language has all of them. The smaller one reaches a single namespace holding a handful of
+     * types with a handful of members each, so everything else goes: a list that offered what the compiler then
+     * refuses would teach a player to distrust it. What the program itself declares always stays, and a type
+     * of the library is listed under the one namespace this language knows it by.
+     */
+    public static List<Item> within(final LanguageLevel level, final List<Item> candidates) {
+        if (level.full()) {
+            return candidates;
+        }
+        final List<Item> out = new ArrayList<>(candidates.size());
+        for (final Item item : candidates) {
+            if (item.sort() == Sort.VARIABLE || OWN.equals(item.owner()) || "*".equals(item.label())) {
+                out.add(item);
+            } else if (item.sort() == Sort.TYPE && item.signature().endsWith(" : " + NAMESPACE)) {
+                if (BuiltIns.SUBSET_LIBRARY.equals(item.label())) {
+                    out.add(item);
+                }
+            } else if (item.sort() == Sort.TYPE) {
+                if (SubsetRules.hasType(item.label())) {
+                    out.add(new Item(item.label(), item.signature(), item.sort(), BuiltIns.SUBSET_LIBRARY));
+                }
+            } else if (!SubsetRules.hasType(item.owner()) || SubsetRules.hasMember(item.owner(), item.label())) {
+                // A member of the program's own types, or one of the library's that this language kept.
+                out.add(item);
+            }
+        }
+        return out;
     }
 
     /**
@@ -311,8 +351,8 @@ public final class SigmaCompletions {
             final int dot = rest.indexOf('.');
             final String head = dot < 0 ? rest : rest.substring(0, dot);
             if (!head.isEmpty() && head.toLowerCase(Locale.ROOT).startsWith(wanted) && seen.add(head)) {
-                items.add(new Item(head, head + " : namespace", Sort.TYPE,
-                        inside.isEmpty() ? "namespace" : inside));
+                items.add(new Item(head, head + " : " + NAMESPACE, Sort.TYPE,
+                        inside.isEmpty() ? NAMESPACE : inside));
             }
         }
         items.sort(Comparator.comparing(Item::label));
@@ -335,7 +375,7 @@ public final class SigmaCompletions {
         final Set<String> seen = new LinkedHashSet<>();
         final List<Item> items = new ArrayList<>();
         for (final NamedType type : declared(model)) {
-            offer(items, seen, type, wanted, "this program");
+            offer(items, seen, type, wanted, OWN);
         }
         if (builtIns != null) {
             for (final NamedType type : builtIns.all()) {

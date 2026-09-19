@@ -80,6 +80,17 @@ class FileOpenersTest {
                 FileOpeners.available("a.sgs", EVERYTHING));
     }
 
+    /** The smaller language is a program like the other, so its sources and its projects open where theirs do. */
+    @Test
+    void available_opensTheSmallerLanguageWhereTheFullOneOpens() {
+        assertEquals(FileType.SG, FileType.of("sg"));
+        assertEquals(FileType.SGPROJ, FileType.of("SGPROJ"));
+        assertEquals(FileOpeners.available("a.sgs", EVERYTHING), FileOpeners.available("a.sg", EVERYTHING));
+        assertEquals(FileOpeners.available("a.sgsproj", EVERYTHING), FileOpeners.available("a.sgproj", EVERYTHING));
+        assertEquals("virtual_studio", FileOpeners.defaultFor("Old/Old.sgproj", EVERYTHING));
+        assertTrue(FileOpeners.creatable().contains(FileType.SG), "and one can be started from nothing as well");
+    }
+
     @Test
     void available_keepsOnlyWhatTheMachineHas() {
         assertEquals(List.of("exposure", FileOpeners.EDITOR),

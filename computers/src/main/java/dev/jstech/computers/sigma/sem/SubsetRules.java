@@ -60,6 +60,20 @@ public final class SubsetRules {
         this.diagnostics = diagnostics;
     }
 
+    /** Whether the smaller language's library has a type of that name. */
+    public static boolean hasType(final String name) {
+        return LIBRARY.containsKey(name);
+    }
+
+    /**
+     * Whether the smaller language's version of that type has that member, which is what an editor asks before
+     * it offers one: a list that offered what the compiler then refuses would be worse than no list.
+     */
+    public static boolean hasMember(final String type, final String member) {
+        final Set<String> offered = LIBRARY.get(type);
+        return offered != null && offered.contains(member);
+    }
+
     /** Reports everything in {@code units} that {@code level} does not have. */
     public void check(final List<CompilationUnit> units, final LanguageLevel level) {
         if (level.full()) {

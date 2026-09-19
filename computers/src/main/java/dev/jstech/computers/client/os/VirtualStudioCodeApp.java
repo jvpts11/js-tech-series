@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.os.edit.CodeRuns;
 import dev.jstech.computers.os.edit.InkPalette;
+import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.AmountStepper;
 import dev.jstech.core.client.gui.component.Button;
@@ -704,13 +705,19 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         if (doc.dirty()) {
             this.workspace.save();
         }
+        final LanguageLevel level = LanguageLevel.ofSource(doc.path());
+        if (level == null) {
+            this.workspace.say(doc.name() + " is not a program to build");
+            return;
+        }
         focusTerminal();
-        enqueue("sgsc " + doc.path() + " -o " + outputFor(doc.path()));
+        // Each language is built by its own compiler, so a Σ source is held to what Σ has.
+        enqueue(level.compiler() + " " + doc.path() + " -o " + outputFor(doc.path()));
     }
 
     private void runFile() {
         final CodeWorkspace.Doc doc = this.workspace.current();
-        if (doc == null) {
+        if (doc == null || LanguageLevel.ofSource(doc.path()) == null) {
             return;
         }
         buildFile();
@@ -722,18 +729,24 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         if (files.isEmpty()) {
             return;
         }
-        final StringBuilder line = new StringBuilder("sgsc");
-        boolean any = false;
+        /*
+         * A folder builds all of its sources into one program. One written wholly in the smaller language is
+         * built by that language's compiler and so held to it; with a single Σ# source among them the full
+         * compiler builds the lot, since everything Σ has is Σ# as well.
+         */
+        final StringBuilder sources = new StringBuilder();
+        LanguageLevel level = null;
         for (final DiskFilesPayload.WireFile file : files) {
-            // A folder builds all of its Σ# sources into one program.
-            if (file.path().toLowerCase(Locale.ROOT).endsWith(".sgs")) {
-                line.append(' ').append(file.path());
-                any = true;
+            final LanguageLevel written = LanguageLevel.ofSource(file.path());
+            if (written != null) {
+                sources.append(' ').append(file.path());
+                level = level == null || written.full() ? written : level;
             }
         }
-        if (!any) {
+        if (level == null) {
             return;
         }
+        final StringBuilder line = new StringBuilder(level.compiler()).append(sources);
         final String folder = this.workspace.folder();
         final String stem = folder.isEmpty() ? "programs" : shortName(folder);
         line.append(" -o ").append(folder.isEmpty() ? "" : folder + "/").append("build/").append(stem).append(".asm");

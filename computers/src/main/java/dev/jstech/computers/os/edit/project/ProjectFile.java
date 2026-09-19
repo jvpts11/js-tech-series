@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os.edit.project;
 
+import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.vm.listing.AsmProgram;
 
 import java.util.ArrayList;
@@ -58,8 +59,11 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         }
     }
 
-    /** The extension a project file carries. */
-    public static final String EXTENSION = "sgsproj";
+    /**
+     * The extension a project file carries when its language has none of its own to give it: a Σ# project's, and
+     * what a project in a language an addon brought falls back on.
+     */
+    public static final String EXTENSION = LanguageLevel.SIGMA_SHARP.projectExtension();
 
     public ProjectFile {
         sources = List.copyOf(sources);
@@ -77,9 +81,34 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         this(name, kind, language, sources, references, entry, AsmProgram.DEFAULT_ARCHITECTURE);
     }
 
-    /** The file name a project of that name keeps itself in. */
+    /** The file name a Σ# project of that name keeps itself in. */
     public static String fileName(final String name) {
         return name + "." + EXTENSION;
+    }
+
+    /**
+     * The file this project keeps itself in, which says what it is written in before anybody opens it: a Σ
+     * project is not a Σ# one, and a player looking at a folder should not have to read the file to find out.
+     */
+    public String fileName() {
+        return this.name + "." + extensionFor(this.language);
+    }
+
+    /** The extension a project written in that language keeps itself in. */
+    public static String extensionFor(final String languageId) {
+        final LanguageLevel level = LanguageLevel.ofId(languageId);
+        return level == null ? EXTENSION : level.projectExtension();
+    }
+
+    /** Whether a file of that name is a project, of any of the languages that have a project file of their own. */
+    public static boolean isProjectFile(final String path) {
+        final String lower = path == null ? "" : path.toLowerCase(Locale.ROOT);
+        for (final LanguageLevel level : LanguageLevel.values()) {
+            if (lower.endsWith("." + level.projectExtension())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Where a project's listing goes when it has one: the build folder, named after the project. */

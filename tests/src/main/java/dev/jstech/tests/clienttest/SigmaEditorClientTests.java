@@ -16,6 +16,7 @@ import dev.jstech.computers.client.os.VirtualStudioApp;
 import dev.jstech.computers.client.os.VirtualStudioCodeApp;
 import dev.jstech.computers.os.edit.project.ProjectFile;
 import dev.jstech.computers.os.edit.project.ProjectTemplate;
+import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.os.edit.project.SolutionFile;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.FilesystemKind;
@@ -53,6 +54,12 @@ public final class SigmaEditorClientTests {
     private static final ResourceLocation FRAMES_XP =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp");
     private static final String EDITOR_LAUNCHER = "Virtual Studio Code";
+
+    /** The line of the studio's wizard most programs start from, in each of the two languages. */
+    private static final ProjectTemplate.Offer SHARP_CONSOLE =
+            new ProjectTemplate.Offer(ProjectTemplate.CONSOLE_APP, LanguageLevel.SIGMA_SHARP);
+    private static final ProjectTemplate.Offer SIGMA_CONSOLE =
+            new ProjectTemplate.Offer(ProjectTemplate.CONSOLE_APP, LanguageLevel.SIGMA);
 
     /** The program the player writes: short enough to type, and it says something when it runs. */
     private static final String SOURCE =
@@ -174,7 +181,7 @@ public final class SigmaEditorClientTests {
         seed(computer, FARM_DIR + "/" + SolutionFile.fileName("Farm"), FileType.SLN,
                 new SolutionFile("Farm", List.of(SolutionFile.projectPath("Farm")), "Farm").write());
         seed(computer, FARM_PROJECT + "/" + ProjectFile.fileName("Farm"), FileType.SGSPROJ,
-                new ProjectFile("Farm", ProjectFile.Kind.CONSOLE, ProjectTemplate.LANGUAGE,
+                new ProjectFile("Farm", ProjectFile.Kind.CONSOLE, LanguageLevel.SIGMA_SHARP.id(),
                         List.of("Program.sgs", "Silo.sgs"), List.of(), ProjectFile.defaultEntry("Farm")).write());
         seed(computer, FARM_PROJECT + "/Program.sgs", FileType.SGS, "using System.IO.*; namespace Farm; "
                 + "class Program { static void Main() { Console.PrintLine(\"farm\"); } }");
@@ -409,6 +416,75 @@ public final class SigmaEditorClientTests {
     }
 
     /**
+     * The smaller language in the studio, which is where anybody would rather write it: a project of its own
+     * kind with a source of its own kind, the editor offering what that language's library has and nothing
+     * it does not, a build for the oldest machines there are, and the program running on this one anyway.
+     */
+    @ClientTest(timeoutTicks = 3000)
+    public static void virtualStudio_makesASigmaProjectSuggestsItsLibraryAndBuildsItForTheOldest(
+            final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+                    final CraftingComputerBlockEntity computer = world.placeRunningCraftingComputer(COMPUTER);
+                    computer.installOs(FRAMES_XP);
+                    for (final String id : new String[] {"virtual_studio", "sgsc", "scc", "sigma"}) {
+                        computer.console().install(program(id).toString());
+                    }
+                    world.placeMonitor(MONITOR, Direction.EAST);
+                })
+                .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
+                .thenRightClick(SETTLE, MONITOR)
+                .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
+                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).launcherLabels().contains(STUDIO_LAUNCHER),
+                        SCREEN_WAIT, "the studio to be listed in Start")
+                .then(0, () -> launch(ctx, STUDIO_LAUNCHER))
+                .thenWaitUntil(() -> studio(ctx) != null && studio(ctx).onStartWindow(),
+                        SCREEN_WAIT, "the studio to open on its Start Window")
+                .then(SETTLE, () -> ctx.clickDesktop(studio(ctx).startLinkCenter("Create a new project")))
+                .thenWaitUntil(() -> studio(ctx).wizardOpen(), SCREEN_WAIT, "the New Project wizard to open")
+                .thenScreenshot(2, "sigma-wizard-templates")
+                .then(SETTLE, () -> studio(ctx).chooseTemplate(SIGMA_CONSOLE))
+                .thenScreenshot(2, "sigma-wizard-configure")
+                .then(SETTLE, () -> studio(ctx).createProject(SIGMA_CONSOLE, "Old"))
+                .thenWaitUntilServer(level -> onDisk(ctx, level, "progs/Old/Old.sln")
+                                && onDisk(ctx, level, "progs/Old/Old/Old.sgproj")
+                                && onDisk(ctx, level, "progs/Old/Old/Old.sg"),
+                        SCREEN_WAIT, "the solution, the Sigma project and its source to be on the disk", level -> "")
+                .thenWaitUntil(() -> studio(ctx).openFile().equals("progs/Old/Old/Old.sg"),
+                        SCREEN_WAIT, "the first source to be open")
+                .thenAssert(0, () -> studio(ctx).text().contains("using Standard.*;"),
+                        "the template's program opens the one namespace this language has")
+                /*
+                 * Typed on the empty line under the using, since nothing is offered with the caret against another
+                 * word: a name followed by a dot is then all the list needs.
+                 */
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_DOWN))
+                .then(1, () -> ctx.type("Console."))
+                .thenWaitUntil(() -> studio(ctx).completionLabels().contains("PrintLine"),
+                        SCREEN_WAIT, "the list to offer what this language's Console has")
+                .thenAssert(0, () -> !studio(ctx).completionLabels().contains("HasLine")
+                                && !studio(ctx).completionLabels().contains("ReadDouble"),
+                        "and nothing the compiler would then refuse, which the full language's Console has")
+                .thenScreenshot(2, "sigma-suggestions")
+                // Taken back out a character at a time, which is also what puts the list away.
+                .then(SETTLE, () -> {
+                    for (int i = 0; i < "Console.".length(); i++) {
+                        ctx.key(GLFW.GLFW_KEY_BACKSPACE);
+                    }
+                })
+                .then(SETTLE, () -> studio(ctx).buildSolution())
+                .thenWaitUntil(() -> studio(ctx).outputLines().stream().anyMatch(l -> l.startsWith("Build succeeded")),
+                        SCREEN_WAIT, "the build to succeed")
+                .thenWaitUntilServer(level -> diskText(ctx, level, "progs/Old/Old/build/Old.asm")
+                                .contains(".arch jsc:x86_16"), SCREEN_WAIT,
+                        "the listing to say it was built for the oldest machines",
+                        level -> diskText(ctx, level, "progs/Old/Old/build/Old.asm"))
+                .thenScreenshot(2, "sigma-built")
+                .then(SETTLE, () -> studio(ctx).startProgram())
+                .thenWaitUntil(() -> studio(ctx).terminalText().contains("Hello from Old"),
+                        SCREEN_WAIT * 3, "the program to run on this newer machine, as everything older does");
+    }
+
+    /**
      * A project made the way the studio wants it: from the Start Window, through the wizard, into a
      * solution with one project, built as a solution and started, with the program's line at the terminal.
      */
@@ -435,9 +511,9 @@ public final class SigmaEditorClientTests {
                 .then(SETTLE, () -> ctx.clickDesktop(studio(ctx).startLinkCenter("Create a new project")))
                 .thenWaitUntil(() -> studio(ctx).wizardOpen(), SCREEN_WAIT, "the New Project wizard to open")
                 .thenScreenshot(2, "wizard-templates")
-                .then(SETTLE, () -> studio(ctx).chooseTemplate(ProjectTemplate.CONSOLE_APP))
+                .then(SETTLE, () -> studio(ctx).chooseTemplate(SHARP_CONSOLE))
                 .thenScreenshot(2, "wizard-configure")
-                .then(SETTLE, () -> studio(ctx).createProject(ProjectTemplate.CONSOLE_APP, "Hello"))
+                .then(SETTLE, () -> studio(ctx).createProject(SHARP_CONSOLE, "Hello"))
                 .thenWaitUntilServer(level -> onDisk(ctx, level, "progs/Hello/Hello.sln")
                                 && onDisk(ctx, level, "progs/Hello/Hello/Hello.sgsproj")
                                 && onDisk(ctx, level, "progs/Hello/Hello/Hello.sgs"),

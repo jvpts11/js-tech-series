@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.sigma.SigmaSemantics;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.sigma.sem.IMemberSymbol;
@@ -27,7 +28,6 @@ import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.function.Consumer;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -318,11 +318,18 @@ public final class ExposureApp implements IDesktopApp {
         if (doc == null) {
             return;
         }
+        final LanguageLevel level = LanguageLevel.ofSource(doc.path());
+        if (level == null) {
+            this.workspace.say(doc.name() + " is not a program to run");
+            return;
+        }
         this.workspace.save();
         final String source = doc.path();
         final int dot = source.lastIndexOf('.');
         final String built = (dot > source.lastIndexOf('/') ? source.substring(0, dot) : source) + ".asm";
-        DesktopScreen.requestTypeAtTerminal(List.of("sgsc " + quote(source), "sigma run " + quote(built)));
+        // Each language is built by its own compiler, so a Σ source is held to what Σ has.
+        DesktopScreen.requestTypeAtTerminal(
+                List.of(level.compiler() + " " + quote(source), "sigma run " + quote(built)));
     }
 
     private static String quote(final String path) {
@@ -461,7 +468,7 @@ public final class ExposureApp implements IDesktopApp {
             return this.outlineRows;
         }
         final List<Outline> rows = new ArrayList<>();
-        if (doc.path().toLowerCase(Locale.ROOT).endsWith(".sgs")) {
+        if (LanguageLevel.ofSource(doc.path()) != null) {
             for (final NamedType type : SigmaSemantics.check(
                     List.of(new SourceFile(doc.name(), text))).model().declaredTypes()) {
                 rows.add(new Outline(0, type.name(), 0));

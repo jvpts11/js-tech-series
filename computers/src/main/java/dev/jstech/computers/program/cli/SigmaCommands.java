@@ -15,7 +15,6 @@ import dev.jstech.computers.sigma.Diagnostic;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.sigma.pack.Manifest;
 import dev.jstech.computers.sigma.pack.Packed;
-import dev.jstech.computers.vm.listing.AsmProgram;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -47,9 +46,9 @@ public final class SigmaCommands {
      */
     public static final String SUBSET_COMPILER = "jsc:scc";
 
-    /** The extension a program is written in, and the one it is compiled to. */
-    private static final String SOURCE = ".sgs";
-    private static final String SUBSET_SOURCE = ".sg";
+    /** The extension a program is written in, in each language, and the one it is compiled to. */
+    private static final String SOURCE = "." + LanguageLevel.SIGMA_SHARP.sourceExtension();
+    private static final String SUBSET_SOURCE = "." + LanguageLevel.SIGMA.sourceExtension();
     private static final String ASSEMBLY = ".asm";
 
     private SigmaCommands() {
@@ -58,10 +57,10 @@ public final class SigmaCommands {
     /** Every verb, for the shell to register. */
     public static List<ICliCommand> all() {
         return List.of(
-                new Compile("sgsc", SOURCE, COMPILER, LanguageLevel.SIGMA_SHARP,
-                        AsmProgram.DEFAULT_ARCHITECTURE),
-                new Compile("scc", SUBSET_SOURCE, SUBSET_COMPILER, LanguageLevel.SIGMA,
-                        Architectures.X86_16.id()),
+                new Compile(LanguageLevel.SIGMA_SHARP.compiler(), SOURCE, COMPILER, LanguageLevel.SIGMA_SHARP,
+                        Architectures.oldestFor(LanguageLevel.SIGMA_SHARP).id()),
+                new Compile(LanguageLevel.SIGMA.compiler(), SUBSET_SOURCE, SUBSET_COMPILER, LanguageLevel.SIGMA,
+                        Architectures.oldestFor(LanguageLevel.SIGMA).id()),
                 new Run(), new Pack());
     }
 
@@ -253,7 +252,7 @@ public final class SigmaCommands {
         }
     }
 
-    static final Runtime SIGMA = new Runtime("sigma", RUNTIME, "Σ#", List.of(ASSEMBLY, SOURCE));
+    static final Runtime SIGMA = new Runtime("sigma", RUNTIME, "Σ#", List.of(ASSEMBLY, SOURCE, SUBSET_SOURCE));
 
     /** Starts, stops and lists the programs one runtime is running on this computer. */
     static final class Run implements ICliCommand {
