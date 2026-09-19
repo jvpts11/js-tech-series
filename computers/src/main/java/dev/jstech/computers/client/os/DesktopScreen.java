@@ -28,6 +28,7 @@ import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
+import dev.jstech.computers.operation.payload.RequestDiskFilesPayload;
 import dev.jstech.computers.operation.payload.MachinePowerPayload;
 import dev.jstech.computers.operation.payload.MoveFilePayload;
 import dev.jstech.computers.operation.payload.NiDepositPayload;
@@ -567,6 +568,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private String computerName = "";
     /** CDE's palette and the backdrop of each workspace, synced from the server and worn while one is chosen. */
     private CdeStyle cdeStyle = CdeStyle.DEFAULT;
+    /** The media in the machine's drives, as its last listing said. */
+    private final List<DiskFilesPayload.WireVolume> media = new ArrayList<>();
 
     /** The desktop's right-click menu, the same component every program's menus are. */
     private final ContextMenu deskMenu =
@@ -811,6 +814,29 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     String homeDir() {
         final int slash = desktopDir.lastIndexOf('/');
         return slash <= 0 ? desktopDir : desktopDir.substring(0, slash);
+    }
+
+    /** Takes the removable media a listing names, which are the machine's whichever folder was listed. */
+    public static void acceptVolumes(final DiskFilesPayload payload) {
+        if (active == null) {
+            return;
+        }
+        active.media.clear();
+        for (final DiskFilesPayload.WireVolume volume : payload.volumes()) {
+            if (volume.removable()) {
+                active.media.add(volume);
+            }
+        }
+    }
+
+    /** Asks the machine which media are in its drives, which a listing of its root says. */
+    void askForMedia() {
+        PacketDistributor.sendToServer(new RequestDiskFilesPayload(host, ""));
+    }
+
+    /** The media in the machine's drives as it last said, each opened in a file manager at its root. */
+    List<DiskFilesPayload.WireVolume> media() {
+        return media;
     }
 
     /** Opens a file manager at that folder, under the name this desktop gives its file manager. */

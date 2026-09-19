@@ -264,11 +264,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   sorted into Desktop_Apps, Desktop_Tools, Network and Games, so nobody has to know a program's name to find it.
   A double click on a group opens it in a window of its own and a double click on a program starts it. A group
   with nothing in it is not drawn, and a program installed while a window is open appears in it at once.
-- Three controls of CDE's Front Panel carry a subpanel, raised by the arrow at their head: Files (Home and
-  Desktop, each opening a File Manager there), the Text Editor (Personal Applications: Text Editor, Terminal,
-  Calculator) and Applications (the Application Manager and the Performance Meter). A subpanel lists only what
-  the machine has, starts what is chosen on it and stays up, and goes down when its arrow is pressed again or
-  another arrow raises its own.
+- Three controls of CDE's Front Panel carry a subpanel, raised by the arrow at their head: Files (Home, Desktop
+  and each medium in one of the machine's drives, each opening a File Manager there), the Text Editor (Personal
+  Applications: Text Editor, Terminal, Calculator) and Applications (the Application Manager, the Performance
+  Meter and Workstation Info). A subpanel lists only what the machine has, starts what is chosen on it and stays
+  up, and goes down when its arrow is pressed again or another arrow raises its own.
 - CDE's Terminal is a Unix terminal: it opens on the shell's own prompt, `player@host:~ $`, and greets nobody.
   A desktop now says for itself whether it stands on a Unix family, so the next desktop cannot be left off a
   list the way CDE was.

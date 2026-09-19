@@ -11,6 +11,7 @@ import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Control;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout.Rect;
+import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -21,6 +22,9 @@ import net.minecraft.resources.ResourceLocation;
  * The subpanels of CDE's Front Panel: what slides up out of a control when the arrow at its head is pressed.
  * Files keeps the places a File Manager is opened at, the Text Editor keeps the personal applications beside
  * it, and Applications keeps the Application Manager and the tools that tell how the workstation is doing.
+ *
+ * <p>The Files subpanel also lists each medium that is in one of the machine's drives, as the machine said when
+ * the subpanel came up.
  *
  * <p>A subpanel is headed by what it is, stands right above the control it belongs to, and stays up until its
  * arrow is pressed again: choosing something on it starts that and leaves the subpanel where it is, which is
@@ -66,6 +70,10 @@ final class CdeLaunchers {
     /** The arrow of that control was pressed: its subpanel comes up, or goes down when it was the one up. */
     void toggle(final Control control) {
         this.open = this.open == control || !hasSubpanel(control) ? null : control;
+        // What is in the drives is asked as the Files subpanel comes up, since a disc may have gone in since.
+        if (this.open == Control.FILES) {
+            desktop.askForMedia();
+        }
     }
 
     void close() {
@@ -156,6 +164,9 @@ final class CdeLaunchers {
             final ResourceLocation files = iconOf("files");
             out.add(new Row("Home", files, () -> desktop.openFolder(desktop.homeDir())));
             out.add(new Row("Desktop", files, () -> desktop.openFolder(desktop.desktopDirectory())));
+            for (final DiskFilesPayload.WireVolume medium : desktop.media()) {
+                out.add(new Row(medium.label(), files, () -> desktop.openFolder(medium.key())));
+            }
         } else if (this.open == Control.EDITOR) {
             program(out, "editor");
             program(out, "command_prompt");

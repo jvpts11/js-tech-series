@@ -18,6 +18,9 @@ import dev.jstech.computers.gui.layout.CdeExitLayout;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -42,6 +45,7 @@ public final class CdeClientTests {
 
     private static final BlockPos MACHINE = new BlockPos(5, 2, 2);
     private static final BlockPos MONITOR = new BlockPos(6, 2, 2);
+    private static final BlockPos DRIVE = new BlockPos(4, 2, 2);
     private static final BlockPos PLAYER_AT_MONITOR = new BlockPos(8, 2, 2);
 
     private CdeClientTests() {
@@ -407,6 +411,30 @@ public final class CdeClientTests {
                                 "Host Name=unix", "Operating System=UNIX System V 3.2")),
                         "it says who is at the workstation, its host name and its system")
                 .thenScreenshot(SETTLE, "cde-workstation-info");
+    }
+
+    /**
+     * The Files subpanel lists the medium in a drive of the machine below Home and Desktop, and choosing it opens
+     * the File Manager there.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void filesSubpanel_listsTheMediumInADrive(final ClientTestContext ctx) {
+        atCde(ctx)
+                .thenBuild(SETTLE, world -> {
+                    world.setBlock(DRIVE, ComputingModule.CD_DRIVE.get());
+                    final ItemStack disc = new ItemStack(ComputingModule.CD_ROM.get());
+                    MediaItem.setKind(disc, MediaKind.PROGRAM_INSTALL);
+                    MediaItem.setPayload(disc, jsc("cde"));
+                    world.blockEntity(DRIVE, MediaReaderBlockEntity.class).mediaSlot().setStackInSlot(0, disc);
+                })
+                .then(SETTLE * 2, () -> clickAt(ctx,
+                        desktop(ctx).frontPanelArrowPoint(CdeFrontPanelLayout.Control.FILES)))
+                .thenWaitUntil(() -> desktop(ctx).subpanelLabels().size() == 3, SCREEN_WAIT,
+                        "the Files subpanel to list the medium below Home and Desktop")
+                .thenScreenshot(SETTLE, "cde-files-subpanel")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).subpanelPoint(desktop(ctx).subpanelLabels().get(2))))
+                .thenWaitUntil(() -> desktop(ctx).shownWindowLabels().contains("File Manager"), SCREEN_WAIT,
+                        "choosing it to open the File Manager on the medium");
     }
 
     /** The Front Panel is pictures only, so resting the pointer on a control names it after a moment. */
