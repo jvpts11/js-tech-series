@@ -61,9 +61,8 @@ public final class CdeClientTests {
                 .thenScreenshot(SETTLE, "cde-file-manager")
                 .then(SETTLE, () -> clickAt(ctx,
                         desktop(ctx).frontPanelArrowPoint(CdeFrontPanelLayout.Control.APPLICATIONS)))
-                // A subpanel lists only what the machine has, and nothing on UNIX stands behind a third line yet.
                 .thenWaitUntil(() -> desktop(ctx).subpanelLabels().equals(List.of("Application Manager",
-                                "Performance Meter")), SCREEN_WAIT,
+                                "Performance Meter", "Workstation Info")), SCREEN_WAIT,
                         "the arrow over Applications to raise its subpanel")
                 .thenScreenshot(SETTLE, "cde-applications");
     }
@@ -386,6 +385,26 @@ public final class CdeClientTests {
                 .thenWaitUntil(() -> desktop(ctx).wornCdeStyle().equals("Default;hatch,dots,tiles,weave"),
                         SCREEN_WAIT, "Apply to put Dots on workspace Two and leave the others as they were")
                 .thenScreenshot(SETTLE, "cde-style-backdrop");
+    }
+
+    /**
+     * Workstation Info, the third line of the Applications subpanel, shows what this workstation is as the machine
+     * tells it: who and where, the network by its id, the system, CDE, and the hardware.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void workstationInfo_showsWhatTheMachineIs(final ClientTestContext ctx) {
+        atCde(ctx)
+                .then(SETTLE, () -> clickAt(ctx,
+                        desktop(ctx).frontPanelArrowPoint(CdeFrontPanelLayout.Control.APPLICATIONS)))
+                .thenWaitUntil(() -> desktop(ctx).subpanelLabels().contains("Workstation Info"), SCREEN_WAIT,
+                        "the Applications subpanel to list Workstation Info")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).subpanelPoint("Workstation Info")))
+                .thenWaitUntil(() -> desktop(ctx).workstationInfoFacts().contains("Window System=CDE 2.5.2"),
+                        SCREEN_WAIT * 2, "Workstation Info to open with the machine's answer")
+                .thenAssert(1, () -> desktop(ctx).workstationInfoFacts().containsAll(List.of("User Name=player",
+                                "Host Name=unix", "Operating System=UNIX System V 3.2")),
+                        "it says who is at the workstation, its host name and its system")
+                .thenScreenshot(SETTLE, "cde-workstation-info");
     }
 
     /** A double click on the menu button closes the window, as it always did on a Motif title bar. */

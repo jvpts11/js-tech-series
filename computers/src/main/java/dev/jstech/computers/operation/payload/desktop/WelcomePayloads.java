@@ -78,7 +78,7 @@ public final class WelcomePayloads {
     }
 
     /** The processor really in the machine, by its own model, not the clock it happens to run at. */
-    private static String cpuName(final IOsHost computer) {
+    static String cpuName(final IOsHost computer) {
         if (!(computer instanceof AbstractComputerBlockEntity machine)) {
             return "";
         }

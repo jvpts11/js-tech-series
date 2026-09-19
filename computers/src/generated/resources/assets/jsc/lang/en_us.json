@@ -293,5 +293,6 @@
   "program.jsc.this_pc.desc": "The machine itself: its hardware, its disks and what fills them.",
   "program.jsc.vim": "Vim",
   "program.jsc.virtual_studio": "Virtual Studio",
-  "program.jsc.virtual_studio_code": "Virtual Studio Code"
+  "program.jsc.virtual_studio_code": "Virtual Studio Code",
+  "program.jsc.workstation_info": "Workstation Info"
 }

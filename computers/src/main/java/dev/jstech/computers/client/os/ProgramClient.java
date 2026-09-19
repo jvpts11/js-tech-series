@@ -66,6 +66,7 @@ public final class ProgramClient {
         register(rl("this_pc"), (host, mon, os) -> new ThisPcApp(host));
         // CDE's settings are its Style Manager, which the approved desktop keeps to what CDE itself offered.
         register(rl("settings"), (host, mon, os) -> onCde(os) ? new StyleManagerApp() : new SettingsApp(host, mon));
+        register(rl("workstation_info"), (host, mon, os) -> new WorkstationInfoApp(host));
         register(rl("files"), (host, mon, os) -> new FilesApp(host, os.getPath(), "", mon));
         register(rl("editor"), (host, mon, os) -> new EditorApp(host));
         register(rl("command_prompt"), (host, mon, os) -> new ShellApp(host, os));

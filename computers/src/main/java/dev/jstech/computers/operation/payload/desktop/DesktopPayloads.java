@@ -286,24 +286,11 @@ public final class DesktopPayloads {
         final String platform = os == null ? "-" : os.platform().label();
         final List<String> installed = new ArrayList<>(console.installed());
         final List<SettingsSnapshotPayload.DiskUse> disks = new ArrayList<>();
-        final long mbEq = StorageKey.MB_EQ_PER_ITEM;
         for (final ItemStack stack : computer.diskStacks()) {
-            if (!(stack.getItem() instanceof DiskItem diskItem)) {
-                continue;
+            if (stack.getItem() instanceof DiskItem diskItem) {
+                disks.add(new SettingsSnapshotPayload.DiskUse(stack.getHoverName().getString(),
+                        diskItem.spec().capacityMb(), usedMb(stack), stack == sysDisk));
             }
-            // Megabytes follow the disk's own era: what an item costs there is what its usage is worth.
-            final long mbPerItem = diskItem.spec().era().mbPerItem();
-            final long capMb = diskItem.spec().capacityMb();
-            final long storageUsed = DriveVolumes.usedWeight(stack);
-            final long fsUsed = DiskFilesystem.filesWeight(stack);
-            final ResourceLocation dOsId =
-                    OsDisks.systemOn(stack);
-            final OsDef dOs =
-                    dOsId != null ? OsRegistry.getOs(dOsId) : null;
-            final long osReserved = dOs != null ? dOs.footprintItemsOn(diskItem.spec().era()) * mbEq : 0L;
-            final long usedMb = (storageUsed + fsUsed + osReserved) * mbPerItem / mbEq;
-            disks.add(new SettingsSnapshotPayload.DiskUse(
-                    stack.getHoverName().getString(), capMb, usedMb, stack == sysDisk));
         }
         // The memory ledger: what the system, its desktop, its services and its windows hold right now.
         final RamLedger ledger = computer.ramLedger();
@@ -323,6 +310,22 @@ public final class DesktopPayloads {
                 netshare, cpuLabel, computer.maxCpuMhz(), architectureOf(computer),
                 computer.ramTotalMb(), computer.totalVramMb(),
                 osLabel, platform, installed, disks, ledger.usedMb(), ramUses, shares, st.remoteAllowed());
+    }
+
+    /**
+     * How many megabytes of a disk are taken: what is stored on it, its files, and the room a system on it keeps
+     * for itself. Megabytes follow the disk's own era, since what an item costs there is what its usage is worth.
+     */
+    static long usedMb(final ItemStack stack) {
+        if (!(stack.getItem() instanceof DiskItem diskItem)) {
+            return 0L;
+        }
+        final long mbEq = StorageKey.MB_EQ_PER_ITEM;
+        final long mbPerItem = diskItem.spec().era().mbPerItem();
+        final ResourceLocation systemId = OsDisks.systemOn(stack);
+        final OsDef system = systemId != null ? OsRegistry.getOs(systemId) : null;
+        final long reserved = system != null ? system.footprintItemsOn(diskItem.spec().era()) * mbEq : 0L;
+        return (DriveVolumes.usedWeight(stack) + DiskFilesystem.filesWeight(stack) + reserved) * mbPerItem / mbEq;
     }
 
     /** How the machine's architecture reads on a screen, or empty when it has no processor to read it from. */

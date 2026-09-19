@@ -163,7 +163,7 @@ final class CdeLaunchers {
         } else if (this.open == Control.APPLICATIONS) {
             out.add(new Row(ApplicationManagerApp.KEY, null, () -> desktop.openApplicationManager(null)));
             program(out, "system_monitor");
-            program(out, "this_pc");
+            program(out, "workstation_info");
         }
         return out;
     }

@@ -224,6 +224,13 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         }
     }
 
+    /** Closes the window running {@code app}, when it is up, the way its own Close button does. */
+    public static void closeWindowFor(final IDesktopApp app) {
+        if (active != null) {
+            active.closeWindowOf(app);
+        }
+    }
+
     /** Puts away the window running {@code dialog}, when it is up. */
     public static void closeDialog(final IDesktopApp dialog) {
         if (active != null) {
@@ -1639,6 +1646,12 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         final DesktopWindow w = windowFor(windowTitle);
         final int[] at = w != null && w.app() instanceof ApplicationManagerApp app ? app.iconCentre(name) : null;
         return at == null ? null : screenPoint(at);
+    }
+
+    /** What the Workstation Info window shows, as {@code label=value}, or nothing while it is not up. */
+    public List<String> workstationInfoFacts() {
+        final DesktopWindow w = windowFor("Workstation Info");
+        return w != null && w.app() instanceof WorkstationInfoApp app ? app.shownFacts() : List.of();
     }
 
     /** CDE's look as the desktop is wearing it, as the machine would keep it. */

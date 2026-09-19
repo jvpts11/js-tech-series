@@ -203,6 +203,11 @@ public final class OsBootstrap {
             rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
             rl("system_monitor"), rl("calculator"), rl("network_manager"));
 
+    /** What CDE bundles: the same, and its Workstation Info, which no other desktop has. */
+    private static final List<ResourceLocation> CDE_APPS = List.of(
+            rl("network"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
+            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("workstation_info"));
+
     /**
      * The built-in desktop environments. The Frames editions bundle their own (the id equals the OS id, so the
      * existing skins and icon sets keep their keys); KDE Plasma, GNOME and Cinnamon are Linux packages, each
@@ -231,10 +236,10 @@ public final class OsBootstrap {
              * CDE keeps its own names for what it bundles, which are plainer than anybody else's: it called a
              * file manager the File Manager. Its settings are the Style Manager, as they were.
              */
-            new DesktopEnvironmentDef(rl("cde"), "CDE", PanelStyle.CDE, BUILTIN_APPS, Map.of(
+            new DesktopEnvironmentDef(rl("cde"), "CDE", PanelStyle.CDE, CDE_APPS, Map.of(
                     rl("files"), "File Manager", rl("editor"), "Text Editor", rl("command_prompt"), "Terminal",
                     rl("calculator"), "Calculator", rl("system_monitor"), "Performance Meter",
-                    rl("settings"), "Style Manager", rl("this_pc"), "Workstation Info"),
+                    rl("settings"), "Style Manager"),
                     SoftwareHouse.OPEN_DESK_CONSORTIUM)
     );
 
@@ -274,6 +279,12 @@ public final class OsBootstrap {
              */
             ProgramSpec.of(rl("this_pc"), "thispc", "This PC", true, FRAMES_ONLY, 0, ProgramKind.APP, 0, HostScope.ANY),
             ProgramSpec.of(rl("disks"), "disks", "Disks", true, LINUX_ONLY, 0, ProgramKind.APP, 0, HostScope.ANY),
+            /*
+             * CDE's own answer to "what is this machine": who is at it, the system and the hardware. Only CDE
+             * bundles it, on every system CDE stands on; the command is named the way CDE named its tools.
+             */
+            ProgramSpec.of(rl("workstation_info"), "dtwsinfo", "Workstation Info", true, CDE_SYSTEMS, 0,
+                    ProgramKind.APP, 0, HostScope.ANY).withHouse(SoftwareHouse.OPEN_DESK_CONSORTIUM),
             ProgramSpec.of(rl("settings"), "settings", "Settings", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),
             ProgramSpec.of(rl("files"), "files", "Files", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),
             ProgramSpec.of(rl("editor"), "editor", "Editor", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),

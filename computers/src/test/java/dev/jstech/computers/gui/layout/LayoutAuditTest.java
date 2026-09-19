@@ -45,7 +45,7 @@ class LayoutAuditTest {
             "CraftingSwitchLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
             "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout",
-            "CdeStyleLayout");
+            "CdeStyleLayout", "WorkstationInfoLayout");
 
     private record AuditCase(String label, GuiLayout layout, boolean fixedSize) {
     }
@@ -142,6 +142,7 @@ class LayoutAuditTest {
         c.add(new AuditCase("CdeStyleLayout(color)", CdeStyleLayout.colorLayout(CdePalette.ALL.size()), true));
         c.add(new AuditCase("CdeStyleLayout(backdrop)",
                 CdeStyleLayout.backdropLayout(CdeBackdrop.values().length), true));
+        c.add(new AuditCase("WorkstationInfoLayout", WorkstationInfoLayout.layout(), true));
         return c;
     }
 

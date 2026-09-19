@@ -277,6 +277,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   beside the desktops it already could. Under the Front Panel the machine is still that distribution, with its
   own shell, its own tree and the player's home in `/home/player`. Gentoo builds it from source in the real
   order: Motif, the Korn shell, then CDE.
+- Workstation Info, CDE's window about the machine, on the third line of the Applications subpanel and in the
+  Application Manager's Desktop_Tools. In three wells it shows who is at the workstation, its host name and the
+  id of the data network it is on (or that it is on none); the system with its release, the architecture and
+  CDE's version; and the processor, the memory, the memory in use with a meter beside it, the video memory and
+  the system disk. It asks the machine again every two seconds while it is open, so the memory in use stays
+  current. Only CDE bundles it, on every system that takes CDE.
 - CDE's Style Manager. The Style control on the Front Panel opens it where the other desktops have their
   settings: a strip of two pages. Color lists the eight palettes under the names they had, shows the colours of
   the one picked, and puts it on the whole desktop the moment it is picked (frames, the active title, the Front

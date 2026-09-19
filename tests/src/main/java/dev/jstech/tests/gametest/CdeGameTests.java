@@ -15,13 +15,17 @@ import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
+import dev.jstech.computers.operation.payload.WorkstationInfoPayload;
+import dev.jstech.computers.operation.payload.desktop.WorkstationInfoPayloads;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
+import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.WorkspaceSet;
+import dev.jstech.computers.os.WorkstationFacts;
 import dev.jstech.computers.os.boot.BootController;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootSequence;
@@ -241,6 +245,40 @@ public final class CdeGameTests {
         CliCommands.shellFor(cli, 52).run("config cdestyle Nobody;no,such", cli);
         helper.assertTrue(machine.console().cdeStyle().equals(CdeStyle.DEFAULT),
                 "a style nobody could draw is kept as the one a workstation starts with");
+        helper.succeed();
+    }
+
+    /**
+     * Workstation Info reads the machine as it stands: its host name, the network it is on by that network's id,
+     * the system with its release and architecture word, CDE with its version, and its memory; and the facts
+     * cross the wire whole.
+     */
+    @GameTest(template = ARENA)
+    public static void workstationInfo_readsTheMachineAsItStands(final GameTestHelper helper) {
+        final MainframeBlockEntity machine = machine(helper, "unix");
+        if (machine == null) {
+            return;
+        }
+        machine.console().install(CDE.toString());
+        machine.setBootedDesktopId(CDE);
+        final WorkstationFacts facts = WorkstationInfoPayloads.factsOf(machine);
+        helper.assertTrue(facts.userName().equals("player") && facts.hostName().equals(Installers.hostName(machine)),
+                "who and where; got " + facts.userName() + "@" + facts.hostName());
+        final String network = machine.networkUuid() == null ? "" : machine.networkUuid().value().toString();
+        helper.assertTrue(facts.network().equals(network), "the network by its id; got " + facts.network());
+        helper.assertTrue(facts.system().equals("UNIX System V 3.2")
+                        && facts.architecture().equals(KernelNames.architecture(Platform.UNIX, machine.processorBits()))
+                        && facts.windowSystem().equals("CDE 2.5.2"),
+                "the system, its architecture and CDE; got " + facts.system() + " / " + facts.architecture() + " / "
+                        + facts.windowSystem());
+        helper.assertTrue(facts.memoryMb() == machine.ramTotalMb() && facts.processorMhz() == machine.maxCpuMhz(),
+                "and the hardware the machine has");
+
+        final RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(),
+                helper.getLevel().registryAccess());
+        WorkstationInfoPayload.STREAM_CODEC.encode(buf, new WorkstationInfoPayload(machine.getBlockPos(), facts));
+        helper.assertTrue(WorkstationInfoPayload.STREAM_CODEC.decode(buf).facts().equals(facts),
+                "the facts cross the wire whole");
         helper.succeed();
     }
 
