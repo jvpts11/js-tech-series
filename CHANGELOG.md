@@ -714,6 +714,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- A window is called what its desktop calls the program, on its title bar, on its panel button and on the cards
+  the panel shows: Dolphin, Kate and KCalc on KDE Plasma, Nemo and xed on Cinnamon, the File Manager and the Text
+  Editor on CDE. Their title bars said Files, Editor and Calculator on every desktop. A title a program writes
+  for itself, such as a dialog's, is kept.
 - The Save and Open dialogs of KDE Plasma, GNOME and Cinnamon show the machine's one tree from `/`, with Home and
   Desktop among their places. Only the two period desktops did; every other Linux desktop showed drive letters, a
   Local Disk (C:) and This PC, because the dialog told a Unix desktop by the look of its windows.

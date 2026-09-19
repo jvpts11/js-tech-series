@@ -90,7 +90,7 @@ final class TaskPopup {
     List<String> titles() {
         final List<String> out = new ArrayList<>();
         for (final DesktopWindow w : windows()) {
-            out.add(w.app().title());
+            out.add(desktop.titleOf(w));
         }
         return out;
     }
@@ -320,7 +320,7 @@ final class TaskPopup {
             ProgramIcons.draw(g, card[0] + 2, card[1] + 1, 8, 8, icon, desktop.icons());
             // The title gives up room for the close box, which only appears on the card under the cursor.
             final int titleW = CARD_W - 12 - (hot ? 10 : 2);
-            final String title = desktop.textFont().plainSubstrByWidth(w.app().title(), Texts.smallFits(titleW));
+            final String title = desktop.textFont().plainSubstrByWidth(desktop.titleOf(w), Texts.smallFits(titleW));
             Texts.small(g, desktop.textFont(), title, card[0] + 12, card[1] + 2, skin.text());
             if (hot) {
                 drawCardClose(g, skin, i, lmx, lmy);
@@ -364,7 +364,7 @@ final class TaskPopup {
             }
             ProgramIcons.draw(g, row[0] + 2, row[1] + 1, 9, 9, icon, desktop.icons());
             g.drawString(desktop.textFont(),
-                    desktop.textFont().plainSubstrByWidth(w.app().title(), row[2] - 16),
+                    desktop.textFont().plainSubstrByWidth(desktop.titleOf(w), row[2] - 16),
                     row[0] + 14, row[1] + 2, w.minimized() ? skin.dim() : skin.text(), false);
         }
         final int[] all = closeAllRect();

@@ -449,7 +449,7 @@ public final class DesktopWindow {
          * Where the title sits is part of the skin's identity, not a constant: the GNOME form centres it,
          * and the title is clamped short of the controls so a long one never runs under them.
          */
-        final String title = app.title();
+        final String title = titleOn(desktop);
         final int textLeft = wx + (titleIcon ? 3 + ICON + 3 : 4);
         final int titleFloor = menuAtLeft ? closeX() + BTN + 5 : wx + 4;
         final int titleX = skin.titleCentered()
@@ -600,6 +600,17 @@ public final class DesktopWindow {
             return BUTTON_MINIMIZE;
         }
         return BUTTON_NONE;
+    }
+
+    /**
+     * What the window is called on that desktop, on its title bar and everywhere the panel lists it. A program
+     * that gives only its own generic name goes by the name this desktop gives it: Dolphin on Plasma, the File
+     * Manager on CDE. A title of the program's own making, such as a dialog's or a document's, is kept as it is.
+     */
+    public String titleOn(@Nullable final DesktopEnvironmentDef desktop) {
+        final ProgramSpec program = desktop == null ? null : desktop.programFor(appKey);
+        final String own = app.title();
+        return program != null && !dialog() && own.equals(program.displayName()) ? appKey : own;
     }
 
     public int workspaces() {

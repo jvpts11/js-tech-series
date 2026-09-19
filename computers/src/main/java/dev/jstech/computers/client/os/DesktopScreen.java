@@ -1779,6 +1779,22 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         return out;
     }
 
+    /** What the title bars of the windows on show say. */
+    public List<String> shownWindowTitles() {
+        final List<String> out = new ArrayList<>();
+        for (final DesktopWindow w : windows) {
+            if (!away(w)) {
+                out.add(titleOf(w));
+            }
+        }
+        return out;
+    }
+
+    /** What a window is called on this desktop, on its title bar and wherever the panel lists it. */
+    String titleOf(final DesktopWindow w) {
+        return w.titleOn(chrome);
+    }
+
     /** Screen position of a point on the panel clear of Start and of the task buttons: its empty stretch. */
     public int[] emptyPanelPoint() {
         return new int[] {sx(Math.max(TASK_X, taskStripRight(sw()) - 8)), sy(sh() - TASKBAR_H / 2)};
@@ -3475,7 +3491,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             return entry.windows() + " " + entry.key();
         }
         final List<DesktopWindow> mine = groupWindows(entry.key());
-        return mine.isEmpty() ? entry.key() : mine.get(mine.size() - 1).app().title();
+        return mine.isEmpty() ? entry.key() : titleOf(mine.get(mine.size() - 1));
     }
 
     /** The balloon's box in desktop-local coordinates, or null when none is up. Draw and hit-test share it. */

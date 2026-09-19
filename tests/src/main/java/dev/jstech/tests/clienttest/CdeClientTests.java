@@ -58,6 +58,8 @@ public final class CdeClientTests {
                 .then(SETTLE, () -> press(ctx, CdeFrontPanelLayout.Control.FILES))
                 .thenWaitUntil(() -> desktop(ctx).openWindowLabels().contains("File Manager"), SCREEN_WAIT,
                         "the Files control to open the File Manager")
+                .thenAssert(SETTLE, () -> desktop(ctx).shownWindowTitles().contains("File Manager"),
+                        "its title bar calls it what CDE calls it, not Files")
                 .thenScreenshot(SETTLE, "cde-file-manager")
                 .then(SETTLE, () -> clickAt(ctx,
                         desktop(ctx).frontPanelArrowPoint(CdeFrontPanelLayout.Control.APPLICATIONS)))
