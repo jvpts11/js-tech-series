@@ -213,10 +213,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   desktop is installed. It stops down to "The operating system has halted.", or "Rebooting..." when it is coming
   straight back. The console greets as FreeBSD does: `FreeBSD/vel64 (desk) (ttyv0)`, the login, the release.
 - FreeBSD's boot loader. After the self-test the machine stops at a ruled box headed "Welcome to FreeBSD" with
-  the red sphere beside it, counting down to a boot on every start. It lists only what it can do here: `Boot`,
-  which is what Enter does, `Reboot`, which runs the self-test again, and the firmware settings on the machines
-  whose firmware is reached that way. An entry is chosen by its number, and any other key stops the count. The
-  setting that hides GRUB's menu hides this one too.
+  FreeBSD's mark beside it, the red sphere with its two horns over the name, counting down to a boot on every
+  start. It lists only what it can do here: `Boot`, which is what Enter does, `Reboot`, which runs the self-test
+  again, and the firmware settings on the machines whose firmware is reached that way. An entry is chosen by its
+  number, and any other key stops the count. The setting that hides GRUB's menu hides this one too.
 - `screenfetch` on FreeBSD draws FreeBSD's mark, the sphere with its two horns, in red, and reports the system
   in FreeBSD's words: the architecture as `vel64` or `IA-32`, the packages counted by `pkg`, and a machine with
   no desktop at `ttyv0`.

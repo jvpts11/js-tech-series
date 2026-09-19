@@ -40,8 +40,9 @@ class LoaderMenuLayoutTest {
     }
 
     @Test
-    void mark_standsClearOfTheBoxAndOverTheName() {
-        assertTrue(LoaderMenuLayout.ORB_CX - LoaderMenuLayout.ORB_R > LoaderMenuLayout.BOX_X + LoaderMenuLayout.BOX_W);
-        assertTrue(LoaderMenuLayout.ORB_CY + LoaderMenuLayout.ORB_R < LoaderMenuLayout.BRAND_Y);
+    void lockup_standsClearOfTheBoxAndAboveTheCount() {
+        assertTrue(LoaderMenuLayout.LOCKUP_X > LoaderMenuLayout.BOX_X + LoaderMenuLayout.BOX_W);
+        assertTrue(LoaderMenuLayout.LOCKUP_X + LoaderMenuLayout.LOCKUP_W < LoaderMenuLayout.WIDTH);
+        assertTrue(LoaderMenuLayout.LOCKUP_Y + LoaderMenuLayout.LOCKUP_H < LoaderMenuLayout.FOOT_Y);
     }
 }

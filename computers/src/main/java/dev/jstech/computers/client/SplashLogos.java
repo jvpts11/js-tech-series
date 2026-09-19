@@ -13,7 +13,7 @@ import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * The marks a machine puts on the glass: the maker's, and each Frames edition's.
+ * The marks a machine puts on the glass: the maker's, each Frames edition's, and FreeBSD's.
  *
  * <p>Textures rather than shapes drawn out of fills. A wordmark is a piece of lettering with weights, italics
  * and a face the game's own font does not have, so drawing one out of rectangles and the vanilla font gets the
@@ -66,6 +66,10 @@ public final class SplashLogos {
     public static final ResourceLocation JSC_BADGE =
             ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/splash/jsc_badge.png");
 
+    /** FreeBSD's: the red sphere with its two horns and the name under it, for the loader it counts down at. */
+    public static final ResourceLocation FREEBSD =
+            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/splash/freebsd_lockup.png");
+
     /** The side a mark is shown at, and the side it is drawn at. */
     public static final int MARK = 16;
     private static final int MARK_TEX = MARK * SUPERSAMPLE;
@@ -114,6 +118,17 @@ public final class SplashLogos {
                             final int width, final int height) {
         smooth(logo);
         g.blit(logo, cx - width / 2, top, width, height, 0.0F, 0.0F, TEX_W, TEX_H, TEX_W, TEX_H);
+    }
+
+    /**
+     * Draws a lockup that is not the shape the rest are, with its top left corner at {@code (x, y)}. It is drawn
+     * at four times the size given, like every other picture here.
+     */
+    public static void at(final GuiGraphics g, final ResourceLocation logo, final int x, final int y,
+                          final int width, final int height) {
+        smooth(logo);
+        g.blit(logo, x, y, width, height, 0.0F, 0.0F, width * SUPERSAMPLE, height * SUPERSAMPLE,
+                width * SUPERSAMPLE, height * SUPERSAMPLE);
     }
 
     /**

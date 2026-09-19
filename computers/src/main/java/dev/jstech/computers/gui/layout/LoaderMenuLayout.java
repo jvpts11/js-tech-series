@@ -13,10 +13,10 @@ import dev.jstech.core.gui.layout.GuiLayout;
 
 /**
  * Where FreeBSD's boot loader puts things on the glass: a ruled box of numbered entries on the left with its
- * heading written over the top rule, the mark and the name on the right, and the count along the bottom.
+ * heading written over the top rule, the system's lockup on the right, and the count along the bottom.
  *
- * <p>The box is as tall as the most entries a menu may hold, so it never has to grow, and the mark keeps clear
- * of it whatever the entries say, since an entry is clipped to the box it is in.
+ * <p>The box is as tall as the most entries a menu may hold, so it never has to grow, and the lockup keeps
+ * clear of it whatever the entries say, since an entry is clipped to the box it is in.
  */
 public final class LoaderMenuLayout {
 
@@ -36,13 +36,11 @@ public final class LoaderMenuLayout {
     public static final int ITEMS_Y = 35;
     public static final int ITEM_PITCH = 11;
 
-    /** The mark: a sphere with a light on it, and the name under it at twice the size of everything else. */
-    public static final int ORB_CX = 307;
-    public static final int ORB_CY = 85;
-    public static final int ORB_R = 29;
-    public static final int BRAND_CX = 307;
-    public static final int BRAND_Y = 146;
-    public static final float BRAND_SCALE = 2.0f;
+    /** The lockup beside the box: the sphere with its two horns and the name under it, as one picture. */
+    public static final int LOCKUP_W = 120;
+    public static final int LOCKUP_H = 124;
+    public static final int LOCKUP_X = 247;
+    public static final int LOCKUP_Y = 38;
 
     /** The line that counts down, under the box, and the longest thing that line ever says. */
     public static final int FOOT_X = 15;
@@ -64,14 +62,12 @@ public final class LoaderMenuLayout {
     public static GuiLayout layout(final int entries) {
         final GuiLayout l = new GuiLayout(WIDTH, HEIGHT)
                 .box("box", BOX_X, BOX_Y, BOX_W, BOX_H)
-                .box("orb", ORB_CX - ORB_R, ORB_CY - ORB_R, ORB_R * 2, ORB_R * 2);
+                .box("lockup", LOCKUP_X, LOCKUP_Y, LOCKUP_W, LOCKUP_H);
         l.text("title", TITLE_X, TITLE_Y, "Welcome to FreeBSD".length(), TEXT_SCALE);
         final int rowChars = (int) (itemRoom() / (GuiLayout.GLYPH_WIDTH * TEXT_SCALE));
         for (int i = 0; i < Math.min(entries, BootMenu.MOST_ENTRIES); i++) {
             l.text("item_" + i, ITEMS_X, ITEMS_Y + i * ITEM_PITCH, rowChars, TEXT_SCALE);
         }
-        final int brandWidth = Math.round("FreeBSD".length() * GuiLayout.GLYPH_WIDTH * BRAND_SCALE);
-        l.text("brand", BRAND_CX - brandWidth / 2, BRAND_Y, "FreeBSD".length(), BRAND_SCALE);
         l.text("foot", FOOT_X, FOOT_Y, FOOT_PAUSED.length(), TEXT_SCALE);
         return l;
     }
