@@ -31,12 +31,14 @@ final class CallChecker {
     private final MemberChecker members;
     /** Choosing between the versions of a method that share a name, which is a question about types alone. */
     private final Overloads overloads;
+    private final PrintfChecker printf;
 
     CallChecker(final BodyScope scope, final ExpressionChecker expressions, final MemberChecker members) {
         this.scope = scope;
         this.expressions = expressions;
         this.members = members;
         this.overloads = new Overloads(scope.rules());
+        this.printf = new PrintfChecker(scope, expressions);
     }
 
     ITypeSymbol callType(final IExpr.Call call) {
@@ -47,6 +49,11 @@ final class CallChecker {
                 return this.callMembers(call, name, this.scope.currentType(), found,
                         name.identifier(), BodyScope.Access.IMPLICIT);
             }
+        }
+        // Only once the program has been asked: a printf of its own is its own, and is what was called above.
+        if (call.callee() instanceof IExpr.Name name && PrintfChecker.NAME.equals(name.identifier())
+                && this.scope.scope().lookup(name.identifier()) == null) {
+            return this.printf.check(call);
         }
         if (call.callee() instanceof IExpr.Member member) {
             return this.callThroughMember(call, member);

@@ -36,6 +36,11 @@ public final class SemanticModel {
      * message still points at the string they typed and not at the additions it turned into.
      */
     private final Map<IExpr, IExpr> lowered = new IdentityHashMap<>();
+    /**
+     * What each call of {@code printf} prints: the text of its format and the values that go in its holes, in
+     * the order they are joined, each a {@code String} or the {@link IExpr} of a value.
+     */
+    private final Map<IExpr.Call, List<Object>> formatted = new IdentityHashMap<>();
     private final List<NamedType> declared = new ArrayList<>();
     private final List<DeclaredVariable> variables = new ArrayList<>();
     private String file = "";
@@ -79,6 +84,16 @@ public final class SemanticModel {
     /** The simpler shape an expression is written down as, or null when it is written as it stands. */
     public IExpr loweredOf(final IExpr expression) {
         return this.lowered.get(expression);
+    }
+
+    /** Records what a call of {@code printf} prints, once its format has been read against its values. */
+    public void setFormatted(final IExpr.Call call, final List<Object> pieces) {
+        this.formatted.put(call, List.copyOf(pieces));
+    }
+
+    /** What a call of {@code printf} prints, or null for a call that is not one. */
+    public List<Object> formattedOf(final IExpr.Call call) {
+        return this.formatted.get(call);
     }
 
     /** Records what a name turned out to be. */

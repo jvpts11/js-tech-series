@@ -608,6 +608,14 @@ final class ExpressionWriter {
     private String joined(final IExpr expression) {
         final ITypeSymbol type = this.emitter.model.typeOf(expression);
         this.value(expression, null);
+        /*
+         * A character is kept as its number while a program runs, so joined as it stands it would read as that
+         * number: 'a' in a sentence came out as 97. It is turned into the one-letter text it means first.
+         */
+        if (type == ITypeSymbol.Primitive.CHAR) {
+            this.body.emit(Opcode.CALL, new IOperand.Method(STRING, "FromChar", List.of("char"), STRING));
+            return STRING;
+        }
         final IMemberSymbol.MethodSymbol reads = readsItself(type);
         if (reads == null) {
             return describe(type);

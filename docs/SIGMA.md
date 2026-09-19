@@ -38,6 +38,16 @@ generics, `var`, `lock`, threads, windows, `abstract`, or strings with holes in 
 what to write instead. Its whole library is one namespace, `Standard` (`using Standard.*;`), with
 `Console`, `File`, `Program`, `Math`, `Convert`, `Time`, `Computer` and `Script`, each a handful of members.
 
+It prints the way the languages of those machines printed, with `printf`, the one call written with no type
+in front of it: `printf("%s has %d items\n", name, count);`. The format has to be written out in quotes,
+because it is read while the program is compiled and never while it runs; what is left is the pieces joined
+and handed to the console, the very line adding them up by hand would have given. The holes are `%d` and `%i`
+for a whole number, `%f` for a number, `%s` for text, `%c` for a character and `%%` for the sign itself, an
+`l` before the letter is taken and means nothing, and there are no widths or precisions. A hole with no
+value, a value with no hole, and a value of the wrong kind are all errors when the program is compiled. A
+line break written into the format ends the line; the console keeps whole lines, so a `printf` that does not
+end in one still ends its line. Σ# has `printf` as well, since it reads whatever Σ does.
+
 An old language is no reason to write it the hard way. On a machine that runs them, the editors treat a
 `.sg` file as they treat a `.sgs` one: coloured, checked as it is typed, and completed from what Σ really
 has, so nothing is offered that the compiler would then refuse. Virtual Studio's New Project lists every

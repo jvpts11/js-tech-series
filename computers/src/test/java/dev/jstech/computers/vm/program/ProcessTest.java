@@ -175,6 +175,23 @@ class ProcessTest {
         assertEquals(List.of("hello"), process.console());
     }
 
+    /** A character runs as its number, and joined to text it used to read as that number: 'a' came out as 97. */
+    @Test
+    void run_aCharacterJoinedToTextReadsAsTheCharacter() {
+        final Process process = run("        char c = 'a'; string s = \"<\" + c + \">\"; s += 'b';\n"
+                + "        Console.PrintLine(s);");
+        assertFinished(process);
+        assertEquals(List.of("<a>b"), process.console());
+    }
+
+    /** Text with line breaks in it is as many lines, and a break at the very end only ends the last one. */
+    @Test
+    void run_textWithLineBreaksInItIsPrintedAsThatManyLines() {
+        final Process process = run("        Console.PrintLine(\"one\\ntwo\"); Console.Print(\"three\\n\");");
+        assertFinished(process);
+        assertEquals(List.of("one", "two", "three"), process.console());
+    }
+
     @Test
     void readLine_waitsForALineAndCarriesOnWithIt() {
         final Process process = run("        Console.PrintLine(\"got \" + Console.ReadLine());");

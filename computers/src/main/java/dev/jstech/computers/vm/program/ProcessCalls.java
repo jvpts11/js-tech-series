@@ -84,11 +84,11 @@ final class ProcessCalls {
      */
     private static void console(final Map<MemberId, Binding> bindings) {
         bind(bindings, "Console", "Print", null, (process, target, arguments, line) -> {
-            process.console0().write(String.valueOf(arguments[0]));
+            process.console0().writeLines(String.valueOf(arguments[0]));
             return null;
         }, STRING);
         bind(bindings, "Console", "PrintLine", null, (process, target, arguments, line) -> {
-            process.console0().write(String.valueOf(arguments[0]));
+            process.console0().writeLines(String.valueOf(arguments[0]));
             return null;
         }, STRING);
         bind(bindings, "Console", "Clear", null, (process, target, arguments, line) -> {

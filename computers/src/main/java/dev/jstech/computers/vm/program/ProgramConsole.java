@@ -46,6 +46,24 @@ public final class ProgramConsole {
         this.written++;
     }
 
+    /**
+     * Writes text a program printed, which is as many lines as it has line breaks in it.
+     *
+     * <p>A break at the very end only ends the last line, the way it does at any terminal, so
+     * {@code "done\n"} is the one line {@code done} and {@code "\n"} is an empty line. Without this a break
+     * inside a line was kept as a character no terminal knows how to show.
+     */
+    public void writeLines(final String text) {
+        if (text.indexOf('\n') < 0) {
+            this.write(text);
+            return;
+        }
+        final String whole = text.endsWith("\n") ? text.substring(0, text.length() - 1) : text;
+        for (final String line : whole.split("\n", -1)) {
+            this.write(line);
+        }
+    }
+
     /** Empties what is kept; the count of what was ever written stays, since those lines were written. */
     public void clear() {
         this.lines.clear();

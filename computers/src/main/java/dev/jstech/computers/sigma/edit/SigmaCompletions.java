@@ -93,6 +93,10 @@ public final class SigmaCompletions {
     /** What the line under a namespace says it is. */
     private static final String NAMESPACE = "namespace";
 
+    /** The call both languages have with no type in front of it, listed under the language itself. */
+    private static final Item PRINTF =
+            new Item("printf", "printf(string format, ...) : void", Sort.METHOD, "the language");
+
     private SigmaCompletions() {
     }
 
@@ -321,6 +325,11 @@ public final class SigmaCompletions {
             }
             own.sort(Comparator.comparing(Item::label).thenComparing(Item::signature));
             items.addAll(own);
+        }
+        // The one call written with no type in front of it, unless the program has a printf of its own above.
+        if (!wanted.isEmpty() && PRINTF.label().startsWith(wanted)
+                && items.stream().noneMatch(item -> item.label().equals(PRINTF.label()))) {
+            items.add(PRINTF);
         }
         items.addAll(types(builtIns, model, prefix));
         return items;

@@ -67,6 +67,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   and is built for the oldest machines unless its Platform target says otherwise. A Sigma Sharp project can
   reference a Sigma library. Virtual Studio Code and Exposure build a `.sg` file with `scc`, and `sigma run`
   takes one. An old language is no reason to write it the hard way.
+- `printf`, the way the languages of those machines printed: `printf("%s has %d items\n", name, count);`, the
+  one call written with no type in front of it. The format is read while the program is compiled, so it has to
+  be written out in quotes, and what is left to run is the pieces joined and handed to the console, the very
+  listing adding them up by hand would have given. `%d` and `%i` take a whole number, `%f` a number, `%s` text,
+  `%c` a character, `%%` is the sign itself, and an `l` before the letter is taken and means nothing. A hole
+  with no value, a value with no hole and a value of the wrong kind are compile errors that say which, and so
+  is a width or a precision, which this `printf` does not have. Sigma's project templates print with it, the
+  editors offer it, and Sigma Sharp has it too, since it reads whatever Sigma does. A program with a `printf`
+  of its own calls its own.
 - The two compilers have marks of their own, in the manner of the languages they are named after: a blue
   hexagon with a Σ for `scc` and a purple one with Σ# for `sgsc`, each drawn for every desktop. `sgsc` still
   wore the cannon of the language's old name, and `scc` had no icon at all.
@@ -578,6 +587,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- A character joined to text reads as the character. A program that wrote `"<" + c + ">"` with `c` holding
+  `'a'` printed `<97>`, the number the character runs as.
+- Text a program prints with line breaks in it is printed as that many lines, and a break at the very end only
+  ends the last one. A break used to be kept inside the line as a character no terminal knows how to show.
 - A key pressed at a machine's screen goes to the machine before it goes to any other mod. With a recipe viewer
   installed, Ctrl+O at a terminal editor hid the viewer's overlay and never reached the editor, so a file could
   not be written. A desktop takes a key first only while something on it is there to use it, so the other

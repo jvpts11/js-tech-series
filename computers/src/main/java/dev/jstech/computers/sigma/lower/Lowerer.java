@@ -478,31 +478,53 @@ public final class Lowerer {
      * first addition is text joining text rather than whatever the hole turned out to hold.
      */
     private IExpr lowered(final IExpr expression) {
+        if (expression instanceof IExpr.Call call && this.model.formattedOf(call) != null) {
+            return this.printed(call);
+        }
         if (!(expression instanceof IExpr.Interpolation written)) {
             return null;
         }
-        IExpr sum = null;
-        for (final Object part : written.parts()) {
-            final IExpr piece = part instanceof IExpr inside ? this.reduced(inside) : this.text(part, written);
-            if (sum == null) {
-                sum = part instanceof String ? piece : this.joins(this.text("", written), piece, written);
-            } else {
-                sum = this.joins(sum, piece, written);
-            }
-        }
-        return sum == null ? this.text("", written) : sum;
+        return this.joined(written.parts(), written);
     }
 
-    /** A piece of text, typed as it is made. */
-    private IExpr text(final Object value, final IExpr.Interpolation written) {
-        final IExpr made = new IExpr.Literal(TokenKind.STRING_LITERAL, value, written.line(), written.column());
+    /**
+     * A call of printf as what it comes down to: its pieces joined, handed to the console's own call.
+     *
+     * <p>The format was read when the call was checked, so nothing of it is left to read while the program
+     * runs, and the line written down is the one joining the pieces by hand would have given.
+     */
+    private IExpr printed(final IExpr.Call call) {
+        final IExpr made = new IExpr.Call(call.callee(), List.of(this.joined(this.model.formattedOf(call), call)),
+                call.line(), call.column());
+        this.model.setType(made, ITypeSymbol.Primitive.VOID);
+        this.model.setCall(made, this.model.callOf(call));
+        return made;
+    }
+
+    /** Pieces of text and values added together, left to right, each value already reduced. */
+    private IExpr joined(final List<Object> parts, final IExpr at) {
+        IExpr sum = null;
+        for (final Object part : parts) {
+            final IExpr piece = part instanceof IExpr inside ? this.reduced(inside) : this.text(part, at);
+            if (sum == null) {
+                sum = part instanceof String ? piece : this.joins(this.text("", at), piece, at);
+            } else {
+                sum = this.joins(sum, piece, at);
+            }
+        }
+        return sum == null ? this.text("", at) : sum;
+    }
+
+    /** A piece of text, typed as it is made, placed where the expression it came of was written. */
+    private IExpr text(final Object value, final IExpr at) {
+        final IExpr made = new IExpr.Literal(TokenKind.STRING_LITERAL, value, at.line(), at.column());
         this.model.setType(made, this.builtIns.stringType());
         return made;
     }
 
     /** Two pieces joined, typed as it is made: joining anything to text gives text. */
-    private IExpr joins(final IExpr left, final IExpr right, final IExpr.Interpolation written) {
-        final IExpr made = new IExpr.Binary(Operator.ADD, left, right, written.line(), written.column());
+    private IExpr joins(final IExpr left, final IExpr right, final IExpr at) {
+        final IExpr made = new IExpr.Binary(Operator.ADD, left, right, at.line(), at.column());
         this.model.setType(made, this.builtIns.stringType());
         return made;
     }

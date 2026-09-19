@@ -96,6 +96,11 @@ public enum SigmaError {
     CANNOT_CREATE_ABSTRACT("S3050", "'%s' is abstract, so it cannot be made with new"),
     MODIFIER_NOT_ALLOWED("S3051", "'%s' cannot be written with %s"),
     NOT_IN_THE_SUBSET("S3052", "Sigma has no %s; %s"),
+    PRINTF_FORMAT_NOT_WRITTEN_OUT("S3053", "printf's format has to be written out where it is used, in quotes, "
+            + "so its holes can be read"),
+    PRINTF_BAD_FORMAT("S3054", "printf: %s"),
+    PRINTF_WRONG_COUNT("S3055", "printf: the format has %s and the call gives %s"),
+    PRINTF_WRONG_VALUE("S3056", "printf: '%%%s' takes %s, and this is %s"),
 
     // A4001 to A4010 are the listing's own problems, reported by reading one back (ListingError).
     NOT_YET_BUILT("S4011", "%s is not built yet"),

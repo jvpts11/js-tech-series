@@ -25,6 +25,9 @@ final class TextFunctions {
         // Joining is written by the compiler for "+" on text, with whatever the two sides are.
         registry.onType(TEXT, "Concat", TEXT, (context, target, arguments, line) ->
                 context.text(String.valueOf(arguments[0]) + String.valueOf(arguments[1]), line), "T", "U");
+        // Written by the compiler where a character is joined to text, since a character runs as its number.
+        registry.onType(TEXT, "FromChar", TEXT, (context, target, arguments, line) ->
+                context.text(String.valueOf((char) Numbers.toInt(arguments[0])), line), "char");
         registry.onType(TEXT, "Format", TEXT, TextFunctions::format, TEXT, "object");
         registry.onType(TEXT, "Format", TEXT, TextFunctions::format, TEXT, "object", "object");
         registry.onObject(TEXT, "Substring", TEXT, TextFunctions::substring, "int");

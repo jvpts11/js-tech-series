@@ -200,7 +200,8 @@ public enum ProjectTemplate {
     /*
      * The same shapes in the smaller language. Its whole library is one namespace, and a program that stays up
      * stands on a class there rather than answering an interface, since the language has none; it fills in only
-     * the calls it uses and says override on each.
+     * the calls it uses and says override on each. It prints the way the languages of those machines printed,
+     * with printf and a line break written into the format.
      */
     private String sigmaSource(final String projectName) {
         return switch (this) {
@@ -211,7 +212,7 @@ public enum ProjectTemplate {
 
                     class %s {
                         static void Main() {
-                            Console.PrintLine("Hello from %s");
+                            printf("Hello from %s\\n");
                         }
                     }
                     """.formatted(projectName, projectName, projectName);
@@ -222,7 +223,7 @@ public enum ProjectTemplate {
 
                     class %s : Script {
                         public override void OnInit() {
-                            Console.PrintLine("%s is up");
+                            printf("%s is up\\n");
                         }
 
                         public override void OnTick() {
