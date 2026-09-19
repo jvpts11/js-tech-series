@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.machine.FileService;
 import dev.jstech.computers.machine.InstallService;
@@ -26,8 +27,11 @@ import dev.jstech.computers.machine.PackageService;
 import dev.jstech.computers.machine.ProgramService;
 import dev.jstech.computers.machine.RemoteComputerService;
 import dev.jstech.computers.operation.MoveLabels;
+import dev.jstech.computers.operation.payload.files.FileAccess;
 import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
+import dev.jstech.computers.os.FilesystemKind;
+import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.KernelNames;
@@ -51,19 +55,19 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.peripheral.IPeripheralOwnerSupport;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -399,6 +403,34 @@ public final class ServerCliComputer implements ICliComputer {
     @Override
     public UnixTree tree() {
         return UnixTree.of(platform());
+    }
+
+    @Override
+    public int osEdition() {
+        return hostBlock instanceof IOsHost computer ? OsRegistry.osVersionRank(computer.installedOsId()) : 0;
+    }
+
+    @Override
+    public boolean hostIs(final HostScope scope) {
+        return switch (scope) {
+            case ANY -> true;
+            case MAINFRAME -> hostBlock instanceof MainframeBlockEntity;
+            case CRAFTING_COMPUTER -> hostBlock instanceof CraftingComputerBlockEntity;
+            /* A rack answers as the server mounted in it, which is what a server-only command belongs to. */
+            case SERVER -> hostBlock instanceof ServerRackBlockEntity;
+            case CLUSTER_MANAGEMENT_COMPUTER -> hostBlock instanceof ClusterManagementComputerBlockEntity;
+        };
+    }
+
+    @Override
+    public boolean hasFiles() {
+        return hostBlock instanceof IOsHost computer
+                && FileAccess.filesystemKindOf(computer) != FilesystemKind.NONE;
+    }
+
+    @Override
+    public boolean hasPorts() {
+        return hostBlock instanceof IPeripheralOwner owner && owner.maxEndpoints() > 0;
     }
 
     @Override

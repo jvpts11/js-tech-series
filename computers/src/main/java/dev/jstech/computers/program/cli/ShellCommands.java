@@ -20,6 +20,10 @@ final class ShellCommands {
     }
 
     static final class Help implements ICliCommand {
+        @Override public CommandScope scope() {
+            return CommandScope.everywhere();
+        }
+
         @Override public String name() {
             return "help";
         }
@@ -73,6 +77,11 @@ final class ShellCommands {
     }
 
     static final class Clear implements ICliCommand, CliShell.IClearMarker {
+        /** The DOS family's own word for it; the Unix systems clear with {@code clear}. */
+        @Override public CommandScope scope() {
+            return CommandScope.on(CommandScope.DOS_SYSTEMS);
+        }
+
         @Override public String name() {
             return "cls";
         }
@@ -87,6 +96,10 @@ final class ShellCommands {
     }
 
     static final class Echo implements ICliCommand {
+        @Override public CommandScope scope() {
+            return CommandScope.everywhere();
+        }
+
         @Override public String name() {
             return "echo";
         }
@@ -105,6 +118,11 @@ final class ShellCommands {
     }
 
     static final class Version implements ICliCommand {
+        /** {@code VER} is the DOS family's; a Unix system says what it is with {@code uname}. */
+        @Override public CommandScope scope() {
+            return CommandScope.on(CommandScope.DOS_SYSTEMS);
+        }
+
         @Override public String name() {
             return "version";
         }
@@ -123,6 +141,10 @@ final class ShellCommands {
     }
 
     static final class Whoami implements ICliCommand {
+        @Override public CommandScope scope() {
+            return CommandScope.everywhere();
+        }
+
         @Override public String name() {
             return "whoami";
         }
@@ -141,6 +163,10 @@ final class ShellCommands {
 
     /** Leaves a remote shell. With no session open there is nothing to leave but the window. */
     static final class Exit implements ICliCommand {
+        @Override public CommandScope scope() {
+            return CommandScope.everywhere();
+        }
+
         @Override public String name() {
             return "exit";
         }

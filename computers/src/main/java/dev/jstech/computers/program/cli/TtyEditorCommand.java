@@ -49,9 +49,18 @@ public final class TtyEditorCommand implements ICliCommand, CliShell.IHandOver {
         return "<file>";
     }
 
+    /** An editor is a program, and it is where a file can be edited at all, so a system with no files has none. */
+    @Override
+    public CommandScope scope() {
+        return CommandScope.everywhere().needing(CommandScope.Need.FILES);
+    }
+
     /** Only where it was installed: a machine that never got the editor does not offer the verb. */
     @Override
     public boolean available(final ICliComputer computer) {
+        if (!ICliCommand.super.available(computer)) {
+            return false;
+        }
         /*
          * The machine lists a program by its full id, jsc:vim, and by the name it is typed as; the
          * editor is known here by that name, so both are looked at rather than only the one that

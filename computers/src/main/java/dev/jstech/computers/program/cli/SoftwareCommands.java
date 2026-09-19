@@ -8,6 +8,8 @@
 package dev.jstech.computers.program.cli;
 
 
+import dev.jstech.computers.os.HostScope;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.Programs;
 import java.util.List;
@@ -21,6 +23,10 @@ import java.util.function.Function;
  */
 final class SoftwareCommands {
 
+    /** What a network's own services are worked from: the Mainframe that orchestrates it, on any system. */
+    private static final CommandScope MAINFRAME_SERVICE = CommandScope.everywhere()
+            .onHost(HostScope.MAINFRAME).needing(CommandScope.Need.NETWORK);
+
     private SoftwareCommands() {
     }
 
@@ -31,6 +37,11 @@ final class SoftwareCommands {
      * this is the Frames-side equivalent, and it speaks to the same Mirror.
      */
     static final class Pckmgr implements ICliCommand {
+        /** The Frames family's package manager, over the network's Mirror. MC-DOS installs from media alone. */
+        @Override public CommandScope scope() {
+            return CommandScope.on(Platform.MC_NET, Platform.FRAMES).needing(CommandScope.Need.NETWORK);
+        }
+
         @Override public String name() {
             return "pckmgr";
         }
@@ -145,6 +156,10 @@ final class SoftwareCommands {
     }
 
     static final class ProgramsList implements ICliCommand {
+        @Override public CommandScope scope() {
+            return CommandScope.everywhere();
+        }
+
         @Override public String name() {
             return "programs";
         }
@@ -170,6 +185,10 @@ final class SoftwareCommands {
     }
 
     static final class Install implements ICliCommand {
+        @Override public CommandScope scope() {
+            return CommandScope.everywhere();
+        }
+
         @Override public String name() {
             return "install";
         }
@@ -193,6 +212,10 @@ final class SoftwareCommands {
     }
 
     static final class Uninstall implements ICliCommand {
+        @Override public CommandScope scope() {
+            return CommandScope.everywhere();
+        }
+
         @Override public String name() {
             return "uninstall";
         }
@@ -216,6 +239,10 @@ final class SoftwareCommands {
     }
 
     static final class Store implements ICliCommand {
+        @Override public CommandScope scope() {
+            return CommandScope.everywhere();
+        }
+
         @Override public String name() {
             return "store";
         }
@@ -245,6 +272,11 @@ final class SoftwareCommands {
     }
 
     static final class IqlEngineCommand implements ICliCommand {
+        /** A service of the network, run from the machine that orchestrates it. */
+        @Override public CommandScope scope() {
+            return MAINFRAME_SERVICE;
+        }
+
         @Override public String name() {
             return "iqlengine";
         }
@@ -262,7 +294,8 @@ final class SoftwareCommands {
         }
 
         @Override public boolean available(final ICliComputer computer) {
-            return computer.iqlEngineInstalled(); // shown only after 'install iqlengine'
+            // The scope says where, and the engine itself has to be installed on top of that.
+            return ICliCommand.super.available(computer) && computer.iqlEngineInstalled();
         }
 
         @Override public void run(final CliContext ctx) {
@@ -272,6 +305,10 @@ final class SoftwareCommands {
     }
 
     static final class Services implements ICliCommand {
+        @Override public CommandScope scope() {
+            return MAINFRAME_SERVICE;
+        }
+
         @Override public String name() {
             return "services";
         }
@@ -281,7 +318,7 @@ final class SoftwareCommands {
         }
 
         @Override public boolean available(final ICliComputer computer) {
-            return computer.iqlEngineInstalled();
+            return ICliCommand.super.available(computer) && computer.iqlEngineInstalled();
         }
 
         @Override public void run(final CliContext ctx) {
@@ -297,12 +334,18 @@ final class SoftwareCommands {
     }
 
     static final class Maint implements ICliCommand {
+
         private final String verb;
         private final String action;
 
         Maint(final String verb, final String action) {
             this.verb = verb;
             this.action = action;
+        }
+
+        /** The storage index is the Mainframe's, so its upkeep is offered nowhere else, whatever the system. */
+        @Override public CommandScope scope() {
+            return MAINFRAME_SERVICE;
         }
 
         @Override public String name() {
@@ -329,6 +372,10 @@ final class SoftwareCommands {
      */
     /** Installs or reports the Mirror, the Mainframe's package repository the Linux package managers use. */
     static final class MirrorCommand implements ICliCommand {
+        @Override public CommandScope scope() {
+            return MAINFRAME_SERVICE;
+        }
+
         @Override public String name() { return "mirror"; }
 
         @Override public String summary() { return "install or check the Mirror package service on the Mainframe"; }

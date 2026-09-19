@@ -121,8 +121,8 @@ public final class SigmaCommands {
         }
 
         @Override
-        public boolean available(final ICliComputer computer) {
-            return installed(computer, this.packageId);
+        public CommandScope scope() {
+            return CommandScope.everywhere().fromPackage(this.packageId);
         }
 
         @Override
@@ -283,8 +283,8 @@ public final class SigmaCommands {
         }
 
         @Override
-        public boolean available(final ICliComputer computer) {
-            return installed(computer, this.runtime.packageId());
+        public CommandScope scope() {
+            return CommandScope.everywhere().fromPackage(this.runtime.packageId());
         }
 
         @Override
@@ -404,8 +404,8 @@ public final class SigmaCommands {
         }
 
         @Override
-        public boolean available(final ICliComputer computer) {
-            return installed(computer, RUNTIME);
+        public CommandScope scope() {
+            return CommandScope.everywhere().fromPackage(RUNTIME);
         }
 
         @Override

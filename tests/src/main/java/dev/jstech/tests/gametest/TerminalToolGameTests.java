@@ -21,6 +21,7 @@ import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliContext;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
+import dev.jstech.computers.program.cli.CommandScope;
 import dev.jstech.computers.program.cli.ICliCommand;
 import dev.jstech.computers.program.tty.TtyScript;
 import dev.jstech.computers.program.tty.TtyScriptProcess;
@@ -224,6 +225,11 @@ public final class TerminalToolGameTests {
     private static final class FetchForTests implements ICliCommand {
 
         private static final String NAME = "jstests-fetch";
+
+        @Override
+        public CommandScope scope() {
+            return CommandScope.everywhere();
+        }
 
         @Override
         public String name() {

@@ -61,10 +61,16 @@ public final class LiveInstallCommands {
 
     /** One install verb; the state machine decides what it does at this point of the sequence. */
     static class LiveVerb implements ICliCommand {
+
         private final String verb;
 
         LiveVerb(final String verb) {
             this.verb = verb;
+        }
+
+        /** The live installer is a shell of its own, swapped in whole, so its words exist wherever it is booted. */
+        @Override public CommandScope scope() {
+            return CommandScope.everywhere();
         }
 
         @Override public String name() { return verb; }
@@ -89,6 +95,10 @@ public final class LiveInstallCommands {
     }
 
     static final class Clear implements ICliCommand, CliShell.IClearMarker {
+        @Override public CommandScope scope() {
+            return CommandScope.everywhere();
+        }
+
         @Override public String name() { return "clear"; }
 
         @Override public String summary() { return "clear the terminal"; }

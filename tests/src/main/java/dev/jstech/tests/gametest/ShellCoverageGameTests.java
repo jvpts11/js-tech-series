@@ -15,6 +15,7 @@ import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.lang.reflect.Method;
@@ -139,14 +140,18 @@ public final class ShellCoverageGameTests {
                     helper.assertTrue(fleet.mainframe().installIqlEngine(), "the IQL Engine installs on the Mainframe");
                     fleet.mainframe().installMirror();
 
-                    final List<String> status = shell(helper, fleet.lab(), "iqlengine status");
+                    final List<String> elsewhere = shell(helper, fleet.lab(), "iqlengine status");
+                    helper.assertTrue(says(elsewhere, "command not found"),
+                            "a service of the network is worked from the machine that runs it; got " + elsewhere);
+
+                    final List<String> status = shell(helper, fleet.mainframe(), "iqlengine status");
                     helper.assertTrue(says(status, "IQL Engine: running"), "the engine runs; got " + status);
-                    final List<String> stopped = shell(helper, fleet.lab(), "iqlengine stop");
+                    final List<String> stopped = shell(helper, fleet.mainframe(), "iqlengine stop");
                     helper.assertTrue(says(stopped, "IQL Engine stopped"), "it stops; got " + stopped);
-                    final List<String> started = shell(helper, fleet.lab(), "iqlengine start");
+                    final List<String> started = shell(helper, fleet.mainframe(), "iqlengine start");
                     helper.assertTrue(says(started, "IQL Engine started"), "and starts again; got " + started);
 
-                    final List<String> services = shell(helper, fleet.lab(), "services");
+                    final List<String> services = shell(helper, fleet.mainframe(), "services");
                     helper.assertTrue(says(services, "IQL Engine") && says(services, "running")
                                     && says(services, "Mirror") && says(services, "serving"),
                             "services lists both with their state; got " + services);
@@ -182,7 +187,7 @@ public final class ShellCoverageGameTests {
                 .thenSucceed();
     }
 
-    private static List<String> shell(final GameTestHelper helper, final PersonalComputerBlockEntity on,
+    private static List<String> shell(final GameTestHelper helper, final IComputerTerminalHost on,
                                       final String command) {
         final ServerCliComputer computer = new ServerCliComputer(on, helper.getLevel());
         final List<String> out = new ArrayList<>();

@@ -27,10 +27,17 @@ final class PackageCommands {
      * OS ships is available, so {@code apt} does not exist on Arch and {@code pacman} does not exist on Ubuntu.
      */
     static final class PackageManagerCommand implements ICliCommand {
+
         private final PackageManagerKind kind;
 
         PackageManagerCommand(final PackageManagerKind kind) {
             this.kind = kind;
+        }
+
+        /** Each manager is its own system's, and it reaches the Mirror over the network. */
+        @Override public CommandScope scope() {
+            return CommandScope.on(CommandScope.UNIX_SYSTEMS).forManager(this.kind)
+                    .needing(CommandScope.Need.NETWORK);
         }
 
         @Override public String name() { return kind.command(); }

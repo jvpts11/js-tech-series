@@ -356,6 +356,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   system it runs on: a Linux says `Linux` and `x86_64` or `i686`, FreeBSD says `FreeBSD` and `vel64` or `IA-32`.
 
 ### Changed
+- A prompt now offers only what the computer in front of you can actually do. Every command says which systems
+  have it and what the machine must have for it to be there: a filesystem, a network under it, ports for
+  peripherals, a package installed, a Mainframe or a Cluster Management Computer. So MC-NET, which keeps no
+  files, no longer lists `dir` and `copy`; a machine off the network no longer offers to search the storage or
+  hold items; `cls` and `ver` belong to the DOS-speaking systems and are gone from the Unix ones; the package
+  manager of the Frames family is offered where that family is; and the upkeep of the storage index, the IQL
+  Engine, the Mirror and the network's services are worked from the Mainframe that runs them, not from any
+  computer that can reach it. Everything that shows commands to a player reads that same answer, so a machine
+  never names something it cannot run.
 - A terminal is now a grid. Every character sits in a cell of its own, all the cells the same width, on the
   prompt that fills a monitor and in the terminal window on a desktop alike. The game's letters are as wide as
   they need to be, so a column of figures never lined up under another and a bar made of one character came

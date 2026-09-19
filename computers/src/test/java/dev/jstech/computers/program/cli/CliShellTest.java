@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.HostScope;
+import dev.jstech.computers.os.Platform;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -112,8 +114,10 @@ class CliShellTest {
     }
 
     @Test
-    void run_operationQueryOffNetworkErrors() {
+    void run_operationOffNetworkIsNotOfferedAtAll() {
         computer.onNetwork = false;
+        assertFalse(shell.find("operation").available(computer),
+                "a machine with no network under it has nothing to ask the network for");
         assertTrue(anyStyle("operation query items", CliStyle.ERROR));
     }
 
@@ -159,6 +163,9 @@ class CliShellTest {
     /**
      * An in-memory computer holding only the parts these commands reach: what it is, the network it reads, the work it
      * is asked for and the programs it has. It records the last effecting call so tests can assert on it.
+     *
+     * <p>A Mainframe running MC-NET, because that is the machine every command under test is offered on: the DOS
+     * verbs belong to that family of systems, and the upkeep of the storage index belongs to the machine that keeps it.
      */
     private static final class FakeComputer implements ICliComputer {
         boolean running;
@@ -168,11 +175,19 @@ class CliShellTest {
         final List<StoredItem> stock = new ArrayList<>();
 
         @Override public String name() {
-            return "TEST-PC";
+            return "TEST-MF";
         }
 
         @Override public String type() {
-            return "Personal Computer";
+            return "Mainframe";
+        }
+
+        @Override public Platform platform() {
+            return Platform.MC_NET;
+        }
+
+        @Override public boolean hostIs(final HostScope scope) {
+            return scope == HostScope.ANY || scope == HostScope.MAINFRAME;
         }
 
         @Override public String nodeId() {

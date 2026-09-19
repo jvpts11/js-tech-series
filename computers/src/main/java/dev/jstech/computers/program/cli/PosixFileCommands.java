@@ -18,10 +18,18 @@ import java.util.Locale;
  */
 final class PosixFileCommands {
 
+    /** The Unix systems' words for files: the distributions, UNIX and FreeBSD, which all keep files. */
+    private static final CommandScope POSIX_FILES =
+            CommandScope.on(CommandScope.UNIX_SYSTEMS).needing(CommandScope.Need.FILES);
+
     private PosixFileCommands() {
     }
 
     static final class Ls implements ICliCommand {
+        @Override public CommandScope scope() {
+            return POSIX_FILES;
+        }
+
         @Override public String name() { return "ls"; }
 
         @Override public String summary() { return "list directory contents"; }
@@ -68,6 +76,10 @@ final class PosixFileCommands {
     }
 
     static final class Pwd implements ICliCommand {
+        @Override public CommandScope scope() {
+            return POSIX_FILES;
+        }
+
         @Override public String name() { return "pwd"; }
 
         @Override public String summary() { return "print the current directory"; }
@@ -78,6 +90,10 @@ final class PosixFileCommands {
     }
 
     static final class Cd implements ICliCommand {
+        @Override public CommandScope scope() {
+            return POSIX_FILES;
+        }
+
         @Override public String name() { return "cd"; }
 
         @Override public String summary() { return "change the current directory (home when no argument)"; }
@@ -94,6 +110,10 @@ final class PosixFileCommands {
     }
 
     static final class Cat implements ICliCommand {
+        @Override public CommandScope scope() {
+            return POSIX_FILES;
+        }
+
         @Override public String name() { return "cat"; }
 
         @Override public String summary() { return "print the content of a file"; }
@@ -117,6 +137,10 @@ final class PosixFileCommands {
     }
 
     static final class Rm implements ICliCommand {
+        @Override public CommandScope scope() {
+            return POSIX_FILES;
+        }
+
         @Override public String name() { return "rm"; }
 
         @Override public String summary() { return "remove a file"; }
@@ -136,6 +160,10 @@ final class PosixFileCommands {
     }
 
     static final class Mkdir implements ICliCommand {
+        @Override public CommandScope scope() {
+            return POSIX_FILES;
+        }
+
         @Override public String name() { return "mkdir"; }
 
         @Override public String summary() { return "create a directory"; }
@@ -155,6 +183,10 @@ final class PosixFileCommands {
     }
 
     static final class Rmdir implements ICliCommand {
+        @Override public CommandScope scope() {
+            return POSIX_FILES;
+        }
+
         @Override public String name() { return "rmdir"; }
 
         @Override public String summary() { return "remove an empty directory"; }
@@ -174,6 +206,10 @@ final class PosixFileCommands {
     }
 
     static final class Cp implements ICliCommand {
+        @Override public CommandScope scope() {
+            return POSIX_FILES;
+        }
+
         @Override public String name() { return "cp"; }
 
         @Override public String summary() { return "copy a file to another location"; }
@@ -193,6 +229,10 @@ final class PosixFileCommands {
     }
 
     static final class Mv implements ICliCommand {
+        @Override public CommandScope scope() {
+            return POSIX_FILES;
+        }
+
         @Override public String name() { return "mv"; }
 
         @Override public String summary() { return "move a file into a directory, or rename it"; }
@@ -217,6 +257,10 @@ final class PosixFileCommands {
     }
 
     static final class Touch implements ICliCommand {
+        @Override public CommandScope scope() {
+            return POSIX_FILES;
+        }
+
         @Override public String name() { return "touch"; }
 
         @Override public String summary() { return "create an empty file"; }
@@ -236,6 +280,10 @@ final class PosixFileCommands {
     }
 
     static final class Write implements ICliCommand {
+        @Override public CommandScope scope() {
+            return POSIX_FILES;
+        }
+
         @Override public String name() { return "write"; }
 
         @Override public String summary() { return "create or overwrite a file with the given text"; }
@@ -257,6 +305,10 @@ final class PosixFileCommands {
     }
 
     static final class Run implements ICliCommand {
+        @Override public CommandScope scope() {
+            return POSIX_FILES;
+        }
+
         @Override public String name() { return "run"; }
 
         @Override public String summary() { return "execute an .iql script"; }
@@ -286,6 +338,11 @@ final class PosixFileCommands {
     }
 
     static final class Clear implements ICliCommand, CliShell.IClearMarker {
+        /** Clearing the glass needs no files, so it is the one here that asks nothing of the disk. */
+        @Override public CommandScope scope() {
+            return CommandScope.on(CommandScope.UNIX_SYSTEMS);
+        }
+
         @Override public String name() { return "clear"; }
 
         @Override public String summary() { return "clear the terminal"; }
@@ -296,6 +353,11 @@ final class PosixFileCommands {
     }
 
     static final class Man implements ICliCommand {
+        /** The manual is about commands, not about files, so a system with no disk still has it. */
+        @Override public CommandScope scope() {
+            return CommandScope.on(CommandScope.UNIX_SYSTEMS);
+        }
+
         @Override public String name() { return "man"; }
 
         @Override public String summary() { return "show the manual entry for a command"; }
@@ -323,6 +385,10 @@ final class PosixFileCommands {
     }
 
     static final class Df implements ICliCommand {
+        @Override public CommandScope scope() {
+            return POSIX_FILES;
+        }
+
         @Override public String name() { return "df"; }
 
         @Override public String summary() { return "report filesystem space usage"; }
@@ -359,6 +425,10 @@ final class PosixFileCommands {
     }
 
     static final class Mkfs implements ICliCommand {
+        @Override public CommandScope scope() {
+            return POSIX_FILES;
+        }
+
         @Override public String name() { return "mkfs.ext4"; }
 
         @Override public List<String> aliases() { return List.of("mkfs"); }

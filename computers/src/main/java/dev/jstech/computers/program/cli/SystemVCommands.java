@@ -40,8 +40,8 @@ public final class SystemVCommands {
 
         @Override public String usage() { return "[package]"; }
 
-        @Override public boolean available(final ICliComputer computer) {
-            return computer.platform() == Platform.UNIX;
+        @Override public CommandScope scope() {
+            return CommandScope.on(Platform.UNIX);
         }
 
         @Override public void run(final CliContext ctx) {

@@ -29,6 +29,10 @@ final class PosixSystemCommands {
         /** Every letter the tool takes: all of it, the kernel, the machine's name, the release, the architecture. */
         private static final String LETTERS = "asnrm";
 
+        @Override public CommandScope scope() {
+            return CommandScope.on(CommandScope.UNIX_SYSTEMS);
+        }
+
         @Override public String name() { return "uname"; }
 
         @Override public String summary() { return "print system information"; }
@@ -80,6 +84,10 @@ final class PosixSystemCommands {
     }
 
     static final class Hostname implements ICliCommand {
+        @Override public CommandScope scope() {
+            return CommandScope.on(CommandScope.UNIX_SYSTEMS);
+        }
+
         @Override public String name() { return "hostname"; }
 
         @Override public String summary() { return "print this computer's host name"; }
@@ -90,6 +98,11 @@ final class PosixSystemCommands {
     }
 
     static final class Screenfetch implements ICliCommand {
+        /** A package a player installs, on the systems whose art it draws. */
+        @Override public CommandScope scope() {
+            return CommandScope.on(CommandScope.UNIX_SYSTEMS).fromPackage("jsc:screenfetch");
+        }
+
 
         // One small ASCII mark per distribution, printed beside the system readout.
         private static final Map<String, String[]> LOGOS = Map.of(

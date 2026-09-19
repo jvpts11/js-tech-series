@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.UnixTree;
@@ -77,6 +78,29 @@ public interface ICliMachine {
     /** Where the installed system keeps the home and mounts the other drives, which is its family's habit. */
     default UnixTree tree() {
         return UnixTree.of(platform());
+    }
+
+    /**
+     * Where the installed system stands in its family's order, counting from one, so a command can belong to one
+     * edition onwards; nought when the system puts itself nowhere in an order.
+     */
+    default int osEdition() {
+        return 0;
+    }
+
+    /** Whether this computer is of the kind a command asks for (any computer, a Mainframe, a Cluster Manager). */
+    default boolean hostIs(final HostScope scope) {
+        return scope == HostScope.ANY;
+    }
+
+    /** Whether the system keeps files at all, which a network system such as MC-NET does not. */
+    default boolean hasFiles() {
+        return false;
+    }
+
+    /** Whether the computer has ports for peripherals. */
+    default boolean hasPorts() {
+        return false;
     }
 
     /** How wide the processor's word is, which is what a system names its architecture after. */

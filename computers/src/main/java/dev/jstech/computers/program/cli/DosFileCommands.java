@@ -18,10 +18,18 @@ import java.util.Locale;
  */
 final class DosFileCommands {
 
+    /** The DOS family's words for files, on a system that keeps files at all: MC-NET keeps none. */
+    private static final CommandScope DOS_FILES =
+            CommandScope.on(CommandScope.DOS_SYSTEMS).needing(CommandScope.Need.FILES);
+
     private DosFileCommands() {
     }
 
     static final class Format implements ICliCommand {
+        @Override public CommandScope scope() {
+            return DOS_FILES;
+        }
+
         @Override public String name() {
             return "format";
         }
@@ -60,6 +68,10 @@ final class DosFileCommands {
     }
 
     static final class Dir implements ICliCommand {
+        @Override public CommandScope scope() {
+            return DOS_FILES;
+        }
+
         @Override public String name() { return "dir"; }
 
         @Override public String summary() { return "list the contents of a directory"; }
@@ -107,6 +119,10 @@ final class DosFileCommands {
      * Refuses to open {@code .dat} (read-only storage projections).
      */
     static final class Type implements ICliCommand {
+        @Override public CommandScope scope() {
+            return DOS_FILES;
+        }
+
         @Override public String name() { return "type"; }
 
         @Override public String summary() { return "print the content of a file"; }
@@ -140,6 +156,10 @@ final class DosFileCommands {
      * use the Network Interactor to move items out of disk storage.
      */
     static final class Del implements ICliCommand {
+        @Override public CommandScope scope() {
+            return DOS_FILES;
+        }
+
         @Override public String name() { return "del"; }
 
         @Override public List<String> aliases() { return List.of("erase"); }
@@ -167,6 +187,10 @@ final class DosFileCommands {
      * from the extension; non-editable types ({@code .dat}, {@code .log}) are refused.
      */
     static final class Write implements ICliCommand {
+        @Override public CommandScope scope() {
+            return DOS_FILES;
+        }
+
         @Override public String name() { return "write"; }
 
         @Override public List<String> aliases() { return List.of("save"); }
@@ -194,6 +218,10 @@ final class DosFileCommands {
      * through the same dispatch path as the {@code operation} command.
      */
     static final class Run implements ICliCommand {
+        @Override public CommandScope scope() {
+            return DOS_FILES;
+        }
+
         @Override public String name() { return "run"; }
 
         @Override public String summary() { return "execute an .iql script from the system disk"; }
@@ -225,6 +253,10 @@ final class DosFileCommands {
      * behaviour); with a path it changes to that directory relative to the current one.
      */
     static final class Cd implements ICliCommand {
+        @Override public CommandScope scope() {
+            return DOS_FILES;
+        }
+
         @Override public String name() { return "cd"; }
 
         @Override public List<String> aliases() { return List.of("chdir"); }
@@ -247,6 +279,10 @@ final class DosFileCommands {
 
     /** Creates a directory on the current drive. */
     static final class Mkdir implements ICliCommand {
+        @Override public CommandScope scope() {
+            return DOS_FILES;
+        }
+
         @Override public String name() { return "mkdir"; }
 
         @Override public List<String> aliases() { return List.of("md"); }
@@ -269,6 +305,10 @@ final class DosFileCommands {
 
     /** Removes an empty directory from the current drive. */
     static final class Rmdir implements ICliCommand {
+        @Override public CommandScope scope() {
+            return DOS_FILES;
+        }
+
         @Override public String name() { return "rmdir"; }
 
         @Override public List<String> aliases() { return List.of("rd"); }
@@ -291,6 +331,10 @@ final class DosFileCommands {
 
     /** Copies a file (or directory subtree) to a new location. */
     static final class Copy implements ICliCommand {
+        @Override public CommandScope scope() {
+            return DOS_FILES;
+        }
+
         @Override public String name() { return "copy"; }
 
         @Override public String summary() { return "copy a file to another location"; }
@@ -313,6 +357,10 @@ final class DosFileCommands {
 
     /** Moves a file (or directory subtree) into another directory. */
     static final class Move implements ICliCommand {
+        @Override public CommandScope scope() {
+            return DOS_FILES;
+        }
+
         @Override public String name() { return "move"; }
 
         @Override public String summary() { return "move a file into another directory"; }
@@ -335,6 +383,10 @@ final class DosFileCommands {
 
     /** Renames a file or directory in place. */
     static final class Ren implements ICliCommand {
+        @Override public CommandScope scope() {
+            return DOS_FILES;
+        }
+
         @Override public String name() { return "ren"; }
 
         @Override public List<String> aliases() { return List.of("rename"); }

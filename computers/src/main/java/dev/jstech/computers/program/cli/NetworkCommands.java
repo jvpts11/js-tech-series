@@ -21,10 +21,19 @@ import java.util.List;
  */
 final class NetworkCommands {
 
+    /** What every one of these needs: a data network under the machine, on any system. */
+    private static final CommandScope ON_THE_NETWORK =
+            CommandScope.everywhere().needing(CommandScope.Need.NETWORK);
+
     private NetworkCommands() {
     }
 
     static final class Net implements ICliCommand {
+        /** On every machine, since saying "not on a network" is half of what it is for. */
+        @Override public CommandScope scope() {
+            return CommandScope.everywhere();
+        }
+
         @Override public String name() {
             return "net";
         }
@@ -53,6 +62,10 @@ final class NetworkCommands {
     }
 
     static final class Find implements ICliCommand {
+        @Override public CommandScope scope() {
+            return ON_THE_NETWORK;
+        }
+
         @Override public String name() {
             return "find";
         }
@@ -82,6 +95,10 @@ final class NetworkCommands {
     }
 
     static final class Lock implements ICliCommand {
+        @Override public CommandScope scope() {
+            return ON_THE_NETWORK;
+        }
+
         @Override public String name() {
             return "lock";
         }
@@ -116,6 +133,10 @@ final class NetworkCommands {
     }
 
     static final class Unlock implements ICliCommand {
+        @Override public CommandScope scope() {
+            return ON_THE_NETWORK;
+        }
+
         @Override public String name() {
             return "unlock";
         }
@@ -143,6 +164,10 @@ final class NetworkCommands {
     }
 
     static final class Locks implements ICliCommand {
+        @Override public CommandScope scope() {
+            return ON_THE_NETWORK;
+        }
+
         @Override public String name() {
             return "locks";
         }
@@ -168,6 +193,10 @@ final class NetworkCommands {
     }
 
     static final class Ops implements ICliCommand {
+        @Override public CommandScope scope() {
+            return ON_THE_NETWORK;
+        }
+
         @Override public String name() {
             return "ops";
         }
@@ -196,6 +225,10 @@ final class NetworkCommands {
     }
 
     static final class Stats implements ICliCommand {
+        @Override public CommandScope scope() {
+            return ON_THE_NETWORK;
+        }
+
         @Override public String name() {
             return "stats";
         }
@@ -233,6 +266,10 @@ final class NetworkCommands {
     }
 
     static final class Cancel implements ICliCommand {
+        @Override public CommandScope scope() {
+            return ON_THE_NETWORK;
+        }
+
         @Override public String name() {
             return "cancel";
         }
@@ -264,7 +301,12 @@ final class NetworkCommands {
     }
 
     static final class Operation implements ICliCommand {
+
         private static final int QUERY_LIMIT = 64;
+
+        @Override public CommandScope scope() {
+            return ON_THE_NETWORK;
+        }
 
         @Override public String name() {
             return "operation";
@@ -322,6 +364,10 @@ final class NetworkCommands {
      * {@code exit} on a connected session comes back to the local shell.
      */
     static final class Ssh implements ICliCommand {
+        @Override public CommandScope scope() {
+            return ON_THE_NETWORK;
+        }
+
         @Override public String name() {
             return "ssh";
         }

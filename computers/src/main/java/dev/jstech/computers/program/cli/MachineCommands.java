@@ -21,6 +21,10 @@ final class MachineCommands {
     }
 
     static final class Status implements ICliCommand {
+        @Override public CommandScope scope() {
+            return CommandScope.everywhere();
+        }
+
         @Override public String name() {
             return "status";
         }
@@ -44,6 +48,10 @@ final class MachineCommands {
 
     /** Shows or changes this computer's settings, the MC-DOS front-end for the Settings app. */
     static final class Config implements ICliCommand {
+        @Override public CommandScope scope() {
+            return CommandScope.everywhere();
+        }
+
         @Override public String name() { return "config"; }
 
         @Override public String summary() { return "show or change this computer's settings"; }
@@ -74,6 +82,10 @@ final class MachineCommands {
     }
 
     static final class Reboot implements ICliCommand {
+        @Override public CommandScope scope() {
+            return CommandScope.everywhere();
+        }
+
         @Override public String name() { return "reboot"; }
 
         @Override public List<String> aliases() { return List.of("restart"); }
@@ -95,6 +107,11 @@ final class MachineCommands {
     }
 
     static final class Devices implements ICliCommand {
+        /** Only where something can hang off the computer at all. */
+        @Override public CommandScope scope() {
+            return CommandScope.everywhere().needing(CommandScope.Need.PORTS);
+        }
+
         @Override public String name() {
             return "devices";
         }
