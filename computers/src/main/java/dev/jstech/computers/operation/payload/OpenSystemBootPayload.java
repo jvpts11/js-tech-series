@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootSplash;
 import net.minecraft.core.BlockPos;
@@ -31,7 +32,7 @@ import java.util.List;
  */
 public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int remainingTicks, int totalTicks,
                                     BootSequence sequence, boolean endsDark, BootSplash splash,
-                                    String desktopId, String systemName) implements CustomPacketPayload {
+                                    BootIdentity who) implements CustomPacketPayload {
 
     /** The longest a step's words may be; anything past it is a sentence, not a step. */
     public static final int MAX_TEXT = 64;
@@ -64,8 +65,9 @@ public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int r
             buf.writeBoolean(line.good());
         }
         buf.writeBoolean(p.endsDark());
-        buf.writeUtf(clip(p.desktopId()), MAX_TEXT);
-        buf.writeUtf(clip(p.systemName()), MAX_TEXT);
+        buf.writeUtf(clip(p.who().desktopId()), MAX_TEXT);
+        buf.writeUtf(clip(p.who().systemName()), MAX_TEXT);
+        buf.writeUtf(clip(p.who().hostName()), MAX_TEXT);
     }
 
     private static OpenSystemBootPayload decode(final RegistryFriendlyByteBuf buf) {
@@ -85,7 +87,7 @@ public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int r
         final boolean endsDark = buf.readBoolean();
         return new OpenSystemBootPayload(host, monitor, remaining, total,
                 new BootSequence(title, subtitle, lines), endsDark, splash,
-                buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT));
+                new BootIdentity(buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT)));
     }
 
     /*

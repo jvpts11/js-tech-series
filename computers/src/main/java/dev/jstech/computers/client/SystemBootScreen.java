@@ -9,6 +9,7 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.menu.MonitorSessionMenu;
+import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.core.gui.Phosphor;
@@ -56,10 +57,8 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
     private final int totalTicks;
     /** Whether a dark monitor follows this rather than a system, which is what a machine going down leaves. */
     private final boolean endsDark;
-    /** The desktop coming up behind the system's own lines, by the last part of its id, or nothing. */
-    private final String desktopId;
-    /** The distribution by name, which a desktop's own loading screen puts at its foot. */
-    private final String systemName;
+    /** The desktop coming up behind the system's own lines, the system by name, and the machine's host name. */
+    private final BootIdentity who;
 
     private int ticks;
 
@@ -71,26 +70,30 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         this.inventoryLabelY = OFF_SCREEN;
         final Starting starting = pending != null ? pending
                 : new Starting(BootSequence.NONE, FALLBACK_TICKS, FALLBACK_TICKS, false, BootSplash.PLAIN,
-                        "", "");
+                        BootIdentity.NONE);
         this.sequence = starting.sequence();
         this.splash = starting.splash();
         this.totalTicks = starting.totalTicks() > 0 ? starting.totalTicks() : FALLBACK_TICKS;
         this.ticks = Math.max(0, this.totalTicks - Math.max(0, starting.remainingTicks()));
         this.endsDark = starting.endsDark();
-        this.desktopId = starting.desktopId();
-        this.systemName = starting.systemName();
+        this.who = starting.who();
+    }
+
+    /** Whether the desktop's own loading screen has taken the glass from the system's lines, for a test to ask. */
+    public boolean desktopSplashUp() {
+        final int through = this.totalTicks > 0 ? this.ticks * 100 / this.totalTicks : 0;
+        return !this.endsDark && DesktopSplashArt.has(this.who.desktopId()) && through >= DesktopSplashArt.FROM;
     }
 
     /** What the machine is bringing up, said before the session that shows it is opened. */
     public static void expect(final BootSequence sequence, final int remainingTicks, final int totalTicks,
-                              final boolean endsDark, final BootSplash splash, final String desktopId,
-                              final String systemName) {
-        pending = new Starting(sequence, remainingTicks, totalTicks, endsDark, splash, desktopId, systemName);
+                              final boolean endsDark, final BootSplash splash, final BootIdentity who) {
+        pending = new Starting(sequence, remainingTicks, totalTicks, endsDark, splash, who);
     }
 
     /** One machine coming up: what it prints, how far along it is, and what it comes up behind. */
     private record Starting(BootSequence sequence, int remainingTicks, int totalTicks, boolean endsDark,
-                            BootSplash splash, String desktopId, String systemName) {
+                            BootSplash splash, BootIdentity who) {
     }
 
     @Override
@@ -128,11 +131,10 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
          * finds out which of them this machine runs. A machine going down never reaches it.
          */
         final int through = this.totalTicks > 0 ? this.ticks * 100 / this.totalTicks : 0;
-        if (!this.endsDark && DesktopSplashArt.has(this.desktopId) && through >= DesktopSplashArt.FROM) {
+        if (desktopSplashUp()) {
             final int within = (through - DesktopSplashArt.FROM) * 100
                     / Math.max(1, 100 - DesktopSplashArt.FROM);
-            DesktopSplashArt.draw(g, font, this.desktopId, this.systemName, era, x, y, W, H, this.ticks,
-                    Math.min(100, within));
+            DesktopSplashArt.draw(g, font, this.who, era, x, y, W, H, this.ticks, Math.min(100, within));
             return;
         }
 

@@ -29,6 +29,7 @@ import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootRunner;
 import dev.jstech.computers.os.boot.BootSequence;
@@ -36,6 +37,7 @@ import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.computers.os.boot.BootTiming;
 import dev.jstech.computers.os.boot.SystemWelcome;
 import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.install.SetupRunner;
@@ -346,7 +348,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
                             installedOs() == null ? BootSplash.PLAIN
                                     : BootSplash.of(installedOs().platform(), installedOs().familyRank()),
                             /* A machine on its way down shows no desktop coming up, so it names none. */
-                            "", installedOs() == null ? "" : installedOs().displayName()));
+                            new BootIdentity("", installedOs() == null ? "" : installedOs().displayName(),
+                                    Installers.hostName(this))));
             // The words and the screen that shows them, as everywhere else: one without the other shows nothing.
             MonitorBlock.openSession(player, server, monitor, worldPosition, this,
                     MonitorSessionMenu.Phase.SYSTEM_BOOT);

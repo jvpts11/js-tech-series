@@ -10,6 +10,7 @@ package dev.jstech.tests.clienttest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.client.SystemBootScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.client.os.ShellApp;
@@ -122,8 +123,28 @@ public final class CdeClientTests {
         clickAt(ctx, at);
     }
 
+    /**
+     * Between the console's lines and the desktop, CDE puts up its own plate over the backdrop it is about to
+     * stand on, and then the desktop comes up behind it.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void comingUp_showsCdesOwnPlateBeforeTheDesktop(final ClientTestContext ctx) {
+        switchedOn(ctx)
+                .thenAwaitScreen(SystemBootScreen.class, BOOT_WAIT)
+                .thenWaitUntil(() -> ctx.screen(SystemBootScreen.class) != null
+                        && ctx.screen(SystemBootScreen.class).desktopSplashUp(), BOOT_WAIT,
+                        "CDE's plate to take the glass from the system's lines")
+                .thenScreenshot(2, "cde-coming-up")
+                .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT);
+    }
+
     /** A UNIX machine with CDE installed, brought up, with the player at its monitor and the desktop open. */
     private static ClientTestContext atCde(final ClientTestContext ctx) {
+        return switchedOn(ctx).thenAwaitScreen(DesktopScreen.class, BOOT_WAIT);
+    }
+
+    /** The same machine just switched on, with the player at its monitor while it is still coming up. */
+    private static ClientTestContext switchedOn(final ClientTestContext ctx) {
         return ctx.thenBuild(0, world -> {
                     world.setBlock(MACHINE, ComputingModule.MAINFRAME.get());
                     final MainframeBlockEntity machine = world.blockEntity(MACHINE, MainframeBlockEntity.class);
@@ -146,8 +167,7 @@ public final class CdeClientTests {
                     world.placeMonitor(MONITOR, Direction.EAST);
                 })
                 .thenTeleport(SETTLE, PLAYER_AT_MONITOR, Direction.WEST)
-                .thenRightClick(SETTLE, MONITOR)
-                .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT);
+                .thenRightClick(SETTLE, MONITOR);
     }
 
     /**

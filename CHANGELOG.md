@@ -272,6 +272,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - CDE's Terminal is a Unix terminal: it opens on the shell's own prompt, `player@host:~ $`, and greets nobody.
   A desktop now says for itself whether it stands on a Unix family, so the next desktop cannot be left off a
   list the way CDE was.
+- CDE comes up behind a screen of its own, as the Linux desktops do. With no login to show, the console's lines
+  are followed by a raised plate with the desktop's name and its maker's over the backdrop the desktop is about
+  to stand on, and a line naming the workstation it is starting on, which is the host name its prompt says.
 - CDE's Terminal window is paper, as a workstation's was: a warm white ground written on in dark inks, each of
   the console's colours (success, error, warning, the hints) given an ink that reads on it. A terminal panel
   inside an editor keeps its dark glass.

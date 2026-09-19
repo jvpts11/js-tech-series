@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.block;
 
+import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootSequence;
 import dev.jstech.computers.os.boot.BootSplash;
 import net.minecraft.core.BlockPos;
@@ -29,12 +30,11 @@ public interface ISystemBootScreenOpener {
      * @param remaining  what the machine says is left of it
      * @param total      how long the whole thing takes, so the steps and the bar know how far along they are
      * @param endsDark   whether a dark monitor follows rather than a system, as it does for a machine going down
-     * @param desktopId  the desktop this machine brings up after the system, by the last part of its id, or
-     *                   empty when it has none and the system comes up at a prompt
-     * @param systemName the distribution by name, which a desktop's own loading screen puts at its foot
+     * @param who        the desktop this machine brings up after the system, the system by name and the machine's
+     *                   host name, which a desktop's own loading screen may put on the glass
      */
     void open(BlockPos pos, BlockPos monitorPos, BootSequence sequence, int remaining, int total,
-              boolean endsDark, BootSplash splash, String desktopId, String systemName);
+              boolean endsDark, BootSplash splash, BootIdentity who);
 
     final class Holder {
 
@@ -50,10 +50,9 @@ public interface ISystemBootScreenOpener {
 
         public static void open(final BlockPos pos, final BlockPos monitorPos, final BootSequence sequence,
                                 final int remaining, final int total, final boolean endsDark,
-                                final BootSplash splash, final String desktopId, final String systemName) {
+                                final BootSplash splash, final BootIdentity who) {
             if (instance != null) {
-                instance.open(pos, monitorPos, sequence, remaining, total, endsDark, splash, desktopId,
-                        systemName);
+                instance.open(pos, monitorPos, sequence, remaining, total, endsDark, splash, who);
             }
         }
     }

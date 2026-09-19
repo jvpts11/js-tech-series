@@ -12,6 +12,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
+import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsRegistry;
@@ -20,6 +21,10 @@ import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.computers.os.boot.BootController;
+import dev.jstech.computers.os.boot.BootIdentity;
+import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.boot.BootSplash;
+import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
@@ -178,6 +183,30 @@ public final class CdeGameTests {
         machine.togglePower();
         helper.assertTrue(machine.openWindows().isEmpty() && machine.desktopWorkspace() == 0,
                 "switched off, the machine keeps neither the windows nor the workspace they were sorted by");
+        helper.succeed();
+    }
+
+    /**
+     * CDE's loading screen names the workstation it is starting on, so the system coming up has to tell the
+     * monitor who it is: which desktop, which system, and the host name its prompt will say a moment later.
+     */
+    @GameTest(template = ARENA)
+    public static void systemComingUp_tellsTheMonitorWhoItIs(final GameTestHelper helper) {
+        final MainframeBlockEntity machine = machine(helper, "unix");
+        if (machine == null) {
+            return;
+        }
+        final BootIdentity who = new BootIdentity("cde", "UNIX System V", Installers.hostName(machine));
+        helper.assertTrue(!who.hostName().isEmpty(), "a machine with a system on it answers to a host name");
+
+        final RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(),
+                helper.getLevel().registryAccess());
+        OpenSystemBootPayload.STREAM_CODEC.encode(buf, new OpenSystemBootPayload(machine.getBlockPos(),
+                machine.getBlockPos(), 40, 100, BootSequence.NONE, false, BootSplash.PLAIN, who));
+        final OpenSystemBootPayload arrived = OpenSystemBootPayload.STREAM_CODEC.decode(buf);
+        helper.assertTrue(arrived.who().equals(who), "who is coming up crosses the wire whole; got " + arrived.who());
+        helper.assertTrue(arrived.remainingTicks() == 40 && arrived.totalTicks() == 100 && !arrived.endsDark(),
+                "and nothing beside it is disturbed by it");
         helper.succeed();
     }
 

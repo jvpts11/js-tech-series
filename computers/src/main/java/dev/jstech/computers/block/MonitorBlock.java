@@ -37,9 +37,11 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.boot.BootController;
+import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.install.LiveInstallState;
@@ -352,26 +354,23 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                                       final BlockPos owner, final IOsHost computer) {
         PacketDistributor.sendToPlayer(player, new OpenSystemBootPayload(
                 owner, monitorPos, computer.bootRemaining(), computer.bootTotal(),
-                computer.bootSequence(), false, splashOf(computer), desktopOf(computer),
-                systemNameOf(computer)));
+                computer.bootSequence(), false, splashOf(computer), identityOf(computer)));
         openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.SYSTEM_BOOT);
     }
 
     /**
-     * The desktop this machine brings up after its system, by the last part of its id, or nothing.
+     * Who is coming up: the desktop, the system by the name it prints of itself, and the machine's host name,
+     * which a desktop's own loading screen may name.
      *
-     * <p>What the machine booted with rather than what is installed on it: a desktop added a moment ago waits
-     * for a restart, so the screen that shows a desktop coming up has to show the one that really is.
+     * <p>The desktop is what the machine booted with rather than what is installed on it: a desktop added a
+     * moment ago waits for a restart, so the screen that shows a desktop coming up has to show the one that
+     * really is.
      */
-    private static String desktopOf(final IOsHost computer) {
+    private static BootIdentity identityOf(final IOsHost computer) {
         final ResourceLocation desktop = computer.bootedDesktopId();
-        return desktop == null ? "" : desktop.getPath();
-    }
-
-    /** The system by the name it prints of itself, which a desktop's loading screen names at its foot. */
-    private static String systemNameOf(final IOsHost computer) {
         final OsDef system = computer.installedOs();
-        return system == null ? "" : system.displayName();
+        return new BootIdentity(desktop == null ? "" : desktop.getPath(),
+                system == null ? "" : system.displayName(), Installers.hostName(computer));
     }
 
     /**
@@ -385,8 +384,8 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                                       final BlockPos owner, final IOsHost computer) {
         PacketDistributor.sendToPlayer(player, new OpenSystemBootPayload(
                 owner, monitorPos, computer.downRemaining(), computer.downTotal(),
-                BootLines.shutdownFor(computer, true), false, splashOf(computer), "",
-                systemNameOf(computer)));
+                BootLines.shutdownFor(computer, true), false, splashOf(computer),
+                identityOf(computer).goingDown()));
         openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.SYSTEM_BOOT);
     }
 

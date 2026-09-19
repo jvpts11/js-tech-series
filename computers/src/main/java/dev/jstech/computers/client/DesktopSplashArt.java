@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.client.os.CdeSplashArt;
+import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -26,6 +28,9 @@ public final class DesktopSplashArt {
 
     /** How far into the wait the desktop takes over from the system's own lines, in hundredths. */
     public static final int FROM = 68;
+
+    /** CDE by the last part of its id. */
+    private static final String CDE = "cde";
 
     /** How many pieces the older desktops reported starting, one square each. */
     private static final int STEPS = 5;
@@ -85,16 +90,16 @@ public final class DesktopSplashArt {
     /**
      * Whether this desktop has a loading screen of its own.
      *
-     * <p>Only the desktops that are a separate thing from the system under them, which here is the Linux
-     * family: they are chosen, installed and replaced on their own, and each one announces itself. A system
-     * that comes with its desktop built in has no such moment, and asking this of one of those used to answer
-     * yes, so every Frames machine finished its start behind another system's loading screen.
+     * <p>Only the desktops that are a separate thing from the system under them, which here are the ones of the
+     * Unix families: they are chosen, installed and replaced on their own, and each one announces itself. A
+     * system that comes with its desktop built in has no such moment, and asking this of one of those used to
+     * answer yes, so every Frames machine finished its start behind another system's loading screen.
      *
      * @param desktopId the desktop by the last part of its id, or empty when none is installed
      */
     public static boolean has(final String desktopId) {
         return switch (desktopId) {
-            case "kde_plasma", "gnome", "cinnamon" -> true;
+            case "kde_plasma", "gnome", "cinnamon", CDE -> true;
             default -> false;
         };
     }
@@ -102,17 +107,20 @@ public final class DesktopSplashArt {
     /**
      * Draws that desktop's loading screen over the glass at {@code (x, y)}.
      *
-     * @param desktopId  the desktop by the last part of its id
-     * @param systemName the distribution it is coming up on, which two of these name at the foot
-     * @param era        the generation of the machine, which decides which of the two looks it wears
-     * @param ticks      how far into the wait the machine is, which is what moves anything that moves
-     * @param progress   how far through the desktop's own share of the wait, in hundredths
+     * @param who      the desktop by the last part of its id, the system it is coming up on, which two of these
+     *                 name at the foot, and the machine's host name, which one of them names
+     * @param era      the generation of the machine, which decides which of the two looks it wears
+     * @param ticks    how far into the wait the machine is, which is what moves anything that moves
+     * @param progress how far through the desktop's own share of the wait, in hundredths
      */
-    public static void draw(final GuiGraphics g, final Font font, final String desktopId,
-                            final String systemName, final HardwareEra era, final int x, final int y,
-                            final int w, final int h, final int ticks, final int progress) {
+    public static void draw(final GuiGraphics g, final Font font, final BootIdentity who, final HardwareEra era,
+                            final int x, final int y, final int w, final int h, final int ticks,
+                            final int progress) {
         final boolean old = era != null && era.compareTo(HardwareEra.STANDARD) < 0;
-        switch (desktopId) {
+        final String systemName = who.systemName();
+        switch (who.desktopId()) {
+            // CDE never changed its face, so it has one look, drawn where the rest of CDE is drawn.
+            case CDE -> CdeSplashArt.draw(g, font, who.hostName(), x, y, w, h);
             case "kde_plasma" -> {
                 if (old) {
                     oldBox(g, font, x, y, w, h, progress, KDE_OLD_GROUND, BOX_FACE, "KDE",
@@ -122,7 +130,7 @@ public final class DesktopSplashArt {
                 }
             }
             case "cinnamon" -> cinnamon(g, font, x, y, w, h, ticks, systemName);
-            /* Only the three reach here; {@link #has} is what keeps anything else from asking. */
+            /* Only GNOME is left to reach here; {@link #has} is what keeps anything else from asking. */
             default -> {
                 if (old) {
                     oldBox(g, font, x, y, w, h, progress, GNOME_OLD_GROUND, GNOME_OLD_FACE, "GNOME",
