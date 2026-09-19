@@ -36,7 +36,9 @@ public enum CliStyle implements IStableId {
      * The terminal's bold: the same white, brighter. It is what a real tool uses for the words it wants read
      * first, a heading over a list of packages or the question it has stopped to ask.
      */
-    BRIGHT(14);
+    BRIGHT(14),
+    /* One more of the extended palette: a brand red, which is not the red an error is written in. */
+    RED(15);
 
     private static final StableIds<CliStyle> IDS = StableIds.of(CliStyle.class);
 

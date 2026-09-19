@@ -31,6 +31,7 @@ import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -221,6 +222,36 @@ public final class FreeBsdGameTests {
                             "'pkg update' ends the way it ends");
                     helper.assertTrue(text(shell.run("apt install iqlengine", cli)).contains("command not found"),
                             "and apt does not exist here");
+                })
+                .thenSucceed();
+    }
+
+    /** screenfetch, installed with pkg, reports the machine in FreeBSD's words under FreeBSD's own mark. */
+    @GameTest(template = ARENA)
+    public static void screenfetch_showsTheSystemAsFreeBsd(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = mainframe(helper, WHERE);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerCliComputer cli = new ServerCliComputer(mainframe, helper.getLevel());
+                    final CliShell shell = CliCommands.shellFor(cli, 52);
+                    helper.assertTrue(text(shell.run("screenfetch", cli)).contains("not found"),
+                            "screenfetch is a package, absent on a fresh install");
+                    mainframe.installMirror();
+                    final String fetched = text(shell.run("pkg install screenfetch", cli));
+                    helper.assertTrue(fetched.contains("New packages to be INSTALLED:")
+                                    && fetched.contains("[1/1] Fetching screenfetch-"),
+                            "pkg says what it will install and fetches it; got " + fetched);
+                    TestWorldBuilder.finishSetup(mainframe, helper.getLevel(), helper.absolutePos(WHERE));
+                    final String out = text(shell.run("screenfetch", cli));
+                    helper.assertTrue(out.contains("player@freebsd"), "the header is user@host; got " + out);
+                    helper.assertTrue(out.contains("OS: FreeBSD vel64"), "the OS line names Velocion's architecture");
+                    helper.assertTrue(out.contains("Kernel: FreeBSD 14.1-RELEASE vel64"), "and so does the kernel's");
+                    helper.assertTrue(out.contains("(pkg)"), "the packages are counted by pkg");
+                    helper.assertTrue(out.contains("Shell: sh"), "the shell is sh");
+                    helper.assertTrue(out.contains("DE: none (ttyv0)"), "and a machine with no desktop is at ttyv0");
+                    helper.assertTrue(out.contains(".---.....----."), "under the mark with the two horns; got " + out);
+                    helper.assertFalse(out.contains("x86_64") || out.contains("Linux"),
+                            "with none of a Linux's words in it; got " + out);
                 })
                 .thenSucceed();
     }

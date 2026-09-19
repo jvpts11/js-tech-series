@@ -500,7 +500,8 @@ public final class ServerCliComputer implements ICliComputer {
                         : "JSC " + os.id().getPath(),
                 hostname(),
                 os.shellId(),
-                chrome != null ? chrome.displayName() : "none (tty1)",
+                chrome != null ? chrome.displayName()
+                        : "none (" + KernelNames.terminal(os.platform()) + ")",
                 computer.maxCpuMhz() + " MHz",
                 (int) Math.min(Integer.MAX_VALUE, computer.ramBuffer()),
                 Math.max(0L, totalMb - freeMb),

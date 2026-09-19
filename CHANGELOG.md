@@ -217,6 +217,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   which is what Enter does, `Reboot`, which runs the self-test again, and the firmware settings on the machines
   whose firmware is reached that way. An entry is chosen by its number, and any other key stops the count. The
   setting that hides GRUB's menu hides this one too.
+- `screenfetch` on FreeBSD draws FreeBSD's mark, the sphere with its two horns, in red, and reports the system
+  in FreeBSD's words: the architecture as `vel64` or `IA-32`, the packages counted by `pkg`, and a machine with
+  no desktop at `ttyv0`.
 - `uname` takes `-s`, `-n`, `-r` and `-m` as well as `-a`, alone or together (`uname -sr`), and answers for the
   system it runs on: a Linux says `Linux` and `x86_64` or `i686`, FreeBSD says `FreeBSD` and `vel64` or `IA-32`.
 
@@ -881,8 +884,8 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   request as partial: when it runs dry while the request is short, the network gives it another lot's worth.
 - `Program.Send` answers false for a program that has already returned. It used to answer true while the
   program was still listed for its terminal or its parent to read, though nothing ever read the line.
-- A Linux console's welcome, `uname -a` and the kernel line of `screenfetch` name the architecture the processor
-  really understands, `i686` on a 32-bit machine, as the boot log beside them already did. They used to say
+- A Linux console's welcome, `uname -a` and the OS and kernel lines of `screenfetch` name the architecture the
+  processor really understands, `i686` on a 32-bit machine, as the boot log beside them already did. They used to say
   `x86_64` on every machine.
 - The notes on the two `install_by_hand` settings in the server configuration no longer list a password, a time
   zone and a locale among the steps, which the by-hand installs stopped asking for.

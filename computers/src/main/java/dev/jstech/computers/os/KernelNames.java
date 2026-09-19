@@ -45,6 +45,11 @@ public final class KernelNames {
         return bits >= 64 ? "x86_64" : "i686";
     }
 
+    /** What a system of that family calls the first terminal on the machine's own screen. */
+    public static String terminal(final Platform platform) {
+        return platform == Platform.FREEBSD ? "ttyv0" : "tty1";
+    }
+
     /** The three together, as a system report gives them: the name, the release, the architecture. */
     public static String kernel(final Platform platform, final int bits) {
         return name(platform) + " " + release(platform) + " " + architecture(platform, bits);

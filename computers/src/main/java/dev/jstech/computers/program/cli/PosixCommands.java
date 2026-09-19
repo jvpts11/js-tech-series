@@ -399,7 +399,23 @@ public final class PosixCommands {
                         "yMMNNNNNNNmmmmmNNMmhs+/-`",
                         "/hMMNNNNNNNNMNdhs++/-`",
                         "`/ohdmmddhys+++/:.`",
-                        "  `-//////:--."});
+                        "  `-//////:--."},
+                "freebsd", new String[]{
+                        "   ```                        `",
+                        "  s` `.....---.......--.```   -/",
+                        "  +o   .--`         /y:`      +.",
+                        "   yo`:.            :o      `+-",
+                        "    y/               -/`   -o/",
+                        "   .-                  ::/sy+:.",
+                        "   /                     `--  /",
+                        "  `:                          :`",
+                        "  `:                          :`",
+                        "   /                          /",
+                        "   .-                        -.",
+                        "    --                      -.",
+                        "     `:`                  `:`",
+                        "       .--             `--.",
+                        "          .---.....----."});
 
         private static final String[] DEFAULT_LOGO = {
                 "  .--------.  ",
@@ -409,14 +425,15 @@ public final class PosixCommands {
                 "  |  JSC   |  ",
                 "  '--------'  "};
 
-        // Each distribution paints in its brand color, the way real fetch tools color their logo block.
+        // Each system paints in its brand color, the way real fetch tools color their logo block.
         private static final Map<String, CliStyle>
                 COLORS = Map.of(
                         "ubuntu", CliStyle.ORANGE,
                         "debian", CliStyle.MAGENTA,
                         "fedora", CliStyle.BLUE,
                         "arch", CliStyle.CYAN,
-                        "gentoo", CliStyle.PURPLE);
+                        "gentoo", CliStyle.PURPLE,
+                        "freebsd", CliStyle.RED);
 
         @Override public String name() { return "screenfetch"; }
 
@@ -448,7 +465,8 @@ public final class PosixCommands {
             final String user = "player@" + info.hostname();
             lines.add(user);
             lines.add("-".repeat(user.length()));
-            lines.add("OS: " + info.os() + " x86_64");
+            lines.add("OS: " + info.os() + " "
+                    + KernelNames.architecture(ctx.computer().platform(), ctx.computer().processorBits()));
             lines.add("Kernel: " + info.kernel());
             lines.add("Uptime: " + uptime(info.uptimeTicks()));
             lines.add("Packages: " + info.packages() + " (" + ctx.computer().packageManager().command() + ")");

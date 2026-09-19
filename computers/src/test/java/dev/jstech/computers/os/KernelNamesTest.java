@@ -46,6 +46,12 @@ class KernelNamesTest {
     }
 
     @Test
+    void terminal_isTheFirstOneOnTheMachinesOwnScreenAsEachFamilyCallsIt() {
+        assertEquals("ttyv0", KernelNames.terminal(Platform.FREEBSD));
+        assertEquals("tty1", KernelNames.terminal(Platform.LINUX));
+    }
+
+    @Test
     void name_isLinuxForEveryFamilyThatIsNotFreeBsd() {
         assertEquals("Linux", KernelNames.name(Platform.LINUX));
         assertEquals("FreeBSD", KernelNames.name(Platform.FREEBSD));

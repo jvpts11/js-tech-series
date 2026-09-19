@@ -50,7 +50,8 @@ public final class ConsoleGreeting {
 
     private static List<CliLine> linux(final ConsoleIdentity console) {
         return List.of(
-                new CliLine(console.osLabel() + " " + console.hostname() + " tty1", CliStyle.ACCENT),
+                new CliLine(console.osLabel() + " " + console.hostname() + " "
+                        + KernelNames.terminal(Platform.LINUX), CliStyle.ACCENT),
                 CliLine.plain(""),
                 CliLine.plain(console.hostname() + " login: player"),
                 CliLine.plain("Password:"),
@@ -62,7 +63,7 @@ public final class ConsoleGreeting {
     private static List<CliLine> freeBsd(final ConsoleIdentity console) {
         return List.of(
                 CliLine.plain("FreeBSD/" + KernelNames.architecture(Platform.FREEBSD, console.bits())
-                        + " (" + console.hostname() + ") (ttyv0)"),
+                        + " (" + console.hostname() + ") (" + KernelNames.terminal(Platform.FREEBSD) + ")"),
                 CliLine.plain(""),
                 CliLine.of(new CliSpan("login: ", CliStyle.PLAIN), new CliSpan("player", CliStyle.BRIGHT)),
                 CliLine.plain("FreeBSD " + KernelNames.FREEBSD_RELEASE + " (GENERIC)"),
