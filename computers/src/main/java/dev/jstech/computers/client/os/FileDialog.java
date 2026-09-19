@@ -320,8 +320,10 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         final List<Place> out = new ArrayList<>();
         if (this.posix) {
             out.add(new Place("PLACES", FileIcons.Kind.HOME, "", true));
-            out.add(new Place("Home", FileIcons.Kind.HOME, parentOf(SystemLayout.POSIX_DESKTOP_DIR), false));
-            out.add(new Place("Desktop", FileIcons.Kind.FOLDER, SystemLayout.POSIX_DESKTOP_DIR, false));
+            // Where this system keeps its people, which is not the same place on every Unix.
+            final String desktopDir = FilesApp.desktopDirAt(this.host, false);
+            out.add(new Place("Home", FileIcons.Kind.HOME, parentOf(desktopDir), false));
+            out.add(new Place("Desktop", FileIcons.Kind.FOLDER, desktopDir, false));
             out.add(new Place("progs", FileIcons.Kind.FOLDER, CodeWorkspace.HOME, false));
             out.add(new Place("DEVICES", FileIcons.Kind.HOME, "", true));
             out.add(new Place("Root", FileIcons.Kind.BIN, "", false));

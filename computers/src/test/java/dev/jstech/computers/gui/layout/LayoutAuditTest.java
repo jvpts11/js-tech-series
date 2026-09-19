@@ -41,7 +41,8 @@ class LayoutAuditTest {
             "BusLayout", "ClusterManagementComputerLayout", "CraftingComputerLayout", "NmsLayout",
             "ComputerTerminalLayout", "ServerRouterLayout", "NetworkInteractorLayout",
             "CraftingSwitchLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
-            "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout");
+            "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
+            "CdeFrontPanelLayout");
 
     private record AuditCase(String label, GuiLayout layout, boolean fixedSize) {
     }
@@ -118,6 +119,11 @@ class LayoutAuditTest {
          */
         for (final int entries : new int[]{2, 3, BootMenu.MOST_ENTRIES}) {
             c.add(new AuditCase("LoaderMenuLayout(" + entries + ")", LoaderMenuLayout.layout(entries), false));
+        }
+        // CDE's Front Panel stands on the desktop, which is the glass or larger when it is drawn smaller.
+        for (final int[] desktop : new int[][]{{384, 256}, {512, 341}}) {
+            c.add(new AuditCase("CdeFrontPanelLayout(" + desktop[0] + ")",
+                    CdeFrontPanelLayout.layout(desktop[0], desktop[1]), false));
         }
         return c;
     }

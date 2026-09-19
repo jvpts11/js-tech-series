@@ -343,6 +343,8 @@ public final class ShellView extends Panel {
              */
             case KDE2 -> 0xFF0C1420;
             case GNOME1 -> 0xFF1A141E;
+            // A slate with the cast of CDE's own backdrop, dark like the rest so the console's colours read.
+            case MOTIF -> 0xFF16202A;
         };
     }
 

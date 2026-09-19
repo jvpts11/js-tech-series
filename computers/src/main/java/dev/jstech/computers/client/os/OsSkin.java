@@ -7,11 +7,13 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.core.client.gui.skin.ISkin;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The one drawing framework every desktop program paints through, so a program looks like the OS it runs on
@@ -40,7 +42,9 @@ public final class OsSkin implements ISkin {
         /** KDE of the early 2000s: vertical title gradient, single-pixel borders, soft greys. */
         KDE2,
         /** GNOME of the late 1990s: thick frame, centred title, warm greys, chunky bevelled studs. */
-        GNOME1
+        GNOME1,
+        /** Motif, which is CDE: one grey, light and shade for relief, and a palette everything is read from. */
+        MOTIF
     }
 
     /** A window-control glyph, so the control's shape can vary independently of its meaning. */
@@ -67,6 +71,9 @@ public final class OsSkin implements ISkin {
     private final boolean dark;
     /** The desktop environment id path this skin belongs to (the icon set and wallpaper key). */
     private final String desktopPath;
+    /** The palette a Motif skin is drawn from, and null for every other form. */
+    @Nullable
+    private final CdePalette motif;
 
     private OsSkin(final DesktopTheme theme, final Form form, final int topRadius, final int bottomRadius,
                    final int titleText, final boolean titleShadow, final int windowBg, final int windowBorder,
@@ -85,6 +92,16 @@ public final class OsSkin implements ISkin {
                    final int accent, final int text, final int dim, final int fieldBg,
                    final int listSelectBg, final int listSelectText, final int listHoverBg, final boolean dark,
                    final String desktopPath) {
+        this(theme, form, topRadius, bottomRadius, titleText, titleShadow, windowBg, windowBorder, accent, text,
+                dim, fieldBg, listSelectBg, listSelectText, listHoverBg, dark, desktopPath, null);
+    }
+
+    private OsSkin(final DesktopTheme theme, final Form form, final int topRadius, final int bottomRadius,
+                   final int titleText, final boolean titleShadow, final int windowBg, final int windowBorder,
+                   final int accent, final int text, final int dim, final int fieldBg,
+                   final int listSelectBg, final int listSelectText, final int listHoverBg, final boolean dark,
+                   final String desktopPath, @Nullable final CdePalette motif) {
+        this.motif = motif;
         this.desktopPath = desktopPath;
         this.theme = theme;
         this.form = form;
@@ -178,6 +195,9 @@ public final class OsSkin implements ISkin {
             0xFF6D5A78, 0xFF1A1A1A, 0xFF5C574E, 0xFFFFFFFF,
             0xFF6D5A78, 0xFFFFFFFF, 0xFFC4BFB2, false, "gnome");
 
+    /* CDE in the palette it ships with; the Style Manager's choice builds another from the same factory. */
+    private static final OsSkin CDE = motif(CdePalette.DEFAULT);
+
     /** The skin for an installed OS id; Frames 95 is the fallback. Kept for the Frames editions (id = desktop). */
     public static OsSkin forOs(final ResourceLocation osId) {
         return forDesktop(osId);
@@ -212,8 +232,19 @@ public final class OsSkin implements ISkin {
             case "kde_plasma" -> KDE_PLASMA;
             case "gnome" -> GNOME;
             case "cinnamon" -> CINNAMON;
+            case "cde" -> CDE;
             default -> FRAMES_95;
         };
+    }
+
+    /**
+     * CDE drawn from that palette. Everything such a skin answers, the frames, the text, the wells and what is
+     * picked out in a list, is one of the palette's colours, so choosing another palette changes all of it.
+     */
+    public static OsSkin motif(final CdePalette palette) {
+        return new OsSkin(DesktopTheme.cde(palette), Form.MOTIF, 0, 0, palette.activeInk(), false,
+                palette.window(), palette.shade(), palette.active(), palette.ink(), palette.shade(),
+                palette.inset(), palette.active(), palette.activeInk(), palette.inset(), false, "cde", palette);
     }
 
     /** A safe default skin (Frames 95) for a field that needs a non-null value before the first render. */
@@ -231,7 +262,8 @@ public final class OsSkin implements ISkin {
      * @return a skin using the override accent, or {@code this}
      */
     public OsSkin withAccent(final int argb) {
-        if (argb == 0 || argb == accent) {
+        // A Motif skin has no accent of its own to override: its colours are its palette's, all of them.
+        if (argb == 0 || argb == accent || form == Form.MOTIF) {
             return this;
         }
         return new OsSkin(theme, form, topRadius, bottomRadius, titleText, titleShadow, windowBg, windowBorder,
@@ -327,6 +359,7 @@ public final class OsSkin implements ISkin {
             case FLAT -> dark ? 0xFF333A48 : 0xFFE3E5EE;
             case KDE2 -> 0xFF8B857E;
             case GNOME1 -> 0xFFA49E8F;
+            case MOTIF -> windowBorder;
         };
     }
 
@@ -344,6 +377,10 @@ public final class OsSkin implements ISkin {
      */
     @Override
     public void windowFrame(final GuiGraphics g, final int x, final int y, final int w, final int h) {
+        if (motif != null) {
+            MotifChrome.windowFrame(g, x, y, w, h, motif);
+            return;
+        }
         final int t = frameThickness();
         roundedRect(g, x - t, y - t, w + t * 2, h + t * 2, windowBorder, topRadius, bottomRadius);
         if (form == Form.GNOME1) {
@@ -369,6 +406,20 @@ public final class OsSkin implements ISkin {
      */
     public void titleBar(final GuiGraphics g, final int x, final int y, final int w, final int titleH,
                          final boolean active) {
+        titleBar(g, x, y, w, titleH, active, 0, 0);
+    }
+
+    /**
+     * The same, told how much of each end of the bar the window's buttons take. Only Motif asks: it lights the
+     * strip the title is written on and leaves the buttons the frame's own grey, so it has to know where the
+     * strip starts and stops. Every other form colours the whole bar and draws its buttons over it.
+     */
+    public void titleBar(final GuiGraphics g, final int x, final int y, final int w, final int titleH,
+                         final boolean active, final int left, final int right) {
+        if (motif != null) {
+            MotifChrome.titleBar(g, x, y, w, titleH, active, left, right, motif);
+            return;
+        }
         if (!active) {
             switch (form) {
                 case BEVEL -> hGradient(g, x, y, w, titleH, 0xFF7F7F7F, 0xFFB0B0B0);
@@ -432,17 +483,30 @@ public final class OsSkin implements ISkin {
      * as a different desktop rather than a repainted one, and nothing else in the mod centres a title.
      */
     public boolean titleCentered() {
-        return form == Form.GNOME1;
+        return form == Form.GNOME1 || form == Form.MOTIF;
     }
 
-    /** The thickness of the window frame in pixels; the GNOME form draws the chunky period border. */
+    /**
+     * Whether a window's one way out sits at the LEFT end of its bar, as Motif's menu button does, with
+     * minimise and maximise alone at the right. Every other form keeps all three at the right.
+     */
+    public boolean menuAtLeft() {
+        return form == Form.MOTIF;
+    }
+
+    /** The thickness of the window frame in pixels; the GNOME and Motif forms draw a chunky border. */
     public int frameThickness() {
-        return form == Form.GNOME1 ? 3 : 1;
+        return form == Form.MOTIF ? MotifChrome.FRAME : form == Form.GNOME1 ? 3 : 1;
     }
 
     /** One title-bar control, shaped per skin, with a real pressed state so a click reads. */
     public void windowControl(final GuiGraphics g, final Font font, final int x, final int y, final int bw,
                               final int bh, final Control control, final boolean hovered, final boolean pressed) {
+        if (motif != null) {
+            // Its marks are relief like everything else in it, not letters, so it draws them itself.
+            MotifChrome.control(g, x, y, bw, bh, control, pressed, motif);
+            return;
+        }
         final boolean isClose = control == Control.CLOSE;
         int nudge = 0;
         switch (form) {
@@ -499,6 +563,7 @@ public final class OsSkin implements ISkin {
             case FLAT -> closeLit ? 0xFFFFFFFF : flat(0xFF3A4256, 0xFFC4CAD6);
             case KDE2 -> 0xFF17324F;
             case GNOME1 -> 0xFF2A2A2A;
+            case MOTIF -> text;
         };
         final String s = switch (control) {
             case MINIMIZE -> "_";
@@ -521,6 +586,7 @@ public final class OsSkin implements ISkin {
             case FLAT -> outline(g, x, y, w, h, edge());
             case KDE2 -> outline(g, x, y, w, h, edge());
             case GNOME1 -> bevelDouble(g, x, y, w, h, false); // sunken well, warm
+            case MOTIF -> MotifChrome.sunken(g, x, y, w, h, panelFill(), motif);
         }
     }
 
@@ -567,6 +633,7 @@ public final class OsSkin implements ISkin {
                     dottedRect(g, x + 3, y + 3, w - 6, h - 6, 0xFF2A2A2A);
                 }
             }
+            case MOTIF -> MotifChrome.button(g, x, y, w, h, pressed, primary, motif);
         }
         final int tc = (form == Form.FLAT && primary) ? 0xFFFFFFFF : text;
         g.drawString(font, label, x + (w - font.width(label)) / 2, y + (h - 7) / 2 + (pressed ? 1 : 0), tc, false);
@@ -586,6 +653,7 @@ public final class OsSkin implements ISkin {
             }
             case KDE2 -> outline(g, x, y, w, h, focused ? 0xFF1D4C80 : 0xFF8B857E);
             case GNOME1 -> bevelDouble(g, x, y, w, h, false); // sunken well
+            case MOTIF -> MotifChrome.sunken(g, x, y, w, h, fieldBg, motif);
         }
     }
 
@@ -625,6 +693,7 @@ public final class OsSkin implements ISkin {
                 g.fill(x, y, x + w, y + h + (active ? 2 : 0), active ? 0xFFD6D2C8 : 0xFFC4BFB2);
                 bevelDouble(g, x, y, w, h + (active ? 2 : 0), true);
             }
+            case MOTIF -> MotifChrome.tab(g, x, y, w, h, active, motif);
         }
         final int tc = switch (form) {
             case LUNA -> active ? 0xFF2B5A16 : 0xFF22324D;
@@ -675,6 +744,7 @@ public final class OsSkin implements ISkin {
                 g.fill(x, y, x + w, y + h, 0xFFD6D2C8);
                 bevelDouble(g, x, y, w, h, true);
             }
+            case MOTIF -> MotifChrome.raised(g, x, y, w, h, windowBg, motif);
         }
     }
 
@@ -704,6 +774,7 @@ public final class OsSkin implements ISkin {
                 g.fill(x, y, x + w, y + 1, 0xFF85806F);
                 g.fill(x, y + 1, x + w, y + 2, 0xFFF0EDE6);
             }
+            case MOTIF -> MotifChrome.statusBar(g, x, y, w, h, motif);
         }
     }
 
@@ -714,6 +785,7 @@ public final class OsSkin implements ISkin {
             case FLAT -> dark ? 0xFF242833 : 0xFFFFFFFF;
             case KDE2 -> 0xFFD6D2CD;
             case GNOME1 -> 0xFFCDC8BC;
+            case MOTIF -> fieldBg;
         };
     }
 

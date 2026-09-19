@@ -20,6 +20,9 @@ import dev.jstech.computers.operation.payload.RenameFilePayload;
 import dev.jstech.computers.operation.payload.RenameVolumePayload;
 import dev.jstech.computers.operation.payload.RequestDiskFilesPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.fs.FileOpeners;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.InstallerLayout;
@@ -39,6 +42,7 @@ import dev.jstech.core.client.gui.component.SearchField;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -759,8 +763,7 @@ public final class FilesApp implements IDesktopApp {
     private List<TreeItem> tree() {
         final List<TreeItem> out = new ArrayList<>();
         out.add(new TreeItem("Quick access", "", true, false, -1));
-        out.add(new TreeItem("Desktop", linux() ? SystemLayout.POSIX_DESKTOP_DIR : SystemLayout.DESKTOP_DIR,
-                false, false, -1));
+        out.add(new TreeItem("Desktop", desktopDirAt(host, !linux()), false, false, -1));
         out.add(new TreeItem("Storage", "Storage", false, false, -1));
         out.add(new TreeItem(linux() ? "Devices" : "This PC", "", true, false, -1));
         for (int i = 0; i < volumes.size(); i++) {
@@ -1384,9 +1387,26 @@ public final class FilesApp implements IDesktopApp {
         }
     }
 
-    /** The folder the desktop's icons live in, by the desktop's id, for a window opened onto it. */
-    public static String desktopDirFor(final String os) {
-        return os.startsWith("frames_") ? SystemLayout.DESKTOP_DIR : SystemLayout.POSIX_DESKTOP_DIR;
+    /**
+     * The folder the desktop's icons live in on the machine at {@code host}.
+     *
+     * <p>Asked of the system that machine runs and not of the desktop it wears, because the same desktop sits
+     * on systems that keep their people in different places: CDE's is under /home on FreeBSD and under /usr on
+     * UNIX. A machine that cannot be reached answers with the common Unix home, or with Frames' own folder on
+     * a Frames desktop.
+     */
+    static String desktopDirAt(final BlockPos host, final boolean frames) {
+        if (frames) {
+            return SystemLayout.DESKTOP_DIR;
+        }
+        final Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null && mc.level.getBlockEntity(host) instanceof IOsHost machine) {
+            final OsDef system = machine.installedOs();
+            if (system != null) {
+                return SystemLayout.desktopDirFor(system, OsRegistry.getKernel(system.kernelId()));
+            }
+        }
+        return SystemLayout.POSIX_DESKTOP_DIR;
     }
 
     /** The context menu for {@code target} (a row, or {@code null} for empty space), greyed where the volume forbids. */

@@ -228,6 +228,17 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   desktop programs that ask for Frames XP or a Linux desktop (Network Management Studio, the Crafting Manager,
   Pattern Studio, Storage Insights, the Craft Planner, the Cluster and Gateway Managers, Remote Control,
   Minesweeper); the Automation Manager, Virtual Studio Code and Exposure stay with the later desktops.
+- CDE looks like CDE. Windows wear Motif frames: a thick raised border, the menu button at the left of the
+  title, minimise and maximise at the right, and the title centred on a strip that takes the active colour
+  only for the window in front. Buttons, wells, tabs and lists are all the same grey told apart by light and
+  shade, read from a palette of eight colours, and the backdrop is a hatch in two of them. Where the others
+  have a taskbar it has the Front Panel, a raised slab at the bottom centre: a clock with hands that tell the
+  world's time, the day of the world on a calendar page, the File Manager, the Text Editor, the four workspaces
+  with EXIT beside them, the Style Manager, and the Applications control, whose arrow raises a subpanel listing
+  every program on the machine. It lists no open windows, because CDE never did. The right button on the slab
+  opens the panel's own menu, where the Task Manager is.
+- The File Manager and the file dialogs open a desktop's Desktop folder and Home where the system really
+  keeps them, which is under `/usr/player` on UNIX and not under `/home/player`.
 - `installpkg`, the way UNIX installs a program: put the medium the package came on in a linked drive and say
   `installpkg`. With one medium in it takes what that medium carries; with several it lists them and asks to be
   told which by name, and with none it says so. The medium itself is met under `/mnt` by its drive letter. A

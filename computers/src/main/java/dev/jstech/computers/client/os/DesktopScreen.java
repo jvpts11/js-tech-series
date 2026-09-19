@@ -15,9 +15,11 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.MachineKeyboard;
 import dev.jstech.computers.client.MonitorFrame;
+import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.TaskbarGroups;
+import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
 import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
@@ -125,6 +127,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private final LinuxPanels linuxPanels = new LinuxPanels(this);
     /** The Frames systems' two: the classic bottom taskbar, and Frames 11's centered band of icons. */
     private final FramesPanels framesPanels = new FramesPanels(this);
+    /** CDE's Front Panel, which stands where the others have a bar, and the subpanel that rises out of it. */
+    private final CdePanels cdePanels = new CdePanels(this);
+    private final CdeLaunchers cdeLaunchers = new CdeLaunchers(this);
     /** The flyout that lists one program's windows over its button on the panel. */
     private final TaskPopup taskPopup = new TaskPopup(this);
     /** The icons on the wallpaper: where each one sits, what it looks like, and which ones are picked. */
@@ -685,6 +690,33 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         return clockText();
     }
 
+    /** The minute of the world's day counted from midnight, for a clock that has hands instead of figures. */
+    int minuteOfDay() {
+        final Minecraft mc = Minecraft.getInstance();
+        return mc.level == null ? 0 : (int) (((mc.level.getDayTime() % 24000L + 6000L) % 24000L) * 3L / 50L);
+    }
+
+    /** Which day of the world it is, counted from one, for a calendar page. */
+    int dayOfWorld() {
+        final Minecraft mc = Minecraft.getInstance();
+        return mc.level == null ? 1 : (int) (mc.level.getDayTime() / 24000L % 9999L) + 1;
+    }
+
+    /** The palette a CDE desktop is drawn from. */
+    CdePalette cdePalette() {
+        return CdePalette.DEFAULT;
+    }
+
+    /** Which of CDE's workspaces is up, counted from nought. */
+    int workspace() {
+        return 0;
+    }
+
+    /** Opens the launcher when it is shut and shuts it when it is open, for a panel that has its own button. */
+    void toggleLauncher() {
+        toggleStart();
+    }
+
     /** Whether the host computer is on a data network right now, as its block entity tells the client. */
     boolean onNetwork() {
         return networkAttached();
@@ -972,12 +1004,21 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
 
     /** One past the last desktop-local row of the work area (the bottom panel's top, or the screen bottom). */
     private int workBottom() {
-        return topPanel() ? sh() : sh() - TASKBAR_H;
+        return topPanel() ? sh() : sh() - panelBand();
     }
 
     /** The pixels reserved for a bottom panel (none under GNOME's top bar). */
     private int bottomReserve() {
-        return topPanel() ? 0 : TASKBAR_H;
+        return topPanel() ? 0 : panelBand();
+    }
+
+    /**
+     * How tall the band a panel stands in is. A taskbar is a taskbar's height on every desktop that has one;
+     * CDE's Front Panel is a slab of pictures and stands taller, and windows keep out of its band the whole
+     * width of the desktop although the slab itself is only as wide as what it holds.
+     */
+    private int panelBand() {
+        return is(PanelStyle.CDE) ? CdeFrontPanelLayout.BAND_H : TASKBAR_H;
     }
 
     // Frames 11 taskbar: each centered item (Start + one per program) occupies this slot.
@@ -1378,6 +1419,13 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             }
         }
         return null;
+    }
+
+    /** Screen position of the middle of one of the Front Panel's controls, under the arrow at its head. */
+    public int[] frontPanelPoint(final CdeFrontPanelLayout.Control control) {
+        final CdeFrontPanelLayout.Rect r = CdeFrontPanelLayout.control(control, sw(), sh());
+        return new int[] {sx(r.x() + r.w() / 2), sy(r.y() + CdeFrontPanelLayout.ARROW_H + (r.h()
+                - CdeFrontPanelLayout.ARROW_H) / 2)};
     }
 
     /** Screen position of a point on the panel clear of Start and of the task buttons: its empty stretch. */
@@ -1911,7 +1959,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         // Cache the local cursor so the Start-menu draw (called deeper in this frame) can highlight the hovered row.
         this.hoverX = lmx;
         this.hoverY = lmy;
-        taskPopup.update(lmx, lmy, sw, sh - TASKBAR_H);
+        taskPopup.update(lmx, lmy, sw, sh - panelBand());
         final HardwareEra eraNow = era();
 
         /*
@@ -1961,7 +2009,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
 
         renderWindows(g, lmx, lmy, partialTick, sw, sh);
 
-        final int tbY = sh - TASKBAR_H;
+        final int tbY = sh - panelBand();
         renderPanelLayer(g, tbY, sw, sh, lmx, lmy);
         renderMenus(g, tbY, lmx, lmy, partialTick);
         renderDragFeedback(g, sw, tbY, perCol);
@@ -2030,7 +2078,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
                                   final int lmx, final int lmy) {
         g.pose().pushPose();
         g.pose().translate(0, 0, DesktopZ.TASKBAR);
-        if (is(PanelStyle.FRAMES_11)) {
+        if (is(PanelStyle.CDE)) {
+            // CDE has no bar at all: a slab of controls at the bottom centre, in its palette's relief.
+            cdePanels.render(g, sw, sh, cdePalette());
+        } else if (is(PanelStyle.FRAMES_11)) {
             // Frames 11 taskbar: dark bar, centered Start + app icons with an active indicator, clock right.
             framesPanels.renderModern(g, tbY, sw, lmx, lmy);
         } else if (periodPanel()) {
@@ -2051,8 +2102,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             renderBalloon(g, tbY, sw);
             g.pose().popPose();
         }
-        // The figures behind the notification area, while the cursor rests on it.
-        if (!topPanel()) {
+        // The figures behind the notification area, while the cursor rests on it. CDE has no such area.
+        if (!topPanel() && !is(PanelStyle.CDE)) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.TASKBAR + 8);
             drawTrayTip(g, tbY, sw);
@@ -2272,8 +2323,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             // A desktop icon's Properties: the explorer on the desktop's folder shows the window.
             final String path = key.substring(OPEN_PROPS.length());
             if (allowOpen("Files")) {
-                final FilesApp files = new FilesApp(host, desktopId.getPath(),
-                        FilesApp.desktopDirFor(desktopId.getPath()), monitorPos);
+                final FilesApp files = new FilesApp(host, desktopId.getPath(), desktopDir, monitorPos);
                 files.showPropertiesFor(FsPaths.fileName(path));
                 openApp("Files", files);
             }
@@ -3395,6 +3445,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             return;
         }
         switch (panel) {
+            case CDE -> cdeLaunchers.render(g, cdePanels.applicationsControl(sw(), sh()), cdePalette());
             case FRAMES_XP -> renderStartMenuXp(g, tbY);
             case FRAMES_11 -> renderStartMenu11(g, tbY);
             case KDE -> renderStartMenuKde(g, tbY);
@@ -3939,7 +3990,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         }
         final double mouseX = lx(mouseXAbs);
         final double mouseY = ly(mouseYAbs);
-        final int tbY = sh() - TASKBAR_H;
+        final int tbY = sh() - panelBand();
         if (clickedPanel(mouseX, mouseY, button, tbY)) {
             return true;
         }
@@ -4039,6 +4090,24 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
                 openPanelMenu((int) mouseX, 0);
             }
             return true;
+        }
+        /*
+         * CDE: the Front Panel answers for itself, and so does the subpanel standing on it. There is no Start
+         * button and no row of open programs to test, and the band either side of the slab is plain desktop.
+         */
+        if (is(PanelStyle.CDE)) {
+            if (startOpen) {
+                if (cdeLaunchers.click((int) mouseX, (int) mouseY, cdePanels.applicationsControl(sw(), sh()))) {
+                    return true;
+                }
+                startOpen = false;
+            }
+            // The right button on the slab opens the panel's own menu, where the Task Manager has always been.
+            if (button == 1 && CdeFrontPanelLayout.panel(sw(), sh()).holds(mouseX, mouseY)) {
+                openPanelMenu((int) mouseX, tbY);
+                return true;
+            }
+            return cdePanels.click(mouseX, mouseY, sw(), sh());
         }
         // Windows 11 keeps Start with the centered group, so it has its own hit test.
         if (is(PanelStyle.FRAMES_11) && mouseY >= tbY) {

@@ -63,6 +63,8 @@ public final class DesktopWindow {
     private boolean maximized;
     // Which title-bar button is currently held down: 0 none, 1 minimize, 2 maximize, 3 close.
     private int pressedBtn;
+    // Whether the skin last drawn with keeps the way out at the left end of the bar, as Motif does.
+    private boolean menuAtLeft;
     // Geometry saved before maximizing, to restore on un-maximize.
     private int restoreX;
     private int restoreY;
@@ -400,6 +402,8 @@ public final class DesktopWindow {
                        final int mouseX, final int mouseY, final float partialTick,
                        final int screenW, final int screenH, final int taskbarH, final int workTop) {
         resolveGeometry(screenW, screenH, taskbarH, workTop);
+        // Where the buttons stand is the skin's to say, and the hit tests below have to agree with the drawing.
+        this.menuAtLeft = skin.menuAtLeft();
         final int wx = curX;
         final int wy = curY;
         final int ww = curW;
@@ -414,7 +418,8 @@ public final class DesktopWindow {
             skin.windowShadow(g, wx, wy, ww, wh);
         }
         skin.windowFrame(g, wx, wy, ww, wh);
-        skin.titleBar(g, wx, wy, ww, TITLE_H, focused);
+        skin.titleBar(g, wx, wy, ww, TITLE_H, focused, closeX() - wx + BTN + 2,
+                dialog() ? 3 : wx + ww - minX() + 2);
         /*
          * The program's own icon at the left of the bar, the way every desktop of these generations marked
          * which program a window belongs to. A key nothing answers to simply gets no icon.
@@ -434,8 +439,9 @@ public final class DesktopWindow {
          */
         final String title = app.title();
         final int textLeft = wx + (titleIcon ? 3 + ICON + 3 : 4);
+        final int titleFloor = menuAtLeft ? closeX() + BTN + 5 : wx + 4;
         final int titleX = skin.titleCentered()
-                ? Math.max(wx + 4, Math.min(wx + (ww - font.width(title)) / 2, minX() - font.width(title) - 4))
+                ? Math.max(titleFloor, Math.min(wx + (ww - font.width(title)) / 2, minX() - font.width(title) - 4))
                 : textLeft;
         g.drawString(font, title, titleX, wy + 3,
                 focused ? skin.titleText() : 0xFF5B6674, focused && skin.textShadow());
@@ -536,16 +542,20 @@ public final class DesktopWindow {
         }
     }
 
+    /*
+     * Three buttons at the right end, close outermost, on every desktop but Motif's, where the one way out is
+     * the menu button at the LEFT end and minimise and maximise have the right end to themselves.
+     */
     private int closeX() {
-        return curX + curW - BTN - 3;
+        return menuAtLeft ? curX + 3 : curX + curW - BTN - 3;
     }
 
     private int maxX() {
-        return curX + curW - 2 * BTN - 5;
+        return menuAtLeft ? curX + curW - BTN - 3 : curX + curW - 2 * BTN - 5;
     }
 
     private int minX() {
-        return curX + curW - 3 * BTN - 7;
+        return menuAtLeft ? curX + curW - 2 * BTN - 5 : curX + curW - 3 * BTN - 7;
     }
 
     public boolean closeBoxHit(final double mx, final double my) {

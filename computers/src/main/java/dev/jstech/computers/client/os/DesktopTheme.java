@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.gui.CdePalette;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -61,6 +62,9 @@ public record DesktopTheme(
             0xFF69B03B, 0xFF2B2B2B, 0xFFF7F7F7, 0xFFB0B0B0,
             "Menu", false);
 
+    // CDE in the palette it ships with.
+    private static final DesktopTheme CDE_DEFAULT = cde(CdePalette.DEFAULT);
+
     /** The theme for an OS id; the Frames editions bundle their own desktop, so the id doubles as the desktop id. */
     public static DesktopTheme forOs(final ResourceLocation osId) {
         return forDesktop(osId);
@@ -74,7 +78,20 @@ public record DesktopTheme(
             case "kde_plasma" -> KDE;
             case "gnome" -> GNOME;
             case "cinnamon" -> CINNAMON;
+            case "cde" -> CDE_DEFAULT;
             default -> WIN95;
         };
+    }
+
+    /**
+     * CDE in that palette. It has no taskbar and no Start button, so the fields that name those hold the
+     * Front Panel's grey and its active colour, which is what draws in their place.
+     */
+    public static DesktopTheme cde(final CdePalette p) {
+        return new DesktopTheme(
+                p.backdropA(), p.window(), p.light(), p.active(), p.ink(),
+                p.window(), p.inset(), 0xFFFFFFFF, p.window(), p.ink(),
+                p.active(), p.activeInk(), p.window(), p.shade(),
+                "", false);
     }
 }
