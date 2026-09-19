@@ -30,6 +30,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.ICliPackages;
+import dev.jstech.computers.program.install.MirrorPackage;
 import dev.jstech.computers.program.tty.TtyScriptProcess;
 import dev.jstech.computers.sigma.pack.Packed;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
@@ -161,6 +162,28 @@ public final class PackageService {
             }
         }
         return out;
+    }
+
+    /**
+     * What the Mirror has under that name for a Linux system that is still being built by hand, or null when it
+     * has nothing by it.
+     *
+     * <p>The machine has no system of its own yet to say what it runs, or has a different one on another disk,
+     * so this goes by what a Linux system can run and not by what is installed. A service is left out: those
+     * are switched on by the machine that runs them once it is up, not laid onto a disk beforehand.
+     *
+     * @param hasATree whether the system being built files its packages by category, and so knows them by those
+     *                 names as well
+     */
+    @Nullable
+    public MirrorPackage whileInstalling(final String typed, final boolean hasATree) {
+        for (final ProgramSpec spec : OsRegistry.programs()) {
+            if (spec.installable() && spec.kind() != ProgramKind.SERVICE && spec.platforms().contains(Platform.LINUX)
+                    && named(typed, spec, hasATree) && this.wrongMachine(spec) == null) {
+                return SourceChains.packageOf(spec);
+            }
+        }
+        return null;
     }
 
     /**
@@ -397,22 +420,22 @@ public final class PackageService {
     private ProgramSpec offeredAs(final String wanted) {
         final boolean hasATree = this.manager().compilesFromSource();
         for (final ProgramSpec candidate : this.offered()) {
-            if (candidate.commandName().equalsIgnoreCase(wanted)
-                    || candidate.id().getPath().equalsIgnoreCase(wanted)
-                    || (hasATree && SourceChains.names(wanted, candidate))) {
+            if (named(wanted, candidate, hasATree)) {
                 return candidate;
             }
         }
         return null;
     }
 
-    /** Why that program is not installed on this machine, or null when nothing stands in its way. */
+    /** Whether what was typed is that program: its command, its id, or its place in a package tree. */
+    private static boolean named(final String typed, final ProgramSpec spec, final boolean hasATree) {
+        return spec.commandName().equalsIgnoreCase(typed) || spec.id().getPath().equalsIgnoreCase(typed)
+                || (hasATree && SourceChains.names(typed, spec));
+    }
+
+    /** Why a program made for another kind of machine does not install on this one, or null when it does. */
     @Nullable
-    private ICliComputer.OpResult whyNotHere(final ProgramSpec spec) {
-        final ICliComputer.OpResult tooOld = this.eraGate(spec);
-        if (tooOld != null) {
-            return tooOld;
-        }
+    private ICliComputer.OpResult wrongMachine(final ProgramSpec spec) {
         final BlockEntity machine = (BlockEntity) this.terminal;
         if (spec.hostScope() == HostScope.MAINFRAME && !(machine instanceof MainframeBlockEntity)) {
             return ICliComputer.OpResult.fail(spec.commandName() + " only installs on the Mainframe");
@@ -424,6 +447,20 @@ public final class PackageService {
                 && !(machine instanceof ClusterManagementComputerBlockEntity)) {
             return ICliComputer.OpResult.fail(spec.commandName()
                     + " only installs on a Cluster Management Computer");
+        }
+        return null;
+    }
+
+    /** Why that program is not installed on this machine, or null when nothing stands in its way. */
+    @Nullable
+    private ICliComputer.OpResult whyNotHere(final ProgramSpec spec) {
+        final ICliComputer.OpResult tooOld = this.eraGate(spec);
+        if (tooOld != null) {
+            return tooOld;
+        }
+        final ICliComputer.OpResult elsewhere = this.wrongMachine(spec);
+        if (elsewhere != null) {
+            return elsewhere;
         }
         if (this.has(spec)) {
             return ICliComputer.OpResult.ok(spec.commandName() + " is already the newest version");

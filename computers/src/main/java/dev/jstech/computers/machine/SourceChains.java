@@ -10,6 +10,8 @@ package dev.jstech.computers.machine;
 import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ProgramVersions;
+import dev.jstech.computers.program.install.MirrorPackage;
+import dev.jstech.computers.program.install.MirrorPackage.Piece;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -28,66 +30,63 @@ final class SourceChains {
     /** How much of a program's installed size its source comes to, the usual kind of estimate. */
     private static final double SOURCE_SHARE = 0.25;
 
-    private static final Map<String, List<Link>> DESKTOPS = Map.of(
+    private static final Map<String, List<Piece>> DESKTOPS = Map.of(
             "kde_plasma", List.of(
-                    new Link("dev-qt/qtbase", "6.7.3", "qtbase-everywhere-src-6.7.3.tar.xz", 48.0,
+                    new Piece("dev-qt/qtbase", "6.7.3", "qtbase-everywhere-src-6.7.3.tar.xz", 48.0,
                             "gui network widgets", "-debug", true),
-                    new Link("kde-frameworks/kconfig", "6.6.0", "kconfig-6.6.0.tar.xz", 2.1, "qml", "-debug -doc",
+                    new Piece("kde-frameworks/kconfig", "6.6.0", "kconfig-6.6.0.tar.xz", 2.1, "qml", "-debug -doc",
                             true),
-                    new Link("kde-frameworks/kcoreaddons", "6.6.0", "kcoreaddons-6.6.0.tar.xz", 2.4, "dbus", "-debug",
+                    new Piece("kde-frameworks/kcoreaddons", "6.6.0", "kcoreaddons-6.6.0.tar.xz", 2.4, "dbus", "-debug",
                             true),
-                    new Link("kde-plasma/kwin", "6.1.5", "kwin-6.1.5.tar.xz", 8.6, "handbook lock", "-debug", true),
-                    new Link("kde-plasma/plasma-workspace", "6.1.5", "plasma-workspace-6.1.5.tar.xz", 19.0,
+                    new Piece("kde-plasma/kwin", "6.1.5", "kwin-6.1.5.tar.xz", 8.6, "handbook lock", "-debug", true),
+                    new Piece("kde-plasma/plasma-workspace", "6.1.5", "plasma-workspace-6.1.5.tar.xz", 19.0,
                             "handbook wallpapers", "-debug", true),
-                    new Link("kde-plasma/plasma-meta", "6.1.5", "", 0.0, "display-manager sddm", "-cups", false)),
+                    new Piece("kde-plasma/plasma-meta", "6.1.5", "", 0.0, "display-manager sddm", "-cups", false)),
             "gnome", List.of(
-                    new Link("dev-libs/glib", "2.80.5", "glib-2.80.5.tar.xz", 5.3, "elf mime xattr", "-debug", true),
-                    new Link("gui-libs/gtk", "4.14.5", "gtk-4.14.5.tar.xz", 13.2, "introspection wayland", "-debug",
+                    new Piece("dev-libs/glib", "2.80.5", "glib-2.80.5.tar.xz", 5.3, "elf mime xattr", "-debug", true),
+                    new Piece("gui-libs/gtk", "4.14.5", "gtk-4.14.5.tar.xz", 13.2, "introspection wayland", "-debug",
                             true),
-                    new Link("x11-wm/mutter", "46.5", "mutter-46.5.tar.xz", 3.1, "introspection wayland", "-debug",
+                    new Piece("x11-wm/mutter", "46.5", "mutter-46.5.tar.xz", 3.1, "introspection wayland", "-debug",
                             true),
-                    new Link("gnome-base/gnome-shell", "46.5", "gnome-shell-46.5.tar.xz", 2.0, "networkmanager",
+                    new Piece("gnome-base/gnome-shell", "46.5", "gnome-shell-46.5.tar.xz", 2.0, "networkmanager",
                             "-debug", true),
-                    new Link("gnome-base/gnome", "46.0", "", 0.0, "bluetooth extras", "-accessibility", false)),
+                    new Piece("gnome-base/gnome", "46.0", "", 0.0, "bluetooth extras", "-accessibility", false)),
             "cinnamon", List.of(
-                    new Link("dev-libs/glib", "2.80.5", "glib-2.80.5.tar.xz", 5.3, "elf mime xattr", "-debug", true),
-                    new Link("x11-libs/gtk+", "3.24.43", "gtk+-3.24.43.tar.xz", 12.6, "introspection X", "-debug",
+                    new Piece("dev-libs/glib", "2.80.5", "glib-2.80.5.tar.xz", 5.3, "elf mime xattr", "-debug", true),
+                    new Piece("x11-libs/gtk+", "3.24.43", "gtk+-3.24.43.tar.xz", 12.6, "introspection X", "-debug",
                             true),
-                    new Link("gnome-extra/cjs", "6.2.0", "cjs-6.2.0.tar.gz", 0.7, "cairo readline", "-debug", true),
-                    new Link("x11-wm/muffin", "6.2.0", "muffin-6.2.0.tar.gz", 2.9, "introspection", "-debug", true),
-                    new Link("gnome-extra/cinnamon", "6.2.9", "cinnamon-6.2.9.tar.gz", 8.4, "nls networkmanager",
+                    new Piece("gnome-extra/cjs", "6.2.0", "cjs-6.2.0.tar.gz", 0.7, "cairo readline", "-debug", true),
+                    new Piece("x11-wm/muffin", "6.2.0", "muffin-6.2.0.tar.gz", 2.9, "introspection", "-debug", true),
+                    new Piece("gnome-extra/cinnamon", "6.2.9", "cinnamon-6.2.9.tar.gz", 8.4, "nls networkmanager",
                             "-debug", true)));
 
     private SourceChains() {
     }
 
-    /**
-     * One package of a chain.
-     *
-     * @param atom     its category and name
-     * @param archive  the file its source comes in, empty for one that is only a list of others
-     * @param sizeMb   how big that file is
-     * @param compiles whether it has anything of its own to compile
-     */
-    record Link(String atom, String version, String archive, double sizeMb, String flagsOn, String flagsOff,
-                boolean compiles) {
-    }
-
     /** Everything merging that program builds, in the order it is built, the program itself last. */
-    static List<Link> of(final ProgramSpec spec) {
-        final List<Link> chain = DESKTOPS.get(spec.id().getPath());
+    static List<Piece> of(final ProgramSpec spec) {
+        final List<Piece> chain = DESKTOPS.get(spec.id().getPath());
         if (chain != null) {
             return chain;
         }
         final String name = spec.commandName().toLowerCase(Locale.ROOT);
         final String version = ProgramVersions.of(spec.id());
-        return List.of(new Link(category(spec.kind()) + "/" + name, version, name + "-" + version + ".tar.xz",
+        return List.of(new Piece(category(spec.kind()) + "/" + name, version, name + "-" + version + ".tar.xz",
                 Math.max(1.0, spec.minDiskMb() * SOURCE_SHARE), "nls", "-debug", true));
+    }
+
+    /**
+     * That program as a package manager sees it, for a system that is still being built and has no package
+     * service of its own to ask.
+     */
+    static MirrorPackage packageOf(final ProgramSpec spec) {
+        return new MirrorPackage(spec.id().toString(), spec.commandName().toLowerCase(Locale.ROOT),
+                ProgramVersions.of(spec.id()), Math.max(1.0, spec.minDiskMb()), of(spec));
     }
 
     /** The name that program is merged under, which is the last of what merging it builds. */
     static String atomOf(final ProgramSpec spec) {
-        final List<Link> chain = of(spec);
+        final List<Piece> chain = of(spec);
         return chain.get(chain.size() - 1).atom();
     }
 

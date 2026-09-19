@@ -12,6 +12,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.install.SetupTiming;
 import dev.jstech.computers.program.install.MakeOpts;
+import dev.jstech.computers.program.install.MirrorPackage.Piece;
 import dev.jstech.computers.program.install.voice.PortageVoices;
 import dev.jstech.computers.program.tty.TtyScript;
 import java.util.ArrayList;
@@ -51,15 +52,15 @@ final class SourceBuild {
     static TtyScript of(final ProgramSpec spec, final IOsHost host, final boolean ask, final Runnable merged) {
         final int jobs = jobs(host);
         final int factor = SetupTiming.eraFactor(host.installedEra());
-        final List<SourceChains.Link> chain = SourceChains.of(spec);
+        final List<Piece> chain = SourceChains.of(spec);
         double compiled = 0.0;
-        for (final SourceChains.Link link : chain) {
+        for (final Piece link : chain) {
             compiled += link.compiles() ? link.sizeMb() : 0.0;
         }
         /* The whole build is as long as the program is big; each package has the share of it its source is. */
         final int whole = buildTicks(spec, host.maxCpuMhz(), jobs);
         final List<PortageVoices.Merge> merges = new ArrayList<>(chain.size());
-        for (final SourceChains.Link link : chain) {
+        for (final Piece link : chain) {
             final int build = link.compiles() && compiled > 0.0
                     ? Math.max(20, (int) Math.round(whole * link.sizeMb() / compiled)) : 0;
             final int fetch = link.archive().isEmpty() ? 0

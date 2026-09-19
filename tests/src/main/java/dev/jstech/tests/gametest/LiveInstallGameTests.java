@@ -106,12 +106,10 @@ public final class LiveInstallGameTests {
             helper.assertTrue(table.matches("(?s).*UUID=[0-9a-f]{8}-[0-9a-f]{4}-.*"), "the root by its identifier");
             helper.assertTrue(table.matches("(?s).*UUID=[0-9A-F]{4}-[0-9A-F]{4}\\s.*"), "the other by its serial");
             term.type("echo workshop > /etc/hostname");
-            term.type("passwd");
-            helper.assertTrue(term.asking().startsWith("New password"), "it asks: " + term.asking());
-            term.type("hunter2");
-            helper.assertTrue(term.asking().startsWith("Retype"), "and asks again: " + term.asking());
-            term.type("hunter2");
-            helper.assertFalse(term.busy(), "and is done once it has been told twice");
+            helper.assertTrue(term.type("passwd").contains("command not found"),
+                    "nothing logs in with a password yet, so the medium has no tool that sets one");
+            helper.assertTrue(term.type("pacman -S nothing-of-the-kind").contains("target not found"),
+                    "a package is one the Mirror has, or it is not installed");
             term.type("pacman -S grub efibootmgr");
         });
         steps.thenWaitUntil(() -> helper.assertTrue(term.asking().contains("Proceed with installation?"),
@@ -194,14 +192,20 @@ public final class LiveInstallGameTests {
         idle(helper, steps, term);
         steps.thenExecute(() -> {
             helper.assertTrue(term.type("blkid").contains("TYPE=\"ext4\""), "the identifiers to copy the table from");
+            helper.assertTrue(term.type("blkid >> /etc/fstab").isEmpty(), "sent into the table they say nothing");
+            helper.assertTrue(term.type("cat /etc/fstab").contains("/dev/sda2: UUID="), "and are there to cut down");
             term.type("echo 'UUID=0000 / ext4 defaults,noatime 0 1' >> /etc/fstab");
-            term.type("passwd");
-            term.type("hunter2");
-            term.type("hunter2");
+            term.type("eselect profile set 5");
+            helper.assertTrue(term.type("eselect profile list").contains("desktop/plasma (stable) *"),
+                    "the chooser stars the profile it was set to");
+            helper.assertTrue(term.type("emerge app-misc/nothing-of-the-kind").contains("no ebuilds to satisfy"),
+                    "a package is one the Mirror has, or it is not merged");
             helper.assertTrue(term.type("grub-install --efi-directory=/efi").contains("command not found"),
                     "the bootloader is a package, and it is not merged yet");
-            term.type("emerge --ask sys-boot/grub");
         });
+        // A program merged by its place in the tree while installing is on the machine that comes up.
+        typed(helper, steps, term, "emerge app-misc/screenfetch");
+        steps.thenExecute(() -> term.type("emerge --ask sys-boot/grub"));
         steps.thenWaitUntil(() -> helper.assertTrue(term.asking().contains("Would you like to merge"),
                 "it lists what it would merge and then asks: " + term.asking()));
         steps.thenExecute(() -> term.type("y"));
@@ -219,6 +223,8 @@ public final class LiveInstallGameTests {
             helper.assertTrue(disk != null && disk.files().get(MakeOpts.PATH) != null
                             && disk.files().get(MakeOpts.PATH).content().contains("-j64"),
                     "and the build options written on the way are on the disk it installed to");
+            helper.assertTrue(mainframe.console().isInstalled("jsc:screenfetch"),
+                    "and so is the program that was merged inside it, asked for by its place in the tree");
         }).thenSucceed();
     }
 

@@ -214,8 +214,29 @@ final class LiveFiles {
             return LiveTurn.said(unquote(said));
         }
         final int at = append >= 0 ? append : over;
-        final String text = unquote(said.substring(0, at).trim());
-        final String target = said.substring(at + (append >= 0 ? 2 : 1)).trim();
+        return this.putInto(said.substring(at + (append >= 0 ? 2 : 1)).trim(),
+                unquote(said.substring(0, at).trim()), append >= 0);
+    }
+
+    /**
+     * Puts what a tool said into a file instead of on the glass, when the line sent it there with {@code >} or
+     * {@code >>} the way a shell does. A line that sent it nowhere, a tool that refused and a tool left running
+     * are all handed back as they came.
+     *
+     * <p>This is how a table written by hand gets a filesystem's identifier into it without anybody copying
+     * thirty-six characters off the glass: {@code blkid >> /etc/fstab}, and the editor to cut the line down.
+     */
+    LiveTurn redirected(final String line, final LiveTurn turn) {
+        final int append = line.lastIndexOf(">>");
+        final int over = append >= 0 ? -1 : line.lastIndexOf('>');
+        if ((append < 0 && over < 0) || !turn.ok() || turn.tool() != null) {
+            return turn;
+        }
+        return this.putInto(line.substring(append >= 0 ? append + 2 : over + 1).trim(), turn.text(), append >= 0);
+    }
+
+    /** Writes text to the file a redirection named, after what is there or over it. */
+    private LiveTurn putInto(final String target, final String text, final boolean after) {
         if (target.isEmpty()) {
             return LiveTurn.refused("bash: syntax error near unexpected token `newline'");
         }
@@ -223,7 +244,7 @@ final class LiveFiles {
         if (this.dirs.contains(whole)) {
             return LiveTurn.refused("bash: " + target + ": Is a directory");
         }
-        final String had = append >= 0 ? this.files.get(whole) : null;
+        final String had = after ? this.files.get(whole) : null;
         this.write(whole, had == null || had.isEmpty() ? text : had + "\n" + text);
         return LiveTurn.silent();
     }

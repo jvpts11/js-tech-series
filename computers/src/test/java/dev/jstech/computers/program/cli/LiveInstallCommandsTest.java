@@ -38,7 +38,7 @@ class LiveInstallCommandsTest {
         this.clock += APART;
         return new LiveInstallState.Env(
                 List.of(new LiveInstallState.Device("sda", 20_480)), true, this.clock, 4, 2000, 4, false, 6_000L,
-                false);
+                false, (typed, byCategory) -> null);
     }
 
     /**

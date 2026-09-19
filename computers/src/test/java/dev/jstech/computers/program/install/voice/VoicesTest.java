@@ -268,22 +268,6 @@ class VoicesTest {
                 glass.all());
     }
 
-    @Test
-    void passwd_asksTwiceUnseenAndRefusesTwoThatDoNotMatch() {
-        final boolean[] set = {false};
-        final TtyScriptProcess tool = new TtyScriptProcess(BootVoices.passwd(() -> set[0] = true));
-        final Glass glass = new Glass();
-        tool.begin(0);
-        tool.advance(0, glass);
-        assertTrue(tool.asking().masked());
-        tool.answer("hunter2", 0, glass);
-        assertTrue(tool.asking().masked());
-        tool.answer("hunter3", 0, glass);
-        assertFalse(set[0]);
-        assertTrue(glass.all().contains("Sorry, passwords do not match."), glass.all());
-        assertFalse(glass.all().contains("hunter"), "and neither was ever on the glass:\n" + glass.all());
-    }
-
     /**
      * No line that redraws itself is wider than the terminal it was laid out for, since one that wrapped would
      * be redrawing two rows. The one exception is the filesystem maker's last count, whose label alone is

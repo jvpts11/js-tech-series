@@ -14,11 +14,15 @@ import java.util.List;
  * What stands between an installation by hand and a system that comes up.
  *
  * <p>Two lists. The first is what no system boots without, and is always asked for: something to boot, a
- * table of what to mount, a bootloader that is installed and has been told what to start, and a way in. The
- * second is the rest of what the handbooks have you do, the clock, the locale, the name, the bind mounts, the
- * profile, which a system comes up without and is the worse for. Whether a world asks for the second as well
- * is the world's own setting, one for each distribution, because how much of the handbook an installation
- * should be is a matter of taste.
+ * table of what to mount, and a bootloader that is installed and has been told what to start. The second is
+ * the rest of what the handbooks have you do, the clock, the name, the bind mounts, the profile, which a
+ * system comes up without and is the worse for. Whether a world asks for the second as well is the world's
+ * own setting, one for each distribution, because how much of the handbook an installation should be is a
+ * matter of taste.
+ *
+ * <p>Neither list has a root password, a time zone or a locale on it. Nothing in this world logs in with a
+ * password yet, the game has no time zones, and the language a player reads in is the one they chose in the
+ * game's own options, so a step that set any of them would be setting nothing.
  */
 final class LiveChecklist {
 
@@ -54,9 +58,6 @@ final class LiveChecklist {
         if (!progress.grubConfig) {
             out.add("nothing for the bootloader to start (grub-mkconfig -o /boot/grub/grub.cfg)");
         }
-        if (!progress.password) {
-            out.add("no root password (passwd)");
-        }
         if (everyStep) {
             wholeHandbook(out, gentoo, progress, disks, chosenName);
         }
@@ -69,7 +70,7 @@ final class LiveChecklist {
         if (gentoo && !disks.boundIn()) {
             out.add("/proc, /sys, /dev and /run were not bound into the new system (mount --rbind, --types proc)");
         }
-        if (gentoo && !progress.profileChosen) {
+        if (gentoo && progress.profile == 0) {
             out.add("no profile chosen (eselect profile list, then set)");
         }
         if (gentoo && !progress.worldUpdated) {
@@ -78,15 +79,8 @@ final class LiveChecklist {
         if (gentoo && !progress.kernelChosen) {
             out.add("/usr/src/linux points nowhere (eselect kernel set 1)");
         }
-        if (!progress.timezone) {
-            out.add(gentoo ? "no time zone (echo a zone into /etc/timezone, emerge --config sys-libs/timezone-data)"
-                    : "no time zone (ln -sf /usr/share/zoneinfo/<Region>/<City> /etc/localtime)");
-        }
         if (!gentoo && !progress.clockSet) {
             out.add("the hardware clock was not set (hwclock --systohc)");
-        }
-        if (!progress.localesGenerated) {
-            out.add("no locale generated (uncomment one in /etc/locale.gen, then locale-gen)");
         }
         if (chosenName.isEmpty()) {
             out.add("the machine has no name (echo <name> > /etc/hostname)");

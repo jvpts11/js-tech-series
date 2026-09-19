@@ -215,7 +215,7 @@ public final class InstallService {
         final LiveTurn result = state.run(line, new LiveInstallState.Env(
                 devices, this.packages.reachable(), this.level.getGameTime(), computer.cpuCores(),
                 computer.maxCpuMhz(), SetupTiming.eraFactor(era),
-                uefi, this.level.getDayTime(), everyStep));
+                uefi, this.level.getDayTime(), everyStep, this.packages::whileInstalling));
         machine.setChanged();
         if (!result.complete()) {
             return result;

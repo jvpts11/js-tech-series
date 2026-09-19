@@ -124,15 +124,6 @@ public final class PacmanVoices {
         return script.effect(built).done();
     }
 
-    /** Generating the locales a file names, which is this distribution's plainer way of saying it. */
-    public static TtyScript localeGen(final List<String> locales, final int ticksEach, final Runnable generated) {
-        final TtyScript.Builder script = TtyScript.script().say("Generating locales...");
-        for (final String locale : locales) {
-            script.pause(ticksEach).say("  " + locale + "... done");
-        }
-        return script.say("Generation complete.").effect(generated).done();
-    }
-
     /** The whole of one transaction: resolve, list, total, ask, retrieve, check, install, run the hooks. */
     private static void transaction(final TtyScript.Builder script, final List<Package> packages,
                                     final boolean ask, final int fetchTicks, final int writeTicks,

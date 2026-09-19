@@ -47,8 +47,8 @@ public final class LiveInstallState {
             "ls", "cat", "less", "more", "cd", "echo", "nano", "mkdir", "lsblk", "blkid", "fdisk", "mkfs.ext4", "mkfs",
             "mkfs.fat", "mkfs.vfat", "mount", "umount", "pacstrap", "pacman", "wget", "tar", "genfstab",
             "arch-chroot", "chroot", "source", "export", "env-update", "emerge-webrsync", "emerge", "eselect",
-            "genkernel", "make", "locale-gen", "ln", "hwclock", "hostname", "mkinitcpio", "grub-install",
-            "grub-mkconfig", "passwd", "exit", "reboot", "help");
+            "genkernel", "make", "hwclock", "hostname", "mkinitcpio", "grub-install", "grub-mkconfig", "exit",
+            "reboot", "help");
 
     /**
      * What stands in front of the name of a file of the session wherever a file of the machine is named.
@@ -118,9 +118,10 @@ public final class LiveInstallState {
      * @param dayTime   the world's count of ticks across all its days, which is what a tool stamps a date from
      * @param everyStep whether this world asks for every step of the handbook rather than only the ones a
      *                  system cannot boot without
+     * @param shelf     what the Mirror has, to be asked for a package by the name somebody typed
      */
     public record Env(List<Device> devices, boolean mirror, long now, int cores, int mhz, int eraFactor,
-                      boolean uefi, long dayTime, boolean everyStep) {
+                      boolean uefi, long dayTime, boolean everyStep, MirrorPackage.IShelf shelf) {
 
         /** Whether a device of that name is in the machine. */
         public boolean has(final String name) {
@@ -252,20 +253,18 @@ public final class LiveInstallState {
             case "echo" -> this.files.echo(line.trim());
             case "nano" -> this.nano(parts);
             case "mkdir" -> this.mkdir(parts);
-            case "lsblk" -> this.disks.lsblk(env, this.distro == Distro.ARCH ? 1_126 : 749,
-                    this.distro == Distro.ARCH ? "/run/archiso/airootfs" : "/run/initramfs/live");
-            case "blkid" -> this.disks.blkid(env);
+            case "lsblk" -> this.files.redirected(line, this.disks.lsblk(env, this.distro == Distro.ARCH ? 1_126 : 749,
+                    this.distro == Distro.ARCH ? "/run/archiso/airootfs" : "/run/initramfs/live"));
+            case "blkid" -> this.files.redirected(line, this.disks.blkid(env));
             case "fdisk" -> this.fdisk(first, env);
             case "mkfs.fat", "mkfs.vfat" -> this.disks.mkfsFat(parts, env);
             case "mkfs.ext4" -> this.disks.mkfsExt4(first, env);
             case "mkfs" -> this.disks.mkfsExt4(parts.length > 2 ? parts[parts.length - 1] : "", env);
             case "mount" -> this.disks.mount(parts, this.files);
             case "umount", "source", "export", "env-update" -> LiveTurn.silent();
-            case "ln" -> this.settings.linkZone(line);
             case "hwclock" -> this.settings.setClock();
             case "arch-chroot", "chroot" -> this.enter(verb, first);
             case "hostname" -> this.settings.hostname(parts);
-            case "passwd" -> this.settings.passwd();
             case "grub-install" -> this.bootloader.install(parts, env);
             case "grub-mkconfig" -> this.bootloader.config(line, env);
             case "exit" -> this.exit();
@@ -306,7 +305,6 @@ public final class LiveInstallState {
             case "eselect" -> this.gentoo.eselect(parts);
             case "genkernel" -> this.gentoo.genkernel(env);
             case "make" -> this.gentoo.make(line.trim(), env);
-            case "locale-gen" -> this.gentoo.localeGen(env);
             default -> LiveTurn.refused("bash: " + verb + ": command not found");
         };
     }
@@ -317,7 +315,6 @@ public final class LiveInstallState {
             case "genfstab" -> this.arch.genfstab(line, env);
             case "pacman" -> this.arch.pacman(parts, env);
             case "mkinitcpio" -> this.arch.mkinitcpio(env);
-            case "locale-gen" -> this.arch.localeGen(env);
             default -> LiveTurn.refused("zsh: command not found: " + verb);
         };
     }

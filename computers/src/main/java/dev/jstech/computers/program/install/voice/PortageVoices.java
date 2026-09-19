@@ -51,6 +51,12 @@ public final class PortageVoices {
             + "error files global help history input keys main memory move nls options parse path prompt regex "
             + "screen search signal strutil syntax term text undo util winio").split(" ");
 
+    /** The profiles a machine of this architecture can be set to, in the order the chooser numbers them. */
+    private static final List<String> PROFILES = List.of("default/linux/vel64/23.0",
+            "default/linux/vel64/23.0/systemd", "default/linux/vel64/23.0/desktop",
+            "default/linux/vel64/23.0/desktop/gnome", "default/linux/vel64/23.0/desktop/plasma",
+            "default/linux/vel64/23.0/no-multilib", "default/linux/vel64/23.0/hardened");
+
     private static final List<String> CONFIGURED = List.of("configure: creating ./config.status",
             "config.status: creating Makefile", "config.status: creating src/Makefile",
             "config.status: creating config.sg", "config.status: executing depfiles commands");
@@ -145,17 +151,30 @@ public final class PortageVoices {
 
     /** The profiles the machine can be set to, with the star on the one in force. */
     public static List<CliLine> profiles(final int chosen) {
-        final String[] names = {"default/linux/vel64/23.0 (stable)", "default/linux/vel64/23.0/systemd (stable)",
-            "default/linux/vel64/23.0/desktop (stable)", "default/linux/vel64/23.0/desktop/gnome (stable)",
-            "default/linux/vel64/23.0/desktop/plasma (stable)", "default/linux/vel64/23.0/no-multilib (stable)",
-            "default/linux/vel64/23.0/hardened (stable)"};
         final List<CliLine> out = new ArrayList<>();
         out.add(Tint.line(Tint.green("Available profile symlink targets:")));
-        for (int i = 0; i < names.length; i++) {
-            out.add(Tint.line("  ", Tint.bright("[" + (i + 1) + "]"), "   " + names[i],
+        for (int i = 0; i < PROFILES.size(); i++) {
+            out.add(Tint.line("  ", Tint.bright("[" + (i + 1) + "]"), "   " + PROFILES.get(i) + " (stable)",
                     i + 1 == chosen ? Tint.line(" ", Tint.cyan("*")) : ""));
         }
         return out;
+    }
+
+    /**
+     * The number of the profile somebody named, by that number or by its whole name, or zero when what they
+     * typed is neither.
+     */
+    public static int profileOf(final String typed) {
+        final int byName = PROFILES.indexOf(typed) + 1;
+        if (byName > 0) {
+            return byName;
+        }
+        try {
+            final int number = Integer.parseInt(typed);
+            return number >= 1 && number <= PROFILES.size() ? number : 0;
+        } catch (final NumberFormatException notANumber) {
+            return 0;
+        }
     }
 
     /**
@@ -224,23 +243,6 @@ public final class PortageVoices {
         final String load = String.format(Locale.ROOT, "Load avg: %d.92, 2.84, 1.37", Math.max(0, jobs - 1));
         final int room = Bars.COLUMNS - ">>>".length() - done.length() - load.length();
         return done + " ".repeat(Math.max(2, room)) + load;
-    }
-
-    /** What generating the locales a file names prints, a job to each. */
-    public static TtyScript localeGen(final List<String> locales, final int jobs, final int ticksEach,
-                                      final Runnable generated) {
-        final TtyScript.Builder script = TtyScript.script()
-                .say(star("Generating " + locales.size() + " locales (this might take a while) with " + jobs
-                        + (jobs == 1 ? " job" : " jobs")))
-                .pause(8);
-        for (int i = 0; i < locales.size(); i++) {
-            script.pause(ticksEach)
-                    .say(Bars.ok(" (" + (i + 1) + "/" + locales.size() + ") Generating " + locales.get(i) + " ..."));
-        }
-        return script.say(star("Generation complete"))
-                .say(Bars.ok("Adding locales to archive ..."))
-                .effect(generated)
-                .done();
     }
 
     /** The list of what would be merged: new or an upgrade, the flags in their two colours, and the total. */

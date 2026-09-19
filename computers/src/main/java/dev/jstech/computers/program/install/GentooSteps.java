@@ -14,7 +14,6 @@ import dev.jstech.computers.program.install.voice.PortageVoices;
 import dev.jstech.computers.program.install.voice.WorldStamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -139,11 +138,6 @@ final class GentooSteps {
                             LiveTimes.write(TREE_MB * 8, 4), TREE_FILES, stamp, synced)
                     : PortageVoices.sync(LiveTimes.fetch(TREE_MB / 4.0, env), TREE_FILES, synced));
         }
-        if (line.contains("--config")) {
-            this.progress.timezone = true;
-            return LiveTurn.said(" * Updating /etc/localtime with /usr/share/zoneinfo/"
-                    + zoneOr(this.files.read(this.files.inNewSystem("/etc/timezone")), "UTC"));
-        }
         if (!this.progress.synced) {
             return LiveTurn.refused("!!! The portage tree is empty. Run emerge-webrsync or emerge --sync first.");
         }
@@ -163,9 +157,26 @@ final class GentooSteps {
         if (targets.isEmpty()) {
             return LiveTurn.refused("!!! No packages given.");
         }
+        // Looked up before anything is built, so a name the tree does not have stops the merge before it starts.
+        final List<MirrorPackage> programs = new ArrayList<>();
+        for (final String target : targets) {
+            if (ofTheInstallItself(target)) {
+                continue;
+            }
+            final MirrorPackage found = env.shelf().find(target, true);
+            if (found == null) {
+                return LiveTurn.refused("", "emerge: there are no ebuilds to satisfy \"" + target + "\".", "");
+            }
+            programs.add(found);
+        }
         final int jobs = LiveTimes.jobs(this.makeJobs(), env);
-        return LiveTurn.running(PortageVoices.emerge(this.merges(targets, jobs, env), ask, jobs,
-                () -> this.merged(targets)));
+        return LiveTurn.running(PortageVoices.emerge(this.merges(targets, programs, jobs, env), ask, jobs,
+                () -> this.merged(targets, programs)));
+    }
+
+    /** Whether that target is one of the installation's own steps rather than a program the Mirror keeps. */
+    private static boolean ofTheInstallItself(final String target) {
+        return target.equals("@world") || target.contains("gentoo-sources") || target.endsWith("grub");
     }
 
     /** The chooser: profiles, kernels, and the news nobody reads. */
@@ -176,11 +187,19 @@ final class GentooSteps {
         final String what = parts.length > 1 ? parts[1] : "";
         final String action = parts.length > 2 ? parts[2] : "list";
         if (what.equals("profile")) {
-            if (action.equals("set")) {
-                this.progress.profileChosen = true;
-                return LiveTurn.silent();
+            if (!action.equals("set")) {
+                return LiveTurn.said(PortageVoices.profiles(this.progress.profileInForce()));
             }
-            return LiveTurn.said(PortageVoices.profiles(1));
+            if (parts.length < 4) {
+                return LiveTurn.refused("!!! Error: You didn't tell me what to set the symlink to", "exiting");
+            }
+            final int chosen = PortageVoices.profileOf(parts[3]);
+            if (chosen == 0) {
+                return LiveTurn.refused("!!! Error: Target \"" + parts[3] + "\" doesn't appear to be valid!",
+                        "exiting");
+            }
+            this.progress.profile = chosen;
+            return LiveTurn.silent();
         }
         if (what.equals("kernel")) {
             if (!this.progress.sources) {
@@ -254,24 +273,6 @@ final class GentooSteps {
         return LiveTurn.refused("make: *** No rule to make target. Stop.");
     }
 
-    /** Generates the locales the file names, a job to each. */
-    LiveTurn localeGen(final LiveInstallState.Env env) {
-        if (!this.files.inside()) {
-            return LiveTurn.refused("locale-gen: command not found");
-        }
-        // The locale every system has whatever the file says, by the name that does not borrow a language's.
-        final List<String> locales = new ArrayList<>(List.of("POSIX.UTF-8"));
-        final String file = this.files.read(this.files.inNewSystem("/etc/locale.gen"));
-        for (final String each : (file == null ? "" : file).split("\n")) {
-            if (!each.isBlank() && !each.startsWith("#")) {
-                locales.add(each.trim().split("\\s+")[0]);
-            }
-        }
-        final int jobs = LiveTimes.jobs(this.makeJobs(), env);
-        return LiveTurn.running(PortageVoices.localeGen(locales, jobs,
-                LiveTimes.compile(24_000L, jobs, env) / 2, () -> this.progress.localesGenerated = true));
-    }
-
     /** Whether the table of what to mount, which this distribution has written by hand, names a root. */
     boolean fstabNamesARoot() {
         final String table = this.files.read(this.files.inNewSystem("/etc/fstab"));
@@ -307,8 +308,8 @@ final class GentooSteps {
     }
 
     /** What the packages asked for come to, each with how long this machine takes to fetch and to build it. */
-    private List<PortageVoices.Merge> merges(final List<String> targets, final int jobs,
-                                             final LiveInstallState.Env env) {
+    private List<PortageVoices.Merge> merges(final List<String> targets, final List<MirrorPackage> programs,
+                                             final int jobs, final LiveInstallState.Env env) {
         final List<PortageVoices.Merge> out = new ArrayList<>();
         for (final String target : targets) {
             if (target.equals("@world")) {
@@ -325,18 +326,22 @@ final class GentooSteps {
                 out.add(new PortageVoices.Merge("sys-boot/grub", "2.12-r5", "", "grub-2.12.tar.xz", 6.4,
                         "fonts nls themes", "-device-mapper -doc", LiveTimes.fetch(6.4, env),
                         LiveTimes.build(6.4 * 3, jobs, env)));
-            } else {
-                final String atom = target.contains("/") ? target : "app-misc/" + target;
-                final String name = atom.substring(atom.indexOf('/') + 1).toLowerCase(Locale.ROOT);
-                out.add(new PortageVoices.Merge(atom, "1.0", "", name + "-1.0.tar.xz", 8.0, "nls", "-debug",
-                        LiveTimes.fetch(8.0, env), LiveTimes.build(8.0, jobs, env)));
+            }
+        }
+        /* A program of the Mirror's is everything it is built from, the toolkit first and the program last. */
+        for (final MirrorPackage program : programs) {
+            for (final MirrorPackage.Piece piece : program.pieces()) {
+                out.add(new PortageVoices.Merge(piece.atom(), piece.version(), "", piece.archive(), piece.sizeMb(),
+                        piece.flagsOn(), piece.flagsOff(),
+                        piece.archive().isEmpty() ? 0 : LiveTimes.fetch(piece.sizeMb(), env),
+                        piece.compiles() ? LiveTimes.build(piece.sizeMb(), jobs, env) : 0));
             }
         }
         return out;
     }
 
     /** What having those packages merged means to the installation. */
-    private void merged(final List<String> targets) {
+    private void merged(final List<String> targets, final List<MirrorPackage> programs) {
         for (final String target : targets) {
             if (target.equals("@world")) {
                 this.progress.worldUpdated = true;
@@ -345,9 +350,11 @@ final class GentooSteps {
                 this.files.makeDir(this.files.inNewSystem("/usr/src/linux-" + KERNEL + "-gentoo"));
             } else if (target.endsWith("grub")) {
                 this.progress.grubPackage = true;
-            } else {
-                this.progress.ask(target);
             }
+        }
+        /* Kept by what the program is and not by what was typed, so it is found again when the system comes up. */
+        for (final MirrorPackage program : programs) {
+            this.progress.ask(program.id());
         }
     }
 
@@ -372,21 +379,9 @@ final class GentooSteps {
                 "# This sets the language of build output to English.",
                 "# Please keep this setting intact when reporting bugs.",
                 "LC_MESSAGES=POSIX.utf8"));
-        this.files.write(this.files.inNewSystem("/etc/locale.gen"), String.join("\n",
-                "# /etc/locale.gen: list all of the locales you want to have on your system.",
-                "#",
-                "# The format of each line:",
-                "# <locale name> <charset>",
-                "#",
-                "#en_US.UTF-8 UTF-8",
-                "#ja_JP.EUC-JP EUC-JP"));
         this.files.write(this.files.inNewSystem("/etc/fstab"), String.join("\n",
                 "# /etc/fstab: static file system information.",
                 "#",
                 "# <fs>                  <mountpoint>    <type>  <opts>          <dump> <pass>"));
-    }
-
-    private static String zoneOr(final String written, final String fallback) {
-        return written == null || written.isBlank() ? fallback : written.trim();
     }
 }

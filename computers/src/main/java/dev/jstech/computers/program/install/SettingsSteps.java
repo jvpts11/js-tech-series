@@ -7,11 +7,9 @@
  */
 package dev.jstech.computers.program.install;
 
-import dev.jstech.computers.program.install.voice.BootVoices;
-
 /**
  * What both distributions settle the same way once somebody is inside the new system: what the machine is
- * called, the root password, the zone its clock reads in, and the hardware clock.
+ * called, and the hardware clock.
  */
 final class SettingsSteps {
 
@@ -65,23 +63,6 @@ final class SettingsSteps {
         }
         this.files.write(this.files.inNewSystem("/etc/hostname"), name);
         this.progress.chosenName = name;
-        return LiveTurn.silent();
-    }
-
-    /** Sets the root password of the new system, asked for twice and shown neither time. */
-    LiveTurn passwd() {
-        if (!this.files.inside()) {
-            return LiveTurn.refused("passwd: this would change the live medium's password, which is gone at the",
-                    "        next restart (step into the new system first)");
-        }
-        return LiveTurn.running(BootVoices.passwd(() -> this.progress.password = true));
-    }
-
-    /** Links the zone the clock reads in, which says nothing when it works, as linking anything does. */
-    LiveTurn linkZone(final String line) {
-        if (line.contains("/usr/share/zoneinfo/") && line.contains("/etc/localtime")) {
-            this.progress.timezone = true;
-        }
         return LiveTurn.silent();
     }
 

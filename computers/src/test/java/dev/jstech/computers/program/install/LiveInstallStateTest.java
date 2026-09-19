@@ -9,6 +9,7 @@ package dev.jstech.computers.program.install;
 
 import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.computers.program.install.MirrorPackage.Piece;
 import dev.jstech.computers.program.tty.ITtyProcess;
 import dev.jstech.computers.program.tty.ITtySink;
 import org.junit.jupiter.api.Test;
@@ -44,7 +45,22 @@ class LiveInstallStateTest {
     private LiveInstallState.Env env(final boolean mirror, final boolean uefi, final boolean everyStep) {
         return new LiveInstallState.Env(
                 List.of(new LiveInstallState.Device("sda", 20_480), new LiveInstallState.Device("sdb", 512_000)),
-                mirror, this.clock, 4, 2000, 4, uefi, 6_000L, everyStep);
+                mirror, this.clock, 4, 2000, 4, uefi, 6_000L, everyStep, LiveInstallStateTest::onTheShelf);
+    }
+
+    /** The two things this Mirror has: a small program of one piece, and a desktop that is built from three. */
+    private static MirrorPackage onTheShelf(final String typed, final boolean byCategory) {
+        if (typed.equals("screenfetch") || (byCategory && typed.equals("app-misc/screenfetch"))) {
+            return new MirrorPackage("jsc:screenfetch", "screenfetch", "3.9.1", 4.0, List.of(new Piece(
+                    "app-misc/screenfetch", "3.9.1", "screenfetch-3.9.1.tar.xz", 1.0, "nls", "-debug", true)));
+        }
+        if (typed.equals("kde_plasma") || (byCategory && typed.equals("kde-plasma/plasma-meta"))) {
+            return new MirrorPackage("jsc:kde_plasma", "kde_plasma", "6.1.5", 900.0, List.of(
+                    new Piece("dev-qt/qtbase", "6.7.3", "qtbase-6.7.3.tar.xz", 48.0, "gui", "-debug", true),
+                    new Piece("kde-plasma/kwin", "6.1.5", "kwin-6.1.5.tar.xz", 8.6, "lock", "-debug", true),
+                    new Piece("kde-plasma/plasma-meta", "6.1.5", "", 0.0, "sddm", "-cups", false)));
+        }
+        return null;
     }
 
     /** One line on a machine of the older firmware with the Mirror up, its tool played out with no answers. */
@@ -119,7 +135,6 @@ class LiveInstallStateTest {
         assertTrue(step(st, "genfstab -U /mnt >> /mnt/etc/fstab").ok());
         assertTrue(step(st, "arch-chroot /mnt").ok());
         assertEquals("[root@archiso /]#", st.prompt());
-        step(st, "passwd", env(true, false, false), "hunter2", "hunter2");
         step(st, "pacman -S grub", env(true, false, false), "y");
         assertTrue(step(st, "grub-install /dev/sdb").ok());
         assertTrue(step(st, "grub-mkconfig -o /boot/grub/grub.cfg").ok());
@@ -138,7 +153,6 @@ class LiveInstallStateTest {
         step(st, "genkernel all");
         assertTrue(seen().contains("Kernel compiled successfully!"), seen());
         step(st, "echo '" + ROOT_LINE + "' >> /etc/fstab");
-        step(st, "passwd", env(true, false, false), "hunter2", "hunter2");
         step(st, "emerge --ask sys-boot/grub", env(true, false, false), "y");
         assertTrue(seen().contains(">>> sys-boot/grub-2.12-r5 merged."), seen());
         assertTrue(step(st, "grub-install /dev/sdb").ok());
@@ -226,7 +240,7 @@ class LiveInstallStateTest {
         assertFalse(r.ok());
         assertFalse(r.complete());
         assertTrue(r.text().contains("no bootloader"), r.text());
-        assertTrue(r.text().contains("no root password"), r.text());
+        assertTrue(r.text().contains("nothing for the bootloader to start"), r.text());
     }
 
     @Test
@@ -241,10 +255,32 @@ class LiveInstallStateTest {
     void reboot_inAWorldThatAsksForEveryStep_wantsTheRestOfTheHandbook() {
         final LiveInstallState st = archWithABase();
         final LiveTurn r = step(st, "reboot", env(true, false, true));
-        assertTrue(r.text().contains("no time zone"), r.text());
-        assertTrue(r.text().contains("no locale generated"), r.text());
+        assertTrue(r.text().contains("the hardware clock was not set"), r.text());
         assertTrue(r.text().contains("the machine has no name"), r.text());
-        assertFalse(step(st, "reboot").text().contains("no time zone"), "and a world that does not is not");
+        assertFalse(step(st, "reboot").text().contains("the machine has no name"), "and a world that does not is not");
+    }
+
+    /**
+     * Nothing logs in with a password yet, the game has no time zones, and the language is the game's own
+     * setting, so no world asks for any of the three, and the tools that set them are not on the medium.
+     */
+    @Test
+    void passwordZoneAndLocale_areNoPartOfAnInstallation() {
+        for (final LiveInstallState.Distro distro : LiveInstallState.Distro.values()) {
+            final LiveInstallState st = distro == LiveInstallState.Distro.ARCH ? archWithABase()
+                    : gentooInsideTheNewSystem();
+            step(st, "exit");
+            final String asked = step(st, "reboot", env(true, false, true)).text();
+            for (final String gone : List.of("password", "time zone", "locale")) {
+                assertFalse(asked.contains(gone), distro + " still asks for a " + gone + ": " + asked);
+            }
+            for (final String verb : List.of("passwd", "locale-gen", "ln")) {
+                assertFalse(LiveInstallState.VERBS.contains(verb), verb);
+                assertTrue(step(st, verb).text().contains("command not found"), verb);
+            }
+            final String guide = step(st, "cat /root/install.txt").text();
+            assertFalse(guide.contains("passwd") || guide.contains("locale") || guide.contains("zone"), guide);
+        }
     }
 
     /** The table this distribution has written by hand is asked for, and a line naming a root is what it is. */
@@ -607,16 +643,65 @@ class LiveInstallStateTest {
         assertEquals("", st.chosenName());
     }
 
-    /** A password is asked for twice and neither answer shown; two that differ set nothing. */
+    /** The identifiers go into the table the way anybody gets them there: sent after what the file already has. */
     @Test
-    void passwd_twoThatDoNotMatch_setNothing() {
+    void blkid_sentIntoTheTable_saysNothingAndIsThereToCutDown() {
+        final LiveInstallState st = gentooInsideTheNewSystem();
+        final LiveTurn sent = step(st, "blkid >> /etc/fstab");
+        assertTrue(sent.ok() && sent.lines().isEmpty(), sent.text());
+        final String table = step(st, "cat /etc/fstab").text();
+        assertTrue(table.startsWith("# /etc/fstab"), "what was there is still there: " + table);
+        assertTrue(table.contains("/dev/sdb: UUID=\""), table);
+        assertTrue(step(st, "blkid").text().contains("UUID="), "and without the redirection it is printed");
+        assertFalse(step(st, "blkid >> /etc").ok(), "a directory is not somewhere to send it");
+    }
+
+    /** The chooser remembers what it was told, stars it, and takes a profile by its number or its name. */
+    @Test
+    void eselectProfile_starsTheOneThatWasSet() {
+        final LiveInstallState st = gentooInsideTheNewSystem();
+        assertTrue(step(st, "eselect profile list").lines().get(1).text().endsWith("*"), "the first, as it came");
+        assertTrue(step(st, "eselect profile set 5").ok());
+        final List<CliLine> listed = step(st, "eselect profile list").lines();
+        assertTrue(listed.get(5).text().contains("desktop/plasma") && listed.get(5).text().endsWith("*"));
+        assertFalse(listed.get(1).text().endsWith("*"));
+        assertTrue(step(st, "eselect profile set default/linux/vel64/23.0/desktop/gnome").ok());
+        assertTrue(step(st, "eselect profile list").lines().get(4).text().endsWith("*"));
+        assertTrue(step(st, "eselect profile set 9").text().contains("doesn't appear to be valid"));
+        assertFalse(step(st, "eselect profile set").ok());
+        final LiveInstallState back = LiveInstallState.deserialize(st.serialize());
+        assertTrue(step(back, "eselect profile list").lines().get(4).text().endsWith("*"), "and it is saved");
+    }
+
+    /**
+     * A desktop merged inside the new system is everything it is built from, and what is kept of it is the
+     * program it is, so the machine that comes up has it. A profile by itself installs nothing.
+     */
+    @Test
+    void gentoo_aDesktopMergedInsideTheNewSystem_isBuiltFromItsPiecesAndKept() {
+        final LiveInstallState st = gentooInsideTheNewSystem();
+        step(st, "emerge-webrsync");
+        step(st, "eselect profile set 5");
+        assertTrue(st.askedFor().isEmpty(), "choosing a profile asks for nothing");
+        step(st, "emerge --ask kde-plasma/plasma-meta", env(true, false, false), "y");
+        assertTrue(seen().contains("dev-qt/qtbase-6.7.3"), seen());
+        assertTrue(seen().contains(">>> kde-plasma/plasma-meta-6.1.5 merged."), seen());
+        assertEquals(List.of("jsc:kde_plasma"), st.askedFor());
+        final LiveTurn unknown = step(st, "emerge app-misc/nothing-of-the-kind");
+        assertFalse(unknown.ok());
+        assertTrue(unknown.text().contains("there are no ebuilds to satisfy \"app-misc/nothing-of-the-kind\""));
+    }
+
+    @Test
+    void arch_aProgramInstalledInsideTheNewSystem_isTheMirrorsAndIsKept() {
         final LiveInstallState st = archWithABase();
         step(st, "arch-chroot /mnt");
-        step(st, "passwd", env(true, false, false), "hunter2", "hunter3");
-        assertTrue(seen().contains("Sorry, passwords do not match."), seen());
-        assertFalse(seen().contains("hunter"), seen());
-        step(st, "exit");
-        assertTrue(step(st, "reboot").text().contains("no root password"));
+        step(st, "pacman -S screenfetch", env(true, false, false), "y");
+        assertTrue(seen().contains("screenfetch-3.9.1-1"), seen());
+        assertEquals(List.of("jsc:screenfetch"), st.askedFor());
+        final LiveTurn unknown = step(st, "pacman -S nothing-of-the-kind");
+        assertFalse(unknown.ok());
+        assertEquals("error: target not found: nothing-of-the-kind", unknown.text());
     }
 
     @Test

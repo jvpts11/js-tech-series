@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.install;
 
+import dev.jstech.computers.program.install.voice.PortageVoices;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -31,12 +32,10 @@ final class LiveProgress {
     boolean fstab;
     /** The package tree has been fetched. */
     boolean synced;
-    /** A profile has been chosen rather than left as it came. */
-    boolean profileChosen;
+    /** The number of the profile that was chosen, or zero while it is still the one the base system came with. */
+    int profile;
     /** The system has been brought up to date with its tree. */
     boolean worldUpdated;
-    /** The locales named in the file have been generated. */
-    boolean localesGenerated;
     /** The kernel sources are merged. */
     boolean sources;
     /** The link the kernel tools follow points at those sources. */
@@ -52,12 +51,15 @@ final class LiveProgress {
     boolean bootloader;
     /** The bootloader has been given its list of what to start. */
     boolean grubConfig;
-    boolean password;
-    /** The zone the clock reads in has been linked, and the hardware clock set from the system's. */
-    boolean timezone;
+    /** The hardware clock has been set from the system's. */
     boolean clockSet;
     /** The name the player gave the machine with the tool for it, empty while they have not. */
     String chosenName = "";
+
+    /** The profile the chooser stars: the one that was chosen, or the first, which is what a base system comes on. */
+    int profileInForce() {
+        return this.profile == 0 ? 1 : this.profile;
+    }
 
     List<String> askedFor() {
         return List.copyOf(this.asked);
@@ -87,9 +89,8 @@ final class LiveProgress {
         out.put("base", this.base);
         out.put("fstab", this.fstab);
         out.put("synced", this.synced);
-        out.put("profile_chosen", this.profileChosen);
+        out.put("profile", Integer.toString(this.profile));
         out.put("world_updated", this.worldUpdated);
-        out.put("locales", this.localesGenerated);
         out.put("sources", this.sources);
         out.put("kernel_chosen", this.kernelChosen);
         out.put("kernel_compiled", this.kernelCompiled);
@@ -98,8 +99,6 @@ final class LiveProgress {
         out.put("grub_package", this.grubPackage);
         out.put("bootloader", this.bootloader);
         out.put("grub_config", this.grubConfig);
-        out.put("password", this.password);
-        out.put("timezone", this.timezone);
         out.put("clock_set", this.clockSet);
         out.put("chosen_name", this.chosenName);
         out.put("asked", String.join(" ", this.asked));
@@ -110,9 +109,8 @@ final class LiveProgress {
         this.base = saved.flag("base");
         this.fstab = saved.flag("fstab");
         this.synced = saved.flag("synced");
-        this.profileChosen = saved.flag("profile_chosen");
+        this.profile = PortageVoices.profileOf(saved.text("profile", "0"));
         this.worldUpdated = saved.flag("world_updated");
-        this.localesGenerated = saved.flag("locales");
         this.sources = saved.flag("sources");
         this.kernelChosen = saved.flag("kernel_chosen");
         this.kernelCompiled = saved.flag("kernel_compiled");
@@ -121,8 +119,6 @@ final class LiveProgress {
         this.grubPackage = saved.flag("grub_package");
         this.bootloader = saved.flag("bootloader");
         this.grubConfig = saved.flag("grub_config");
-        this.password = saved.flag("password");
-        this.timezone = saved.flag("timezone");
         this.clockSet = saved.flag("clock_set");
         this.chosenName = saved.text("chosen_name", "");
         for (final String pkg : saved.text("asked", "").split(" ")) {

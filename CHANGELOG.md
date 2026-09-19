@@ -127,24 +127,33 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A command at a terminal can leave a tool running in front of it, the way a real one does. While the tool runs
   the prompt is away and what it prints arrives as it happens: lines one after another, a bar that fills in
   place, a flood of paths going by. A tool can stop and ask, with its question standing where the prompt would
-  and Enter by itself taking the default, and a password typed at one is not shown. Ctrl+C stops it, and what
+  and Enter by itself taking the default, and an answer it asks for unseen is not shown. Ctrl+C stops it, and what
   it had not finished stays not done. It keeps running with nobody at the screen, and it is still running after
   the world has been saved and loaded. Both terminals do this, the prompt that fills a monitor and the window
   on a desktop, and any command can start one. A server mounted in a rack does the same, and goes on with
   what it was left running while the rack's switch is turned to one of its neighbours.
 - The Gentoo install follows its handbook. The disk mounts at `/mnt/gentoo`, the stage 3 is fetched into it and
   unpacked there, and inside the chroot the package tree comes with `emerge-webrsync` before anything merges.
-  `eselect profile`, `emerge --update --deep --newuse @world`, `eselect kernel`, the time zone and `locale-gen`
-  are all there to be run, and `MAKEOPTS` in `/etc/portage/make.conf` is read. The kernel can be built either
-  way, `genkernel all` or `make` in `/usr/src/linux`. The filesystem table is written by hand from what `blkid`
-  prints, and the bootloader is a package that has to be merged before `grub-install` exists. Arch is the same
-  in its own words: it mounts at `/mnt`, `pacman -S grub efibootmgr` comes before `grub-install`, and
-  `ln -sf` for the zone, `hwclock --systohc` and `locale-gen` are there to be run.
+  `eselect profile`, `emerge --update --deep --newuse @world` and `eselect kernel` are all there to be run, and
+  `MAKEOPTS` in `/etc/portage/make.conf` is read. The chooser remembers the profile it was set to, by its
+  number or its name, and stars it; a profile says how things are built and installs nothing, as it does not
+  on a real one. The kernel can be built either way, `genkernel all` or `make` in `/usr/src/linux`. The
+  filesystem table is written by hand from what `blkid` prints, and `blkid >> /etc/fstab` puts the identifiers
+  into it to be cut down in the editor, so nobody copies one off the glass. The bootloader is a package that
+  has to be merged before `grub-install` exists. Arch is the same in its own words: it mounts at `/mnt`,
+  `pacman -S grub efibootmgr` comes before `grub-install`, and `hwclock --systohc` is there to be run.
+- What is installed inside the system being built is a program of the Mirror's. `emerge --ask
+  kde-plasma/plasma-meta` in the chroot builds everything the desktop is made of, the way it does on an
+  installed Gentoo, `pacman -S` installs by the Mirror's own names and versions, and the machine that comes up
+  has what was asked for. A name the Mirror has nothing by is refused in the tool's own words.
+- A by-hand install sets no root password, no time zone and no locale, and the medium carries no tool that
+  does. Nothing in this world logs in with a password yet, the game has no time zones, and the language a
+  player reads in is the one chosen in the game's own options, so those steps set nothing.
 - The live medium of a by-hand install carries `nano`, and it is nano: the title row with the file's name and
   `Modified`, what it has to say in brackets above the two rows of keys, `^O` asking for the name before it
   writes, `^X` asking about a file that has changed, `^W` and `^\` to search and to replace, `^K` and `^U` to
   cut lines and paste them, `^R` to pull another file in, `^C` for where the cursor is, and `^G` for its help.
-  It edits the files of the installation, `make.conf`, `locale.gen`, `fstab`, and what is saved is what the
+  It edits the files of the installation, `make.conf`, `fstab`, the machine's name, and what is saved is what the
   later steps read: `-j4` in the build options is what makes a compile four jobs wide. It is written on the
   black of the terminal it took over, at the terminal's size. Escape is looking away from the monitor and not
   closing the editor: the next look at that machine finds it open on the same file, with what was typed and
@@ -152,8 +161,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Two settings in the server configuration, `install_by_hand.gentoo_every_step` and
   `install_by_hand.arch_every_step`, decide how much of the handbook a world asks for. Off, which is the
   default, a restart only refuses what a system cannot boot without: a base system, a filesystem table, a
-  kernel, a bootloader with its list of what to start, and a root password. On, it asks for every step of that
-  distribution's handbook and says which are missing. Every step answers the way the real tool does either way.
+  kernel, and a bootloader with its list of what to start. On, it asks for every step of that distribution's
+  handbook that means something here and says which are missing. Every step answers the way the real tool does
+  either way.
 - The live medium of a hand-installed distribution carries files, and `ls`, `cd`, `cat` and `less` to read them.
   The guide the real medium ships with is in `/root/install.txt`, written from the steps the shell really
   accepts. What a step wrote is what reading it back shows: the filesystem table is not there until `genfstab`
