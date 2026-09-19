@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.machine;
 
+import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ComputerSettings;
@@ -79,6 +80,12 @@ public final class MachineConfigService {
                 console.setWallpaper(value == null ? "" : value.trim());
                 machine.setChanged();
                 return ICliComputer.OpResult.ok("wallpaper set");
+            }
+            case "cdestyle" -> {
+                // Read forgivingly and kept as read, so a style nobody could draw is never what is stored.
+                console.setCdeStyle(CdeStyle.parse(value));
+                machine.setChanged();
+                return ICliComputer.OpResult.ok("cdestyle set");
             }
             case "theme" -> {
                 // A theme preset bundles an accent and a wallpaper, so picking one restyles the desktop.

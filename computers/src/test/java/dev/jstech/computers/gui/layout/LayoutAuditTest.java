@@ -10,6 +10,8 @@ package dev.jstech.computers.gui.layout;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.computers.gui.CdeBackdrop;
+import dev.jstech.computers.gui.CdePalette;
 import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.core.gui.layout.GuiLayout;
 import java.io.File;
@@ -42,7 +44,8 @@ class LayoutAuditTest {
             "ComputerTerminalLayout", "ServerRouterLayout", "NetworkInteractorLayout",
             "CraftingSwitchLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
-            "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout");
+            "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout",
+            "CdeStyleLayout");
 
     private record AuditCase(String label, GuiLayout layout, boolean fixedSize) {
     }
@@ -134,6 +137,11 @@ class LayoutAuditTest {
         // CDE's Application Manager: the window of the four groups, and a group that fills two rows.
         c.add(new AuditCase("CdeAppManagerLayout(groups)", CdeAppManagerLayout.layout(4, false, 284, 62), true));
         c.add(new AuditCase("CdeAppManagerLayout(group)", CdeAppManagerLayout.layout(8, true, 292, 128), true));
+        // CDE's Style Manager: the strip of pages, and each page with everything it lists.
+        c.add(new AuditCase("CdeStyleLayout(strip)", CdeStyleLayout.stripLayout(2), true));
+        c.add(new AuditCase("CdeStyleLayout(color)", CdeStyleLayout.colorLayout(CdePalette.ALL.size()), true));
+        c.add(new AuditCase("CdeStyleLayout(backdrop)",
+                CdeStyleLayout.backdropLayout(CdeBackdrop.values().length), true));
         return c;
     }
 

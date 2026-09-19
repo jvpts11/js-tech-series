@@ -16,6 +16,7 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.MachineKeyboard;
 import dev.jstech.computers.client.MonitorFrame;
 import dev.jstech.computers.gui.CdePalette;
+import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.TaskbarGroups;
@@ -432,7 +433,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
          * The host's era picks the desktop's period look: a Linux desktop on Legacy hardware wears
          * its own era, instead of a modern flat theme on a machine from another decade.
          */
-        OsSkin base = OsSkin.forDesktop(desktopId, era());
+        // CDE is drawn out of the palette the machine keeps, which is a choice and not a fact of its era.
+        OsSkin base = is(PanelStyle.CDE) ? OsSkin.motif(cdePalette()) : OsSkin.forDesktop(desktopId, era());
         if (desktopDarkMode) {
             base = base.darkVariant();
         }
@@ -556,6 +558,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     /** The player's chosen wallpaper style ({@code ""} = OS default) and computer name, synced from the server. */
     private String desktopWallpaper = "";
     private String computerName = "";
+    /** CDE's palette and the backdrop of each workspace, synced from the server and worn while one is chosen. */
+    private CdeStyle cdeStyle = CdeStyle.DEFAULT;
 
     /** The desktop's right-click menu, the same component every program's menus are. */
     private final ContextMenu deskMenu =
@@ -715,7 +719,27 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
 
     /** The palette a CDE desktop is drawn from. */
     CdePalette cdePalette() {
-        return CdePalette.DEFAULT;
+        return cdeStyle.colours();
+    }
+
+    /** CDE's look as this desktop is wearing it, which is what the Style Manager starts from. */
+    CdeStyle cdeStyle() {
+        return cdeStyle;
+    }
+
+    /**
+     * Puts a look on the desktop at once, frames and panel and backdrop, without telling the machine: the Style
+     * Manager shows a palette this way while it is being chosen, and puts the kept one back on Cancel.
+     */
+    void wearCdeStyle(final CdeStyle style) {
+        cdeStyle = style == null ? CdeStyle.DEFAULT : style;
+        rebuildSkin();
+    }
+
+    /** Puts a look on the desktop and has the machine keep it, so it is there for whoever looks next. */
+    void keepCdeStyle(final CdeStyle style) {
+        wearCdeStyle(style);
+        PacketDistributor.sendToServer(new SetSettingPayload(host, "cdestyle", cdeStyle.encoded()));
     }
 
     /** Which of the desktop's workspaces is up, counted from nought. */
@@ -1617,6 +1641,53 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         return at == null ? null : screenPoint(at);
     }
 
+    /** CDE's look as the desktop is wearing it, as the machine would keep it. */
+    public String wornCdeStyle() {
+        return cdeStyle.encoded();
+    }
+
+    /** Screen position of a page on the Style Manager's strip, or null while the Style Manager is not up. */
+    public int[] styleManagerPagePoint(final String page) {
+        final StyleManagerApp manager = styleManager();
+        final int[] at = manager == null ? null : manager.pageCentre(page);
+        return at == null ? null : screenPoint(at);
+    }
+
+    /** Screen position of a palette on the Color page, or of a pattern on the Backdrop page, whichever is up. */
+    public int[] stylePageRowPoint(final String name) {
+        final StyleManagerApp manager = styleManager();
+        if (manager == null) {
+            return null;
+        }
+        int[] at = manager.colorPage() == null ? null : manager.colorPage().rowCentre(name);
+        if (at == null && manager.backdropPage() != null) {
+            at = manager.backdropPage().rowCentre(name);
+        }
+        return at == null ? null : screenPoint(at);
+    }
+
+    /** Screen position of a button of a Style Manager page: OK or Cancel on Color, Apply or Close on Backdrop. */
+    public int[] stylePageButtonPoint(final boolean color, final int button) {
+        final StyleManagerApp manager = styleManager();
+        if (manager == null) {
+            return null;
+        }
+        final int[] at = color
+                ? manager.colorPage() == null ? null : manager.colorPage().buttonCentre(button)
+                : manager.backdropPage() == null ? null : manager.backdropPage().buttonCentre(button);
+        return at == null ? null : screenPoint(at);
+    }
+
+    @Nullable
+    private StyleManagerApp styleManager() {
+        for (final DesktopWindow w : windows) {
+            if (w.app() instanceof StyleManagerApp manager) {
+                return manager;
+            }
+        }
+        return null;
+    }
+
     /** Screen position of the middle of EXIT on the Front Panel. */
     public int[] exitPoint() {
         final CdeFrontPanelLayout.Rect r = CdeFrontPanelLayout.exit(sw(), sh());
@@ -2164,6 +2235,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         active.desktopItems.clear();
         active.desktopItems.addAll(payload.files());
         active.desktopWallpaper = payload.wallpaper();
+        active.cdeStyle = CdeStyle.parse(payload.cdeStyle());
         active.computerName = payload.computerName();
         active.desktopAccent = payload.prefs().accent();
         active.desktopBrightness = payload.prefs().brightness();
@@ -2243,7 +2315,12 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         g.pose().scale((float) scale(), (float) scale(), 1);
         g.enableScissor(ox, oy, ox + pw(), oy + ph());
 
-        WallpaperPainter.paint(g, sw, sh, desktopId, eraNow, desktopWallpaper);
+        if (is(PanelStyle.CDE)) {
+            // CDE hangs no picture: each workspace wears a pattern of its own in the palette's backdrop colours.
+            MotifChrome.backdrop(g, sw, sh, cdePalette(), cdeStyle.backdrop(shownWorkspace));
+        } else {
+            WallpaperPainter.paint(g, sw, sh, desktopId, eraNow, desktopWallpaper);
+        }
 
         // A cooperative OS that ran out of memory shows its crash screen, then reboots to an empty session.
         if (crashing) {

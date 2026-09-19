@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.program.ComputerSettings;
 import java.util.ArrayList;
@@ -29,8 +30,9 @@ import java.util.Map;
  * places those icons exactly where the player dropped them; an icon with no entry flows into the next
  * free auto-layout cell. {@code pinned} names the programs pinned to the panel, by program id path, in
  * the order they sit there. {@code defaultApps} holds the program chosen with Always for each extension.
+ * {@code cdeStyle} is CDE's palette and backdrops as the machine keeps them, which only CDE reads.
  */
-public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String wallpaper,
+public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String wallpaper, String cdeStyle,
                                   String computerName, List<String> programs,
                                   List<WireIconCell> iconCells, Prefs prefs,
                                   List<WireCommunity> community, List<String> pinned,
@@ -87,7 +89,7 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "desktop_files"));
 
     /*
-     * Written out by hand: composite takes six pairs and this carries nine things. The alternative was
+     * Written out by hand: composite takes six pairs and this carries ten things. The alternative was
      * to bundle two of them into a record nobody else wants, which would have cost a reader more than
      * these two short methods do.
      */
@@ -98,6 +100,7 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
         DiskFilesPayload.WireFile.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_FILES))
                 .encode(buf, payload.files);
         buf.writeUtf(payload.wallpaper, 48);
+        buf.writeUtf(clip(payload.cdeStyle, CdeStyle.MOST_LETTERS), CdeStyle.MOST_LETTERS);
         /*
          * A name as long as a name may be. Written at that length, and cut to it rather than refused: this
          * packet is what puts a desktop in front of somebody, and a name a letter too long used to throw here
@@ -137,6 +140,7 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
         final List<DiskFilesPayload.WireFile> files =
                 DiskFilesPayload.WireFile.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_FILES)).decode(buf);
         final String wallpaper = buf.readUtf(48);
+        final String cdeStyle = buf.readUtf(CdeStyle.MOST_LETTERS);
         final String computerName = buf.readUtf(InstallerFlow.MOST_NAME_LETTERS);
         final List<String> programs =
                 ByteBufCodecs.stringUtf8(32).apply(ByteBufCodecs.list(MAX_PROGRAMS)).decode(buf);
@@ -154,8 +158,8 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
         for (int i = 0; i < apps; i++) {
             defaultApps.put(buf.readUtf(32), buf.readUtf(64));
         }
-        return new DesktopFilesPayload(files, wallpaper, computerName, programs, cells, prefs, community, pinned,
-                defaultApps);
+        return new DesktopFilesPayload(files, wallpaper, cdeStyle, computerName, programs, cells, prefs, community,
+                pinned, defaultApps);
     }
 
     /* Copied on the way in, so what the desktop is handed cannot change under it after it arrives. */

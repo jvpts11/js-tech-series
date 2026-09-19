@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program;
 
+import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.SetupJob;
 import dev.jstech.computers.program.install.LiveInstallState;
@@ -36,6 +37,8 @@ public final class ComputerConsoleState {
     private final Deque<String> history = new ArrayDeque<>();
     private final Set<String> installed = new LinkedHashSet<>();
     private String wallpaper = "";
+    /** CDE's palette and the backdrop of each workspace, as {@code CdeStyle} keeps them; empty until one is chosen. */
+    private String cdeStyle = "";
     private String computerName = "";
     /**
      * Which run of this machine is on the glass, counted up every time the machine starts over.
@@ -203,6 +206,15 @@ public final class ComputerConsoleState {
 
     public void setWallpaper(final String id) {
         this.wallpaper = id == null ? "" : id;
+    }
+
+    /** CDE's look on this machine, which is its wallpaper and its window colours at once. */
+    public CdeStyle cdeStyle() {
+        return CdeStyle.parse(this.cdeStyle);
+    }
+
+    public void setCdeStyle(final CdeStyle style) {
+        this.cdeStyle = style == null || style.equals(CdeStyle.DEFAULT) ? "" : style.encoded();
     }
 
     /** The player-given computer name ({@code ""} means unset). */
@@ -433,6 +445,9 @@ public final class ComputerConsoleState {
         if (!wallpaper.isEmpty()) {
             tag.putString("Wallpaper", wallpaper);
         }
+        if (!cdeStyle.isEmpty()) {
+            tag.putString("CdeStyle", cdeStyle);
+        }
         if (!computerName.isEmpty()) {
             tag.putString("ComputerName", computerName);
         }
@@ -545,6 +560,7 @@ public final class ComputerConsoleState {
                 : null;
         foreground.load(tag.getCompound("Foreground"));
         wallpaper = tag.getString("Wallpaper");
+        cdeStyle = tag.getString("CdeStyle");
         computerName = tag.getString("ComputerName");
         iconCells.clear();
         for (final Tag entry : tag.getList("IconCells", Tag.TAG_COMPOUND)) {

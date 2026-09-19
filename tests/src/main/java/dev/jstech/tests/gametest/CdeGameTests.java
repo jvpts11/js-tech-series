@@ -10,6 +10,8 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.gui.CdeBackdrop;
+import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
@@ -216,6 +218,33 @@ public final class CdeGameTests {
     }
 
     /**
+     * The Style Manager's choice is the machine's to keep: set through the machine's settings, it comes back
+     * from a save and is what the desktop is handed, and a style nobody could draw is kept as one that can be.
+     */
+    @GameTest(template = ARENA)
+    public static void cdeStyle_isKeptWithTheMachine(final GameTestHelper helper) {
+        final MainframeBlockEntity machine = machine(helper, "unix");
+        if (machine == null) {
+            return;
+        }
+        final CdeStyle chosen = CdeStyle.DEFAULT.withPalette("Desert").withBackdrop(1, CdeBackdrop.DOTS);
+        final ServerCliComputer cli = new ServerCliComputer(machine, helper.getLevel());
+        final String said = text(CliCommands.shellFor(cli, 52).run("config cdestyle " + chosen.encoded(), cli));
+        helper.assertTrue(machine.console().cdeStyle().equals(chosen), "the setting takes the style; got "
+                + machine.console().cdeStyle() + " after " + said);
+
+        final CompoundTag saved = machine.saveWithoutMetadata(helper.getLevel().registryAccess());
+        machine.console().setCdeStyle(CdeStyle.DEFAULT);
+        machine.loadWithComponents(saved, helper.getLevel().registryAccess());
+        helper.assertTrue(machine.console().cdeStyle().equals(chosen), "and it comes back from a save");
+
+        CliCommands.shellFor(cli, 52).run("config cdestyle Nobody;no,such", cli);
+        helper.assertTrue(machine.console().cdeStyle().equals(CdeStyle.DEFAULT),
+                "a style nobody could draw is kept as the one a workstation starts with");
+        helper.succeed();
+    }
+
+    /**
      * CDE's loading screen names the workstation it is starting on, so the system coming up has to tell the
      * monitor who it is: which desktop, which system, and the host name its prompt will say a moment later.
      */
@@ -225,7 +254,8 @@ public final class CdeGameTests {
         if (machine == null) {
             return;
         }
-        final BootIdentity who = new BootIdentity("cde", "UNIX System V", Installers.hostName(machine));
+        final BootIdentity who = new BootIdentity("cde", "UNIX System V", Installers.hostName(machine),
+                CdeStyle.DEFAULT.withPalette("Desert").encoded());
         helper.assertTrue(!who.hostName().isEmpty(), "a machine with a system on it answers to a host name");
 
         final RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(),

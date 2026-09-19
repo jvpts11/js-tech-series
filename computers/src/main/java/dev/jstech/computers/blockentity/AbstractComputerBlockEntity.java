@@ -349,7 +349,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
                                     : BootSplash.of(installedOs().platform(), installedOs().familyRank()),
                             /* A machine on its way down shows no desktop coming up, so it names none. */
                             new BootIdentity("", installedOs() == null ? "" : installedOs().displayName(),
-                                    Installers.hostName(this))));
+                                    Installers.hostName(this), "")));
             // The words and the screen that shows them, as everywhere else: one without the other shows nothing.
             MonitorBlock.openSession(player, server, monitor, worldPosition, this,
                     MonitorSessionMenu.Phase.SYSTEM_BOOT);

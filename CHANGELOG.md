@@ -274,9 +274,17 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   list the way CDE was.
 - CDE runs on the Linux distributions too, as it can on a real one today: each distribution takes it from the
   Mirror with its own package manager, `apt install cde` on Debian and Ubuntu and the same word to the others,
-  beside the desktops it already could. Under the Front Panel the machine is still that distribution, with its own shell,
-  its own tree and the player's home in `/home/player`. Gentoo builds it from source in the real order: Motif, the
-  Korn shell, then CDE.
+  beside the desktops it already could. Under the Front Panel the machine is still that distribution, with its
+  own shell, its own tree and the player's home in `/home/player`. Gentoo builds it from source in the real
+  order: Motif, the Korn shell, then CDE.
+- CDE's Style Manager. The Style control on the Front Panel opens it where the other desktops have their
+  settings: a strip of two pages. Color lists the eight palettes under the names they had, shows the colours of
+  the one picked, and puts it on the whole desktop the moment it is picked (frames, the active title, the Front
+  Panel and the backdrop); OK keeps it and Cancel puts the old one back. Backdrop gives the workspace that is up
+  one of six patterns (Hatch, Pinstripe, Tiles, Weave, Dots or Plain) in the palette's own backdrop colours, so
+  the four workspaces can look different; each starts with a different one. The choice is kept with the machine
+  and CDE's loading screen already wears it. Everything else a machine keeps about itself is set at its prompt
+  with `config`.
 - CDE comes up behind a screen of its own, as the Linux desktops do. With no login to show, the console's lines
   are followed by a raised plate with the desktop's name and its maker's over the backdrop the desktop is about
   to stand on, and a line naming the workstation it is starting on, which is the host name its prompt says.

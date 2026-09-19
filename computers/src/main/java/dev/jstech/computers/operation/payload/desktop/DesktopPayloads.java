@@ -111,7 +111,8 @@ public final class DesktopPayloads {
     private static void handleRequestDesktopFiles(final RequestDesktopFilesPayload payload, final ServerPlayer player,
                                                   final ServerLevel level) {
         final List<DiskFilesPayload.WireFile> wire = new ArrayList<>();
-        final String[] prefs = {"", ""};
+        // wallpaper, computer name, CDE's style
+        final String[] prefs = {"", "", ""};
         // accent override (0=none), brightness, clock12h (0/1), taskbar centered (1) vs left (0), dark (0/1), scale (%)
         final int[] deskPrefs = {0, 100, 0, 1, 0, 0};
         final List<String> programs = new ArrayList<>();
@@ -124,6 +125,7 @@ public final class DesktopPayloads {
                     filesystemKindOf(computer);
             prefs[0] = computer.console().wallpaper();
             prefs[1] = computer.console().computerName();
+            prefs[2] = computer.console().cdeStyle().encoded();
             pinned.addAll(computer.console().settings().pinned());
             defaultApps.putAll(computer.console().settings().defaultApps());
             deskPrefs[0] = computer.console().settings().accent();
@@ -215,7 +217,8 @@ public final class DesktopPayloads {
                 }
             }
         }
-        PacketDistributor.sendToPlayer(player, new DesktopFilesPayload(wire, prefs[0], prefs[1], programs, iconCells,
+        PacketDistributor.sendToPlayer(player, new DesktopFilesPayload(wire, prefs[0], prefs[2], prefs[1], programs,
+                iconCells,
                 new DesktopFilesPayload.Prefs(deskPrefs[0], deskPrefs[1], deskPrefs[2] != 0,
                         deskPrefs[3] != 0, deskPrefs[4] != 0, deskPrefs[5]), community, pinned, defaultApps));
     }

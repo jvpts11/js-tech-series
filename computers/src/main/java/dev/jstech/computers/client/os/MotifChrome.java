@@ -7,7 +7,10 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.gui.CdeBackdrop;
 import dev.jstech.computers.gui.CdePalette;
+import java.util.EnumMap;
+import java.util.Map;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 
@@ -26,10 +29,9 @@ final class MotifChrome {
     /** How wide the relief of a frame is, which is what makes a Motif window look like a carved block. */
     static final int FRAME = 3;
 
-    /** The diagonal hatch CDE's backdrop wears until another is chosen, and the side of its tile. */
-    private static final ResourceLocation HATCH =
-            ResourceLocation.fromNamespaceAndPath("jsc", "textures/gui/cde/backdrop_hatch.png");
+    /** The side of a backdrop's tile, and the masks its patterns are laid with. */
     private static final int TILE = 8;
+    private static final Map<CdeBackdrop, ResourceLocation> MASKS = masks();
 
     private MotifChrome() {
     }
@@ -118,14 +120,31 @@ final class MotifChrome {
      *
      * <p>A pattern is a small white mask tiled across the desktop in one draw and tinted, never a picture of
      * its own colours, so one tile serves every palette and a whole desktop of hatching costs what one
-     * rectangle does.
+     * rectangle does. The plain backdrop is the first colour alone.
      */
-    static void backdrop(final GuiGraphics g, final int w, final int h, final CdePalette p) {
+    static void backdrop(final GuiGraphics g, final int w, final int h, final CdePalette p,
+                         final CdeBackdrop pattern) {
         g.fill(0, 0, w, h, p.backdropA());
+        final ResourceLocation mask = MASKS.get(pattern);
+        if (mask == null) {
+            return;
+        }
         final int tint = p.backdropB();
         g.setColor((tint >> 16 & 0xFF) / 255.0F, (tint >> 8 & 0xFF) / 255.0F, (tint & 0xFF) / 255.0F, 1.0F);
-        g.blit(HATCH, 0, 0, 0.0F, 0.0F, w, h, TILE, TILE);
+        g.blit(mask, 0, 0, 0.0F, 0.0F, w, h, TILE, TILE);
         g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
+    /** The masks the patterns are laid with, made once, so drawing a backdrop allocates nothing. */
+    private static Map<CdeBackdrop, ResourceLocation> masks() {
+        final Map<CdeBackdrop, ResourceLocation> out = new EnumMap<>(CdeBackdrop.class);
+        for (final CdeBackdrop pattern : CdeBackdrop.values()) {
+            if (!pattern.mask().isEmpty()) {
+                out.put(pattern, ResourceLocation.fromNamespaceAndPath("jsc",
+                        "textures/gui/cde/backdrop_" + pattern.mask() + ".png"));
+            }
+        }
+        return out;
     }
 
     private static void relief(final GuiGraphics g, final int x, final int y, final int w, final int h,

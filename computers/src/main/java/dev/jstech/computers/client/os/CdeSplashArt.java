@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.CdePalette;
+import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.core.gui.TextShadow;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -35,16 +36,18 @@ public final class CdeSplashArt {
     }
 
     /**
-     * Draws the screen over the glass at {@code (x, y)}.
+     * Draws the screen over the glass at {@code (x, y)}, in the palette the workstation keeps and over the
+     * backdrop of its first workspace, which is where the desktop comes up.
      *
      * @param hostName the name the workstation answers to, or empty when it is not known
+     * @param style    the look the workstation keeps
      */
-    public static void draw(final GuiGraphics g, final Font font, final String hostName, final int x, final int y,
-                            final int w, final int h) {
-        final CdePalette p = CdePalette.DEFAULT;
+    public static void draw(final GuiGraphics g, final Font font, final String hostName, final CdeStyle style,
+                            final int x, final int y, final int w, final int h) {
+        final CdePalette p = style.colours();
         g.pose().pushPose();
         g.pose().translate(x, y, 0);
-        MotifChrome.backdrop(g, w, h, p);
+        MotifChrome.backdrop(g, w, h, p, style.backdrop(0));
 
         final int px = (w - PLATE_W) / 2;
         final int py = h / 2 - PLATE_H / 2 - LINE_GAP;

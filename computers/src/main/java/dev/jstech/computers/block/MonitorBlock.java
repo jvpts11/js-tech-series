@@ -370,7 +370,8 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final ResourceLocation desktop = computer.bootedDesktopId();
         final OsDef system = computer.installedOs();
         return new BootIdentity(desktop == null ? "" : desktop.getPath(),
-                system == null ? "" : system.displayName(), Installers.hostName(computer));
+                system == null ? "" : system.displayName(), Installers.hostName(computer),
+                computer.console() == null ? "" : computer.console().cdeStyle().encoded());
     }
 
     /**

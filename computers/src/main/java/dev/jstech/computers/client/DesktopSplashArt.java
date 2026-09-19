@@ -8,6 +8,7 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.client.os.CdeSplashArt;
+import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.Font;
@@ -120,7 +121,7 @@ public final class DesktopSplashArt {
         final String systemName = who.systemName();
         switch (who.desktopId()) {
             // CDE never changed its face, so it has one look, drawn where the rest of CDE is drawn.
-            case CDE -> CdeSplashArt.draw(g, font, who.hostName(), x, y, w, h);
+            case CDE -> CdeSplashArt.draw(g, font, who.hostName(), CdeStyle.parse(who.look()), x, y, w, h);
             case "kde_plasma" -> {
                 if (old) {
                     oldBox(g, font, x, y, w, h, progress, KDE_OLD_GROUND, BOX_FACE, "KDE",

@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.CdePalette;
+import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -47,7 +48,7 @@ final class WallpaperPainter {
             case "adwaita" -> paintAdwaita(g, w, h);
             case "minty" -> paintMintY(g, w, h);
             // CDE has no picture to hang: its backdrop is a pattern in two colours of its palette.
-            case "cde" -> MotifChrome.backdrop(g, w, h, CdePalette.DEFAULT);
+            case "cde" -> MotifChrome.backdrop(g, w, h, CdePalette.DEFAULT, CdeStyle.DEFAULT.backdrop(0));
             default -> paintNineFive(g, w, h);
         }
     }

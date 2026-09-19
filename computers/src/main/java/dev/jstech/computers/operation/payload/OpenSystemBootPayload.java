@@ -68,6 +68,7 @@ public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int r
         buf.writeUtf(clip(p.who().desktopId()), MAX_TEXT);
         buf.writeUtf(clip(p.who().systemName()), MAX_TEXT);
         buf.writeUtf(clip(p.who().hostName()), MAX_TEXT);
+        buf.writeUtf(clip(p.who().look()), MAX_TEXT);
     }
 
     private static OpenSystemBootPayload decode(final RegistryFriendlyByteBuf buf) {
@@ -87,7 +88,8 @@ public record OpenSystemBootPayload(BlockPos hostPos, BlockPos monitorPos, int r
         final boolean endsDark = buf.readBoolean();
         return new OpenSystemBootPayload(host, monitor, remaining, total,
                 new BootSequence(title, subtitle, lines), endsDark, splash,
-                new BootIdentity(buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT)));
+                new BootIdentity(buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT), buf.readUtf(MAX_TEXT),
+                        buf.readUtf(MAX_TEXT)));
     }
 
     /*

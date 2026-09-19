@@ -15,20 +15,21 @@ class BootIdentityTest {
 
     @Test
     void constructor_readsWhatIsMissingAsNothing() {
-        assertEquals(BootIdentity.NONE, new BootIdentity(null, null, null));
+        assertEquals(BootIdentity.NONE, new BootIdentity(null, null, null, null));
     }
 
     @Test
-    void goingDown_keepsTheSystemAndTheHostAndNamesNoDesktop() {
-        final BootIdentity down = new BootIdentity("cde", "UNIX System V", "desk").goingDown();
+    void goingDown_keepsTheSystemAndTheHostAndNamesNoDesktopAndNoLook() {
+        final BootIdentity down = new BootIdentity("cde", "UNIX System V", "desk", "Desert;hatch").goingDown();
         assertEquals("", down.desktopId());
         assertEquals("UNIX System V", down.systemName());
         assertEquals("desk", down.hostName());
+        assertEquals("", down.look());
     }
 
     @Test
     void goingDown_ofAMachineWithNoDesktopIsTheSameMachine() {
-        final BootIdentity prompt = new BootIdentity("", "FreeBSD", "desk");
+        final BootIdentity prompt = new BootIdentity("", "FreeBSD", "desk", "");
         assertEquals(prompt, prompt.goingDown());
     }
 }

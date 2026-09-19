@@ -338,6 +338,56 @@ public final class CdeClientTests {
         return window != null && window.app() instanceof ShellApp shell ? shell : null;
     }
 
+    /**
+     * The Style Manager's Color page puts a palette on the whole desktop the moment it is picked; Cancel puts the
+     * old one back, and OK has the machine keep it, so the desktop still wears it after the machine is asked
+     * again.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void styleManager_colorIsWornWhenPickedAndKeptOnOk(final ClientTestContext ctx) {
+        atCde(ctx)
+                .then(SETTLE, () -> press(ctx, CdeFrontPanelLayout.Control.STYLE))
+                .thenWaitUntil(() -> desktop(ctx).styleManagerPagePoint("Color") != null, SCREEN_WAIT,
+                        "the Style control to open the Style Manager")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).styleManagerPagePoint("Color")))
+                .thenWaitUntil(() -> desktop(ctx).stylePageRowPoint("Desert") != null, SCREEN_WAIT,
+                        "the Color page to open")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).stylePageRowPoint("Desert")))
+                .thenWaitUntil(() -> desktop(ctx).wornCdeStyle().startsWith("Desert;"), SCREEN_WAIT,
+                        "the desktop to wear Desert the moment it is picked")
+                .thenScreenshot(SETTLE, "cde-style-color")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).stylePageButtonPoint(true, 1)))
+                .thenWaitUntil(() -> desktop(ctx).wornCdeStyle().startsWith("Default;"), SCREEN_WAIT,
+                        "Cancel to put the palette the desktop had back")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).styleManagerPagePoint("Color")))
+                .thenWaitUntil(() -> desktop(ctx).stylePageRowPoint("Neptune") != null, SCREEN_WAIT,
+                        "the Color page to open again")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).stylePageRowPoint("Neptune")))
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).stylePageButtonPoint(true, 0)))
+                .then(SETTLE * 2, DesktopScreen::refreshActive)
+                .thenAssert(SETTLE * 5, () -> desktop(ctx).wornCdeStyle().startsWith("Neptune;"),
+                        "OK has the machine keep it, so the desktop wears it after asking the machine again");
+    }
+
+    /** A backdrop is set for the workspace that is up, and the others keep theirs. */
+    @ClientTest(timeoutTicks = 3600)
+    public static void styleManager_backdropIsSetForTheWorkspaceThatIsUp(final ClientTestContext ctx) {
+        atCde(ctx)
+                .then(SETTLE, () -> pressWorkspace(ctx, 1))
+                .thenWaitUntil(() -> desktop(ctx).shownWorkspace() == 1, SCREEN_WAIT, "workspace Two to come up")
+                .then(SETTLE, () -> press(ctx, CdeFrontPanelLayout.Control.STYLE))
+                .thenWaitUntil(() -> desktop(ctx).styleManagerPagePoint("Backdrop") != null, SCREEN_WAIT,
+                        "the Style Manager to open")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).styleManagerPagePoint("Backdrop")))
+                .thenWaitUntil(() -> desktop(ctx).stylePageRowPoint("Dots") != null, SCREEN_WAIT,
+                        "the Backdrop page to open")
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).stylePageRowPoint("Dots")))
+                .then(SETTLE, () -> clickAt(ctx, desktop(ctx).stylePageButtonPoint(false, 0)))
+                .thenWaitUntil(() -> desktop(ctx).wornCdeStyle().equals("Default;hatch,dots,tiles,weave"),
+                        SCREEN_WAIT, "Apply to put Dots on workspace Two and leave the others as they were")
+                .thenScreenshot(SETTLE, "cde-style-backdrop");
+    }
+
     /** A double click on the menu button closes the window, as it always did on a Motif title bar. */
     @ClientTest(timeoutTicks = 3600)
     public static void menuButton_closesTheWindowOnADoubleClick(final ClientTestContext ctx) {
