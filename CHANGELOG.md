@@ -212,6 +212,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   network only when a cable reaches one, the Mirror only when one answers, and a display manager only when a
   desktop is installed. It stops down to "The operating system has halted.", or "Rebooting..." when it is coming
   straight back. The console greets as FreeBSD does: `FreeBSD/vel64 (desk) (ttyv0)`, the login, the release.
+- MC-DOS has files of its own. The root of its disk holds `MCDOS.SYS`, `COMMAND.COM`, `CONFIG.SYS` and
+  `AUTOEXEC.BAT`, with the system's tools in a `DOS` directory, and `type` reads the ones that are text. A program
+  installed on it gets a directory of its own at the root, named in capitals the way that filesystem named
+  things, with its executable and its notes inside, and the `PATH` line of `AUTOEXEC.BAT` names exactly the
+  directories of what is installed. Like the system files of the other families they are generated from the
+  machine and cannot be edited or deleted. `dir` at the root of a fresh MC-DOS used to say File Not Found.
 - FreeBSD's boot loader. After the self-test the machine stops at a ruled box headed "Welcome to FreeBSD" with
   FreeBSD's mark beside it, the red sphere with its two horns over the name, counting down to a boot on every
   start. It lists only what it can do here: `Boot`, which is what Enter does, `Reboot`, which runs the self-test
@@ -887,6 +893,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A Linux console's welcome, `uname -a` and the OS and kernel lines of `screenfetch` name the architecture the
   processor really understands, `i686` on a 32-bit machine, as the boot log beside them already did. They used to say
   `x86_64` on every machine.
+- A file the system generates is found whatever case its name is typed in on MC-DOS and Frames, which never
+  told one case from the other: `type frames\system\FRAMES.INI` reads the file listed as `frames.ini`. The
+  systems met at a Unix prompt still tell them apart. An installed program's notes on a system without This PC
+  no longer send the reader to This PC to remove it.
 - The notes on the two `install_by_hand` settings in the server configuration no longer list a password, a time
   zone and a locale among the steps, which the by-hand installs stopped asking for.
 

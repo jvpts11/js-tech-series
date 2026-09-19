@@ -256,6 +256,27 @@ public final class FreeBsdGameTests {
                 .thenSucceed();
     }
 
+    /** The root of a FreeBSD disk is a Unix root, with a desktop on it or without: nothing of Frames' is there. */
+    @GameTest(template = ARENA)
+    public static void root_holdsAUnixTreeAndNothingOfFrames(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = mainframe(helper, WHERE);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerCliComputer cli = new ServerCliComputer(mainframe, helper.getLevel());
+                    final CliShell shell = CliCommands.shellFor(cli, 52);
+                    mainframe.console().install(
+                            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "kde_plasma").toString());
+                    shell.run("cd /", cli);
+                    final String root = text(shell.run("ls", cli));
+                    helper.assertTrue(root.contains("home/") && root.contains("etc/") && root.contains("usr/"),
+                            "the Unix tree is there; got " + root);
+                    helper.assertFalse(root.contains("Program Files") || root.contains("Frames")
+                                    || root.contains("Users"),
+                            "and nothing of Frames' is; got " + root);
+                })
+                .thenSucceed();
+    }
+
     /** What is installed goes under /usr/local, apart from the base system, and rc.conf names this machine. */
     @GameTest(template = ARENA)
     public static void installedPackages_liveUnderUsrLocal(final GameTestHelper helper) {
