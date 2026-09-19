@@ -61,10 +61,27 @@ public final class ProgramFilesProjection {
             linux(host, os, out);
         } else if (os.platform() == Platform.FREEBSD) {
             freebsd(host, out);
+        } else if (os.platform() == Platform.UNIX) {
+            systemV(host, out);
         } else if (os.platform() == Platform.MC_DOS) {
             out.addAll(McDosTree.entries(dosFacts(host, os)));
         }
         return out;
+    }
+
+    /*
+     * System V keeps its kernel as a file at the root, called what the system is called, and the table init
+     * reads beside it in /etc. A program added to it goes in /usr/bin with what it brings under /usr/lib, which
+     * is where that system put such things before anybody had a /usr/share.
+     */
+    private static void systemV(final IOsHost host, final List<InstallerLayout.Entry> out) {
+        out.add(file("unix", FileType.BIN));
+        out.add(file("etc/inittab", FileType.CFG));
+        for (final ProgramSpec spec : installed(host)) {
+            out.add(file("usr/bin/" + spec.commandName(), FileType.BIN));
+            out.add(dir("usr/lib/" + spec.commandName()));
+            out.add(file("usr/lib/" + spec.commandName() + "/readme", FileType.TXT));
+        }
     }
 
     /** What MC-DOS's own tree is made from on that machine: the system, its maker's line, and what is installed. */
@@ -234,11 +251,16 @@ public final class ProgramFilesProjection {
                     + (host.networkAttached() ? "ifconfig_em0=\"DHCP\"\n" : "")
                     + "dumpdev=\"AUTO\"\n");
         }
+        if (path.equals("etc/inittab")) {
+            // The run level the system comes up at, and the one line that keeps a login on the console.
+            return Optional.of("is:2:initdefault:\nco:234:respawn:/etc/getty console console\n");
+        }
         for (final ProgramSpec spec : installed(host)) {
             final String frames = "/" + spec.displayName() + "/readme.txt";
             if (path.endsWith(frames) && (path.startsWith(PROGRAM_FILES) || path.startsWith(PROGRAM_FILES_X86))
                     || path.equals("usr/share/" + spec.commandName() + "/readme")
                     || path.equals("usr/local/share/" + spec.commandName() + "/readme")
+                    || path.equals("usr/lib/" + spec.commandName() + "/readme")
                     || path.equals(McDosTree.readmeOf(McDosTree.nameOf(spec.commandName())))) {
                 return Optional.of(readme(spec, os.platform() == Platform.FRAMES));
             }

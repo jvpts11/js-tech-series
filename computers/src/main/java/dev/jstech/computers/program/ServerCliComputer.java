@@ -36,6 +36,7 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
+import dev.jstech.computers.os.UnixTree;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.program.cli.DosPath;
@@ -386,6 +387,11 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     @Override
+    public UnixTree tree() {
+        return UnixTree.of(platform());
+    }
+
+    @Override
     public int processorBits() {
         return hostBlock instanceof IOsHost computer ? computer.processorBits() : 64;
     }
@@ -541,7 +547,7 @@ public final class ServerCliComputer implements ICliComputer {
         if (shellFamily() != ShellFamily.POSIX) {
             return currentLocation().dosPath() + ">";
         }
-        final String cwd = PosixPath.renderForPrompt(currentLocation());
+        final String cwd = PosixPath.renderForPrompt(tree(), currentLocation());
         final OsDef os = hostBlock instanceof IOsHost c ? c.installedOs() : null;
         return ConsoleIdentity.promptOf(os == null ? "" : os.shellId(), hostname(), cwd);
     }
@@ -590,7 +596,7 @@ public final class ServerCliComputer implements ICliComputer {
          */
         if (!console.hasTerminalLocation() && console.terminalDrive() == 'C'
                 && shellFamily() == ShellFamily.POSIX) {
-            return PosixPath.home();
+            return PosixPath.home(tree());
         }
         final String dir = console.terminalDir();
         final List<String> segments = dir.isEmpty()

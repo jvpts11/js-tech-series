@@ -58,6 +58,15 @@ class ConsoleGreetingTest {
     }
 
     @Test
+    void of_greetsSystemVWithTheMachineTheLoginAndWhereItsHelpIs() {
+        final List<String> said = words(new ConsoleIdentity("sh", "desk", "UNIX System V", Platform.UNIX, 16));
+        assertEquals("desk Console Login: player", said.get(0));
+        assertEquals("Type help for the UNIX system on-line help.", said.get(1));
+        assertEquals("", said.get(said.size() - 1));
+        assertEquals(3, said.size());
+    }
+
+    @Test
     void of_logsRootInOnAnInstallerMedium() {
         final List<String> said = words(new ConsoleIdentity(ConsoleIdentity.LIVE, "archiso", "Arch Linux live",
                 Platform.LINUX, 64));

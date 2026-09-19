@@ -39,7 +39,13 @@ public enum Platform implements IStableName {
      * FreeBSD, which is a system and a platform both: one kernel, one base system and one ports tree, made in
      * one place. What is built for it is not what is built for Linux, however alike the two look at a prompt.
      */
-    FREEBSD("freebsd", "FreeBSD");
+    FREEBSD("freebsd", "FreeBSD"),
+
+    /**
+     * UNIX System V, the oldest of the families met at a Unix prompt and the only one a machine of the first age
+     * runs. It takes its programs from media and from nowhere else, so what is built for it is its own.
+     */
+    UNIX("unix", "UNIX");
 
     private final String serializedName;
     private final String label;
@@ -64,7 +70,7 @@ public enum Platform implements IStableName {
      * others carry a setup program, and whose files sit under one root rather than on lettered drives.
      */
     public boolean unixLike() {
-        return this == LINUX || this == FREEBSD;
+        return this == LINUX || this == FREEBSD || this == UNIX;
     }
 
     /** Whether everything in that set is of those families, so what is made for it is made for them alone. */

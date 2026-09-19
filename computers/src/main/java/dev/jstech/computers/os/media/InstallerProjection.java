@@ -8,6 +8,7 @@
 package dev.jstech.computers.os.media;
 
 import dev.jstech.computers.os.Branding;
+import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.MinSpecTooltip;
 import dev.jstech.computers.os.OsDef;
@@ -104,7 +105,7 @@ public final class InstallerProjection {
                 Component.translatable("os.jsc." + os.id().getPath() + ".desc").getString()
                         .replace("os.jsc." + os.id().getPath() + ".desc", ""),
                 plain(MinSpecTooltip.osMinSpec(os.id())), os.platform().label(), "any computer",
-                List.of());
+                List.of(), KernelNames.bootFiles(os.platform()));
     }
 
     private static InstallerLayout.Facts programFacts(final ProgramSpec spec) {

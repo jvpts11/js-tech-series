@@ -68,7 +68,12 @@ public final class OsBootstrap {
              * FreeBSD's own kernel. To a player at a prompt it reads the same as the one above, and that is
              * the whole of what they share: nothing built for one runs on the other.
              */
-            new KernelDef(rl("freebsd"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.POSIX));
+            new KernelDef(rl("freebsd"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.POSIX),
+            /*
+             * System V's kernel: the one here that ran several programs at once on a machine of the first age,
+             * and the oldest thing in this list that a Unix prompt is met on.
+             */
+            new KernelDef(rl("unix"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.POSIX));
 
     /**
      * The built-in operating systems, in install order. A static list (built eagerly) so datagen (lang and the
@@ -132,7 +137,15 @@ public final class OsBootstrap {
              */
             OsDef.terminalSystem(rl("freebsd"), rl("freebsd"), Platform.FREEBSD, HardwareEra.LEGACY, 2_048,
                     "FreeBSD", "sh", PackageManagerKind.PKG, InstallMode.GUIDED, SoftwareHouse.DAEMON_FOUNDATION)
-                    .withRam(16)
+                    .withRam(16),
+            /*
+             * UNIX System V: the one system of the first age that runs several programs at once, in ten
+             * megabytes of disk and two of memory. It has no Mirror to install from, only media, which is the
+             * price of what it can do on a machine that small.
+             */
+            OsDef.terminalSystem(rl("unix"), rl("unix"), Platform.UNIX, HardwareEra.VINTAGE, 10,
+                    "UNIX System V", "sh", PackageManagerKind.NONE, InstallMode.GUIDED, SoftwareHouse.BELLWETHER_LABS)
+                    .withRam(2)
             /*
              * OS case (c): PDA/Tablet/Smartphone portables ship with a factory mobile OS. Those item/block
              * types do not exist yet; register the mobile OS here once they do.
@@ -215,8 +228,12 @@ public final class OsBootstrap {
             JsComputersApi.registerDesktop(desktop);
         }
     }
-    private static final Set<Platform> ALL_PLATFORMS =
-            Set.of(Platform.MC_DOS, Platform.MC_NET, Platform.FRAMES, Platform.LINUX, Platform.FREEBSD);
+    /*
+     * What runs on every system. UNIX is among them and in none of the narrower sets yet: at its terminal it
+     * takes what every system takes, and the desktop programs come to it with its own desktop.
+     */
+    private static final Set<Platform> ALL_PLATFORMS = Set.of(Platform.MC_DOS, Platform.MC_NET, Platform.FRAMES,
+            Platform.LINUX, Platform.FREEBSD, Platform.UNIX);
 
     /**
      * The built-in program descriptors, in desktop launcher order (the built-in apps first, then the

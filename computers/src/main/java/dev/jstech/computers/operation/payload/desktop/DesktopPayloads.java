@@ -154,7 +154,7 @@ public final class DesktopPayloads {
             if (!disk.isEmpty()
                     && kind == FilesystemKind.HIERARCHICAL) {
                 final OsDef osDef = computer.installedOs();
-                final String desktopDir = SystemLayout.desktopDirFor(
+                final String desktopDir = SystemLayout.desktopDirFor(osDef,
                         osDef == null ? null : OsRegistry.getKernel(
                                 osDef.kernelId()));
                 for (final String d

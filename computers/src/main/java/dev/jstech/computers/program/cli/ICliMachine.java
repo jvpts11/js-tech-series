@@ -9,6 +9,7 @@ package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
+import dev.jstech.computers.os.UnixTree;
 import java.util.List;
 
 /**
@@ -71,6 +72,11 @@ public interface ICliMachine {
      */
     default Platform platform() {
         return Platform.LINUX;
+    }
+
+    /** Where the installed system keeps the home and mounts the other drives, which is its family's habit. */
+    default UnixTree tree() {
+        return UnixTree.of(platform());
     }
 
     /** How wide the processor's word is, which is what a system names its architecture after. */

@@ -1083,7 +1083,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         };
         final OsDef os =
                 OsRegistry.getOs(osId);
-        this.desktopDir = SystemLayout.desktopDirFor(os == null ? null
+        this.desktopDir = SystemLayout.desktopDirFor(os, os == null ? null
                 : OsRegistry.getKernel(os.kernelId()));
         this.theme = DesktopTheme.forDesktop(desktopId);
         // A provisional skin: rebuildSkin() refines it with the host's era once the level is reachable.

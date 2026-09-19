@@ -40,7 +40,8 @@ public final class ClientTestSuite {
             SettingsSharingClientTests.class,
             SourceBuildClientTests.class,
             SystemUiClientTests.class,
-            UiSweepClientTests.class);
+            UiSweepClientTests.class,
+            UnixClientTests.class);
 
     private ClientTestSuite() {
     }

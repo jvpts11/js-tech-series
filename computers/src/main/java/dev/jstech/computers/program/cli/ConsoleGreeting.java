@@ -20,7 +20,8 @@ import java.util.List;
  * <p>Each family says it in a shape of its own, and that shape is most of how one is told from another before a
  * single command is typed: a Linux names the system, the machine and the terminal and welcomes with its kernel
  * in brackets, where FreeBSD opens with its name over its architecture, puts the machine in brackets, and gives
- * its release on a line of its own after the login.
+ * its release on a line of its own after the login, and System V says the least of the three: the machine, the
+ * login, and where its help is.
  */
 public final class ConsoleGreeting {
 
@@ -35,7 +36,20 @@ public final class ConsoleGreeting {
         if (console.live()) {
             return live(console);
         }
+        if (console.platform() == Platform.UNIX) {
+            return systemV(console);
+        }
         return console.platform() == Platform.FREEBSD ? freeBsd(console) : linux(console);
+    }
+
+    /** System V: the machine's name before the login on one line, and where its own help is on the next. */
+    private static List<CliLine> systemV(final ConsoleIdentity console) {
+        return List.of(
+                CliLine.of(new CliSpan(console.hostname() + " Console Login: ", CliStyle.PLAIN),
+                        new CliSpan("player", CliStyle.BRIGHT)),
+                CliLine.of(new CliSpan("Type ", CliStyle.PLAIN), new CliSpan("help", CliStyle.CYAN),
+                        new CliSpan(" for the UNIX system on-line help.", CliStyle.PLAIN)),
+                CliLine.plain(""));
     }
 
     /** An installer medium: its own banner, and root already logged in, as such a medium comes up. */

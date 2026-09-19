@@ -503,8 +503,9 @@ public final class PosixCommands {
         }
     }
 
-    private static String dos(final String posixPath) {
-        return PosixPath.toDos(posixPath);
+    /** A path as it was typed, turned into the form the drives understand, by the tree that system keeps. */
+    private static String dos(final CliContext ctx, final String posixPath) {
+        return PosixPath.toDos(ctx.computer().tree(), posixPath);
     }
 
     static final class Ls implements ICliCommand {
@@ -525,7 +526,7 @@ public final class PosixCommands {
                     dir = a;
                 }
             }
-            final ICliComputer.FsResult result = ctx.computer().listDisk(dos(dir));
+            final ICliComputer.FsResult result = ctx.computer().listDisk(dos(ctx, dir));
             if (!result.ok()) {
                 ctx.out().error("ls: " + result.message());
                 return;
@@ -559,7 +560,7 @@ public final class PosixCommands {
         @Override public String summary() { return "print the current directory"; }
 
         @Override public void run(final CliContext ctx) {
-            ctx.out().line(PosixPath.render(ctx.computer().currentLocation()));
+            ctx.out().line(PosixPath.render(ctx.computer().tree(), ctx.computer().currentLocation()));
         }
     }
 
@@ -572,7 +573,7 @@ public final class PosixCommands {
 
         @Override public void run(final CliContext ctx) {
             final String target = ctx.hasArgs() ? ctx.rest(0) : "~";
-            final ICliComputer.FsResult result = ctx.computer().changeDir(dos(target));
+            final ICliComputer.FsResult result = ctx.computer().changeDir(dos(ctx, target));
             if (!result.ok()) {
                 ctx.out().error("cd: " + result.message());
             }
@@ -591,7 +592,7 @@ public final class PosixCommands {
                 ctx.out().error("usage: cat <file>");
                 return;
             }
-            final ICliComputer.FsResult result = ctx.computer().readFile(dos(ctx.arg(0)));
+            final ICliComputer.FsResult result = ctx.computer().readFile(dos(ctx, ctx.arg(0)));
             if (!result.ok()) {
                 ctx.out().error("cat: " + result.message());
                 return;
@@ -614,7 +615,7 @@ public final class PosixCommands {
                 ctx.out().error("usage: rm <file>");
                 return;
             }
-            final ICliComputer.FsResult result = ctx.computer().deleteFile(dos(ctx.arg(0)));
+            final ICliComputer.FsResult result = ctx.computer().deleteFile(dos(ctx, ctx.arg(0)));
             if (!result.ok()) {
                 ctx.out().error("rm: " + result.message());
             }
@@ -633,7 +634,7 @@ public final class PosixCommands {
                 ctx.out().error("usage: mkdir <directory>");
                 return;
             }
-            final ICliComputer.FsResult result = ctx.computer().makeDir(dos(ctx.rest(0)));
+            final ICliComputer.FsResult result = ctx.computer().makeDir(dos(ctx, ctx.rest(0)));
             if (!result.ok()) {
                 ctx.out().error("mkdir: " + result.message());
             }
@@ -652,7 +653,7 @@ public final class PosixCommands {
                 ctx.out().error("usage: rmdir <directory>");
                 return;
             }
-            final ICliComputer.FsResult result = ctx.computer().removeDir(dos(ctx.rest(0)));
+            final ICliComputer.FsResult result = ctx.computer().removeDir(dos(ctx, ctx.rest(0)));
             if (!result.ok()) {
                 ctx.out().error("rmdir: " + result.message());
             }
@@ -671,7 +672,7 @@ public final class PosixCommands {
                 ctx.out().error("usage: cp <source> <destination>");
                 return;
             }
-            final ICliComputer.FsResult result = ctx.computer().copyPath(dos(ctx.arg(0)), dos(ctx.arg(1)));
+            final ICliComputer.FsResult result = ctx.computer().copyPath(dos(ctx, ctx.arg(0)), dos(ctx, ctx.arg(1)));
             if (!result.ok()) {
                 ctx.out().error("cp: " + result.message());
             }
@@ -694,8 +695,8 @@ public final class PosixCommands {
             // A bare new name (no slash, no path form) is a rename; anything else moves into a directory.
             final boolean rename = !dest.contains("/") && !dest.startsWith("~") && !dest.equals(".") && !dest.equals("..");
             final ICliComputer.FsResult result = rename
-                    ? ctx.computer().renamePath(dos(ctx.arg(0)), dest)
-                    : ctx.computer().movePath(dos(ctx.arg(0)), dos(dest));
+                    ? ctx.computer().renamePath(dos(ctx, ctx.arg(0)), dest)
+                    : ctx.computer().movePath(dos(ctx, ctx.arg(0)), dos(ctx, dest));
             if (!result.ok()) {
                 ctx.out().error("mv: " + result.message());
             }
@@ -714,7 +715,7 @@ public final class PosixCommands {
                 ctx.out().error("usage: touch <file>");
                 return;
             }
-            final ICliComputer.FsResult result = ctx.computer().writeFile(dos(ctx.arg(0)), "");
+            final ICliComputer.FsResult result = ctx.computer().writeFile(dos(ctx, ctx.arg(0)), "");
             if (!result.ok()) {
                 ctx.out().error("touch: " + result.message());
             }
@@ -733,7 +734,7 @@ public final class PosixCommands {
                 ctx.out().error("usage: write <file> <text...>");
                 return;
             }
-            final ICliComputer.FsResult result = ctx.computer().writeFile(dos(ctx.arg(0)), ctx.rest(1));
+            final ICliComputer.FsResult result = ctx.computer().writeFile(dos(ctx, ctx.arg(0)), ctx.rest(1));
             if (!result.ok()) {
                 ctx.out().error("write: " + result.message());
             } else if (!result.message().isEmpty()) {
@@ -754,7 +755,7 @@ public final class PosixCommands {
                 ctx.out().error("usage: run <file.iql>");
                 return;
             }
-            final ICliComputer.FsResult result = ctx.computer().runScript(dos(ctx.arg(0)));
+            final ICliComputer.FsResult result = ctx.computer().runScript(dos(ctx, ctx.arg(0)));
             if (!result.ok()) {
                 ctx.out().error("run: " + result.message());
                 return;
@@ -886,7 +887,7 @@ public final class PosixCommands {
             }
             ctx.out().row("Filesystem       Size   Used   Avail  Use%", "Mounted on");
             for (final ICliComputer.MountInfo m : mounts) {
-                final String mount = PosixPath.render(DosPath.Location.root(m.drive()));
+                final String mount = PosixPath.render(ctx.computer().tree(), DosPath.Location.root(m.drive()));
                 if (!m.ready()) {
                     ctx.out().row(String.format(Locale.ROOT, "/dev/%s%s", m.device(), "  (no medium)"), mount);
                     continue;

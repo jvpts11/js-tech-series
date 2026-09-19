@@ -212,6 +212,19 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   network only when a cable reaches one, the Mirror only when one answers, and a display manager only when a
   desktop is installed. It stops down to "The operating system has halted.", or "Rebooting..." when it is coming
   straight back. The console greets as FreeBSD does: `FreeBSD/vel64 (desk) (ttyv0)`, the login, the release.
+- UNIX System V, from Bellwether Labs: the one system of the first age that is met at a Unix prompt, in ten
+  megabytes of disk and two of memory, for a Vintage machine and every one after. It comes up at a terminal
+  running `sh` and keeps the habits of its day: the home is `/usr/player` and `~` means that, other drives are
+  mounted under `/mnt` by their letter, the kernel is the file `unix` at the root with `init`'s table in
+  `/etc/inittab`, and a program added to it goes in `/usr/bin` with what it brings under `/usr/lib`. It has no
+  network to install from. `uname -a` answers the way System V did, the system, the node, the release, the
+  version and the machine, and names the Integra Architecture down to `IA-16` on a 16-bit processor. Until its own
+  installer arrives it installs through the plain guided one.
+- UNIX starts and stops in very few words. It signs itself, counts the machine's memory in bytes and says how
+  much is left after what it keeps, checks its root filesystem and says it is ready; the console then signs
+  the player in as `desk Console Login: player` and says where its help is. Stopping, it warns the console in
+  capitals, changes run level, 0 to stop and 6 to come straight back, and ends on "The system is down.". It
+  never had a boot menu and has none here.
 - MC-DOS has files of its own. The root of its disk holds `MCDOS.SYS`, `COMMAND.COM`, `CONFIG.SYS` and
   `AUTOEXEC.BAT`, with the system's tools in a `DOS` directory, and `type` reads the ones that are text. A program
   installed on it gets a directory of its own at the root, named in capitals the way that filesystem named
@@ -893,6 +906,9 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - A Linux console's welcome, `uname -a` and the OS and kernel lines of `screenfetch` name the architecture the
   processor really understands, `i686` on a 32-bit machine, as the boot log beside them already did. They used to say
   `x86_64` on every machine.
+- An install disc of a system lists the files its own family boots from. FreeBSD's carried a Linux kernel and
+  its first filesystem, `boot/vmlinuz` and `boot/initrd.img`; it now carries `boot/loader` and
+  `boot/kernel/kernel`, and a UNIX medium carries `unix`.
 - A file the system generates is found whatever case its name is typed in on MC-DOS and Frames, which never
   told one case from the other: `type frames\system\FRAMES.INI` reads the file listed as `frames.ini`. The
   systems met at a Unix prompt still tell them apart. An installed program's notes on a system without This PC

@@ -73,6 +73,7 @@ public final class BootLines {
             case MC_NET -> net(machine, system, copyright, level);
             case LINUX -> linux(machine, system, level);
             case FREEBSD -> BsdBootLines.up(machine, system, level);
+            case UNIX -> SysVBootLines.up(machine, system);
             case FRAMES -> frames(machine, system);
             default -> new BootSequence.Builder().title(system.displayName()).subtitle(copyright).build();
         };
@@ -240,6 +241,7 @@ public final class BootLines {
                     .build();
             case LINUX -> linuxDown(system, restarting);
             case FREEBSD -> BsdBootLines.down(machine, restarting);
+            case UNIX -> SysVBootLines.down(machine, restarting);
             default -> BootSequence.NONE;
         };
     }

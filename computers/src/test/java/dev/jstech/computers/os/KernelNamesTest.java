@@ -9,6 +9,7 @@ package dev.jstech.computers.os;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class KernelNamesTest {
@@ -52,8 +53,29 @@ class KernelNamesTest {
     }
 
     @Test
-    void name_isLinuxForEveryFamilyThatIsNotFreeBsd() {
+    void name_isEachFamilysOwn() {
         assertEquals("Linux", KernelNames.name(Platform.LINUX));
         assertEquals("FreeBSD", KernelNames.name(Platform.FREEBSD));
+        assertEquals("UNIX", KernelNames.name(Platform.UNIX));
+    }
+
+    @Test
+    void architecture_onSystemVGoesDownToTheSixteenBitWord() {
+        assertEquals("IA-16", KernelNames.architecture(Platform.UNIX, 16));
+        assertEquals("IA-32", KernelNames.architecture(Platform.UNIX, 32));
+        assertEquals("vel64", KernelNames.architecture(Platform.UNIX, 64));
+    }
+
+    @Test
+    void everything_onSystemVIsTheSystemTheNodeTheReleaseTheVersionAndTheMachine() {
+        assertEquals("UNIX desk 3.2 2 IA-16", KernelNames.everything(Platform.UNIX, "desk", 16));
+        assertEquals("console", KernelNames.terminal(Platform.UNIX));
+    }
+
+    @Test
+    void bootFiles_areNamedTheWayEachFamilyNamesThem() {
+        assertEquals(List.of("boot/vmlinuz", "boot/initrd.img"), KernelNames.bootFiles(Platform.LINUX));
+        assertEquals(List.of("boot/loader", "boot/kernel/kernel"), KernelNames.bootFiles(Platform.FREEBSD));
+        assertEquals(List.of("unix"), KernelNames.bootFiles(Platform.UNIX));
     }
 }
