@@ -20,6 +20,10 @@ import java.util.function.ToIntFunction;
  * fits. The system takes its share first, then the desktop it booted, then the services it runs, then the
  * windows the player opened; a script process joins the list the same way. Pure arithmetic: the hosts and
  * the desktop screen fill it from the registries, and the same rules run on both sides.
+ *
+ * <p>Each entry carries two sizes, and they answer different questions. The megabytes are what the machine gave it
+ * and cannot give twice, so they are what says whether one more thing fits. The bytes are what is really held this
+ * moment, which is the number that moves while a program runs and the one a person watches.
  */
 public final class RamLedger {
 
@@ -56,17 +60,25 @@ public final class RamLedger {
         }
     }
 
+    /** The bytes in a megabyte, for the things whose hold is counted in bytes as it happens. */
+    public static final long BYTES_PER_MB = 1024L * 1024L;
+
     /**
-     * One thing holding memory: a label to show, its megabytes, what it is, and the number it answers to
-     * where it has one.
+     * One thing holding memory: a label to show, the megabytes it was given, the bytes it is holding of them,
+     * what it is, and the number it answers to where it has one.
+     *
+     * <p>The two sizes are the two questions a person asks of memory. What was given is what the machine
+     * promised and cannot promise twice, so it is what decides whether one more thing fits. What is held is what
+     * is really in there this moment, which is what moves while a program runs. Everything but a running program
+     * holds all of what it was given, so for those the two are the same number.
      *
      * <p>Only a script process has a number: two of them can be started from the same file, so the name
      * alone cannot say which is which when one of them is to be ended.
      */
-    public record Entry(String name, int mb, Kind kind, int id) {
+    public record Entry(String name, int mb, long heldBytes, Kind kind, int id) {
 
         public Entry(final String name, final int mb, final Kind kind) {
-            this(name, mb, kind, 0);
+            this(name, mb, mb * BYTES_PER_MB, kind, 0);
         }
     }
 
@@ -84,8 +96,16 @@ public final class RamLedger {
 
     /** The same, for something that answers to a number of its own. */
     public RamLedger add(final String name, final int mb, final Kind kind, final int id) {
+        return add(name, mb, Math.max(0, mb) * BYTES_PER_MB, kind, id);
+    }
+
+    /**
+     * The same, for a running program, which was given {@code mb} and is holding {@code heldBytes} of them this
+     * moment. It is listed by the room it was given, since that is what the machine promised it.
+     */
+    public RamLedger add(final String name, final int mb, final long heldBytes, final Kind kind, final int id) {
         if (mb > 0) {
-            entries.add(new Entry(name, mb, kind, id));
+            entries.add(new Entry(name, mb, Math.max(0, heldBytes), kind, id));
         }
         return this;
     }
@@ -113,6 +133,15 @@ public final class RamLedger {
         return sum;
     }
 
+    /** The bytes really being held this moment, which is what moves while a program runs. */
+    public long heldBytes() {
+        long sum = 0L;
+        for (final Entry entry : entries) {
+            sum += entry.heldBytes;
+        }
+        return sum;
+    }
+
     public int freeMb() {
         return Math.max(0, totalMb - usedMb());
     }
@@ -124,6 +153,22 @@ public final class RamLedger {
 
     public List<Entry> entries() {
         return List.copyOf(entries);
+    }
+
+    /**
+     * How much is really held, as a person reads it: bytes while there are few, then kilobytes, then megabytes
+     * with one decimal. A program that has just started holds a few hundred bytes, and one that has been
+     * building a list for a while holds megabytes; a single unit would show one of the two as nothing.
+     */
+    public static String heldLabel(final long bytes) {
+        if (bytes < 1024L) {
+            return bytes + " B";
+        }
+        if (bytes < BYTES_PER_MB) {
+            return bytes / 1024L + " KB";
+        }
+        final long tenths = bytes * 10L / BYTES_PER_MB;
+        return tenths / 10L + "." + tenths % 10L + " MB";
     }
 
     /**

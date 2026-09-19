@@ -189,6 +189,23 @@ public final class TaskManagerApp implements IDesktopApp {
         return data == null ? 0 : data.ramUsedMb();
     }
 
+    /**
+     * The bytes the machine is really holding this moment. The committed megabytes above are what it promised
+     * and what says whether one more program fits; this is what moves while the programs run.
+     */
+    private long heldBytes() {
+        long sum = 0L;
+        for (final RamUse use : processes()) {
+            sum += use.heldBytes();
+        }
+        return sum;
+    }
+
+    /** The same in whole megabytes, for the meters and the history, which are drawn against the installed RAM. */
+    private int heldMb() {
+        return (int) (heldBytes() / RamLedger.BYTES_PER_MB);
+    }
+
     /** This process's share of the machine's load, by what it holds. See {@link Load} for what that means. */
     private int cpuOf(final RamUse use) {
         final int total = Math.max(1, usedMb());
@@ -227,7 +244,8 @@ public final class TaskManagerApp implements IDesktopApp {
         load.step(2.0 + services().size() * 0.8 + tasks().size() * 0.6);
         final int at = samples % HISTORY;
         cpuHistory[at] = load.percent();
-        memHistory[at] = usedMb();
+        // The graph follows what is held, so a program filling memory draws a rising line.
+        memHistory[at] = heldMb();
         samples++;
     }
 
@@ -387,7 +405,7 @@ public final class TaskManagerApp implements IDesktopApp {
         final int graphH = (h - 34) / 2;
         gauge(g, font, x + 2, y + 8, meterW, graphH - 10, load.percent() + " %");
         Texts.small(g, font, "CPU Usage", x + 2, y, skin.dim());
-        gauge(g, font, x + 2, y + graphH + 16, meterW, graphH - 10, usedMb() + " MB");
+        gauge(g, font, x + 2, y + graphH + 16, meterW, graphH - 10, heldMb() + " MB");
         Texts.small(g, font, "Memory Usage", x + 2, y + graphH + 8, skin.dim());
         final int gx = x + meterW + 8;
         final int gw = w - meterW - 10;
@@ -402,7 +420,7 @@ public final class TaskManagerApp implements IDesktopApp {
             {"Programs", String.valueOf(tasks().size())},
             {"Services", String.valueOf(services().size())}});
         facts(g, font, x + half + 2, fy, half - 4, new String[][] {
-            {"Total MB", JsTechTheme.fmt(totalMb())},
+            {"In use", RamLedger.heldLabel(heldBytes())},
             {"Free MB", JsTechTheme.fmt(Math.max(0, totalMb() - usedMb()))},
             {"Processor", clock()}});
     }
@@ -471,7 +489,7 @@ public final class TaskManagerApp implements IDesktopApp {
         }
         final int cardH = 22;
         if (page == 0) {
-            card(g, font, px, y + 4, pw / 2 - 2, cardH, "Memory", usedMb() + " / " + totalMb() + " MB");
+            card(g, font, px, y + 4, pw / 2 - 2, cardH, "Memory", heldMb() + " / " + totalMb() + " MB");
             card(g, font, px + pw / 2 + 2, y + 4, pw / 2 - 2, cardH, "Processor",
                     load.percent() + "%  " + clock());
         }
@@ -659,7 +677,8 @@ public final class TaskManagerApp implements IDesktopApp {
             final int text = index == selected ? 0xFFFFFFFF : skin.text();
             final int dim = index == selected ? 0xFFFFFFFF : skin.dim();
             if (detailed) {
-                final String mb = JsTechTheme.fmt(use.mb()) + " MB";
+                // What it is holding, not what it was promised: the number that moves while a program runs.
+                final String mb = RamLedger.heldLabel(use.heldBytes());
                 final int mbW = Texts.smallWidth(font, mb);
                 final String cpu = cpuOf(use) + "%";
                 final int cpuW = Texts.smallWidth(font, cpu);

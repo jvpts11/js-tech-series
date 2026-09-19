@@ -16,6 +16,7 @@ import dev.jstech.computers.os.boot.SystemWelcome;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.core.JsCore;
 import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -456,9 +457,26 @@ public interface IOsHost extends IPeripheralOwner {
     }
 
     /**
+     * Whether a service installed here is running, and so holding the memory it asks for. A service with nothing
+     * to switch is running as long as the machine is; a machine that can stop one of its own says so itself.
+     */
+    default boolean serviceRunning(final ProgramSpec service) {
+        /*
+         * A language's runtime is in memory while it has something to run, the way an interpreter is loaded for
+         * a program and not for the disk it sits on. A service registered under a language's own name is that
+         * language's runtime, so nothing has to be named here for this to hold for an addon's language too.
+         */
+        if (JsCore.languages().get(service.id()) == null) {
+            return true;
+        }
+        final MachinePrograms running = programs();
+        return running != null && !running.isEmpty();
+    }
+
+    /**
      * This machine's memory ledger: the running system's own share, the desktop package it booted, the
-     * services installed on it and the windows it has open, each weighed under the installed system. A
-     * machine that is off or has no system holds nothing.
+     * services it is running, the programs it is running and the windows it has open, each weighed under the
+     * installed system. A machine that is off or has no system holds nothing.
      */
     default RamLedger ramLedger() {
         final RamLedger ledger = new RamLedger(ramTotalMb());
@@ -480,7 +498,8 @@ public interface IOsHost extends IPeripheralOwner {
         final ComputerConsoleState console = console();
         if (console != null) {
             for (final ProgramSpec spec : OsRegistry.programs()) {
-                if (spec.kind() == ProgramKind.SERVICE && console.isInstalled(spec.id().getPath())) {
+                if (spec.kind() == ProgramKind.SERVICE && console.isInstalled(spec.id().getPath())
+                        && serviceRunning(spec)) {
                     ledger.add(spec.displayName(), spec.ramMbOn(os), RamLedger.Kind.SERVICE);
                 }
             }
@@ -488,7 +507,7 @@ public interface IOsHost extends IPeripheralOwner {
         final MachinePrograms scripts = programs();
         if (scripts != null) {
             for (final var one : scripts.view()) {
-                ledger.add(one.name(), one.heapMb(), RamLedger.Kind.PROCESS, one.id());
+                ledger.add(one.name(), one.heapMb(), one.heldBytes(), RamLedger.Kind.PROCESS, one.id());
             }
         }
         for (final OpenWindow window : openWindows()) {

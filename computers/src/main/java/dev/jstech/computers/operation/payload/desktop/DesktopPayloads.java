@@ -304,7 +304,7 @@ public final class DesktopPayloads {
         final List<SettingsSnapshotPayload.RamUse> ramUses = new ArrayList<>();
         for (final RamLedger.Entry entry : ledger.entries()) {
             ramUses.add(new SettingsSnapshotPayload.RamUse(
-                    entry.name(), entry.mb(), entry.kind().serializedName(), entry.id()));
+                    entry.name(), entry.mb(), entry.heldBytes(), entry.kind().serializedName(), entry.id()));
         }
         final List<SettingsSnapshotPayload.ShareRow> shares = new ArrayList<>();
         for (final ComputerSettings.Share share : st.shares()) {

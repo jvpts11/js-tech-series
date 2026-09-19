@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.os.HostScope;
@@ -21,8 +22,13 @@ import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.RamLedger;
+import dev.jstech.computers.machine.ProgramLauncher;
+import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.vm.program.IProgramParent;
+import dev.jstech.computers.vm.program.ProgramPriority;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -48,6 +54,29 @@ public final class OsMemoryGameTests {
     private static final String ARENA = "empty";
     private static final int SETTLE = 4;
 
+    /** The room the program under test asks for, which is more than it will ever hold. */
+    private static final int ROOM_MB = 16;
+
+    /** A program that takes up room and stays up, so there is something to read off the ledger. */
+    private static final String HOLDING = """
+            using System.*;
+            using System.Collections.*;
+            namespace Programs;
+            class Holding : IScript {
+                List<string> room = new List<string>();
+
+                public void OnInit() {
+                    int i = 0;
+                    while (i < 200) {
+                        room.Add("a line of text that takes up room on the heap");
+                        i = i + 1;
+                    }
+                }
+                public void OnTick() { }
+                public void OnDestroy() { }
+            }
+            """;
+
     private OsMemoryGameTests() {
     }
 
@@ -63,8 +92,9 @@ public final class OsMemoryGameTests {
                             "Frames XP holds 64 MB for itself; got " + mainframe.ramReservedMb());
 
                     mainframe.console().install("iqlengine");
+                    mainframe.installIqlEngine();
                     helper.assertTrue(mainframe.ramReservedMb() == 88,
-                            "an installed service holds its share on top of the system; got "
+                            "a running service holds its share on top of the system; got "
                                     + mainframe.ramReservedMb());
 
                     mainframe.setOpenWindows(List.of(
@@ -77,6 +107,35 @@ public final class OsMemoryGameTests {
                     helper.assertTrue(ledger.usedMb() == 120, "the ledger adds up; got " + ledger.usedMb());
                     helper.assertTrue(mainframe.ramReservedMb() == 88,
                             "windows are not part of the reserve; got " + mainframe.ramReservedMb());
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A service holds memory while it runs and not while it merely sits on the disk. The Engine is the one a
+     * player stops and starts by hand, so it is the one that proves it.
+     */
+    @GameTest(template = ARENA)
+    public static void ramLedger_aStoppedServiceHoldsNothing(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = placeLegacyMainframe(helper, new BlockPos(2, 2, 2), id("frames_xp"));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    mainframe.setNeedsPost(false);
+                    mainframe.console().install("iqlengine");
+                    mainframe.installIqlEngine();
+                    helper.assertTrue(mainframe.ramReservedMb() == 88,
+                            "the Engine holds its 24 MB while it runs; got " + mainframe.ramReservedMb());
+
+                    mainframe.setIqlEngineRunning(false);
+                    helper.assertTrue(mainframe.ramReservedMb() == 64,
+                            "a service that is stopped holds nothing, though it is still installed; got "
+                                    + mainframe.ramReservedMb());
+                    helper.assertTrue(mainframe.console().isInstalled("iqlengine"),
+                            "and stopping it did not uninstall it");
+
+                    mainframe.setIqlEngineRunning(true);
+                    helper.assertTrue(mainframe.ramReservedMb() == 88,
+                            "starting it again takes the memory back; got " + mainframe.ramReservedMb());
                 })
                 .thenSucceed();
     }
@@ -101,6 +160,45 @@ public final class OsMemoryGameTests {
                             "the kept layout fills the RAM; got " + mainframe.ramLedger().usedMb());
                     helper.assertTrue(mainframe.windowsWithinBudget(asked.subList(0, 3)).size() == 3,
                             "a layout that fits comes back whole");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A running program is listed by both of its sizes: the room the machine promised it, which is what says
+     * whether one more program fits, and what it is really holding, which is what moves while it runs. And a
+     * language's runtime is in memory while it has something to run, not while it merely sits on a disk.
+     */
+    @GameTest(template = ARENA)
+    public static void ramLedger_listsAProgramByWhatItHoldsAndItsRuntimeWhileItRuns(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = TestWorldBuilder.forGameTest(helper)
+                .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    computer.console().install("sigma");
+                    helper.assertTrue(computer.ramLedger().usedMb(RamLedger.Kind.SERVICE) == 0,
+                            "a runtime with nothing to run holds nothing; got "
+                                    + computer.ramLedger().usedMb(RamLedger.Kind.SERVICE));
+                    final ProgramLauncher.Launch launch = ProgramLauncher.launch(computer, "C:\\progs\\hold.sgs",
+                            asked -> ICliComputer.FsResult.ok(HOLDING), List.of(), IProgramParent.NONE,
+                            ProgramPriority.MEDIUM, ROOM_MB);
+                    helper.assertTrue(launch.ok(), "the program starts; got " + launch.message());
+                })
+                .thenExecuteAfter(SETTLE, () -> {
+                    final RamLedger ledger = computer.ramLedger();
+                    RamLedger.Entry program = null;
+                    for (final RamLedger.Entry entry : ledger.entries()) {
+                        if (entry.kind() == RamLedger.Kind.PROCESS) {
+                            program = entry;
+                        }
+                    }
+                    helper.assertTrue(program != null, "the ledger lists the program; it has " + ledger.entries());
+                    helper.assertTrue(program.mb() == ROOM_MB,
+                            "by the room it was promised; got " + program.mb());
+                    helper.assertTrue(program.heldBytes() > 0 && program.heldBytes() < ROOM_MB * RamLedger.BYTES_PER_MB,
+                            "and by what it is holding of that room; got " + program.heldBytes());
+                    helper.assertTrue(ledger.usedMb(RamLedger.Kind.SERVICE) > 0,
+                            "the runtime is in memory now that it has something to run");
                 })
                 .thenSucceed();
     }

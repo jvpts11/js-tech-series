@@ -45,15 +45,17 @@ public final class SettingsPayloadGameTests {
                 "C", true, "", true, false, 0, "1 CPU", 100, "x86-64, 64-bit", 256, 0, "frames_11", "Frames",
                 List.of("jsc:sgsc"),
                 List.of(new SettingsSnapshotPayload.DiskUse(longDisk, 500, 12, true)),
-                40, List.of(new SettingsSnapshotPayload.RamUse(longName, 12, "PROCESS", 7)),
+                40, List.of(new SettingsSnapshotPayload.RamUse(longName, 12, 3_145_728L, "PROCESS", 7)),
                 List.of(new SettingsSnapshotPayload.ShareRow("pub", "C:\\pub", true)), false);
         final RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), helper.getLevel().registryAccess());
         SettingsSnapshotPayload.STREAM_CODEC.encode(buf, snapshot);
         final SettingsSnapshotPayload back = SettingsSnapshotPayload.STREAM_CODEC.decode(buf);
         helper.assertTrue(back.ramUses().size() == 1
                         && back.ramUses().get(0).label().equals(longName.substring(0, SettingsSnapshotPayload.LABEL_MAX))
-                        && back.ramUses().get(0).id() == 7,
-                "the process arrives with its name cut to the cap and its number intact; got " + back.ramUses());
+                        && back.ramUses().get(0).id() == 7
+                        && back.ramUses().get(0).heldBytes() == 3_145_728L,
+                "the process arrives with its name cut to the cap, and its number and what it holds intact; got "
+                        + back.ramUses());
         helper.assertTrue(back.disks().get(0).label().length() == SettingsSnapshotPayload.LABEL_MAX
                         && back.disks().get(0).capMb() == 500,
                 "the disk label is cut the same way; got " + back.disks());

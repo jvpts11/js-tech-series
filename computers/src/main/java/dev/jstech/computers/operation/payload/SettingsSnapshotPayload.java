@@ -62,13 +62,18 @@ public record SettingsSnapshotPayload(
     public record ShareRow(String name, String path, boolean writable) {}
 
     /**
-     * One thing holding memory: what to call it, how many megabytes, the serialized name of its ledger kind, and
-     * the number it answers to if it is something that can be ended.
+     * One thing holding memory: what to call it, how many megabytes it was given, how many bytes of them it is
+     * holding this moment, the serialized name of its ledger kind, and the number it answers to if it is
+     * something that can be ended.
+     *
+     * <p>Both sizes travel because both are shown: the megabytes are what the machine promised and what a new
+     * program is measured against, and the bytes are what is really in there, which is what moves while a
+     * program runs.
      *
      * <p>A window is ended by its name, but two scripts can be started from the same file and only the
      * number tells them apart, so the number travels for those and is 0 for everything else.
      */
-    public record RamUse(String label, int mb, String kind, int id) {}
+    public record RamUse(String label, int mb, long heldBytes, String kind, int id) {}
 
     public static final int MAX = 64;
 
@@ -138,6 +143,7 @@ public record SettingsSnapshotPayload(
             final RamUse r = p.ramUses.get(i);
             buf.writeUtf(clip(r.label(), LABEL_MAX), LABEL_MAX);
             buf.writeVarInt(r.mb());
+            buf.writeVarLong(r.heldBytes());
             buf.writeUtf(clip(r.kind(), 16), 16);
             buf.writeVarInt(r.id());
         }
@@ -191,7 +197,8 @@ public record SettingsSnapshotPayload(
         final int ramUseCount = Math.min(buf.readVarInt(), MAX);
         final List<RamUse> ramUses = new ArrayList<>(ramUseCount);
         for (int i = 0; i < ramUseCount; i++) {
-            ramUses.add(new RamUse(buf.readUtf(48), buf.readVarInt(), buf.readUtf(16), buf.readVarInt()));
+            ramUses.add(new RamUse(buf.readUtf(48), buf.readVarInt(), buf.readVarLong(), buf.readUtf(16),
+                    buf.readVarInt()));
         }
         final int shareCount = Math.min(buf.readVarInt(), MAX);
         final List<ShareRow> shares = new ArrayList<>(shareCount);

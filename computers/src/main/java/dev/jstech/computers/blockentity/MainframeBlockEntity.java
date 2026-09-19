@@ -28,6 +28,7 @@ import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkSelectOperation;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.os.OsDisks;
+import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.program.iql.IqlCatalog;
@@ -1572,6 +1573,20 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     }
 
     // IQL Engine (the saved-object service installed on the Mainframe)
+
+    /**
+     * The services of a network are the ones a player starts and stops by hand, so this machine answers for its
+     * own: one that is installed but stopped is not running, and holds nothing while it is not.
+     */
+    @Override
+    public boolean serviceRunning(final ProgramSpec service) {
+        return switch (service.id().getPath()) {
+            case "iqlengine" -> isIqlEngineActive();
+            case "automation_engine" -> isAutomationEngineActive();
+            case "mirror" -> isMirrorActive();
+            default -> super.serviceRunning(service);
+        };
+    }
 
     public IqlCatalog iqlCatalog() {
         return services.catalog();

@@ -356,6 +356,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   system it runs on: a Linux says `Linux` and `x86_64` or `i686`, FreeBSD says `FreeBSD` and `vel64` or `IA-32`.
 
 ### Changed
+- A computer's memory now says what is really in it. A running program was listed by the room it had been
+  promised, a number that never moved however much the program went on to hold, so nothing a program did
+  showed anywhere. Each thing now carries both sizes: the room it was given, which is what says whether one
+  more program fits and is still what a machine runs out of, and what it is holding this moment, which is what
+  the Task Manager's list, its memory meter and its history, and the System Monitor now show. A program filling
+  memory finally draws a rising line.
+- A service holds memory while it is running and not while it merely sits on the disk. Stopping the IQL Engine
+  gives its memory back, and a language's runtime is in memory while it has a program to run; installing one
+  costs nothing until it does.
 - A prompt now offers only what the computer in front of you can actually do. Every command says which systems
   have it and what the machine must have for it to be there: a filesystem, a network under it, ports for
   peripherals, a package installed, a Mainframe or a Cluster Management Computer. So MC-NET, which keeps no
