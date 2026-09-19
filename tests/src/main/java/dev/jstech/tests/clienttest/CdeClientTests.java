@@ -34,6 +34,9 @@ public final class CdeClientTests {
     /** Ticks enough for a first click to have gone stale, so the two after it are a double click of their own. */
     private static final int DOUBLE_CLICK_GONE = 10;
 
+    private static final String MANAGER = "Application Manager";
+    private static final String MANAGER_APPS = "Application Manager - Desktop_Apps";
+
     private static final BlockPos MACHINE = new BlockPos(5, 2, 2);
     private static final BlockPos MONITOR = new BlockPos(6, 2, 2);
     private static final BlockPos PLAYER_AT_MONITOR = new BlockPos(8, 2, 2);
@@ -53,9 +56,40 @@ public final class CdeClientTests {
                 .thenWaitUntil(() -> desktop(ctx).openWindowLabels().contains("File Manager"), SCREEN_WAIT,
                         "the Files control to open the File Manager")
                 .thenScreenshot(SETTLE, "cde-file-manager")
-                .then(SETTLE, () -> press(ctx, CdeFrontPanelLayout.Control.APPLICATIONS))
-                .thenWaitUntil(() -> desktop(ctx).isStartOpen(), SCREEN_WAIT, "the Applications subpanel to rise")
+                .then(SETTLE, () -> clickAt(ctx,
+                        desktop(ctx).frontPanelArrowPoint(CdeFrontPanelLayout.Control.APPLICATIONS)))
+                .thenWaitUntil(() -> desktop(ctx).isStartOpen(), SCREEN_WAIT,
+                        "the arrow over Applications to raise its subpanel")
                 .thenScreenshot(SETTLE, "cde-applications");
+    }
+
+    /**
+     * The Applications control opens the Application Manager: the groups that hold something as folders, a
+     * group in a window of its own on a double click, and a program started by a double click on it there.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void applicationManager_findsAProgramByItsGroupAndStartsIt(final ClientTestContext ctx) {
+        atCde(ctx)
+                .then(SETTLE, () -> press(ctx, CdeFrontPanelLayout.Control.APPLICATIONS))
+                .thenWaitUntil(() -> desktop(ctx).applicationManagerNames(MANAGER).contains("Desktop_Apps"),
+                        SCREEN_WAIT, "the Applications control to open the Application Manager")
+                .thenAssert(1, () -> !desktop(ctx).applicationManagerNames(MANAGER).contains("Games"),
+                        "a group with nothing in it is not drawn")
+                .thenScreenshot(SETTLE, "cde-application-manager")
+                .then(DOUBLE_CLICK_GONE, () -> doubleClickAt(ctx,
+                        desktop(ctx).applicationManagerPoint(MANAGER, "Desktop_Apps")))
+                .thenWaitUntil(() -> desktop(ctx).applicationManagerNames(MANAGER_APPS).contains("Calculator"),
+                        SCREEN_WAIT, "a double click on Desktop_Apps to open the group in its own window")
+                .thenScreenshot(SETTLE, "cde-application-manager-group")
+                .then(DOUBLE_CLICK_GONE, () -> doubleClickAt(ctx,
+                        desktop(ctx).applicationManagerPoint(MANAGER_APPS, "Calculator")))
+                .thenWaitUntil(() -> desktop(ctx).shownWindowLabels().contains("Calculator"), SCREEN_WAIT,
+                        "a double click on the Calculator to start it");
+    }
+
+    private static void doubleClickAt(final ClientTestContext ctx, final int[] at) {
+        clickAt(ctx, at);
+        clickAt(ctx, at);
     }
 
     /** A UNIX machine with CDE installed, brought up, with the player at its monitor and the desktop open. */

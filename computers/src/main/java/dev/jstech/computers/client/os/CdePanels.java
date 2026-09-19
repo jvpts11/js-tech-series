@@ -84,8 +84,14 @@ final class CdePanels {
             }
         }
         for (final Control control : Control.values()) {
-            if (CdeFrontPanelLayout.control(control, sw, sh).holds(mx, my)) {
-                press(control);
+            final Rect r = CdeFrontPanelLayout.control(control, sw, sh);
+            if (r.holds(mx, my)) {
+                // The arrow at the head of a control raises what is behind it; the control itself opens its program.
+                if (control == Control.APPLICATIONS && my < r.y() + CdeFrontPanelLayout.ARROW_H + 2) {
+                    desktop.toggleLauncher();
+                } else {
+                    press(control);
+                }
                 return true;
             }
         }
@@ -102,7 +108,7 @@ final class CdePanels {
             case FILES -> open(FILES);
             case EDITOR -> open(EDITOR);
             case STYLE -> open(STYLE);
-            case APPLICATIONS -> desktop.toggleLauncher();
+            case APPLICATIONS -> desktop.openApplicationManager(null);
             default -> { }
         }
     }

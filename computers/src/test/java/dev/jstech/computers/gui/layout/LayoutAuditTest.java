@@ -42,7 +42,7 @@ class LayoutAuditTest {
             "ComputerTerminalLayout", "ServerRouterLayout", "NetworkInteractorLayout",
             "CraftingSwitchLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
-            "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout");
+            "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout");
 
     private record AuditCase(String label, GuiLayout layout, boolean fixedSize) {
     }
@@ -131,6 +131,9 @@ class LayoutAuditTest {
             c.add(new AuditCase("CdeExitLayout(" + desktop[0] + ")",
                     CdeExitLayout.layout(desktop[0], desktop[1]), false));
         }
+        // CDE's Application Manager: the window of the four groups, and a group that fills two rows.
+        c.add(new AuditCase("CdeAppManagerLayout(groups)", CdeAppManagerLayout.layout(4, false, 284, 62), true));
+        c.add(new AuditCase("CdeAppManagerLayout(group)", CdeAppManagerLayout.layout(8, true, 292, 128), true));
         return c;
     }
 

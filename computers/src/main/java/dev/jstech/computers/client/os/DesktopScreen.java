@@ -36,6 +36,7 @@ import dev.jstech.computers.operation.payload.SetIconPositionPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
+import dev.jstech.computers.os.CdeAppGroup;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.IOsHost;
@@ -1017,6 +1018,28 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         closeStart();
     }
 
+    /**
+     * Opens CDE's Application Manager on a group, or on the groups themselves for null, and brings the window
+     * forward instead when it is already up: one window for each, however often it is asked for.
+     */
+    void openApplicationManager(@Nullable final CdeAppGroup group) {
+        final String key = ApplicationManagerApp.keyOf(group);
+        final DesktopWindow open = windowFor(key);
+        if (open != null) {
+            focusWindow(open);
+            return;
+        }
+        final ApplicationManagerApp app = new ApplicationManagerApp(group);
+        app.applySkin(skin);
+        openApp(key, app);
+    }
+
+    /** The desktop that is up, for a window that outlived the screen it was opened on; null while none is. */
+    @Nullable
+    static DesktopScreen current() {
+        return active;
+    }
+
     void askToPowerOff() {
         openPowerDialog();
     }
@@ -1536,6 +1559,25 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             }
         }
         return new int[] {0, 0};
+    }
+
+    /** Screen position of the arrow at the head of a Front Panel control, which raises what is behind it. */
+    public int[] frontPanelArrowPoint(final CdeFrontPanelLayout.Control control) {
+        final CdeFrontPanelLayout.Rect r = CdeFrontPanelLayout.control(control, sw(), sh());
+        return new int[] {sx(r.x() + r.w() / 2), sy(r.y() + CdeFrontPanelLayout.ARROW_H / 2 + 1)};
+    }
+
+    /** The names under the icons of the Application Manager window so titled, or nothing when it is not up. */
+    public List<String> applicationManagerNames(final String windowTitle) {
+        final DesktopWindow w = windowFor(windowTitle);
+        return w != null && w.app() instanceof ApplicationManagerApp app ? app.names() : List.of();
+    }
+
+    /** Screen position of the icon so named in the Application Manager window so titled, or null. */
+    public int[] applicationManagerPoint(final String windowTitle, final String name) {
+        final DesktopWindow w = windowFor(windowTitle);
+        final int[] at = w != null && w.app() instanceof ApplicationManagerApp app ? app.iconCentre(name) : null;
+        return at == null ? null : screenPoint(at);
     }
 
     /** Screen position of the middle of EXIT on the Front Panel. */
@@ -5164,8 +5206,6 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         windows.add(opened);
     }
 
-    /** Recreates a program from its launcher key, for restoring persisted windows. */
-    @Nullable
     /** Opens that program's window on this desktop, if this machine has it at all. */
     private void startProgramById(final String path) {
         for (final Launcher l : launchers) {
@@ -5176,6 +5216,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         }
     }
 
+    /** Recreates a program from its launcher key, for restoring persisted windows. */
+    @Nullable
     private IDesktopApp factoryFor(final String key) {
         /*
          * The welcome has no launcher of its own: it is the system putting itself in front of somebody, not a
@@ -5183,6 +5225,10 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
          */
         if (WelcomeApp.KEY.equals(key)) {
             return new WelcomeApp(host);
+        }
+        // Nor has CDE's Application Manager, which is reached from the Front Panel, one window to a group.
+        if (is(PanelStyle.CDE) && ApplicationManagerApp.owns(key)) {
+            return new ApplicationManagerApp(ApplicationManagerApp.groupOf(key));
         }
         for (final Launcher l : launchers) {
             if (l.label().equals(key) && l.factory() != null) {

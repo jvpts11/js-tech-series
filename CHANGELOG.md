@@ -260,6 +260,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   across all four workspaces, warns that what is not saved will be lost, and offers Shut Down, Restart and
   Cancel. There is no logging out, since nobody logs in. Enter takes Shut Down, and a click beside the buttons
   answers nothing.
+- CDE's Application Manager. The Applications control on the Front Panel opens it: every program on the machine
+  sorted into Desktop_Apps, Desktop_Tools, Network and Games, so nobody has to know a program's name to find it.
+  A double click on a group opens it in a window of its own and a double click on a program starts it. A group
+  with nothing in it is not drawn, and a program installed while a window is open appears in it at once. The
+  arrow at the head of the control still raises the subpanel that lists the programs.
 - Escape puts the power dialog away on every desktop instead of closing the monitor behind it, and no key
   reaches a program while that dialog is up.
 - The File Manager and the file dialogs open a desktop's Desktop folder and Home where the system really
