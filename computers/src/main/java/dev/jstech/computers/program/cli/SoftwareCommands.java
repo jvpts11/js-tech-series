@@ -14,6 +14,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.Programs;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -36,14 +37,29 @@ final class SoftwareCommands {
      * software the same way. Linux distributions keep their own managers (apt, dnf, pacman, emerge);
      * this is the Frames-side equivalent, and it speaks to the same Mirror.
      */
+    /**
+     * A package manager over the network's Mirror, under whichever name its family gave it.
+     *
+     * <p>The Frames family calls it {@code pckmgr} and the network appliance calls it {@code netgetter}, and
+     * they are the same manager fetching from the same mirror: one implementation wearing two names, so a
+     * fix to how packages install is a fix on both machines. MC-DOS has neither and installs from media.
+     */
     static final class Pckmgr implements ICliCommand {
-        /** The Frames family's package manager, over the network's Mirror. MC-DOS installs from media alone. */
+
+        private final String name;
+        private final Set<Platform> systems;
+
+        Pckmgr(final String name, final Set<Platform> systems) {
+            this.name = name;
+            this.systems = systems;
+        }
+
         @Override public CommandScope scope() {
-            return CommandScope.on(Platform.MC_NET, Platform.FRAMES).needing(CommandScope.Need.NETWORK);
+            return CommandScope.on(this.systems).needing(CommandScope.Need.NETWORK);
         }
 
         @Override public String name() {
-            return "pckmgr";
+            return this.name;
         }
 
         @Override public String summary() {
@@ -51,7 +67,7 @@ final class SoftwareCommands {
         }
 
         @Override public String usage() {
-            return "pckmgr install|remove|search|list|update [name]";
+            return this.name + " install|remove|search|list|update [name]";
         }
 
         @Override public void run(final CliContext ctx) {
@@ -74,7 +90,8 @@ final class SoftwareCommands {
                      * becomes "the feature is broken".
                      */
                     if (!flag.isEmpty() && !flag.equalsIgnoreCase("--available")) {
-                        ctx.out().error("pckmgr list: unknown option " + flag + " (did you mean --available?)");
+                        ctx.out().error(this.name + " list: unknown option " + flag
+                                + " (did you mean --available?)");
                     } else {
                         listPackages(ctx, "", flag.isEmpty());
                     }
@@ -90,10 +107,10 @@ final class SoftwareCommands {
             }
         }
 
-        private static void requireName(final CliContext ctx,
-                                        final Function<String, ICliComputer.OpResult> action) {
+        private void requireName(final CliContext ctx,
+                                 final Function<String, ICliComputer.OpResult> action) {
             if (ctx.argCount() < 2) {
-                ctx.out().error("pckmgr: this verb needs a package name");
+                ctx.out().error(this.name + ": this verb needs a package name");
                 return;
             }
             report(ctx, action.apply(ctx.arg(1)));

@@ -51,6 +51,9 @@ public final class CliCommands {
         if (family == ShellFamily.NET) {
             final List<ICliCommand> commands = new ArrayList<>(BuiltinCommands.shared());
             commands.addAll(NetFileCommands.all());
+            commands.addAll(NetTextCommands.all());
+            commands.addAll(NetMachineCommands.all());
+            commands.addAll(NetSoftwareCommands.all());
             commands.addAll(EXTRA);
             return commands;
         }

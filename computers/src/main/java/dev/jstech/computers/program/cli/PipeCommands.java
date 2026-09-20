@@ -33,12 +33,12 @@ final class PipeCommands {
     /** The POSIX tools, which is where these names come from. */
     static List<ICliCommand> posix() {
         return List.of(new Grep(), new Wc(), new Head(), new Tail(), new Sort(),
-                new PagerCommand("less", true));
+                new PagerCommand("less", CommandScope.UNIX_SYSTEMS));
     }
 
     /** The same tools under the names and switches the DOS family has always written them with. */
     static List<ICliCommand> dos() {
-        return List.of(new DosFind(), new DosSort(), new PagerCommand("more", false));
+        return List.of(new DosFind(), new DosSort(), new PagerCommand("more", CommandScope.DOS_SYSTEMS));
     }
 
     /**
@@ -46,7 +46,7 @@ final class PipeCommands {
      *
      * @param from the argument that may be a file name, or empty when the tool takes none
      */
-    private static List<String> linesFor(final CliContext ctx, final String from) {
+    static List<String> linesFor(final CliContext ctx, final String from) {
         if (ctx.hasInput() || from.isEmpty()) {
             return ctx.input();
         }
@@ -58,14 +58,14 @@ final class PipeCommands {
         return List.of(read.message().split("\r?\n", -1));
     }
 
-    private static void print(final CliContext ctx, final List<String> lines) {
+    static void print(final CliContext ctx, final List<String> lines) {
         for (final String line : lines) {
             ctx.out().line(line);
         }
     }
 
     /** The words of a line that are not switches, which is how every one of these reads its arguments. */
-    private static List<String> plainWords(final CliContext ctx) {
+    static List<String> plainWords(final CliContext ctx) {
         final List<String> words = new ArrayList<>();
         for (final String arg : ctx.args()) {
             if (!arg.startsWith("-") && !arg.startsWith("/")) {
@@ -75,7 +75,7 @@ final class PipeCommands {
         return words;
     }
 
-    private static boolean flag(final CliContext ctx, final String unix, final String dos) {
+    static boolean flag(final CliContext ctx, final String unix, final String dos) {
         for (final String arg : ctx.args()) {
             final String said = arg.toLowerCase(Locale.ROOT);
             if (said.equals(unix) || said.equals(dos)) {

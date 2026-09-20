@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.program.cli.interac.InteracCommand;
 import dev.jstech.computers.program.cli.man.ManCommands;
 import java.util.ArrayList;
@@ -97,7 +98,7 @@ public final class BuiltinCommands {
                 new MachineCommands.Devices(),
                 new NetworkCommands.Ssh(),
                 new ShellCommands.Exit(),
-                new SoftwareCommands.Pckmgr(),
+                new SoftwareCommands.Pckmgr("pckmgr", Set.of(Platform.FRAMES)),
                 new SoftwareCommands.ProgramsList(),
                 new SoftwareCommands.Install(),
                 new SoftwareCommands.Store(),

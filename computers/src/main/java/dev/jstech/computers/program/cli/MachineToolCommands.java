@@ -8,6 +8,7 @@
 package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.os.RamLedger;
+import dev.jstech.computers.os.ShellFamily;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -36,55 +37,11 @@ final class MachineToolCommands {
         return List.of(new Tasklist(), new Taskkill(), new Where(), new Mem(), new DateDos(), new Tree());
     }
 
-    /** The processes a machine is running, with what each is holding. */
-    private static void printProcesses(final CliContext ctx, final boolean dosStyle) {
-        final List<ICliComputer.SigmaProcess> running = ctx.computer().sigmaProcesses();
-        if (running.isEmpty()) {
-            ctx.out().dim(dosStyle ? "No tasks are running." : "no processes");
-            return;
-        }
-        /*
-         * The file as well as the name: a program that gave itself no name is listed under the runtime that
-         * runs it, and then the file is the only thing telling two of them apart.
-         */
-        ctx.out().header(CliText.pad(dosStyle ? "PID" : "  PID", 7) + CliText.pad("NAME", 14)
-                + CliText.pad("FILE", 24) + CliText.pad("STATE", 10) + CliText.padLeft("MEM", 10));
-        for (final ICliComputer.SigmaProcess one : running) {
-            ctx.out().line(CliText.pad(String.valueOf(one.id()), 7) + CliText.pad(one.name(), 14)
-                    + CliText.pad(one.file(), 24) + CliText.pad(one.state(), 10)
-                    + CliText.padLeft(RamLedger.heldLabel(one.heldBytes()), 10));
-        }
-    }
-
-    /** Stops the process of that number, in whichever family's words. */
-    private static void stopProcess(final CliContext ctx, final String number, final boolean dosStyle) {
-        final int id = whole(number);
-        if (id <= 0) {
-            ctx.out().error(dosStyle ? "taskkill: /PID takes the number of a task" : "kill: not a process id");
-            return;
-        }
-        final ICliComputer.OpResult result = ctx.computer().stopSigma(id);
-        ctx.out().styled(result.message(), result.ok() ? CliStyle.OK : CliStyle.ERROR);
-    }
-
-    private static int whole(final String text) {
-        try {
-            return Integer.parseInt(text.trim().replace("%", ""));
-        } catch (final NumberFormatException notANumber) {
-            return -1;
-        }
-    }
-
-    /** Where a command lives, which for a machine like this is which package put it there. */
-    private static void whereIs(final CliContext ctx, final String name, final boolean dosStyle) {
-        final ICliCommand found = ctx.shell().find(name);
-        if (found == null || !found.available(ctx.computer())) {
-            ctx.out().error(dosStyle ? "INFO: Could not find \"" + name + "\"." : name + " not found");
-            return;
-        }
-        final String path = found.scope().fromAPackage() ? found.scope().packageId() : "the system";
-        ctx.out().row(found.name(), path);
-    }
+    /*
+     * What is running, how to stop one and where a command came from are answered by MachineFacts, which
+     * every family asks in its own words. They used to live here, which made this file the DOS and POSIX
+     * verbs and the answers both, and left nowhere for a third family to ask the same questions.
+     */
 
     static final class Ps implements ICliCommand {
         @Override public CommandScope scope() {
@@ -109,7 +66,7 @@ final class MachineToolCommands {
         }
 
         @Override public void run(final CliContext ctx) {
-            printProcesses(ctx, false);
+            MachineFacts.printProcesses(ctx, ShellFamily.POSIX);
         }
     }
 
@@ -149,7 +106,7 @@ final class MachineToolCommands {
              * the mark has always meant at a shell, and it is how a background line is stopped.
              */
             if (ctx.arg(0).startsWith("%")) {
-                final int id = whole(ctx.arg(0));
+                final int id = MachineFacts.whole(ctx.arg(0));
                 if (id > 0 && ctx.computer().stopJob(id)) {
                     ctx.out().ok("[" + id + "] done");
                 } else {
@@ -157,7 +114,7 @@ final class MachineToolCommands {
                 }
                 return;
             }
-            stopProcess(ctx, ctx.arg(0), false);
+            MachineFacts.stopProcess(ctx, ctx.arg(0), ShellFamily.POSIX);
         }
     }
 
@@ -192,7 +149,7 @@ final class MachineToolCommands {
                 ctx.out().error("usage: which <command>");
                 return;
             }
-            whereIs(ctx, ctx.arg(0), false);
+            MachineFacts.whereIs(ctx, ctx.arg(0), ShellFamily.POSIX);
         }
     }
 
@@ -276,7 +233,7 @@ final class MachineToolCommands {
         }
 
         @Override public void run(final CliContext ctx) {
-            printProcesses(ctx, true);
+            MachineFacts.printProcesses(ctx, ShellFamily.DOS);
         }
     }
 
@@ -310,7 +267,7 @@ final class MachineToolCommands {
                     number = ctx.arg(i).substring(5);
                 }
             }
-            stopProcess(ctx, number, true);
+            MachineFacts.stopProcess(ctx, number, ShellFamily.DOS);
         }
     }
 
@@ -336,7 +293,7 @@ final class MachineToolCommands {
                 ctx.out().error("usage: WHERE <command>");
                 return;
             }
-            whereIs(ctx, ctx.arg(0), true);
+            MachineFacts.whereIs(ctx, ctx.arg(0), ShellFamily.DOS);
         }
     }
 

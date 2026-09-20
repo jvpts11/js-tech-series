@@ -119,10 +119,64 @@ public final class McNetGameTests {
                     helper.assertTrue(says(seen, "a line"), "seefile puts it on the glass; got " + seen);
 
                     for (final String gone : new String[] {"dir", "type notes.txt", "cd", "mkdir progs",
-                            "tree"}) {
+                            "tree", "cls", "del notes.txt", "ren a b", "more notes.txt", "find x",
+                            "taskkill", "mem", "date", "where dir", "start echo hi", "at", "pckmgr list"}) {
                         helper.assertTrue(says(shell(helper, computer, gone), "command not found"),
                                 "the DOS word '" + gone + "' is not this machine's");
                     }
+                })
+                .thenSucceed();
+    }
+
+    /** Every word the palette promises answers, and the machine can say what it has. */
+    @GameTest(template = ARENA)
+    public static void thePalette_answersToEveryWordItPromises(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    DiskFilesystem.write(computer.systemDisk(), "notes.txt", FileType.TXT,
+                            "beta\nalpha\ncable", Long.MAX_VALUE, FilesystemKind.FLAT);
+
+                    for (final String word : new String[] {"listfiles", "seefile notes.txt",
+                            "findtext cable notes.txt", "sortlines notes.txt", "memory", "tasklist",
+                            "worldtime", "findcommand listfiles", "showcommands", "schedule"}) {
+                        final List<String> said = shell(helper, computer, word);
+                        helper.assertTrue(!says(said, "command not found"),
+                                "'" + word + "' is one of this machine's words; got " + said);
+                    }
+
+                    helper.assertTrue(says(shell(helper, computer, "sortlines notes.txt"), "alpha"),
+                            "sortlines puts them in order");
+                    helper.assertTrue(says(shell(helper, computer, "findtext cable notes.txt"), "cable"),
+                            "findtext finds the line");
+
+                    final List<String> everything = shell(helper, computer, "showcommands");
+                    helper.assertTrue(says(everything, "FILES") && says(everything, "listfiles")
+                                    && says(everything, "MACHINE") && says(everything, "memory"),
+                            "showcommands gathers what this machine can run; got " + everything);
+                    /*
+                     * This machine is on no cable, so the verbs that need a network are not among them. The
+                     * listing reads the same filter every other listing reads, which is what keeps it from
+                     * teaching a word the machine would then refuse.
+                     */
+                    helper.assertTrue(!says(everything, "interac"),
+                            "and says nothing of the network verbs on a machine with no network; got "
+                                    + everything);
+                })
+                .thenSucceed();
+    }
+
+    /** A verb that would erase a disk asks to be meant before it does it. */
+    @GameTest(template = ARENA)
+    public static void format_wantsToBeMeant(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final List<String> warned = shell(helper, computer, "format c");
+                    helper.assertTrue(says(warned, "would be lost"),
+                            "it says what it would destroy first; got " + warned);
+                    helper.assertTrue(DiskFilesystem.exists(computer.systemDisk(), "netstart.sys"),
+                            "and nothing is destroyed until it is meant");
                 })
                 .thenSucceed();
     }

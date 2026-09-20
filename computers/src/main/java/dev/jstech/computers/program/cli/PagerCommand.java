@@ -7,7 +7,9 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.Platform;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Reading a file a page at a time: the verb that hands the terminal to the pager.
@@ -22,11 +24,15 @@ import java.util.List;
 final class PagerCommand implements ICliCommand, CliShell.IHandOver {
 
     private final String name;
-    private final boolean unixName;
+    private final Set<Platform> systems;
 
-    PagerCommand(final String name, final boolean unixName) {
+    /**
+     * @param name    the word this family types
+     * @param systems the systems that word belongs to
+     */
+    PagerCommand(final String name, final Set<Platform> systems) {
         this.name = name;
-        this.unixName = unixName;
+        this.systems = systems;
     }
 
     @Override
@@ -46,8 +52,7 @@ final class PagerCommand implements ICliCommand, CliShell.IHandOver {
 
     @Override
     public CommandScope scope() {
-        return CommandScope.on(this.unixName ? CommandScope.UNIX_SYSTEMS : CommandScope.DOS_SYSTEMS)
-                .needing(CommandScope.Need.FILES);
+        return CommandScope.on(this.systems).needing(CommandScope.Need.FILES);
     }
 
     @Override

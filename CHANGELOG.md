@@ -18,6 +18,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   a flat disk has nowhere to change into and no folders to make. Its prompt is `SYSTEM:>`, naming the machine
   rather than a place, since there is no path to put there and no drive letter to carry. A name stands for
   something the way the Unix shells write it, and `/?` goes back to being the DOS family's alone.
+- The rest of MC-NET's words, said the same way: `read` for a long file a page at a time, `findtext` and
+  `sortlines` for lines, `memory`, `tasklist` and `end` for what the machine is doing, `worldtime`,
+  `findcommand`, `clear`, `run` and `format`, `runbackground` and `schedule` for work left behind, and
+  `netgetter` for the network's mirror. Where the DOS family shouted a switch this says a word: `end 4`
+  instead of `TASKKILL /PID 4`, `format d yes` instead of `/y`, `schedule forget 2` instead of `/DELETE`.
+- `showcommands` is how MC-NET teaches. An appliance keeps no manuals, so it says everything it can run at
+  once, gathered by what a thing is for. It reads the same filter every other listing reads, so it never
+  offers a word the machine would then refuse: on a computer with no cable it says nothing of the network.
 - MC-NET can be wrecked like every other system. Installing it writes `netstart.sys` at the root of the disk,
   and a machine that no longer finds it says `netstart.sys is missing` and will not start until an
   installation medium writes it back. With no folders it has no system folder to lose, so it has one way of

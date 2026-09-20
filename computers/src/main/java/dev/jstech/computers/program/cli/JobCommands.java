@@ -43,7 +43,7 @@ final class JobCommands {
      * may be left with: a small machine holds a few and a large one holds many, and neither is a number
      * anybody had to invent.
      */
-    private static void add(final CliContext ctx, final String line, final JobWhen when, final boolean dosStyle) {
+    static void add(final CliContext ctx, final String line, final JobWhen when, final boolean dosStyle) {
         if (line.isBlank()) {
             ctx.out().error(dosStyle ? "A command is needed." : "nothing to run");
             return;
@@ -72,7 +72,7 @@ final class JobCommands {
     }
 
     /** The machine's list, in whichever family's columns. */
-    private static void list(final CliContext ctx, final boolean dosStyle) {
+    static void list(final CliContext ctx, final boolean dosStyle) {
         final List<MachineJobs.Job> jobs = ctx.computer().jobs();
         if (jobs.isEmpty()) {
             ctx.out().dim(dosStyle ? "There are no entries in the list." : "no jobs");
@@ -85,7 +85,7 @@ final class JobCommands {
         }
     }
 
-    private static void stop(final CliContext ctx, final String written, final boolean dosStyle) {
+    static void stop(final CliContext ctx, final String written, final boolean dosStyle) {
         final int id = number(written);
         if (id <= 0 || !ctx.computer().stopJob(id)) {
             ctx.out().error(dosStyle ? "The job ID does not exist." : "no such job: " + written);
