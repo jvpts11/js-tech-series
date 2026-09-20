@@ -144,6 +144,19 @@ final class MachineToolCommands {
                 ctx.out().error("usage: kill <pid>");
                 return;
             }
+            /*
+             * A number after a per-cent mark is a job of this machine's own list, not a process: that is what
+             * the mark has always meant at a shell, and it is how a background line is stopped.
+             */
+            if (ctx.arg(0).startsWith("%")) {
+                final int id = whole(ctx.arg(0));
+                if (id > 0 && ctx.computer().stopJob(id)) {
+                    ctx.out().ok("[" + id + "] done");
+                } else {
+                    ctx.out().error("no such job: " + ctx.arg(0));
+                }
+                return;
+            }
             stopProcess(ctx, ctx.arg(0), false);
         }
     }

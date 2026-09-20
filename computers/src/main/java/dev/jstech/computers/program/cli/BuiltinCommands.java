@@ -39,7 +39,9 @@ public final class BuiltinCommands {
              */
             "find", "sort", "more",
             // And the ones whose DOS names are that family's own: the Unix shells have ps, kill, which, date.
-            "tasklist", "taskkill", "where", "mem", "date", "tree");
+            "tasklist", "taskkill", "where", "mem", "date", "tree",
+            // START and AT are this family's jobs; the Unix systems have & with jobs and crontab.
+            "start", "at");
 
     /** The verbs both shell families share (network, programs, config, maintenance); no DOS file verbs. */
     public static List<ICliCommand> shared() {
@@ -69,6 +71,8 @@ public final class BuiltinCommands {
         out.addAll(ManCommands.dos());
         // The same small tools, under the names and switches this family writes them with.
         out.addAll(MachineToolCommands.dos());
+        // And its own way of leaving a machine with work: START and AT.
+        out.addAll(JobCommands.dos());
         return List.copyOf(out);
     }
 

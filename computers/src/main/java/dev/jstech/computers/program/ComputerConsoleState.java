@@ -11,6 +11,8 @@ import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.SetupJob;
 import dev.jstech.computers.program.install.LiveInstallState;
+import dev.jstech.computers.program.job.JobStorage;
+import dev.jstech.computers.program.job.MachineJobs;
 import java.util.Collection;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -36,6 +38,14 @@ public final class ComputerConsoleState {
 
     private final Deque<String> history = new ArrayDeque<>();
     private final Set<String> installed = new LinkedHashSet<>();
+
+    /**
+     * The work this machine does with nobody at it: lines left running and lines to be run at an hour.
+     *
+     * <p>They belong to the computer and not to whoever typed them, so they go with it through a save and
+     * carry on while the player is away, which is the whole reason for having them.
+     */
+    private final MachineJobs jobs = new MachineJobs();
     private String wallpaper = "";
     /** CDE's palette and the backdrop of each workspace, as {@code CdeStyle} keeps them; empty until one is chosen. */
     private String cdeStyle = "";
@@ -68,6 +78,11 @@ public final class ComputerConsoleState {
     private final Map<String, Integer> iconCells = new LinkedHashMap<>();
 
     /** The command history, oldest first. */
+    /** The work this machine does with nobody at it. */
+    public MachineJobs jobs() {
+        return this.jobs;
+    }
+
     public List<String> history() {
         return new ArrayList<>(history);
     }
@@ -396,6 +411,7 @@ public final class ComputerConsoleState {
             historyTag.add(StringTag.valueOf(line));
         }
         tag.put("History", historyTag);
+        JobStorage.save(this.jobs, tag);
         if (setup != null) {
             // A setup half done goes with the machine, so the world coming back finds it still copying.
             final CompoundTag job = new CompoundTag();
@@ -521,6 +537,7 @@ public final class ComputerConsoleState {
 
     public void load(final CompoundTag tag) {
         history.clear();
+        JobStorage.load(this.jobs, tag);
         for (final Tag entry : tag.getList("History", Tag.TAG_STRING)) {
             history.addLast(entry.getAsString());
         }

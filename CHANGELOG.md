@@ -356,6 +356,14 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   system it runs on: a Linux says `Linux` and `x86_64` or `i686`, FreeBSD says `FreeBSD` and `vel64` or `IA-32`.
 
 ### Added
+- A computer can be left with work and it carries on with nobody at it. On the Unix systems a line ending in
+  `&` is left running and the prompt comes straight back, `jobs` lists what the machine is doing, `kill %1`
+  stops one, and `crontab 06:00 <command>` leaves a line for an hour of the world's own day, or for the days
+  named (`crontab 18:00 M,W,F ...`). On the DOS family the same list under its own words: `START <command>`,
+  `AT hh:mm [/EVERY:M,W,F] <command>`, `AT` alone to see what the computer is set to do, and `AT <id> /DELETE`
+  to take one off. A job costs the machine a megabyte while it has it, so how many a computer can be left with
+  is its memory's answer and not a number anybody invented, and what it was left with goes with it through a
+  save. The shortest anything repeats is an hour of the world's clock, a little under a minute of real time.
 - The small tools a person reaches for without thinking. On the Unix systems: `ps` and `kill` for what is
   running and stopping one, `which` for where a command came from, `du` for what the files here take, and
   `date` for the world's own clock. On the DOS family, the same answers under its own names: `TASKLIST`,

@@ -43,8 +43,13 @@ import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.computers.program.job.MachineJobs;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
@@ -1059,12 +1064,46 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * their chance to say goodbye rather than being left frozen for whenever it comes back on.
      */
     protected void tickSigma() {
+        /*
+         * The machine's own work comes first and on its own: a computer with no program running still has the
+         * jobs it was left with, and the program host has nothing to do on such a machine and says so.
+         */
+        if (level instanceof ServerLevel world && isRunning()) {
+            tickJobs(world);
+        }
         if (!host.tick() || !(level instanceof ServerLevel server)) {
             return;
         }
         replication.pushOutput(server);
         replication.pushWindows(server);
         host.hearGateways();
+    }
+
+    /**
+     * Runs the work this machine was left with: a line put in the background, and a line whose hour has come.
+     *
+     * <p>Run here, on the machine's own tick, and not by whoever typed it: that is what a job is. Nobody has
+     * to be at the keyboard, or in the world at all, and what a job prints goes nowhere unless a terminal is
+     * looking, exactly as at a real one.
+     */
+    private void tickJobs(final ServerLevel server) {
+        final ComputerConsoleState console = console();
+        /*
+         * Only a machine that is a terminal in its own right runs jobs, which is every computer a player
+         * types at. A rack's bays keep theirs on the unit that owns the terminal, not on the rack.
+         */
+        if (console == null || console.jobs().isEmpty() || !(this instanceof IComputerTerminalHost terminal)) {
+            return;
+        }
+        final List<MachineJobs.Job> due = console.jobs().due(server.getDayTime());
+        if (due.isEmpty()) {
+            return;
+        }
+        final ServerCliComputer computer = new ServerCliComputer(terminal, server);
+        for (final MachineJobs.Job job : due) {
+            CliCommands.shellFor(computer, TermBuffer.MONITOR_COLUMNS).run(job.line(), computer);
+        }
+        setChanged();
     }
 
     /**

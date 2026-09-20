@@ -32,6 +32,8 @@ public final class PosixCommands {
         out.addAll(ManCommands.posix());
         // The small tools a person reaches for without thinking.
         out.addAll(MachineToolCommands.posix());
+        // And the work a machine is left with when nobody is at it.
+        out.addAll(JobCommands.posix());
         return List.copyOf(out);
     }
 

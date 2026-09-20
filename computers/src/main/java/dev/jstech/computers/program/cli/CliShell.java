@@ -11,6 +11,8 @@ import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.program.cli.man.ManPage;
 import dev.jstech.computers.program.cli.sh.ShLine;
 import dev.jstech.computers.program.cli.sh.ShRunner;
+import dev.jstech.computers.program.job.JobWhen;
+import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.computers.program.tty.ITtyProcess;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -77,6 +79,14 @@ public final class CliShell {
          * typed, arrows and all, because on a real one the arrow is part of the step being taught. So the line
          * is only taken apart when an installed system is the one reading it.
          */
+        /*
+         * A line that ends in & is not run here at all: it is left with the machine, which runs it on its own
+         * tick and hands the prompt straight back. That is what the mark has always meant on this family.
+         */
+        if (!live && !tokens.isEmpty() && tokens.get(tokens.size() - 1).equals("&")
+                && computer.shellFamily() == ShellFamily.POSIX) {
+            return backgrounded(tokens.subList(0, tokens.size() - 1), computer, out);
+        }
         final ShLine whole = live ? ShLine.NOTHING : ShLine.of(tokens);
         if (!whole.isEmpty() && !whole.isSimple()) {
             return ShRunner.run(this, whole, computer, out);
@@ -133,6 +143,27 @@ public final class CliShell {
         final String file = command instanceof IHandOver giving ? giving.fileOf(computer, args) : null;
         final CliShell.HandOver handOver = file == null ? null : new HandOver(command.name(), file);
         return new Response(out.lines(), clear, handOver, out.started());
+    }
+
+    /**
+     * Leaves a line with the machine instead of running it, and says under what number.
+     *
+     * <p>A job costs the machine a megabyte while it has it, which is what says how many a computer can be
+     * left with; a machine with none left says so rather than quietly dropping the line.
+     */
+    private Response backgrounded(final List<String> tokens, final ICliComputer computer, final CliOutput out) {
+        final ICliComputer.MemoryUse memory = computer.memory();
+        if (memory.totalMb() > 0 && memory.usedMb() + MachineJobs.JOB_MB > memory.totalMb()) {
+            out.error("the machine has no memory left for another job");
+            return new Response(out.lines(), false);
+        }
+        final MachineJobs.Job job = computer.addJob(String.join(" ", tokens), JobWhen.AT_ONCE);
+        if (job == null) {
+            out.error("this machine keeps no jobs");
+        } else {
+            out.ok("[" + job.id() + "] " + job.line());
+        }
+        return new Response(out.lines(), false);
     }
 
     /**

@@ -11,7 +11,10 @@ import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.UnixTree;
+import dev.jstech.computers.program.job.JobWhen;
+import dev.jstech.computers.program.job.MachineJobs;
 import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * What a command reaches of the computer it runs on: what the computer is called and built from, whether it runs, what
@@ -116,6 +119,22 @@ public interface ICliMachine {
     /** What this machine's memory is spent on: what it has, what it promised, and what is really in it. */
     default ICliComputer.MemoryUse memory() {
         return new ICliComputer.MemoryUse(0, 0, 0L);
+    }
+
+    /** The work this machine does with nobody at it: lines left running and lines waiting for an hour. */
+    default List<MachineJobs.Job> jobs() {
+        return List.of();
+    }
+
+    /** Leaves a line for the machine to run, now or at an hour; null on a machine that keeps none. */
+    @Nullable
+    default MachineJobs.Job addJob(final String line, final JobWhen when) {
+        return null;
+    }
+
+    /** Takes one off the list; false when there was none of that number. */
+    default boolean stopJob(final int id) {
+        return false;
     }
 
     /** How wide the processor's word is, which is what a system names its architecture after. */

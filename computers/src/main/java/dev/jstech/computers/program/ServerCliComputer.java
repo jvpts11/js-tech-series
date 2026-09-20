@@ -34,6 +34,8 @@ import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.RamLedger;
+import dev.jstech.computers.program.job.JobWhen;
+import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.OsDef;
@@ -817,6 +819,30 @@ public final class ServerCliComputer implements ICliComputer {
         }
         final RamLedger ledger = computer.ramLedger();
         return new MemoryUse(ledger.totalMb(), ledger.usedMb(), ledger.heldBytes());
+    }
+
+    @Override
+    public List<MachineJobs.Job> jobs() {
+        return host.console() == null ? List.of() : host.console().jobs().all();
+    }
+
+    @Override
+    public MachineJobs.Job addJob(final String line, final JobWhen when) {
+        if (host.console() == null) {
+            return null;
+        }
+        final MachineJobs.Job job = host.console().jobs().add(line, when);
+        hostBlock.setChanged();
+        return job;
+    }
+
+    @Override
+    public boolean stopJob(final int id) {
+        if (host.console() == null || !host.console().jobs().remove(id)) {
+            return false;
+        }
+        hostBlock.setChanged();
+        return true;
     }
 
     @Override
