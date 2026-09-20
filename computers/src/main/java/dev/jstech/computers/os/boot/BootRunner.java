@@ -228,6 +228,15 @@ public final class BootRunner {
         if (!phases.halted() || !machine.isRunning()) {
             return;
         }
+        /*
+         * A machine standing at a wrecked system stays there. What is on its disk is not whole, so there is
+         * nothing to go on to, and the test below cannot see that: a wrecked machine still has a system
+         * installed, which is the very reason it was found and refused. Putting a medium in is what gives it
+         * somewhere to go, and that is how such a machine is repaired.
+         */
+        if (!SystemIntegrity.check(machine).whole() && !machine.hasBootableMedium()) {
+            return;
+        }
         if (!machine.hasOs() && !machine.hasBootableMedium()) {
             return;
         }

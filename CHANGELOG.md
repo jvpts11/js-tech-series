@@ -6,6 +6,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 
 ## [Unreleased]
 
+### Fixed
+- A wrecked machine really stays wrecked. One whose system file had been deleted stopped at its self-test for
+  a single tick and then started the system anyway, because the check that asks whether there is anywhere to
+  go only looked for a machine with nothing installed at all, and a wrecked machine still has a system
+  installed: that is the very reason it is found and refused. It now stays where it stands until there is
+  somewhere to go, which is what putting an installation medium in gives it.
+
 ### Added
 - A name can now be given a value at the prompt and it stays given: `set NAME=value` on the Frames and MC-DOS
   family, `export NAME=value` and a bare `NAME=value` on the Unix shells, `unset` to forget one, and `set` or

@@ -12,8 +12,13 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.boot.SystemIntegrity;
 import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.CliCommands;
+import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -38,8 +43,13 @@ public final class WreckedMachineGameTests {
     private static final String ARENA = "empty";
     private static final int SETTLE = 6;
 
+    /** How long a self-test is given to play out before the machine is asked where it got to. */
+    private static final int POST_WAIT = 200;
+
     private static final ResourceLocation FRAMES_XP =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp");
+    private static final ResourceLocation FRAMES_11 =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_11");
     private static final ResourceLocation DEBIAN =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "debian");
 
@@ -127,6 +137,97 @@ public final class WreckedMachineGameTests {
                             "a Linux panics; got " + health.complaint());
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * The newest Frames is wreckable like every other: its loader is on the disk, the player's own DEL takes
+     * it off, and the self-test that follows stops the machine where it stands.
+     *
+     * <p>Through the shell rather than through the filesystem API, because what has to be true is that the
+     * player can do it with the machine in front of them, and a file the API can delete but the prompt will
+     * not is a file nobody can really delete.
+     */
+    @GameTest(template = ARENA)
+    public static void theNewestFrames_isWreckedByThePlayersOwnDelete(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper, FRAMES_11);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final String loader = SystemIntegrity.loaderOf(computer.installedOs());
+                    helper.assertTrue(DiskFilesystem.exists(computer.systemDisk(), loader),
+                            "the newest Frames writes its loader too, at " + loader);
+
+                    final List<String> listed = shell(helper, computer, "dir " + dos(loader));
+                    helper.assertTrue(listed.stream().anyMatch(line -> line.contains("kickmgr")),
+                            "and the player can see it from the prompt; got " + listed);
+
+                    final List<String> said = shell(helper, computer, "del " + dos(loader));
+                    helper.assertTrue(!DiskFilesystem.exists(computer.systemDisk(), loader),
+                            "DEL really takes it off the disk; the machine said " + said);
+
+                    final SystemIntegrity.Result health = SystemIntegrity.check(computer);
+                    helper.assertTrue(health.state() == SystemIntegrity.State.NO_LOADER
+                                    && health.complaint().equals("kickmgr is missing"),
+                            "and the machine knows what it is missing; got " + health);
+                })
+                .thenSucceed();
+    }
+
+    /** A machine whose loader is gone stops at its own self-test instead of showing a desktop. */
+    @GameTest(template = ARENA, timeoutTicks = POST_WAIT * 2)
+    public static void aWreckedMachine_stopsAtItsOwnSelfTest(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper, FRAMES_11);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    DiskFilesystem.delete(computer.systemDisk(),
+                            SystemIntegrity.loaderOf(computer.installedOs()));
+                    computer.setNeedsPost(true);
+                })
+                .thenExecuteAfter(POST_WAIT, () -> helper.assertTrue(computer.haltedAtPost(),
+                        "the machine is standing at its own failure rather than showing a desktop"))
+                .thenSucceed();
+    }
+
+    /**
+     * A machine with no system folder left stands at its failure too, and a medium is what lets it go on.
+     *
+     * <p>The two halts are the same halt to the machine: what is on the disk is not whole, so there is
+     * nowhere to go. A disk still saying a system is installed is not somewhere to go, which is the whole
+     * mistake a machine would be making if it booted one.
+     */
+    @GameTest(template = ARENA, timeoutTicks = POST_WAIT * 2)
+    public static void aMachineWithNoSystemLeft_staysAtItsFailureUntilThereIsSomewhereToGo(
+            final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper, FRAMES_11);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    DiskFilesystem.delete(computer.systemDisk(),
+                            SystemIntegrity.loaderOf(computer.installedOs()));
+                    DiskFilesystem.rmdir(computer.systemDisk(),
+                            SystemIntegrity.folderOf(computer.installedOs()), FilesystemKind.HIERARCHICAL);
+                    computer.setNeedsPost(true);
+                })
+                .thenExecuteAfter(POST_WAIT, () -> {
+                    helper.assertTrue(computer.haltedAtPost(),
+                            "with nothing left on the disk the machine stays where it is");
+                    helper.assertTrue(computer.hasOs(),
+                            "although the disk still says a system is installed, which is the trap");
+                })
+                .thenSucceed();
+    }
+
+    /** A DOS path for a file the disk keeps under slashes, which is how a player writes it at the prompt. */
+    private static String dos(final String path) {
+        return "C:\\" + path.replace('/', '\\');
+    }
+
+    private static List<String> shell(final GameTestHelper helper, final PersonalComputerBlockEntity on,
+                                      final String command) {
+        final ServerCliComputer computer = new ServerCliComputer(on, helper.getLevel());
+        final List<String> out = new ArrayList<>();
+        for (final CliLine line : CliCommands.shellFor(computer, 80).run(command, computer).lines()) {
+            out.add(line.text());
+        }
+        return out;
     }
 
     /** Installing over it writes the loader back, which is how a wrecked machine is repaired. */
