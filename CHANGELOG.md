@@ -356,6 +356,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   system it runs on: a Linux says `Linux` and `x86_64` or `i686`, FreeBSD says `FreeBSD` and `vel64` or `IA-32`.
 
 ### Added
+- The small tools a person reaches for without thinking. On the Unix systems: `ps` and `kill` for what is
+  running and stopping one, `which` for where a command came from, `du` for what the files here take, and
+  `date` for the world's own clock. On the DOS family, the same answers under its own names: `TASKLIST`,
+  `TASKKILL /PID`, `WHERE`, `MEM` (which now says what the memory really holds as well as what it promised),
+  `DATE`, `TIME` and `TREE`. A process is listed with the file it was started from, since a program that gave
+  itself no name is listed under the runtime that runs it and the file is what tells two of them apart.
 - Commands have real manual pages now, and there is one body of text about each of them. A page has NAME,
   SYNOPSIS, DESCRIPTION, OPTIONS, EXAMPLES and SEE ALSO, written by the command itself, and every way of
   asking reads that same page: `man` at a Unix prompt, `help <command>` anywhere, `<command> --help`, and

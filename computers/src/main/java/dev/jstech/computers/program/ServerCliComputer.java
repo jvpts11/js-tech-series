@@ -33,6 +33,7 @@ import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.OsDef;
@@ -63,6 +64,7 @@ import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -794,6 +796,27 @@ public final class ServerCliComputer implements ICliComputer {
     @Override
     public List<ShareInfo> shares() {
         return config().shares();
+    }
+
+    @Override
+    public String worldTime() {
+        /*
+         * The world's own clock, read the way the game reads it: day one is the first day, and the hours run
+         * from six in the morning, which is when a day starts here.
+         */
+        final long time = level.getDayTime();
+        final long day = time / 24000L + 1L;
+        final long minutes = (time % 24000L) * 60L / 1000L + 6L * 60L;
+        return String.format(Locale.ROOT, "Day %d, %02d:%02d", day, minutes / 60L % 24L, minutes % 60L);
+    }
+
+    @Override
+    public MemoryUse memory() {
+        if (!(hostBlock instanceof IOsHost computer)) {
+            return new MemoryUse(0, 0, 0L);
+        }
+        final RamLedger ledger = computer.ramLedger();
+        return new MemoryUse(ledger.totalMb(), ledger.usedMb(), ledger.heldBytes());
     }
 
     @Override

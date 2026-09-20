@@ -31,7 +31,15 @@ public final class BuiltinCommands {
              * pckmgr is the Frames package manager: a Linux distribution keeps apt/dnf/pacman/emerge,
              * and offering both on the same shell would be two doors to one room.
              */
-            "pckmgr");
+            "pckmgr",
+            /*
+             * The tools whose names both families use for work that is nearly, but not quite, the same: DOS
+             * FIND is text in a file and Unix find is files by name; the switches of SORT and MORE are each
+             * family's own. Each shell takes the one that is its own, so neither shadows the other.
+             */
+            "find", "sort", "more",
+            // And the ones whose DOS names are that family's own: the Unix shells have ps, kill, which, date.
+            "tasklist", "taskkill", "where", "mem", "date", "tree");
 
     /** The verbs both shell families share (network, programs, config, maintenance); no DOS file verbs. */
     public static List<ICliCommand> shared() {
@@ -59,6 +67,8 @@ public final class BuiltinCommands {
          * unless a server turns it on. The DOS family's own way of teaching is HELP and /?, which it keeps.
          */
         out.addAll(ManCommands.dos());
+        // The same small tools, under the names and switches this family writes them with.
+        out.addAll(MachineToolCommands.dos());
         return List.copyOf(out);
     }
 

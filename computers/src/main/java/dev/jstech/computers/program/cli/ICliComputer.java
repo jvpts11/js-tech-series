@@ -178,6 +178,16 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
     }
 
     /**
+     * What a machine's memory is spent on.
+     *
+     * @param totalMb    the megabytes installed
+     * @param usedMb     the megabytes promised to what is running, which is what says whether one more fits
+     * @param heldBytes  what is really held this moment, which is what moves while a program runs
+     */
+    record MemoryUse(int totalMb, int usedMb, long heldBytes) {
+    }
+
+    /**
      * One thing a name a player typed could stand for: what the machine calls it, what a person calls it, and
      * how much of it the network is holding.
      *

@@ -103,6 +103,21 @@ public interface ICliMachine {
         return false;
     }
 
+    /**
+     * The day and the hour by the clock of the world this machine stands in, as a person reads them.
+     *
+     * <p>There is one clock here and everything is timed by it: a job on a schedule, a line in a log, the hour
+     * on a file. A machine that cannot see it says so rather than making an hour up.
+     */
+    default String worldTime() {
+        return "the clock is not set";
+    }
+
+    /** What this machine's memory is spent on: what it has, what it promised, and what is really in it. */
+    default ICliComputer.MemoryUse memory() {
+        return new ICliComputer.MemoryUse(0, 0, 0L);
+    }
+
     /** How wide the processor's word is, which is what a system names its architecture after. */
     default int processorBits() {
         return 64;

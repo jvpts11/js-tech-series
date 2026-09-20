@@ -30,6 +30,8 @@ public final class PosixCommands {
         out.addAll(PipeCommands.posix());
         // And the ways of finding out what a machine can do at all.
         out.addAll(ManCommands.posix());
+        // The small tools a person reaches for without thinking.
+        out.addAll(MachineToolCommands.posix());
         return List.copyOf(out);
     }
 
