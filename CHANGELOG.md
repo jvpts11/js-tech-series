@@ -364,6 +364,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   a prompt and a cable, with nothing to install, and takes its words either way its family writes them:
   `interac list stone --sort count` on a Unix system, `INTERAC LIST STONE /S:COUNT` on a DOS one, in any case,
   with `INTERAC /?` for what it does. A verb may also be written as an option, `interac --where diamond`.
+- `interac get 42 cobblestone` takes items out of the network and into your own hands, through the computer
+  you are typing at, the way the graphical program does it; whatever your inventory has no room for stays in
+  the computer rather than being lost. `--to local` (`/LOCAL`) leaves it all in the computer instead, and that
+  is the only way to ask from a session opened on another machine, where nobody is standing at the keyboard.
+  `interac put hand` hands over what you are holding, `interac fill water` fills a held bucket from the
+  network, and `interac fav` stars a thing on this computer, the same stars the Network Interactor shows.
 - A thing is named the way a player says it: `cobblestone`, `minecraft:cobblestone` or `"oak log"` all find
   it, and what the network is holding is looked at before the registry of everything there is. A name that
   fits several things is answered with the several and how much of each there is, rather than guessed at.

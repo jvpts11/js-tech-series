@@ -58,6 +58,30 @@ public interface ICliOperations {
         return craft(item, quantity);
     }
 
+    /**
+     * Brings items out of the network and into the hands of whoever is typing, through this machine.
+     *
+     * <p>Only at the machine itself: a session opened on another one has nobody standing in front of it, so
+     * there is nowhere to put anything and this says so rather than reaching across the world.
+     */
+    default ICliComputer.OpResult takeToHand(final String item, final long quantity) {
+        return ICliComputer.OpResult.fail("this machine cannot reach the network");
+    }
+
+    /**
+     * Hands what the player is holding to the network.
+     *
+     * @param quantity how many of the held stack to hand over; everything held when it is not less
+     */
+    default ICliComputer.OpResult storeFromHand(final long quantity) {
+        return ICliComputer.OpResult.fail("this machine cannot reach the network");
+    }
+
+    /** Fills the container the player is holding with a fluid or chemical the network has. */
+    default ICliComputer.OpResult fillHeld(final String item) {
+        return ICliComputer.OpResult.fail("this machine cannot reach the network");
+    }
+
     /** Place a standing hold on the named item so concurrent operations WAIT on it. */
     default ICliComputer.OpResult lock(final String item, final long quantity) {
         return ICliComputer.OpResult.fail("this machine cannot reach the network");

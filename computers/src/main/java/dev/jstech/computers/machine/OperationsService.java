@@ -8,8 +8,10 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.operation.DataHandoff;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.MoveLabels;
+import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.ICliNetwork;
@@ -25,6 +27,8 @@ import java.util.Locale;
 import java.util.function.BooleanSupplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
@@ -156,6 +160,117 @@ public final class OperationsService {
         op.setPriority(priority);
         return ICliComputer.OpResult.ok("CRAFT queued: " + qtyLabel(quantity) + " "
                 + key.displayName().getString());
+    }
+
+    /**
+     * Brings items out of the network and into the hands of whoever is typing, through this machine.
+     *
+     * <p>The same road the graphical program takes: the network hands them to the computer and the computer
+     * hands them to the player, so a full inventory leaves them here rather than losing them. With nobody at
+     * the machine there is nowhere to put anything, and that is said plainly instead of guessed at.
+     */
+    public ICliComputer.OpResult takeToHand(@Nullable final ServerPlayer player, final String item,
+                                            final long quantity, final String origin) {
+        if (player == null) {
+            return ICliComputer.OpResult.fail("nobody is at this machine; ask for it '--to local' instead");
+        }
+        final StorageKey key = StorageKey.byName(item);
+        final NetworkUuid net = this.terminal.networkUuid();
+        if (key == null || net == null) {
+            return ICliComputer.OpResult.fail(key == null ? "unknown item: " + item : "this machine is on no network");
+        }
+        final MainframeBlockEntity mainframe = this.mainframe();
+        if (mainframe == null) {
+            return ICliComputer.OpResult.fail("the network has no running Mainframe");
+        }
+        final DataHandoff.Outcome outcome = DataHandoff.toPlayer(mainframe, this.level, net, player,
+                this.terminal.localStore(), key, demand(quantity), this.terminal.originLabel(origin), () -> { });
+        if (outcome != DataHandoff.Outcome.DEPOSITED) {
+            return ICliComputer.OpResult.fail("could not start the SELECT");
+        }
+        return ICliComputer.OpResult.ok("SELECT queued: " + qtyLabel(quantity) + " "
+                + key.displayName().getString() + " -> your inventory");
+    }
+
+    /**
+     * Hands what the player is holding to the network.
+     *
+     * <p>What the network cannot take comes back to the hand it left, which is the same promise every other
+     * way of handing something over makes.
+     */
+    public ICliComputer.OpResult storeFromHand(@Nullable final ServerPlayer player, final long quantity,
+                                               final String origin) {
+        if (player == null) {
+            return ICliComputer.OpResult.fail("nobody is at this machine to take anything from");
+        }
+        final ItemStack held = player.getMainHandItem();
+        if (held.isEmpty()) {
+            return ICliComputer.OpResult.fail("you are holding nothing");
+        }
+        final NetworkUuid net = this.terminal.networkUuid();
+        final MainframeBlockEntity mainframe = this.mainframe();
+        if (net == null || mainframe == null) {
+            return ICliComputer.OpResult.fail("the network has no running Mainframe");
+        }
+        final int count = quantity <= 0L ? held.getCount() : (int) Math.min(quantity, held.getCount());
+        final String name = held.getHoverName().getString();
+        final DataHandoff.Outcome outcome = DataHandoff.intoNetwork(mainframe, this.level, net, player,
+                DataHandoff.inventory(player, player.getInventory().selected), count, false,
+                this.terminal.originLabel(origin), () -> { });
+        return switch (outcome) {
+            case DEPOSITED -> ICliComputer.OpResult.ok("INSERT queued: " + count + " " + name + " -> network");
+            case NO_ROOM -> ICliComputer.OpResult.fail("the network has no room for " + name);
+            case NO_DISPATCHER -> ICliComputer.OpResult.fail("the network has no running Mainframe");
+            default -> ICliComputer.OpResult.fail("there is nothing in your hand to store");
+        };
+    }
+
+    /** Fills the container the player is holding with a fluid or chemical the network has. */
+    public ICliComputer.OpResult fillHeld(@Nullable final ServerPlayer player, final String item,
+                                          final String origin) {
+        if (player == null) {
+            return ICliComputer.OpResult.fail("nobody is at this machine to fill anything for");
+        }
+        if (player.getMainHandItem().isEmpty()) {
+            return ICliComputer.OpResult.fail("you are holding nothing to fill");
+        }
+        final StorageKey key = this.fluidNamed(item);
+        final NetworkUuid net = this.terminal.networkUuid();
+        final MainframeBlockEntity mainframe = this.mainframe();
+        if (key == null) {
+            return ICliComputer.OpResult.fail("the network holds no fluid called \"" + item + "\"");
+        }
+        if (net == null || mainframe == null) {
+            return ICliComputer.OpResult.fail("the network has no running Mainframe");
+        }
+        final DataHandoff.Outcome outcome = DataHandoff.fillFromNetwork(mainframe, this.level, net, player,
+                DataHandoff.inventory(player, player.getInventory().selected), key,
+                this.terminal.originLabel(origin), () -> { });
+        return switch (outcome) {
+            case FILLED -> ICliComputer.OpResult.ok("SELECT queued: filling with "
+                    + key.displayName().getString());
+            case NO_ROOM -> ICliComputer.OpResult.fail("what you are holding takes none of it");
+            case NO_DISPATCHER -> ICliComputer.OpResult.fail("the network has no running Mainframe");
+            default -> ICliComputer.OpResult.fail("what you are holding does not hold " + item);
+        };
+    }
+
+    /** The fluid or chemical of that name the network is holding, or null when it holds none of it. */
+    @Nullable
+    private StorageKey fluidNamed(final String item) {
+        final NetworkUuid net = this.terminal.networkUuid();
+        if (net == null || item.isBlank()) {
+            return null;
+        }
+        for (final StorageKey key : NetworkStorage.of(this.level, net).query().keySet()) {
+            if ((key.isFluid() || key.isChemical())
+                    && (key.registryId().toString().equalsIgnoreCase(item)
+                        || key.registryId().getPath().equalsIgnoreCase(item)
+                        || key.displayName().getString().equalsIgnoreCase(item))) {
+                return key;
+            }
+        }
+        return null;
     }
 
     /**

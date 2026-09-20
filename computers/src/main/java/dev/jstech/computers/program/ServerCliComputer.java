@@ -66,6 +66,7 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
@@ -81,10 +82,29 @@ public final class ServerCliComputer implements ICliComputer {
     private final BlockEntity hostBlock;
     private final ServerLevel level;
 
+    /**
+     * Who is typing, when somebody is.
+     *
+     * <p>Most of what a machine does is the machine's own and has no one in front of it: a program, a service,
+     * a schedule. A few words are about the person at the keyboard, though, and those are exactly the words
+     * that cannot work from anywhere else: taking items into your own hands, or handing over what you are
+     * holding. A shell built with nobody typing simply has no one to hand anything to, which is what a session
+     * opened on another machine is, and it says so rather than reaching across the world for a player.
+     */
+    @Nullable
+    private final ServerPlayer typist;
+
     public ServerCliComputer(final IComputerTerminalHost host, final ServerLevel level) {
+        this(host, level, null);
+    }
+
+    /** The same, for a shell somebody is typing at, which is what the words about the player need. */
+    public ServerCliComputer(final IComputerTerminalHost host, final ServerLevel level,
+                             @Nullable final ServerPlayer typist) {
         this.host = host;
         this.hostBlock = (BlockEntity) host;
         this.level = level;
+        this.typist = typist;
     }
 
     @Override
@@ -244,6 +264,21 @@ public final class ServerCliComputer implements ICliComputer {
     @Override
     public OpResult select(final String item, final long quantity, final String origin) {
         return operations().select(item, quantity, origin);
+    }
+
+    @Override
+    public OpResult takeToHand(final String item, final long quantity) {
+        return operations().takeToHand(typist, item, quantity, MoveLabels.SHELL);
+    }
+
+    @Override
+    public OpResult storeFromHand(final long quantity) {
+        return operations().storeFromHand(typist, quantity, MoveLabels.SHELL);
+    }
+
+    @Override
+    public OpResult fillHeld(final String item) {
+        return operations().fillHeld(typist, item, MoveLabels.SHELL);
     }
 
     @Override
@@ -752,6 +787,11 @@ public final class ServerCliComputer implements ICliComputer {
     @Override
     public List<ShareInfo> shares() {
         return config().shares();
+    }
+
+    @Override
+    public List<String> favourites() {
+        return host.console() == null ? List.of() : host.console().settings().favourites();
     }
 
     @Override

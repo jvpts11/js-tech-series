@@ -31,8 +31,8 @@ import java.util.Locale;
 public final class InteracCommand implements ICliCommand {
 
     /** The words it takes, which is also the list a verb written as an option is looked for in. */
-    private static final List<String> VERBS =
-            List.of("status", "list", "where", "info", "craft", "ops", "cancel", "lock", "unlock", "locks", "stats");
+    private static final List<String> VERBS = List.of("status", "list", "get", "put", "fill", "fav", "where",
+            "info", "craft", "ops", "cancel", "lock", "unlock", "locks", "stats");
 
     /** How many rows a listing shows before it says how many more there were. */
     private static final int MOST_ROWS = 16;
@@ -57,7 +57,7 @@ public final class InteracCommand implements ICliCommand {
 
     @Override
     public String usage() {
-        return "[list [text]] [where item] [info item] [craft n item] [ops] [cancel id] [lock n item] [stats]";
+        return "[list [text]] [get n item] [put n item|hand] [craft n item] [where item] [info item] [ops]";
     }
 
     @Override
@@ -70,6 +70,10 @@ public final class InteracCommand implements ICliCommand {
         switch (words.verb()) {
             case "", "status" -> status(ctx);
             case "list", "ls" -> list(ctx, words);
+            case "get" -> get(ctx, words);
+            case "put" -> put(ctx, words);
+            case "fill" -> fill(ctx, words);
+            case "fav" -> fav(ctx, words);
             case "where" -> where(ctx, words);
             case "info" -> info(ctx, words);
             case "craft" -> craft(ctx, words);
@@ -119,6 +123,83 @@ public final class InteracCommand implements ICliCommand {
         ctx.out().dim(rows.size() + (rows.size() == 1 ? " kind" : " kinds")
                 + (text.isEmpty() ? "" : " match \"" + text + "\"")
                 + (rows.size() > MOST_ROWS ? ", showing the first " + MOST_ROWS : ""));
+    }
+
+    /**
+     * Takes something out of the network: into the player's own hands, or into this computer's storage.
+     *
+     * <p>Into the hands is what a player means by taking something, so that is what it does with nothing
+     * said. {@code --to local} leaves it in the machine, which is also the only way a session opened on
+     * another machine can ask, since nobody is standing in front of that one.
+     */
+    private static void get(final CliContext ctx, final InteracWords words) {
+        final long quantity = words.quantity();
+        if (quantity < 0L) {
+            ctx.out().error("usage: interac get <quantity> <item> [--to local]");
+            return;
+        }
+        final ICliComputer.ItemMatch one = resolve(ctx, words.item(), "get");
+        if (one == null) {
+            return;
+        }
+        final boolean local = words.option("to", "").equals("local") || words.has("local");
+        say(ctx, local ? ctx.computer().select(one.id(), quantity) : ctx.computer().takeToHand(one.id(), quantity));
+    }
+
+    /**
+     * Hands something to the network: what the player is holding, or what this computer is holding.
+     *
+     * <p>{@code put hand} is the one that reads as it is meant, so the word {@code hand} stands where an item
+     * name would; anything else names something out of this machine's own storage.
+     */
+    private static void put(final CliContext ctx, final InteracWords words) {
+        final String named = words.item();
+        if (named.equalsIgnoreCase("hand") || named.isEmpty()) {
+            say(ctx, ctx.computer().storeFromHand(words.quantity()));
+            return;
+        }
+        final long quantity = words.quantity();
+        final ICliComputer.ItemMatch one = resolve(ctx, named, "put");
+        if (one == null) {
+            return;
+        }
+        say(ctx, ctx.computer().insert(one.id(), Math.max(0L, quantity)));
+    }
+
+    /** Fills what the player is holding with a fluid the network has. */
+    private static void fill(final CliContext ctx, final InteracWords words) {
+        if (words.item().isEmpty()) {
+            ctx.out().error("usage: interac fill <fluid>");
+            return;
+        }
+        say(ctx, ctx.computer().fillHeld(words.item()));
+    }
+
+    /**
+     * What this computer has starred, and starring or unstarring one thing.
+     *
+     * <p>The same stars the window shows, since they belong to the computer: what is starred at the prompt is
+     * starred in the Network Interactor when it is next opened.
+     */
+    private static void fav(final CliContext ctx, final InteracWords words) {
+        if (words.item().isEmpty()) {
+            final List<String> starred = ctx.computer().favourites();
+            if (starred.isEmpty()) {
+                ctx.out().dim("nothing is starred on this computer");
+                return;
+            }
+            for (final String id : starred) {
+                ctx.out().line("  " + id);
+            }
+            return;
+        }
+        final ICliComputer.ItemMatch one = resolve(ctx, words.item(), "fav");
+        if (one == null) {
+            return;
+        }
+        final String id = "item|" + one.id();
+        final boolean starred = ctx.computer().favourites().contains(id);
+        say(ctx, ctx.computer().setConfig(starred ? "unfavourite" : "favourite", id));
     }
 
     /** Which servers hold a thing, and how much each holds. */
@@ -281,9 +362,11 @@ public final class InteracCommand implements ICliCommand {
     private static void help(final CliContext ctx) {
         ctx.out().line("Works the data network: shows what it holds, where it is, and what it is doing.");
         ctx.out().blank();
-        ctx.out().line("interac [status] [list [text]] [where item] [info item] [craft n item]");
+        ctx.out().line("interac [status] [list [text]] [get n item] [put n item|hand] [fill fluid]");
+        ctx.out().line("        [craft n item] [where item] [info item] [fav [item]]");
         ctx.out().line("        [ops] [cancel id] [lock n item] [unlock item] [locks] [stats]");
         ctx.out().blank();
+        ctx.out().row("  --to local", "leave what is taken in this computer (/LOCAL on DOS)");
         ctx.out().row("  --sort count", "sort a listing by count (--sort name by name; /S:COUNT on DOS)");
         ctx.out().row("  /?", "this, on the DOS family");
     }

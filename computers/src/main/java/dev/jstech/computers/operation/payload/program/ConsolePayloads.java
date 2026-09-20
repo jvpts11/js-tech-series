@@ -119,8 +119,13 @@ public final class ConsolePayloads {
          * An open ssh session runs the line on the remote machine, in its own shell family, the
          * local terminal is only the window. Everything else (ssh itself, exit) stays local.
          */
+        /*
+         * The shell is told who is typing at it, which is what the words about the player need: taking items
+         * into your own hands, or handing over what you are holding. A session opened on another machine is
+         * built without anybody, since nobody is standing in front of that one.
+         */
         final var localComputer =
-                new ServerCliComputer(host, level);
+                new ServerCliComputer(host, level, player);
         var computer = localComputer;
         final var session = SshTerminal.targetOf(host, level, payload.line());
         if (session != null) {

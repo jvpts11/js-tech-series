@@ -143,6 +143,75 @@ public final class InteracGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * Taking something into your own hands, and leaving it in the machine instead.
+     *
+     * <p>A shell built with nobody typing at it is what a session opened on another machine is, so it is also
+     * how this holds the rule to account: there is nowhere to put anything, and it says so rather than
+     * reaching across the world for a player.
+     */
+    @GameTest(template = ARENA)
+    public static void get_needsSomebodyAtTheMachineUnlessItStaysThere(final GameTestHelper helper) {
+        final Fleet fleet = wire(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final List<String> nobody = shell(helper, fleet.lab(), "interac get 42 cobblestone");
+                    helper.assertTrue(says(nobody, "nobody is at this machine"),
+                            "with nobody typing there is nowhere to put it; got " + nobody);
+
+                    final List<String> local = shell(helper, fleet.lab(), "interac get 42 cobblestone --to local");
+                    helper.assertTrue(says(local, "SELECT queued") && says(local, "local storage"),
+                            "and asking for it to stay in the machine works from anywhere; got " + local);
+
+                    final List<String> dos = shell(helper, fleet.lab(), "INTERAC GET 42 COBBLESTONE /LOCAL");
+                    helper.assertTrue(says(dos, "SELECT queued"),
+                            "the DOS switch says the same thing; got " + dos);
+                })
+                .thenSucceed();
+    }
+
+    /** Handing something over needs somebody to take it from, the same way. */
+    @GameTest(template = ARENA)
+    public static void put_hand_needsSomebodyHoldingSomething(final GameTestHelper helper) {
+        final Fleet fleet = wire(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final List<String> nobody = shell(helper, fleet.lab(), "interac put hand");
+                    helper.assertTrue(says(nobody, "nobody is at this machine"),
+                            "there is nobody to take anything from; got " + nobody);
+
+                    final List<String> named = shell(helper, fleet.lab(), "interac put 8 oak log");
+                    helper.assertTrue(says(named, "holds no") || says(named, "INSERT queued"),
+                            "and naming something puts it in from the machine's own storage; got " + named);
+                })
+                .thenSucceed();
+    }
+
+    /** Starring belongs to the computer, so what the prompt stars the window shows, and the other way about. */
+    @GameTest(template = ARENA)
+    public static void fav_starsAThingOnTheComputerItself(final GameTestHelper helper) {
+        final Fleet fleet = wire(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final List<String> none = shell(helper, fleet.lab(), "interac fav");
+                    helper.assertTrue(says(none, "nothing is starred"), "nothing is starred yet; got " + none);
+
+                    shell(helper, fleet.lab(), "interac fav cobblestone");
+                    helper.assertTrue(fleet.lab().console().settings().favourites()
+                                    .contains("item|minecraft:cobblestone"),
+                            "the computer itself is what remembers it; it has "
+                                    + fleet.lab().console().settings().favourites());
+
+                    final List<String> listed = shell(helper, fleet.lab(), "interac fav");
+                    helper.assertTrue(says(listed, "minecraft:cobblestone"), "and it lists it; got " + listed);
+
+                    shell(helper, fleet.lab(), "interac fav cobblestone");
+                    helper.assertTrue(fleet.lab().console().settings().favourites().isEmpty(),
+                            "saying it again takes the star off");
+                })
+                .thenSucceed();
+    }
+
     /** The glance the program opens with, and the DOS family's way of asking what it does. */
     @GameTest(template = ARENA)
     public static void status_andHelp_answerOnAMachineOfEitherFamily(final GameTestHelper helper) {

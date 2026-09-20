@@ -72,8 +72,9 @@ public final class DesktopShellPayloads {
         CliShell.HandOver handOver = null;
         if (level.getBlockEntity(payload.hostPos())
                 instanceof IComputerTerminalHost host) {
+            // Told who is typing, for the words that hand something to the player or take it from them.
             final var computer =
-                    new ServerCliComputer(host, level);
+                    new ServerCliComputer(host, level, player);
             // The window's own shell: its directory is its own, and so is the reply.
             computer.useSession(payload.session());
             /*

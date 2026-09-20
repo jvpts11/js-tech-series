@@ -256,6 +256,52 @@ public final class DataHandoff {
         return Outcome.FILLED;
     }
 
+    /**
+     * Brings items out of the network and into the player's own hands.
+     *
+     * <p>Through the machine, the way the graphical program does it: the network hands the items to the
+     * computer, and what the player has no room for stays there rather than being dropped on the floor or
+     * quietly left in the network. A machine whose own storage is full too hands the rest back to the
+     * network, so nothing is ever lost between the three.
+     *
+     * <p>Only things that come in stacks: a fluid needs something to go in, which is what {@code fill} is for.
+     */
+    public static Outcome toPlayer(final MainframeBlockEntity mainframe, final ServerLevel level,
+                                   final NetworkUuid network, final Player player, final LocalStore store,
+                                   final StorageKey key, final long quantity, final String label,
+                                   final Runnable afterSettle) {
+        if (!key.isItem() || quantity <= 0L) {
+            return Outcome.NOTHING;
+        }
+        final CollectingSink sink = new CollectingSink();
+        final NetworkSelectOperation op = mainframe.submitNetworkSelect(key, quantity, sink, label);
+        if (op == null) {
+            return Outcome.NO_DISPATCHER;
+        }
+        op.onSettle(() -> {
+            long left = sink.total();
+            while (left > 0L && !player.isRemoved()) {
+                final ItemStack stack = key.stack((int) Math.min(left, key.batch()));
+                final int asked = stack.getCount();
+                player.getInventory().add(stack);
+                final int placed = asked - stack.getCount();
+                left -= placed;
+                if (placed == 0) {
+                    // Not a stack more will fit; the rest is somebody else's to keep.
+                    break;
+                }
+            }
+            if (left > 0L) {
+                final long kept = store.insert(key, left);
+                if (left - kept > 0L) {
+                    NetworkStorage.of(level, network).insert(key, left - kept);
+                }
+            }
+            afterSettle.run();
+        });
+        return Outcome.DEPOSITED;
+    }
+
     /** Fills ONE held container with {@code key} from a computer's own disks, at once. */
     public static Outcome fillFromLocalStore(final LocalStore store, final Player player, final ISource source,
                                              final StorageKey key) {

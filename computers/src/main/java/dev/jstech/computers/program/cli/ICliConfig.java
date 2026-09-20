@@ -44,6 +44,16 @@ public interface ICliConfig {
         return List.of();
     }
 
+    /**
+     * What this computer has starred, by the id the machine stars things under.
+     *
+     * <p>Starring belongs to the computer and not to the player, so what was starred in the window is starred
+     * at its prompt, and the other way about.
+     */
+    default List<String> favourites() {
+        return List.of();
+    }
+
     /** Every folder the other running machines on this network share. */
     default List<ICliComputer.NetworkShare> networkShares() {
         return List.of();
