@@ -369,6 +369,13 @@ final class InstallerFrames {
             return switch (style) {
                 case MC_DOS -> new Ink(0xFF000000, 0xFF41D862, 0xFFA4FFBC, 0xFF1F8A3F, 0xFF41D862, 0xFF000000,
                         0xFF41D862, 0xFF000000, 0xFFA4FFBC, 0xFF000000, 0xFF41D862);
+                /*
+                 * The appliance's own phosphor, taken from the Vintage skin its screens wear, so the install
+                 * and the machine it installs look like one thing rather than two. Amber where it wants the
+                 * eye, as that generation's boxes did.
+                 */
+                case MC_NET -> new Ink(0xFF000000, 0xFF33FF66, 0xFF99FFBB, 0xFF2E8B2E, 0xFF33FF66, 0xFF000000,
+                        0xFF33FF66, 0xFF000000, 0xFFFFB000, 0xFF000000, 0xFF33FF66);
                 case FRAMES_95, FRAMES_XP -> new Ink(0xFF0000A8, 0xFFC0C0C0, 0xFFFFFFFF, 0xFF7B7BB8,
                         0xFFC0C0C0, 0xFF000000, 0xFFC0C0C0, 0xFF0000A8, 0xFFFFFF55, 0xFFC0C0C0, 0xFF000000);
                 case FRAMES_11 -> new Ink(0xFF0B1530, 0xFFE8EAF2, 0xFFFFFFFF, 0xFF9AA2B2, 0xFF3A6AE0,

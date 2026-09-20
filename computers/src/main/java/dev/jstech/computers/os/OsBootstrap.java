@@ -103,7 +103,8 @@ public final class OsBootstrap {
                     .withInstaller(InstallerStyle.MC_DOS),
             // MC-NET: full-screen network GUI (the rewrapped network interactor), from the Vintage era.
             OsDef.mediaInstalled(rl("mc_net"), OsCapability.NETWORK_GUI, HardwareEra.VINTAGE, rl("net_min"), 8,
-                    Platform.MC_NET, "MC-NET", Optional.empty(), SoftwareHouse.NOUVELL).withRam(2),
+                    Platform.MC_NET, "MC-NET", Optional.empty(), SoftwareHouse.NOUVELL).withRam(2)
+                    .withInstaller(InstallerStyle.MC_NET),
             /*
              * The Frames editions bundle their own desktop environment (the id doubles as the DE id), and they
              * are the one family here with an order to it: each says where it sits (withRank), so a program can

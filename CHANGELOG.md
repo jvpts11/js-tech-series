@@ -23,6 +23,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   `findcommand`, `clear`, `run` and `format`, `runbackground` and `schedule` for work left behind, and
   `netgetter` for the network's mirror. Where the DOS family shouted a switch this says a word: `end 4`
   instead of `TASKKILL /PID 4`, `format d yes` instead of `/y`, `schedule forget 2` instead of `/DELETE`.
+- MC-NET's install has a face of its own instead of the generic one. One page that says what is about to
+  happen and waits, then five lines of work, then the server is ready: it asks nothing about the machine,
+  because there is no tree to lay down, no folder to choose and no name to type. It is written in the same
+  green phosphor its screens wear on a Vintage machine, so the install and the system look like one thing.
+  What it does still waits for the player to say go, because no installer here writes to a disk unasked.
 - `showcommands` is how MC-NET teaches. An appliance keeps no manuals, so it says everything it can run at
   once, gathered by what a thing is for. It reads the same filter every other listing reads, so it never
   offers a word the machine would then refuse: on a computer with no cable it says nothing of the network.

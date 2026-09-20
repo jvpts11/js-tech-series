@@ -33,6 +33,16 @@ public enum InstallerStyle implements IStableName {
     /** The setup of the first age: a welcome, a settings page, a box with a bar in it. */
     MC_DOS("mc_dos"),
 
+    /**
+     * The appliance's: five lines and it is ready.
+     *
+     * <p>It asks nothing, because there is nothing about this machine to ask. There is no tree to lay down
+     * and no folder to choose, no name to type, and one disk to write to. Switching a network box on and
+     * having it work was what it was sold for, so the install is over before a wizard would have finished
+     * saying hello.
+     */
+    MC_NET("mc_net"),
+
     /** A text check of the machine, then a grey wizard with a picture down its side. */
     FRAMES_95("frames_95"),
 
@@ -75,6 +85,20 @@ public enum InstallerStyle implements IStableName {
                     new Stage(InstallerPage.WELCOME, InstallerChrome.FULL_TEXT, List.of()),
                     new Stage(InstallerPage.SETTINGS, InstallerChrome.FULL_TEXT, List.of()),
                     new Stage(InstallerPage.COPY, InstallerChrome.FULL_TEXT, List.of("Copying files")),
+                    new Stage(InstallerPage.DONE, InstallerChrome.FULL_TEXT, List.of()));
+            /*
+             * One page that waits, and then the work. It asks nothing about the machine, which is the point,
+             * but it does not write to somebody's disk before they have said go: that is the one thing every
+             * installer here owes the player, and being quick is no reason to take it away.
+             *
+             * The steps are named for what this system actually lays down, the file that starts it and the
+             * operating space among them, because those are the things a player later deletes or replaces.
+             */
+            case MC_NET -> List.of(
+                    new Stage(InstallerPage.WELCOME, InstallerChrome.FULL_TEXT, List.of()),
+                    new Stage(InstallerPage.COPY, InstallerChrome.FULL_TEXT, List.of(
+                            "checking the disk", "writing the system", "writing netstart.sys",
+                            "installing the interactor", "looking for a network")),
                     new Stage(InstallerPage.DONE, InstallerChrome.FULL_TEXT, List.of()));
             case FRAMES_95 -> List.of(
                     new Stage(InstallerPage.WELCOME, InstallerChrome.FULL_TEXT, List.of()),
@@ -174,6 +198,15 @@ public enum InstallerStyle implements IStableName {
                 case SETTINGS -> "Setup will use the following settings:";
                 case COPY -> "Setup is copying " + systemName + " to the disk.";
                 default -> systemName + " Setup is complete.";
+            };
+            /*
+             * It calls the machine a server, because that is what this system makes of whatever it is put
+             * on, and it never says "please wait": the whole of it is over in a breath.
+             */
+            case MC_NET -> switch (page) {
+                case WELCOME -> "This will make this machine a " + systemName + " server.";
+                case COPY -> "Setting up this server.";
+                default -> "This server is ready.";
             };
             case FRAMES_95 -> switch (page) {
                 case WELCOME -> "Setup is checking this computer before it starts.";
