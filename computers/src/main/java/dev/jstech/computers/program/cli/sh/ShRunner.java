@@ -119,8 +119,20 @@ public final class ShRunner {
         return new CliShell.Response(out.lines(), false);
     }
 
-    /** The names a shell knows without anybody setting them: where it is, who it is, and what it runs. */
+    /**
+     * The names a shell knows: where it is, who it is and what it runs, and then whatever the player set.
+     *
+     * <p>What was set wins, because a shell that would not let you say what {@code HOME} means is a shell
+     * arguing with the person typing at it.
+     */
     private static Map<String, String> namesOf(final ICliComputer computer) {
+        final Map<String, String> named = builtIn(computer);
+        named.putAll(computer.shellVariables());
+        return named;
+    }
+
+    /** The ones nobody set, which the machine answers for out of what it is. */
+    private static Map<String, String> builtIn(final ICliComputer computer) {
         final Map<String, String> named = new LinkedHashMap<>();
         final boolean dos = computer.shellFamily() != ShellFamily.POSIX;
         named.put("HOSTNAME", computer.hostname());

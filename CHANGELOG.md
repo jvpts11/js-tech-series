@@ -7,6 +7,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### Added
+- A name can now be given a value at the prompt and it stays given: `set NAME=value` on the Frames and MC-DOS
+  family, `export NAME=value` and a bare `NAME=value` on the Unix shells, `unset` to forget one, and `set` or
+  `export` on their own to list the names there are. The names belong to the machine rather than to the window
+  they were typed in, so one set at a monitor is there in a window on the desktop, in a session opened from
+  another machine, and after the machine has been off. A name the player set stands over one the machine
+  answers for, so `HOME` and `USER` can be said to mean something else.
 - `interac` on its own now takes the terminal whole and shows the network as a full screen: headings for the
   network, the servers, what is held back, the work in flight and what has been starred, a list under them, and
   a panel beside it saying what the picked row is, who is holding it, what makes it and what it goes into. The

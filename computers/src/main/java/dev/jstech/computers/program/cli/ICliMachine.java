@@ -14,6 +14,7 @@ import dev.jstech.computers.os.UnixTree;
 import dev.jstech.computers.program.job.JobWhen;
 import dev.jstech.computers.program.job.MachineJobs;
 import java.util.List;
+import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -119,6 +120,23 @@ public interface ICliMachine {
     /** What this machine's memory is spent on: what it has, what it promised, and what is really in it. */
     default ICliComputer.MemoryUse memory() {
         return new ICliComputer.MemoryUse(0, 0, 0L);
+    }
+
+    /**
+     * The names the shell knows on this machine, by name in upper case.
+     *
+     * <p>They belong to the machine and not to a prompt, so a name set at a monitor is still there in a
+     * window on the desktop, in a session opened from another machine, and after a restart. That is what a
+     * player means by setting one: a shell that forgot everything the moment a window closed would be a
+     * shell nobody could use.
+     */
+    default Map<String, String> shellVariables() {
+        return Map.of();
+    }
+
+    /** Gives a name a value on this machine, or forgets it when the value is blank. */
+    default ICliComputer.OpResult setShellVariable(final String name, final String value) {
+        return ICliComputer.OpResult.fail("this machine keeps no names");
     }
 
     /** The work this machine does with nobody at it: lines left running and lines waiting for an hour. */

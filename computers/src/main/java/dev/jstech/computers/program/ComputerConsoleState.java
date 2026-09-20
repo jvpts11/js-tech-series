@@ -524,6 +524,11 @@ public final class ComputerConsoleState {
             settings.defaultApps().forEach(apps::putString);
             s.put("DefaultApps", apps);
         }
+        if (!settings.variables().isEmpty()) {
+            final CompoundTag named = new CompoundTag();
+            settings.variables().forEach(named::putString);
+            s.put("Variables", named);
+        }
         tag.put("Settings", s);
     }
 
@@ -633,5 +638,11 @@ public final class ComputerConsoleState {
             apps.put(key, appsTag.getString(key));
         }
         settings.putDefaultApps(apps);
+        final Map<String, String> named = new LinkedHashMap<>();
+        final CompoundTag namedTag = s.getCompound("Variables");
+        for (final String key : namedTag.getAllKeys()) {
+            named.put(key, namedTag.getString(key));
+        }
+        settings.putVariables(named);
     }
 }

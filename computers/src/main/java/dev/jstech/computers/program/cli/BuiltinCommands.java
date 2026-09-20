@@ -73,6 +73,8 @@ public final class BuiltinCommands {
         out.addAll(MachineToolCommands.dos());
         // And its own way of leaving a machine with work: START and AT.
         out.addAll(JobCommands.dos());
+        // Giving a name a value, which both families do and only the words differ over.
+        out.addAll(VariableCommands.shared());
         return List.copyOf(out);
     }
 

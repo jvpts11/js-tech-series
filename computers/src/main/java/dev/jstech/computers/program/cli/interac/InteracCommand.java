@@ -65,6 +65,11 @@ public final class InteracCommand implements ICliCommand, CliShell.IHandOver {
     public List<String> description() {
         return List.of(
                 "Shows what the data network is holding and moves it about, without writing a line of IQL.",
+                "On its own it takes the whole terminal: headings for the network, the servers, what is held",
+                "back, the work in flight and what has been starred, a list under them, and the ten numbered",
+                "keys along the foot. Arrows move, Tab goes to the next heading, typing looks for something,",
+                "and F10 gives the terminal back.",
+                "",
                 "With words it does the one thing asked and gives the prompt back; an operation that takes",
                 "time prints its number and its result appears before the next prompt.",
                 "",
@@ -83,7 +88,8 @@ public final class InteracCommand implements ICliCommand, CliShell.IHandOver {
     @Override
     public List<Example> examples() {
         return List.of(
-                new Example("interac", "the network at a glance: whose it is and what it holds"),
+                new Example("interac", "the whole network on the whole glass, worked with the keyboard"),
+                new Example("interac status", "the network at a glance: whose it is and what it holds"),
                 new Example("interac list stone --sort count", "what it holds whose name has stone in it"),
                 new Example("interac get 42 cobblestone", "42 into your own hands, through this computer"),
                 new Example("interac put hand", "what you are holding goes into the network"),

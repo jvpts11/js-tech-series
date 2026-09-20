@@ -856,6 +856,23 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     @Override
+    public Map<String, String> shellVariables() {
+        return host.console() == null ? Map.of() : host.console().settings().variables();
+    }
+
+    @Override
+    public OpResult setShellVariable(final String name, final String value) {
+        if (host.console() == null) {
+            return OpResult.fail("this machine keeps no names");
+        }
+        host.console().settings().setVariable(name, value);
+        hostBlock.setChanged();
+        return OpResult.ok(value == null || value.isEmpty()
+                ? name.toUpperCase(Locale.ROOT) + " is forgotten"
+                : name.toUpperCase(Locale.ROOT) + "=" + value);
+    }
+
+    @Override
     public List<NetworkShare> networkShares() {
         return remotes().networkShares();
     }

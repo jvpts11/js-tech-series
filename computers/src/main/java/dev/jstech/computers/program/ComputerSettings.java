@@ -39,6 +39,9 @@ public final class ComputerSettings {
     public static final int MAX_DEFAULT_APPS = 64;
     /** The most folders one machine opens to the others on its network. */
     public static final int MAX_SHARES = 16;
+
+    /** How many names the shell keeps on one machine, which is far more than anybody sets by hand. */
+    public static final int MAX_VARIABLES = 64;
     /** What a fresh machine pins: its file explorer. */
     public static final String DEFAULT_PINNED = "files";
 
@@ -95,6 +98,12 @@ public final class ComputerSettings {
      * into the recipes the network lists for it. The next craft of that item opens on the same recipe.
      */
     private final Map<String, Integer> recipeChoices = new LinkedHashMap<>();
+    /**
+     * The names the shell knows on this machine, by name in upper case: what a player set with {@code set} or
+     * {@code export}. They belong to the machine rather than to a prompt, so a name set at a monitor is still
+     * there in a window on the desktop, in a session opened from another machine, and after a restart.
+     */
+    private final Map<String, String> variables = new LinkedHashMap<>();
 
     public int accent() {
         return accent;
@@ -370,6 +379,41 @@ public final class ComputerSettings {
     /** An unmodifiable view of the remembered recipe choices, for serialisation. */
     public Map<String, Integer> recipeChoices() {
         return Collections.unmodifiableMap(recipeChoices);
+    }
+
+    /** The names the shell knows on this machine, by name in upper case. */
+    public Map<String, String> variables() {
+        return Collections.unmodifiableMap(variables);
+    }
+
+    /**
+     * Gives {@code name} a value on this machine, or forgets it when the value is blank.
+     *
+     * <p>The name is kept in upper case because that is how every one of these shells writes an environment
+     * name, and it means {@code set path=...} and {@code set PATH=...} are the same name rather than two.
+     * The name set longest ago goes past the cap.
+     */
+    public void setVariable(final String name, final String value) {
+        if (name == null || name.isBlank()) {
+            return;
+        }
+        final String key = name.trim().toUpperCase(Locale.ROOT);
+        variables.remove(key);
+        if (value == null || value.isEmpty()) {
+            return;
+        }
+        while (variables.size() >= MAX_VARIABLES) {
+            variables.remove(variables.keySet().iterator().next());
+        }
+        variables.put(key, value);
+    }
+
+    /** Replaces the names the shell knows (used on load). */
+    public void putVariables(final Map<String, String> map) {
+        variables.clear();
+        if (map != null) {
+            map.forEach(this::setVariable);
+        }
     }
 
     /** Replaces the remembered recipe choices (used on load). */

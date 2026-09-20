@@ -34,6 +34,8 @@ public final class PosixCommands {
         out.addAll(MachineToolCommands.posix());
         // And the work a machine is left with when nobody is at it.
         out.addAll(JobCommands.posix());
+        // This family's own words for giving a name a value and taking it away again.
+        out.addAll(VariableCommands.posix());
         return List.copyOf(out);
     }
 

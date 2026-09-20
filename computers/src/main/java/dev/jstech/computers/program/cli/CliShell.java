@@ -101,6 +101,19 @@ public final class CliShell {
             }
             return new Response(out.lines(), false);
         }
+        /*
+         * A line that is nothing but NAME=value is not a command at all: it is how the POSIX shells have
+         * always given a name a value, and a player who types it expects it to have worked, not to be told
+         * there is no such command.
+         */
+        if (tokens.size() == 1 && computer.shellFamily() == ShellFamily.POSIX
+                && VariableCommands.isAssignment(word)) {
+            final ICliComputer.OpResult set = VariableCommands.assignmentOf(word, computer);
+            if (!set.ok()) {
+                out.error(set.message());
+            }
+            return new Response(out.lines(), false);
+        }
         final ICliCommand command = find(word);
         /*
          * A command that is not available on this computer (another distribution's package manager, an
