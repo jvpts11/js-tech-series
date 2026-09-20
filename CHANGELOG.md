@@ -7,6 +7,16 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### Added
+- `interac` on its own now takes the terminal whole and shows the network as a full screen: headings for the
+  network, the servers, what is held back, the work in flight and what has been starred, a list under them, and
+  a panel beside it saying what the picked row is, who is holding it, what makes it and what it goes into. The
+  arrows and Page Up and Page Down move through it, Tab goes to the next heading, typing looks for something,
+  the mouse picks a row or presses a key, and the ten keys along the foot do the ten things there are to do:
+  take into your hands, put out of them, ask for some made, hold some back, let it go, star it, call off an
+  operation, start the search again, the help page, and give the terminal back. The machine draws the screen and
+  the terminal only shows it, so it is the same screen at a monitor, in a window on a desktop and over a session
+  opened on a machine on the other side of the world, and none of the network is ever held in the terminal.
+  `interac` with words after it still does the one thing asked at the prompt.
 - Restarting a computer now shows the system closing down first, and the self-test begins when it has finished.
   The one screen a system of any age put up on its way down was the one screen nobody could see: switching a
   machine off showed it and restarting one did not, although restarting is how anybody reboots a computer here.

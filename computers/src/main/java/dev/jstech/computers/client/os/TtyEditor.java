@@ -32,6 +32,15 @@ public final class TtyEditor {
     private static final int LINE_H = 9;
     private static final int PAD = 3;
 
+    /** How wide the glass is taken to be until one has been drawn, which is what a terminal held. */
+    private static final int DEFAULT_COLUMNS = 80;
+
+    /** How many rows it is taken to hold for the same reason. */
+    private static final int DEFAULT_ROWS = 24;
+
+    /** The narrowest a glass is ever said to be, so a window squeezed to nothing still asks for something. */
+    private static final int LEAST_COLUMNS = 20;
+
     /** How an editor reads the keyboard. */
     public interface IKeys {
 
@@ -64,6 +73,16 @@ public final class TtyEditor {
             if (!existed) {
                 editor.say("\"" + editor.name() + "\" [New]");
             }
+        }
+
+        /**
+         * The glass is another size than it was, in columns and in rows.
+         *
+         * <p>An editor showing a file has nothing to do about it, since a file is as wide and as long as it
+         * is. One whose text is drawn to fit the glass, such as a view built of columns, asks for it again
+         * at the new size.
+         */
+        default void resized(final TtyEditor editor, final int columns, final int rows) {
         }
     }
 
@@ -103,6 +122,12 @@ public final class TtyEditor {
     private int scroll;
     /** How far the rows are slid to the left, in pixels, to keep the caret on a long line in view. */
     private int shift;
+
+    /** How many columns of text the glass holds, as the last drawing of it worked out. */
+    private int columns = DEFAULT_COLUMNS;
+
+    /** How many rows of text it holds, worked out the same way. */
+    private int rows = DEFAULT_ROWS;
     private boolean dirty;
     private String message = "";
 
@@ -172,6 +197,16 @@ public final class TtyEditor {
     /** The document, for a flavour that moves the caret its own way. */
     public TextDocument document() {
         return this.doc;
+    }
+
+    /** How many columns of text the glass holds, as the last drawing of it worked out. */
+    public int columns() {
+        return this.columns;
+    }
+
+    /** How many rows of text it holds, worked out the same way. */
+    public int rows() {
+        return this.rows;
     }
 
     /** Whether it has been changed since it was last written. */
@@ -286,6 +321,7 @@ public final class TtyEditor {
             TtyChrome.lower(g, font, x, y + upperH, width, lowerH, this.lineH, this.lowerName, this.lower, palette);
         }
         final int rows = Math.max(1, (upperH - head - PAD - this.lineH) / this.lineH);
+        measure(font, width, rows);
         drawStatus(g, font, x, y + height - keysH - this.lineH, width, look, palette);
         if (!look.page().isEmpty()) {
             Draw.pushScissor(g, x, y + head, x + width, y + height - keysH - this.lineH);
@@ -319,6 +355,23 @@ public final class TtyEditor {
             Draw.text(g, font, "~", x + PAD, y + head + PAD + i * this.lineH, palette.gutterText(), palette.ground());
         }
         Draw.popScissor(g);
+    }
+
+    /**
+     * Works out how many columns of text this glass holds, and tells the editor when the answer changes.
+     *
+     * <p>A window is resized by dragging its corner, so the answer changes while the editor is up rather
+     * than only when it opens, and whatever is drawn to fit the glass has to hear about it.
+     */
+    private void measure(final Font font, final int width, final int tall) {
+        final int cell = Math.max(1, font.width("m"));
+        final int held = Math.max(LEAST_COLUMNS, (width - 2 * PAD) / cell);
+        if (held == this.columns && tall == this.rows) {
+            return;
+        }
+        this.columns = held;
+        this.rows = tall;
+        this.keys.resized(this, held, tall);
     }
 
     /** Lines shown in place of the file, from wherever the wheel has left them. */

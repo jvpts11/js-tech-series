@@ -13,6 +13,10 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.computers.program.cli.CliShell;
+import dev.jstech.computers.program.cli.interac.InteracScreen;
+import dev.jstech.computers.program.cli.interac.InteracState;
+import dev.jstech.computers.program.cli.interac.InteracView;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
@@ -43,6 +47,7 @@ public final class InteracGameTests {
     private static final String ARENA = "empty";
     private static final int SETTLE = 8;
     private static final int WIDTH = 80;
+    private static final int HEIGHT = 19;
 
     /** The Mainframe with a rack holding logs of two kinds, and a personal computer to type at. */
     private record Fleet(PersonalComputerBlockEntity lab, ServerRackBlockEntity rack) {
@@ -218,7 +223,7 @@ public final class InteracGameTests {
         final Fleet fleet = wire(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final List<String> glance = shell(helper, fleet.lab(), "interac");
+                    final List<String> glance = shell(helper, fleet.lab(), "interac status");
                     helper.assertTrue(says(glance, "Network") && says(glance, "Mainframe")
                                     && says(glance, "Stored"),
                             "the glance says whose network it is and what it holds; got " + glance);
@@ -231,6 +236,78 @@ public final class InteracGameTests {
                     helper.assertTrue(says(sorted, "Oak Log"), "a DOS switch sorts the listing; got " + sorted);
                 })
                 .thenSucceed();
+    }
+
+    /** The word on its own gives the terminal to the full-screen view, which the machine draws. */
+    @GameTest(template = ARENA)
+    public static void view_takesTheTerminalAndIsDrawnByTheMachine(final GameTestHelper helper) {
+        final Fleet fleet = wire(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerCliComputer computer = new ServerCliComputer(fleet.lab(), helper.getLevel());
+                    final CliShell.HandOver over =
+                            CliCommands.shellFor(computer, WIDTH).run("interac", computer).handOver();
+                    helper.assertTrue(over != null, "the word on its own gives the terminal away");
+                    helper.assertTrue("interac".equals(over.editor()) && InteracState.names(over.path()),
+                            "and names the view and where it opens; got " + over);
+
+                    final List<String> screen = InteracView.screen(computer, opening());
+                    helper.assertTrue(screen.size() == HEIGHT,
+                            "a screen is a glass's worth of rows; got " + screen.size());
+                    helper.assertTrue(says(screen, "[Network]") && says(screen, "Oak Log")
+                                    && says(screen, "Cobblestone"),
+                            "the rows come off the network itself; got " + screen);
+                    helper.assertTrue(says(screen, "Mainframe up"),
+                            "and the bar says how the network is; got " + screen.get(0));
+
+                    final List<String> logs = InteracView.screen(computer, opening().searchingFor("log"));
+                    helper.assertTrue(says(logs, "Oak Log") && !says(logs, "Cobblestone"),
+                            "a search narrows the list; got " + logs);
+                    helper.assertTrue(InteracScreen.rowsSaid(logs) == 2,
+                            "and the screen says how many rows there are; got "
+                                    + InteracScreen.rowsSaid(logs));
+
+                    final List<String> servers =
+                            InteracView.screen(computer, opening().onTab(InteracState.TAB_SERVERS));
+                    helper.assertTrue(says(servers, "[Servers]") && says(servers, "% full"),
+                            "another heading is another list off the same machine; got " + servers);
+                })
+                .thenSucceed();
+    }
+
+    /** A key that asks for something is carried out by the machine, once, when the view is drawn. */
+    @GameTest(template = ARENA)
+    public static void view_carriesOutWhatWasAskedOfItExactlyOnce(final GameTestHelper helper) {
+        final Fleet fleet = wire(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerCliComputer computer = new ServerCliComputer(fleet.lab(), helper.getLevel());
+                    final InteracState asked = opening().searchingFor("cobblestone")
+                            .asking("lock" + InteracView.NOW, 64L);
+
+                    final List<String> done = InteracView.screen(computer, asked);
+                    helper.assertTrue(computer.locks().size() == 1,
+                            "the hold asked for was really put on; got " + computer.locks());
+                    helper.assertTrue(computer.locks().get(0).quantity() == 64L,
+                            "for as many as were asked for; got " + computer.locks());
+                    helper.assertTrue(says(done, "64"), "and the screen says so; got " + done);
+
+                    InteracView.screen(computer, asked.done());
+                    helper.assertTrue(computer.locks().get(0).quantity() == 64L,
+                            "asking for the same view again does not do it a second time; got "
+                                    + computer.locks());
+
+                    final List<String> held =
+                            InteracView.screen(computer, opening().onTab(InteracState.TAB_LOCKED));
+                    helper.assertTrue(says(held, "[Locked]") && says(held, "Cobblestone"),
+                            "and the heading for holds shows it; got " + held);
+                })
+                .thenSucceed();
+    }
+
+    /** The view as it opens, on a glass the size of the one these tests read. */
+    private static InteracState opening() {
+        return InteracState.OPENING.on(WIDTH, HEIGHT);
     }
 
     private static List<String> shell(final GameTestHelper helper, final IComputerTerminalHost on,

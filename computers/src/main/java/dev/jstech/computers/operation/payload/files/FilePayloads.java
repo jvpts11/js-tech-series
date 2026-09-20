@@ -30,8 +30,11 @@ import dev.jstech.computers.os.media.InstallerProjection;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.cli.interac.InteracState;
+import dev.jstech.computers.program.cli.interac.InteracView;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -293,13 +296,33 @@ public final class FilePayloads {
         String content = "";
         boolean exists = false;
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
-            final Optional<String> read = readDiskFile(level, computer, payload.path());
+            final Optional<String> drawn = interacScreen(level, computer, player, payload.path());
+            final Optional<String> read = drawn.isPresent() ? drawn
+                    : readDiskFile(level, computer, payload.path());
             if (read.isPresent()) {
                 content = read.get();
                 exists = true;
             }
         }
         PacketDistributor.sendToPlayer(player, new FileContentPayload(payload.path(), content, exists));
+    }
+
+    /**
+     * The full-screen view of the network, drawn by the machine that is on it, when that is what was asked
+     * for rather than a file.
+     *
+     * <p>It comes this way because a screen is asked for exactly as a file is: the terminal names the state it
+     * wants and is handed back the rows to show. Anything the name says was asked of the network happens here
+     * too, on the machine, with the player who typed it in hand, so a row taken into somebody's hands goes
+     * into the right hands.
+     */
+    private static Optional<String> interacScreen(final ServerLevel level, final IOsHost computer,
+                                                  final ServerPlayer player, final String path) {
+        if (!InteracState.names(path) || !(computer instanceof IComputerTerminalHost terminal)) {
+            return Optional.empty();
+        }
+        final ServerCliComputer shell = new ServerCliComputer(terminal, level, player);
+        return Optional.of(String.join("\n", InteracView.screen(shell, InteracState.of(path))));
     }
 
     /**

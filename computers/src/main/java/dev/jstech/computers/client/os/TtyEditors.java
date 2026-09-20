@@ -33,6 +33,12 @@ public final class TtyEditors {
          */
         register("less", LessKeys::new);
         register("more", LessKeys::new);
+        /*
+         * The network view takes the terminal for the same reason again: a list that is moved through, picked
+         * from and acted on is not something a prompt can hold. It writes nothing to a disk either; what it
+         * changes is the network.
+         */
+        register("interac", InteracTuiKeys::new);
     }
 
     private TtyEditors() {

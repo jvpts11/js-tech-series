@@ -9,6 +9,7 @@ package dev.jstech.computers.program.cli.interac;
 
 import dev.jstech.computers.program.cli.CliContext;
 import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.computers.program.cli.CliText;
 import dev.jstech.computers.program.cli.CommandScope;
@@ -28,7 +29,7 @@ import java.util.Locale;
  * {@code "oak log"} all work; a name that fits several things is answered with the several rather than
  * guessed at.
  */
-public final class InteracCommand implements ICliCommand {
+public final class InteracCommand implements ICliCommand, CliShell.IHandOver {
 
     /** The words it takes, which is also the list a verb written as an option is looked for in. */
     private static final List<String> VERBS = List.of("status", "list", "get", "put", "fill", "fav", "where",
@@ -94,9 +95,25 @@ public final class InteracCommand implements ICliCommand {
         return List.of("iql", "net", "ssh");
     }
 
+    /**
+     * With nothing said after it, the terminal is given to the full-screen view; with words, the one thing
+     * asked is done at the prompt and the prompt is kept.
+     *
+     * <p>What is handed over is not a file on a disk but the state the view opens in, which is how the
+     * machine is asked for a screen: the same way it is asked for a file.
+     */
+    @Override
+    public String fileOf(final ICliComputer computer, final List<String> args) {
+        return args.isEmpty() ? InteracState.OPENING.path() : null;
+    }
+
     @Override
     public void run(final CliContext ctx) {
         // What it does is its manual page, which the shell itself answers for; there is no second copy here.
+        if (!ctx.hasArgs()) {
+            // The terminal has been given away; there is nothing to print behind it.
+            return;
+        }
         final InteracWords words = InteracWords.of(ctx.args()).withVerbFrom(VERBS);
         switch (words.verb()) {
             case "", "status" -> status(ctx);

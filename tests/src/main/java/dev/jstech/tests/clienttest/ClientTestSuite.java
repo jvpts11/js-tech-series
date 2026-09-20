@@ -30,6 +30,7 @@ public final class ClientTestSuite {
             FullJourneyClientTests.class,
             GatewayManagerClientTests.class,
             InstallMediaClientTests.class,
+            InteracTuiClientTests.class,
             LiveInstallClientTests.class,
             TaskbarClientTests.class,
             TerminalEditorClientTests.class,
