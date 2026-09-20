@@ -22,7 +22,18 @@ public enum ShellFamily implements IStableName {
     DOS("dos"),
 
     /** A single rooted filesystem, mounts under {@code /media}, and Unix verbs (the Linux kernel). */
-    POSIX("posix");
+    POSIX("posix"),
+
+    /**
+     * The network appliance's own words, on a disk that keeps files and no folders (the {@code net_min}
+     * kernel).
+     *
+     * <p>It is neither of the others on purpose. There are no paths to write, only names, so there is no
+     * drive letter and no tree; the verbs are said in whole words rather than in either family's
+     * abbreviations, and they are lowercase, since a machine of this kind never had the DOS family's
+     * tolerance for shouting.
+     */
+    NET("net");
 
     private final String serializedName;
 

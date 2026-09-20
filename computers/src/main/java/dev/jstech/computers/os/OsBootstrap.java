@@ -65,7 +65,7 @@ public final class OsBootstrap {
              * because a bag of files beside a GUI that is the whole network is what this machine is, where
              * MC-DOS of the same age is a personal computer with folders.
              */
-            new KernelDef(rl("net_min"), SchedulerKind.NONE, FilesystemKind.FLAT, ShellFamily.DOS),
+            new KernelDef(rl("net_min"), SchedulerKind.NONE, FilesystemKind.FLAT, ShellFamily.NET),
             /*
              * The Linux kernel: preemptive, a single rooted hierarchical filesystem, and POSIX shell syntax.
              * Public through the addon API, so any add-on distribution built on it speaks bash for free.

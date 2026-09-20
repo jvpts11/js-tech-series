@@ -14,8 +14,12 @@ import dev.jstech.computers.os.boot.SystemIntegrity;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.CliCommands;
+import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -43,6 +47,7 @@ public final class McNetGameTests {
 
     private static final String ARENA = "empty";
     private static final int SETTLE = 6;
+    private static final int WIDTH = 80;
 
     private static final ResourceLocation MC_NET =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_net");
@@ -88,6 +93,49 @@ public final class McNetGameTests {
                             "a flat disk refuses a folder");
                     helper.assertTrue(DiskFilesystem.listDirs(computer.systemDisk(), "",
                             FilesystemKind.FLAT).isEmpty(), "and has none to list");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * MC-NET stops speaking DOS: its own words answer, and the DOS family's do not.
+     *
+     * <p>Held to account from the prompt rather than from the registry, because what matters is that a
+     * player typing the old verb is told it is not here and a player typing the new one is answered.
+     */
+    @GameTest(template = ARENA)
+    public static void thePrompt_speaksItsOwnWordsAndNotTheDosFamilys(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    DiskFilesystem.write(computer.systemDisk(), "notes.txt", FileType.TXT, "a line",
+                            Long.MAX_VALUE, FilesystemKind.FLAT);
+
+                    final List<String> listed = shell(helper, computer, "listfiles");
+                    helper.assertTrue(says(listed, "notes.txt"),
+                            "listfiles answers and lists the disk; got " + listed);
+
+                    final List<String> seen = shell(helper, computer, "seefile notes.txt");
+                    helper.assertTrue(says(seen, "a line"), "seefile puts it on the glass; got " + seen);
+
+                    for (final String gone : new String[] {"dir", "type notes.txt", "cd", "mkdir progs",
+                            "tree"}) {
+                        helper.assertTrue(says(shell(helper, computer, gone), "command not found"),
+                                "the DOS word '" + gone + "' is not this machine's");
+                    }
+                })
+                .thenSucceed();
+    }
+
+    /** The prompt names the machine, because a flat disk has nowhere to be standing. */
+    @GameTest(template = ARENA)
+    public static void thePrompt_namesTheMachineAndNotAPlace(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerCliComputer shell = new ServerCliComputer(computer, helper.getLevel());
+                    helper.assertTrue(shell.prompt().equals("SYSTEM:>"),
+                            "no drive letter and no path; got " + shell.prompt());
                 })
                 .thenSucceed();
     }
@@ -175,4 +223,17 @@ public final class McNetGameTests {
                 .thenSucceed();
     }
 
+    private static List<String> shell(final GameTestHelper helper, final PersonalComputerBlockEntity on,
+                                      final String command) {
+        final ServerCliComputer computer = new ServerCliComputer(on, helper.getLevel());
+        final List<String> out = new ArrayList<>();
+        for (final CliLine line : CliCommands.shellFor(computer, WIDTH).run(command, computer).lines()) {
+            out.add(line.text());
+        }
+        return out;
+    }
+
+    private static boolean says(final List<String> lines, final String text) {
+        return lines.stream().anyMatch(line -> line.contains(text));
+    }
 }

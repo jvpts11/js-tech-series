@@ -426,19 +426,12 @@ final class DosFileCommands {
     }
 
     /**
-     * Formats a file's world-time stamp (total ticks) as an in-game day and clock, e.g.
-     * {@code "Day 12  08:15"}. A stamp of {@code 0} (unknown, e.g. a virtual .dat projection or a
-     * file written before timestamps existed) renders as a short placeholder.
+     * When a file was last written.
+     *
+     * <p>Answered by {@link Stamps}, which every family's listing asks, so the same file read at two
+     * prompts never gives two different hours.
      */
     private static String formatStamp(final long ticks) {
-        if (ticks <= 0L) {
-            return "  --  ";
-        }
-        final long day = ticks / 24_000L;
-        final long timeOfDay = ticks % 24_000L;
-        // Minecraft tick 0 is 06:00; each in-game hour is 1000 ticks.
-        final long hour = ((timeOfDay / 1000L) + 6L) % 24L;
-        final long minute = (timeOfDay % 1000L) * 60L / 1000L;
-        return String.format(Locale.ROOT, "Day %d  %02d:%02d", day, hour, minute);
+        return Stamps.of(ticks);
     }
 }

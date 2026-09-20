@@ -43,7 +43,12 @@ public final class ShRunner {
      * the star to the command, which is why {@code DEL *.TXT} was the command's own doing.
      */
     public static List<String> expand(final ICliComputer computer, final List<String> tokens) {
-        final boolean dos = computer.shellFamily() != ShellFamily.POSIX;
+        /*
+         * Only the DOS family writes a name between per cent signs. The network appliance says it the other
+         * way, with the rest of its lowercase habits, so the test is for that family rather than for
+         * anything that is not Unix.
+         */
+        final boolean dos = computer.shellFamily() == ShellFamily.DOS;
         final Map<String, String> named = namesOf(computer);
         final List<String> out = new ArrayList<>(tokens.size());
         List<String> names = null;
@@ -134,17 +139,19 @@ public final class ShRunner {
     /** The ones nobody set, which the machine answers for out of what it is. */
     private static Map<String, String> builtIn(final ICliComputer computer) {
         final Map<String, String> named = new LinkedHashMap<>();
-        final boolean dos = computer.shellFamily() != ShellFamily.POSIX;
         named.put("HOSTNAME", computer.hostname());
         named.put("COMPUTERNAME", computer.hostname());
         named.put("USER", "player");
         named.put("USERNAME", "player");
         named.put("OS", computer.platform().label());
-        if (dos) {
-            named.put("CD", computer.prompt());
-        } else {
-            named.put("HOME", computer.tree().homePath());
-            named.put("PWD", computer.currentLocation().storagePath());
+        switch (computer.shellFamily()) {
+            case DOS -> named.put("CD", computer.prompt());
+            case POSIX -> {
+                named.put("HOME", computer.tree().homePath());
+                named.put("PWD", computer.currentLocation().storagePath());
+            }
+            /* A flat disk has no folder to be standing in and no home, so it answers for neither. */
+            case NET -> { }
         }
         return named;
     }

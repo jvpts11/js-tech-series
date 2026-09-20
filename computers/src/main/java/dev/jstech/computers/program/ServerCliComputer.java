@@ -636,6 +636,13 @@ public final class ServerCliComputer implements ICliComputer {
         if (live != null) {
             return live.prompt();
         }
+        /*
+         * A flat disk has no path to put in a prompt, so MC-NET's names the machine instead of a place. It
+         * is also why it carries no drive letter: there is one store and nowhere in it to stand.
+         */
+        if (shellFamily() == ShellFamily.NET) {
+            return "SYSTEM:>";
+        }
         if (shellFamily() != ShellFamily.POSIX) {
             return currentLocation().dosPath() + ">";
         }

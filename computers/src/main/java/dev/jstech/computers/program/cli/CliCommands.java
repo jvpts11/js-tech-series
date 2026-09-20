@@ -43,6 +43,17 @@ public final class CliCommands {
      */
     public static synchronized List<ICliCommand> commandsFor(
             final ShellFamily family) {
+        /*
+         * The network appliance takes the verbs both families share and its own words for the rest. It never
+         * sees the DOS file verbs, which is the whole point: a machine with no folders should not be offered
+         * a way to change into one.
+         */
+        if (family == ShellFamily.NET) {
+            final List<ICliCommand> commands = new ArrayList<>(BuiltinCommands.shared());
+            commands.addAll(NetFileCommands.all());
+            commands.addAll(EXTRA);
+            return commands;
+        }
         if (family == ShellFamily.POSIX) {
             final List<ICliCommand> commands = new ArrayList<>(BuiltinCommands.shared());
             commands.addAll(PosixCommands.all());

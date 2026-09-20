@@ -182,8 +182,14 @@ class CliShellTest {
             return "Mainframe";
         }
 
+        /*
+         * The shell these tests drive is the DOS command set, so the machine under it says it is a system
+         * that speaks DOS. It used to say MC-NET and pass anyway, because MC-NET was counted among the
+         * DOS-speaking systems; it has its own words now, and a fixture claiming one family while running
+         * another's verbs tests nothing that is true of either.
+         */
         @Override public Platform platform() {
-            return Platform.MC_NET;
+            return Platform.MC_DOS;
         }
 
         @Override public boolean hostIs(final HostScope scope) {

@@ -46,11 +46,19 @@ public record CommandScope(Set<Platform> platforms, int minOsRank, HostScope hos
     /** Every system there is, which is what a command of the machines themselves reaches. */
     public static final Set<Platform> EVERY_SYSTEM = Set.of(Platform.values());
 
-    /** The DOS-speaking systems: MC-DOS, MC-NET and every Frames edition. */
-    public static final Set<Platform> DOS_SYSTEMS = Set.of(Platform.MC_DOS, Platform.MC_NET, Platform.FRAMES);
+    /** The DOS-speaking systems: MC-DOS and every Frames edition. */
+    public static final Set<Platform> DOS_SYSTEMS = Set.of(Platform.MC_DOS, Platform.FRAMES);
 
     /** The Unix-speaking systems: the distributions, UNIX and FreeBSD. */
     public static final Set<Platform> UNIX_SYSTEMS = Set.of(Platform.LINUX, Platform.UNIX, Platform.FREEBSD);
+
+    /**
+     * The network appliance, which speaks neither of the above.
+     *
+     * <p>A set of one today. It is a set all the same, because what makes a verb MC-NET's is the kind of
+     * machine it is, not the single system that is that kind now.
+     */
+    public static final Set<Platform> NET_SYSTEMS = Set.of(Platform.MC_NET);
 
     /** A command no machine has, which is what a command that declares nothing is. */
     public static final CommandScope NOWHERE = new CommandScope(Set.of(), 0, HostScope.ANY, Set.of(), null, "");

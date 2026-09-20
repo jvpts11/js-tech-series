@@ -12,6 +12,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   things that do nothing else. It now keeps a flat store, files at the root and no folders, which is what a
   network appliance of that age had and what tells it apart from the personal computer of the same year. So
   there is no `cd` to change folder, no folders to make or remove, and no tree to draw.
+- MC-NET stops speaking DOS. It is its own shell family now, beside the DOS one and the Unix one, and it says
+  what it does in whole words: `listfiles` for the disk, `seefile` to put a file on the glass, and `delete`,
+  `copy`, `rename` and `write` for the rest. There is no `cd`, no `mkdir`, no `rmdir` and no `tree`, because
+  a flat disk has nowhere to change into and no folders to make. Its prompt is `SYSTEM:>`, naming the machine
+  rather than a place, since there is no path to put there and no drive letter to carry. A name stands for
+  something the way the Unix shells write it, and `/?` goes back to being the DOS family's alone.
 - MC-NET can be wrecked like every other system. Installing it writes `netstart.sys` at the root of the disk,
   and a machine that no longer finds it says `netstart.sys is missing` and will not start until an
   installation medium writes it back. With no folders it has no system folder to lose, so it has one way of

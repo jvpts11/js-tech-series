@@ -129,9 +129,12 @@ public final class CliShell {
          * Asking a command what it does: --help anywhere, and /? on the family that has written it that way
          * since there was a DOS. Answered here rather than by every command, so no command can be written
          * that forgets to answer, and so the words are the ones in its manual page and nowhere else.
+         *
+         * <p>The switch belongs to that family alone, not to everything that is not Unix: the network
+         * appliance speaks neither, and teaches what it has its own way.
          */
         if (args.contains("--help")
-                || (computer.shellFamily() != ShellFamily.POSIX && args.contains("/?"))) {
+                || (computer.shellFamily() == ShellFamily.DOS && args.contains("/?"))) {
             out.accent(command.name() + (command.usage().isEmpty() ? "" : " " + command.usage()));
             for (final String said : ManPage.lines(command, false)) {
                 out.line(said);
