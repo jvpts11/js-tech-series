@@ -384,6 +384,38 @@ public final class OsBootstrap {
             // Minesweeper: a small game available on any desktop (rank 0 = Frames 95 and newer).
             ProgramSpec.of(rl("minesweeper"), "mines", "Minesweeper", false, DESKTOPS, 16, ProgramKind.APP, 0, HostScope.ANY)
                     .withEra(VINTAGE).withHouse(SoftwareHouse.MIDSOFT).withRam(1),
+            // Solitaire: the other game every one of these desktops shipped with, and as light as that one.
+            ProgramSpec.of(rl("solitaire"), "solitaire", "Solitaire", false, DESKTOPS, 16, ProgramKind.APP, 0, HostScope.ANY)
+                    .withEra(VINTAGE).withHouse(SoftwareHouse.MIDSOFT).withRam(1),
+            // Snake: the game a machine with almost nothing in it could still run.
+            ProgramSpec.of(rl("snake"), "snake", "Snake", false, DESKTOPS, 8, ProgramKind.APP, 0, HostScope.ANY)
+                    .withEra(VINTAGE).withHouse(SoftwareHouse.MIDSOFT).withRam(1),
+            // 67ark: packs files into one that weighs less, which is how a small disk is made to stretch.
+            ProgramSpec.of(rl("ark"), "ark", "67ark", false, DESKTOPS, 24, ProgramKind.APP, 0, HostScope.ANY)
+                    .withEra(LEGACY).withHouse(SoftwareHouse.VAULTIS).withRam(16),
+            // Paint: a real picture in an indexed palette, which also becomes the desktop's wallpaper.
+            ProgramSpec.of(rl("paint"), "paint", "Paint", false, DESKTOPS, 48, ProgramKind.APP, 0, HostScope.ANY)
+                    .withEra(LEGACY).withHouse(SoftwareHouse.BELLWETHER_LABS).withRam(32),
+            // Exceed: a sheet whose cells can ask the network what it is holding.
+            ProgramSpec.of(rl("exceed"), "exceed", "Exceed", false, DESKTOPS, 64, ProgramKind.APP, 2, HostScope.ANY)
+                    .withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(64),
+            /*
+             * The Messenger: a service on the Mainframe and a client on every computer. Its declared memory
+             * is only its floor; what it really costs grows with the conversations it keeps and with how
+             * many people have the messenger open, which is the whole point of it.
+             */
+            ProgramSpec.of(rl("messenger_service"), "msgsvc", "Messenger Service", false,
+                            ALL_PLATFORMS, 48, ProgramKind.SERVICE, 2, HostScope.MAINFRAME)
+                    .withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(8),
+            ProgramSpec.of(rl("messenger"), "messenger", "Midsoft Messenger", false, DESKTOPS, 48,
+                            ProgramKind.APP, 2, HostScope.ANY)
+                    .withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(32),
+            // KnotHub keeps the source a network is still arguing over; Knot is what a computer reads it with.
+            ProgramSpec.of(rl("knothub"), "knothub", "KnotHub", false, ALL_PLATFORMS, 64,
+                            ProgramKind.SERVICE, 2, HostScope.MAINFRAME)
+                    .withEra(STANDARD).withHouse(SoftwareHouse.DAYLIGHT_FOUNDATION).withRam(16),
+            ProgramSpec.of(rl("knot"), "knot", "Knot", false, DESKTOPS, 48, ProgramKind.APP, 2, HostScope.ANY)
+                    .withEra(STANDARD).withHouse(SoftwareHouse.DAYLIGHT_FOUNDATION).withRam(32),
             // Storage Insights: a network dashboard -> Frames XP or newer.
             ProgramSpec.of(rl("storage_insights"), "insights", "Storage Insights", false, DESKTOPS, 64, ProgramKind.APP, 2, HostScope.ANY)
                     .withEra(STANDARD).withHouse(SoftwareHouse.VAULTIS).withRam(64),

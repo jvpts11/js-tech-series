@@ -465,6 +465,21 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     }
 
     /**
+     * Hangs a picture on this desktop's wall, which is what the paint program's last button does.
+     *
+     * <p>The choice goes to the machine like any other setting, so it is remembered with the computer
+     * rather than with the client looking at it, and every screen of that machine shows it.
+     */
+    public static void setWallpaperToPicture(final String path) {
+        if (active == null || path == null || path.isEmpty()) {
+            return;
+        }
+        final String choice = PixWallpaper.choiceFor(path);
+        active.desktopWallpaper = choice;
+        PacketDistributor.sendToServer(new SetSettingPayload(active.host, "wallpaper", choice));
+    }
+
+    /**
      * Raises the error for a refused action on an installer's own files: they are generated from the
      * medium's stamp, so there is nothing to rename, copy off, delete or overwrite.
      */
@@ -2463,7 +2478,14 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             // CDE hangs no picture: each workspace wears a pattern of its own in the palette's backdrop colours.
             MotifChrome.backdrop(g, sw, sh, cdePalette(), cdeStyle.backdrop(shownWorkspace));
         } else {
-            WallpaperPainter.paint(g, sw, sh, desktopId, eraNow, desktopWallpaper);
+            /*
+             * A picture a player drew hangs in front of the built-in wallpapers, and falls back to them the
+             * moment it cannot be found, so a deleted drawing never leaves the desktop with a blank wall.
+             */
+            PixWallpaper.want(host, desktopWallpaper);
+            if (!PixWallpaper.paint(g, sw, sh)) {
+                WallpaperPainter.paint(g, sw, sh, desktopId, eraNow, desktopWallpaper);
+            }
         }
 
         // A cooperative OS that ran out of memory shows its crash screen, then reboots to an empty session.
@@ -5632,6 +5654,11 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
          */
         FilesApps.forgetAll();
         TrashApp.forgetAll();
+        /*
+         * And the picture on the wall is let go with them: another machine's desktop may open next, and a
+         * wallpaper chosen there under the same file name would otherwise be shown this one's drawing.
+         */
+        PixWallpaper.clear();
         /*
          * The layout goes to the machine: the windows the player leaves behind are what the machine
          * has open, for whoever looks next and after the game is closed. Not when the desktop is closing

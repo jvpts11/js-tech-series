@@ -21,6 +21,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Where one computer stands on the data network: the node it is known by, the network it is on, and the
  * network it is registered with.
@@ -51,7 +53,11 @@ final class NetworkAttachment {
     static final long NO_CABLE = Long.MIN_VALUE;
 
     /* Every face, held once: Direction.values() hands back a fresh copy of the array on every call. */
-    private static final Direction[] FACES = Direction.values();
+    /*
+     * Every side, held once, because asking the enum hands back a fresh array on every call. Kept as a
+     * list rather than as that array, which nothing here wants to do more than walk.
+     */
+    private static final List<Direction> FACES = List.of(Direction.values());
 
     NetworkAttachment(final AbstractComputerBlockEntity machine) {
         this.machine = machine;

@@ -58,7 +58,11 @@ final class MainframeNetworking {
     private static final int PROMOTE_DELAY = 60;
 
     /** Every side, held once: Direction.values() hands back a fresh copy of the array on every call. */
-    private static final Direction[] SIDES = Direction.values();
+    /*
+     * Every side, held once, because asking the enum hands back a fresh array on every call. Kept as a
+     * list rather than as that array, which nothing here wants to do more than walk.
+     */
+    private static final List<Direction> SIDES = List.of(Direction.values());
 
     private final MainframeBlockEntity mainframe;
 

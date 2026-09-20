@@ -159,6 +159,8 @@ public final class SetupRunner {
                     case "iqlengine" -> mainframe.uninstallIqlEngine();
                     case "automation_engine" -> mainframe.uninstallAutomationEngine();
                     case "mirror" -> mainframe.uninstallMirror();
+                    case "messenger_service" -> mainframe.uninstallMessenger();
+                    case "knothub" -> mainframe.uninstallKnot();
                     default -> { }
                 }
             }
@@ -169,6 +171,8 @@ public final class SetupRunner {
                 case "iqlengine" -> mainframe.installIqlEngine();
                 case "automation_engine" -> mainframe.installAutomationEngine();
                 case "mirror" -> mainframe.installMirror();
+                case "messenger_service" -> mainframe.installMessenger();
+                case "knothub" -> mainframe.installKnot();
                 default -> { }
             }
         }

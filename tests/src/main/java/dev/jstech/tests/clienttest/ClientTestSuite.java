@@ -31,6 +31,7 @@ public final class ClientTestSuite {
             GatewayManagerClientTests.class,
             InstallMediaClientTests.class,
             InteracTuiClientTests.class,
+            LeftoverProgramsClientTests.class,
             LiveInstallClientTests.class,
             McNetSpaceClientTests.class,
             TaskbarClientTests.class,

@@ -321,7 +321,11 @@ public final class IqlPayloads {
             return;
         }
         final var content = DiskFilesystem.read(sysDisk, payload.fileName());
-        if (content.isEmpty()) {
+        /*
+         * A script past what the reply may carry is answered as though it were not there, rather than
+         * taking the packet down: the cap throws when it is handed more than it takes.
+         */
+        if (content.isEmpty() || content.get().length() > SaveIqlFilePayload.MAX_CONTENT_LEN) {
             PacketDistributor.sendToPlayer(player,
                     new IqlFileContentPayload("", "", false));
             return;

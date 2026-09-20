@@ -304,6 +304,14 @@ public final class FilePayloads {
                 exists = true;
             }
         }
+        /*
+         * A file past what the packet may carry is said to be too large rather than handed over: the cap
+         * throws when it is given more than it takes, so this used to take the packet down instead.
+         */
+        if (content.length() > FileContentPayload.MAX_CONTENT) {
+            PacketDistributor.sendToPlayer(player, FileContentPayload.tooLarge(payload.path()));
+            return;
+        }
         PacketDistributor.sendToPlayer(player, new FileContentPayload(payload.path(), content, exists));
     }
 
@@ -366,6 +374,6 @@ public final class FilePayloads {
          * An answer nobody is waiting for belongs to a window that has since closed, and is dropped.
          */
         CodeFileReplies.content(
-                payload.path(), payload.content(), payload.exists());
+                payload.path(), payload.content(), payload.exists(), payload.tooLarge());
     }
 }

@@ -7,6 +7,37 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### Added
+- **Solitaire** and **Snake**, the two games these desktops always shipped with. Klondike drawing one card,
+  dealt from a number so the same number deals the same game and one player can hand another the deal they
+  are stuck on; and a snake in an arena whose walls can be turned off, which takes away the easy way to die
+  and leaves only running into yourself. Both are as light as Minesweeper and run on any desktop.
+- **67ark**, which packs many files into one that really weighs less. A disk here counts the bytes of what
+  is on it, so archiving a folder of logs is how a small disk is made to stretch; text that repeats packs
+  hardest, so a log collapses much further than a config does, and the program shows what each one saved.
+  Opening an archive lists what is inside it without unpacking anything.
+- **Paint**, a real picture rather than a grid of blocks: a canvas up to 128 by 128 in a palette of 256
+  colours, every tool the program it is named after had, zoom and undo. What it writes is about a kilobyte
+  where a colour per pixel would be twenty-four, which is what makes keeping pictures on a disk possible at
+  all. A picture can be hung on the desktop as its wallpaper, so something a player drew ends up on every
+  screen of that machine.
+- **Exceed**, a sheet of cells. Besides the arithmetic a spreadsheet has always done, a cell can ask the
+  network what it is holding: how many of a thing, how much room is left, how many servers there are. Those
+  cells are drawn apart from the ones the player typed, so nobody wonders why a number moved by itself, and
+  they are worked out from what the machine last said rather than from asking the world. It reads and
+  writes the comma separated files the mod already had, so a sheet is a file any other program can open.
+- **Midsoft Messenger** and its **Messenger Service**, the first program here where the other end is
+  another player: who is on the network, a window per conversation, and the nudge. The history lives on the
+  network's own machine, so a conversation is there when you next sit down at any machine on it. The
+  service is also the first in the mod that does not cost a fixed amount: it grows on the disk as it keeps
+  what people said, and in the machine's memory as more of them are connected, and the window shows both.
+- **Knot** and **KnotHub**, which keep the source a network is still arguing over. Push a file from the
+  machine you are at, pull a revision back onto it, and read who changed what with the changes marked line
+  by line. It sits under the package manager rather than beside it: a package is a finished thing one
+  player hands to another, and this is the code before it became one.
+- The editor grew into a real one. It was a name, a text area and a status line; it now has line numbers,
+  find and replace, go to line, the line and column in the bar, Open and Save As through the system's own
+  file window, and more than one file open at a time. It stays a text editor: highlighting, completion,
+  projects and a compiler are what tell the five development environments apart, and they stay theirs.
 - MC-NET draws the whole monitor, as every other system does. Its interface was a 244 by 230 window with the
   player's inventory under it, throwing away 140 columns of a screen the desktops fill, which is why the one
   interface in the mod that is a whole system read as an inventory panel. It is now the glass: a status bar

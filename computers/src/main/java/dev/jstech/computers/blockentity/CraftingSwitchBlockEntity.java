@@ -51,8 +51,12 @@ import java.util.Set;
 public class CraftingSwitchBlockEntity extends BlockEntity {
 
     private static final int FACES = 6;
-    /* Every side, held once: SIDES hands back a fresh copy of the array on every call. */
-    private static final Direction[] SIDES = Direction.values();
+    /*
+     * Every side, held once, because asking the enum hands back a fresh array on every call. Kept as a
+     * list rather than as that array: an array of enum constants is a mutable thing to leave lying about,
+     * and nothing here wants more than to walk it.
+     */
+    private static final List<Direction> SIDES = List.of(Direction.values());
     private static final int BFS_STEPS = 64;
 
     /*

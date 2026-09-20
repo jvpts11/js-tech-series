@@ -83,6 +83,13 @@ public final class ProgramClient {
         register(rl("cluster_manager"), (host, mon, os) -> new ClusterManagerApp(host));
         register(rl("gateway_manager"), (host, mon, os) -> new GatewayManagerApp(host));
         register(rl("minesweeper"), (host, mon, os) -> new MinesweeperApp());
+        register(rl("solitaire"), (host, mon, os) -> new SolitaireApp());
+        register(rl("snake"), (host, mon, os) -> new SnakeApp());
+        register(rl("ark"), (host, mon, os) -> new ArchiverApp(host));
+        register(rl("paint"), (host, mon, os) -> new PaintApp(host));
+        register(rl("exceed"), (host, mon, os) -> new ExceedApp(host, mon));
+        register(rl("messenger"), (host, mon, os) -> new MessengerApp(host, mon));
+        register(rl("knot"), (host, mon, os) -> new KnotApp(host, mon));
         register(rl("storage_insights"), (host, mon, os) -> new StorageInsightsApp(host, mon));
         register(rl("craft_planner"), (host, mon, os) -> new CraftPlannerApp(host, mon));
         register(rl("automation_manager"), (host, mon, os) -> new AutomationManagerApp(host, mon));

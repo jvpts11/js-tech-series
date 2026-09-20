@@ -111,6 +111,22 @@ public enum FileType {
     SGPROJ("sgproj", true, false),
 
     /**
+     * Many files packed into one, which weighs less than they did apart.
+     *
+     * <p>Not editable, because most of it is compressed and a character changed by hand would make the rest
+     * of it unreadable. An archiver opens it, and its listing is plain enough to read without one.
+     */
+    ARK("ark", false, false),
+
+    /**
+     * A picture: a grid of pixels naming colours in a palette, run length encoded.
+     *
+     * <p>Not editable by hand, because it is numbers rather than words and a character changed in it moves
+     * every pixel after that point. A paint program opens it.
+     */
+    PIX("pix", false, false),
+
+    /**
      * A file of a kind the machines do not know: whatever a player or a program chose to call it, such as
      * {@code thing.fk}.
      *

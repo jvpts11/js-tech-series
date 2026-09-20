@@ -43,9 +43,14 @@ public final class McNetSpaceClientTests {
     private static final BlockPos MONITOR = new BlockPos(6, 2, 2);
     private static final BlockPos PLAYER_AT_MONITOR = new BlockPos(8, 2, 2);
 
-    /** Where the panel's Get button is, which the screen draws and this clicks. */
-    private static final int PANE_GET_X = ComputerTerminalLayout.PANE_X + 6 + 30;
-    private static final int PANE_BTN_Y = ComputerTerminalLayout.PANE_Y + 106 + 6;
+    /*
+     * The middle of the panel's Get button, worked out from the layout the screen itself draws from. It
+     * used to be the same numbers written out again here, and they went stale the moment the button moved.
+     */
+    private static final int PANE_GET_X =
+            ComputerTerminalLayout.PANE_GET_X + ComputerTerminalLayout.PANE_BTN_W / 2;
+    private static final int PANE_BTN_Y =
+            ComputerTerminalLayout.PANE_BTN_Y + ComputerTerminalLayout.PANE_BTN_H / 2;
 
     private static final ResourceLocation MC_NET =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_net");

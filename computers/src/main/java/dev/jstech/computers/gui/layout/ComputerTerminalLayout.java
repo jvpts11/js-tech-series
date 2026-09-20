@@ -89,6 +89,17 @@ public final class ComputerTerminalLayout {
     public static final int OPS_ROWS = 6;
 
     /*
+     * The two buttons at the foot of the panel. They live here rather than in the screen because the
+     * screen draws them, the click reads them and a client test presses them: three places that once held
+     * their own copy of the same number, which is how the last one came to be pressing empty glass.
+     */
+    public static final int PANE_BTN_Y = PANE_Y + 110;
+    public static final int PANE_BTN_W = 60;
+    public static final int PANE_BTN_H = 12;
+    public static final int PANE_GET_X = PANE_X + 6;
+    public static final int PANE_CRAFT_X = PANE_X + 72;
+
+    /*
      * The public/private slider band, which lives in the panel beside the grid. These were written out in
      * both the heading that draws them and the screen that drags them, which is how the two came to
      * disagree; they are one set of numbers now.

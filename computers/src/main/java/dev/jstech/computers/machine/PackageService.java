@@ -489,6 +489,8 @@ public final class PackageService {
                 case "iqlengine" -> mf.installIqlEngine();
                 case "automation_engine" -> mf.installAutomationEngine();
                 case "mirror" -> mf.installMirror();
+                case "messenger_service" -> mf.installMessenger();
+                case "knothub" -> mf.installKnot();
                 default -> console != null && console.install(spec.id().toString());
             };
             machine.setChanged();

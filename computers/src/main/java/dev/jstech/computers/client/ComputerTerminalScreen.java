@@ -159,12 +159,12 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     private String modFilter = "";
 
     /* The two buttons at the foot of the panel beside the grid, which the panel draws and the click reads. */
-    /* Far enough under the last line of the panel that the two never come within a few pixels. */
-    static final int PANE_BTN_Y = ComputerTerminalLayout.PANE_Y + 110;
-    static final int PANE_BTN_W = 60;
-    static final int PANE_BTN_H = 12;
-    static final int PANE_GET_X = ComputerTerminalLayout.PANE_X + 6;
-    static final int PANE_CRAFT_X = ComputerTerminalLayout.PANE_X + 72;
+    /* The panel's two buttons, from the layout, which is where every reader of them now looks. */
+    static final int PANE_BTN_Y = ComputerTerminalLayout.PANE_BTN_Y;
+    static final int PANE_BTN_W = ComputerTerminalLayout.PANE_BTN_W;
+    static final int PANE_BTN_H = ComputerTerminalLayout.PANE_BTN_H;
+    static final int PANE_GET_X = ComputerTerminalLayout.PANE_GET_X;
+    static final int PANE_CRAFT_X = ComputerTerminalLayout.PANE_CRAFT_X;
 
     /** The entry the panel beside the grid is describing, or null when nothing is picked out. */
     @Nullable

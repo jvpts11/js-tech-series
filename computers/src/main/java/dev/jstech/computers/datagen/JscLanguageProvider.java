@@ -236,6 +236,17 @@ public class JscLanguageProvider extends LanguageProvider {
         add("program.jsc.pattern_studio.desc",
                 "Author bench, machine and multi-stage recipes, then burn them onto media at a linked encoder.");
         add("program.jsc.minesweeper.desc", "Minesweeper.");
+        add("program.jsc.solitaire.desc", "Klondike solitaire, drawing one card at a time.");
+        add("program.jsc.snake.desc", "Snake. Eat, grow, and do not run into yourself.");
+        add("program.jsc.ark.desc", "Pack many files into one that weighs less, and take them back out.");
+        add("program.jsc.paint.desc", "Draw a picture, and hang it on the desktop.");
+        add("program.jsc.exceed.desc", "A sheet of cells that can ask the network what it is holding.");
+        add("program.jsc.messenger_service.desc",
+                "Keeps the network's conversations. It grows on the disk as it keeps them, and in memory "
+                        + "as more people have the messenger open.");
+        add("program.jsc.messenger.desc", "Talk to whoever else is on this network.");
+        add("program.jsc.knothub.desc", "Keeps the source this network is still working on, revision by revision.");
+        add("program.jsc.knot.desc", "Push a file to the network's repository, and see who changed what.");
         add("program.jsc.storage_insights.desc",
                 "Where the network's storage went: biggest types, what is running low, how full each server is.");
         add("program.jsc.craft_planner.desc",
