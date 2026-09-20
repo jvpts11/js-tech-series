@@ -651,6 +651,12 @@ public final class ServerCliComputer implements ICliComputer {
         return files().mounts();
     }
 
+    @Override
+    public List<String> fileNames() {
+        // Named the way a listing names the folder the prompt stands in: with nothing, which is "here".
+        return files().list("");
+    }
+
     /** The terminal window's shell session this prompt speaks for, or 0 for the machine's own prompt. */
     private int session;
 

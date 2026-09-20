@@ -210,18 +210,18 @@ public final class OperationCancelGameTests {
                     helper.assertTrue(live.get(0).status() != OperationRecord.STATUS_FAILED,
                             "the pull is live, not failed; got " + live.get(0).status());
                     shortId[0] = ShortId.of(live.get(0).id().toString());
-                    helper.assertTrue(cliContains(shell.run("ops", cli), shortId[0]),
+                    helper.assertTrue(cliContains(shell.run("interac ops", cli), shortId[0]),
                             "ops lists the operation by its short id " + shortId[0]);
-                    helper.assertTrue(cliContains(shell.run("cancel nope", cli), "no operation"),
+                    helper.assertTrue(cliContains(shell.run("interac cancel nope", cli), "no operation"),
                             "an unknown id is reported");
-                    helper.assertTrue(cliContains(shell.run("cancel " + shortId[0], cli), "cancelled SELECT"),
+                    helper.assertTrue(cliContains(shell.run("interac cancel " + shortId[0], cli), "cancelled SELECT"),
                             "cancel by short id stops the pull");
                     // Settled but not yet logged: it leaves the in-flight list on the Mainframe's next tick.
-                    helper.assertTrue(cliContains(shell.run("cancel " + shortId[0], cli), "already settled"),
+                    helper.assertTrue(cliContains(shell.run("interac cancel " + shortId[0], cli), "already settled"),
                             "a second cancel in the same tick finds it settled");
                 })
                 .thenExecuteAfter(2, () -> {
-                    helper.assertTrue(cliContains(shell.run("cancel " + shortId[0], cli), "no operation"),
+                    helper.assertTrue(cliContains(shell.run("interac cancel " + shortId[0], cli), "no operation"),
                             "the settled operation is no longer in flight");
                     final List<OperationRecord> log = mainframe.recentOperations();
                     helper.assertTrue(!log.isEmpty() && log.get(0).status() == OperationRecord.STATUS_DISCARDED,

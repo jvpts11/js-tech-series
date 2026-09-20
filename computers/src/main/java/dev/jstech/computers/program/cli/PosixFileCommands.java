@@ -118,20 +118,26 @@ final class PosixFileCommands {
 
         @Override public String summary() { return "print the content of a file"; }
 
-        @Override public String usage() { return "<file>"; }
+        @Override public String usage() { return "<file> [file...]"; }
 
+        /**
+         * Every file it was given, one after another, which is what the name is short for and what a word with
+         * a star in it turns into by the time it gets here.
+         */
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
                 ctx.out().error("usage: cat <file>");
                 return;
             }
-            final ICliComputer.FsResult result = ctx.computer().readFile(dos(ctx, ctx.arg(0)));
-            if (!result.ok()) {
-                ctx.out().error("cat: " + result.message());
-                return;
-            }
-            for (final String line : result.message().split("\n", -1)) {
-                ctx.out().line(line);
+            for (final String named : ctx.args()) {
+                final ICliComputer.FsResult result = ctx.computer().readFile(dos(ctx, named));
+                if (!result.ok()) {
+                    ctx.out().error("cat: " + result.message());
+                    continue;
+                }
+                for (final String line : result.message().split("\n", -1)) {
+                    ctx.out().line(line);
+                }
             }
         }
     }

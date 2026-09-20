@@ -34,7 +34,7 @@ public final class CliText {
         if (width <= 0) {
             return "";
         }
-        if (text.length() >= width) {
+        if (text.length() > width) {
             return width == 1 ? "~" : text.substring(0, width - 2) + "~ ";
         }
         return text + " ".repeat(width - text.length());
@@ -45,7 +45,7 @@ public final class CliText {
         if (width <= 0) {
             return "";
         }
-        if (text.length() >= width) {
+        if (text.length() > width) {
             return width == 1 ? "~" : "~" + text.substring(text.length() - width + 1);
         }
         return " ".repeat(width - text.length()) + text;

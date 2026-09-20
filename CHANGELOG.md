@@ -356,6 +356,16 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   system it runs on: a Linux says `Linux` and `x86_64` or `i686`, FreeBSD says `FreeBSD` and `vel64` or `IA-32`.
 
 ### Added
+- A prompt now reads a whole line the way a shell does. Commands can be joined with `|`, each handed what the
+  one before it printed; `>` puts what came out into a file and `>>` adds to it; `<` feeds the first command a
+  file. A name stands for something before the command sees it (`$HOME` and `$HOSTNAME` on the Unix systems,
+  `%CD%` and `%COMPUTERNAME%` on the DOS ones), and on the Unix systems a word with a star in it is opened out
+  into the names it matches, as that family's shell has always done, while the DOS family still hands the star
+  to the command, as that one always did. A live medium's installer is left alone: there the arrow is part of
+  the step being taught.
+- The tools a pipe is for: `grep`, `wc`, `head`, `tail` and `sort` on the Unix systems, and `FIND`, `SORT` and
+  `MORE` on the DOS ones, all of them reading what a pipe hands them or the file they are named. `cat` now
+  reads every file it is given rather than the first.
 - `interac` works the data network from any prompt, without writing a line of IQL. `interac` on its own says
   whose network it is, whether a Mainframe is orchestrating it and what it holds; `list` shows what is in
   there and narrows to a word; `where` names the servers holding a thing; `info` says what it is, how much
@@ -382,6 +392,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   listing. At the prompt, Shift with the arrows picks out what is being typed.
 
 ### Changed
+- The network's loose verbs are words of `interac` now. `find`, `lock`, `unlock`, `locks`, `ops`, `cancel` and
+  `stats` are gone as commands of their own and are `interac where`, `interac lock` and the rest, so there is
+  one program for the network at a prompt just as there is one on a desktop. The name `find` goes back to
+  meaning what it means everywhere else, text in files. IQL is `iql` now, and still answers to `operation`,
+  `op` and `sql`.
 - A computer's memory now says what is really in it. A running program was listed by the room it had been
   promised, a number that never moved however much the program went on to hold, so nothing a program did
   showed anywhere. Each thing now carries both sizes: the room it was given, which is what says whether one

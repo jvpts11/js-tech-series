@@ -304,19 +304,21 @@ public final class InteracCommand implements ICliCommand {
 
     private static void stats(final CliContext ctx) {
         final List<ICliComputer.OperationStat> stats = ctx.computer().operationStats();
+        ctx.out().dim("peak " + ctx.computer().peakOperationsToday() + " in flight today");
         if (stats.isEmpty()) {
-            ctx.out().dim("the network has settled nothing yet");
+            ctx.out().dim("no operations settled in the last hour");
             return;
         }
-        ctx.out().header(CliText.pad("WHAT", 10) + CliText.padLeft("COUNT", 7)
-                + CliText.padLeft("WAIT", 7) + CliText.padLeft("RUN", 7) + CliText.padLeft("MOVED", 10));
         for (final ICliComputer.OperationStat stat : stats) {
-            ctx.out().line(CliText.pad(stat.type().toLowerCase(Locale.ROOT), 10)
-                    + CliText.padLeft(String.valueOf(stat.count()), 7)
-                    + CliText.padLeft(stat.averageWait() + "t", 7)
-                    + CliText.padLeft(stat.averageRun() + "t", 7)
-                    + CliText.padLeft(CliText.group(stat.moved()), 10));
+            ctx.out().row(stat.type(), stat.count() + " ops  wait " + ticks(stat.averageWait())
+                    + "  run " + ticks(stat.averageRun()) + "  fail " + stat.shortfallPercent()
+                    + "%  moved " + CliText.group(stat.moved()));
         }
+    }
+
+    /** Ticks while they are few, and seconds once there are enough of them to be worth reading as seconds. */
+    private static String ticks(final int ticks) {
+        return ticks >= 1200 ? ticks / 20 + "s" : ticks + "t";
     }
 
     /**

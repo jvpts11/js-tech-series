@@ -12,7 +12,25 @@ import java.util.List;
 /**
  * Everything a command receives when it runs: the arguments after the command word, the computer to act on, the output buffer to write into, and the shell itself (so {@code help} can list its peers). Pure data (no Minecraft types) so a command is exercised in a unit test with a fake computer.
  */
-public record CliContext(List<String> args, ICliComputer computer, CliOutput out, CliShell shell) {
+public record CliContext(List<String> args, ICliComputer computer, CliOutput out, CliShell shell,
+                         List<String> input) {
+
+    /** A command run on its own, with nothing feeding it, which is most of them. */
+    public CliContext(final List<String> args, final ICliComputer computer, final CliOutput out,
+                      final CliShell shell) {
+        this(args, computer, out, shell, List.of());
+    }
+
+    /**
+     * What is feeding this command: the lines the command before it in the pipeline printed, or a file's
+     * lines when one was named, and nothing at all for a command run on its own.
+     *
+     * <p>A command that has no use for it ignores it, exactly as at a real shell, where most commands are
+     * handed a keyboard they never read.
+     */
+    public boolean hasInput() {
+        return !this.input.isEmpty();
+    }
 
     /** The argument at {@code index}, or {@code ""} when there are fewer arguments than that. */
     public String arg(final int index) {

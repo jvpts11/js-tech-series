@@ -202,6 +202,14 @@ public interface ICliFiles {
     }
 
     /** Every drive the shell can see (the system disk first), for {@code df}; empty when there is no OS. */
+    /**
+     * The names of what is in the folder the prompt stands in, for a word with a star in it to be opened out
+     * against. A folder ends with a slash, as a listing shows it.
+     */
+    default List<String> fileNames() {
+        return List.of();
+    }
+
     default List<ICliComputer.MountInfo> mounts() {
         return List.of();
     }

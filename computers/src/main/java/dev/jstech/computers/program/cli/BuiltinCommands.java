@@ -51,6 +51,8 @@ public final class BuiltinCommands {
          * always the one a player types into.
          */
         out.addAll(SigmaCommands.all());
+        // The DOS family's own tools for working on lines, which its pipes feed the same way.
+        out.addAll(PipeCommands.dos());
         return List.copyOf(out);
     }
 
@@ -63,13 +65,11 @@ public final class BuiltinCommands {
                 new ShellCommands.Whoami(),
                 new MachineCommands.Status(),
                 new NetworkCommands.Net(),
-                new NetworkCommands.Find(),
-                new NetworkCommands.Lock(),
-                new NetworkCommands.Unlock(),
-                new NetworkCommands.Locks(),
-                new NetworkCommands.Ops(),
-                new NetworkCommands.Cancel(),
-                new NetworkCommands.Stats(),
+                /*
+                 * What the network holds and what it is doing are words of interac now, not seven loose verbs
+                 * of their own: one program for the network, the way one program is what a player opens for it
+                 * on a desktop. IQL stays beside it for whoever wants to write a statement out.
+                 */
                 new NetworkCommands.Operation(),
                 new InteracCommand(),
                 new MachineCommands.Devices(),

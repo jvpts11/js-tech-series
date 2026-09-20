@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.program.cli.sh.ShLine;
+import dev.jstech.computers.program.cli.sh.ShRunner;
 import dev.jstech.computers.program.tty.ITtyProcess;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -58,9 +60,24 @@ public final class CliShell {
         for (final String notice : computer.drainNotices()) {
             out.ok(notice);
         }
-        final List<String> tokens = CliTokenizer.tokenize(line);
+        /*
+         * What the shell does to a line before anything else sees it: puts in what a name stands for, and,
+         * on the family whose shell does that, opens out a word with a star in it into the names it matches.
+         */
+        final boolean live = computer.liveInstall() != null;
+        final List<String> tokens = live
+                ? CliTokenizer.tokenize(line) : ShRunner.expand(computer, CliTokenizer.tokenize(line));
         if (tokens.isEmpty()) {
             return new Response(out.lines(), false);
+        }
+        /*
+         * A live medium's installer is a shell of its own, swapped in whole: its verbs take the line as it was
+         * typed, arrows and all, because on a real one the arrow is part of the step being taught. So the line
+         * is only taken apart when an installed system is the one reading it.
+         */
+        final ShLine whole = live ? ShLine.NOTHING : ShLine.of(tokens);
+        if (!whole.isEmpty() && !whole.isSimple()) {
+            return ShRunner.run(this, whole, computer, out);
         }
         final String word = tokens.get(0);
         // A bare drive qualifier like "D:" switches the current drive (DOS-style), not a command.

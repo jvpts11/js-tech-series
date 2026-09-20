@@ -57,9 +57,9 @@ class CliShellTest {
     @Test
     void run_helpListsEveryRegisteredCommand() {
         final String out = joined("help");
-        assertTrue(out.contains("operation"));
-        assertTrue(out.contains("find"));
-        assertTrue(out.contains("lock"));
+        assertTrue(out.contains("iql"));
+        assertTrue(out.contains("interac"));
+        assertTrue(out.contains("net"));
     }
 
     @Test

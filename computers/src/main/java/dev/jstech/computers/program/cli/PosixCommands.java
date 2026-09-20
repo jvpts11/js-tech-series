@@ -8,6 +8,7 @@
 package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.os.PackageManagerKind;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -23,6 +24,13 @@ public final class PosixCommands {
 
     /** The POSIX-only commands (the shared verbs are added by {@link CliCommands}). */
     public static List<ICliCommand> all() {
+        final List<ICliCommand> out = new ArrayList<>(files());
+        // The tools that work on lines, which are what a pipe is for.
+        out.addAll(PipeCommands.posix());
+        return List.copyOf(out);
+    }
+
+    private static List<ICliCommand> files() {
         return List.of(
                 new PosixFileCommands.Ls(),
                 new PosixFileCommands.Pwd(),

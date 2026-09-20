@@ -61,245 +61,6 @@ final class NetworkCommands {
         }
     }
 
-    static final class Find implements ICliCommand {
-        @Override public CommandScope scope() {
-            return ON_THE_NETWORK;
-        }
-
-        @Override public String name() {
-            return "find";
-        }
-
-        @Override public String summary() {
-            return "show which servers hold an item";
-        }
-
-        @Override public String usage() {
-            return "<item>";
-        }
-
-        @Override public void run(final CliContext ctx) {
-            if (!ctx.hasArgs()) {
-                ctx.out().error("usage: find <item>");
-                return;
-            }
-            final List<ICliComputer.Holding> holdings = ctx.computer().find(ctx.rest(0));
-            if (holdings.isEmpty()) {
-                ctx.out().dim("no server holds '" + ctx.rest(0) + "'");
-                return;
-            }
-            for (final ICliComputer.Holding holding : holdings) {
-                ctx.out().row(holding.server(), CliText.group(holding.quantity()));
-            }
-        }
-    }
-
-    static final class Lock implements ICliCommand {
-        @Override public CommandScope scope() {
-            return ON_THE_NETWORK;
-        }
-
-        @Override public String name() {
-            return "lock";
-        }
-
-        @Override public List<String> aliases() {
-            return List.of("hold");
-        }
-
-        @Override public String summary() {
-            return "hold an item so concurrent operations wait";
-        }
-
-        @Override public String usage() {
-            return "<item> | <quantity> <item>";
-        }
-
-        @Override public void run(final CliContext ctx) {
-            if (!ctx.hasArgs()) {
-                ctx.out().error("usage: lock " + usage());
-                return;
-            }
-            if (!ctx.computer().onNetwork()) {
-                ctx.out().error("not on a network");
-                return;
-            }
-            // "lock <quantity> <item>" reserves an amount; "lock <item>" holds everything available.
-            final long qty = ctx.longArg(0);
-            final String item = qty > 0L && ctx.argCount() >= 2 ? ctx.rest(1) : ctx.rest(0);
-            final ICliComputer.OpResult result = ctx.computer().lock(item, qty > 0L ? qty : 0L);
-            ctx.out().styled(result.message(), result.ok() ? CliStyle.OK : CliStyle.ERROR);
-        }
-    }
-
-    static final class Unlock implements ICliCommand {
-        @Override public CommandScope scope() {
-            return ON_THE_NETWORK;
-        }
-
-        @Override public String name() {
-            return "unlock";
-        }
-
-        @Override public List<String> aliases() {
-            return List.of("release");
-        }
-
-        @Override public String summary() {
-            return "release a held item";
-        }
-
-        @Override public String usage() {
-            return "<item>";
-        }
-
-        @Override public void run(final CliContext ctx) {
-            if (!ctx.hasArgs()) {
-                ctx.out().error("usage: unlock <item>");
-                return;
-            }
-            final ICliComputer.OpResult result = ctx.computer().unlock(ctx.rest(0));
-            ctx.out().styled(result.message(), result.ok() ? CliStyle.OK : CliStyle.ERROR);
-        }
-    }
-
-    static final class Locks implements ICliCommand {
-        @Override public CommandScope scope() {
-            return ON_THE_NETWORK;
-        }
-
-        @Override public String name() {
-            return "locks";
-        }
-
-        @Override public List<String> aliases() {
-            return List.of("holds");
-        }
-
-        @Override public String summary() {
-            return "list held item types";
-        }
-
-        @Override public void run(final CliContext ctx) {
-            final List<ICliComputer.StoredItem> held = ctx.computer().locks();
-            if (held.isEmpty()) {
-                ctx.out().dim("no items are locked");
-                return;
-            }
-            for (final ICliComputer.StoredItem row : held) {
-                ctx.out().row(row.name(), CliText.group(row.quantity()));
-            }
-        }
-    }
-
-    static final class Ops implements ICliCommand {
-        @Override public CommandScope scope() {
-            return ON_THE_NETWORK;
-        }
-
-        @Override public String name() {
-            return "ops";
-        }
-
-        @Override public List<String> aliases() {
-            return List.of("jobs");
-        }
-
-        @Override public String summary() {
-            return "list operations in flight";
-        }
-
-        @Override public void run(final CliContext ctx) {
-            final List<ICliComputer.ActiveOp> ops = ctx.computer().activeOps();
-            if (ops.isEmpty()) {
-                ctx.out().dim("no operations running");
-                return;
-            }
-            for (final ICliComputer.ActiveOp op : ops) {
-                final String head = op.id() + "  " + op.type() + " " + op.item();
-                final String tail = op.priority() + " " + op.status() + " " + CliText.group(op.progress()) + "/"
-                        + CliText.group(op.total());
-                ctx.out().row(head, tail);
-            }
-        }
-    }
-
-    static final class Stats implements ICliCommand {
-        @Override public CommandScope scope() {
-            return ON_THE_NETWORK;
-        }
-
-        @Override public String name() {
-            return "stats";
-        }
-
-        @Override public List<String> aliases() {
-            return List.of("statistics");
-        }
-
-        @Override public String summary() {
-            return "the network's operations over the last hour";
-        }
-
-        @Override public void run(final CliContext ctx) {
-            if (!ctx.computer().onNetwork()) {
-                ctx.out().error("not on a network");
-                return;
-            }
-            final List<ICliComputer.OperationStat> stats = ctx.computer().operationStats();
-            ctx.out().dim("peak " + ctx.computer().peakOperationsToday() + " in flight today");
-            if (stats.isEmpty()) {
-                ctx.out().dim("no operations settled in the last hour");
-                return;
-            }
-            for (final ICliComputer.OperationStat stat : stats) {
-                final String tail = stat.count() + " ops  wait " + ticks(stat.averageWait()) + "  run "
-                        + ticks(stat.averageRun()) + "  fail " + stat.shortfallPercent() + "%  moved "
-                        + CliText.group(stat.moved());
-                ctx.out().row(stat.type(), tail);
-            }
-        }
-
-        private static String ticks(final int ticks) {
-            return ticks >= 1200 ? (ticks / 20) + "s" : ticks + "t";
-        }
-    }
-
-    static final class Cancel implements ICliCommand {
-        @Override public CommandScope scope() {
-            return ON_THE_NETWORK;
-        }
-
-        @Override public String name() {
-            return "cancel";
-        }
-
-        @Override public List<String> aliases() {
-            return List.of("kill");
-        }
-
-        @Override public String summary() {
-            return "stop an operation in flight";
-        }
-
-        @Override public String usage() {
-            return "<id>";
-        }
-
-        @Override public void run(final CliContext ctx) {
-            if (!ctx.hasArgs()) {
-                ctx.out().error("usage: cancel <id>   (the id column of 'ops')");
-                return;
-            }
-            if (!ctx.computer().onNetwork()) {
-                ctx.out().error("not on a network");
-                return;
-            }
-            final ICliComputer.OpResult result = ctx.computer().cancelOperation(ctx.arg(0));
-            ctx.out().styled(result.message(), result.ok() ? CliStyle.OK : CliStyle.ERROR);
-        }
-    }
-
     static final class Operation implements ICliCommand {
 
         private static final int QUERY_LIMIT = 64;
@@ -308,12 +69,13 @@ final class NetworkCommands {
             return ON_THE_NETWORK;
         }
 
+        /** The language's own name. The words it was typed as before still reach it, as a shell's old names do. */
         @Override public String name() {
-            return "operation";
+            return "iql";
         }
 
         @Override public List<String> aliases() {
-            return List.of("op", "sql");
+            return List.of("operation", "op", "sql");
         }
 
         @Override public String summary() {
@@ -326,7 +88,7 @@ final class NetworkCommands {
 
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
-                ctx.out().error("usage: operation <statement>   e.g. operation SELECT 64 Cobblestone");
+                ctx.out().error("usage: iql <statement>   e.g. iql SELECT 64 Cobblestone");
                 return;
             }
             final IqlParseResult parsed = IqlParser.tryParse(ctx.rest(0));

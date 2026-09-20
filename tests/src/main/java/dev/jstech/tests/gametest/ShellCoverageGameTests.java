@@ -97,18 +97,18 @@ public final class ShellCoverageGameTests {
         final Fleet fleet = wire(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    final List<String> found = shell(helper, fleet.lab(), "find minecraft:oak_log");
-                    helper.assertTrue(says(found, "640"), "find names where the 640 logs are; got " + found);
+                    final List<String> found = shell(helper, fleet.lab(), "interac where minecraft:oak_log");
+                    helper.assertTrue(says(found, "640"), "it names where the 640 logs are; got " + found);
 
-                    final List<String> locked = shell(helper, fleet.lab(), "lock minecraft:oak_log");
+                    final List<String> locked = shell(helper, fleet.lab(), "interac lock minecraft:oak_log");
                     helper.assertTrue(says(locked, "LOCK held") && says(locked, "Oak Log"),
                             "lock holds the logs; got " + locked);
-                    final List<String> held = shell(helper, fleet.lab(), "locks");
+                    final List<String> held = shell(helper, fleet.lab(), "interac locks");
                     helper.assertTrue(says(held, "Oak Log"), "locks lists them; got " + held);
 
-                    final List<String> released = shell(helper, fleet.lab(), "unlock minecraft:oak_log");
+                    final List<String> released = shell(helper, fleet.lab(), "interac unlock minecraft:oak_log");
                     helper.assertTrue(says(released, "UNLOCK released"), "unlock lets them go; got " + released);
-                    final List<String> none = shell(helper, fleet.lab(), "locks");
+                    final List<String> none = shell(helper, fleet.lab(), "interac locks");
                     helper.assertTrue(says(none, "no items are locked"), "and nothing is held after; got " + none);
                 })
                 .thenSucceed();
