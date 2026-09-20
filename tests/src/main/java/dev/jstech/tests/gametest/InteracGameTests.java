@@ -224,7 +224,7 @@ public final class InteracGameTests {
                             "the glance says whose network it is and what it holds; got " + glance);
 
                     final List<String> dos = shell(helper, fleet.lab(), "INTERAC /?");
-                    helper.assertTrue(says(dos, "Works the data network"),
+                    helper.assertTrue(says(dos, "work the data network"),
                             "and the DOS switch asks what it does, in any case; got " + dos);
 
                     final List<String> sorted = shell(helper, fleet.lab(), "INTERAC LIST LOG /S:COUNT");

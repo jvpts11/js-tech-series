@@ -8,6 +8,7 @@
 package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.program.cli.interac.InteracCommand;
+import dev.jstech.computers.program.cli.man.ManCommands;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -53,6 +54,11 @@ public final class BuiltinCommands {
         out.addAll(SigmaCommands.all());
         // The DOS family's own tools for working on lines, which its pipes feed the same way.
         out.addAll(PipeCommands.dos());
+        /*
+         * listcmd, which is every family's and nobody's: one word that lists all a computer can run, off
+         * unless a server turns it on. The DOS family's own way of teaching is HELP and /?, which it keeps.
+         */
+        out.addAll(ManCommands.dos());
         return List.copyOf(out);
     }
 

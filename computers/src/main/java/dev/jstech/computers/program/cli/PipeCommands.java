@@ -123,6 +123,26 @@ final class PipeCommands {
             return "[-i] [-v] <text> [file]";
         }
 
+        @Override public List<String> description() {
+            return List.of("Prints the lines that hold some text: the lines of the file it is given, or the",
+                    "lines a pipe hands it. It is what makes a listing worth asking for, since the answer",
+                    "can then be narrowed to the one line that matters.");
+        }
+
+        @Override public List<Option> options() {
+            return List.of(new Option("-i", "without regard to case"),
+                    new Option("-v", "the lines that do NOT hold it"));
+        }
+
+        @Override public List<Example> examples() {
+            return List.of(new Example("interac list | grep oak", "only the rows about oak"),
+                    new Example("grep -i error /var/log/cron", "and in a file, whatever case it was written in"));
+        }
+
+        @Override public List<String> seeAlso() {
+            return List.of("sort", "wc", "head", "tail");
+        }
+
         @Override public void run(final CliContext ctx) {
             final List<String> words = plainWords(ctx);
             if (words.isEmpty()) {

@@ -8,6 +8,7 @@
 package dev.jstech.computers.program.cli;
 
 
+import dev.jstech.computers.program.cli.man.ManPage;
 import java.util.List;
 import java.util.Locale;
 
@@ -373,19 +374,17 @@ final class PosixFileCommands {
         @Override public void run(final CliContext ctx) {
             if (!ctx.hasArgs()) {
                 ctx.out().error("What manual page do you want?");
+                ctx.out().dim("For example, try 'man intro'.");
                 return;
             }
             final ICliCommand command = ctx.shell().find(ctx.arg(0));
-            if (command == null) {
+            if (command == null || !command.available(ctx.computer())) {
                 ctx.out().error("No manual entry for " + ctx.arg(0));
                 return;
             }
             ctx.out().accent(command.name().toUpperCase(Locale.ROOT) + "(1)");
-            ctx.out().line("NAME");
-            ctx.out().line("    " + command.name() + " - " + command.summary());
-            if (!command.usage().isEmpty()) {
-                ctx.out().line("SYNOPSIS");
-                ctx.out().line("    " + command.name() + " " + command.usage());
+            for (final String line : ManPage.lines(command, true)) {
+                ctx.out().line(line);
             }
         }
     }

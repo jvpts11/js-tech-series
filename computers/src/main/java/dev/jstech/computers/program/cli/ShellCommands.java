@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.program.cli.man.ManPage;
 import java.util.List;
 
 /**
@@ -43,14 +44,20 @@ final class ShellCommands {
         @Override public void run(final CliContext ctx) {
             if (ctx.hasArgs()) {
                 final ICliCommand command = ctx.shell().find(ctx.arg(0));
-                if (command == null) {
+                if (command == null || !command.available(ctx.computer())) {
                     ctx.out().error("no such command: " + ctx.arg(0));
                     return;
                 }
+                /*
+                 * The command's own page, in this family's voice: the same words the manual has on a Unix
+                 * system, which is the whole point of there being one body of text about a command.
+                 */
                 ctx.out().accent(command.name() + (command.usage().isEmpty() ? "" : " " + command.usage()));
-                ctx.out().dim("  " + command.summary());
+                for (final String line : ManPage.lines(command, false)) {
+                    ctx.out().line(line);
+                }
                 if (!command.aliases().isEmpty()) {
-                    ctx.out().dim("  aliases: " + String.join(", ", command.aliases()));
+                    ctx.out().dim("  also: " + String.join(", ", command.aliases()));
                 }
                 return;
             }

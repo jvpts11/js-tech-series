@@ -8,6 +8,7 @@
 package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.os.PackageManagerKind;
+import dev.jstech.computers.program.cli.man.ManCommands;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,6 +28,8 @@ public final class PosixCommands {
         final List<ICliCommand> out = new ArrayList<>(files());
         // The tools that work on lines, which are what a pipe is for.
         out.addAll(PipeCommands.posix());
+        // And the ways of finding out what a machine can do at all.
+        out.addAll(ManCommands.posix());
         return List.copyOf(out);
     }
 

@@ -32,11 +32,13 @@ public final class ComputersServerConfig {
     private static final ModConfigSpec.BooleanValue SHOW_BOOT_MENU_VALUE;
     private static final ModConfigSpec.BooleanValue GENTOO_EVERY_STEP_VALUE;
     private static final ModConfigSpec.BooleanValue ARCH_EVERY_STEP_VALUE;
+    private static final ModConfigSpec.BooleanValue LIST_COMMANDS_VALUE;
 
     /** Held apart from the file so a machine can ask while the world is still coming up. */
     private static boolean showBootMenu = true;
     private static boolean gentooEveryStep;
     private static boolean archEveryStep;
+    private static boolean listCommands;
 
     static {
         final ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -66,6 +68,18 @@ public final class ComputersServerConfig {
                                 + "and a name for the machine are asked for as well.")
                 .define("arch_every_step", false);
         builder.pop();
+        builder.push("prompt");
+        LIST_COMMANDS_VALUE = builder
+                .comment("Whether every computer has the 'listcmd' command, which lists absolutely everything that "
+                                + "computer can run right now: its commands, whatever family they belong to, and "
+                                + "the programs installed on it.",
+                        "Off, it is nowhere at all: not in help, not in a manual, not in what a half-typed name "
+                                + "completes to, and typing it is an unknown command. Each system then teaches what "
+                                + "it has in its own way, which is the experience those systems really gave.",
+                        "On, it is on every computer and shows up everywhere like any other command, for whoever "
+                                + "would rather read one list than learn each system's own habits.")
+                .define("list_commands", false);
+        builder.pop();
         SPEC = builder.build();
     }
 
@@ -94,6 +108,11 @@ public final class ComputersServerConfig {
         return archEveryStep;
     }
 
+    /** Whether every computer has {@code listcmd}, the one word that lists all it can run. */
+    public static boolean listCommands() {
+        return listCommands;
+    }
+
     private static void onLoad(final ModConfigEvent.Loading event) {
         apply(event.getConfig());
     }
@@ -110,6 +129,7 @@ public final class ComputersServerConfig {
         showBootMenu = SHOW_BOOT_MENU_VALUE.get();
         gentooEveryStep = GENTOO_EVERY_STEP_VALUE.get();
         archEveryStep = ARCH_EVERY_STEP_VALUE.get();
+        listCommands = LIST_COMMANDS_VALUE.get();
         JsComputers.LOGGER.debug("Boot menu is {}", showBootMenu ? "shown" : "hidden");
     }
 }

@@ -54,6 +54,17 @@ public interface ICliConfig {
         return List.of();
     }
 
+    /**
+     * Whether this world lets a computer list everything it can run in one word.
+     *
+     * <p>A server's choice, not a machine's, but it is asked of the machine like everything else: what a
+     * command may do is decided by the computer in front of the player and by nothing the command reaches
+     * round it.
+     */
+    default boolean listsEverything() {
+        return false;
+    }
+
     /** Every folder the other running machines on this network share. */
     default List<ICliComputer.NetworkShare> networkShares() {
         return List.of();

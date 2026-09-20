@@ -57,6 +57,7 @@ import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.peripheral.IPeripheralOwnerSupport;
+import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -793,6 +794,11 @@ public final class ServerCliComputer implements ICliComputer {
     @Override
     public List<ShareInfo> shares() {
         return config().shares();
+    }
+
+    @Override
+    public boolean listsEverything() {
+        return ComputersServerConfig.listCommands();
     }
 
     @Override

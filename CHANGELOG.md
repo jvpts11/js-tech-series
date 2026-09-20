@@ -356,6 +356,16 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   system it runs on: a Linux says `Linux` and `x86_64` or `i686`, FreeBSD says `FreeBSD` and `vel64` or `IA-32`.
 
 ### Added
+- Commands have real manual pages now, and there is one body of text about each of them. A page has NAME,
+  SYNOPSIS, DESCRIPTION, OPTIONS, EXAMPLES and SEE ALSO, written by the command itself, and every way of
+  asking reads that same page: `man` at a Unix prompt, `help <command>` anywhere, `<command> --help`, and
+  `<command> /?` on the DOS family, which answers it in its own voice. `whatis` says a command in one line and
+  `apropos` searches what every command on this machine is for, which is how to find one whose name you do not
+  know. None of them will teach a command the computer in front of you cannot run.
+- `listcmd` lists absolutely everything a computer can run right now, commands and installed programs
+  together, whichever system it runs. It is off until a server turns it on (`list_commands` in the server
+  config): off it is nowhere at all, not in help, not in a manual, and typing it is an unknown command, so a
+  world that wants each system's own way of teaching keeps it.
 - A prompt now reads a whole line the way a shell does. Commands can be joined with `|`, each handed what the
   one before it printed; `>` puts what came out into a file and `>>` adds to it; `<` feeds the first command a
   file. A name stands for something before the command sees it (`$HOME` and `$HOSTNAME` on the Unix systems,

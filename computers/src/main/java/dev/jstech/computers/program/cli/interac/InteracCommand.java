@@ -61,12 +61,43 @@ public final class InteracCommand implements ICliCommand {
     }
 
     @Override
+    public List<String> description() {
+        return List.of(
+                "Shows what the data network is holding and moves it about, without writing a line of IQL.",
+                "With words it does the one thing asked and gives the prompt back; an operation that takes",
+                "time prints its number and its result appears before the next prompt.",
+                "",
+                "An item is named the way you would say it: cobblestone, minecraft:cobblestone or \"oak log\".",
+                "A name that fits more than one thing is answered with the things it fits, so that the next",
+                "line you type names the one you meant.");
+    }
+
+    @Override
+    public List<Option> options() {
+        return List.of(
+                new Option("--to local   (/LOCAL)", "leave what is taken in this computer, not your hands"),
+                new Option("--sort count (/S:COUNT)", "order a listing by how much there is; --sort name by name"));
+    }
+
+    @Override
+    public List<Example> examples() {
+        return List.of(
+                new Example("interac", "the network at a glance: whose it is and what it holds"),
+                new Example("interac list stone --sort count", "what it holds whose name has stone in it"),
+                new Example("interac get 42 cobblestone", "42 into your own hands, through this computer"),
+                new Example("interac put hand", "what you are holding goes into the network"),
+                new Example("interac where diamond", "which servers hold it, and how much each has"));
+    }
+
+    @Override
+    public List<String> seeAlso() {
+        return List.of("iql", "net", "ssh");
+    }
+
+    @Override
     public void run(final CliContext ctx) {
+        // What it does is its manual page, which the shell itself answers for; there is no second copy here.
         final InteracWords words = InteracWords.of(ctx.args()).withVerbFrom(VERBS);
-        if (words.has("help")) {
-            help(ctx);
-            return;
-        }
         switch (words.verb()) {
             case "", "status" -> status(ctx);
             case "list", "ls" -> list(ctx, words);
@@ -360,16 +391,4 @@ public final class InteracCommand implements ICliCommand {
         ctx.out().styled(result.message(), result.ok() ? CliStyle.OK : CliStyle.ERROR);
     }
 
-    /** What the program does, in the words of the family the machine belongs to. */
-    private static void help(final CliContext ctx) {
-        ctx.out().line("Works the data network: shows what it holds, where it is, and what it is doing.");
-        ctx.out().blank();
-        ctx.out().line("interac [status] [list [text]] [get n item] [put n item|hand] [fill fluid]");
-        ctx.out().line("        [craft n item] [where item] [info item] [fav [item]]");
-        ctx.out().line("        [ops] [cancel id] [lock n item] [unlock item] [locks] [stats]");
-        ctx.out().blank();
-        ctx.out().row("  --to local", "leave what is taken in this computer (/LOCAL on DOS)");
-        ctx.out().row("  --sort count", "sort a listing by count (--sort name by name; /S:COUNT on DOS)");
-        ctx.out().row("  /?", "this, on the DOS family");
-    }
 }

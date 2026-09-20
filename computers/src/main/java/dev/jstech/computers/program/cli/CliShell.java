@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.ShellFamily;
+import dev.jstech.computers.program.cli.man.ManPage;
 import dev.jstech.computers.program.cli.sh.ShLine;
 import dev.jstech.computers.program.cli.sh.ShRunner;
 import dev.jstech.computers.program.tty.ITtyProcess;
@@ -100,6 +102,19 @@ public final class CliShell {
             return new Response(out.lines(), false);
         }
         final List<String> args = new ArrayList<>(tokens.subList(1, tokens.size()));
+        /*
+         * Asking a command what it does: --help anywhere, and /? on the family that has written it that way
+         * since there was a DOS. Answered here rather than by every command, so no command can be written
+         * that forgets to answer, and so the words are the ones in its manual page and nowhere else.
+         */
+        if (args.contains("--help")
+                || (computer.shellFamily() != ShellFamily.POSIX && args.contains("/?"))) {
+            out.accent(command.name() + (command.usage().isEmpty() ? "" : " " + command.usage()));
+            for (final String said : ManPage.lines(command, false)) {
+                out.line(said);
+            }
+            return new Response(out.lines(), false);
+        }
         final CliContext context = new CliContext(args, computer, out, this);
         try {
             command.run(context);
