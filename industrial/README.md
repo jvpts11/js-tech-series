@@ -56,5 +56,5 @@ playable (see [docs/RELEASING.md](../docs/RELEASING.md)).
 - Minecraft 1.21.1 and NeoForge 21.1.248 or newer.
 - [J's Core](../core/README.md) at the same version (required).
 
-It does not need [J's Computers](../computers/README.md), and never will: the machines work on their
+It does not need [J's Computers](../computers/README.md), the machines work on their
 own, with any FE source, and the computing mod only adds ways to drive them.

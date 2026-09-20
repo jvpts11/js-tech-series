@@ -13,8 +13,10 @@ currently is J's Computers, which has the backbone for every other mod that come
 own network and the operations system. After J's Computers reaches a good level of readiness, J's Industrial will
 be the next one in the list.
 
-The series is in alpha. See [what a version means](docs/RELEASING.md), [what changed](CHANGELOG.md) and the
-[releases page](https://github.com/jvpts11/js-tech-series/releases) for the builds.
+The series is in alpha. See [what a version means](docs/RELEASING.md), [what changed](CHANGELOG.md), you can also find
+the mod's builds and releases here: [releases page](https://github.com/jvpts11/js-tech-series/releases). Also, be warned, that
+as long as both J's Industrial and J's Computers don't get fully stable in their foundations, worlds will
+be broken while updating from older versions to focus time and effort in fixing problems and adding new features.
 
 ## The mods
 
@@ -35,15 +37,18 @@ energy capabilities, and the industrial mod's machines work with any FE generato
 
 ## Repository layout
 
-One repository, several mods, all built at the same version:
+Until the entire series hit v1.0.0r, all mods of the J's Tech Series live here in this monorepo, with the ones:
 
 - `core/`: J's Core (`jscore`), the shared library.
 - `computers/`: J's Computers (`jsc`), the computing mod.
 - `industrial/`: J's Industrial (`jsindustrial`), the industrial mod.
-- `tests/`: the development-only test mod. **It is not a mod to install.** It holds the tests of every mod
-  and hosts the development runs; it is never released and adds nothing to the game. See
+- `tests/`: a development-only test mod. **It is not a mod to install.** It holds the tests of every mod
+  and hosts the development runs; This mot is not intended to be used in-game, if you ever find this in your mods folder,
+  uninstall, since this mod does nothing than just run tests for development, it also adds nothing to the game by itself. See
   [tests/README.md](tests/README.md).
 - `docs/`: the public documentation: code style, versions and releases.
+
+In the future, each mod will get their own dedicated repository, for now, all mods will stay here to ease development.
 
 ## Building from source
 
@@ -53,7 +58,7 @@ cd js-tech-series
 ./gradlew build
 ```
 
-Java 21. Each mod's jar lands in its own `build/libs`, for example `computers/build/libs/jsc-1.21.1-<version>.jar`;
+The J's Tech series use Java 21. Each mod's jar lands in its own `build/libs`, for example `computers/build/libs/jsc-1.21.1-<version>.jar`;
 a build that is not the tagged release carries a `-SNAPSHOT.<commit>` suffix. Useful tasks: `runClient`,
 `runServer`, `test` (pure logic, JUnit), `runGameTestServer` (the mods in a headless server),
 `runClientTests0` (a real client that drives the screens and takes screenshots), and `:core:runData`,
@@ -61,7 +66,7 @@ a build that is not the tagged release carries a `-SNAPSHOT.<commit>` suffix. Us
 
 ## Contributing
 
-Read [docs/CODE_STYLE.md](docs/CODE_STYLE.md) before opening a pull request, and
+If you want to make a contribution, read [docs/CODE_STYLE.md](docs/CODE_STYLE.md) before opening a pull request, and
 [AI_POLICY.md](AI_POLICY.md) if you work with an AI assistant. Bug reports and ideas go in the issues.
 
 ## License
