@@ -12,6 +12,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   go only looked for a machine with nothing installed at all, and a wrecked machine still has a system
   installed: that is the very reason it is found and refused. It now stays where it stands until there is
   somewhere to go, which is what putting an installation medium in gives it.
+- A machine that will not start now says why. Standing at its failed self-test, it went on announcing
+  "Booting from ..." over the top of its own refusal and then sat there for ever, because the screen decided
+  what to show by asking the firmware whether it had found anything bootable, and a wrecked machine's disk
+  still declares its system. A halted machine is now booting from nothing whatever the firmware made of the
+  drives, so the failure reaches both the older screens and the modern one. A modern machine also said "No
+  bootable device", which is true of an empty computer and a lie about a wrecked one whose device is right
+  there; it now heads with what the machine actually found, in the words that family used.
 - What a machine prints now fits the window it is read in. A terminal window on a desktop is narrower than a
   monitor, and the machine was writing to a monitor's width whatever it was talking to, so every wide line
   folded in half: a directory listing came out with a row of leader dots on its own under each name. The

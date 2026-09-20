@@ -61,6 +61,9 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
     /** What the machine said was left of its self-test when this screen opened. */
     private final int postTicks;
 
+    /** Whether the machine is standing at the end of a self-test that refused to go on. */
+    private final boolean halted;
+
     private static BootSequenceScreen active;
 
     private FirmwareStatePayload state;
@@ -86,6 +89,7 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         this.kind = testing.kind();
         this.machineName = testing.machineName();
         this.complaint = testing.complaint();
+        this.halted = testing.halted();
         this.postTicks = testing.remainingTicks() > 0 ? testing.remainingTicks() : FALLBACK_TICKS;
         /*
          * A machine standing at a self-test that found nothing to boot opens at the end of that test rather
@@ -306,6 +310,16 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
      * when no disk carries a system and no medium in a drive can boot.
      */
     private String bootingFrom() {
+        /*
+         * A machine standing at a failed self-test is booting from nothing, whatever the firmware made of the
+         * drives. The disk it would reach for is the very disk it has just refused: a system whose loader is
+         * gone is still a system as far as the firmware's list is concerned, so the list says bootable and
+         * the machine says no. Saying "booting from" it here is the machine contradicting itself, and what a
+         * player saw was a self-test that announced a boot and then sat there for ever.
+         */
+        if (this.halted) {
+            return "";
+        }
         if (state == null) {
             return "";
         }
@@ -428,7 +442,13 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         g.fill(bx, by, bx + boxW, by + boxH, 0xFF2A2D3E);
         g.fill(bx, by, bx + boxW, by + 14, 0xFF3A4060);
         g.fill(bx, by, bx + 2, by + 14, 0xFFF0B23A);
-        wall(g, "No bootable device", bx + 7, by + 4, 0xFFF0B23A);
+        /*
+         * What is wrong, when the machine knows: "no bootable device" is true of an empty computer and a lie
+         * about a wrecked one, whose device is right there and whose system will not start. A player who
+         * deleted a file needs to be told which file, not that their disk has gone.
+         */
+        wall(g, this.complaint.isEmpty() ? "No bootable device" : this.complaint,
+                bx + 7, by + 4, 0xFFF0B23A);
         int ly = by + 18;
         if (entries.isEmpty()) {
             wall(g, "No disk and no drive is attached to this computer.", bx + 8, ly, dim);

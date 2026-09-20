@@ -46,6 +46,7 @@ public final class ClientTestSuite {
             TerminalWidthClientTests.class,
             TrashClientTests.class,
             UiSweepClientTests.class,
+            WreckedMachineClientTests.class,
             UnixClientTests.class);
 
     private ClientTestSuite() {
