@@ -70,8 +70,14 @@ public enum FileType {
      */
     /** A settings file the system keeps for itself. */
     INI("ini", false, true),
-    /** A piece of the system: the kernel, a driver. */
-    SYS("sys", false, true),
+    /**
+     * A piece of the system: the loader, the kernel, a driver.
+     *
+     * <p>A real file on the disk, not a projection, because the system a machine boots has to be something a
+     * player can really delete. That is what makes a machine wreckable: the file is there, it can go, and at
+     * the next start the machine says what it wanted and will not run without it.
+     */
+    SYS("sys", false, false),
     /** A font the system draws with. */
     FON("fon", false, true),
 

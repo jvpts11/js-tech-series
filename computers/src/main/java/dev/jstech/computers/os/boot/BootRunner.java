@@ -157,7 +157,19 @@ public final class BootRunner {
          * A machine with nothing to boot ends its self-test on the era's own failure and stays there, the way
          * one does: whoever is watching reads what happened instead of being dropped into the setup.
          */
-        if (!machine.hasOs() && !machine.hasBootableMedium()) {
+        /*
+         * What is on the disk is looked at before it is trusted. Nothing on these machines is protected, so a
+         * player really can delete the system, and what that costs them is decided by what is missing: the
+         * whole folder leaves nothing to find, which is the same as an empty disk; the loader alone leaves a
+         * system that is found and will not start, and the machine says which file it wanted.
+         */
+        final SystemIntegrity.Result health = SystemIntegrity.check(machine);
+        if (health.state() == SystemIntegrity.State.NO_LOADER && !machine.hasBootableMedium()) {
+            phases.halt();
+            return;
+        }
+        final boolean bootable = machine.hasOs() && health.state() != SystemIntegrity.State.NO_SYSTEM;
+        if (!bootable && !machine.hasBootableMedium()) {
             /*
              * Written down rather than simply left: the machine is standing at its own failure, and a monitor
              * opened after the fact has to find it there. It used to be a moment only the player already
@@ -181,7 +193,7 @@ public final class BootRunner {
          * A system on a disk takes time to come up, and that time is the machine's too. A machine booting a
          * medium instead has no system of its own to load, so it hands over as it always did.
          */
-        if (machine.hasOs()) {
+        if (bootable) {
             /*
              * The systems that bring a boot manager stop at it first, which is also how a player finds out that
              * the other disk has something on it.

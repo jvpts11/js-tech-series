@@ -356,6 +356,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   system it runs on: a Linux says `Linux` and `x86_64` or `i686`, FreeBSD says `FreeBSD` and `vel64` or `IA-32`.
 
 ### Added
+- A system is a real thing on a real disk, and a machine can be wrecked. Installing writes the file that
+  starts the system, and nothing protects it: delete it and the machine carries on, because the system is
+  already in memory, exactly as a real one would. The reckoning comes at the next start, and what it costs
+  depends on what is missing. The whole system folder gone leaves nothing to find, so the firmware looks
+  elsewhere as it would at an empty disk. The file that starts it gone leaves a system that is found and will
+  not run, and the machine says so in its own family's words: `kickmgr is missing` on the Frames, `Bad or
+  missing command interpreter` on MC-DOS, `kernel panic - not syncing: no init found` on the Unix systems.
+  Installing over it puts the system back and leaves the player's own files where they are; only formatting
+  takes those.
 - A computer can be left with work and it carries on with nobody at it. On the Unix systems a line ending in
   `&` is left running and the prompt comes straight back, `jobs` lists what the machine is doing, `kill %1`
   stops one, and `crontab 06:00 <command>` leaves a line for an hour of the world's own day, or for the days

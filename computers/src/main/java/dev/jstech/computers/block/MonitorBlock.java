@@ -32,6 +32,7 @@ import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.boot.SystemIntegrity;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
@@ -500,8 +501,14 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final int remaining = ownerBe instanceof IOsHost machine ? machine.postRemaining() : 0;
         // A machine standing at a failed self-test opens at the end of it, not at the start of another one.
         final boolean halted = ownerBe instanceof IOsHost machine && machine.haltedAtPost();
+        /*
+         * What the machine found wrong with its own disk, when that is why it stopped: a system whose loader
+         * has been deleted is found and will not start, and the screen says which file it wanted.
+         */
+        final String complaint = ownerBe instanceof IOsHost machine
+                ? SystemIntegrity.check(machine).complaint() : "";
         PacketDistributor.sendToPlayer(player,
-                new OpenPostPayload(owner, monitorPos, kind.id(), name, remaining, halted));
+                new OpenPostPayload(owner, monitorPos, kind.id(), name, remaining, halted, complaint));
         if (ownerBe instanceof IOsHost machine) {
             openSession(player, level, monitorPos, owner, machine, MonitorSessionMenu.Phase.POST);
         }

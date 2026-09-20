@@ -29,9 +29,11 @@ public interface IPostScreenOpener {
      * @param remainingTicks what is left of the machine's self-test, since the machine keeps that time
      * @param halted         the machine is standing at a self-test that found nothing to boot, so the screen
      *                       opens at the end of it rather than playing one through
+     * @param complaint      what the machine found wrong with the system on its disk, in that system's own
+     *                       words, or empty when the disk is simply empty and the firmware speaks instead
      */
     void open(BlockPos pos, BlockPos monitorPos, FirmwareKind kind, String machineName, int remainingTicks,
-              boolean halted);
+              boolean halted, String complaint);
 
     final class Holder {
 
@@ -46,9 +48,10 @@ public interface IPostScreenOpener {
         }
 
         public static void open(final BlockPos pos, final BlockPos monitorPos, final FirmwareKind kind,
-                                final String machineName, final int remainingTicks, final boolean halted) {
+                                final String machineName, final int remainingTicks, final boolean halted,
+                                final String complaint) {
             if (instance != null) {
-                instance.open(pos, monitorPos, kind, machineName, remainingTicks, halted);
+                instance.open(pos, monitorPos, kind, machineName, remainingTicks, halted, complaint);
             }
         }
     }

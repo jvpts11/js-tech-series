@@ -124,7 +124,8 @@ public final class FirmwarePayloads {
                         IPostScreenOpener.Holder.open(
                                 payload.host(), payload.monitorPos(),
                                 FirmwareKind.byId(payload.firmwareKind()),
-                                payload.name(), payload.remainingTicks(), payload.halted())));
+                                payload.name(), payload.remainingTicks(), payload.halted(),
+                                payload.complaint())));
         // A finished installer still waiting for its reboot: the monitor comes back to that prompt.
         registrar.playToClient(OpenInstallDonePayload.TYPE, OpenInstallDonePayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->

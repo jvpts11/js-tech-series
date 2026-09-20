@@ -50,8 +50,8 @@ public final class ComputingClientSetup {
     public static void registerScreens(final RegisterMenuScreensEvent event) {
         // Wire the client-side firmware screen opener so blocks can open it without importing Minecraft.
         IFirmwareScreenOpener.Holder.set((pos, monitorPos, kind, name) -> FirmwareScreen.expect(kind, name));
-        IPostScreenOpener.Holder.set((pos, monitorPos, kind, name, remaining, halted) ->
-                BootSequenceScreen.expect(kind, name, remaining, halted));
+        IPostScreenOpener.Holder.set((pos, monitorPos, kind, name, remaining, halted, complaint) ->
+                BootSequenceScreen.expect(kind, name, remaining, halted, complaint));
         IInstallDoneScreenOpener.Holder.set(
                 (pos, monitorPos, kind, osName, targetLabel, targetSlot, failure) -> {
                     if (failure.isEmpty()) {

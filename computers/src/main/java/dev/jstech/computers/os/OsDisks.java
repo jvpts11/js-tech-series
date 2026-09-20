@@ -9,8 +9,10 @@ package dev.jstech.computers.os;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.os.boot.SystemIntegrity;
 import dev.jstech.computers.os.boot.SystemWelcome;
 import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.computers.program.ComputerConsoleState;
@@ -216,12 +218,24 @@ public final class OsDisks {
         }
         final int targetSlot = targetFor(diskCount, diskInSlot, osId, preferredSlot);
         if (targetSlot == ALREADY_THERE) {
-            return true; // a disk already carries it: a re-install with nothing to write
+            /*
+             * A disk already carries it, so there is nothing to add; what there may be is something to put
+             * back. Installing over a system whose files have been deleted is how a wrecked machine is
+             * repaired, and a repair that did nothing because the disk still remembered the system would be
+             * no repair at all.
+             */
+            for (int slot = 0; slot < diskCount; slot++) {
+                final ItemStack carrying = diskInSlot.apply(slot);
+                if (systemsOn(carrying).has(osId)) {
+                    final ItemStack repaired = carrying.copy();
+                    writeLoader(repaired, def);
+                    setDiskInSlot.accept(repaired, slot);
+                    break;
+                }
+            }
+            return true;
         }
         final ItemStack disk = diskInSlot.apply(targetSlot);
-        if (systemsOn(disk).has(osId)) {
-            return true; // already on that disk: a re-install with nothing to write
-        }
         /*
          * Installed beside whatever the disk already carries rather than over it, and booting by default, which
          * is what a machine does the moment you finish installing something on it. A disk that carried a system
@@ -242,8 +256,31 @@ public final class OsDisks {
             }
             updated.set(ComputingModule.FILESYSTEM.get(), fs);
         }
+        writeLoader(updated, def);
         setDiskInSlot.accept(updated, targetSlot);
         return true;
+    }
+
+    /**
+     * Writes the one file that starts the system, and the folder it sits in.
+     *
+     * <p>A system is a real thing on a real disk here, which is what makes deleting it mean something: a
+     * machine whose loader is gone finds a system and will not start it, and one whose folder is gone finds
+     * nothing at all. Installing again writes this back, which is how such a machine is repaired.
+     */
+    private static void writeLoader(final ItemStack disk, final OsDef def) {
+        final String loader = SystemIntegrity.loaderOf(def);
+        final String folder = SystemIntegrity.folderOf(def);
+        if (loader.isEmpty()) {
+            return;
+        }
+        FilesystemContents fs = disk.getOrDefault(ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+        if (!folder.isEmpty()) {
+            fs = fs.withDir(folder);
+        }
+        disk.set(ComputingModule.FILESYSTEM.get(), fs);
+        DiskFilesystem.write(disk, loader, FileType.SYS, def.displayName() + " loader",
+                Long.MAX_VALUE, FilesystemKind.HIERARCHICAL);
     }
 
     /**

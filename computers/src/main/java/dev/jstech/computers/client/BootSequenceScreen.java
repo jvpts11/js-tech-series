@@ -55,6 +55,9 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
     private final BlockPos monitorPos;
     private final FirmwareKind kind;
     private final String machineName;
+
+    /** What the machine found wrong with the system on its disk, in that system's words; empty when nothing. */
+    private final String complaint;
     /** What the machine said was left of its self-test when this screen opened. */
     private final int postTicks;
 
@@ -79,9 +82,10 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         this.computerPos = session.hostPos();
         this.monitorPos = session.monitorPos();
         final Testing testing = pending != null ? pending
-                : new Testing(FirmwareKind.forEra(HardwareEra.STANDARD), "", FALLBACK_TICKS, false);
+                : new Testing(FirmwareKind.forEra(HardwareEra.STANDARD), "", FALLBACK_TICKS, false, "");
         this.kind = testing.kind();
         this.machineName = testing.machineName();
+        this.complaint = testing.complaint();
         this.postTicks = testing.remainingTicks() > 0 ? testing.remainingTicks() : FALLBACK_TICKS;
         /*
          * A machine standing at a self-test that found nothing to boot opens at the end of that test rather
@@ -95,12 +99,16 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
 
     /** The self-test the machine is in, said before the session that shows it is opened. */
     public static void expect(final FirmwareKind kind, final String machineName, final int remainingTicks,
-                              final boolean halted) {
-        pending = new Testing(kind, machineName, remainingTicks, halted);
+                              final boolean halted, final String complaint) {
+        pending = new Testing(kind, machineName, remainingTicks, halted, complaint);
     }
 
-    /** One machine testing itself: which firmware it wears, what it is called, and where it has got to. */
-    private record Testing(FirmwareKind kind, String machineName, int remainingTicks, boolean halted) {
+    /**
+     * One machine testing itself: which firmware it wears, what it is called, where it has got to, and what
+     * it found wrong with the system on its disk, if the disk had one at all.
+     */
+    private record Testing(FirmwareKind kind, String machineName, int remainingTicks, boolean halted,
+                           String complaint) {
     }
 
     /** The machine's own generation, so the bezel is the monitor that machine would really have. */
@@ -324,8 +332,18 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         return (chosenSlot >= 0 ? "Disk " + chosenSlot : "the medium") + ": " + chosen.label();
     }
 
-    /** How this machine's age says that nothing can be booted. */
+    /**
+     * How this machine says it will not start.
+     *
+     * <p>A disk with a system on it whose loader has been deleted is not a disk with nothing on it: the
+     * firmware found a system and handed over, and what failed was the system. So the system's own words are
+     * what goes on the glass, with the way back underneath, and the firmware only speaks when there was
+     * really nothing to find.
+     */
     private List<String> noBootLines() {
+        if (!this.complaint.isEmpty()) {
+            return List.of(this.complaint, "Put in an installation medium and install over it to repair.");
+        }
         return switch (kind) {
             case CLI_BIOS -> List.of("Non-system disk or disk error",
                     "Replace and press any key when ready");
