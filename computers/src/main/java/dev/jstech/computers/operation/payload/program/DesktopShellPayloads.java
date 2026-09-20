@@ -132,8 +132,12 @@ public final class DesktopShellPayloads {
             if (target != null) {
                 shellOn = new ServerCliComputer(target, level);
             }
+            /*
+             * Laid out to the width of the window that asked, not to a monitor's. A machine writes in
+             * columns, and columns wider than the glass they are read on fold in half.
+             */
             final var shell = CliCommands.shellFor(
-                    shellOn, CLI_WIDTH);
+                    shellOn, payload.columns());
             final var response = shell.run(payload.line(), shellOn);
             clear = response.clearScreen();
             handOver = response.handOver();

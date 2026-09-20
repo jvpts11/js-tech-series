@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
@@ -26,6 +27,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -185,6 +187,54 @@ public final class ShellCoverageGameTests {
                             "pckmgr update reaches the Mirror and reports; got " + updated);
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * What a machine prints fits the glass it was told it is writing for.
+     *
+     * <p>A terminal window on a desktop is narrower than a monitor, and it tells the machine so. A listing
+     * laid out for a monitor and read in such a window folds every line in half, which is what a directory
+     * listing looked like until the width travelled with the line. So each of these is asked for on a narrow
+     * glass and has to come back fitting it.
+     */
+    @GameTest(template = ARENA)
+    public static void aListing_fitsTheGlassItWasWrittenFor(final GameTestHelper helper) {
+        final Fleet fleet = wire(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    for (final String command : new String[] {"dir", "dir C:\\", "mem", "tasklist", "tree"}) {
+                        narrow(helper, fleet.lab(), command);
+                    }
+                })
+                .thenSucceed();
+    }
+
+    /** The same for the other family, whose listings are its own. */
+    @GameTest(template = ARENA)
+    public static void aListing_fitsTheGlassOnTheOtherFamilyToo(final GameTestHelper helper) {
+        final Fleet fleet = wire(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    fleet.desk().installOs(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "debian"));
+                    for (final String command : new String[] {"ls -l", "ls -l /", "df", "ps"}) {
+                        narrow(helper, fleet.desk(), command);
+                    }
+                })
+                .thenSucceed();
+    }
+
+    /** How wide a terminal window on a desktop is, which is narrower than a monitor and the case that broke. */
+    private static final int NARROW = 52;
+
+    /** Runs a command on a narrow glass and fails on the first line that runs past it. */
+    private static void narrow(final GameTestHelper helper, final IComputerTerminalHost on,
+                               final String command) {
+        final ServerCliComputer computer = new ServerCliComputer(on, helper.getLevel());
+        for (final CliLine line : CliCommands.newShell(NARROW).run(command, computer).lines()) {
+            helper.assertTrue(line.text().length() <= NARROW,
+                    "'" + command + "' wrote " + line.text().length() + " columns onto a glass of "
+                            + NARROW + ": [" + line.text() + "]");
+        }
     }
 
     private static List<String> shell(final GameTestHelper helper, final IComputerTerminalHost on,

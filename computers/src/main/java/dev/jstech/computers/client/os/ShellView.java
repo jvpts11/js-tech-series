@@ -76,6 +76,15 @@ public final class ShellView extends Panel {
      */
     private final TermBuffer scrollback = new TermBuffer(MAX_SCROLLBACK, TermBuffer.MONITOR_COLUMNS);
 
+    /**
+     * How many columns this window's glass holds, as the last drawing of it worked out.
+     *
+     * <p>It goes to the machine with every line, because the machine lays its answer out in columns and has
+     * no glass of its own to measure. Told nothing, it writes to a monitor's width and this window folds
+     * every wide line in half.
+     */
+    private int columns = TermBuffer.MONITOR_COLUMNS;
+
     /** Draws the glass a cell at a time, which is what makes a terminal's columns line up. */
     private final TermPainter painter = new TermPainter();
 
@@ -379,7 +388,8 @@ public final class ShellView extends Panel {
         }
         g.fill(x(), y(), right(), bottom(), ground);
         // Lines wrap to the columns the view has now, so nothing leaks past the frame however it is resized.
-        this.scrollback.setColumns(TermPainter.columnsIn(Math.max(40, width() - PAD * 2 - 2), 1.0f));
+        this.columns = TermPainter.columnsIn(Math.max(40, width() - PAD * 2 - 2), 1.0f);
+        this.scrollback.setColumns(this.columns);
         final List<TermRow> all = this.scrollback.rows();
         final int inputY = bottom() - LINE_H;
         final int visible = Math.max(1, (height() - PAD - LINE_H - 2) / LINE_H);
@@ -504,7 +514,7 @@ public final class ShellView extends Panel {
              */
             if (this.keyboard.asking()) {
                 PacketDistributor.sendToServer(new DesktopShellRunPayload(this.host,
-                        line.isEmpty() ? TerminalTools.ENTER : line, this.session));
+                        line.isEmpty() ? TerminalTools.ENTER : line, this.session, this.columns));
             }
             return;
         }
@@ -514,7 +524,8 @@ public final class ShellView extends Panel {
              * for the program to read. None of the terminal's own words mean anything here.
              */
             push(line, CliStyle.PROMPT);
-            PacketDistributor.sendToServer(new DesktopShellRunPayload(this.host, line, this.session));
+            PacketDistributor.sendToServer(
+                    new DesktopShellRunPayload(this.host, line, this.session, this.columns));
             return;
         }
         push(this.prompt + " " + line, CliStyle.PROMPT);
@@ -525,7 +536,8 @@ public final class ShellView extends Panel {
             handleRun(parts.length > 1 ? parts[1].trim() : "");
             return;
         }
-        PacketDistributor.sendToServer(new DesktopShellRunPayload(this.host, line, this.session));
+        PacketDistributor.sendToServer(
+                new DesktopShellRunPayload(this.host, line, this.session, this.columns));
     }
 
     /** Opens an installed program's window by name, or lists what can be opened. */

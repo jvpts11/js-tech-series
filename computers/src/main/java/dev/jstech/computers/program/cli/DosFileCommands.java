@@ -22,6 +22,17 @@ final class DosFileCommands {
     private static final CommandScope DOS_FILES =
             CommandScope.on(CommandScope.DOS_SYSTEMS).needing(CommandScope.Need.FILES);
 
+    /**
+     * How wide the column saying when a file was last written is, in a listing.
+     *
+     * <p>As narrow as the longest stamp and no narrower: every column these two take is a column the name
+     * does not have, and the name is the part a player has to be able to read and type back.
+     */
+    private static final int STAMP_W = 14;
+
+    /** And how wide the one saying how big it is, which {@code <DIR>} stands in for. */
+    private static final int SIZE_W = 10;
+
     private DosFileCommands() {
     }
 
@@ -96,16 +107,23 @@ final class DosFileCommands {
             int dirs = 0;
             int files = 0;
             long bytes = 0L;
+            /*
+             * Columns, the way DIR has always printed them: when it was last written, how big it is, and
+             * then the name. The name goes last on purpose, because it is the one thing that has no width
+             * anybody can plan for, and a listing whose last column runs long is still a listing that lines
+             * up. Written as a settings row instead, every line ran the whole width of the glass and folded
+             * in half on any window narrower than a monitor.
+             */
             for (final ICliComputer.FsEntry entry : entries) {
-                final String stamp = formatStamp(entry.modified());
+                final String stamp = CliText.pad(formatStamp(entry.modified()), STAMP_W);
                 if (entry.isDir()) {
                     dirs++;
-                    ctx.out().row(entry.name() + "  <DIR>", stamp);
+                    ctx.out().line(stamp + CliText.pad("<DIR>", SIZE_W) + entry.name());
                 } else {
                     files++;
                     bytes += entry.weightMbEq();
-                    final String label = entry.name() + (entry.readOnly() ? "  [RO]" : "");
-                    ctx.out().row(label, CliText.group(entry.weightMbEq()) + " mB   " + stamp);
+                    ctx.out().line(stamp + CliText.padLeft(CliText.group(entry.weightMbEq()) + " mB",
+                            SIZE_W - 2) + "  " + entry.name() + (entry.readOnly() ? "  [RO]" : ""));
                 }
             }
             ctx.out().blank();

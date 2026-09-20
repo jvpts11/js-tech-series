@@ -43,6 +43,7 @@ public final class ClientTestSuite {
             SourceBuildClientTests.class,
             SystemUiClientTests.class,
             TerminalSelectionClientTests.class,
+            TerminalWidthClientTests.class,
             TrashClientTests.class,
             UiSweepClientTests.class,
             UnixClientTests.class);

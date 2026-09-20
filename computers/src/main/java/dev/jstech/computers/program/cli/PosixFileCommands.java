@@ -23,6 +23,12 @@ final class PosixFileCommands {
     private static final CommandScope POSIX_FILES =
             CommandScope.on(CommandScope.UNIX_SYSTEMS).needing(CommandScope.Need.FILES);
 
+    /** How wide the size column of a long listing is. */
+    private static final int SIZE_W = 12;
+
+    /** Which column {@code df} writes where a filesystem is mounted in. */
+    private static final int MOUNT_AT = 44;
+
     private PosixFileCommands() {
     }
 
@@ -58,10 +64,16 @@ final class PosixFileCommands {
                 return;
             }
             if (longFormat) {
+                /*
+                 * Columns, the way ls -l prints them: the mode, the size, then the name. The name goes last
+                 * because it is the one column nothing can plan a width for; pushed to the right edge with
+                 * the size, every line ran the width of the glass and folded in half on a narrow window.
+                 */
                 for (final ICliComputer.FsEntry e : entries) {
                     final String mode = (e.isDir() ? "d" : "-") + (e.readOnly() ? "r--r--r--" : "rw-r--r--");
-                    ctx.out().row(mode + "  " + e.name() + (e.isDir() ? "/" : ""),
-                            e.isDir() ? "" : String.format(Locale.ROOT, "%,d mB", e.weightMbEq()));
+                    ctx.out().line(mode + CliText.padLeft(
+                            e.isDir() ? "" : String.format(Locale.ROOT, "%,d mB", e.weightMbEq()), SIZE_W)
+                            + "  " + e.name() + (e.isDir() ? "/" : ""));
                 }
                 return;
             }
@@ -404,17 +416,24 @@ final class PosixFileCommands {
                 ctx.out().error("df: no filesystems mounted");
                 return;
             }
-            ctx.out().row("Filesystem       Size   Used   Avail  Use%", "Mounted on");
+            /*
+             * A table, the way df prints one, with where it is mounted in the last column: pushed to the
+             * right edge instead, every row ran the width of the glass and folded in half on a window
+             * narrower than a monitor.
+             */
+            ctx.out().header("Filesystem       Size   Used   Avail  Use%  Mounted on");
             for (final ICliComputer.MountInfo m : mounts) {
                 final String mount = PosixPath.render(ctx.computer().tree(), DosPath.Location.root(m.drive()));
                 if (!m.ready()) {
-                    ctx.out().row(String.format(Locale.ROOT, "/dev/%s%s", m.device(), "  (no medium)"), mount);
+                    ctx.out().line(CliText.pad(String.format(Locale.ROOT, "/dev/%s%s", m.device(),
+                            "  (no medium)"), MOUNT_AT) + mount);
                     continue;
                 }
                 final long used = Math.max(0L, m.capacityMbEq() - m.freeMbEq());
                 final int pct = m.capacityMbEq() <= 0 ? 0 : (int) (used * 100 / m.capacityMbEq());
-                ctx.out().row(String.format(Locale.ROOT, "/dev/%-8s %6s %6s %6s %3d%%", m.device(),
-                        size(m.capacityMbEq()), size(used), size(m.freeMbEq()), pct), mount);
+                ctx.out().line(CliText.pad(String.format(Locale.ROOT, "/dev/%-8s %6s %6s %6s %3d%%",
+                        m.device(), size(m.capacityMbEq()), size(used), size(m.freeMbEq()), pct), MOUNT_AT)
+                        + mount);
             }
         }
 

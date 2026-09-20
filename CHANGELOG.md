@@ -12,6 +12,13 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   go only looked for a machine with nothing installed at all, and a wrecked machine still has a system
   installed: that is the very reason it is found and refused. It now stays where it stands until there is
   somewhere to go, which is what putting an installation medium in gives it.
+- What a machine prints now fits the window it is read in. A terminal window on a desktop is narrower than a
+  monitor, and the machine was writing to a monitor's width whatever it was talking to, so every wide line
+  folded in half: a directory listing came out with a row of leader dots on its own under each name. The
+  window now tells the machine how wide its glass is with every line.
+- `dir`, `ls -l` and `df` print columns again instead of pushing their last value to the right edge with a
+  run of dots between. The name goes last, where a name belongs, because it is the one column nothing can
+  plan a width for, and the columns before it are as narrow as what they hold.
 
 ### Added
 - A name can now be given a value at the prompt and it stays given: `set NAME=value` on the Frames and MC-DOS
