@@ -714,6 +714,15 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
     @Override
     public boolean mouseClicked(final double mx, final double my, final int button) {
+        /*
+         * A program holding the whole glass is handed the cell that was clicked, the way a terminal hands one
+         * to a program that asked for the mouse. Which line of the file that is depends on the program's own
+         * view, so only the cell travels.
+         */
+        if (this.editor != null && button == 0 && overGlass(mx, my)) {
+            return this.editor.clicked(TermPainter.rowAt(my - topPos - scrollbackTop(), rowPitch(), textScale),
+                    columnUnder(mx));
+        }
         if (this.editor == null && button == 0 && overGlass(mx, my)) {
             selector.pressed(scrollback.rows(), rowUnder(my), columnUnder(mx));
             return true;

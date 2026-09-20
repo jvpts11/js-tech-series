@@ -406,6 +406,11 @@ public final class ShellView extends Panel {
 
     @Override
     public boolean mouseClicked(final double mx, final double my, final int button) {
+        // A program holding the glass is handed the cell, as a terminal hands one to a program with the mouse.
+        if (this.editor != null && button == 0) {
+            return this.editor.clicked((int) ((my - y() - PAD) / LINE_H),
+                    TermPainter.columnAt(mx - x() - PAD, 1.0f));
+        }
         super.mouseClicked(mx, my, button);
         final int row = this.output.rowAt(mx, my);
         if (button == 0 && row >= 0) {

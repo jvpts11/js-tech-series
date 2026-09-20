@@ -32,12 +32,13 @@ final class PipeCommands {
 
     /** The POSIX tools, which is where these names come from. */
     static List<ICliCommand> posix() {
-        return List.of(new Grep(), new Wc(), new Head(), new Tail(), new Sort());
+        return List.of(new Grep(), new Wc(), new Head(), new Tail(), new Sort(),
+                new PagerCommand("less", true));
     }
 
     /** The same tools under the names and switches the DOS family has always written them with. */
     static List<ICliCommand> dos() {
-        return List.of(new DosFind(), new DosSort(), new DosMore());
+        return List.of(new DosFind(), new DosSort(), new PagerCommand("more", false));
     }
 
     /**
@@ -305,40 +306,6 @@ final class PipeCommands {
             final List<String> words = plainWords(ctx);
             print(ctx, TextFilters.ordered(linesFor(ctx, words.isEmpty() ? "" : words.get(0)),
                     flag(ctx, "", "/r"), false));
-        }
-    }
-
-    /**
-     * {@code MORE}: a page at a time.
-     *
-     * <p>A terminal here is not a teletype and its glass keeps what scrolled past, so what this does is what a
-     * player wants of it: the first page, and how much more there was.
-     */
-    static final class DosMore implements ICliCommand {
-        @Override public CommandScope scope() {
-            return CommandScope.on(CommandScope.DOS_SYSTEMS).needing(CommandScope.Need.FILES);
-        }
-
-        @Override public String name() {
-            return "more";
-        }
-
-        @Override public String summary() {
-            return "show text a page at a time";
-        }
-
-        @Override public String usage() {
-            return "[file]";
-        }
-
-        @Override public void run(final CliContext ctx) {
-            final List<String> words = plainWords(ctx);
-            final List<String> lines = linesFor(ctx, words.isEmpty() ? "" : words.get(0));
-            final int page = 20;
-            print(ctx, TextFilters.first(lines, page));
-            if (lines.size() > page) {
-                ctx.out().dim("-- More -- (" + (lines.size() - page) + " lines above the glass)");
-            }
         }
     }
 }

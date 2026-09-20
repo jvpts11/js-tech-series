@@ -356,6 +356,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   system it runs on: a Linux says `Linux` and `x86_64` or `i686`, FreeBSD says `FreeBSD` and `vel64` or `IA-32`.
 
 ### Added
+- `less` is a real pager: it takes the terminal and shows a file a page at a time, with Space and Page Down
+  going on, `b` and Page Up going back, the arrows a line, `/` looking for something, `n` finding the next one
+  and `q` giving the terminal back, and a line at the foot saying how far through it you are. `MORE` on the
+  DOS family is the same pager under its own name. A program holding the whole glass is now handed the cell
+  that was clicked, so the pointer works inside one the way it does everywhere else.
 - A system is a real thing on a real disk, and a machine can be wrecked. Installing writes the file that
   starts the system, and nothing protects it: delete it and the machine carries on, because the system is
   already in memory, exactly as a real one would. The reckoning comes at the next start, and what it costs

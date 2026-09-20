@@ -38,6 +38,16 @@ public final class TtyEditor {
         /** A key was pressed; true if it meant something. */
         boolean key(TtyEditor editor, int key, int modifiers);
 
+        /**
+         * A cell of the glass was clicked, counted from the top left of what the editor is showing.
+         *
+         * <p>True when it meant something to this editor. One that says nothing gets the ordinary answer:
+         * the caret goes where the pointer is, which is what an editor with a mouse has always done.
+         */
+        default boolean clicked(final TtyEditor editor, final int row, final int column) {
+            return false;
+        }
+
         /** A character was typed; true if it went into the text. */
         boolean typed(TtyEditor editor, char c);
 
@@ -400,6 +410,22 @@ public final class TtyEditor {
     /** Shows whatever is on the glass from its first line, for a flavour that has just put a page there. */
     public void toTheTop() {
         this.scroll = 0;
+    }
+
+    /**
+     * A cell of the glass was clicked.
+     *
+     * <p>The row is counted from the top of what is being shown, not of the file, since that is all a screen
+     * can know: which line of the file that is depends on how far the view has scrolled, which is this
+     * editor's own business.
+     */
+    public boolean clicked(final int row, final int column) {
+        if (this.keys.clicked(this, row, column)) {
+            return true;
+        }
+        final int line = Math.max(0, Math.min(this.doc.lineCount() - 1, this.scroll + Math.max(0, row)));
+        this.doc.setCursor(line, Math.max(0, column));
+        return true;
     }
 
     /** Moves the view without moving the caret, which is what a wheel does. */
