@@ -58,7 +58,14 @@ public final class OsBootstrap {
             new KernelDef(rl("dos"), SchedulerKind.NONE, FilesystemKind.HIERARCHICAL, ShellFamily.DOS),
             new KernelDef(rl("win9x"), SchedulerKind.COOPERATIVE, FilesystemKind.HIERARCHICAL, ShellFamily.DOS),
             new KernelDef(rl("nt"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.DOS),
-            new KernelDef(rl("net_min"), SchedulerKind.NONE, FilesystemKind.NONE, ShellFamily.DOS),
+            /*
+             * The network kernel: one task at a time, and a flat store of files with no folders in it. Flat
+             * rather than none, because a network appliance that cannot keep a file cannot keep the pattern
+             * that teaches its network a recipe, nor the file that starts itself. Flat rather than a tree,
+             * because a bag of files beside a GUI that is the whole network is what this machine is, where
+             * MC-DOS of the same age is a personal computer with folders.
+             */
+            new KernelDef(rl("net_min"), SchedulerKind.NONE, FilesystemKind.FLAT, ShellFamily.DOS),
             /*
              * The Linux kernel: preemptive, a single rooted hierarchical filesystem, and POSIX shell syntax.
              * Public through the addon API, so any add-on distribution built on it speaks bash for free.

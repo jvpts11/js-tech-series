@@ -153,10 +153,17 @@ public final class NmsFileGameTests {
                     mf.setChanged();
 
                     final List<DiskFilesystem.FileEntry> all = DiskFilesystem.list(sysDisk, "", kind);
-                    // There should be two real files (excluding any .dat projections).
-                    final long realCount = all.stream().filter(e -> !e.readOnly()).count();
-                    helper.assertTrue(realCount == 2L,
-                            "expected 2 real files; got: " + realCount);
+                    /*
+                     * Both files that were written are there and are the player's to change. Asserted by
+                     * name rather than by counting what is on the disk: the system keeps files of its own
+                     * there too, the file that starts it among them, and a count would call every one of
+                     * those a failure of this test.
+                     */
+                    for (final String written : new String[] {"script.iql", "notes.txt"}) {
+                        helper.assertTrue(all.stream().anyMatch(e -> e.path().equals(written)
+                                        && !e.readOnly()),
+                                "expected " + written + " on the disk and writable; got: " + all);
+                    }
 
                     // Filter to .iql only, mirroring the iqlFileList() helper in the payload handler.
                     final long iqlCount = all.stream().filter(e -> e.type() == FileType.IQL).count();

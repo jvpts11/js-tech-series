@@ -67,11 +67,17 @@ public final class SystemIntegrity {
         }
         final String folder = folderOf(os);
         final String loader = loaderOf(os);
-        if (folder.isEmpty()) {
+        if (folder.isEmpty() && loader.isEmpty()) {
             return FINE;
         }
+        /*
+         * A system on a flat disk has no folder to lose, only the file that starts it, so it has one way of
+         * being broken where the others have two. Asking after a folder that cannot exist would say a whole
+         * machine was gone the moment it was installed.
+         */
         final FilesystemKind kind = FilesystemKind.HIERARCHICAL;
-        if (DiskFilesystem.listDirs(disk, "", kind).stream().noneMatch(folder::equalsIgnoreCase)
+        if (!folder.isEmpty()
+                && DiskFilesystem.listDirs(disk, "", kind).stream().noneMatch(folder::equalsIgnoreCase)
                 && !DiskFilesystem.exists(disk, loader)) {
             return new Result(State.NO_SYSTEM, "", folder);
         }
@@ -95,14 +101,18 @@ public final class SystemIntegrity {
         };
     }
 
-    /** The one file that starts the system, whose absence stops it where it stands. */
+    /**
+     * The one file that starts the system, whose absence stops it where it stands.
+     *
+     * <p>MC-NET's sits at the root because its disk is flat: there is no folder to put it in.
+     */
     public static String loaderOf(final OsDef os) {
         return switch (os.platform()) {
             case FRAMES -> SystemLayout.SYSTEM_DIR + "/kickmgr.sys";
             case MC_DOS -> "COMMAND.COM";
             case LINUX -> "boot/vmlinuz";
             case UNIX, FREEBSD -> "boot/kernel";
-            case MC_NET -> "";
+            case MC_NET -> "netstart.sys";
         };
     }
 
@@ -112,7 +122,7 @@ public final class SystemIntegrity {
             case FRAMES -> "kickmgr is missing";
             case MC_DOS -> "Bad or missing command interpreter";
             case LINUX, UNIX, FREEBSD -> "kernel panic - not syncing: no init found";
-            case MC_NET -> "";
+            case MC_NET -> "netstart.sys is missing";
         };
     }
 

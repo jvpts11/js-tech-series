@@ -6,6 +6,17 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 
 ## [Unreleased]
 
+### Added
+- MC-NET keeps files. Its kernel declared no filesystem at all while a dozen programs were declared for it,
+  the two text editors and both compilers among them: a machine with nowhere to read or write, asked to run
+  things that do nothing else. It now keeps a flat store, files at the root and no folders, which is what a
+  network appliance of that age had and what tells it apart from the personal computer of the same year. So
+  there is no `cd` to change folder, no folders to make or remove, and no tree to draw.
+- MC-NET can be wrecked like every other system. Installing it writes `netstart.sys` at the root of the disk,
+  and a machine that no longer finds it says `netstart.sys is missing` and will not start until an
+  installation medium writes it back. With no folders it has no system folder to lose, so it has one way of
+  breaking where the others have two.
+
 ### Fixed
 - A wrecked machine really stays wrecked. One whose system file had been deleted stopped at its self-test for
   a single tick and then started the system anyway, because the check that asks whether there is anywhere to

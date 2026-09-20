@@ -279,8 +279,14 @@ public final class OsDisks {
             fs = fs.withDir(folder);
         }
         disk.set(ComputingModule.FILESYSTEM.get(), fs);
+        /*
+         * Written in the kind of filesystem the system's own kernel gives it, not in the one every system
+         * used to have. A flat disk keeps its loader at the root because it has no folder to keep it in.
+         */
+        final KernelDef kernel = OsRegistry.getKernel(def.kernelId());
         DiskFilesystem.write(disk, loader, FileType.SYS, def.displayName() + " loader",
-                Long.MAX_VALUE, FilesystemKind.HIERARCHICAL);
+                Long.MAX_VALUE,
+                kernel != null ? kernel.filesystem() : FilesystemKind.HIERARCHICAL);
     }
 
     /**
