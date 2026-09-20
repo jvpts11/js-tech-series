@@ -10,6 +10,7 @@ package dev.jstech.core.client.gui.component;
 import dev.jstech.core.client.gui.logic.TextEditState;
 import dev.jstech.core.gui.LineHistory;
 import java.util.function.Consumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import org.lwjgl.glfw.GLFW;
 
@@ -28,6 +29,12 @@ public final class CommandLine extends UiComponent {
 
     private static final int BACKGROUND = 0xFF101820;
     private static final int PROMPT = 0xFF40C060;
+
+    /** What picked-out letters are drawn on: a wash of the ink the line is written in. */
+    private static final int PICKED = 0x50CDD6E2;
+
+    /** How many lines of a paste a terminal will run: enough for a handful of commands, and no more. */
+    private static final int MOST_PASTED_LINES = 16;
 
     private final int maxLength;
     private final Consumer<String> onSubmit;
@@ -119,6 +126,15 @@ public final class CommandLine extends UiComponent {
         final int caretAt = prompt.get().length() + 1 + (hidden ? 0 : input.caret());
         final String shown = Texts.tail(ctx.font(), full, width() - 6);
         final int dropped = full.length() - shown.length();
+        if (isFocused() && !hidden && input.hasSelection()) {
+            // Under the letters, so what Shift and the arrows picked out reads as picked out.
+            final int from = Math.max(0, prompt.get().length() + 1 + input.selectionStart() - dropped);
+            final int to = Math.max(from, Math.min(shown.length(),
+                    prompt.get().length() + 1 + input.selectionEnd() - dropped));
+            final int left = x() + 3 + ctx.font().width(shown.substring(0, Math.min(from, shown.length())));
+            g.fill(left, y() + 1, left + ctx.font().width(shown.substring(Math.min(from, shown.length()), to)),
+                    y() + 11, PICKED);
+        }
         g.drawString(ctx.font(), shown, x() + 3, y() + 2, textColor, false);
         if (isFocused()) {
             final int visibleCaret = Math.max(0, Math.min(shown.length(), caretAt - dropped));
@@ -147,6 +163,14 @@ public final class CommandLine extends UiComponent {
             return false;
         }
         final boolean control = (modifiers & GLFW.GLFW_MOD_CONTROL) != 0;
+        final boolean shift = (modifiers & GLFW.GLFW_MOD_SHIFT) != 0;
+        if (control && key == GLFW.GLFW_KEY_C) {
+            return copy();
+        }
+        if (control && key == GLFW.GLFW_KEY_V) {
+            paste();
+            return true;
+        }
         switch (key) {
             case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> submit();
             case GLFW.GLFW_KEY_BACKSPACE -> input.backspace();
@@ -155,18 +179,24 @@ public final class CommandLine extends UiComponent {
                 if (control) {
                     input.wordLeft();
                 } else {
-                    input.left();
+                    input.left(shift);
                 }
             }
             case GLFW.GLFW_KEY_RIGHT -> {
                 if (control) {
                     input.wordRight();
                 } else {
-                    input.right();
+                    input.right(shift);
                 }
             }
-            case GLFW.GLFW_KEY_HOME -> input.home();
-            case GLFW.GLFW_KEY_END -> input.end();
+            case GLFW.GLFW_KEY_HOME -> input.home(shift);
+            case GLFW.GLFW_KEY_END -> input.end(shift);
+            case GLFW.GLFW_KEY_A -> {
+                if (!control) {
+                    return false;
+                }
+                input.selectAll();
+            }
             case GLFW.GLFW_KEY_UP -> recall(-1);
             case GLFW.GLFW_KEY_DOWN -> recall(1);
             default -> {
@@ -174,6 +204,41 @@ public final class CommandLine extends UiComponent {
             }
         }
         return true;
+    }
+
+    /** Puts what is picked out of the line on the clipboard; with nothing picked out this key is not ours. */
+    private boolean copy() {
+        final String picked = input.selectedText();
+        if (picked.isEmpty()) {
+            return false;
+        }
+        Minecraft.getInstance().keyboardHandler.setClipboard(picked);
+        return true;
+    }
+
+    /**
+     * Types what is on the clipboard.
+     *
+     * <p>Several lines run one after another, which is what a terminal does with a paste; the last stays on
+     * the line unrun, since a paste that did not end in a newline is a line somebody is still writing. A paste
+     * longer than a terminal has any business running is cut short.
+     */
+    private void paste() {
+        final String text = Minecraft.getInstance().keyboardHandler.getClipboard();
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+        final String[] lines = text.split("\r?\n", -1);
+        for (int i = 0; i < lines.length && i < MOST_PASTED_LINES; i++) {
+            for (final char ch : lines[i].toCharArray()) {
+                if (ch >= 32 && ch != 127) {
+                    input.type(ch);
+                }
+            }
+            if (i < lines.length - 1 && i < MOST_PASTED_LINES - 1) {
+                submit();
+            }
+        }
     }
 
     private void submit() {

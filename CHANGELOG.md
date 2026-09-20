@@ -355,6 +355,15 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - `uname` takes `-s`, `-n`, `-r` and `-m` as well as `-a`, alone or together (`uname -sr`), and answers for the
   system it runs on: a Linux says `Linux` and `x86_64` or `i686`, FreeBSD says `FreeBSD` and `vel64` or `IA-32`.
 
+### Added
+- Text can be picked out of a terminal with the pointer and copied. Drag across what a machine printed and it
+  is picked out; a second click takes the word under the pointer and a third the whole row. Ctrl+C copies what
+  is picked out to the clipboard, and with nothing picked out it is still the interrupt it has always been.
+  Ctrl+V types what is on the clipboard, and a paste of several lines runs them one after another, up to
+  sixteen of them. It works the same at a machine's own prompt and in a terminal window on a desktop, and a
+  copied row is cut at what it says rather than padded out to the width of the glass, so a listing pastes as a
+  listing. At the prompt, Shift with the arrows picks out what is being typed.
+
 ### Changed
 - A computer's memory now says what is really in it. A running program was listed by the room it had been
   promised, a number that never moved however much the program went on to hold, so nothing a program did

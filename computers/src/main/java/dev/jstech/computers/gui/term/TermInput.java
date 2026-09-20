@@ -31,16 +31,23 @@ public final class TermInput {
     }
 
     /**
-     * The line as rows of cells, and the cell the cursor is in.
+     * The line as rows of cells, the cell the cursor is in, and the cell the other end of a selection is in.
      *
      * @param rows         one row or more, never none, so there is always somewhere to draw the cursor
      * @param cursorRow    which of them the cursor is on
      * @param cursorColumn how many cells across that row it sits
+     * @param markRow      the row the far end of what is picked out is on, the cursor's own when nothing is
+     * @param markColumn   how many cells across that row it sits
      */
-    public record Laid(List<TermRow> rows, int cursorRow, int cursorColumn) {
+    public record Laid(List<TermRow> rows, int cursorRow, int cursorColumn, int markRow, int markColumn) {
 
         public Laid {
             rows = List.copyOf(rows);
+        }
+
+        /** What is picked out of the line being typed, which is nothing until Shift and an arrow pick some. */
+        public TermSelection selection() {
+            return new TermSelection(this.markRow, this.markColumn, this.cursorRow, this.cursorColumn);
         }
     }
 
@@ -56,6 +63,17 @@ public final class TermInput {
      */
     public static Laid lay(final CliLine before, final String typed, final CliStyle typedStyle, final int cursor,
                            final int columns) {
+        return lay(before, typed, typedStyle, cursor, cursor, columns);
+    }
+
+    /**
+     * The same, for a line with something picked out in it.
+     *
+     * @param mark how many characters of {@code typed} come before the far end of what is picked out; the same
+     *             as {@code cursor} when nothing is
+     */
+    public static Laid lay(final CliLine before, final String typed, final CliStyle typedStyle, final int cursor,
+                           final int mark, final int columns) {
         final int wide = Math.max(1, columns);
         final List<TermBuffer.Cell> cells = new ArrayList<>(TermBuffer.cellsOf(before));
         while (!cells.isEmpty() && cells.get(cells.size() - 1).ch() == ' ') {
@@ -71,10 +89,11 @@ public final class TermInput {
             rows.add(TermBuffer.rowOf(cells, from, Math.min(cells.size(), from + wide)));
         }
         final int at = start + Math.max(0, Math.min(cursor, cells.size() - start));
+        final int far = start + Math.max(0, Math.min(mark, cells.size() - start));
         /* A cursor past the last cell of a full row is at the start of the next one, which may not exist yet. */
         while (rows.size() <= at / wide) {
             rows.add(new TermRow(List.of()));
         }
-        return new Laid(rows, at / wide, at % wide);
+        return new Laid(rows, at / wide, at % wide, far / wide, far % wide);
     }
 }

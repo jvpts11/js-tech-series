@@ -23,6 +23,7 @@ import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.client.term.TermPainter;
 import dev.jstech.computers.client.term.TermPalette;
+import dev.jstech.computers.client.term.TermSelector;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.gui.term.TermCompletion;
@@ -79,6 +80,15 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
     /** How long the cursor is there for, and then not there for, in milliseconds. */
     private static final long CURSOR_BLINK_MS = 500L;
+
+    /**
+     * How much of a paste a terminal takes: enough for a handful of commands or a wrapped path, and no more.
+     *
+     * <p>A paste is whatever happened to be on the clipboard, which may be a whole file. Running a thousand
+     * lines at a machine because somebody meant to paste one is not a thing a terminal should let happen.
+     */
+    private static final int MOST_PASTED_LINES = 16;
+    private static final int MOST_PASTED_LETTERS = 512;
     private static final int LINE_H = 9;
 
     /**
@@ -105,6 +115,9 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
     /** Draws the glass a cell at a time, which is what makes a terminal's columns line up. */
     private final TermPainter painter = new TermPainter();
+
+    /** What is picked out on the glass with the pointer, and what copying it puts on the clipboard. */
+    private final TermSelector selector = new TermSelector();
 
     /** How much smaller than the game's own the text is drawn, worked out from the room the glass has. */
     private float textScale = TEXT_SCALE;
@@ -429,7 +442,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         final int visible = visibleRows();
         final List<TermRow> all = scrollback.rows();
         final int end = Math.max(0, all.size() - scrollOffset);
-        final int start = Math.max(0, end - visible);
+        final int start = firstVisibleRow();
         /*
          * Drawn in the glass's own scale, so a row's pitch and a cell's width are the same whole numbers
          * whatever size the text comes out at, and the whole glass goes to the card in one batch.
@@ -437,6 +450,8 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         g.pose().pushPose();
         g.pose().translate(10, top, 0);
         g.pose().scale(textScale, textScale, 1.0f);
+        TermPainter.highlight(g, all.subList(start, end), 0, 0, rowPitch(), start, selector.selection(),
+                TermPalette.selectionOn(glass()));
         painter.draw(g, font, all.subList(start, end), 0, 0, rowPitch(), this::colorOf, glass());
         g.pose().popPose();
         if (scrollOffset > 0) {
@@ -488,7 +503,21 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         final boolean unseen = keyboard.asking() && keyboard.unseen();
         final boolean shown = input != null && !unseen;
         return TermInput.lay(before(), shown ? input.getValue() : "", CliStyle.PROMPT,
-                shown ? input.getCursorPosition() : 0, scrollback.columns());
+                shown ? input.getCursorPosition() : 0, shown ? markOf(input) : 0,
+                scrollback.columns());
+    }
+
+    /**
+     * Where the far end of what Shift and the arrows have picked out sits in the line being typed.
+     *
+     * <p>The box keeps that end to itself and hands over only the letters between the two, so it is worked out
+     * from them: if the letters are the ones after the cursor the far end is to its right, and otherwise to its
+     * left. With nothing picked out there are no letters and both ends are the cursor.
+     */
+    private static int markOf(final EditBox box) {
+        final String picked = box.getHighlighted();
+        final int cursor = box.getCursorPosition();
+        return box.getValue().startsWith(picked, cursor) ? cursor + picked.length() : cursor - picked.length();
     }
 
     /**
@@ -506,6 +535,8 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             g.pose().pushPose();
             g.pose().translate(10, imageHeight - 17 - (last - i) * rowHeight, 0);
             g.pose().scale(textScale, textScale, 1.0f);
+            TermPainter.highlight(g, typing.rows().subList(i, i + 1), 0, 0, rowPitch(), i, typing.selection(),
+                    TermPalette.selectionOn(typingGround()));
             painter.drawOnce(g, font, typing.rows().get(i), 0, 0, this::colorOf, typingGround());
             if (i == typing.cursorRow() && (Util.getMillis() / CURSOR_BLINK_MS) % 2 == 0) {
                 final int at = typing.cursorColumn() * TermPainter.CELL;
@@ -566,7 +597,20 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
             }
             return true;
         }
+        /*
+         * Copying and pasting come before everything else a key means here, at a prompt and in front of a tool
+         * alike. Ctrl+C with something picked out copies it, which is the one thing it can mean then; with
+         * nothing picked out it falls through to interrupting, as it always has.
+         */
+        if ((mods & GLFW.GLFW_MOD_CONTROL) != 0 && key == InputConstants.KEY_C && selector.copy(scrollback.rows())) {
+            return true;
+        }
+        if ((mods & GLFW.GLFW_MOD_CONTROL) != 0 && key == InputConstants.KEY_V) {
+            paste();
+            return true;
+        }
         if (key == 257 || key == 335) { // Enter / numpad Enter
+            selector.clear();
             submit();
             return true;
         }
@@ -640,6 +684,77 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
     private void recallHistory(final int direction) {
         history.recall(direction).ifPresent(input::setValue);
+    }
+
+    /**
+     * Types what is on the clipboard.
+     *
+     * <p>Several lines are run one after another, which is what a terminal does with a paste and what makes
+     * pasting a few commands worth doing; the last one is left on the prompt unrun, since a paste that did not
+     * end in a newline is a line somebody is still writing.
+     */
+    private void paste() {
+        if (input == null || (keyboard.busy() && !keyboard.asking())) {
+            return;
+        }
+        final String text = TermSelector.clipboard();
+        if (text.isEmpty()) {
+            return;
+        }
+        final String[] lines = text.split("\r?\n", -1);
+        for (int i = 0; i < lines.length && i < MOST_PASTED_LINES; i++) {
+            final String line = lines[i].length() > MOST_PASTED_LETTERS
+                    ? lines[i].substring(0, MOST_PASTED_LETTERS) : lines[i];
+            input.insertText(line);
+            if (i < lines.length - 1 && i < MOST_PASTED_LINES - 1) {
+                submit();
+            }
+        }
+    }
+
+    @Override
+    public boolean mouseClicked(final double mx, final double my, final int button) {
+        if (this.editor == null && button == 0 && overGlass(mx, my)) {
+            selector.pressed(scrollback.rows(), rowUnder(my), columnUnder(mx));
+            return true;
+        }
+        return super.mouseClicked(mx, my, button);
+    }
+
+    @Override
+    public boolean mouseDragged(final double mx, final double my, final int button, final double dx, final double dy) {
+        if (this.editor == null && button == 0) {
+            selector.draggedTo(rowUnder(my), columnUnder(mx));
+            return true;
+        }
+        return super.mouseDragged(mx, my, button, dx, dy);
+    }
+
+    @Override
+    public boolean mouseReleased(final double mx, final double my, final int button) {
+        selector.released();
+        return super.mouseReleased(mx, my, button);
+    }
+
+    /** Whether the pointer is over the rows the machine has printed, which is what can be picked out. */
+    private boolean overGlass(final double mx, final double my) {
+        return mx >= leftPos + 10 && mx < leftPos + imageWidth - 10
+                && my >= topPos + scrollbackTop() && my < topPos + imageHeight - 23;
+    }
+
+    /** Which row of the buffer the pointer is over, counting from the top of the buffer and not of the glass. */
+    private int rowUnder(final double my) {
+        return firstVisibleRow() + TermPainter.rowAt(my - topPos - scrollbackTop(), rowPitch(), textScale);
+    }
+
+    private int columnUnder(final double mx) {
+        return TermPainter.columnAt(mx - leftPos - 10, textScale);
+    }
+
+    /** The row of the buffer the top of the glass is showing, which is where what is drawn starts. */
+    private int firstVisibleRow() {
+        final int end = Math.max(0, scrollback.rows().size() - scrollOffset);
+        return Math.max(0, end - visibleRows());
     }
 
     @Override

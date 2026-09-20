@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.term;
 
 import dev.jstech.computers.gui.term.TermRow;
+import dev.jstech.computers.gui.term.TermSelection;
 import dev.jstech.computers.program.cli.CliSpan;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.gui.TextShadow;
@@ -99,6 +100,44 @@ public final class TermPainter {
     /** How many cells fit across that many pixels at that scale. */
     public static int columnsIn(final int pixels, final float scale) {
         return Math.max(8, (int) (pixels / (CELL * scale)));
+    }
+
+    /** Which cell across a row a pointer that far from the left of the glass is in. */
+    public static int columnAt(final double pixels, final float scale) {
+        return Math.max(0, (int) (pixels / (CELL * scale)));
+    }
+
+    /** Which row down the glass a pointer that far from the top of it is in. */
+    public static int rowAt(final double pixels, final int pitch, final float scale) {
+        return (int) Math.floor(pixels / (pitch * scale));
+    }
+
+    /**
+     * Fills the cells a selection takes, under the letters.
+     *
+     * <p>Drawn in the same pose and the same units the rows are, and told which row of the buffer the first of
+     * them is, since a glass shows a window onto a buffer that is taller than it.
+     *
+     * @param firstRow which row of the buffer {@code rows} starts at
+     */
+    public static void highlight(final GuiGraphics g, final List<TermRow> rows, final int x, final int y,
+                                 final int pitch, final int firstRow, final TermSelection selection,
+                                 final int color) {
+        if (selection.isEmpty()) {
+            return;
+        }
+        for (int i = 0; i < rows.size(); i++) {
+            final int row = firstRow + i;
+            if (row < selection.startRow() || row > selection.endRow()) {
+                continue;
+            }
+            final int cells = rows.get(i).length();
+            final int from = row == selection.startRow() ? Math.min(selection.startColumn(), cells) : 0;
+            final int to = row == selection.endRow() ? Math.min(selection.endColumn(), cells) : cells;
+            if (from < to) {
+                g.fill(x + from * CELL, y + i * pitch, x + to * CELL, y + i * pitch + pitch, color);
+            }
+        }
     }
 
     /**

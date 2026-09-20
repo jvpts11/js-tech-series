@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.client.term.TermPainter;
 import dev.jstech.computers.client.term.TermPalette;
+import dev.jstech.computers.client.term.TermSelector;
 import dev.jstech.computers.gui.term.TermBuffer;
 import dev.jstech.computers.gui.term.TermRow;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
@@ -77,6 +78,9 @@ public final class ShellView extends Panel {
 
     /** Draws the glass a cell at a time, which is what makes a terminal's columns line up. */
     private final TermPainter painter = new TermPainter();
+
+    /** What is picked out on the glass with the pointer, the same as at a machine's own prompt. */
+    private final TermSelector selector = new TermSelector();
     private final ListView<TermRow> output;
     private final Label scrolledTag;
     private final CommandLine console;
@@ -395,15 +399,44 @@ public final class ShellView extends Panel {
                             final int x, final int y, final int w, final int h,
                             final boolean hovered, final boolean selected) {
         final int ground = ground();
+        TermPainter.highlight(g, List.of(row), x, y, LINE_H, index, this.selector.selection(),
+                TermPalette.selectionOn(ground));
         this.painter.drawRow(g, ctx.font(), row, x, y, TermPalette.inksFor(ground), ground);
     }
 
     @Override
     public boolean mouseClicked(final double mx, final double my, final int button) {
         super.mouseClicked(mx, my, button);
+        final int row = this.output.rowAt(mx, my);
+        if (button == 0 && row >= 0) {
+            this.selector.pressed(this.scrollback.rows(), row, columnUnder(mx));
+        } else if (button == 0) {
+            this.selector.clear();
+        }
         // Typing always goes to the command line: a click on the output must not take the keyboard away.
         focus(this.console);
         return true;
+    }
+
+    @Override
+    public boolean mouseDragged(final double mx, final double my, final int button) {
+        final int row = this.output.rowAt(mx, my);
+        if (button == 0 && row >= 0) {
+            this.selector.draggedTo(row, columnUnder(mx));
+            return true;
+        }
+        return super.mouseDragged(mx, my, button);
+    }
+
+    @Override
+    public boolean mouseReleased(final double mx, final double my, final int button) {
+        this.selector.released();
+        return super.mouseReleased(mx, my, button);
+    }
+
+    /** Which cell across a row the pointer is over, counted from the left of the output. */
+    private int columnUnder(final double mx) {
+        return TermPainter.columnAt(mx - this.output.x(), 1.0f);
     }
 
     @Override
@@ -424,6 +457,11 @@ public final class ShellView extends Panel {
              * a window is left with the mouse, so there is always another way out of this one.
              */
             this.editor.keyPressed(key, modifiers);
+            return true;
+        }
+        if (key == GLFW.GLFW_KEY_C && ((modifiers & GLFW.GLFW_MOD_CONTROL) != 0 || Screen.hasControlDown())
+                && this.selector.copy(this.scrollback.rows())) {
+            // Something is picked out, so this is a copy; with nothing picked out it is the interrupt below.
             return true;
         }
         if (this.busy && key == GLFW.GLFW_KEY_C && ((modifiers & GLFW.GLFW_MOD_CONTROL) != 0

@@ -46,6 +46,17 @@ public final class TermPalette {
         return lightGround(ground) ? ON_PAPER : ON_GLASS;
     }
 
+    /**
+     * What picked-out text is drawn on: a wash of the ink the glass writes in, laid under the letters.
+     *
+     * <p>Not the reverse video a hardware terminal did, because these letters carry meaning in their colour and
+     * a selection that swapped ink for ground would have to throw that away. A wash keeps every colour on the
+     * glass readable and still says plainly where the selection begins and ends.
+     */
+    public static int selectionOn(final int ground) {
+        return lightGround(ground) ? 0x40111111 : 0x50CDD6E2;
+    }
+
     public static int colorOf(final CliStyle style) {
         return switch (style) {
             case PROMPT -> 0xFFCDD6E2;         // light gray-white for the echoed command line
