@@ -356,6 +356,17 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   system it runs on: a Linux says `Linux` and `x86_64` or `i686`, FreeBSD says `FreeBSD` and `vel64` or `IA-32`.
 
 ### Added
+- `interac` works the data network from any prompt, without writing a line of IQL. `interac` on its own says
+  whose network it is, whether a Mainframe is orchestrating it and what it holds; `list` shows what is in
+  there and narrows to a word; `where` names the servers holding a thing; `info` says what it is, how much
+  there is, what makes it and what it goes into; `craft` asks for some to be made; and `ops`, `cancel`,
+  `lock`, `unlock`, `locks` and `stats` are the network's work and holds. It comes with every system that has
+  a prompt and a cable, with nothing to install, and takes its words either way its family writes them:
+  `interac list stone --sort count` on a Unix system, `INTERAC LIST STONE /S:COUNT` on a DOS one, in any case,
+  with `INTERAC /?` for what it does. A verb may also be written as an option, `interac --where diamond`.
+- A thing is named the way a player says it: `cobblestone`, `minecraft:cobblestone` or `"oak log"` all find
+  it, and what the network is holding is looked at before the registry of everything there is. A name that
+  fits several things is answered with the several and how much of each there is, rather than guessed at.
 - Text can be picked out of a terminal with the pointer and copied. Drag across what a machine printed and it
   is picked out; a second click takes the word under the pointer and a third the whole row. Ctrl+C copies what
   is picked out to the clipboard, and with nothing picked out it is still the interrupt it has always been.

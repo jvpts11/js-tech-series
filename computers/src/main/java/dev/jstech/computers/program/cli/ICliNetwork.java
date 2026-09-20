@@ -80,4 +80,19 @@ public interface ICliNetwork {
     default ICliComputer.ServerUse networkUse() {
         return new ICliComputer.ServerUse("", 0L, 0L);
     }
+
+    /**
+     * What a name a player typed could stand for, best first: the one thing it names, or the several it fits.
+     *
+     * <p>A command that takes an item takes it the way a person says it, so this is where {@code "oak log"}
+     * becomes something a machine can act on, and where a name that fits several stays several.
+     */
+    default List<ICliComputer.ItemMatch> matching(final String text) {
+        return List.of();
+    }
+
+    /** Everything known about one thing, by the id a match gave: where it is, what makes it, what it makes. */
+    default ICliComputer.ItemDetail itemDetail(final String id) {
+        return new ICliComputer.ItemDetail("", id, 0L, List.of(), List.of(), List.of());
+    }
 }

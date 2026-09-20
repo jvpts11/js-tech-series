@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.program.cli.interac.InteracCommand;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -70,6 +71,7 @@ public final class BuiltinCommands {
                 new NetworkCommands.Cancel(),
                 new NetworkCommands.Stats(),
                 new NetworkCommands.Operation(),
+                new InteracCommand(),
                 new MachineCommands.Devices(),
                 new NetworkCommands.Ssh(),
                 new ShellCommands.Exit(),

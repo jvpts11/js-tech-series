@@ -47,6 +47,9 @@ public final class NetworkReadService {
      */
     private static final int EVERYTHING = 1_000_000;
 
+    /** How many ways of making a thing, and things it goes into, one answer names before it stops. */
+    private static final int MOST_RECIPE_LINES = 12;
+
     private final IComputerTerminalHost terminal;
     private final ServerLevel level;
     /** The other machines of the network as the machine's shell reaches them. */
@@ -369,6 +372,39 @@ public final class NetworkReadService {
             }
         }
         return rows;
+    }
+
+    /**
+     * What a name a player typed could stand for, best first.
+     *
+     * <p>What the network is holding is what the name is looked for in, so the count comes back with the name
+     * and a listing of what fits reads as a listing of the network.
+     */
+    public List<ICliComputer.ItemMatch> matching(final String text) {
+        final NetworkUuid net = this.terminal.networkUuid();
+        final Map<StorageKey, Long> stored = net == null
+                ? Map.of() : NetworkStorage.of(this.level, net).query();
+        final List<ICliComputer.ItemMatch> out = new ArrayList<>();
+        for (final StorageKey key : ItemNames.matching(text, stored)) {
+            out.add(new ICliComputer.ItemMatch(key.registryId().toString(),
+                    key.displayName().getString(), stored.getOrDefault(key, 0L)));
+        }
+        return out;
+    }
+
+    /** Everything known about one thing the network holds: where it is, what makes it, what it goes into. */
+    public ICliComputer.ItemDetail itemDetail(final String id) {
+        final NetworkUuid net = this.terminal.networkUuid();
+        final StorageKey key = StorageKey.byName(id);
+        if (net == null || key == null) {
+            return new ICliComputer.ItemDetail("", id, 0L, List.of(), List.of(), List.of());
+        }
+        final NetworkStorage storage = NetworkStorage.of(this.level, net);
+        final MainframeBlockEntity mainframe = this.mainframe(net);
+        return new ICliComputer.ItemDetail(key.displayName().getString(), key.registryId().toString(),
+                storage.count(key), this.find(id),
+                ItemRecipes.madeBy(mainframe, key, MOST_RECIPE_LINES),
+                ItemRecipes.usedIn(mainframe, key, MOST_RECIPE_LINES));
     }
 
     /** The network's servers, with what each holds and can hold. */

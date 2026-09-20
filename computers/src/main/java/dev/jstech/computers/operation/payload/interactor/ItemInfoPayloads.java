@@ -14,9 +14,7 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.os.NetworkInteractorApp;
 import dev.jstech.computers.client.os.StorageInsightsApp;
-import dev.jstech.computers.crafting.CraftingPattern;
-import dev.jstech.computers.crafting.MachineCategory;
-import dev.jstech.computers.crafting.NetworkRecipe;
+import dev.jstech.computers.machine.ItemRecipes;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -173,67 +171,12 @@ public final class ItemInfoPayloads {
         final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
         final List<String> madeBy = new ArrayList<>();
         final List<String> usedIn = new ArrayList<>();
-        if (mainframe != null) {
-            for (final var recipe : mainframe.recipesFor(payload.key())) {
-                if (madeBy.size() >= ItemRecipesPayload.MAX_LINES) {
-                    break;
-                }
-                madeBy.add(wire(recipeLine(recipe), ItemRecipesPayload.MAX_TEXT));
-            }
-            for (final CraftingPattern pattern : mainframe.networkPatterns()) {
-                if (pattern.ingredientTotals().containsKey(payload.key())) {
-                    addUse(usedIn, pattern.result().getHoverName().getString());
-                }
-            }
-            for (final var recipe : mainframe.networkMachineRecipes()) {
-                if (consumes(recipe, payload.key())) {
-                    final StorageKey made = recipe.resultKey();
-                    addUse(usedIn, made == null ? recipe.displayName() : made.displayName().getString());
-                }
-            }
+        for (final String line : ItemRecipes.madeBy(mainframe, payload.key(), ItemRecipesPayload.MAX_LINES)) {
+            madeBy.add(wire(line, ItemRecipesPayload.MAX_TEXT));
         }
-        PacketDistributor.sendToPlayer(player, new ItemRecipesPayload(payload.key(), madeBy, usedIn));
-    }
-
-    /** "Blast · processing · Blast Furnace": how the details panel lists one recipe that makes an item. */
-    private static String recipeLine(final NetworkRecipe recipe) {
-        if (recipe.proc().isPresent()) {
-            return recipe.displayName() + " · processing · "
-                    + MachineCategory.label(recipe.proc().get().machineType());
-        }
-        if (recipe.multi().isPresent()) {
-            final List<String> machines = new ArrayList<>();
-            for (final var stage : recipe.multi().get().stages()) {
-                machines.add(stage.proc().isPresent()
-                        ? MachineCategory.label(stage.proc().get().machineType())
-                        : "Bench");
-            }
-            return recipe.displayName() + " · multi-stage · " + String.join(" -> ", machines);
-        }
-        return recipe.displayName() + " · bench";
-    }
-
-    private static void addUse(final List<String> usedIn, final String name) {
-        if (usedIn.size() < ItemRecipesPayload.MAX_LINES && !usedIn.contains(name)) {
+        for (final String name : ItemRecipes.usedIn(mainframe, payload.key(), ItemRecipesPayload.MAX_LINES)) {
             usedIn.add(wire(name, ItemRecipesPayload.MAX_TEXT));
         }
-    }
-
-    /** Whether a machine recipe takes {@code key} in, at any of its stages. */
-    private static boolean consumes(final NetworkRecipe recipe, final StorageKey key) {
-        if (recipe.proc().isPresent()) {
-            return recipe.proc().get().ingredientTotals().containsKey(key);
-        }
-        if (recipe.multi().isPresent()) {
-            for (final var stage : recipe.multi().get().stages()) {
-                if (stage.proc().isPresent() && stage.proc().get().ingredientTotals().containsKey(key)) {
-                    return true;
-                }
-                if (stage.bench().isPresent() && stage.bench().get().ingredientTotals().containsKey(key)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        PacketDistributor.sendToPlayer(player, new ItemRecipesPayload(payload.key(), madeBy, usedIn));
     }
 }

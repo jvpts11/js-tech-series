@@ -177,6 +177,41 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
     record Holding(String server, long quantity) {
     }
 
+    /**
+     * One thing a name a player typed could stand for: what the machine calls it, what a person calls it, and
+     * how much of it the network is holding.
+     *
+     * <p>A name that fits several is answered with several of these, which is what lets a command show them
+     * and ask which rather than guess.
+     *
+     * @param id       the registry id, which is what names it again without any doubt
+     * @param name     what a person calls it
+     * @param quantity how much of it the network holds, which is nought for something it has none of
+     */
+    record ItemMatch(String id, String name, long quantity) {
+    }
+
+    /**
+     * What is known about one thing the network holds: what it is called, how much there is, where it is, and
+     * the recipes that make it and that it goes into.
+     *
+     * @param name    what a person calls it
+     * @param id      the registry id
+     * @param stored  how much the network holds
+     * @param where   the servers holding it, with how much each holds
+     * @param madeBy  one line per way of making it, as the Network Interactor words them
+     * @param usedIn  one line per thing it goes into
+     */
+    record ItemDetail(String name, String id, long stored, List<Holding> where, List<String> madeBy,
+                      List<String> usedIn) {
+
+        public ItemDetail {
+            where = List.copyOf(where);
+            madeBy = List.copyOf(madeBy);
+            usedIn = List.copyOf(usedIn);
+        }
+    }
+
     /** A snapshot of one in-flight operation; {@code id} is the short id {@code cancel} takes. */
     record ActiveOp(String id, String type, String item, long progress, long total, String status,
                     String priority) {

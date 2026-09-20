@@ -227,6 +227,16 @@ public final class ServerCliComputer implements ICliComputer {
     }
 
     @Override
+    public List<ItemMatch> matching(final String text) {
+        return networkReads().matching(text);
+    }
+
+    @Override
+    public ItemDetail itemDetail(final String id) {
+        return networkReads().itemDetail(id);
+    }
+
+    @Override
     public OpResult select(final String item, final long quantity) {
         return select(item, quantity, MoveLabels.SHELL);
     }
