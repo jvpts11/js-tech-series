@@ -249,6 +249,7 @@
   "program.jsc.gateway_manager": "Gateway Manager",
   "program.jsc.gnome": "GNOME",
   "program.jsc.gnome.desc": "The GNOME desktop environment.",
+  "program.jsc.help_viewer": "Help Viewer",
   "program.jsc.integrity_monitor": "Integrity Monitor",
   "program.jsc.integrity_monitor.desc": "Re-reads this bay after a hot swap, so the network index never has to doubt it.",
   "program.jsc.iqlengine": "IQL Engine",

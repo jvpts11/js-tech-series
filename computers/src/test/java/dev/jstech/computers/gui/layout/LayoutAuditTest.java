@@ -45,7 +45,7 @@ class LayoutAuditTest {
             "CraftingSwitchLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
             "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout",
-            "CdeStyleLayout", "WorkstationInfoLayout", "TrashLayout");
+            "CdeStyleLayout", "WorkstationInfoLayout", "TrashLayout", "HelpViewerLayout");
 
     private record AuditCase(String label, GuiLayout layout, boolean fixedSize) {
     }
@@ -143,6 +143,7 @@ class LayoutAuditTest {
         c.add(new AuditCase("CdeStyleLayout(backdrop)",
                 CdeStyleLayout.backdropLayout(CdeBackdrop.values().length), true));
         c.add(new AuditCase("WorkstationInfoLayout", WorkstationInfoLayout.layout(), true));
+        c.add(new AuditCase("HelpViewerLayout", HelpViewerLayout.layout(), true));
         // The trash window in each of its three looks, at its smallest and at its first size.
         for (final int[] size : new int[][]{
                 {TrashLayout.MIN_W - TrashLayout.FRAME_W, TrashLayout.MIN_H - TrashLayout.FRAME_H},

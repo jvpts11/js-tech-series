@@ -16,6 +16,7 @@ import dev.jstech.computers.operation.payload.crafting.CraftingPayloads;
 import dev.jstech.computers.operation.payload.desktop.DesktopPayloads;
 import dev.jstech.computers.operation.payload.desktop.ThisPcPayloads;
 import dev.jstech.computers.operation.payload.desktop.WelcomePayloads;
+import dev.jstech.computers.operation.payload.desktop.HelpPayloads;
 import dev.jstech.computers.operation.payload.desktop.WorkstationInfoPayloads;
 import dev.jstech.computers.operation.payload.files.FileEditPayloads;
 import dev.jstech.computers.operation.payload.files.FilePayloads;
@@ -64,6 +65,7 @@ public final class ComputingPayloads {
         ThisPcPayloads.register(registrar);
         WelcomePayloads.register(registrar);
         WorkstationInfoPayloads.register(registrar);
+        HelpPayloads.register(registrar);
         IqlPayloads.register(registrar);
         TerminalPayloads.register(registrar);
         TerminalLocalPayloads.register(registrar);

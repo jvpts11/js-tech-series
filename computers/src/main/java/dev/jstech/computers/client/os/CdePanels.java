@@ -152,6 +152,7 @@ final class CdePanels {
             case STYLE -> open(STYLE);
             case APPLICATIONS -> desktop.openApplicationManager(null);
             case TRASH -> desktop.openTrash();
+            case HELP -> open("help_viewer");
             default -> { }
         }
     }
@@ -221,6 +222,8 @@ final class CdePanels {
             case TRASH -> ProgramIcons.draw(g, cx - ProgramIcons.SIZE / 2, top + 2, ProgramIcons.SIZE,
                     ProgramIcons.SIZE, ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
                             desktop.trashFull() ? "trash_full" : "trash"), "cde");
+            // An open book, which is what that control was a picture of on the real panel.
+            case HELP -> book(g, cx - 9, top + 3);
         }
     }
 
@@ -289,5 +292,16 @@ final class CdePanels {
         g.fill(x + 10, y, x + 18, y + 8, 0xFFD8332C);
         g.fill(x, y + 10, x + 8, y + 18, 0xFF3FA34D);
         g.fill(x + 10, y + 10, x + 18, y + 18, 0xFFE2C36B);
+    }
+
+    /** An open book: two leaves, a spine between them, and lines of writing on each. */
+    private static void book(final GuiGraphics g, final int x, final int y) {
+        g.fill(x, y, x + 18, y + 14, 0xFF1A1A1A);
+        g.fill(x + 1, y + 1, x + 8, y + 13, 0xFFF4F1E8);
+        g.fill(x + 10, y + 1, x + 17, y + 13, 0xFFF4F1E8);
+        for (int line = 0; line < 4; line++) {
+            g.fill(x + 2, y + 3 + line * 2, x + 7, y + 4 + line * 2, 0xFF9AA3B8);
+            g.fill(x + 11, y + 3 + line * 2, x + 16, y + 4 + line * 2, 0xFF9AA3B8);
+        }
     }
 }

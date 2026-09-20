@@ -356,6 +356,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   system it runs on: a Linux says `Linux` and `x86_64` or `i686`, FreeBSD says `FreeBSD` and `vel64` or `IA-32`.
 
 ### Added
+- CDE has its Help Viewer, and the Front Panel has the control that opens it. What it shows is not a second
+  body of text: it is the very manual pages `man` prints at a terminal, asked of the machine through the same
+  filter that decides what that machine can run, so the Help never teaches a command that is not there. The
+  list on the left is grouped by what a person would be looking for (The Network, Files, Software, Writing
+  programs, Finding your way, The Machine), typing in the Search field narrows it the way `apropos` does, and
+  Backtrack is greyed until there is somewhere to go back to.
 - `less` is a real pager: it takes the terminal and shows a file a page at a time, with Space and Page Down
   going on, `b` and Page Up going back, the arrows a line, `/` looking for something, `n` finding the next one
   and `q` giving the terminal back, and a line at the foot saying how far through it you are. `MORE` on the

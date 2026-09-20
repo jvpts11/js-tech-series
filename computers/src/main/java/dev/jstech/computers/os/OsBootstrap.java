@@ -285,6 +285,12 @@ public final class OsBootstrap {
              */
             ProgramSpec.of(rl("workstation_info"), "dtwsinfo", "Workstation Info", true, CDE_SYSTEMS, 0,
                     ProgramKind.APP, 0, HostScope.ANY).withHouse(SoftwareHouse.OPEN_DESK_CONSORTIUM),
+            /*
+             * The Help Viewer, which is CDE's own and is named the way CDE named it. What it shows is the
+             * machine's manual pages, so it ships with the desktop rather than being installed.
+             */
+            ProgramSpec.of(rl("help_viewer"), "dthelpview", "Help Viewer", true, CDE_SYSTEMS, 0,
+                    ProgramKind.APP, 0, HostScope.ANY).withHouse(SoftwareHouse.OPEN_DESK_CONSORTIUM),
             ProgramSpec.of(rl("settings"), "settings", "Settings", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),
             ProgramSpec.of(rl("files"), "files", "Files", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),
             ProgramSpec.of(rl("editor"), "editor", "Editor", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),

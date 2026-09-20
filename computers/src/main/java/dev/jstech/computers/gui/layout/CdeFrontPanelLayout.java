@@ -22,7 +22,9 @@ public final class CdeFrontPanelLayout {
     /** The controls, left to right, with the switch standing between the fourth and the fifth, the trash last. */
     public enum Control {
         CLOCK(0, "Clock"), DATE(1, "Calendar"), FILES(2, "File Manager"), EDITOR(3, "Text Editor"),
-        STYLE(4, "Style Manager"), APPLICATIONS(5, "Applications"), TRASH(6, "Trash Can");
+        STYLE(4, "Style Manager"), APPLICATIONS(5, "Applications"), TRASH(6, "Trash Can"),
+        /* The control that was held back until there was a viewer for it to open, which there now is. */
+        HELP(7, "Help Viewer");
 
         /** Its place along the panel, counted from the left and said outright rather than read off the order. */
         private final int place;
@@ -64,7 +66,14 @@ public final class CdeFrontPanelLayout {
     public static final int BAND_H = 50;
 
     public static final int PANEL_H = 46;
-    public static final int CONTROL_W = 34;
+    /**
+     * How wide one control is.
+     *
+     * <p>Narrow enough that the whole panel, controls and workspace switch together, stands on the smallest
+     * glass a desktop is drawn on. A panel wider than the screen is a panel with its ends cut off, and the
+     * ends are where the clock and the Help are.
+     */
+    public static final int CONTROL_W = 30;
     /** The strip at the head of a control where the arrow of its subpanel sits. */
     public static final int ARROW_H = 9;
 
