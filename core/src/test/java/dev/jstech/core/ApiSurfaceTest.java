@@ -53,7 +53,14 @@ class ApiSurfaceTest {
             // what it adds to them
             "IProgrammingLanguage", "OperationType", "IOperationArgs",
             // the computers: what a machine is, and what can be installed on one
-            "ArchitectureSpec", "KernelDef", "OsDef", "ProgramSpec", "DesktopEnvironmentDef");
+            "ArchitectureSpec", "KernelDef", "OsDef", "ProgramSpec", "DesktopEnvironmentDef",
+            "OperatingSpaceDef",
+            /*
+             * What a client-side addition is handed. An operating space is given the machine's own menu,
+             * because the items in it are the server's and every space needs the same ones, so the menu is
+             * as much a part of the promise as the descriptors above.
+             */
+            "ComputerTerminalMenu");
 
     /** What java.lang brings in, which a signature may name with no import at all. */
     private static final Set<String> JAVA_LANG = Set.of("String", "Object", "Integer", "Long", "Double", "Float",
@@ -187,9 +194,14 @@ class ApiSurfaceTest {
                 if (!Files.isDirectory(main)) {
                     continue;
                 }
+                /*
+                 * The api package and what sits under it. The client half is a package of its own because a
+                 * dedicated server must not load a screen, not because it is any less of a promise: an addon
+                 * registering an operating space calls it, so it is watched the same way.
+                 */
                 try (Stream<Path> walk = Files.walk(main)) {
                     found.addAll(walk.filter(path -> path.toString().endsWith(".java"))
-                            .filter(path -> path.getParent().getFileName().toString().equals("api"))
+                            .filter(ApiSurfaceTest::insideApi)
                             .sorted().toList());
                 }
             }
@@ -197,5 +209,19 @@ class ApiSurfaceTest {
             throw new UncheckedIOException(e);
         }
         return found;
+    }
+
+    /** Whether a source file sits in an {@code api} package or in one nested under it. */
+    private static boolean insideApi(final Path file) {
+        for (Path at = file.getParent(); at != null; at = at.getParent()) {
+            final String name = at.getFileName() == null ? "" : at.getFileName().toString();
+            if (name.equals("api")) {
+                return true;
+            }
+            if (name.equals("java")) {
+                return false;
+            }
+        }
+        return false;
     }
 }

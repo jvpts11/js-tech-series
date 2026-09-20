@@ -7,29 +7,40 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
- * The Storage tab: per-disk public/private slider band above the local-storage item grid,
- * shifted down by {@link #STORAGE_SHIFT} so the band never overlaps the grid.
+ * The Storage heading: what this machine's own disks hold, with the public/private slider for each disk
+ * in the panel beside the grid.
+ *
+ * <p>The sliders used to be a band above the grid, which cost the grid a row on the one heading that most
+ * wants them. They live where the detail of what is picked out lives on the other headings, because that
+ * is what they are: the detail of the store this heading is showing.
  */
 final class StorageTerminalTab extends AbstractTerminalTab {
 
-    // Layout constants, mirroring ComputerTerminalScreen; update together if layout changes.
-    private static final int STORAGE_SHIFT = 8;
-    private static final int STORAGE_NET_ROWS = 3;
-    private static final int SLIDER_TRACK0_DY = 1;
-    private static final int SLIDER_ROW_PITCH = 9;
-    private static final int SLIDER_TRACK_H = 7;
-    private static final int SLIDER_TRACK_LX = 24;
-    private static final int SLIDER_HANDLE_W = 3;
-    private static final int NET_X = 68;
-    private static final int DEPOSIT_W = 160;
-    private static final int DEPOSIT_Y = 126;
-    private static final int SORT_X = 182;
-    private static final int SORT_W = 46;
-    private static final int TOOLBAR_Y = 36;
+    private static final int GRID_ROWS = ComputerTerminalLayout.GRID_ROWS;
+    private static final int TOOLBAR_Y = ComputerTerminalLayout.TOOLBAR_Y;
+    private static final int SORT_X = ComputerTerminalLayout.SORT_X;
+    private static final int SORT_W = ComputerTerminalLayout.SORT_W;
+    private static final int MOD_X = ComputerTerminalLayout.MOD_X;
+    private static final int MOD_W = ComputerTerminalLayout.MOD_W;
+    private static final int PANE_X = ComputerTerminalLayout.PANE_X;
+    private static final int PANE_Y = ComputerTerminalLayout.PANE_Y;
+    private static final int PANE_W = ComputerTerminalLayout.PANE_W;
+    private static final int DEPOSIT_X = ComputerTerminalLayout.DEPOSIT_X;
+    private static final int DEPOSIT_Y = ComputerTerminalLayout.DEPOSIT_Y;
+    private static final int DEPOSIT_W = ComputerTerminalLayout.DEPOSIT_W;
+
+    /* The slider band, panel-relative; the screen's drag math reads the very same numbers. */
+    private static final int SLIDER_TRACK0_DY = ComputerTerminalLayout.SLIDER_TRACK0_DY;
+    private static final int SLIDER_ROW_PITCH = ComputerTerminalLayout.SLIDER_ROW_PITCH;
+    private static final int SLIDER_TRACK_H = ComputerTerminalLayout.SLIDER_TRACK_H;
+    private static final int SLIDER_TRACK_LX = ComputerTerminalLayout.SLIDER_TRACK_LX;
+    private static final int SLIDER_HANDLE_W = ComputerTerminalLayout.SLIDER_HANDLE_W;
+    private static final int SLIDER_LABEL_DY = ComputerTerminalLayout.SLIDER_LABEL_DY;
 
     StorageTerminalTab(final ComputerTerminalScreen screen, final ComputerTerminalMenu menu) {
         super(screen, menu);
@@ -38,40 +49,44 @@ final class StorageTerminalTab extends AbstractTerminalTab {
     @Override
     public void renderTabBg(final GuiGraphics g, final int x, final int y,
                             final int cx, final int cy, final int cw,
-                            final int mouseX, final int mouseY) {
-        sliderBandBg(g, cx, cy, cw);
-        gridBg(g, x, y, STORAGE_SHIFT, STORAGE_NET_ROWS);
+                            final int mouseX, final int mouseY, final float partialTick) {
+        gridBg(g, x, y, 0, GRID_ROWS);
+        screen.paneBg(g, x, y);
+        sliderBandBg(g, x, y);
     }
 
     @Override
     public void renderTabLabels(final GuiGraphics g, final int cx, final int cy, final int cw) {
-        sliderBandLabels(g, cx, cy, cw);
         final int shown = visibleItems().size();
         final String t = shown + (shown == 1 ? " type" : " types");
-        g.drawString(font(), t, cx + cw - font().width(t), TOOLBAR_Y + STORAGE_SHIFT + 3, DIM(), false);
+        g.drawString(font(), t, cx + cw - font().width(t), TOOLBAR_Y + 3, DIM(), false);
         g.drawCenteredString(font(), screen.sortByQuantity ? "Qty" : "Name",
-                SORT_X + SORT_W / 2, TOOLBAR_Y + STORAGE_SHIFT + 3, ACCENT());
+                SORT_X + SORT_W / 2, TOOLBAR_Y + 3, ACCENT());
+        final String mod = screen.modFilter();
+        g.drawCenteredString(font(), mod.isEmpty() ? "Mod" : font().plainSubstrByWidth(mod, MOD_W - 6),
+                MOD_X + MOD_W / 2, TOOLBAR_Y + 3, mod.isEmpty() ? DIM() : ACCENT());
         final boolean holding = !menu.getCarried().isEmpty();
-        g.drawCenteredString(font(), "DEPOSIT TO STORAGE",
-                NET_X + DEPOSIT_W / 2, DEPOSIT_Y + STORAGE_SHIFT + 3, holding ? ACCENT() : DIM());
+        g.drawCenteredString(font(), "Store all",
+                DEPOSIT_X + DEPOSIT_W / 2 + 4, DEPOSIT_Y + 2, holding ? ACCENT() : DIM());
+        sliderBandLabels(g);
     }
 
-    // Slider band rendering
+    // The public/private band
 
-    private void sliderBandBg(final GuiGraphics g, final int cx, final int cy, final int cw) {
-        final int bandTop = cy + 18;
+    private void sliderBandBg(final GuiGraphics g, final int x, final int y) {
         if (!menu.storageHasSlider()) {
-            g.fill(cx, bandTop, cx + cw, bandTop + 11, PANEL());
-            g.fill(cx, bandTop, cx + 2, bandTop + 11, GREEN());
             return;
         }
-        final int disks = menu.diskCount();
-        final int trackX = cx + SLIDER_TRACK_LX;
-        final int trackW = cw - SLIDER_TRACK_LX - 2;
-        for (int d = 0; d < disks; d++) {
-            final int ty = bandTop + SLIDER_TRACK0_DY + d * SLIDER_ROW_PITCH;
-            sliderTrackBg(g, trackX, ty, trackW, d);
+        final int trackX = x + PANE_X + SLIDER_TRACK_LX;
+        final int trackW = PANE_W - SLIDER_TRACK_LX * 2;
+        for (int d = 0; d < shownDisks(); d++) {
+            sliderTrackBg(g, trackX, y + PANE_Y + SLIDER_TRACK0_DY + d * SLIDER_ROW_PITCH, trackW, d);
         }
+    }
+
+    /** How many disks the panel has room to show, which is every one of them on any machine so far. */
+    private int shownDisks() {
+        return Math.min(menu.diskCount(), ComputerTerminalLayout.sliderRows());
     }
 
     private void sliderTrackBg(final GuiGraphics g, final int tx, final int ty, final int tw, final int disk) {
@@ -95,27 +110,40 @@ final class StorageTerminalTab extends AbstractTerminalTab {
             g.fill(tickX, ty + SLIDER_TRACK_H, tickX + 1, ty + SLIDER_TRACK_H + 1, LINE());
         }
         final int handleColor = screen.draggingSliderDisk == disk ? 0xFFFFFFFF : ACCENT();
-        g.fill(handleX, ty - 2, handleX + SLIDER_HANDLE_W, ty + SLIDER_TRACK_H + 2, handleColor);
+        g.fill(handleX, ty - ComputerTerminalLayout.SLIDER_HANDLE_OVERHANG, handleX + SLIDER_HANDLE_W,
+                ty + SLIDER_TRACK_H + ComputerTerminalLayout.SLIDER_HANDLE_OVERHANG, handleColor);
     }
 
-    private void sliderBandLabels(final GuiGraphics g, final int cx, final int cy, final int cw) {
-        final int bandTop = cy + 18;
+    private void sliderBandLabels(final GuiGraphics g) {
+        final int px = PANE_X + 6;
+        final int right = PANE_X + PANE_W - 6;
+        g.drawString(font(), "This machine's disks", px, PANE_Y + 6, ACCENT(), false);
         if (!menu.storageHasSlider()) {
-            g.drawString(font(), "PUBLIC · NETWORK STORAGE", cx + 4, bandTop + 2, GREEN(), false);
+            g.drawString(font(), "Every byte of it is the", px, PANE_Y + 22, TEXT(), false);
+            g.drawString(font(), "network's, and none of it", px, PANE_Y + 32, TEXT(), false);
+            g.drawString(font(), "is kept back.", px, PANE_Y + 42, TEXT(), false);
+            final String store = menu.storageCapacity() <= 0 ? "no disk"
+                    : fmt(menu.storageUsed()) + " / " + fmt(menu.storageCapacity());
+            g.drawString(font(), store, px, PANE_Y + 60, GREEN(), false);
             return;
         }
-        final int disks = menu.diskCount();
-        final int trackX = cx + SLIDER_TRACK_LX;
-        for (int d = 0; d < disks; d++) {
-            final int ty = bandTop + SLIDER_TRACK0_DY + d * SLIDER_ROW_PITCH;
-            g.drawString(font(), String.valueOf((char) ('A' + d)), cx + 2, ty, DIM(), false);
+        for (int d = 0; d < shownDisks(); d++) {
+            final int ty = PANE_Y + SLIDER_TRACK0_DY + d * SLIDER_ROW_PITCH;
+            g.drawString(font(), "Disk " + (char) ('A' + d), px, ty - SLIDER_LABEL_DY, DIM(), false);
             if (menu.diskCapacityWeight(d) <= 0L) {
-                g.drawString(font(), "no disk", trackX + 4, ty, DIM(), false);
+                g.drawString(font(), "empty", right - font().width("empty"), ty - SLIDER_LABEL_DY, DIM(), false);
                 continue;
             }
-            final int permille = sliderValue(d);
-            final String readout = (permille / 10) + "% pub";
-            g.drawString(font(), readout, cx + cw - font().width(readout), ty, GREEN(), false);
+            final String readout = (sliderValue(d) / 10) + "% offered";
+            g.drawString(font(), readout, right - font().width(readout), ty - SLIDER_LABEL_DY, GREEN(), false);
         }
+        // The word about dragging only where there is room left for it under the last track.
+        final int footY = PANE_Y + SLIDER_TRACK0_DY + shownDisks() * SLIDER_ROW_PITCH + 6;
+        if (footY + 30 > PANE_Y + ComputerTerminalLayout.PANE_H) {
+            return;
+        }
+        g.drawString(font(), "Drag to say how much of a", px, footY, DIM(), false);
+        g.drawString(font(), "disk the network may have.", px, footY + 10, DIM(), false);
+        g.drawString(font(), "Hold Shift for fine steps.", px, footY + 20, DIM(), false);
     }
 }

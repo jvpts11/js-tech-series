@@ -7,6 +7,36 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 ## [Unreleased]
 
 ### Added
+- MC-NET draws the whole monitor, as every other system does. Its interface was a 244 by 230 window with the
+  player's inventory under it, throwing away 140 columns of a screen the desktops fill, which is why the one
+  interface in the mod that is a whole system read as an inventory panel. It is now the glass: a status bar
+  across the top that says which network the machine is on, how many servers it has, how much they hold and
+  what is in flight; the headings down the left as words rather than icons; the network's store nine wide and
+  seven deep beside a panel that says everything the machine knows about whatever is picked out; and the
+  player's own rows glued over the bottom. It keeps the era skins, so a Vintage machine shows it in green
+  phosphor with scanlines, a Legacy one in beige and system blue, and the later eras in the dark it had.
+- Operating spaces: what a desktop environment is to a Linux, for the system that has no desktop. MC-NET
+  ships with one, called the Interactor; take it off and the machine is a prompt and nothing else, exactly
+  as a Linux with its desktop removed is a TTY. What a monitor opens is now decided by the space installed on
+  the machine rather than by what the system is capable of. An add-on registers a space of its own and ships
+  the whole screen behind it, so it can invent a way of working a network that nothing here imagined; ours
+  goes in through the same door rather than being a special case behind it.
+- The prompt is a heading inside MC-NET's interface. Clicking Console used to throw a separate Command Prompt
+  window over the screen, which is a thing a screen that is the whole machine has no business doing to
+  itself. It is a view of the machine's own console, so everything the prompt can do on a machine with no
+  interface at all it can do here, editors and compilers included. The Command Prompt is no longer offered as
+  a program on a network system, because there is nowhere for a window to go.
+- MC-NET can be taught a recipe. `crafting_manager` and `pattern_studio` are both desktop programs, so a
+  Crafting Computer running MC-NET could not put a single pattern into its own Recipe ROM: the one player
+  that system exists for could not autocraft with recipes of their own. A Patterns heading now does that
+  work in the system's own shape, under the same condition the Crafting Manager installs under, a Crafting
+  Computer with a Crafting Card: the draft with the three destinations the Pattern Studio's bar sends to, the
+  `.craft` files on a medium in a linked drive with Load all and Load one, and the ROM with Unload and
+  Download beside it. A pattern is still born at a Pattern Encoder and nowhere else.
+- The network's store can be narrowed by mod, and what is picked out has a panel of its own: what it is, what
+  holds it and how much each of them holds, whether the network has a pattern for it, and the two things
+  worth doing with it. It is the same answer the prompt gives for a thing, so the screen and the prompt never
+  disagree about what the network is holding.
 - MC-NET keeps files. Its kernel declared no filesystem at all while a dozen programs were declared for it,
   the two text editors and both compilers among them: a machine with nowhere to read or write, asked to run
   things that do nothing else. It now keeps a flat store, files at the root and no folders, which is what a
@@ -37,6 +67,51 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   breaking where the others have two.
 
 ### Fixed
+- The Patterns heading asks the machine once a second instead of once a frame. It asked for both halves of
+  what it shows every time it drew, which is several messages a tick for as long as an answer is on its way
+  and an unending run of them on a machine that never answers, which is any machine further than eight
+  blocks from the monitor being looked at. It also no longer takes an answer meant for a desktop's Pattern
+  Studio after its own screen has closed, keeps what is picked out pointing at a row that still exists when a
+  list shrinks under it, turns only over the lists it can scroll, and no longer writes how many more files
+  there are across the last row of them.
+- A craft is planned once the number has stopped changing. Every digit typed into the quantity asked the
+  machine for a fresh plan, and planning walks the whole recipe against everything the network holds, so
+  asking for a thousand of something asked for four of them in the time it takes to type it; holding a step
+  button did the same on every click. The machine is asked a tenth of a second after the last change.
+- The question that asks the network for a thing is centred on the panel it actually draws rather than on a
+  fixed height, so the short shape no longer sits high on the glass with a gap under it, and opening the
+  question out no longer leaves the quantity field where the shorter panel had it.
+- A terminal reopened on the Craft or the Patterns heading stays on it. The rail is built from what the
+  machine says it offers and that answer arrives a tick or two behind the window, so the screen saw a rail
+  without those headings on it and moved to the network before the machine had a chance to answer.
+- A disk's name no longer has its own slider handle drawn through it: a disk offering nothing puts its handle
+  at the left end of the track, which is exactly where its name is written. The two buttons under the panel
+  beside the grid also no longer sit two pixels under the line above them.
+- The rail and the pattern behind a picked-out thing are worked out when they change rather than several
+  times in every frame, which is what building a list and walking the whole craft catalogue per draw was.
+- Two add-ons registering an operating space at the same moment can no longer leave the table with neither of
+  them in it. Client setup is handed to every mod at once, on as many threads as the loader cares to use.
+- Asking the network for a thing works again. The field a quantity is typed into was built with the screen's
+  own font at a moment when the screen has none, so the first thing that measured a string in it brought the
+  game down the instant the question was opened.
+- The inventory key is a letter at a prompt. Pressing it at a network machine's Console shut the machine's
+  whole interface, because a key the prompt had no use for fell through to the game behind it. Every key
+  belongs to the prompt while the prompt is what is showing, Escape excepted, which still closes.
+- A network item shows how much of it there is again, in the Network Interactor on a desktop. The total was
+  being drawn with the offset meant for the game's own item count, which cancels a lift that a plain label
+  never applies, so every total landed two hundred deep behind the window it belonged to and only the
+  tooltip could say the number. The star on a favourite and the availability mark on a craftable were lost
+  in the same place.
+- A terminal says what its network is holding whatever machine it is on. Only the orchestrator could answer
+  the question, so a terminal on any other computer read "0 held" while showing a grid full of things. Every
+  machine asks the orchestrator of the network it is on, which is where the index of what is where lives.
+- A network machine's prompt greets with the name of the system it is on. It was read off the machine's own
+  disks by the client, which is not holding them, so the prompt came up on a machine that could not say what
+  it was running and greeted nobody. The name goes with the window now, from the side that knows it.
+- The deposit button no longer sits on the rule above the player's own rows, and a disk's slider no longer
+  has the next disk's name drawn across its handle: a disk's row needs twenty-one pixels and was given
+  fourteen. The numbers behind both were written out in two files that had drifted apart, and are one set
+  now, with the arithmetic held to account by the layout's own tests.
 - A wrecked machine really stays wrecked. One whose system file had been deleted stopped at its self-test for
   a single tick and then started the system anyway, because the check that asks whether there is anywhere to
   go only looked for a machine with nothing installed at all, and a wrecked machine still has a system

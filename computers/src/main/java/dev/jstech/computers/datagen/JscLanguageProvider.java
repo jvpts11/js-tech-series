@@ -264,6 +264,9 @@ public class JscLanguageProvider extends LanguageProvider {
                         + "it writes.");
         add("program.jsc.sigma.desc",
                 "Runs compiled Σ# programs, and brings the 'sigma' command to the prompt.");
+        add("program.jsc.interactor.desc",
+                "The operating space a network system draws: its store, its work and its prompt, on the "
+                        + "whole screen. Take it off and the machine is a prompt and nothing else.");
         add("program.jsc.kde_plasma.desc", "The KDE Plasma desktop environment.");
         add("program.jsc.gnome.desc", "The GNOME desktop environment.");
         add("program.jsc.cinnamon.desc", "The Cinnamon desktop environment.");

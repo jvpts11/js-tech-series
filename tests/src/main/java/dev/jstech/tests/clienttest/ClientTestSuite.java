@@ -32,6 +32,7 @@ public final class ClientTestSuite {
             InstallMediaClientTests.class,
             InteracTuiClientTests.class,
             LiveInstallClientTests.class,
+            McNetSpaceClientTests.class,
             TaskbarClientTests.class,
             TerminalEditorClientTests.class,
             MekanismClientTests.class,

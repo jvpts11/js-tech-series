@@ -18,7 +18,7 @@ import java.util.List;
  */
 final class TasksTerminalTab extends AbstractTerminalTab {
 
-    // Mirror of ComputerTerminalScreen constants; update together if layout changes.
+    /** Mirror of the screen's own hit test; update together if this layout changes. */
     private static final int TASK_OP_ROWS = 4;
     private static final String[] TASK_SUBTABS = {"Processes", "Hardware", "Devices"};
 
@@ -29,7 +29,7 @@ final class TasksTerminalTab extends AbstractTerminalTab {
     @Override
     public void renderTabBg(final GuiGraphics g, final int x, final int y,
                             final int cx, final int cy, final int cw,
-                            final int mouseX, final int mouseY) {
+                            final int mouseX, final int mouseY, final float partialTick) {
         final int sw = cw / 3;
         g.fill(cx + screen.taskSubTab * sw + 4, cy + 36, cx + (screen.taskSubTab + 1) * sw - 4, cy + 37, ACCENT());
         g.fill(cx, cy + 38, cx + cw, cy + 39, LINE());

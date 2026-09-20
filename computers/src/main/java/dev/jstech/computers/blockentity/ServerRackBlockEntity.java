@@ -1675,6 +1675,10 @@ public class ServerRackBlockEntity extends BlockEntity
     public boolean installOs(final ResourceLocation osId, final int preferredSlot) {
         final boolean installed = OsDisks.installOs(
                 diskSlots(), this::diskInSlot, this::setDiskInSlot, osId, preferredSlot);
+        /* A network system arrives with its interface on, on a rack unit as on a desk computer. */
+        if (installed && OsDisks.installBundledSpace(OsRegistry.getOs(osId), console())) {
+            setChanged();
+        }
         if (installed && level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
                     Block.UPDATE_CLIENTS);
@@ -1706,6 +1710,12 @@ public class ServerRackBlockEntity extends BlockEntity
     public ResourceLocation installedDesktopId() {
         return OsDisks.installedDesktopId(
                 installedOs(), console());
+    }
+
+    @Override
+    @Nullable
+    public ResourceLocation installedSpaceId() {
+        return OsDisks.installedSpaceId(installedOs(), console());
     }
 
     @Override

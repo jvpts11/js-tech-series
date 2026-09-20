@@ -333,6 +333,12 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
+    @Nullable
+    public ResourceLocation installedSpaceId() {
+        return rack.asUnit(row, rack::installedSpaceId);
+    }
+
+    @Override
     public boolean validateOsSession() {
         return rack.asUnit(row, rack::validateOsSession);
     }

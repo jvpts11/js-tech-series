@@ -19,6 +19,7 @@ import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.menu.DosTerminalMenu;
 import dev.jstech.computers.menu.LinuxTtyMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
+import dev.jstech.computers.menu.NetTerminalMenu;
 import dev.jstech.computers.operation.payload.OpenBootMenuPayload;
 import dev.jstech.computers.operation.payload.OpenComputerUiPayload;
 import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
@@ -542,7 +543,18 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
             case FIRMWARE -> openFirmwareUi(player, level, monitorPos, owner, ownerBe);
             case FULL_DESKTOP -> openDesktopUi(player, level, monitorPos, owner, ownerBe);
             case TERMINAL_ONLY -> openCommandPrompt(player, level, monitorPos, owner);
-            case NETWORK_GUI -> openTerminal(player, level, monitorPos, owner);
+            /*
+             * What a network machine opens is the space installed on it, not what the system is capable of.
+             * Take the space off and the machine is a prompt, exactly as a Linux with its desktop removed is
+             * a TTY; put another on and that one draws instead.
+             */
+            case NETWORK_GUI -> {
+                if (ownerBe instanceof IOsHost machine && machine.installedSpaceId() != null) {
+                    openTerminal(player, level, monitorPos, owner);
+                } else {
+                    openCommandPrompt(player, level, monitorPos, owner);
+                }
+            }
         }
         /*
          * The first time an installed system comes up in front of somebody, and only then. The mark lives on the
@@ -641,11 +653,13 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
             }
             /*
              * Each platform gets its own console screen: the Linux TTY (installed distributions and live
-             * media), the MC-DOS terminal, and the MC-NET Command Prompt window, never each other's.
+             * media), the MC-DOS terminal and the network system's, never each other's.
              */
             final boolean tty = posix || live != null;
             final boolean dos = !tty && os != null
                     && os.platform() == Platform.MC_DOS;
+            final boolean net = !tty && os != null
+                    && os.platform() == Platform.MC_NET;
             // Which run of the machine this terminal belongs to, so it does not come up showing another's lines.
             final long session = host.console() == null ? 0L : host.console().session();
             player.openMenu(new SimpleMenuProvider(
@@ -653,7 +667,10 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                             ? new LinuxTtyMenu(id, inv, monitorPos, owner, era, console, session)
                             : dos
                                     ? new DosTerminalMenu(id, inv, monitorPos, owner, era, console, session)
-                                    : new CommandPromptMenu(id, inv, monitorPos, owner, era, console, session),
+                                    : net
+                                            ? new NetTerminalMenu(id, inv, monitorPos, owner, era, console, session)
+                                            : new CommandPromptMenu(id, inv, monitorPos, owner, era, console,
+                                                    session),
                     title),
                     buf -> CommandPromptMenu.writeOpenBuffer(buf, monitorPos, owner, era, console, session));
         }
@@ -661,19 +678,32 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
 
     private static void openTerminal(final ServerPlayer player, final Level level,
                                      final BlockPos monitorPos, final BlockPos owner) {
-        if (level.getBlockEntity(owner) instanceof IComputerTerminalHost host) {
+        final BlockEntity ownerBe = level.getBlockEntity(owner);
+        if (ownerBe instanceof IComputerTerminalHost host) {
             final Component title = level.getBlockState(owner).getBlock().getName();
             // Reopen on the tab the player last used here (persisted on the Monitor).
             final int initialTab =
                     level.getBlockEntity(monitorPos) instanceof MonitorBlockEntity monitor
                             ? monitor.lastTab() : ComputerTerminalMenu.TAB_NETWORK;
+            /*
+             * Which space is drawing goes with the window, because the console that knows it never leaves
+             * the server. A machine that is not a network machine at all sends none and gets the terminal
+             * the mod has always drawn here, which is what every desktop's Network Interactor is.
+             */
+            final ResourceLocation spaceId = ownerBe instanceof IOsHost machine
+                    ? machine.installedSpaceId() : null;
+            /*
+             * What the system calls itself goes with the window too, because the prompt inside the space
+             * greets with it and the client cannot read a disk it is not holding.
+             */
+            final OsDef running = ownerBe instanceof IOsHost machine ? machine.installedOs() : null;
+            final String systemName = running == null ? "" : running.displayName();
             player.openMenu(new SimpleMenuProvider(
-                    (id, inv, p) -> new ComputerTerminalMenu(id, inv, host, owner, monitorPos, initialTab), title),
-                    buf -> {
-                        buf.writeBlockPos(monitorPos);
-                        buf.writeBlockPos(owner);
-                        buf.writeVarInt(initialTab);
-                    });
+                    (id, inv, p) -> new ComputerTerminalMenu(id, inv, host, owner, monitorPos, initialTab,
+                            spaceId, systemName),
+                    title),
+                    buf -> ComputerTerminalMenu.writeOpenBuffer(buf, monitorPos, owner, initialTab, spaceId,
+                            systemName));
         }
     }
 

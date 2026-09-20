@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.gui.CdeBackdrop;
 import dev.jstech.computers.gui.CdePalette;
+import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.core.gui.layout.GuiLayout;
 import java.io.File;
@@ -47,7 +48,23 @@ class LayoutAuditTest {
             "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout",
             "CdeStyleLayout", "WorkstationInfoLayout", "TrashLayout", "HelpViewerLayout");
 
-    private record AuditCase(String label, GuiLayout layout, boolean fixedSize) {
+    /**
+     * One layout worth auditing, with the budget it is measured against.
+     *
+     * <p>Most screens are panels over the game and are held to what a panel may take. A screen that is a
+     * monitor's whole glass is measured against the glass instead, because that is what it is drawn on and
+     * what every other thing a monitor shows already fills.
+     */
+    private record AuditCase(String label, GuiLayout layout, boolean fixedSize, int widthBudget,
+                             int heightBudget) {
+
+        AuditCase(final String label, final GuiLayout layout, final boolean fixedSize) {
+            this(label, layout, fixedSize, SCREEN_W_BUDGET, SCREEN_H_BUDGET);
+        }
+
+        static AuditCase onTheGlass(final String label, final GuiLayout layout) {
+            return new AuditCase(label, layout, true, MonitorGlass.WIDTH, MonitorGlass.HEIGHT);
+        }
     }
 
     /** Every layout, at the sizes/states worth auditing (worst cases for the parametrized ones). */
@@ -62,8 +79,7 @@ class LayoutAuditTest {
         c.add(new AuditCase("CraftingComputerLayout", CraftingComputerLayout.layout(), true));
         c.add(new AuditCase("NmsLayout", NmsLayout.layout(), true));
         c.add(new AuditCase("ServerRackLayout", ServerRackLayout.layout(), true));
-        c.add(new AuditCase("ComputerTerminalLayout(mainframe)", ComputerTerminalLayout.layout(true), true));
-        c.add(new AuditCase("ComputerTerminalLayout(pc)", ComputerTerminalLayout.layout(false), true));
+        c.add(AuditCase.onTheGlass("ComputerTerminalLayout", ComputerTerminalLayout.layout()));
         /*
          * The explorer and This PC are resizable desktop windows: audit the smallest, the default and a
          * maximised size, plus the row and grid geometry that depend on the width alone.
@@ -188,10 +204,10 @@ class LayoutAuditTest {
             if (!c.fixedSize()) {
                 continue;
             }
-            assertTrue(c.layout().width() <= SCREEN_W_BUDGET,
-                    c.label() + " width " + c.layout().width() + " exceeds the " + SCREEN_W_BUDGET + "px budget");
-            assertTrue(c.layout().height() <= SCREEN_H_BUDGET,
-                    c.label() + " height " + c.layout().height() + " exceeds the " + SCREEN_H_BUDGET + "px budget");
+            assertTrue(c.layout().width() <= c.widthBudget(),
+                    c.label() + " width " + c.layout().width() + " exceeds the " + c.widthBudget() + "px budget");
+            assertTrue(c.layout().height() <= c.heightBudget(),
+                    c.label() + " height " + c.layout().height() + " exceeds the " + c.heightBudget() + "px budget");
         }
     }
 

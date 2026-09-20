@@ -111,6 +111,8 @@ final class SourceChains {
             case SERVICE -> "net-misc";
             case HYBRID -> "app-admin";
             case DESKTOP_ENVIRONMENT -> "x11-wm";
+            /* A whole interface, as a desktop is, for a machine that draws no windows at all. */
+            case OPERATING_SPACE -> "net-wm";
         };
     }
 }

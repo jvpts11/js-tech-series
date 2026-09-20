@@ -10,6 +10,7 @@ package dev.jstech.computers.api;
 import dev.jstech.computers.hardware.ArchitectureSpec;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.KernelDef;
+import dev.jstech.computers.os.OperatingSpaceDef;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.ProgramSpec;
 import net.neoforged.bus.api.Event;
@@ -65,5 +66,15 @@ public final class ComputersRegisterEvent extends Event implements IModBusEvent 
     /** Adds a desktop, which a Linux computer installs as a package or an operating system bundles. */
     public void desktop(final DesktopEnvironmentDef desktop) {
         JsComputersApi.registerDesktop(desktop);
+    }
+
+    /**
+     * Adds an operating space, which a network system installs as a package.
+     *
+     * <p>Name it here and register the screen that draws it from your client setup. A space named with no
+     * screen behind it leaves the machine at its prompt, which is what a machine with no space is.
+     */
+    public void operatingSpace(final OperatingSpaceDef space) {
+        JsComputersApi.registerSpace(space);
     }
 }

@@ -96,6 +96,8 @@ public final class ShellView extends Panel {
 
     /** Whether this view is a terminal window of its own rather than a panel inside another program. */
     private boolean ownWindow;
+    /** A ground set by whoever is drawing this view, or zero to take the one its system's skin gives. */
+    private int ownGround;
     /** How many lines up from the bottom the output is scrolled. */
     private int scrollOffset;
     /** The prompt, synced from the server after each command so it tracks the current directory. */
@@ -132,6 +134,18 @@ public final class ShellView extends Panel {
      *               another program does not
      */
     public ShellView(final BlockPos host, final boolean posix, final String systemName) {
+        this(host, posix, systemName, "Type HELP for a list of commands");
+    }
+
+    /**
+     * A view of the console of the computer at {@code host}.
+     *
+     * @param posix     whether the machine speaks bash rather than the DOS prompt
+     * @param startHint the one line this family uses to say where to start, which is its own words and
+     *                  not every family's: one says HELP and another says showcommands
+     */
+    public ShellView(final BlockPos host, final boolean posix, final String systemName,
+                     final String startHint) {
         this.host = host;
         if (posix) {
             /*
@@ -149,11 +163,14 @@ public final class ShellView extends Panel {
             if (systemName != null && !systemName.isEmpty()) {
                 push(systemName, CliStyle.ACCENT);
                 push(Branding.systemCopyright(systemName, era()), CliStyle.DIM);
-                /*
-                 * The way this family told a player where to start, in its own words. A line nobody ever printed
-                 * would teach the same thing and sound like nothing; this one does both.
-                 */
-                push("Type HELP for a list of commands", CliStyle.DIM);
+            }
+            /*
+             * The way this family told a player where to start, in its own words. A line nobody ever printed
+             * would teach the same thing and sound like nothing; this one does both. Outside the name, since
+             * a machine that cannot say what it is still knows where a player should start.
+             */
+            if (startHint != null && !startHint.isEmpty()) {
+                push(startHint, CliStyle.DIM);
             }
         }
         this.output = add(new ListView<TermRow>(this.scrollback::rows, LINE_H, this::renderLine));
@@ -355,8 +372,23 @@ public final class ShellView extends Panel {
         return this;
     }
 
+    /**
+     * A ground of its own, for a view drawn somewhere that is not a desktop.
+     *
+     * <p>The operating space a network machine draws is the whole screen, painted in the hardware era's
+     * own skin, so its prompt takes that ground rather than one of the desktop forms': a console in pure
+     * black inside a green phosphor screen reads as a hole cut in the glass.
+     */
+    public ShellView setGround(final int argb) {
+        this.ownGround = argb;
+        return this;
+    }
+
     /** The ground this view is drawn on. */
     private int ground() {
+        if (this.ownGround != 0) {
+            return this.ownGround;
+        }
         return this.ownWindow && this.osSkin.form() == OsSkin.Form.MOTIF ? TermPalette.PAPER : groundOf(this.osSkin);
     }
 

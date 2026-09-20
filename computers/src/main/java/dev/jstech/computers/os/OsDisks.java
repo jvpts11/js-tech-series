@@ -348,6 +348,64 @@ public final class OsDisks {
     }
 
     /**
+     * The operating space a network machine draws with, or null when it has none and is a bare prompt.
+     *
+     * <p>What a desktop environment is to a Linux, for the system that has no desktop: the space is a package,
+     * so the machine draws whatever is installed on it and falls back to its prompt when nothing is. That is
+     * why what a monitor opens is asked of this and not of {@link OsCapability}: a network system is capable of
+     * a screen, and whether it has one to show is a thing about the machine rather than about the system.
+     */
+    @Nullable
+    public static ResourceLocation installedSpaceId(
+            @Nullable final OsDef os,
+            @Nullable final ComputerConsoleState console) {
+        if (os == null || os.capability() != OsCapability.NETWORK_GUI || console == null) {
+            return null;
+        }
+        for (final String id : console.installed()) {
+            final ResourceLocation rl = ResourceLocation.tryParse(id);
+            final ProgramSpec spec = rl == null ? null : OsRegistry.getProgram(rl);
+            if (spec != null && spec.kind() == ProgramKind.OPERATING_SPACE
+                    && OsRegistry.getSpace(rl) != null) {
+                return rl;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Puts the space a network system ships with onto the machine, which is what its install pays for.
+     *
+     * <p>Every other kind of system either bundles its interface with itself (the Frames editions) or leaves
+     * the player to fetch one (the distributions). A network system does neither: it arrives with a space on
+     * and the space can be taken off afterwards, so the install writes it and nothing else does. A machine
+     * that already has one keeps it, so installing the system again over a space somebody chose does not
+     * quietly swap it for ours.
+     *
+     * <p>Which space is the system's own is read off the register rather than named here, so a network system
+     * an addon brings arrives with the addon's space by the same rule.
+     *
+     * @return whether a space was put on, so a caller only writes the machine back when something changed
+     */
+    public static boolean installBundledSpace(@Nullable final OsDef os,
+                                              @Nullable final ComputerConsoleState console) {
+        if (os == null || os.capability() != OsCapability.NETWORK_GUI || console == null
+                || installedSpaceId(os, console) != null) {
+            return false;
+        }
+        for (final ProgramSpec spec : OsRegistry.programs()) {
+            if (spec.kind() == ProgramKind.OPERATING_SPACE
+                    && spec.platforms().contains(os.platform())
+                    && OsRegistry.getSpace(spec.id()) != null) {
+                console.install(spec.id().toString());
+                console.setInstalledVersion(spec.id().toString(), ProgramVersions.of(spec.id().toString()));
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Free weight in mB-equivalents available on a system disk for user files: the disk capacity
      * minus the stored items, the existing files, and the installed OS footprint.
      */

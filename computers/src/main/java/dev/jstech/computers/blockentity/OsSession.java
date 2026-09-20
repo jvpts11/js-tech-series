@@ -264,6 +264,11 @@ final class OsSession {
         return OsDisks.installedDesktopId(installedOs(), this.machine.console());
     }
 
+    /** The operating space this computer draws with, or null when it has none and comes up at its prompt. */
+    ResourceLocation installedSpaceId() {
+        return OsDisks.installedSpaceId(installedOs(), this.machine.console());
+    }
+
     boolean hasOs() {
         return !systemDisk().isEmpty();
     }
@@ -368,6 +373,18 @@ final class OsSession {
         final boolean installed = OsDisks.installOs(
                 this.machine.layout().diskCount(), this::diskInSlot, this::putDisk, osId, preferredSlot);
         if (installed) {
+            /*
+             * A network system arrives with its interface on, which is the one install that also puts a
+             * package down. Here rather than in whichever screen asked, because every path into a machine's
+             * disks comes through this one.
+             *
+             * After the write and not before: the console is read off whichever disk stack is current, and
+             * the install has just replaced that stack. Asking for it now reads the new one; setChanged then
+             * writes what was added back onto it, which the disk's own write has already been and gone for.
+             */
+            if (OsDisks.installBundledSpace(OsRegistry.getOs(osId), this.machine.console())) {
+                this.machine.setChanged();
+            }
             tellClients();
         }
         return installed;

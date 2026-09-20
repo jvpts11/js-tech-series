@@ -11,6 +11,7 @@ import dev.jstech.computers.hardware.ArchitectureSpec;
 import dev.jstech.computers.hardware.Architectures;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.KernelDef;
+import dev.jstech.computers.os.OperatingSpaceDef;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
@@ -76,5 +77,16 @@ public final class JsComputersApi {
     /** Adds a desktop, which a Linux computer installs as a package or an operating system bundles. */
     public static void registerDesktop(final DesktopEnvironmentDef desktop) {
         OsRegistry.registerDesktop(desktop);
+    }
+
+    /**
+     * Adds an operating space, which a network system installs as a package.
+     *
+     * <p>This half names it. The screen that draws it is registered on the client, where there is a screen
+     * to register, so an add-on shipping a space calls both: this one from its common setup and the other
+     * from its client setup.
+     */
+    public static void registerSpace(final OperatingSpaceDef space) {
+        OsRegistry.registerSpace(space);
     }
 }

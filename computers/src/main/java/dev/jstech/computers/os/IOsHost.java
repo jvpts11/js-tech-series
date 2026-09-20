@@ -218,6 +218,16 @@ public interface IOsHost extends IPeripheralOwner {
     ResourceLocation installedDesktopId();
 
     /**
+     * The operating space a network machine draws with, or null when it has none.
+     *
+     * <p>What a desktop environment is to a Linux, for the system that has no desktop: null here is a machine
+     * that comes up at its prompt and nothing else, which is a network system whose space has been taken off
+     * as much as it is every machine that never had one.
+     */
+    @Nullable
+    ResourceLocation installedSpaceId();
+
+    /**
      * Whether this machine still has something to run: the installed system, or a live session whose medium
      * it can still see.
      *

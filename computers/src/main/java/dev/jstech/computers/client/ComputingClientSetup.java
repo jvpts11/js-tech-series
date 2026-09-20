@@ -17,11 +17,15 @@ import dev.jstech.computers.block.IInstallerScreenOpener;
 import dev.jstech.computers.block.IKvmScreenOpener;
 import dev.jstech.computers.block.IPostScreenOpener;
 import dev.jstech.computers.block.ISystemBootScreenOpener;
+import dev.jstech.computers.api.client.IOperatingSpaceScreen;
+import dev.jstech.computers.api.client.OperatingSpaceScreens;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.menu.CommandPromptMenu;
+import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -36,6 +40,10 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
  */
 @EventBusSubscriber(modid = JsComputers.MODID, value = Dist.CLIENT)
 public final class ComputingClientSetup {
+
+    /** The operating space the mod itself brings, which is what MC-NET ships with. */
+    private static final ResourceLocation INTERACTOR =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "interactor");
 
     private ComputingClientSetup() {
     }
@@ -119,10 +127,24 @@ public final class ComputingClientSetup {
                  final Component title) -> new CommandPromptScreen<>(menu, inv, title));
         event.register(ComputingModule.DOS_TERMINAL_MENU.get(), DosTerminalScreen::new);
         event.register(ComputingModule.LINUX_TTY_MENU.get(), LinuxTtyScreen::new);
+        event.register(ComputingModule.NET_TERMINAL_MENU.get(), NetTerminalScreen::new);
         event.register(ComputingModule.SERVER_RACK_MENU.get(), ServerRackScreen::new);
         event.register(ComputingModule.SERVER_ROUTER_MENU.get(), ServerRouterScreen::new);
         event.register(ComputingModule.SERVER_ASSEMBLY_MENU.get(), ServerAssemblyScreen::new);
-        event.register(ComputingModule.COMPUTER_TERMINAL_MENU.get(), ComputerTerminalScreen::new);
+        /*
+         * The one place an operating space is chosen. The mod's own is registered through the same door an
+         * addon uses, so it is the API's first client rather than a special case behind it; a machine whose
+         * space nobody draws falls back to the Interactor, never to a blank screen.
+         */
+        OperatingSpaceScreens.register(INTERACTOR, ComputerTerminalScreen::new);
+        event.register(ComputingModule.COMPUTER_TERMINAL_MENU.get(),
+                (final ComputerTerminalMenu menu,
+                 final Inventory inv,
+                 final Component title) -> {
+                    final IOperatingSpaceScreen space = OperatingSpaceScreens.get(menu.spaceId());
+                    return space != null ? space.open(menu, inv, title)
+                            : new ComputerTerminalScreen(menu, inv, title);
+                });
         event.register(ComputingModule.EXPORT_BUS_MENU.get(), ExportBusScreen::new);
         event.register(ComputingModule.IMPORT_BUS_MENU.get(), ImportBusScreen::new);
         event.register(ComputingModule.CRAFTING_SWITCH_MENU.get(), CraftingSwitchScreen::new);

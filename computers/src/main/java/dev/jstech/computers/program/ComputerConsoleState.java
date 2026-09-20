@@ -8,6 +8,7 @@
 package dev.jstech.computers.program;
 
 import dev.jstech.computers.gui.CdeStyle;
+import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.SetupJob;
 import dev.jstech.computers.program.install.LiveInstallState;
@@ -132,11 +133,18 @@ public final class ComputerConsoleState {
         }
     }
 
-    /** Every installed package whose recorded version is not {@code current}. */
-    public List<String> outdatedPackages(final String current) {
+    /**
+     * Every installed package behind the version this build ships for it.
+     *
+     * <p>Each package against its own version, which is what a package manager reconciles: a version is part
+     * of a program's face, so an update brings each one up to what this build of it is, not to a single
+     * number shared by all of them. It used to take one version to hold every package to, which read as
+     * "everything is outdated" the moment a machine carried a package installed at its own version.
+     */
+    public List<String> outdatedPackages() {
         final List<String> out = new ArrayList<>();
         for (final String id : installed) {
-            if (!current.equals(installedVersions.get(id))) {
+            if (!ProgramVersions.of(id).equals(installedVersions.get(id))) {
                 out.add(id);
             }
         }

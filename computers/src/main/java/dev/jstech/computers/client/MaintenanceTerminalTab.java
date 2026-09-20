@@ -38,7 +38,7 @@ final class MaintenanceTerminalTab extends AbstractTerminalTab {
     @Override
     public void renderTabBg(final GuiGraphics g, final int x, final int y,
                             final int cx, final int cy, final int cw,
-                            final int mouseX, final int mouseY) {
+                            final int mouseX, final int mouseY, final float partialTick) {
         final int tileW = (cw - 4) / 2;
         for (int r = 0; r < 2; r++) {
             final int ty = cy + (r == 0 ? MNT_TILE_ROW1_Y : MNT_TILE_ROW2_Y);

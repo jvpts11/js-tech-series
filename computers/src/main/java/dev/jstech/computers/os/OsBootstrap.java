@@ -46,6 +46,7 @@ public final class OsBootstrap {
         registerKernels();
         registerOses();
         registerDesktops();
+        registerSpaces();
         registerPrograms();
     }
 
@@ -261,8 +262,37 @@ public final class OsBootstrap {
             JsComputersApi.registerDesktop(desktop);
         }
     }
+
+    /**
+     * The built-in operating spaces: the one MC-NET ships with, and the only one the mod has.
+     *
+     * <p>Its name is the Network Interactor's, because it is the same thing that runs as a window on a desktop
+     * and at the prompt: one way of working a network, drawn wherever the machine can draw it.
+     */
+    private static final List<OperatingSpaceDef> BUILTIN_SPACES = List.of(
+            new OperatingSpaceDef(rl("interactor"), "Interactor", SoftwareHouse.NOUVELL)
+    );
+
+    /** The built-in operating spaces, so tooling reads them from one source. */
+    public static List<OperatingSpaceDef> builtinSpaces() {
+        return BUILTIN_SPACES;
+    }
+
+    private static void registerSpaces() {
+        for (final OperatingSpaceDef space : BUILTIN_SPACES) {
+            JsComputersApi.registerSpace(space);
+        }
+    }
+
+    /** Where an operating space runs: on a network system, which is the only kind that has one. */
+    private static final Set<Platform> NET_ONLY = Set.of(Platform.MC_NET);
+
     /* What runs on every system, at a terminal as well as on a desktop. */
     private static final Set<Platform> ALL_PLATFORMS = Set.of(Platform.MC_DOS, Platform.MC_NET, Platform.FRAMES,
+            Platform.LINUX, Platform.FREEBSD, Platform.UNIX);
+
+    /** Every system whose prompt is a thing that can be opened, which is every one but the network's. */
+    private static final Set<Platform> PROMPT_PLATFORMS = Set.of(Platform.MC_DOS, Platform.FRAMES,
             Platform.LINUX, Platform.FREEBSD, Platform.UNIX);
 
     /**
@@ -303,10 +333,12 @@ public final class OsBootstrap {
             ProgramSpec.of(rl("files"), "files", "Files", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),
             ProgramSpec.of(rl("editor"), "editor", "Editor", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),
             /*
-             * The Command Prompt ships with every computer (terminal on MC-DOS, shell app on Frames), so it is
-             * allowed on every platform, matching its prior behaviour of no gating at all.
+             * The Command Prompt ships with every computer that has somewhere to put it: a terminal on MC-DOS,
+             * a window on a desktop. Not on a network system, whose interface is the whole screen and whose
+             * prompt is a heading inside it: a window opened there would be the machine drawing a window onto
+             * itself, which is the one thing that interface does not do.
              */
-            ProgramSpec.of(rl("command_prompt"), "cmd", "Command Prompt", true, ALL_PLATFORMS, 0, ProgramKind.APP, 0, HostScope.ANY),
+            ProgramSpec.of(rl("command_prompt"), "cmd", "Command Prompt", true, PROMPT_PLATFORMS, 0, ProgramKind.APP, 0, HostScope.ANY),
             ProgramSpec.of(rl("system_monitor"), "sysmon", "System Monitor", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),
             ProgramSpec.of(rl("calculator"), "calc", "Calculator", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),
             // The Network Manager is pre-installed but exclusive to the Mainframe, and needs Frames XP or newer.
@@ -471,7 +503,16 @@ public final class OsBootstrap {
              * a Linux distribution from the Mirror by its own package manager, as one still can.
              */
             ProgramSpec.of(rl("cde"), "cde", "CDE", false, CDE_SYSTEMS, 32, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
-                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.OPEN_DESK_CONSORTIUM).withRam(16)
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.OPEN_DESK_CONSORTIUM).withRam(16),
+            /*
+             * The operating space MC-NET ships with, and what makes the machine more than a prompt. It goes on
+             * with the system rather than being bought from the Mirror, but it is a package like any other, so
+             * a player who wants nothing but the prompt takes it off and a machine that has lost it puts it
+             * back. Two megabytes and a Vintage minimum, because the system it belongs to is a Vintage system.
+             */
+            ProgramSpec.of(rl("interactor"), "interactor", "Interactor", false, NET_ONLY, 2,
+                            ProgramKind.OPERATING_SPACE, 0, HostScope.ANY)
+                    .withMinEra(VINTAGE).withEra(VINTAGE).withHouse(SoftwareHouse.NOUVELL).withRam(1)
     );
 
     /** The built-in program descriptors, so datagen (lang, install media) reads them from one source. */

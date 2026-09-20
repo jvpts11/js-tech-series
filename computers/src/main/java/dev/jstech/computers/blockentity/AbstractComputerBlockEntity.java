@@ -716,6 +716,41 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return attachment.attached();
     }
 
+    /**
+     * What the network this machine is on is holding, and how much room it has for more.
+     *
+     * <p>Asked of the machine that orchestrates that network, because the index of what is where is kept
+     * there and nowhere else. Every machine used to answer nothing at all, the orchestrator excepted, so a
+     * terminal on a personal computer said the network held nothing while showing what it held.
+     *
+     * <p>No {@code @Override} because the terminal host interface is implemented by the machines below this
+     * class rather than by this one; a method inherited from here answers it for each of them.
+     */
+    public long networkStorageUsed() {
+        final MainframeBlockEntity orchestrator = networkOrchestrator();
+        return orchestrator == null ? 0L : orchestrator.networkStorageUsed();
+    }
+
+    public long networkStorageTotal() {
+        if (networkUuid() == null || !(level instanceof ServerLevel serverLevel)) {
+            return 0L;
+        }
+        // In items as the racks registered them: what a megabyte holds differs by era, an item does not.
+        return NetworkSystem.get(serverLevel).totalStorageItemsOf(networkUuid());
+    }
+
+    /** The machine that orchestrates this one's network, or null when it is on none or none is running. */
+    @Nullable
+    private MainframeBlockEntity networkOrchestrator() {
+        if (networkUuid() == null || !(level instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+        return NetworkSystem.get(serverLevel).mainframePositionOf(networkUuid())
+                .map(pos -> serverLevel.getBlockEntity(BlockPos.of(pos))
+                        instanceof MainframeBlockEntity mainframe ? mainframe : null)
+                .orElse(null);
+    }
+
     /** Where this computer stands on the data network, for a Mainframe, which owns its network itself. */
     protected NetworkAttachment attachment() {
         return attachment;
@@ -773,6 +808,12 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
     public ResourceLocation installedDesktopId() {
         return session.installedDesktopId();
+    }
+
+    /** The operating space this computer draws with, or null when it comes up at its prompt and nothing else. */
+    @Override
+    public ResourceLocation installedSpaceId() {
+        return session.installedSpaceId();
     }
 
     public boolean hasOs() {

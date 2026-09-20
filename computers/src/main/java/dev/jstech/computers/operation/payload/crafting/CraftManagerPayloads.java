@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload.crafting;
 
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.client.ComputerTerminalScreen;
 import dev.jstech.computers.client.os.CraftingManagerApp;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.NetworkRecipe;
@@ -120,9 +121,14 @@ public final class CraftManagerPayloads {
         PacketDistributor.sendToPlayer(player, buildCraftManagerState(cc, level));
     }
 
-    /** Routes the Crafting Manager state payload to the open {@link CraftingManagerApp}. */
+    /**
+     * Routes the Crafting Manager state to whichever view asked for it: the desktop program, or the
+     * Patterns heading of a network machine's space, which does the same work without a window.
+     */
     private static void handleCraftManagerState(final CraftManagerStatePayload payload, final Player player) {
-        CraftingManagerApp.accept(payload);
+        if (!ComputerTerminalScreen.acceptCraftManager(payload)) {
+            CraftingManagerApp.accept(payload);
+        }
     }
 
     /**

@@ -623,12 +623,7 @@ public final class PackageService {
          * brings up. The program itself always runs the code this build ships, so an update reconciles
          * the record rather than moving files.
          */
-        final List<String> outdated = new ArrayList<>();
-        for (final String id : console.installed()) {
-            if (!ProgramVersions.of(id).equals(console.installedVersion(id))) {
-                outdated.add(id);
-            }
-        }
+        final List<String> outdated = console.outdatedPackages();
         if (outdated.isEmpty()) {
             return ICliComputer.OpResult.ok("All packages are up to date.");
         }

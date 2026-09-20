@@ -629,23 +629,27 @@ public final class RackUnitGameTests {
         final var mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    final var cli = new dev.jstech.computers.program.ServerCliComputer(
-                            mainframe, helper.getLevel());
                     final var console = mainframe.console();
-                    final String version = dev.jstech.computers.program
+                    final String build = dev.jstech.computers.program
                             .ServerCliComputer.modVersion();
+                    /*
+                     * A package is held to its own version and not to the mod's build, which is what an
+                     * update reconciles: the machine already carries the interface its system shipped with,
+                     * at that interface's own version, and holding it to a build number would call it
+                     * outdated for ever.
+                     */
+                    final String own = dev.jstech.computers.os.ProgramVersions.of("jsc:test_package");
 
-                    // Nothing to reconcile on a machine with no packages.
                     console.install("jsc:test_package");
                     helper.assertTrue(console.installedVersion("jsc:test_package").isEmpty(),
                             "a package installed outside the manager carries no version yet");
-                    helper.assertTrue(console.outdatedPackages(version).contains("jsc:test_package"),
+                    helper.assertTrue(console.outdatedPackages().contains("jsc:test_package"),
                             "an unversioned package reads as outdated");
 
-                    console.setInstalledVersion("jsc:test_package", version);
-                    helper.assertTrue(console.outdatedPackages(version).isEmpty(),
-                            "a package at the current build is up to date");
-                    helper.assertTrue(!version.isEmpty(), "the current build has a version string");
+                    console.setInstalledVersion("jsc:test_package", own);
+                    helper.assertTrue(console.outdatedPackages().isEmpty(),
+                            "every package at its own version is up to date; got " + console.outdatedPackages());
+                    helper.assertTrue(!build.isEmpty(), "the current build has a version string");
                 })
                 .thenSucceed();
     }

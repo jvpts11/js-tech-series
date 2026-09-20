@@ -1076,9 +1076,13 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             key = e.key();
         }
         final boolean chosen = selected.contains(key);
-        // What sits in front of the model rides at the count's depth, like the vanilla count does.
+        /*
+         * What sits in front of the model rides at the count's depth. Flat, though: the count here is a
+         * label and a fill rather than the vanilla decoration, so it takes the flat offset. With the other
+         * one it landed two hundred behind the window, which is why a network item showed no total at all.
+         */
         g.pose().pushPose();
-        g.pose().translate(0.0F, 0.0F, DesktopZ.countOffset());
+        g.pose().translate(0.0F, 0.0F, DesktopZ.flatCountOffset());
         if (count != null) {
             final int w = Texts.smallWidth(ctx.font(), count);
             final int tx = cx + size - w - 1;

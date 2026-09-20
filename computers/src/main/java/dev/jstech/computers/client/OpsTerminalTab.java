@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import java.util.ArrayList;
@@ -17,8 +18,11 @@ import java.util.List;
 /** The Operations tab: a scrollable log of recent network operations with a provenance detail pane. */
 final class OpsTerminalTab extends AbstractTerminalTab {
 
-    // Mirror of ComputerTerminalScreen.OPS_ROWS; update together if layout changes.
-    private static final int OPS_ROWS = 4;
+    /** The one number the drawing and the screen's hit test both read. */
+    private static final int OPS_ROWS = ComputerTerminalLayout.OPS_ROWS;
+
+    /** Where the detail of the selected operation starts, under the last row of the list. */
+    private static final int DETAIL_Y = 32 + OPS_ROWS * 12 + 8;
 
     OpsTerminalTab(final ComputerTerminalScreen screen, final ComputerTerminalMenu menu) {
         super(screen, menu);
@@ -35,7 +39,7 @@ final class OpsTerminalTab extends AbstractTerminalTab {
     @Override
     public void renderTabBg(final GuiGraphics g, final int x, final int y,
                             final int cx, final int cy, final int cw,
-                            final int mouseX, final int mouseY) {
+                            final int mouseX, final int mouseY, final float partialTick) {
         final List<OperationRecord> ops = ops();
         final int start = clampOpScroll(ops.size());
         for (int i = 0; i < OPS_ROWS && start + i < ops.size(); i++) {
@@ -55,10 +59,10 @@ final class OpsTerminalTab extends AbstractTerminalTab {
             g.fill(cx + cw - 2, trackTop, cx + cw, trackTop + trackH, LINE());
             g.fill(cx + cw - 2, thumbY, cx + cw, thumbY + thumbH, ACCENT());
         }
-        g.fill(cx, cy + 90, cx + cw, cy + 140, PANEL());
-        g.fill(cx, cy + 90, cx + cw, cy + 91, LINE());
+        g.fill(cx, cy + DETAIL_Y, cx + cw, cy + DETAIL_Y + 50, PANEL());
+        g.fill(cx, cy + DETAIL_Y, cx + cw, cy + DETAIL_Y + 1, LINE());
         if (screen.selectedOp >= 0 && screen.selectedOp < ops.size()) {
-            drawDataIcon(g, ops.get(screen.selectedOp).key(), -1L, cx + 5, cy + 96);
+            drawDataIcon(g, ops.get(screen.selectedOp).key(), -1L, cx + 5, cy + DETAIL_Y + 6);
         }
     }
 
@@ -80,28 +84,29 @@ final class OpsTerminalTab extends AbstractTerminalTab {
         }
         if (screen.selectedOp >= 0 && screen.selectedOp < ops.size()) {
             final OperationRecord op = ops.get(screen.selectedOp);
-            g.drawString(font(), op.name().getString(), cx + 24, cy + 96, TEXT(), false);
+            g.drawString(font(), op.name().getString(), cx + 24, cy + DETAIL_Y + 6, TEXT(), false);
             /*
              * Show "all" for an uncapped request, so a Long.MAX demand never renders as an absurd,
              * overflowing "9223372036854.8M" total.
              */
             final String reqLabel = op.requested() >= 1_000_000_000L ? "all" : fmt(op.requested());
             final String sub = fmt(op.moved()) + " of " + reqLabel + "  " + statusLabel(op.status());
-            g.drawString(font(), sub, cx + 24, cy + 106, statusColor(op.status()), false);
+            g.drawString(font(), sub, cx + 24, cy + DETAIL_Y + 16, statusColor(op.status()), false);
             /*
              * A craft carries its stages as sub-operations; show those (what it is made of, how far each is)
              * rather than provenance rows, which is what makes a multi-stage craft legible here.
              */
             if (!op.subs().isEmpty()) {
-                subRows(g, cx, cy + 118, op.subs());
+                subRows(g, cx, cy + DETAIL_Y + 28, op.subs());
             } else {
                 final List<OperationRecord.MoveRow> mv = op.moves();
                 if (!mv.isEmpty()) {
-                    moveRow(g, cx, cy + 118, mv.get(0));
+                    moveRow(g, cx, cy + DETAIL_Y + 28, mv.get(0));
                     if (mv.size() == 2) {
-                        moveRow(g, cx, cy + 128, mv.get(1));
+                        moveRow(g, cx, cy + DETAIL_Y + 38, mv.get(1));
                     } else if (mv.size() > 2) {
-                        g.drawString(font(), "+" + (mv.size() - 1) + " more sources", cx + 6, cy + 128, DIM(), false);
+                        g.drawString(font(), "+" + (mv.size() - 1) + " more sources",
+                                cx + 6, cy + DETAIL_Y + 38, DIM(), false);
                     }
                 }
             }

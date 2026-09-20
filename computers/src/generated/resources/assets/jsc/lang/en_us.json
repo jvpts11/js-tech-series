@@ -252,6 +252,8 @@
   "program.jsc.help_viewer": "Help Viewer",
   "program.jsc.integrity_monitor": "Integrity Monitor",
   "program.jsc.integrity_monitor.desc": "Re-reads this bay after a hot swap, so the network index never has to doubt it.",
+  "program.jsc.interactor": "Interactor",
+  "program.jsc.interactor.desc": "The operating space a network system draws: its store, its work and its prompt, on the whole screen. Take it off and the machine is a prompt and nothing else.",
   "program.jsc.iqlengine": "IQL Engine",
   "program.jsc.iqlengine.desc": "The service that compiles and runs IQL on the Mainframe. The NMS is its front end.",
   "program.jsc.kde_plasma": "KDE Plasma",

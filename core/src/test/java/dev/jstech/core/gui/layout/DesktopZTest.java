@@ -172,6 +172,20 @@ class DesktopZTest {
     }
 
     @Test
+    void flatCountOffset_landsInFrontOfTheItemAndNotBehindTheWindow() {
+        /*
+         * A label drawn where a count goes lifts nothing by itself, so it takes the band directly. Handed
+         * the offset meant for renderItemDecorations it would sit DECORATION_LIFT behind the window, which
+         * is where a network item's total went and why nobody ever saw one.
+         */
+        assertEquals(DesktopZ.BAND_COUNT, DesktopZ.flatCountOffset());
+        assertTrue(DesktopZ.flatCountOffset() > DesktopZ.BAND_ITEM,
+                "a flat count must sit in front of the model it belongs to");
+        assertTrue(DesktopZ.flatCountOffset() > 0,
+                "a flat count must sit in front of the window that drew it, never behind it");
+    }
+
+    @Test
     void inventoryItems_stayBehindTheTaskbarAndTooltips() {
         final int top = DesktopZ.INVENTORY + DesktopZ.BAND_COUNT;
         assertTrue(top < DesktopZ.TASKBAR, "inventory items must not poke through the taskbar");

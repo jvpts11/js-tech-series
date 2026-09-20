@@ -70,6 +70,9 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
     /** What a raw console is written on: the whole glass, with no program window around it. */
     private static final int BARE_GLASS = 0xFF000000;
+
+    /** Where a network system stands before it has said so itself: at the machine, since it has no path. */
+    private static final String NET_PROMPT = "SYSTEM:>";
     private static final int MAX_SCROLLBACK = 512;
 
     /**
@@ -174,9 +177,17 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     }
 
     /**
+     * Whether this terminal is a network system's, which greets in its own house's voice and stands at a
+     * prompt that names the machine rather than a place on a disk.
+     */
+    protected boolean netStyle() {
+        return false;
+    }
+
+    /**
      * A bare terminal draws no window chrome, just the glass and the text, the way a real console
-     * fills its display. The MC-DOS terminal and the Linux TTY override this; the MC-NET Command
-     * Prompt keeps its program window.
+     * fills its display. Every console the mod opens is one: a machine at its prompt is the prompt,
+     * and a window around it would be a window drawn by nothing.
      */
     protected boolean bareTerminal() {
         return false;
@@ -235,6 +246,18 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
                 push(Branding.systemCopyright(
                         menu.osLabel(), screenEra()), CliStyle.DIM);
                 push("640K base memory", CliStyle.DIM);
+                push("", CliStyle.PLAIN);
+            } else if (netStyle()) {
+                /*
+                 * A network system with no space on it is a prompt and nothing else, so the first thing it
+                 * says is what it is and how to give it a face again. It is the same relationship a Linux
+                 * has with its desktop, and the same answer: the interface is a package, so fetch one.
+                 */
+                push(menu.osLabel() + " 1.0", CliStyle.ACCENT);
+                push(Branding.systemCopyright(menu.osLabel(), screenEra()), CliStyle.DIM);
+                push("", CliStyle.PLAIN);
+                push("No operating space is installed.", CliStyle.WARN);
+                push("netgetter install interactor  puts one on.", CliStyle.DIM);
                 push("", CliStyle.PLAIN);
             } else {
                 push(Branding.houseOf(menu.osLabel()).name()
@@ -912,13 +935,26 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         if (keyboard.busy()) {
             return CliLine.plain("");
         }
-        // The Command Prompt program keeps a prompt of its own, whatever shell is behind it.
-        if (promptLine != null && (menu.posixShell() || dosStyle())) {
+        // A console of a machine's own shows that machine's prompt; anything else shows the mod's.
+        if (promptLine != null && (menu.posixShell() || dosStyle() || netStyle())) {
             return promptLine;
         }
-        final String words = menu.posixShell()
-                ? (dosPrompt.equals("C:\\>") ? initialPosixPrompt() : dosPrompt)
-                : dosStyle() ? dosPrompt : "jsc>";
+        /*
+         * The server has not said yet what the prompt is, which is true for the tick between the window
+         * opening and the machine answering. Each family stands at its own until then rather than at a
+         * drive letter no flat disk has.
+         */
+        final boolean unsaid = dosPrompt.equals("C:\\>");
+        final String words;
+        if (menu.posixShell()) {
+            words = unsaid ? initialPosixPrompt() : dosPrompt;
+        } else if (dosStyle()) {
+            words = dosPrompt;
+        } else if (netStyle()) {
+            words = unsaid ? NET_PROMPT : dosPrompt;
+        } else {
+            words = "jsc>";
+        }
         return new CliLine(words, CliStyle.ACCENT);
     }
 

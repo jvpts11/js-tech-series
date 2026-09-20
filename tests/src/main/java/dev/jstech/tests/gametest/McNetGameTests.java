@@ -10,6 +10,11 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.os.FilesystemKind;
+import dev.jstech.computers.os.OperatingSpaceDef;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.ProgramKind;
+import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.SoftwareHouse;
 import dev.jstech.computers.os.boot.SystemIntegrity;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
@@ -51,6 +56,10 @@ public final class McNetGameTests {
 
     private static final ResourceLocation MC_NET =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_net");
+
+    /** The operating space this system ships with, which is what it draws the network with. */
+    private static final ResourceLocation INTERACTOR =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "interactor");
 
     /** A running machine with MC-NET on its disk. */
     private static PersonalComputerBlockEntity machine(final GameTestHelper helper) {
@@ -275,6 +284,89 @@ public final class McNetGameTests {
                             "and the player's own files are still there");
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * Installing the system puts its interface on with it, which is the one install that does.
+     *
+     * <p>Every other kind of system either bundles its interface or leaves the player to fetch one. A
+     * network system arrives with a space on and can have it taken off, so the install is what writes it.
+     */
+    @GameTest(template = ARENA)
+    public static void installing_putsTheSpaceOnWithTheSystem(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertTrue(INTERACTOR.equals(computer.installedSpaceId()),
+                            "the machine draws the space it shipped with; got " + computer.installedSpaceId());
+                    helper.assertTrue(computer.console() != null
+                                    && computer.console().isInstalled(INTERACTOR.toString()),
+                            "and it is a package on the machine, not a thing built into the system");
+                })
+                .thenSucceed();
+    }
+
+    /** Take the space off and the machine is a prompt, exactly as a Linux with no desktop is a TTY. */
+    @GameTest(template = ARENA)
+    public static void uninstallingTheSpace_leavesAPromptAndNothingElse(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertTrue(computer.console().uninstall(INTERACTOR.toString()),
+                            "the space comes off like any other package");
+                    helper.assertTrue(computer.installedSpaceId() == null,
+                            "and the machine has nothing left to draw with; got "
+                                    + computer.installedSpaceId());
+                    helper.assertTrue(computer.installedOsId() != null,
+                            "the system itself is untouched, which is what makes it a prompt and not a brick");
+                })
+                .thenSucceed();
+    }
+
+    /** A space somebody chose is not quietly swapped for ours when the system is installed again. */
+    @GameTest(template = ARENA)
+    public static void installingAgain_keepsTheSpaceAlreadyOnTheMachine(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    computer.console().uninstall(INTERACTOR.toString());
+                    computer.installOs(MC_NET);
+                    helper.assertTrue(INTERACTOR.equals(computer.installedSpaceId()),
+                            "installing over a machine with none puts the shipped one back");
+
+                    computer.installOs(MC_NET);
+                    helper.assertTrue(computer.console().installed().stream()
+                                    .filter(id -> id.equals(INTERACTOR.toString())).count() == 1,
+                            "and installing again over a machine that has one changes nothing");
+                })
+                .thenSucceed();
+    }
+
+    /** A machine that is not a network machine has no space, whatever is installed on it. */
+    @GameTest(template = ARENA)
+    public static void aDesktopMachine_hasNoOperatingSpace(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = TestWorldBuilder.forGameTest(helper)
+                .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
+        computer.installOs(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_dos"));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> helper.assertTrue(computer.installedSpaceId() == null,
+                        "a space is what a network system draws with, and nothing else has one"))
+                .thenSucceed();
+    }
+
+    /** The space is registered under its own name, which is how an addon's is found beside it. */
+    @GameTest(template = ARENA)
+    public static void theSpace_isRegisteredAsOne(final GameTestHelper helper) {
+        final OperatingSpaceDef space = OsRegistry.getSpace(INTERACTOR);
+        helper.assertTrue(space != null, "the shipped space is in the register");
+        helper.assertTrue(space.house() == SoftwareHouse.NOUVELL,
+                "credited to the house that makes the system; got " + space.house());
+        final ProgramSpec spec = OsRegistry.getProgram(INTERACTOR);
+        helper.assertTrue(spec != null && spec.kind() == ProgramKind.OPERATING_SPACE,
+                "and it is a package of that kind, which is what makes it installable");
+        helper.assertTrue(spec.installable(),
+                "an addon's space replaces it, so this one has to be removable");
+        helper.succeed();
     }
 
     private static List<String> shell(final GameTestHelper helper, final PersonalComputerBlockEntity on,

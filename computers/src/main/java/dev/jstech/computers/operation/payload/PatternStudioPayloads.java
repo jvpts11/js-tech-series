@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
+import dev.jstech.computers.client.ComputerTerminalScreen;
 import dev.jstech.computers.client.os.PatternStudioApp;
 import dev.jstech.computers.crafting.AnyTagResolver;
 import dev.jstech.computers.crafting.CraftingPattern;
@@ -81,8 +82,15 @@ public final class PatternStudioPayloads {
         ComputerAccess.accept(registrar, PatternStudioEditPayload.TYPE, PatternStudioEditPayload.STREAM_CODEC,
                 ComputerAccess.machine(PatternStudioEditPayload::host), PatternStudioPayloads::handleEdit);
         registrar.playToClient(PatternStudioStatePayload.TYPE, PatternStudioStatePayload.STREAM_CODEC,
-                ClientPayloadHandlers.onMainThread((payload, player) ->
-                        PatternStudioApp.accept(payload)));
+                ClientPayloadHandlers.onMainThread((payload, player) -> {
+                    /*
+                     * The Patterns heading of a network machine's space does the Studio's work without the
+                     * Studio's window, so it asks the same question and takes the same answer.
+                     */
+                    if (!ComputerTerminalScreen.acceptPatternStudio(payload)) {
+                        PatternStudioApp.accept(payload);
+                    }
+                }));
     }
 
     // resolution

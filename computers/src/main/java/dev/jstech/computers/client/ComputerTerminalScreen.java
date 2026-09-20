@@ -11,30 +11,20 @@ import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
-import dev.jstech.computers.operation.payload.CraftPlanRequestPayload;
-import dev.jstech.computers.operation.payload.CraftSubmitPayload;
+import dev.jstech.computers.operation.payload.CraftManagerStatePayload;
+import dev.jstech.computers.operation.payload.PatternStudioStatePayload;
 import dev.jstech.computers.operation.payload.LocalStorageSnapshotPayload;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
-import dev.jstech.computers.operation.payload.NetworkServersPayload;
-import dev.jstech.computers.operation.payload.OpenProgramPayload;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.RequestServerBreakdownPayload;
-import dev.jstech.computers.operation.payload.ServerBreakdownPayload;
 import dev.jstech.computers.operation.payload.TerminalDiskPrivacyPayload;
-import dev.jstech.computers.operation.payload.TerminalDropPayload;
 import dev.jstech.computers.operation.payload.TerminalInsertPayload;
 import dev.jstech.computers.operation.payload.TerminalLocalDepositPayload;
-import dev.jstech.computers.operation.payload.TerminalLocalUploadPayload;
-import dev.jstech.computers.operation.payload.TerminalLocalWithdrawPayload;
 import dev.jstech.computers.operation.payload.TerminalMaintenancePayload;
-import dev.jstech.computers.operation.payload.TerminalSelectPayload;
-import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
-import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.tier.HardwareEra;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
+import net.minecraft.resources.ResourceLocation;
 import java.util.Optional;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -49,10 +39,8 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.minecraft.client.gui.Font;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -115,33 +103,41 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     private static final int RAIL_W = ComputerTerminalLayout.RAIL_W;
     private static final int TAB_Y0 = ComputerTerminalLayout.TAB_Y0;
     private static final int TAB_H = ComputerTerminalLayout.TAB_H;
-    private static final int CONTENT_X = 63;
+    private static final int BAR_H = ComputerTerminalLayout.BAR_H;
+    private static final int CONTENT_X = ComputerTerminalLayout.CONTENT_X;
+    private static final int CONTENT_W = ComputerTerminalLayout.CONTENT_W;
 
     // Network item grid (a virtual grid, not real slots; rendered from the snapshot).
-    private static final int NET_X = 68;
-    private static final int NET_COLS = 9;
-    private static final int NET_ROWS = 4;
-    private static final int NET_Y = 52;
+    private static final int NET_X = ComputerTerminalLayout.GRID_X;
+    private static final int NET_COLS = ComputerTerminalLayout.GRID_COLS;
+    private static final int NET_ROWS = ComputerTerminalLayout.GRID_ROWS;
+    private static final int NET_Y = ComputerTerminalLayout.GRID_Y;
 
-    // Toolbar above the grid: a search field on the left, a sort toggle on the right.
-    private static final int TOOLBAR_Y = 36;
-    private static final int TOOLBAR_H = 12;
-    private static final int TOOLBAR_W = NET_COLS * 18 - 2;
-    private static final int SORT_W = 46;
-    private static final int SORT_X = NET_X + TOOLBAR_W - SORT_W;
-    private static final int SEARCH_W = TOOLBAR_W - SORT_W - 4;
+    // Toolbar above the grid: what is searched for, which mod it belongs to, and the order.
+    private static final int TOOLBAR_Y = ComputerTerminalLayout.TOOLBAR_Y;
+    private static final int TOOLBAR_H = ComputerTerminalLayout.TOOLBAR_H;
+    private static final int SORT_W = ComputerTerminalLayout.SORT_W;
+    private static final int SORT_X = ComputerTerminalLayout.SORT_X;
+    private static final int MOD_W = ComputerTerminalLayout.MOD_W;
+    private static final int MOD_X = ComputerTerminalLayout.MOD_X;
+    private static final int SEARCH_W = ComputerTerminalLayout.SEARCH_W;
 
     /*
-     * Deposit bar: the explicit "insert held items into the network" target, sitting
-     * just below the item grid and above the player inventory.
+     * Deposit button: the explicit "insert held items into the network" target, sitting on the rule that
+     * separates the machine's own screen from the player's own rows.
      */
-    private static final int DEPOSIT_Y = NET_Y + NET_ROWS * 18 + 2;
-    private static final int DEPOSIT_W = NET_COLS * 18 - 2;
-    private static final int DEPOSIT_H = 14;
+    private static final int DEPOSIT_X = ComputerTerminalLayout.DEPOSIT_X;
+    private static final int DEPOSIT_Y = ComputerTerminalLayout.DEPOSIT_Y;
+    private static final int DEPOSIT_W = ComputerTerminalLayout.DEPOSIT_W;
+    private static final int DEPOSIT_H = ComputerTerminalLayout.DEPOSIT_H;
 
-    // Indexed by ComputerTerminalMenu.TAB_* id, keep in sync with those constants (Processes = 7, Console = 8).
+    /*
+     * The headings, indexed by ComputerTerminalMenu.TAB_*. They are the rail's own words rather than the
+     * mod's usual ones: "Upkeep" is what fits beside a heading list this narrow, and "Programs" is what
+     * this system calls what is running, since its own verb for it is programs rather than processes.
+     */
     private static final String[] TAB_NAMES =
-            {"Local", "Storage", "Network", "Operations", "Tasks", "Maint", "Craft", "Processes", "Console"};
+            {"Local", "Storage", "Network", "Ops", "Tasks", "Upkeep", "Craft", "Programs", "Console", "Patterns"};
 
     private int netScrollRow;
     int selectedOp;
@@ -159,27 +155,34 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     private List<NetworkItemEntry> visibleSource = List.of();
     private String visibleKey = "";
 
+    /** Which mod's items the grid is showing, or the empty string for every one of them. */
+    private String modFilter = "";
+
+    /* The two buttons at the foot of the panel beside the grid, which the panel draws and the click reads. */
+    /* Far enough under the last line of the panel that the two never come within a few pixels. */
+    static final int PANE_BTN_Y = ComputerTerminalLayout.PANE_Y + 110;
+    static final int PANE_BTN_W = 60;
+    static final int PANE_BTN_H = 12;
+    static final int PANE_GET_X = ComputerTerminalLayout.PANE_X + 6;
+    static final int PANE_CRAFT_X = ComputerTerminalLayout.PANE_X + 72;
+
+    /** The entry the panel beside the grid is describing, or null when nothing is picked out. */
+    @Nullable
+    private NetworkItemEntry selectedEntry;
+
     /*
-     * Storage tab: the public/private slider band. The Storage tab inserts a band between the header bar
-     * and the item toolbar, then shifts its toolbar/grid/deposit down by STORAGE_SHIFT so nothing
-     * overlaps. The band holds one compact track per disk (a PC has 2). For a host without a slider
-     * (a Server/Mainframe) the band shows a static "always public" badge instead of a dead control.
+     * Storage: the public/private slider band, one compact track per disk (a personal computer has two).
+     * It lives in the panel beside the grid, where the detail of whatever is selected lives on the other
+     * headings, so the grid keeps every one of its rows. For a host without a slider (a Server or a
+     * Mainframe, whose whole store is the network's) the panel says so instead of showing a dead control.
      */
-    private static final int SLIDER_TRACK0_DY = 1;        // first track top, relative to the band top
-    private static final int SLIDER_ROW_PITCH = 9;        // vertical distance between the two tracks
-    private static final int SLIDER_TRACK_H = 7;
-    private static final int SLIDER_TRACK_LX = 24;        // track left inset from the content left edge
-    private static final int SLIDER_HANDLE_W = 3;
+    private static final int SLIDER_TRACK0_DY = ComputerTerminalLayout.SLIDER_TRACK0_DY;
+    private static final int SLIDER_ROW_PITCH = ComputerTerminalLayout.SLIDER_ROW_PITCH;
+    private static final int SLIDER_TRACK_H = ComputerTerminalLayout.SLIDER_TRACK_H;
+    private static final int SLIDER_TRACK_LX = ComputerTerminalLayout.SLIDER_TRACK_LX;
+    private static final int SLIDER_HANDLE_W = ComputerTerminalLayout.SLIDER_HANDLE_W;
     // Snap step while dragging (50 per-mille = 5%); holding Shift drags at fine 1 per-mille. Tunable.
     private static final int SLIDER_STEP = 50;
-    /*
-     * Storage-tab vertical shift applied to the shared toolbar/grid/deposit so the band fits above. The
-     * shift is bounded by the inventory: DEPOSIT_Y(126) + STORAGE_SHIFT + DEPOSIT_H(14) must stay <=
-     * INV_Y(148), so 8 is the maximum and the deposit bar abuts the inventory exactly with no overlap.
-     */
-    private static final int STORAGE_SHIFT = 8;
-    // The Storage grid loses one row to the band; the Network grid keeps all four.
-    private static final int STORAGE_NET_ROWS = 3;
 
     int draggingSliderDisk = -1;            // which disk's slider is being dragged, or -1 for none
     private int focusedSliderDisk = -1;    // which disk's slider has keyboard focus, or -1 for none
@@ -187,38 +190,27 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     private final int[] sliderPreview = new int[LocalStorageSnapshotPayload.MAX_DISKS];
     private final boolean[] sliderPreviewActive = new boolean[LocalStorageSnapshotPayload.MAX_DISKS];
 
-    // Operations tab layout (content-relative).
-    private static final int OPS_ROWS = 4;
+    // Operations tab layout (content-relative); the tab and this hit test read the one number.
+    private static final int OPS_ROWS = ComputerTerminalLayout.OPS_ROWS;
 
     private static final String[] TASK_SUBTABS = {"Processes", "Hardware", "Devices"};
 
-    // Request popup state (open only while popupEntry != null).
-    private static final int POPUP_W = 204;
-    private static final int POPUP_H = 178;
-    private static final int[] STEP_AMOUNTS = {-1000, -100, -10, -1, 1, 10, 100, 1000};
-    private static final String[] STEP_LABELS = {"----", "---", "--", "-", "+", "++", "+++", "++++"};
-    private EditBox qtyBox;
-    private boolean syncingQty;
-    @Nullable
-    private NetworkItemEntry popupEntry;
-
-    // Craft popup state (open only while craftPopup != null) + catalog scroll.
-    @Nullable
-    private CraftCatalogPayload.Entry craftPopup;
-    private long craftQty = 1;
+    /** How far down the Craft heading's catalogue has been scrolled. */
     int craftScroll;
-    private int popupQty = 1;
-    private boolean popupFromStorage;
-    private final Set<String> deselectedServers = new HashSet<>();
-    private boolean advancedMode;
-    private int destServerIndex;
-    private static final int REQ_H_SIMPLE = 102;
-    private static final int REQ_H_ADVANCED = 200;
 
-    @Nullable
-    private OperationRecord popupOp;
-    private int opPopupScroll;
-    private static final int OP_POPUP_ROWS = 7;
+    /**
+     * The three questions this screen asks about a thing, each its own object.
+     *
+     * <p>The two that take a number share the field that number is typed into, because they are never up
+     * at the same time and because a screen with two of them would be a screen with two places to look.
+     */
+    private final TerminalQuantityBox qtyBox =
+            new TerminalQuantityBox(118, 14, 12, this::quantityTyped);
+    private final TerminalRequestPopup request = new TerminalRequestPopup(this, menu, qtyBox);
+    private final TerminalCraftPopup craft = new TerminalCraftPopup(this, menu, qtyBox);
+
+    /** What one Operation is made of, shown when one of them is clicked into. */
+    private final TerminalOperationPopup opPopup = new TerminalOperationPopup(this, menu);
     private static final int TASK_OP_ROWS = 4;
 
     // Maintenance tab layout (content-relative Y offsets from the content top cy).
@@ -231,23 +223,21 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     private static final int MNT_BTN_DROP_Y = 130;
     private static final int MNT_BTN_H = 15;
 
-    private boolean dropOpen;
-    private int dropScope = TerminalDropPayload.SCOPE_NETWORK;
-    private final Set<StorageKey> dropTypes = new LinkedHashSet<>();
-    private int dropServerIndex;
-    private int dropTypeScrollRow;
     String maintHint = "";
-    private static final int DROP_W = 206;
-    private static final int DROP_H = 146;
-    private static final int DROP_GRID_COLS = 9;
-    private static final int DROP_GRID_ROWS = 3;
+
+    /** The one question this screen asks that cannot be taken back, and the only modal that is its own. */
+    private final TerminalDropPopup drop = new TerminalDropPopup(this, menu);
 
     public ComputerTerminalScreen(final ComputerTerminalMenu menu, final Inventory inventory,
                                   final Component title) {
         super(menu, inventory, title);
-        this.imageWidth = 244;
-        // The Mainframe terminal is taller: its tab rail holds a 6th (Maintenance) tab.
-        this.imageHeight = 230 + menu.invDrop();
+        /*
+         * The whole monitor glass, on every machine. This used to be a window narrower than the screen it
+         * was drawn on, which grew by a band when the host was a Mainframe; the rail scrolls instead, so
+         * nothing about the host changes the size of anything.
+         */
+        this.imageWidth = ComputerTerminalLayout.WIDTH;
+        this.imageHeight = ComputerTerminalLayout.HEIGHT;
         // The terminal draws all of its own labels.
         this.titleLabelX = -10000;
         this.inventoryLabelY = -10000;
@@ -270,19 +260,28 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         addRenderableWidget(box);
         searchBox = box;
 
-        // The request popup's editable quantity field (digits only); visible only while the popup is up.
-        final EditBox qty = new EditBox(font, popupX() + 8, popupY() + 30, 118, 14, Component.literal("Qty"));
-        qty.setTextColor(theme.text());
-        qty.setMaxLength(12);
-        qty.setFilter(s -> s.isEmpty() || s.chars().allMatch(Character::isDigit));
-        qty.setResponder(this::onQtyTyped);
-        qty.visible = false;
-        qty.active = false;
-        addRenderableWidget(qty);
-        qtyBox = qty;
+        /*
+         * The field a quantity is typed into; hidden until one of the questions that takes one is up. It
+         * is made here rather than with the other fields because a screen has no font until it is laid
+         * out, and a box built with that null throws the moment anything measures a string in it.
+         */
+        qtyBox.ensure(font);
+        qtyBox.setTextColor(theme.text());
+        addRenderableWidget(qtyBox.widget());
 
         syncSearchBoxVisibility();
 
+        /*
+         * Indexed by ComputerTerminalMenu.TAB_*, so the array is in that order rather than the rail's:
+         * the rail says which headings a machine offers, this says what each one of them draws.
+         *
+         * Built once and kept through a resize, because a heading can be holding something of the
+         * machine's: the prompt's scrollback is the machine's console, and a window that changed size is
+         * no reason to lose what was said at it.
+         */
+        if (tabs != null) {
+            return;
+        }
         tabs = new ITerminalTab[]{
             new LocalTerminalTab(this, menu),
             new StorageTerminalTab(this, menu),
@@ -292,6 +291,8 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
             new MaintenanceTerminalTab(this, menu),
             new CraftTerminalTab(this, menu),
             new ProcessesTerminalTab(this, menu),
+            new ConsoleTerminalTab(this, menu),
+            new PatternsTerminalTab(this, menu),
         };
     }
 
@@ -299,98 +300,117 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         if (searchBox == null) {
             return;
         }
-        final boolean show = isGridTab() && popupEntry == null && popupOp == null && craftPopup == null;
+        final boolean show = isGridTab() && !anyQuestionOpen();
         searchBox.visible = show;
         searchBox.active = show;
-        // The Storage tab's toolbar sits below the slider band, so move the search field to match.
-        searchBox.setY(topPos + TOOLBAR_Y + 2 + gridShift());
+        searchBox.setY(topPos + TOOLBAR_Y + 2);
         if (!show) {
             searchBox.setFocused(false);
         }
-        if (qtyBox != null) {
-            final boolean p = popupEntry != null || craftPopup != null;
-            qtyBox.visible = p;
-            qtyBox.active = p;
-            if (!p) {
-                qtyBox.setFocused(false);
-            }
+        /*
+         * The quantity field belongs to whichever question is up, and the two that take one draw it in
+         * different places, so it is put where that question wants it before it is shown.
+         */
+        if (request.isOpen()) {
+            request.placeField();
+        } else if (craft.isOpen()) {
+            craft.placeField();
+        }
+        qtyBox.show(request.isOpen() || craft.isOpen());
+    }
+
+    /** Whether any of the questions this screen asks is up, which is when nothing behind it is live. */
+    private boolean anyQuestionOpen() {
+        return request.isOpen() || craft.isOpen() || opPopup.isOpen() || drop.isOpen();
+    }
+
+    /** What was typed into the quantity field goes to whichever question asked for it. */
+    private void quantityTyped(final long value) {
+        if (craft.isOpen()) {
+            craft.typed(value);
+        } else if (request.isOpen()) {
+            request.typed(value);
         }
     }
 
-    private void onQtyTyped(final String s) {
-        if (syncingQty) {
-            return;
-        }
-        if (craftPopup != null) {
-            try {
-                final long v = s.isEmpty() ? 1L : Long.parseLong(s);
-                craftQty = Math.max(1, Math.min(99_999, v));
-                requestCraftPlan();
-            } catch (final NumberFormatException ignored) {
-                // Over-long input: leave the last valid quantity in place.
-            }
-            return;
-        }
-        if (popupEntry == null) {
-            return;
-        }
-        try {
-            final long v = s.isEmpty() ? 0L : Long.parseLong(s);
-            popupQty = (int) Math.max(0L, Math.min((long) Integer.MAX_VALUE, Math.min(popupEntry.total(), v)));
-        } catch (final NumberFormatException ignored) {
-            // Over-long input: leave the last valid quantity in place.
+    /** Hands the keyboard to the quantity field, which is a thing the questions ask the screen to do. */
+    void giveKeyboardTo(final TerminalQuantityBox box) {
+        if (box.widget() != null) {
+            setFocused(box.widget());
+            box.setFocused(true);
         }
     }
 
-    private void setPopupQty(final int value) {
-        final int max = (int) Math.max(1L, Math.min((long) Integer.MAX_VALUE,
-                popupEntry == null ? 1L : popupEntry.total()));
-        popupQty = Math.max(1, Math.min(max, value));
-        if (qtyBox != null) {
-            syncingQty = true;
-            qtyBox.setValue(String.valueOf(popupQty));
-            syncingQty = false;
-        }
-    }
-
+    /**
+     * The headings this machine offers, in rail order.
+     *
+     * <p>The rail is not a fixed list. It is built from what the host is and from whether the network can
+     * craft at all: six on a personal computer with no crafting, ten on a Mainframe with it. Craft appears
+     * when the network has a Crafting Computer on it; Patterns only on a machine that can be taught a recipe
+     * itself; Tasks and Upkeep belong to the Mainframe, which is the machine that orchestrates. Console is
+     * last on every one of them, because a machine always has a prompt.
+     */
     private int[] railTabs() {
-        // The Command Prompt launcher sits at the bottom of every computer's rail.
-        final int[] base = baseRailTabs();
-        final int[] full = Arrays.copyOf(base, base.length + 1);
-        full[base.length] = ComputerTerminalMenu.TAB_CONSOLE;
-        return full;
+        final int shape = (menu.craftAvailable() ? 1 : 0)
+                | (menu.patternsAvailable() ? 2 : 0)
+                | (menu.mainframeHost() ? 4 : 0);
+        if (railCache != null && railShape == shape) {
+            return railCache;
+        }
+        final List<Integer> rail = new ArrayList<>(10);
+        rail.add(ComputerTerminalMenu.TAB_LOCAL);
+        rail.add(ComputerTerminalMenu.TAB_STORAGE);
+        rail.add(ComputerTerminalMenu.TAB_NETWORK);
+        if (menu.craftAvailable()) {
+            rail.add(ComputerTerminalMenu.TAB_CRAFT);
+        }
+        if (menu.patternsAvailable()) {
+            rail.add(ComputerTerminalMenu.TAB_PATTERNS);
+        }
+        rail.add(ComputerTerminalMenu.TAB_OPS);
+        if (menu.mainframeHost()) {
+            rail.add(ComputerTerminalMenu.TAB_TASKS);
+            rail.add(ComputerTerminalMenu.TAB_MAINTENANCE);
+        }
+        rail.add(ComputerTerminalMenu.TAB_PROCESSES);
+        rail.add(ComputerTerminalMenu.TAB_CONSOLE);
+        final int[] out = new int[rail.size()];
+        for (int i = 0; i < out.length; i++) {
+            out[i] = rail.get(i);
+        }
+        railShape = shape;
+        railCache = out;
+        return out;
     }
 
-    private int[] baseRailTabs() {
-        final boolean craft = menu.craftAvailable();
-        if (menu.mainframeHost()) {
-            return craft
-                    ? new int[]{ComputerTerminalMenu.TAB_LOCAL, ComputerTerminalMenu.TAB_STORAGE,
-                            ComputerTerminalMenu.TAB_NETWORK, ComputerTerminalMenu.TAB_CRAFT,
-                            ComputerTerminalMenu.TAB_OPS, ComputerTerminalMenu.TAB_TASKS,
-                            ComputerTerminalMenu.TAB_MAINTENANCE, ComputerTerminalMenu.TAB_PROCESSES}
-                    : new int[]{ComputerTerminalMenu.TAB_LOCAL, ComputerTerminalMenu.TAB_STORAGE,
-                            ComputerTerminalMenu.TAB_NETWORK, ComputerTerminalMenu.TAB_OPS,
-                            ComputerTerminalMenu.TAB_TASKS, ComputerTerminalMenu.TAB_MAINTENANCE,
-                            ComputerTerminalMenu.TAB_PROCESSES};
-        }
-        return craft
-                ? new int[]{ComputerTerminalMenu.TAB_LOCAL, ComputerTerminalMenu.TAB_STORAGE,
-                        ComputerTerminalMenu.TAB_NETWORK, ComputerTerminalMenu.TAB_CRAFT,
-                        ComputerTerminalMenu.TAB_OPS, ComputerTerminalMenu.TAB_PROCESSES}
-                : new int[]{ComputerTerminalMenu.TAB_LOCAL, ComputerTerminalMenu.TAB_STORAGE,
-                        ComputerTerminalMenu.TAB_NETWORK, ComputerTerminalMenu.TAB_OPS,
-                        ComputerTerminalMenu.TAB_PROCESSES};
-    }
+    /*
+     * The rail is asked for several times a frame (the drawing, the labels, the wheel, the click), and it
+     * only ever changes when the host gains or loses one of the three optional headings. Hold the answer
+     * and rebuild it when that shape changes, so a draw pass allocates nothing.
+     */
+    private int[] railCache;
+    private int railShape = -1;
 
     // Per-tab rendering delegates; instantiated in init() once menu and screen geometry are ready.
     private ITerminalTab[] tabs;
+
+    /**
+     * The heading showing, or null when there is none to show.
+     *
+     * <p>Null-safe on purpose: input and the tick reach a screen from the moment it exists, which is before
+     * the headings are built, and a heading can also be one the machine no longer offers.
+     */
+    @Nullable
+    private ITerminalTab showing() {
+        final int active = menu.activeTab();
+        return tabs != null && active >= 0 && active < tabs.length ? tabs[active] : null;
+    }
 
     // The rail now scrolls instead of shrinking, so every entry keeps its full height and its name.
     private int railScroll;
 
     private int railVisible() {
-        return ComputerTerminalLayout.visibleRows(ComputerTerminalLayout.railHeight(menu.invY()));
+        return ComputerTerminalLayout.visibleRows(ComputerTerminalLayout.railHeight());
     }
 
     private int maxRailScroll() {
@@ -398,11 +418,88 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     }
 
     private int contentW() {
-        return imageWidth - CONTENT_X - 6;
+        return CONTENT_W;
     }
 
     Font tabFont() {
         return font;
+    }
+
+    /**
+     * Offers the Crafting Manager's state to the Patterns heading, when that is what asked for it.
+     *
+     * <p>The same two messages serve the desktop programs and this heading, because it is the same work
+     * seen from a machine that draws no windows. Whichever of them is open takes the answer.
+     */
+    public static boolean acceptCraftManager(final CraftManagerStatePayload payload) {
+        return PatternsTerminalTab.accept(payload);
+    }
+
+    /** Offers the Pattern Studio's state to the Patterns heading, when that is what asked for it. */
+    public static boolean acceptPatternStudio(final PatternStudioStatePayload payload) {
+        return PatternsTerminalTab.accept(payload);
+    }
+
+    /*
+     * What the space is showing, for a test that drives it the way a player does. They answer about the
+     * drawing rather than about the menu, because a heading drawn in one row and clicked in another is the
+     * exact bug the layout model exists to prevent and a reading off the menu would never see it.
+     */
+
+    /** The heading this machine is showing, as a {@code ComputerTerminalMenu.TAB_*}. */
+    public int activeHeading() {
+        return menu.activeTab();
+    }
+
+    /** The headings this machine offers, named, in rail order. */
+    public List<String> headings() {
+        final List<String> out = new ArrayList<>();
+        for (final int tab : railTabs()) {
+            out.add(TAB_NAMES[tab]);
+        }
+        return out;
+    }
+
+    /** Where to click for a named heading, relative to the glass, or null when it is not offered. */
+    @Nullable
+    public int[] headingPoint(final String name) {
+        final List<String> rail = headings();
+        final int row = rail.indexOf(name) - railScroll;
+        if (row < 0 || row >= railVisible()) {
+            return null;
+        }
+        return new int[]{RAIL_X + RAIL_W / 2, ComputerTerminalLayout.rowY(row) + TAB_H / 2};
+    }
+
+    /** Whether the question about taking a thing out of the network is up, for a test to check. */
+    public boolean requestOpen() {
+        return request.isOpen();
+    }
+
+    /** What the prompt has printed on this machine, one line after another, for a test to read. */
+    public String consoleText() {
+        return tabs != null && tabs[ComputerTerminalMenu.TAB_CONSOLE] instanceof ConsoleTerminalTab console
+                ? console.glassText() : "";
+    }
+
+    /** Where the glass starts, for a heading that draws in world coordinates of its own. */
+    int left() {
+        return leftPos;
+    }
+
+    int top() {
+        return topPos;
+    }
+
+    /**
+     * What the machine's system calls itself, which is what its console greets a player with.
+     *
+     * <p>Sent with the window. It was read off the host's own disks on the client instead, and the client
+     * cannot read a disk it is not holding: the prompt came up on a machine that could not say what it was
+     * running, so it greeted nobody at all.
+     */
+    String systemName() {
+        return menu.systemName();
     }
 
     // Background
@@ -419,50 +516,50 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         g.fill(x - 1, y - 1, x + imageWidth + 1, y + imageHeight + 1, OUTER);
         g.fill(x, y, x + imageWidth, y + imageHeight, SCREEN);
 
+        // The status bar across the top: the same reading whatever heading is showing.
+        g.fill(x, y, x + imageWidth, y + BAR_H, RAIL);
+        g.fill(x, y + BAR_H - 1, x + imageWidth, y + BAR_H, LINE);
+
         /*
-         * Tab rail: a fixed-height, scrolling list so every entry keeps its name even when there are
-         * more tabs (plus the Command Prompt) than fit at once.
+         * The heading rail: a scrolling list of names, so every entry keeps its word even when a machine
+         * offers more headings than fit at once.
          */
-        final int railH = menu.invY() - TAB_Y0 - 2;
-        g.fill(x + RAIL_X, y + TAB_Y0, x + RAIL_X + RAIL_W, y + TAB_Y0 + railH, RAIL);
-        g.fill(x + RAIL_X + RAIL_W, y + TAB_Y0, x + RAIL_X + RAIL_W + 1, y + TAB_Y0 + railH, LINE);
+        final int railH = ComputerTerminalLayout.railHeight();
+        g.fill(x + RAIL_X, y + BAR_H, x + RAIL_X + RAIL_W, y + imageHeight, RAIL);
+        g.fill(x + RAIL_X + RAIL_W, y + BAR_H, x + RAIL_X + RAIL_W + 1, y + imageHeight, LINE);
         final int[] rail = railTabs();
-        railScroll = ComputerTerminalLayout.clampScroll(railScroll, railTabs().length, railVisible());
+        railScroll = ComputerTerminalLayout.clampScroll(railScroll, rail.length, railVisible());
         final int visible = railVisible();
         for (int row = 0; row < visible && railScroll + row < rail.length; row++) {
             final int i = railScroll + row;
             final int tab = rail[i];
             final int tx = x + RAIL_X;
             final int ty = y + TAB_Y0 + row * TAB_H;
-            final boolean on = tab == menu.activeTab();
-            if (on) {
+            if (tab == menu.activeTab()) {
                 g.fill(tx, ty, tx + RAIL_W, ty + TAB_H, TAB_ON);
                 g.fill(tx, ty, tx + 2, ty + TAB_H, ACCENT);
             }
-            icon(g, tab, tx + (RAIL_W - 16) / 2, ty + 3, on ? TAB_LABEL_ON : DIM);
         }
         // Scroll hints: a small up/down chevron when there is more rail above or below.
         if (railScroll > 0) {
-            g.fill(x + RAIL_X + RAIL_W / 2 - 2, y + TAB_Y0 + 1, x + RAIL_X + RAIL_W / 2 + 2, y + TAB_Y0 + 2, ACCENT);
+            g.fill(x + RAIL_X + RAIL_W / 2 - 2, y + TAB_Y0 - 1, x + RAIL_X + RAIL_W / 2 + 2, y + TAB_Y0, ACCENT);
         }
         if (railScroll < maxRailScroll()) {
-            final int by = y + TAB_Y0 + railH - 2;
+            final int by = y + TAB_Y0 + railH - 1;
             g.fill(x + RAIL_X + RAIL_W / 2 - 2, by, x + RAIL_X + RAIL_W / 2 + 2, by + 1, ACCENT);
         }
 
-        // Content header bar.
         final int cx = x + CONTENT_X;
-        final int cy = y + 6;
+        final int cy = y;
         final int cw = contentW();
-        g.fill(cx, cy, cx + cw, cy + 16, PANEL);
-        g.fill(cx, cy + 16, cx + cw, cy + 17, LINE);
-
-        final int activeTab = menu.activeTab();
-        if (activeTab >= 0 && activeTab < tabs.length) {
-            tabs[activeTab].renderTabBg(g, x, y, cx, cy, cw, mouseX, mouseY);
+        final ITerminalTab heading = showing();
+        if (heading != null) {
+            heading.renderTabBg(g, x, y, cx, cy, cw, mouseX, mouseY, partialTick);
         }
 
-        // Player inventory backgrounds (always visible; the Mainframe's sit lower).
+        // The rule that separates the machine's own screen from the player's own rows.
+        g.fill(x + RAIL_X + RAIL_W, y + ComputerTerminalLayout.INV_LINE_Y,
+                x + imageWidth, y + ComputerTerminalLayout.INV_LINE_Y + 1, LINE);
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 slotBg(g, x + ComputerTerminalMenu.INV_X + col * 18, y + menu.invY() + row * 18);
@@ -493,18 +590,21 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         return menu.diskPermille(disk);
     }
 
-    // Track geometry, content-relative-to-absolute (matches sliderBandBg).
+    /*
+     * Track geometry, panel-relative to absolute. The tracks live in the panel beside the grid, which is
+     * the one place on this screen where the detail of what is selected belongs, and it is where the
+     * Storage heading draws them too: one source for the drawing and for the drag.
+     */
     private int sliderTrackX() {
-        return leftPos + CONTENT_X + SLIDER_TRACK_LX;
+        return leftPos + ComputerTerminalLayout.PANE_X + SLIDER_TRACK_LX;
     }
 
     private int sliderTrackW() {
-        return contentW() - SLIDER_TRACK_LX - 2;
+        return ComputerTerminalLayout.PANE_W - SLIDER_TRACK_LX * 2;
     }
 
     private int sliderTrackY(final int disk) {
-        // cy = topPos + 6; band top = cy + 18; first track at band top + SLIDER_TRACK0_DY.
-        return topPos + 6 + 18 + SLIDER_TRACK0_DY + disk * SLIDER_ROW_PITCH;
+        return topPos + ComputerTerminalLayout.PANE_Y + SLIDER_TRACK0_DY + disk * SLIDER_ROW_PITCH;
     }
 
     /** The disk whose slider track the cursor is over (within a small vertical tolerance), or -1. */
@@ -554,14 +654,17 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     }
 
     /*
-     * A parameterized item grid + deposit bar shared by the Network tab (offset 0, 4 rows) and the
-     * Storage tab (offset STORAGE_SHIFT, 3 rows), so both stay pixel-identical apart from the offset.
+     * The item grid and its toolbar, drawn the same way for the network's store and the machine's own,
+     * so the two headings are pixel-identical and a player never has to learn one of them twice.
      */
     void gridBg(final GuiGraphics g, final int x, final int y, final int dy, final int rows) {
         final int tbx = x + NET_X;
         final int tby = y + TOOLBAR_Y + dy;
         g.fill(tbx, tby, tbx + SEARCH_W, tby + TOOLBAR_H, TRACK);
         g.fill(tbx, tby, tbx + SEARCH_W, tby + 1, LINE);
+        final int mbx = x + MOD_X;
+        g.fill(mbx, tby, mbx + MOD_W, tby + TOOLBAR_H, PANEL);
+        g.fill(mbx, tby, mbx + MOD_W, tby + 1, modFilter.isEmpty() ? LINE : ACCENT);
         final int sbx = x + SORT_X;
         g.fill(sbx, tby, sbx + SORT_W, tby + TOOLBAR_H, PANEL);
         g.fill(sbx, tby, sbx + SORT_W, tby + 1, LINE);
@@ -577,10 +680,103 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
                 if (idx < items.size()) {
                     final NetworkItemEntry e = items.get(idx);
                     drawDataIcon(g, e.key(), e.total(), sx, sy);
+                    if (selectedEntry != null && selectedEntry.key().equals(e.key())) {
+                        outline(g, sx, sy, ACCENT);
+                    }
                 }
             }
         }
         depositBar(g, x, y, dy);
+    }
+
+    /** A one-pixel ring round a cell, which is how the grid says which one the panel is describing. */
+    private void outline(final GuiGraphics g, final int x, final int y, final int color) {
+        g.fill(x - 1, y - 1, x + 17, y, color);
+        g.fill(x - 1, y + 16, x + 17, y + 17, color);
+        g.fill(x - 1, y, x, y + 16, color);
+        g.fill(x + 16, y, x + 17, y + 16, color);
+    }
+
+    /** The panel beside the grid: a flat ground with a line across its top, as every panel here has. */
+    void paneBg(final GuiGraphics g, final int x, final int y) {
+        final int px = x + ComputerTerminalLayout.PANE_X;
+        final int py = y + ComputerTerminalLayout.PANE_Y;
+        g.fill(px, py, px + ComputerTerminalLayout.PANE_W, py + ComputerTerminalLayout.PANE_H, PANEL);
+        g.fill(px, py, px + ComputerTerminalLayout.PANE_W, py + 1, LINE);
+    }
+
+    /** What the panel beside the grid is describing, which a click on a cell picks out. */
+    @Nullable
+    NetworkItemEntry selectedEntry() {
+        return selectedEntry;
+    }
+
+    /**
+     * Picks a thing out and asks the network where it is.
+     *
+     * <p>The rows of which server holds how much are the machine's answer, not a guess from the snapshot,
+     * so the panel is the same answer the prompt gives, which is the whole point of it being there.
+     */
+    private void selectEntry(final NetworkItemEntry entry) {
+        selectedEntry = entry;
+        menu.setServerBreakdown(List.of());
+        PacketDistributor.sendToServer(new RequestServerBreakdownPayload(
+                menu.monitorPos(), menu.hostPos(), entry.key()));
+    }
+
+    /**
+     * The pattern that makes the selected thing, when the network has one loaded, else null.
+     *
+     * <p>The answer is held onto, because the panel asks for it twice a frame while the catalogue only
+     * changes when a fresh one arrives from the machine. Without that, every frame walked the whole
+     * catalogue and built a key for each row in it.
+     */
+    @Nullable
+    CraftCatalogPayload.Entry craftFor(@Nullable final NetworkItemEntry entry) {
+        if (entry == null) {
+            return null;
+        }
+        final List<CraftCatalogPayload.Entry> catalog = menu.craftCatalog();
+        if (entry == craftForEntry && catalog == craftForCatalog) {
+            return craftForResult;
+        }
+        CraftCatalogPayload.Entry found = null;
+        for (final CraftCatalogPayload.Entry candidate : catalog) {
+            if (StorageKey.of(candidate.result()).equals(entry.key())) {
+                found = candidate;
+                break;
+            }
+        }
+        craftForEntry = entry;
+        craftForCatalog = catalog;
+        craftForResult = found;
+        return found;
+    }
+
+    @Nullable
+    private NetworkItemEntry craftForEntry;
+    @Nullable
+    private List<CraftCatalogPayload.Entry> craftForCatalog;
+    @Nullable
+    private CraftCatalogPayload.Entry craftForResult;
+
+    /** The two things the panel lets a player do with what is picked out: ask for it, or have it made. */
+    private boolean clickedPane(final double mouseX, final double mouseY) {
+        if (selectedEntry == null) {
+            return false;
+        }
+        if (inRect(mouseX, mouseY, leftPos + PANE_GET_X, topPos + PANE_BTN_Y, PANE_BTN_W, PANE_BTN_H)) {
+            request.openFromNetwork(selectedEntry);
+            syncSearchBoxVisibility();
+            return true;
+        }
+        final CraftCatalogPayload.Entry pattern = craftFor(selectedEntry);
+        if (pattern != null
+                && inRect(mouseX, mouseY, leftPos + PANE_CRAFT_X, topPos + PANE_BTN_Y, PANE_BTN_W, PANE_BTN_H)) {
+            openCraftPopup(pattern);
+            return true;
+        }
+        return false;
     }
 
     void slotBg(final GuiGraphics g, final int x, final int y) {
@@ -608,58 +804,79 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
         syncPalette();
         final int cx = CONTENT_X;
-        final int cy = 6;
+        final int cy = 0;
         final int cw = contentW();
 
-        // Tab names under each icon, for the scrolling window of rail entries.
+        // The name of each heading, for the scrolling window of rail entries.
         final int[] rail = railTabs();
         final int visible = railVisible();
         for (int row = 0; row < visible && railScroll + row < rail.length; row++) {
             final int i = railScroll + row;
             final int ty = TAB_Y0 + row * TAB_H;
-            g.drawCenteredString(font, TAB_NAMES[rail[i]], RAIL_X + RAIL_W / 2, ty + 19,
-                    rail[i] == menu.activeTab() ? TAB_LABEL_ON : DIM);
+            g.drawString(font, TAB_NAMES[rail[i]], RAIL_X + 8, ty + 5,
+                    rail[i] == menu.activeTab() ? TAB_LABEL_ON : DIM, false);
         }
 
-        // Header: computer name + status pill.
-        g.drawString(font, this.title, cx + 6, cy + 5, TEXT, false);
-        final int netState = menu.networkLinkState();
-        final String status;
-        final int statusColor;
-        if (netState == 2) {
-            status = "CONFLICT";
-            statusColor = RED;
-        } else if (!menu.buildValid()) {
-            status = "OFFLINE";
-            statusColor = RED;
-        } else if (menu.running()) {
-            status = "ONLINE";
-            statusColor = GREEN;
-        } else {
-            status = "READY";
-            statusColor = AMBER;
-        }
-        g.drawString(font, status, cx + cw - font.width(status) - 6, cy + 5, statusColor, false);
+        renderStatusBar(g);
 
-        final int activeTab = menu.activeTab();
-        if (activeTab >= 0 && activeTab < tabs.length) {
-            tabs[activeTab].renderTabLabels(g, cx, cy, cw);
+        final ITerminalTab heading = showing();
+        if (heading != null) {
+            heading.renderTabLabels(g, cx, cy, cw);
         } else {
             placeholder(g, cx, cy, "Not available yet");
         }
+
+        // The player's own rows, named so the two halves of the glass are never confused for one another.
+        g.drawString(font, "Your inventory", CONTENT_X, ComputerTerminalLayout.INV_LABEL_Y, DIM, false);
+    }
+
+    /**
+     * The bar across the top: what this machine is, which network it is on and what that network holds.
+     *
+     * <p>The same reading whatever heading is showing, because it answers the question a player has every
+     * time they look at the screen and should never have to change headings to ask.
+     */
+    private void renderStatusBar(final GuiGraphics g) {
+        g.drawString(font, this.title, 6, 4, ACCENT, false);
+        final int netState = menu.networkLinkState();
+        int at = 6 + font.width(this.title) + 10;
+        if (netState == 2) {
+            g.drawString(font, "network conflict", at, 4, RED, false);
+        } else if (netState == 1) {
+            final String servers = menu.serverCount() + (menu.serverCount() == 1 ? " server" : " servers");
+            g.drawString(font, servers, at, 4, DIM, false);
+            at += font.width(servers) + 10;
+            final String held = fmt(menu.networkStorageUsed()) + " held";
+            g.drawString(font, held, at, 4, TEXT, false);
+        } else {
+            g.drawString(font, "no network", at, 4, DIM, false);
+        }
+        /*
+         * What the machine itself is doing, at the far end: a build that will not run, a machine that is
+         * switched off, and how many Operations the network has in flight.
+         */
+        final String state;
+        final int stateColor;
+        if (!menu.buildValid()) {
+            state = "build invalid";
+            stateColor = RED;
+        } else if (!menu.running()) {
+            state = "halted";
+            stateColor = AMBER;
+        } else {
+            final int live = menu.activeOps().size();
+            state = live == 0 ? "idle" : live + (live == 1 ? " op" : " ops");
+            stateColor = live == 0 ? DIM : GREEN;
+        }
+        g.drawString(font, state, imageWidth - font.width(state) - 6, 4, stateColor, false);
     }
 
     // Craft tab: catalog grid + running/recent panels + request popup
 
-    private static final int CRAFT_COLS = 9;
-    private static final int CRAFT_ROWS = 2;
-    private static final int CRAFT_GRID_Y = 40;
-    private static final int CRAFT_RUNNING_Y = 82;
-    private static final int CRAFT_RECENT_Y = 116;
-
-    private static String trim(final String s, final int max) {
-        return s.length() <= max ? s : s.substring(0, max - 1) + "…";
-    }
+    /* Mirrors of the Craft heading's own catalogue geometry, which this hit test reads. */
+    private static final int CRAFT_COLS = ComputerTerminalLayout.GRID_COLS;
+    private static final int CRAFT_ROWS = ComputerTerminalLayout.GRID_ROWS - 2;
+    private static final int CRAFT_GRID_Y = ComputerTerminalLayout.GRID_Y;
 
     @Nullable
     private CraftCatalogPayload.Entry
@@ -676,188 +893,11 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         return index < catalog.size() ? catalog.get(index) : null;
     }
 
-    private void openCraftPopup(
-            final CraftCatalogPayload.Entry entry) {
-        craftPopup = entry;
-        craftQty = 1;
-        menu.setCraftPlan(null);
-        if (qtyBox != null) {
-            syncingQty = true;
-            qtyBox.setValue("1");
-            syncingQty = false;
-        }
-        requestCraftPlan();
+    private void openCraftPopup(final CraftCatalogPayload.Entry entry) {
+        craft.open(entry);
         syncSearchBoxVisibility();
     }
 
-    private void closeCraftPopup() {
-        craftPopup = null;
-        menu.setCraftPlan(null);
-        syncSearchBoxVisibility();
-    }
-
-    private void requestCraftPlan() {
-        if (craftPopup != null) {
-            PacketDistributor.sendToServer(
-                    new CraftPlanRequestPayload(
-                            menu.monitorPos(), menu.hostPos(), craftPopup.result(), craftQty));
-        }
-    }
-
-    private void setCraftQty(final long value) {
-        craftQty = Math.max(1, Math.min(99_999, value));
-        if (qtyBox != null) {
-            syncingQty = true;
-            qtyBox.setValue(String.valueOf(craftQty));
-            syncingQty = false;
-        }
-        requestCraftPlan();
-    }
-
-    private void submitCraft(final boolean partial) {
-        if (craftPopup == null) {
-            return;
-        }
-        PacketDistributor.sendToServer(
-                new CraftSubmitPayload(
-                        menu.monitorPos(), menu.hostPos(), craftPopup.result(), craftQty, partial, true,
-                        OperationPriority.DEFAULT));
-        closeCraftPopup();
-    }
-
-    private void renderCraftPopup(final GuiGraphics g, final int mouseX, final int mouseY) {
-        if (craftPopup == null) {
-            return;
-        }
-        final var plan = menu.craftPlan();
-        g.pose().pushPose();
-        g.pose().translate(0, 0, 350);
-        g.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xE0070A0F);
-        final int px = popupX();
-        final int py = popupY();
-        g.fill(px - 2, py - 2, px + POPUP_W + 2, py + POPUP_H + 2, 0xFF0A1A1F);
-        g.fill(px, py, px + POPUP_W, py + POPUP_H, PANEL);
-        g.fill(px, py, px + POPUP_W, py + 1, ACCENT);
-
-        drawDataIcon(g, StorageKey
-                .of(craftPopup.result()), -1L, px + 6, py + 5);
-        g.drawString(font, "CRAFT  " + trim(craftPopup.result().getHoverName().getString(), 18),
-                px + 28, py + 8, TEXT, false);
-
-        /*
-         * Quantity row: the shared editable field plus steppers. The popup draws over the screen at a
-         * raised z, so the qty field (a widget drawn earlier by super.render) must be re-rendered here or
-         * the selected craft amount stays hidden behind the overlay -- the item popup does the same.
-         */
-        g.fill(px + 6, py + 28, px + 130, py + 46, TRACK);
-        if (qtyBox != null) {
-            qtyBox.render(g, mouseX, mouseY, 0.0f);
-        }
-        final String[] steps = {"-64", "-1", "+1", "+64"};
-        for (int i = 0; i < steps.length; i++) {
-            final int bx = px + 134 + i * 16;
-            g.fill(bx, py + 30, bx + 15, py + 44, btnHover(mouseX, mouseY, bx, py + 30, 15, 14) ? HOVER : SCREEN);
-            g.drawCenteredString(font, steps[i], bx + 8, py + 33, ACCENT);
-        }
-
-        // Plan rows (need vs have).
-        g.drawString(font, "PLAN - raw ingredients", px + 6, py + 52, DIM, false);
-        int rowY = py + 63;
-        if (plan == null) {
-            g.drawString(font, "planning...", px + 6, rowY, DIM, false);
-        } else {
-            for (int i = 0; i < Math.min(5, plan.rows().size()); i++) {
-                final var row = plan.rows().get(i);
-                drawDataIcon(g, StorageKey
-                        .of(row.item()), -1L, px + 6, rowY - 2);
-                g.drawString(font, trim(row.item().getHoverName().getString(), 14), px + 26, rowY + 2, TEXT, false);
-                final String counts = fmt(row.have()) + " / " + fmt(row.need());
-                g.drawString(font, counts, px + POPUP_W - font.width(counts) - 8, rowY + 2,
-                        row.satisfied() ? GREEN : RED, false);
-                rowY += 14;
-            }
-            if (plan.rows().size() > 5) {
-                g.drawString(font, "+" + (plan.rows().size() - 5) + " more", px + 26, rowY, DIM, false);
-            }
-            final String est = plan.estimateTicks() > 0
-                    ? "EST ~" + Math.max(1, plan.estimateTicks() / 20) + "s" : "EST --";
-            g.drawString(font, est, px + 6, py + 144, DIM, false);
-            if (!plan.feasible()) {
-                g.drawString(font, "max now: " + fmt(plan.maxFeasible()),
-                        px + 70, py + 144, AMBER, false);
-            }
-        }
-
-        // Buttons: CRAFT (grey while infeasible) / PARTIAL / CANCEL.
-        final boolean feasible = plan != null && plan.feasible();
-        final boolean partialUseful = plan != null && !plan.feasible() && plan.maxFeasible() > 0;
-        drawPopupButton(g, px + 6, py + 156, 56, "CRAFT", feasible ? GREEN : DIM,
-                feasible && btnHover(mouseX, mouseY, px + 6, py + 156, 56, 14));
-        drawPopupButton(g, px + 66, py + 156, 84, "PARTIAL",
-                partialUseful ? AMBER : DIM, partialUseful && btnHover(mouseX, mouseY, px + 66, py + 156, 84, 14));
-        drawPopupButton(g, px + 154, py + 156, 44, "CLOSE", DIM,
-                btnHover(mouseX, mouseY, px + 154, py + 156, 44, 14));
-        g.pose().popPose();
-    }
-
-    private void drawPopupButton(final GuiGraphics g, final int x, final int y, final int w,
-                                 final String label, final int color, final boolean hovered) {
-        g.fill(x, y, x + w, y + 14, hovered ? HOVER : SCREEN);
-        g.fill(x, y, x + w, y + 1, LINE);
-        g.drawCenteredString(font, label, x + w / 2, y + 3, color);
-    }
-
-    private boolean btnHover(final int mouseX, final int mouseY, final int x, final int y,
-                             final int w, final int h) {
-        return mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
-    }
-
-    private boolean handleCraftPopupClick(final double mouseX, final double mouseY, final int button) {
-        if (button == 1) {
-            closeCraftPopup();
-            return true;
-        }
-        if (button != 0) {
-            return true;
-        }
-        final int px = popupX();
-        final int py = popupY();
-        final int mx = (int) mouseX;
-        final int my = (int) mouseY;
-        if (mx < px || mx >= px + POPUP_W || my < py || my >= py + POPUP_H) {
-            closeCraftPopup();
-            return true;
-        }
-        if (qtyBox != null && qtyBox.isMouseOver(mouseX, mouseY)) {
-            setFocused(qtyBox);
-            qtyBox.setFocused(true);
-            return qtyBox.mouseClicked(mouseX, mouseY, button);
-        }
-        final long[] stepAmounts = {-64, -1, 1, 64};
-        for (int i = 0; i < stepAmounts.length; i++) {
-            final int bx = px + 134 + i * 16;
-            if (btnHover(mx, my, bx, py + 30, 15, 14)) {
-                setCraftQty(craftQty + stepAmounts[i]);
-                return true;
-            }
-        }
-        final var plan = menu.craftPlan();
-        final boolean feasible = plan != null && plan.feasible();
-        final boolean partialUseful = plan != null && !plan.feasible() && plan.maxFeasible() > 0;
-        if (feasible && btnHover(mx, my, px + 6, py + 156, 56, 14)) {
-            submitCraft(false);
-            return true;
-        }
-        if (partialUseful && btnHover(mx, my, px + 66, py + 156, 84, 14)) {
-            submitCraft(true);
-            return true;
-        }
-        if (btnHover(mx, my, px + 154, py + 156, 44, 14)) {
-            closeCraftPopup();
-            return true;
-        }
-        return true; // swallow clicks while the popup is up
-    }
 
     private void placeholder(final GuiGraphics g, final int cx, final int cy, final String text) {
         g.drawString(font, text, cx + 6, cy + 28, DIM, false);
@@ -865,14 +905,47 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
 
     // Network tab: a virtual item grid drawn from the snapshot
 
-    /** The vertical shift applied to the shared grid on the Storage tab (the slider band lives above). */
-    private int gridShift() {
-        return menu.activeTab() == ComputerTerminalMenu.TAB_STORAGE ? STORAGE_SHIFT : 0;
+    /** The number of grid rows, which is the same on every heading that draws one. */
+    private int gridRows() {
+        return NET_ROWS;
     }
 
-    /** The number of grid rows for the active tab (the Storage tab gives one row to the slider band). */
-    private int gridRows() {
-        return menu.activeTab() == ComputerTerminalMenu.TAB_STORAGE ? STORAGE_NET_ROWS : NET_ROWS;
+    /** Which mod an entry comes from, which is the namespace of whatever is behind it. */
+    private static String modOf(final NetworkItemEntry entry) {
+        final ResourceLocation id = entry.key().registryId();
+        return id == null ? "" : id.getNamespace();
+    }
+
+    /**
+     * The mods whose items the network holds, in the order they are named, with the empty string first
+     * for "every one of them". What the Mod button steps through.
+     */
+    List<String> modsPresent() {
+        final List<NetworkItemEntry> source = menu.activeTab() == ComputerTerminalMenu.TAB_STORAGE
+                ? menu.localItems() : menu.networkItems();
+        final List<String> out = new ArrayList<>();
+        out.add("");
+        for (final NetworkItemEntry e : source) {
+            final String mod = modOf(e);
+            if (!mod.isEmpty() && !out.contains(mod)) {
+                out.add(mod);
+            }
+        }
+        out.subList(1, out.size()).sort(String::compareToIgnoreCase);
+        return out;
+    }
+
+    /** Which mod's items are being shown, or the empty string for every one of them. */
+    String modFilter() {
+        return modFilter;
+    }
+
+    /** Steps the Mod button on, wrapping back to every mod at the end of the list. */
+    private void cycleModFilter(final int step) {
+        final List<String> mods = modsPresent();
+        final int at = Math.max(0, mods.indexOf(modFilter));
+        modFilter = mods.get(Math.floorMod(at + step, mods.size()));
+        netScrollRow = 0;
     }
 
     List<NetworkItemEntry> visibleItems() {
@@ -880,12 +953,15 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         final List<NetworkItemEntry> source = menu.activeTab() == ComputerTerminalMenu.TAB_STORAGE
                 ? menu.localItems() : menu.networkItems();
         // A snapshot replaces the menu's list object, so the list itself tells a fresh snapshot from the last one.
-        final String key = menu.activeTab() + "|" + sortByQuantity + "|" + q;
+        final String key = menu.activeTab() + "|" + sortByQuantity + "|" + modFilter + "|" + q;
         if (source == visibleSource && key.equals(visibleKey)) {
             return visibleCache;
         }
         final List<NetworkItemEntry> out = new ArrayList<>();
         for (final NetworkItemEntry e : source) {
+            if (!modFilter.isEmpty() && !modFilter.equals(modOf(e))) {
+                continue;
+            }
             if (q.isEmpty()
                     || e.name().getString().toLowerCase(Locale.ROOT).contains(q)) {
                 out.add(e);
@@ -904,19 +980,24 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     }
 
     private void depositBar(final GuiGraphics g, final int x, final int y, final int yShift) {
-        final int dx = x + NET_X;
+        final int dx = x + DEPOSIT_X;
         final int dy = y + DEPOSIT_Y + yShift;
         final boolean holding = !menu.getCarried().isEmpty();
-        g.fill(dx - 1, dy - 1, dx + DEPOSIT_W + 1, dy + DEPOSIT_H + 1, holding ? ACCENT : SLOT_EDGE);
+        /*
+         * A fill with a line across its top, the way every other button on this screen is drawn. It had a
+         * border around it, which cost a pixel on each side of a button that only has sixteen to live in
+         * between the rule and the player's own rows, and so it sat on the rule.
+         */
         g.fill(dx, dy, dx + DEPOSIT_W, dy + DEPOSIT_H, holding ? 0xFF123038 : TRACK);
-        // Down-arrow glyph (deposit into the network).
-        final int gx = dx + 6;
-        final int gy = dy + 3;
+        g.fill(dx, dy, dx + DEPOSIT_W, dy + 1, holding ? ACCENT : LINE);
+        // Down-arrow glyph (deposit into the network), sized to sit inside the button with a pixel to spare.
+        final int gx = dx + 4;
+        final int gy = dy + 2;
         final int gc = holding ? ACCENT : DIM;
-        g.fill(gx + 2, gy, gx + 4, gy + 5, gc);
-        g.fill(gx, gy + 4, gx + 6, gy + 5, gc);
-        g.fill(gx + 1, gy + 5, gx + 5, gy + 6, gc);
-        g.fill(gx + 2, gy + 6, gx + 4, gy + 7, gc);
+        g.fill(gx + 2, gy, gx + 4, gy + 4, gc);
+        g.fill(gx, gy + 3, gx + 6, gy + 4, gc);
+        g.fill(gx + 1, gy + 4, gx + 5, gy + 5, gc);
+        g.fill(gx + 2, gy + 5, gx + 4, gy + 6, gc);
     }
 
     private int clampScroll(final int count, final int visibleRows) {
@@ -929,7 +1010,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     @Nullable
     private NetworkItemEntry networkItemAt(final int mx, final int my) {
         final int relX = mx - (leftPos + NET_X);
-        final int relY = my - (topPos + NET_Y + gridShift());
+        final int relY = my - (topPos + NET_Y);
         if (relX < 0 || relY < 0 || relX % 18 > 16 || relY % 18 > 16) {
             return null;
         }
@@ -952,7 +1033,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
          * destination get what is left.
          */
         final int left = cx + 6;
-        final int right = cx + POPUP_W - 6;
+        final int right = cx + ComputerTerminalLayout.POPUP_W - 6;
         final String from = font.plainSubstrByWidth(mv.from(), (right - left) / 2 - 6);
         g.drawString(font, from, left, my, DIM, false);
         final int arrowX = left + font.width(from) + 4;
@@ -984,7 +1065,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         };
     }
 
-    private static String opTypeLabel(final byte type) {
+    static String opTypeLabel(final byte type) {
         return switch (type) {
             case OperationRecord.TYPE_INSERT -> "INSERT";
             case OperationRecord.TYPE_DELETE -> "DELETE";
@@ -1007,7 +1088,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
 
     private int maintButtonAt(final int mx, final int my) {
         final int cx = leftPos + CONTENT_X;
-        final int cy = topPos + 6;
+        final int cy = topPos;
         final int cw = contentW();
         final int halfW = (cw - 4) / 2;
         if (inRect(mx, my, cx, cy + MNT_BTN_ROW1_Y, halfW, MNT_BTN_H)) {
@@ -1026,208 +1107,8 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     }
 
     private void openDrop() {
-        dropOpen = true;
-        dropScope = TerminalDropPayload.SCOPE_NETWORK;
-        dropTypes.clear();
-        dropServerIndex = 0;
-        dropTypeScrollRow = 0;
+        drop.open();
         syncSearchBoxVisibility();
-    }
-
-    private void closeDrop() {
-        dropOpen = false;
-        dropTypes.clear();
-        syncSearchBoxVisibility();
-    }
-
-    private int dropX() {
-        return leftPos + (imageWidth - DROP_W) / 2;
-    }
-
-    private int dropY() {
-        return topPos + (imageHeight - DROP_H) / 2;
-    }
-
-    private boolean dropConfirmEnabled() {
-        return switch (dropScope) {
-            case TerminalDropPayload.SCOPE_SERVER -> !menu.networkServers().isEmpty();
-            case TerminalDropPayload.SCOPE_TYPES -> !dropTypes.isEmpty();
-            default -> true; // SCOPE_NETWORK
-        };
-    }
-
-    private void renderDropPopup(final GuiGraphics g, final int mouseX, final int mouseY) {
-        if (!dropOpen) {
-            return;
-        }
-        g.pose().pushPose();
-        g.pose().translate(0, 0, 350);
-        g.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xE0070A0F);
-        final int px = dropX();
-        final int py = dropY();
-        g.fill(px - 1, py - 1, px + DROP_W + 1, py + DROP_H + 1, RED);
-        g.fill(px, py, px + DROP_W, py + DROP_H, 0xFF0F151C);
-
-        g.drawString(font, "DROP DATA", px + 8, py + 6, RED, false);
-        g.drawString(font, "Irreversible data loss", px + 8, py + 17, DIM, false);
-
-        // Scope selector: NETWORK | SERVER | TYPES.
-        final int segW = (DROP_W - 16) / 3;
-        final String[] names = {"NETWORK", "SERVER", "TYPES"};
-        for (int i = 0; i < 3; i++) {
-            final int bx = px + 8 + i * segW;
-            final boolean on = dropScope == i;
-            final boolean hov = inRect(mouseX, mouseY, bx, py + 30, segW - 2, 14);
-            g.fill(bx, py + 30, bx + segW - 2, py + 44, on ? RED : (hov ? 0xFF24323C : 0xFF1A222B));
-            g.drawCenteredString(font, names[i], bx + (segW - 2) / 2, py + 33, on ? 0xFFFFFFFF : DIM);
-        }
-
-        final int bodyY = py + 50;
-        switch (dropScope) {
-            case TerminalDropPayload.SCOPE_SERVER -> renderDropServer(g, mouseX, mouseY, px, bodyY);
-            case TerminalDropPayload.SCOPE_TYPES -> renderDropTypes(g, px, bodyY);
-            default -> { // SCOPE_NETWORK
-                g.drawString(font, "Destroys ALL public storage on", px + 8, bodyY, TEXT, false);
-                g.drawString(font, "the entire network.", px + 8, bodyY + 11, TEXT, false);
-                g.drawString(font, fmt(menu.indexedTypes()) + " types over " + menu.indexedServers()
-                        + " servers", px + 8, bodyY + 28, AMBER, false);
-            }
-        }
-
-        // CANCEL | CONFIRM DROP.
-        final int by = py + DROP_H - 22;
-        final boolean cancelHov = inRect(mouseX, mouseY, px + 8, by, 70, 16);
-        g.fill(px + 8, by, px + 78, by + 16, cancelHov ? 0xFF2A3340 : 0xFF1A222B);
-        g.drawCenteredString(font, "CANCEL", px + 43, by + 4, TEXT);
-        final boolean canConfirm = dropConfirmEnabled();
-        final boolean confHov = inRect(mouseX, mouseY, px + 84, by, DROP_W - 92, 16);
-        g.fill(px + 84, by, px + DROP_W - 8, by + 16,
-                !canConfirm ? 0xFF3A2420 : (confHov ? 0xFFB23228 : 0xFF8A241C));
-        g.drawCenteredString(font, "CONFIRM DROP", px + 84 + (DROP_W - 92) / 2, by + 4,
-                canConfirm ? 0xFFFFFFFF : DIM);
-        g.pose().popPose();
-    }
-
-    private void renderDropServer(final GuiGraphics g, final int mouseX, final int mouseY,
-                                  final int px, final int bodyY) {
-        final List<NetworkServersPayload.ServerEntry> servers = menu.networkServers();
-        if (servers.isEmpty()) {
-            g.drawString(font, "No Servers on the network.", px + 8, bodyY, AMBER, false);
-            return;
-        }
-        final NetworkServersPayload.ServerEntry target =
-                servers.get(Math.floorMod(dropServerIndex, servers.size()));
-        final boolean lh = inRect(mouseX, mouseY, px + 8, bodyY, 14, 14);
-        final boolean rh = inRect(mouseX, mouseY, px + DROP_W - 22, bodyY, 14, 14);
-        g.fill(px + 8, bodyY, px + 22, bodyY + 14, lh ? 0xFF24323C : 0xFF1A222B);
-        g.drawCenteredString(font, "<", px + 15, bodyY + 3, ACCENT);
-        g.fill(px + DROP_W - 22, bodyY, px + DROP_W - 8, bodyY + 14, rh ? 0xFF24323C : 0xFF1A222B);
-        g.drawCenteredString(font, ">", px + DROP_W - 15, bodyY + 3, ACCENT);
-        g.drawCenteredString(font, font.plainSubstrByWidth(target.name(), DROP_W - 56),
-                px + DROP_W / 2, bodyY + 3, TEXT);
-        g.drawString(font, "Wipes this server's storage.", px + 8, bodyY + 20, TEXT, false);
-        g.drawString(font, fmt(target.free()) + " free now", px + 8, bodyY + 32, DIM, false);
-    }
-
-    private void renderDropTypes(final GuiGraphics g, final int px, final int bodyY) {
-        final List<NetworkItemEntry> items = menu.networkItems();
-        if (items.isEmpty()) {
-            g.drawString(font, "No data types on the network.", px + 8, bodyY, AMBER, false);
-            return;
-        }
-        final int gridX = px + (DROP_W - DROP_GRID_COLS * 18) / 2;
-        final int rows = (items.size() + DROP_GRID_COLS - 1) / DROP_GRID_COLS;
-        dropTypeScrollRow = Math.max(0, Math.min(Math.max(0, rows - DROP_GRID_ROWS), dropTypeScrollRow));
-        final int start = dropTypeScrollRow * DROP_GRID_COLS;
-        for (int r = 0; r < DROP_GRID_ROWS; r++) {
-            for (int col = 0; col < DROP_GRID_COLS; col++) {
-                final int sx = gridX + col * 18;
-                final int sy = bodyY + r * 18;
-                slotBg(g, sx, sy);
-                final int idx = start + r * DROP_GRID_COLS + col;
-                if (idx < items.size()) {
-                    final NetworkItemEntry e = items.get(idx);
-                    drawDataIcon(g, e.key(), e.total(), sx, sy);
-                    if (dropTypes.contains(e.key())) {
-                        g.pose().pushPose();
-                        g.pose().translate(0, 0, 200); // frame the slot ABOVE the rendered item
-                        g.fill(sx - 1, sy - 1, sx + 17, sy, RED);
-                        g.fill(sx - 1, sy + 16, sx + 17, sy + 17, RED);
-                        g.fill(sx - 1, sy, sx, sy + 16, RED);
-                        g.fill(sx + 16, sy, sx + 17, sy + 16, RED);
-                        g.pose().popPose();
-                    }
-                }
-            }
-        }
-        g.drawString(font, dropTypes.size() + " of " + items.size() + " selected",
-                px + 8, bodyY + DROP_GRID_ROWS * 18 + 2, AMBER, false);
-    }
-
-    private boolean handleDropClick(final double mouseX, final double mouseY, final int button) {
-        if (button == 1) {
-            closeDrop();
-            return true;
-        }
-        if (button != 0) {
-            return true;
-        }
-        final int px = dropX();
-        final int py = dropY();
-        // Scope selector.
-        final int segW = (DROP_W - 16) / 3;
-        for (int i = 0; i < 3; i++) {
-            if (inRect(mouseX, mouseY, px + 8 + i * segW, py + 30, segW - 2, 14)) {
-                dropScope = i;
-                return true;
-            }
-        }
-        final int bodyY = py + 50;
-        if (dropScope == TerminalDropPayload.SCOPE_SERVER && !menu.networkServers().isEmpty()) {
-            if (inRect(mouseX, mouseY, px + 8, bodyY, 14, 14)) {
-                dropServerIndex--;
-                return true;
-            }
-            if (inRect(mouseX, mouseY, px + DROP_W - 22, bodyY, 14, 14)) {
-                dropServerIndex++;
-                return true;
-            }
-        }
-        if (dropScope == TerminalDropPayload.SCOPE_TYPES) {
-            final int idx = dropTypeCellAt((int) mouseX, (int) mouseY, px, bodyY);
-            final List<NetworkItemEntry> items = menu.networkItems();
-            if (idx >= 0 && idx < items.size()) {
-                final StorageKey key = items.get(idx).key();
-                if (!dropTypes.remove(key) && dropTypes.size() < TerminalDropPayload.MAX_TYPES) {
-                    dropTypes.add(key);
-                }
-                return true;
-            }
-        }
-        final int by = py + DROP_H - 22;
-        if (inRect(mouseX, mouseY, px + 8, by, 70, 16)) {
-            closeDrop();
-            return true;
-        }
-        if (inRect(mouseX, mouseY, px + 84, by, DROP_W - 92, 16) && dropConfirmEnabled()) {
-            sendDrop();
-            closeDrop();
-            return true;
-        }
-        if (mouseX < px || mouseX >= px + DROP_W || mouseY < py || mouseY >= py + DROP_H) {
-            closeDrop();
-        }
-        return true; // modal: swallow clicks while the DROP popup is up
-    }
-
-    private int dropTypeCellAt(final int mx, final int my, final int px, final int bodyY) {
-        final int gridX = px + (DROP_W - DROP_GRID_COLS * 18) / 2;
-        final int relX = mx - gridX;
-        final int relY = my - bodyY;
-        if (relX < 0 || relX >= DROP_GRID_COLS * 18 || relY < 0 || relY >= DROP_GRID_ROWS * 18) {
-            return -1;
-        }
-        return (dropTypeScrollRow + relY / 18) * DROP_GRID_COLS + relX / 18;
     }
 
     private void sendMaintenance(final int action) {
@@ -1235,24 +1116,8 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
                 new TerminalMaintenancePayload(menu.monitorPos(), menu.hostPos(), action));
     }
 
-    private void sendDrop() {
-        final List<StorageKey> types = dropScope == TerminalDropPayload.SCOPE_TYPES
-                ? new ArrayList<>(dropTypes) : List.of();
-        String serverKey = "";
-        if (dropScope == TerminalDropPayload.SCOPE_SERVER) {
-            final List<NetworkServersPayload.ServerEntry> servers = menu.networkServers();
-            if (servers.isEmpty()) {
-                return;
-            }
-            serverKey = servers.get(Math.floorMod(dropServerIndex, servers.size())).key();
-        }
-        PacketDistributor.sendToServer(new TerminalDropPayload(
-                menu.monitorPos(), menu.hostPos(), dropScope, types, serverKey));
-        maintHint = "DROP logged";
-    }
-
     private int taskSubTabAt(final int mx, final int my) {
-        final int barY = topPos + 6 + 26;
+        final int barY = topPos + 24;
         if (my < barY || my >= barY + 14) {
             return -1;
         }
@@ -1275,7 +1140,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         if (mx < leftPos + CONTENT_X || mx >= leftPos + imageWidth - 6) {
             return -1;
         }
-        final int rel = my - (topPos + 6 + 32);
+        final int rel = my - (topPos + 32);
         if (rel < 0) {
             return -1;
         }
@@ -1302,138 +1167,53 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         g.drawString(font, value, x + w - font.width(value), y, DIM, false);
     }
 
-    // Tab icons (drawn as flat pixel glyphs so they stay crisp at any GUI scale)
-
-    private void icon(final GuiGraphics g, final int tab, final int x, final int y, final int c) {
-        switch (tab) {
-            case 0 -> { // Local: ascending stat bars
-                g.fill(x + 2, y + 9, x + 5, y + 14, c);
-                g.fill(x + 6, y + 6, x + 9, y + 14, c);
-                g.fill(x + 10, y + 3, x + 13, y + 14, c);
-            }
-            case 1 -> { // Storage: stacked drive bays
-                g.fill(x + 2, y + 3, x + 14, y + 6, c);
-                g.fill(x + 2, y + 7, x + 14, y + 10, c);
-                g.fill(x + 2, y + 11, x + 14, y + 14, c);
-            }
-            case 2 -> { // Network: hub and spokes
-                g.fill(x + 3, y + 7, x + 13, y + 9, c);
-                g.fill(x + 7, y + 3, x + 9, y + 13, c);
-                g.fill(x + 6, y + 6, x + 10, y + 10, c);
-                g.fill(x + 6, y + 2, x + 10, y + 4, c);
-                g.fill(x + 6, y + 12, x + 10, y + 14, c);
-                g.fill(x + 2, y + 6, x + 4, y + 10, c);
-                g.fill(x + 12, y + 6, x + 14, y + 10, c);
-            }
-            case 3 -> { // Operations: bulleted list
-                for (int r = 0; r < 3; r++) {
-                    final int ly = y + 3 + r * 4;
-                    g.fill(x + 2, ly, x + 4, ly + 2, c);
-                    g.fill(x + 5, ly, x + 14, ly + 2, c);
-                }
-            }
-            case 4 -> { // Tasks: CPU chip
-                g.fill(x + 4, y + 4, x + 12, y + 5, c);
-                g.fill(x + 4, y + 11, x + 12, y + 12, c);
-                g.fill(x + 4, y + 4, x + 5, y + 12, c);
-                g.fill(x + 11, y + 4, x + 12, y + 12, c);
-                g.fill(x + 7, y + 7, x + 9, y + 9, c);
-                g.fill(x + 6, y + 2, x + 7, y + 4, c);
-                g.fill(x + 9, y + 2, x + 10, y + 4, c);
-                g.fill(x + 6, y + 12, x + 7, y + 14, c);
-                g.fill(x + 9, y + 12, x + 10, y + 14, c);
-                g.fill(x + 2, y + 6, x + 4, y + 7, c);
-                g.fill(x + 2, y + 9, x + 4, y + 10, c);
-                g.fill(x + 12, y + 6, x + 14, y + 7, c);
-                g.fill(x + 12, y + 9, x + 14, y + 10, c);
-            }
-            case 6 -> { // Craft: a 3x3 crafting grid
-                for (int r = 0; r < 3; r++) {
-                    for (int col = 0; col < 3; col++) {
-                        g.fill(x + 2 + col * 4, y + 3 + r * 4, x + 5 + col * 4, y + 6 + r * 4, c);
-                    }
-                }
-            }
-            case 7 -> { // Processes: a cog (the network's background services)
-                g.fill(x + 7, y + 2, x + 9, y + 4, c);   // tooth: top
-                g.fill(x + 7, y + 12, x + 9, y + 14, c); // tooth: bottom
-                g.fill(x + 2, y + 7, x + 4, y + 9, c);   // tooth: left
-                g.fill(x + 12, y + 7, x + 14, y + 9, c); // tooth: right
-                g.fill(x + 5, y + 5, x + 11, y + 7, c);  // ring: top edge
-                g.fill(x + 5, y + 9, x + 11, y + 11, c); // ring: bottom edge
-                g.fill(x + 5, y + 5, x + 7, y + 11, c);  // ring: left edge
-                g.fill(x + 9, y + 5, x + 11, y + 11, c); // ring: right edge
-            }
-            case 8 -> { // Console: a ">" prompt and a blinking cursor underscore
-                g.fill(x + 3, y + 4, x + 5, y + 6, c);
-                g.fill(x + 5, y + 6, x + 7, y + 8, c);
-                g.fill(x + 3, y + 8, x + 5, y + 10, c);
-                g.fill(x + 8, y + 11, x + 13, y + 13, c);
-            }
-            default -> { // Maintenance: a wrench laid diagonally (C-shaped open jaw, diagonal shaft)
-                g.fill(x + 2, y + 2, x + 7, y + 4, c); // jaw: top lip
-                g.fill(x + 2, y + 2, x + 4, y + 7, c); // jaw: left side
-                g.fill(x + 2, y + 5, x + 7, y + 7, c); // jaw: bottom lip (mouth opens toward the shaft)
-                for (int s = 0; s < 7; s++) {          // shaft running to the bottom-right handle
-                    g.fill(x + 6 + s, y + 6 + s, x + 8 + s, y + 8 + s, c);
-                }
-            }
-        }
-    }
-
     // Interaction
 
     @Override
     public boolean keyPressed(final int key, final int scan, final int mods) {
         // The DROP popup is modal: ESC closes it; every other key is swallowed.
-        if (dropOpen) {
+        if (drop.isOpen()) {
             if (key == 256) {
-                closeDrop();
+                drop.close();
+                syncSearchBoxVisibility();
             }
             return true;
         }
         /*
-         * The craft popup is modal: ESC closes it, Enter submits a feasible craft, typing goes to
-         * the quantity field, anything else is swallowed.
+         * The two questions that take a number are modal: ESC closes, Enter says go, typing goes to the
+         * field, and every other key is swallowed so the inventory key never closes the screen mid-edit.
          */
-        if (craftPopup != null) {
+        if (craft.isOpen()) {
             if (key == 256) {
-                closeCraftPopup();
-                return true;
+                craft.close();
+                syncSearchBoxVisibility();
+            } else if (key == 257 || key == 335) {
+                craft.submitIfPossible();
+                syncSearchBoxVisibility();
+            } else if (qtyBox.focused()) {
+                qtyBox.keyPressed(key, scan, mods);
             }
-            if (key == 257 || key == 335) {
-                final var plan = menu.craftPlan();
-                if (plan != null && plan.feasible()) {
-                    submitCraft(false);
-                }
-                return true;
-            }
-            if (qtyBox != null && qtyBox.isFocused()) {
+            return true;
+        }
+        if (request.isOpen()) {
+            if (key == 256) {
+                request.close();
+                syncSearchBoxVisibility();
+            } else if (key == 257 || key == 335) {
+                request.submit();
+                syncSearchBoxVisibility();
+            } else if (qtyBox.focused()) {
                 qtyBox.keyPressed(key, scan, mods);
             }
             return true;
         }
         /*
-         * The request popup is modal: ESC closes it, Enter submits, typing goes to the quantity field,
-         * and every other key is swallowed so the inventory key ('E') never closes the GUI mid-edit.
+         * A heading that is typed into takes every key before the screen's own shortcuts do: the prompt
+         * is a heading here now, and a terminal that let the inventory key close the screen mid-line
+         * would be a terminal nobody could type an 'e' at.
          */
-        if (popupEntry != null) {
-            if (key == 256) {
-                closeRequest();
-                return true;
-            }
-            if (key == 257 || key == 335) {
-                // Enter submits: a Storage popup withdraws to the inventory; a Network popup requests.
-                if (popupFromStorage) {
-                    sendStorageAction(false);
-                } else {
-                    sendRequest();
-                }
-                return true;
-            }
-            if (qtyBox != null && qtyBox.isFocused()) {
-                qtyBox.keyPressed(key, scan, mods);
-            }
+        final ITerminalTab heading = showing();
+        if (heading != null && heading.onKeyPressed(key, scan, mods)) {
             return true;
         }
         /*
@@ -1478,35 +1258,85 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
 
     @Override
     public boolean charTyped(final char c, final int mods) {
-        if ((popupEntry != null || craftPopup != null) && qtyBox != null && qtyBox.isFocused()) {
+        if ((request.isOpen() || craft.isOpen()) && qtyBox.focused()) {
             return qtyBox.charTyped(c, mods);
         }
         if (searchBox != null && searchBox.isFocused()) {
             return searchBox.charTyped(c, mods);
         }
+        final ITerminalTab heading = showing();
+        if (!anyQuestionOpen() && heading != null && heading.onCharTyped(c, mods)) {
+            return true;
+        }
         return super.charTyped(c, mods);
     }
 
     @Override
+    public boolean keyReleased(final int key, final int scan, final int mods) {
+        final ITerminalTab heading = showing();
+        if (heading != null && heading.onKeyReleased(key, scan, mods)) {
+            return true;
+        }
+        return super.keyReleased(key, scan, mods);
+    }
+
+    @Override
+    public boolean shouldCloseOnEsc() {
+        /*
+         * An editor at the prompt uses Escape for its own modes, and a terminal in the middle of one is
+         * the last place a stray Escape should shut the whole machine's screen.
+         */
+        final ITerminalTab heading = showing();
+        return heading == null || !heading.wantsEscape();
+    }
+
+    @Override
+    public void removed() {
+        for (final ITerminalTab tab : tabs == null ? new ITerminalTab[0] : tabs) {
+            if (tab != null) {
+                tab.onRemoved();
+            }
+        }
+        super.removed();
+    }
+
+    @Override
     public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
-        if (dropOpen) {
-            return handleDropClick(mouseX, mouseY, button);
+        if (drop.isOpen()) {
+            final boolean was = drop.isOpen();
+            final boolean taken = drop.clicked(mouseX, mouseY, button);
+            if (was && !drop.isOpen()) {
+                syncSearchBoxVisibility();
+            }
+            return taken;
         }
-        if (craftPopup != null) {
-            return handleCraftPopupClick(mouseX, mouseY, button);
+        if (craft.isOpen()) {
+            final boolean taken = craft.clicked(mouseX, mouseY, button);
+            if (!craft.isOpen()) {
+                syncSearchBoxVisibility();
+            }
+            return taken;
         }
-        if (popupEntry != null) {
-            return handlePopupClick(mouseX, mouseY, button);
+        if (request.isOpen()) {
+            final boolean taken = request.clicked(mouseX, mouseY, button);
+            if (!request.isOpen()) {
+                syncSearchBoxVisibility();
+            }
+            return taken;
         }
-        if (popupOp != null) {
-            return handleOpPopupClick(mouseX, mouseY, button);
+        if (opPopup.isOpen()) {
+            final boolean taken = opPopup.clicked(mouseX, mouseY, button);
+            if (!opPopup.isOpen()) {
+                syncSearchBoxVisibility();
+            }
+            return taken;
         }
         /*
          * Let the active content tab claim the press (e.g. the Processes tab's action buttons), after any
          * modal popup above has had its chance but before the rail/grid handlers below.
          */
-        final int active = menu.activeTab();
-        if (active >= 0 && active < tabs.length && tabs[active].onMouseClicked(mouseX, mouseY, button)) {
+        final ITerminalTab heading = showing();
+        if (heading != null && heading.onMouseClicked(mouseX, mouseY, button)) {
             return true;
         }
         /*
@@ -1545,7 +1375,8 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
                 && button == 0) {
             final NetworkItemEntry e = networkItemAt((int) mouseX, (int) mouseY);
             if (e != null) {
-                openStorageRequest(e);
+                request.openFromStorage(e);
+                syncSearchBoxVisibility();
                 return true;
             }
         }
@@ -1583,8 +1414,11 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     }
 
     /**
-     * The rail down the left side, which is how the terminal changes what it is showing. The prompt is the
-     * one entry on it that opens something rather than switching the content beside it.
+     * The rail down the left side, which is how the space changes what it is showing.
+     *
+     * <p>Every entry on it switches the content beside it, the prompt included. It used to be that clicking
+     * the prompt threw a separate window over the screen instead, which is a thing a screen that is the
+     * whole machine has no business doing to itself.
      */
     private boolean clickedRail(final double mouseX, final double mouseY) {
         final int[] rail = railTabs();
@@ -1593,12 +1427,6 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
             return false;
         }
         final int tab = rail[railScroll + row];
-        if (tab == ComputerTerminalMenu.TAB_CONSOLE) {
-            // Launch the Command Prompt for this computer instead of switching content.
-            PacketDistributor.sendToServer(new OpenProgramPayload(
-                    menu.monitorPos(), menu.hostPos(), Programs.COMMAND_PROMPT.toString()));
-            return true;
-        }
         if (tab != menu.activeTab()) {
             menu.setActiveTab(tab);
             if (minecraft != null && minecraft.gameMode != null) {
@@ -1623,17 +1451,29 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
             }
         }
         if (isGridTab()) {
-            if (inRect(mouseX, mouseY, leftPos + SORT_X, topPos + TOOLBAR_Y + gridShift(),
+            if (inRect(mouseX, mouseY, leftPos + SORT_X, topPos + TOOLBAR_Y,
                     SORT_W, TOOLBAR_H)) {
                 sortByQuantity = !sortByQuantity;
                 netScrollRow = 0;
                 return true;
             }
-            // The Network tab opens a request popup; the Storage tab withdraws directly.
+            if (inRect(mouseX, mouseY, leftPos + MOD_X, topPos + TOOLBAR_Y, MOD_W, TOOLBAR_H)) {
+                cycleModFilter(hasShiftDown() ? -1 : 1);
+                return true;
+            }
+            /*
+             * A click on the network's grid picks the thing out rather than asking for it: the panel beside
+             * the grid then says everything the machine knows about it, and the asking is done there. The
+             * machine's own store keeps its popup, because what is done to a local stack is taking or giving
+             * it and there is nothing else to say about it.
+             */
             if (menu.activeTab() == ComputerTerminalMenu.TAB_NETWORK) {
                 final NetworkItemEntry e = networkItemAt((int) mouseX, (int) mouseY);
                 if (e != null) {
-                    openRequest(e);
+                    selectEntry(e);
+                    return true;
+                }
+                if (clickedPane(mouseX, mouseY)) {
                     return true;
                 }
             }
@@ -1698,6 +1538,10 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
             setSliderPreview(draggingSliderDisk, sliderPermilleAt(draggingSliderDisk, mouseX, hasShiftDown()));
             return true;
         }
+        final ITerminalTab heading = showing();
+        if (heading != null && heading.onMouseDragged(mouseX, mouseY, button)) {
+            return true;
+        }
         return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
     }
 
@@ -1712,8 +1556,17 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
             draggingSliderDisk = -1;
             return true;
         }
+        final ITerminalTab heading = showing();
+        if (heading != null && heading.onMouseReleased(mouseX, mouseY, button)) {
+            return true;
+        }
         return super.mouseReleased(mouseX, mouseY, button);
     }
+
+    /* Ticks to wait for the menu's synchronised data before trusting it to shape the rail. */
+    private static final int SETTLE_TICKS = 5;
+
+    private int ticksOpen;
 
     @Override
     protected void containerTick() {
@@ -1722,9 +1575,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         if (searchBox != null) {
             searchBox.setTextColor(theme.text());
         }
-        if (qtyBox != null) {
-            qtyBox.setTextColor(theme.text());
-        }
+        qtyBox.setTextColor(theme.text());
         /*
          * Drop a slider's optimistic preview once the authoritative sync has caught up to it (or while
          * it is not being dragged and the server reports a different, clamped value), so a rejected
@@ -1735,6 +1586,38 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
                     && d < menu.diskCount() && menu.diskPermille(d) == sliderPreview[d]) {
                 sliderPreviewActive[d] = false;
             }
+        }
+        /*
+         * A heading can stop being offered while somebody is looking at it: pull the Crafting Card and
+         * Patterns is gone, unplug the network and Craft is. The rail is what the machine offers, so the
+         * screen falls back to the network rather than drawing a heading that is no longer on it.
+         */
+        final int active = menu.activeTab();
+        boolean onRail = false;
+        for (final int tab : railTabs()) {
+            onRail |= tab == active;
+        }
+        /*
+         * Hold that judgement for the first few ticks. The rail's shape is read from the synchronised menu
+         * data, which arrives a tick or two after the window does, so a screen reopened on Craft or Patterns
+         * would otherwise be thrown back to the network before the machine had a chance to say it offers it.
+         */
+        if (ticksOpen < SETTLE_TICKS) {
+            ticksOpen++;
+            onRail = true;
+        }
+        if (!onRail) {
+            menu.setActiveTab(ComputerTerminalMenu.TAB_NETWORK);
+            if (minecraft != null && minecraft.gameMode != null) {
+                minecraft.gameMode.handleInventoryButtonClick(menu.containerId,
+                        ComputerTerminalMenu.TAB_NETWORK);
+            }
+            syncSearchBoxVisibility();
+        }
+        craft.tick();
+        final ITerminalTab heading = showing();
+        if (heading != null) {
+            heading.onContainerTick();
         }
     }
 
@@ -1759,7 +1642,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     }
 
     private boolean overNetworkGrid(final double mx, final double my) {
-        final int gy = topPos + NET_Y + gridShift();
+        final int gy = topPos + NET_Y;
         return mx >= leftPos + NET_X && mx < leftPos + NET_X + NET_COLS * 18
                 && my >= gy && my < gy + gridRows() * 18;
     }
@@ -1770,186 +1653,14 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     }
 
     private boolean overDepositBar(final double mx, final double my) {
-        final int dx = leftPos + NET_X;
-        final int dy = topPos + DEPOSIT_Y + gridShift();
+        final int dx = leftPos + DEPOSIT_X;
+        final int dy = topPos + DEPOSIT_Y;
         return mx >= dx && mx < dx + DEPOSIT_W && my >= dy && my < dy + DEPOSIT_H;
     }
 
-    // Request popup (Network SELECT)
-
-    private int popupX() {
-        return leftPos + (imageWidth - POPUP_W) / 2;
-    }
-
-    private int popupY() {
-        return topPos + (imageHeight - POPUP_H) / 2;
-    }
-
-    private static final int POPUP_SERVER_ROWS = 4;
-
-    private void openRequest(final NetworkItemEntry e) {
-        popupEntry = e;
-        popupFromStorage = false;
-        deselectedServers.clear();
-        advancedMode = false;
-        destServerIndex = 0;
-        menu.setServerBreakdown(List.of());  // clear stale rows; the reply repopulates
-        menu.setNetworkServers(List.of());   // ditto the destination picker's computer list
-        syncSearchBoxVisibility(); // hide the search field, reveal the quantity field
-        setPopupQty((int) Math.min(64L, Math.max(1L, e.total())));
-        setFocused(qtyBox);
-        if (qtyBox != null) {
-            qtyBox.setFocused(true);
-        }
-        /*
-         * The reply carries BOTH the per-server breakdown (advanced sources) and the full computer list
-         * (the advanced destination picker).
-         */
-        PacketDistributor.sendToServer(new RequestServerBreakdownPayload(
-                menu.monitorPos(), menu.hostPos(), e.key()));
-    }
-
-    private void openStorageRequest(final NetworkItemEntry e) {
-        popupEntry = e;
-        popupFromStorage = true;
-        advancedMode = false;
-        syncSearchBoxVisibility();
-        setPopupQty((int) Math.min(64L, Math.max(1L, e.total())));
-        setFocused(qtyBox);
-        if (qtyBox != null) {
-            qtyBox.setFocused(true);
-        }
-    }
-
-    private void closeRequest() {
-        popupEntry = null;
-        popupFromStorage = false;
-        deselectedServers.clear();
-        advancedMode = false;
-        syncSearchBoxVisibility();
-    }
-
-    private int reqPopupH() {
-        return !popupFromStorage && advancedMode ? REQ_H_ADVANCED : REQ_H_SIMPLE;
-    }
-
-    private void toggleAdvanced() {
-        advancedMode = !advancedMode;
-    }
-
-    // Operation-detail popup (SubOperations of a clicked Operation)
-
     private void openOpPopup(final OperationRecord op) {
-        popupOp = op;
-        opPopupScroll = 0;
+        opPopup.open(op);
         syncSearchBoxVisibility();
-    }
-
-    private void closeOpPopup() {
-        popupOp = null;
-        syncSearchBoxVisibility();
-    }
-
-    private boolean handleOpPopupClick(final double mouseX, final double mouseY, final int button) {
-        if (button == 1) {
-            closeOpPopup();
-            return true;
-        }
-        if (button == 0) {
-            final int px = popupX();
-            final int py = popupY();
-            if (mouseX < px || mouseX >= px + POPUP_W || mouseY < py || mouseY >= py + POPUP_H) {
-                closeOpPopup();
-            }
-        }
-        return true; // swallow clicks while the popup is up
-    }
-
-    private int clampOpPopupScroll(final int size) {
-        final int max = Math.max(0, size - OP_POPUP_ROWS);
-        opPopupScroll = Math.max(0, Math.min(max, opPopupScroll));
-        return opPopupScroll;
-    }
-
-    private void renderOpPopup(final GuiGraphics g) {
-        if (popupOp == null) {
-            return;
-        }
-        // While the clicked Operation is still in flight, track its newest live record (the popup
-        if (popupOp.status() == OperationRecord.STATUS_PROCESSING
-                || popupOp.status() == OperationRecord.STATUS_WAITING
-                || popupOp.status() == OperationRecord.STATUS_PENDING) {
-            for (final OperationRecord live : menu.activeOps()) {
-                if (live.type() == popupOp.type() && live.key().equals(popupOp.key())
-                        && live.requested() == popupOp.requested()) {
-                    popupOp = live;
-                    break;
-                }
-            }
-        }
-        /*
-         * Push above the item grid and dim the screen, so the tab rail and header behind never show
-         * through the panel (flat fills draw below items otherwise).
-         */
-        g.pose().pushPose();
-        g.pose().translate(0, 0, 350);
-        g.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xE0070A0F);
-        final int px = popupX();
-        final int py = popupY();
-        g.fill(px - 2, py - 2, px + POPUP_W + 2, py + POPUP_H + 2, 0xFF0A1A1F);
-        g.fill(px, py, px + POPUP_W, py + POPUP_H, PANEL);
-        g.fill(px, py, px + POPUP_W, py + 1, ACCENT);
-        drawDataIcon(g, popupOp.key(), -1L, px + 6, py + 5);
-        final String label = opTypeLabel(popupOp.type());
-        g.drawString(font, label + "  " + popupOp.name().getString(), px + 28, py + 6, TEXT, false);
-        g.drawString(font, fmt(popupOp.moved()) + " of " + fmt(popupOp.requested()) + "  "
-                + statusLabel(popupOp.status()), px + 28, py + 17, statusColor(popupOp.status()), false);
-        final double f = popupOp.requested() <= 0
-                ? (popupOp.status() == OperationRecord.STATUS_PROCESSING ? 0 : 1)
-                : Math.min(1.0, (double) popupOp.moved() / popupOp.requested());
-        track(g, px + 6, py + 30, POPUP_W - 12, f,
-                popupOp.status() == OperationRecord.STATUS_PROCESSING ? ACCENT2 : statusColor(popupOp.status()));
-        g.drawString(font, "SUBOPERATIONS", px + 6, py + 42, DIM, false);
-        /*
-         * A live Operation carries its real SubOperation rows (per-server share, progress, state);
-         * a finished log entry carries only its provenance moves, so render whichever it has.
-         */
-        final List<OperationRecord.SubRow> subs = popupOp.subs();
-        final List<OperationRecord.MoveRow> moves = popupOp.moves();
-        if (!subs.isEmpty()) {
-            final int start = clampOpPopupScroll(subs.size());
-            for (int i = 0; i < OP_POPUP_ROWS && start + i < subs.size(); i++) {
-                subRow(g, px, py + 56 + i * 12, subs.get(start + i));
-            }
-        } else if (moves.isEmpty()) {
-            g.drawString(font, "No movement yet.", px + 6, py + 56, DIM, false);
-        } else {
-            final int start = clampOpPopupScroll(moves.size());
-            for (int i = 0; i < OP_POPUP_ROWS && start + i < moves.size(); i++) {
-                moveRow(g, px, py + 56 + i * 12, moves.get(start + i));
-            }
-        }
-        final String hint = "right-click to close";
-        g.drawString(font, hint, px + POPUP_W - font.width(hint) - 6, py + POPUP_H - 10, DIM, false);
-        g.pose().popPose();
-    }
-
-    private void subRow(final GuiGraphics g, final int px, final int my, final OperationRecord.SubRow sub) {
-        g.drawString(font, font.plainSubstrByWidth(sub.server(), 62), px + 6, my, DIM, false);
-        g.drawString(font, fmt(sub.moved()) + " / " + fmt(sub.planned()), px + 72, my, TEXT, false);
-        final String state = switch (sub.state()) {
-            case OperationRecord.SubRow.SUB_READING -> "READING";
-            case OperationRecord.SubRow.SUB_STREAMING -> "STREAMING";
-            case OperationRecord.SubRow.SUB_COMPLETED -> "DONE";
-            default -> "QUEUED";
-        };
-        final int color = switch (sub.state()) {
-            case OperationRecord.SubRow.SUB_READING -> AMBER;
-            case OperationRecord.SubRow.SUB_STREAMING -> ACCENT2;
-            case OperationRecord.SubRow.SUB_COMPLETED -> GREEN;
-            default -> DIM;
-        };
-        g.drawString(font, state, px + POPUP_W - font.width(state) - 6, my, color, false);
     }
 
     private int taskOpRowAt(final int mx, final int my) {
@@ -1959,7 +1670,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         if (mx < leftPos + CONTENT_X || mx >= leftPos + imageWidth - 6) {
             return -1;
         }
-        final int rel = my - (topPos + 6 + 90);
+        final int rel = my - (topPos + 90);
         if (rel < 0) {
             return -1;
         }
@@ -1967,264 +1678,12 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         return row >= 0 && row < Math.min(TASK_OP_ROWS, menu.activeOps().size()) ? row : -1;
     }
 
-    private boolean handlePopupClick(final double mouseX, final double mouseY, final int button) {
-        if (button == 1) {
-            closeRequest(); // right-click closes
-            return true;
-        }
-        if (button != 0) {
-            return true;
-        }
-        final int px = popupX();
-        final int py = popupY();
-        final int ph = reqPopupH();
-        // Outside the box closes.
-        if (mouseX < px || mouseX >= px + POPUP_W || mouseY < py || mouseY >= py + ph) {
-            closeRequest();
-            return true;
-        }
-        // Advanced toggle (Network tab only; never on the Storage popup).
-        if (!popupFromStorage && inRect(mouseX, mouseY, px + POPUP_W - 44, py + 5, 36, 12)) {
-            toggleAdvanced();
-            return true;
-        }
-        // Quantity field: focus it so the player can type, and let the EditBox place its cursor.
-        if (inRect(mouseX, mouseY, px + 7, py + 29, 120, 16)) {
-            setFocused(qtyBox);
-            qtyBox.setFocused(true);
-            qtyBox.mouseClicked(mouseX, mouseY, button);
-            return true;
-        }
-        // Max: request everything available.
-        if (inRect(mouseX, mouseY, px + POPUP_W - 58, py + 30, 50, 14)) {
-            setPopupQty((int) Math.min(Integer.MAX_VALUE, popupEntry.total()));
-            return true;
-        }
-        // Steppers: -1000/-100/-10/-1 then +1/+10/+100/+1000.
-        for (int i = 0; i < STEP_AMOUNTS.length; i++) {
-            if (inRect(mouseX, mouseY, px + 8 + i * 23, py + 48, 22, 14)) {
-                setPopupQty(popupQty + STEP_AMOUNTS[i]);
-                return true;
-            }
-        }
-        // Storage popup: two action buttons (to inventory / to network); no sources or destination.
-        if (popupFromStorage) {
-            final int by = py + ph - 22;
-            if (inRect(mouseX, mouseY, px + 8, by, 90, 16)) {
-                sendStorageAction(false);
-            } else if (inRect(mouseX, mouseY, px + 104, by, 90, 16)) {
-                sendStorageAction(true);
-            }
-            return true;
-        }
-        // Advanced mode: source-server checkboxes (PULL FROM) and the destination computer cycle.
-        if (advancedMode) {
-            final List<ServerBreakdownPayload.ServerHolding> servers = menu.serverBreakdown();
-            for (int i = 0; i < Math.min(POPUP_SERVER_ROWS, servers.size()); i++) {
-                if (inRect(mouseX, mouseY, px + 8, py + 78 + i * 12, POPUP_W - 16, 11)) {
-                    final String key = servers.get(i).key();
-                    if (!deselectedServers.remove(key)) {
-                        deselectedServers.add(key);
-                    }
-                    return true;
-                }
-            }
-            final int count = menu.networkServers().size();
-            if (count > 0) {
-                if (inRect(mouseX, mouseY, px + 8, py + 152, 14, 14)) {
-                    destServerIndex = Math.floorMod(destServerIndex - 1, count);
-                    return true;
-                }
-                if (inRect(mouseX, mouseY, px + POPUP_W - 22, py + 152, 14, 14)) {
-                    destServerIndex = Math.floorMod(destServerIndex + 1, count);
-                    return true;
-                }
-            }
-        }
-        // Action button (REQUEST in simple mode, SEND to a computer in advanced mode).
-        if (inRect(mouseX, mouseY, px + 8, py + ph - 22, POPUP_W - 16, 16)) {
-            sendRequest();
-            return true;
-        }
-        return true; // clicks inside the box are consumed
-    }
-
-    private void sendRequest() {
-        if (popupEntry == null || popupQty <= 0) {
-            return;
-        }
-        final List<String> keys = new ArrayList<>();
-        boolean anyDeselected = false;
-        int kind = TerminalSelectPayload.DEST_AUTO;
-        String destServer = "";
-        /*
-         * Sources and destination are advanced-only; a simple request pulls from everywhere to the
-         * auto destination (local storage, else inventory).
-         */
-        if (advancedMode) {
-            for (final ServerBreakdownPayload.ServerHolding s : menu.serverBreakdown()) {
-                if (deselectedServers.contains(s.key())) {
-                    anyDeselected = true;
-                } else {
-                    keys.add(s.key());
-                }
-            }
-            if (anyDeselected && keys.isEmpty() && !menu.serverBreakdown().isEmpty()) {
-                closeRequest(); // every source unchecked, nothing to pull from
-                return;
-            }
-            final List<NetworkServersPayload.ServerEntry> comp = menu.networkServers();
-            if (comp.isEmpty()) {
-                return; // no destination computer yet, keep the popup open
-            }
-            kind = TerminalSelectPayload.DEST_SERVER;
-            destServer = comp.get(Math.floorMod(destServerIndex, comp.size())).key();
-        }
-        PacketDistributor.sendToServer(new TerminalSelectPayload(
-                menu.monitorPos(), menu.hostPos(), popupEntry.key(), popupQty,
-                anyDeselected ? keys : List.of(), kind, destServer));
-        closeRequest();
-    }
-
-    private void sendStorageAction(final boolean toNetwork) {
-        if (popupEntry == null || popupQty <= 0) {
-            return;
-        }
-        if (toNetwork) {
-            PacketDistributor.sendToServer(new TerminalLocalUploadPayload(
-                    menu.monitorPos(), menu.hostPos(), popupEntry.key(), popupQty));
-        } else {
-            PacketDistributor.sendToServer(new TerminalLocalWithdrawPayload(
-                    menu.monitorPos(), menu.hostPos(), popupEntry.key(), popupQty));
-        }
-        closeRequest();
-    }
 
     private static boolean inRect(final double mx, final double my, final int x, final int y,
                                   final int w, final int h) {
         return mx >= x && mx < x + w && my >= y && my < y + h;
     }
 
-    private void renderPopup(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
-        if (popupEntry == null) {
-            return;
-        }
-        /*
-         * Items (the grid + inventory) render at a higher z than flat fills, so the popup must sit
-         * above them or they show through. Push the whole popup (and the quantity field) forward.
-         */
-        g.pose().pushPose();
-        g.pose().translate(0, 0, 350);
-        g.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xE0070A0F);
-        final int px = popupX();
-        final int py = popupY();
-        final int ph = reqPopupH();
-        g.fill(px - 1, py - 1, px + POPUP_W + 1, py + ph + 1, ACCENT);
-        g.fill(px, py, px + POPUP_W, py + ph, 0xFF0F151C);
-
-        // Header: icon + name + available, plus the advanced-mode toggle (Network tab only).
-        drawDataIcon(g, popupEntry.key(), -1L, px + 8, py + 5);
-        g.drawString(font, font.plainSubstrByWidth(popupEntry.name().getString(), POPUP_W - 78),
-                px + 28, py + 6, TEXT, false);
-        g.drawString(font, fmt(popupEntry.total()) + (popupEntry.key().isItem() ? "" : " mB")
-                        + (popupFromStorage ? " in local" : " available"),
-                px + 28, py + 17, DIM, false);
-        if (!popupFromStorage) {
-            final boolean advHover = inRect(mouseX, mouseY, px + POPUP_W - 44, py + 5, 36, 12);
-            g.fill(px + POPUP_W - 44, py + 5, px + POPUP_W - 8, py + 17,
-                    advancedMode ? ACCENT : (advHover ? 0xFF24323C : 0xFF1A222B));
-            g.drawCenteredString(font, "ADV", px + POPUP_W - 26, py + 7, advancedMode ? 0xFF0F151C : DIM);
-        }
-
-        // Quantity: editable field (re-rendered here so it sits ON the popup) + a Max button.
-        g.fill(px + 7, py + 29, px + 127, py + 45, TRACK);
-        qtyBox.render(g, mouseX, mouseY, partialTick);
-        final boolean maxHover = inRect(mouseX, mouseY, px + POPUP_W - 58, py + 30, 50, 14);
-        g.fill(px + POPUP_W - 58, py + 30, px + POPUP_W - 8, py + 44, maxHover ? 0xFF2BB3A4 : 0xFF1F9488);
-        g.drawCenteredString(font, "MAX", px + POPUP_W - 33, py + 33, 0xFFFFFFFF);
-
-        // Stepper row: ---- --- -- - (1000/100/10/1 down) then + ++ +++ ++++ (up).
-        for (int i = 0; i < STEP_LABELS.length; i++) {
-            final int bx = px + 8 + i * 23;
-            final boolean hover = inRect(mouseX, mouseY, bx, py + 48, 22, 14);
-            g.fill(bx, py + 48, bx + 22, py + 62, hover ? 0xFF24323C : 0xFF1A222B);
-            g.drawCenteredString(font, STEP_LABELS[i], bx + 11, py + 51, STEP_AMOUNTS[i] > 0 ? ACCENT : AMBER);
-        }
-
-        if (popupFromStorage) {
-            renderStorageActions(g, mouseX, mouseY, px, py, ph);
-        } else if (advancedMode) {
-            renderAdvanced(g, mouseX, mouseY, px, py, ph);
-        } else {
-            renderSimple(g, mouseX, mouseY, px, py, ph);
-        }
-        g.pose().popPose();
-    }
-
-    private void renderSimple(final GuiGraphics g, final int mouseX, final int mouseY,
-                              final int px, final int py, final int ph) {
-        final boolean hasStorage = menu.usableStorageSlots() > 0;
-        g.drawString(font, hasStorage ? "Lands in this computer's storage" : "Needs internal storage (no disk)",
-                px + 8, py + 70, hasStorage ? DIM : AMBER, false);
-        actionButton(g, mouseX, mouseY, px + 8, py + ph - 22, POPUP_W - 16, "REQUEST " + fmt(popupQty));
-    }
-
-    private void renderStorageActions(final GuiGraphics g, final int mouseX, final int mouseY,
-                                      final int px, final int py, final int ph) {
-        g.drawString(font, "Send local items to:", px + 8, py + 70, DIM, false);
-        final int by = py + ph - 22;
-        actionButton(g, mouseX, mouseY, px + 8, by, 90, "TO INVENTORY");
-        actionButton(g, mouseX, mouseY, px + 104, by, 90, "TO NETWORK");
-    }
-
-    private void renderAdvanced(final GuiGraphics g, final int mouseX, final int mouseY,
-                                final int px, final int py, final int ph) {
-        g.drawString(font, "PULL FROM", px + 8, py + 66, DIM, false);
-        final List<ServerBreakdownPayload.ServerHolding> servers = menu.serverBreakdown();
-        if (servers.isEmpty()) {
-            g.drawString(font, "all servers", px + POPUP_W - 8 - font.width("all servers"), py + 66, DIM, false);
-        }
-        for (int i = 0; i < Math.min(POPUP_SERVER_ROWS, servers.size()); i++) {
-            final ServerBreakdownPayload.ServerHolding s = servers.get(i);
-            final int ry = py + 78 + i * 12;
-            final boolean on = !deselectedServers.contains(s.key());
-            g.fill(px + 8, ry, px + 18, ry + 10, on ? ACCENT : 0xFF2A3340);
-            g.fill(px + 9, ry + 1, px + 17, ry + 9, on ? ACCENT : 0xFF11161D);
-            g.drawString(font, font.plainSubstrByWidth(s.label(), 120), px + 22, ry + 1, on ? TEXT : DIM, false);
-            final String c = fmt(s.count());
-            g.drawString(font, c, px + POPUP_W - 8 - font.width(c), ry + 1, DIM, false);
-        }
-        if (servers.size() > POPUP_SERVER_ROWS) {
-            g.drawString(font, "+" + (servers.size() - POPUP_SERVER_ROWS) + " more (included)",
-                    px + 22, py + 78 + POPUP_SERVER_ROWS * 12, DIM, false);
-        }
-
-        // SEND TO: cycle through every computer that can receive items.
-        g.drawString(font, "SEND TO", px + 8, py + 140, DIM, false);
-        final List<NetworkServersPayload.ServerEntry> comp = menu.networkServers();
-        if (comp.isEmpty()) {
-            g.drawString(font, "No computers available", px + 8, py + 154, AMBER, false);
-        } else {
-            final NetworkServersPayload.ServerEntry target = comp.get(Math.floorMod(destServerIndex, comp.size()));
-            final boolean lh = inRect(mouseX, mouseY, px + 8, py + 152, 14, 14);
-            final boolean rh = inRect(mouseX, mouseY, px + POPUP_W - 22, py + 152, 14, 14);
-            g.fill(px + 8, py + 152, px + 22, py + 166, lh ? 0xFF24323C : 0xFF1A222B);
-            g.drawCenteredString(font, "<", px + 15, py + 155, ACCENT);
-            g.fill(px + POPUP_W - 22, py + 152, px + POPUP_W - 8, py + 166, rh ? 0xFF24323C : 0xFF1A222B);
-            g.drawCenteredString(font, ">", px + POPUP_W - 15, py + 155, ACCENT);
-            final String text = font.plainSubstrByWidth(
-                    target.name() + "  (" + fmt(target.free()) + " free)", POPUP_W - 52);
-            g.drawString(font, text, px + 26, py + 155, TEXT, false);
-        }
-        actionButton(g, mouseX, mouseY, px + 8, py + ph - 22, POPUP_W - 16, "SEND " + fmt(popupQty));
-    }
-
-    private void actionButton(final GuiGraphics g, final int mouseX, final int mouseY,
-                              final int x, final int y, final int w, final String label) {
-        final boolean hover = inRect(mouseX, mouseY, x, y, w, 16);
-        g.fill(x, y, x + w, y + 16, hover ? 0xFF2BB3A4 : 0xFF1F9488);
-        g.drawCenteredString(font, label, x + w / 2, y + 4, 0xFFFFFFFF);
-    }
 
     void drawDataIcon(final GuiGraphics g, final StorageKey key, final long count,
                               final int x, final int y) {
@@ -2267,17 +1726,13 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
                     railScroll - (int) Math.signum(dy), railTabs().length, railVisible());
             return true;
         }
-        if (dropOpen && dy != 0) {
-            if (dropScope == TerminalDropPayload.SCOPE_TYPES) {
-                dropTypeScrollRow = Math.max(0, dropTypeScrollRow - (int) Math.signum(dy));
-            }
+        if (drop.scrolled(dy)) {
             return true;
         }
-        if (popupOp != null && dy != 0) {
-            opPopupScroll = Math.max(0, opPopupScroll - (int) Math.signum(dy));
+        if (opPopup.scrolled(dy)) {
             return true;
         }
-        if (craftPopup == null && menu.activeTab() == ComputerTerminalMenu.TAB_CRAFT && dy != 0) {
+        if (!craft.isOpen() && menu.activeTab() == ComputerTerminalMenu.TAB_CRAFT && dy != 0) {
             craftScroll = Math.max(0, craftScroll - (int) Math.signum(dy));
             return true;
         }
@@ -2292,6 +1747,10 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
             opScroll = Math.max(0, Math.min(max, opScroll - (int) Math.signum(dy)));
             return true;
         }
+        final ITerminalTab heading = showing();
+        if (heading != null && heading.onMouseScrolled(mx, my, dy)) {
+            return true;
+        }
         return super.mouseScrolled(mx, my, dx, dy);
     }
 
@@ -2303,14 +1762,14 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
          * custom hover tooltips below draw afterward using the palette fields refreshed during renderBg/Labels.
          */
         super.render(g, mouseX, mouseY, partialTick);
-        if (dropOpen) {
-            renderDropPopup(g, mouseX, mouseY);
-        } else if (craftPopup != null) {
-            renderCraftPopup(g, mouseX, mouseY);
-        } else if (popupEntry != null) {
-            renderPopup(g, mouseX, mouseY, partialTick);
-        } else if (popupOp != null) {
-            renderOpPopup(g);
+        if (drop.isOpen()) {
+            drop.render(g, mouseX, mouseY);
+        } else if (craft.isOpen()) {
+            craft.render(g, mouseX, mouseY);
+        } else if (request.isOpen()) {
+            request.render(g, mouseX, mouseY, partialTick);
+        } else if (opPopup.isOpen()) {
+            opPopup.render(g);
         } else if (isGridTab()) {
             final boolean local = menu.activeTab() == ComputerTerminalMenu.TAB_STORAGE;
             final String where = local ? "in storage" : "on the network";
@@ -2346,7 +1805,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
          * Match the grid's per-tab vertical shift and row count so the highlight tracks the cell the
          * tooltip hit-test (networkItemAt) reports -- on the Storage tab the slider band pushes both down.
          */
-        final int gy = topPos + NET_Y + gridShift();
+        final int gy = topPos + NET_Y;
         final int relX = mx - gx;
         final int relY = my - gy;
         if (relX < 0 || relY < 0 || relX % 18 > 15 || relY % 18 > 15) {

@@ -28,7 +28,17 @@ public enum ProgramKind implements IStableName {
      * A desktop environment package (KDE Plasma, GNOME, Cinnamon): installing it turns a TTY-only Linux into
      * a graphical desktop. The matching {@link DesktopEnvironmentDef} describes the chrome it brings.
      */
-    DESKTOP_ENVIRONMENT("desktop_environment");
+    DESKTOP_ENVIRONMENT("desktop_environment"),
+
+    /**
+     * An operating space package: what a network system shows on the glass instead of a bare prompt.
+     *
+     * <p>The same relationship a Linux has with its desktop, for a machine that has no desktop. MC-NET ships
+     * with one; uninstall it and the machine is a terminal and nothing else; install another and that one
+     * draws. The matching {@link OperatingSpaceDef} names it, and the screen itself is registered on the
+     * client, so an add-on writes a whole way of working the network rather than a theme over ours.
+     */
+    OPERATING_SPACE("operating_space");
 
     private final String serializedName;
 

@@ -100,6 +100,7 @@ import dev.jstech.computers.menu.ExportBusMenu;
 import dev.jstech.computers.menu.ImportBusMenu;
 import dev.jstech.computers.menu.InputBusMenu;
 import dev.jstech.computers.menu.LinuxTtyMenu;
+import dev.jstech.computers.menu.NetTerminalMenu;
 import dev.jstech.computers.menu.MainframeMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.menu.NetworkGatewayMenu;
@@ -690,8 +691,8 @@ public final class ComputingModule {
                     MonitorSessionMenu::fromNetwork));
 
     /*
-     * Each terminal platform opens its own screen: MC-DOS and the Linux TTY carry the Command Prompt's
-     * data but are separate menu types, so the MC-NET window is never reused for another system's console.
+     * Each terminal platform opens its own screen. They carry the same data and differ in how the machine
+     * greets and where it stands, so no system is ever met in another's voice.
      */
     public static final DeferredHolder<MenuType<?>,
             MenuType<DosTerminalMenu>> DOS_TERMINAL_MENU =
@@ -702,6 +703,11 @@ public final class ComputingModule {
             MenuType<LinuxTtyMenu>> LINUX_TTY_MENU =
             MENUS.register("linux_tty", () -> IMenuTypeExtension.create(
                     LinuxTtyMenu::fromNetwork));
+
+    public static final DeferredHolder<MenuType<?>,
+            MenuType<NetTerminalMenu>> NET_TERMINAL_MENU =
+            MENUS.register("net_terminal", () -> IMenuTypeExtension.create(
+                    NetTerminalMenu::fromNetwork));
 
     public static final DeferredHolder<MenuType<?>,
             MenuType<DesktopMenu>> DESKTOP_MENU =

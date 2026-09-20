@@ -32,6 +32,7 @@ public final class OsRegistry {
     private static final Map<ResourceLocation, OsDef> OSES = new LinkedHashMap<>();
     private static final Map<ResourceLocation, ProgramSpec> PROGRAMS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, DesktopEnvironmentDef> DESKTOPS = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, OperatingSpaceDef> SPACES = new LinkedHashMap<>();
 
     private static volatile boolean frozen;
 
@@ -51,6 +52,10 @@ public final class OsRegistry {
 
     public static void registerDesktop(final DesktopEnvironmentDef def) {
         add(DESKTOPS, def == null ? null : def.id(), def, "desktop");
+    }
+
+    public static void registerSpace(final OperatingSpaceDef def) {
+        add(SPACES, def == null ? null : def.id(), def, "operating space");
     }
 
     /** Closes the registry, as the mod does once every mod has loaded: nothing is added after. */
@@ -95,6 +100,16 @@ public final class OsRegistry {
     /** Returns an unmodifiable view of all registered desktop environments. */
     public static Collection<DesktopEnvironmentDef> desktops() {
         return Collections.unmodifiableCollection(DESKTOPS.values());
+    }
+
+    /** Returns the {@link OperatingSpaceDef} registered under {@code id}, or {@code null} if absent. */
+    public static OperatingSpaceDef getSpace(ResourceLocation id) {
+        return id == null ? null : SPACES.get(id);
+    }
+
+    /** Returns an unmodifiable view of all registered operating spaces. */
+    public static Collection<OperatingSpaceDef> spaces() {
+        return Collections.unmodifiableCollection(SPACES.values());
     }
 
     // Lookup
