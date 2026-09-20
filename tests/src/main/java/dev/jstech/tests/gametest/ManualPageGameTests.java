@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
@@ -138,13 +139,31 @@ public final class ManualPageGameTests {
         final PersonalComputerBlockEntity computer = machine(helper, DEBIAN);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
+                    /*
+                     * Read from the server rather than assumed, because this is the one command a server
+                     * turns on and off, and a test that assumed the shipped answer would be a test that
+                     * failed on any server that had made the other choice.
+                     */
+                    final boolean on = ComputersServerConfig.listCommands();
                     final List<String> typed = shell(helper, computer, "listcmd");
-                    helper.assertTrue(says(typed, "command not found"),
-                            "off, typing it is an unknown word; got " + typed);
+                    helper.assertTrue(says(typed, "command not found") != on,
+                            "with listcmd " + (on ? "on it runs" : "off it is an unknown word")
+                                    + "; got " + head(typed));
                     final List<String> listed = shell(helper, computer, "apropos everything");
-                    helper.assertTrue(!says(listed, "listcmd"), "and it is in no list either; got " + listed);
+                    helper.assertTrue(says(listed, "listcmd") == on,
+                            "and it is in a list only when it is on; got " + head(listed));
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * The first few lines of what a machine said, for a message that has to fit somewhere.
+     *
+     * <p>A listing of everything a computer can run is hundreds of lines long, and a failure that quotes all
+     * of them is a failure nobody can read and one the game cannot even write down.
+     */
+    private static List<String> head(final List<String> lines) {
+        return lines.subList(0, Math.min(4, lines.size()));
     }
 
     private static List<String> shell(final GameTestHelper helper, final PersonalComputerBlockEntity on,
