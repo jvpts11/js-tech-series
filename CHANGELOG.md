@@ -6,6 +6,10 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 
 ## [Unreleased]
 
+## [0.4.0a] - 2026-09-21 - The Booting Update
+
+Codename: Beryllium.
+
 ### Added
 - **Solitaire** and **Snake**, the two games these desktops always shipped with. Klondike drawing one card,
   dealt from a number so the same number deals the same game and one player can hand another the deal they
@@ -120,84 +124,6 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   installation medium writes it back. With no folders it has no system folder to lose, so it has one way of
   breaking where the others have two.
 
-### Fixed
-- A file cannot be given a path longer than the machine can then ask about. Each folder and file name was
-  held to sixty-four characters and the path they built to nothing at all, so folders nested deeply enough
-  made a file that existed on the disk and that no window could open, list, copy or pack away again, because
-  every message that carries a path refuses a longer one outright. A whole path is now held to what those
-  messages carry, and a thing put back out of the trash is numbered within that too.
-- A service is listed as running and weighs what it asks for. Every installed service was looked up by the
-  bare name of its program while every way of installing one writes down the whole name, so no service ever
-  matched: none was listed on the machine it was on and none of the memory they hold was counted against it.
-  Installing one from a package manager also only flipped its switch without recording it at all, and a
-  package built from source was recorded without the version it was built at, which listed it as out of date
-  the moment it finished building.
-- The Patterns heading asks the machine once a second instead of once a frame. It asked for both halves of
-  what it shows every time it drew, which is several messages a tick for as long as an answer is on its way
-  and an unending run of them on a machine that never answers, which is any machine further than eight
-  blocks from the monitor being looked at. It also no longer takes an answer meant for a desktop's Pattern
-  Studio after its own screen has closed, keeps what is picked out pointing at a row that still exists when a
-  list shrinks under it, turns only over the lists it can scroll, and no longer writes how many more files
-  there are across the last row of them.
-- A craft is planned once the number has stopped changing. Every digit typed into the quantity asked the
-  machine for a fresh plan, and planning walks the whole recipe against everything the network holds, so
-  asking for a thousand of something asked for four of them in the time it takes to type it; holding a step
-  button did the same on every click. The machine is asked a tenth of a second after the last change.
-- The question that asks the network for a thing is centred on the panel it actually draws rather than on a
-  fixed height, so the short shape no longer sits high on the glass with a gap under it, and opening the
-  question out no longer leaves the quantity field where the shorter panel had it.
-- A terminal reopened on the Craft or the Patterns heading stays on it. The rail is built from what the
-  machine says it offers and that answer arrives a tick or two behind the window, so the screen saw a rail
-  without those headings on it and moved to the network before the machine had a chance to answer.
-- A disk's name no longer has its own slider handle drawn through it: a disk offering nothing puts its handle
-  at the left end of the track, which is exactly where its name is written. The two buttons under the panel
-  beside the grid also no longer sit two pixels under the line above them.
-- The rail and the pattern behind a picked-out thing are worked out when they change rather than several
-  times in every frame, which is what building a list and walking the whole craft catalogue per draw was.
-- Two add-ons registering an operating space at the same moment can no longer leave the table with neither of
-  them in it. Client setup is handed to every mod at once, on as many threads as the loader cares to use.
-- Asking the network for a thing works again. The field a quantity is typed into was built with the screen's
-  own font at a moment when the screen has none, so the first thing that measured a string in it brought the
-  game down the instant the question was opened.
-- The inventory key is a letter at a prompt. Pressing it at a network machine's Console shut the machine's
-  whole interface, because a key the prompt had no use for fell through to the game behind it. Every key
-  belongs to the prompt while the prompt is what is showing, Escape excepted, which still closes.
-- A network item shows how much of it there is again, in the Network Interactor on a desktop. The total was
-  being drawn with the offset meant for the game's own item count, which cancels a lift that a plain label
-  never applies, so every total landed two hundred deep behind the window it belonged to and only the
-  tooltip could say the number. The star on a favourite and the availability mark on a craftable were lost
-  in the same place.
-- A terminal says what its network is holding whatever machine it is on. Only the orchestrator could answer
-  the question, so a terminal on any other computer read "0 held" while showing a grid full of things. Every
-  machine asks the orchestrator of the network it is on, which is where the index of what is where lives.
-- A network machine's prompt greets with the name of the system it is on. It was read off the machine's own
-  disks by the client, which is not holding them, so the prompt came up on a machine that could not say what
-  it was running and greeted nobody. The name goes with the window now, from the side that knows it.
-- The deposit button no longer sits on the rule above the player's own rows, and a disk's slider no longer
-  has the next disk's name drawn across its handle: a disk's row needs twenty-one pixels and was given
-  fourteen. The numbers behind both were written out in two files that had drifted apart, and are one set
-  now, with the arithmetic held to account by the layout's own tests.
-- A wrecked machine really stays wrecked. One whose system file had been deleted stopped at its self-test for
-  a single tick and then started the system anyway, because the check that asks whether there is anywhere to
-  go only looked for a machine with nothing installed at all, and a wrecked machine still has a system
-  installed: that is the very reason it is found and refused. It now stays where it stands until there is
-  somewhere to go, which is what putting an installation medium in gives it.
-- A machine that will not start now says why. Standing at its failed self-test, it went on announcing
-  "Booting from ..." over the top of its own refusal and then sat there for ever, because the screen decided
-  what to show by asking the firmware whether it had found anything bootable, and a wrecked machine's disk
-  still declares its system. A halted machine is now booting from nothing whatever the firmware made of the
-  drives, so the failure reaches both the older screens and the modern one. A modern machine also said "No
-  bootable device", which is true of an empty computer and a lie about a wrecked one whose device is right
-  there; it now heads with what the machine actually found, in the words that family used.
-- What a machine prints now fits the window it is read in. A terminal window on a desktop is narrower than a
-  monitor, and the machine was writing to a monitor's width whatever it was talking to, so every wide line
-  folded in half: a directory listing came out with a row of leader dots on its own under each name. The
-  window now tells the machine how wide its glass is with every line.
-- `dir`, `ls -l` and `df` print columns again instead of pushing their last value to the right edge with a
-  run of dots between. The name goes last, where a name belongs, because it is the one column nothing can
-  plan a width for, and the columns before it are as narrow as what they hold.
-
-### Added
 - A name can now be given a value at the prompt and it stays given: `set NAME=value` on the Frames and MC-DOS
   family, `export NAME=value` and a bare `NAME=value` on the Unix shells, `unset` to forget one, and `set` or
   `export` on their own to list the names there are. The names belong to the machine rather than to the window
@@ -562,7 +488,6 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - `uname` takes `-s`, `-n`, `-r` and `-m` as well as `-a`, alone or together (`uname -sr`), and answers for the
   system it runs on: a Linux says `Linux` and `x86_64` or `i686`, FreeBSD says `FreeBSD` and `vel64` or `IA-32`.
 
-### Added
 - CDE has its Help Viewer, and the Front Panel has the control that opens it. What it shows is not a second
   body of text: it is the very manual pages `man` prints at a terminal, asked of the machine through the same
   filter that decides what that machine can run, so the Help never teaches a command that is not there. The
@@ -1052,6 +977,82 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - Every source file's header names the mod it belongs to.
 
 ### Fixed
+- A file cannot be given a path longer than the machine can then ask about. Each folder and file name was
+  held to sixty-four characters and the path they built to nothing at all, so folders nested deeply enough
+  made a file that existed on the disk and that no window could open, list, copy or pack away again, because
+  every message that carries a path refuses a longer one outright. A whole path is now held to what those
+  messages carry, and a thing put back out of the trash is numbered within that too.
+- A service is listed as running and weighs what it asks for. Every installed service was looked up by the
+  bare name of its program while every way of installing one writes down the whole name, so no service ever
+  matched: none was listed on the machine it was on and none of the memory they hold was counted against it.
+  Installing one from a package manager also only flipped its switch without recording it at all, and a
+  package built from source was recorded without the version it was built at, which listed it as out of date
+  the moment it finished building.
+- The Patterns heading asks the machine once a second instead of once a frame. It asked for both halves of
+  what it shows every time it drew, which is several messages a tick for as long as an answer is on its way
+  and an unending run of them on a machine that never answers, which is any machine further than eight
+  blocks from the monitor being looked at. It also no longer takes an answer meant for a desktop's Pattern
+  Studio after its own screen has closed, keeps what is picked out pointing at a row that still exists when a
+  list shrinks under it, turns only over the lists it can scroll, and no longer writes how many more files
+  there are across the last row of them.
+- A craft is planned once the number has stopped changing. Every digit typed into the quantity asked the
+  machine for a fresh plan, and planning walks the whole recipe against everything the network holds, so
+  asking for a thousand of something asked for four of them in the time it takes to type it; holding a step
+  button did the same on every click. The machine is asked a tenth of a second after the last change.
+- The question that asks the network for a thing is centred on the panel it actually draws rather than on a
+  fixed height, so the short shape no longer sits high on the glass with a gap under it, and opening the
+  question out no longer leaves the quantity field where the shorter panel had it.
+- A terminal reopened on the Craft or the Patterns heading stays on it. The rail is built from what the
+  machine says it offers and that answer arrives a tick or two behind the window, so the screen saw a rail
+  without those headings on it and moved to the network before the machine had a chance to answer.
+- A disk's name no longer has its own slider handle drawn through it: a disk offering nothing puts its handle
+  at the left end of the track, which is exactly where its name is written. The two buttons under the panel
+  beside the grid also no longer sit two pixels under the line above them.
+- The rail and the pattern behind a picked-out thing are worked out when they change rather than several
+  times in every frame, which is what building a list and walking the whole craft catalogue per draw was.
+- Two add-ons registering an operating space at the same moment can no longer leave the table with neither of
+  them in it. Client setup is handed to every mod at once, on as many threads as the loader cares to use.
+- Asking the network for a thing works again. The field a quantity is typed into was built with the screen's
+  own font at a moment when the screen has none, so the first thing that measured a string in it brought the
+  game down the instant the question was opened.
+- The inventory key is a letter at a prompt. Pressing it at a network machine's Console shut the machine's
+  whole interface, because a key the prompt had no use for fell through to the game behind it. Every key
+  belongs to the prompt while the prompt is what is showing, Escape excepted, which still closes.
+- A network item shows how much of it there is again, in the Network Interactor on a desktop. The total was
+  being drawn with the offset meant for the game's own item count, which cancels a lift that a plain label
+  never applies, so every total landed two hundred deep behind the window it belonged to and only the
+  tooltip could say the number. The star on a favourite and the availability mark on a craftable were lost
+  in the same place.
+- A terminal says what its network is holding whatever machine it is on. Only the orchestrator could answer
+  the question, so a terminal on any other computer read "0 held" while showing a grid full of things. Every
+  machine asks the orchestrator of the network it is on, which is where the index of what is where lives.
+- A network machine's prompt greets with the name of the system it is on. It was read off the machine's own
+  disks by the client, which is not holding them, so the prompt came up on a machine that could not say what
+  it was running and greeted nobody. The name goes with the window now, from the side that knows it.
+- The deposit button no longer sits on the rule above the player's own rows, and a disk's slider no longer
+  has the next disk's name drawn across its handle: a disk's row needs twenty-one pixels and was given
+  fourteen. The numbers behind both were written out in two files that had drifted apart, and are one set
+  now, with the arithmetic held to account by the layout's own tests.
+- A wrecked machine really stays wrecked. One whose system file had been deleted stopped at its self-test for
+  a single tick and then started the system anyway, because the check that asks whether there is anywhere to
+  go only looked for a machine with nothing installed at all, and a wrecked machine still has a system
+  installed: that is the very reason it is found and refused. It now stays where it stands until there is
+  somewhere to go, which is what putting an installation medium in gives it.
+- A machine that will not start now says why. Standing at its failed self-test, it went on announcing
+  "Booting from ..." over the top of its own refusal and then sat there for ever, because the screen decided
+  what to show by asking the firmware whether it had found anything bootable, and a wrecked machine's disk
+  still declares its system. A halted machine is now booting from nothing whatever the firmware made of the
+  drives, so the failure reaches both the older screens and the modern one. A modern machine also said "No
+  bootable device", which is true of an empty computer and a lie about a wrecked one whose device is right
+  there; it now heads with what the machine actually found, in the words that family used.
+- What a machine prints now fits the window it is read in. A terminal window on a desktop is narrower than a
+  monitor, and the machine was writing to a monitor's width whatever it was talking to, so every wide line
+  folded in half: a directory listing came out with a row of leader dots on its own under each name. The
+  window now tells the machine how wide its glass is with every line.
+- `dir`, `ls -l` and `df` print columns again instead of pushing their last value to the right edge with a
+  run of dots between. The name goes last, where a name belongs, because it is the one column nothing can
+  plan a width for, and the columns before it are as narrow as what they hold.
+
 - A window is called what its desktop calls the program, on its title bar, on its panel button and on the cards
   the panel shows: Dolphin, Kate and KCalc on KDE Plasma, Nemo and xed on Cinnamon, the File Manager and the Text
   Editor on CDE. Their title bars said Files, Editor and Calculator on every desktop. A title a program writes
