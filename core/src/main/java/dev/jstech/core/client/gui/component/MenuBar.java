@@ -10,6 +10,8 @@ package dev.jstech.core.client.gui.component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
@@ -87,7 +89,7 @@ public final class MenuBar extends UiComponent {
         if (index < 0 || index >= this.titles.size()) {
             return null;
         }
-        final net.minecraft.client.gui.Font font = net.minecraft.client.Minecraft.getInstance().font;
+        final Font font = Minecraft.getInstance().font;
         return new int[] {titleX(index) + font.width(this.titles.get(index)) / 2, y() + height() / 2};
     }
 
@@ -99,7 +101,7 @@ public final class MenuBar extends UiComponent {
     /** The left edge of a title, from the widths of the ones before it. */
     private int titleX(final int index) {
         int mx = x() + LEFT;
-        final net.minecraft.client.gui.Font font = net.minecraft.client.Minecraft.getInstance().font;
+        final Font font = Minecraft.getInstance().font;
         for (int i = 0; i < index; i++) {
             mx += font.width(this.titles.get(i)) + GAP;
         }
@@ -111,7 +113,7 @@ public final class MenuBar extends UiComponent {
         if (my < y() || my >= y() + height()) {
             return -1;
         }
-        final net.minecraft.client.gui.Font font = net.minecraft.client.Minecraft.getInstance().font;
+        final Font font = Minecraft.getInstance().font;
         int left = x() + LEFT;
         for (int i = 0; i < this.titles.size(); i++) {
             final int w = font.width(this.titles.get(i));

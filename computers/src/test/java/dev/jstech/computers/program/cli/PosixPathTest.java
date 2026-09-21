@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.UnixTree;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -74,5 +75,31 @@ class PosixPathTest {
         assertEquals("/home/shared", PosixPath.render(resolved));
         final DosPath.Location media = DosPath.resolve(cwd, PosixPath.toDos("/media/d/backup"));
         assertEquals("/media/d/backup", PosixPath.render(media));
+    }
+
+    @Test
+    void toDos_onSystemV_expandsTheTildeToTheHomeUnderUsr() {
+        assertEquals("C:\\usr\\player", PosixPath.toDos(UnixTree.SYSTEM_V, "~"));
+        assertEquals("C:\\usr\\player\\notes.txt", PosixPath.toDos(UnixTree.SYSTEM_V, "~/notes.txt"));
+    }
+
+    @Test
+    void toDos_onSystemV_mountsTheOtherDrivesUnderMnt() {
+        assertEquals("D:\\backup", PosixPath.toDos(UnixTree.SYSTEM_V, "/mnt/d/backup"));
+        assertEquals("C:\\media\\d", PosixPath.toDos(UnixTree.SYSTEM_V, "/media/d"));
+    }
+
+    @Test
+    void render_onSystemV_namesAnotherDriveByItsMountUnderMnt() {
+        assertEquals("/mnt/d", PosixPath.render(UnixTree.SYSTEM_V, DosPath.Location.root('D')));
+        assertEquals("/mnt/e/x", PosixPath.render(UnixTree.SYSTEM_V, new DosPath.Location('E', List.of("x"))));
+    }
+
+    @Test
+    void renderForPrompt_onSystemV_abbreviatesItsOwnHomeAndNotTheCommonOne() {
+        assertEquals("~", PosixPath.renderForPrompt(UnixTree.SYSTEM_V, PosixPath.home(UnixTree.SYSTEM_V)));
+        assertEquals("~/docs", PosixPath.renderForPrompt(UnixTree.SYSTEM_V,
+                PosixPath.home(UnixTree.SYSTEM_V).child("docs")));
+        assertEquals("/home/player", PosixPath.renderForPrompt(UnixTree.SYSTEM_V, PosixPath.home()));
     }
 }

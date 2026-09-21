@@ -8,53 +8,102 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.block.DataCableBlock;
+import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.MainframeStructure;
+import dev.jstech.computers.crafting.CraftPlanner;
+import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.crafting.ICraftIo;
+import dev.jstech.computers.crafting.MultiStagePattern;
+import dev.jstech.computers.crafting.NetworkCraftOperation;
+import dev.jstech.computers.crafting.NetworkMultiStageOperation;
+import dev.jstech.computers.crafting.NetworkProcessingOperation;
+import dev.jstech.computers.crafting.NetworkRecipe;
+import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.FormFactor;
-import dev.jstech.core.network.ConnectivityIndex;
-import dev.jstech.core.network.IDataNetworkConnectable;
+import dev.jstech.computers.operation.INetworkOperation;
+import dev.jstech.computers.operation.IPersistentOperation;
+import dev.jstech.computers.operation.NetworkIndex;
+import dev.jstech.computers.operation.NetworkInsertOperation;
+import dev.jstech.computers.operation.NetworkSelectOperation;
+import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.os.OsDisks;
+import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.install.OsInstallRunner;
+import dev.jstech.computers.os.install.SetupRunner;
+import dev.jstech.computers.program.iql.IqlCatalog;
+import dev.jstech.computers.storage.IDataSink;
+import dev.jstech.computers.storage.LocalStore;
+import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.storage.StoreSink;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.FailoverRole;
-import dev.jstech.core.network.MainframeNode;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.operation.OperationBalance;
 import dev.jstech.core.operation.OperationDispatch;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.operation.IOperationTask;
+import dev.jstech.core.operation.OperationStatistics;
 import dev.jstech.core.operation.SelfTestOperationTask;
-import dev.jstech.core.persistence.NetworkRegistrySavedData;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
-import dev.jstech.core.uuid.NetworkUuidState;
 import dev.jstech.core.uuid.NodeUuid;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
 import java.util.Set;
+import software.bernie.geckolib.animatable.GeoBlockEntity;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
 /**
- * The Mainframe BlockEntity: the binding that turns installed hardware item stacks into a {@link ComputerBuild} and exposes the powered state, capacity and parallel-queue count. Unlike the passive computers it shares a base with, the Mainframe OWNS and orchestrates a data network rather than reading one from a cable.
+ * The Mainframe BlockEntity: the binding that turns installed hardware item stacks into a
+ * {@link ComputerBuild} and exposes the powered state, capacity and parallel-queue count. Unlike the
+ * passive computers it shares a base with, the Mainframe OWNS and orchestrates a data network rather
+ * than reading one from a cable.
  */
 public class MainframeBlockEntity extends AbstractComputerBlockEntity
-        implements dev.jstech.computers.terminal.IComputerTerminalHost,
-        software.bernie.geckolib.animatable.GeoBlockEntity {
+        implements IComputerTerminalHost,
+        GeoBlockEntity {
 
     @Override
-    public java.util.Set<Long> occupiedPositions(final long ownerPos) {
+    public Set<Long> occupiedPositions(final long ownerPos) {
         // The whole 3x2x2 footprint is one connection surface: a peripheral cable
         final Direction facing = getBlockState().getValue(HorizontalDirectionalBlock.FACING);
-        final java.util.Set<Long> positions = new java.util.HashSet<>();
+        final Set<Long> positions = new HashSet<>();
         for (final BlockPos p : MainframeStructure.allPositions(worldPosition, facing)) {
             positions.add(p.asLong());
         }
@@ -93,11 +142,11 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     private static final int FLAG_NETWORKED = 4;
     private static final int FLAG_PANEL_OFF = 8;
 
-    private static final software.bernie.geckolib.animation.RawAnimation WORK =
-            software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("animation.mainframe.work");
+    private static final RawAnimation WORK =
+            RawAnimation.begin().thenLoop("animation.mainframe.work");
 
-    private final software.bernie.geckolib.animatable.instance.AnimatableInstanceCache geckoCache =
-            software.bernie.geckolib.util.GeckoLibUtil.createInstanceCache(this);
+    private final AnimatableInstanceCache geckoCache =
+            GeckoLibUtil.createInstanceCache(this);
 
     private int clientHardwareMask;
     private int clientDiskSystemMask;
@@ -111,26 +160,26 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     public void registerControllers(
-            final software.bernie.geckolib.animation.AnimatableManager.ControllerRegistrar controllers) {
+            final AnimatableManager.ControllerRegistrar controllers) {
         /*
          * The roof fans and the tape reels turn while the machine is up; every other visual (installed
          * hardware, the lamps, the panel) is bone visibility set by the renderer, not animation.
          */
-        controllers.add(new software.bernie.geckolib.animation.AnimationController<>(this, "work", 0,
+        controllers.add(new AnimationController<>(this, "work", 0,
                 state -> visualRunning() ? state.setAndContinue(WORK)
-                        : software.bernie.geckolib.animation.PlayState.STOP));
+                        : PlayState.STOP));
     }
 
     @Override
-    public software.bernie.geckolib.animatable.instance.AnimatableInstanceCache getAnimatableInstanceCache() {
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
         return geckoCache;
     }
 
     /** The era of this cabinet, read from its block; it picks the model and the atlas. */
-    public dev.jstech.core.tier.HardwareEra mainframeEra() {
+    public HardwareEra mainframeEra() {
         return getBlockState().getBlock()
-                instanceof dev.jstech.computers.block.MainframeBlock mainframe
-                ? mainframe.era() : dev.jstech.core.tier.HardwareEra.STANDARD;
+                instanceof MainframeBlock mainframe
+                ? mainframe.era() : HardwareEra.STANDARD;
     }
 
     /** Whether hardware slot {@code slot} holds a part, on either side. */
@@ -152,7 +201,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         if (level != null && level.isClientSide()) {
             return (clientDiskSystemMask & (1 << bay)) != 0;
         }
-        return dev.jstech.computers.os.OsDisks.hasSystem(
+        return OsDisks.hasSystem(
                 getHardware().getStackInSlot(DISK_SLOTS_START + bay));
     }
 
@@ -189,7 +238,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         }
         int systems = 0;
         for (int bay = 0; bay < DISK_SLOTS; bay++) {
-            if (dev.jstech.computers.os.OsDisks.hasSystem(
+            if (OsDisks.hasSystem(
                     getHardware().getStackInSlot(DISK_SLOTS_START + bay))) {
                 systems |= 1 << bay;
             }
@@ -218,20 +267,20 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     public void syncVisuals() {
         if (level != null && !level.isClientSide()) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
-                    net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+                    Block.UPDATE_CLIENTS);
         }
     }
 
     /** The whole 3 x 2 x 2 footprint: the renderer draws the cabinet from this block alone. */
-    public net.minecraft.world.phys.AABB renderBox() {
+    public AABB renderBox() {
         final BlockState state = getBlockState();
         if (!state.hasProperty(HorizontalDirectionalBlock.FACING)) {
-            return new net.minecraft.world.phys.AABB(worldPosition);
+            return new AABB(worldPosition);
         }
-        net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(worldPosition);
+        AABB box = new AABB(worldPosition);
         for (final BlockPos part : MainframeStructure.allPositions(
                 worldPosition, state.getValue(HorizontalDirectionalBlock.FACING))) {
-            box = box.minmax(new net.minecraft.world.phys.AABB(part));
+            box = box.minmax(new AABB(part));
         }
         return box;
     }
@@ -247,8 +296,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     }
 
     @Override
-    public void onDataPacket(final net.minecraft.network.Connection connection,
-                             final net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket packet,
+    public void onDataPacket(final Connection connection,
+                             final ClientboundBlockEntityDataPacket packet,
                              final HolderLookup.Provider registries) {
         super.onDataPacket(connection, packet, registries);
         final CompoundTag tag = packet.getTag();
@@ -271,24 +320,26 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         clientFlags = tag.getInt("VisualFlags");
     }
 
-    private boolean networkConflict;
-    private boolean failoverEnabled;
-    private FailoverRole failoverRole = FailoverRole.NONE;
-    private int failoverWaitTicks;
+    /** Which network this Mainframe owns, who else is claiming it, and whose turn it is to run it. */
+    private final MainframeNetworking networking = new MainframeNetworking(this);
     @Nullable
     private NetworkUuid nativeNetworkUuid;
 
     @Nullable
     private OperationDispatch dispatch;
     private int dispatchQueues;
-    private final dev.jstech.computers.operation.NetworkIndex networkIndex =
-            new dev.jstech.computers.operation.NetworkIndex();
-    private final java.util.List<dev.jstech.computers.operation.INetworkOperation>
-            activeOperations = new java.util.ArrayList<>();
-    private long completedTotal;
+    /** The holds this Mainframe was saved with, waiting for the catalog to be read before being taken again. */
+    private Map<StorageKey, Long> heldOnLoad;
+
+    private final NetworkIndex networkIndex =
+            new NetworkIndex();
+    /** What the network is carrying out, whose turn it is, and what became of each: all of it lives here. */
+    private final MainframeScheduler scheduler = new MainframeScheduler(this);
+    /** What the network knows how to make, and the making of it. */
+    private final MainframeCrafts crafts = new MainframeCrafts(this);
     // Operations that were in flight when the world was saved, waiting for the first booted tick to resume.
     @Nullable
-    private net.minecraft.nbt.ListTag pendingOperations;
+    private ListTag pendingOperations;
     /** The game time the pending list was written at, so the resume can tell how long it sat unresumed. */
     private long pendingSavedAt;
     private int resumeCountdown;
@@ -297,31 +348,13 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     // Set when the block is being destroyed, so setRemoved can tell a break (discard) from a chunk unload (keep).
     private boolean broken;
 
-    /*
-     * The IQL Engine: a service installed on the Mainframe that holds the network's saved IQL objects
-     * (views/procedures/jobs) and runs the jobs. The catalog persists with the Mainframe; the NMS only
-     * opens when the Engine is installed and running. A running Mainframe runs its Engine by default.
-     */
-    private final dev.jstech.computers.program.iql.IqlCatalog iqlCatalog =
-            new dev.jstech.computers.program.iql.IqlCatalog();
-    private boolean iqlEngineInstalled;
-    private boolean iqlEngineRunning = true;
-    /**
-     * The Automation Engine: a second service that, like the IQL Engine, lets the job agent fire the saved
-     * jobs. Installing it lets the Automation Manager run jobs without the full IQL Engine / NMS stack.
-     */
-    private boolean automationEngineInstalled;
-    private final dev.jstech.computers.program.IqlJobAgent iqlJobAgent =
-            new dev.jstech.computers.program.IqlJobAgent();
-    /** Jobs the player paused from the Processes tab (lowercased names); a paused job never fires. */
-    private final java.util.Set<String> pausedJobs = new java.util.HashSet<>();
-    /** The last script the NMS editor held, persisted so it survives closing and reopening the studio. */
-    private String savedScript = "";
+    /** The software installed on this Mainframe: the IQL Engine, the Automation Engine and the Mirror. */
+    private final MainframeServices services = new MainframeServices(this);
 
     private static final int OPERATION_LOG_MAX = 32;
     private static final int FAILOVER_PROMOTE_DELAY = 60;
-    private final java.util.Deque<dev.jstech.computers.operation.payload.OperationRecord>
-            operationLog = new java.util.ArrayDeque<>();
+    private final Deque<OperationRecord>
+            operationLog = new ArrayDeque<>();
 
     public MainframeBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.MAINFRAME_BE.get(), pos, state, LAYOUT);
@@ -338,15 +371,15 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
      * installable nor counted in the build.
      */
     @Override
-    protected dev.jstech.core.tier.HardwareEra requiredBoardEra() {
+    protected HardwareEra requiredBoardEra() {
         return blockEra();
     }
 
-    private dev.jstech.core.tier.HardwareEra blockEra() {
+    private HardwareEra blockEra() {
         return getBlockState().getBlock()
-                instanceof dev.jstech.computers.block.MainframeBlock mf
+                instanceof MainframeBlock mf
                 ? mf.era()
-                : dev.jstech.core.tier.HardwareEra.STANDARD;
+                : HardwareEra.STANDARD;
     }
 
     /*
@@ -368,12 +401,12 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         return "Inventory";
     }
 
-    public dev.jstech.computers.storage.LocalStore localStore() {
-        final java.util.List<ItemStack> disks = new java.util.ArrayList<>(DISK_SLOTS);
+    public LocalStore localStore() {
+        final List<ItemStack> disks = new ArrayList<>(DISK_SLOTS);
         for (int i = 0; i < DISK_SLOTS; i++) {
             disks.add(getHardware().getStackInSlot(DISK_SLOTS_START + i));
         }
-        return new dev.jstech.computers.storage.LocalStore(disks, this::setChanged);
+        return new LocalStore(disks, this::setChanged);
     }
 
     /**
@@ -398,11 +431,14 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     public static void serverTick(final Level level, final BlockPos pos,
                                   final BlockState state, final MainframeBlockEntity be) {
         if (level instanceof ServerLevel serverLevel) {
-            be.tickBuildProgress(serverLevel);
+            be.tickTerminal(serverLevel);
             /*
              * Before tick(), which returns early on a powered-down machine: a cabinet that was just
-             * switched off still has to put its lamps out on the client.
+             * switched off still has to put its lamps out on the client, and a cabinet coming up has a
+             * self-test to carry along, which the base tick does for every other kind of computer.
              */
+            be.tickBootPhases(serverLevel);
+            OsInstallRunner.tick(be, serverLevel, be.getBlockPos());
             be.syncVisualsIfChanged();
             be.tick(serverLevel);
         }
@@ -414,21 +450,21 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
          * The Mainframe runs its own tick rather than the base's node tick, so the programs a player
          * wrote are ticked here as well, and told to stop when the cabinet is switched off.
          */
-        tickCannon();
+        tickSigma();
         if (!isRunning()) {
-            leaveNetwork(level);
+            networking.leave(level);
             closeDispatch();
             return;
         }
         // Whatever the machine is setting up copies on while it is up, network or no network.
-        dev.jstech.computers.os.install.SetupRunner.tick(this, level, worldPosition);
-        updateNetwork(level);
-        if (networkConflict) {
+        SetupRunner.tick(this, level, worldPosition);
+        networking.update(level);
+        if (networking.conflicted()) {
             // A contested network collapses: discard every in-flight Operation (its progress is
             closeDispatch();
             return;
         }
-        if (failoverRole == FailoverRole.PASSIVE) {
+        if (networking.standingBy()) {
             /*
              * A Passive standby holds no dispatcher and runs no Operations until it is promoted; the
              * Active member owns the network. closeDispatch settles anything left from a demotion.
@@ -448,13 +484,21 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         runDispatch();
         // Reconcile the in-RAM storage catalog with the network's servers: a changes-only ANALYZE
         networkIndex.analyzeIncremental(level, networkUuid());
+        /*
+         * The holds a player put on the storage last: taken again now that the catalog has been read, since
+         * a hold lasts until somebody lets it go and closing a world is not somebody letting it go.
+         */
+        if (heldOnLoad != null) {
+            networkIndex.restoreManualLocks(heldOnLoad);
+            heldOnLoad = null;
+        }
         restorePendingOperations(level);
-        tickOperations();
+        scheduler.tick();
         // The IQL Engine's job agent fires scheduled/conditional jobs (no-op unless the Engine runs).
-        iqlJobAgent.tick(this, level);
+        services.tick(level);
     }
 
-    public dev.jstech.computers.operation.NetworkIndex networkIndex() {
+    public NetworkIndex networkIndex() {
         return networkIndex;
     }
 
@@ -476,113 +520,6 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         // No-op: ownership teardown runs through unregister(NetworkSystem)/onBroken(), not this hook.
     }
 
-    private void updateNetwork(final ServerLevel level) {
-        final NetworkSystem system = NetworkSystem.get(level);
-        final ConnectivityIndex index = system.connectivity();
-        final java.util.Set<Long> cables = adjacentCables(level);
-        /*
-         * Bridge every cable run this Mainframe touches into one segment, so the topology connected
-         * through the Mainframe is a single network.
-         */
-        index.bridge(cables);
-
-        // The network already laid on a touched cable, if any, a primary's network to join, or an
-        NetworkUuid adopted = null;
-        for (final long cable : cables) {
-            final Optional<NetworkUuid> segment = index.networkOf(cable);
-            if (segment.isPresent()) {
-                adopted = segment.get();
-                break;
-            }
-        }
-
-        final java.util.List<MainframeBlockEntity> peers = otherRunningMainframesOnSegment(level, index, cables);
-        final boolean primaryPeerPresent = peers.stream().anyMatch(peer -> !peer.failoverEnabled);
-
-        if (!failoverEnabled) {
-            failoverRole = FailoverRole.NONE;
-            failoverWaitTicks = 0;
-            final NetworkUuid effective = adopted != null ? adopted : nativeNetworkUuid();
-            if (adopted == null) {
-                NetworkRegistrySavedData.get(level).addNetwork(effective);
-            }
-            setConflict(level, primaryPeerPresent);
-            if (primaryPeerPresent) {
-                // Two primaries on one network: collapse it until they are physically separated.
-                NetworkRegistrySavedData.get(level).setNetworkState(effective, NetworkUuidState.CONFLICTED);
-                networkUuid = null;
-                unregister(system);
-                return;
-            }
-            orchestrate(level, system, index, cables, effective);
-            return;
-        }
-
-        setConflict(level, false); // a standby never holds the network in conflict on its own
-        if (adopted == null) {
-            // Not on any network yet: dormant until it reaches a primary's network.
-            failoverRole = FailoverRole.PASSIVE;
-            failoverWaitTicks = 0;
-            networkUuid = null;
-            unregister(system);
-            return;
-        }
-        if (primaryPeerPresent) {
-            // The primary owns and orchestrates this network; the standby merely stands by on it.
-            failoverRole = FailoverRole.PASSIVE;
-            failoverWaitTicks = 0;
-            networkUuid = adopted;
-            unregister(system);
-            return;
-        }
-        /*
-         * No primary present, so it is gone and the network is orphaned. The lowest-positioned standby
-         * takes that SAME network over after the takeover delay; the rest keep standing by.
-         */
-        final boolean superiorStandbyPresent = peers.stream()
-                .anyMatch(peer -> peer.worldPosition.asLong() < worldPosition.asLong());
-        updateFailoverRole(superiorStandbyPresent);
-        if (failoverRole == FailoverRole.PASSIVE) {
-            networkUuid = adopted;
-            unregister(system);
-            return;
-        }
-        orchestrate(level, system, index, cables, adopted);
-    }
-
-    private void orchestrate(final ServerLevel level, final NetworkSystem system, final ConnectivityIndex index,
-                             final java.util.Set<Long> cables, final NetworkUuid effective) {
-        // A cable whose BlockEntity has not registered yet (mid chunk-load) is skipped, picked up later.
-        for (final long cable : cables) {
-            if (index.contains(cable) && !effective.equals(index.networkOf(cable).orElse(null))) {
-                index.assignUuid(cable, effective);
-            }
-        }
-        networkUuid = effective;
-        // Restore the network from any prior CONFLICTED or ORPHANED state, since adopting it revives it.
-        NetworkRegistrySavedData.get(level).setNetworkState(effective, NetworkUuidState.ACTIVE);
-        system.registerMainframe(snapshot(effective));
-        system.recordMainframePosition(effective, worldPosition.asLong());
-        registeredNetwork = effective;
-    }
-
-    private void updateFailoverRole(final boolean superiorPresent) {
-        if (superiorPresent) {
-            failoverRole = FailoverRole.PASSIVE; // a preferred Active is running, so stand by
-            failoverWaitTicks = 0;
-        } else if (failoverRole == FailoverRole.PASSIVE) {
-            // The Active this member was backing is gone; take over after the promotion delay.
-            if (++failoverWaitTicks >= FAILOVER_PROMOTE_DELAY) {
-                failoverRole = FailoverRole.ACTIVE;
-                failoverWaitTicks = 0;
-            }
-        } else {
-            // Lowest-positioned and not standing by, so own the network immediately (initial election).
-            failoverRole = FailoverRole.ACTIVE;
-            failoverWaitTicks = 0;
-        }
-    }
-
     public boolean submitOperation(final IOperationTask task, final OperationPriority priority) {
         if (dispatch == null || !isRunning()) {
             return false;
@@ -591,155 +528,22 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         return true;
     }
 
-    private void leaveNetwork(final ServerLevel level) {
-        networkUuid = null;
-        setConflict(level, false);
-        unregister(NetworkSystem.get(level));
-    }
-
-    private void unregister(final NetworkSystem system) {
-        if (registeredNetwork != null) {
-            system.unregisterMainframe(registeredNetwork, nodeUuid());
-            registeredNetwork = null;
-        }
-    }
-
+    /** What a Mainframe being broken leaves behind, which the networking side decides. */
     public void onBroken() {
         broken = true;
-        if (!(level instanceof ServerLevel serverLevel)) {
-            return;
-        }
-        final NetworkSystem system = NetworkSystem.get(serverLevel);
-        // The LAST Mainframe out orphans the network, whatever its failover role. While another
-        final boolean survivorPresent = !otherRunningMainframesOnSegment(
-                serverLevel, system.connectivity(), adjacentCables(serverLevel)).isEmpty();
-        if (!survivorPresent) {
-            orphanOwnedNetwork(serverLevel);
-        }
-        unregister(system);
-    }
-
-    private void orphanOwnedNetwork(final ServerLevel level) {
-        final NetworkSystem system = NetworkSystem.get(level);
-        final ConnectivityIndex index = system.connectivity();
-        final java.util.Set<NetworkUuid> owned = new java.util.LinkedHashSet<>();
-        if (registeredNetwork != null) {
-            owned.add(registeredNetwork);
-        }
-        for (final long cable : adjacentCables(level)) {
-            index.networkOf(cable).ifPresent(owned::add);
-        }
-        final NetworkRegistrySavedData registry = NetworkRegistrySavedData.get(level);
-        for (final NetworkUuid net : owned) {
-            registry.setNetworkState(net, NetworkUuidState.ORPHANED);
+        if (level instanceof ServerLevel serverLevel) {
+            networking.onBroken(serverLevel);
         }
     }
 
-    private void eraseOwnedNetwork(final ServerLevel level) {
-        final NetworkSystem system = NetworkSystem.get(level);
-        final ConnectivityIndex index = system.connectivity();
-        final NetworkRegistrySavedData registry = NetworkRegistrySavedData.get(level);
-        for (final NetworkUuid net : new java.util.LinkedHashSet<>(java.util.Arrays.asList(networkUuid, registeredNetwork))) {
-            if (net != null) {
-                index.clearNetwork(net);
-                registry.removeNetwork(net);
-            }
-        }
-        networkUuid = null;
-        unregister(system);
+    /** The base class's record of which network this computer is attached to and registered on. */
+    NetworkAttachment networkAttachment() {
+        return attachment();
     }
 
-    private java.util.List<MainframeBlockEntity> otherRunningMainframesOnSegment(
-            final ServerLevel level, final ConnectivityIndex index, final java.util.Set<Long> cables) {
-        final java.util.Map<Long, MainframeBlockEntity> found = new java.util.LinkedHashMap<>();
-        final java.util.Set<Long> scanned = new java.util.HashSet<>();
-        for (final long anchor : cables) {
-            for (final long cablePos : index.componentPositions(anchor)) {
-                if (!scanned.add(cablePos)) {
-                    continue;
-                }
-                final BlockPos base = BlockPos.of(cablePos);
-                for (final Direction direction : Direction.values()) {
-                    final MainframeBlockEntity mainframe = mainframeBehind(level, base.relative(direction));
-                    if (mainframe != null && mainframe != this && mainframe.isRunning()) {
-                        found.putIfAbsent(mainframe.worldPosition.asLong(), mainframe);
-                    }
-                }
-            }
-        }
-        return new java.util.ArrayList<>(found.values());
-    }
-
-    @Nullable
-    private MainframeBlockEntity mainframeBehind(final ServerLevel level, final BlockPos pos) {
-        final BlockEntity be = level.getBlockEntity(pos);
-        if (be instanceof MainframeBlockEntity mainframe) {
-            return mainframe;
-        }
-        if (be instanceof MainframePartBlockEntity part && part.controllerPos() != null
-                && level.getBlockEntity(part.controllerPos()) instanceof MainframeBlockEntity controller) {
-            return controller;
-        }
-        return null;
-    }
-
-    private void setConflict(final ServerLevel level, final boolean conflict) {
-        if (conflict != networkConflict && level.getServer() != null) {
-            final String message = conflict
-                    ? "[J's Computers] NETWORK_CONFLICT: two Mainframes share one network near "
-                            + worldPosition.toShortString()
-                    : "[J's Computers] Network conflict resolved near " + worldPosition.toShortString();
-            level.getServer().getPlayerList().broadcastSystemMessage(
-                    net.minecraft.network.chat.Component.literal(message), false);
-        }
-        networkConflict = conflict;
-    }
-
-    /*
-     * The Mainframe is a 3x2x2 multiblock, so it scans for a cable across its whole footprint and
-     * bridges every touched cable into one network, replacing the base's single-cable scan.
-     */
-    private java.util.Set<Long> adjacentCables(final ServerLevel level) {
-        final Direction facing = getBlockState().getValue(HorizontalDirectionalBlock.FACING);
-        final java.util.Set<Long> inside = new java.util.HashSet<>();
-        for (final BlockPos p : MainframeStructure.allPositions(worldPosition, facing)) {
-            if (p.equals(worldPosition)) {
-                inside.add(p.asLong());
-            } else if (level.getBlockEntity(p) instanceof MainframePartBlockEntity part
-                    && worldPosition.equals(part.controllerPos())) {
-                inside.add(p.asLong());
-            }
-        }
-        /*
-         * Collect EVERY cable on an external face, not just the first, because the mainframe
-         * bridges all of them into its single network.
-         */
-        final java.util.Set<Long> cables = new java.util.LinkedHashSet<>();
-        for (final long posLong : inside) {
-            final BlockPos p = BlockPos.of(posLong);
-            for (final Direction direction : Direction.values()) {
-                final BlockPos neighbor = p.relative(direction);
-                if (inside.contains(neighbor.asLong())) {
-                    continue; // a face internal to the multiblock
-                }
-                if (level.getBlockState(neighbor).getBlock() instanceof DataCableBlock cable
-                        && acceptsTier(cable.tier())) {
-                    cables.add(neighbor.asLong());
-                }
-            }
-        }
-        return cables;
-    }
-
-    @Override
-    protected boolean acceptsTier(final DataTier tier) {
-        return getBlockState().getBlock() instanceof IDataNetworkConnectable device
-                && device.acceptedCableTiers().contains(tier);
-    }
-
-    private MainframeNode snapshot(final NetworkUuid network) {
-        return new MainframeNode(nodeUuid(), network, capacity(),
-                FailoverRole.NONE, Optional.empty(), 0L);
+    /** Whether a cable of that tier is one this Mainframe will talk over. */
+    boolean acceptsDataTier(final DataTier tier) {
+        return acceptsTier(tier);
     }
 
     // Operation dispatch (the virtual-thread runtime)
@@ -791,7 +595,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
              * Fold the dying dispatcher's tally into the persisted lifetime total so the
              * completed count carries across power cycles and chunk unloads.
              */
-            completedTotal += dispatch.completedCount();
+            scheduler.completedTotal(scheduler.completedTotal() + dispatch.completedCount());
             dispatch.close();
             dispatch = null;
             dispatchQueues = 0;
@@ -800,25 +604,19 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
              * INSERT returning leftover, a SELECT freeing its lock) recovers; then record each as
              * DISCARDED so a conflict or power-off leaves a trace in the log instead of vanishing.
              */
-            for (final var operation : activeOperations) {
-                if (keepPersistent && operation instanceof dev.jstech.computers.operation
-                        .IPersistentOperation persistent && !persistent.isEphemeral()) {
+            for (final var operation : scheduler.live()) {
+                if (keepPersistent && operation instanceof IPersistentOperation persistent
+                        && !persistent.isEphemeral()) {
                     continue; // already saved with the block entity; it resumes on reload
                 }
                 operation.abandon();
                 if (operation.silent()) {
                     continue; // its record travels with the Operation it turned into
                 }
-                recordOperation(operation.toRecord().withStatus(
-                        dev.jstech.computers.operation.payload
-                                .OperationRecord.STATUS_DISCARDED));
-                post(net -> new dev.jstech.core.event.IOperationLifecycleEvent.Discarded(
-                        net, operation.operationId(), operation.typeId()));
+                recordOperation(operation.toRecord().withStatus(OperationRecord.STATUS_DISCARDED));
+                scheduler.postDiscarded(operation);
             }
-            activeOperations.clear();
-            timing.clear();
-            deferredTicks.clear();
-            lastGranted = java.util.Set.of();
+            scheduler.clear();
             // The index lives in RAM: powering off clears the catalog, rebuilt on the next start.
             networkIndex.clear();
         }
@@ -836,51 +634,30 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     }
 
     public int pendingOps() {
-        final int slots = Math.max(1, pooledQueues());
-        int used = 0;
-        int queued = 0;
-        for (final var operation : activeOperations) {
-            if (operation.isDone()) {
-                continue;
-            }
-            if (operation.isWaiting()) {
-                queued++; // blocked on another Operation's LOCK, not streaming
-            } else if (!occupiesQueue(operation)) {
-                continue; // a machine stage runs under its computer's threads, never queued in the Mainframe
-            } else if (used < slots) {
-                used++;
-            } else {
-                queued++;
-            }
-        }
-        return queued + (dispatch == null ? 0 : dispatch.pendingCount());
+        return scheduler.queuedCount(Math.max(1, pooledQueues()))
+                + (dispatch == null ? 0 : dispatch.pendingCount());
     }
 
     public int runningOps() {
-        final int slots = Math.max(1, pooledQueues());
-        int used = 0;
-        for (final var operation : activeOperations) {
-            if (!operation.isDone() && !operation.isWaiting() && occupiesQueue(operation) && used < slots) {
-                used++;
-            }
-        }
-        return used + (dispatch == null ? 0 : dispatch.runningCount());
+        return scheduler.runningCount(Math.max(1, pooledQueues()))
+                + (dispatch == null ? 0 : dispatch.runningCount());
     }
 
     public long completedOps() {
-        return completedTotal + (dispatch == null ? 0L : dispatch.completedCount());
+        return scheduler.completedTotal() + (dispatch == null ? 0L : dispatch.completedCount());
     }
 
     public void recordOperation(final byte type, final ItemStack icon, final long requested,
                                 final long moved, final byte status,
-                                final java.util.List<dev.jstech.computers.operation.payload.OperationRecord.MoveRow> moves) {
-        recordOperation(new dev.jstech.computers.operation.payload.OperationRecord(
-                type, dev.jstech.computers.storage.StorageKey.of(icon),
-                requested, moved, status, java.util.List.copyOf(moves)));
+                                final List<OperationRecord.MoveRow>
+                                        moves) {
+        recordOperation(new OperationRecord(
+                type, StorageKey.of(icon),
+                requested, moved, status, List.copyOf(moves)));
     }
 
     public void recordOperation(
-            final dev.jstech.computers.operation.payload.OperationRecord record) {
+            final OperationRecord record) {
         operationLog.addFirst(record);
         while (operationLog.size() > OPERATION_LOG_MAX) {
             operationLog.removeLast();
@@ -891,70 +668,70 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     // Multi-tick network Operations (decomposed into SubOperations)
 
     @Nullable
-    public dev.jstech.computers.operation.NetworkSelectOperation submitNetworkSelect(
-            final dev.jstech.computers.storage.StorageKey key, final long demand,
-            final dev.jstech.computers.storage.IDataSink destination, final String destinationLabel) {
+    public NetworkSelectOperation submitNetworkSelect(
+            final StorageKey key, final long demand,
+            final IDataSink destination, final String destinationLabel) {
         return submitPull(key, demand, destination, destinationLabel,
-                dev.jstech.computers.operation.payload.OperationRecord.TYPE_SELECT, null);
+                OperationRecord.TYPE_SELECT, null);
     }
 
     @Nullable
-    public dev.jstech.computers.operation.NetworkSelectOperation submitNetworkSelect(
-            final net.minecraft.world.item.Item item, final long demand,
-            final dev.jstech.computers.storage.IDataSink destination, final String destinationLabel) {
-        return submitNetworkSelect(dev.jstech.computers.storage.StorageKey.of(item),
+    public NetworkSelectOperation submitNetworkSelect(
+            final Item item, final long demand,
+            final IDataSink destination, final String destinationLabel) {
+        return submitNetworkSelect(StorageKey.of(item),
                 demand, destination, destinationLabel);
     }
 
     @Nullable
-    public dev.jstech.computers.operation.NetworkSelectOperation submitNetworkSelect(
-            final dev.jstech.computers.storage.StorageKey key, final long demand,
-            final dev.jstech.computers.storage.IDataSink destination, final String destinationLabel,
-            final java.util.Set<dev.jstech.core.uuid.NodeUuid> sources) {
+    public NetworkSelectOperation submitNetworkSelect(
+            final StorageKey key, final long demand,
+            final IDataSink destination, final String destinationLabel,
+            final Set<NodeUuid> sources) {
         return submitPull(key, demand, destination, destinationLabel,
-                dev.jstech.computers.operation.payload.OperationRecord.TYPE_SELECT, sources);
+                OperationRecord.TYPE_SELECT, sources);
     }
 
     @Nullable
-    public dev.jstech.computers.operation.NetworkSelectOperation submitNetworkSelect(
-            final net.minecraft.world.item.Item item, final long demand,
-            final dev.jstech.computers.storage.IDataSink destination, final String destinationLabel,
-            final java.util.Set<dev.jstech.core.uuid.NodeUuid> sources) {
-        return submitNetworkSelect(dev.jstech.computers.storage.StorageKey.of(item),
+    public NetworkSelectOperation submitNetworkSelect(
+            final Item item, final long demand,
+            final IDataSink destination, final String destinationLabel,
+            final Set<NodeUuid> sources) {
+        return submitNetworkSelect(StorageKey.of(item),
                 demand, destination, destinationLabel, sources);
     }
 
     @Nullable
-    public dev.jstech.computers.operation.NetworkSelectOperation submitNetworkMove(
-            final dev.jstech.computers.storage.StorageKey key, final long demand,
-            final dev.jstech.computers.storage.IDataSink destination, final String destinationLabel,
-            final java.util.Set<dev.jstech.core.uuid.NodeUuid> sources) {
+    public NetworkSelectOperation submitNetworkMove(
+            final StorageKey key, final long demand,
+            final IDataSink destination, final String destinationLabel,
+            final Set<NodeUuid> sources) {
         return submitPull(key, demand, destination, destinationLabel,
-                dev.jstech.computers.operation.payload.OperationRecord.TYPE_MOVE, sources);
+                OperationRecord.TYPE_MOVE, sources);
     }
 
     @Nullable
-    public dev.jstech.computers.operation.NetworkSelectOperation submitNetworkDelete(
-            final dev.jstech.computers.storage.StorageKey key, final long demand,
-            final dev.jstech.computers.storage.IDataSink destination, final String destinationLabel) {
+    public NetworkSelectOperation submitNetworkDelete(
+            final StorageKey key, final long demand,
+            final IDataSink destination, final String destinationLabel) {
         return submitPull(key, demand, destination, destinationLabel,
-                dev.jstech.computers.operation.payload.OperationRecord.TYPE_DELETE, null);
+                OperationRecord.TYPE_DELETE, null);
     }
 
     @Nullable
-    public dev.jstech.computers.operation.NetworkSelectOperation submitNetworkDelete(
-            final net.minecraft.world.item.Item item, final long demand,
-            final dev.jstech.computers.storage.IDataSink destination, final String destinationLabel) {
-        return submitNetworkDelete(dev.jstech.computers.storage.StorageKey.of(item),
+    public NetworkSelectOperation submitNetworkDelete(
+            final Item item, final long demand,
+            final IDataSink destination, final String destinationLabel) {
+        return submitNetworkDelete(StorageKey.of(item),
                 demand, destination, destinationLabel);
     }
 
     @Nullable
-    private dev.jstech.computers.operation.NetworkSelectOperation submitPull(
-            final dev.jstech.computers.storage.StorageKey key, final long demand,
-            final dev.jstech.computers.storage.IDataSink destination, final String destinationLabel,
+    private NetworkSelectOperation submitPull(
+            final StorageKey key, final long demand,
+            final IDataSink destination, final String destinationLabel,
             final byte recordType,
-            final java.util.Set<dev.jstech.core.uuid.NodeUuid> sources) {
+            final Set<NodeUuid> sources) {
         /*
          * A SELECT/MOVE/DELETE also needs the dispatcher; without an OS the Operation would never tick and would
          * just pile up in activeOperations. Refuse it so callers no-op cleanly instead of accumulating dead work.
@@ -962,16 +739,16 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         if (!isRunning() || !hasOs() || !(level instanceof ServerLevel serverLevel) || networkUuid() == null) {
             return null;
         }
-        final var operation = new dev.jstech.computers.operation.NetworkSelectOperation(
+        final var operation = new NetworkSelectOperation(
                 serverLevel, networkUuid(), key, demand, destination, destinationLabel, recordType,
-                java.util.UUID.randomUUID(), networkIndex, ensureDispatch(), sources);
+                UUID.randomUUID(), networkIndex, ensureDispatch(), sources);
         track(operation);
         return operation;
     }
 
     @Nullable
-    public dev.jstech.computers.operation.NetworkInsertOperation submitNetworkInsert(
-            final dev.jstech.computers.storage.StorageKey key, final long demand,
+    public NetworkInsertOperation submitNetworkInsert(
+            final StorageKey key, final long demand,
             final String sourceLabel) {
         /*
          * Without a booted OS the dispatcher never ticks (see tick()), so an Operation submitted here would
@@ -981,43 +758,27 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         if (!isRunning() || !hasOs() || !(level instanceof ServerLevel serverLevel) || networkUuid() == null) {
             return null;
         }
-        final var operation = new dev.jstech.computers.operation.NetworkInsertOperation(
+        final var operation = new NetworkInsertOperation(
                 serverLevel, networkUuid(), key, demand, sourceLabel, networkIndex, ensureDispatch());
         track(operation);
         return operation;
     }
 
     @Nullable
-    public dev.jstech.computers.operation.NetworkInsertOperation submitNetworkInsert(
-            final net.minecraft.world.item.Item item, final long demand, final String sourceLabel) {
-        return submitNetworkInsert(dev.jstech.computers.storage.StorageKey.of(item),
+    public NetworkInsertOperation submitNetworkInsert(
+            final Item item, final long demand, final String sourceLabel) {
+        return submitNetworkInsert(StorageKey.of(item),
                 demand, sourceLabel);
     }
 
     // CRAFT: recursive autocrafting over the network's Crafting Computers
 
-    public java.util.List<net.minecraft.core.BlockPos> craftingComputerPositions() {
-        if (networkUuid() == null || !(level instanceof ServerLevel serverLevel)) {
-            return java.util.List.of();
-        }
-        final java.util.List<net.minecraft.core.BlockPos> positions = new java.util.ArrayList<>();
-        for (final var node : dev.jstech.core.network.NetworkSystem.get(serverLevel)
-                .craftingComputersOf(networkUuid())) {
-            positions.add(net.minecraft.core.BlockPos.of(node.pos()));
-        }
-        return positions;
+    public List<BlockPos> craftingComputerPositions() {
+        return crafts.craftingComputers();
     }
 
-    public java.util.List<net.minecraft.core.BlockPos> supercomputerPositions() {
-        if (networkUuid() == null || !(level instanceof ServerLevel serverLevel)) {
-            return java.util.List.of();
-        }
-        final java.util.List<net.minecraft.core.BlockPos> positions = new java.util.ArrayList<>();
-        for (final var node : dev.jstech.core.network.NetworkSystem.get(serverLevel)
-                .supercomputersOf(networkUuid())) {
-            positions.add(net.minecraft.core.BlockPos.of(node.pos()));
-        }
-        return positions;
+    public List<BlockPos> supercomputerPositions() {
+        return crafts.supercomputers();
     }
 
     /**
@@ -1025,95 +786,42 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
      * The Tasks view uses it to show how many crafts can run at once and how many are currently running.
      */
     public int[] supercomputerCraftSlots() {
-        int used = 0;
-        int total = 0;
-        for (final net.minecraft.core.BlockPos pos : supercomputerPositions()) {
-            if (level != null && level.getBlockEntity(pos)
-                    instanceof dev.jstech.computers.blockentity.HbwInterfaceBlockEntity sc
-                    && sc.clusterOnline()) {
-                total += (int) sc.parallelCrafts();
-                used += sc.craftSlotsInUse();
-            }
-        }
-        return new int[] {used, total};
+        return crafts.craftSlots();
     }
 
-    public java.util.List<dev.jstech.computers.crafting.CraftingPattern> networkPatterns() {
-        final java.util.List<dev.jstech.computers.crafting.CraftingPattern> patterns =
-                new java.util.ArrayList<>();
-        for (final net.minecraft.core.BlockPos pos : craftingComputerPositions()) {
-            if (level != null && level.getBlockEntity(pos)
-                    instanceof CraftingComputerBlockEntity cc && cc.isRunning()) {
-                patterns.addAll(cc.romPatterns());
-            }
-        }
-        return patterns;
+    public List<CraftingPattern> networkPatterns() {
+        return crafts.patterns();
     }
 
     /** The plain machine (processing) patterns on the network, for the recursive craft planner. */
-    public java.util.List<dev.jstech.computers.crafting.ProcessingPattern> networkProcessingPatterns() {
-        final java.util.List<dev.jstech.computers.crafting.ProcessingPattern> machines =
-                new java.util.ArrayList<>();
-        for (final var recipe : networkMachineRecipes()) {
-            recipe.proc().ifPresent(machines::add);
-        }
-        return machines;
+    public List<ProcessingPattern> networkProcessingPatterns() {
+        return crafts.processingPatterns();
     }
 
     /** Every machine recipe (processing / multi-stage) the network's running Crafting Computers hold. */
-    public java.util.List<dev.jstech.computers.crafting.NetworkRecipe> networkMachineRecipes() {
-        final java.util.List<dev.jstech.computers.crafting.NetworkRecipe> recipes =
-                new java.util.ArrayList<>();
-        for (final net.minecraft.core.BlockPos pos : craftingComputerPositions()) {
-            if (level != null && level.getBlockEntity(pos)
-                    instanceof CraftingComputerBlockEntity cc && cc.isRunning()) {
-                recipes.addAll(cc.machineRecipes());
-            }
-        }
-        return recipes;
+    public List<NetworkRecipe> networkMachineRecipes() {
+        return crafts.machineRecipes();
     }
 
     @Nullable
-    public dev.jstech.computers.crafting.NetworkCraftOperation submitNetworkCraft(
-            final dev.jstech.computers.storage.StorageKey key, final long demand,
+    public NetworkCraftOperation submitNetworkCraft(
+            final StorageKey key, final long demand,
             final boolean partial, final String requesterLabel) {
-        return submitNetworkCraft(key, demand, partial, requesterLabel, null);
+        return crafts.craft(key, demand, partial, requesterLabel, null);
     }
 
     /**
-     * Same as {@link #submitNetworkCraft(dev.jstech.computers.storage.StorageKey, long,
-     * boolean, String)}, but plans with one extra pattern alongside the network's Recipe ROMs. A multi-stage
+     * Same as {@link #submitNetworkCraft(StorageKey, long, boolean, String)}, but plans with one extra
+     * pattern alongside the network's Recipe ROMs. A multi-stage
      * pipeline's bench stage carries its own embedded pattern, so it must craft even when that pattern was
      * never loaded into any Recipe ROM on the network.
      */
     @Nullable
-    public dev.jstech.computers.crafting.NetworkCraftOperation submitNetworkCraft(
-            final dev.jstech.computers.storage.StorageKey key, final long demand,
+    public NetworkCraftOperation submitNetworkCraft(
+            final StorageKey key, final long demand,
             final boolean partial, final String requesterLabel,
-            @Nullable final dev.jstech.computers.crafting.CraftingPattern extraPattern) {
-        if (!isRunning() || !hasOs() || !(level instanceof ServerLevel serverLevel) || networkUuid() == null
-                || demand <= 0) {
-            return null;
-        }
-        final var stock = networkIndex.snapshot();
-        /*
-         * A cell that accepts a tag is settled here, against what the network holds right now, so the
-         * planner and the craft itself only ever see exact items.
-         */
-        final var patterns = dev.jstech.computers.crafting.AnyTagResolver
-                .resolveAll(networkPatterns(), stock);
-        final dev.jstech.computers.crafting.CraftingPattern extra = extraPattern == null ? null
-                : dev.jstech.computers.crafting.AnyTagResolver.resolve(extraPattern, stock);
-        if (extra != null && !patterns.contains(extra)) {
-            patterns.add(extra);
-        }
-        // Machine patterns take part in the plan: an ingredient no bench makes may come out of a machine.
-        final var planned = dev.jstech.computers.crafting.CraftPlanning.plan(
-                key, demand, partial, patterns, networkProcessingPatterns(), stock);
-        if (planned == null) {
-            return null; // nothing on the network makes it, or not enough of it for a full request
-        }
-        return submitPlannedCraft(key, demand, planned.plan(), requesterLabel, extra);
+            @Nullable final CraftingPattern extraPattern) {
+        return crafts.craft(key, demand, partial, requesterLabel, extraPattern);
     }
 
     /**
@@ -1121,85 +829,30 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
      * run settles as COMPLETED_PARTIAL showing produced vs requested, exactly what the player asked to see.
      */
     @Nullable
-    public dev.jstech.computers.crafting.NetworkCraftOperation submitPlannedCraft(
-            final dev.jstech.computers.storage.StorageKey key, final long demand,
-            final dev.jstech.computers.crafting.CraftPlanner.Plan plan, final String requesterLabel,
-            @Nullable final dev.jstech.computers.crafting.CraftingPattern extraPattern) {
-        if (!isRunning() || !hasOs() || !(level instanceof ServerLevel serverLevel) || networkUuid() == null
-                || demand <= 0 || plan.steps().isEmpty()) {
-            return null;
-        }
-        final var operation = new dev.jstech.computers.crafting.NetworkCraftOperation(
-                serverLevel, networkUuid(), key, demand, plan, networkIndex,
-                java.util.UUID.randomUUID(), craftingComputerPositions(), supercomputerPositions(),
-                requesterLabel, extraPattern, this);
-        track(operation);
-        return operation;
+    public NetworkCraftOperation submitPlannedCraft(
+            final StorageKey key, final long demand,
+            final CraftPlanner.Plan plan, final String requesterLabel,
+            @Nullable final CraftingPattern extraPattern) {
+        return crafts.plannedCraft(key, demand, plan, requesterLabel, extraPattern);
     }
 
     /**
      * Whether anything on the network produces {@code key}: a bench pattern in a Recipe ROM, or a machine
      * recipe. The cheap answer a prompt needs at once, before the plan itself is made.
      */
-    public boolean anythingMakes(final dev.jstech.computers.storage.StorageKey key) {
-        for (final var pattern : networkPatterns()) {
-            if (key.equals(dev.jstech.computers.storage.StorageKey.of(pattern.result()))) {
-                return true;
-            }
-        }
-        for (final var recipe : networkMachineRecipes()) {
-            if (key.equals(recipe.resultKey())) {
-                return true;
-            }
-        }
-        return false;
+    public boolean anythingMakes(final StorageKey key) {
+        return crafts.anythingMakes(key);
     }
 
     /**
-     * Plans a recursive craft on a virtual thread. The request shows at once as a pending craft; when the
-     * plan lands, the real craft takes over with the level and the settle callback given meanwhile. Returns
-     * null only when nothing on the network makes {@code key} at all, or the Mainframe cannot run crafts.
-     */
-    @Nullable
-    private dev.jstech.computers.crafting.PendingCraftOperation submitCraftAsync(
-            final dev.jstech.computers.storage.StorageKey key, final long demand,
-            final boolean partial, final String label) {
-        return submitCraftAsync(key, demand, partial, label, null);
-    }
-
-    /**
-     * As above, planned with {@code preferred} ahead of every other bench pattern, so a result that several
-     * bench patterns make is built by the one the player picked (the planner takes the first pattern that
-     * makes a thing).
-     */
-    @Nullable
-    private dev.jstech.computers.crafting.PendingCraftOperation submitCraftAsync(
-            final dev.jstech.computers.storage.StorageKey key, final long demand,
-            final boolean partial, final String label,
-            @Nullable final dev.jstech.computers.crafting.CraftingPattern preferred) {
-        if (!isRunning() || !hasOs() || !(level instanceof ServerLevel) || networkUuid() == null
-                || demand <= 0 || !anythingMakes(key)) {
-            return null;
-        }
-        final var stock = networkIndex.snapshot();
-        final var patterns = dev.jstech.computers.crafting.AnyTagResolver
-                .resolveAll(patternsPreferring(preferred), stock);
-        final var pending = new dev.jstech.computers.crafting.PendingCraftOperation(
-                this, key, demand, partial, label);
-        track(pending);
-        pending.start(ensureDispatch(), patterns, networkProcessingPatterns(), stock);
-        return pending;
-    }
-
-    /**
-     * Runs a machine recipe: feeds a {@link dev.jstech.computers.crafting.ProcessingPattern}'s
+     * Runs a machine recipe: feeds a {@link ProcessingPattern}'s
      * inputs into the matching machine (declared on a Crafting Switch) and collects its outputs back into the
      * network, until {@code demand} of the primary output is produced or the pattern times out.
      */
-    public dev.jstech.computers.crafting.NetworkProcessingOperation submitNetworkProcessing(
-            final dev.jstech.computers.crafting.ProcessingPattern pattern, final long demand,
+    public NetworkProcessingOperation submitNetworkProcessing(
+            final ProcessingPattern pattern, final long demand,
             final String requesterLabel) {
-        return submitNetworkProcessing(pattern, demand, requesterLabel, null);
+        return crafts.machineRun(pattern, demand, requesterLabel, null);
     }
 
     /**
@@ -1207,52 +860,24 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
      * A recursive craft passes its own pool here so its machine steps pipeline through the pool (concurrent,
      * race-free) rather than through the shared network; such a step is ephemeral and does not persist a reload.
      */
-    public dev.jstech.computers.crafting.NetworkProcessingOperation submitNetworkProcessing(
-            final dev.jstech.computers.crafting.ProcessingPattern pattern, final long demand,
+    public NetworkProcessingOperation submitNetworkProcessing(
+            final ProcessingPattern pattern, final long demand,
             final String requesterLabel,
-            @Nullable final dev.jstech.computers.crafting.ICraftIo io) {
-        if (!isRunning() || !hasOs() || !(level instanceof ServerLevel serverLevel) || networkUuid() == null
-                || demand <= 0) {
-            return null;
-        }
-        final var operation = new dev.jstech.computers.crafting.NetworkProcessingOperation(
-                serverLevel, networkUuid(), pattern, demand, craftingComputerPositions(),
-                java.util.UUID.randomUUID(), requesterLabel, io);
-        track(operation);
-        return operation;
+            @Nullable final ICraftIo io) {
+        return crafts.machineRun(pattern, demand, requesterLabel, io);
     }
 
     /** Runs a multi-stage recipe: an ordered pipeline of bench/processing stages, one at a time. */
-    public dev.jstech.computers.crafting.NetworkMultiStageOperation submitNetworkMultiStage(
-            final dev.jstech.computers.crafting.MultiStagePattern pattern, final long demand,
+    public NetworkMultiStageOperation submitNetworkMultiStage(
+            final MultiStagePattern pattern, final long demand,
             final String requesterLabel) {
-        if (!isRunning() || !hasOs() || !(level instanceof ServerLevel) || networkUuid() == null || demand <= 0) {
-            return null;
-        }
-        // Bench stages that accept a tag are settled against stock now, the way a plain craft's are.
-        final var resolved = dev.jstech.computers.crafting.AnyTagResolver
-                .resolve(pattern, networkIndex.snapshot());
-        final var operation = new dev.jstech.computers.crafting.NetworkMultiStageOperation(
-                this, resolved, demand, requesterLabel);
-        track(operation);
-        return operation;
+        return crafts.pipeline(pattern, demand, requesterLabel);
     }
 
     /** The network's bench patterns with {@code preferred} first (when it is one of them, or given at all). */
-    public java.util.List<dev.jstech.computers.crafting.CraftingPattern> patternsPreferring(
-            @Nullable final dev.jstech.computers.crafting.CraftingPattern preferred) {
-        final java.util.List<dev.jstech.computers.crafting.CraftingPattern> all = networkPatterns();
-        if (preferred == null) {
-            return all;
-        }
-        final java.util.List<dev.jstech.computers.crafting.CraftingPattern> ordered = new java.util.ArrayList<>(all.size() + 1);
-        ordered.add(preferred);
-        for (final var pattern : all) {
-            if (!pattern.equals(preferred)) {
-                ordered.add(pattern);
-            }
-        }
-        return ordered;
+    public List<CraftingPattern> patternsPreferring(
+            @Nullable final CraftingPattern preferred) {
+        return crafts.patternsPreferring(preferred);
     }
 
     /**
@@ -1261,20 +886,9 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
      * result. A craft dialog lists these so the player can pick one, and the index into this list is what a
      * craft request names; the list only changes when a ROM does.
      */
-    public java.util.List<dev.jstech.computers.crafting.NetworkRecipe> recipesFor(
-            final dev.jstech.computers.storage.StorageKey key) {
-        final java.util.List<dev.jstech.computers.crafting.NetworkRecipe> out = new java.util.ArrayList<>();
-        for (final var recipe : networkMachineRecipes()) {
-            if (key.equals(recipe.resultKey()) && recipe.usesMachine()) {
-                out.add(recipe);
-            }
-        }
-        for (final var pattern : networkPatterns()) {
-            if (key.equals(dev.jstech.computers.storage.StorageKey.of(pattern.result()))) {
-                out.add(dev.jstech.computers.crafting.NetworkRecipe.ofBench(pattern));
-            }
-        }
-        return out;
+    public List<NetworkRecipe> recipesFor(
+            final StorageKey key) {
+        return crafts.recipesFor(key);
     }
 
     /**
@@ -1288,8 +902,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
      * the resulting operation settles. Returns the operation, or null if nothing on the network makes {@code key}.
      */
     @Nullable
-    public dev.jstech.computers.operation.INetworkOperation submitCraftRequest(
-            final dev.jstech.computers.storage.StorageKey key, final long demand,
+    public INetworkOperation submitCraftRequest(
+            final StorageKey key, final long demand,
             final boolean partial, final String label, @Nullable final Runnable onSettle) {
         return submitCraftRequest(key, demand, partial, label, onSettle, true);
     }
@@ -1301,59 +915,11 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
      * range runs the machine's own choice, the way the five-argument form does.
      */
     @Nullable
-    public dev.jstech.computers.operation.INetworkOperation submitCraftRequest(
-            final dev.jstech.computers.storage.StorageKey key, final long demand,
+    public INetworkOperation submitCraftRequest(
+            final StorageKey key, final long demand,
             final boolean partial, final String label, @Nullable final Runnable onSettle,
             final int recipe) {
-        final java.util.List<dev.jstech.computers.crafting.NetworkRecipe> recipes = recipesFor(key);
-        if (recipe < 0 || recipe >= recipes.size()) {
-            return submitCraftRequest(key, demand, partial, label, onSettle, true);
-        }
-        final dev.jstech.computers.crafting.NetworkRecipe chosen = recipes.get(recipe);
-        final dev.jstech.computers.operation.INetworkOperation op;
-        if (chosen.proc().isPresent()) {
-            op = runProcessing(chosen.proc().get(), key, demand, label);
-        } else if (chosen.multi().isPresent()) {
-            op = submitNetworkMultiStage(chosen.multi().get(), demand, label);
-        } else {
-            op = submitCraftAsync(key, demand, partial, label, chosen.bench().orElse(null));
-        }
-        settle(op, onSettle);
-        return op;
-    }
-
-    /** Hooks {@code onSettle} onto whichever kind of craft operation came out, when there is one to hook. */
-    private static void settle(@Nullable final dev.jstech.computers.operation.INetworkOperation op,
-                               @Nullable final Runnable onSettle) {
-        if (op == null || onSettle == null) {
-            return;
-        }
-        if (op instanceof dev.jstech.computers.crafting.NetworkCraftOperation craft) {
-            craft.onSettle(onSettle);
-        } else if (op instanceof dev.jstech.computers.crafting.NetworkProcessingOperation processing) {
-            processing.onSettle(onSettle);
-        } else if (op instanceof dev.jstech.computers.crafting.NetworkMultiStageOperation multi) {
-            multi.onSettle(onSettle);
-        } else if (op instanceof dev.jstech.computers.crafting.PendingCraftOperation pending) {
-            pending.onSettle(onSettle);
-        }
-    }
-
-    /**
-     * Runs a processing recipe for {@code demand} of {@code key}: the whole tree as one craft when an input is
-     * short and other patterns make it (all-or-nothing), else the bare machine run with what the network holds.
-     */
-    @Nullable
-    private dev.jstech.computers.operation.INetworkOperation runProcessing(
-            final dev.jstech.computers.crafting.ProcessingPattern machine,
-            final dev.jstech.computers.storage.StorageKey key, final long demand, final String label) {
-        if (!inputsInStock(machine, demand)) {
-            final var planned = submitNetworkCraft(key, demand, false, label);
-            if (planned != null) {
-                return planned;
-            }
-        }
-        return submitNetworkProcessing(machine, demand, label);
+        return crafts.request(key, demand, partial, label, onSettle, recipe);
     }
 
     /**
@@ -1363,36 +929,11 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
      * have a multi-stage recipe; everything else routes the same way regardless.
      */
     @Nullable
-    public dev.jstech.computers.operation.INetworkOperation submitCraftRequest(
-            final dev.jstech.computers.storage.StorageKey key, final long demand,
+    public INetworkOperation submitCraftRequest(
+            final StorageKey key, final long demand,
             final boolean partial, final String label, @Nullable final Runnable onSettle,
             final boolean preferMultiStage) {
-        for (final var recipe : networkMachineRecipes()) {
-            if (!key.equals(recipe.resultKey())) {
-                continue;
-            }
-            if (recipe.proc().isPresent()) {
-                final var op = runProcessing(recipe.proc().get(), key, demand, label);
-                settle(op, onSettle);
-                return op;
-            }
-            if (recipe.multi().isPresent() && preferMultiStage) {
-                final var op = submitNetworkMultiStage(recipe.multi().get(), demand, label);
-                if (op != null && onSettle != null) {
-                    op.onSettle(onSettle);
-                }
-                return op;
-            }
-        }
-        /*
-         * No machine makes it directly (or multi-stage was declined): plan a recursive bench-and-machine craft.
-         * The planning runs off the tick; the request is listed as pending until the plan lands.
-         */
-        final var op = submitCraftAsync(key, demand, partial, label);
-        if (op != null && onSettle != null) {
-            op.onSettle(onSettle);
-        }
-        return op;
+        return crafts.request(key, demand, partial, label, onSettle, preferMultiStage);
     }
 
     /**
@@ -1419,40 +960,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     /** Whether the network has a multi-stage recipe whose end result is {@code key} (so a caller can offer the
      *  player the choice between the pipeline and the flat, recursively-planned path). */
-    public boolean hasMultiStageRecipe(final dev.jstech.computers.storage.StorageKey key) {
-        for (final var recipe : networkMachineRecipes()) {
-            if (key.equals(recipe.resultKey()) && recipe.multi().isPresent()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** Whether the network currently stocks every input a processing run producing {@code quantity} would use. */
-    private boolean inputsInStock(final dev.jstech.computers.crafting.ProcessingPattern machine,
-                                  final long quantity) {
-        if (!(level instanceof ServerLevel serverLevel) || networkUuid() == null) {
-            return true;
-        }
-        final var storage = dev.jstech.computers.operation.NetworkStorage
-                .of(serverLevel, networkUuid());
-        final var primary = machine.primaryOutput();
-        final long runs = ceilDiv(quantity, primary == null ? 1 : Math.max(1, primary.amount()));
-        final java.util.Map<dev.jstech.computers.storage.StorageKey, Long> need =
-                new java.util.HashMap<>();
-        for (final var in : machine.inputs()) {
-            need.merge(in.key(), in.amount() * runs, Long::sum);
-        }
-        for (final var entry : need.entrySet()) {
-            if (storage.count(entry.getKey()) < entry.getValue()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private static long ceilDiv(final long amount, final long perRun) {
-        return (amount + perRun - 1) / perRun;
+    public boolean hasMultiStageRecipe(final StorageKey key) {
+        return crafts.hasMultiStageRecipe(key);
     }
 
     /*
@@ -1460,34 +969,47 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
      * Operations WAIT, the explicit handle on storage concurrency.
      */
 
-    public long lockType(final dev.jstech.computers.storage.StorageKey key,
+    public long lockType(final StorageKey key,
                          final long demand,
-                         @Nullable final java.util.Set<dev.jstech.core.uuid.NodeUuid> sources) {
+                         @Nullable final Set<NodeUuid> sources) {
         if (!isRunning() || networkUuid() == null) {
             return 0L;
         }
         return networkIndex.manualLock(key, demand, sources);
     }
 
-    public long unlockType(final dev.jstech.computers.storage.StorageKey key) {
+    public long unlockType(final StorageKey key) {
         return networkIndex.manualUnlock(key);
     }
 
-    public java.util.Map<dev.jstech.computers.storage.StorageKey, Long> lockedTypes() {
+    public Map<StorageKey, Long> lockedTypes() {
         return networkIndex.manualLockView();
     }
 
-    /** The configured concurrent-job cap for a machine key, from the first Crafting Computer that set one. */
-    private int resolveMaxJobs(final String machineKey) {
-        for (final net.minecraft.core.BlockPos pos : craftingComputerPositions()) {
-            if (level != null && level.getBlockEntity(pos) instanceof CraftingComputerBlockEntity cc) {
-                final CraftingComputerBlockEntity.MachineConfig cfg = cc.machineConfig(machineKey);
-                if (cfg != CraftingComputerBlockEntity.MachineConfig.DEFAULT) {
-                    return cfg.maxJobs();
-                }
-            }
-        }
-        return CraftingComputerBlockEntity.MachineConfig.DEFAULT.maxJobs();
+    /** The ceiling on how many jobs of one machine type may run at once, as the crafting side declares it. */
+    int maxJobsFor(final String machineKey) {
+        return crafts.maxJobsFor(machineKey);
+    }
+
+    /** The world's clock, which is what the statistics measure an hour and a day against. */
+    long gameTime() {
+        return level == null ? 0L : level.getGameTime();
+    }
+
+    /** How fast the Crafting Computer at that position drives a machine, or nothing where there is none. */
+    long craftingThroughputAt(final BlockPos pos) {
+        return level != null && level.getBlockEntity(pos) instanceof CraftingComputerBlockEntity computer
+                ? computer.craftingThroughput() : 0L;
+    }
+
+    /** Takes an Operation on: the scheduler holds it, ticks it and writes it down when it settles. */
+    void takeOn(final INetworkOperation operation) {
+        scheduler.track(operation);
+    }
+
+    /** The virtual-thread runtime, made if this is the first thing that needs it. */
+    OperationDispatch dispatch() {
+        return ensureDispatch();
     }
 
     /**
@@ -1502,7 +1024,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         if (++resumeCountdown < RESUME_DELAY_TICKS) {
             return;
         }
-        final net.minecraft.nbt.ListTag saved = pendingOperations;
+        final ListTag saved = pendingOperations;
         pendingOperations = null;
         final long savedAt = pendingSavedAt;
         pendingSavedAt = 0L;
@@ -1510,47 +1032,47 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
          * Operations that sat unresumed past the expiry have lost whoever wanted them: they are restored just far
          * enough to hand back what they held (a craft's pool goes back to storage), then discarded and logged.
          */
-        final long expiry = dev.jstech.core.operation.OperationBalance.orphanedOperationsExpiryTicks();
+        final long expiry = OperationBalance.orphanedOperationsExpiryTicks();
         final boolean expired = expiry > 0L && savedAt > 0L && level.getGameTime() - savedAt >= expiry;
-        final int liveBefore = activeOperations.size();
+        final int liveBefore = scheduler.liveCount();
         final HolderLookup.Provider registries = level.registryAccess();
-        final java.util.Map<java.util.UUID, dev.jstech.computers.operation.INetworkOperation>
-                byId = new java.util.HashMap<>();
-        final java.util.Set<java.util.UUID> completedStages = new java.util.HashSet<>();
-        final java.util.List<dev.jstech.computers.crafting.NetworkMultiStageOperation>
-                pipelines = new java.util.ArrayList<>();
+        final Map<UUID, INetworkOperation>
+                byId = new HashMap<>();
+        final Set<UUID> completedStages = new HashSet<>();
+        final List<NetworkMultiStageOperation>
+                pipelines = new ArrayList<>();
         /*
          * Crafts that had machine steps in flight re-plan only once every operation is back, so the steps they
          * were running can be found by id and their output counted before the remaining demand is planned.
          */
-        final java.util.List<CompoundTag> craftsOnMachines = new java.util.ArrayList<>();
+        final List<CompoundTag> craftsOnMachines = new ArrayList<>();
         for (int i = 0; i < saved.size(); i++) {
             final CompoundTag tag = saved.getCompound(i);
-            final java.util.UUID savedId = tag.hasUUID(
-                    dev.jstech.computers.operation.IPersistentOperation.ID_KEY)
-                    ? tag.getUUID(dev.jstech.computers.operation.IPersistentOperation.ID_KEY)
-                    : java.util.UUID.randomUUID();
-            switch (tag.getString(dev.jstech.computers.operation.IPersistentOperation.KIND_KEY)) {
-                case dev.jstech.computers.crafting.NetworkProcessingOperation.KIND -> {
-                    final var op = dev.jstech.computers.crafting.NetworkProcessingOperation
+            final UUID savedId = tag.hasUUID(
+                    IPersistentOperation.ID_KEY)
+                    ? tag.getUUID(IPersistentOperation.ID_KEY)
+                    : UUID.randomUUID();
+            switch (tag.getString(IPersistentOperation.KIND_KEY)) {
+                case NetworkProcessingOperation.KIND -> {
+                    final var op = NetworkProcessingOperation
                             .restore(tag, level, networkUuid(), craftingComputerPositions(), registries);
                     if (op != null) {
                         track(op);
                         byId.put(savedId, op);
                     }
                 }
-                case dev.jstech.computers.crafting.NetworkCraftOperation.KIND -> {
+                case NetworkCraftOperation.KIND -> {
                     /*
                      * An expired craft is not re-planned after its machine steps: it hands its pool back now and
                      * is discarded with the rest, so it takes the plain restore path below.
                      */
-                    if (!expired && !dev.jstech.computers.crafting.NetworkCraftOperation
+                    if (!expired && !NetworkCraftOperation
                             .savedMachineSteps(tag).isEmpty()) {
                         craftsOnMachines.add(tag);
                         continue;
                     }
                     // submitNetworkCraft already registers the re-planned craft in activeOperations.
-                    final var restored = dev.jstech.computers.crafting.NetworkCraftOperation
+                    final var restored = NetworkCraftOperation
                             .restore(tag, this, level, networkUuid(), registries);
                     if (restored.operation() != null) {
                         byId.put(savedId, restored.operation());
@@ -1558,8 +1080,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
                         completedStages.add(savedId);
                     }
                 }
-                case dev.jstech.computers.crafting.NetworkMultiStageOperation.KIND -> {
-                    final var op = dev.jstech.computers.crafting.NetworkMultiStageOperation
+                case NetworkMultiStageOperation.KIND -> {
+                    final var op = NetworkMultiStageOperation
                             .restore(tag, this, registries);
                     if (op != null) {
                         track(op);
@@ -1571,20 +1093,20 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             }
         }
         for (final CompoundTag tag : craftsOnMachines) {
-            final java.util.List<dev.jstech.computers.crafting.NetworkProcessingOperation> steps =
-                    new java.util.ArrayList<>();
-            for (final java.util.UUID stepId : dev.jstech.computers.crafting.NetworkCraftOperation
+            final List<NetworkProcessingOperation> steps =
+                    new ArrayList<>();
+            for (final UUID stepId : NetworkCraftOperation
                     .savedMachineSteps(tag)) {
                 if (byId.get(stepId)
-                        instanceof dev.jstech.computers.crafting.NetworkProcessingOperation proc) {
+                        instanceof NetworkProcessingOperation proc) {
                     steps.add(proc);
                 }
             }
-            dev.jstech.computers.crafting.NetworkCraftOperation
+            NetworkCraftOperation
                     .restore(tag, this, level, networkUuid(), registries, steps);
         }
         for (final var pipeline : pipelines) {
-            final java.util.UUID stageId = pipeline.pendingStageId();
+            final UUID stageId = pipeline.pendingStageId();
             if (stageId != null && completedStages.contains(stageId)) {
                 pipeline.skipCompletedStage();
             } else {
@@ -1592,8 +1114,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             }
         }
         if (expired) {
-            for (int i = liveBefore; i < activeOperations.size(); i++) {
-                activeOperations.get(i).cancel(); // the next operations tick logs each one as DISCARDED
+            for (int i = liveBefore; i < scheduler.liveCount(); i++) {
+                scheduler.liveAt(i).cancel(); // the next operations tick logs each one as DISCARDED
             }
         }
         setChanged();
@@ -1603,7 +1125,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
      * Stops an in-flight Operation on request: it hands back what it held and is logged as DISCARDED on the
      * next tick. Returns false when no Operation with that id is in flight any more.
      */
-    public boolean cancelOperation(final java.util.UUID id) {
+    public boolean cancelOperation(final UUID id) {
         final var operation = findOperation(id);
         if (operation == null || operation.isDone()) {
             return false;
@@ -1613,372 +1135,50 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         return true;
     }
 
-    /** Work queued by an operation's settle callback that must run on a later tick (the index is current then). */
-    private final java.util.List<Runnable> deferredWork = new java.util.ArrayList<>();
-
-    /**
-     * Ticks a ready Operation has spent without a queue slot, per Operation. Every aging period (a balance
-     * value) of deferral lifts its effective priority one level, so a long queue of
-     * higher-priority work delays a low-priority request but can never starve it outright. The count only
-     * grows while the Operation is passed over and is dropped when it settles, so a starved Operation that
-     * finally wins a slot keeps it instead of falling straight back behind the newcomers.
-     */
-    private final java.util.Map<dev.jstech.computers.operation.INetworkOperation, Integer> deferredTicks =
-            new java.util.IdentityHashMap<>();
-    /** The Operations the last tick granted a queue slot to; the views report the rest as PENDING. */
-    private java.util.Set<dev.jstech.computers.operation.INetworkOperation> lastGranted = java.util.Set.of();
-    /** Per in-flight Operation: ticks spent waiting (queued or on a lock) and ticks spent running. */
-    private final java.util.Map<dev.jstech.computers.operation.INetworkOperation, int[]> timing =
-            new java.util.IdentityHashMap<>();
-    private static final int WAITED = 0;
-    private static final int RAN = 1;
-    /** The last hour of settled Operations by type, and the day's peak concurrency; RAM only. */
-    private final dev.jstech.core.operation.OperationStatistics statistics =
-            new dev.jstech.core.operation.OperationStatistics();
-
-    private void countTick(final dev.jstech.computers.operation.INetworkOperation operation, final int slot) {
-        final int[] counted = timing.computeIfAbsent(operation, o -> new int[2]);
-        if (slot == RAN && counted[RAN] == 0) {
-            post(net -> new dev.jstech.core.event.IOperationLifecycleEvent.Started(
-                    net, operation.operationId(), operation.typeId()));
-        }
-        counted[slot]++;
-    }
-
-    /**
-     * Takes an Operation into the in-flight list and announces it on the series' event bus. Every
-     * submission and every resume goes through here, so the bus sees each Operation exactly once.
-     */
-    private void track(final dev.jstech.computers.operation.INetworkOperation operation) {
-        activeOperations.add(operation);
-        post(net -> new dev.jstech.core.event.IOperationLifecycleEvent.Created(
-                net, operation.operationId(), operation.typeId()));
-    }
-
-    /** Posts one settled Operation's outcome: completed, failed (short), or discarded. */
-    private void postSettled(final dev.jstech.computers.operation.INetworkOperation operation,
-                             final dev.jstech.computers.operation.payload.OperationRecord record) {
-        if (record.completed()) {
-            post(net -> new dev.jstech.core.event.IOperationLifecycleEvent.Completed(net,
-                    operation.operationId(), operation.typeId(), (long) record.waitedTicks() + record.ranTicks()));
-        } else if (record.status() == dev.jstech.computers.operation.payload.OperationRecord.STATUS_DISCARDED) {
-            post(net -> new dev.jstech.core.event.IOperationLifecycleEvent.Discarded(net,
-                    operation.operationId(), operation.typeId()));
-        } else {
-            post(net -> new dev.jstech.core.event.IOperationLifecycleEvent.Failed(net,
-                    operation.operationId(), operation.typeId(), settleReason(record)));
-        }
-    }
-
-    private static String settleReason(final dev.jstech.computers.operation.payload.OperationRecord record) {
-        return switch (record.status()) {
-            case dev.jstech.computers.operation.payload.OperationRecord.STATUS_PARTIAL ->
-                    "delivered " + record.moved() + " of " + record.requested();
-            case dev.jstech.computers.operation.payload.OperationRecord.STATUS_RESOURCE_LOCKED ->
-                    "timed out waiting on a locked resource";
-            default -> "failed";
-        };
-    }
-
-    /**
-     * Posts a lifecycle event for this Mainframe's network. Without a network (a Mainframe that just left
-     * one, dropping its Operations on the way out) there is nobody to tell, so nothing is built or posted.
-     */
-    private void post(final java.util.function.Function<NetworkUuid,
-            dev.jstech.core.event.IOperationLifecycleEvent> event) {
-        final NetworkUuid net = networkUuid();
-        if (net != null) {
-            dev.jstech.core.JsCore.events().post(event.apply(net));
-        }
-    }
-
-    /** The scheduler's timing of an in-flight Operation as {@code [waited, ran]}, zeros before its first tick. */
-    private int[] timingOf(final dev.jstech.computers.operation.INetworkOperation operation) {
-        final int[] counted = timing.get(operation);
-        return counted == null ? new int[2] : counted;
-    }
-
     /** The rolling statistics of this Mainframe's Operations. */
-    public dev.jstech.core.operation.OperationStatistics statistics() {
-        return statistics;
+    public OperationStatistics statistics() {
+        return scheduler.statistics();
     }
 
     /** Runs {@code work} on the next operations tick, after the storage index has caught up with this one. */
     public void runNextTick(final Runnable work) {
-        deferredWork.add(work);
+        scheduler.runNextTick(work);
     }
 
-    private void tickOperations() {
-        if (!deferredWork.isEmpty()) {
-            final java.util.List<Runnable> work = new java.util.ArrayList<>(deferredWork);
-            deferredWork.clear();
-            work.forEach(Runnable::run);
-        }
-        if (activeOperations.isEmpty()) {
-            lastGranted = java.util.Set.of();
-            deferredTicks.clear();
-            timing.clear();
-            return;
-        }
-        // Progress lives in the Operations themselves and is saved with this block entity.
-        setChanged();
-        statistics.observeConcurrency(level.getGameTime(), activeOperations.size());
-        /*
-         * A queue processes at most the RAM buffer per tick: a buffer smaller than the CPU leaves
-         * the CPU idle waiting on RAM, so the effective rate is the lesser of the two. Subframes pool
-         * their share of capacity and their GPUs' queues into the Mainframe that orchestrates them.
-         */
-        final long effectiveCapacity = Math.min(pooledCapacity(), ramBuffer());
-        final int slots = Math.max(1, pooledQueues());
-        assignMachines();
-        /*
-         * A machine step feeds at its Crafting Computer's crafting-card throughput (card x CPU), NOT the
-         * Mainframe's capacity; the card is what governs how fast any craft runs, bench or machine. That
-         * throughput is SHARED among the steps one computer is driving at once, so a computer feeding three
-         * machines splits its card's throughput three ways (the machine's own speed is still the ceiling).
-         */
-        final java.util.Map<net.minecraft.core.BlockPos, Integer> stepsPerComputer = new java.util.HashMap<>();
-        for (final var operation : activeOperations) {
-            if (operation instanceof dev.jstech.computers.crafting.NetworkProcessingOperation proc
-                    && !proc.isDone() && !proc.isWaiting()) {
-                final net.minecraft.core.BlockPos cc = proc.executorComputer();
-                if (cc != null) {
-                    stepsPerComputer.merge(cc, 1, Integer::sum);
-                }
-            }
-        }
-        /*
-         * Iterate a snapshot: a multi-stage operation submits its sub-stage into activeOperations mid-tick,
-         * which would otherwise be a concurrent modification. The new stage simply ticks next tick.
-         */
-        final java.util.List<dev.jstech.computers.operation.INetworkOperation> snapshot =
-                new java.util.ArrayList<>(activeOperations);
-        /*
-         * The queue slots go to the ready Operations by effective priority (level plus aging), submission
-         * order inside a level. Re-deciding every tick means a higher-priority request takes over a slot the
-         * next tick instead of waiting for whatever was streaming to finish.
-         */
-        final java.util.List<dev.jstech.core.operation.exec.QueueArbiter.Candidate<
-                dev.jstech.computers.operation.INetworkOperation>> ready = new java.util.ArrayList<>();
-        for (final var operation : snapshot) {
-            if (!operation.isDone() && !operation.isWaiting() && occupiesQueue(operation)) {
-                ready.add(new dev.jstech.core.operation.exec.QueueArbiter.Candidate<>(
-                        operation, operation.priority(), deferredTicks.getOrDefault(operation, 0)));
-            }
-        }
-        final java.util.Set<dev.jstech.computers.operation.INetworkOperation> granted =
-                java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
-        granted.addAll(dev.jstech.core.operation.exec.QueueArbiter.grant(ready, slots,
-                dev.jstech.core.operation.OperationBalance.priorityAgingTicks()));
-        lastGranted = granted;
-        for (final var operation : snapshot) {
-            if (operation.isDone()) {
-                continue;
-            }
-            if (operation.isWaiting()) {
-                countTick(operation, WAITED);
-                operation.tick(0L); // lock retry + timeout only; holds no queue slot
-            } else if (!occupiesQueue(operation)) {
-                /*
-                 * A craft's machine stage runs under its Crafting Computer's thread ceiling, not a Mainframe
-                 * queue: it always gets its feed and never counts against the queue budget.
-                 */
-                countTick(operation, RAN);
-                operation.tick(machineFeedBudget(operation, effectiveCapacity, stepsPerComputer));
-            } else if (granted.contains(operation)) {
-                countTick(operation, RAN);
-                operation.tick(machineFeedBudget(operation, effectiveCapacity, stepsPerComputer));
-            } else {
-                /*
-                 * Ready Operations beyond the queue count stay PENDING this tick: no progress, no latency
-                 * countdown, since their disks have not started reading yet. Their wait is what ages them.
-                 */
-                countTick(operation, WAITED);
-                deferredTicks.merge(operation, 1, Integer::sum);
-            }
-        }
-        final java.util.Iterator<dev.jstech.computers.operation.INetworkOperation> it =
-                activeOperations.iterator();
-        while (it.hasNext()) {
-            final var operation = it.next();
-            if (operation.isDone()) {
-                deferredTicks.remove(operation);
-                final int[] counted = timing.remove(operation);
-                final int waited = counted == null ? 0 : counted[WAITED];
-                final int ran = counted == null ? 0 : counted[RAN];
-                /*
-                 * A craft's machine steps are nested stages, not operations of their own: the parent craft logs
-                 * them as its sub-operations, so don't write them to the log or the lifetime tally separately.
-                 * A silent Operation (a placeholder that became a real one) leaves no trace either.
-                 */
-                final boolean nested = operation instanceof dev.jstech.computers.crafting
-                        .NetworkProcessingOperation proc && proc.isNested();
-                if (!nested && !operation.silent()) {
-                    final var record = operation.toRecord().withTiming(waited, ran);
-                    recordOperation(record);
-                    statistics.record(level.getGameTime(), record.type(), !record.completed(), waited, ran,
-                            record.moved());
-                    if (record.completed()) {
-                        completedTotal++; // network Operations count toward the lifetime tally too
-                    }
-                    postSettled(operation, record);
-                }
-                it.remove();
-            }
-        }
-    }
-
-    /**
-     * Gives every running processing job a distinct physical machine, so concurrency on a machine type scales
-     * with the machines actually present, so two same-type jobs never share (and jam) one block. A job keeps the
-     * machine it already holds (as long as it is still there and routable); a new job claims a free one of the
-     * ones its recipe can route to. A job with no free machine is flagged blocked (it waits, it does not time
-     * out). The Machines tab's Max Jobs is an OPTIONAL per-type ceiling on top of this: 0 means "use them all".
-     */
-    private void assignMachines() {
-        final java.util.Set<net.minecraft.core.BlockPos> taken = new java.util.HashSet<>();
-        final java.util.Map<String, Integer> perType = new java.util.HashMap<>();
-        final java.util.List<dev.jstech.computers.crafting.NetworkProcessingOperation> jobs =
-                new java.util.ArrayList<>();
-        for (final var operation : activeOperations) {
-            if (operation instanceof dev.jstech.computers.crafting.NetworkProcessingOperation proc
-                    && !proc.isDone()) {
-                jobs.add(proc);
-            }
-        }
-        /*
-         * Pass 1: a job that already holds a still-valid, unclaimed machine keeps it (stable across ticks so a
-         * machine is never fed by two jobs turn and turn about).
-         */
-        for (final var proc : jobs) {
-            final net.minecraft.core.BlockPos held = proc.assignedMachine();
-            if (held != null && !taken.contains(held) && proc.routableMachines().contains(held)) {
-                taken.add(held);
-                perType.merge(proc.machineKey(), 1, Integer::sum);
-                proc.setConcurrencyBlocked(false);
-            } else {
-                proc.setAssignedMachine(null);
-            }
-        }
-        // Pass 2: an unassigned job claims a free routable machine, within its type's optional Max Jobs ceiling.
-        for (final var proc : jobs) {
-            if (proc.assignedMachine() != null) {
-                continue;
-            }
-            final String key = proc.machineKey();
-            final int ceiling = resolveMaxJobs(key); // 0 = auto: no ceiling, bounded only by the machines present
-            if (ceiling > 0 && perType.getOrDefault(key, 0) >= ceiling) {
-                proc.setConcurrencyBlocked(true);
-                continue;
-            }
-            net.minecraft.core.BlockPos free = null;
-            for (final net.minecraft.core.BlockPos candidate : proc.routableMachines()) {
-                if (!taken.contains(candidate)) {
-                    free = candidate;
-                    break;
-                }
-            }
-            if (free != null) {
-                proc.setAssignedMachine(free);
-                taken.add(free);
-                perType.merge(key, 1, Integer::sum);
-                proc.setConcurrencyBlocked(false);
-            } else {
-                proc.setConcurrencyBlocked(true); // every machine of this type is busy: wait, do not time out
-            }
-        }
-    }
-
-    /**
-     * The per-tick throughput to run {@code operation} at. A machine step feeds at its Crafting Computer's
-     * crafting-card throughput (card x CPU), shared among the steps that computer drives at once; the card, not
-     * the machine, sets the crafting speed. Everything else runs at the Mainframe's own orchestration capacity.
-     */
-    private long machineFeedBudget(final dev.jstech.computers.operation.INetworkOperation operation,
-                                   final long effectiveCapacity,
-                                   final java.util.Map<net.minecraft.core.BlockPos, Integer> stepsPerComputer) {
-        if (operation instanceof dev.jstech.computers.crafting.NetworkProcessingOperation proc) {
-            final net.minecraft.core.BlockPos cc = proc.executorComputer();
-            if (cc == null) {
-                return 0L; // no Crafting Computer drives this machine, so it cannot be fed
-            }
-            final long throughput = level != null
-                    && level.getBlockEntity(cc) instanceof CraftingComputerBlockEntity computer
-                    ? computer.craftingThroughput() : 0L;
-            return throughput / Math.max(1, stepsPerComputer.getOrDefault(cc, 1));
-        }
-        return effectiveCapacity;
-    }
-
-    /**
-     * Whether {@code operation} occupies one of the Mainframe's operation queues. A craft's machine stage is
-     * orchestrated by its Crafting Computer and gated by that computer's crafting threads, not by the Mainframe,
-     * so it never occupies a Mainframe queue: the queues gate distinct operations (a craft, a SELECT, an INSERT),
-     * the crafting threads gate one craft's concurrent stages. Every non-stage operation occupies a queue.
-     */
-    private static boolean occupiesQueue(
-            final dev.jstech.computers.operation.INetworkOperation operation) {
-        return !(operation instanceof dev.jstech.computers.crafting.NetworkProcessingOperation proc
-                && proc.isNested());
+    /** Takes an Operation on: the scheduler holds it, ticks it and writes it down when it settles. */
+    private void track(final INetworkOperation operation) {
+        scheduler.track(operation);
     }
 
     /** The operations in flight right now, for views that need the live objects rather than the log. */
-    public java.util.List<dev.jstech.computers.operation.INetworkOperation> liveOperations() {
-        return java.util.List.copyOf(activeOperations);
+    public List<INetworkOperation> liveOperations() {
+        return scheduler.live();
     }
 
-    public java.util.List<dev.jstech.computers.operation.payload.OperationRecord> recentOperations() {
-        return java.util.List.copyOf(operationLog);
+    public List<OperationRecord> recentOperations() {
+        return List.copyOf(operationLog);
     }
 
-    public java.util.List<dev.jstech.computers.operation.payload.OperationRecord> activeOperationRecords() {
-        final java.util.List<dev.jstech.computers.operation.payload.OperationRecord> out =
-                new java.util.ArrayList<>(activeOperations.size());
-        for (final var operation : activeOperations) {
-            final int[] counted = timingOf(operation);
-            var record = operation.liveRecord().withTiming(counted[WAITED], counted[RAN]);
-            /*
-             * A ready Operation the last tick did not grant a slot to is queued: the scheduler decides, the
-             * view only reports it. A machine stage keeps its live status (PROCESSING while it runs): it is
-             * gated by its Crafting Computer's threads, not a Mainframe queue, so it is never forced to PENDING.
-             */
-            if (!operation.isDone() && !operation.isWaiting() && occupiesQueue(operation)
-                    && !lastGranted.contains(operation)) {
-                record = record.withStatus(dev.jstech.computers.operation.payload
-                        .OperationRecord.STATUS_PENDING);
-            }
-            out.add(record);
-        }
-        return out;
+    public List<OperationRecord> activeOperationRecords() {
+        return scheduler.liveRecords();
     }
 
     /** The in-flight Operation with this id, or null when it has settled or never existed. */
     @Nullable
-    public dev.jstech.computers.operation.INetworkOperation findOperation(final java.util.UUID id) {
-        for (final var operation : activeOperations) {
-            if (id.equals(operation.operationId())) {
-                return operation;
-            }
-        }
-        return null;
+    public INetworkOperation findOperation(final UUID id) {
+        return scheduler.find(id);
     }
 
     /**
      * Changes the scheduling level of an in-flight Operation; the next tick re-grants the queue slots with the
      * new level. Returns false when no Operation with that id is in flight any more.
      */
-    public boolean setOperationPriority(final java.util.UUID id, final OperationPriority priority) {
-        final var operation = findOperation(id);
-        if (operation == null || operation.isDone()) {
-            return false;
-        }
-        operation.setPriority(priority);
-        setChanged();
-        return true;
+    public boolean setOperationPriority(final UUID id, final OperationPriority priority) {
+        return scheduler.setPriority(id, priority);
     }
 
     public boolean hasActiveOperations() {
-        return !activeOperations.isEmpty();
+        return scheduler.hasActive();
     }
 
     public NetworkUuid nativeNetworkUuid() {
@@ -1990,23 +1190,28 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     }
 
     public boolean hasNetworkConflict() {
-        return networkConflict;
+        return networking.conflicted();
     }
 
     public boolean failoverEnabled() {
-        return failoverEnabled;
+        return networking.failoverEnabled();
     }
 
     public FailoverRole failoverRole() {
-        return failoverRole;
+        return networking.failoverRole();
     }
 
+    /**
+     * Switches this Mainframe between owning a network and standing by for whoever owns it.
+     *
+     * <p>Becoming a standby gives up the network it had: a machine that is about to back somebody else's
+     * cannot go on holding one of its own, or the two would be a conflict the moment they were wired up.
+     */
     public void toggleFailover() {
-        failoverEnabled = !failoverEnabled;
-        if (failoverEnabled && level instanceof ServerLevel serverLevel) {
-            eraseOwnedNetwork(serverLevel);
+        networking.toggleFailover();
+        if (networking.failoverEnabled() && level instanceof ServerLevel serverLevel) {
+            networking.eraseOwnedNetwork(serverLevel);
         }
-        setChanged();
     }
 
     // IComputerTerminalHost: read-only monitoring for the Monitor terminal
@@ -2023,7 +1228,15 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     public int networkLinkState() {
-        return networkConflict ? NET_STATE_CONFLICT : (networkUuid != null ? NET_STATE_LINKED : NET_STATE_NONE);
+        return linkState();
+    }
+
+    /** Whether this Mainframe is on a network, on none, or on one somebody else is claiming too. */
+    private int linkState() {
+        if (networking.conflicted()) {
+            return NET_STATE_CONFLICT;
+        }
+        return networkUuid() != null ? NET_STATE_LINKED : NET_STATE_NONE;
     }
 
     @Override
@@ -2065,8 +1278,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     public int networkServerCount() {
-        if (networkUuid != null && level instanceof ServerLevel serverLevel) {
-            return NetworkSystem.get(serverLevel).serversOf(networkUuid).size();
+        if (networkUuid() != null && level instanceof ServerLevel serverLevel) {
+            return NetworkSystem.get(serverLevel).serversOf(networkUuid()).size();
         }
         return 0;
     }
@@ -2082,11 +1295,11 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     }
 
     @Override
-    public dev.jstech.computers.storage.IDataSink localStorage() {
-        return new dev.jstech.computers.storage.StoreSink(localStore());
+    public IDataSink localStorage() {
+        return new StoreSink(localStore());
     }
 
-    public java.util.Map<dev.jstech.computers.storage.StorageKey, Long> localSnapshot() {
+    public Map<StorageKey, Long> localSnapshot() {
         return localStore().view();
     }
 
@@ -2113,16 +1326,16 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     public int networkPcCount() {
-        if (networkUuid != null && level instanceof ServerLevel serverLevel) {
-            return NetworkSystem.get(serverLevel).personalComputersOf(networkUuid).size();
+        if (networkUuid() != null && level instanceof ServerLevel serverLevel) {
+            return NetworkSystem.get(serverLevel).personalComputersOf(networkUuid()).size();
         }
         return 0;
     }
 
     @Override
     public int networkSubframeCount() {
-        if (networkUuid != null && level instanceof ServerLevel serverLevel) {
-            return NetworkSystem.get(serverLevel).subframesOf(networkUuid).size();
+        if (networkUuid() != null && level instanceof ServerLevel serverLevel) {
+            return NetworkSystem.get(serverLevel).subframesOf(networkUuid()).size();
         }
         return 0;
     }
@@ -2149,7 +1362,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     public int indexHealthState() {
-        return networkIndex.health().state().ordinal();
+        return networkIndex.health().state().id();
     }
 
     @Override
@@ -2160,16 +1373,16 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     @Override
     public long networkStorageUsed() {
         return networkIndex.usedWeight()
-                / dev.jstech.computers.storage.StorageKey.MB_EQ_PER_ITEM;
+                / StorageKey.MB_EQ_PER_ITEM;
     }
 
     @Override
     public long networkStorageTotal() {
-        if (networkUuid == null || !(level instanceof ServerLevel serverLevel)) {
+        if (networkUuid() == null || !(level instanceof ServerLevel serverLevel)) {
             return 0L;
         }
         // Counted in items as the racks registered them: what a megabyte holds differs by era, an item does not.
-        return NetworkSystem.get(serverLevel).totalStorageItemsOf(networkUuid);
+        return NetworkSystem.get(serverLevel).totalStorageItemsOf(networkUuid());
     }
 
     public static final int DATA_RUNNING = 0;
@@ -2202,13 +1415,12 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             case DATA_RAM_BUFFER -> (int) Math.min(Integer.MAX_VALUE, ramBuffer());
             case DATA_AUTOSTART -> isAutoStart() ? 1 : 0;
             case DATA_MANUAL_ON -> isManualOn() ? 1 : 0;
-            case DATA_NETWORK_STATE ->
-                    networkConflict ? NET_STATE_CONFLICT : (networkUuid != null ? NET_STATE_LINKED : NET_STATE_NONE);
+            case DATA_NETWORK_STATE -> linkState();
             case DATA_PENDING_OPS -> pendingOps();
             case DATA_RUNNING_OPS -> runningOps();
             case DATA_COMPLETED_OPS -> (int) Math.min(Integer.MAX_VALUE, completedOps());
-            case DATA_FAILOVER_ENABLED -> failoverEnabled ? 1 : 0;
-            case DATA_FAILOVER_ROLE -> failoverRole.ordinal();
+            case DATA_FAILOVER_ENABLED -> networking.failoverEnabled() ? 1 : 0;
+            case DATA_FAILOVER_ROLE -> networking.failoverRole().id();
             default -> 0;
         };
     }
@@ -2251,7 +1463,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
          */
         closeDispatch(!broken);
         if (level instanceof ServerLevel serverLevel) {
-            unregister(NetworkSystem.get(serverLevel));
+            networking.unregisterFrom(NetworkSystem.get(serverLevel));
         }
     }
 
@@ -2261,70 +1473,45 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
          * Hardware (under the "Inventory" key), ManualOn, AutoStart, NodeUuid, LinkedMonitors and
          * Console are loaded by the base; only the Mainframe-only state is restored here.
          */
-        failoverEnabled = tag.getBoolean("Failover");
+        networking.load(tag);
         servicePanelOff = tag.getBoolean("ServicePanelOff");
-        /*
-         * Persist the standby role + countdown so a reload mid-promotion does not reset the timer (which
-         * could, with frequent chunk cycling, stop a standby from ever promoting).
-         */
-        if (tag.contains("FailoverRole")) {
-            try {
-                failoverRole = FailoverRole.valueOf(tag.getString("FailoverRole"));
-            } catch (final IllegalArgumentException ignored) {
-                failoverRole = FailoverRole.NONE;
+        // Kept until the catalog has been read, since a hold can only be taken against what is there.
+        heldOnLoad = null;
+        if (tag.contains("ManualLocks")) {
+            final Map<StorageKey, Long> held = new LinkedHashMap<>();
+            final ListTag holds = tag.getList("ManualLocks", Tag.TAG_COMPOUND);
+            for (int i = 0; i < holds.size(); i++) {
+                final CompoundTag hold = holds.getCompound(i);
+                StorageKey.CODEC.parse(registries.createSerializationContext(NbtOps.INSTANCE),
+                                hold.get("key"))
+                        .result().ifPresent(key -> held.put(key, hold.getLong("amount")));
+            }
+            if (!held.isEmpty()) {
+                heldOnLoad = held;
             }
         }
-        failoverWaitTicks = tag.getInt("FailoverWaitTicks");
         if (tag.contains("NetworkUuid")) {
             nativeNetworkUuid = NetworkUuid.fromString(tag.getString("NetworkUuid"));
         }
-        completedTotal = tag.getLong("CompletedTotal");
+        scheduler.completedTotal(tag.getLong("CompletedTotal"));
         operationLog.clear();
-        final net.minecraft.nbt.ListTag ops = tag.getList("OperationLog", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        final ListTag ops = tag.getList("OperationLog", Tag.TAG_COMPOUND);
         for (int i = 0; i < ops.size() && i < OPERATION_LOG_MAX; i++) {
-            operationLog.addLast(dev.jstech.computers.operation.payload.OperationRecord
+            operationLog.addLast(OperationRecord
                     .fromNbt(ops.getCompound(i), registries));
         }
-        if (tag.contains("ActiveOperations", net.minecraft.nbt.Tag.TAG_LIST)) {
-            pendingOperations = tag.getList("ActiveOperations", net.minecraft.nbt.Tag.TAG_COMPOUND).copy();
+        if (tag.contains("ActiveOperations", Tag.TAG_LIST)) {
+            pendingOperations = tag.getList("ActiveOperations", Tag.TAG_COMPOUND).copy();
             pendingSavedAt = tag.getLong("ActiveOperationsSavedAt");
             resumeCountdown = 0;
         }
-        iqlEngineInstalled = tag.getBoolean("IqlEngineInstalled");
-        iqlEngineRunning = !tag.contains("IqlEngineRunning") || tag.getBoolean("IqlEngineRunning");
-        automationEngineInstalled = tag.getBoolean("AutomationEngineInstalled");
-        mirrorInstalled = tag.getBoolean("MirrorInstalled");
-        shelved.clear();
-        final CompoundTag shelf = tag.getCompound("MirrorShelf");
-        for (final String name : shelf.getAllKeys()) {
-            shelved.put(name, shelf.getString(name));
-        }
-        iqlCatalog.clear();
-        final net.minecraft.nbt.ListTag catalog = tag.getList("IqlCatalog", net.minecraft.nbt.Tag.TAG_COMPOUND);
-        for (int i = 0; i < catalog.size(); i++) {
-            final CompoundTag entry = catalog.getCompound(i);
-            iqlCatalog.put(new dev.jstech.computers.program.iql.IqlSavedObject(
-                    dev.jstech.computers.program.iql.IqlDefinition.ObjectType
-                            .valueOf(entry.getString("Type")),
-                    entry.getString("Name"), entry.getString("Body"),
-                    dev.jstech.computers.program.iql.IqlDefinition.TriggerKind
-                            .valueOf(entry.getString("Trigger")),
-                    entry.getString("Spec")));
-        }
-        pausedJobs.clear();
-        final net.minecraft.nbt.ListTag paused = tag.getList("PausedJobs", net.minecraft.nbt.Tag.TAG_STRING);
-        for (int i = 0; i < paused.size(); i++) {
-            pausedJobs.add(paused.getString(i));
-        }
-        savedScript = tag.getString("IqlScript");
+        services.load(tag);
     }
 
     @Override
     protected void saveExtra(final CompoundTag tag, final HolderLookup.Provider registries) {
-        tag.putBoolean("Failover", failoverEnabled);
+        networking.save(tag);
         tag.putBoolean("ServicePanelOff", servicePanelOff);
-        tag.putString("FailoverRole", failoverRole.name());
-        tag.putInt("FailoverWaitTicks", failoverWaitTicks);
         if (nativeNetworkUuid != null) {
             tag.putString("NetworkUuid", nativeNetworkUuid.asString());
         }
@@ -2334,16 +1521,16 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
          */
         tag.putLong("CompletedTotal", completedOps());
         if (!operationLog.isEmpty()) {
-            final net.minecraft.nbt.ListTag ops = new net.minecraft.nbt.ListTag();
-            for (final dev.jstech.computers.operation.payload.OperationRecord rec : operationLog) {
+            final ListTag ops = new ListTag();
+            for (final OperationRecord rec : operationLog) {
                 ops.add(rec.toNbt(registries));
             }
             tag.put("OperationLog", ops);
         }
         // Operations in flight resume after a reload: save their state (plus any not yet resumed).
-        final net.minecraft.nbt.ListTag inFlight = new net.minecraft.nbt.ListTag();
-        for (final var operation : activeOperations) {
-            if (operation instanceof dev.jstech.computers.operation.IPersistentOperation persistent
+        final ListTag inFlight = new ListTag();
+        for (final var operation : scheduler.live()) {
+            if (operation instanceof IPersistentOperation persistent
                     && !operation.isDone() && !persistent.isEphemeral()) {
                 /*
                  * A craft's machine steps read and write its in-memory pool, which does not survive a reload, so
@@ -2364,243 +1551,169 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             tag.putLong("ActiveOperationsSavedAt", pendingOperations != null && pendingSavedAt > 0L
                     ? pendingSavedAt : level != null ? level.getGameTime() : 0L);
         }
-        tag.putBoolean("IqlEngineInstalled", iqlEngineInstalled);
-        tag.putBoolean("IqlEngineRunning", iqlEngineRunning);
-        tag.putBoolean("AutomationEngineInstalled", automationEngineInstalled);
-        tag.putBoolean("MirrorInstalled", mirrorInstalled);
-        if (!shelved.isEmpty()) {
-            final CompoundTag shelf = new CompoundTag();
-            shelved.forEach(shelf::putString);
-            tag.put("MirrorShelf", shelf);
+        /*
+         * What a player put a hold on. The reservation itself points at where the things were, and a reload
+         * reads the network afresh, so what is kept is what was held and of what; it is taken again once the
+         * catalog is back.
+         */
+        final Map<StorageKey, Long> held = networkIndex.manualLockView();
+        if (!held.isEmpty()) {
+            final ListTag holds = new ListTag();
+            held.forEach((key, amount) -> StorageKey.CODEC
+                    .encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), key)
+                    .result().ifPresent(encoded -> {
+                        final CompoundTag hold = new CompoundTag();
+                        hold.put("key", encoded);
+                        hold.putLong("amount", amount);
+                        holds.add(hold);
+                    }));
+            tag.put("ManualLocks", holds);
         }
-        if (!iqlCatalog.isEmpty()) {
-            final net.minecraft.nbt.ListTag catalog = new net.minecraft.nbt.ListTag();
-            for (final dev.jstech.computers.program.iql.IqlSavedObject object : iqlCatalog.all()) {
-                final CompoundTag entry = new CompoundTag();
-                entry.putString("Type", object.type().name());
-                entry.putString("Name", object.name());
-                entry.putString("Body", object.body());
-                entry.putString("Trigger", object.triggerKind().name());
-                entry.putString("Spec", object.triggerSpec());
-                catalog.add(entry);
-            }
-            tag.put("IqlCatalog", catalog);
-        }
-        if (!pausedJobs.isEmpty()) {
-            final net.minecraft.nbt.ListTag paused = new net.minecraft.nbt.ListTag();
-            for (final String name : pausedJobs) {
-                paused.add(net.minecraft.nbt.StringTag.valueOf(name));
-            }
-            tag.put("PausedJobs", paused);
-        }
-        if (!savedScript.isEmpty()) {
-            tag.putString("IqlScript", savedScript);
-        }
+        services.save(tag);
     }
 
     // IQL Engine (the saved-object service installed on the Mainframe)
 
-    public dev.jstech.computers.program.iql.IqlCatalog iqlCatalog() {
-        return iqlCatalog;
+    /**
+     * The services of a network are the ones a player starts and stops by hand, so this machine answers for its
+     * own: one that is installed but stopped is not running, and holds nothing while it is not.
+     */
+    @Override
+    public boolean serviceRunning(final ProgramSpec service) {
+        return switch (service.id().getPath()) {
+            case "iqlengine" -> isIqlEngineActive();
+            case "automation_engine" -> isAutomationEngineActive();
+            case "mirror" -> isMirrorActive();
+            default -> super.serviceRunning(service);
+        };
+    }
+
+    public IqlCatalog iqlCatalog() {
+        return services.catalog();
     }
 
     public boolean isIqlEngineInstalled() {
-        return iqlEngineInstalled;
+        return services.iqlEngineInstalled();
     }
 
     public boolean isIqlEngineRunning() {
-        return iqlEngineRunning;
+        return services.iqlEngineRunning();
     }
 
     /** The Engine is usable only when installed, not stopped, and the Mainframe itself is powered. */
     public boolean isIqlEngineActive() {
-        return iqlEngineInstalled && iqlEngineRunning && isRunning();
+        return services.iqlEngineActive();
     }
 
     /** Installs the Engine on the Mainframe; returns false if it was already installed. */
     public boolean installIqlEngine() {
-        if (iqlEngineInstalled) {
-            return false;
-        }
-        iqlEngineInstalled = true;
-        iqlEngineRunning = true;
-        setChanged();
-        return true;
+        return services.installIqlEngine();
     }
 
     /** Starts or stops the installed Engine service; returns false if there is nothing to change. */
     public boolean setIqlEngineRunning(final boolean running) {
-        if (!iqlEngineInstalled || iqlEngineRunning == running) {
-            return false;
-        }
-        iqlEngineRunning = running;
-        setChanged();
-        return true;
+        return services.setIqlEngineRunning(running);
     }
 
     public boolean isAutomationEngineInstalled() {
-        return automationEngineInstalled;
+        return services.automationEngineInstalled();
     }
 
     /** Active when installed and the Mainframe is powered; enables the job agent like the IQL Engine does. */
     public boolean isAutomationEngineActive() {
-        return automationEngineInstalled && isRunning();
+        return services.automationEngineActive();
     }
 
     /** Installs the Automation Engine on the Mainframe; returns false if it was already installed. */
     public boolean installAutomationEngine() {
-        if (automationEngineInstalled) {
-            return false;
-        }
-        automationEngineInstalled = true;
-        setChanged();
-        return true;
+        return services.installAutomationEngine();
     }
 
-    // The Mirror: the package repository service every Linux computer on the network installs from.
-    private boolean mirrorInstalled;
-
     public boolean isMirrorInstalled() {
-        return mirrorInstalled;
+        return services.mirrorInstalled();
     }
 
     /** Whether the Mirror serves packages: installed and the Mainframe is running. */
     public boolean isMirrorActive() {
-        return mirrorInstalled && isRunning();
+        return services.mirrorActive();
     }
 
     /** Installs the Mirror service on the Mainframe; returns false if it was already installed. */
     public boolean installMirror() {
-        if (mirrorInstalled) {
-            return false;
-        }
-        mirrorInstalled = true;
-        setChanged();
-        return true;
+        return services.installMirror();
     }
 
-    /**
-     * The packages players on this network have published to the Mirror, by name.
-     *
-     * <p>They live with the Mainframe, not with the machine that built them: that is what a Mirror is
-     * for. Each is the whole package as text, so what a player installs is exactly what the player who
-     * published it could read on their own screen.
-     */
-    private final java.util.Map<String, String> shelved = new java.util.LinkedHashMap<>();
-
     /** How many packages one network's Mirror will hold, so a shelf cannot grow without end. */
-    public static final int SHELF_MAX = 64;
+    public static final int SHELF_MAX = MainframeServices.SHELF_MAX;
 
-    /** Everything on the shelf, by name. */
-    public java.util.Map<String, String> shelvedPackages() {
-        return java.util.Map.copyOf(shelved);
+    /** Everything on the Mirror's shelf, by name. */
+    public Map<String, String> shelvedPackages() {
+        return services.shelvedPackages();
     }
 
     /** One of them, or null. */
     @Nullable
     public String shelvedPackage(final String name) {
-        return shelved.get(name);
+        return services.shelvedPackage(name);
     }
 
-    /**
-     * Puts one on the shelf, replacing any build of it already there.
-     *
-     * <p>Replacing rather than refusing is deliberate: publishing again is how a player releases a fix,
-     * and making them take the old one down first would only mean a moment when the network has none.
-     */
+    /** Puts one on the shelf, replacing any build of it already there. */
     public boolean shelve(final String name, final String text) {
-        if (name == null || name.isBlank() || text == null || text.isBlank()) {
-            return false;
-        }
-        if (!shelved.containsKey(name) && shelved.size() >= SHELF_MAX) {
-            return false;
-        }
-        shelved.put(name, text);
-        setChanged();
-        return true;
+        return services.shelve(name, text);
     }
 
     /** Takes one off the shelf; false when it was not there. */
     public boolean unshelve(final String name) {
-        if (shelved.remove(name) == null) {
-            return false;
-        }
-        setChanged();
-        return true;
+        return services.unshelve(name);
     }
 
     /** Removes the Mirror service; returns false if it was not installed. */
     public boolean uninstallMirror() {
-        if (!mirrorInstalled) {
-            return false;
-        }
-        mirrorInstalled = false;
-        setChanged();
-        return true;
+        return services.uninstallMirror();
     }
 
     /** Removes the IQL Engine service (stopping it); returns false if it was not installed. */
     public boolean uninstallIqlEngine() {
-        if (!iqlEngineInstalled) {
-            return false;
-        }
-        iqlEngineInstalled = false;
-        iqlEngineRunning = false;
-        setChanged();
-        return true;
+        return services.uninstallIqlEngine();
     }
 
     /** Removes the Automation Engine service; returns false if it was not installed. */
     public boolean uninstallAutomationEngine() {
-        if (!automationEngineInstalled) {
-            return false;
-        }
-        automationEngineInstalled = false;
-        setChanged();
-        return true;
+        return services.uninstallAutomationEngine();
     }
 
     @Override
     protected void onSystemErased() {
         super.onSystemErased();
         // The services were software on the formatted disk: a wiped Mainframe serves nothing any more.
-        uninstallMirror();
-        uninstallIqlEngine();
-        uninstallAutomationEngine();
+        services.eraseInstalls();
     }
 
     public void markIqlCatalogChanged() {
         setChanged();
     }
 
-    // IQL job process control (the Processes-tab task manager)
-
     public boolean isJobPaused(final String jobName) {
-        return pausedJobs.contains(jobName.toLowerCase(java.util.Locale.ROOT));
+        return services.jobPaused(jobName);
     }
 
     /** Pauses a job (a resumable "End"): the agent stops firing it until it is restarted. */
     public void pauseJob(final String jobName) {
-        if (pausedJobs.add(jobName.toLowerCase(java.util.Locale.ROOT))) {
-            setChanged();
-        }
+        services.pauseJob(jobName);
     }
 
     /** Restarts a job: resumes it if paused and re-arms its trigger so it reschedules from now. */
     public void restartJob(final String jobName) {
-        pausedJobs.remove(jobName.toLowerCase(java.util.Locale.ROOT));
-        iqlJobAgent.rearm(jobName);
-        setChanged();
+        services.restartJob(jobName);
     }
 
     /** The persisted NMS editor script for this Mainframe, or "" if none has been saved. */
     public String savedScript() {
-        return savedScript;
+        return services.savedScript();
     }
 
     /** Persists the NMS editor script so it survives closing and reopening the studio (and a reload). */
     public void setSavedScript(final String script) {
-        this.savedScript = script == null ? "" : script;
-        setChanged();
+        services.savedScript(script);
     }
 }

@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.os.RamLedger;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
 import dev.jstech.computers.operation.payload.RequestSettingsPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
@@ -59,9 +61,9 @@ public final class SystemMonitorApp implements IDesktopApp {
     private final Label loadingLabel;
     private final Label nameLabel;
     private final Label osLabel;
-    private final Label[] specGroups = new Label[3];
-    private final Label[] specLabels = new Label[3];
-    private final Label[] specValues = new Label[3];
+    private final Label[] specGroups = new Label[4];
+    private final Label[] specLabels = new Label[4];
+    private final Label[] specValues = new Label[4];
     private final Label memoryHeader;
     private final Label memoryFree;
     private final ListView<RamUse> memList;
@@ -76,9 +78,11 @@ public final class SystemMonitorApp implements IDesktopApp {
         osLabel = root.add(new Label(() -> data == null ? "" : data.osLabel() + "  (" + data.platform() + ")", Label.Tone.DIM)
                 .setAlign(Label.Align.RIGHT));
         spec(0, "Processor", () -> data == null || data.cpuLabel().isEmpty() ? "-" : data.cpuLabel(), () -> cpuClock(data == null ? 0 : data.cpuMhz()));
-        spec(1, "Memory", () -> "RAM", () -> data == null ? "-"
-                : JsTechTheme.fmt(data.ramUsedMb()) + " / " + JsTechTheme.fmt(data.ramMb()) + " MB");
-        spec(2, "Graphics", () -> data != null && data.vramMb() > 0 ? "VRAM" : "no GPU",
+        // A second processor line with no group of its own, the way a continuation row reads under the one above it.
+        spec(1, "", () -> data == null || data.cpuArch().isEmpty() ? "-" : data.cpuArch(), () -> "");
+        spec(2, "Memory", () -> "RAM", () -> data == null ? "-"
+                : RamLedger.heldLabel(heldBytes()) + " of " + JsTechTheme.fmt(data.ramMb()) + " MB");
+        spec(3, "Graphics", () -> data != null && data.vramMb() > 0 ? "VRAM" : "no GPU",
                 () -> data != null && data.vramMb() > 0 ? JsTechTheme.fmt(data.vramMb()) + " MB" : "-");
         memoryHeader = root.add(new Label("MEMORY", Label.Tone.DIM));
         memoryFree = root.add(new Label(() -> data == null ? ""
@@ -91,6 +95,15 @@ public final class SystemMonitorApp implements IDesktopApp {
         diskList = root.add(new ListView<DiskUse>(() -> data == null ? List.of() : data.disks(), DISK_ROW_H, this::renderDiskRow));
         active = this;
         PacketDistributor.sendToServer(new RequestSettingsPayload(host));
+    }
+
+    /** What the machine is really holding: the sum of what each thing on the list holds this moment. */
+    private long heldBytes() {
+        long sum = 0L;
+        for (final RamUse use : data.ramUses()) {
+            sum += use.heldBytes();
+        }
+        return sum;
     }
 
     private void spec(final int index, final String group, final Supplier<String> label, final Supplier<String> value) {
@@ -166,7 +179,7 @@ public final class SystemMonitorApp implements IDesktopApp {
             g.fill(px, row, px + pw, row + 1, skin.edge());
         }
         row += 5;
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < specGroups.length; i++) {
             specGroups[i].setVisible(ready);
             specLabels[i].setVisible(ready);
             specValues[i].setVisible(ready);
@@ -194,7 +207,8 @@ public final class SystemMonitorApp implements IDesktopApp {
     private void renderMemoryRow(final GuiGraphics g, final UiContext ctx, final RamUse use, final int index, final int x,
                                  final int y, final int w, final int h, final boolean hovered, final boolean selected) {
         final Font font = ctx.font();
-        final String amount = JsTechTheme.fmt(use.mb()) + " MB";
+        // What it holds now, which is what a person watching this list is watching for.
+        final String amount = RamLedger.heldLabel(use.heldBytes());
         final int amountW = font.width(amount);
         final String name = font.plainSubstrByWidth(use.label(), w - amountW - 6);
         g.drawString(font, name, x, y + 1, ctx.skin().text(), false);
@@ -208,8 +222,8 @@ public final class SystemMonitorApp implements IDesktopApp {
         g.drawString(font, tag, x, y, ctx.skin().text(), false);
         final long cap = Math.max(1L, disk.capMb());
         final double frac = Math.min(1.0, (double) disk.usedMb() / cap);
-        final String usage = dev.jstech.computers.hardware.DiskSpec.sizeLabel(disk.usedMb())
-                + " / " + dev.jstech.computers.hardware.DiskSpec.sizeLabel(disk.capMb());
+        final String usage = DiskSpec.sizeLabel(disk.usedMb())
+                + " / " + DiskSpec.sizeLabel(disk.capMb());
         g.drawString(font, usage, x + w - font.width(usage), y, ctx.skin().dim(), false);
         final int barY = y + 10;
         g.fill(x, barY, x + w, barY + BAR_H, ctx.skin().fieldBg());

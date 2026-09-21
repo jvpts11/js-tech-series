@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.fs.FsPaths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +16,7 @@ import java.util.List;
  * resolves it against the session's current location, and formats both the on-disk path and the DOS display path.
  *
  * <p>Pure logic with no Minecraft types, so the whole path algebra is unit-tested. The on-disk filesystem keeps
- * {@code '/'}-separated paths ({@link dev.jstech.computers.os.fs.FsPaths}); the shell shows the
+ * {@code '/'}-separated paths ({@link FsPaths}); the shell shows the
  * player {@code '\'}-separated DOS paths with a drive letter. This class bridges the two. Segment matching against
  * real files is case-insensitive at the filesystem layer; this class preserves the case it is given.
  */

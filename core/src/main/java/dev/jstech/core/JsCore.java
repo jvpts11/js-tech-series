@@ -8,14 +8,19 @@
 package dev.jstech.core;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.core.api.CoreRegisterEvent;
 import dev.jstech.core.config.CoreConfigBridge;
 import dev.jstech.core.event.CoreEventDispatcher;
+import dev.jstech.core.language.LanguageRegistry;
 import dev.jstech.core.operation.OperationTypeRegistry;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.registry.CoreAttachments;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModLoader;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
 import org.slf4j.Logger;
 
 /**
@@ -32,8 +37,8 @@ public final class JsCore {
 
     private static final CoreEventDispatcher EVENTS = new CoreEventDispatcher();
     private static final OperationTypeRegistry OPERATIONS = new OperationTypeRegistry();
-    private static final dev.jstech.core.language.LanguageRegistry LANGUAGES =
-            new dev.jstech.core.language.LanguageRegistry();
+    private static final LanguageRegistry LANGUAGES =
+            new LanguageRegistry();
 
     /**
      * The series' internal event bus: an orchestrator posts the lifecycle of its Operations here and any mod
@@ -54,7 +59,7 @@ public final class JsCore {
      * <p>An addon may add one and may take one away, this series' own included: everything that deals in
      * programs resolves through here by extension rather than by naming a language.
      */
-    public static dev.jstech.core.language.LanguageRegistry languages() {
+    public static LanguageRegistry languages() {
         return LANGUAGES;
     }
 
@@ -65,5 +70,17 @@ public final class JsCore {
         CoreItems.register(modEventBus);
         // The balance of the Operations engine is series-wide: the core owns the server config file.
         CoreConfigBridge.register(modEventBus, modContainer);
+        /*
+         * One moment for anything to be added, and one for the door to close. Everything of the series adds
+         * itself through the same event an addon does, so the way in is the one that is tested every time
+         * the game starts. It is posted on the main thread rather than while the mods load side by side,
+         * because what it fills is shared and would otherwise be filled from several threads at once.
+         */
+        modEventBus.addListener(FMLCommonSetupEvent.class, event -> event.enqueueWork(
+                () -> ModLoader.postEvent(new CoreRegisterEvent(LANGUAGES, OPERATIONS))));
+        modEventBus.addListener(FMLLoadCompleteEvent.class, event -> event.enqueueWork(() -> {
+            LANGUAGES.freeze();
+            OPERATIONS.freeze();
+        }));
     }
 }

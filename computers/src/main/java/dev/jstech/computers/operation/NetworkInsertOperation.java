@@ -17,6 +17,7 @@ import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.operation.ILatencyScheduler;
+import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;
@@ -33,6 +34,9 @@ import java.util.UUID;
  * A multi-tick INSERT: writes an item into the network's servers over time, the inverse of a SELECT. It fills the fastest-tier servers first, up to each server's free space.
  */
 public final class NetworkInsertOperation extends AbstractTransferOperation {
+
+    /** Wrote as much of it as would go, and the servers had no room for the rest. */
+    private static final String NO_ROOM = "jsc.operation.failure.no_room";
 
     private final String sourceLabel;
     private final UUID operationId = UUID.randomUUID();
@@ -91,8 +95,12 @@ public final class NetworkInsertOperation extends AbstractTransferOperation {
 
     @Override
     protected void finish() {
-        markSettled(movedTotal >= demand ? OperationRecord.STATUS_COMPLETED
-                : movedTotal > 0L ? OperationRecord.STATUS_PARTIAL : OperationRecord.STATUS_FAILED);
+        if (movedTotal >= demand) {
+            markSettled(OperationRecord.STATUS_COMPLETED);
+            return;
+        }
+        markSettled(movedTotal > 0L ? OperationRecord.STATUS_PARTIAL : OperationRecord.STATUS_FAILED,
+                OperationFailure.of(NO_ROOM, key.displayName().getString()));
     }
 
     public NetworkInsertOperation onSettle(final Runnable callback) {
@@ -134,6 +142,6 @@ public final class NetworkInsertOperation extends AbstractTransferOperation {
                 moves.add(new OperationRecord.MoveRow(sourceLabel, written, "SRV-" + shortId(server.asString()))));
         final List<OperationRecord.SubRow> subs = includeSubs ? subRows() : List.of();
         return new OperationRecord(operationId, OperationRecord.TYPE_INSERT, key, demand, movedTotal,
-                recordStatus, priority(), List.copyOf(moves), subs);
+                recordStatus, priority(), List.copyOf(moves), subs).withCause(cause());
     }
 }

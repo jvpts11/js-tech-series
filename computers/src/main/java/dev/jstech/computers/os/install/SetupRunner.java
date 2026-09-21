@@ -13,10 +13,10 @@ import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.CommandOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
+import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.Platform;
-import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.os.SoftwareHouse;
@@ -161,6 +161,11 @@ public final class SetupRunner {
                     default -> { }
                 }
             }
+            /*
+             * Whatever the service was keeping goes with it. A machine that kept a conversation nobody can
+             * reach any more, and went on paying for it in disk space, would be keeping a ghost.
+             */
+            host.serviceUninstalled(path);
             return;
         }
         if (host instanceof MainframeBlockEntity mainframe) {
@@ -173,11 +178,6 @@ public final class SetupRunner {
         }
         console.install(id);
         console.setInstalledVersion(id, ProgramVersions.of(id));
-    }
-
-    /** Whether {@code spec} is a service a Mainframe switches on, which install and remove both special-case. */
-    public static boolean isMainframeService(final ProgramSpec spec) {
-        return spec.kind() == ProgramKind.SERVICE;
     }
 
     private static String sourceName(final MediaFormat medium) {
@@ -214,10 +214,10 @@ public final class SetupRunner {
     }
 
     /** What follows the bar once it is full: the manager's own closing lines. */
-    static List<CommandOutputPayload.WireLine> finished(final SetupJob job) {
+    static List<WireLine> finished(final SetupJob job) {
         final String pkg = job.packageName();
         final String ver = ProgramVersions.of(job.programId());
-        final List<CommandOutputPayload.WireLine> out = new ArrayList<>();
+        final List<WireLine> out = new ArrayList<>();
         switch (job.via()) {
             case "apt" -> {
                 if (job.removing()) {
@@ -283,8 +283,8 @@ public final class SetupRunner {
         return String.format(Locale.ROOT, "%02d:%02d", gone / 60, gone % 60);
     }
 
-    private static CommandOutputPayload.WireLine line(final String text, final CliStyle style) {
-        return new CommandOutputPayload.WireLine(text, style.ordinal());
+    private static WireLine line(final String text, final CliStyle style) {
+        return new WireLine(text, style.id());
     }
 
     /* Who gets told */
@@ -326,16 +326,12 @@ public final class SetupRunner {
      * when {@code replaceLast} says so, which is how a bar grows in place.
      */
     private static void promptLines(final ServerLevel level, final BlockPos pos,
-                                    final List<CommandOutputPayload.WireLine> lines, final boolean replaceLast) {
-        final List<DesktopShellOutputPayload.WireLine> desktop = new ArrayList<>(lines.size());
-        for (final CommandOutputPayload.WireLine each : lines) {
-            desktop.add(new DesktopShellOutputPayload.WireLine(each.text(), each.style()));
-        }
+                                    final List<WireLine> lines, final boolean replaceLast) {
         for (final ServerPlayer player : level.players()) {
             if (player.containerMenu instanceof CommandPromptMenu prompt && pos.equals(prompt.hostPos())) {
                 PacketDistributor.sendToPlayer(player, new CommandOutputPayload(false, "", lines, "", "", replaceLast));
             } else if (player.containerMenu instanceof DesktopMenu desk && pos.equals(desk.hostPos())) {
-                PacketDistributor.sendToPlayer(player, DesktopShellOutputPayload.informational(desktop, replaceLast));
+                PacketDistributor.sendToPlayer(player, DesktopShellOutputPayload.informational(lines, replaceLast));
             }
         }
     }

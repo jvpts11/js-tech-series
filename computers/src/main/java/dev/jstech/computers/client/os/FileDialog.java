@@ -7,9 +7,12 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.MkdirPayload;
 import dev.jstech.computers.operation.payload.RequestDiskFilesPayload;
+import dev.jstech.computers.os.DesktopEnvironmentDef;
+import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Breadcrumbs;
@@ -22,12 +25,14 @@ import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.language.IProgrammingLanguage;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
@@ -83,7 +88,7 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
             final List<Filter> out = new ArrayList<>();
             for (final IProgrammingLanguage language : JsCore.languages().all()) {
                 final List<String> extensions = new ArrayList<>(language.sourceExtensions());
-                java.util.Collections.sort(extensions);
+                Collections.sort(extensions);
                 out.add(of(language.displayName(), extensions.toArray(new String[0])));
             }
             out.add(ALL);
@@ -319,8 +324,10 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         final List<Place> out = new ArrayList<>();
         if (this.posix) {
             out.add(new Place("PLACES", FileIcons.Kind.HOME, "", true));
-            out.add(new Place("Home", FileIcons.Kind.HOME, parentOf(SystemLayout.POSIX_DESKTOP_DIR), false));
-            out.add(new Place("Desktop", FileIcons.Kind.FOLDER, SystemLayout.POSIX_DESKTOP_DIR, false));
+            // Where this system keeps its people, which is not the same place on every Unix.
+            final String desktopDir = FilesApp.desktopDirAt(this.host, false);
+            out.add(new Place("Home", FileIcons.Kind.HOME, parentOf(desktopDir), false));
+            out.add(new Place("Desktop", FileIcons.Kind.FOLDER, desktopDir, false));
             out.add(new Place("progs", FileIcons.Kind.FOLDER, CodeWorkspace.HOME, false));
             out.add(new Place("DEVICES", FileIcons.Kind.HOME, "", true));
             out.add(new Place("Root", FileIcons.Kind.BIN, "", false));
@@ -769,7 +776,13 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
     @Override
     public void applySkin(final OsSkin value) {
         this.skin = value;
-        this.posix = value.form() == OsSkin.Form.KDE2 || value.form() == OsSkin.Form.GNOME1;
+        /*
+         * The desktop says which family it stands on. This used to be read off the look of the skin, which only
+         * the two period desktops wear, so every other Unix desktop showed drive letters and a Local Disk.
+         */
+        final DesktopEnvironmentDef desktop =
+                OsRegistry.getDesktop(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, value.osPath()));
+        this.posix = desktop != null && desktop.panelStyle().unixLike();
     }
 
     @Override

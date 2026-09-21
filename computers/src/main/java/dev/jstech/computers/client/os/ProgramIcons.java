@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.client.os;
 
+import java.util.HashMap;
+import java.util.Map;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 
@@ -34,11 +37,11 @@ public final class ProgramIcons {
      * Whether a sprite file actually exists, cached per path: a program without artwork (or an add-on
      * without a variant for some desktop) must degrade to the generic sprite, never to a missing texture.
      */
-    private static final java.util.Map<ResourceLocation, Boolean> PRESENT = new java.util.HashMap<>();
+    private static final Map<ResourceLocation, Boolean> PRESENT = new HashMap<>();
 
     private static boolean exists(final ResourceLocation tex) {
         return PRESENT.computeIfAbsent(tex, t ->
-                net.minecraft.client.Minecraft.getInstance().getResourceManager().getResource(t).isPresent());
+                Minecraft.getInstance().getResourceManager().getResource(t).isPresent());
     }
 
     /** Marks an icon set drawn for a desktop as it looked on Legacy-era hardware. */

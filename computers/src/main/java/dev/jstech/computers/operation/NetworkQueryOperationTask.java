@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.operation;
 
-import dev.jstech.computers.operation.payload.ComputingPayloads;
+import dev.jstech.computers.operation.payload.terminal.TerminalPayloads;
 import dev.jstech.core.operation.IOperationContext;
 import dev.jstech.core.operation.IOperationResult;
 import dev.jstech.core.operation.IOperationTask;
@@ -38,7 +38,7 @@ public final class NetworkQueryOperationTask implements IOperationTask {
         if (player == null) {
             return IOperationResult.success();
         }
-        context.onMainThread(() -> ComputingPayloads.sendSnapshot(player, level, network));
+        context.onMainThread(() -> TerminalPayloads.sendSnapshot(player, level, network));
         return IOperationResult.success();
     }
 }

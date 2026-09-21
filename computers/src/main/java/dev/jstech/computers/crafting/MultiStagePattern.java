@@ -10,12 +10,17 @@ package dev.jstech.computers.crafting;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.util.Sizes;
+import dev.jstech.core.util.Utf8Text;
+import java.util.ArrayList;
+import java.util.function.Function;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 
 import java.util.List;
 import java.util.Optional;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * An ordered pipeline of stages, each either a bench {@link CraftingPattern} or a {@link ProcessingPattern}.
@@ -59,13 +64,8 @@ public record MultiStagePattern(List<Stage> stages, String name, String note) {
 
     public MultiStagePattern {
         stages = List.copyOf(stages);
-        name = clamp(name, CraftingPattern.MAX_NAME);
-        note = clamp(note, CraftingPattern.MAX_NOTE);
-    }
-
-    private static String clamp(final String s, final int max) {
-        final String value = s == null ? "" : s.trim();
-        return value.length() <= max ? value : value.substring(0, max);
+        name = Utf8Text.field(name, CraftingPattern.MAX_NAME);
+        note = Utf8Text.field(note, CraftingPattern.MAX_NOTE);
     }
 
     public static final Codec<MultiStagePattern> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -97,8 +97,8 @@ public record MultiStagePattern(List<Stage> stages, String name, String note) {
     }
 
     /** The same pipeline with every bench stage's tagged cells resolved by {@code chooser}. */
-    public MultiStagePattern resolved(final java.util.function.Function<String, net.minecraft.world.item.ItemStack> chooser) {
-        final List<Stage> out = new java.util.ArrayList<>(stages.size());
+    public MultiStagePattern resolved(final Function<String, ItemStack> chooser) {
+        final List<Stage> out = new ArrayList<>(stages.size());
         for (final Stage stage : stages) {
             out.add(stage.bench().isPresent() ? Stage.bench(stage.bench().get().resolved(chooser)) : stage);
         }
@@ -125,16 +125,12 @@ public record MultiStagePattern(List<Stage> stages, String name, String note) {
         demand[stages.size() - 1] = Math.max(1, finalRequested);
         for (int i = stages.size() - 2; i >= 0; i--) {
             final Stage next = stages.get(i + 1);
-            final long runsOfNext = ceilDiv(demand[i + 1], Math.max(1, outputPerRun(next)));
+            final long runsOfNext = Sizes.ceilDiv(demand[i + 1], Math.max(1, outputPerRun(next)));
             final StorageKey produced = outputKey(stages.get(i));
             final long consumedPerRun = produced == null ? 0 : inputPerRun(next, produced);
             demand[i] = consumedPerRun > 0 ? runsOfNext * consumedPerRun : demand[i + 1];
         }
         return demand;
-    }
-
-    private static long ceilDiv(final long amount, final long perRun) {
-        return (amount + perRun - 1) / perRun;
     }
 
     /** The primary result a stage yields per run: the bench result count, or the primary output's amount. */

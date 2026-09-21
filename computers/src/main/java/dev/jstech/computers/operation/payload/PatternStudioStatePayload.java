@@ -87,6 +87,11 @@ public record PatternStudioStatePayload(
                 ByteBufCodecs.BOOL, Drive::writable,
                 ByteBufCodecs.stringUtf8(MAX_NAME).apply(ByteBufCodecs.list(MAX_FILES)), Drive::files,
                 Drive::new);
+
+        /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+        public Drive {
+            files = List.copyOf(files);
+        }
     }
 
     /** The linked Pattern Encoder, or {@code linked == false} when there is none. */
@@ -207,6 +212,16 @@ public record PatternStudioStatePayload(
             out.add(codec.decode(buf));
         }
         return out;
+    }
+
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public PatternStudioStatePayload {
+        bench = List.copyOf(bench);
+        inputs = List.copyOf(inputs);
+        outputs = List.copyOf(outputs);
+        stages = List.copyOf(stages);
+        drives = List.copyOf(drives);
+        machines = List.copyOf(machines);
     }
 
     @Override

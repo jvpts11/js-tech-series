@@ -3,5 +3,9 @@
   "gui.jscore.confirm": "Confirm",
   "item.jscore.copper_plate": "Copper Plate",
   "item.jscore.iron_dust": "Iron Dust",
-  "item.jscore.iron_plate": "Iron Plate"
+  "item.jscore.iron_plate": "Iron Plate",
+  "jscore.operation.failure.cancelled": "the machine running it stopped",
+  "jscore.operation.failure.crashed": "the Operation ran into a problem: %s (%s)",
+  "jscore.operation.failure.no_result": "the Operation finished without saying what it did",
+  "jscore.operation.failure.self_test": "the self-test ran past what its numbers can hold"
 }

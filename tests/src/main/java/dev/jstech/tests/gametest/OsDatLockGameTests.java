@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Tech Series.
  */
 package dev.jstech.tests.gametest;
 
@@ -12,7 +12,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
-import dev.jstech.computers.operation.payload.ComputingPayloads;
+import dev.jstech.computers.operation.payload.files.FileAccess;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
@@ -168,7 +168,7 @@ public final class OsDatLockGameTests {
                             .findFirst()
                             .orElse("");
                     helper.assertFalse(datPath.isEmpty(), "the disk must project a .dat for the stored item");
-                    final StorageKey resolved = ComputingPayloads.resolveDatKey(sysDisk, datPath);
+                    final StorageKey resolved = FileAccess.resolveDatKey(sysDisk, datPath);
                     helper.assertTrue(key.equals(resolved),
                             "the .dat path must invert back to its StorageKey; got " + resolved);
 
@@ -182,7 +182,7 @@ public final class OsDatLockGameTests {
                             "the local store must report the seeded quantity; got " + beforeDisk);
 
                     // Move the item onto the medium and assert conservation.
-                    final long moved = ComputingPayloads.transferDatToMedium(mainframe, key, media);
+                    final long moved = FileAccess.transferDatToMedium(mainframe, key, media);
                     helper.assertTrue(moved > 0L, "the transfer must move at least one item");
 
                     final long afterDisk = mainframe.localStore().count(key);

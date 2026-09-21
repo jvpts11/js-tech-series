@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -20,7 +21,7 @@ import net.minecraft.resources.ResourceLocation;
  * checking the player is in reach of the switch.
  *
  * @param switchPos the Crafting Switch block position
- * @param face      the {@link net.minecraft.core.Direction#get3DDataValue()} of the edited face
+ * @param face      the {@link Direction#get3DDataValue()} of the edited face
  * @param name      the new name for that face's machine
  * @param active    whether that face accepts crafts
  */

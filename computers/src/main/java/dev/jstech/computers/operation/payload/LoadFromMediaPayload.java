@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.fs.FsPaths;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -44,7 +45,7 @@ public record LoadFromMediaPayload(
     private record FileName(String value) {
         static final StreamCodec<RegistryFriendlyByteBuf, FileName> STREAM_CODEC =
                 StreamCodec.composite(
-                        ByteBufCodecs.stringUtf8(dev.jstech.computers.os.fs.FsPaths.MAX_NAME_LENGTH),
+                        ByteBufCodecs.stringUtf8(FsPaths.MAX_NAME_LENGTH),
                         FileName::value,
                         FileName::new);
     }
@@ -57,6 +58,11 @@ public record LoadFromMediaPayload(
                         FileName.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_FILES)), Wire::files,
                         ByteBufCodecs.BOOL, Wire::all,
                         Wire::new);
+
+        /* Copied on the way in, so what arrives cannot change under whoever is acting on it. */
+        Wire {
+            files = List.copyOf(files);
+        }
     }
 
     public static final StreamCodec<RegistryFriendlyByteBuf, LoadFromMediaPayload> STREAM_CODEC =
@@ -69,6 +75,11 @@ public record LoadFromMediaPayload(
                             p.hostPos(), p.mediaVolumeKey(),
                             p.fileNames().stream().map(FileName::new).toList(),
                             p.allMissing()));
+
+    /* Copied on the way in, so what arrives from a client cannot change under whoever is acting on it. */
+    public LoadFromMediaPayload {
+        fileNames = List.copyOf(fileNames);
+    }
 
     @Override
     public CustomPacketPayload.Type<LoadFromMediaPayload> type() {

@@ -10,23 +10,24 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
 import dev.jstech.computers.block.NetworkGatewayBlock;
-import dev.jstech.computers.cannon.CannonCosts;
 import dev.jstech.computers.gateway.GatewayLog;
 import dev.jstech.computers.gateway.GatewayName;
 import dev.jstech.computers.gateway.GatewayPermissions;
 import dev.jstech.computers.gateway.GatewayService;
 import dev.jstech.computers.gateway.GatewayStats;
-import dev.jstech.computers.gateway.GatewayValues;
 import dev.jstech.computers.gateway.IGatewayBridge;
 import dev.jstech.computers.gateway.NetworkGateways;
 import dev.jstech.computers.integration.computercraft.ComputerCraftIntegration;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.core.peripheral.ILinkResult;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.PeripheralLinkValidator;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -126,7 +127,7 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
      * <p>A message waits here for the programs on the host machine to be handed it on the next tick, and
      * no longer: one nobody is listening for is dropped rather than piling up for ever.
      */
-    private final java.util.Deque<Message> messages = new java.util.ArrayDeque<>();
+    private final Deque<Message> messages = new ArrayDeque<>();
     /* What the client knows of the server side, for the block's own screen. */
     private String clientHostName = "";
     private boolean clientCcOnline;
@@ -171,6 +172,9 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
     public void onOwnerLinked(final long ownerPos) {
         linkedOwner = ownerPos;
         setChanged();
+        if (!messages.isEmpty()) {
+            tellHostMailWaits();
+        }
     }
 
     @Override
@@ -327,14 +331,28 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
             messages.removeFirst();
         }
         messages.addLast(new Message(from, text == null ? "" : text, tick));
+        tellHostMailWaits();
+    }
+
+    /**
+     * Lets the linked host know something waits here, so it looks for its Gateways on its next tick instead of on
+     * every tick. A host whose chunk is not loaded looks once when it loads anyway.
+     */
+    private void tellHostMailWaits() {
+        if (level != null && linkedOwner != null) {
+            final BlockPos host = BlockPos.of(linkedOwner);
+            if (level.isLoaded(host) && level.getBlockEntity(host) instanceof AbstractComputerBlockEntity machine) {
+                machine.gatewayMailWaits();
+            }
+        }
     }
 
     /** Everything said to this side since the last time anyone asked, oldest first. */
-    public java.util.List<Message> takeMessages() {
+    public List<Message> takeMessages() {
         if (messages.isEmpty()) {
-            return java.util.List.of();
+            return List.of();
         }
-        final java.util.List<Message> said = java.util.List.copyOf(messages);
+        final List<Message> said = List.copyOf(messages);
         messages.clear();
         return said;
     }
@@ -391,7 +409,7 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
         rollTick();
         spentThisTick += Math.max(0, credits);
         if (owner() instanceof AbstractComputerBlockEntity host) {
-            host.cannon().owe(credits);
+            host.programs().owe(credits);
         }
     }
 
@@ -411,7 +429,7 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
         if (!(owner() instanceof AbstractComputerBlockEntity host)) {
             return 0;
         }
-        final int credits = host.cannonCredits();
+        final int credits = host.sigmaCredits();
         if (credits <= 0) {
             return 0;
         }
@@ -455,7 +473,7 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
         for (final Map.Entry<Integer, Map<String, Long>> byComputer : watches.entrySet()) {
             for (final Map.Entry<String, Long> watched : byComputer.getValue().entrySet()) {
                 final long total = GatewayService.stockOf(this, watched.getKey());
-                charge(CannonCosts.READ);
+                charge(SigmaCosts.READ);
                 if (total != watched.getValue()) {
                     final long previous = watched.getValue();
                     watched.setValue(total);
@@ -596,7 +614,7 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
             one.putString(NBT_WHO, e.who());
             one.putString(NBT_WHAT, e.what());
             one.putString(NBT_RESULT, e.result());
-            one.putInt(NBT_TONE, e.tone().ordinal());
+            one.putInt(NBT_TONE, e.tone().id());
             entries.add(one);
         }
         tag.put(NBT_LOG, entries);
@@ -618,7 +636,7 @@ public class NetworkGatewayBlockEntity extends BlockEntity implements IPeriphera
             for (final Tag raw : tag.getList(NBT_LOG, Tag.TAG_COMPOUND)) {
                 final CompoundTag one = (CompoundTag) raw;
                 oldestFirst.add(new GatewayLog.Entry(one.getLong(NBT_WHEN), one.getString(NBT_WHO),
-                        one.getString(NBT_WHAT), one.getString(NBT_RESULT), GatewayLog.Tone.at(one.getInt(NBT_TONE))));
+                        one.getString(NBT_WHAT), one.getString(NBT_RESULT), GatewayLog.Tone.byId(one.getInt(NBT_TONE))));
             }
             log.restore(oldestFirst);
         }

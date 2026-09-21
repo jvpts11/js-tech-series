@@ -15,6 +15,7 @@ import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
+import java.util.Collection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
@@ -110,7 +111,7 @@ public final class NetworkStorage {
         return new NetworkStorage(entries);
     }
 
-    public static NetworkStorage ofServers(final ServerLevel level, final java.util.Collection<NodeUuid> nodes) {
+    public static NetworkStorage ofServers(final ServerLevel level, final Collection<NodeUuid> nodes) {
         final NetworkSystem system = NetworkSystem.get(level);
         final List<Entry> entries = new ArrayList<>();
         for (final NodeUuid node : nodes) {

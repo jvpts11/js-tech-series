@@ -10,6 +10,10 @@ package dev.jstech.computers.gui.layout;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.computers.gui.CdeBackdrop;
+import dev.jstech.computers.gui.CdePalette;
+import dev.jstech.computers.gui.MonitorGlass;
+import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.core.gui.layout.GuiLayout;
 import java.io.File;
 import java.lang.reflect.Method;
@@ -40,9 +44,27 @@ class LayoutAuditTest {
             "BusLayout", "ClusterManagementComputerLayout", "CraftingComputerLayout", "NmsLayout",
             "ComputerTerminalLayout", "ServerRouterLayout", "NetworkInteractorLayout",
             "CraftingSwitchLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
-            "PatternStudioLayout", "NetworkGatewayLayout");
+            "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
+            "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout",
+            "CdeStyleLayout", "WorkstationInfoLayout", "TrashLayout", "HelpViewerLayout");
 
-    private record AuditCase(String label, GuiLayout layout, boolean fixedSize) {
+    /**
+     * One layout worth auditing, with the budget it is measured against.
+     *
+     * <p>Most screens are panels over the game and are held to what a panel may take. A screen that is a
+     * monitor's whole glass is measured against the glass instead, because that is what it is drawn on and
+     * what every other thing a monitor shows already fills.
+     */
+    private record AuditCase(String label, GuiLayout layout, boolean fixedSize, int widthBudget,
+                             int heightBudget) {
+
+        AuditCase(final String label, final GuiLayout layout, final boolean fixedSize) {
+            this(label, layout, fixedSize, SCREEN_W_BUDGET, SCREEN_H_BUDGET);
+        }
+
+        static AuditCase onTheGlass(final String label, final GuiLayout layout) {
+            return new AuditCase(label, layout, true, MonitorGlass.WIDTH, MonitorGlass.HEIGHT);
+        }
     }
 
     /** Every layout, at the sizes/states worth auditing (worst cases for the parametrized ones). */
@@ -52,12 +74,12 @@ class LayoutAuditTest {
         c.add(new AuditCase("CraftingSwitchLayout", CraftingSwitchLayout.layout(), true));
         c.add(new AuditCase("PatternEncoderLayout", PatternEncoderLayout.layout(), true));
         c.add(new AuditCase("NetworkGatewayLayout", NetworkGatewayLayout.layout(), true));
+        c.add(new AuditCase("OpenWithLayout", OpenWithLayout.layout(), true));
         c.add(new AuditCase("ClusterManagementComputerLayout", ClusterManagementComputerLayout.layout(), true));
         c.add(new AuditCase("CraftingComputerLayout", CraftingComputerLayout.layout(), true));
         c.add(new AuditCase("NmsLayout", NmsLayout.layout(), true));
         c.add(new AuditCase("ServerRackLayout", ServerRackLayout.layout(), true));
-        c.add(new AuditCase("ComputerTerminalLayout(mainframe)", ComputerTerminalLayout.layout(true), true));
-        c.add(new AuditCase("ComputerTerminalLayout(pc)", ComputerTerminalLayout.layout(false), true));
+        c.add(AuditCase.onTheGlass("ComputerTerminalLayout", ComputerTerminalLayout.layout()));
         /*
          * The explorer and This PC are resizable desktop windows: audit the smallest, the default and a
          * maximised size, plus the row and grid geometry that depend on the width alone.
@@ -110,6 +132,45 @@ class LayoutAuditTest {
             c.add(new AuditCase("PatternStudioLayout(" + h + ")",
                     dev.jstech.computers.gui.layout.PatternStudioLayout.layout(322, h), false));
         }
+        /*
+         * A boot loader is drawn on the monitor's glass, which is one size for everything a machine shows and
+         * wider than the budget a panel is held to, so it is audited for being clean and not for fitting one.
+         */
+        for (final int entries : new int[]{2, 3, BootMenu.MOST_ENTRIES}) {
+            c.add(new AuditCase("LoaderMenuLayout(" + entries + ")", LoaderMenuLayout.layout(entries), false));
+        }
+        // CDE's Front Panel stands on the desktop, which is the glass or larger when it is drawn smaller.
+        for (final int[] desktop : new int[][]{{384, 256}, {512, 341}}) {
+            c.add(new AuditCase("CdeFrontPanelLayout(" + desktop[0] + ")",
+                    CdeFrontPanelLayout.layout(desktop[0], desktop[1]), false));
+            // Its window icons, with more of them than one row of the workspace holds.
+            c.add(new AuditCase("CdeWindowIconLayout(" + desktop[0] + ")",
+                    CdeWindowIconLayout.layout(CdeWindowIconLayout.perRow(desktop[0]) + 2, desktop[0],
+                            desktop[1] - CdeFrontPanelLayout.BAND_H), false));
+            c.add(new AuditCase("CdeExitLayout(" + desktop[0] + ")",
+                    CdeExitLayout.layout(desktop[0], desktop[1]), false));
+        }
+        // CDE's Application Manager: the window of the four groups, and a group that fills two rows.
+        c.add(new AuditCase("CdeAppManagerLayout(groups)", CdeAppManagerLayout.layout(4, false, 284, 62), true));
+        c.add(new AuditCase("CdeAppManagerLayout(group)", CdeAppManagerLayout.layout(8, true, 292, 128), true));
+        // CDE's Style Manager: the strip of pages, and each page with everything it lists.
+        c.add(new AuditCase("CdeStyleLayout(strip)", CdeStyleLayout.stripLayout(2), true));
+        c.add(new AuditCase("CdeStyleLayout(color)", CdeStyleLayout.colorLayout(CdePalette.ALL.size()), true));
+        c.add(new AuditCase("CdeStyleLayout(backdrop)",
+                CdeStyleLayout.backdropLayout(CdeBackdrop.values().length), true));
+        c.add(new AuditCase("WorkstationInfoLayout", WorkstationInfoLayout.layout(), true));
+        c.add(new AuditCase("HelpViewerLayout", HelpViewerLayout.layout(), true));
+        // The trash window in each of its three looks, at its smallest and at its first size.
+        for (final int[] size : new int[][]{
+                {TrashLayout.MIN_W - TrashLayout.FRAME_W, TrashLayout.MIN_H - TrashLayout.FRAME_H},
+                {TrashLayout.DEFAULT_W - TrashLayout.FRAME_W, TrashLayout.DEFAULT_H - TrashLayout.FRAME_H}}) {
+            c.add(new AuditCase("TrashLayout.frames(" + size[0] + ")", TrashLayout.framesLayout(size[0], size[1]),
+                    false));
+            c.add(new AuditCase("TrashLayout.linux(" + size[0] + ")", TrashLayout.linuxLayout(size[0], size[1]),
+                    false));
+            c.add(new AuditCase("TrashLayout.cde(" + size[0] + ")", TrashLayout.cdeLayout(size[0], size[1]),
+                    false));
+        }
         return c;
     }
 
@@ -143,10 +204,10 @@ class LayoutAuditTest {
             if (!c.fixedSize()) {
                 continue;
             }
-            assertTrue(c.layout().width() <= SCREEN_W_BUDGET,
-                    c.label() + " width " + c.layout().width() + " exceeds the " + SCREEN_W_BUDGET + "px budget");
-            assertTrue(c.layout().height() <= SCREEN_H_BUDGET,
-                    c.label() + " height " + c.layout().height() + " exceeds the " + SCREEN_H_BUDGET + "px budget");
+            assertTrue(c.layout().width() <= c.widthBudget(),
+                    c.label() + " width " + c.layout().width() + " exceeds the " + c.widthBudget() + "px budget");
+            assertTrue(c.layout().height() <= c.heightBudget(),
+                    c.label() + " height " + c.layout().height() + " exceeds the " + c.heightBudget() + "px budget");
         }
     }
 

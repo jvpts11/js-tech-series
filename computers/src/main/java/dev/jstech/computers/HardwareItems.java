@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers;
 
-import dev.jstech.computers.hardware.CpuSocket;
+import dev.jstech.computers.hardware.CpuSocketId;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.FormFactor;
@@ -111,22 +111,22 @@ public final class HardwareItems {
 
     public static final DeferredItem<CpuItem> CPU_INTEGRA_486SX =
             cpu("cpu_integra_486sx", "Integra 486SX",
-                    new CpuSpec(HardwareEra.VINTAGE, CpuSocket.SOCKET_3, 1, 25, 3, false));
+                    new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 25, 3, false));
     public static final DeferredItem<CpuItem> CPU_INTEGRA_486DX2 =
             cpu("cpu_integra_486dx2", "Integra 486DX2",
-                    new CpuSpec(HardwareEra.VINTAGE, CpuSocket.SOCKET_3, 1, 66, 5, false));
+                    new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 66, 5, false));
     public static final DeferredItem<CpuItem> CPU_INTEGRA_486DX4 =
             cpu("cpu_integra_486dx4", "Integra 486DX4",
-                    new CpuSpec(HardwareEra.VINTAGE, CpuSocket.SOCKET_3, 1, 100, 5, false));
+                    new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_3, 1, 100, 5, false));
     public static final DeferredItem<CpuItem> CPU_VELOCION_K6_II =
             cpu("cpu_velocion_k6_ii", "Velocion K6-II",
-                    new CpuSpec(HardwareEra.VINTAGE, CpuSocket.SOCKET_7, 1, 350, 15, false));
+                    new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 350, 15, false));
     public static final DeferredItem<CpuItem> CPU_VELOCION_K6_III =
             cpu("cpu_velocion_k6_iii", "Velocion K6-III",
-                    new CpuSpec(HardwareEra.VINTAGE, CpuSocket.SOCKET_7, 1, 400, 20, false));
+                    new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 400, 20, false));
     public static final DeferredItem<CpuItem> CPU_VELOCION_K6_III_PLUS =
             cpu("cpu_velocion_k6_iii_plus", "Velocion K6-III+",
-                    new CpuSpec(HardwareEra.VINTAGE, CpuSocket.SOCKET_7, 1, 450, 22, false));
+                    new CpuSpec(HardwareEra.VINTAGE, CpuSocketId.SOCKET_7, 1, 450, 22, false));
 
     public static final DeferredItem<RamItem> RAM_SIMM_4 =
             ram("ram_simm_4", "Stratix Layer SIMM-4", new RamSpec(HardwareEra.VINTAGE, RamGeneration.SIMM, 1, 1));
@@ -153,16 +153,16 @@ public final class HardwareItems {
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_BABYAT_VINTAGE =
             board("motherboard_babyat_vintage", "MF Baby-AT I Motherboard",
                     new MotherboardSpec(FormFactor.BABY_AT, HardwareEra.VINTAGE,
-                            CpuSocket.SOCKET_3, 1, Set.of(RamGeneration.SIMM), 4, PcieGeneration.ISA, 4, 2, 2));
+                            CpuSocketId.SOCKET_3, 1, Set.of(RamGeneration.SIMM), 4, PcieGeneration.ISA, 4, 2, 2));
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_AT_VINTAGE =
             board("motherboard_at_vintage", "MF AT Standard Motherboard",
                     new MotherboardSpec(FormFactor.AT, HardwareEra.VINTAGE,
-                            CpuSocket.SOCKET_7, 1, Set.of(RamGeneration.SIMM, RamGeneration.EDO), 8,
+                            CpuSocketId.SOCKET_7, 1, Set.of(RamGeneration.SIMM, RamGeneration.EDO), 8,
                             PcieGeneration.PCI, 7, 4, 2));
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_VINTAGE =
             board("motherboard_mtx_vintage", "MF MTX-V Motherboard",
                     new MotherboardSpec(FormFactor.MTX, HardwareEra.VINTAGE,
-                            CpuSocket.SOCKET_7, 2, Set.of(RamGeneration.SIMM, RamGeneration.EDO), 16,
+                            CpuSocketId.SOCKET_7, 2, Set.of(RamGeneration.SIMM, RamGeneration.EDO), 16,
                             PcieGeneration.PCI, 8, 4, 8));
     /*
      * Dual-socket server board for vintage-era rack hardware; more RAM slots and PCIe slots
@@ -171,7 +171,7 @@ public final class HardwareItems {
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_VINTAGE =
             board("motherboard_eeb_vintage", "MF EEB-V Server Board",
                     new MotherboardSpec(FormFactor.EEB, HardwareEra.VINTAGE,
-                            CpuSocket.SOCKET_7, 2, Set.of(RamGeneration.SIMM, RamGeneration.EDO), 16,
+                            CpuSocketId.SOCKET_7, 2, Set.of(RamGeneration.SIMM, RamGeneration.EDO), 16,
                             PcieGeneration.PCI, 10, 8, 8));
 
     /*
@@ -189,49 +189,49 @@ public final class HardwareItems {
 
     public static final DeferredItem<CpuItem> CPU_INTEGRA_VERTEX_700 =
             cpu("cpu_integra_vertex_700", "Integra Vertex 700",
-                    new CpuSpec(HardwareEra.LEGACY, CpuSocket.SOCKET_370, 1, 700, 28, false));
+                    new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_370, 1, 700, 28, false));
     public static final DeferredItem<CpuItem> CPU_INTEGRA_VERTEX_III_S_1000 =
             cpu("cpu_integra_vertex_iii_s_1000", "Integra Vertex III-S 1000",
-                    new CpuSpec(HardwareEra.LEGACY, CpuSocket.SOCKET_370, 1, 1000, 30, false));
+                    new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_370, 1, 1000, 30, false));
     public static final DeferredItem<CpuItem> CPU_INTEGRA_VERTEX_III_S_1400 =
             cpu("cpu_integra_vertex_iii_s_1400", "Integra Vertex III-S 1400",
-                    new CpuSpec(HardwareEra.LEGACY, CpuSocket.SOCKET_370, 1, 1400, 32, false));
+                    new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_370, 1, 1400, 32, false));
     public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_XP_2400 =
             cpu("cpu_velocion_sprint_xp_2400", "Velocion Sprint XP 2400+",
-                    new CpuSpec(HardwareEra.LEGACY, CpuSocket.SOCKET_A, 1, 2000, 65, false));
+                    new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_A, 1, 2000, 65, false));
     public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_XP_3200 =
             cpu("cpu_velocion_sprint_xp_3200", "Velocion Sprint XP 3200+",
-                    new CpuSpec(HardwareEra.LEGACY, CpuSocket.SOCKET_A, 1, 2200, 76, false));
+                    new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_A, 1, 2200, 76, false));
     public static final DeferredItem<CpuItem> CPU_VELOCION_SPRINT_XP_3800 =
             cpu("cpu_velocion_sprint_xp_3800", "Velocion Sprint XP 3800+",
-                    new CpuSpec(HardwareEra.LEGACY, CpuSocket.SOCKET_A, 1, 2400, 89, false));
+                    new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_A, 1, 2400, 89, false));
     public static final DeferredItem<CpuItem> CPU_INTEGRA_DUO_E4300 =
             cpu("cpu_integra_duo_e4300", "Integra Duo E4300",
-                    new CpuSpec(HardwareEra.LEGACY, CpuSocket.LGA_775, 2, 1800, 65, false));
+                    new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_775, 2, 1800, 65, false));
     public static final DeferredItem<CpuItem> CPU_INTEGRA_DUO_E6600 =
             cpu("cpu_integra_duo_e6600", "Integra Duo E6600",
-                    new CpuSpec(HardwareEra.LEGACY, CpuSocket.LGA_775, 2, 2400, 65, false));
+                    new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_775, 2, 2400, 65, false));
     public static final DeferredItem<CpuItem> CPU_INTEGRA_DUO_E8500 =
             cpu("cpu_integra_duo_e8500", "Integra Duo E8500",
-                    new CpuSpec(HardwareEra.LEGACY, CpuSocket.LGA_775, 2, 3160, 65, false));
+                    new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_775, 2, 3160, 65, false));
     public static final DeferredItem<CpuItem> CPU_VELOCION_DUAL_240 =
             cpu("cpu_velocion_dual_240", "Velocion Dual 240",
-                    new CpuSpec(HardwareEra.LEGACY, CpuSocket.SOCKET_940, 2, 2200, 85, false));
+                    new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_940, 2, 2200, 85, false));
     public static final DeferredItem<CpuItem> CPU_VELOCION_DUAL_280 =
             cpu("cpu_velocion_dual_280", "Velocion Dual 280",
-                    new CpuSpec(HardwareEra.LEGACY, CpuSocket.SOCKET_940, 2, 2400, 95, false));
+                    new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_940, 2, 2400, 95, false));
     public static final DeferredItem<CpuItem> CPU_VELOCION_DUAL_285 =
             cpu("cpu_velocion_dual_285", "Velocion Dual 285",
-                    new CpuSpec(HardwareEra.LEGACY, CpuSocket.SOCKET_940, 2, 2600, 95, false));
+                    new CpuSpec(HardwareEra.LEGACY, CpuSocketId.SOCKET_940, 2, 2600, 95, false));
     public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_5100 =
             cpu("cpu_integra_servo_5100", "Integra Servo 5100",
-                    new CpuSpec(HardwareEra.LEGACY, CpuSocket.LGA_771, 2, 2000, 65, false));
+                    new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_771, 2, 2000, 65, false));
     public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_5160 =
             cpu("cpu_integra_servo_5160", "Integra Servo 5160",
-                    new CpuSpec(HardwareEra.LEGACY, CpuSocket.LGA_771, 2, 3000, 80, false));
+                    new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_771, 2, 3000, 80, false));
     public static final DeferredItem<CpuItem> CPU_INTEGRA_SERVO_5365 =
             cpu("cpu_integra_servo_5365", "Integra Servo 5365",
-                    new CpuSpec(HardwareEra.LEGACY, CpuSocket.LGA_771, 4, 2000, 120, false));
+                    new CpuSpec(HardwareEra.LEGACY, CpuSocketId.LGA_771, 4, 2000, 120, false));
 
     public static final DeferredItem<RamItem> RAM_SDRAM_128 =
             ram("ram_sdram_128", "Stratix Layer SDRAM-128", new RamSpec(HardwareEra.LEGACY, RamGeneration.SDRAM, 32, 5));
@@ -272,31 +272,33 @@ public final class HardwareItems {
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_LEGACY_SKA =
             board("motherboard_atx_legacy_ska", "MF ATX Legacy Motherboard (Socket A)",
                     new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY,
-                            CpuSocket.SOCKET_A, 1, Set.of(RamGeneration.DDR, RamGeneration.DDR2), 4,
+                            CpuSocketId.SOCKET_A, 1, Set.of(RamGeneration.DDR, RamGeneration.DDR2), 4,
                             PcieGeneration.AGP_8X, 4, 4, 4));
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_LEGACY_S370 =
             board("motherboard_atx_legacy_s370", "MF ATX Legacy Motherboard (Socket 370)",
                     new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY,
-                            CpuSocket.SOCKET_370, 1, Set.of(RamGeneration.DDR, RamGeneration.DDR2), 4,
+                            CpuSocketId.SOCKET_370, 1, Set.of(RamGeneration.DDR, RamGeneration.DDR2), 4,
                             PcieGeneration.PCIE_1_0, 4, 4, 4));
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_LEGACY_LGA775 =
             board("motherboard_atx_legacy_lga775", "MF ATX Legacy Motherboard (LGA 775)",
                     new MotherboardSpec(FormFactor.ATX, HardwareEra.LEGACY,
-                            CpuSocket.LGA_775, 1, Set.of(RamGeneration.DDR, RamGeneration.DDR2), 4,
+                            CpuSocketId.LGA_775, 1, Set.of(RamGeneration.DDR, RamGeneration.DDR2), 4,
                             PcieGeneration.PCIE_1_0, 4, 4, 4));
     // The Legacy EATX board lists "one of LGA 775 / Socket 940": one board per socket.
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_LEGACY_LGA775 =
             board("motherboard_eatx_legacy_lga775", "MF EATX Legacy Motherboard (LGA 775)",
                     new MotherboardSpec(FormFactor.EATX, HardwareEra.LEGACY,
-                            CpuSocket.LGA_775, 2, Set.of(RamGeneration.DDR2), 8, PcieGeneration.PCIE_1_0, 6, 6, 4));
+                            CpuSocketId.LGA_775, 2, Set.of(RamGeneration.DDR2), 8, PcieGeneration.PCIE_1_0, 6, 6, 4));
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_LEGACY_S940 =
             board("motherboard_eatx_legacy_s940", "MF EATX Legacy Motherboard (Socket 940)",
                     new MotherboardSpec(FormFactor.EATX, HardwareEra.LEGACY,
-                            CpuSocket.SOCKET_940, 2, Set.of(RamGeneration.DDR2), 8, PcieGeneration.PCIE_1_0, 6, 6, 4));
+                            CpuSocketId.SOCKET_940, 2, Set.of(RamGeneration.DDR2), 8,
+                            PcieGeneration.PCIE_1_0, 6, 6, 4));
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_LEGACY =
             board("motherboard_mtx_legacy", "MF MTX-L Motherboard",
                     new MotherboardSpec(FormFactor.MTX, HardwareEra.LEGACY,
-                            CpuSocket.SOCKET_940, 4, Set.of(RamGeneration.DDR2), 24, PcieGeneration.PCIE_1_0, 8, 6, 8));
+                            CpuSocketId.SOCKET_940, 4, Set.of(RamGeneration.DDR2), 24,
+                            PcieGeneration.PCIE_1_0, 8, 6, 8));
 
     /*
      * Legacy rotating and early solid-state disks: IDE HDDs of 4 GB and 20 GB and the first affordable
@@ -321,19 +323,19 @@ public final class HardwareItems {
 
     public static final DeferredItem<CpuItem> CPU_ASCENT_X4_955 =
             cpu("cpu_ascent_x4_955", "Velocion Ascent X4 955",
-                    new CpuSpec(HardwareEra.STANDARD, CpuSocket.AM3, 4, 3200, 125, false));
+                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.AM3, 4, 3200, 125, false));
     public static final DeferredItem<CpuItem> CPU_ASCENT_X6_1090T =
             cpu("cpu_ascent_x6_1090t", "Velocion Ascent X6 1090T",
-                    new CpuSpec(HardwareEra.STANDARD, CpuSocket.AM3, 6, 3200, 125, false));
+                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.AM3, 6, 3200, 125, false));
     public static final DeferredItem<CpuItem> CPU_APEX_5_4590 =
             cpu("cpu_apex_5_4590", "Integra Apex 5 4590",
-                    new CpuSpec(HardwareEra.STANDARD, CpuSocket.LGA_1150, 4, 3300, 84, false));
+                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 4, 3300, 84, false));
     public static final DeferredItem<CpuItem> CPU_APEX_5_4690K =
             cpu("cpu_apex_5_4690k", "Integra Apex 5 4690K",
-                    new CpuSpec(HardwareEra.STANDARD, CpuSocket.LGA_1150, 4, 3500, 88, false));
+                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 4, 3500, 88, false));
     public static final DeferredItem<CpuItem> CPU_APEX_7_4790K =
             cpu("cpu_apex_7_4790k", "Integra Apex 7 4790K",
-                    new CpuSpec(HardwareEra.STANDARD, CpuSocket.LGA_1150, 4, 4000, 88, false));
+                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_1150, 4, 4000, 88, false));
 
     /*
      * Standard GPU ladder (PCIe 2.0 entry to PCIe 3.0 high-end). The HD 7970 (in ComputingModule) is the
@@ -361,11 +363,11 @@ public final class HardwareItems {
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_STANDARD_LGA1150 =
             board("motherboard_atx_standard_lga1150", "MF ATX Standard Motherboard (LGA 1150)",
                     new MotherboardSpec(FormFactor.ATX, HardwareEra.STANDARD,
-                            CpuSocket.LGA_1150, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_3_0, 4, 2, 4));
+                            CpuSocketId.LGA_1150, 1, Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_3_0, 4, 2, 4));
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EATX_STANDARD_WS =
             board("motherboard_eatx_standard_ws", "MF EATX Standard Workstation Board",
                     new MotherboardSpec(FormFactor.EATX, HardwareEra.STANDARD,
-                            CpuSocket.LGA_2011, 1, Set.of(RamGeneration.DDR3), 8, PcieGeneration.PCIE_3_0, 7, 4, 4));
+                            CpuSocketId.LGA_2011, 1, Set.of(RamGeneration.DDR3), 8, PcieGeneration.PCIE_3_0, 7, 4, 4));
 
     /**
      * The whole catalog ordered for the creative tab: era by era (Vintage to Singularity), and within

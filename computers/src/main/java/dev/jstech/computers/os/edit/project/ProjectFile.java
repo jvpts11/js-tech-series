@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.os.edit.project;
 
+import dev.jstech.computers.sigma.LanguageLevel;
+import dev.jstech.computers.vm.listing.AsmProgram;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -24,9 +27,10 @@ import java.util.Locale;
  * @param sources    its source files, relative to the project folder
  * @param references the names of the library projects it compiles with
  * @param entry      the listing it builds, relative to the project folder, or empty for a library
+ * @param platform   the processor architecture it is built for, by id
  */
 public record ProjectFile(String name, Kind kind, String language, List<String> sources,
-                          List<String> references, String entry) {
+                          List<String> references, String entry, String platform) {
 
     /** The shapes a project can have. */
     public enum Kind {
@@ -55,18 +59,56 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         }
     }
 
-    /** The extension a project file carries. */
-    public static final String EXTENSION = "canproj";
+    /**
+     * The extension a project file carries when its language has none of its own to give it: a Σ# project's, and
+     * what a project in a language an addon brought falls back on.
+     */
+    public static final String EXTENSION = LanguageLevel.SIGMA_SHARP.projectExtension();
 
     public ProjectFile {
         sources = List.copyOf(sources);
         references = List.copyOf(references);
         entry = entry == null ? "" : entry;
+        platform = platform == null || platform.isEmpty() ? AsmProgram.DEFAULT_ARCHITECTURE : platform;
     }
 
-    /** The file name a project of that name keeps itself in. */
+    /**
+     * A project built for the architecture a program gets when nobody asks for one, which is the oldest that runs
+     * it. Every project written before the studio could be told otherwise is one of these.
+     */
+    public ProjectFile(final String name, final Kind kind, final String language, final List<String> sources,
+                       final List<String> references, final String entry) {
+        this(name, kind, language, sources, references, entry, AsmProgram.DEFAULT_ARCHITECTURE);
+    }
+
+    /** The file name a Σ# project of that name keeps itself in. */
     public static String fileName(final String name) {
         return name + "." + EXTENSION;
+    }
+
+    /**
+     * The file this project keeps itself in, which says what it is written in before anybody opens it: a Σ
+     * project is not a Σ# one, and a player looking at a folder should not have to read the file to find out.
+     */
+    public String fileName() {
+        return this.name + "." + extensionFor(this.language);
+    }
+
+    /** The extension a project written in that language keeps itself in. */
+    public static String extensionFor(final String languageId) {
+        final LanguageLevel level = LanguageLevel.ofId(languageId);
+        return level == null ? EXTENSION : level.projectExtension();
+    }
+
+    /** Whether a file of that name is a project, of any of the languages that have a project file of their own. */
+    public static boolean isProjectFile(final String path) {
+        final String lower = path == null ? "" : path.toLowerCase(Locale.ROOT);
+        for (final LanguageLevel level : LanguageLevel.values()) {
+            if (lower.endsWith("." + level.projectExtension())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Where a project's listing goes when it has one: the build folder, named after the project. */
@@ -86,7 +128,8 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         }
         final List<String> more = new ArrayList<>(this.sources);
         more.add(source);
-        return new ProjectFile(this.name, this.kind, this.language, more, this.references, this.entry);
+        return new ProjectFile(this.name, this.kind, this.language, more, this.references, this.entry,
+                this.platform);
     }
 
     /** The project without that source, or the same one when it was not there. */
@@ -96,7 +139,8 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         }
         final List<String> fewer = new ArrayList<>(this.sources);
         fewer.remove(source);
-        return new ProjectFile(this.name, this.kind, this.language, fewer, this.references, this.entry);
+        return new ProjectFile(this.name, this.kind, this.language, fewer, this.references, this.entry,
+                this.platform);
     }
 
     /** The project with one more reference, or the same one when it is already there. */
@@ -106,7 +150,17 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         }
         final List<String> more = new ArrayList<>(this.references);
         more.add(reference);
-        return new ProjectFile(this.name, this.kind, this.language, this.sources, more, this.entry);
+        return new ProjectFile(this.name, this.kind, this.language, this.sources, more, this.entry,
+                this.platform);
+    }
+
+    /** The project built for that architecture instead, or the same one when it is already the one. */
+    public ProjectFile withPlatform(final String architecture) {
+        if (this.platform.equals(architecture)) {
+            return this;
+        }
+        return new ProjectFile(this.name, this.kind, this.language, this.sources, this.references, this.entry,
+                architecture);
     }
 
     /** The file's text. */
@@ -118,6 +172,7 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         out.append("sources: ").append(String.join(", ", this.sources)).append('\n');
         out.append("references: ").append(String.join(", ", this.references)).append('\n');
         out.append("entry: ").append(this.entry).append('\n');
+        out.append("platform: ").append(this.platform).append('\n');
         return out.toString();
     }
 
@@ -132,6 +187,7 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         List<String> sources = List.of();
         List<String> references = List.of();
         String entry = "";
+        String platform = AsmProgram.DEFAULT_ARCHITECTURE;
         for (final String raw : (text == null ? "" : text).split("\n")) {
             final String line = raw.trim();
             final int colon = line.indexOf(':');
@@ -147,10 +203,11 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
                 case "sources" -> sources = list(value);
                 case "references" -> references = list(value);
                 case "entry" -> entry = value;
+                case "platform" -> platform = value;
                 default -> { }
             }
         }
-        return new ProjectFile(name, kind, language, sources, references, entry);
+        return new ProjectFile(name, kind, language, sources, references, entry, platform);
     }
 
     private static List<String> list(final String value) {

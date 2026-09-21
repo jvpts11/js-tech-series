@@ -96,6 +96,13 @@ subprojects {
         useJUnitPlatform()
     }
 
+    // Every jar carries its licence: the LGPL's text and the GPL's, whose terms the LGPL builds on.
+    tasks.named('jar', Jar).configure {
+        from(rootProject.files('COPYING', 'COPYING.LESSER')) {
+            into 'META-INF'
+        }
+    }
+
     // IDEA no longer downloads sources/javadoc jars for dependencies on its own.
     idea {
         module {

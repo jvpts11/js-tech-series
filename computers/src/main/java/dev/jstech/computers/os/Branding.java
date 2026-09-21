@@ -76,7 +76,7 @@ public final class Branding {
 
     /** The firmware banner's first line: who built the board and which firmware it runs. */
     public static String biosBanner(final HardwareEra era) {
-        return HARDWARE_HOUSE + " BIOS  v" + biosVersion(era);
+        return HARDWARE_HOUSE + " BIOS v" + biosVersion(era);
     }
 
     /** The copyright line under a firmware banner. */

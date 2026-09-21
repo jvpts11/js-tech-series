@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Core.
  */
 /**
  * The NetworkSystem: the graph of cables, network anchors, gateways and routers that connects computers, machines and peripherals.

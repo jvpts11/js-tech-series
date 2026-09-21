@@ -9,6 +9,7 @@ package dev.jstech.computers.block;
 
 import dev.jstech.core.multiblock.IBlockMatcher;
 import dev.jstech.core.multiblock.MultiblockPattern;
+import dev.jstech.core.multiblock.MultiblockPatternGeometry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
@@ -37,8 +38,8 @@ public final class ServerRackStructure {
 
     /**
      * Declarative description of the Server Rack / Supercomputer Node footprint, used by
-     * {@link dev.jstech.core.multiblock.MultiblockPatternGeometry} to compute
-     * world positions for any of the four horizontal orientations.
+     * {@link MultiblockPatternGeometry} to compute world positions for any of the four horizontal
+     * orientations.
      */
     public static final MultiblockPattern PATTERN = MultiblockPattern.builder("server_rack")
             .layer("#P", "PP")

@@ -22,7 +22,7 @@ import net.minecraft.resources.ResourceLocation;
  *
  * @param host         the computer block position
  * @param monitorPos   the monitor the player used
- * @param firmwareKind the {@code FirmwareKind} ordinal to render
+ * @param firmwareKind the id of the {@code FirmwareKind} to render
  * @param name         the host's display name
  */
 public record OpenComputerUiPayload(BlockPos host, BlockPos monitorPos, int firmwareKind,

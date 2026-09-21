@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.block.part.ICablePart;
 import dev.jstech.computers.block.part.CablePartType;
+import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.core.network.ConnectivityIndex;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.INetworkBridge;
@@ -28,7 +29,7 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -52,7 +53,7 @@ public class DataCableBlockEntity extends BlockEntity {
         super(ComputingModule.DATA_CABLE_BE.get(), pos, state);
     }
 
-    public static void serverTick(final net.minecraft.world.level.Level level, final BlockPos pos,
+    public static void serverTick(final Level level, final BlockPos pos,
                                   final BlockState state, final DataCableBlockEntity cable) {
         if (!(level instanceof ServerLevel)) {
             return;
@@ -100,13 +101,13 @@ public class DataCableBlockEntity extends BlockEntity {
                 .orElse(null);
     }
 
-    public dev.jstech.computers.storage.ExternalDataPort neighborPort(final Direction face) {
+    public ExternalDataPort neighborPort(final Direction face) {
         final ServerLevel serverLevel = serverLevel();
         if (serverLevel == null) {
-            return new dev.jstech.computers.storage.ExternalDataPort(null, null);
+            return new ExternalDataPort(null, null);
         }
         // Every kind of data the faced block holds: a bus moves whatever is there.
-        return dev.jstech.computers.storage.ExternalDataPort.at(
+        return ExternalDataPort.at(
                 serverLevel, worldPosition.relative(face), face.getOpposite());
     }
 
@@ -118,7 +119,7 @@ public class DataCableBlockEntity extends BlockEntity {
 
     @Nullable
     public CablePartType partType(final Direction face) {
-        return CablePartType.byId(partTypes[face.get3DDataValue()]);
+        return CablePartType.find(partTypes[face.get3DDataValue()]);
     }
 
     @Nullable
@@ -130,7 +131,7 @@ public class DataCableBlockEntity extends BlockEntity {
         final int idx = face.get3DDataValue();
         part.attach(this, face);
         parts[idx] = part;
-        partTypes[idx] = part.type().id();
+        partTypes[idx] = (byte) part.type().id();
         setChanged();
         syncToClients();
     }
@@ -232,7 +233,7 @@ public class DataCableBlockEntity extends BlockEntity {
             }
             final CompoundTag entry = new CompoundTag();
             entry.putByte("Face", (byte) i);
-            entry.putByte("Type", part.type().id());
+            entry.putByte("Type", (byte) part.type().id());
             final CompoundTag data = new CompoundTag();
             part.save(data, registries);
             entry.put("Data", data);
@@ -257,7 +258,7 @@ public class DataCableBlockEntity extends BlockEntity {
         for (int i = 0; i < list.size(); i++) {
             final CompoundTag entry = list.getCompound(i);
             final int idx = entry.getByte("Face") & 0xFF;
-            final CablePartType type = CablePartType.byId(entry.getByte("Type"));
+            final CablePartType type = CablePartType.find(entry.getByte("Type"));
             if (idx < 0 || idx >= parts.length || type == null) {
                 continue;
             }
@@ -266,7 +267,7 @@ public class DataCableBlockEntity extends BlockEntity {
             part.attach(this, face);
             part.load(entry.getCompound("Data"), registries);
             parts[idx] = part;
-            partTypes[idx] = type.id();
+            partTypes[idx] = (byte) type.id();
         }
         loadedNetwork = tag.contains("Network")
                 ? NetworkUuid.fromString(tag.getString("Network"))

@@ -11,11 +11,13 @@ import dev.jstech.core.registry.CoreAttachments;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import net.minecraft.server.level.ServerLevel;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Central facade for spatial connectivity, UUID lookup, and orchestration capacity queries on a J's Computers network.
@@ -24,15 +26,15 @@ public final class NetworkSystem {
 
     private final ConnectivityIndex connectivity = new ConnectivityIndex();
 
-    private final java.util.Map<NetworkUuid, MainframeNode> mainframesByNetwork = new java.util.HashMap<>();
+    private final Map<NetworkUuid, MainframeNode> mainframesByNetwork = new HashMap<>();
 
-    private final java.util.Map<NetworkUuid, Long> mainframePosByNetwork = new java.util.HashMap<>();
+    private final Map<NetworkUuid, Long> mainframePosByNetwork = new HashMap<>();
 
     private final NodeRegistry<NodeUuid, SubframeNode> subframes = new NodeRegistry<>();
 
     private final NodeRegistry<NodeUuid, ServerNode> servers = new NodeRegistry<>();
 
-    private final java.util.Map<NodeUuid, ServerLocation> serverLocations = new java.util.HashMap<>();
+    private final Map<NodeUuid, ServerLocation> serverLocations = new HashMap<>();
 
     private final NodeRegistry<NodeUuid, PersonalComputerNode> personalComputers = new NodeRegistry<>();
 
@@ -46,7 +48,7 @@ public final class NetworkSystem {
      * Every per-network / per-node registry, collected so clear() resets them all together and a newly
      * added one can never be left out again (crafting and supercomputer nodes once were).
      */
-    private final List<java.util.Map<?, ?>> registries = List.of(
+    private final List<Map<?, ?>> registries = List.of(
             mainframesByNetwork, mainframePosByNetwork, serverLocations);
     private final List<NodeRegistry<?, ?>> nodeRegistries = List.of(
             subframes, servers, personalComputers, craftingComputers, supercomputers, routers);
@@ -98,7 +100,7 @@ public final class NetworkSystem {
     // Mainframe / Subframe registry, works in Phase 0 with snapshots
 
     public void registerMainframe(MainframeNode mainframe) {
-        java.util.Objects.requireNonNull(mainframe, "mainframe must not be null");
+        Objects.requireNonNull(mainframe, "mainframe must not be null");
         mainframesByNetwork.put(mainframe.networkUuid(), mainframe);
     }
 
@@ -119,7 +121,7 @@ public final class NetworkSystem {
     }
 
     public void registerSubframe(SubframeNode subframe) {
-        java.util.Objects.requireNonNull(subframe, "subframe must not be null");
+        Objects.requireNonNull(subframe, "subframe must not be null");
         // Idempotent by node UUID: a Subframe re-registering each tick from tickNode() never duplicates.
         subframes.register(subframe.networkUuid(), subframe.nodeUuid(), subframe);
     }
@@ -137,7 +139,7 @@ public final class NetworkSystem {
     }
 
     public void registerServer(ServerNode server) {
-        java.util.Objects.requireNonNull(server, "server must not be null");
+        Objects.requireNonNull(server, "server must not be null");
         /*
          * Idempotent by node UUID: a Rack re-registering each tick never duplicates, and an unchanged
          * snapshot leaves every reader's list untouched.
@@ -155,7 +157,7 @@ public final class NetworkSystem {
     }
 
     public void registerPersonalComputer(PersonalComputerNode pc) {
-        java.util.Objects.requireNonNull(pc, "pc must not be null");
+        Objects.requireNonNull(pc, "pc must not be null");
         personalComputers.register(pc.networkUuid(), pc.nodeUuid(), pc);
     }
 
@@ -163,12 +165,12 @@ public final class NetworkSystem {
         personalComputers.unregister(network, node);
     }
 
-    public java.util.List<PersonalComputerNode> personalComputersOf(NetworkUuid networkUuid) {
+    public List<PersonalComputerNode> personalComputersOf(NetworkUuid networkUuid) {
         return personalComputers.of(networkUuid);
     }
 
     public void registerCraftingComputer(CraftingComputerNode computer) {
-        java.util.Objects.requireNonNull(computer, "computer must not be null");
+        Objects.requireNonNull(computer, "computer must not be null");
         craftingComputers.register(computer.networkUuid(), computer.nodeUuid(), computer);
     }
 
@@ -176,12 +178,12 @@ public final class NetworkSystem {
         craftingComputers.unregister(network, node);
     }
 
-    public java.util.List<CraftingComputerNode> craftingComputersOf(NetworkUuid networkUuid) {
+    public List<CraftingComputerNode> craftingComputersOf(NetworkUuid networkUuid) {
         return craftingComputers.of(networkUuid);
     }
 
     public void registerSupercomputer(SupercomputerNode supercomputer) {
-        java.util.Objects.requireNonNull(supercomputer, "supercomputer must not be null");
+        Objects.requireNonNull(supercomputer, "supercomputer must not be null");
         supercomputers.register(supercomputer.networkUuid(), supercomputer.nodeUuid(), supercomputer);
     }
 
@@ -189,7 +191,7 @@ public final class NetworkSystem {
         supercomputers.unregister(network, node);
     }
 
-    public java.util.List<SupercomputerNode> supercomputersOf(NetworkUuid networkUuid) {
+    public List<SupercomputerNode> supercomputersOf(NetworkUuid networkUuid) {
         return supercomputers.of(networkUuid);
     }
 
@@ -198,7 +200,7 @@ public final class NetworkSystem {
         serverLocations.remove(node);
     }
 
-    public java.util.List<ServerNode> serversOf(NetworkUuid networkUuid) {
+    public List<ServerNode> serversOf(NetworkUuid networkUuid) {
         return servers.of(networkUuid);
     }
 
@@ -242,7 +244,7 @@ public final class NetworkSystem {
     // Server Router (topology element) registry
 
     public void registerRouter(final ServerRouterElement router) {
-        java.util.Objects.requireNonNull(router, "router must not be null");
+        Objects.requireNonNull(router, "router must not be null");
         routers.register(router.networkUuid(), router.pos(), router);
     }
 
@@ -250,7 +252,7 @@ public final class NetworkSystem {
         routers.unregister(network, pos);
     }
 
-    public java.util.List<ServerRouterElement> routersOf(final NetworkUuid networkUuid) {
+    public List<ServerRouterElement> routersOf(final NetworkUuid networkUuid) {
         return routers.of(networkUuid);
     }
 
@@ -270,7 +272,7 @@ public final class NetworkSystem {
 
     public void clear() {
         connectivity.clear();
-        registries.forEach(java.util.Map::clear);
+        registries.forEach(Map::clear);
         nodeRegistries.forEach(NodeRegistry::clear);
     }
 }

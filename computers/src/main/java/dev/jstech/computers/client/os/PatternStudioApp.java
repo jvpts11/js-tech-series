@@ -30,6 +30,7 @@ import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -1243,7 +1244,7 @@ public final class PatternStudioApp implements IInventoryBandApp {
     }
 
     private static ItemStack carried() {
-        final var mc = net.minecraft.client.Minecraft.getInstance();
+        final var mc = Minecraft.getInstance();
         return mc.player == null ? ItemStack.EMPTY : mc.player.containerMenu.getCarried();
     }
 

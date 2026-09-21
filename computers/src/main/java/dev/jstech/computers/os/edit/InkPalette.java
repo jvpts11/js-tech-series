@@ -24,9 +24,18 @@ public record InkPalette(int ground, int gutter, int gutterText, int caret, int 
             0xFFFFFFFF, 0xFFF2F3F6, 0xFF8A8F9C, 0xFF1B2437, 0xFFF6F7FB,
             0xFF1B2437, 0xFF0033B0, 0xFF1B2437, 0xFF9B1C1C, 0xFF8A4B00, 0xFF2F7A3F, 0xFF505A6B);
 
-    /** For a window with a dark client area: Frames 11 in its dark palette, and a terminal. */
+    /** For a window with a dark client area: Frames 11 in its dark palette, and a terminal in a window. */
     public static final InkPalette DARK = new InkPalette(
             0xFF1E212A, 0xFF1A1D25, 0xFF7B8494, 0xFFE7E9EF, 0xFF242833,
+            0xFFD5DAE4, 0xFF8FA9F5, 0xFFD5DAE4, 0xFFDB9A72, 0xFFD3B475, 0xFF89939F, 0xFF9AA3B2);
+
+    /**
+     * For the bare glass of a monitor, where a terminal is the whole screen: black, as that glass is, so an
+     * editor that takes the terminal over is on the same ground the prompt was and not on a slate panel laid
+     * over it. The inks are the dark window's, which were picked for a ground darker than they are.
+     */
+    public static final InkPalette GLASS = new InkPalette(
+            0xFF000000, 0xFF0C0E13, 0xFF7B8494, 0xFFE7E9EF, 0xFF0C0E13,
             0xFFD5DAE4, 0xFF8FA9F5, 0xFFD5DAE4, 0xFFDB9A72, 0xFFD3B475, 0xFF89939F, 0xFF9AA3B2);
 
     /** The palette for a window whose client area is {@code dark}. */

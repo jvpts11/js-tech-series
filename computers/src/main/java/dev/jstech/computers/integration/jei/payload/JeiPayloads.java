@@ -17,7 +17,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 /**
@@ -40,34 +39,25 @@ public final class JeiPayloads {
                 ComputerAccess.machine(SetProcessingPatternPayload::host), JeiPayloads::handleSetProcessingPattern);
     }
 
-    private static void handleSetPattern(final SetPatternPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player) || !(player.level() instanceof ServerLevel level)) {
-                return;
-            }
-            // The host is resolved through the monitor the player is at, never from the position alone.
-            final IOsHost host = PatternStudioPayloads.studioHost(player, level, payload.host(), payload.monitorPos());
-            if (host == null) {
-                return;
-            }
-            PatternStudioPayloads.applyBenchGrid(host, level, payload.grid(), payload.recipeId());
-            PacketDistributor.sendToPlayer(player, PatternStudioPayloads.buildState(level, host, "Recipe placed on the bench", 0));
-        });
+    private static void handleSetPattern(final SetPatternPayload payload, final ServerPlayer player,
+                                         final ServerLevel level) {
+        // The host is resolved through the monitor the player is at, never from the position alone.
+        final IOsHost host = PatternStudioPayloads.studioHost(player, level, payload.host(), payload.monitorPos());
+        if (host == null) {
+            return;
+        }
+        PatternStudioPayloads.applyBenchGrid(host, level, payload.grid(), payload.recipeId());
+        PacketDistributor.sendToPlayer(player, PatternStudioPayloads.buildState(level, host, "Recipe placed on the bench", 0));
     }
 
     private static void handleSetProcessingPattern(final SetProcessingPatternPayload payload,
-                                                   final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player) || !(player.level() instanceof ServerLevel level)) {
-                return;
-            }
-            final IOsHost host = PatternStudioPayloads.studioHost(player, level, payload.host(), payload.monitorPos());
-            if (host == null) {
-                return;
-            }
-            PatternStudioPayloads.applyProcessingCells(host, level, payload.inputs(), payload.outputs(),
-                    payload.recipeType());
-            PacketDistributor.sendToPlayer(player, PatternStudioPayloads.buildState(level, host, "Recipe placed in the machine draft", 1));
-        });
+                                                   final ServerPlayer player, final ServerLevel level) {
+        final IOsHost host = PatternStudioPayloads.studioHost(player, level, payload.host(), payload.monitorPos());
+        if (host == null) {
+            return;
+        }
+        PatternStudioPayloads.applyProcessingCells(host, level, payload.inputs(), payload.outputs(),
+                payload.recipeType());
+        PacketDistributor.sendToPlayer(player, PatternStudioPayloads.buildState(level, host, "Recipe placed in the machine draft", 1));
     }
 }

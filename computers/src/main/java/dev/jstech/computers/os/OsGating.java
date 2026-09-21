@@ -32,15 +32,15 @@ public final class OsGating {
      * Returns {@code true} when the given hardware is capable of running an OS whose minimum era is
      * {@code osMinEra}.
      *
-     * <p>A hardware era satisfies the requirement when its ordinal is greater than or equal to the
-     * OS minimum era ordinal (newer or equal is accepted; older is rejected).
+     * <p>A hardware era satisfies the requirement when it is at least the OS minimum era (newer or
+     * equal is accepted; older is rejected).
      *
      * @param osMinEra the minimum hardware era declared by the OS
      * @param hardware the era of the computer's hardware
      * @return {@code true} iff the hardware era is at least {@code osMinEra}
      */
     public static boolean canInstall(HardwareEra osMinEra, HardwareEra hardware) {
-        return hardware.ordinal() >= osMinEra.ordinal();
+        return hardware.isAtLeast(osMinEra);
     }
 
     /**

@@ -42,6 +42,17 @@ class InkPaletteTest {
         assertReadable(InkPalette.DARK, "dark");
     }
 
+    /** A monitor's bare glass is black, and an editor that takes it over stays on that black. */
+    @Test
+    void glass_isBlackAndEverythingOnItReads() {
+        assertEquals(0xFF000000, InkPalette.GLASS.ground());
+        assertReadable(InkPalette.GLASS, "glass");
+        assertTrue(ColorContrast.ratio(InkPalette.GLASS.gutterText(), InkPalette.GLASS.gutter()) >= VISIBLE);
+        assertTrue(ColorContrast.ratio(InkPalette.GLASS.caret(), InkPalette.GLASS.ground()) >= READABLE);
+        // An editor writes its title and its keys the other way round: the ground's colour on the text's.
+        assertTrue(ColorContrast.ratio(InkPalette.GLASS.ground(), InkPalette.GLASS.plain()) >= READABLE);
+    }
+
     @Test
     void gutterText_isVisibleOnTheGutterOfBothPalettes() {
         assertTrue(ColorContrast.ratio(InkPalette.LIGHT.gutterText(), InkPalette.LIGHT.gutter()) >= VISIBLE,

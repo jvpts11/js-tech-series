@@ -3,12 +3,13 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Core.
  */
 package dev.jstech.core.client.gui.widget;
 
 import dev.jstech.core.client.gui.logic.PaginationState;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 
@@ -88,7 +89,7 @@ public abstract class DataTableWidget<T> extends RowListWidget<T> {
         graphics.fill(getX(), getY(), getX() + width, getY() + headerHeight, 0xFF2A2A2A);
         for (int col = 0; col < columnHeaders.size(); col++) {
             graphics.drawString(
-                    net.minecraft.client.Minecraft.getInstance().font,
+                    Minecraft.getInstance().font,
                     columnHeaders.get(col),
                     columnX(col) + 2,
                     getY() + (headerHeight - 8) / 2,

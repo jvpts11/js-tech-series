@@ -17,7 +17,7 @@ import java.util.Set;
  */
 public record MotherboardSpec(FormFactor formFactor,
                               HardwareEra era,
-                              CpuSocket socket,
+                              CpuSocketId socket,
                               int cpuSlots,
                               Set<RamGeneration> acceptedRam,
                               int ramSlots,

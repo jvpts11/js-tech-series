@@ -21,9 +21,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
  */
 final class ProcessesTerminalTab extends AbstractTerminalTab {
 
-    // The terminal draws its own header bar over cy..cy+17, so the tab's content starts below it.
+    // The status bar runs over cy..cy+14, so this heading's own content starts below it.
     private static final int SUBHEAD_Y = 22;
-    private static final int TOOLBAR_Y = 20;
+    private static final int TOOLBAR_Y = 18;
     private static final int BTN_H = 14;
     private static final int LIST_Y = 40;
     private static final int ROW_H = 20;
@@ -40,7 +40,7 @@ final class ProcessesTerminalTab extends AbstractTerminalTab {
     @Override
     public void renderTabBg(final GuiGraphics g, final int x, final int y,
                             final int cx, final int cy, final int cw,
-                            final int mouseX, final int mouseY) {
+                            final int mouseX, final int mouseY, final float partialTick) {
         lastCx = cx;
         lastCy = cy;
         lastCw = cw;

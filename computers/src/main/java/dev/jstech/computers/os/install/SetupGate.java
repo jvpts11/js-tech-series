@@ -94,7 +94,8 @@ public final class SetupGate {
         }
         final int rank = OsRegistry.osVersionRank(os.id());
         if (rank != 0 && rank < spec.minOsRank()) {
-            return Optional.of(name + " needs " + systemOfRank(spec.minOsRank()) + " or newer. This computer runs "
+            return Optional.of(name + " needs " + OsRegistry.systemOfRank(spec.minOsRank())
+                    + " or newer. This computer runs "
                     + os.displayName() + ".");
         }
         final Optional<String> scope = hostScope(host, spec);
@@ -155,16 +156,6 @@ public final class SetupGate {
             out.append(platform.label());
         }
         return out.isEmpty() ? "nothing" : out.toString();
-    }
-
-    /** The name of the oldest system of that rank, which is what "or newer" is measured from. */
-    private static String systemOfRank(final int rank) {
-        for (final OsDef os : OsRegistry.oses()) {
-            if (OsRegistry.osVersionRank(os.id()) == rank) {
-                return os.displayName();
-            }
-        }
-        return "a newer system";
     }
 
     /** An era's name as a word: "Legacy", not "LEGACY". */

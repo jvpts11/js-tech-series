@@ -10,6 +10,9 @@ package dev.jstech.computers.datagen;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.os.OsBootstrap;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.ProgramSpec;
 import net.minecraft.data.PackOutput;
 import net.neoforged.neoforge.common.data.LanguageProvider;
 
@@ -52,8 +55,8 @@ public class JscLanguageProvider extends LanguageProvider {
          * Program display names come from the single program registry, so a new program's name is written
          * once (on its ProgramSpec) and datagen emits its translation key here automatically.
          */
-        for (final dev.jstech.computers.os.ProgramSpec program
-                : dev.jstech.computers.os.OsBootstrap.builtinPrograms()) {
+        for (final ProgramSpec program
+                : OsBootstrap.builtinPrograms()) {
             add(program.titleKey(), program.displayName());
             /*
              * Every program says what it does, in one line, wherever it is shown: on its install
@@ -93,8 +96,8 @@ public class JscLanguageProvider extends LanguageProvider {
          * Operating-system display names (the ids stay technical; players see these).
          * OS display names, like the programs, come from the single OS registry.
          */
-        for (final dev.jstech.computers.os.OsDef os
-                : dev.jstech.computers.os.OsBootstrap.builtinOses()) {
+        for (final OsDef os
+                : OsBootstrap.builtinOses()) {
             add(os.titleKey(), os.displayName());
         }
         add(ComputingModule.SUPERCOMPUTER_NODE.get(), "Supercomputer Node");
@@ -174,10 +177,30 @@ public class JscLanguageProvider extends LanguageProvider {
         add("jsc.gui.storage.disk", "Disk %s");
         // Expansion card bus-family mismatch: shown when a card cannot enter a slot due to incompatible bus.
         add("jsc.gui.computer.slot.bus_mismatch", "Wrong slot type: this card requires a %s slot");
+        addOperationFailures();
         for (final ComputingModule.DiskEntry disk : ComputingModule.DISKS) {
             add(disk.item().get(), disk.displayName());
         }
         addHardwareCatalog();
+    }
+
+    /**
+     * Why an Operation did not do what it was asked, as its row in the log reads it out.
+     *
+     * <p>Written as sentences a player can act on rather than as names of conditions: what the network was short
+     * of, or what it was waiting for, so that the next thing to try is obvious from the line itself.
+     */
+    private void addOperationFailures() {
+        add("jsc.operation.failure.not_enough_stored", "the network was not holding enough %s");
+        add("jsc.operation.failure.no_room", "the network had no room left for the %s");
+        add("jsc.operation.failure.held_by_another", "another Operation was holding the %s it needed");
+        add("jsc.operation.failure.not_enough_ingredients", "the ingredients for the %s ran out");
+        add("jsc.operation.failure.machine_stopped", "the machine making the %s stopped taking anything");
+        add("jsc.operation.failure.no_way_to_make_it", "nothing on the network knows how to make %s");
+        add("jsc.operation.failure.no_crafting_computer", "no crafting computer was free to make the %s");
+        add("jsc.operation.failure.no_stages", "the pattern has no stages in it");
+        add("jsc.operation.failure.stage_would_not_start", "stage %s of %s could not be started");
+        add("jsc.operation.failure.stage_failed", "stage %s of %s failed");
     }
 
     /**
@@ -213,6 +236,17 @@ public class JscLanguageProvider extends LanguageProvider {
         add("program.jsc.pattern_studio.desc",
                 "Author bench, machine and multi-stage recipes, then burn them onto media at a linked encoder.");
         add("program.jsc.minesweeper.desc", "Minesweeper.");
+        add("program.jsc.solitaire.desc", "Klondike solitaire, drawing one card at a time.");
+        add("program.jsc.snake.desc", "Snake. Eat, grow, and do not run into yourself.");
+        add("program.jsc.ark.desc", "Pack many files into one that weighs less, and take them back out.");
+        add("program.jsc.paint.desc", "Draw a picture, and hang it on the desktop.");
+        add("program.jsc.exceed.desc", "A sheet of cells that can ask the network what it is holding.");
+        add("program.jsc.messenger_service.desc",
+                "Keeps the network's conversations. It grows on the disk as it keeps them, and in memory "
+                        + "as more people have the messenger open.");
+        add("program.jsc.messenger.desc", "Talk to whoever else is on this network.");
+        add("program.jsc.knothub.desc", "Keeps the source this network is still working on, revision by revision.");
+        add("program.jsc.knot.desc", "Push a file to the network's repository, and see who changed what.");
         add("program.jsc.storage_insights.desc",
                 "Where the network's storage went: biggest types, what is running low, how full each server is.");
         add("program.jsc.craft_planner.desc",
@@ -233,10 +267,17 @@ public class JscLanguageProvider extends LanguageProvider {
         add("program.jsc.mirror.desc",
                 "The network's package repository. Every package manager installs from it.");
         add("program.jsc.screenfetch.desc", "Prints the system's identity, with its distribution's logo.");
-        add("program.jsc.cannonc.desc",
-                "Compiles a Cannon program into the assembly the runtime reads.");
-        add("program.jsc.cannonrt.desc",
-                "Runs compiled Cannon programs, and brings the 'cannon' command to the prompt.");
+        add("program.jsc.sgsc.desc",
+                "Compiles a Σ# program into the assembly the runtime reads.");
+        add("program.jsc.scc.desc",
+                "Compiles a Σ program into the assembly a machine runs. Small enough for the oldest of them, "
+                        + "and the whole toolchain there, since nothing else has to be installed to run what "
+                        + "it writes.");
+        add("program.jsc.sigma.desc",
+                "Runs compiled Σ# programs, and brings the 'sigma' command to the prompt.");
+        add("program.jsc.interactor.desc",
+                "The operating space a network system draws: its store, its work and its prompt, on the "
+                        + "whole screen. Take it off and the machine is a prompt and nothing else.");
         add("program.jsc.kde_plasma.desc", "The KDE Plasma desktop environment.");
         add("program.jsc.gnome.desc", "The GNOME desktop environment.");
         add("program.jsc.cinnamon.desc", "The Cinnamon desktop environment.");

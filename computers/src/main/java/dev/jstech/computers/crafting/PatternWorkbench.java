@@ -9,9 +9,14 @@ package dev.jstech.computers.crafting;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.storage.ChemicalBridges;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.id.IStableId;
+import dev.jstech.core.persistence.SavedValue;
+import dev.jstech.core.util.Utf8Text;
+import dev.jstech.core.id.StableIds;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -31,7 +36,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -100,9 +107,35 @@ public final class PatternWorkbench {
         }
     }
 
-    /** Which editor a draft belongs to; also the kind of file it opens or writes. */
-    public enum Kind {
-        BENCH, MACHINE, PIPELINE
+    /**
+     * Which editor a draft belongs to; also the kind of file it opens or writes. The Pattern Studio's tabs are
+     * numbered by these ids.
+     */
+    public enum Kind implements IStableId {
+        BENCH(0, "Bench"),
+        MACHINE(1, "Machine"),
+        PIPELINE(2, "Pipeline");
+
+        private static final StableIds<Kind> IDS = StableIds.of(Kind.class);
+
+        private final int id;
+        /** What the workbench's saved keys call the kind's draft. */
+        private final String saveKey;
+
+        Kind(final int id, final String saveKey) {
+            this.id = id;
+            this.saveKey = saveKey;
+        }
+
+        @Override
+        public int id() {
+            return id;
+        }
+
+        /** The kind that declares {@code id}; an id no kind declares reads as {@link #BENCH}. */
+        public static Kind byId(final int id) {
+            return IDS.byId(id, BENCH);
+        }
     }
 
     // bench draft
@@ -127,8 +160,8 @@ public final class PatternWorkbench {
     private String pipelineNote = "";
 
     // provenance: the file the current draft of each kind was opened from, so a burn writes it back
-    private final String[] openedFile = {"", "", ""};
-    private final String[] openedSource = {"", "", ""};
+    private final Map<Kind, String> openedFile = new EnumMap<>(Kind.class);
+    private final Map<Kind, String> openedSource = new EnumMap<>(Kind.class);
 
     public PatternWorkbench() {
         for (int i = 0; i < CraftingPattern.GRID_SIZE; i++) {
@@ -190,8 +223,8 @@ public final class PatternWorkbench {
     }
 
     public void setBenchName(final String name, final String note) {
-        benchName = clamp(name, CraftingPattern.MAX_NAME);
-        benchNote = clamp(note, CraftingPattern.MAX_NOTE);
+        benchName = Utf8Text.field(name, CraftingPattern.MAX_NAME);
+        benchNote = Utf8Text.field(note, CraftingPattern.MAX_NOTE);
     }
 
     public void clearBench() {
@@ -316,8 +349,8 @@ public final class PatternWorkbench {
     }
 
     public void setProcName(final String name, final String note) {
-        procName = clamp(name, CraftingPattern.MAX_NAME);
-        procNote = clamp(note, CraftingPattern.MAX_NOTE);
+        procName = Utf8Text.field(name, CraftingPattern.MAX_NAME);
+        procNote = Utf8Text.field(note, CraftingPattern.MAX_NOTE);
     }
 
     /**
@@ -430,8 +463,8 @@ public final class PatternWorkbench {
     }
 
     public void setPipelineName(final String name, final String note) {
-        pipelineName = clamp(name, CraftingPattern.MAX_NAME);
-        pipelineNote = clamp(note, CraftingPattern.MAX_NOTE);
+        pipelineName = Utf8Text.field(name, CraftingPattern.MAX_NAME);
+        pipelineNote = Utf8Text.field(note, CraftingPattern.MAX_NOTE);
     }
 
     /** Appends the bench draft as a stage and clears the bench so the next stage starts fresh. */
@@ -504,17 +537,17 @@ public final class PatternWorkbench {
 
     /** The file the {@code kind} draft was opened from ({@code ""} when it was started fresh). */
     public String openedFile(final Kind kind) {
-        return openedFile[kind.ordinal()];
+        return openedFile.getOrDefault(kind, "");
     }
 
     /** Where that file lives: a drive key such as {@code media:<pos>}, {@code disk} for the system disk, or {@code ""}. */
     public String openedSource(final Kind kind) {
-        return openedSource[kind.ordinal()];
+        return openedSource.getOrDefault(kind, "");
     }
 
     public void remember(final Kind kind, final String source, final String file) {
-        openedSource[kind.ordinal()] = source == null ? "" : source;
-        openedFile[kind.ordinal()] = file == null ? "" : file;
+        openedSource.put(kind, source == null ? "" : source);
+        openedFile.put(kind, file == null ? "" : file);
     }
 
     public void forget(final Kind kind) {
@@ -578,8 +611,8 @@ public final class PatternWorkbench {
         MultiStagePattern.CODEC.encodeStart(ops, multiStagePattern()).result()
                 .ifPresent(stagesTag -> tag.put("Stages", stagesTag));
         for (final Kind kind : Kind.values()) {
-            tag.putString("Opened" + kind.name(), openedFile[kind.ordinal()]);
-            tag.putString("Source" + kind.name(), openedSource[kind.ordinal()]);
+            tag.putString("Opened" + kind.saveKey, openedFile(kind));
+            tag.putString("Source" + kind.saveKey, openedSource(kind));
         }
     }
 
@@ -618,8 +651,8 @@ public final class PatternWorkbench {
             });
         }
         for (final Kind kind : Kind.values()) {
-            openedFile[kind.ordinal()] = tag.getString("Opened" + kind.name());
-            openedSource[kind.ordinal()] = tag.getString("Source" + kind.name());
+            openedFile.put(kind, tag.getString("Opened" + kind.saveKey));
+            openedSource.put(kind, tag.getString("Source" + kind.saveKey));
         }
     }
 
@@ -650,13 +683,10 @@ public final class PatternWorkbench {
             final CompoundTag row = list.getCompound(i);
             final int index = row.getInt("Index");
             if (index >= 0 && index < cells.length && row.contains("Cell")) {
-                cells[index] = DataCell.CODEC.parse(ops, row.get("Cell")).result().orElse(null);
+                cells[index] = SavedValue.readOr(DataCell.CODEC.parse(ops, row.get("Cell")),
+                        JsComputers.LOGGER, "a slot of a saved pattern", null);
             }
         }
     }
 
-    private static String clamp(final String s, final int max) {
-        final String value = s == null ? "" : s.trim();
-        return value.length() <= max ? value : value.substring(0, max);
-    }
 }

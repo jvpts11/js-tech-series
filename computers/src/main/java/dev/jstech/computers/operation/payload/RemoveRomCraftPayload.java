@@ -43,12 +43,22 @@ public record RemoveRomCraftPayload(
                         BlockPos.STREAM_CODEC, Wire::pos,
                         ByteBufCodecs.VAR_INT.apply(ByteBufCodecs.list(MAX_INDICES)), Wire::indices,
                         Wire::new);
+
+        /* Copied on the way in, so what arrives cannot change under whoever is acting on it. */
+        Wire {
+            indices = List.copyOf(indices);
+        }
     }
 
     public static final StreamCodec<RegistryFriendlyByteBuf, RemoveRomCraftPayload> STREAM_CODEC =
             Wire.STREAM_CODEC.map(
                     w -> new RemoveRomCraftPayload(w.pos(), w.indices()),
                     p -> new Wire(p.hostPos(), p.romIndices()));
+
+    /* Copied on the way in, so what arrives from a client cannot change under whoever is acting on it. */
+    public RemoveRomCraftPayload {
+        romIndices = List.copyOf(romIndices);
+    }
 
     @Override
     public CustomPacketPayload.Type<RemoveRomCraftPayload> type() {

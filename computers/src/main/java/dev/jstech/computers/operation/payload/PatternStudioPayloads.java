@@ -12,6 +12,8 @@ import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
+import dev.jstech.computers.client.ComputerTerminalScreen;
+import dev.jstech.computers.client.os.PatternStudioApp;
 import dev.jstech.computers.crafting.AnyTagResolver;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.MachineCategory;
@@ -21,6 +23,11 @@ import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.crafting.RecipeBook;
 import dev.jstech.computers.crafting.RecipeMachines;
+import dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk;
+import dev.jstech.computers.operation.payload.crafting.CraftManagerPayloads;
+import dev.jstech.computers.operation.payload.files.FileAccess;
+import dev.jstech.computers.operation.payload.network.NetworkLookup;
+import dev.jstech.computers.operation.payload.terminal.TerminalHosts;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.VolumeLabel;
@@ -35,12 +42,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,8 +82,15 @@ public final class PatternStudioPayloads {
         ComputerAccess.accept(registrar, PatternStudioEditPayload.TYPE, PatternStudioEditPayload.STREAM_CODEC,
                 ComputerAccess.machine(PatternStudioEditPayload::host), PatternStudioPayloads::handleEdit);
         registrar.playToClient(PatternStudioStatePayload.TYPE, PatternStudioStatePayload.STREAM_CODEC,
-                (payload, context) -> context.enqueueWork(() ->
-                        dev.jstech.computers.client.os.PatternStudioApp.accept(payload)));
+                ClientPayloadHandlers.onMainThread((payload, player) -> {
+                    /*
+                     * The Patterns heading of a network machine's space does the Studio's work without the
+                     * Studio's window, so it asks the same question and takes the same answer.
+                     */
+                    if (!ComputerTerminalScreen.acceptPatternStudio(payload)) {
+                        PatternStudioApp.accept(payload);
+                    }
+                }));
     }
 
     // resolution
@@ -85,131 +99,118 @@ public final class PatternStudioPayloads {
     @Nullable
     public static IOsHost studioHost(final ServerPlayer player, final ServerLevel level, final BlockPos hostPos,
                                     final BlockPos monitorPos) {
-        final var terminal = ComputingPayloads.niHost(player, level, hostPos, monitorPos);
+        final var terminal = TerminalHosts.niHost(player, level, hostPos, monitorPos);
         return terminal instanceof IOsHost host && host.studio() != null ? host : null;
     }
 
-    private static void handleRequest(final RequestPatternStudioPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player) || !(player.level() instanceof ServerLevel level)) {
-                return;
-            }
-            final IOsHost host = studioHost(player, level, payload.host(), payload.monitorPos());
-            if (host == null) {
-                return;
-            }
-            host.studio().refreshPreview(level);
-            PacketDistributor.sendToPlayer(player, buildState(level, host, "", -1));
-        });
+    private static void handleRequest(final RequestPatternStudioPayload payload, final ServerPlayer player,
+                                      final ServerLevel level) {
+        final IOsHost host = studioHost(player, level, payload.host(), payload.monitorPos());
+        if (host == null) {
+            return;
+        }
+        host.studio().refreshPreview(level);
+        PacketDistributor.sendToPlayer(player, buildState(level, host, "", -1));
     }
 
     // edits
 
-    private static void handleEdit(final PatternStudioEditPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player) || !(player.level() instanceof ServerLevel level)) {
+    private static void handleEdit(final PatternStudioEditPayload payload, final ServerPlayer player,
+                                   final ServerLevel level) {
+        final IOsHost host = studioHost(player, level, payload.host(), payload.monitorPos());
+        if (host == null) {
+            return;
+        }
+        final PatternWorkbench studio = host.studio();
+        String status = "";
+        int tab = -1;
+        /*
+         * A ghost cell takes what the player carries when the click came with nothing named: a recipe
+         * viewer's drop names the item itself, a click on a cell names the cursor.
+         */
+        final ItemStack carried = player.containerMenu.getCarried();
+        final ItemStack item = !payload.item().isEmpty() ? payload.item() : carried;
+        switch (payload.action()) {
+            case PatternStudioEditPayload.BENCH_SET_CELL -> {
+                studio.setGhost(payload.index(), item);
+                studio.forget(PatternWorkbench.Kind.BENCH);
+            }
+            case PatternStudioEditPayload.BENCH_CLEAR_CELL -> studio.setGhost(payload.index(), ItemStack.EMPTY);
+            case PatternStudioEditPayload.BENCH_SET_TAG -> studio.setAnyTag(payload.index(), payload.text());
+            case PatternStudioEditPayload.BENCH_SET_NAME -> studio.setBenchName(payload.text(), payload.text2());
+            case PatternStudioEditPayload.BENCH_CLEAR -> studio.clearBench();
+            case PatternStudioEditPayload.PROC_SET_INPUT -> {
+                studio.setProcCell(false, payload.index(), PatternWorkbench.DataCell.fromStack(item));
+                studio.forget(PatternWorkbench.Kind.MACHINE);
+            }
+            case PatternStudioEditPayload.PROC_SET_OUTPUT -> {
+                studio.setProcCell(true, payload.index(), PatternWorkbench.DataCell.fromStack(item));
+                studio.forget(PatternWorkbench.Kind.MACHINE);
+            }
+            case PatternStudioEditPayload.PROC_CLEAR_INPUT -> studio.setProcCell(false, payload.index(), null);
+            case PatternStudioEditPayload.PROC_CLEAR_OUTPUT -> studio.setProcCell(true, payload.index(), null);
+            case PatternStudioEditPayload.PROC_SET_INPUT_AMOUNT ->
+                    studio.setProcAmount(false, payload.index(), payload.value());
+            case PatternStudioEditPayload.PROC_SET_OUTPUT_AMOUNT ->
+                    studio.setProcAmount(true, payload.index(), payload.value());
+            case PatternStudioEditPayload.PROC_SET_CHANCE -> studio.setOutputChance(payload.index(), (int) payload.value());
+            case PatternStudioEditPayload.PROC_SET_MACHINE -> studio.setMachineType(payload.text());
+            case PatternStudioEditPayload.PROC_SET_TIMEOUT -> studio.setProcTimeout((int) payload.value());
+            case PatternStudioEditPayload.PROC_SET_NAME -> studio.setProcName(payload.text(), payload.text2());
+            case PatternStudioEditPayload.PROC_CLEAR -> studio.clearMachine();
+            case PatternStudioEditPayload.PIPE_ADD_BENCH -> {
+                studio.refreshPreview(level);
+                status = studio.addBenchStage() ? "Bench stage added" : "The bench draft is not a recipe";
+                tab = 2;
+            }
+            case PatternStudioEditPayload.PIPE_ADD_PROC -> {
+                status = studio.addProcessingStage() ? "Machine stage added"
+                        : "The machine draft needs a machine, an input and an output";
+                tab = 2;
+            }
+            case PatternStudioEditPayload.PIPE_ADD_FILE -> {
+                status = addStageFromFile(level, host, payload.text(), payload.text2());
+                tab = 2;
+            }
+            case PatternStudioEditPayload.PIPE_REMOVE -> studio.removeStage(payload.index());
+            case PatternStudioEditPayload.PIPE_SET_NAME -> studio.setPipelineName(payload.text(), payload.text2());
+            case PatternStudioEditPayload.PIPE_CLEAR -> studio.clearPipeline();
+            case PatternStudioEditPayload.OPEN_FILE -> {
+                final int[] opened = {-1};
+                status = openFile(level, host, payload.text(), payload.text2(), opened);
+                tab = opened[0];
+            }
+            case PatternStudioEditPayload.SAVE_TO_DISK -> status = saveToDisk(level, host, PatternWorkbench.Kind.byId(payload.index()));
+            case PatternStudioEditPayload.LOAD_INTO_ROM -> status = loadIntoRom(level, host, PatternWorkbench.Kind.byId(payload.index()));
+            case PatternStudioEditPayload.BURN -> status = burn(level, host, PatternWorkbench.Kind.byId(payload.index()));
+            case PatternStudioEditPayload.ENCODER_CANCEL -> {
+                final PatternEncoderBlockEntity enc = encoderOf(level, host);
+                if (enc != null) {
+                    enc.cancelAll();
+                    status = "Encoder queue cleared";
+                }
+            }
+            case PatternStudioEditPayload.ENCODER_EJECT -> {
+                final PatternEncoderBlockEntity enc = encoderOf(level, host);
+                if (enc == null) {
+                    status = "No encoder linked";
+                } else if (enc.locked()) {
+                    status = "The encoder is writing";
+                } else {
+                    final ItemStack out = enc.ejectMedia();
+                    if (!out.isEmpty() && !player.addItem(out)) {
+                        player.drop(out, false);
+                    }
+                    status = out.isEmpty() ? "The bay is empty" : "Ejected";
+                }
+            }
+            default -> {
                 return;
             }
-            final IOsHost host = studioHost(player, level, payload.host(), payload.monitorPos());
-            if (host == null) {
-                return;
-            }
-            final PatternWorkbench studio = host.studio();
-            String status = "";
-            int tab = -1;
-            /*
-             * A ghost cell takes what the player carries when the click came with nothing named: a recipe
-             * viewer's drop names the item itself, a click on a cell names the cursor.
-             */
-            final ItemStack carried = player.containerMenu.getCarried();
-            final ItemStack item = !payload.item().isEmpty() ? payload.item() : carried;
-            switch (payload.action()) {
-                case PatternStudioEditPayload.BENCH_SET_CELL -> {
-                    studio.setGhost(payload.index(), item);
-                    studio.forget(PatternWorkbench.Kind.BENCH);
-                }
-                case PatternStudioEditPayload.BENCH_CLEAR_CELL -> studio.setGhost(payload.index(), ItemStack.EMPTY);
-                case PatternStudioEditPayload.BENCH_SET_TAG -> studio.setAnyTag(payload.index(), payload.text());
-                case PatternStudioEditPayload.BENCH_SET_NAME -> studio.setBenchName(payload.text(), payload.text2());
-                case PatternStudioEditPayload.BENCH_CLEAR -> studio.clearBench();
-                case PatternStudioEditPayload.PROC_SET_INPUT -> {
-                    studio.setProcCell(false, payload.index(), PatternWorkbench.DataCell.fromStack(item));
-                    studio.forget(PatternWorkbench.Kind.MACHINE);
-                }
-                case PatternStudioEditPayload.PROC_SET_OUTPUT -> {
-                    studio.setProcCell(true, payload.index(), PatternWorkbench.DataCell.fromStack(item));
-                    studio.forget(PatternWorkbench.Kind.MACHINE);
-                }
-                case PatternStudioEditPayload.PROC_CLEAR_INPUT -> studio.setProcCell(false, payload.index(), null);
-                case PatternStudioEditPayload.PROC_CLEAR_OUTPUT -> studio.setProcCell(true, payload.index(), null);
-                case PatternStudioEditPayload.PROC_SET_INPUT_AMOUNT ->
-                        studio.setProcAmount(false, payload.index(), payload.value());
-                case PatternStudioEditPayload.PROC_SET_OUTPUT_AMOUNT ->
-                        studio.setProcAmount(true, payload.index(), payload.value());
-                case PatternStudioEditPayload.PROC_SET_CHANCE -> studio.setOutputChance(payload.index(), (int) payload.value());
-                case PatternStudioEditPayload.PROC_SET_MACHINE -> studio.setMachineType(payload.text());
-                case PatternStudioEditPayload.PROC_SET_TIMEOUT -> studio.setProcTimeout((int) payload.value());
-                case PatternStudioEditPayload.PROC_SET_NAME -> studio.setProcName(payload.text(), payload.text2());
-                case PatternStudioEditPayload.PROC_CLEAR -> studio.clearMachine();
-                case PatternStudioEditPayload.PIPE_ADD_BENCH -> {
-                    studio.refreshPreview(level);
-                    status = studio.addBenchStage() ? "Bench stage added" : "The bench draft is not a recipe";
-                    tab = 2;
-                }
-                case PatternStudioEditPayload.PIPE_ADD_PROC -> {
-                    status = studio.addProcessingStage() ? "Machine stage added"
-                            : "The machine draft needs a machine, an input and an output";
-                    tab = 2;
-                }
-                case PatternStudioEditPayload.PIPE_ADD_FILE -> {
-                    status = addStageFromFile(level, host, payload.text(), payload.text2());
-                    tab = 2;
-                }
-                case PatternStudioEditPayload.PIPE_REMOVE -> studio.removeStage(payload.index());
-                case PatternStudioEditPayload.PIPE_SET_NAME -> studio.setPipelineName(payload.text(), payload.text2());
-                case PatternStudioEditPayload.PIPE_CLEAR -> studio.clearPipeline();
-                case PatternStudioEditPayload.OPEN_FILE -> {
-                    final int[] opened = {-1};
-                    status = openFile(level, host, payload.text(), payload.text2(), opened);
-                    tab = opened[0];
-                }
-                case PatternStudioEditPayload.SAVE_TO_DISK -> status = saveToDisk(level, host, kindOf(payload.index()));
-                case PatternStudioEditPayload.LOAD_INTO_ROM -> status = loadIntoRom(level, host, kindOf(payload.index()));
-                case PatternStudioEditPayload.BURN -> status = burn(level, host, kindOf(payload.index()));
-                case PatternStudioEditPayload.ENCODER_CANCEL -> {
-                    final PatternEncoderBlockEntity enc = encoderOf(level, host);
-                    if (enc != null) {
-                        enc.cancelAll();
-                        status = "Encoder queue cleared";
-                    }
-                }
-                case PatternStudioEditPayload.ENCODER_EJECT -> {
-                    final PatternEncoderBlockEntity enc = encoderOf(level, host);
-                    if (enc == null) {
-                        status = "No encoder linked";
-                    } else if (enc.locked()) {
-                        status = "The encoder is writing";
-                    } else {
-                        final ItemStack out = enc.ejectMedia();
-                        if (!out.isEmpty() && !player.addItem(out)) {
-                            player.drop(out, false);
-                        }
-                        status = out.isEmpty() ? "The bay is empty" : "Ejected";
-                    }
-                }
-                default -> {
-                    return;
-                }
-            }
-            studio.refreshPreview(level);
-            host.setChanged();
-            PacketDistributor.sendToPlayer(player, buildState(level, host, status, tab));
-        });
-    }
-
-    private static PatternWorkbench.Kind kindOf(final int index) {
-        final PatternWorkbench.Kind[] kinds = PatternWorkbench.Kind.values();
-        return index >= 0 && index < kinds.length ? kinds[index] : PatternWorkbench.Kind.BENCH;
+        }
+        studio.refreshPreview(level);
+        host.setChanged();
+        PacketDistributor.sendToPlayer(player, buildState(level, host, status, tab));
     }
 
     /** Fills the bench from a recipe viewer's transfer: the nine cells, tags cleared. */
@@ -224,7 +225,7 @@ public final class PatternStudioPayloads {
         final ResourceLocation id = recipeId == null || recipeId.isEmpty() ? null : ResourceLocation.tryParse(recipeId);
         if (id != null) {
             final var holder = level.getRecipeManager().byKey(id);
-            if (holder.isPresent() && holder.get().value() instanceof net.minecraft.world.item.crafting.CraftingRecipe recipe) {
+            if (holder.isPresent() && holder.get().value() instanceof CraftingRecipe recipe) {
                 tags = RecipeBook.benchTags(recipe);
             }
         }
@@ -258,12 +259,12 @@ public final class PatternStudioPayloads {
         if (DISK_KEY.equals(key)) {
             return host.systemDisk();
         }
-        return key.startsWith("media:") ? ComputingPayloads.mediaStackFor(level, host, key) : ItemStack.EMPTY;
+        return key.startsWith("media:") ? FileAccess.mediaStackFor(level, host, key) : ItemStack.EMPTY;
     }
 
     /** The path a craft file name has on {@code key}: under the crafts folder on a hierarchical system disk. */
     private static String pathOn(final IOsHost host, final String key, final String fileName) {
-        if (DISK_KEY.equals(key) && ComputingPayloads.filesystemKindOf(host) == FilesystemKind.HIERARCHICAL) {
+        if (DISK_KEY.equals(key) && FileAccess.filesystemKindOf(host) == FilesystemKind.HIERARCHICAL) {
             return CRAFTS_DIR + "/" + fileName;
         }
         return fileName;
@@ -340,7 +341,7 @@ public final class PatternStudioPayloads {
     private static String fileBaseFor(final PatternWorkbench studio, final PatternWorkbench.Kind kind) {
         final String name = studio.draftName(kind);
         if (!name.isBlank()) {
-            return ComputingPayloads.sanitizeFileBase(name);
+            return CraftFilesOnDisk.sanitizeFileBase(name);
         }
         return switch (kind) {
             case BENCH -> "pattern";
@@ -359,7 +360,7 @@ public final class PatternStudioPayloads {
             return "The draft is not complete";
         }
         final ItemStack disk = host.systemDisk();
-        final FilesystemKind fs = ComputingPayloads.filesystemKindOf(host);
+        final FilesystemKind fs = FileAccess.filesystemKindOf(host);
         if (disk.isEmpty() || fs == FilesystemKind.NONE) {
             return "No system disk to save to";
         }
@@ -422,7 +423,7 @@ public final class PatternStudioPayloads {
         if (!loaded) {
             return "Not loaded: already in the ROM, or the ROM is full";
         }
-        ComputingPayloads.reconcileCraftsFolder(cc, level);
+        CraftFilesOnDisk.reconcileCraftsFolder(cc, level);
         return "Loaded into the ROM: " + name;
     }
 
@@ -491,7 +492,7 @@ public final class PatternStudioPayloads {
             computers.add(cc);
         }
         final MainframeBlockEntity mf = host.networkUuid() == null ? null
-                : ComputingPayloads.resolveMainframe(level, host.networkUuid());
+                : NetworkLookup.resolveMainframe(level, host.networkUuid());
         if (mf != null) {
             for (final BlockPos pos : mf.craftingComputerPositions()) {
                 final BlockEntity be = level.getBlockEntity(pos);
@@ -516,7 +517,7 @@ public final class PatternStudioPayloads {
                                                        final String status, final int tabHint) {
         final PatternWorkbench studio = host.studio();
         final MainframeBlockEntity mf = host.networkUuid() == null ? null
-                : ComputingPayloads.resolveMainframe(level, host.networkUuid());
+                : NetworkLookup.resolveMainframe(level, host.networkUuid());
         final Map<StorageKey, Long> stock = mf == null ? Map.of() : mf.networkIndex().snapshot();
 
         // Bench: each cell with what an "any" cell would use right now, and how much of it the network holds.
@@ -588,11 +589,11 @@ public final class PatternStudioPayloads {
                 drives.add(new PatternStudioStatePayload.Drive("media:" + endpoint,
                         wire(drive + ": " + VolumeLabel.of(m, m.getHoverName().getString()),
                                 PatternStudioStatePayload.MAX_LABEL),
-                        fmt.writable(), ComputingPayloads.craftFileListFromMedia(m)));
+                        fmt.writable(), CraftManagerPayloads.craftFileListFromMedia(m)));
             }
         }
         final ItemStack disk = host.systemDisk();
-        final FilesystemKind fs = ComputingPayloads.filesystemKindOf(host);
+        final FilesystemKind fs = FileAccess.filesystemKindOf(host);
         if (!disk.isEmpty() && fs != FilesystemKind.NONE) {
             final List<String> files = new ArrayList<>();
             final String dir = fs == FilesystemKind.HIERARCHICAL ? CRAFTS_DIR : "";

@@ -3,11 +3,10 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Core.
  */
 package dev.jstech.core.energy;
 
-import dev.jstech.core.energy.internal.EnergyNetwork;
 
 /**
  * A node of an energy network: generator, consumer or storage.

@@ -63,6 +63,11 @@ public record IqlFileListPayload(List<String> files, String status, boolean ok)
                     (names, status, ok) -> new IqlFileListPayload(
                             names.stream().map(FileName::value).toList(), status, ok));
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public IqlFileListPayload {
+        files = List.copyOf(files);
+    }
+
     @Override
     public CustomPacketPayload.Type<IqlFileListPayload> type() {
         return TYPE;

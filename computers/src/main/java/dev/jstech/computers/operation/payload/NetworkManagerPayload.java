@@ -71,6 +71,11 @@ public record NetworkManagerPayload(BlockPos hostPos, String networkId, List<Net
                         ByteBufCodecs.VAR_INT, Statistics::peakConcurrent,
                         ByteBufCodecs.VAR_LONG, Statistics::movedLastHour,
                         Statistics::new);
+
+        /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+        public Statistics {
+            types = List.copyOf(types);
+        }
     }
 
     public static final CustomPacketPayload.Type<NetworkManagerPayload> TYPE =
@@ -84,6 +89,11 @@ public record NetworkManagerPayload(BlockPos hostPos, String networkId, List<Net
                     Hardware.STREAM_CODEC, NetworkManagerPayload::hardware,
                     Statistics.STREAM_CODEC, NetworkManagerPayload::statistics,
                     NetworkManagerPayload::new);
+
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public NetworkManagerPayload {
+        nodes = List.copyOf(nodes);
+    }
 
     @Override
     public CustomPacketPayload.Type<NetworkManagerPayload> type() {

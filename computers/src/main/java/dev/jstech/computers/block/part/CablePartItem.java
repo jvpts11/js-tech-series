@@ -9,8 +9,10 @@ package dev.jstech.computers.block.part;
 
 import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.core.network.DataTier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Item;
@@ -91,10 +93,10 @@ public class CablePartItem extends Item {
          */
         final boolean craftingPart = type == CablePartType.INPUT || type == CablePartType.RECEIVING;
         final boolean craftingCable =
-                cable.tier() == dev.jstech.core.network.DataTier.CRAFTING;
+                cable.tier() == DataTier.CRAFTING;
         if (craftingPart != craftingCable) {
             if (!level.isClientSide() && context.getPlayer() != null) {
-                context.getPlayer().displayClientMessage(net.minecraft.network.chat.Component.literal(
+                context.getPlayer().displayClientMessage(Component.literal(
                         craftingPart ? "Crafting buses mount on crafting cables"
                                 : "Storage buses mount on data cables"), true);
             }

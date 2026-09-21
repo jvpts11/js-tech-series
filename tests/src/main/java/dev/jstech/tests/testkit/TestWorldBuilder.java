@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Tech Series.
  */
 package dev.jstech.tests.testkit;
 
@@ -13,6 +13,7 @@ import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.NetworkStorage;
@@ -224,8 +225,13 @@ public final class TestWorldBuilder {
          * A machine on a real base has a disk with a system on it. Without one the computer powers on into
          * its firmware with nothing to boot, which is not what the base is meant to demonstrate.
          */
+        /*
+         * On a solid-state drive, because how long a system takes to come up is read off the disk it sits on:
+         * a machine of this generation running this system would have one, and a test that sits through the
+         * twenty seconds a mechanical disk costs is only testing the wait.
+         */
         hw.setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+                new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
         be.installOs(DESKTOP_OS);
         be.togglePower();
         return be;
@@ -250,8 +256,43 @@ public final class TestWorldBuilder {
                 new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()));
         hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
                 new ItemStack(ComputingModule.PSU_650G.get()));
+        // Solid state for the same reason as the personal computer above: the disk decides how long it takes.
         hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+                new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
+        be.installOs(DESKTOP_OS);
+        be.togglePower();
+        return be;
+    }
+
+    /**
+     * Places a Legacy-era Crafting Computer next to a cable, gives it hardware of its own generation, and
+     * powers it on.
+     *
+     * <p>A machine of an earlier era is not the same machine in another colour: its chassis takes only
+     * boards of its own generation, and what it wears follows from that. The period desktop chrome, the
+     * panel built out of raised studs and sunken wells rather than a flat band, is only reachable on one of
+     * these, so anything that wants to see it has to build one.
+     *
+     * <p>Legacy rather than Vintage because a Vintage machine has no PCIe slot for a Crafting Card, and
+     * every caller so far wants a machine that can also do something.
+     */
+    public CraftingComputerBlockEntity placeRunningLegacyCraftingComputer(final BlockPos relative) {
+        setBlock(relative, ComputingModule.LEGACY_CRAFTING_COMPUTER.get());
+        faceRearTowardCable(relative);
+        final CraftingComputerBlockEntity be = blockEntity(relative, CraftingComputerBlockEntity.class);
+        final ItemStackHandler hw = be.getHardware();
+        hw.setStackInSlot(CraftingComputerBlockEntity.MOTHERBOARD_SLOT,
+                new ItemStack(HardwareItems.MOTHERBOARD_ATX_LEGACY_LGA775.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.CPU_SLOT,
+                new ItemStack(HardwareItems.CPU_INTEGRA_DUO_E4300.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.RAM_SLOTS_START,
+                new ItemStack(HardwareItems.RAM_DDR2_2048.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.PCIE_SLOTS_START,
+                new ItemStack(ComputingModule.CRAFTING_CARD_T2.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
+                new ItemStack(HardwareItems.PSU_500B.get()));
+        hw.setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
+                new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
         be.installOs(DESKTOP_OS);
         be.togglePower();
         return be;
@@ -313,7 +354,7 @@ public final class TestWorldBuilder {
     public static void installDesktop(final CraftingComputerBlockEntity cc, final ResourceLocation os,
                                       final ResourceLocation... programs) {
         cc.getHardware().setStackInSlot(CraftingComputerBlockEntity.DISK_SLOTS_START,
-                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+                new ItemStack(ComputingModule.disk(StorageTier.SSD, DiskSize.GB_500)));
         if (!cc.installOs(os)) {
             throw new IllegalStateException("could not install " + os + " on the Crafting Computer");
         }

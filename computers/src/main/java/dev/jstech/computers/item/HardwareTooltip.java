@@ -7,8 +7,8 @@
  */
 package dev.jstech.computers.item;
 
+import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.core.tier.HardwareEra;
-import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
@@ -40,6 +40,15 @@ public final class HardwareTooltip {
     /** {@code text} in the colour of {@code era}'s screens: the one styling every era mention shares. */
     public static Component eraName(final HardwareEra era, final String text) {
         return Component.literal(text).withStyle(style -> style.withColor(era.screenColor()));
+    }
+
+    /**
+     * How a processor's architecture reads wherever it is shown: "x86-64, 64-bit". The word size comes from the
+     * architecture rather than from the era, since it is the architecture's own, and one place says it so a chip's
+     * tooltip and a machine's screens cannot come to word it differently.
+     */
+    public static String architecture(final CpuSpec cpu) {
+        return cpu.architecture().name() + ", " + cpu.architecture().bits() + "-bit";
     }
 
     /** An era name in title case: {@code LEGACY} reads as "Legacy". */

@@ -1,7 +1,18 @@
 # J's Industrial
 
-Energy, machines and the processing chains that feed the network. This is the industrial mod of the
-[J's Tech Series](../README.md); its id is `jsindustrial`.
+Energy, machines and the processing chains that feed the network and the other mods.
+This is the industrial mod of the [J's Tech Series](../README.md); its id is `jsindustrial`.
+
+## What is J's Industrial?
+
+This mod is the industrial part of the entire J's Tech Series. It is planned to be a mod inspired by mods like
+GregTech, HBM's Nuclear Tech Mod, ReactorCraft, NuclearCraft, IndustrialCraft and so on. You will be able to
+download J's Industrial alone and play it with other mods; when played with other mods of the J's Tech Series, it
+will be completely and fully integrated with everything from the series.
+
+The key difference of J's Industrial is to have immersive realism, but without being too punishing or
+overwhelming. J's Industrial will also not use a special energy system: all machines will work with Forge
+Energy.
 
 ## Everything here is still groundwork
 
@@ -9,7 +20,7 @@ This is the oldest and least worked on part of the series. What is in it was wri
 to find out how a machine, a recipe and an energy buffer should be built at all, and it has been left
 mostly alone since, while the computing side was taken forward.
 
-So take none of it as settled. The textures and the models are first drafts. The numbers were picked to
+So take none of what is here as settled. The textures and the models are first drafts. The numbers were picked to
 make something run, not balanced against anything. The four machines below are the ones it took to prove
 the shape of the thing, not a considered opening tier. Names, recipes and behaviour can all change, and
 when the tier ladder further down is actually built, most of what is here will be redone rather than
@@ -45,5 +56,5 @@ playable (see [docs/RELEASING.md](../docs/RELEASING.md)).
 - Minecraft 1.21.1 and NeoForge 21.1.248 or newer.
 - [J's Core](../core/README.md) at the same version (required).
 
-It does not need [J's Computers](../computers/README.md), and never will: the machines work on their
+It does not need [J's Computers](../computers/README.md), the machines work on their
 own, with any FE source, and the computing mod only adds ways to drive them.

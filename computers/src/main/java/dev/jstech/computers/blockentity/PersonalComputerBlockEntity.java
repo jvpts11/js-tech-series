@@ -18,6 +18,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -93,10 +94,10 @@ public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
      * The era this PC belongs to, read from its block. Defaults to Standard for any block that is not a
      * {@link PersonalComputerBlock} (which never happens in practice, but keeps the read total).
      */
-    private dev.jstech.core.tier.HardwareEra blockEra() {
+    private HardwareEra blockEra() {
         return getBlockState().getBlock() instanceof PersonalComputerBlock pc
                 ? pc.era()
-                : dev.jstech.core.tier.HardwareEra.STANDARD;
+                : HardwareEra.STANDARD;
     }
 
     @Override
@@ -109,7 +110,7 @@ public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
     }
 
     @Override
-    protected dev.jstech.core.tier.HardwareEra requiredBoardEra() {
+    protected HardwareEra requiredBoardEra() {
         /*
          * A PC accepts only a board of its own era, so a Legacy and a Standard ATX board are not
          * interchangeable: each installs in its matching machine alone.
@@ -138,7 +139,7 @@ public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
     }
 
     private boolean onServerNetwork() {
-        return networkUuid != null && level instanceof ServerLevel;
+        return networkUuid() != null && level instanceof ServerLevel;
     }
 
     @Override
@@ -146,7 +147,7 @@ public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
         if (!onServerNetwork()) {
             return 0;
         }
-        return NetworkSystem.get((ServerLevel) level).serversOf(networkUuid).size();
+        return NetworkSystem.get((ServerLevel) level).serversOf(networkUuid()).size();
     }
 
     // Local storage (PC-specific: lives on the installed disks)
@@ -211,7 +212,7 @@ public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
 
     @Override
     public int networkLinkState() {
-        return networkUuid != null ? 1 : 0; // a PC never conflicts; it only reads a network
+        return networkUuid() != null ? 1 : 0; // a PC never conflicts; it only reads a network
     }
 
     @Override
@@ -299,7 +300,7 @@ public class PersonalComputerBlockEntity extends AbstractComputerBlockEntity
             case DATA_CAPACITY -> (int) Math.min(Integer.MAX_VALUE, capacity());
             case DATA_RAM_BUFFER -> (int) Math.min(Integer.MAX_VALUE, ramBuffer());
             case DATA_AUTOSTART -> isAutoStart() ? 1 : 0;
-            case DATA_ON_NETWORK -> networkUuid != null ? 1 : 0;
+            case DATA_ON_NETWORK -> networkUuid() != null ? 1 : 0;
             case DATA_SERVER_COUNT -> networkServerCount();
             default -> 0;
         };

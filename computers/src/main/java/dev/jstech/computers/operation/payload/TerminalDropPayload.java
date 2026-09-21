@@ -41,6 +41,11 @@ public record TerminalDropPayload(BlockPos monitorPos, BlockPos hostPos, int sco
                     ByteBufCodecs.stringUtf8(48), TerminalDropPayload::serverKey,
                     TerminalDropPayload::new);
 
+    /* Copied on the way in, so what arrives from a client cannot change under whoever is acting on it. */
+    public TerminalDropPayload {
+        types = List.copyOf(types);
+    }
+
     @Override
     public CustomPacketPayload.Type<TerminalDropPayload> type() {
         return TYPE;

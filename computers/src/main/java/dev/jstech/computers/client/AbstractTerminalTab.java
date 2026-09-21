@@ -8,7 +8,11 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.menu.ComputerTerminalMenu;
+import dev.jstech.computers.operation.payload.NetworkItemEntry;
+import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -88,19 +92,19 @@ abstract class AbstractTerminalTab implements ITerminalTab {
     }
 
     protected void drawDataIcon(final GuiGraphics g,
-                                final dev.jstech.computers.storage.StorageKey key,
+                                final StorageKey key,
                                 final long count, final int x, final int y) {
         screen.drawDataIcon(g, key, count, x, y);
     }
 
     protected void moveRow(final GuiGraphics g, final int cx, final int my,
-                           final dev.jstech.computers.operation.payload.OperationRecord.MoveRow mv) {
+                           final OperationRecord.MoveRow mv) {
         screen.moveRow(g, cx, my, mv);
     }
 
     // Shared query helpers
 
-    protected java.util.List<dev.jstech.computers.operation.payload.NetworkItemEntry> visibleItems() {
+    protected List<NetworkItemEntry> visibleItems() {
         return screen.visibleItems();
     }
 
@@ -124,28 +128,28 @@ abstract class AbstractTerminalTab implements ITerminalTab {
 
     protected static String opTypeLabel(final byte type) {
         return switch (type) {
-            case dev.jstech.computers.operation.payload.OperationRecord.TYPE_INSERT -> "INSERT";
-            case dev.jstech.computers.operation.payload.OperationRecord.TYPE_DELETE -> "DELETE";
-            case dev.jstech.computers.operation.payload.OperationRecord.TYPE_MOVE -> "MOVE";
-            case dev.jstech.computers.operation.payload.OperationRecord.TYPE_ANALYZE -> "ANALYZE";
-            case dev.jstech.computers.operation.payload.OperationRecord.TYPE_REINDEX -> "REINDEX";
-            case dev.jstech.computers.operation.payload.OperationRecord.TYPE_VACUUM -> "VACUUM";
-            case dev.jstech.computers.operation.payload.OperationRecord.TYPE_DROP -> "DROP";
-            case dev.jstech.computers.operation.payload.OperationRecord.TYPE_CRAFT -> "CRAFT";
+            case OperationRecord.TYPE_INSERT -> "INSERT";
+            case OperationRecord.TYPE_DELETE -> "DELETE";
+            case OperationRecord.TYPE_MOVE -> "MOVE";
+            case OperationRecord.TYPE_ANALYZE -> "ANALYZE";
+            case OperationRecord.TYPE_REINDEX -> "REINDEX";
+            case OperationRecord.TYPE_VACUUM -> "VACUUM";
+            case OperationRecord.TYPE_DROP -> "DROP";
+            case OperationRecord.TYPE_CRAFT -> "CRAFT";
             default -> "SELECT";
         };
     }
 
     protected int opTypeColor(final byte type) {
         return switch (type) {
-            case dev.jstech.computers.operation.payload.OperationRecord.TYPE_INSERT,
-                    dev.jstech.computers.operation.payload.OperationRecord.TYPE_CRAFT -> AMBER();
-            case dev.jstech.computers.operation.payload.OperationRecord.TYPE_DELETE,
-                    dev.jstech.computers.operation.payload.OperationRecord.TYPE_DROP -> RED();
-            case dev.jstech.computers.operation.payload.OperationRecord.TYPE_MOVE -> GREEN();
-            case dev.jstech.computers.operation.payload.OperationRecord.TYPE_ANALYZE,
-                    dev.jstech.computers.operation.payload.OperationRecord.TYPE_REINDEX,
-                    dev.jstech.computers.operation.payload.OperationRecord.TYPE_VACUUM -> DIM();
+            case OperationRecord.TYPE_INSERT,
+                    OperationRecord.TYPE_CRAFT -> AMBER();
+            case OperationRecord.TYPE_DELETE,
+                    OperationRecord.TYPE_DROP -> RED();
+            case OperationRecord.TYPE_MOVE -> GREEN();
+            case OperationRecord.TYPE_ANALYZE,
+                    OperationRecord.TYPE_REINDEX,
+                    OperationRecord.TYPE_VACUUM -> DIM();
             default -> ACCENT2();
         };
     }

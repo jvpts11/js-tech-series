@@ -3,10 +3,11 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Core.
  */
 package dev.jstech.core.operation;
 
+import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
@@ -35,6 +36,15 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
 
     private static final int MAX_TERMINAL_HISTORY = 256;
 
+    /** An Operation that ran to the end and then answered with nothing at all, which is a mistake in its code. */
+    private static final String NO_RESULT = "jscore.operation.failure.no_result";
+
+    /** An Operation given up on because the machine running it stopped. */
+    private static final String CANCELLED = "jscore.operation.failure.cancelled";
+
+    /** An Operation that threw: the type of what was thrown, then what it said. */
+    private static final String CRASHED = "jscore.operation.failure.crashed";
+
     /*
      * Not final: the lane count follows the Mainframe's GPU count, which the player can change at runtime by
      * hot-swapping a GPU. It is resized in place (see setParallelQueues) rather than by rebuilding the dispatcher,
@@ -45,11 +55,20 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
     private final PriorityQueue<PendingOp> pending = new PriorityQueue<>(ORDER);
     private final ConcurrentLinkedQueue<Runnable> mainThreadActions = new ConcurrentLinkedQueue<>();
     private final Map<UUID, OperationStatus> statuses = new ConcurrentHashMap<>();
+    private final Map<UUID, OperationFailure> failures = new ConcurrentHashMap<>();
+    /*
+     * The one thread allowed to queue, promote, cancel and settle. The queue of waiting Operations, the running
+     * count and the settle order are plain objects on purpose, because they are touched once a tick and a lock
+     * around them would be paid for by every Operation; what keeps them safe is that only this thread reaches
+     * them. That was written down nowhere before, so an Operation queued from anywhere else silently corrupted
+     * the queue instead of saying so.
+     */
+    private final Thread owner;
     /*
      * Settle order, so the status map keeps only the most recent terminal entries: without this it would
      * grow one entry per Operation forever on a long-lived dispatcher. Touched on the main thread only.
      */
-    private final java.util.ArrayDeque<UUID> terminalOrder = new java.util.ArrayDeque<>();
+    private final ArrayDeque<UUID> terminalOrder = new ArrayDeque<>();
     private final Set<CompletableFuture<?>> inFlight = ConcurrentHashMap.newKeySet();
     private final Object tickMonitor = new Object();
 
@@ -60,18 +79,39 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
     private long completed;
     private long failed;
 
+    /**
+     * A dispatcher owned by the thread that builds it, which is the thread the world runs on.
+     *
+     * <p>Every dispatcher is built while the world is being ticked, so the thread doing the building is the one
+     * that will be ticking it. Taking the owner from here rather than being told it is what keeps this class
+     * free of any knowledge of what a server is.
+     */
     public OperationDispatch(final int parallelQueues) {
         if (parallelQueues < 1) {
             throw new IllegalArgumentException("parallelQueues must be >= 1; got " + parallelQueues);
         }
         this.parallelQueues = parallelQueues;
+        this.owner = Thread.currentThread();
         this.workers = Executors.newVirtualThreadPerTaskExecutor();
     }
 
+    /**
+     * Queues an Operation and gives back the name it will be known by.
+     *
+     * <p>Queued after the dispatcher is closed, it is given back already discarded rather than refused: whoever
+     * asked has an id to look up and will find out it will never run, which is what happens to a craft asked for
+     * in the same tick the Mainframe loses power.
+     */
     public UUID submit(final IOperationTask task, final OperationPriority priority) {
         Objects.requireNonNull(task, "task must not be null");
         Objects.requireNonNull(priority, "priority must not be null");
+        requireOwnerThread("submit");
         final UUID id = UUID.randomUUID();
+        if (closed) {
+            statuses.put(id, OperationStatus.DISCARDED);
+            rememberTerminal(id);
+            return id;
+        }
         statuses.put(id, OperationStatus.PENDING);
         pending.add(new PendingOp(id, task, priority, sequenceCounter++));
         return id;
@@ -83,6 +123,10 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
     }
 
     public void tick() {
+        requireOwnerThread("tick");
+        if (closed) {
+            return;
+        }
         // 1. Apply everything the virtual threads asked the main thread to do since the last tick.
         Runnable action;
         while ((action = mainThreadActions.poll()) != null) {
@@ -154,25 +198,43 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
             try {
                 result = op.task().run(context);
                 if (result == null) {
-                    result = IOperationResult.failure("task returned a null result");
+                    result = IOperationResult.failure(NO_RESULT);
                 }
             } catch (final OperationCancelledException cancelled) {
-                result = IOperationResult.failure("cancelled");
+                result = IOperationResult.failure(CANCELLED);
             } catch (final Throwable throwable) {
-                result = IOperationResult.failure(throwable.toString());
+                /*
+                 * The type and the message both, because a player reads the line and whoever is asked about it
+                 * afterwards reads the same line: an exception with no message says nothing without its type,
+                 * and a message with no type rarely says where it came from.
+                 */
+                result = IOperationResult.failure(CRASHED,
+                        throwable.getClass().getSimpleName(),
+                        String.valueOf(throwable.getMessage()));
             }
             final IOperationResult finalResult = result;
             mainThreadActions.add(() -> complete(op.id(), finalResult));
         });
     }
 
+    /*
+     * Reached one tick after the work itself finished, which leaves room for the dispatcher to have been closed
+     * in between. An Operation settling then was already discarded by the close, and letting it settle again
+     * would count it twice and undo the discarding, so a late answer is dropped where it arrives.
+     */
     private void complete(final UUID id, final IOperationResult result) {
-        if (result instanceof IOperationResult.Success) {
+        if (closed || statuses.get(id) != OperationStatus.PROCESSING) {
+            return;
+        }
+        if (result instanceof IOperationResult.Failure failure) {
+            statuses.put(id, OperationStatus.FAILED);
+            if (failure.cause().isPresent()) {
+                failures.put(id, failure.cause());
+            }
+            this.failed++;
+        } else {
             statuses.put(id, OperationStatus.COMPLETED);
             completed++;
-        } else {
-            statuses.put(id, OperationStatus.FAILED);
-            failed++;
         }
         rememberTerminal(id);
         running--;
@@ -182,7 +244,18 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
         return statuses.getOrDefault(id, OperationStatus.PENDING);
     }
 
+    /**
+     * Why that Operation failed, or {@link OperationFailure#NONE} where there is nothing to say.
+     *
+     * <p>A reason lasts as long as the state it belongs to, so an Operation old enough to have fallen out of the
+     * settled history has no reason to give either.
+     */
+    public OperationFailure failureOf(final UUID id) {
+        return failures.getOrDefault(id, OperationFailure.NONE);
+    }
+
     public boolean cancel(final UUID id) {
+        requireOwnerThread("cancel");
         if (pending.removeIf(op -> op.id().equals(id))) {
             statuses.put(id, OperationStatus.DISCARDED);
             rememberTerminal(id);
@@ -199,7 +272,23 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
     private void rememberTerminal(final UUID id) {
         terminalOrder.addLast(id);
         while (terminalOrder.size() > MAX_TERMINAL_HISTORY) {
-            statuses.remove(terminalOrder.pollFirst());
+            final UUID oldest = terminalOrder.pollFirst();
+            statuses.remove(oldest);
+            failures.remove(oldest);
+        }
+    }
+
+    /**
+     * Refuses a call from anywhere but the thread that owns this dispatcher.
+     *
+     * <p>Loudly, because the alternative is what used to happen: a queue built for one thread being written by
+     * two, which does not fail where the mistake is but somewhere else entirely, a tick or an hour later.
+     */
+    private void requireOwnerThread(final String what) {
+        final Thread current = Thread.currentThread();
+        if (current != this.owner) {
+            throw new IllegalStateException(what + " is only for the thread that owns the dispatcher ("
+                    + this.owner.getName() + "); it was called from " + current.getName());
         }
     }
 
@@ -235,9 +324,34 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
         return failed;
     }
 
+    /**
+     * Shuts the dispatcher down, and says so about every Operation it was holding.
+     *
+     * <p>What was queued and what was running both end as discarded. That word is the whole point: an Operation
+     * left sitting at the state it happened to be in read as still pending or still running, so a terminal showed
+     * a craft as under way by a Mainframe that had been switched off, and it stayed that way until somebody broke
+     * the machine. Whoever asked for it can see now that it will not be finished.
+     */
     @Override
     public void close() {
+        requireOwnerThread("close");
+        if (closed) {
+            return;
+        }
         closed = true;
+        for (PendingOp op = pending.poll(); op != null; op = pending.poll()) {
+            discard(op.id());
+        }
+        /*
+         * The running ones too. Their virtual threads are about to be interrupted, and the answer they would have
+         * given arrives on a tick that will never come, so nothing else would ever move them off PROCESSING.
+         */
+        for (final Map.Entry<UUID, OperationStatus> entry : statuses.entrySet()) {
+            if (!entry.getValue().isTerminal()) {
+                discard(entry.getKey());
+            }
+        }
+        running = 0;
         // Unblock every task waiting on the main thread or on a tick so no virtual thread hangs.
         for (final CompletableFuture<?> future : inFlight) {
             future.completeExceptionally(new OperationCancelledException());
@@ -246,6 +360,12 @@ public final class OperationDispatch implements AutoCloseable, ILatencyScheduler
             tickMonitor.notifyAll();
         }
         workers.shutdownNow();
+    }
+
+    private void discard(final UUID id) {
+        statuses.put(id, OperationStatus.DISCARDED);
+        failures.put(id, OperationFailure.of(CANCELLED));
+        rememberTerminal(id);
     }
 
     /** The per-task handle: marshals work to the main thread and waits on ticks, all virtual-thread-safe. */

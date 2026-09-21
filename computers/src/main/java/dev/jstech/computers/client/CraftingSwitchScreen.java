@@ -8,10 +8,14 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
+import dev.jstech.computers.crafting.MachineCategory;
 import dev.jstech.computers.gui.layout.CraftingSwitchLayout;
 import dev.jstech.computers.menu.CraftingSwitchMenu;
+import dev.jstech.computers.operation.payload.SetBusNamePayload;
 import dev.jstech.computers.operation.payload.SetCraftingSwitchFacePayload;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -51,7 +55,7 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
     private Button categoryBtn;
     private boolean categoryPickerOpen;
     private int categoryScroll;
-    private java.util.List<String> allCategories;
+    private List<String> allCategories;
 
     public CraftingSwitchScreen(final CraftingSwitchMenu menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
@@ -107,12 +111,12 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
     }
 
     /** The machines whose cable run hangs off the given switch face (client-synced). */
-    private java.util.List<CraftingSwitchBlockEntity.BusMachineLine> busMachinesOnFace(final int face) {
+    private List<CraftingSwitchBlockEntity.BusMachineLine> busMachinesOnFace(final int face) {
         final CraftingSwitchBlockEntity be = blockEntity();
         if (be == null) {
-            return java.util.List.of();
+            return List.of();
         }
-        final java.util.List<CraftingSwitchBlockEntity.BusMachineLine> out = new java.util.ArrayList<>();
+        final List<CraftingSwitchBlockEntity.BusMachineLine> out = new ArrayList<>();
         for (final var line : be.busMachineLines()) {
             if (line.switchFace() == face) {
                 out.add(line);
@@ -206,8 +210,8 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
         final var viaBus = busMachinesOnFace(selectedFace);
         if (!viaBus.isEmpty()) {
             final var line = viaBus.get(0);
-            PacketDistributor.sendToServer(new dev.jstech.computers.operation.payload
-                    .SetBusNamePayload(line.cablePos(), line.busFace(), name));
+            PacketDistributor.sendToServer(
+                    new SetBusNamePayload(line.cablePos(), line.busFace(), name));
         }
     }
 
@@ -239,11 +243,11 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
     }
 
     /** "none" first, then every installed recipe type id, the dynamic generic machine categories. */
-    private java.util.List<String> categories() {
+    private List<String> categories() {
         if (allCategories == null) {
-            final java.util.List<String> list = new java.util.ArrayList<>();
+            final List<String> list = new ArrayList<>();
             list.add("");
-            list.addAll(dev.jstech.computers.crafting.MachineCategory.categoryIds());
+            list.addAll(MachineCategory.categoryIds());
             allCategories = list;
         }
         return allCategories;
@@ -253,7 +257,7 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
     public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
         // The category picker is modal: a row click tags the face, any other click closes it.
         if (categoryPickerOpen) {
-            final java.util.List<String> list = categories();
+            final List<String> list = categories();
             final int px = leftPos + CP_X;
             final int py = topPos + CP_Y;
             for (int r = 0; r < CP_VIS_ROWS && categoryScroll + r < list.size(); r++) {
@@ -428,7 +432,7 @@ public class CraftingSwitchScreen extends AbstractContainerScreen<CraftingSwitch
 
     /** Modal list of the dynamic machine categories (installed recipe types); a row click tags the face. */
     private void renderCategoryPicker(final GuiGraphics g, final int mouseX, final int mouseY) {
-        final java.util.List<String> list = categories();
+        final List<String> list = categories();
         categoryScroll = Math.max(0, Math.min(Math.max(0, list.size() - CP_VIS_ROWS), categoryScroll));
         final int px = leftPos + CP_X;
         final int py = topPos + CP_Y;

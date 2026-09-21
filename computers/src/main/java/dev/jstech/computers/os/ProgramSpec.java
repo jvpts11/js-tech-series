@@ -9,6 +9,9 @@ package dev.jstech.computers.os;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.computers.api.ComputersRegisterEvent;
+import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
@@ -25,7 +28,7 @@ import java.util.Set;
  * live on. See {@link OsGating} and {@link OsRegistry}. Requirements do not depend on the hardware era.
  *
  * <p>The {@link #CODEC} keeps this JSON-serialisable so the built-in registrations can later move to a
- * datapack; today the source of truth is the Java registration through {@link JSComputersAPI}.
+ * datapack; today the source of truth is the Java registration through {@link ComputersRegisterEvent}.
  *
  * @param id           unique registry key (e.g. {@code jsc:nms})
  * @param commandName  the short word the Command Prompt's {@code run}/{@code programs} verbs use
@@ -36,7 +39,9 @@ import java.util.Set;
  * @param minVramMb    minimum VRAM in MB (checked against the total installed VRAM)
  * @param minDiskMb    disk footprint in MB the program needs free to install
  * @param kind         how it runs (foreground app or headless service)
- * @param minOsRank    minimum Frames version rank (0 any / 2 XP+ / 3 11); see {@code OsRegistry.osVersionRank}
+ * @param minOsRank    the oldest place in a family's order this will run on, counting from one; zero for a
+ *                     program that runs on any system of the platforms it names. Each system says where it
+ *                     sits ({@link OsDef#familyRank()}), so this is a number against those, not a name
  * @param hostScope    which computer it may live on (any, a Crafting Computer, or the Mainframe)
  * @param iconId       base id for its per-OS icon sprites ({@code textures/gui/program/<path>/<os>.png})
  * @param minEra       the oldest hardware generation that may install it (a gate)
@@ -61,8 +66,8 @@ public record ProgramSpec(
         int minOsRank,
         HostScope hostScope,
         ResourceLocation iconId,
-        dev.jstech.core.tier.HardwareEra minEra,
-        dev.jstech.core.tier.HardwareEra era,
+        HardwareEra minEra,
+        HardwareEra era,
         SoftwareHouse house,
         int ramMb
 ) {
@@ -72,21 +77,21 @@ public record ProgramSpec(
             Codec.STRING.optionalFieldOf("command_name", "").forGetter(ProgramSpec::commandName),
             Codec.STRING.optionalFieldOf("display_name", "").forGetter(ProgramSpec::displayName),
             Codec.BOOL.optionalFieldOf("preinstalled", false).forGetter(ProgramSpec::preinstalled),
-            enumCodec(Platform.class).listOf().xmap(Set::copyOf, List::copyOf)
+            StableCodecs.byName(Platform.class).listOf().xmap(Set::copyOf, List::copyOf)
                     .fieldOf("platforms").forGetter(ProgramSpec::platforms),
             Codec.INT.optionalFieldOf("min_cpu_mhz", 0).forGetter(ProgramSpec::minCpuMhz),
             Codec.INT.optionalFieldOf("min_vram_mb", 0).forGetter(ProgramSpec::minVramMb),
             Codec.INT.optionalFieldOf("min_disk_mb", 0).forGetter(ProgramSpec::minDiskMb),
-            enumCodec(ProgramKind.class).optionalFieldOf("kind", ProgramKind.APP).forGetter(ProgramSpec::kind),
+            StableCodecs.byName(ProgramKind.class).optionalFieldOf("kind", ProgramKind.APP).forGetter(ProgramSpec::kind),
             Codec.INT.optionalFieldOf("min_os_rank", 0).forGetter(ProgramSpec::minOsRank),
-            enumCodec(HostScope.class).optionalFieldOf("host_scope", HostScope.ANY).forGetter(ProgramSpec::hostScope),
+            StableCodecs.byName(HostScope.class).optionalFieldOf("host_scope", HostScope.ANY).forGetter(ProgramSpec::hostScope),
             ResourceLocation.CODEC.optionalFieldOf("icon_id", ResourceLocation.fromNamespaceAndPath("jsc", "generic"))
                     .forGetter(ProgramSpec::iconId),
-            enumCodec(dev.jstech.core.tier.HardwareEra.class)
-                    .optionalFieldOf("min_era", dev.jstech.core.tier.HardwareEra.VINTAGE)
+            StableCodecs.byName(HardwareEra.class)
+                    .optionalFieldOf("min_era", HardwareEra.VINTAGE)
                     .forGetter(ProgramSpec::minEra),
             // Absent means "derive it from the OS rank", which the compact constructor does.
-            enumCodec(dev.jstech.core.tier.HardwareEra.class)
+            StableCodecs.byName(HardwareEra.class)
                     .optionalFieldOf("era", null)
                     .forGetter(ProgramSpec::era),
             SoftwareHouse.CODEC.optionalFieldOf("house", SoftwareHouse.BUNDLED).forGetter(ProgramSpec::house),
@@ -117,7 +122,7 @@ public record ProgramSpec(
             iconId = id;
         }
         if (minEra == null) {
-            minEra = dev.jstech.core.tier.HardwareEra.VINTAGE;
+            minEra = HardwareEra.VINTAGE;
         }
         if (era == null) {
             era = eraFromRank(minOsRank);
@@ -136,14 +141,14 @@ public record ProgramSpec(
      * needs: only-on-11 is Standard, XP-or-later is Legacy, anything else is Vintage. The built-in
      * registrations override this per program; the rule is only the default for a program that never said.
      */
-    private static dev.jstech.core.tier.HardwareEra eraFromRank(final int minOsRank) {
+    private static HardwareEra eraFromRank(final int minOsRank) {
         if (minOsRank >= 3) {
-            return dev.jstech.core.tier.HardwareEra.STANDARD;
+            return HardwareEra.STANDARD;
         }
         if (minOsRank >= 2) {
-            return dev.jstech.core.tier.HardwareEra.LEGACY;
+            return HardwareEra.LEGACY;
         }
-        return dev.jstech.core.tier.HardwareEra.VINTAGE;
+        return HardwareEra.VINTAGE;
     }
 
     /**
@@ -154,7 +159,7 @@ public record ProgramSpec(
                                  final boolean preinstalled, final Set<Platform> platforms, final int minDiskMb,
                                  final ProgramKind kind, final int minOsRank, final HostScope hostScope) {
         return new ProgramSpec(id, commandName, displayName, preinstalled, platforms, 0, 0, minDiskMb,
-                kind, minOsRank, hostScope, id, dev.jstech.core.tier.HardwareEra.VINTAGE, null,
+                kind, minOsRank, hostScope, id, HardwareEra.VINTAGE, null,
                 SoftwareHouse.BUNDLED, 0);
     }
 
@@ -163,7 +168,7 @@ public record ProgramSpec(
      * hardware generation it was written for: a desktop environment of the 2010s has no business
      * running on a machine of the 1990s.
      */
-    public ProgramSpec withMinEra(final dev.jstech.core.tier.HardwareEra oldest) {
+    public ProgramSpec withMinEra(final HardwareEra oldest) {
         return new ProgramSpec(id, commandName, displayName, preinstalled, platforms, minCpuMhz, minVramMb,
                 minDiskMb, kind, minOsRank, hostScope, iconId, oldest, era, house, ramMb);
     }
@@ -172,7 +177,7 @@ public record ProgramSpec(
      * The same program, stamped as written in {@code generation}. This decides the medium it ships on and
      * the year on its banner; it never gates where it installs, which stays {@link #minEra()}'s job.
      */
-    public ProgramSpec withEra(final dev.jstech.core.tier.HardwareEra generation) {
+    public ProgramSpec withEra(final HardwareEra generation) {
         return new ProgramSpec(id, commandName, displayName, preinstalled, platforms, minCpuMhz, minVramMb,
                 minDiskMb, kind, minOsRank, hostScope, iconId, minEra, generation, house, ramMb);
     }
@@ -233,10 +238,5 @@ public record ProgramSpec(
             sb.append(Character.toUpperCase(p.charAt(0))).append(p.substring(1));
         }
         return sb.toString();
-    }
-
-    private static <E extends Enum<E>> Codec<E> enumCodec(final Class<E> type) {
-        return Codec.STRING.xmap(s -> Enum.valueOf(type, s.toUpperCase(java.util.Locale.ROOT)),
-                e -> e.name().toLowerCase(java.util.Locale.ROOT));
     }
 }

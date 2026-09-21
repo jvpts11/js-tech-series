@@ -7,10 +7,12 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.computers.api.ComputersRegisterEvent;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 import java.util.Map;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A desktop environment: the graphical shell a computer runs on top of its OS. The Frames editions bundle
@@ -20,7 +22,7 @@ import java.util.Map;
  * <p>A desktop environment brings its chrome ({@link PanelStyle}), its skin and wallpaper (looked up by
  * {@link #id()} on the client), the built-in programs it bundles, and the native names those programs
  * show under it (Files is Dolphin on KDE and Nautilus on GNOME). Registered through
- * {@link JSComputersAPI}, so an add-on can ship its own.
+ * {@link ComputersRegisterEvent}, so an add-on can ship its own.
  *
  * @param id               unique registry key (e.g. {@code jsc:kde_plasma}); Frames use their OS id
  * @param displayName      the human name
@@ -71,7 +73,7 @@ public record DesktopEnvironmentDef(
      * the one whose own name it is, else nothing. A window's key is its launcher label, so this is how the
      * machine reads a saved layout back into programs.
      */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public ProgramSpec programFor(final String key) {
         ProgramSpec byName = null;
         for (final ProgramSpec spec : OsRegistry.programs()) {

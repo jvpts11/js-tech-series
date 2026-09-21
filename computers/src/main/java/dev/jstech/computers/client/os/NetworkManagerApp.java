@@ -30,9 +30,11 @@ import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.gui.layout.DesktopZ;
 import dev.jstech.core.operation.OperationPriority;
+import java.util.Collections;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +43,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -238,7 +241,8 @@ public final class NetworkManagerApp implements IDesktopApp {
         detailName = detailPopup.add(new Label(() -> detailOp == null ? "" : detailOp.name().getString()));
         detailAmount = detailPopup.add(new Label(this::detailAmountText)
                 .setColor(() -> detailOp == null ? 0 : statusColor(detailOp.status())));
-        detailSection = detailPopup.add(new Label(this::detailSectionText, Label.Tone.DIM));
+        detailSection = detailPopup.add(new Label(this::detailSectionText, Label.Tone.DIM)
+                .setColor(() -> detailOp != null && detailOp.cause().isPresent() ? C_RED : 0));
         detailTiming = detailPopup.add(new Label(this::detailTimingText, Label.Tone.DIM).setAlign(Label.Align.RIGHT));
         detailList = detailPopup.add(new ListView<DetailRow>(() -> detailRows, 10, this::renderDetailRow));
         detailClose = detailPopup.add(new Button("Close", detailPopup::close));
@@ -289,7 +293,7 @@ public final class NetworkManagerApp implements IDesktopApp {
     public static void acceptOpsLog(final List<OperationRecord> ops) {
         if (active != null) {
             final List<OperationRecord> reversed = new ArrayList<>(ops);
-            java.util.Collections.reverse(reversed);
+            Collections.reverse(reversed);
             active.logNewestFirst = reversed;
         }
     }
@@ -361,7 +365,7 @@ public final class NetworkManagerApp implements IDesktopApp {
     }
 
     /** Ticks as a short duration: whole seconds past a minute's worth, else ticks. */
-    private static String ticksLabel(final int ticks) {
+    private static String ticksLabel(final long ticks) {
         return ticks >= 1200 ? (ticks / 20) + "s" : ticks + "t";
     }
 
@@ -568,7 +572,7 @@ public final class NetworkManagerApp implements IDesktopApp {
         if (op.priority() != OperationPriority.DEFAULT) {
             final String tag = op.priority().label();
             g.drawString(font, tag, nameX, y + 3,
-                    op.priority().ordinal() > OperationPriority.DEFAULT.ordinal() ? C_AMBER : ctx.skin().dim(), false);
+                    op.priority().compareTo(OperationPriority.DEFAULT) > 0 ? C_AMBER : ctx.skin().dim(), false);
             nameX += font.width(tag) + 4;
         }
         final int barX = x + w / 2 + 4;
@@ -893,9 +897,17 @@ public final class NetworkManagerApp implements IDesktopApp {
         return "waited " + ticksLabel(detailOp.waitedTicks()) + ", ran " + ticksLabel(detailOp.ranTicks());
     }
 
+    /*
+     * Why it failed comes first where there is a reason, because that is the one thing somebody who opened a
+     * failed Operation came to find out. The headings below it are for a row that has parts to list.
+     */
     private String detailSectionText() {
         if (detailOp == null) {
             return "";
+        }
+        final Optional<Component> why = detailOp.failureText();
+        if (why.isPresent()) {
+            return why.get().getString();
         }
         return !detailOp.subs().isEmpty() ? "STAGES" : !detailOp.moves().isEmpty() ? "SOURCES" : "No sub-operations.";
     }

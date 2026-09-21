@@ -11,6 +11,8 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.core.util.Sizes;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
@@ -21,6 +23,7 @@ import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.fluids.FluidStack;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -73,6 +76,26 @@ public final class StorageKey {
         return new StorageKey(Kind.CHEMICAL, ItemStack.EMPTY, FluidStack.EMPTY, chemical);
     }
 
+    /**
+     * The key an item name stands for, as a player writes it: {@code cobblestone} or {@code minecraft:cobblestone}
+     * alike, and {@code jsc:...} for this mod's own. Null for a name no item answers to.
+     *
+     * <p>A name with no namespace is taken as vanilla's, which is what someone typing at a prompt means by
+     * {@code iron_ingot}.
+     */
+    @Nullable
+    public static StorageKey byName(final String name) {
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+        final String id = name.contains(":") ? name : "minecraft:" + name;
+        final ResourceLocation location = ResourceLocation.tryParse(id.toLowerCase(Locale.ROOT));
+        if (location == null) {
+            return null;
+        }
+        return BuiltInRegistries.ITEM.getOptional(location).map(StorageKey::of).orElse(null);
+    }
+
     public Kind kind() {
         return kind;
     }
@@ -89,9 +112,16 @@ public final class StorageKey {
         return kind == Kind.CHEMICAL;
     }
 
-    /** Fluids and chemicals are measured in millibuckets; one item weighs {@link #MB_EQ_PER_ITEM}. */
+    /**
+     * Fluids and chemicals are measured in millibuckets; one item weighs {@link #MB_EQ_PER_ITEM}.
+     *
+     * <p>A quantity can come from a packet, so it can be any number at all, and a thousand times a large
+     * enough one comes back negative. A negative weight is not a number written badly, it is a different
+     * answer: a request for it passes every check that it fits, and putting it away adds storage rather than
+     * using it. Asking for more items than there could ever be gets the largest weight there is instead.
+     */
     public long weight(final long quantity) {
-        return kind == Kind.ITEM ? quantity * MB_EQ_PER_ITEM : quantity;
+        return kind == Kind.ITEM ? Sizes.times(quantity, MB_EQ_PER_ITEM) : quantity;
     }
 
     public ItemStack stack(final int count) {
@@ -165,9 +195,9 @@ public final class StorageKey {
     /** The registry id of the data behind the key: the item's, the fluid's or the chemical's. */
     public ResourceLocation registryId() {
         return switch (kind) {
-            case FLUID -> net.minecraft.core.registries.BuiltInRegistries.FLUID.getKey(fluidPrototype.getFluid());
+            case FLUID -> BuiltInRegistries.FLUID.getKey(fluidPrototype.getFluid());
             case CHEMICAL -> Objects.requireNonNull(chemical);
-            case ITEM -> net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(itemPrototype.getItem());
+            case ITEM -> BuiltInRegistries.ITEM.getKey(itemPrototype.getItem());
         };
     }
 
@@ -176,7 +206,7 @@ public final class StorageKey {
      * machine's settings name what is starred. Two keys that differ only in their components share one id.
      */
     public String id() {
-        return kind.name().toLowerCase(java.util.Locale.ROOT) + "|" + registryId();
+        return kind.name().toLowerCase(Locale.ROOT) + "|" + registryId();
     }
 
     /** A chemical key on disk: {@code {"chemical": "<id>"}}. */

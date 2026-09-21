@@ -3,10 +3,11 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Core.
  */
 package dev.jstech.core.energy.internal;
 
+import dev.jstech.core.energy.EnergyDistributionResult;
 import dev.jstech.core.energy.IEnergyCable;
 import dev.jstech.core.energy.IEnergyNode;
 
@@ -40,7 +41,8 @@ public final class EnergyFlowGraph {
     }
 
     /**
-     * Raw result of one distribution: used internally by {@link EnergyNetwork} to build the {@link dev.jstech.core.energy.EnergyDistributionResult} exposed to the caller.
+     * Raw result of one distribution: used internally by {@link EnergyNetwork} to build the
+     * {@link EnergyDistributionResult} exposed to the caller.
      */
     public record FlowResult(
             long totalSupply,

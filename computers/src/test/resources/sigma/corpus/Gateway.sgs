@@ -1,0 +1,33 @@
+using System.*;
+using System.IO.*;
+using System.Collections.*;
+using System.Network.*;
+namespace Corpus;
+class GatewayCorpus {
+    static void Main() {
+        bool online = Gateway.Online;
+        string current = Gateway.Current;
+        List<string> names = Gateway.Names();
+        bool chosen = Gateway.Select("east");
+        Console.PrintLine("" + online + current + names.Count + chosen);
+        foreach (CcComputer computer in Gateway.Computers()) {
+            Console.PrintLine("" + computer.Id + computer.Name + computer.Label + computer.Online);
+        }
+        foreach (CcPeripheral device in Gateway.Peripherals()) {
+            Console.PrintLine(device.Name + device.Type + device.Methods.Count);
+        }
+
+        object none = Gateway.Call("left", "getName");
+        object one = Gateway.Call("left", "setOutput", true);
+        object two = Gateway.Call("left", "setOutput", "top", true);
+        object three = Gateway.Call("left", "setOutput", "top", true, 1);
+        bool powered = Gateway.TurnOn(1) && Gateway.Shutdown(1) && Gateway.Reboot(1);
+        bool sent = Gateway.Send(1, "hello");
+        Gateway.OnMessage(Heard);
+        Console.PrintLine("" + none + one + two + three + powered + sent);
+    }
+
+    static void Heard(GatewayMessage message) {
+        Console.PrintLine("" + message.From + message.Text + message.Tick);
+    }
+}

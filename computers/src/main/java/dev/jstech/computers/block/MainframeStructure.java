@@ -9,6 +9,7 @@ package dev.jstech.computers.block;
 
 import dev.jstech.core.multiblock.IBlockMatcher;
 import dev.jstech.core.multiblock.MultiblockPattern;
+import dev.jstech.core.multiblock.MultiblockPatternGeometry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
@@ -35,9 +36,8 @@ public final class MainframeStructure {
     public static final int BLOCK_COUNT = WIDTH * HEIGHT * DEPTH; // 12
 
     /**
-     * Declarative description of the Mainframe footprint, used by
-     * {@link dev.jstech.core.multiblock.MultiblockPatternGeometry} to compute
-     * world positions for any of the four horizontal orientations.
+     * Declarative description of the Mainframe footprint, used by {@link MultiblockPatternGeometry} to
+     * compute world positions for any of the four horizontal orientations.
      */
     public static final MultiblockPattern PATTERN = MultiblockPattern.builder("mainframe")
             .layer("P#P", "PPP")

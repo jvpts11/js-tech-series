@@ -7,12 +7,16 @@
  */
 package dev.jstech.computers.crafting;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.operation.ComputingOperations;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.IPersistentOperation;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
+import dev.jstech.core.persistence.SavedValue;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -35,6 +39,15 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
 
     public static final String KIND = "multi";
 
+    /** A pipeline with nothing in it, which is a pattern that was saved wrong. */
+    private static final String NO_STAGES = "jsc.operation.failure.no_stages";
+
+    /** A stage that could not be started at all: nothing is set up to carry it out. */
+    private static final String STAGE_WOULD_NOT_START = "jsc.operation.failure.stage_would_not_start";
+
+    /** A stage that ran and failed without saying why. */
+    private static final String STAGE_FAILED = "jsc.operation.failure.stage_failed";
+
     private final MainframeBlockEntity mainframe;
     private final MultiStagePattern pattern;
     private final long requested;
@@ -49,6 +62,7 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
     private UUID pendingStageId;
     private boolean done;
     private byte status = OperationRecord.STATUS_PROCESSING;
+    private OperationFailure cause = OperationFailure.NONE;
     private OperationPriority priority = OperationPriority.DEFAULT;
     private Runnable onSettle;
 
@@ -67,6 +81,7 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
         this.operationId = operationId;
         if (pattern.stages().isEmpty()) {
             status = OperationRecord.STATUS_FAILED;
+            cause = OperationFailure.of(NO_STAGES);
             finish();
         }
     }
@@ -78,7 +93,7 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
 
     @Override
     public String typeId() {
-        return dev.jstech.computers.operation.ComputingOperations.MULTI_STAGE;
+        return ComputingOperations.MULTI_STAGE;
     }
 
     @Override
@@ -90,7 +105,7 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
         MultiStagePattern.CODEC.encodeStart(ops, pattern).result().ifPresent(t -> tag.put("Pattern", t));
         tag.putLong("Requested", requested);
         tag.putString("Label", requesterLabel);
-        tag.putByte(NetworkCraftOperation.PRIORITY_KEY, (byte) priority.ordinal());
+        tag.putByte(NetworkCraftOperation.PRIORITY_KEY, (byte) priority.id());
         tag.putInt("StageIndex", stageIndex);
         if (currentStage instanceof IPersistentOperation stage && !currentStage.isDone()) {
             tag.putUUID("StageId", stage.operationId());
@@ -106,7 +121,9 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
                                                      final HolderLookup.Provider registries) {
         final RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, registries);
         final MultiStagePattern pattern = tag.contains("Pattern")
-                ? MultiStagePattern.CODEC.parse(ops, tag.get("Pattern")).result().orElse(null) : null;
+                ? SavedValue.readOr(MultiStagePattern.CODEC.parse(ops, tag.get("Pattern")),
+                        JsComputers.LOGGER, "the pattern a saved pipeline was following", null)
+                : null;
         if (pattern == null) {
             return null;
         }
@@ -169,6 +186,8 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
             currentStage = startStage(pattern.stages().get(stageIndex));
             if (currentStage == null) {
                 status = OperationRecord.STATUS_FAILED;
+                cause = OperationFailure.of(STAGE_WOULD_NOT_START, String.valueOf(stageIndex + 1),
+                        String.valueOf(pattern.stages().size()));
                 finish();
                 return;
             }
@@ -177,9 +196,16 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
         }
         if (currentStage.isDone()) {
             // Take whatever status the finished stage carried; a failed stage fails the whole pipeline.
-            final byte stageStatus = currentStage.toRecord().status();
-            if (stageStatus == OperationRecord.STATUS_FAILED) {
+            final OperationRecord stageRecord = currentStage.toRecord();
+            if (stageRecord.status() == OperationRecord.STATUS_FAILED) {
                 status = OperationRecord.STATUS_FAILED;
+                /*
+                 * The stage's own reason, where it gave one: a pipeline that failed because its third stage ran
+                 * out of something says that, rather than saying only that a stage failed.
+                 */
+                cause = stageRecord.cause().isPresent() ? stageRecord.cause()
+                        : OperationFailure.of(STAGE_FAILED, String.valueOf(stageIndex + 1),
+                                String.valueOf(pattern.stages().size()));
                 finish();
                 return;
             }
@@ -293,6 +319,6 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
 
     private OperationRecord buildRecord(final byte recordStatus) {
         return new OperationRecord(operationId, OperationRecord.TYPE_CRAFT, resultKey, requested, stageIndex,
-                recordStatus, priority, List.of(), List.of());
+                recordStatus, priority, List.of(), List.of()).withCause(cause);
     }
 }

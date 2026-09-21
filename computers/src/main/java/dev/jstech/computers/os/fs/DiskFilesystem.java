@@ -11,6 +11,8 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.media.FormattedMediaItem;
+import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.world.item.ItemStack;
@@ -249,6 +251,39 @@ public final class DiskFilesystem {
         return WriteResult.OK;
     }
 
+    /**
+     * Adds {@code addition} at the end of the file at {@code path}, making the file when there is none, with the same
+     * checks as {@link #write(ItemStack, String, FileType, String, long, FilesystemKind, long)}, except that only what
+     * the file grows by has to fit in {@code freeWeight}.
+     *
+     * @param now the world game time in ticks the file is stamped with, or {@code 0} for an unknown time
+     */
+    public static WriteResult append(final ItemStack disk, final String path, final FileType type,
+                                     final String addition, final long freeWeight,
+                                     final FilesystemKind kind, final long now) {
+        if (!FsPaths.isValidPath(path, kind)) {
+            return WriteResult.INVALID_PATH;
+        }
+        if (type.virtualProjection() || installerLocked(disk)) {
+            return WriteResult.READ_ONLY;
+        }
+        final FilesystemContents current = disk.getOrDefault(
+                ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+        final StoredFile had = current.files().get(path);
+        if (had != null && had.type().virtualProjection()) {
+            return WriteResult.READ_ONLY;
+        }
+        final int held = had == null ? 0 : had.byteSize();
+        final int added = addition.getBytes(StandardCharsets.UTF_8).length;
+        final long grows = FsPaths.sizeMbEq(held + added, eraOf(disk)) - FsPaths.sizeMbEq(held, eraOf(disk));
+        if (grows > freeWeight) {
+            return WriteResult.DISK_FULL;
+        }
+        final String content = had == null ? addition : had.content() + addition;
+        disk.set(ComputingModule.FILESYSTEM.get(), current.with(new StoredFile(path, type, content, now)));
+        return WriteResult.OK;
+    }
+
     // delete
 
     /**
@@ -268,13 +303,13 @@ public final class DiskFilesystem {
      * be damaged nor turned into a place to hide files.
      */
     static boolean installerLocked(final ItemStack volume) {
-        if (!(volume.getItem() instanceof dev.jstech.computers.os.media.MediaItem)) {
+        if (!(volume.getItem() instanceof MediaItem)) {
             return false;
         }
-        final dev.jstech.computers.os.media.MediaKind kind =
-                dev.jstech.computers.os.media.MediaItem.kind(volume);
-        return kind != dev.jstech.computers.os.media.MediaKind.DATA
-                && dev.jstech.computers.os.media.MediaItem.payload(volume) != null;
+        final MediaKind kind =
+                MediaItem.kind(volume);
+        return kind != MediaKind.DATA
+                && MediaItem.payload(volume) != null;
     }
 
     public static boolean delete(final ItemStack disk, final String path) {
@@ -483,10 +518,11 @@ public final class DiskFilesystem {
     }
 
     /**
-     * The kind a path's extension names, or {@code fallback} when it names none.
+     * The kind a path's extension names, or {@code fallback} when it has none.
      *
-     * <p>A name with no extension, or one nobody claims, keeps the kind it had: a text file renamed to
-     * {@code notes} is still text, which is what lets it still be opened.
+     * <p>A name with no extension keeps the kind it had: a text file renamed to {@code notes} is still text. An
+     * extension the machines do not know makes the file one of a kind they do not know, so a file renamed to
+     * {@code thing.fk} is not text wearing another name.
      */
     private static FileType typeOfPath(final String path, final FileType fallback) {
         final int slash = path.lastIndexOf('/');
@@ -495,8 +531,7 @@ public final class DiskFilesystem {
         if (dot <= 0 || dot == name.length() - 1) {
             return fallback;
         }
-        return FileType.fromExtension(name.substring(dot + 1).toLowerCase(java.util.Locale.ROOT))
-                .orElse(fallback);
+        return FileType.of(name.substring(dot + 1));
     }
 
     /**
@@ -526,7 +561,7 @@ public final class DiskFilesystem {
             }
             /*
              * The kind follows the new name. A file's kind is read off its extension everywhere else,
-             * so one renamed from .txt to .can has to become a program rather than a text file wearing
+             * so one renamed from .txt to .sgs has to become a program rather than a text file wearing
              * a program's name. A name whose kind is one the machine writes by itself is refused, the
              * way writing such a file by hand is: renaming into it would make a file nothing can edit.
              */

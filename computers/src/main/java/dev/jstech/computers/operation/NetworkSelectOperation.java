@@ -14,6 +14,8 @@ import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.ILatencyScheduler;
+import dev.jstech.core.operation.OperationBalance;
+import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.server.level.ServerLevel;
@@ -34,7 +36,13 @@ public final class NetworkSelectOperation extends AbstractTransferOperation {
 
     /** The design default of the WAITING timeout; the live value comes from the balance config. */
     public static final int DEFAULT_WAIT_TIMEOUT_TICKS =
-            dev.jstech.core.operation.OperationBalance.DEFAULT_WAITING_TIMEOUT_TICKS;
+            OperationBalance.DEFAULT_WAITING_TIMEOUT_TICKS;
+
+    /** Waited as long as it was allowed to for something another Operation was holding. */
+    private static final String HELD_BY_ANOTHER = "jsc.operation.failure.held_by_another";
+
+    /** Took everything of it the network had, which was less than was asked for. */
+    private static final String NOT_ENOUGH_STORED = "jsc.operation.failure.not_enough_stored";
 
     private final IDataSink destination;
     private final String destinationLabel;
@@ -61,7 +69,7 @@ public final class NetworkSelectOperation extends AbstractTransferOperation {
                                   @Nullable final ILatencyScheduler scheduler,
                                   final Set<NodeUuid> sourceFilter) {
         this(level, network, key, demand, destination, destinationLabel, recordType, operationId, index,
-                scheduler, sourceFilter, dev.jstech.core.operation.OperationBalance.waitingTimeoutTicks());
+                scheduler, sourceFilter, OperationBalance.waitingTimeoutTicks());
     }
 
     public NetworkSelectOperation(final ServerLevel level, final NetworkUuid network, final StorageKey key,
@@ -202,9 +210,15 @@ public final class NetworkSelectOperation extends AbstractTransferOperation {
         }
         waiting = false;
         index.unlock(operationId);
-        markSettled(timedOut ? OperationRecord.STATUS_RESOURCE_LOCKED
-                : movedTotal >= demand ? OperationRecord.STATUS_COMPLETED
-                : movedTotal > 0L ? OperationRecord.STATUS_PARTIAL : OperationRecord.STATUS_FAILED);
+        if (timedOut) {
+            markSettled(OperationRecord.STATUS_RESOURCE_LOCKED,
+                    OperationFailure.of(HELD_BY_ANOTHER, key.displayName().getString()));
+        } else if (movedTotal >= demand) {
+            markSettled(OperationRecord.STATUS_COMPLETED);
+        } else {
+            markSettled(movedTotal > 0L ? OperationRecord.STATUS_PARTIAL : OperationRecord.STATUS_FAILED,
+                    OperationFailure.of(NOT_ENOUGH_STORED, key.displayName().getString()));
+        }
     }
 
     @Override
@@ -254,6 +268,6 @@ public final class NetworkSelectOperation extends AbstractTransferOperation {
                 moves.add(new OperationRecord.MoveRow("SRV-" + shortId(server.asString()), moved, destinationLabel)));
         final List<OperationRecord.SubRow> subs = includeSubs ? subRows() : List.of();
         return new OperationRecord(operationId, recordType, key, demand, movedTotal,
-                recordStatus, priority(), List.copyOf(moves), subs);
+                recordStatus, priority(), List.copyOf(moves), subs).withCause(cause());
     }
 }

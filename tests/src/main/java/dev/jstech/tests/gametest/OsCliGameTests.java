@@ -3,10 +3,11 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Tech Series.
  */
 package dev.jstech.tests.gametest;
 
+import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
@@ -368,6 +369,70 @@ public final class OsCliGameTests {
                     final ICliComputer.FsResult write = cli.writeFile("cobblestone.dat", "x");
                     helper.assertFalse(write.ok(),
                             "writeFile must reject a .dat (read-only) file type");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * {@code write} takes a file whatever its extension: one of a kind the machine does not know is kept under the
+     * name it was given, and reads back like any other.
+     */
+    @GameTest(template = ARENA)
+    public static void cliWrite_takesAFileOfAKindTheMachineDoesNotKnow(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = placeMainframeWithMcDos(helper, pos);
+
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
+                    final ICliComputer.FsResult write = cli.writeFile("thing.fk", "made by a program");
+                    helper.assertTrue(write.ok(), "writeFile takes a .fk; got: " + write.message());
+                    final ICliComputer.FsResult read = cli.readFile("thing.fk");
+                    helper.assertTrue(read.ok() && "made by a program".equals(read.message()),
+                            "and reads it back; got: " + read.message());
+                })
+                .thenSucceed();
+    }
+
+    /** The program chosen with Always for an extension is kept by the computer, across a save, as Open with sets it. */
+    @GameTest(template = ARENA)
+    public static void config_keepsTheProgramChosenForAnExtensionAcrossASave(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = placeMainframeWithMcDos(helper, pos);
+
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    // The same call Open with's Always makes through the setting payload.
+                    cliFor(mainframe, helper.getLevel()).setConfig("defaultapp:fk", "editor");
+                    final var registries = helper.getLevel().registryAccess();
+                    mainframe.loadWithComponents(mainframe.saveWithFullMetadata(registries), registries);
+                    helper.assertTrue("editor".equals(mainframe.console().settings().defaultApp("fk")),
+                            "the computer still opens .fk files in the Editor after the save; it keeps "
+                                    + mainframe.console().settings().defaultApps());
+                })
+                .thenSucceed();
+    }
+
+    /** Renaming a text file to an extension the machine does not know makes it a file of that unknown kind. */
+    @GameTest(template = ARENA)
+    public static void rename_toAnUnknownExtensionMakesAFileOfAnUnknownKind(final GameTestHelper helper) {
+        final BlockPos pos = new BlockPos(2, 2, 2);
+        final MainframeBlockEntity mainframe = placeMainframeWithMcDos(helper, pos);
+
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
+                    helper.assertTrue(cli.writeFile("notes.txt", "hi").ok(), "the text file is written");
+                    final var disk = mainframe.systemDisk();
+                    final boolean renamed = dev.jstech.computers.os.fs.DiskFilesystem.rename(disk, "notes.txt",
+                            "notes.fk", dev.jstech.computers.os.FilesystemKind.HIERARCHICAL);
+                    helper.assertTrue(renamed, "and renamed");
+                    final var entry = dev.jstech.computers.os.fs.DiskFilesystem.list(disk, "",
+                                    dev.jstech.computers.os.FilesystemKind.HIERARCHICAL).stream()
+                            .filter(one -> "notes.fk".equals(one.path())).findFirst().orElse(null);
+                    helper.assertTrue(entry != null && entry.type() == dev.jstech.computers.os.fs.FileType.OTHER,
+                            "it is a file of a kind the machine does not know; got " + entry);
+                    helper.assertTrue("hi".equals(cli.readFile("notes.fk").message()), "with what it held");
                 })
                 .thenSucceed();
     }
@@ -843,7 +908,7 @@ public final class OsCliGameTests {
                                     + mainframe.defaultInstallSlot());
                     helper.assertTrue(mainframe.installOs(ubuntu, -1),
                             "installing a second OS beside the first must succeed (dual boot)");
-                    helper.assertTrue(ubuntu.equals(mainframe.diskInSlot(1).get(ComputingModule.SYSTEM_OS.get())),
+                    helper.assertTrue(ubuntu.equals(OsDisks.systemOn(mainframe.diskInSlot(1))),
                             "the second OS must land on the free disk, not over the first");
                     helper.assertTrue(MC_DOS.equals(mainframe.installedOsId()),
                             "with no preference the first disk with a system boots; got " + mainframe.installedOsId());
@@ -897,32 +962,6 @@ public final class OsCliGameTests {
                             "'apt search' must mark installed packages");
                     helper.assertTrue(text(shell.run("pacman -S mirror", cli)).contains("command not found"),
                             "pacman must not exist on an apt distribution");
-                })
-                .thenSucceed();
-    }
-
-    /** A source build (emerge) settles into the installed set once its completion tick has passed. */
-    @GameTest(template = ARENA)
-    public static void linux_sourceBuildSettlesWhenDone(final GameTestHelper helper) {
-        helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> {
-                    final dev.jstech.computers.program.ComputerConsoleState console =
-                            new dev.jstech.computers.program.ComputerConsoleState();
-                    console.startBuild("jsc:example", 100L);
-                    helper.assertTrue(console.settleBuilds(50L).isEmpty(), "a build must not settle early");
-                    helper.assertFalse(console.isInstalled("jsc:example"), "a building package is not installed yet");
-                    helper.assertTrue(console.settleBuilds(100L).contains("jsc:example"),
-                            "the build must settle at its completion tick");
-                    helper.assertTrue(console.isInstalled("jsc:example"), "a settled build is installed");
-                    // Persistence: a pending build survives an NBT round-trip.
-                    console.startBuild("jsc:other", 900L);
-                    final net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
-                    console.save(tag);
-                    final dev.jstech.computers.program.ComputerConsoleState loaded =
-                            new dev.jstech.computers.program.ComputerConsoleState();
-                    loaded.load(tag);
-                    helper.assertTrue(loaded.pendingBuilds().containsKey("jsc:other"),
-                            "a pending build must persist across a reload");
                 })
                 .thenSucceed();
     }
@@ -990,158 +1029,6 @@ public final class OsCliGameTests {
                                     && dev.jstech.computers.os.OsRegistry.getDesktop(gnome).panelStyle()
                                     == dev.jstech.computers.os.PanelStyle.GNOME,
                             "the GNOME desktop environment must be registered with the GNOME chrome");
-                })
-                .thenSucceed();
-    }
-
-    /**
-     * The manual Arch install end to end: a booted live medium owns the terminal, the real command sequence
-     * (against the network mirror) lands Arch on the chosen disk, the live session ends, and the computer boots
-     * the new system with its zsh prompt.
-     */
-    @GameTest(template = ARENA)
-    public static void linux_archLiveInstallByHandBootsTheSystem(final GameTestHelper helper) {
-        final BlockPos pos = new BlockPos(2, 2, 2);
-        final MainframeBlockEntity mainframe = placeMainframeWithOs(helper, pos,
-                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "ubuntu"));
-        helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> {
-                    mainframe.installMirror();
-                    mainframe.console().startLiveInstall(
-                            dev.jstech.computers.program.install.LiveInstallState.Distro.ARCH);
-                    helper.assertTrue(dev.jstech.computers.os.boot.BootController
-                                    .targetForComputer(mainframe)
-                                    == dev.jstech.computers.os.boot.BootController.BootTarget.TERMINAL_ONLY,
-                            "a booted live medium runs in the terminal");
-                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
-                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
-                    helper.assertTrue("root@archiso ~ #".equals(cli.prompt()),
-                            "the live shell must be a root prompt on the ISO; got " + cli.prompt());
-                    helper.assertTrue(text(shell.run("ls", cli)).contains("command not found"),
-                            "the live shell only knows the installer verbs");
-                    helper.assertTrue(text(shell.run("pacstrap /mnt base linux", cli)).contains("not a mountpoint"),
-                            "pacstrap before mount must fail with the real error");
-                    shell.run("mkfs.ext4 /dev/sda", cli);
-                    shell.run("mount /dev/sda /mnt", cli);
-                    helper.assertTrue(text(shell.run("pacstrap /mnt base linux", cli)).contains("installation complete"),
-                            "pacstrap must pull the base system from the mirror");
-                    shell.run("genfstab -U /mnt >> /mnt/etc/fstab", cli);
-                    shell.run("arch-chroot /mnt", cli);
-                    helper.assertTrue("[root@archiso /]#".equals(cli.prompt()), "the chroot changes the prompt");
-                    shell.run("grub-install /dev/sda", cli);
-                    shell.run("passwd", cli);
-                    shell.run("exit", cli);
-                    helper.assertTrue(text(shell.run("reboot", cli)).contains("Installation complete"),
-                            "reboot after a full sequence must complete the install");
-                    final ResourceLocation arch = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "arch");
-                    helper.assertTrue(mainframe.console().liveInstall() == null, "the live session must end");
-                    helper.assertTrue(arch.equals(mainframe.installedOsId()),
-                            "the computer must boot the hand-installed Arch; got " + mainframe.installedOsId());
-                    final ServerCliComputer after = cliFor(mainframe, helper.getLevel());
-                    helper.assertTrue("player@arch ~ %".equals(after.prompt()),
-                            "after the reboot Arch shows its zsh prompt; got " + after.prompt());
-                })
-                .thenSucceed();
-    }
-
-    /**
-     * The Gentoo live install by hand, through the live shell: stage3 from the mirror, chroot, sync, the
-     * kernel sources compile for real (CPU-scaled ticks, so genkernel refuses until they are done), then
-     * genkernel, GRUB, passwd, reboot, and the installed Gentoo shows its bash prompt.
-     */
-    @GameTest(template = ARENA, timeoutTicks = 1000)
-    public static void linux_gentooLiveInstallCompilesTheKernelBeforeBooting(final GameTestHelper helper) {
-        final BlockPos pos = new BlockPos(2, 2, 2);
-        final MainframeBlockEntity mainframe = placeMainframeWithOs(helper, pos,
-                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "ubuntu"));
-        // The test CPU runs at 2000 MHz, which the live installer turns into a 32 s (640 tick) kernel build.
-        final int kernelTicks = 640;
-        helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> {
-                    mainframe.installMirror();
-                    mainframe.console().startLiveInstall(
-                            dev.jstech.computers.program.install.LiveInstallState.Distro.GENTOO);
-                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
-                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
-                    helper.assertTrue("livecd ~ #".equals(cli.prompt()),
-                            "the Gentoo live CD is a root prompt; got " + cli.prompt());
-                    helper.assertTrue(text(shell.run("tar xpf stage3-amd64.tar.xz -C /mnt", cli)).contains("Not a mountpoint"),
-                            "unpacking the stage3 before mounting must fail with the real error");
-                    shell.run("mkfs.ext4 /dev/sda", cli);
-                    shell.run("mount /dev/sda /mnt", cli);
-                    helper.assertTrue(text(shell.run("tar xpf stage3-amd64.tar.xz -C /mnt", cli)).contains("done"),
-                            "the stage3 tarball must come from the mirror");
-                    shell.run("chroot /mnt", cli);
-                    helper.assertTrue("(chroot) livecd / #".equals(cli.prompt()), "the chroot changes the prompt");
-                    helper.assertTrue(text(shell.run("emerge sys-kernel/gentoo-sources", cli)).contains("portage tree is empty"),
-                            "emerging before a sync must fail with the real error");
-                    shell.run("emerge --sync", cli);
-                    helper.assertTrue(text(shell.run("emerge sys-kernel/gentoo-sources", cli)).contains("about " + (kernelTicks / 20) + "s"),
-                            "the kernel sources announce their CPU-scaled compile time");
-                    helper.assertTrue(text(shell.run("genkernel all", cli)).contains("still compiling"),
-                            "genkernel must wait for the sources to finish compiling");
-                })
-                .thenExecuteAfter(kernelTicks + 10, () -> {
-                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
-                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
-                    helper.assertTrue(text(shell.run("genkernel all", cli)).contains("Kernel compiled successfully"),
-                            "once the sources are compiled genkernel builds the kernel");
-                    shell.run("grub-install /dev/sda", cli);
-                    shell.run("passwd", cli);
-                    shell.run("exit", cli);
-                    helper.assertTrue(text(shell.run("reboot", cli)).contains("Installation complete"),
-                            "reboot after the full sequence must complete the install");
-                    final ResourceLocation gentoo = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "gentoo");
-                    helper.assertTrue(mainframe.console().liveInstall() == null, "the live session must end");
-                    helper.assertTrue(gentoo.equals(mainframe.installedOsId()),
-                            "the computer must boot the hand-installed Gentoo; got " + mainframe.installedOsId());
-                    final ServerCliComputer after = cliFor(mainframe, helper.getLevel());
-                    helper.assertTrue("player@gentoo:~$".equals(after.prompt()),
-                            "after the reboot Gentoo shows its bash prompt; got " + after.prompt());
-                })
-                .thenSucceed();
-    }
-
-    /**
-     * On a source-based distribution a package compiles in the background: a repeated emerge reports the
-     * running build instead of restarting it, {@code emerge --status} lists it, and once it finishes the
-     * shell announces the finished build ahead of the next command's output.
-     */
-    @GameTest(template = ARENA, timeoutTicks = 400)
-    public static void linux_emergeAnnouncesAFinishedBuild(final GameTestHelper helper) {
-        final BlockPos pos = new BlockPos(2, 2, 2);
-        final MainframeBlockEntity mainframe = placeMainframeWithOs(helper, pos,
-                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "gentoo"));
-        // Minesweeper's 16 MB footprint on the 2000 MHz test CPU is an 8 s (160 tick) build.
-        final int buildTicks = 160;
-        helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> {
-                    mainframe.installMirror();
-                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
-                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
-                    helper.assertTrue(text(shell.run("emerge mines", cli)).contains("compiling (about " + (buildTicks / 20) + "s)"),
-                            "emerge starts a CPU-scaled source build");
-                    helper.assertTrue(text(shell.run("emerge mines", cli)).contains("already compiling"),
-                            "a second emerge of the same package reports the running build");
-                    final String status = text(shell.run("emerge --status", cli));
-                    helper.assertTrue(status.contains("minesweeper") && status.contains("compiling"),
-                            "emerge --status lists the running build; got " + status);
-                    helper.assertFalse(mainframe.console().isInstalled("jsc:minesweeper"),
-                            "a building package is not installed yet");
-                })
-                .thenExecuteAfter(buildTicks + 10, () -> {
-                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
-                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
-                    final var response = shell.run("pwd", cli);
-                    helper.assertTrue(!response.lines().isEmpty()
-                                    && response.lines().get(0).text().contains("mines: build finished, package installed"),
-                            "the finished build is announced ahead of the next command; got " + text(response));
-                    helper.assertTrue(text(shell.run("pwd", cli)).contains("/home/player"),
-                            "the announcement is made once, then the shell is back to normal output");
-                    helper.assertTrue(mainframe.console().isInstalled("jsc:minesweeper"),
-                            "a finished build is installed");
-                    helper.assertTrue(text(shell.run("emerge --status", cli)).contains("no builds in progress"),
-                            "nothing is left compiling");
                 })
                 .thenSucceed();
     }
@@ -1447,6 +1334,12 @@ public final class OsCliGameTests {
                     reader.mediaSlot().setStackInSlot(0, ItemStack.EMPTY);
                     helper.assertTrue(mainframe.validateOsSession(),
                             "ejecting the medium falls back to the installed disk system");
+                    /*
+                     * Ending it is the machine's own step, not something that happens by being asked whether
+                     * the medium is there: a question that threw the session away would throw it away the
+                     * first time the drive was a tick late to load.
+                     */
+                    helper.assertTrue(mainframe.settleLiveInstall(), "and the machine ends the session itself");
                     helper.assertTrue(mainframe.console().liveInstall() == null,
                             "the live session died with its medium");
                     helper.assertTrue("player@ubuntu:~$".equals(cliFor(mainframe, helper.getLevel()).prompt()),
@@ -1506,34 +1399,6 @@ public final class OsCliGameTests {
                             helper.absolutePos(pos));
                     helper.assertTrue(text(shell.run("neofetch", cli)).contains("DE: Cinnamon"),
                             "with a desktop environment installed the DE line names it (alias included)");
-                })
-                .thenSucceed();
-    }
-
-    /** A source build settles by itself through the computer's tick, with no command needed to finish it. */
-    @GameTest(template = ARENA, timeoutTicks = 400)
-    public static void linux_buildSettlesByTickingWithoutACommand(final GameTestHelper helper) {
-        final BlockPos pos = new BlockPos(2, 2, 2);
-        final MainframeBlockEntity mainframe = placeMainframeWithOs(helper, pos,
-                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "gentoo"));
-        // Minesweeper's 16 MB footprint on the 2000 MHz test CPU is an 8 s (160 tick) build.
-        helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> {
-                    mainframe.installMirror();
-                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
-                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
-                    shell.run("emerge mines", cli);
-                    helper.assertTrue(mainframe.console().buildTotal("jsc:minesweeper") > 0,
-                            "a running build knows its full duration (for the progress lines)");
-                })
-                .thenExecuteAfter(200, () -> {
-                    // No command ran since: the block's own ticker settled the finished build.
-                    helper.assertTrue(mainframe.console().isInstalled("jsc:minesweeper"),
-                            "the tick settles a finished build without a command");
-                    final ServerCliComputer cli = cliFor(mainframe, helper.getLevel());
-                    final var shell = dev.jstech.computers.program.cli.CliCommands.shellFor(cli, 52);
-                    helper.assertTrue(text(shell.run("pwd", cli)).contains("build finished"),
-                            "with no console open the finished notice waits for the next command");
                 })
                 .thenSucceed();
     }

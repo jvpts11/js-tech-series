@@ -8,10 +8,11 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.layout.FilesLayout;
-import dev.jstech.computers.operation.payload.CopyFilePayload;
-import dev.jstech.computers.operation.payload.DeleteFilePayload;
+import dev.jstech.computers.machine.MachineListing;
+import dev.jstech.computers.operation.payload.ArchiveFilesPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.EjectMediaPayload;
+import dev.jstech.computers.operation.payload.ExtractArchivePayload;
 import dev.jstech.computers.operation.payload.InstallFromMediaPayload;
 import dev.jstech.computers.operation.payload.MediumTransferPayload;
 import dev.jstech.computers.operation.payload.MkdirPayload;
@@ -20,8 +21,15 @@ import dev.jstech.computers.operation.payload.RenameFilePayload;
 import dev.jstech.computers.operation.payload.RenameVolumePayload;
 import dev.jstech.computers.operation.payload.RequestDiskFilesPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.fs.Archive;
+import dev.jstech.computers.os.fs.FileOpeners;
+import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.InstallerLayout;
 import dev.jstech.computers.os.fs.SystemLayout;
+import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.Breadcrumbs;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.CellGrid;
@@ -36,6 +44,7 @@ import dev.jstech.core.client.gui.component.SearchField;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -68,7 +77,10 @@ import java.util.Set;
  * lists' layout rather than draw in it. The geometry lives in {@link FilesLayout}, where a test proves
  * nothing overlaps.
  */
-public final class FilesApp implements IDesktopApp {
+public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
+
+    /** The archiver, by the id the desktop knows it under; nothing is offered without it installed. */
+    private static final String ARCHIVER = "ark";
 
     private static final long DOUBLE_CLICK_MS = 300L;
     private static final int HISTORY_MAX = 32;
@@ -144,9 +156,8 @@ public final class FilesApp implements IDesktopApp {
     @Nullable
     private String pendingRename;
 
-    // The clipboard: paths waiting to be pasted, and whether the paste moves them.
-    private final List<String> clipboard = new ArrayList<>();
-    private boolean clipboardCut;
+    /** What has been cut or copied, waiting to be pasted. */
+    private final FileClipboard clipboard = new FileClipboard();
 
     // The row the context menu was opened on, for the actions that apply to a sweep.
     private int ctxRow = -1;
@@ -328,6 +339,7 @@ public final class FilesApp implements IDesktopApp {
     @Override
     public void onClosed() {
         FilesApps.forget(this);
+        CodeFileReplies.forget(this);
     }
 
     /** The names listed right now, top to bottom, which is what a player sees in the window. */
@@ -484,6 +496,9 @@ public final class FilesApp implements IDesktopApp {
 
     /** The explorer's key for the other machines' shared folders. */
     private static final String NET_ROOT = "net:";
+
+    /** The tree's key for the trash, which is no folder the explorer lists but a window the desktop opens. */
+    private static final String TRASH_PLACE = "trash:";
 
     private boolean onNetwork() {
         return dir.startsWith(NET_ROOT);
@@ -645,9 +660,12 @@ public final class FilesApp implements IDesktopApp {
     }
 
     private SortBy sortBy() {
-        final SortBy[] all = SortBy.values();
-        final int column = columns.sortColumn();
-        return column >= 0 && column < all.length ? all[column] : SortBy.NAME;
+        // The header's columns are Name, Type and Size, in that order.
+        return switch (columns.sortColumn()) {
+            case 1 -> SortBy.TYPE;
+            case 2 -> SortBy.SIZE;
+            default -> SortBy.NAME;
+        };
     }
 
     private int indexOfPath(final String path) {
@@ -669,7 +687,7 @@ public final class FilesApp implements IDesktopApp {
     }
 
     /** What a kind of file is called in the Type column and in a New menu: "Text" for a .txt. */
-    public static String typeLabel(final dev.jstech.computers.os.fs.FileType type) {
+    public static String typeLabel(final FileType type) {
         return typeLabel(new DiskFilesPayload.WireFile("new." + type.extension(), type.extension(), 0, false, false,
                 "", 0));
     }
@@ -692,7 +710,8 @@ public final class FilesApp implements IDesktopApp {
             case "bin" -> "Installer data";
             case "cpk" -> "Program package";
             case "sln" -> "Solution";
-            case "canproj" -> "Cannon project";
+            case "sgsproj" -> "Σ# project";
+            case "sgproj" -> "Σ project";
             /*
              * A language names its own files. Whatever is registered gets this for nothing, and the
              * explorer stops needing to know which language the machines happen to speak.
@@ -753,9 +772,10 @@ public final class FilesApp implements IDesktopApp {
     private List<TreeItem> tree() {
         final List<TreeItem> out = new ArrayList<>();
         out.add(new TreeItem("Quick access", "", true, false, -1));
-        out.add(new TreeItem("Desktop", linux() ? SystemLayout.POSIX_DESKTOP_DIR : SystemLayout.DESKTOP_DIR,
-                false, false, -1));
+        out.add(new TreeItem("Desktop", desktopDirAt(host, !linux()), false, false, -1));
         out.add(new TreeItem("Storage", "Storage", false, false, -1));
+        // The trash is a place of the desktop, opened in a window of its own; a file dropped on it is deleted.
+        out.add(new TreeItem(DeskTrash.titleHere(), TRASH_PLACE, false, false, -1));
         out.add(new TreeItem(linux() ? "Devices" : "This PC", "", true, false, -1));
         for (int i = 0; i < volumes.size(); i++) {
             final DiskFilesPayload.WireVolume v = volumes.get(i);
@@ -960,8 +980,17 @@ public final class FilesApp implements IDesktopApp {
         final boolean cur = item.target().isEmpty() ? (dir.isEmpty() && isVolumeItem(item))
                 : isVolumeItem(item) ? isCurrentVolume(item.target()) : dir.equals(item.target());
         ctx.skin().listRow(g, x, y, w, h, hovered, cur);
-        FileIcons.draw(g, x + 2, y + 1, item.target().equals("Storage") ? FileIcons.Kind.DAT
-                : (isVolumeItem(item) ? (item.removable() ? FileIcons.Kind.BIN : FileIcons.Kind.HOME) : FileIcons.Kind.FOLDER));
+        if (item.target().equals(TRASH_PLACE)) {
+            final DesktopScreen desktop = DesktopScreen.current();
+            final boolean full = desktop != null && desktop.trashFull();
+            ProgramIcons.draw(g, x + 2, y, FilesLayout.ICON_W, FilesLayout.ROW_H,
+                    ResourceLocation.fromNamespaceAndPath("jsc", full ? "trash_full" : "trash"),
+                    desktop == null ? skin.iconSet() : desktop.icons());
+        } else {
+            FileIcons.draw(g, x + 2, y + 1, item.target().equals("Storage") ? FileIcons.Kind.DAT
+                    : (isVolumeItem(item) ? (item.removable() ? FileIcons.Kind.BIN : FileIcons.Kind.HOME)
+                    : FileIcons.Kind.FOLDER));
+        }
         if (!(isVolumeItem(item) && item.volumeIndex() == volRenaming)) {
             final int maxW = w + 2 - (FilesLayout.ICON_W + 8) - (item.removable() ? 8 : 0);
             g.drawString(ctx.font(), Texts.clip(ctx.font(), item.label(), maxW), x + 3 + FilesLayout.ICON_W, y + 2,
@@ -1141,6 +1170,13 @@ public final class FilesApp implements IDesktopApp {
             return;
         }
         final TreeItem item = items.get(index);
+        if (item.target().equals(TRASH_PLACE)) {
+            final DesktopScreen desktop = DesktopScreen.current();
+            if (button == 0 && desktop != null) {
+                desktop.openTrash();
+            }
+            return;
+        }
         if (button == 1) {
             if (isVolumeItem(item)) {
                 final int volume = item.volumeIndex();
@@ -1237,6 +1273,18 @@ public final class FilesApp implements IDesktopApp {
         return out;
     }
 
+    /** The middle of the listed row so named, or null when nothing listed has that name or it is scrolled away. */
+    @Nullable
+    public int[] rowPoint(final String name) {
+        for (int i = fileList.scroll(); i < rows.size() && i < fileList.scroll() + fileList.visibleRows(); i++) {
+            if (rows.get(i).name().equals(name)) {
+                final int[] r = fileList.rowRect(i);
+                return new int[] {r[0] + 20, r[1] + r[3] / 2};
+            }
+        }
+        return null;
+    }
+
     /** The middle of the menu's entry with that label, or null. */
     public int[] contextPoint(final String label) {
         final int index = contextLabels().indexOf(label);
@@ -1248,7 +1296,7 @@ public final class FilesApp implements IDesktopApp {
         final List<ContextMenu.Item> out = new ArrayList<>();
         out.add(new ContextMenu.Item("Folder", !readOnly, this::newFolder));
         out.add(ContextMenu.Item.separator());
-        for (final dev.jstech.computers.os.fs.FileType type : dev.jstech.computers.os.fs.FileOpeners.creatable()) {
+        for (final FileType type : FileOpeners.creatable()) {
             out.add(new ContextMenu.Item(typeLabel(type) + " (." + type.extension() + ")", !readOnly,
                     () -> newFile(type)));
         }
@@ -1308,7 +1356,7 @@ public final class FilesApp implements IDesktopApp {
         String path = typed.trim().replace('\\', '/');
         String rootKey = "";
         if (path.length() >= 2 && path.charAt(1) == ':') {
-            final String letter = path.substring(0, 2).toUpperCase(java.util.Locale.ROOT);
+            final String letter = path.substring(0, 2).toUpperCase(Locale.ROOT);
             path = path.substring(2);
             if (!letter.equals("C:")) {
                 boolean found = false;
@@ -1378,9 +1426,26 @@ public final class FilesApp implements IDesktopApp {
         }
     }
 
-    /** The folder the desktop's icons live in, by the desktop's id, for a window opened onto it. */
-    public static String desktopDirFor(final String os) {
-        return os.startsWith("frames_") ? SystemLayout.DESKTOP_DIR : SystemLayout.POSIX_DESKTOP_DIR;
+    /**
+     * The folder the desktop's icons live in on the machine at {@code host}.
+     *
+     * <p>Asked of the system that machine runs and not of the desktop it wears, because the same desktop sits
+     * on systems that keep their people in different places: CDE's is under /home on FreeBSD and under /usr on
+     * UNIX. A machine that cannot be reached answers with the common Unix home, or with Frames' own folder on
+     * a Frames desktop.
+     */
+    static String desktopDirAt(final BlockPos host, final boolean frames) {
+        if (frames) {
+            return SystemLayout.DESKTOP_DIR;
+        }
+        final Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null && mc.level.getBlockEntity(host) instanceof IOsHost machine) {
+            final OsDef system = machine.installedOs();
+            if (system != null) {
+                return SystemLayout.desktopDirFor(system, OsRegistry.getKernel(system.kernelId()));
+            }
+        }
+        return SystemLayout.POSIX_DESKTOP_DIR;
     }
 
     /** The context menu for {@code target} (a row, or {@code null} for empty space), greyed where the volume forbids. */
@@ -1394,16 +1459,29 @@ public final class FilesApp implements IDesktopApp {
             items.add(new ContextMenu.Item(setup || program ? "Run" : "Open", true, () -> open(target)));
             if (target.kind() == Kind.FILE && !dat && !setup) {
                 /*
-                 * One entry per program on this machine that can open the kind, so a player picks the
-                 * one they want rather than getting whichever the desktop would have chosen.
+                 * One entry per program on this machine that can open the kind, so a player picks the one they
+                 * want rather than getting whichever the desktop would have chosen, and a last one asks which
+                 * program should open files like it for good.
                  */
                 final String path = target.file().path();
-                for (final String programId : dev.jstech.computers.os.fs.FileOpeners.available(
-                        path, DesktopScreen.installedProgramIds())) {
-                    items.add(new ContextMenu.Item("Open with " + DesktopScreen.openerName(programId), true,
+                final List<String> installed = DesktopScreen.installedProgramIds();
+                final List<ContextMenu.Item> openWith = new ArrayList<>();
+                for (final String programId : FileOpeners.available(path, installed)) {
+                    openWith.add(new ContextMenu.Item(DesktopScreen.openerName(programId), true,
                             () -> DesktopScreen.requestOpenFileWith(programId, path)));
                 }
+                if (!FileOpeners.choices(path, installed).isEmpty()) {
+                    if (!openWith.isEmpty()) {
+                        openWith.add(ContextMenu.Item.separator());
+                    }
+                    openWith.add(new ContextMenu.Item("Choose another program...", true,
+                            () -> DesktopScreen.requestChooseOpener(path)));
+                }
+                if (!openWith.isEmpty()) {
+                    items.add(ContextMenu.Item.submenu("Open with", openWith));
+                }
             }
+            addArchiveItems(items, target, ro);
             items.add(ContextMenu.Item.separator());
             items.add(new ContextMenu.Item("Cut", !ro && !target.file().readOnly(), () -> cut(target)));
             items.add(new ContextMenu.Item("Copy", !target.file().readOnly(), () -> copy(target)));
@@ -1437,6 +1515,59 @@ public final class FilesApp implements IDesktopApp {
     }
 
     /**
+     * What the archiver offers on the thing under the cursor, when the machine has it installed.
+     *
+     * <p>This is where compressing belongs. A player who wants a folder packed away reaches for the right
+     * button on the folder, not for a program they then have to find the folder again inside; and an
+     * archive they have just been handed is unpacked the same way. Nothing is offered at all on a machine
+     * without the archiver, because the menu should not name a program that is not there.
+     */
+    private void addArchiveItems(final List<ContextMenu.Item> items, final Row target, final boolean ro) {
+        if (!DesktopScreen.installedProgramIds().contains(ARCHIVER) || target.file() == null
+                || target.file().projectsItem()) {
+            return;
+        }
+        final String path = target.file().path();
+        items.add(ContextMenu.Item.separator());
+        if (Archive.EXTENSION.equalsIgnoreCase(target.file().ext())) {
+            items.add(new ContextMenu.Item("Extract here", !ro, () -> extractHere(path)));
+            return;
+        }
+        items.add(new ContextMenu.Item("Compress to " + Archive.leaf(archiveNameFor(path)), !ro,
+                () -> compress(path)));
+    }
+
+    /** The archive a thing is packed into: its own name with the archive's extension, beside it. */
+    private static String archiveNameFor(final String path) {
+        final String leaf = Archive.leaf(path);
+        final int dot = leaf.lastIndexOf('.');
+        final String stem = dot > 0 ? leaf.substring(0, dot) : leaf;
+        final int slash = path.lastIndexOf('/');
+        final String folder = slash > 0 ? path.substring(0, slash + 1) : "";
+        return folder + stem + "." + Archive.EXTENSION;
+    }
+
+    private void compress(final String path) {
+        CodeFileReplies.expectSaved(this);
+        PacketDistributor.sendToServer(new ArchiveFilesPayload(
+                host, archiveNameFor(path), List.of(path), false));
+    }
+
+    private void extractHere(final String path) {
+        CodeFileReplies.expectSaved(this);
+        final int slash = path.lastIndexOf('/');
+        PacketDistributor.sendToServer(new ExtractArchivePayload(
+                host, path, "", slash > 0 ? path.substring(0, slash) : ""));
+    }
+
+    @Override
+    public void onSaved(final boolean ok, final String message) {
+        // The folder has changed under the window either way, so it is read again before anything else.
+        request(dir);
+        DesktopScreen.raise(host, ok ? "67ark" : "Could not do that", message, "");
+    }
+
+    /**
      * Whether this is something the machine can run.
      *
      * <p>Asked of the languages the machines know rather than of a list of extensions here, so opening a
@@ -1444,7 +1575,10 @@ public final class FilesApp implements IDesktopApp {
      */
     private static boolean isProgram(final DiskFilesPayload.WireFile f) {
         final String extension = f.ext().toLowerCase(Locale.ROOT);
-        final var runner = dev.jstech.core.JsCore.languages().runnerOf(extension);
+        if (MachineListing.claims(extension)) {
+            return true;
+        }
+        final var runner = JsCore.languages().runnerOf(extension);
         // A source file can be run too, but opening one means reading it, so it is not offered as "Run".
         return runner != null && !runner.sourceExtensions().contains(extension);
     }
@@ -1528,7 +1662,15 @@ public final class FilesApp implements IDesktopApp {
             bandActive = false;
             return;
         }
-        if (dragging && dragRow >= 0 && dragRow < rows.size()) {
+        if (dragging && dragRow >= 0 && dragRow < rows.size() && onTrashPlace(mouseX, mouseY)) {
+            // Dropped on the trash in the tree: deleted, as Delete on its menu would.
+            final Row src = rows.get(dragRow);
+            if (src.file() != null && src.file().readOnly()) {
+                lockedError(src);
+            } else if (src.file() != null) {
+                DeskTrash.delete(host, List.of(src.file().path()));
+            }
+        } else if (dragging && dragRow >= 0 && dragRow < rows.size()) {
             final Row src = rows.get(dragRow);
             // Where did the drag land: a removable-drive destination (left tree or a media row), or a folder?
             final String mediaDest = mediaDropTarget(mouseX, mouseY);
@@ -1588,6 +1730,16 @@ public final class FilesApp implements IDesktopApp {
             }
         }
         return dir;
+    }
+
+    /** Whether the point is on the trash's place in the tree. */
+    private boolean onTrashPlace(final double mx, final double my) {
+        if (!treeList.contains(mx, my)) {
+            return false;
+        }
+        final int index = treeList.rowAt(mx, my);
+        final List<TreeItem> items = tree();
+        return index >= 0 && index < items.size() && items.get(index).target().equals(TRASH_PLACE);
     }
 
     /** The row of the list or the tile of the icon view under the point, whichever is shown, or -1. */
@@ -1728,23 +1880,25 @@ public final class FilesApp implements IDesktopApp {
     }
 
     private void cut(final Row r) {
-        clipboard.clear();
-        for (final Row s : selection(r)) {
-            if (s.file() != null && !s.file().readOnly()) {
-                clipboard.add(s.file().path());
-            }
-        }
-        clipboardCut = true;
+        clipboard.cut(takeable(r));
     }
 
     private void copy(final Row r) {
-        clipboard.clear();
+        clipboard.copy(takeable(r));
+    }
+
+    /**
+     * The paths an action can take from the rows it applies to. A read-only entry is a projection of what
+     * the computer holds rather than a file, so there is nothing to move and it is left where it is.
+     */
+    private List<String> takeable(final Row r) {
+        final List<String> out = new ArrayList<>();
         for (final Row s : selection(r)) {
             if (s.file() != null && !s.file().readOnly()) {
-                clipboard.add(s.file().path());
+                out.add(s.file().path());
             }
         }
-        clipboardCut = false;
+        return out;
     }
 
     /** The rows an action applies to: the sweep when the target is in it, else the target alone. */
@@ -1763,20 +1917,10 @@ public final class FilesApp implements IDesktopApp {
     }
 
     private void paste() {
-        if (clipboard.isEmpty() || readOnlyVolume()) {
+        if (readOnlyVolume()) {
             return;
         }
-        for (final String src : clipboard) {
-            if (clipboardCut) {
-                PacketDistributor.sendToServer(new MoveFilePayload(host, src, dir));
-            } else {
-                PacketDistributor.sendToServer(new CopyFilePayload(host, src, dir));
-            }
-        }
-        if (clipboardCut) {
-            clipboard.clear();
-        }
-        FilesApps.diskChanged();
+        clipboard.pasteInto(host, dir);
     }
 
     private void startRenameAt(final int index) {
@@ -1833,6 +1977,7 @@ public final class FilesApp implements IDesktopApp {
          */
         if (bandRows.size() > 1 && bandRows.contains(ctxRow)) {
             boolean locked = false;
+            final List<String> doomed = new ArrayList<>();
             for (final int index : bandRows) {
                 if (index < 0 || index >= rows.size()) {
                     continue;
@@ -1845,13 +1990,13 @@ public final class FilesApp implements IDesktopApp {
                     locked = true; // a projection in the sweep is skipped, not silently lost
                     continue;
                 }
-                PacketDistributor.sendToServer(new DeleteFilePayload(host, r.file().path()));
+                doomed.add(r.file().path());
             }
             if (locked) {
                 DesktopScreen.showDatLockedError();
             }
             bandRows.clear();
-            FilesApps.diskChanged();
+            DeskTrash.delete(host, doomed);
             return;
         }
         if (ctxRow < 0 || ctxRow >= rows.size()) {
@@ -1865,8 +2010,8 @@ public final class FilesApp implements IDesktopApp {
             lockedError(r);
             return;
         }
-        PacketDistributor.sendToServer(new DeleteFilePayload(host, r.file().path()));
-        FilesApps.diskChanged();
+        // Into the trash from the system disk; for good, once asked, from a medium or a share.
+        DeskTrash.delete(host, List.of(r.file().path()));
     }
 
     /** The right refusal for a projected entry: a stored item points at the Network Interactor, an installer's file at setup. */
@@ -1884,7 +2029,7 @@ public final class FilesApp implements IDesktopApp {
      * <p>The kind is chosen before the file exists, because the extension decides which program opens
      * it, and a file made as text and renamed afterwards is a rename the player should not have had to do.
      */
-    public void newFile(final dev.jstech.computers.os.fs.FileType type) {
+    public void newFile(final FileType type) {
         final String name = uniqueName("New File", "." + type.extension());
         pendingRename = name;
         PacketDistributor.sendToServer(new SaveFilePayload(host, join(dir, name), ""));
@@ -2042,10 +2187,13 @@ public final class FilesApp implements IDesktopApp {
 
     // icons and helpers
 
-    /** What to call a file of a language the machines know, or a plain description when they know none. */
+    /** What to call a listing, a file of a language the machines know, or a plain description when they know none. */
     private static String languageLabel(final String ext) {
         final String lower = ext.toLowerCase(Locale.ROOT);
-        final var language = dev.jstech.core.JsCore.languages().byExtension(lower);
+        if (MachineListing.claims(lower)) {
+            return MachineListing.LABEL;
+        }
+        final var language = JsCore.languages().byExtension(lower);
         if (language != null) {
             return language.displayName()
                     + (language.sourceExtensions().contains(lower) ? " source" : " program");

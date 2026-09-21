@@ -42,6 +42,11 @@ public record NetworkServersPayload(List<ServerEntry> servers) implements Custom
             ServerEntry.STREAM_CODEC.apply(ByteBufCodecs.list(MAX))
                     .map(NetworkServersPayload::new, NetworkServersPayload::servers);
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public NetworkServersPayload {
+        servers = List.copyOf(servers);
+    }
+
     @Override
     public CustomPacketPayload.Type<NetworkServersPayload> type() {
         return TYPE;

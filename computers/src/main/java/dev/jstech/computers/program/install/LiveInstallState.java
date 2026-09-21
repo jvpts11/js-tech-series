@@ -7,365 +7,397 @@
  */
 package dev.jstech.computers.program.install;
 
+import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.core.id.IStableName;
+import dev.jstech.core.id.StableNames;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 /**
- * The manual installation of a source/live distribution, as a state machine the live shell drives: the
- * player runs the real steps in order (partition, mount, bootstrap the base system, fstab, chroot, kernel,
- * bootloader, password, reboot) and gets the genuine error when a step is out of order. Pure (no
- * Minecraft types) so the whole sequence is unit-tested; the shell supplies the world facts it needs
- * through {@link Env} (the disks present, whether the network mirror answers, the current tick).
+ * An installation done by hand from a live medium, as the shell of that medium drives it.
  *
- * <p>Arch: {@code lsblk, mkfs.ext4, mount, pacstrap, genfstab, arch-chroot, grub-install, passwd, exit,
- * reboot}. Gentoo: {@code lsblk, mkfs.ext4, mount, tar (stage3), chroot, emerge --sync, emerge
- * gentoo-sources (a real compile wait), genkernel, grub-install, passwd, exit, reboot}.
+ * <p>The player runs the real steps in the real order and is refused, in the real tool's words, whatever a real
+ * machine would refuse at that point. The steps that take time are left running in front of the terminal and
+ * do what they are for when they end, so what is recorded here is always what is really on the disk.
+ *
+ * <p>This is where a line is sent to whatever answers it. The files the session touches, the disks, how far
+ * the installation has got, and each distribution's own steps are things of their own beside it. Pure, no
+ * Minecraft types, so every sequence is tested without the game; what it needs of the world comes in through
+ * {@link Env}.
  */
 public final class LiveInstallState {
 
-    public enum Distro { ARCH, GENTOO }
-
-    /** What the shell needs from the world for one command. */
-    public record Env(List<String> devices, boolean mirror, long now, long kernelBuildTicks) {
-    }
-
-    /** The outcome of one command: its output lines, whether it failed, and whether the install completed. */
-    public record Result(boolean ok, List<String> lines, boolean complete) {
-        static Result pass(final String... lines) {
-            return new Result(true, List.of(lines), false);
-        }
-
-        static Result fail(final String... lines) {
-            return new Result(false, List.of(lines), false);
-        }
-    }
-
     private final Distro distro;
-    private String device = "";       // the formatted target, e.g. "sda"
-    private boolean formatted;
-    private boolean mounted;
-    private boolean base;             // pacstrap / stage3 done
-    private boolean fstab;
-    private boolean chroot;
-    private boolean synced;           // gentoo: portage tree synced
-    private long kernelReadyAt = -1;  // gentoo: kernel sources compile finishes at this tick
-    private boolean kernelBuilt;      // gentoo: genkernel done
-    private boolean bootloader;
-    private boolean password;
+    private final LiveFiles files;
+    private final LiveDisks disks;
+    private final LiveProgress progress = new LiveProgress();
+    private final GentooSteps gentoo;
+    private final ArchSteps arch;
+    private final BootloaderSteps bootloader;
+    private final SettingsSteps settings;
+
+    /**
+     * Every verb {@link #run} answers to, which is also every verb the shell of a live medium accepts.
+     *
+     * <p>It lives here, beside the switch that answers them, because a second list in the shell drifted from
+     * this one once, and a verb answered here and refused there is a verb nobody can type.
+     */
+    public static final List<String> VERBS = List.of(
+            "ls", "cat", "less", "more", "cd", "echo", "nano", "mkdir", "lsblk", "blkid", "fdisk", "mkfs.ext4", "mkfs",
+            "mkfs.fat", "mkfs.vfat", "mount", "umount", "pacstrap", "pacman", "wget", "tar", "genfstab",
+            "arch-chroot", "chroot", "source", "export", "env-update", "emerge-webrsync", "emerge", "eselect",
+            "genkernel", "make", "hwclock", "hostname", "mkinitcpio", "grub-install", "grub-mkconfig", "exit",
+            "reboot", "help");
+
+    /**
+     * What stands in front of the name of a file of the session wherever a file of the machine is named.
+     *
+     * <p>An editor asks the machine for a file by name, and these are not on any disk: they are the medium's
+     * and the half-built system's, and they go when the session does. The mark is what sends the asking here.
+     */
+    public static final String FILE_SCHEME = "live:";
 
     public LiveInstallState(final Distro distro) {
         this.distro = distro;
+        this.files = new LiveFiles(distro == Distro.GENTOO ? "/mnt/gentoo" : "/mnt", LiveGuide.of(distro));
+        this.disks = new LiveDisks(this.files.root());
+        this.gentoo = new GentooSteps(this.files, this.disks, this.progress);
+        this.arch = new ArchSteps(this.files, this.disks, this.progress);
+        this.bootloader = new BootloaderSteps(distro, this.files, this.disks, this.progress);
+        this.settings = new SettingsSteps(distro, this.files, this.progress);
+    }
+
+    /** The two distributions that are installed by hand. */
+    public enum Distro implements IStableName {
+        ARCH("arch"),
+        GENTOO("gentoo");
+
+        private static final StableNames<Distro> NAMES = StableNames.of(Distro.class);
+
+        private final String serializedName;
+
+        Distro(final String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        @Override
+        public String serializedName() {
+            return this.serializedName;
+        }
+
+        /** The distribution a saved state names, or null for a name none declares. */
+        static Distro find(final String name) {
+            return NAMES.find(name);
+        }
+    }
+
+    /**
+     * A disk the machine really has, as the live shell sees it.
+     *
+     * @param name   the device name the shell gives it, {@code sda} for the first
+     * @param sizeMb how big it is, so the tools print the disk the player actually put in
+     * @param speed  how many times faster than a mechanical disk it is, which is how long writing to it takes
+     */
+    public record Device(String name, int sizeMb, int speed) {
+
+        /** A mechanical disk of that size. */
+        public Device(final String name, final int sizeMb) {
+            this(name, sizeMb, 1);
+        }
+    }
+
+    /**
+     * What the shell needs from the world for one command.
+     *
+     * @param cores     how many the processor has, which caps how much of a compile can happen at once
+     * @param mhz       how fast it runs, which is the other half of how long a compile takes
+     * @param eraFactor how much faster than the earliest machines this one's connection is
+     * @param uefi      whether this machine's firmware boots the modern way, which decides whether the disk
+     *                  needs a partition of its own for the bootloader and which target it is installed for
+     * @param dayTime   the world's count of ticks across all its days, which is what a tool stamps a date from
+     * @param everyStep whether this world asks for every step of the handbook rather than only the ones a
+     *                  system cannot boot without
+     * @param shelf     what the Mirror has, to be asked for a package by the name somebody typed
+     */
+    public record Env(List<Device> devices, boolean mirror, long now, int cores, int mhz, int eraFactor,
+                      boolean uefi, long dayTime, boolean everyStep, MirrorPackage.IShelf shelf) {
+
+        /** Whether a device of that name is in the machine. */
+        public boolean has(final String name) {
+            return this.find(name) != null;
+        }
+
+        /** The device of that name, or null when the machine has none. */
+        public Device find(final String name) {
+            for (final Device device : this.devices) {
+                if (device.name().equals(name)) {
+                    return device;
+                }
+            }
+            return null;
+        }
     }
 
     public Distro distro() {
-        return distro;
+        return this.distro;
     }
 
     public boolean inChroot() {
-        return chroot;
+        return this.files.inside();
     }
 
-    /** The index of the target disk among the environment's devices ({@code sda}=0, {@code sdb}=1, ...), or -1. */
+    /** The index of the target disk among the machine's ({@code sda} is 0), or -1 when none is chosen. */
     public int targetIndex() {
-        if (device.length() < 3 || !device.startsWith("sd")) {
-            return -1;
-        }
-        return device.charAt(2) - 'a';
+        return this.disks.targetIndex();
     }
 
-    /** The live shell prompt for the current state, in the distribution's own style. */
+    /**
+     * The live shell's prompt, in the distribution's own style.
+     *
+     * <p>It names where the session is standing, as those prompts do, with the root user's home written as a
+     * tilde. Inside the new system it is that system's own root that is shown, not the mount point it hangs
+     * off outside, because from in there that is where you are.
+     */
     public String prompt() {
-        if (distro == Distro.ARCH) {
-            return chroot ? "[root@archiso /]#" : "root@archiso ~ #";
-        }
-        return chroot ? "(chroot) livecd / #" : "livecd ~ #";
+        return this.promptLine().text();
+    }
+
+    /** The same prompt in the colours each medium's shell really gives it. */
+    public CliLine promptLine() {
+        return LivePrompt.of(this.distro, this.files.inside(), this.files.cwdForPrompt());
+    }
+
+    /**
+     * The name the player gave the machine while installing it, empty when they gave none.
+     *
+     * <p>Given with the tool for it or written into the file that holds it, which is the same thing done two
+     * ways and both are how people do it.
+     */
+    public String chosenName() {
+        return this.settings.chosenName();
+    }
+
+    /** The packages the player asked for inside the new system, in the order they asked. */
+    public List<String> askedFor() {
+        return this.progress.askedFor();
+    }
+
+    /** The filesystem table the installation wrote, empty when it never wrote one. */
+    public String filesystemTable() {
+        final String table = this.files.read(this.files.inNewSystem("/etc/fstab"));
+        return table == null ? "" : table;
     }
 
     /** The host name the live medium reports. */
     public String hostname() {
-        return distro == Distro.ARCH ? "archiso" : "livecd";
+        return this.settings.mediumName();
     }
 
-    /** The tick the Gentoo kernel sources finish compiling, or -1 when no compile has started. */
-    public long kernelReadyAt() {
-        return kernelReadyAt;
+    /** How many jobs the build options ask for, which is one until somebody writes otherwise. */
+    public int makeJobs() {
+        return this.gentoo.makeJobs();
     }
 
-    /** Whether the Gentoo kernel is currently compiling (sources emerged, genkernel not yet possible). */
-    public boolean kernelCompiling(final long nowTick) {
-        return distro == Distro.GENTOO && kernelReadyAt >= 0 && !kernelBuilt && nowTick < kernelReadyAt;
+    /**
+     * The build options the installation wrote, empty for a distribution that has none or a file never written.
+     *
+     * <p>They belong to the system and not to the install: every package it builds from then on is built by them.
+     */
+    public String buildOptions() {
+        final String written = this.distro == Distro.GENTOO ? this.gentoo.buildOptions() : null;
+        return written == null ? "" : written;
     }
 
-    /** Runs one command line against the state. */
-    public Result run(final String line, final Env env) {
+    /** How long compiling the kernel takes on this machine, with what the build options ask of it. */
+    public long compileTicks(final Env env) {
+        return LiveTimes.compile(LiveTimes.KERNEL_WORK, LiveTimes.jobs(this.makeJobs(), env), env);
+    }
+
+    /**
+     * The file an editor started with those words would open, as it was typed, or null when they name nothing
+     * an editor can open: no file at all, or a directory.
+     *
+     * <p>The words are everything after the editor's name, so its options are among them and are passed over.
+     */
+    public String editable(final List<String> words) {
+        String file = "";
+        for (final String word : words) {
+            if (!word.startsWith("-") && !word.startsWith("+")) {
+                file = word;
+            }
+        }
+        return file.isEmpty() || this.files.isDir(this.files.resolve(file)) ? null : file;
+    }
+
+    /** A file of the session as somebody standing in it names it, for an editor; null when there is none. */
+    public String fileAt(final String typed) {
+        return this.files.read(this.files.resolve(typed));
+    }
+
+    /** Writes a file of the session, which is what an editor closed on it does. */
+    public void writeFileAt(final String typed, final String content) {
+        this.files.write(this.files.resolve(typed), content);
+    }
+
+    /** Runs one command line against the installation. */
+    public LiveTurn run(final String line, final Env env) {
         final String[] parts = line.trim().split("\\s+");
-        final String cmd = parts.length == 0 ? "" : parts[0].toLowerCase(Locale.ROOT);
-        final String arg1 = parts.length > 1 ? parts[1] : "";
-        return switch (cmd) {
-            case "lsblk" -> lsblk(env);
-            case "mkfs.ext4", "mkfs" -> mkfs(cmd.equals("mkfs") ? (parts.length > 2 ? parts[2] : "") : arg1, env);
-            case "mount" -> mount(arg1, parts.length > 2 ? parts[2] : "");
-            case "pacstrap" -> pacstrap(arg1, env);
-            case "tar" -> stage3(line, env);
-            case "genfstab" -> genfstab(line);
-            case "arch-chroot", "chroot" -> enterChroot(arg1);
-            case "emerge-webrsync", "emerge" -> emerge(line, env);
-            case "genkernel" -> genkernel(env);
-            case "grub-install" -> grub(arg1);
-            case "passwd" -> passwd();
-            case "exit" -> exit();
-            case "reboot" -> reboot();
-            case "help" -> help();
-            default -> Result.fail(cmd + ": command not found");
+        final String verb = parts.length == 0 ? "" : parts[0].toLowerCase(Locale.ROOT);
+        final String first = parts.length > 1 ? parts[1] : "";
+        return switch (verb) {
+            case "ls" -> this.files.ls(first);
+            case "cat" -> this.files.cat(first, false);
+            case "less", "more" -> this.files.cat(first, true);
+            case "cd" -> this.files.cd(first);
+            case "echo" -> this.files.echo(line.trim());
+            case "nano" -> this.nano(parts);
+            case "mkdir" -> this.mkdir(parts);
+            case "lsblk" -> this.files.redirected(line, this.disks.lsblk(env, this.distro == Distro.ARCH ? 1_126 : 749,
+                    this.distro == Distro.ARCH ? "/run/archiso/airootfs" : "/run/initramfs/live"));
+            case "blkid" -> this.files.redirected(line, this.disks.blkid(env));
+            case "fdisk" -> this.fdisk(first, env);
+            case "mkfs.fat", "mkfs.vfat" -> this.disks.mkfsFat(parts, env);
+            case "mkfs.ext4" -> this.disks.mkfsExt4(first, env);
+            case "mkfs" -> this.disks.mkfsExt4(parts.length > 2 ? parts[parts.length - 1] : "", env);
+            case "mount" -> this.disks.mount(parts, this.files);
+            case "umount", "source", "export", "env-update" -> LiveTurn.silent();
+            case "hwclock" -> this.settings.setClock();
+            case "arch-chroot", "chroot" -> this.enter(verb, first);
+            case "hostname" -> this.settings.hostname(parts);
+            case "grub-install" -> this.bootloader.install(parts, env);
+            case "grub-mkconfig" -> this.bootloader.config(line, env);
+            case "exit" -> this.exit();
+            case "reboot" -> this.reboot(env);
+            case "help" -> LiveTurn.said(LiveGuide.help(this.distro));
+            default -> this.distro == Distro.GENTOO ? this.gentooVerb(verb, parts, line, env)
+                    : this.archVerb(verb, parts, line, env);
         };
     }
 
-    private Result lsblk(final Env env) {
-        final List<String> out = new ArrayList<>();
-        out.add("NAME   TYPE  MOUNTPOINT");
-        if (env.devices().isEmpty()) {
-            out.add("(no disks detected)");
-        }
-        for (int i = 0; i < env.devices().size(); i++) {
-            final String name = env.devices().get(i);
-            final String mp = mounted && name.equals(device) ? "/mnt" : "";
-            out.add(String.format(Locale.ROOT, "%-6s disk  %s", name, mp));
-        }
-        return new Result(true, out, false);
+    public String serialize() {
+        final LiveSaved out = new LiveSaved();
+        out.put("distro", this.distro.serializedName());
+        this.files.save(out);
+        this.disks.save(out);
+        this.progress.save(out);
+        return out.write();
     }
 
-    private static String deviceName(final String arg) {
-        return arg.startsWith("/dev/") ? arg.substring(5) : arg;
+    public static LiveInstallState deserialize(final String written) {
+        final LiveSaved saved = LiveSaved.read(written);
+        final Distro distro = Distro.find(saved.text("distro", ""));
+        if (distro == null) {
+            return null;
+        }
+        final LiveInstallState state = new LiveInstallState(distro);
+        state.files.load(saved);
+        state.disks.load(saved);
+        state.progress.load(saved);
+        return state;
     }
 
-    private Result mkfs(final String arg, final Env env) {
-        final String dev = deviceName(arg);
+    private LiveTurn gentooVerb(final String verb, final String[] parts, final String line, final Env env) {
+        return switch (verb) {
+            case "wget" -> this.gentoo.wget(parts, env);
+            case "tar" -> this.gentoo.tar(parts, line, env);
+            case "emerge", "emerge-webrsync" -> this.gentoo.emerge(parts, line, env);
+            case "eselect" -> this.gentoo.eselect(parts);
+            case "genkernel" -> this.gentoo.genkernel(env);
+            case "make" -> this.gentoo.make(line.trim(), env);
+            default -> LiveTurn.refused("bash: " + verb + ": command not found");
+        };
+    }
+
+    private LiveTurn archVerb(final String verb, final String[] parts, final String line, final Env env) {
+        return switch (verb) {
+            case "pacstrap" -> this.arch.pacstrap(parts, env);
+            case "genfstab" -> this.arch.genfstab(line, env);
+            case "pacman" -> this.arch.pacman(parts, env);
+            case "mkinitcpio" -> this.arch.mkinitcpio(env);
+            default -> LiveTurn.refused("zsh: command not found: " + verb);
+        };
+    }
+
+    /** Opens the partition editor on a disk, which takes the terminal over until it is written or left. */
+    private LiveTurn fdisk(final String arg, final Env env) {
+        final String dev = LiveDisks.deviceName(arg);
         if (dev.isEmpty()) {
-            return Result.fail("Usage: mkfs.ext4 /dev/<device>");
+            return LiveTurn.refused("fdisk: bad usage", "Try 'fdisk --help' for more information.");
         }
-        if (!env.devices().contains(dev)) {
-            return Result.fail("mke2fs: No such file or directory while trying to determine filesystem size");
+        final Device disk = env.find(dev);
+        if (disk == null) {
+            return LiveTurn.refused("fdisk: cannot open /dev/" + dev + ": No such file or directory");
         }
-        device = dev;
-        formatted = true;
-        mounted = false;
-        base = false;
-        return Result.pass("mke2fs 1.47 (JSC)", "Creating filesystem on /dev/" + dev, "Writing superblocks and filesystem accounting information: done");
+        return LiveTurn.running(new FdiskProcess(this.disks, dev, disk.sizeMb()));
     }
 
-    private Result mount(final String arg, final String point) {
-        final String dev = deviceName(arg);
-        if (dev.isEmpty() || point.isEmpty()) {
-            return Result.fail("mount: bad usage", "Try 'mount /dev/<device> /mnt'.");
+    /**
+     * The editor, which says nothing when it opens: the shell gives it the terminal, and whatever it has to
+     * say from then on it says on its own glass. What is answered here is only why it would not open.
+     */
+    private LiveTurn nano(final String[] parts) {
+        final List<String> words = List.of(parts).subList(1, parts.length);
+        if (this.editable(words) != null) {
+            return LiveTurn.silent();
         }
-        if (!point.equals("/mnt")) {
-            return Result.fail("mount: " + point + ": mount point does not exist.");
+        for (final String word : words) {
+            if (!word.startsWith("-") && !word.startsWith("+")) {
+                return LiveTurn.refused("nano: " + word + " is a directory");
+            }
         }
-        if (!formatted || !dev.equals(device)) {
-            return Result.fail("mount: /mnt: wrong fs type, bad option, bad superblock on /dev/" + dev + ".",
-                    "       (format it first: mkfs.ext4 /dev/" + dev + ")");
-        }
-        mounted = true;
-        return Result.pass();
+        return LiveTurn.refused("Usage: nano [OPTIONS] [[+LINE[,COLUMN]] FILE]...");
     }
 
-    private Result pacstrap(final String point, final Env env) {
-        if (distro != Distro.ARCH) {
-            return Result.fail("pacstrap: command not found");
+    private LiveTurn mkdir(final String[] parts) {
+        for (int i = 1; i < parts.length; i++) {
+            if (!parts[i].startsWith("-")) {
+                this.files.makeDir(this.files.resolve(parts[i]));
+            }
         }
-        if (!point.equals("/mnt") || !mounted) {
-            return Result.fail("==> ERROR: '/mnt' is not a mountpoint!");
-        }
-        if (!env.mirror()) {
-            return Result.fail("error: failed retrieving file 'core.db' from mirror://mainframe : Could not resolve host",
-                    "error: failed to synchronize all databases (unexpected error)");
-        }
-        base = true;
-        return Result.pass("==> Creating install root at /mnt", ":: Synchronizing package databases (mirror://mainframe)",
-                ":: Installing base linux ... done", "pacstrap: installation complete");
+        return LiveTurn.silent();
     }
 
-    private Result stage3(final String line, final Env env) {
-        if (distro != Distro.GENTOO) {
-            return Result.fail("tar: stage3: Cannot open: No such file or directory");
+    /** Steps into the new system, by whichever of the two tools this distribution uses for it. */
+    private LiveTurn enter(final String verb, final String point) {
+        if (verb.equals("arch-chroot") && this.distro != Distro.ARCH) {
+            return LiveTurn.refused("bash: arch-chroot: command not found");
         }
-        if (!line.contains("stage3")) {
-            return Result.fail("tar: Cowardly refusing to create an empty archive");
+        if (!point.equals(this.files.root())) {
+            return LiveTurn.refused("chroot: cannot change root directory to '" + point
+                    + "': No such file or directory");
         }
-        if (!mounted) {
-            return Result.fail("tar: /mnt: Cannot open: Not a mountpoint");
+        if (!this.progress.base) {
+            return LiveTurn.refused("chroot: failed to run command '/bin/bash': No such file or directory");
         }
-        if (!env.mirror()) {
-            return Result.fail("tar: stage3-amd64.tar.xz: Cannot open: mirror://mainframe could not be resolved");
-        }
-        base = true;
-        return Result.pass("Unpacking stage3 into /mnt ... done");
+        this.files.enter();
+        return LiveTurn.silent();
     }
 
-    private Result genfstab(final String line) {
-        if (distro != Distro.ARCH) {
-            return Result.fail("genfstab: command not found");
+    private LiveTurn exit() {
+        if (!this.files.inside()) {
+            return LiveTurn.said("logout");
         }
-        if (!base) {
-            return Result.fail("genfstab: /mnt/etc does not exist (install the base system first)");
-        }
-        if (!line.contains("/mnt")) {
-            return Result.fail("Usage: genfstab -U /mnt >> /mnt/etc/fstab");
-        }
-        fstab = true;
-        return Result.pass("# /dev/" + device, "UUID=jsc-" + device + "  /  ext4  rw,relatime  0 1");
+        this.files.leave();
+        return LiveTurn.said("exit");
     }
 
-    private Result enterChroot(final String point) {
-        if (!point.equals("/mnt")) {
-            return Result.fail("chroot: cannot change root directory to '" + point + "': No such file or directory");
+    /** Restarts into the new system, or says everything that would stop it coming up. */
+    private LiveTurn reboot(final Env env) {
+        if (this.files.inside()) {
+            return LiveTurn.refused("reboot: you are inside the new system. exit first.");
         }
-        if (!base) {
-            return Result.fail("chroot: failed to run command '/bin/bash': No such file or directory");
-        }
-        chroot = true;
-        return Result.pass();
-    }
-
-    private Result emerge(final String line, final Env env) {
-        if (distro != Distro.GENTOO) {
-            return Result.fail("emerge: command not found");
-        }
-        if (!chroot) {
-            return Result.fail("emerge: this must be run inside the new system (chroot /mnt)");
-        }
-        if (!env.mirror()) {
-            return Result.fail("!!! Could not resolve mirror://mainframe", "!!! Synchronization failed");
-        }
-        if (line.startsWith("emerge-webrsync") || line.contains("--sync")) {
-            synced = true;
-            return Result.pass(">>> Synchronizing the portage tree from mirror://mainframe ... done");
-        }
-        if (!synced) {
-            return Result.fail("!!! The portage tree is empty. Run emerge-webrsync or emerge --sync first.");
-        }
-        if (line.contains("gentoo-sources")) {
-            kernelReadyAt = env.now() + env.kernelBuildTicks();
-            return Result.pass(">>> Emerging (1 of 1) sys-kernel/gentoo-sources", ">>> Compiling ... (about "
-                    + (env.kernelBuildTicks() / 20) + "s; run genkernel when it finishes)");
-        }
-        return Result.pass(">>> Emerging " + line.substring("emerge".length()).trim() + " ... done");
-    }
-
-    private Result genkernel(final Env env) {
-        if (distro != Distro.GENTOO) {
-            return Result.fail("genkernel: command not found");
-        }
-        if (!chroot) {
-            return Result.fail("genkernel: this must be run inside the new system (chroot /mnt)");
-        }
-        if (kernelReadyAt < 0) {
-            return Result.fail("* ERROR: no kernel sources found. emerge sys-kernel/gentoo-sources first.");
-        }
-        if (env.now() < kernelReadyAt) {
-            return Result.fail("* kernel sources are still compiling (" + ((kernelReadyAt - env.now()) / 20) + "s left)");
-        }
-        kernelBuilt = true;
-        return Result.pass("* Gentoo Linux Genkernel", "* kernel: >> Compiling 6.8-jsc bzImage ... done", "* Kernel compiled successfully!");
-    }
-
-    private Result grub(final String arg) {
-        if (!chroot) {
-            return Result.fail("grub-install: error: cannot find EFI directory (run this inside the new system).");
-        }
-        final String dev = deviceName(arg);
-        if (!dev.equals(device)) {
-            return Result.fail("grub-install: error: cannot find a device for /dev/" + (dev.isEmpty() ? "?" : dev) + ".");
-        }
-        if (distro == Distro.GENTOO && !kernelBuilt) {
-            return Result.fail("grub-install: error: no kernel image found in /boot (run genkernel first).");
-        }
-        bootloader = true;
-        return Result.pass("Installing for i386-pc platform.", "Installation finished. No error reported.");
-    }
-
-    private Result passwd() {
-        if (!chroot) {
-            return Result.fail("passwd: you are changing the live medium's password, not the new system's (chroot /mnt first)");
-        }
-        password = true;
-        return Result.pass("passwd: password updated successfully");
-    }
-
-    private Result exit() {
-        if (!chroot) {
-            return Result.pass("logout");
-        }
-        chroot = false;
-        return Result.pass();
-    }
-
-    private Result reboot() {
-        if (chroot) {
-            return Result.fail("reboot: you are inside the chroot. exit first.");
-        }
-        final List<String> missing = new ArrayList<>();
-        if (!base) {
-            missing.add("no base system installed");
-        }
-        if (distro == Distro.ARCH && !fstab) {
-            missing.add("no fstab (genfstab)");
-        }
-        if (distro == Distro.GENTOO && !kernelBuilt) {
-            missing.add("no kernel (genkernel)");
-        }
-        if (!bootloader) {
-            missing.add("no bootloader (grub-install)");
-        }
-        if (!password) {
-            missing.add("no root password (passwd)");
-        }
+        final List<String> missing = new ArrayList<>(LiveChecklist.missing(this.distro, this.progress,
+                this.distro == Distro.GENTOO && this.gentoo.fstabNamesARoot(), this.disks, this.chosenName(),
+                env.everyStep()));
         if (!missing.isEmpty()) {
             final List<String> out = new ArrayList<>();
             out.add("The new system will not boot:");
-            for (final String m : missing) {
-                out.add("  - " + m);
+            for (final String each : missing) {
+                out.add("  - " + each);
             }
-            return new Result(false, out, false);
+            return LiveTurn.refused(out.toArray(String[]::new));
         }
-        return new Result(true, List.of("Rebooting into the new system ..."), true);
-    }
-
-    private Result help() {
-        return distro == Distro.ARCH
-                ? Result.pass("lsblk | mkfs.ext4 /dev/sdX | mount /dev/sdX /mnt | pacstrap /mnt base linux",
-                        "genfstab -U /mnt >> /mnt/etc/fstab | arch-chroot /mnt | grub-install /dev/sdX | passwd | exit | reboot")
-                : Result.pass("lsblk | mkfs.ext4 /dev/sdX | mount /dev/sdX /mnt | tar xpf stage3-amd64.tar.xz -C /mnt",
-                        "chroot /mnt | emerge --sync | emerge sys-kernel/gentoo-sources | genkernel all",
-                        "grub-install /dev/sdX | passwd | exit | reboot");
-    }
-
-    // persistence (a compact key=value string, so the console state stays free of NBT here)
-
-    public String serialize() {
-        return distro.name() + ";" + device + ";" + (formatted ? 1 : 0) + ";" + (mounted ? 1 : 0) + ";" + (base ? 1 : 0)
-                + ";" + (fstab ? 1 : 0) + ";" + (chroot ? 1 : 0) + ";" + (synced ? 1 : 0) + ";" + kernelReadyAt + ";"
-                + (kernelBuilt ? 1 : 0) + ";" + (bootloader ? 1 : 0) + ";" + (password ? 1 : 0);
-    }
-
-    public static LiveInstallState deserialize(final String s) {
-        final String[] p = s.split(";", -1);
-        if (p.length < 12) {
-            return null;
-        }
-        final LiveInstallState st = new LiveInstallState(Distro.valueOf(p[0]));
-        st.device = p[1];
-        st.formatted = p[2].equals("1");
-        st.mounted = p[3].equals("1");
-        st.base = p[4].equals("1");
-        st.fstab = p[5].equals("1");
-        st.chroot = p[6].equals("1");
-        st.synced = p[7].equals("1");
-        st.kernelReadyAt = Long.parseLong(p[8]);
-        st.kernelBuilt = p[9].equals("1");
-        st.bootloader = p[10].equals("1");
-        st.password = p[11].equals("1");
-        return st;
+        return LiveTurn.finished("Rebooting into the new system ...");
     }
 }

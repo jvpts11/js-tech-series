@@ -37,6 +37,13 @@ public record ThisPcPayload(WireMachine machine, List<WireDisk> disks, List<Wire
                     ByteBufCodecs.stringUtf8(96).apply(ByteBufCodecs.list(MAX)), ThisPcPayload::installedPrograms,
                     ThisPcPayload::new);
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public ThisPcPayload {
+        disks = List.copyOf(disks);
+        media = List.copyOf(media);
+        installedPrograms = List.copyOf(installedPrograms);
+    }
+
     @Override
     public CustomPacketPayload.Type<ThisPcPayload> type() {
         return TYPE;
@@ -54,6 +61,7 @@ public record ThisPcPayload(WireMachine machine, List<WireDisk> disks, List<Wire
      * @param boardLabel   the motherboard's name, or empty
      * @param cpuLabel     the processor's name with its clock, or empty
      * @param cpuCount     how many processors are seated
+     * @param cpuArch      the architecture the processors are built on, ready to read, or empty
      * @param ramMb        installed memory
      * @param vramMb       installed video memory
      * @param gpuCount     how many graphics cards are seated
@@ -63,13 +71,13 @@ public record ThisPcPayload(WireMachine machine, List<WireDisk> disks, List<Wire
      */
     public record WireMachine(String name, String kind, String era, String osLabel, int osYear,
                               String networkLabel, String boardLabel, String cpuLabel, int cpuCount,
-                              int ramMb, int vramMb, int gpuCount, String psuLabel, boolean buildValid,
-                              String peripherals) {
+                              String cpuArch, int ramMb, int vramMb, int gpuCount, String psuLabel,
+                              boolean buildValid, String peripherals) {
 
-        public static final WireMachine EMPTY = new WireMachine("", "", "", "", 0, "", "", "", 0, 0, 0, 0, "",
+        public static final WireMachine EMPTY = new WireMachine("", "", "", "", 0, "", "", "", 0, "", 0, 0, 0, "",
                 false, "");
 
-        // Written by hand: composite() tops out at six pairs, and the card carries fifteen fields.
+        // Written by hand: composite() tops out at six pairs, and the card carries sixteen fields.
         public static final StreamCodec<RegistryFriendlyByteBuf, WireMachine> STREAM_CODEC =
                 StreamCodec.of((buf, m) -> {
                     buf.writeUtf(m.name(), 96);
@@ -81,6 +89,7 @@ public record ThisPcPayload(WireMachine machine, List<WireDisk> disks, List<Wire
                     buf.writeUtf(m.boardLabel(), 96);
                     buf.writeUtf(m.cpuLabel(), 96);
                     buf.writeVarInt(m.cpuCount());
+                    buf.writeUtf(m.cpuArch(), 48);
                     buf.writeVarInt(m.ramMb());
                     buf.writeVarInt(m.vramMb());
                     buf.writeVarInt(m.gpuCount());
@@ -89,8 +98,8 @@ public record ThisPcPayload(WireMachine machine, List<WireDisk> disks, List<Wire
                     buf.writeUtf(m.peripherals(), 256);
                 }, buf -> new WireMachine(buf.readUtf(96), buf.readUtf(48), buf.readUtf(32), buf.readUtf(64),
                         buf.readVarInt(), buf.readUtf(64), buf.readUtf(96), buf.readUtf(96), buf.readVarInt(),
-                        buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readUtf(96), buf.readBoolean(),
-                        buf.readUtf(256)));
+                        buf.readUtf(48), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readUtf(96),
+                        buf.readBoolean(), buf.readUtf(256)));
     }
 
     /**
@@ -135,9 +144,9 @@ public record ThisPcPayload(WireMachine machine, List<WireDisk> disks, List<Wire
      * One drive linked to the computer, with whatever medium is in it.
      *
      * @param readerPos   the drive block's packed position
-     * @param drive       the drive type name (e.g. CD_DRIVE)
+     * @param drive       the drive type's serialized name (e.g. cd_drive)
      * @param mediaName   the medium's display name, or empty for an empty drive
-     * @param kind        the media kind (OS_INSTALL / PROGRAM_INSTALL / DATA / empty when none)
+     * @param kind        the media kind's serialized name (os_install / program_install / data, empty when none)
      * @param payloadPath the OS/program id carried, or empty
      * @param installable true if this is an installer whose software is not yet installed here
      * @param payloadName what the medium installs, by name, or empty

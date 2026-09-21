@@ -1,0 +1,68 @@
+using System.*;
+using System.IO.*;
+using System.Collections.*;
+using System.Network.*;
+using System.Operations.*;
+using System.Execution.*;
+namespace Corpus;
+class NetworkCorpus {
+    static void Main() {
+        bool online = Network.Online;
+        string current = Network.Current;
+        long stored = Network.Capacity + Network.Used + Network.Total("minecraft:iron_ingot");
+        List<string> types = Network.Types();
+        Console.PrintLine("" + online + current + stored + types.Count);
+        foreach (HoldingInfo holding in Network.Find("minecraft:iron_ingot")) {
+            Console.PrintLine(holding.Server + holding.Quantity);
+        }
+        foreach (ServerInfo server in Network.Servers()) {
+            Console.PrintLine(server.Name + server.Stored + server.Capacity);
+        }
+        Subscription any = Network.Watch("minecraft:iron_ingot", Told);
+        Subscription below = Network.WatchBelow("minecraft:iron_ingot", 10, Told);
+        Subscription above = Network.WatchAbove("minecraft:iron_ingot", 100, Told);
+        Console.PrintLine("" + any.Id + any.Item + below.Id + above.Id);
+
+        RemoteComputer desk = Network.Computer("desk");
+        List<RemoteComputer> all = Network.Computers();
+        Console.PrintLine(desk.Host + desk.Name + desk.Type + desk.Os + desk.Online + all.Count);
+        List<string> args = new List<string>();
+        Process one = desk.Start("C:\\tool.asm");
+        Process two = desk.Start("C:\\tool.asm", args);
+        Process three = desk.Start("C:\\tool.asm", args, "lab");
+        List<string> shell = desk.Shell("dir");
+        bool sent = desk.Send(one.Id, "hi");
+        List<Process> processes = desk.Processes();
+        Console.PrintLine("" + two.Id + three.Id + shell.Count + sent + processes.Count);
+
+        IqlResult result = Iql.Run("QUERY items");
+        List<Map<string, object>> rows = Iql.Query("QUERY items");
+        IqlResult exec = Iql.Exec("restock");
+        IqlResult execWith = Iql.Exec("restock", args);
+        IqlResult file = Iql.RunFile("C:\\job.iql");
+        Console.PrintLine("" + result.Ok + result.Message + result.Rows.Count + rows.Count);
+        Console.PrintLine("" + exec.Ok + execWith.Ok + file.Ok);
+
+        bool mainframe = Mainframe.Online;
+        int peak = Mainframe.PeakToday;
+        WorkStat stat = Mainframe.Stats("PULL");
+        List<WorkStat> work = Mainframe.Work();
+        Console.PrintLine("" + mainframe + peak + stat.Type + stat.Count + stat.AverageWait + stat.AverageRun);
+        Console.PrintLine("" + stat.ShortfallPercent + stat.Moved + work.Count);
+
+        AskResult pulled = Operations.Pull("minecraft:oak_log", 64);
+        AskResult pushed = Operations.Push("minecraft:oak_log", 64);
+        AskResult crafted = Operations.Craft("minecraft:stick", 4);
+        AskResult cancelled = Operations.Cancel("op-1");
+        AskResult raised = Operations.Reprioritise("op-1", "HIGH");
+        OperationInfo info = Operations.Get("op-1");
+        List<OperationInfo> list = Operations.List();
+        Console.PrintLine("" + pulled.Ok + pulled.Message + pushed.Ok + crafted.Ok + cancelled.Ok + raised.Ok);
+        Console.PrintLine(info.Id + info.Type + info.Item + info.Moved + info.Requested + info.Status + info.Priority);
+        Console.PrintLine("" + list.Count);
+    }
+
+    static void Told(StockEvent told) {
+        Console.PrintLine(told.Item + told.Total + told.Previous);
+    }
+}

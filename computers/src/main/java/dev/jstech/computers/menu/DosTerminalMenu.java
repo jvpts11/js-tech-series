@@ -8,6 +8,7 @@
 package dev.jstech.computers.menu;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -22,16 +23,16 @@ import org.jetbrains.annotations.Nullable;
 public class DosTerminalMenu extends CommandPromptMenu {
 
     public DosTerminalMenu(final int containerId, final Inventory playerInventory, final BlockPos monitorPos,
-                           final BlockPos hostPos, @Nullable final HardwareEra era, final String shellId,
-                           final String hostname, final String osLabel) {
+                           final BlockPos hostPos, @Nullable final HardwareEra era,
+                           final ConsoleIdentity console, final long session) {
         super(ComputingModule.DOS_TERMINAL_MENU.get(), containerId, playerInventory, monitorPos, hostPos,
-                era, shellId, hostname, osLabel);
+                era, console, session);
     }
 
     public static DosTerminalMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                               final RegistryFriendlyByteBuf buf) {
         final OpenData data = readOpenBuffer(buf);
         return new DosTerminalMenu(containerId, playerInventory, data.monitor(), data.host(), data.era(),
-                data.shellId(), data.hostname(), data.osLabel());
+                data.console(), data.session());
     }
 }

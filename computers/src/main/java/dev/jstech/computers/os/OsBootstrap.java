@@ -7,23 +7,28 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.computers.os.install.InstallerStyle;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.SubscribeEvent;
 
 import static dev.jstech.core.tier.HardwareEra.LEGACY;
 import static dev.jstech.core.tier.HardwareEra.STANDARD;
 import static dev.jstech.core.tier.HardwareEra.VINTAGE;
+import dev.jstech.computers.api.ComputersRegisterEvent;
+import dev.jstech.computers.api.JsComputersApi;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 
 import java.util.Optional;
 
 /**
- * Registers the built-in kernels and operating systems during the common-setup phase.
+ * The kernels, operating systems, desktops and programs the mod brings of its own.
  *
- * <p>All registrations go through {@link JSComputersAPI} so the built-in entries exercise the
- * same public addon path that third-party developers use.
+ * <p>Every one of them is added the way an addon adds one, by listening for the same event, so the way in
+ * is the one that is tried every time the game starts rather than a path only addons take.
  */
 @EventBusSubscriber(modid = "jsc", bus = EventBusSubscriber.Bus.MOD)
 public final class OsBootstrap {
@@ -31,8 +36,8 @@ public final class OsBootstrap {
     private OsBootstrap() {}
 
     @SubscribeEvent
-    public static void onCommonSetup(FMLCommonSetupEvent event) {
-        event.enqueueWork(OsBootstrap::registerBuiltins);
+    public static void onRegister(final ComputersRegisterEvent event) {
+        registerBuiltins();
     }
 
     // Built-in registrations
@@ -41,6 +46,7 @@ public final class OsBootstrap {
         registerKernels();
         registerOses();
         registerDesktops();
+        registerSpaces();
         registerPrograms();
     }
 
@@ -49,16 +55,33 @@ public final class OsBootstrap {
      * from one source. dos = MS-DOS 2.0+ (real directories); win9x = cooperative; nt = preemptive (XP + 11);
      * net_min = the minimal network kernel with no scheduler or filesystem.
      */
-    private static final java.util.List<KernelDef> BUILTIN_KERNELS = java.util.List.of(
+    private static final List<KernelDef> BUILTIN_KERNELS = List.of(
             new KernelDef(rl("dos"), SchedulerKind.NONE, FilesystemKind.HIERARCHICAL, ShellFamily.DOS),
             new KernelDef(rl("win9x"), SchedulerKind.COOPERATIVE, FilesystemKind.HIERARCHICAL, ShellFamily.DOS),
             new KernelDef(rl("nt"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.DOS),
-            new KernelDef(rl("net_min"), SchedulerKind.NONE, FilesystemKind.NONE, ShellFamily.DOS),
+            /*
+             * The network kernel: one task at a time, and a flat store of files with no folders in it. Flat
+             * rather than none, because a network appliance that cannot keep a file cannot keep the pattern
+             * that teaches its network a recipe, nor the file that starts itself. Flat rather than a tree,
+             * because a bag of files beside a GUI that is the whole network is what this machine is, where
+             * MC-DOS of the same age is a personal computer with folders.
+             */
+            new KernelDef(rl("net_min"), SchedulerKind.NONE, FilesystemKind.FLAT, ShellFamily.NET),
             /*
              * The Linux kernel: preemptive, a single rooted hierarchical filesystem, and POSIX shell syntax.
              * Public through the addon API, so any add-on distribution built on it speaks bash for free.
              */
-            new KernelDef(rl("linux"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.POSIX));
+            new KernelDef(rl("linux"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.POSIX),
+            /*
+             * FreeBSD's own kernel. To a player at a prompt it reads the same as the one above, and that is
+             * the whole of what they share: nothing built for one runs on the other.
+             */
+            new KernelDef(rl("freebsd"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.POSIX),
+            /*
+             * System V's kernel: the one here that ran several programs at once on a machine of the first age,
+             * and the oldest thing in this list that a Unix prompt is met on.
+             */
+            new KernelDef(rl("unix"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.POSIX));
 
     /**
      * The built-in operating systems, in install order. A static list (built eagerly) so datagen (lang and the
@@ -69,7 +92,7 @@ public final class OsBootstrap {
      * disk it lands on (1 MB an item at 16 bits, 16 MB at 32, 256 MB at 64). MC-DOS fills a fifth of a
      * 20 MB vintage drive; Frames 11 is 80 items of a standard disk and will not fit a vintage one at all.
      */
-    private static final java.util.List<OsDef> BUILTIN_OSES = java.util.List.of(
+    private static final List<OsDef> BUILTIN_OSES = List.of(
             /*
              * MC-DOS: terminal-only CLI shell from the Vintage era.
              * Each system also says the RAM it holds for itself while running (withRam): a fifth of a
@@ -77,17 +100,26 @@ public final class OsBootstrap {
              * a good part of a gigabyte for Frames 11. Its bundled programs weigh a quarter of that each.
              */
             OsDef.mediaInstalled(rl("mc_dos"), OsCapability.TERMINAL_ONLY, HardwareEra.VINTAGE, rl("dos"), 4,
-                    Platform.MC_DOS, "MC-DOS", Optional.empty(), SoftwareHouse.MIDSOFT).withRam(1),
+                    Platform.MC_DOS, "MC-DOS", Optional.empty(), SoftwareHouse.MIDSOFT).withRam(1)
+                    .withInstaller(InstallerStyle.MC_DOS),
             // MC-NET: full-screen network GUI (the rewrapped network interactor), from the Vintage era.
             OsDef.mediaInstalled(rl("mc_net"), OsCapability.NETWORK_GUI, HardwareEra.VINTAGE, rl("net_min"), 8,
-                    Platform.MC_NET, "MC-NET", Optional.empty(), SoftwareHouse.NOUVELL).withRam(2),
-            // The Frames editions bundle their own desktop environment (the id doubles as the DE id).
+                    Platform.MC_NET, "MC-NET", Optional.empty(), SoftwareHouse.NOUVELL).withRam(2)
+                    .withInstaller(InstallerStyle.MC_NET),
+            /*
+             * The Frames editions bundle their own desktop environment (the id doubles as the DE id), and they
+             * are the one family here with an order to it: each says where it sits (withRank), so a program can
+             * ask for XP or newer without anything but these three lines knowing which is newer than which.
+             */
             OsDef.mediaInstalled(rl("frames_95"), OsCapability.FULL_DESKTOP, HardwareEra.LEGACY, rl("win9x"), 48,
-                    Platform.FRAMES, "Frames 95", Optional.of(rl("frames_95")), SoftwareHouse.MIDSOFT).withRam(16),
+                    Platform.FRAMES, "Frames 95", Optional.of(rl("frames_95")), SoftwareHouse.MIDSOFT).withRam(16)
+                    .withInstaller(InstallerStyle.FRAMES_95).withRank(1),
             OsDef.mediaInstalled(rl("frames_xp"), OsCapability.FULL_DESKTOP, HardwareEra.LEGACY, rl("nt"), 1_536,
-                    Platform.FRAMES, "Frames XP", Optional.of(rl("frames_xp")), SoftwareHouse.MIDSOFT).withRam(64),
+                    Platform.FRAMES, "Frames XP", Optional.of(rl("frames_xp")), SoftwareHouse.MIDSOFT).withRam(64)
+                    .withInstaller(InstallerStyle.FRAMES_XP).withRank(2),
             OsDef.mediaInstalled(rl("frames_11"), OsCapability.FULL_DESKTOP, HardwareEra.STANDARD, rl("nt"), 20_480,
-                    Platform.FRAMES, "Frames 11", Optional.of(rl("frames_11")), SoftwareHouse.MIDSOFT).withRam(768),
+                    Platform.FRAMES, "Frames 11", Optional.of(rl("frames_11")), SoftwareHouse.MIDSOFT).withRam(768)
+                    .withInstaller(InstallerStyle.FRAMES_11).withRank(3),
 
             /*
              * Linux distributions: all on the Linux kernel, all boot to a bash TTY until a desktop environment
@@ -98,15 +130,31 @@ public final class OsBootstrap {
              * weighs on top of it (the desktop environments below say how much).
              */
             OsDef.linuxDistro(rl("ubuntu"), 8_192, "Ubuntu", "bash", PackageManagerKind.APT, InstallMode.GUIDED,
-                    SoftwareHouse.AXIOMATIC).withRam(48),
+                    SoftwareHouse.AXIOMATIC).withRam(48).withInstaller(InstallerStyle.UBUNTU),
             OsDef.linuxDistro(rl("debian"), 4_096, "Debian", "bash", PackageManagerKind.APT, InstallMode.GUIDED,
-                    SoftwareHouse.DEBIAN_CIRCLE).withRam(24),
+                    SoftwareHouse.DEBIAN_CIRCLE).withRam(24).withInstaller(InstallerStyle.DEBIAN),
             OsDef.linuxDistro(rl("fedora"), 8_192, "Fedora", "bash", PackageManagerKind.DNF, InstallMode.GUIDED,
-                    SoftwareHouse.RED_CAP).withRam(48),
+                    SoftwareHouse.RED_CAP).withRam(48).withInstaller(InstallerStyle.FEDORA),
             OsDef.linuxDistro(rl("arch"), 2_048, "Arch Linux", "zsh", PackageManagerKind.PACMAN, InstallMode.LIVE_MANUAL,
                     SoftwareHouse.ARCH_COLLECTIVE).withRam(12),
             OsDef.linuxDistro(rl("gentoo"), 4_096, "Gentoo", "bash", PackageManagerKind.EMERGE, InstallMode.SOURCE,
-                    SoftwareHouse.GENTOO_FOUNDRY).withRam(12)
+                    SoftwareHouse.GENTOO_FOUNDRY).withRam(12),
+            /*
+             * FreeBSD: the solid server and the lean daily driver. It asks for a machine of the Legacy age at
+             * least and runs on every one after, it takes less memory than any distribution so the same
+             * machine keeps more for its programs, and it comes up at a terminal until a desktop is installed.
+             */
+            OsDef.terminalSystem(rl("freebsd"), rl("freebsd"), Platform.FREEBSD, HardwareEra.LEGACY, 2_048,
+                    "FreeBSD", "sh", PackageManagerKind.PKG, InstallMode.GUIDED, SoftwareHouse.DAEMON_FOUNDATION)
+                    .withRam(16),
+            /*
+             * UNIX System V: the one system of the first age that runs several programs at once, in ten
+             * megabytes of disk and two of memory. It has no Mirror to install from, only media, which is the
+             * price of what it can do on a machine that small.
+             */
+            OsDef.terminalSystem(rl("unix"), rl("unix"), Platform.UNIX, HardwareEra.VINTAGE, 10,
+                    "UNIX System V", "sh", PackageManagerKind.NONE, InstallMode.GUIDED, SoftwareHouse.BELLWETHER_LABS)
+                    .withRam(2)
             /*
              * OS case (c): PDA/Tablet/Smartphone portables ship with a factory mobile OS. Those item/block
              * types do not exist yet; register the mobile OS here once they do.
@@ -114,24 +162,24 @@ public final class OsBootstrap {
     );
 
     /** The built-in kernels, so datagen and tooling read them from one source. */
-    public static java.util.List<KernelDef> builtinKernels() {
+    public static List<KernelDef> builtinKernels() {
         return BUILTIN_KERNELS;
     }
 
     /** The built-in operating systems, so datagen (lang, install media) reads them from one source. */
-    public static java.util.List<OsDef> builtinOses() {
+    public static List<OsDef> builtinOses() {
         return BUILTIN_OSES;
     }
 
     private static void registerKernels() {
         for (final KernelDef kernel : BUILTIN_KERNELS) {
-            JSComputersAPI.registerKernel(kernel);
+            JsComputersApi.registerKernel(kernel);
         }
     }
 
     private static void registerOses() {
         for (final OsDef os : BUILTIN_OSES) {
-            JSComputersAPI.registerOS(os);
+            JsComputersApi.registerOperatingSystem(os);
         }
     }
 
@@ -139,53 +187,113 @@ public final class OsBootstrap {
      * Desktop apps that run under any desktop environment: the Frames editions and a Linux desktop alike. On
      * Frames they arrive on install media; on Linux the same programs are packages the Mirror serves.
      */
-    private static final java.util.Set<Platform> DESKTOPS = java.util.Set.of(Platform.FRAMES, Platform.LINUX);
-    private static final java.util.Set<Platform> LINUX_ONLY = java.util.Set.of(Platform.LINUX);
-    private static final java.util.Set<Platform> FRAMES_ONLY = java.util.Set.of(Platform.FRAMES);
+    private static final Set<Platform> DESKTOPS =
+            Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD, Platform.UNIX);
+    /**
+     * The same without UNIX, for the few desktop programs written for machines later than any UNIX desktop
+     * reaches: the automation front-end, which asks for the newest Frames, and the two later code editors.
+     */
+    private static final Set<Platform> LATER_DESKTOPS = Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD);
+    private static final Set<Platform> LINUX_ONLY = Set.of(Platform.LINUX);
+    /**
+     * Where CDE runs: on UNIX, which has no other desktop, and on FreeBSD and the Linux distributions beside the
+     * ones they already take. It was written for the Unix workstations and has been built for the others since.
+     */
+    private static final Set<Platform> CDE_SYSTEMS = Set.of(Platform.UNIX, Platform.FREEBSD, Platform.LINUX);
+    /**
+     * What is made for the systems met at a Unix prompt, whichever of them it is: the desktop environments and
+     * the small tools the Mirror serves. FreeBSD takes all of it from its own packages and ports.
+     */
+    private static final Set<Platform> LINUX_AND_FREEBSD = Set.of(Platform.LINUX, Platform.FREEBSD);
+    private static final Set<Platform> FRAMES_ONLY = Set.of(Platform.FRAMES);
 
     /** The nine built-in desktop apps every desktop environment can bundle, in rail order. */
-    private static final java.util.List<ResourceLocation> BUILTIN_APPS = java.util.List.of(
+    private static final List<ResourceLocation> BUILTIN_APPS = List.of(
             rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
             rl("system_monitor"), rl("calculator"), rl("network_manager"));
+
+    /** What CDE bundles: the same, and its Workstation Info, which no other desktop has. */
+    private static final List<ResourceLocation> CDE_APPS = List.of(
+            rl("network"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
+            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("workstation_info"));
 
     /**
      * The built-in desktop environments. The Frames editions bundle their own (the id equals the OS id, so the
      * existing skins and icon sets keep their keys); KDE Plasma, GNOME and Cinnamon are Linux packages, each
      * with its chrome and the native names its bundled apps show.
      */
-    private static final java.util.List<DesktopEnvironmentDef> BUILTIN_DESKTOPS = java.util.List.of(
-            new DesktopEnvironmentDef(rl("frames_95"), "Frames 95", PanelStyle.FRAMES_95, BUILTIN_APPS, java.util.Map.of(),
+    private static final List<DesktopEnvironmentDef> BUILTIN_DESKTOPS = List.of(
+            new DesktopEnvironmentDef(rl("frames_95"), "Frames 95", PanelStyle.FRAMES_95, BUILTIN_APPS, Map.of(),
                     SoftwareHouse.MIDSOFT),
-            new DesktopEnvironmentDef(rl("frames_xp"), "Frames XP", PanelStyle.FRAMES_XP, BUILTIN_APPS, java.util.Map.of(),
+            new DesktopEnvironmentDef(rl("frames_xp"), "Frames XP", PanelStyle.FRAMES_XP, BUILTIN_APPS, Map.of(),
                     SoftwareHouse.MIDSOFT),
-            new DesktopEnvironmentDef(rl("frames_11"), "Frames 11", PanelStyle.FRAMES_11, BUILTIN_APPS, java.util.Map.of(),
+            new DesktopEnvironmentDef(rl("frames_11"), "Frames 11", PanelStyle.FRAMES_11, BUILTIN_APPS, Map.of(),
                     SoftwareHouse.MIDSOFT),
-            new DesktopEnvironmentDef(rl("kde_plasma"), "KDE Plasma", PanelStyle.KDE, BUILTIN_APPS, java.util.Map.of(
+            new DesktopEnvironmentDef(rl("kde_plasma"), "KDE Plasma", PanelStyle.KDE, BUILTIN_APPS, Map.of(
                     rl("files"), "Dolphin", rl("editor"), "Kate", rl("command_prompt"), "Konsole",
                     rl("calculator"), "KCalc", rl("system_monitor"), "System Monitor",
                     rl("settings"), "System Settings", rl("this_pc"), "Info Center"), SoftwareHouse.KDE_GUILD),
-            new DesktopEnvironmentDef(rl("gnome"), "GNOME", PanelStyle.GNOME, BUILTIN_APPS, java.util.Map.of(
+            new DesktopEnvironmentDef(rl("gnome"), "GNOME", PanelStyle.GNOME, BUILTIN_APPS, Map.of(
                     rl("files"), "Files", rl("editor"), "Text Editor", rl("command_prompt"), "Terminal",
                     rl("calculator"), "Calculator", rl("system_monitor"), "System Monitor",
                     rl("settings"), "Settings", rl("this_pc"), "About"), SoftwareHouse.GNOME_TRUST),
-            new DesktopEnvironmentDef(rl("cinnamon"), "Cinnamon", PanelStyle.CINNAMON, BUILTIN_APPS, java.util.Map.of(
+            new DesktopEnvironmentDef(rl("cinnamon"), "Cinnamon", PanelStyle.CINNAMON, BUILTIN_APPS, Map.of(
                     rl("files"), "Nemo", rl("editor"), "xed", rl("command_prompt"), "Terminal",
                     rl("calculator"), "Calculator", rl("system_monitor"), "System Monitor",
-                    rl("settings"), "System Settings", rl("this_pc"), "System Info"), SoftwareHouse.SPEARMINT)
+                    rl("settings"), "System Settings", rl("this_pc"), "System Info"), SoftwareHouse.SPEARMINT),
+            /*
+             * CDE keeps its own names for what it bundles, which are plainer than anybody else's: it called a
+             * file manager the File Manager. Its settings are the Style Manager, as they were.
+             */
+            new DesktopEnvironmentDef(rl("cde"), "CDE", PanelStyle.CDE, CDE_APPS, Map.of(
+                    rl("files"), "File Manager", rl("editor"), "Text Editor", rl("command_prompt"), "Terminal",
+                    rl("calculator"), "Calculator", rl("system_monitor"), "Performance Meter",
+                    rl("settings"), "Style Manager"),
+                    SoftwareHouse.OPEN_DESK_CONSORTIUM)
     );
 
     /** The built-in desktop environments, so tooling reads them from one source. */
-    public static java.util.List<DesktopEnvironmentDef> builtinDesktops() {
+    public static List<DesktopEnvironmentDef> builtinDesktops() {
         return BUILTIN_DESKTOPS;
     }
 
     private static void registerDesktops() {
         for (final DesktopEnvironmentDef desktop : BUILTIN_DESKTOPS) {
-            JSComputersAPI.registerDesktopEnvironment(desktop);
+            JsComputersApi.registerDesktop(desktop);
         }
     }
-    private static final java.util.Set<Platform> ALL_PLATFORMS =
-            java.util.Set.of(Platform.MC_DOS, Platform.MC_NET, Platform.FRAMES, Platform.LINUX);
+
+    /**
+     * The built-in operating spaces: the one MC-NET ships with, and the only one the mod has.
+     *
+     * <p>Its name is the Network Interactor's, because it is the same thing that runs as a window on a desktop
+     * and at the prompt: one way of working a network, drawn wherever the machine can draw it.
+     */
+    private static final List<OperatingSpaceDef> BUILTIN_SPACES = List.of(
+            new OperatingSpaceDef(rl("interactor"), "Interactor", SoftwareHouse.NOUVELL)
+    );
+
+    /** The built-in operating spaces, so tooling reads them from one source. */
+    public static List<OperatingSpaceDef> builtinSpaces() {
+        return BUILTIN_SPACES;
+    }
+
+    private static void registerSpaces() {
+        for (final OperatingSpaceDef space : BUILTIN_SPACES) {
+            JsComputersApi.registerSpace(space);
+        }
+    }
+
+    /** Where an operating space runs: on a network system, which is the only kind that has one. */
+    private static final Set<Platform> NET_ONLY = Set.of(Platform.MC_NET);
+
+    /* What runs on every system, at a terminal as well as on a desktop. */
+    private static final Set<Platform> ALL_PLATFORMS = Set.of(Platform.MC_DOS, Platform.MC_NET, Platform.FRAMES,
+            Platform.LINUX, Platform.FREEBSD, Platform.UNIX);
+
+    /** Every system whose prompt is a thing that can be opened, which is every one but the network's. */
+    private static final Set<Platform> PROMPT_PLATFORMS = Set.of(Platform.MC_DOS, Platform.FRAMES,
+            Platform.LINUX, Platform.FREEBSD, Platform.UNIX);
 
     /**
      * The built-in program descriptors, in desktop launcher order (the built-in apps first, then the
@@ -193,7 +301,7 @@ public final class OsBootstrap {
      * not run common setup) read from the same single source. Hardware minimums are conservative balancing
      * estimates; {@code hostScope} replaces the old per-program install special cases.
      */
-    private static final java.util.List<ProgramSpec> BUILTIN_PROGRAMS = java.util.List.of(
+    private static final List<ProgramSpec> BUILTIN_PROGRAMS = List.of(
             /*
              * Built-in Frames apps: pre-installed, no install disc, always present on a Frames desktop (subject
              * to host scope and OS rank). These used to be a hardcoded launcher list.
@@ -209,14 +317,28 @@ public final class OsBootstrap {
              */
             ProgramSpec.of(rl("this_pc"), "thispc", "This PC", true, FRAMES_ONLY, 0, ProgramKind.APP, 0, HostScope.ANY),
             ProgramSpec.of(rl("disks"), "disks", "Disks", true, LINUX_ONLY, 0, ProgramKind.APP, 0, HostScope.ANY),
+            /*
+             * CDE's own answer to "what is this machine": who is at it, the system and the hardware. Only CDE
+             * bundles it, on every system CDE stands on; the command is named the way CDE named its tools.
+             */
+            ProgramSpec.of(rl("workstation_info"), "dtwsinfo", "Workstation Info", true, CDE_SYSTEMS, 0,
+                    ProgramKind.APP, 0, HostScope.ANY).withHouse(SoftwareHouse.OPEN_DESK_CONSORTIUM),
+            /*
+             * The Help Viewer, which is CDE's own and is named the way CDE named it. What it shows is the
+             * machine's manual pages, so it ships with the desktop rather than being installed.
+             */
+            ProgramSpec.of(rl("help_viewer"), "dthelpview", "Help Viewer", true, CDE_SYSTEMS, 0,
+                    ProgramKind.APP, 0, HostScope.ANY).withHouse(SoftwareHouse.OPEN_DESK_CONSORTIUM),
             ProgramSpec.of(rl("settings"), "settings", "Settings", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),
             ProgramSpec.of(rl("files"), "files", "Files", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),
             ProgramSpec.of(rl("editor"), "editor", "Editor", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),
             /*
-             * The Command Prompt ships with every computer (terminal on MC-DOS, shell app on Frames), so it is
-             * allowed on every platform, matching its prior behaviour of no gating at all.
+             * The Command Prompt ships with every computer that has somewhere to put it: a terminal on MC-DOS,
+             * a window on a desktop. Not on a network system, whose interface is the whole screen and whose
+             * prompt is a heading inside it: a window opened there would be the machine drawing a window onto
+             * itself, which is the one thing that interface does not do.
              */
-            ProgramSpec.of(rl("command_prompt"), "cmd", "Command Prompt", true, ALL_PLATFORMS, 0, ProgramKind.APP, 0, HostScope.ANY),
+            ProgramSpec.of(rl("command_prompt"), "cmd", "Command Prompt", true, PROMPT_PLATFORMS, 0, ProgramKind.APP, 0, HostScope.ANY),
             ProgramSpec.of(rl("system_monitor"), "sysmon", "System Monitor", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),
             ProgramSpec.of(rl("calculator"), "calc", "Calculator", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY),
             // The Network Manager is pre-installed but exclusive to the Mainframe, and needs Frames XP or newer.
@@ -262,6 +384,40 @@ public final class OsBootstrap {
             // Minesweeper: a small game available on any desktop (rank 0 = Frames 95 and newer).
             ProgramSpec.of(rl("minesweeper"), "mines", "Minesweeper", false, DESKTOPS, 16, ProgramKind.APP, 0, HostScope.ANY)
                     .withEra(VINTAGE).withHouse(SoftwareHouse.MIDSOFT).withRam(1),
+            // Solitaire: the other game every one of these desktops shipped with, and as light as that one.
+            ProgramSpec.of(rl("solitaire"), "solitaire", "Solitaire", false, DESKTOPS, 16, ProgramKind.APP, 0, HostScope.ANY)
+                    .withEra(VINTAGE).withHouse(SoftwareHouse.MIDSOFT).withRam(1),
+            // Snake: the game a machine with almost nothing in it could still run.
+            ProgramSpec.of(rl("snake"), "snake", "Snake", false, DESKTOPS, 8, ProgramKind.APP, 0, HostScope.ANY)
+                    .withEra(VINTAGE).withHouse(SoftwareHouse.MIDSOFT).withRam(1),
+            // 67ark: packs files into one that weighs less, which is how a small disk is made to stretch.
+            ProgramSpec.of(rl("ark"), "ark", "67ark", false, DESKTOPS, 24, ProgramKind.APP, 0, HostScope.ANY)
+                    .withEra(LEGACY).withHouse(SoftwareHouse.VAULTIS).withRam(16),
+            // Paint: a real picture in an indexed palette, which also becomes the desktop's wallpaper.
+            ProgramSpec.of(rl("paint"), "paint", "Paint", false, DESKTOPS, 48, ProgramKind.APP, 0, HostScope.ANY)
+                    .withEra(LEGACY).withHouse(SoftwareHouse.BELLWETHER_LABS).withRam(32),
+            // Exceed: a sheet whose cells can ask the network what it is holding.
+            ProgramSpec.of(rl("exceed"), "exceed", "Exceed", false, DESKTOPS, 64, ProgramKind.APP, 2, HostScope.ANY)
+                    .withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(64),
+            /*
+             * The Messenger: a service on a server in a rack and a client on every computer. Its declared
+             * memory is only its floor; what it really costs grows with the conversations it keeps and with
+             * how many people have the messenger open, which is the whole point of it. It belongs on a
+             * server rather than on the Mainframe because that is what a server is for: the Mainframe
+             * orchestrates the network, the servers run the things it serves.
+             */
+            ProgramSpec.of(rl("messenger_service"), "msgsvc", "Messenger Service", false,
+                            ALL_PLATFORMS, 48, ProgramKind.SERVICE, 2, HostScope.SERVER)
+                    .withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(8),
+            ProgramSpec.of(rl("messenger"), "messenger", "Midsoft Messenger", false, DESKTOPS, 48,
+                            ProgramKind.APP, 2, HostScope.ANY)
+                    .withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(32),
+            // KnotHub keeps the source a network is still arguing over; Knot is what a computer reads it with.
+            ProgramSpec.of(rl("knothub"), "knothub", "KnotHub", false, ALL_PLATFORMS, 64,
+                            ProgramKind.SERVICE, 2, HostScope.SERVER)
+                    .withEra(STANDARD).withHouse(SoftwareHouse.DAYLIGHT_FOUNDATION).withRam(16),
+            ProgramSpec.of(rl("knot"), "knot", "Knot", false, DESKTOPS, 48, ProgramKind.APP, 2, HostScope.ANY)
+                    .withEra(STANDARD).withHouse(SoftwareHouse.DAYLIGHT_FOUNDATION).withRam(32),
             // Storage Insights: a network dashboard -> Frames XP or newer.
             ProgramSpec.of(rl("storage_insights"), "insights", "Storage Insights", false, DESKTOPS, 64, ProgramKind.APP, 2, HostScope.ANY)
                     .withEra(STANDARD).withHouse(SoftwareHouse.VAULTIS).withRam(64),
@@ -272,7 +428,7 @@ public final class OsBootstrap {
             ProgramSpec.of(rl("automation_engine"), "autoeng", "Automation Engine", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 3, HostScope.MAINFRAME)
                     .withEra(STANDARD).withHouse(SoftwareHouse.RED_CAP).withRam(64),
             // The Automation Manager is a modern automation front-end -> Frames 11 (rank 3).
-            ProgramSpec.of(rl("automation_manager"), "automgr", "Automation Manager", false, DESKTOPS, 64, ProgramKind.APP, 3, HostScope.ANY)
+            ProgramSpec.of(rl("automation_manager"), "automgr", "Automation Manager", false, LATER_DESKTOPS, 64, ProgramKind.APP, 3, HostScope.ANY)
                     .withEra(STANDARD).withHouse(SoftwareHouse.RED_CAP).withRam(96),
             /*
              * Server services: headless daemons that only make sense on a machine mounted in a rack,
@@ -306,17 +462,24 @@ public final class OsBootstrap {
              * screenfetch: the little system-identity tool, a package the Mirror serves to any Linux (its
              * absence teaching the package manager: 'command not found' until you apt/dnf/pacman/emerge it).
              */
-            ProgramSpec.of(rl("screenfetch"), "screenfetch", "screenfetch", false, LINUX_ONLY, 4, ProgramKind.APP, 0, HostScope.ANY)
+            ProgramSpec.of(rl("screenfetch"), "screenfetch", "screenfetch", false, LINUX_AND_FREEBSD, 4, ProgramKind.APP, 0, HostScope.ANY)
                     .withEra(LEGACY).withHouse(SoftwareHouse.ARCH_COLLECTIVE).withRam(1),
             /*
-             * The Cannon toolchain: the compiler and the runtime, two packages the Mirror serves to any
+             * The Σ# toolchain: the compiler and the runtime, two packages the Mirror serves to any
              * machine of the Legacy generation or later running Frames XP or a Linux. Neither has a window
              * of its own; both are verbs at the prompt, which is where a program is written and run from.
              */
-            ProgramSpec.of(rl("cannonc"), "cannonc", "Cannon Compiler", false, ALL_PLATFORMS, 8, ProgramKind.APP, 2, HostScope.ANY)
-                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.CANNON_FOUNDATION).withRam(16),
-            ProgramSpec.of(rl("cannonrt"), "cannon", "Cannon Runtime", false, ALL_PLATFORMS, 12, ProgramKind.SERVICE, 2, HostScope.ANY)
-                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.CANNON_FOUNDATION).withRam(24),
+            ProgramSpec.of(rl("sgsc"), "sgsc", "Σ# Compiler", false, ALL_PLATFORMS, 8, ProgramKind.APP, 2, HostScope.ANY)
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.SIGMA_FOUNDATION).withRam(16),
+            /*
+             * The Sigma Compiler Collection, which is the whole toolchain of the earliest machines: it writes the
+             * assembly the machine already runs, so there is no runtime to install beside it. Small enough to sit
+             * on a Vintage disk, and useful long past that, since a program built with it runs everywhere.
+             */
+            ProgramSpec.of(rl("scc"), "scc", "Σ Compiler", false, ALL_PLATFORMS, 4, ProgramKind.APP, 1, HostScope.ANY)
+                    .withMinEra(VINTAGE).withEra(VINTAGE).withHouse(SoftwareHouse.SIGMA_FOUNDATION).withRam(2),
+            ProgramSpec.of(rl("sigma"), "sigma", "Sigma Runtime", false, ALL_PLATFORMS, 12, ProgramKind.SERVICE, 2, HostScope.ANY)
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.SIGMA_FOUNDATION).withRam(24),
             /*
              * Virtual Studio: the whole workshop in one window, and the only editor that says what a call
              * will cost the program before the line is written. Frames only, and it asks the machine to
@@ -326,18 +489,18 @@ public final class OsBootstrap {
             ProgramSpec.of(rl("virtual_studio"), "virtualstudio", "Virtual Studio", false, FRAMES_ONLY, 512, ProgramKind.APP, 2, HostScope.ANY)
                     .withMinEra(LEGACY).withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(256),
             /*
-             * Virtual Studio Code: the light editor for Cannon, with the machine's programs down the side
+             * Virtual Studio Code: the light editor for Σ#, with the machine's programs down the side
              * and its console welded into the bottom of the window, so a program is written, compiled and
              * run without leaving it. Frames XP or newer, and any Linux desktop.
              */
-            ProgramSpec.of(rl("virtual_studio_code"), "virtualcode", "Virtual Studio Code", false, DESKTOPS, 128, ProgramKind.APP, 2, HostScope.ANY)
+            ProgramSpec.of(rl("virtual_studio_code"), "virtualcode", "Virtual Studio Code", false, LATER_DESKTOPS, 128, ProgramKind.APP, 2, HostScope.ANY)
                     .withMinEra(LEGACY).withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(48),
             /*
              * Exposure: the editor that compiles every program on the disk instead of the one in front
              * of you, so changing something shared shows which of the others stopped building. It offers
              * nothing as you type, which is the trade.
              */
-            ProgramSpec.of(rl("exposure"), "exposure", "Exposure", false, DESKTOPS, 192, ProgramKind.APP, 2, HostScope.ANY)
+            ProgramSpec.of(rl("exposure"), "exposure", "Exposure", false, LATER_DESKTOPS, 192, ProgramKind.APP, 2, HostScope.ANY)
                     .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.DAYLIGHT_FOUNDATION).withRam(64),
             /*
              * Vim takes over the terminal it was started from instead of opening a window of its own,
@@ -361,22 +524,39 @@ public final class OsBootstrap {
              * run on Legacy machines; Cinnamon is a much later desktop and needs Standard hardware. A
              * Vintage computer therefore has no graphical desktop at all and lives at the TTY.
              */
-            ProgramSpec.of(rl("kde_plasma"), "kde-plasma", "KDE Plasma", false, LINUX_ONLY, 256, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
+            ProgramSpec.of(rl("kde_plasma"), "kde-plasma", "KDE Plasma", false, LINUX_AND_FREEBSD, 256, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
                     .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.KDE_GUILD).withRam(224),
-            ProgramSpec.of(rl("gnome"), "gnome", "GNOME", false, LINUX_ONLY, 192, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
+            ProgramSpec.of(rl("gnome"), "gnome", "GNOME", false, LINUX_AND_FREEBSD, 192, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
                     .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.GNOME_TRUST).withRam(256),
-            ProgramSpec.of(rl("cinnamon"), "cinnamon", "Cinnamon", false, LINUX_ONLY, 160, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
-                    .withMinEra(STANDARD).withEra(STANDARD).withHouse(SoftwareHouse.SPEARMINT).withRam(160)
+            ProgramSpec.of(rl("cinnamon"), "cinnamon", "Cinnamon", false, LINUX_AND_FREEBSD, 160, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
+                    .withMinEra(STANDARD).withEra(STANDARD).withHouse(SoftwareHouse.SPEARMINT).withRam(160),
+            /*
+             * CDE: the desktop of the Unix workstations, and the only one UNIX has. A fraction of what the
+             * later desktops weigh, which is how a Legacy machine with a few megabytes to spare runs one. UNIX
+             * takes it from a medium like everything else it installs; FreeBSD takes it from its packages, and
+             * a Linux distribution from the Mirror by its own package manager, as one still can.
+             */
+            ProgramSpec.of(rl("cde"), "cde", "CDE", false, CDE_SYSTEMS, 32, ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
+                    .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.OPEN_DESK_CONSORTIUM).withRam(16),
+            /*
+             * The operating space MC-NET ships with, and what makes the machine more than a prompt. It goes on
+             * with the system rather than being bought from the Mirror, but it is a package like any other, so
+             * a player who wants nothing but the prompt takes it off and a machine that has lost it puts it
+             * back. Two megabytes and a Vintage minimum, because the system it belongs to is a Vintage system.
+             */
+            ProgramSpec.of(rl("interactor"), "interactor", "Interactor", false, NET_ONLY, 2,
+                            ProgramKind.OPERATING_SPACE, 0, HostScope.ANY)
+                    .withMinEra(VINTAGE).withEra(VINTAGE).withHouse(SoftwareHouse.NOUVELL).withRam(1)
     );
 
     /** The built-in program descriptors, so datagen (lang, install media) reads them from one source. */
-    public static java.util.List<ProgramSpec> builtinPrograms() {
+    public static List<ProgramSpec> builtinPrograms() {
         return BUILTIN_PROGRAMS;
     }
 
     private static void registerPrograms() {
         for (final ProgramSpec program : BUILTIN_PROGRAMS) {
-            JSComputersAPI.registerProgram(program);
+            JsComputersApi.registerProgram(program);
         }
     }
 

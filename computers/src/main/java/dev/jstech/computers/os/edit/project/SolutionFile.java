@@ -37,9 +37,14 @@ public record SolutionFile(String name, List<String> projects, String startup) {
         return name + "." + EXTENSION;
     }
 
-    /** The relative path of a project's file inside the solution: its folder, then its file. */
+    /** The relative path of a Σ# project's file inside the solution: its folder, then its file. */
     public static String projectPath(final String projectName) {
         return projectName + "/" + ProjectFile.fileName(projectName);
+    }
+
+    /** The relative path of that project's file inside the solution, under the extension its language gives it. */
+    public static String projectPath(final ProjectFile project) {
+        return project.name() + "/" + project.fileName();
     }
 
     /** The name of the project a relative project path is for. */

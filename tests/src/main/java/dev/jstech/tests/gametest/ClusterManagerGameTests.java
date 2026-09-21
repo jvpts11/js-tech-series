@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Tech Series.
  */
 package dev.jstech.tests.gametest;
 
@@ -25,7 +25,7 @@ import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.operation.payload.ClusterManagerStatePayload;
-import dev.jstech.computers.operation.payload.ComputingPayloads;
+import dev.jstech.computers.operation.payload.cluster.ClusterManagerStateBuilder;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
@@ -463,7 +463,7 @@ public final class ClusterManagerGameTests {
                     rack.toggleBayPower(1); // the second is switched off at the bay
                 })
                 .thenExecuteAfter(4, () -> {
-                    final var state = ComputingPayloads.buildClusterManagerState(manager, helper.getLevel(),
+                    final var state = ClusterManagerStateBuilder.buildClusterManagerState(manager, helper.getLevel(),
                             ClusterManagerStatePayload.KIND_DATACENTER, 0, "");
                     final List<ClusterManagerStatePayload.WireNode> nodes = state.detail().nodes();
                     helper.assertTrue(nodes.size() == 2, "both servers are listed; got " + nodes.size());
@@ -474,7 +474,7 @@ public final class ClusterManagerGameTests {
                     rack.toggleBayPower(1);
                 })
                 .thenExecuteAfter(4, () -> {
-                    final var state = ComputingPayloads.buildClusterManagerState(manager, helper.getLevel(),
+                    final var state = ClusterManagerStateBuilder.buildClusterManagerState(manager, helper.getLevel(),
                             ClusterManagerStatePayload.KIND_DATACENTER, 0, "");
                     helper.assertTrue(state.detail().nodes().get(1).state()
                                     == ClusterManagerStatePayload.STATE_NO_SYSTEM,
@@ -494,7 +494,7 @@ public final class ClusterManagerGameTests {
         final ServerRackBlockEntity rack = placeSupercomputer(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 6, () -> {
-                    final var state = ComputingPayloads.buildClusterManagerState(manager, helper.getLevel(),
+                    final var state = ClusterManagerStateBuilder.buildClusterManagerState(manager, helper.getLevel(),
                             ClusterManagerStatePayload.KIND_SUPERCOMPUTER, 0, "");
                     final List<ClusterManagerStatePayload.WireNode> nodes = state.detail().nodes();
                     helper.assertTrue(!nodes.isEmpty(), "the cluster lists its nodes");
@@ -504,7 +504,7 @@ public final class ClusterManagerGameTests {
                     pullCoprocessor(rack, 0); // the node keeps its slot but stops counting for crafts
                 })
                 .thenExecuteAfter(6, () -> {
-                    final var state = ComputingPayloads.buildClusterManagerState(manager, helper.getLevel(),
+                    final var state = ClusterManagerStateBuilder.buildClusterManagerState(manager, helper.getLevel(),
                             ClusterManagerStatePayload.KIND_SUPERCOMPUTER, 0, "");
                     helper.assertTrue(state.detail().nodes().get(0).state()
                                     == ClusterManagerStatePayload.STATE_NO_COPROCESSOR,

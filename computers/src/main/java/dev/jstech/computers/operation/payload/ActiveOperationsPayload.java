@@ -33,6 +33,14 @@ public record ActiveOperationsPayload(List<OperationRecord> operations, int scSl
                     ByteBufCodecs.VAR_INT, ActiveOperationsPayload::scSlotsTotal,
                     ActiveOperationsPayload::new);
 
+    /*
+     * Copied, because this is built from the machine's own live list of what it is running and then written to
+     * the network while the machine goes on running it. What it hands the client cannot change afterwards.
+     */
+    public ActiveOperationsPayload {
+        operations = List.copyOf(operations);
+    }
+
     @Override
     public CustomPacketPayload.Type<ActiveOperationsPayload> type() {
         return TYPE;

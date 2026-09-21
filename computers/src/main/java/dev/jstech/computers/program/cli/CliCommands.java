@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.ShellFamily;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,10 +42,26 @@ public final class CliCommands {
      * shared network/program verbs plus the POSIX file verbs (plus extras) for {@code POSIX}.
      */
     public static synchronized List<ICliCommand> commandsFor(
-            final dev.jstech.computers.os.ShellFamily family) {
-        if (family == dev.jstech.computers.os.ShellFamily.POSIX) {
+            final ShellFamily family) {
+        /*
+         * The network appliance takes the verbs both families share and its own words for the rest. It never
+         * sees the DOS file verbs, which is the whole point: a machine with no folders should not be offered
+         * a way to change into one.
+         */
+        if (family == ShellFamily.NET) {
+            final List<ICliCommand> commands = new ArrayList<>(BuiltinCommands.shared());
+            commands.addAll(NetFileCommands.all());
+            commands.addAll(NetTextCommands.all());
+            commands.addAll(NetMachineCommands.all());
+            commands.addAll(NetSoftwareCommands.all());
+            commands.addAll(EXTRA);
+            return commands;
+        }
+        if (family == ShellFamily.POSIX) {
             final List<ICliCommand> commands = new ArrayList<>(BuiltinCommands.shared());
             commands.addAll(PosixCommands.all());
+            // Each of these says for itself which family it belongs to, as the package managers do.
+            commands.addAll(SystemVCommands.all());
             commands.addAll(EXTRA);
             return commands;
         }
@@ -52,7 +69,7 @@ public final class CliCommands {
     }
 
     /** A shell speaking the given family's command set. */
-    public static CliShell newShell(final dev.jstech.computers.os.ShellFamily family,
+    public static CliShell newShell(final ShellFamily family,
                                     final int width) {
         return new CliShell(commandsFor(family), width);
     }
@@ -66,7 +83,7 @@ public final class CliCommands {
     }
 
     /** The command list a computer's terminal offers for completion: live verbs, or its family's set. */
-    public static List<ICliCommand> commandsFor(final dev.jstech.computers.os.ShellFamily family,
+    public static List<ICliCommand> commandsFor(final ShellFamily family,
                                                final boolean live) {
         return live ? LiveInstallCommands.all() : commandsFor(family);
     }

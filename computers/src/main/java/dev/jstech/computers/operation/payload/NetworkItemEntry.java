@@ -47,6 +47,11 @@ public record NetworkItemEntry(StorageKey key, long total, List<StorageShare> sh
                     StorageShare.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_SHARES)), NetworkItemEntry::shares,
                     NetworkItemEntry::new);
 
+    /* Copied on the way in, so what a view is handed cannot change under it while the network works on. */
+    public NetworkItemEntry {
+        shares = List.copyOf(shares);
+    }
+
     public boolean isFluid() {
         return key.isFluid();
     }

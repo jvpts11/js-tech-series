@@ -10,9 +10,12 @@ package dev.jstech.computers.crafting;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.util.Utf8Text;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
@@ -50,8 +53,8 @@ public record CraftingPattern(List<ItemStack> grid, ItemStack result, List<Strin
         }
         grid = List.copyOf(grid);
         anyTags = normalizeTags(anyTags);
-        name = clamp(name, MAX_NAME);
-        note = clamp(note, MAX_NOTE);
+        name = Utf8Text.field(name, MAX_NAME);
+        note = Utf8Text.field(note, MAX_NOTE);
     }
 
     /** A pattern with exact cells and no name: what every author wrote before names and tags existed. */
@@ -88,11 +91,6 @@ public record CraftingPattern(List<ItemStack> grid, ItemStack result, List<Strin
             out.add(tag == null ? "" : tag.trim());
         }
         return List.copyOf(out);
-    }
-
-    private static String clamp(final String s, final int max) {
-        final String value = s == null ? "" : s.trim();
-        return value.length() <= max ? value : value.substring(0, max);
     }
 
     /** The tag cell {@code cell} accepts, or {@code ""} when it takes the exact item only. */
@@ -189,7 +187,7 @@ public record CraftingPattern(List<ItemStack> grid, ItemStack result, List<Strin
             if (a.isEmpty() || ItemStack.isSameItem(a, b)) {
                 continue;
             }
-            final net.minecraft.tags.TagKey<net.minecraft.world.item.Item> tag = AnyTagResolver.tagOf(anyTags.get(i));
+            final TagKey<Item> tag = AnyTagResolver.tagOf(anyTags.get(i));
             if (tag == null || !a.is(tag) || !b.is(tag)) {
                 return false;
             }

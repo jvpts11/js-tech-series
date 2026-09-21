@@ -29,7 +29,7 @@ import java.util.List;
  */
 public record DesktopShellOutputPayload(boolean clear, boolean busy, String prompt, List<WireLine> lines,
                                         String editor, String editorPath, int session, boolean replaceLast,
-                                        boolean informational)
+                                        boolean informational, TerminalKeyboard keyboard)
         implements CustomPacketPayload {
 
     public static final int MAX_LINES = 256;
@@ -37,31 +37,41 @@ public record DesktopShellOutputPayload(boolean clear, boolean busy, String prom
     /** A reply that only printed, which is what nearly every command does. */
     public DesktopShellOutputPayload(final boolean clear, final boolean busy, final String prompt,
                                      final List<WireLine> lines) {
-        this(clear, busy, prompt, lines, "", "", 0, false, false);
+        this(clear, busy, prompt, lines, "", "", 0, false, false, TerminalKeyboard.PROMPT);
     }
 
     /** A reply that only printed, to the session that asked. */
     public DesktopShellOutputPayload(final boolean clear, final boolean busy, final String prompt,
                                      final List<WireLine> lines, final int session) {
-        this(clear, busy, prompt, lines, "", "", session, false, false);
+        this(clear, busy, prompt, lines, "", "", session, false, false, TerminalKeyboard.PROMPT);
     }
 
     /** A reply that hands the terminal to an editor, to the session that asked. */
     public DesktopShellOutputPayload(final boolean clear, final boolean busy, final String prompt,
                                      final List<WireLine> lines, final String editor, final String editorPath,
                                      final int session) {
-        this(clear, busy, prompt, lines, editor, editorPath, session, false, false);
+        this(clear, busy, prompt, lines, editor, editorPath, session, false, false, TerminalKeyboard.PROMPT);
     }
 
     /** A reply that hands the terminal to an editor, for every window. */
     public DesktopShellOutputPayload(final boolean clear, final boolean busy, final String prompt,
                                      final List<WireLine> lines, final String editor, final String editorPath) {
-        this(clear, busy, prompt, lines, editor, editorPath, 0, false, false);
+        this(clear, busy, prompt, lines, editor, editorPath, 0, false, false, TerminalKeyboard.PROMPT);
+    }
+
+    /**
+     * Lines printed while a tool is in front of the terminal, or as it gives the prompt back, for every
+     * window: a machine has one console, and a tool running at it is running in all of them.
+     */
+    public DesktopShellOutputPayload(final String prompt, final List<WireLine> lines,
+                                     final TerminalKeyboard keyboard) {
+        this(false, keyboard.busy(), prompt, lines, "", "", 0, false, false, keyboard);
     }
 
     /** Lines the machine prints on its own, for every terminal, drawn over the last line or after it. */
     public static DesktopShellOutputPayload informational(final List<WireLine> lines, final boolean replaceLast) {
-        return new DesktopShellOutputPayload(false, false, "", lines, "", "", 0, replaceLast, true);
+        return new DesktopShellOutputPayload(false, false, "", lines, "", "", 0, replaceLast, true,
+                TerminalKeyboard.PROMPT);
     }
 
     /** Whether the machine gave the terminal to an editor. */
@@ -89,6 +99,7 @@ public record DesktopShellOutputPayload(boolean clear, boolean busy, String prom
         ByteBufCodecs.VAR_INT.encode(buf, payload.session());
         ByteBufCodecs.BOOL.encode(buf, payload.replaceLast());
         ByteBufCodecs.BOOL.encode(buf, payload.informational());
+        TerminalKeyboard.STREAM_CODEC.encode(buf, payload.keyboard());
     }
 
     private static DesktopShellOutputPayload read(final RegistryFriendlyByteBuf buf) {
@@ -102,21 +113,16 @@ public record DesktopShellOutputPayload(boolean clear, boolean busy, String prom
         final boolean replaceLast = ByteBufCodecs.BOOL.decode(buf);
         final boolean informational = ByteBufCodecs.BOOL.decode(buf);
         return new DesktopShellOutputPayload(clear, busy, prompt, lines, editor, editorPath, session, replaceLast,
-                informational);
+                informational, TerminalKeyboard.STREAM_CODEC.decode(buf));
+    }
+
+    /* Copied on the way in, so what the terminal is handed cannot change under it after it arrives. */
+    public DesktopShellOutputPayload {
+        lines = List.copyOf(lines);
     }
 
     @Override
     public CustomPacketPayload.Type<DesktopShellOutputPayload> type() {
         return TYPE;
-    }
-
-    /** One output line: its text and the ordinal of its {@code CliStyle} for colouring. */
-    public record WireLine(String text, int style) {
-
-        public static final StreamCodec<RegistryFriendlyByteBuf, WireLine> STREAM_CODEC =
-                StreamCodec.composite(
-                        ByteBufCodecs.stringUtf8(512), WireLine::text,
-                        ByteBufCodecs.VAR_INT, WireLine::style,
-                        WireLine::new);
     }
 }

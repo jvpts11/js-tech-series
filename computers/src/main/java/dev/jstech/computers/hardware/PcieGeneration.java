@@ -11,16 +11,23 @@ package dev.jstech.computers.hardware;
  * Expansion-bus generations for graphics/expansion cards, oldest to newest (the legacy ISA/PCI/AGP buses precede the PCIe line).
  */
 public enum PcieGeneration {
-    ISA,
-    PCI,
-    AGP_4X,
-    AGP_8X,
-    PCIE_1_0,
-    PCIE_2_0,
-    PCIE_3_0,
-    PCIE_4_0,
-    PCIE_5_0,
-    PCIE_6_0;
+    ISA(0),
+    PCI(1),
+    AGP_4X(2),
+    AGP_8X(3),
+    PCIE_1_0(4),
+    PCIE_2_0(5),
+    PCIE_3_0(6),
+    PCIE_4_0(7),
+    PCIE_5_0(8),
+    PCIE_6_0(9);
+
+    /** The generation's place in the line, oldest first: one step is roughly a doubling of bandwidth. */
+    private final int generation;
+
+    PcieGeneration(final int generation) {
+        this.generation = generation;
+    }
 
     /** The physical bus family this generation belongs to. */
     public ExpansionBus busFamily() {
@@ -53,7 +60,7 @@ public enum PcieGeneration {
      * for a modern card, not a brick wall.
      */
     public double bandwidthFactorIn(final PcieGeneration slot) {
-        final int behind = this.ordinal() - slot.ordinal();
+        final int behind = this.generation - slot.generation;
         if (behind <= 0) {
             return 1.0;
         }

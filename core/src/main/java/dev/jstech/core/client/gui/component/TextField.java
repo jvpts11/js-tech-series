@@ -8,7 +8,10 @@
 package dev.jstech.core.client.gui.component;
 
 import dev.jstech.core.client.gui.logic.TextEditState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -194,7 +197,7 @@ public class TextField extends UiComponent {
     private static final int SELECTION = 0x663A72B0;
     /** The font the field was last drawn with, which is what a click is measured against. */
     @Nullable
-    private net.minecraft.client.gui.Font font;
+    private Font font;
     /** How many characters had scrolled out of view on the left when the field was last drawn. */
     private int offset;
 
@@ -205,7 +208,7 @@ public class TextField extends UiComponent {
     @Override
     public boolean mouseClicked(final double mx, final double my, final int button) {
         if (button == 0 && this.font != null && isFocused()) {
-            state.moveTo(indexAt(mx), net.minecraft.client.gui.screens.Screen.hasShiftDown());
+            state.moveTo(indexAt(mx), Screen.hasShiftDown());
         }
         return true;
     }
@@ -257,10 +260,10 @@ public class TextField extends UiComponent {
              * address bar or a name in a rename box is used for.
              */
             switch (key) {
-                case GLFW.GLFW_KEY_C -> net.minecraft.client.Minecraft.getInstance().keyboardHandler.setClipboard(
+                case GLFW.GLFW_KEY_C -> Minecraft.getInstance().keyboardHandler.setClipboard(
                         state.hasSelection() ? state.selectedText() : state.edit());
                 case GLFW.GLFW_KEY_X -> {
-                    net.minecraft.client.Minecraft.getInstance().keyboardHandler.setClipboard(
+                    Minecraft.getInstance().keyboardHandler.setClipboard(
                             state.hasSelection() ? state.selectedText() : state.edit());
                     if (!state.deleteSelection()) {
                         state.sync("");
@@ -268,7 +271,7 @@ public class TextField extends UiComponent {
                     edited();
                 }
                 case GLFW.GLFW_KEY_V -> {
-                    final String pasted = net.minecraft.client.Minecraft.getInstance().keyboardHandler.getClipboard();
+                    final String pasted = Minecraft.getInstance().keyboardHandler.getClipboard();
                     for (final char c : pasted.replace("\r", "").replace('\n', ' ').toCharArray()) {
                         if (accepts(c)) {
                             state.type(c);

@@ -10,8 +10,9 @@ package dev.jstech.tests.gametest;
 import com.mojang.authlib.GameProfile;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.menu.DesktopMenu;
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.ComputerAccess;
-import dev.jstech.computers.operation.payload.ScreenSessions;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestWorldBuilder;
 import java.util.UUID;
@@ -22,9 +23,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
-import net.neoforged.neoforge.event.entity.player.PlayerContainerEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -76,27 +75,52 @@ public final class ComputerAccessGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * The sessions a monitor shows that are not a system are menus, so having one open on that machine is
+     * what the gate asks. It used to be a note the server kept per player, which is the thing that could
+     * fall out of step with what the player actually had on screen.
+     */
     @GameTest(template = ARENA)
-    public static void screen_admitsTheOpenedScreenOnlyAtTheMonitorShowingItsMachine(final GameTestHelper helper) {
+    public static void screen_admitsOnlyThePlayerHoldingThatMachinesSession(final GameTestHelper helper) {
         final Desk desk = desk(helper);
         final ComputerAccess.IGate<BlockPos> gate = ComputerAccess.screen(pos -> pos);
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(linked(helper, desk), "the monitor links to the computer"))
                 .thenExecute(() -> {
                     final ServerPlayer player = desk.player();
-                    helper.assertFalse(gate.admits(player, desk.computer()), "the server opened nothing: refused");
-                    ScreenSessions.opened(player, desk.monitor(), desk.computer());
-                    helper.assertTrue(gate.admits(player, desk.computer()), "the screen the server opened: admitted");
-                    helper.assertFalse(gate.admits(player, desk.elsewhere()), "a payload naming another machine: refused");
-                    standAt(helper, player, FAR_AWAY);
-                    helper.assertFalse(gate.admits(player, desk.computer()), "walked away from the monitor: refused");
-                    standAt(helper, player, AT_MONITOR);
-                    helper.assertTrue(gate.admits(player, desk.computer()), "back at the monitor: admitted again");
-                    NeoForge.EVENT_BUS.post(new PlayerContainerEvent.Open(player, desktopOf(desk)));
-                    helper.assertFalse(gate.admits(player, desk.computer()), "a menu opened since: refused");
-                    ScreenSessions.opened(player, desk.monitor(), desk.elsewhere());
+                    helper.assertFalse(gate.admits(player, desk.computer()), "holding no session: refused");
+                    player.containerMenu = sessionOf(desk, desk.computer());
+                    helper.assertTrue(gate.admits(player, desk.computer()),
+                            "the machine's own session: admitted");
                     helper.assertFalse(gate.admits(player, desk.elsewhere()),
-                            "a monitor that does not show that machine: refused");
+                            "a payload naming another machine: refused");
+                    player.containerMenu = sessionOf(desk, desk.elsewhere());
+                    helper.assertFalse(gate.admits(player, desk.computer()),
+                            "a session on another machine: refused");
+                    player.containerMenu = desktopOf(desk);
+                    helper.assertFalse(gate.admits(player, desk.computer()),
+                            "a menu that is not one of those sessions: refused");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * And the session closes itself when the player leaves the glass, which is what used to be asked of the
+     * note: reach belongs to the menu, so walking away ends it wherever the session came from.
+     */
+    @GameTest(template = ARENA)
+    public static void session_staysOpenOnlyWhileThePlayerIsAtTheMonitor(final GameTestHelper helper) {
+        final Desk desk = desk(helper);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(linked(helper, desk), "the monitor links to the computer"))
+                .thenExecute(() -> {
+                    final ServerPlayer player = desk.player();
+                    final MonitorSessionMenu session = sessionOf(desk, desk.computer());
+                    helper.assertTrue(session.stillValid(player), "at the monitor: the session holds");
+                    standAt(helper, player, FAR_AWAY);
+                    helper.assertFalse(session.stillValid(player), "walked away: the session closes");
+                    standAt(helper, player, AT_MONITOR);
+                    helper.assertTrue(session.stillValid(player), "back at the monitor: it holds again");
                 })
                 .thenSucceed();
     }
@@ -131,6 +155,12 @@ public final class ComputerAccessGameTests {
                 new GameProfile(UUID.randomUUID(), "access-gate"));
         standAt(helper, player, AT_MONITOR);
         return new Desk(helper.absolutePos(COMPUTER), helper.absolutePos(MONITOR), player);
+    }
+
+    /** One of the monitor's sessions, open on that machine, as the server would have opened it. */
+    private static MonitorSessionMenu sessionOf(final Desk desk, final BlockPos host) {
+        return new MonitorSessionMenu(1, desk.player().getInventory(), desk.monitor(), host,
+                HardwareEra.STANDARD, MonitorSessionMenu.Phase.FIRMWARE);
     }
 
     private static DesktopMenu desktopOf(final Desk desk) {

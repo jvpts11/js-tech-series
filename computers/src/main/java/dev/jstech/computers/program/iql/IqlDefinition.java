@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.program.iql;
 
+import dev.jstech.core.id.IStableId;
+import dev.jstech.core.id.StableIds;
+
 /**
  * A parsed IQL Layer-2 statement: a CREATE/DROP of a saved object (a view, a procedure, or a job) or an
  * EXEC of a procedure. Where an {@link IqlOperation} is one immediate action, an {@code IqlDefinition}
@@ -24,10 +27,55 @@ public record IqlDefinition(Verb verb, ObjectType objectType, String name, Strin
     public enum Verb { CREATE, DROP, EXEC }
 
     /** The kind of saved object. {@code NONE} only for EXEC, which names a procedure. */
-    public enum ObjectType { VIEW, PROCEDURE, JOB, NONE }
+    public enum ObjectType implements IStableId {
+        VIEW(0),
+        PROCEDURE(1),
+        JOB(2),
+        NONE(3);
+
+        private static final StableIds<ObjectType> IDS = StableIds.of(ObjectType.class);
+
+        private final int id;
+
+        ObjectType(final int id) {
+            this.id = id;
+        }
+
+        @Override
+        public int id() {
+            return id;
+        }
+
+        /** The type that declares {@code id}; an id no type declares reads as {@link #NONE}. */
+        public static ObjectType byId(final int id) {
+            return IDS.byId(id, NONE);
+        }
+    }
 
     /** A job's trigger family: a fixed interval, a condition, or none (views/procedures). */
-    public enum TriggerKind { NONE, EVERY, WHEN }
+    public enum TriggerKind implements IStableId {
+        NONE(0),
+        EVERY(1),
+        WHEN(2);
+
+        private static final StableIds<TriggerKind> IDS = StableIds.of(TriggerKind.class);
+
+        private final int id;
+
+        TriggerKind(final int id) {
+            this.id = id;
+        }
+
+        @Override
+        public int id() {
+            return id;
+        }
+
+        /** The trigger that declares {@code id}; an id no trigger declares reads as {@link #NONE}. */
+        public static TriggerKind byId(final int id) {
+            return IDS.byId(id, NONE);
+        }
+    }
 
     public IqlDefinition {
         if (name == null) {

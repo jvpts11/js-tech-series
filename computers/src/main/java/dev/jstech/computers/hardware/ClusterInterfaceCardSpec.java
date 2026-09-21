@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.hardware;
 
+import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.core.id.IStableId;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.tier.IndustrialTier;
 
@@ -31,16 +33,27 @@ public record ClusterInterfaceCardSpec(HardwareEra era, IndustrialTier tier, Pci
                                        int parallelNodes, int tdpWatts) implements IExpansionCardSpec {
 
     /** How far a card reaches, in cabinet kinds. Each level includes the ones before it. */
-    public enum Reach {
+    public enum Reach implements IStableId {
         /** Rack servers only: datacenter sections. */
-        DATACENTERS,
+        DATACENTERS(0),
         /** Datacenters and supercomputer fabrics. */
-        SUPERCOMPUTERS,
+        SUPERCOMPUTERS(1),
         /** Everything, AI racks included. */
-        ALL;
+        ALL(2);
+
+        private final int id;
+
+        Reach(final int id) {
+            this.id = id;
+        }
+
+        @Override
+        public int id() {
+            return id;
+        }
 
         /** Whether this reach covers a cabinet of the given kind. */
-        public boolean covers(final dev.jstech.computers.rack.RackChassis.RackType kind) {
+        public boolean covers(final RackChassis.RackType kind) {
             return switch (kind) {
                 case SERVER -> true;
                 case SUPERCOMPUTER -> this != DATACENTERS;

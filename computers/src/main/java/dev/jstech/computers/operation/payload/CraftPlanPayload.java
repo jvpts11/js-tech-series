@@ -156,6 +156,13 @@ public record CraftPlanPayload(ItemStack result, long quantity, List<Row> rows,
         return recipe >= 0 && recipe < options.size() ? options.get(recipe) : null;
     }
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public CraftPlanPayload {
+        rows = List.copyOf(rows);
+        options = List.copyOf(options);
+        cover = List.copyOf(cover);
+    }
+
     @Override
     public CustomPacketPayload.Type<CraftPlanPayload> type() {
         return TYPE;

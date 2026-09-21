@@ -8,6 +8,7 @@
 package dev.jstech.computers.crafting;
 
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.util.Sizes;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -231,7 +232,7 @@ public final class CraftPlanner {
 
             final long perRun = pattern != null ? Math.max(1, pattern.result().getCount())
                     : Math.max(1, machine.primaryOutput().amount());
-            final long runs = (deficit + perRun - 1) / perRun;
+            final long runs = Sizes.ceilDiv(deficit, perRun);
             final Map<StorageKey, Long> ingredients = pattern != null
                     ? pattern.ingredientTotals() : machineInputs(machine);
 

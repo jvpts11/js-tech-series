@@ -7,24 +7,49 @@
  */
 package dev.jstech.computers.blockentity;
 
-import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.block.DataCableBlock;
+import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.block.IEraChassisBlock;
+import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
-import dev.jstech.computers.hardware.DiskSpec;
-import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.FormFactor;
-import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.IExpansionCardItem;
 import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.item.PsuItem;
 import dev.jstech.computers.item.RamItem;
+import dev.jstech.computers.menu.MonitorSessionMenu;
+import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.machine.MachineServices;
+import dev.jstech.computers.machine.NetworkReadService;
+import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
+import dev.jstech.computers.operation.payload.ScreenSessions;
+import dev.jstech.computers.operation.payload.UiWindowPayload;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
-import dev.jstech.computers.os.OsRegistry;
-import dev.jstech.computers.os.fs.SystemLayout;
-import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.os.boot.BootIdentity;
+import dev.jstech.computers.os.boot.BootLines;
+import dev.jstech.computers.os.boot.BootRunner;
+import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.boot.BootSplash;
+import dev.jstech.computers.os.boot.BootTiming;
+import dev.jstech.computers.os.boot.SystemWelcome;
+import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.computers.os.install.Installers;
+import dev.jstech.computers.os.install.OsInstallJob;
+import dev.jstech.computers.os.install.OsInstallRunner;
+import dev.jstech.computers.os.install.SetupRunner;
+import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.gui.term.TermBuffer;
+import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.CliCommands;
+import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.computers.program.job.MachineJobs;
+import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
@@ -33,86 +58,85 @@ import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * Shared base for every computer that is a BLOCK (Personal Computer, Mainframe, Crafting Computer, and future ones such as Subframe / Supercomputer / AI Server).
+ * Shared base for every computer that is a BLOCK (Personal Computer, Mainframe, Crafting Computer, and
+ * future ones such as Subframe / Supercomputer / AI Server).
+ *
+ * <p>What a computer is made of is held in parts, each owning one matter of it: the hardware installed and
+ * what it adds up to, the power, where it stands on the data network, what hangs off its peripheral cables,
+ * the system it boots and the session it runs it in, the console that rides on its disk, the programs it is
+ * running, the players watching it, and what it sends them.
+ *
+ * <p>This class is where those parts are put together. It holds them, answers to the names the rest of the
+ * mod has always called, decides what THIS kind of computer accepts in a slot, which is the one thing each
+ * kind settles for itself, and saves each part in turn.
  */
 public abstract class AbstractComputerBlockEntity extends BlockEntity
-        implements IPeripheralOwnerSupport, dev.jstech.computers.os.IOsHost {
+        implements IPeripheralOwnerSupport, IOsHost, IWatchedConsole {
 
-    protected static final long NO_CABLE = Long.MIN_VALUE;
+    /** The parts installed and what they add up to; it is built with the layout, so the constructor sets it. */
+    private final ComputerHardware hardware;
+    /** Whether it is on, whether it comes up by itself, and whether the next look at it shows the self-test. */
+    private final ComputerPower power = new ComputerPower(this::setChanged, this::endSession);
+    /** Where this computer stands on the data network: its node, its network, and the cable it reads. */
+    private final NetworkAttachment attachment = new NetworkAttachment(this);
+    /** What is on the far end of its peripheral cables. */
+    private final PeripheralEndpoints peripherals = new PeripheralEndpoints();
+    /** The system it boots and the session it runs: disks, desktop, windows, installing and formatting. */
+    private final OsSession session = new OsSession(this);
+    /** The console it keeps, which rides on the system disk rather than on the machine. */
+    private final DiskConsole diskConsole = new DiskConsole(this);
+    /** The programs it is running and what they reach through it. */
+    private final ProgramHost host = new ProgramHost(this);
+    /** The players with this computer's console on screen. */
+    private final Viewers viewers = new Viewers(this.worldPosition);
+    /** What it sends them: the windows its programs have open, and what those programs print. */
+    private final ClientReplication replication = new ClientReplication(this);
+    /** What moves the tool in front of its terminal along, and sends what that tool prints. */
+    private final TerminalFeed terminalFeed = TerminalFeed.of(this);
 
-    protected final ComputerHardwareLayout layout;
-
-    protected final ItemStackHandler hardware;
-
-    @Nullable
-    private ComputerBuild cachedBuild;
-    private boolean buildDirty = true;
-
-    private boolean manualOn;
-    private boolean autoStart;
-
-    @Nullable
-    private NodeUuid nodeUuid;
+    /** The name a player gave this computer: the machine's own, and no part's. */
     private String computerName = "";
-    @Nullable
-    protected NetworkUuid networkUuid;
-    @Nullable
-    protected NetworkUuid registeredNetwork;
-    /** The client's copy of whether this machine is on a network; the server answers from {@code networkUuid}. */
-    private boolean clientNetworked;
-
-    protected final Set<Long> linkedMonitors = new LinkedHashSet<>();
 
     /*
-     * The OS is no longer stored on the block entity; it lives on the system disk's SYSTEM_OS
-     * component. All OS-related state is derived at runtime by scanning the installed disk stacks.
+     * The recipe drafts the Pattern Studio edits, kept out of the session deliberately: a power cut ends a
+     * session and closes its windows, while a draft half laid out is still there afterwards, for whoever
+     * sits down next.
      */
+    private final PatternWorkbench studio =
+            new PatternWorkbench();
 
     protected AbstractComputerBlockEntity(final BlockEntityType<?> type, final BlockPos pos,
                                           final BlockState state, final ComputerHardwareLayout layout) {
         super(type, pos, state);
-        this.layout = layout;
-        this.hardware = new ItemStackHandler(layout.totalSlots()) {
-            @Override
-            protected void onContentsChanged(final int slot) {
-                buildDirty = true;
-                if (!buildValid()) {
-                    manualOn = false;
-                } else if (autoStart) {
-                    manualOn = true;
-                }
-                setChanged();
-            }
+        this.hardware = new ComputerHardware(this, layout);
+    }
 
-            @Override
-            public boolean isItemValid(final int slot, final ItemStack stack) {
-                return isValidForSlot(slot, stack);
-            }
-
-            @Override
-            public int getSlotLimit(final int slot) {
-                return 1;
-            }
-        };
+    /* The parts installed have changed: the build is worked out again and the power reconsidered. */
+    void hardwareChanged() {
+        power.hardwareChanged(buildValid());
+        setChanged();
     }
 
     // Hardware assembly
@@ -153,11 +177,11 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (!(stack.getItem() instanceof CpuItem cpu)) {
             return false;
         }
-        final ItemStack boardStack = hardware.getStackInSlot(layout.motherboardSlot());
+        final ItemStack boardStack = getHardware().getStackInSlot(layout().motherboardSlot());
         if (!(boardStack.getItem() instanceof MotherboardItem board)) {
             return true; // no board yet: allow pre-staging, as the expansion slots do
         }
-        return cpu.spec().socket() == board.spec().socket()
+        return cpu.spec().socket().equals(board.spec().socket())
                 && cpu.spec().era() == board.spec().era();
     }
 
@@ -169,7 +193,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (!(stack.getItem() instanceof RamItem ram)) {
             return false;
         }
-        final ItemStack boardStack = hardware.getStackInSlot(layout.motherboardSlot());
+        final ItemStack boardStack = getHardware().getStackInSlot(layout().motherboardSlot());
         if (!(boardStack.getItem() instanceof MotherboardItem board)) {
             return true; // no board yet: allow pre-staging
         }
@@ -181,285 +205,433 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (!(stack.getItem() instanceof IExpansionCardItem card)) {
             return false;
         }
-        final ItemStack boardStack = hardware.getStackInSlot(layout.motherboardSlot());
+        final ItemStack boardStack = getHardware().getStackInSlot(layout().motherboardSlot());
         if (!(boardStack.getItem() instanceof MotherboardItem motherboard)) {
-            // No board yet, so accept the card so it can be pre-staged; the slot will be inoperative until a board arrives.
+            /*
+             * No board yet, so accept the card so it can be pre-staged; the slot stays inoperative
+             * until a board arrives.
+             */
             return true;
         }
         return card.cardSpec().bus().compatibleWith(motherboard.spec().pcieGeneration());
     }
 
     public boolean isValidForSlot(final int slot, final ItemStack stack) {
-        if (slot == layout.motherboardSlot()) {
+        if (slot == layout().motherboardSlot()) {
             return isAcceptedBoard(stack);
         }
-        if (slot == layout.psuSlot()) {
+        if (slot == layout().psuSlot()) {
             return stack.getItem() instanceof PsuItem;
         }
-        if (layout.isCpu(slot)) {
+        if (layout().isCpu(slot)) {
             return isValidCpu(stack);
         }
-        if (layout.isRam(slot)) {
+        if (layout().isRam(slot)) {
             return isValidRam(stack);
         }
-        if (layout.isPcie(slot)) {
+        if (layout().isPcie(slot)) {
             return isValidPcieCard(stack);
         }
-        if (layout.isDisk(slot)) {
+        if (layout().isDisk(slot)) {
             return stack.getItem() instanceof DiskItem;
         }
         return false;
     }
 
     public ItemStackHandler getHardware() {
-        return hardware;
+        return hardware.handler();
+    }
+
+    /** Where this computer's slots are: which one takes the board, which ones take disks, and how many. */
+    ComputerHardwareLayout layout() {
+        return hardware.layout();
     }
 
     protected void markBuildDirty() {
-        buildDirty = true;
+        hardware.markDirty();
     }
 
+    @Override
     @Nullable
     public ComputerBuild currentBuild() {
-        if (buildDirty) {
-            cachedBuild = computeBuild();
-            buildDirty = false;
-        }
-        return cachedBuild;
+        return hardware.current();
     }
 
-    @Nullable
-    private ComputerBuild computeBuild() {
-        final ItemStack boardStack = hardware.getStackInSlot(layout.motherboardSlot());
-        if (!(boardStack.getItem() instanceof MotherboardItem motherboard) || !isAcceptedBoard(boardStack)) {
-            /*
-             * A board this computer does not accept (wrong form factor or wrong era) yields no build, so a
-             * direct setStackInSlot or a board installed before an era gate existed can never run the machine.
-             */
-            return null;
+    /** Every core of every processor seated in this machine, which a machine can really be asked. */
+    @Override
+    public int cpuCores() {
+        final ComputerBuild build = currentBuild();
+        if (build == null) {
+            return 1;
         }
-        if (!(hardware.getStackInSlot(layout.psuSlot()).getItem() instanceof PsuItem psu)) {
-            return null;
+        int cores = 0;
+        for (final CpuSpec cpu : build.cpus()) {
+            cores += cpu.cores();
         }
-        /*
-         * Every count is clamped to what the installed board exposes, so a part in a slot the board
-         * does not offer is ignored.
-         */
-        final int cpuCount = Math.min(layout.cpuCount(), motherboard.spec().cpuSlots());
-        final List<CpuSpec> cpus = new ArrayList<>();
-        for (int i = 0; i < cpuCount; i++) {
-            if (hardware.getStackInSlot(layout.cpuStart() + i).getItem() instanceof CpuItem cpu) {
-                cpus.add(cpu.spec());
-            }
-        }
-        final int ramCount = Math.min(layout.ramCount(), motherboard.spec().ramSlots());
-        final List<RamSpec> rams = new ArrayList<>();
-        for (int i = 0; i < ramCount; i++) {
-            if (hardware.getStackInSlot(layout.ramStart() + i).getItem() instanceof RamItem ram) {
-                rams.add(ram.spec());
-            }
-        }
-        final int pcieCount = Math.min(layout.pcieCount(), motherboard.spec().pcieSlots());
-        final List<IExpansionCardSpec> pcieCards = new ArrayList<>();
-        for (int i = 0; i < pcieCount; i++) {
-            if (hardware.getStackInSlot(layout.pcieStart() + i).getItem() instanceof IExpansionCardItem card) {
-                pcieCards.add(card.cardSpec());
-            }
-        }
-        final int diskCount = Math.min(layout.diskCount(), motherboard.spec().diskSlots());
-        final List<DiskSpec> disks = new ArrayList<>();
-        for (int i = 0; i < diskCount; i++) {
-            if (hardware.getStackInSlot(layout.diskStart() + i).getItem() instanceof DiskItem disk) {
-                disks.add(disk.spec());
-            }
-        }
-        return new ComputerBuild(motherboard.spec(), cpus, pcieCards, rams, psu.spec(), disks);
+        return Math.max(1, cores);
     }
 
     public boolean buildValid() {
-        final ComputerBuild build = currentBuild();
-        return build != null && build.isPowered();
+        return hardware.valid();
     }
 
     public boolean isRunning() {
-        return buildValid() && manualOn;
+        return buildValid() && power.on();
     }
 
     public boolean isManualOn() {
-        return manualOn;
+        return power.on();
     }
 
     public boolean isAutoStart() {
-        return autoStart;
+        return power.autoStart();
     }
 
     public void togglePower() {
-        setPowered(!manualOn);
+        final boolean wasOn = isRunning();
+        power.toggle();
+        if (wasOn && !isRunning()) {
+            showShutdown(false);
+        }
     }
 
     @Override
     public void setPowered(final boolean on) {
-        manualOn = on;
-        if (on) {
-            needsPost = true;
+        final boolean wasOn = isRunning();
+        power.setPowered(on);
+        if (wasOn && !on) {
+            showShutdown(false);
         }
-        openWindows.clear(); // power off or a cold start: no desktop survives either
-        pendingInstallSlot = NO_PENDING_INSTALL; // nor does an installer session
-        setChanged();
+    }
+
+    /**
+     * Starts the machine over: the system says goodbye first, and the self-test begins when it has finished.
+     *
+     * <p>A restart is not a power cut. The system that is running closes its programs and shows what it shows
+     * while it does, exactly as it does on the way to being switched off, and only then does the machine test
+     * itself again. A machine with nothing running, or with a system of an age that had no such screen, starts
+     * over at once, which is also what those machines did.
+     */
+    @Override
+    public void restart() {
+        if (!(level instanceof ServerLevel server) || !isRunning()) {
+            setNeedsPost(true);
+            return;
+        }
+        final int ticks = showShutdown(true);
+        if (ticks <= 0) {
+            setNeedsPost(true);
+            return;
+        }
+        power.beginDown(server.getGameTime(), ticks);
+    }
+
+    /**
+     * Puts the system's own goodbye in front of whoever is watching, and answers how long it runs for.
+     *
+     * <p>Only the two ways a machine really stops: switched off, or started over. A machine that went dark
+     * because its parts no longer make a computer lost its power rather than being shut down, and nothing says
+     * goodbye when the plug comes out. The systems of the earliest ages have nothing to show either, so their
+     * monitors simply go dark where they stand, which is what a length of zero means here.
+     *
+     * @param restarting the machine is coming straight back up, which every system words differently
+     */
+    private int showShutdown(final boolean restarting) {
+        if (!(level instanceof ServerLevel server)) {
+            return 0;
+        }
+        final BootSequence sequence = BootLines.shutdownFor(this, restarting);
+        if (sequence.isEmpty()) {
+            return 0;
+        }
+        final int ticks = BootTiming.shutdownTicks(
+                BootRunner.bootLength(this));
+        ScreenSessions.eachWatcher(server, worldPosition, (player, monitor) -> {
+            PacketDistributor.sendToPlayer(player,
+                    new OpenSystemBootPayload(
+                            worldPosition, monitor, ticks, ticks, sequence, !restarting,
+                            installedOs() == null ? BootSplash.PLAIN
+                                    : BootSplash.of(installedOs().platform(), installedOs().familyRank()),
+                            /* A machine on its way down shows no desktop coming up, so it names none. */
+                            new BootIdentity("", installedOs() == null ? "" : installedOs().displayName(),
+                                    Installers.hostName(this), "")));
+            // The words and the screen that shows them, as everywhere else: one without the other shows nothing.
+            MonitorBlock.openSession(player, server, monitor, worldPosition, this,
+                    MonitorSessionMenu.Phase.SYSTEM_BOOT);
+        });
+        return ticks;
     }
 
     public void toggleAutoStart() {
-        autoStart = !autoStart;
-        if (autoStart && buildValid()) {
-            if (!manualOn) {
-                /*
-                 * Auto-start bringing a machine up from off is a cold start. It writes the POST flag
-                 * directly, so it has to close the desktop itself: a machine that went dark through an
-                 * invalid build never passed through setPowered, and its old windows would otherwise
-                 * resurface on a session that no longer exists.
-                 */
-                needsPost = true;
-                openWindows.clear();
-                pendingInstallSlot = NO_PENDING_INSTALL;
-            }
-            manualOn = true;
+        power.toggleAutoStart(buildValid());
+    }
+
+    private void endSession() {
+        session.drop();
+        /*
+         * The terminal's lines belong to the run of the machine that printed them, and this is where a run
+         * ends: a restart, a power cut, a cold start. Counting the run up is what lets a terminal opened
+         * afterwards start clean instead of coming up showing somebody else's installation.
+         */
+        if (console() != null) {
+            console().newSession();
         }
+    }
+
+    /** Whether the machine owes a power-on self-test or is in the middle of one. */
+    @Override
+    public boolean needsPost() {
+        return power.needsPost();
+    }
+
+    /** Whether the machine is standing at the end of a self-test that found nothing to boot. */
+    @Override
+    public boolean haltedAtPost() {
+        return power.halted();
+    }
+
+    @Override
+    public void resumeFromHalt() {
+        power.resume();
+    }
+
+    /** The ticks the self-test still has to run, for a monitor opened while it is under way. */
+    @Override
+    public int postRemaining() {
+        return level == null ? 0 : power.postRemaining(level.getGameTime());
+    }
+
+    @Override
+    public boolean keepsInstalls() {
+        return true;
+    }
+
+    @Override
+    public void markChanged() {
         setChanged();
     }
 
-    /*
-     * The power-on self-test runs once per power-up (and once per requested reboot), then the monitor
-     * boots straight into the OS. Deliberately transient: a computer that stayed on across a chunk
-     * reload does not POST again, exactly like a real machine that was never switched off.
-     */
-    private boolean needsPost;
+    /** The system being copied onto a disk right now, or nothing. */
+    @Override
+    @Nullable
+    public OsInstallJob installing() {
+        return session.installing();
+    }
 
-    /** Whether the next monitor use should play the power-on self-test before booting. */
-    public boolean needsPost() {
-        return needsPost;
+    /** Starts, replaces or ends the copy this machine is doing. */
+    public void setInstalling(@Nullable final OsInstallJob job) {
+        session.setInstalling(job);
+    }
+
+    @Override
+    public SystemWelcome systemWelcome() {
+        return session.welcome();
+    }
+
+    @Override
+    public void setSystemWelcome(final SystemWelcome welcome) {
+        session.setWelcome(welcome);
+    }
+
+    /** The installer this machine is in: the page it is on and what has been answered so far. */
+    @Nullable
+    public InstallerFlow installer() {
+        return session.installer();
+    }
+
+    /** Puts the machine in an installer, or takes it out of one. */
+    public void setInstaller(@Nullable final InstallerFlow flow) {
+        session.setInstaller(flow);
+    }
+
+    /** Whether that system could go on that disk, asked before a copy starts rather than after it ends. */
+    public boolean canTakeOs(final ResourceLocation osId, final int preferredSlot) {
+        return session.canTakeOs(osId, preferredSlot);
+    }
+
+    /** Boots that system on that disk for this boot only, leaving what the disk boots by default alone. */
+    public void setBootOnce(final int slot, @Nullable final ResourceLocation osId) {
+        session.setBootOnce(slot, osId);
+    }
+
+    /**
+     * Carries this machine up: the self-test, the wait at a boot manager, and the system coming up.
+     *
+     * <p>The machine keeps these times rather than the screen doing it. Closing the monitor halfway through no
+     * longer stops a machine coming up, opening it again shows how far it has got, and a machine nobody is
+     * looking at boots all the same, which is what a machine does.
+     */
+    protected void tickBootPhases(final ServerLevel level) {
+        BootRunner.tick(this, power.phases(), level, worldPosition);
+    }
+
+    /** Whether the machine is stopped at its boot menu. */
+    @Override
+    public boolean atBootMenu() {
+        return power.atMenu();
+    }
+
+    /** The ticks left before the menu boots its first entry by itself, or zero once a key has stopped it. */
+    @Override
+    public int menuRemaining() {
+        return level == null ? 0 : power.menuRemaining(level.getGameTime());
+    }
+
+    /** A key was pressed at the menu: the machine waits there for a choice. */
+    @Override
+    public void holdBootMenu() {
+        power.holdMenu();
+    }
+
+    /** Leaves the menu and brings the chosen system up. */
+    @Override
+    public void leaveBootMenu() {
+        power.endMenu();
+        power.beginBoot();
+    }
+
+    @Override
+    public void restartFromBootMenu() {
+        power.endMenu();
+        setNeedsPost(true);
+    }
+
+    /** Whether the system is coming up on this machine right now. */
+    @Override
+    public boolean booting() {
+        return power.booting();
+    }
+
+    /** The ticks the system still needs, for a monitor opened while it comes up. */
+    @Override
+    public int bootRemaining() {
+        return level == null ? 0 : power.bootRemaining(level.getGameTime());
+    }
+
+    /** How long the coming-up under way takes in all, for the bar on the screen watching it. */
+    @Override
+    public int bootTotal() {
+        return power.bootTotal();
+    }
+
+    /** Whether the machine is closing its system down on its way to starting over. */
+    @Override
+    public boolean goingDown() {
+        return power.goingDown();
+    }
+
+    /** How long that closing-down takes in all, and how much of it a monitor opened now would join. */
+    @Override
+    public int downTotal() {
+        return power.downTotal();
+    }
+
+    @Override
+    public int downRemaining() {
+        return level == null ? 0 : power.downRemaining(level.getGameTime());
+    }
+
+    /** What this machine's system shows while it comes up. */
+    @Override
+    public BootSequence bootSequence() {
+        return BootLines.forMachine(this, level instanceof ServerLevel server ? server : null);
+    }
+
+    /** Whether a drive this machine reaches holds something it could boot instead of one of its own disks. */
+    @Override
+    public boolean hasBootableMedium() {
+        if (level == null) {
+            return false;
+        }
+        for (final long endpoint : linkedEndpoints()) {
+            if (level.getBlockEntity(BlockPos.of(endpoint))
+                    instanceof MediaReaderBlockEntity reader
+                    && reader.insertedKind() == MediaKind.OS_INSTALL
+                    && reader.insertedPayload() != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void setNeedsPost(final boolean value) {
-        this.needsPost = value;
-        if (value) {
-            openWindows.clear(); // a restart closes everything, as it does on any machine
-            pendingInstallSlot = NO_PENDING_INSTALL; // the restart is what the installer was waiting for
-        }
+        power.setNeedsPost(value);
     }
-
-    /*
-     * A guided installer that finished writing the system but has not rebooted yet. Persisted: the
-     * machine is still in the installer after a reload, the same way it keeps its booted desktop.
-     */
-    private int pendingInstallSlot = NO_PENDING_INSTALL;
 
     @Override
     public int pendingInstallSlot() {
-        return pendingInstallSlot;
+        return session.pendingInstallSlot();
     }
 
     @Override
     public void setPendingInstallSlot(final int slot) {
-        this.pendingInstallSlot = slot;
-        setChanged();
+        session.setPendingInstallSlot(slot);
     }
-
-    /*
-     * The desktop this session booted into. Held apart from what is on disk so that installing or
-     * removing a desktop package takes effect on the next boot, not the next time the monitor is opened.
-     */
-    @Nullable
-    private ResourceLocation bootedDesktopId;
 
     @Override
     @Nullable
     public ResourceLocation bootedDesktopId() {
-        return bootedDesktopId;
+        return session.bootedDesktopId();
     }
 
     @Override
     public void setBootedDesktopId(@Nullable final ResourceLocation id) {
-        this.bootedDesktopId = id;
-        setChanged();
+        session.setBootedDesktopId(id);
     }
 
-    /*
-     * The windows open on this machine's desktop. Kept here, not in the client, so they belong to the
-     * machine: whoever opens the monitor next sees them, and they survive the game being closed.
-     */
-    private final java.util.List<dev.jstech.computers.os.OpenWindow> openWindows =
-            new java.util.ArrayList<>();
-
-    /*
-     * The recipe drafts the Pattern Studio edits. Machine state like the windows: a draft half laid out when
-     * the player walks away is still there for whoever sits down next, and after the game was closed.
-     */
-    private final dev.jstech.computers.crafting.PatternWorkbench studio =
-            new dev.jstech.computers.crafting.PatternWorkbench();
-
     @Override
-    public dev.jstech.computers.crafting.PatternWorkbench studio() {
+    public PatternWorkbench studio() {
         return studio;
     }
 
     @Override
-    public java.util.List<dev.jstech.computers.os.OpenWindow> openWindows() {
-        return java.util.List.copyOf(openWindows);
+    public List<OpenWindow> openWindows() {
+        return session.openWindows();
     }
 
     @Override
-    public void setOpenWindows(final java.util.List<dev.jstech.computers.os.OpenWindow> windows) {
-        openWindows.clear();
-        for (final dev.jstech.computers.os.OpenWindow window : windows) {
-            if (openWindows.size() >= dev.jstech.computers.os.OpenWindow.MAX) {
-                break;
-            }
-            openWindows.add(window);
-        }
-        setChanged();
+    public void setOpenWindows(final List<OpenWindow> windows) {
+        session.setOpenWindows(windows);
+    }
+
+    @Override
+    public int desktopWorkspace() {
+        return session.desktopWorkspace();
+    }
+
+    @Override
+    public void setDesktopWorkspace(final int workspace) {
+        session.setDesktopWorkspace(workspace);
     }
 
     public long capacity() {
-        return buildValid() ? currentBuild().totalCapacity() : 0L;
+        return hardware.capacity();
     }
 
     public long ramBuffer() {
-        return buildValid() ? currentBuild().ramBuffer() : 0L;
+        return hardware.ramBuffer();
     }
 
-    /*
-     * Motherboard-derived slot availability (read from the board alone, no PSU needed,
-     * so the assembly GUI lights up usable slots as soon as a board goes in).
-     */
-
     public int boardCpuSlots() {
-        return hardware.getStackInSlot(layout.motherboardSlot()).getItem() instanceof MotherboardItem m
-                ? Math.min(layout.cpuCount(), m.spec().cpuSlots()) : 0;
+        return hardware.boardCpuSlots();
     }
 
     public int boardRamSlots() {
-        return hardware.getStackInSlot(layout.motherboardSlot()).getItem() instanceof MotherboardItem m
-                ? Math.min(layout.ramCount(), m.spec().ramSlots()) : 0;
+        return hardware.boardRamSlots();
     }
 
     public int boardPcieSlots() {
-        return hardware.getStackInSlot(layout.motherboardSlot()).getItem() instanceof MotherboardItem m
-                ? Math.min(layout.pcieCount(), m.spec().pcieSlots()) : 0;
+        return hardware.boardPcieSlots();
     }
 
     public int boardDiskSlots() {
-        return hardware.getStackInSlot(layout.motherboardSlot()).getItem() instanceof MotherboardItem m
-                ? Math.min(layout.diskCount(), m.spec().diskSlots()) : 0;
+        return hardware.boardDiskSlots();
     }
 
-    /**
-     * The hardware era of the installed motherboard, or {@code null} when no board is present. Read from the board
-     * alone (no PSU needed), so the assembly GUI can adopt the era's skin the moment a board goes in.
-     */
+    /** The hardware era of the installed motherboard, or {@code null} when no board is present. */
     @Nullable
     public HardwareEra installedEra() {
-        return hardware.getStackInSlot(layout.motherboardSlot()).getItem() instanceof MotherboardItem m
-                ? m.spec().era() : null;
+        return hardware.installedEra();
     }
 
     /**
@@ -469,46 +641,31 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
     @Nullable
     public HardwareEra displayEra() {
-        return getBlockState().getBlock() instanceof dev.jstech.computers.block.IEraChassisBlock chassis
+        return getBlockState().getBlock() instanceof IEraChassisBlock chassis
                 ? chassis.chassisEra()
                 : installedEra();
     }
 
     public int installedCpus() {
-        final ComputerBuild build = currentBuild();
-        return build == null ? 0 : build.cpus().size();
+        return hardware.installedCpus();
     }
 
     public int installedRam() {
-        final ComputerBuild build = currentBuild();
-        return build == null ? 0 : build.rams().size();
+        return hardware.installedRam();
     }
 
     public int installedGpus() {
-        final ComputerBuild build = currentBuild();
-        return build == null ? 0 : build.gpus().size();
+        return hardware.installedGpus();
     }
 
     /** The best (max) CPU clock in MHz across installed CPUs, or 0 when there is no valid build. */
     public int maxCpuMhz() {
-        final ComputerBuild build = currentBuild();
-        if (build == null) {
-            return 0;
-        }
-        int max = 0;
-        for (final CpuSpec cpu : build.cpus()) {
-            max = Math.max(max, cpu.freqMhz());
-        }
-        return max;
+        return hardware.maxCpuMhz();
     }
 
-    /**
-     * The usable VRAM in MB across installed GPUs, or 0 when there is no valid build. A card seated in
-     * a slot older than itself contributes only what that slot's bandwidth allows.
-     */
+    /** The usable VRAM in MB across installed GPUs, or 0 when there is no valid build. */
     public int totalVramMb() {
-        final ComputerBuild build = currentBuild();
-        return build == null ? 0 : build.effectiveVramMb();
+        return hardware.totalVramMb();
     }
 
     /**
@@ -516,19 +673,11 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * mB-equivalent weight ({@link #systemDiskFreeWeight()}) at what an item costs on that disk's era.
      */
     public long systemDiskFreeMb() {
-        final ItemStack disk = systemDisk();
-        return dev.jstech.computers.os.OsDisks.systemDiskFreeWeight(disk)
-                * diskEra(disk).mbPerItem() / StorageKey.MB_EQ_PER_ITEM;
-    }
-
-    /** The era a disk was made for, which sets what an item and a system image cost on it; standard for no disk. */
-    protected static HardwareEra diskEra(final ItemStack disk) {
-        return disk.getItem() instanceof DiskItem item ? item.spec().era() : HardwareEra.STANDARD;
+        return session.systemDiskFreeMb();
     }
 
     public int installedDisks() {
-        final ComputerBuild build = currentBuild();
-        return build == null ? 0 : build.disks().size();
+        return hardware.installedDisks();
     }
 
     /*
@@ -554,25 +703,57 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     // Identity & name
 
     public NodeUuid nodeUuid() {
-        if (nodeUuid == null) {
-            nodeUuid = NodeUuid.random();
-            setChanged();
-        }
-        return nodeUuid;
+        return attachment.node();
     }
 
     @Nullable
     public NetworkUuid networkUuid() {
-        return networkUuid;
+        return attachment.network();
+    }
+
+    @Override
+    public boolean networkAttached() {
+        return attachment.attached();
     }
 
     /**
-     * Whether this machine is attached to a data network. On the server that is simply whether it resolved
-     * one; on the client the network's identity never travels, only this answer does.
+     * What the network this machine is on is holding, and how much room it has for more.
+     *
+     * <p>Asked of the machine that orchestrates that network, because the index of what is where is kept
+     * there and nowhere else. Every machine used to answer nothing at all, the orchestrator excepted, so a
+     * terminal on a personal computer said the network held nothing while showing what it held.
+     *
+     * <p>No {@code @Override} because the terminal host interface is implemented by the machines below this
+     * class rather than by this one; a method inherited from here answers it for each of them.
      */
-    @Override
-    public boolean networkAttached() {
-        return level != null && level.isClientSide ? clientNetworked : networkUuid != null;
+    public long networkStorageUsed() {
+        final MainframeBlockEntity orchestrator = networkOrchestrator();
+        return orchestrator == null ? 0L : orchestrator.networkStorageUsed();
+    }
+
+    public long networkStorageTotal() {
+        if (networkUuid() == null || !(level instanceof ServerLevel serverLevel)) {
+            return 0L;
+        }
+        // In items as the racks registered them: what a megabyte holds differs by era, an item does not.
+        return NetworkSystem.get(serverLevel).totalStorageItemsOf(networkUuid());
+    }
+
+    /** The machine that orchestrates this one's network, or null when it is on none or none is running. */
+    @Nullable
+    private MainframeBlockEntity networkOrchestrator() {
+        if (networkUuid() == null || !(level instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+        return NetworkSystem.get(serverLevel).mainframePositionOf(networkUuid())
+                .map(pos -> serverLevel.getBlockEntity(BlockPos.of(pos))
+                        instanceof MainframeBlockEntity mainframe ? mainframe : null)
+                .orElse(null);
+    }
+
+    /** Where this computer stands on the data network, for a Mainframe, which owns its network itself. */
+    protected NetworkAttachment attachment() {
+        return attachment;
     }
 
     public String customName() {
@@ -603,32 +784,18 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * <p>The system disk is defined as the first disk slot (lowest index) holding a
      * {@link DiskItem} with a {@code SYSTEM_OS} component that maps to a known {@link OsDef}.
      */
-    // The firmware's preferred boot disk slot (-1 = the first disk with a system). Persisted, so dual boot sticks.
-    private int bootDiskSlot = -1;
-
     public ItemStack systemDisk() {
-        /*
-         * The preferred boot disk (chosen in the firmware's boot order) wins when it holds a system; otherwise
-         * the first disk with a system boots, so a computer with two installed OSes dual-boots by choice.
-         */
-        return dev.jstech.computers.os.OsDisks.systemDisk(
-                layout.diskCount(), this::diskInSlot, bootDiskSlot);
-    }
-
-    private static boolean hasSystem(final ItemStack disk) {
-        return dev.jstech.computers.os.OsDisks.hasSystem(disk);
+        return session.systemDisk();
     }
 
     /** The disk slot index the firmware boots first, or {@code -1} for "the first disk with a system". */
     public int bootDiskSlot() {
-        return bootDiskSlot;
+        return session.bootDiskSlot();
     }
 
     /** Sets the preferred boot disk slot ({@code -1} = automatic) and marks the computer dirty. */
     public void setBootDiskSlot(final int slot) {
-        this.bootDiskSlot = slot;
-        setChanged();
-        buildDirty = true;
+        session.setBootDiskSlot(slot);
     }
 
     /**
@@ -640,32 +807,30 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * else null (a TTY-only or network OS).
      */
     public ResourceLocation installedDesktopId() {
-        return dev.jstech.computers.os.OsDisks.installedDesktopId(
-                installedOs(), console());
+        return session.installedDesktopId();
+    }
+
+    /** The operating space this computer draws with, or null when it comes up at its prompt and nothing else. */
+    @Override
+    public ResourceLocation installedSpaceId() {
+        return session.installedSpaceId();
     }
 
     public boolean hasOs() {
-        return !systemDisk().isEmpty();
+        return session.hasOs();
     }
 
     /**
      * Returns the stacks in this computer's disk slots, in slot order. Entries may be empty or hold
      * non-disk items; callers filter as needed (used by the "This PC" disk listing).
      */
-    public java.util.List<ItemStack> diskStacks() {
-        final java.util.List<ItemStack> out = new java.util.ArrayList<>(layout.diskCount());
-        for (int i = 0; i < layout.diskCount(); i++) {
-            out.add(hardware.getStackInSlot(layout.diskStart() + i));
-        }
-        return out;
+    public List<ItemStack> diskStacks() {
+        return session.diskStacks();
     }
 
     /** The disk stack in the given 0-based disk slot (for renaming a specific installed disk), or EMPTY. */
     public ItemStack diskInSlot(final int slot) {
-        if (slot < 0 || slot >= layout.diskCount()) {
-            return ItemStack.EMPTY;
-        }
-        return hardware.getStackInSlot(layout.diskStart() + slot);
+        return session.diskInSlot(slot);
     }
 
     /**
@@ -674,8 +839,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
     @Nullable
     public ResourceLocation installedOsId() {
-        final ItemStack disk = systemDisk();
-        return disk.isEmpty() ? null : disk.get(ComputingModule.SYSTEM_OS.get());
+        return session.installedOsId();
     }
 
     /**
@@ -684,8 +848,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      */
     @Nullable
     public OsDef installedOs() {
-        final ResourceLocation osId = installedOsId();
-        return osId != null ? OsRegistry.getOs(osId) : null;
+        return session.installedOs();
     }
 
     /**
@@ -694,11 +857,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * space alongside stored data.
      */
     public long reservedByOs() {
-        // One lookup of the system disk serves both the system and the era the system sits on.
-        final ItemStack disk = systemDisk();
-        final ResourceLocation osId = disk.isEmpty() ? null : disk.get(ComputingModule.SYSTEM_OS.get());
-        final OsDef os = osId != null ? OsRegistry.getOs(osId) : null;
-        return os != null ? os.footprintItemsOn(diskEra(disk)) : 0L;
+        return session.reservedByOs();
     }
 
     /**
@@ -707,7 +866,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * system disk is present.
      */
     public long systemDiskFreeWeight() {
-        return dev.jstech.computers.os.OsDisks.systemDiskFreeWeight(systemDisk());
+        return session.systemDiskFreeWeight();
     }
 
     /**
@@ -732,130 +891,41 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         return installOs(osId, -1);
     }
 
-    /*
-     * Which progress quarter (25/50/75%) each running build last reported, so the console gets a handful
-     * of emerge-style progress lines instead of one per second. Transient by design.
-     */
-    private final java.util.Map<String, Integer> buildQuarterReported = new java.util.HashMap<>();
-    private int liveKernelQuarterReported;
+    /** Moves whatever is running in front of this computer's terminal along, and tells whoever is watching. */
+    public void tickTerminal(final ServerLevel level) {
+        terminalFeed.tick(level);
+    }
 
     /**
-     * Streams source-build progress and completion to every console open on this computer (the full-screen
-     * prompt and the desktop terminal window alike). Called from the host block's server ticker; checks
-     * once a second and only speaks on a 25% step or on completion, like emerge's own output.
+     * Every player with this computer's console on screen: its terminal menus, or its open desktop.
+     *
+     * <p>The list is the machine's own, kept on the server thread: read it, do not keep it.
      */
-    public void tickBuildProgress(final net.minecraft.server.level.ServerLevel level) {
-        final dev.jstech.computers.program.ComputerConsoleState console = console();
-        if (console == null || level.getGameTime() % 20 != 0) {
-            return;
-        }
-        final long now = level.getGameTime();
-        final java.util.List<dev.jstech.computers.operation.payload.CommandOutputPayload.WireLine>
-                wire = new java.util.ArrayList<>();
-        final int dim = dev.jstech.computers.program.cli.CliStyle.DIM.ordinal();
-        final int ok = dev.jstech.computers.program.cli.CliStyle.OK.ordinal();
-
-        // Package builds (emerge): progress quarters while compiling.
-        for (final java.util.Map.Entry<String, Long> entry : console.pendingBuilds().entrySet()) {
-            final long total = console.buildTotal(entry.getKey());
-            if (total <= 0 || entry.getValue() <= now) {
-                continue; // completions are handled below
-            }
-            final long left = entry.getValue() - now;
-            final int pct = (int) Math.max(0, Math.min(99, 100 - left * 100 / total));
-            final int quarter = pct / 25;
-            if (quarter >= 1 && quarter > buildQuarterReported.getOrDefault(entry.getKey(), 0)) {
-                buildQuarterReported.put(entry.getKey(), quarter);
-                wire.add(new dev.jstech.computers.operation.payload.CommandOutputPayload.WireLine(
-                        ">>> " + buildDisplayName(entry.getKey()) + ": compiling ... " + pct + "% ("
-                                + (left / 20) + "s left)", dim));
-            }
-        }
-
-        // The Gentoo live install's kernel compile gets the same treatment.
-        final dev.jstech.computers.program.install.LiveInstallState live = console.liveInstall();
-        if (live != null && live.kernelCompiling(now)) {
-            final long kernelTotal = Math.max(5L, Math.min(1800L, 64_000L / Math.max(100, maxCpuMhz()))) * 20L;
-            final long left = live.kernelReadyAt() - now;
-            final int pct = (int) Math.max(0, Math.min(99, 100 - left * 100 / Math.max(1L, kernelTotal)));
-            final int quarter = pct / 25;
-            if (quarter >= 1 && quarter > liveKernelQuarterReported) {
-                liveKernelQuarterReported = quarter;
-                wire.add(new dev.jstech.computers.operation.payload.CommandOutputPayload.WireLine(
-                        ">>> sys-kernel/gentoo-sources: compiling ... " + pct + "% (" + (left / 20) + "s left)", dim));
-            }
-        } else if (live != null && live.kernelReadyAt() >= 0 && !live.kernelCompiling(now)
-                && liveKernelQuarterReported > 0 && liveKernelQuarterReported < 4) {
-            liveKernelQuarterReported = 4;
-            wire.add(new dev.jstech.computers.operation.payload.CommandOutputPayload.WireLine(
-                    ">>> sys-kernel/gentoo-sources: compiled. Run 'genkernel all' to build the kernel.", ok));
-        }
-
-        /*
-         * Completions: announced live to whoever is looking; with no console open the notice stays queued
-         * for the shell to print ahead of the next command instead.
-         */
-        final java.util.List<net.minecraft.server.level.ServerPlayer> viewers = consoleViewers(level);
-        if (!console.settleBuilds(now).isEmpty()) {
-            setChanged();
-            if (!viewers.isEmpty()) {
-                for (final String id : console.drainFinishedBuilds()) {
-                    buildQuarterReported.remove(id);
-                    wire.add(new dev.jstech.computers.operation.payload.CommandOutputPayload
-                            .WireLine(">>> " + buildDisplayName(id) + ": build finished, package installed", ok));
-                }
-            }
-        }
-        if (wire.isEmpty() || viewers.isEmpty()) {
-            return;
-        }
-        final var prompt = new dev.jstech.computers.operation.payload.CommandOutputPayload(
-                false, "", wire);
-        final java.util.List<dev.jstech.computers.operation.payload.DesktopShellOutputPayload
-                .WireLine> desktopWire = new java.util.ArrayList<>();
-        for (final var line : wire) {
-            desktopWire.add(new dev.jstech.computers.operation.payload.DesktopShellOutputPayload
-                    .WireLine(line.text(), line.style()));
-        }
-        /*
-         * Every reply says whether a program has the terminal, notices included: one that said otherwise
-         * would hand the keyboard back while a program was still using it.
-         */
-        final var desktop = new dev.jstech.computers.operation.payload.DesktopShellOutputPayload(
-                false, cannon.held() != 0, "", desktopWire);
-        for (final net.minecraft.server.level.ServerPlayer viewer : viewers) {
-            if (viewer.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu) {
-                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(viewer, desktop);
-            } else {
-                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(viewer, prompt);
-            }
-        }
+    public List<ServerPlayer> consoleViewers(
+            final ServerLevel level) {
+        return viewers.at(level);
     }
 
-    /** Every player with this computer's console on screen: its terminal menus, or its open desktop. */
-    private java.util.List<net.minecraft.server.level.ServerPlayer> consoleViewers(
-            final net.minecraft.server.level.ServerLevel level) {
-        final java.util.List<net.minecraft.server.level.ServerPlayer> out = new java.util.ArrayList<>();
-        for (final net.minecraft.server.level.ServerPlayer player : level.players()) {
-            final boolean viewing = (player.containerMenu
-                    instanceof dev.jstech.computers.menu.CommandPromptMenu prompt
-                    && worldPosition.equals(prompt.hostPos()))
-                    || (player.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu desk
-                            && worldPosition.equals(desk.hostPos()));
-            if (viewing) {
-                out.add(player);
-            }
-        }
-        return out;
+    /**
+     * The windows this machine owes that player, counted as sent from here on: everything its programs have
+     * open that the player has not been given already.
+     *
+     * <p>Somebody who has just opened the desktop is owed all of them, which is how a second person at the
+     * same machine is shown what the first is already looking at.
+     */
+    public List<UiWindowPayload> takeWindowsOwed(
+            final ServerPlayer viewer) {
+        return replication.takeOwed(viewer);
     }
 
-    private static String buildDisplayName(final String programId) {
-        final net.minecraft.resources.ResourceLocation rl =
-                net.minecraft.resources.ResourceLocation.tryParse(programId);
-        final dev.jstech.computers.os.ProgramSpec spec =
-                rl == null ? null : dev.jstech.computers.os.OsRegistry.getProgram(rl);
-        return spec != null ? spec.commandName()
-                : (programId.contains(":") ? programId.substring(programId.indexOf(':') + 1) : programId);
+    @Override
+    public void consoleOpenedBy(final ServerPlayer viewer) {
+        this.viewers.opened(viewer);
+    }
+
+    @Override
+    public void consoleClosedBy(final ServerPlayer viewer) {
+        this.viewers.closed(viewer);
     }
 
     /**
@@ -865,39 +935,12 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * installer shell.
      */
     public boolean validateOsSession() {
-        final dev.jstech.computers.program.ComputerConsoleState console = console();
-        final dev.jstech.computers.program.install.LiveInstallState live =
-                console == null ? null : console.liveInstall();
-        if (live != null) {
-            if (hasLiveMediumFor(live.distro())) {
-                return true;
-            }
-            console.clearLiveInstall();
-            setChanged();
-        }
-        return installedOsId() != null;
+        return session.validateOsSession();
     }
 
-    /** Whether a linked drive still holds the live/source installer medium for {@code distro}. */
-    private boolean hasLiveMediumFor(
-            final dev.jstech.computers.program.install.LiveInstallState.Distro distro) {
-        final net.minecraft.world.level.Level level = getLevel();
-        if (level == null) {
-            return true; // not resolvable right now; do not kill the session over a missing level
-        }
-        final String wanted = distro
-                == dev.jstech.computers.program.install.LiveInstallState.Distro.ARCH
-                ? "arch" : "gentoo";
-        for (final long endpoint : linkedEndpoints()) {
-            if (level.getBlockEntity(net.minecraft.core.BlockPos.of(endpoint))
-                    instanceof dev.jstech.computers.os.media.MediaReaderBlockEntity reader
-                    && reader.insertedKind() == dev.jstech.computers.os.media.MediaKind.OS_INSTALL
-                    && reader.insertedPayload() != null
-                    && wanted.equals(reader.insertedPayload().getPath())) {
-                return true;
-            }
-        }
-        return false;
+    @Override
+    public boolean settleLiveInstall() {
+        return session.settleLiveInstall();
     }
 
     /**
@@ -906,22 +949,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * Returns whether a disk was actually formatted.
      */
     public boolean formatDisk(final int slot) {
-        // Write back through the handler so onContentsChanged fires (setChanged + build invalidation).
-        final dev.jstech.computers.os.OsDisks.FormatResult result =
-                dev.jstech.computers.os.OsDisks.formatDisk(
-                        layout.diskCount(), this::diskInSlot,
-                        (stack, s) -> hardware.setStackInSlot(layout.diskStart() + s, stack), slot);
-        if (!result.formatted()) {
-            return false;
-        }
-        if (bootDiskSlot == slot) {
-            bootDiskSlot = -1;
-        }
-        if (result == dev.jstech.computers.os.OsDisks.FormatResult.ERASED_SYSTEM) {
-            onSystemErased();
-        }
-        setChanged();
-        return true;
+        return session.formatDisk(slot);
     }
 
     /**
@@ -930,7 +958,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * software services (the Mainframe) extend this to switch those off too.
      */
     protected void onSystemErased() {
-        final dev.jstech.computers.program.ComputerConsoleState console = console();
+        final ComputerConsoleState console = console();
         if (console != null) {
             console.wipeSoftware();
         }
@@ -941,8 +969,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * lands beside the first for dual boot), else the first disk; {@code -1} when no disk is installed.
      */
     public int defaultInstallSlot() {
-        return dev.jstech.computers.os.OsDisks.defaultInstallSlot(
-                layout.diskCount(), this::diskInSlot);
+        return session.defaultInstallSlot();
     }
 
     /**
@@ -951,48 +978,14 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * the first disk. Returns false when the OS is unknown, no disk is present, or the footprint does not fit.
      */
     public boolean installOs(final ResourceLocation osId, final int preferredSlot) {
-        /*
-         * Writing back through setStackInSlot makes onContentsChanged fire (setChanged + build
-         * invalidation); the block update then pushes the new disk state to watching clients.
-         */
-        final boolean installed = dev.jstech.computers.os.OsDisks.installOs(
-                layout.diskCount(), this::diskInSlot,
-                (stack, s) -> hardware.setStackInSlot(layout.diskStart() + s, stack),
-                osId, preferredSlot);
-        if (installed && level != null) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
-                    Block.UPDATE_CLIENTS);
-        }
-        return installed;
+        return session.installOs(osId, preferredSlot);
     }
 
     /**
      * Removes the OS from the system disk. A no-op when no bootable disk is installed.
      */
     public void uninstallOs() {
-        for (int i = 0; i < layout.diskCount(); i++) {
-            final ItemStack stack = hardware.getStackInSlot(layout.diskStart() + i);
-            if (!(stack.getItem() instanceof DiskItem)) {
-                continue;
-            }
-            final ResourceLocation osId = stack.get(ComputingModule.SYSTEM_OS.get());
-            if (osId == null) {
-                continue;
-            }
-            /*
-             * Clear the component regardless of whether the OS id is still registered: if an addon OS was
-             * installed and the addon later removed, the id is unknown but the player must still be able to
-             * uninstall it (otherwise they would have to physically pull the disk and risk losing its files).
-             */
-            final ItemStack updated = stack.copy();
-            updated.remove(ComputingModule.SYSTEM_OS.get());
-            hardware.setStackInSlot(layout.diskStart() + i, updated);
-            if (level != null) {
-                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
-                        Block.UPDATE_CLIENTS);
-            }
-            return;
-        }
+        session.uninstallOs();
     }
 
     /*
@@ -1002,7 +995,7 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
 
     @Override
     public Set<Long> peripheralEndpoints() {
-        return linkedMonitors;
+        return peripherals.all();
     }
 
     @Override
@@ -1029,41 +1022,16 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     protected abstract void unregisterNode(NetworkSystem system, NetworkUuid network);
 
     protected void tickNode(final ServerLevel level) {
-        tickBuildProgress(level);
-        tickCannon();
-        dev.jstech.computers.os.install.SetupRunner.tick(this, level, worldPosition);
-        final NetworkSystem system = NetworkSystem.get(level);
-        NetworkUuid resolved = null;
-        if (isRunning()) {
-            final long cable = adjacentCable(level);
-            resolved = cable == NO_CABLE ? null : system.connectivity().networkOf(cable).orElse(null);
-        }
-        if (registeredNetwork != null && !registeredNetwork.equals(resolved)) {
-            unregisterNode(system, registeredNetwork);
-            registeredNetwork = null;
-        }
-        final boolean wasAttached = networkUuid != null;
-        networkUuid = resolved;
-        if (resolved != null) {
-            registerNode(system, resolved);
-            registeredNetwork = resolved;
-        }
-        if (wasAttached != (resolved != null)) {
-            /*
-             * The desktop's notification area shows whether this machine is on a network, so a cable cut or
-             * laid has to reach the client rather than wait for the next time the monitor is opened.
-             */
-            setChanged();
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
-                    net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
-        }
+        tickTerminal(level);
+        tickBootPhases(level);
+        OsInstallRunner.tick(this, level, worldPosition);
+        tickSigma();
+        SetupRunner.tick(this, level, worldPosition);
+        attachment.tick(level);
     }
 
     public void onBroken(final ServerLevel level) {
-        if (registeredNetwork != null) {
-            unregisterNode(NetworkSystem.get(level), registeredNetwork);
-            registeredNetwork = null;
-        }
+        attachment.leave(level);
     }
 
     @Override
@@ -1079,62 +1047,25 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         }
     }
 
-    protected long adjacentCable(final ServerLevel level) {
-        for (final Direction direction : cableSearchFaces()) {
-            final BlockPos neighbor = worldPosition.relative(direction);
-            if (level.getBlockState(neighbor).getBlock() instanceof DataCableBlock cable
-                    && acceptsTier(cable.tier())) {
-                return neighbor.asLong();
-            }
-        }
-        return NO_CABLE;
-    }
-
-    /**
-     * The faces on which this computer will accept a data cable, derived from the block's
-     * {@link dev.jstech.core.network.IDataNetworkConnectable#connectsOnFace} so the
-     * device's attachment and the cable's rendered connection always agree. A standalone computer
-     * reports only its rear; the Mainframe (a separate block entity) and the cluster nodes keep every
-     * face.
-     */
-    protected java.util.List<Direction> cableSearchFaces() {
-        final BlockState state = getBlockState();
-        if (state.getBlock() instanceof dev.jstech.core.network.IDataNetworkConnectable device) {
-            final java.util.List<Direction> faces = new java.util.ArrayList<>(Direction.values().length);
-            for (final Direction direction : Direction.values()) {
-                if (device.connectsOnFace(state, direction)) {
-                    faces.add(direction);
-                }
-            }
-            return faces;
-        }
-        return java.util.Arrays.asList(Direction.values());
-    }
-
     protected boolean acceptsTier(final DataTier tier) {
         return getBlockState().getBlock() instanceof IDataNetworkConnectable device
                 && device.acceptedCableTiers().contains(tier);
     }
 
-    // Console state: the Command Prompt's per-computer history and installed programs.
+    /** The Σ# programs this machine is running. */
+    public MachinePrograms programs() {
+        return host.programs();
+    }
 
-    private final dev.jstech.computers.program.ComputerConsoleState console =
-            new dev.jstech.computers.program.ComputerConsoleState();
+    /** What the Σ# programs on this machine reach through it. */
+    public MachineServices services() {
+        return host.services();
+    }
 
-    /*
-     * Script processes: the Cannon programs this machine is running, which live with the machine
-     * rather than with its system disk: they are what it is doing, not what it has installed.
-     */
-
-    private final dev.jstech.computers.cannon.machine.MachinePrograms cannon =
-            new dev.jstech.computers.cannon.machine.MachinePrograms();
-
-    private final dev.jstech.computers.cannon.run.IHost cannonHost =
-            new dev.jstech.computers.cannon.machine.MachineHost(this);
-
-    /** The Cannon programs this machine is running. */
-    public dev.jstech.computers.cannon.machine.MachinePrograms cannon() {
-        return cannon;
+    /** The data network as what runs on this machine reads it. */
+    @Override
+    public NetworkReadService networkService() {
+        return host.services().network();
     }
 
     /**
@@ -1144,30 +1075,17 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * off, which is the truthful answer and not an error.
      */
     public long networkStock(final String item) {
-        if (this instanceof dev.jstech.computers.terminal.IComputerTerminalHost terminal
-                && level instanceof ServerLevel server) {
-            long sum = 0;
-            for (final var holding
-                    : new dev.jstech.computers.program.ServerCliComputer(terminal, server).find(item)) {
-                sum += holding.quantity();
-            }
-            return sum;
-        }
-        return 0L;
+        return host.networkStock(item);
     }
 
     /** The prompt this machine's shell would show, for giving it back when a program lets go. */
-    private String shellPrompt() {
-        if (this instanceof dev.jstech.computers.terminal.IComputerTerminalHost host
-                && level instanceof ServerLevel server) {
-            return new dev.jstech.computers.program.ServerCliComputer(host, server).prompt();
-        }
-        return "";
+    String shellPrompt() {
+        return host.shellPrompt();
     }
 
-    /** The clock those programs read, which is this machine's own world. */
-    public dev.jstech.computers.cannon.run.IHost cannonHost() {
-        return cannonHost;
+    /** The same prompt a run at a time, in the colours the machine's shell gives it. */
+    CliLine shellPromptLine() {
+        return host.shellPromptLine();
     }
 
     /**
@@ -1176,16 +1094,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * <p>A machine with no build is worth nothing, which is the honest answer for one whose parts have
      * been taken out from under a running program.
      */
-    public int cannonCredits() {
-        final ComputerBuild build = currentBuild();
-        if (build == null) {
-            return 0;
-        }
-        long coreMegahertz = 0;
-        for (final dev.jstech.computers.hardware.CpuSpec cpu : build.cpus()) {
-            coreMegahertz += (long) cpu.cores() * cpu.freqMhz();
-        }
-        return dev.jstech.computers.cannon.machine.MachinePrograms.creditsFor(coreMegahertz);
+    public int sigmaCredits() {
+        return host.credits();
     }
 
     /**
@@ -1194,29 +1104,47 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * <p>A computer that has been switched off is not running programs, so they are told so and given
      * their chance to say goodbye rather than being left frozen for whenever it comes back on.
      */
-    protected void tickCannon() {
-        // A machine running nothing still pays down what a Gateway spent on its behalf, tick by tick.
-        if (cannon.isEmpty() && cannon.owed() == 0) {
-            return;
-        }
-        if (!isRunning()) {
-            cannon.stopAll();
-            setChanged();
-            return;
-        }
+    protected void tickSigma() {
         /*
-         * The server's clock, not this machine's worth, is what bounds the tick: a machine the server has
-         * no time for this tick runs nothing and is first next tick.
+         * The machine's own work comes first and on its own: a computer with no program running still has the
+         * jobs it was left with, and the program host has nothing to do on such a machine and says so.
          */
-        final long deadline = level instanceof ServerLevel server
-                ? dev.jstech.computers.cannon.machine.ServerTickDeadline.shared().claim(server, worldPosition)
-                : Long.MAX_VALUE;
-        cannon.tick(cannonCredits(), deadline, this::networkStock, this::remoteParentWaiting);
-        if (level instanceof ServerLevel server) {
-            pushCannonOutput(server);
-            pushWindows(server);
-            hearGateways();
+        if (level instanceof ServerLevel world && isRunning()) {
+            tickJobs(world);
         }
+        if (!host.tick() || !(level instanceof ServerLevel server)) {
+            return;
+        }
+        replication.pushOutput(server);
+        replication.pushWindows(server);
+        host.hearGateways();
+    }
+
+    /**
+     * Runs the work this machine was left with: a line put in the background, and a line whose hour has come.
+     *
+     * <p>Run here, on the machine's own tick, and not by whoever typed it: that is what a job is. Nobody has
+     * to be at the keyboard, or in the world at all, and what a job prints goes nowhere unless a terminal is
+     * looking, exactly as at a real one.
+     */
+    private void tickJobs(final ServerLevel server) {
+        final ComputerConsoleState console = console();
+        /*
+         * Only a machine that is a terminal in its own right runs jobs, which is every computer a player
+         * types at. A rack's bays keep theirs on the unit that owns the terminal, not on the rack.
+         */
+        if (console == null || console.jobs().isEmpty() || !(this instanceof IComputerTerminalHost terminal)) {
+            return;
+        }
+        final List<MachineJobs.Job> due = console.jobs().due(server.getDayTime());
+        if (due.isEmpty()) {
+            return;
+        }
+        final ServerCliComputer computer = new ServerCliComputer(terminal, server);
+        for (final MachineJobs.Job job : due) {
+            CliCommands.shellFor(computer, TermBuffer.MONITOR_COLUMNS).run(job.line(), computer);
+        }
+        setChanged();
     }
 
     /**
@@ -1227,17 +1155,12 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * tick never looks. A machine whose chunk is not loaded is not known to be gone: its programs come back
      * with it, so what was started for them is kept until it can be asked.
      */
-    private boolean remoteParentWaiting(final dev.jstech.computers.cannon.machine.MachinePrograms.RemoteParent parent) {
-        if (!(level instanceof ServerLevel server)) {
-            return false;
-        }
-        if (!server.isLoaded(parent.machine())) {
-            return true;
-        }
-        return server.getBlockEntity(parent.machine()) instanceof AbstractComputerBlockEntity machine
-                && parent.node().equals(machine.nodeUuid())
-                && machine.cannon().byId(parent.program()) != null;
-    }
+
+    /**
+     * Tells the program on another machine that started one of this machine's programs that the program has ended, so
+     * a wait on it runs again at once. A machine that is not loaded is not told: its programs look again when they
+     * come back.
+     */
 
     /**
      * Hands the programs on this machine whatever the ComputerCraft computers said through its Gateways.
@@ -1245,179 +1168,19 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
      * <p>A message waits on the Gateway until this tick and no longer: whoever is listening hears it now,
      * and a machine where no program listens simply lets it go.
      */
-    private void hearGateways() {
-        for (final dev.jstech.computers.blockentity.NetworkGatewayBlockEntity gateway
-                : dev.jstech.computers.cannon.machine.HostGateway.gatewaysOf(this)) {
-            for (final dev.jstech.computers.blockentity.NetworkGatewayBlockEntity.Message said
-                    : gateway.takeMessages()) {
-                cannon.deliverGatewayMessage(said.from(), said.text(), said.tick());
-            }
-        }
+    /** Says a Gateway linked to this machine has something waiting for its programs. */
+    public void gatewayMailWaits() {
+        host.gatewayMailWaits();
     }
-
-    /* Every window of a program that has been sent, by the program and the window, as it was sent. */
-    private final java.util.Map<Long, dev.jstech.computers.operation.payload.UiWindowPayload> sentWindows =
-            new java.util.HashMap<>();
-
-    /**
-     * Sends the windows the programs on this machine have open to whoever is at its desktop.
-     *
-     * <p>A window goes over whole whenever anything in it changes, and once more, empty, when it closes.
-     * A machine nobody is looking at sends nothing and forgets what it sent, so whoever opens the desktop
-     * next is sent everything as it stands.
-     */
-    private void pushWindows(final ServerLevel level) {
-        final java.util.List<net.minecraft.server.level.ServerPlayer> viewers = consoleViewers(level);
-        if (viewers.isEmpty()) {
-            sentWindows.clear();
-            return;
-        }
-        final java.util.Map<Long, dev.jstech.computers.operation.payload.UiWindowPayload> open =
-                new java.util.HashMap<>();
-        for (final dev.jstech.computers.cannon.machine.MachinePrograms.Live one : cannon.all()) {
-            for (final dev.jstech.computers.cannon.run.Values.Obj window : cannon.windowsOf(one.id())) {
-                final var payload = dev.jstech.computers.operation.payload.UiWindowPayload.of(
-                        worldPosition, one.id(), window);
-                if (payload != null) {
-                    open.put(key(payload.program(), payload.window()), payload);
-                }
-            }
-        }
-        final java.util.List<dev.jstech.computers.operation.payload.UiWindowPayload> send =
-                new java.util.ArrayList<>();
-        for (final var entry : open.entrySet()) {
-            if (!entry.getValue().equals(sentWindows.get(entry.getKey()))) {
-                send.add(entry.getValue());
-            }
-        }
-        for (final var entry : sentWindows.entrySet()) {
-            if (!open.containsKey(entry.getKey())) {
-                send.add(dev.jstech.computers.operation.payload.UiWindowPayload.gone(worldPosition,
-                        entry.getValue().program(), entry.getValue().window()));
-            }
-        }
-        sentWindows.clear();
-        sentWindows.putAll(open);
-        if (send.isEmpty()) {
-            return;
-        }
-        for (final net.minecraft.server.level.ServerPlayer viewer : viewers) {
-            if (!(viewer.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu)) {
-                continue;
-            }
-            for (final var payload : send) {
-                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(viewer, payload);
-            }
-        }
-    }
-
-    private static long key(final int program, final long window) {
-        return ((long) program << 32) | (window & 0xFFFFFFFFL);
-    }
-
-    /**
-     * Sends what the program in front has printed to whoever is at this machine's terminal.
-     *
-     * <p>This is what makes a program at a terminal behave like one anywhere else: its lines appear as
-     * it prints them rather than all at once when it is over, and the prompt comes back the moment it
-     * returns. A program nobody is watching still runs; there is simply nowhere for its lines to go.
-     */
-    private void pushCannonOutput(final ServerLevel level) {
-        if (cannon.held() == 0) {
-            return;
-        }
-        final var one = cannon.byId(cannon.held());
-        if (one == null) {
-            cannon.release();
-            return;
-        }
-        final var state = one.process().state();
-        final boolean over = state != dev.jstech.core.language.ILanguageProcess.State.RUNNING
-                && state != dev.jstech.core.language.ILanguageProcess.State.PARKED;
-        final java.util.List<String> fresh = cannon.unseen();
-        final String halt = over && state == dev.jstech.core.language.ILanguageProcess.State.HALTED
-                ? one.process().message() : null;
-        if (over) {
-            cannon.release();
-            setChanged();
-        }
-        if (fresh.isEmpty() && halt == null && !over) {
-            return;
-        }
-        final java.util.List<net.minecraft.server.level.ServerPlayer> viewers = consoleViewers(level);
-        if (viewers.isEmpty()) {
-            return;
-        }
-        final java.util.List<dev.jstech.computers.operation.payload.DesktopShellOutputPayload
-                .WireLine> wire = new java.util.ArrayList<>();
-        for (final String line : fresh) {
-            wire.add(new dev.jstech.computers.operation.payload.DesktopShellOutputPayload.WireLine(
-                    line, dev.jstech.computers.program.cli.CliStyle.PLAIN.ordinal()));
-        }
-        if (halt != null) {
-            wire.add(new dev.jstech.computers.operation.payload.DesktopShellOutputPayload.WireLine(
-                    halt, dev.jstech.computers.program.cli.CliStyle.ERROR.ordinal()));
-        }
-        final var payload = new dev.jstech.computers.operation.payload.DesktopShellOutputPayload(
-                false, !over, over ? shellPrompt() : "", wire);
-        /*
-         * The same said twice, once in each terminal's own words: a window on a desktop, and the prompt
-         * that is the whole glass of a machine that has none. Both are watching this one console.
-         */
-        final java.util.List<dev.jstech.computers.operation.payload.CommandOutputPayload.WireLine> promptWire =
-                new java.util.ArrayList<>(wire.size());
-        for (final var line : wire) {
-            promptWire.add(new dev.jstech.computers.operation.payload.CommandOutputPayload.WireLine(
-                    line.text(), line.style()));
-        }
-        final var prompt = new dev.jstech.computers.operation.payload.CommandOutputPayload(
-                false, over ? shellPrompt() : "", promptWire);
-        for (final net.minecraft.server.level.ServerPlayer viewer : viewers) {
-            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(viewer,
-                    viewer.containerMenu instanceof dev.jstech.computers.menu.DesktopMenu ? payload : prompt);
-        }
-    }
-
-    /**
-     * The disk stack {@link #console} was read from, or null when nothing has been read yet. Identity,
-     * not equality: a different stack object means a different physical drive, while writing to the same
-     * drive (installing an OS, adding a program) keeps the same object and must NOT discard the state
-     * held in memory, because doing that resurrected a cleared live-install session from the older disk copy.
-     */
-    @Nullable
-    private ItemStack consoleDisk;
 
     /*
      * Provided here (no @Override: this base does not itself declare IComputerTerminalHost) so the
      * computer subclasses that ARE hosts inherit it and satisfy the interface's console() method.
      */
-    public dev.jstech.computers.program.ComputerConsoleState console() {
-        final ItemStack disk = systemDisk();
-        if (consoleDisk != disk) {
-            loadConsoleFrom(disk);
-        }
-        return console;
+    public ComputerConsoleState console() {
+        return diskConsole.state();
     }
 
-    /**
-     * Reads the console state off {@code disk}, replacing whatever the previous drive left in memory. A
-     * disk with no state (a fresh or freshly formatted one) yields an empty console, which is what a
-     * clean install must see.
-     */
-    private void loadConsoleFrom(final ItemStack disk) {
-        consoleDisk = disk; // set first: nothing below may recurse back into console()
-        console.clear();
-        final CompoundTag saved = disk.isEmpty() ? null : disk.get(ComputingModule.DISK_CONSOLE.get());
-        if (saved != null) {
-            console.load(saved);
-        }
-    }
-
-    /**
-     * Writes the console state back onto the system disk. Called before the block entity is saved and
-     * after anything that changes installed software, so the disk is always the record of its own
-     * contents.
-     */
     @Override
     public void setChanged() {
         /*
@@ -1426,21 +1189,8 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
          * program and immediately removing the drive would lose the install: the in-memory state is
          * discarded when the slot changes, and the world may not have saved in between.
          */
-        flushConsoleToDisk();
+        diskConsole.flush();
         super.setChanged();
-    }
-
-    protected void flushConsoleToDisk() {
-        /*
-         * Write back to the drive the state was read from, not to whatever is the system disk now: if a
-         * drive has just been swapped, this state belongs to the old one and must not be copied onto it.
-         */
-        if (consoleDisk == null || consoleDisk.isEmpty()) {
-            return;
-        }
-        final CompoundTag tag = new CompoundTag();
-        console.save(tag);
-        consoleDisk.set(ComputingModule.DISK_CONSOLE.get(), tag);
     }
 
     // Persistence (common fields; subclasses add their own via the hooks)
@@ -1463,43 +1213,19 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
     @Override
     protected void loadAdditional(final CompoundTag tag, final HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
-        final String hardwareKey = hardwareNbtKey();
-        if (tag.contains(hardwareKey)) {
-            hardware.deserializeNBT(registries, tag.getCompound(hardwareKey));
-        }
-        manualOn = tag.getBoolean("ManualOn");
-        autoStart = tag.getBoolean("AutoStart");
-        bootDiskSlot = tag.contains("BootDisk") ? tag.getInt("BootDisk") : -1;
+        hardware.load(tag, registries, hardwareNbtKey());
+        power.load(tag);
+        session.load(tag);
         computerName = tag.getString("ComputerName");
-        if (tag.contains("NodeUuid")) {
-            nodeUuid = NodeUuid.fromString(tag.getString("NodeUuid"));
-        }
-        linkedMonitors.clear();
-        for (final long monitor : tag.getLongArray("LinkedMonitors")) {
-            linkedMonitors.add(monitor);
-        }
-        bootedDesktopId = tag.contains("BootedDesktop")
-                ? ResourceLocation.tryParse(tag.getString("BootedDesktop")) : null;
-        openWindows.clear();
-        openWindows.addAll(dev.jstech.computers.os.OpenWindow.loadAll(
-                tag.getList("OpenWindows", net.minecraft.nbt.Tag.TAG_COMPOUND)));
-        pendingInstallSlot = tag.contains("PendingInstall") ? tag.getInt("PendingInstall") : NO_PENDING_INSTALL;
+        attachment.load(tag);
+        peripherals.load(tag);
         if (tag.contains("Studio")) {
             studio.load(tag.getCompound("Studio"), registries);
         }
-        if (tag.contains("Cannon")) {
-            cannon.load(tag.getCompound("Cannon"), this);
-        }
-        /*
-         * A world saved before the software moved onto the disk still carries the old block-level tag;
-         * adopt it once so the machine keeps what it had, and it lands on the disk at the next save.
-         */
-        if (tag.contains("Console")) {
-            console.load(tag.getCompound("Console"));
-            consoleDisk = systemDisk(); // adopt it onto the current drive at the next flush
-        }
+        host.load(tag);
+        diskConsole.loadLegacy(tag);
         loadExtra(tag, registries);
-        buildDirty = true;
+        hardware.markDirty();
     }
 
     @Override
@@ -1509,43 +1235,19 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
          * Push the software onto the disk first: the hardware handler below serializes the disk stacks,
          * and a flush after that point would be written to a copy and lost.
          */
-        flushConsoleToDisk();
-        tag.put(hardwareNbtKey(), hardware.serializeNBT(registries));
-        tag.putBoolean("ManualOn", manualOn);
-        tag.putBoolean("AutoStart", autoStart);
-        if (bootDiskSlot >= 0) {
-            tag.putInt("BootDisk", bootDiskSlot);
-        }
+        diskConsole.flush();
+        hardware.save(tag, registries, hardwareNbtKey());
+        power.save(tag);
+        session.save(tag);
         if (!computerName.isEmpty()) {
             tag.putString("ComputerName", computerName);
         }
-        if (nodeUuid != null) {
-            tag.putString("NodeUuid", nodeUuid.asString());
-        }
-        /*
-         * The running session survives a reload, exactly like the POST flag: a machine that was left up
-         * with a desktop on screen must come back to that desktop, not fall to a shell.
-         */
-        if (bootedDesktopId != null) {
-            tag.putString("BootedDesktop", bootedDesktopId.toString());
-        }
-        if (!openWindows.isEmpty()) {
-            tag.put("OpenWindows", dev.jstech.computers.os.OpenWindow.saveAll(openWindows));
-        }
-        if (pendingInstallSlot != NO_PENDING_INSTALL) {
-            tag.putInt("PendingInstall", pendingInstallSlot);
-        }
+        attachment.save(tag);
         final CompoundTag studioTag = new CompoundTag();
         studio.save(studioTag, registries);
         tag.put("Studio", studioTag);
-        if (!cannon.isEmpty()) {
-            final CompoundTag cannonTag = new CompoundTag();
-            cannon.save(cannonTag);
-            tag.put("Cannon", cannonTag);
-        }
-        if (!linkedMonitors.isEmpty()) {
-            tag.putLongArray("LinkedMonitors", linkedMonitors.stream().mapToLong(Long::longValue).toArray());
-        }
+        host.save(tag);
+        peripherals.save(tag);
         /*
          * The console rides on the system disk, so flush it there BEFORE the hardware handler is
          * serialized above, or the write would land on a disk stack that was already copied.
@@ -1559,27 +1261,23 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
         if (!computerName.isEmpty()) {
             tag.putString("ComputerName", computerName);
         }
-        /*
-         * Whether this machine is on a data network: the desktop's notification area reads it, so it has to
-         * travel to the client and be refreshed when a cable comes or goes.
-         */
-        tag.putBoolean("Networked", networkUuid != null);
+        attachment.saveForClient(tag);
         return tag;
     }
 
     @Override
-    public net.minecraft.network.protocol.Packet<net.minecraft.network.protocol.game.ClientGamePacketListener>
+    public Packet<ClientGamePacketListener>
             getUpdatePacket() {
         /*
          * Without this, a mid-session rename (which calls sendBlockUpdated) never reaches the client, so
          * reopening the assembly screen reads a stale, empty name from the client copy of this block entity.
          */
-        return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
-    public void onDataPacket(final net.minecraft.network.Connection connection,
-                             final net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket packet,
+    public void onDataPacket(final Connection connection,
+                             final ClientboundBlockEntityDataPacket packet,
                              final HolderLookup.Provider registries) {
         /*
          * Apply only the display name from a live block update. The rest of the client state is kept in sync
@@ -1588,6 +1286,6 @@ public abstract class AbstractComputerBlockEntity extends BlockEntity
          */
         final CompoundTag tag = packet.getTag();
         computerName = tag != null ? tag.getString("ComputerName") : "";
-        clientNetworked = tag != null && tag.getBoolean("Networked");
+        attachment.loadFromClient(tag);
     }
 }

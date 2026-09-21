@@ -33,9 +33,11 @@ import java.util.List;
  * @param minimized whether the window sits on the panel only
  * @param maximized whether the window fills the work area (its floating bounds are kept underneath)
  * @param state     what the program had open, as the program wrote it, or empty
+ * @param workspaces which of the desktop's workspaces the window is on, as a {@link WorkspaceSet}; a desktop
+ *                   with one workspace keeps everything on the first
  */
 public record OpenWindow(String key, int x, int y, int w, int h, boolean minimized, boolean maximized,
-                         String state) {
+                         String state, int workspaces) {
 
     /** The most windows a machine remembers; more than this is not a desktop anyone left on purpose. */
     public static final int MAX = 32;
@@ -48,12 +50,24 @@ public record OpenWindow(String key, int x, int y, int w, int h, boolean minimiz
 
     public OpenWindow {
         state = clipState(state);
+        workspaces = WorkspaceSet.normalised(workspaces);
     }
 
     /** A window with nothing of its own to remember. */
     public OpenWindow(final String key, final int x, final int y, final int w, final int h,
                       final boolean minimized, final boolean maximized) {
-        this(key, x, y, w, h, minimized, maximized, "");
+        this(key, x, y, w, h, minimized, maximized, "", WorkspaceSet.only(0));
+    }
+
+    /** A window on the first workspace, which is where every window of a desktop with only one is. */
+    public OpenWindow(final String key, final int x, final int y, final int w, final int h,
+                      final boolean minimized, final boolean maximized, final String state) {
+        this(key, x, y, w, h, minimized, maximized, state, WorkspaceSet.only(0));
+    }
+
+    /** Whether the window shows while that workspace is up. */
+    public boolean on(final int shown) {
+        return WorkspaceSet.holds(this.workspaces, shown);
     }
 
     /** {@code state} cut to what the wire carries, at a line boundary; null reads as nothing. */
@@ -80,13 +94,17 @@ public record OpenWindow(String key, int x, int y, int w, int h, boolean minimiz
         if (!state.isEmpty()) {
             tag.putString("State", state);
         }
+        // Left out on the first workspace alone, which is what reading nothing comes back as.
+        if (workspaces != WorkspaceSet.only(0)) {
+            tag.putInt("Workspaces", workspaces);
+        }
         return tag;
     }
 
     public static OpenWindow load(final CompoundTag tag) {
         return new OpenWindow(tag.getString("Key"), tag.getInt("X"), tag.getInt("Y"),
                 tag.getInt("W"), tag.getInt("H"), tag.getBoolean("Min"), tag.getBoolean("Max"),
-                tag.getString("State"));
+                tag.getString("State"), tag.getInt("Workspaces"));
     }
 
     public static ListTag saveAll(final List<OpenWindow> windows) {

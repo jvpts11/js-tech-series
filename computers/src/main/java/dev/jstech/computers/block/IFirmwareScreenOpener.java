@@ -15,10 +15,11 @@ import org.jetbrains.annotations.Nullable;
  * Callback that opens the firmware setup screen on the client.
  *
  * <p>This interface lives in common code so the block classes can reference it without importing
- * any client-only class. The client-side implementation is registered in
- * {@link dev.jstech.computers.client.ComputingClientSetup} during the
- * {@link net.neoforged.neoforge.client.event.RegisterMenuScreensEvent}; until then (on dedicated
- * servers) the holder remains {@code null} and any call is silently skipped.
+ * any client-only class, which is why the one named below is written as a word rather than linked:
+ * a link is an import, and importing it here would undo the point of the interface. The client-side
+ * implementation is registered in {@code ComputingClientSetup} while the client is handed its
+ * screens; until then (on dedicated servers) the holder remains {@code null} and any call is
+ * silently skipped.
  */
 @FunctionalInterface
 public interface IFirmwareScreenOpener {

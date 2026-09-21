@@ -13,6 +13,7 @@ import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.operation.OperationDispatch;
+import dev.jstech.core.operation.OperationFailure;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.operation.IOperationResult;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,12 @@ import java.util.UUID;
  */
 public final class PendingCraftOperation implements INetworkOperation {
 
+    /** No pattern, and no chain of patterns, leads from what the network holds to what was asked for. */
+    private static final String NO_WAY_TO_MAKE_IT = "jsc.operation.failure.no_way_to_make_it";
+
+    /** There is a way to make it, but no computer on the network free to carry the plan out. */
+    private static final String NO_CRAFTING_COMPUTER = "jsc.operation.failure.no_crafting_computer";
+
     private final MainframeBlockEntity mainframe;
     private final StorageKey key;
     private final long demand;
@@ -44,6 +51,7 @@ public final class PendingCraftOperation implements INetworkOperation {
     private boolean done;
     private boolean cancelled;
     private boolean failed;
+    private OperationFailure cause = OperationFailure.NONE;
     @Nullable
     private NetworkCraftOperation delivered;
 
@@ -75,12 +83,14 @@ public final class PendingCraftOperation implements INetworkOperation {
         }
         if (planned == null) {
             failed = true;
+            cause = OperationFailure.of(NO_WAY_TO_MAKE_IT, key.displayName().getString());
             settle();
             return;
         }
         final NetworkCraftOperation craft = mainframe.submitPlannedCraft(key, demand, planned.plan(), label, null);
         if (craft == null) {
             failed = true;
+            cause = OperationFailure.of(NO_CRAFTING_COMPUTER, key.displayName().getString());
             settle();
             return;
         }
@@ -185,7 +195,7 @@ public final class PendingCraftOperation implements INetworkOperation {
                 : delivered != null ? OperationRecord.STATUS_COMPLETED
                 : OperationRecord.STATUS_PENDING;
         return new OperationRecord(operationId, OperationRecord.TYPE_CRAFT, key, demand, 0L, status, priority,
-                List.of(), List.of());
+                List.of(), List.of()).withCause(cause);
     }
 
     @Override

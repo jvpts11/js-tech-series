@@ -8,13 +8,31 @@
 package dev.jstech.computers.menu;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
-import dev.jstech.computers.operation.payload.ComputingPayloads;
+import dev.jstech.computers.operation.index.IndexHealth;
+import dev.jstech.computers.operation.payload.CraftCatalogPayload;
+import dev.jstech.computers.operation.payload.CraftPlanPayload;
+import dev.jstech.computers.operation.payload.LocalStorageSnapshotPayload;
 import dev.jstech.computers.operation.payload.NetworkItemEntry;
+import dev.jstech.computers.operation.payload.NetworkServersPayload;
+import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.operation.payload.ProcessListPayload;
+import dev.jstech.computers.operation.payload.ServerBreakdownPayload;
+import dev.jstech.computers.operation.payload.crafting.CraftingPayloads;
+import dev.jstech.computers.operation.payload.network.NetworkPayloads;
+import dev.jstech.computers.operation.payload.operations.OperationsPayloads;
+import dev.jstech.computers.operation.payload.program.ProgramPayloads;
+import dev.jstech.computers.operation.payload.terminal.TerminalLocalPayloads;
+import dev.jstech.computers.operation.payload.terminal.TerminalPayloads;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.tier.HardwareEra;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
@@ -39,11 +57,28 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
     public static final int TAB_CRAFT = 6;
     /** The process/service manager: the network's background services (the IQL Engine and its state). */
     public static final int TAB_PROCESSES = 7;
-    /*
-     * A launch-only rail entry: clicking it opens the Command Prompt rather than switching content,
-     * so it is never the active tab (the menu's initial-tab clamp stops at TAB_PROCESSES).
+    /**
+     * The machine's own prompt, as a heading like any other.
+     *
+     * <p>It used to be the one rail entry that opened something: clicking it threw a separate Command Prompt
+     * window over the screen. A machine whose whole interface is this screen has no business opening a window
+     * onto itself, so the prompt lives inside it.
      */
     public static final int TAB_CONSOLE = 8;
+    /**
+     * Teaching the machine a recipe: what is on a medium, and what its Recipe ROM holds.
+     *
+     * <p>It appears on a Crafting Computer with a Crafting Card, which is the same condition the Crafting
+     * Manager installs under. Without it a machine running this system could load no pattern at all, so the
+     * one player this system exists for could not autocraft with recipes of their own.
+     */
+    public static final int TAB_PATTERNS = 9;
+
+    /** The highest heading that shows content, which is what an incoming tab id is clamped to. */
+    public static final int TAB_LAST = TAB_PATTERNS;
+
+    /** How long a system's name may be on the wire; a name is a name, not a paragraph. */
+    private static final int MAX_SYSTEM_NAME = 64;
 
     /*
      * Slot layout (relative to the screen's top-left). The screen draws the slot
@@ -59,20 +94,24 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
     public static final int INV_X = ComputerTerminalLayout.INV_X;
     public static final int INV_Y = ComputerTerminalLayout.INV_Y;
     public static final int HOTBAR_Y = ComputerTerminalLayout.HOTBAR_Y;
-    public static final int MAINFRAME_INV_DROP = ComputerTerminalLayout.MAINFRAME_INV_DROP;
 
     private static final double MONITOR_REACH = 16.0;
 
-    private static final int DATA_COUNT = 33;
+    private static final int DATA_COUNT = 34;
     private static final int DATA_INDEX_HEALTH = 31;
     private static final int DATA_INDEX_HEALTH_TYPES = 32;
     private static final int DATA_USABLE_SLOTS = 18;
     private static final int DATA_CRAFT_COMPUTERS = 29;
     /*
-     * The host's board-derived hardware-era ordinal (or -1 when no board), synced so the client can skin the
+     * The host's board-derived hardware-era id (or -1 when no board), synced so the client can skin the
      * terminal in the host computer's era. It re-resolves each tick, so swapping the board repaints live.
      */
     private static final int DATA_ERA = 30;
+    /*
+     * Whether this host can be taught a recipe: a Crafting Computer with a Crafting Card in it. It is a synced
+     * reading rather than a guess from the block, because the card can be pulled while somebody is looking.
+     */
+    private static final int DATA_PATTERNS_HOST = 33;
 
     private final Level level;
     @Nullable
@@ -81,29 +120,36 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
     private final ServerPlayer serverPlayer;
     private final BlockPos hostPos;
     private final BlockPos monitorPos;
+    /* Which operating space the client is to draw over these slots; null when nothing registered draws. */
+    @Nullable
+    private final ResourceLocation spaceId;
+    /*
+     * What the machine's system calls itself, which is what its prompt greets a player with. Sent rather
+     * than read off the disks on the client: the server is the side that knows, and a console that cannot
+     * say what it is on says nothing at all instead.
+     */
+    private final String systemName;
     private final int storageCount;
     private int refreshTick;
     private boolean initialDataSent;
 
     private int activeTab;
 
-    private final int invDrop;
+    private List<NetworkItemEntry> networkItems = List.of();
 
-    private java.util.List<NetworkItemEntry> networkItems = java.util.List.of();
+    private List<NetworkItemEntry> localItems = List.of();
 
-    private java.util.List<NetworkItemEntry> localItems = java.util.List.of();
+    private List<ServerBreakdownPayload.ServerHolding>
+            serverBreakdown = List.of();
 
-    private java.util.List<dev.jstech.computers.operation.payload.ServerBreakdownPayload.ServerHolding>
-            serverBreakdown = java.util.List.of();
+    private List<OperationRecord>
+            operationsLog = List.of();
 
-    private java.util.List<dev.jstech.computers.operation.payload.OperationRecord>
-            operationsLog = java.util.List.of();
+    private List<OperationRecord>
+            activeOps = List.of();
 
-    private java.util.List<dev.jstech.computers.operation.payload.OperationRecord>
-            activeOps = java.util.List.of();
-
-    private java.util.List<dev.jstech.computers.operation.payload.NetworkServersPayload.ServerEntry>
-            networkServers = java.util.List.of();
+    private List<NetworkServersPayload.ServerEntry>
+            networkServers = List.of();
 
     private final int[] clientData = new int[DATA_COUNT];
 
@@ -131,46 +177,72 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
 
     public ComputerTerminalMenu(final int containerId, final Inventory playerInventory,
                                 @Nullable final IComputerTerminalHost host,
-                                final BlockPos hostPos, final BlockPos monitorPos, final int initialTab) {
+                                final BlockPos hostPos, final BlockPos monitorPos, final int initialTab,
+                                @Nullable final ResourceLocation spaceId, final String systemName) {
         super(ComputingModule.COMPUTER_TERMINAL_MENU.get(), containerId);
         this.level = playerInventory.player.level();
         this.serverPlayer = playerInventory.player instanceof ServerPlayer sp ? sp : null;
         this.host = host;
         this.hostPos = hostPos.immutable();
         this.monitorPos = monitorPos.immutable();
+        this.spaceId = spaceId;
+        this.systemName = systemName == null ? "" : systemName;
         /*
          * Open on the player's last-used tab; fall back to Network, and never land on the
          * Mainframe-only Tasks view when the host is a plain computer.
          */
-        int tab = initialTab >= TAB_LOCAL && initialTab <= TAB_PROCESSES ? initialTab : TAB_NETWORK;
+        int tab = initialTab >= TAB_LOCAL && initialTab <= TAB_LAST ? initialTab : TAB_NETWORK;
         if ((tab == TAB_TASKS || tab == TAB_MAINTENANCE) && (host == null || !host.isMainframeHost())) {
             tab = TAB_NETWORK;
         }
         if (tab == TAB_CRAFT && craftComputerCount() <= 0 && !level.isClientSide) {
             tab = TAB_NETWORK; // the Craft tab vanished since last session (computer removed)
         }
+        if (tab == TAB_PATTERNS && !level.isClientSide
+                && !(host instanceof CraftingComputerBlockEntity cc && cc.craftingCardFactor() > 0.0)) {
+            tab = TAB_NETWORK; // the card came out, or this was never a machine that could be taught
+        }
         this.activeTab = tab;
-        this.invDrop = host != null && host.isMainframeHost() ? MAINFRAME_INV_DROP : 0;
 
         /*
          * The Storage tab is now a disk-backed quantity view (like the Network tab), not vanilla
          * slots, so the menu holds only the player inventory; local items are synced via snapshot.
          */
         this.storageCount = 0;
-        addPlayerInventory(playerInventory, INV_X, INV_Y + invDrop);
+        addPlayerInventory(playerInventory, INV_X, INV_Y);
         addDataSlots(data);
     }
 
+    /**
+     * Where the player's own rows sit, which is the same place on every machine.
+     *
+     * <p>They used to drop by a band on a Mainframe, because the window grew to carry an extra heading. The
+     * glass is the whole monitor now and the rail scrolls, so nothing about the host moves a slot.
+     */
     public int invY() {
-        return INV_Y + invDrop;
+        return INV_Y;
     }
 
     public int hotbarY() {
-        return HOTBAR_Y + invDrop;
+        return HOTBAR_Y;
     }
 
-    public int invDrop() {
-        return invDrop;
+    /**
+     * The operating space drawing this machine, or null when nothing registered is.
+     *
+     * <p>Which screen the client puts over these slots: the mod owns the menu, because the items are the
+     * server's and every space needs the same ones, and the space owns the drawing and the keyboard. It is
+     * sent with the window rather than asked of the machine, because what a space is lives in a console the
+     * client never sees.
+     */
+    @Nullable
+    public ResourceLocation spaceId() {
+        return spaceId;
+    }
+
+    /** What the machine's system calls itself, which is what its prompt greets a player with. */
+    public String systemName() {
+        return systemName;
     }
 
     @Nullable
@@ -179,11 +251,34 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
         final BlockPos monitorPos = buf.readBlockPos();
         final BlockPos hostPos = buf.readBlockPos();
         final int initialTab = buf.readVarInt();
+        final ResourceLocation spaceId = buf.readBoolean() ? buf.readResourceLocation() : null;
+        final String systemName = buf.readUtf(MAX_SYSTEM_NAME);
         final var be = playerInventory.player.level().getBlockEntity(hostPos);
         if (be instanceof IComputerTerminalHost terminalHost) {
-            return new ComputerTerminalMenu(containerId, playerInventory, terminalHost, hostPos, monitorPos, initialTab);
+            return new ComputerTerminalMenu(containerId, playerInventory, terminalHost, hostPos, monitorPos,
+                    initialTab, spaceId, systemName);
         }
         return null;
+    }
+
+    /** Writes what the client needs before the menu exists: where it is, which heading, and what it runs. */
+    public static void writeOpenBuffer(final RegistryFriendlyByteBuf buf, final BlockPos monitorPos,
+                                       final BlockPos hostPos, final int initialTab,
+                                       @Nullable final ResourceLocation spaceId, final String systemName) {
+        buf.writeBlockPos(monitorPos);
+        buf.writeBlockPos(hostPos);
+        buf.writeVarInt(initialTab);
+        buf.writeBoolean(spaceId != null);
+        if (spaceId != null) {
+            buf.writeResourceLocation(spaceId);
+        }
+        /*
+         * Cut rather than trusted: a string longer than its wire field throws while it is being encoded,
+         * which disconnects the player instead of shortening a name.
+         */
+        final String name = systemName == null ? "" : systemName;
+        buf.writeUtf(name.length() > MAX_SYSTEM_NAME ? name.substring(0, MAX_SYSTEM_NAME) : name,
+                MAX_SYSTEM_NAME);
     }
 
     private int serverValue(final int index) {
@@ -222,20 +317,32 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
             case 28 -> clampInt(host.networkStorageTotal());
             case DATA_CRAFT_COMPUTERS -> craftComputerCount();
             case DATA_ERA -> {
-                final dev.jstech.core.tier.HardwareEra era = host.displayEra();
-                yield era == null ? -1 : era.ordinal();
+                final HardwareEra era = host.displayEra();
+                yield era == null ? -1 : era.id();
             }
             case DATA_INDEX_HEALTH -> host.indexHealthState();
             case DATA_INDEX_HEALTH_TYPES -> host.indexHealthTypeCount();
+            case DATA_PATTERNS_HOST -> host instanceof CraftingComputerBlockEntity cc
+                    && cc.craftingCardFactor() > 0.0 ? 1 : 0;
             default -> 0;
         };
+    }
+
+    /**
+     * Whether this machine can be taught a recipe, which is what the Patterns heading needs to exist.
+     *
+     * <p>A Crafting Computer with a Crafting Card: the same condition the Crafting Manager installs under,
+     * asked of the machine rather than of the system, so taking the card out takes the heading away.
+     */
+    public boolean patternsAvailable() {
+        return data.get(DATA_PATTERNS_HOST) > 0;
     }
 
     private int craftComputerCount() {
         if (host == null || host.networkUuid() == null || !(level instanceof ServerLevel serverLevel)) {
             return 0;
         }
-        return dev.jstech.core.network.NetworkSystem.get(serverLevel)
+        return NetworkSystem.get(serverLevel)
                 .craftingComputersOf(host.networkUuid()).size();
     }
 
@@ -259,7 +366,7 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
 
     @Override
     public boolean clickMenuButton(final Player player, final int id) {
-        if (id >= TAB_LOCAL && id <= TAB_PROCESSES) {
+        if (id >= TAB_LOCAL && id <= TAB_LAST) {
             this.activeTab = id;
             // Remember the tab on the Monitor so reopening this terminal lands here again.
             if (level.getBlockEntity(monitorPos) instanceof MonitorBlockEntity monitor) {
@@ -278,87 +385,82 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
             return;
         }
         if (id == TAB_STORAGE) {
-            ComputingPayloads.dispatchLocalSnapshot(serverPlayer, host);
+            TerminalLocalPayloads.dispatchLocalSnapshot(serverPlayer, host);
         } else if (host.networkUuid() != null) {
             if (id == TAB_NETWORK) {
-                ComputingPayloads.dispatchTerminalQuery(serverPlayer, host.networkUuid(), serverLevel);
+                TerminalPayloads.dispatchTerminalQuery(serverPlayer, host.networkUuid(), serverLevel);
             } else if (id == TAB_OPS || id == TAB_TASKS) {
-                ComputingPayloads.dispatchTerminalOpsLog(serverPlayer, host.networkUuid(), serverLevel);
-                ComputingPayloads.dispatchActiveOperations(serverPlayer, host.networkUuid(), serverLevel);
+                OperationsPayloads.dispatchTerminalOpsLog(serverPlayer, host.networkUuid(), serverLevel);
+                OperationsPayloads.dispatchActiveOperations(serverPlayer, host.networkUuid(), serverLevel);
             } else if (id == TAB_MAINTENANCE) {
                 /*
                  * The DROP popup needs the network's data types (the TYPES grid) and the list of
                  * Servers it can wipe (the SERVER picker); the index stats arrive via ContainerData.
                  */
-                ComputingPayloads.dispatchTerminalQuery(serverPlayer, host.networkUuid(), serverLevel);
-                ComputingPayloads.dispatchNetworkServers(serverPlayer, host.networkUuid(), serverLevel);
+                TerminalPayloads.dispatchTerminalQuery(serverPlayer, host.networkUuid(), serverLevel);
+                NetworkPayloads.dispatchNetworkServers(serverPlayer, host.networkUuid(), serverLevel);
             } else if (id == TAB_CRAFT) {
                 /*
                  * The Craft tab needs the catalog plus the live/logged Operations for its
                  * RUNNING and RECENT panels.
                  */
-                ComputingPayloads.dispatchCraftCatalog(serverPlayer, host.networkUuid(), serverLevel);
-                ComputingPayloads.dispatchTerminalOpsLog(serverPlayer, host.networkUuid(), serverLevel);
-                ComputingPayloads.dispatchActiveOperations(serverPlayer, host.networkUuid(), serverLevel);
+                CraftingPayloads.dispatchCraftCatalog(serverPlayer, host.networkUuid(), serverLevel);
+                OperationsPayloads.dispatchTerminalOpsLog(serverPlayer, host.networkUuid(), serverLevel);
+                OperationsPayloads.dispatchActiveOperations(serverPlayer, host.networkUuid(), serverLevel);
             } else if (id == TAB_PROCESSES) {
                 // Per-host: the processes shown are the ones running on THIS computer (the host).
-                ComputingPayloads.dispatchProcesses(serverPlayer, hostPos(), serverLevel);
+                ProgramPayloads.dispatchProcesses(serverPlayer, hostPos(), serverLevel);
             }
         }
     }
 
-    private java.util.List<dev.jstech.computers.operation.payload
-            .CraftCatalogPayload.Entry> craftCatalog = java.util.List.of();
+    private List<CraftCatalogPayload.Entry> craftCatalog = List.of();
 
-    private java.util.List<dev.jstech.computers.operation.payload
-            .ProcessListPayload.ProcessLine> processes = java.util.List.of();
+    private List<ProcessListPayload.ProcessLine> processes = List.of();
 
-    public void setProcesses(final java.util.List<dev.jstech.computers.operation.payload
-            .ProcessListPayload.ProcessLine> processes) {
+    public void setProcesses(final List<ProcessListPayload.ProcessLine> processes) {
         this.processes = processes;
     }
 
-    public java.util.List<dev.jstech.computers.operation.payload
-            .ProcessListPayload.ProcessLine> processes() {
+    public List<ProcessListPayload.ProcessLine> processes() {
         return processes;
     }
 
     @Nullable
-    private dev.jstech.computers.operation.payload.CraftPlanPayload craftPlan;
+    private CraftPlanPayload craftPlan;
 
-    public void setCraftCatalog(final java.util.List<
-            dev.jstech.computers.operation.payload.CraftCatalogPayload.Entry> entries) {
+    public void setCraftCatalog(final List<
+            CraftCatalogPayload.Entry> entries) {
         this.craftCatalog = entries;
     }
 
-    public java.util.List<dev.jstech.computers.operation.payload
-            .CraftCatalogPayload.Entry> craftCatalog() {
+    public List<CraftCatalogPayload.Entry> craftCatalog() {
         return craftCatalog;
     }
 
     public void setCraftPlan(
-            @Nullable final dev.jstech.computers.operation.payload.CraftPlanPayload plan) {
+            @Nullable final CraftPlanPayload plan) {
         this.craftPlan = plan;
     }
 
     @Nullable
-    public dev.jstech.computers.operation.payload.CraftPlanPayload craftPlan() {
+    public CraftPlanPayload craftPlan() {
         return craftPlan;
     }
 
-    public void setNetworkItems(final java.util.List<NetworkItemEntry> items) {
+    public void setNetworkItems(final List<NetworkItemEntry> items) {
         this.networkItems = items;
     }
 
-    public java.util.List<NetworkItemEntry> networkItems() {
+    public List<NetworkItemEntry> networkItems() {
         return networkItems;
     }
 
-    public void setLocalItems(final java.util.List<NetworkItemEntry> items) {
+    public void setLocalItems(final List<NetworkItemEntry> items) {
         this.localItems = items;
     }
 
-    public java.util.List<NetworkItemEntry> localItems() {
+    public List<NetworkItemEntry> localItems() {
         return localItems;
     }
 
@@ -366,16 +468,13 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
      * Per-disk privacy state for the Storage tab's slider, synced with the local snapshot. Empty for a
      * host with no slider (a Server/Mainframe), which the screen reads as "always public".
      */
-    private java.util.List<dev.jstech.computers.operation.payload
-            .LocalStorageSnapshotPayload.DiskInfo> diskPrivacy = java.util.List.of();
+    private List<LocalStorageSnapshotPayload.DiskInfo> diskPrivacy = List.of();
 
-    public void setDiskPrivacy(final java.util.List<dev.jstech.computers.operation.payload
-            .LocalStorageSnapshotPayload.DiskInfo> disks) {
+    public void setDiskPrivacy(final List<LocalStorageSnapshotPayload.DiskInfo> disks) {
         this.diskPrivacy = disks;
     }
 
-    public java.util.List<dev.jstech.computers.operation.payload
-            .LocalStorageSnapshotPayload.DiskInfo> diskPrivacy() {
+    public List<LocalStorageSnapshotPayload.DiskInfo> diskPrivacy() {
         return diskPrivacy;
     }
 
@@ -401,38 +500,38 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
     }
 
     public void setServerBreakdown(
-            final java.util.List<dev.jstech.computers.operation.payload.ServerBreakdownPayload.ServerHolding> rows) {
+            final List<ServerBreakdownPayload.ServerHolding> rows) {
         this.serverBreakdown = rows;
     }
 
-    public java.util.List<dev.jstech.computers.operation.payload.ServerBreakdownPayload.ServerHolding> serverBreakdown() {
+    public List<ServerBreakdownPayload.ServerHolding> serverBreakdown() {
         return serverBreakdown;
     }
 
     public void setNetworkServers(
-            final java.util.List<dev.jstech.computers.operation.payload.NetworkServersPayload.ServerEntry> servers) {
+            final List<NetworkServersPayload.ServerEntry> servers) {
         this.networkServers = servers;
     }
 
-    public java.util.List<dev.jstech.computers.operation.payload.NetworkServersPayload.ServerEntry> networkServers() {
+    public List<NetworkServersPayload.ServerEntry> networkServers() {
         return networkServers;
     }
 
     public void setOperationsLog(
-            final java.util.List<dev.jstech.computers.operation.payload.OperationRecord> ops) {
+            final List<OperationRecord> ops) {
         this.operationsLog = ops;
     }
 
-    public java.util.List<dev.jstech.computers.operation.payload.OperationRecord> operationsLog() {
+    public List<OperationRecord> operationsLog() {
         return operationsLog;
     }
 
     public void setActiveOps(
-            final java.util.List<dev.jstech.computers.operation.payload.OperationRecord> ops) {
+            final List<OperationRecord> ops) {
         this.activeOps = ops;
     }
 
-    public java.util.List<dev.jstech.computers.operation.payload.OperationRecord> activeOps() {
+    public List<OperationRecord> activeOps() {
         return activeOps;
     }
 
@@ -459,24 +558,24 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
          * only while something is in flight (its snapshot is already pushed on deposit/withdraw/settle).
          */
         if (activeTab == TAB_TASKS || activeTab == TAB_OPS) {
-            ComputingPayloads.dispatchActiveOperations(serverPlayer, host.networkUuid(), serverLevel);
+            OperationsPayloads.dispatchActiveOperations(serverPlayer, host.networkUuid(), serverLevel);
         }
         if (activeTab == TAB_OPS) {
             /*
              * Keep the log live too: a craft that just settled drops out of the active list and must appear in
              * the recent log the same tick, so the Operations view is fully real-time (in flight and just done).
              */
-            ComputingPayloads.dispatchTerminalOpsLog(serverPlayer, host.networkUuid(), serverLevel);
+            OperationsPayloads.dispatchTerminalOpsLog(serverPlayer, host.networkUuid(), serverLevel);
         }
         if (activeTab == TAB_CRAFT
-                && ComputingPayloads.networkHasActiveOps(serverLevel, host.networkUuid())) {
+                && TerminalPayloads.networkHasActiveOps(serverLevel, host.networkUuid())) {
             // Keep the RUNNING bars moving and settle finished crafts into RECENT.
-            ComputingPayloads.dispatchActiveOperations(serverPlayer, host.networkUuid(), serverLevel);
-            ComputingPayloads.dispatchTerminalOpsLog(serverPlayer, host.networkUuid(), serverLevel);
+            OperationsPayloads.dispatchActiveOperations(serverPlayer, host.networkUuid(), serverLevel);
+            OperationsPayloads.dispatchTerminalOpsLog(serverPlayer, host.networkUuid(), serverLevel);
         }
         if (activeTab == TAB_NETWORK
-                && ComputingPayloads.networkHasActiveOps(serverLevel, host.networkUuid())) {
-            ComputingPayloads.dispatchTerminalQuery(serverPlayer, host.networkUuid(), serverLevel);
+                && TerminalPayloads.networkHasActiveOps(serverLevel, host.networkUuid())) {
+            TerminalPayloads.dispatchTerminalQuery(serverPlayer, host.networkUuid(), serverLevel);
         }
     }
 
@@ -574,11 +673,9 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
         return data.get(26);
     }
 
-    /** The index's health state, as an {@code IndexHealth.State} ordinal. */
-    public dev.jstech.computers.operation.index.IndexHealth.State indexHealth() {
-        final var states = dev.jstech.computers.operation.index.IndexHealth.State.values();
-        final int ordinal = data.get(DATA_INDEX_HEALTH);
-        return ordinal >= 0 && ordinal < states.length ? states[ordinal] : states[0];
+    /** The index's health state, read back from the id the host synced. */
+    public IndexHealth.State indexHealth() {
+        return IndexHealth.State.byId(data.get(DATA_INDEX_HEALTH));
     }
 
     /** How many item types the index has flagged. */
@@ -624,11 +721,8 @@ public class ComputerTerminalMenu extends AbstractComputerMenu {
 
     /** The host computer's board-derived hardware era for the GUI skin, or {@code null} (STANDARD) when none. */
     @Nullable
-    public dev.jstech.core.tier.HardwareEra hardwareEra() {
-        final int ordinal = data.get(DATA_ERA);
-        final dev.jstech.core.tier.HardwareEra[] values =
-                dev.jstech.core.tier.HardwareEra.values();
-        return ordinal >= 0 && ordinal < values.length ? values[ordinal] : null;
+    public HardwareEra hardwareEra() {
+        return HardwareEra.find(data.get(DATA_ERA));
     }
 
     @Override

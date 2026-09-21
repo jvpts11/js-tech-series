@@ -24,10 +24,8 @@ import java.util.List;
  */
 public record FirmwareStatePayload(
         BlockPos hostPos,
-        int eraOrdinal,
-        String cpuLabel,
-        int cpuMhz,
-        int ramMb,
+        int eraId,
+        Machine machine,
         int bootSlot,
         int installTargetSlot,
         List<Entry> entries,
@@ -35,15 +33,62 @@ public record FirmwareStatePayload(
 ) implements CustomPacketPayload {
 
     /**
+     * What the firmware found when the machine powered on: the same facts its self-test reads out and its
+     * hardware page lists.
+     *
+     * <p>Read off the parts themselves rather than off the block, so a computer answers with what is seated in
+     * it and not with what kind of computer it is.
+     *
+     * @param name       what the player called the machine, or what kind of machine it is when they called it
+     *                   nothing
+     * @param cpuName    the processor by model
+     * @param cores      how many cores it has
+     * @param cpuMhz     its clock, zero when no processor is seated
+     * @param cpuArch    the architecture by name, "x86-64"; the self-test reads it out on its own and the
+     *                   hardware page puts the word size beside it
+     * @param cpuBits    the architecture's word size
+     * @param boardName  the motherboard by model
+     * @param ramMb      the memory counted over the modules seated
+     * @param ramModules how many modules are in
+     * @param ramSlots   how many the board has
+     * @param ramName    the memory modules by model, so a self-test names what it counted
+     * @param gpuName    the video card by model, or empty when the machine draws nothing
+     * @param monitors   how many monitors are really linked, which is not the same as "connected"
+     * @param ports      how many peripheral ports the board offers
+     * @param eraLabel   the hardware generation in words
+     */
+    public record Machine(String name, String cpuName, int cores, int cpuMhz, String cpuArch, int cpuBits,
+                          String boardName, int ramMb, int ramModules, int ramSlots, String ramName,
+                          String gpuName, int monitors, int ports, String eraLabel) {
+
+        /** A machine nothing could be read from: no parts, or a host that is not a computer. */
+        public static final Machine NONE =
+                new Machine("", "", 0, 0, "", 0, "", 0, 0, 0, "", "", 0, 0, "");
+
+        /** Whether a processor was found at all, which is what decides that there is a self-test to show. */
+        public boolean hasCpu() {
+            return this.cpuMhz > 0;
+        }
+
+        /** The memory as a self-test names it: how many modules of which kind, or nothing when none are in. */
+        public String memoryModules() {
+            if (this.ramModules <= 0 || this.ramName.isEmpty()) {
+                return "";
+            }
+            return this.ramModules + "x " + this.ramName;
+        }
+    }
+
+    /**
      * The storage controller the firmware found, if any. A real RAID controller is configured from
      * its own setup at power-on rather than from inside the running system, so the firmware is where
      * this lives.
      *
      * @param present    whether a controller is fitted at all (false hides the storage page)
-     * @param mode       the array mode ordinal currently configured
+     * @param mode       the id of the array mode currently configured
      * @param members    how many drives the array was formed with (0 when unconfigured)
      * @param drives     how many member drives are present right now
-     * @param capacities usable capacity in items for each mode, indexed by mode ordinal
+     * @param capacities usable capacity in items for each mode, one per mode in the order the modes are declared
      */
     public record RaidInfo(boolean present, int mode, int members, int drives, List<Long> capacities) {
 
@@ -60,19 +105,24 @@ public record FirmwareStatePayload(
     public static final int MAX_ENTRIES = 32;
 
     /**
-     * One boot entry.
+     * One boot entry, in the parts a firmware reads out rather than as a sentence.
+     *
+     * <p>A self-test prints these in columns, a boot menu names the device beside what is on it, and a setup
+     * page lists them a third way, so they arrive apart and each screen puts them together as its own age did.
      *
      * @param kind        {@link #KIND_DISK} (an installed disk) or {@link #KIND_MEDIA} (a linked drive's medium)
      * @param ref         the disk slot index, or the media reader's packed block position
      * @param osId        the OS on it ({@code ""} when the disk has no system / the medium is not an installer)
-     * @param label       the display label (OS name, or "no system" / the medium's name)
-     * @param detail      a second line: the disk/medium size and device
+     * @param label       what the device holds: the system's name, an installer's name, or "no system"/"empty"
+     * @param device      the hardware itself by model, or the kind of drive for a reader
+     * @param size        how much the device holds, in words, and nothing for a drive whose size means nothing
+     * @param note        why this cannot be booted or installed, and nothing when it can
      * @param bootable    whether this entry can be booted (a disk with an OS; an OS-installer medium whose OS
      *                    passes the hardware era gate)
-     * @param installMode the OS's install mode ordinal for a medium (guided / live manual / source), else -1
+     * @param installMode the id of the OS's install mode for a medium (guided / live manual / source), else -1
      */
-    public record Entry(int kind, long ref, String osId, String label, String detail, boolean bootable,
-                        int installMode) {
+    public record Entry(int kind, long ref, String osId, String label, String device, String size, String note,
+                        boolean bootable, int installMode) {
     }
 
     public static final CustomPacketPayload.Type<FirmwareStatePayload> TYPE =
@@ -81,6 +131,11 @@ public record FirmwareStatePayload(
     public static final StreamCodec<RegistryFriendlyByteBuf, FirmwareStatePayload> STREAM_CODEC =
             StreamCodec.of(FirmwareStatePayload::encode, FirmwareStatePayload::decode);
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public FirmwareStatePayload {
+        entries = List.copyOf(entries);
+    }
+
     @Override
     public CustomPacketPayload.Type<FirmwareStatePayload> type() {
         return TYPE;
@@ -88,10 +143,8 @@ public record FirmwareStatePayload(
 
     private static void encode(final RegistryFriendlyByteBuf buf, final FirmwareStatePayload p) {
         buf.writeBlockPos(p.hostPos);
-        buf.writeVarInt(p.eraOrdinal);
-        buf.writeUtf(p.cpuLabel, 48);
-        buf.writeVarInt(p.cpuMhz);
-        buf.writeVarInt(p.ramMb);
+        buf.writeVarInt(p.eraId);
+        writeMachine(buf, p.machine);
         buf.writeVarInt(p.bootSlot);
         buf.writeVarInt(p.installTargetSlot);
         buf.writeVarInt(Math.min(p.entries.size(), MAX_ENTRIES));
@@ -101,7 +154,9 @@ public record FirmwareStatePayload(
             buf.writeVarLong(e.ref());
             buf.writeUtf(e.osId(), 64);
             buf.writeUtf(e.label(), 48);
-            buf.writeUtf(e.detail(), 48);
+            buf.writeUtf(e.device(), 48);
+            buf.writeUtf(e.size(), 16);
+            buf.writeUtf(e.note(), 48);
             buf.writeBoolean(e.bootable());
             buf.writeVarInt(e.installMode());
         }
@@ -121,16 +176,14 @@ public record FirmwareStatePayload(
     private static FirmwareStatePayload decode(final RegistryFriendlyByteBuf buf) {
         final BlockPos pos = buf.readBlockPos();
         final int era = buf.readVarInt();
-        final String cpuLabel = buf.readUtf(48);
-        final int cpuMhz = buf.readVarInt();
-        final int ramMb = buf.readVarInt();
+        final Machine machine = readMachine(buf);
         final int bootSlot = buf.readVarInt();
         final int target = buf.readVarInt();
         final int count = Math.min(buf.readVarInt(), MAX_ENTRIES);
         final List<Entry> entries = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             entries.add(new Entry(buf.readVarInt(), buf.readVarLong(), buf.readUtf(64), buf.readUtf(48),
-                    buf.readUtf(48), buf.readBoolean(), buf.readVarInt()));
+                    buf.readUtf(48), buf.readUtf(16), buf.readUtf(48), buf.readBoolean(), buf.readVarInt()));
         }
         RaidInfo raid = RaidInfo.ABSENT;
         if (buf.readBoolean()) {
@@ -144,6 +197,30 @@ public record FirmwareStatePayload(
             }
             raid = new RaidInfo(true, mode, members, drives, capacities);
         }
-        return new FirmwareStatePayload(pos, era, cpuLabel, cpuMhz, ramMb, bootSlot, target, entries, raid);
+        return new FirmwareStatePayload(pos, era, machine, bootSlot, target, entries, raid);
+    }
+
+    private static void writeMachine(final RegistryFriendlyByteBuf buf, final Machine m) {
+        buf.writeUtf(m.name(), 48);
+        buf.writeUtf(m.cpuName(), 48);
+        buf.writeVarInt(m.cores());
+        buf.writeVarInt(m.cpuMhz());
+        buf.writeUtf(m.cpuArch(), 32);
+        buf.writeVarInt(m.cpuBits());
+        buf.writeUtf(m.boardName(), 64);
+        buf.writeVarInt(m.ramMb());
+        buf.writeVarInt(m.ramModules());
+        buf.writeVarInt(m.ramSlots());
+        buf.writeUtf(m.ramName(), 48);
+        buf.writeUtf(m.gpuName(), 48);
+        buf.writeVarInt(m.monitors());
+        buf.writeVarInt(m.ports());
+        buf.writeUtf(m.eraLabel(), 24);
+    }
+
+    private static Machine readMachine(final RegistryFriendlyByteBuf buf) {
+        return new Machine(buf.readUtf(48), buf.readUtf(48), buf.readVarInt(), buf.readVarInt(), buf.readUtf(32),
+                buf.readVarInt(), buf.readUtf(64), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
+                buf.readUtf(48), buf.readUtf(48), buf.readVarInt(), buf.readVarInt(), buf.readUtf(24));
     }
 }

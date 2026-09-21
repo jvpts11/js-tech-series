@@ -19,6 +19,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The Pattern Encoder's bay panel: the one media slot, the player's inventory, and two buttons (eject the
@@ -50,7 +51,7 @@ public class PatternEncoderMenu extends AbstractComputerMenu {
         addPlayerInventory(playerInventory, PatternEncoderLayout.INV_X, PatternEncoderLayout.INV_Y);
     }
 
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public static PatternEncoderMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                                  final RegistryFriendlyByteBuf buf) {
         if (playerInventory.player.level().getBlockEntity(buf.readBlockPos())

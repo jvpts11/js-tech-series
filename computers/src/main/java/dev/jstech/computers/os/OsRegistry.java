@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.computers.JsComputers;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Collection;
@@ -15,13 +16,15 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Static registry for all kernels, operating systems, and programs known to the mod.
+ * Every kernel, operating system, program and desktop the computers know.
  *
- * <p>Entries are registered during the mod common-setup phase via {@link JSComputersAPI}. The
- * maps are insertion-ordered so iteration order is deterministic for display and testing purposes.
+ * <p>They are added while the game loads, at the one moment the mods are asked for them, and the registry
+ * is closed once the loading is done. That is what lets a world be sure that what it can install does not
+ * change under it while somebody plays it.
  *
- * <p>This class is not thread-safe; all registrations must occur on the mod-loading thread before
- * any game tick accesses the maps.
+ * <p>Two of the same id are refused rather than one quietly replacing the other, because which of the two
+ * won would otherwise depend on the order the mods happened to load in. They are kept in the order they
+ * arrived, so what a list shows is the same every time.
  */
 public final class OsRegistry {
 
@@ -29,25 +32,64 @@ public final class OsRegistry {
     private static final Map<ResourceLocation, OsDef> OSES = new LinkedHashMap<>();
     private static final Map<ResourceLocation, ProgramSpec> PROGRAMS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, DesktopEnvironmentDef> DESKTOPS = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, OperatingSpaceDef> SPACES = new LinkedHashMap<>();
+
+    private static volatile boolean frozen;
 
     private OsRegistry() {}
 
-    // Registration (called by JSComputersAPI)
-
-    static void registerKernel(KernelDef def) {
-        KERNELS.put(def.id(), def);
+    public static void registerKernel(final KernelDef def) {
+        add(KERNELS, def == null ? null : def.id(), def, "kernel");
     }
 
-    static void registerOs(OsDef def) {
-        OSES.put(def.id(), def);
+    public static void registerOs(final OsDef def) {
+        add(OSES, def == null ? null : def.id(), def, "operating system");
     }
 
-    static void registerProgram(ProgramSpec def) {
-        PROGRAMS.put(def.id(), def);
+    public static void registerProgram(final ProgramSpec def) {
+        add(PROGRAMS, def == null ? null : def.id(), def, "program");
     }
 
-    static void registerDesktop(DesktopEnvironmentDef def) {
-        DESKTOPS.put(def.id(), def);
+    public static void registerDesktop(final DesktopEnvironmentDef def) {
+        add(DESKTOPS, def == null ? null : def.id(), def, "desktop");
+    }
+
+    public static void registerSpace(final OperatingSpaceDef def) {
+        add(SPACES, def == null ? null : def.id(), def, "operating space");
+    }
+
+    /** Closes the registry, as the mod does once every mod has loaded: nothing is added after. */
+    public static void freeze() {
+        frozen = true;
+    }
+
+    /** Whether the registry has been closed. */
+    public static boolean isFrozen() {
+        return frozen;
+    }
+
+    /**
+     * Puts one in, and refuses an id something already answers for.
+     *
+     * <p>The two refusals are not the same. A taken id can only be two mods declaring the same thing, which
+     * is a mistake in one of them and is worth stopping the load over while somebody is there to read why.
+     * Adding one after the loading is done can happen in a world already being played, and no addon's
+     * mistake is worth ending somebody's game over, so that one is refused with a word in the log.
+     */
+    private static <T> void add(final Map<ResourceLocation, T> into, final ResourceLocation id, final T def,
+                                final String what) {
+        if (def == null || id == null) {
+            return;
+        }
+        if (frozen) {
+            JsComputers.LOGGER.warn("The {} {} was not registered: they are only added while the game loads",
+                    what, id);
+            return;
+        }
+        if (into.containsKey(id)) {
+            throw new IllegalStateException("A " + what + " is already registered as " + id);
+        }
+        into.put(id, def);
     }
 
     /** Returns the {@link DesktopEnvironmentDef} registered under {@code id}, or {@code null} if absent. */
@@ -58,6 +100,16 @@ public final class OsRegistry {
     /** Returns an unmodifiable view of all registered desktop environments. */
     public static Collection<DesktopEnvironmentDef> desktops() {
         return Collections.unmodifiableCollection(DESKTOPS.values());
+    }
+
+    /** Returns the {@link OperatingSpaceDef} registered under {@code id}, or {@code null} if absent. */
+    public static OperatingSpaceDef getSpace(ResourceLocation id) {
+        return id == null ? null : SPACES.get(id);
+    }
+
+    /** Returns an unmodifiable view of all registered operating spaces. */
+    public static Collection<OperatingSpaceDef> spaces() {
+        return Collections.unmodifiableCollection(SPACES.values());
     }
 
     // Lookup
@@ -118,20 +170,33 @@ public final class OsRegistry {
     }
 
     /**
-     * The version rank of a Frames OS, so a program can require a newer version within the same platform:
-     * {@code frames_95 = 1}, {@code frames_xp = 2}, {@code frames_11 = 3}; everything else (and no OS) is 0.
-     * A pure {@code osId}-to-rank map, safe to call on either side without the registry being populated.
+     * Where a system sits in its family's order, as the system itself declares, so a program can ask for one
+     * no older than a given one within the same platform.
+     *
+     * <p>Zero for a system that declares nothing, for one nobody has registered, and for no system at all: a
+     * family with no order means the platform alone decides, which is the answer for every family but one.
+     *
+     * <p>This used to be three names written out here, which meant the mod's own three systems were the only
+     * ones that could ever be ordered: a fourth, or an addon's, had no way to say it was newer than anything.
      */
     public static int osVersionRank(final ResourceLocation osId) {
-        if (osId == null) {
-            return 0;
+        final OsDef os = osId == null ? null : getOs(osId);
+        return os == null ? 0 : os.familyRank();
+    }
+
+    /**
+     * The name of the system at that place in its family's order, for a message saying what is needed.
+     *
+     * <p>Falls back to words rather than a name where nothing answers to that rank, which is what happens if a
+     * program asks for a rank past the end of its family.
+     */
+    public static String systemOfRank(final int rank) {
+        for (final OsDef os : oses()) {
+            if (os.familyRank() == rank) {
+                return os.displayName();
+            }
         }
-        return switch (osId.getPath()) {
-            case "frames_95" -> 1;
-            case "frames_xp" -> 2;
-            case "frames_11" -> 3;
-            default -> 0;
-        };
+        return "a newer system";
     }
 
     /**

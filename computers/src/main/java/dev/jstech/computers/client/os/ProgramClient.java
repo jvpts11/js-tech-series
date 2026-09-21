@@ -7,6 +7,10 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.client.NmsApp;
+import dev.jstech.computers.os.DesktopEnvironmentDef;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.PanelStyle;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
@@ -60,7 +64,10 @@ public final class ProgramClient {
         // Built-in Frames apps.
         register(rl("network"), (host, mon, os) -> new NetworkInteractorApp(host, mon));
         register(rl("this_pc"), (host, mon, os) -> new ThisPcApp(host));
-        register(rl("settings"), (host, mon, os) -> new SettingsApp(host, mon));
+        // CDE's settings are its Style Manager, which the approved desktop keeps to what CDE itself offered.
+        register(rl("settings"), (host, mon, os) -> onCde(os) ? new StyleManagerApp() : new SettingsApp(host, mon));
+        register(rl("workstation_info"), (host, mon, os) -> new WorkstationInfoApp(host));
+        register(rl("help_viewer"), (host, mon, os) -> new HelpViewerApp(host));
         register(rl("files"), (host, mon, os) -> new FilesApp(host, os.getPath(), "", mon));
         register(rl("editor"), (host, mon, os) -> new EditorApp(host));
         register(rl("command_prompt"), (host, mon, os) -> new ShellApp(host, os));
@@ -70,12 +77,19 @@ public final class ProgramClient {
         register(rl("task_manager"), (host, mon, os) -> new TaskManagerApp(host, os));
         // Installable programs.
         register(rl("nms"), (host, mon, os) ->
-                new dev.jstech.computers.client.NmsApp(host, mon));
+                new NmsApp(host, mon));
         register(rl("crafting_manager"), (host, mon, os) -> new CraftingManagerApp(host));
         register(rl("pattern_studio"), (host, mon, os) -> new PatternStudioApp(host, mon));
         register(rl("cluster_manager"), (host, mon, os) -> new ClusterManagerApp(host));
         register(rl("gateway_manager"), (host, mon, os) -> new GatewayManagerApp(host));
         register(rl("minesweeper"), (host, mon, os) -> new MinesweeperApp());
+        register(rl("solitaire"), (host, mon, os) -> new SolitaireApp());
+        register(rl("snake"), (host, mon, os) -> new SnakeApp());
+        register(rl("ark"), (host, mon, os) -> new ArchiverApp(host));
+        register(rl("paint"), (host, mon, os) -> new PaintApp(host));
+        register(rl("exceed"), (host, mon, os) -> new ExceedApp(host, mon));
+        register(rl("messenger"), (host, mon, os) -> new MessengerApp(host, mon));
+        register(rl("knot"), (host, mon, os) -> new KnotApp(host, mon));
         register(rl("storage_insights"), (host, mon, os) -> new StorageInsightsApp(host, mon));
         register(rl("craft_planner"), (host, mon, os) -> new CraftPlannerApp(host, mon));
         register(rl("automation_manager"), (host, mon, os) -> new AutomationManagerApp(host, mon));
@@ -89,5 +103,11 @@ public final class ProgramClient {
 
     private static ResourceLocation rl(final String path) {
         return ResourceLocation.fromNamespaceAndPath("jsc", path);
+    }
+
+    /** Whether a program is being opened on CDE, whatever system CDE stands on. */
+    private static boolean onCde(final ResourceLocation desktopId) {
+        final DesktopEnvironmentDef desktop = desktopId == null ? null : OsRegistry.getDesktop(desktopId);
+        return desktop != null && desktop.panelStyle() == PanelStyle.CDE;
     }
 }

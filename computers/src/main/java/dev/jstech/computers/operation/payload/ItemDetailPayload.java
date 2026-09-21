@@ -62,6 +62,13 @@ public record ItemDetailPayload(ItemStack item, long total, List<NetworkItemEntr
         return new ItemDetailPayload(item, total, storedIn, usedToMake, buses);
     }
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public ItemDetailPayload {
+        storedIn = List.copyOf(storedIn);
+        usedToMake = List.copyOf(usedToMake);
+        buses = List.copyOf(buses);
+    }
+
     @Override
     public CustomPacketPayload.Type<ItemDetailPayload> type() {
         return TYPE;

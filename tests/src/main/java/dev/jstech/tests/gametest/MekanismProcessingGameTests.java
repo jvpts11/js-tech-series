@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Tech Series.
  */
 package dev.jstech.tests.gametest;
 
@@ -197,6 +197,59 @@ public final class MekanismProcessingGameTests {
                             "two raw iron must have been fed, no more; left " + storage.count(Items.RAW_IRON));
                     helper.assertTrue(storage.count(oxygen) <= 1600,
                             "the chamber must have taken the oxygen for two runs; left " + storage.count(oxygen));
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A chamber burns oxygen at a rate that only averages what a pattern says a lot uses, so the request's nominal
+     * oxygen can run out before its last lot is done. It used to be left dry until the operation timed out with
+     * half the clumps; now a machine that has stood still for want of a gas is given another lot's worth.
+     *
+     * <p>The pattern here understates on purpose, 25 mB a lot where a purification burns about 200, so the chamber
+     * MUST run dry several times over. That makes finishing the proof: two lots cannot come out of the 50 mB the
+     * request is nominally worth unless the dry machine was fed again.
+     *
+     * <p>It used to ask instead whether more than the nominal had been taken, which is a question about the burn
+     * rate rather than about the feeding: a chamber given enough power runs fast enough to fit inside its nominal,
+     * never goes dry, and made the test fail with everything working.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 900)
+    public static void purificationChamber_finishesWhenItBurnsMoreOxygenThanThePatternSays(
+            final GameTestHelper helper) {
+        final MekanismRig.Rig rig = MekanismRig.build(helper, PURIFICATION_CHAMBER);
+        final StorageKey oxygen = StorageKey.chemical(OXYGEN);
+        final StorageKey clump = StorageKey.of(BuiltInRegistries.ITEM.get(CLUMP_IRON));
+        final NetworkProcessingOperation[] op = new NetworkProcessingOperation[1];
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> MekanismRig.mountBuses(helper))
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    final NetworkStorage storage = rig.net().storage(helper.getLevel());
+                    rig.net().seed(Items.RAW_IRON, 8);
+                    helper.assertTrue(storage.insert(oxygen, 2000) == 2000, "2 000 mB of oxygen must go in as data");
+                    MekanismRig.assertDiscovered(helper, PURIFICATION_CHAMBER);
+                    final ProcessingPattern pattern = new ProcessingPattern(
+                            List.of(new ProcessingPattern.ProcessingInput(StorageKey.of(Items.RAW_IRON), 1),
+                                    new ProcessingPattern.ProcessingInput(oxygen, 25)),
+                            List.of(new ProcessingPattern.ProcessingOutput(clump, 2, 100)),
+                            PURIFICATION_CHAMBER.toString(), 400);
+                    op[0] = rig.net().mainframe().submitNetworkProcessing(pattern, 4, "battery");
+                    helper.assertTrue(op[0] != null, "the Mainframe must accept the processing operation");
+                })
+                .thenExecuteAfter(20, () -> MekanismRig.power(helper))
+                .thenWaitUntil(() -> {
+                    MekanismRig.power(helper);
+                    helper.assertTrue(op[0].isDone(), "the chamber is still working");
+                })
+                .thenExecute(() -> {
+                    final NetworkStorage storage = rig.net().storage(helper.getLevel());
+                    helper.assertTrue(op[0].toRecord().status() == OperationRecord.STATUS_COMPLETED,
+                            "the operation must finish whole, not partial; status " + op[0].toRecord().status()
+                                    + ", produced " + op[0].produced());
+                    helper.assertTrue(storage.count(clump) >= 4, "both lots' clumps land; got " + storage.count(clump));
+                    helper.assertTrue(storage.count(oxygen) < 1950,
+                            "which took far more oxygen than the 50 mB the request was nominally worth; left "
+                                    + storage.count(oxygen));
                 })
                 .thenSucceed();
     }

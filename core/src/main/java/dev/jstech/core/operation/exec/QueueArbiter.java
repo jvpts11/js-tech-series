@@ -42,12 +42,14 @@ public final class QueueArbiter {
      */
     public static OperationPriority effective(final OperationPriority priority, final int deferredTicks,
                                               final int agingTicks) {
-        final OperationPriority[] levels = OperationPriority.values();
         if (agingTicks <= 0 || deferredTicks <= 0) {
             return priority;
         }
-        final int lifted = Math.min(levels.length - 1, priority.ordinal() + deferredTicks / agingTicks);
-        return levels[lifted];
+        OperationPriority lifted = priority;
+        for (int steps = deferredTicks / agingTicks; steps > 0 && lifted != OperationPriority.HIGH; steps--) {
+            lifted = lifted.raise();
+        }
+        return lifted;
     }
 
     /**
@@ -63,7 +65,7 @@ public final class QueueArbiter {
         for (int i = 0; i < ready.size(); i++) {
             order.add(i);
         }
-        order.sort((a, b) -> Integer.compare(rank(ready.get(b), agingTicks), rank(ready.get(a), agingTicks)));
+        order.sort((a, b) -> level(ready.get(b), agingTicks).compareTo(level(ready.get(a), agingTicks)));
         final boolean[] granted = new boolean[ready.size()];
         for (int i = 0; i < Math.min(slots, order.size()); i++) {
             granted[order.get(i)] = true;
@@ -77,7 +79,7 @@ public final class QueueArbiter {
         return out;
     }
 
-    private static int rank(final Candidate<?> candidate, final int agingTicks) {
-        return effective(candidate.priority(), candidate.deferredTicks(), agingTicks).ordinal();
+    private static OperationPriority level(final Candidate<?> candidate, final int agingTicks) {
+        return effective(candidate.priority(), candidate.deferredTicks(), agingTicks);
     }
 }

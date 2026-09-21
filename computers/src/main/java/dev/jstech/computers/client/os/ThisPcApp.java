@@ -21,6 +21,8 @@ import dev.jstech.computers.os.MinSpecTooltip;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.media.MediaDriveType;
+import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.CellGrid;
 import dev.jstech.core.client.gui.component.Draw;
@@ -226,12 +228,12 @@ public final class ThisPcApp implements IDesktopApp {
                 int detailColor = ctx.skin().dim();
                 if (!media.loaded()) {
                     detail = prettyDrive(media.drive()) + " drive, " + media.blocksAway() + " blocks away";
-                } else if (media.kind().equals("OS_INSTALL")) {
+                } else if (media.kind().equals(MediaKind.OS_INSTALL.serializedName())) {
                     detail = "Installs " + (media.payloadName().isEmpty() ? media.payloadPath() : media.payloadName())
                             + (media.payloadYear() > 0 ? " · " + media.payloadYear() : "") + " · bootable"
                             + (media.packageId().isEmpty() ? "" : " · package " + media.packageId());
                     detailColor = AMBER;
-                } else if (media.kind().equals("PROGRAM_INSTALL")) {
+                } else if (media.kind().equals(MediaKind.PROGRAM_INSTALL.serializedName())) {
                     detail = (media.installable() ? "Installs " : "Installed: ")
                             + (media.payloadName().isEmpty() ? media.payloadPath() : media.payloadName())
                             + (media.payloadYear() > 0 ? " · " + media.payloadYear() : "")
@@ -268,7 +270,7 @@ public final class ThisPcApp implements IDesktopApp {
             }
             if (media != null) {
                 // The requirements ride on the tooltip of the detail line; the row has room for one line.
-                if (!media.needs().isEmpty() && media.loaded() && !media.kind().equals("DATA") && my >= y() + 11 && my < y() + 20) {
+                if (!media.needs().isEmpty() && media.loaded() && !media.kind().equals(MediaKind.DATA.serializedName()) && my >= y() + 11 && my < y() + 20) {
                     final List<Component> lines = new ArrayList<>(3);
                     lines.add(Component.literal(media.payloadName().isEmpty() ? media.mediaName() : media.payloadName()));
                     for (final String need : media.needs().split(" · ")) {
@@ -312,12 +314,13 @@ public final class ThisPcApp implements IDesktopApp {
         drivesHeader = page.add(new SectionHeader(() -> "Devices and drives"));
         noDrives = page.add(new Label("No disks installed and no drives linked", Label.Tone.DIM));
         hardwareHeader = page.add(new SectionHeader(() -> "Hardware"));
-        final String[] keys = {"Board", "Processor", "Memory", "Graphics", "Power", "Peripherals", "Build"};
+        final String[] keys = {"Board", "Processor", "Architecture", "Memory", "Graphics", "Power", "Peripherals",
+            "Build"};
         for (int i = 0; i < keys.length; i++) {
             final int line = i;
             hwKeys.add(page.add(new Label(keys[i], Label.Tone.DIM)));
             hwValues.add(page.add(new Label(() -> hardwareValue(line))
-                    .setColor(() -> line == 6 ? (data.machine().buildValid() ? GREEN : AMBER) : 0)));
+                    .setColor(() -> line == keys.length - 1 ? (data.machine().buildValid() ? GREEN : AMBER) : 0)));
         }
         programsHeader = page.add(new SectionHeader(() -> "Installed programs  " + data.installedPrograms().size()));
         noPrograms = page.add(new Label("None. Insert an installer, or run a package manager.", Label.Tone.DIM));
@@ -413,10 +416,11 @@ public final class ThisPcApp implements IDesktopApp {
         return switch (line) {
             case 0 -> m.boardLabel().isEmpty() ? "none" : m.boardLabel();
             case 1 -> m.cpuLabel().isEmpty() ? "none" : (m.cpuCount() > 1 ? m.cpuCount() + " × " : "") + m.cpuLabel();
-            case 2 -> m.ramMb() > 0 ? m.ramMb() + " it" : "none";
-            case 3 -> m.gpuCount() > 0 ? m.gpuCount() + " × " + m.vramMb() + " MB VRAM" : "none";
-            case 4 -> m.psuLabel().isEmpty() ? "none" : m.psuLabel();
-            case 5 -> m.peripherals().isEmpty() ? "none linked" : m.peripherals();
+            case 2 -> m.cpuArch().isEmpty() ? "none" : m.cpuArch();
+            case 3 -> m.ramMb() > 0 ? m.ramMb() + " it" : "none";
+            case 4 -> m.gpuCount() > 0 ? m.gpuCount() + " × " + m.vramMb() + " MB VRAM" : "none";
+            case 5 -> m.psuLabel().isEmpty() ? "none" : m.psuLabel();
+            case 6 -> m.peripherals().isEmpty() ? "none linked" : m.peripherals();
             default -> m.buildValid() ? "OK, the machine comes up" : "not valid";
         };
     }
@@ -575,22 +579,19 @@ public final class ThisPcApp implements IDesktopApp {
             Draw.outline(g, x + 2, y, 10, 10, 0xFFC2C7D4);
             return;
         }
-        switch (m.drive()) {
-            case "DOCK_STATION" -> {
-                g.fill(x + 1, y + 1, x + 13, y + 9, 0xFF2E3238);
-                g.fill(x + 9, y + 3, x + 12, y + 7, 0xFFB8BEC8);
-                Draw.outline(g, x + 1, y + 1, 12, 8, 0xFF1C1F24);
-            }
-            case "FLOPPY_DRIVE" -> {
-                g.fill(x + 1, y, x + 13, y + 10, 0xFF1C2438);
-                g.fill(x + 4, y + 1, x + 10, y + 4, 0xFFB8BEC8);
-                Draw.outline(g, x + 1, y, 12, 10, 0xFF0B1220);
-            }
-            default -> {
-                g.fill(x + 2, y, x + 12, y + 10, 0xFFB9C0CE);
-                g.fill(x + 5, y + 3, x + 9, y + 7, 0xFFEDF0F6);
-                Draw.outline(g, x + 2, y, 10, 10, 0xFF6E7686);
-            }
+        final MediaDriveType drive = MediaDriveType.find(m.drive());
+        if (drive == MediaDriveType.DOCK_STATION) {
+            g.fill(x + 1, y + 1, x + 13, y + 9, 0xFF2E3238);
+            g.fill(x + 9, y + 3, x + 12, y + 7, 0xFFB8BEC8);
+            Draw.outline(g, x + 1, y + 1, 12, 8, 0xFF1C1F24);
+        } else if (drive == MediaDriveType.FLOPPY_DRIVE) {
+            g.fill(x + 1, y, x + 13, y + 10, 0xFF1C2438);
+            g.fill(x + 4, y + 1, x + 10, y + 4, 0xFFB8BEC8);
+            Draw.outline(g, x + 1, y, 12, 10, 0xFF0B1220);
+        } else {
+            g.fill(x + 2, y, x + 12, y + 10, 0xFFB9C0CE);
+            g.fill(x + 5, y + 3, x + 9, y + 7, 0xFFEDF0F6);
+            Draw.outline(g, x + 2, y, 10, 10, 0xFF6E7686);
         }
     }
 
@@ -731,12 +732,12 @@ public final class ThisPcApp implements IDesktopApp {
     // helpers
 
     private static String prettyDrive(final String drive) {
-        return switch (drive) {
-            case "FLOPPY_DRIVE" -> "Floppy";
-            case "CD_DRIVE" -> "CD";
-            case "DVD_DRIVE" -> "DVD";
-            case "DOCK_STATION" -> "USB";
-            default -> drive;
+        final MediaDriveType type = MediaDriveType.find(drive);
+        return type == null ? drive : switch (type) {
+            case FLOPPY_DRIVE -> "Floppy";
+            case CD_DRIVE -> "CD";
+            case DVD_DRIVE -> "DVD";
+            case DOCK_STATION -> "USB";
         };
     }
 

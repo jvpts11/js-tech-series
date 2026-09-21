@@ -8,13 +8,16 @@
 package dev.jstech.computers.menu;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.blockentity.IWatchedConsole;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
+import dev.jstech.computers.gui.layout.NetworkInteractorLayout;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -85,6 +88,13 @@ public class DesktopMenu extends AbstractContainerMenu {
         for (int i = 0; i < INVENTORY_SLOTS; i++) {
             addSlot(new NetworkInteractorSlot(playerInventory, inventoryIndexFor(i), 0, 0, this::slotsActive, true));
         }
+        IWatchedConsole.opened(playerInventory.player, hostPos);
+    }
+
+    @Override
+    public void removed(final Player player) {
+        super.removed(player);
+        IWatchedConsole.closed(player, hostPos);
     }
 
     /** Whether the inventory slots are currently live; the desktop screen sets this each tick. */
@@ -110,7 +120,7 @@ public class DesktopMenu extends AbstractContainerMenu {
     /**
      * Client-only: lays the 36 inventory slots out with their top-left at {@code (originX, originY)} in screen
      * space, using the standard 9-wide, 4-row grid with an 18px pitch (3 main rows then the hotbar). Because
-     * {@link net.minecraft.world.inventory.Slot}'s {@code x}/{@code y} are final, following a moving window means
+     * {@link Slot}'s {@code x}/{@code y} are final, following a moving window means
      * rebuilding each slot at its new spot; this only runs when the origin or viewport actually changed, so a
      * still window (and any in-progress drag) keeps its slot instances. The vanilla index is preserved, so server
      * sync (which is purely by slot index) is unaffected.
@@ -137,7 +147,7 @@ public class DesktopMenu extends AbstractContainerMenu {
              * row 3), so the real slots line up with their backgrounds instead of diverging on the hotbar.
              */
             final int cellTop = originY
-                    + dev.jstech.computers.gui.layout.NetworkInteractorLayout.rowYOffset(row);
+                    + NetworkInteractorLayout.rowYOffset(row);
             final boolean visible = cellTop >= viewportTop && cellTop + 18 <= viewportBottom;
             final NetworkInteractorSlot slot =
                     new NetworkInteractorSlot(playerInventory, inventoryIndexFor(i),

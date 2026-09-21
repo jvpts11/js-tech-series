@@ -15,6 +15,8 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.client.gui.component.UiContext;
+import java.util.ArrayDeque;
+import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -50,7 +52,7 @@ public final class ShellApp implements IDesktopApp {
     private final BlockPos host;
 
     /** Lines still to be typed here, one after the other as each finishes. */
-    private final java.util.ArrayDeque<String> lines = new java.util.ArrayDeque<>();
+    private final ArrayDeque<String> lines = new ArrayDeque<>();
 
     public ShellApp(final BlockPos host) {
         this(host, null);
@@ -58,10 +60,8 @@ public final class ShellApp implements IDesktopApp {
 
     public ShellApp(final BlockPos host, @Nullable final ResourceLocation desktopId) {
         final DesktopEnvironmentDef chrome = desktopId == null ? null : OsRegistry.getDesktop(desktopId);
-        final boolean posix = chrome != null && switch (chrome.panelStyle()) {
-            case KDE, GNOME, CINNAMON -> true;
-            default -> false;
-        };
+        // The desktop says which family it stands on; a list kept here was what left the next desktop out.
+        final boolean posix = chrome != null && chrome.panelStyle().unixLike();
         final ProgramSpec promptSpec = Programs.get(Programs.COMMAND_PROMPT);
         /*
          * Frames 11 ships its own modern shell ("Megashell"); every other desktop names the window after its
@@ -73,7 +73,12 @@ public final class ShellApp implements IDesktopApp {
             this.title = chrome != null && promptSpec != null ? chrome.nameOf(promptSpec) : "Command Prompt";
         }
         this.host = host;
-        this.view = new ShellView(host, posix, true);
+        /*
+         * A shell greets the player with the system it belongs to. On this family the desktop and the system are
+         * the same thing by the same name, so the desktop is where the name comes from; a Unix terminal opens on
+         * a bare prompt and greets nobody.
+         */
+        this.view = new ShellView(host, posix, chrome == null || posix ? "" : chrome.displayName()).asOwnWindow();
         this.view.setOnIdle(this::typeNext);
     }
 
@@ -92,7 +97,7 @@ public final class ShellApp implements IDesktopApp {
      * Types lines here one after the other, the next only once the machine has answered the one
      * before, the way a studio hands the shell a job it cannot do itself.
      */
-    public void typeLines(final java.util.List<String> typed) {
+    public void typeLines(final List<String> typed) {
         this.lines.addAll(typed);
         if (!this.view.busy()) {
             typeNext();

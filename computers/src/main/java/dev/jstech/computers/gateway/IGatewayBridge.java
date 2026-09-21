@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.gateway;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * The ComputerCraft side of a Network Gateway, as the block entity sees it. The block entity never names a
  * ComputerCraft class: without CC: Tweaked there is no bridge at all, and with it the integration hands the
@@ -36,22 +39,21 @@ public interface IGatewayBridge {
     boolean eventTo(int computerId, String event, Object... arguments);
 
     /** Everything on the wire, by the name ComputerCraft knows it by, to the kind of thing it is. */
-    java.util.Map<String, String> peripherals();
+    Map<String, String> peripherals();
 
     /** The methods a peripheral on the wire answers; empty when there is no such peripheral. */
-    java.util.List<String> methodsOf(String peripheral);
+    List<String> methodsOf(String peripheral);
 
     /**
      * Calls a method of a peripheral on the wire and gives back what it answered.
      *
-     * @throws dev.jstech.computers.gateway.GatewayRefusedException when there is no such peripheral or
-     *                                                              method, or it refused
+     * @throws GatewayRefusedException when there is no such peripheral or method, or it refused
      */
-    Object call(String peripheral, String method, java.util.List<Object> arguments)
+    Object call(String peripheral, String method, List<Object> arguments)
             throws GatewayRefusedException;
 
     /** The ComputerCraft computers on the wire: the name each is known by, its number, and whether it is on. */
-    java.util.List<java.util.Map<String, Object>> computers();
+    List<Map<String, Object>> computers();
 
     /**
      * Turns a computer on the wire on, off, or off and on again; false when there is no such computer.

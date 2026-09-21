@@ -10,6 +10,7 @@ package dev.jstech.computers.crafting;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.util.Utf8Text;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -98,13 +99,8 @@ public record ProcessingPattern(List<ProcessingInput> inputs, List<ProcessingOut
         outputs = List.copyOf(outputs);
         machineType = machineType == null ? "" : machineType;
         timeoutTicks = Math.max(1, timeoutTicks);
-        name = clamp(name, CraftingPattern.MAX_NAME);
-        note = clamp(note, CraftingPattern.MAX_NOTE);
-    }
-
-    private static String clamp(final String s, final int max) {
-        final String value = s == null ? "" : s.trim();
-        return value.length() <= max ? value : value.substring(0, max);
+        name = Utf8Text.field(name, CraftingPattern.MAX_NAME);
+        note = Utf8Text.field(note, CraftingPattern.MAX_NOTE);
     }
 
     public static final Codec<ProcessingPattern> CODEC = RecordCodecBuilder.create(i -> i.group(

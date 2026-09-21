@@ -7,9 +7,21 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.computers.crafting.PatternWorkbench;
+import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.machine.NetworkReadService;
+import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.boot.SystemWelcome;
+import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.core.JsCore;
+import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
+import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * it, so every access route (a directly linked monitor, a KVM channel, ssh, remote control)
  * converges on one pipeline instead of duplicating it per machine shape.
  */
-public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
+public interface IOsHost extends IPeripheralOwner {
 
     /** Whether the machine is powered on with a valid build. */
     boolean isRunning();
@@ -37,6 +49,65 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
     boolean needsPost();
 
     void setNeedsPost(boolean value);
+
+    /**
+     * Starts the machine over, letting whatever is running say goodbye first.
+     *
+     * <p>Different from asking for a self-test outright: a running system closes its programs and shows what
+     * it shows while it does, and the self-test begins when it has finished. A host with nothing to show, or
+     * nothing running, starts over at once, which is what the plain form does.
+     */
+    default void restart() {
+        setNeedsPost(true);
+    }
+
+    /**
+     * Whether the machine is closing its system down on its way to starting over.
+     *
+     * <p>A phase of its own, and a monitor opened during it has to find the machine in it: without this, a
+     * player who looked away mid-restart came back to the desktop of a system that was being closed.
+     */
+    default boolean goingDown() {
+        return false;
+    }
+
+    /** How long that closing-down takes in all, so a screen joining it knows how far along it is. */
+    default int downTotal() {
+        return 0;
+    }
+
+    /** The ticks it still has to run, so a monitor opened part way through joins it where it is. */
+    default int downRemaining() {
+        return 0;
+    }
+
+    /**
+     * Whether an installation is waiting for this machine to finish testing itself.
+     *
+     * <p>A machine told to install something is not a machine booting its own system: it was restarted in
+     * order to start from the medium instead. Without this, a computer that already had a system installed
+     * played that system's whole start before showing the installer it had been restarted for, and one with
+     * two systems stopped at its boot manager on the way, asking which of them to boot when the answer was
+     * neither.
+     */
+    default boolean installationWaiting() {
+        return installer() != null || installing() != null
+                || (console() != null && console().liveInstall() != null);
+    }
+
+    /**
+     * Whether this machine is standing at the end of a self-test that found nothing to boot.
+     *
+     * <p>A machine that answers yes is waiting for a key at its own failure, and a monitor opened on it shows
+     * that rather than its setup. A host with no self-test to stand at answers no.
+     */
+    default boolean haltedAtPost() {
+        return false;
+    }
+
+    /** A key was pressed at that failure: the machine stops standing there. */
+    default void resumeFromHalt() {
+    }
 
     /** The value of {@link #pendingInstallSlot()} when no installation is waiting for its reboot. */
     int NO_PENDING_INSTALL = -2;
@@ -59,26 +130,49 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
      * package changes what the NEXT boot will run, not what is running now. Without it, leaving the
      * monitor and coming back silently applied a change the machine was never restarted for.
      */
-    @org.jetbrains.annotations.Nullable
-    net.minecraft.resources.ResourceLocation bootedDesktopId();
+    @Nullable
+    ResourceLocation bootedDesktopId();
 
     /** Fixes the desktop for this session. Called when POST hands over to the boot manager. */
-    void setBootedDesktopId(@org.jetbrains.annotations.Nullable net.minecraft.resources.ResourceLocation id);
+    void setBootedDesktopId(@Nullable ResourceLocation id);
 
     /**
      * The program windows this machine has open, as the last player to leave its monitor left them.
      * Machine state, not viewer state: it persists with the machine and is cleared by a restart or a
      * shutdown, exactly like the windows on a real desktop.
      */
-    java.util.List<OpenWindow> openWindows();
+    List<OpenWindow> openWindows();
 
-    void setOpenWindows(java.util.List<OpenWindow> windows);
+    void setOpenWindows(List<OpenWindow> windows);
+
+    /**
+     * Which of the desktop's workspaces is up, counted from nought. Machine state like the windows it sorts,
+     * and cleared with them: a machine that comes up again comes up on the first. A host whose desktops never
+     * have more than one keeps the first for good.
+     */
+    default int desktopWorkspace() {
+        return 0;
+    }
+
+    default void setDesktopWorkspace(final int workspace) {
+    }
 
     /** The RAM buffer of the current build, in items. */
     long ramBuffer();
 
     /** The best CPU clock in MHz across installed CPUs, or 0 with no valid build. */
     int maxCpuMhz();
+
+    /**
+     * How many cores this machine has, counted across every processor in it.
+     *
+     * <p>Not how many processors: work is spread over cores, so one four-core processor gets through four
+     * times what a single core does, and that is the number anything timing work on this machine wants.
+     * A host that cannot be asked what it is built of answers with a core for each processor it reports.
+     */
+    default int cpuCores() {
+        return Math.max(1, this.installedCpus());
+    }
 
     /** The total VRAM in MB across installed GPUs, or 0 with no valid build. */
     int totalVramMb();
@@ -124,10 +218,34 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
     ResourceLocation installedDesktopId();
 
     /**
-     * Whether this machine still has something to run: the installed OS, or a live-install session
-     * whose medium is still present. Implementations drop a dead live session as a side effect.
+     * The operating space a network machine draws with, or null when it has none.
+     *
+     * <p>What a desktop environment is to a Linux, for the system that has no desktop: null here is a machine
+     * that comes up at its prompt and nothing else, which is a network system whose space has been taken off
+     * as much as it is every machine that never had one.
+     */
+    @Nullable
+    ResourceLocation installedSpaceId();
+
+    /**
+     * Whether this machine still has something to run: the installed system, or a live session whose medium
+     * it can still see.
+     *
+     * <p>A question, and nothing more. It is asked by the gate on every payload a screen sends and by the
+     * container every tick, so it must be safe to ask at any moment and must change nothing when it is: a
+     * machine whose drive is a tick late to load says it cannot tell, and being unable to tell keeps the
+     * session rather than ending it. Ending one is {@link #settleLiveInstall()}.
      */
     boolean validateOsSession();
+
+    /**
+     * Ends a live session whose medium has really been taken out, once a tick, and says whether it did.
+     *
+     * <p>A machine that keeps no live session has none to end.
+     */
+    default boolean settleLiveInstall() {
+        return false;
+    }
 
     /** The per-machine console state: history, installed programs, settings. */
     ComputerConsoleState console();
@@ -137,7 +255,7 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
 
     /** The network this machine currently belongs to, or null when unlinked. */
     @Nullable
-    dev.jstech.core.uuid.NetworkUuid networkUuid();
+    NetworkUuid networkUuid();
 
     /**
      * Whether this machine is attached to a data network. Unlike {@link #networkUuid()}, which is a server
@@ -145,6 +263,151 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
      */
     default boolean networkAttached() {
         return networkUuid() != null;
+    }
+
+    /**
+     * A system being copied onto this machine's disks right now, or nothing.
+     *
+     * <p>A machine that cannot hold one answers nothing and is installed the moment it is asked, which is what
+     * a host with nowhere to keep the work has to do.
+     */
+    @Nullable
+    default OsInstallJob installing() {
+        return null;
+    }
+
+    /** Starts, replaces or ends the copy this machine is doing; a host that keeps none does nothing. */
+    default void setInstalling(@Nullable final OsInstallJob job) {
+    }
+
+    /** The installer this machine is in: the page it is on and what has been answered so far. */
+    @Nullable
+    default InstallerFlow installer() {
+        return null;
+    }
+
+    /** Puts the machine in an installer, or takes it out of one. */
+    default void setInstaller(@Nullable final InstallerFlow flow) {
+    }
+
+    /** Whether this machine can hold a copy of its own rather than being written to there and then. */
+    default boolean keepsInstalls() {
+        return false;
+    }
+
+    /**
+     * Whether a monitor watching this machine's block is showing THIS machine right now.
+     *
+     * <p>Every machine in a rack shares the rack's position, and its monitor shows one of them at a time, so a
+     * screen meant for one of them must not be put in front of somebody looking at another.
+     */
+    default boolean onScreen() {
+        return true;
+    }
+
+    /** Tells the world this machine's state changed, so it is written with the block that holds it. */
+    default void markChanged() {
+    }
+
+    /**
+     * What the system this machine boots remembers about being greeted, and whether its welcome comes back.
+     *
+     * <p>A host that does not keep it answers that nobody has met its system, which is what a machine with no
+     * disk of its own means anyway.
+     */
+    default SystemWelcome systemWelcome() {
+        return SystemWelcome.UNSEEN;
+    }
+
+    /** Writes the greeting back onto the disk the system is on; a host that cannot keep it does nothing. */
+    default void setSystemWelcome(final SystemWelcome welcome) {
+    }
+
+    /*
+     * Where the machine is on its way up. A host that runs no phases of its own answers that it is past all of
+     * them, which is what a machine reached through something other than its own power amounts to: whoever asks
+     * is told there is nothing to watch rather than being shown a self-test that will never end.
+     */
+
+    /** The ticks the self-test still has to run, for a monitor opened while it is under way. */
+    default int postRemaining() {
+        return 0;
+    }
+
+    /** Whether the machine is stopped at its boot manager, waiting to be told what to start. */
+    default boolean atBootMenu() {
+        return false;
+    }
+
+    /** The ticks left before the menu boots its first entry by itself, or zero once a key has stopped it. */
+    default int menuRemaining() {
+        return 0;
+    }
+
+    /** A key was pressed at the menu: the machine waits there for a choice. */
+    default void holdBootMenu() {
+    }
+
+    /** Leaves the menu and brings the chosen system up. */
+    default void leaveBootMenu() {
+    }
+
+    /**
+     * Leaves the menu to start the machine over from its self-test, which is what a boot manager's own Reboot
+     * is for. No system is up yet to say goodbye, so nothing is shown closing: the machine simply starts again.
+     */
+    default void restartFromBootMenu() {
+    }
+
+    /** Whether the system is coming up on this machine right now. */
+    default boolean booting() {
+        return false;
+    }
+
+    /** The ticks the system still needs, for a monitor opened while it comes up. */
+    default int bootRemaining() {
+        return 0;
+    }
+
+    /** How long the coming-up under way takes in all, for the bar on the screen watching it. */
+    default int bootTotal() {
+        return 0;
+    }
+
+    /** What this machine's system shows while it comes up, which is nothing at all for a machine with none. */
+    default BootSequence bootSequence() {
+        return BootSequence.NONE;
+    }
+
+    /** The parts this machine is built from right now, or nothing when it is not built from parts. */
+    @Nullable
+    default ComputerBuild currentBuild() {
+        return null;
+    }
+
+    /**
+     * How many bits wide this machine's processor is, which is what a system names its architecture from. A
+     * machine that cannot say what it is built of is taken for one of today's.
+     */
+    default int processorBits() {
+        final ComputerBuild build = this.currentBuild();
+        return build == null || build.cpus().isEmpty() ? 64 : build.cpus().getFirst().architecture().bits();
+    }
+
+    /** Whether a drive this machine reaches holds something it could boot instead of one of its own disks. */
+    default boolean hasBootableMedium() {
+        return false;
+    }
+
+    /**
+     * The data network as what runs on this machine reads it, or nothing when the machine has nobody to ask.
+     *
+     * <p>Nothing is not the same as a network that is down, and whoever reads this owes the difference: a
+     * machine with nobody to ask has no grounds for a claim about the network either way.
+     */
+    @Nullable
+    default NetworkReadService networkService() {
+        return null;
     }
 
     /** The player-given machine name, or an empty string. */
@@ -157,7 +420,7 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
     int installedCpus();
 
     /** The installed disk stacks, in slot order. */
-    java.util.List<ItemStack> diskStacks();
+    List<ItemStack> diskStacks();
 
     /** Free space on the system disk in internal data-weight units. */
     long systemDiskFreeWeight();
@@ -184,7 +447,7 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
      * the window and the session. Null on a host that has no room for one (a machine that is not seated).
      */
     @Nullable
-    default dev.jstech.computers.crafting.PatternWorkbench studio() {
+    default PatternWorkbench studio() {
         return null;
     }
 
@@ -194,7 +457,7 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
      * <p>They hold memory like anything else the machine is doing, which is why the ledger asks for them.
      */
     @Nullable
-    default dev.jstech.computers.cannon.machine.MachinePrograms cannon() {
+    default MachinePrograms programs() {
         return null;
     }
 
@@ -204,9 +467,38 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
     }
 
     /**
+     * Whether a service installed here is running, and so holding the memory it asks for. A service with nothing
+     * to switch is running as long as the machine is; a machine that can stop one of its own says so itself.
+     */
+    default boolean serviceRunning(final ProgramSpec service) {
+        /*
+         * A language's runtime is in memory while it has something to run, the way an interpreter is loaded for
+         * a program and not for the disk it sits on. A service registered under a language's own name is that
+         * language's runtime, so nothing has to be named here for this to hold for an addon's language too.
+         */
+        if (JsCore.languages().get(service.id()) == null) {
+            return true;
+        }
+        final MachinePrograms running = programs();
+        return running != null && !running.isEmpty();
+    }
+
+    /**
+     * Told after a service was taken off this machine, so whatever it was keeping can go with it.
+     *
+     * <p>A service that holds something of its own, a history or a body of source, has to be able to let go
+     * of it: what it kept is unreachable the moment the software is gone, and a machine still paying disk
+     * space for it would be keeping something nobody can ever read again.
+     *
+     * @param programPath the program's path, without its namespace
+     */
+    default void serviceUninstalled(final String programPath) {
+    }
+
+    /**
      * This machine's memory ledger: the running system's own share, the desktop package it booted, the
-     * services installed on it and the windows it has open, each weighed under the installed system. A
-     * machine that is off or has no system holds nothing.
+     * services it is running, the programs it is running and the windows it has open, each weighed under the
+     * installed system. A machine that is off or has no system holds nothing.
      */
     default RamLedger ramLedger() {
         final RamLedger ledger = new RamLedger(ramTotalMb());
@@ -225,18 +517,24 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
                         RamLedger.Kind.DESKTOP);
             }
         }
-        final dev.jstech.computers.program.ComputerConsoleState console = console();
+        final ComputerConsoleState console = console();
         if (console != null) {
             for (final ProgramSpec spec : OsRegistry.programs()) {
-                if (spec.kind() == ProgramKind.SERVICE && console.isInstalled(spec.id().getPath())) {
+                /*
+                 * By the whole id, which is how every install path writes it down. Asking by the path alone
+                 * matched nothing, so no service ever weighed anything here and none of them was listed as
+                 * running, whatever the player had installed.
+                 */
+                if (spec.kind() == ProgramKind.SERVICE && console.isInstalled(spec.id().toString())
+                        && serviceRunning(spec)) {
                     ledger.add(spec.displayName(), spec.ramMbOn(os), RamLedger.Kind.SERVICE);
                 }
             }
         }
-        final dev.jstech.computers.cannon.machine.MachinePrograms scripts = cannon();
+        final MachinePrograms scripts = programs();
         if (scripts != null) {
-            for (final dev.jstech.computers.cannon.machine.MachinePrograms.Live one : scripts.all()) {
-                ledger.add(one.name(), one.heapMb(), RamLedger.Kind.PROCESS, one.id());
+            for (final var one : scripts.view()) {
+                ledger.add(one.name(), one.heapMb(), one.heldBytes(), RamLedger.Kind.PROCESS, one.id());
             }
         }
         for (final OpenWindow window : openWindows()) {
@@ -255,7 +553,7 @@ public interface IOsHost extends dev.jstech.core.peripheral.IPeripheralOwner {
      * The leading windows of {@code windows} that fit beside everything else this machine holds, in order;
      * the first past the budget and everything after it are dropped, so the oldest windows survive.
      */
-    default java.util.List<OpenWindow> windowsWithinBudget(final java.util.List<OpenWindow> windows) {
+    default List<OpenWindow> windowsWithinBudget(final List<OpenWindow> windows) {
         final OsDef os = installedOs();
         if (os == null) {
             return windows;

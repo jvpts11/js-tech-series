@@ -7,22 +7,34 @@
  */
 package dev.jstech.computers.client.os;
 
-import dev.jstech.computers.operation.payload.ComputingPayloads;
+import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.client.term.TermPainter;
+import dev.jstech.computers.client.term.TermPalette;
+import dev.jstech.computers.client.term.TermSelector;
+import dev.jstech.computers.gui.term.TermBuffer;
+import dev.jstech.computers.gui.term.TermRow;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
+import dev.jstech.computers.operation.payload.RequestFileContentPayload;
+import dev.jstech.computers.operation.payload.TerminalKeyboard;
+import dev.jstech.computers.operation.payload.WireLine;
+import dev.jstech.computers.operation.payload.program.DesktopShellPayloads;
+import dev.jstech.computers.operation.payload.program.TerminalTools;
+import dev.jstech.computers.os.Branding;
+import dev.jstech.computers.os.edit.InkPalette;
+import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliStyle;
 import dev.jstech.core.client.gui.component.CommandLine;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.UiContext;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
+import dev.jstech.core.tier.HardwareEra;
 import java.util.List;
 import java.util.Locale;
-import net.minecraft.client.gui.Font;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
@@ -40,12 +52,7 @@ public final class ShellView extends Panel {
     private static final int LINE_H = 9;
     private static final int PAD = 3;
     private static final int MAX_SCROLLBACK = 256;
-    private static final int INPUT_TEXT = 0xFFCDD6E2;
     private static final int TAG_COLOR = 0xFF5A6678;
-
-    /** One line of the scrollback, in the colour the shell styled it. */
-    private record Line(String text, int color) {
-    }
 
     private final BlockPos host;
 
@@ -61,11 +68,36 @@ public final class ShellView extends Panel {
      * this mod's skin answers; the toolkit's own context knows the shared look and not the form.
      */
     private OsSkin osSkin = OsSkin.fallback();
-    private final Deque<Line> scrollback = new ArrayDeque<>();
-    private final ListView<Line> output;
+    /**
+     * What is on the glass, wrapped to the columns the window has now.
+     *
+     * <p>The window is freely resized, and the glass wraps everything again when its width changes and at no
+     * other time, so a console nobody types into costs nothing a frame.
+     */
+    private final TermBuffer scrollback = new TermBuffer(MAX_SCROLLBACK, TermBuffer.MONITOR_COLUMNS);
+
+    /**
+     * How many columns this window's glass holds, as the last drawing of it worked out.
+     *
+     * <p>It goes to the machine with every line, because the machine lays its answer out in columns and has
+     * no glass of its own to measure. Told nothing, it writes to a monitor's width and this window folds
+     * every wide line in half.
+     */
+    private int columns = TermBuffer.MONITOR_COLUMNS;
+
+    /** Draws the glass a cell at a time, which is what makes a terminal's columns line up. */
+    private final TermPainter painter = new TermPainter();
+
+    /** What is picked out on the glass with the pointer, the same as at a machine's own prompt. */
+    private final TermSelector selector = new TermSelector();
+    private final ListView<TermRow> output;
     private final Label scrolledTag;
     private final CommandLine console;
 
+    /** Whether this view is a terminal window of its own rather than a panel inside another program. */
+    private boolean ownWindow;
+    /** A ground set by whoever is drawing this view, or zero to take the one its system's skin gives. */
+    private int ownGround;
     /** How many lines up from the bottom the output is scrolled. */
     private int scrollOffset;
     /** The prompt, synced from the server after each command so it tracks the current directory. */
@@ -79,13 +111,41 @@ public final class ShellView extends Panel {
     private boolean busy;
 
     /**
+     * Who has the keyboard when it is not the prompt or a program: a tool the machine is running in front.
+     *
+     * <p>A tool is not typed at unless it has stopped to ask. When it has, its question stands where the
+     * prompt would and the answer goes to it; asked unseen, what is typed is never drawn.
+     */
+    private TerminalKeyboard keyboard = TerminalKeyboard.PROMPT;
+
+    /**
+     * Whether the tool in front has printed a line on this glass yet.
+     *
+     * <p>A bar redraws the line it is on. A window opened half way through a fetch has no such line, so the
+     * first thing it is sent goes under what is there rather than over it.
+     */
+    private boolean toolSpoke;
+
+    /**
      * A view of the console of the computer at {@code host}.
      *
      * @param posix  whether the machine speaks bash rather than the DOS prompt
      * @param banner whether to greet the player, which the terminal window does and a panel inside
      *               another program does not
      */
-    public ShellView(final BlockPos host, final boolean posix, final boolean banner) {
+    public ShellView(final BlockPos host, final boolean posix, final String systemName) {
+        this(host, posix, systemName, "Type HELP for a list of commands");
+    }
+
+    /**
+     * A view of the console of the computer at {@code host}.
+     *
+     * @param posix     whether the machine speaks bash rather than the DOS prompt
+     * @param startHint the one line this family uses to say where to start, which is its own words and
+     *                  not every family's: one says HELP and another says showcommands
+     */
+    public ShellView(final BlockPos host, final boolean posix, final String systemName,
+                     final String startHint) {
         this.host = host;
         if (posix) {
             /*
@@ -95,12 +155,25 @@ public final class ShellView extends Panel {
             this.prompt = "$";
         } else {
             this.prompt = "C:\\>";
-            if (banner) {
-                push("J's Computers Shell", colorOf(CliStyle.ACCENT.ordinal()));
-                push("type a command and press ENTER", colorOf(CliStyle.DIM.ordinal()));
+            /*
+             * A shell of this family opens by saying which system it belongs to, the way one does. The system is
+             * the Midsoft house's, not the board maker's and certainly not the mod's, which is what this used to
+             * print. A shell that cannot tell which system it is on says nothing at all.
+             */
+            if (systemName != null && !systemName.isEmpty()) {
+                push(systemName, CliStyle.ACCENT);
+                push(Branding.systemCopyright(systemName, era()), CliStyle.DIM);
+            }
+            /*
+             * The way this family told a player where to start, in its own words. A line nobody ever printed
+             * would teach the same thing and sound like nothing; this one does both. Outside the name, since
+             * a machine that cannot say what it is still knows where a player should start.
+             */
+            if (startHint != null && !startHint.isEmpty()) {
+                push(startHint, CliStyle.DIM);
             }
         }
-        this.output = add(new ListView<Line>(() -> this.wrapCache, LINE_H, this::renderLine));
+        this.output = add(new ListView<TermRow>(this.scrollback::rows, LINE_H, this::renderLine));
         this.scrolledTag = add(new Label(() -> this.scrollOffset > 0 ? "scrolled +" + this.scrollOffset : "")
                 .setColor(TAG_COLOR).setAlign(Label.Align.RIGHT));
         /*
@@ -108,7 +181,9 @@ public final class ShellView extends Panel {
          * program has the screen until it returns.
          */
         this.console = add(new CommandLine(DesktopShellRunPayload.MAX_LEN - 1, this::submit)
-                .setPrompt(() -> this.busy ? "" : this.prompt));
+                .setPrompt(this::promptNow)
+                .setUnseen(() -> this.keyboard.asking() && this.keyboard.unseen())
+                .setTakesNothing(() -> this.keyboard.asking()));
         focus(this.console);
         ShellViews.register(this);
         // Sync the real prompt (and any pending build notices) before the player types anything.
@@ -123,7 +198,7 @@ public final class ShellView extends Panel {
     /** Asks the program in front to stop, the way Ctrl+C at the terminal does. */
     public void interrupt() {
         if (this.busy) {
-            PacketDistributor.sendToServer(new DesktopShellRunPayload(this.host, ComputingPayloads.INTERRUPT,
+            PacketDistributor.sendToServer(new DesktopShellRunPayload(this.host, DesktopShellPayloads.INTERRUPT,
                     this.session));
         }
     }
@@ -148,9 +223,7 @@ public final class ShellView extends Panel {
         public void onContent(final String path, final String content, final boolean exists) {
             ShellView.this.editor = new TtyEditor(path, content,
                     ShellView.this.flavour, ShellView.this.terminalHost);
-            if (!exists) {
-                ShellView.this.editor.say("\"" + ShellView.this.editor.name() + "\" [New]");
-            }
+            ShellView.this.editor.opened(exists);
         }
     };
 
@@ -158,32 +231,27 @@ public final class ShellView extends Panel {
     private TtyEditor.IKeys flavour;
 
     /** What an editor running here can ask the terminal to do for it. */
-    private final TtyEditor.IHost terminalHost = new TtyEditor.IHost() {
-        @Override
-        public void save(final String path, final String text) {
-            PacketDistributor.sendToServer(
-                    new dev.jstech.computers.operation.payload.SaveFilePayload(
-                            ShellView.this.host, path, text));
-            FilesApps.diskChanged();
-        }
+    private final TtyEditor.IHost terminalHost = new TtyEditorWire(this::machine, this::editorDone);
 
-        @Override
-        public void quit() {
-            ShellView.this.editor = null;
-            /*
-             * The prompt comes back where it was, so the machine is asked for it rather than guessed:
-             * a program may have left the terminal somewhere else while the editor had it.
-             */
-            PacketDistributor.sendToServer(new DesktopShellRunPayload(ShellView.this.host, ""));
-        }
-    };
+    private BlockPos machine() {
+        return this.host;
+    }
+
+    private void editorDone() {
+        this.editor = null;
+        /*
+         * The prompt comes back where it was, so the machine is asked for it rather than guessed:
+         * a program may have left the terminal somewhere else while the editor had it.
+         */
+        PacketDistributor.sendToServer(new DesktopShellRunPayload(this.host, ""));
+    }
 
     /** Hands the terminal to an editor on {@code path}, which the machine is asked for. */
     public void openEditor(final String path, final TtyEditor.IKeys keys) {
         this.flavour = keys;
         CodeFileReplies.expectContent(this.opening, path);
         PacketDistributor.sendToServer(
-                new dev.jstech.computers.operation.payload.RequestFileContentPayload(this.host, path));
+                new RequestFileContentPayload(this.host, path));
     }
 
     /** Whether an editor has this terminal. */
@@ -217,7 +285,7 @@ public final class ShellView extends Panel {
     /** Everything the console has printed here, as one piece of text. */
     public String scrollbackText() {
         final StringBuilder text = new StringBuilder();
-        for (final Line line : this.scrollback) {
+        for (final CliLine line : this.scrollback.lines()) {
             text.append(line.text()).append('\n');
         }
         return text.toString();
@@ -236,7 +304,7 @@ public final class ShellView extends Panel {
 
     /** Puts a line in this view's scrollback without asking the machine anything. */
     public void say(final String text, final CliStyle style) {
-        push(text, colorOf(style.ordinal()));
+        push(text, style);
     }
 
     /** Runs a line as though the player had typed it. */
@@ -248,15 +316,17 @@ public final class ShellView extends Panel {
     void accept(final DesktopShellOutputPayload payload) {
         if (payload.clear()) {
             this.scrollback.clear();
-            this.generation++;
         }
         // A bar growing on one line: what was printed last is drawn over rather than followed.
-        if (payload.replaceLast() && !this.scrollback.isEmpty() && !payload.lines().isEmpty()) {
-            this.scrollback.removeLast();
-            this.generation++;
-        }
-        for (final DesktopShellOutputPayload.WireLine line : payload.lines()) {
-            push(line.text(), colorOf(line.style()));
+        boolean over = payload.replaceLast();
+        for (final WireLine line : payload.lines()) {
+            if (over || (line.over() && this.toolSpoke)) {
+                this.scrollback.replaceLast(line.toLine());
+                over = false;
+            } else {
+                this.scrollback.push(line.toLine());
+            }
+            this.toolSpoke = this.toolSpoke || payload.keyboard().busy();
         }
         // Lines the machine printed on its own say nothing about who has the prompt.
         if (payload.informational()) {
@@ -266,7 +336,11 @@ public final class ShellView extends Panel {
         if (!payload.prompt().isEmpty()) {
             this.prompt = payload.prompt();
         }
-        this.busy = payload.busy();
+        this.keyboard = payload.keyboard();
+        if (!this.keyboard.busy()) {
+            this.toolSpoke = false;
+        }
+        this.busy = payload.busy() || this.keyboard.busy();
         if (!this.busy && this.onIdle != null) {
             // A command finished: whoever queued the next line behind it may send it now.
             this.onIdle.run();
@@ -283,55 +357,39 @@ public final class ShellView extends Panel {
         }
     }
 
-    private void push(final String text, final int color) {
-        this.scrollback.addLast(new Line(text, color));
-        while (this.scrollback.size() > MAX_SCROLLBACK) {
-            this.scrollback.removeFirst();
-        }
-        this.generation++;
+    /** A line of one colour, which is what this view writes on its own account. */
+    private void push(final String text, final CliStyle style) {
+        this.scrollback.push(new CliLine(text, style));
     }
 
-    /*
-     * The view is freely resizable, so lines wrap at render time to the current width; the wrapped view
-     * is cached per (width, scrollback generation) so a console nobody types into costs nothing a frame.
+    /**
+     * Says that this view is a terminal window of its own and not a panel inside another program, so it wears
+     * the ground the desktop's own terminal had. Only CDE's differs: its terminal window was paper, written on
+     * in dark inks, where a panel inside an editor stays the dark glass the editor is built around.
      */
-    private int generation;
-    private List<Line> wrapCache = List.of();
-    private int wrapCacheW = -1;
-    private int wrapCacheGen = -1;
+    public ShellView asOwnWindow() {
+        this.ownWindow = true;
+        return this;
+    }
 
-    private List<Line> wrapped(final Font font, final int usableW) {
-        if (this.wrapCacheW == usableW && this.wrapCacheGen == this.generation) {
-            return this.wrapCache;
+    /**
+     * A ground of its own, for a view drawn somewhere that is not a desktop.
+     *
+     * <p>The operating space a network machine draws is the whole screen, painted in the hardware era's
+     * own skin, so its prompt takes that ground rather than one of the desktop forms': a console in pure
+     * black inside a green phosphor screen reads as a hole cut in the glass.
+     */
+    public ShellView setGround(final int argb) {
+        this.ownGround = argb;
+        return this;
+    }
+
+    /** The ground this view is drawn on. */
+    private int ground() {
+        if (this.ownGround != 0) {
+            return this.ownGround;
         }
-        final List<Line> out = new ArrayList<>();
-        for (final Line line : this.scrollback) {
-            String rest = line.text();
-            while (true) {
-                if (font.width(rest) <= usableW) {
-                    out.add(new Line(rest, line.color()));
-                    break;
-                }
-                String piece = font.plainSubstrByWidth(rest, usableW);
-                final int space = piece.lastIndexOf(' ');
-                if (space > piece.length() / 2) {
-                    piece = piece.substring(0, space);
-                }
-                if (piece.isEmpty()) {
-                    out.add(new Line(rest, line.color()));
-                    break;
-                }
-                out.add(new Line(piece, line.color()));
-                rest = rest.substring(piece.length()).stripLeading();
-                if (rest.isEmpty()) {
-                    break;
-                }
-            }
-        }
-        this.wrapCache = out;
-        this.wrapCacheW = usableW;
-        this.wrapCacheGen = this.generation;
-        return out;
+        return this.ownWindow && this.osSkin.form() == OsSkin.Form.MOTIF ? TermPalette.PAPER : groundOf(this.osSkin);
     }
 
     /** The console ground, kept dark like a real terminal, tinted to the system it runs on. */
@@ -346,21 +404,25 @@ public final class ShellView extends Panel {
              */
             case KDE2 -> 0xFF0C1420;
             case GNOME1 -> 0xFF1A141E;
+            // A slate with the cast of CDE's own backdrop, for a panel inside another program.
+            case MOTIF -> 0xFF16202A;
         };
     }
 
     @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
+        final int ground = ground();
         if (this.editor != null) {
             // The editor has the glass: no scrollback, no prompt, exactly as at a real terminal.
             this.editor.render(g, ctx.font(), x(), y(), width(), height(),
-                    dev.jstech.computers.os.edit.InkPalette.DARK);
+                    InkPalette.forGround(!TermPalette.lightGround(ground)));
             return;
         }
-        final int ground = groundOf(this.osSkin);
         g.fill(x(), y(), right(), bottom(), ground);
-        // Lines wrap to the view's current width, so nothing leaks past the frame however it is resized.
-        final List<Line> all = wrapped(ctx.font(), Math.max(40, width() - PAD * 2 - 2));
+        // Lines wrap to the columns the view has now, so nothing leaks past the frame however it is resized.
+        this.columns = TermPainter.columnsIn(Math.max(40, width() - PAD * 2 - 2), 1.0f);
+        this.scrollback.setColumns(this.columns);
+        final List<TermRow> all = this.scrollback.rows();
         final int inputY = bottom() - LINE_H;
         final int visible = Math.max(1, (height() - PAD - LINE_H - 2) / LINE_H);
         final int maxScroll = Math.max(0, all.size() - visible);
@@ -370,22 +432,58 @@ public final class ShellView extends Panel {
         this.output.setScroll(maxScroll - this.scrollOffset);
         this.scrolledTag.setBounds(x() + PAD, inputY, width() - PAD * 2 - 1, 8);
         this.console.setBounds(x(), inputY - 2, width(), LINE_H + 2);
-        this.console.setStyle(ground, INPUT_TEXT);
+        // What is typed is written in the ink the echoed command will have, whichever kind of ground this is.
+        this.console.setStyle(ground, TermPalette.inksFor(ground).applyAsInt(CliStyle.PROMPT));
         super.render(g, ctx);
     }
 
-    private void renderLine(final GuiGraphics g, final UiContext ctx, final Line line, final int index,
+    private void renderLine(final GuiGraphics g, final UiContext ctx, final TermRow row, final int index,
                             final int x, final int y, final int w, final int h,
                             final boolean hovered, final boolean selected) {
-        g.drawString(ctx.font(), line.text(), x, y, line.color(), false);
+        final int ground = ground();
+        TermPainter.highlight(g, List.of(row), x, y, LINE_H, index, this.selector.selection(),
+                TermPalette.selectionOn(ground));
+        this.painter.drawRow(g, ctx.font(), row, x, y, TermPalette.inksFor(ground), ground);
     }
 
     @Override
     public boolean mouseClicked(final double mx, final double my, final int button) {
+        // A program holding the glass is handed the cell, as a terminal hands one to a program with the mouse.
+        if (this.editor != null && button == 0) {
+            return this.editor.clicked((int) ((my - y() - PAD) / LINE_H),
+                    TermPainter.columnAt(mx - x() - PAD, 1.0f));
+        }
         super.mouseClicked(mx, my, button);
+        final int row = this.output.rowAt(mx, my);
+        if (button == 0 && row >= 0) {
+            this.selector.pressed(this.scrollback.rows(), row, columnUnder(mx));
+        } else if (button == 0) {
+            this.selector.clear();
+        }
         // Typing always goes to the command line: a click on the output must not take the keyboard away.
         focus(this.console);
         return true;
+    }
+
+    @Override
+    public boolean mouseDragged(final double mx, final double my, final int button) {
+        final int row = this.output.rowAt(mx, my);
+        if (button == 0 && row >= 0) {
+            this.selector.draggedTo(row, columnUnder(mx));
+            return true;
+        }
+        return super.mouseDragged(mx, my, button);
+    }
+
+    @Override
+    public boolean mouseReleased(final double mx, final double my, final int button) {
+        this.selector.released();
+        return super.mouseReleased(mx, my, button);
+    }
+
+    /** Which cell across a row the pointer is over, counted from the left of the output. */
+    private int columnUnder(final double mx) {
+        return TermPainter.columnAt(mx - this.output.x(), 1.0f);
     }
 
     @Override
@@ -400,10 +498,21 @@ public final class ShellView extends Panel {
     @Override
     public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
         if (this.editor != null) {
-            return this.editor.keyPressed(key, modifiers);
+            /*
+             * Every key is the editor's, and one it has no use for goes nowhere. On a desktop that matters for
+             * Escape, which would otherwise close the desktop under an editor holding text nobody has written:
+             * a window is left with the mouse, so there is always another way out of this one.
+             */
+            this.editor.keyPressed(key, modifiers);
+            return true;
+        }
+        if (key == GLFW.GLFW_KEY_C && ((modifiers & GLFW.GLFW_MOD_CONTROL) != 0 || Screen.hasControlDown())
+                && this.selector.copy(this.scrollback.rows())) {
+            // Something is picked out, so this is a copy; with nothing picked out it is the interrupt below.
+            return true;
         }
         if (this.busy && key == GLFW.GLFW_KEY_C && ((modifiers & GLFW.GLFW_MOD_CONTROL) != 0
-                || net.minecraft.client.gui.screens.Screen.hasControlDown())) {
+                || Screen.hasControlDown())) {
             interrupt();
             return true;
         }
@@ -419,18 +528,39 @@ public final class ShellView extends Panel {
         return true;
     }
 
+    /** What stands in front of what is typed: the prompt, a tool's question, or nothing while something runs. */
+    private String promptNow() {
+        if (this.keyboard.asking()) {
+            return this.keyboard.standing().text().stripTrailing();
+        }
+        return this.busy ? "" : this.prompt;
+    }
+
     private void submit(final String line) {
         this.scrollOffset = 0;
+        if (this.keyboard.busy()) {
+            /*
+             * A tool is in front. It is typed at only when it has asked, and what is typed is not echoed
+             * here: the machine prints the question with its answer for every window looking at it, and
+             * prints the question alone when the answer was not for showing.
+             */
+            if (this.keyboard.asking()) {
+                PacketDistributor.sendToServer(new DesktopShellRunPayload(this.host,
+                        line.isEmpty() ? TerminalTools.ENTER : line, this.session, this.columns));
+            }
+            return;
+        }
         if (this.busy) {
             /*
              * A line for the program in front: it shows as typed, with no prompt, and goes to the machine
              * for the program to read. None of the terminal's own words mean anything here.
              */
-            push(line, INPUT_TEXT);
-            PacketDistributor.sendToServer(new DesktopShellRunPayload(this.host, line, this.session));
+            push(line, CliStyle.PROMPT);
+            PacketDistributor.sendToServer(
+                    new DesktopShellRunPayload(this.host, line, this.session, this.columns));
             return;
         }
-        push(this.prompt + " " + line, colorOf(CliStyle.PROMPT.ordinal()));
+        push(this.prompt + " " + line, CliStyle.PROMPT);
         final String[] parts = line.split("\\s+", 2);
         final String verb = parts[0].toLowerCase(Locale.ROOT);
         // "run/start/open <program>" launches a desktop window client-side (the server shell has no windows).
@@ -438,46 +568,42 @@ public final class ShellView extends Panel {
             handleRun(parts.length > 1 ? parts[1].trim() : "");
             return;
         }
-        PacketDistributor.sendToServer(new DesktopShellRunPayload(this.host, line, this.session));
+        PacketDistributor.sendToServer(
+                new DesktopShellRunPayload(this.host, line, this.session, this.columns));
     }
 
     /** Opens an installed program's window by name, or lists what can be opened. */
     private void handleRun(final String name) {
         final List<String> labels = DesktopScreen.openableLabels();
         if (name.isEmpty()) {
-            push("Programs: " + String.join(", ", labels), 0xFFB7BCCB);
-            push("Usage: run <program>", 0xFF7A8496);
+            push("Programs: " + String.join(", ", labels), CliStyle.PLAIN);
+            push("Usage: run <program>", CliStyle.DIM);
             return;
         }
         final String norm = name.toLowerCase(Locale.ROOT).replace(" ", "");
         for (final String label : labels) {
             if (label.equalsIgnoreCase(name) || label.toLowerCase(Locale.ROOT).replace(" ", "").equals(norm)) {
                 DesktopScreen.requestOpen(label);
-                push("Opening " + label + "...", 0xFF8FE0A8);
+                push("Opening " + label + "...", CliStyle.OK);
                 return;
             }
         }
-        push("No such program: " + name + " (type 'run' to list them)", 0xFFE06A6A);
+        push("No such program: " + name + " (type 'run' to list them)", CliStyle.ERROR);
     }
 
-    static int colorOf(final int ordinal) {
-        final CliStyle[] values = CliStyle.values();
-        final CliStyle style = ordinal >= 0 && ordinal < values.length ? values[ordinal] : CliStyle.PLAIN;
-        return switch (style) {
-            case PROMPT -> 0xFFCDD6E2;
-            case ACCENT, HEADER -> 0xFF39D6C4;
-            case OK -> 0xFF5FE07A;
-            case ERROR -> 0xFFEF6A5A;
-            case WARN -> 0xFFF0B23A;
-            case INFO -> 0xFF2AA7E0;
-            case DIM -> 0xFF7D8A9C;
-            // The extended palette: brand-tinted terminal colours (screenfetch logos and the like).
-            case ORANGE -> 0xFFE95420;
-            case MAGENTA -> 0xFFE0447C;
-            case BLUE -> 0xFF5A8FD6;
-            case CYAN -> 0xFF2FA6E8;
-            case PURPLE -> 0xFF9E8FD6;
-            default -> 0xFFCDD6E2;
-        };
+    /**
+     * The host computer's generation, for the year under the system's name.
+     *
+     * <p>Read off the machine on the client, the way the other screens here do it, and the middle generation when
+     * the computer is not loaded, which only decides a year for a system nobody has heard of.
+     */
+    private HardwareEra era() {
+        final Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null && mc.level.getBlockEntity(this.host)
+                instanceof AbstractComputerBlockEntity computer
+                && computer.displayEra() != null) {
+            return computer.displayEra();
+        }
+        return HardwareEra.STANDARD;
     }
 }

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program;
 
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -33,6 +34,16 @@ class ComputerSettingsTest {
         assertEquals(75, settings.guiScale());
         settings.setGuiScale(0);
         assertEquals(0, settings.guiScale(), "zero stands for the default");
+    }
+
+    @Test
+    void setDefaultApp_forgetsTheOldestChoicePastTheCap() {
+        for (int i = 0; i <= ComputerSettings.MAX_DEFAULT_APPS; i++) {
+            settings.setDefaultApp("x" + i, "editor");
+        }
+        assertEquals(ComputerSettings.MAX_DEFAULT_APPS, settings.defaultApps().size());
+        assertEquals("", settings.defaultApp("x0"), "the first choice made room");
+        assertEquals("editor", settings.defaultApp("x" + ComputerSettings.MAX_DEFAULT_APPS));
     }
 
     @Test
@@ -258,6 +269,35 @@ class ComputerSettingsTest {
         assertEquals(ComputerSettings.MAX_RECIPE_CHOICES, settings.recipeChoices().size());
         assertEquals(-1, settings.recipeChoice("item|mod:thing0"), "the first choice made room");
         assertEquals(ComputerSettings.MAX_RECIPE_CHOICES, settings.recipeChoice("item|mod:thing" + ComputerSettings.MAX_RECIPE_CHOICES));
+    }
+
+    @Test
+    void setVariable_keepsTheNameInUpperCaseAndForgetsItOnABlankValue() {
+        settings.setVariable("base", "C:\\work");
+
+        assertEquals("C:\\work", settings.variables().get("BASE"), "a name is a name whatever case it is written in");
+        settings.setVariable("BASE", "");
+        assertFalse(settings.variables().containsKey("BASE"), "and nothing after the equals sign forgets it");
+    }
+
+    @Test
+    void setVariable_forgetsTheOldestPastTheCap() {
+        for (int i = 0; i < ComputerSettings.MAX_VARIABLES + 1; i++) {
+            settings.setVariable("NAME" + i, "value " + i);
+        }
+
+        assertEquals(ComputerSettings.MAX_VARIABLES, settings.variables().size());
+        assertFalse(settings.variables().containsKey("NAME0"), "the first name made room");
+        assertTrue(settings.variables().containsKey("NAME" + ComputerSettings.MAX_VARIABLES));
+    }
+
+    @Test
+    void putVariables_replacesWhatWasThere() {
+        settings.setVariable("GONE", "x");
+        settings.putVariables(Map.of("KEPT", "y"));
+
+        assertFalse(settings.variables().containsKey("GONE"));
+        assertEquals("y", settings.variables().get("KEPT"));
     }
 
     @Test

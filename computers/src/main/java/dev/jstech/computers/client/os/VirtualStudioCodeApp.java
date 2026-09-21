@@ -8,7 +8,9 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
+import dev.jstech.computers.os.edit.CodeRuns;
 import dev.jstech.computers.os.edit.InkPalette;
+import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.AmountStepper;
 import dev.jstech.core.client.gui.component.Button;
@@ -21,6 +23,7 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.TextField;
+import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.language.IProgrammingLanguage;
 import java.util.ArrayDeque;
@@ -28,7 +31,9 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.function.Consumer;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -98,7 +103,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     private final TextField askField = new TextField(64);
     private final Button askOk;
     private String askTitle = "";
-    private java.util.function.Consumer<String> askAction = value -> { };
+    private Consumer<String> askAction = value -> { };
     private final Popup settings = new Popup("Settings", 170, 50).setLayouter(this::layoutSettings);
     private final AmountStepper tabStepper = new AmountStepper();
     /** The question a closing tab with changes asks. */
@@ -167,7 +172,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
          * The panel is a view of the machine's own console, not a terminal of its own: what is compiled
          * here shows in the Command Prompt window too, because a computer has one console.
          */
-        this.terminal = this.root.add(new ShellView(host, false, false)).setOnIdle(this::runNext);
+        this.terminal = this.root.add(new ShellView(host, false, "")).setOnIdle(this::runNext);
         this.root.add(this.menuBar);
         this.menuBar.add("File", this::fileMenu).add("Edit", this::editMenu).add("View", this::viewMenu)
                 .add("Go", this::goMenu).add("Run", this::runMenu).add("Terminal", this::terminalMenu)
@@ -303,7 +308,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     private List<SideRow> sideRows() {
         final List<SideRow> out = new ArrayList<>();
         final String folder = this.workspace.folder();
-        out.add(new SideRow(folder.isEmpty() ? "C:\\" : shortName(folder).toUpperCase(java.util.Locale.ROOT),
+        out.add(new SideRow(folder.isEmpty() ? "C:\\" : shortName(folder).toUpperCase(Locale.ROOT),
                 0, null, true));
         for (final CodeWorkspace.TreeRow row : this.workspace.tree()) {
             final String mark = row.file().directory()
@@ -517,7 +522,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
                 item("Run File", hasDoc(), this::runFile),
                 item("Build File", hasDoc(), this::buildFile),
                 item("Build Folder", this.folderOpen && !this.workspace.files().isEmpty(), this::buildFolder),
-                item("Stop", true, () -> this.terminal.run("cannon stop")));
+                item("Stop", true, () -> this.terminal.run("sigma stop")));
     }
 
     private List<ContextMenu.Item> terminalMenu() {
@@ -530,16 +535,16 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         return List.of(
                 item("Welcome", true, this::closeFolder),
                 item("Keyboard Shortcuts", true, this::showShortcuts),
-                item("About", true, () -> this.workspace.say("Virtual Studio Code, by Midsoft. Cannon 1.0.")));
+                item("About", true, () -> this.workspace.say("Virtual Studio Code, by Midsoft. Σ# 1.0.")));
     }
 
     /** Every command there is, under the name its menu gives it, for the palette. */
     private List<CommandPalette.Entry> commands() {
         return List.of(
-                new CommandPalette.Entry("Cannon: Run File", "F5", this::runFile),
-                new CommandPalette.Entry("Cannon: Build File", "Ctrl+Shift+B", this::buildFile),
-                new CommandPalette.Entry("Cannon: Build Folder", "", this::buildFolder),
-                new CommandPalette.Entry("Cannon: Stop", "", () -> this.terminal.run("cannon stop")),
+                new CommandPalette.Entry("Σ#: Run File", "F5", this::runFile),
+                new CommandPalette.Entry("Σ#: Build File", "Ctrl+Shift+B", this::buildFile),
+                new CommandPalette.Entry("Σ#: Build Folder", "", this::buildFolder),
+                new CommandPalette.Entry("Σ#: Stop", "", () -> this.terminal.run("sigma stop")),
                 new CommandPalette.Entry("Terminal: New Terminal", "Ctrl+`", this::focusTerminal),
                 new CommandPalette.Entry("Terminal: Clear", "", () -> this.terminal.run("cls")),
                 new CommandPalette.Entry("File: New File", "", this::newFile),
@@ -651,7 +656,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     }
 
     private void newFile() {
-        ask("New File", "untitled.can", name -> {
+        ask("New File", "untitled.sgs", name -> {
             if (!name.isEmpty()) {
                 final String folder = this.workspace.folder();
                 this.workspace.newFile(folder.isEmpty() ? name : folder + "/" + name);
@@ -700,17 +705,23 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         if (doc.dirty()) {
             this.workspace.save();
         }
+        final LanguageLevel level = LanguageLevel.ofSource(doc.path());
+        if (level == null) {
+            this.workspace.say(doc.name() + " is not a program to build");
+            return;
+        }
         focusTerminal();
-        enqueue("cannonc " + doc.path() + " -o " + outputFor(doc.path()));
+        // Each language is built by its own compiler, so a Σ source is held to what Σ has.
+        enqueue(level.compiler() + " " + doc.path() + " -o " + outputFor(doc.path()));
     }
 
     private void runFile() {
         final CodeWorkspace.Doc doc = this.workspace.current();
-        if (doc == null) {
+        if (doc == null || LanguageLevel.ofSource(doc.path()) == null) {
             return;
         }
         buildFile();
-        enqueue("cannon run " + outputFor(doc.path()));
+        enqueue("sigma run " + outputFor(doc.path()));
     }
 
     private void buildFolder() {
@@ -718,18 +729,24 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         if (files.isEmpty()) {
             return;
         }
-        final StringBuilder line = new StringBuilder("cannonc");
-        boolean any = false;
+        /*
+         * A folder builds all of its sources into one program. One written wholly in the smaller language is
+         * built by that language's compiler and so held to it; with a single Σ# source among them the full
+         * compiler builds the lot, since everything Σ has is Σ# as well.
+         */
+        final StringBuilder sources = new StringBuilder();
+        LanguageLevel level = null;
         for (final DiskFilesPayload.WireFile file : files) {
-            // A folder builds all of its Cannon sources into one program.
-            if (file.path().toLowerCase(java.util.Locale.ROOT).endsWith(".can")) {
-                line.append(' ').append(file.path());
-                any = true;
+            final LanguageLevel written = LanguageLevel.ofSource(file.path());
+            if (written != null) {
+                sources.append(' ').append(file.path());
+                level = level == null || written.full() ? written : level;
             }
         }
-        if (!any) {
+        if (level == null) {
             return;
         }
+        final StringBuilder line = new StringBuilder(level.compiler()).append(sources);
         final String folder = this.workspace.folder();
         final String stem = folder.isEmpty() ? "programs" : shortName(folder);
         line.append(" -o ").append(folder.isEmpty() ? "" : folder + "/").append("build/").append(stem).append(".asm");
@@ -756,7 +773,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     }
 
     /** Asks for one thing in a small window and does something with the answer. */
-    private void ask(final String title, final String initial, final java.util.function.Consumer<String> action) {
+    private void ask(final String title, final String initial, final Consumer<String> action) {
         this.askTitle = title;
         this.askAction = action;
         this.askField.set(initial);
@@ -778,7 +795,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     }
 
     private void layoutAskClose(final Popup p) {
-        final List<dev.jstech.core.client.gui.component.UiComponent> c = p.children();
+        final List<UiComponent> c = p.children();
         final int y = p.bottom() - 15;
         c.get(0).setBounds(p.x() + 4, y, 40, 11);
         c.get(1).setBounds(p.x() + 48, y, 60, 11);
@@ -800,7 +817,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     }
 
     private void layoutSettings(final Popup p) {
-        final List<dev.jstech.core.client.gui.component.UiComponent> children = p.children();
+        final List<UiComponent> children = p.children();
         children.get(0).setBounds(p.x() + 4, p.contentTop() + 4, 50, 9);
         this.tabStepper.setBounds(p.x() + 56, p.contentTop() + 2, 96, 12);
         children.get(2).setBounds(p.right() - 38, p.bottom() - 15, 34, 11);
@@ -1028,7 +1045,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         int ry = y + 32;
         g.drawString(font, "Walkthroughs", rightX, ry, palette.plain(), false);
         ry += 10;
-        g.drawString(font, "Get started with Cannon:", rightX, ry, palette.gutterText(), false);
+        g.drawString(font, "Get started with Σ#:", rightX, ry, palette.gutterText(), false);
         ry += 9;
         g.drawString(font, "open a folder, write, press F5", rightX, ry, palette.gutterText(), false);
         ry += 14;
@@ -1041,7 +1058,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
 
     private int link(final GuiGraphics g, final Font font, final int x, final int y, final String label,
                      final Runnable action, final InkPalette palette) {
-        g.drawString(font, label, x, y, palette.of(dev.jstech.computers.os.edit.CodeRuns.Ink.KEYWORD), false);
+        g.drawString(font, label, x, y, palette.of(CodeRuns.Ink.KEYWORD), false);
         this.links.add(new Link(x, y - 1, font.width(label), 9, action));
         return y + 9;
     }

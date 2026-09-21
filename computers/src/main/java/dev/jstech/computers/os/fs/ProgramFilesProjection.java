@@ -15,6 +15,7 @@ import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.os.SoftwareHouse;
+import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.program.ComputerConsoleState;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -23,6 +24,7 @@ import java.util.Optional;
 import java.util.Set;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * What the system folder and the program folders hold: the system's own files, and one folder per
@@ -57,8 +59,55 @@ public final class ProgramFilesProjection {
             frames(host, os, out);
         } else if (os.platform() == Platform.LINUX) {
             linux(host, os, out);
+        } else if (os.platform() == Platform.FREEBSD) {
+            freebsd(host, out);
+        } else if (os.platform() == Platform.UNIX) {
+            systemV(host, out);
+        } else if (os.platform() == Platform.MC_DOS) {
+            out.addAll(McDosTree.entries(dosFacts(host, os)));
         }
         return out;
+    }
+
+    /*
+     * System V keeps its kernel as a file at the root, called what the system is called, and the table init
+     * reads beside it in /etc. A program added to it goes in /usr/bin with what it brings under /usr/lib, which
+     * is where that system put such things before anybody had a /usr/share.
+     */
+    private static void systemV(final IOsHost host, final List<InstallerLayout.Entry> out) {
+        out.add(file("unix", FileType.BIN));
+        out.add(file("etc/inittab", FileType.CFG));
+        for (final ProgramSpec spec : installed(host)) {
+            out.add(file("usr/bin/" + spec.commandName(), FileType.BIN));
+            out.add(dir("usr/lib/" + spec.commandName()));
+            out.add(file("usr/lib/" + spec.commandName() + "/readme", FileType.TXT));
+        }
+    }
+
+    /** What MC-DOS's own tree is made from on that machine: the system, its maker's line, and what is installed. */
+    private static McDosTree.Facts dosFacts(final IOsHost host, final OsDef os) {
+        final List<String> programs = new ArrayList<>();
+        for (final ProgramSpec spec : installed(host)) {
+            programs.add(McDosTree.nameOf(spec.commandName()));
+        }
+        return new McDosTree.Facts(os.displayName(), Branding.systemCopyright(os.displayName(), os.minEra()),
+                McDosTree.nameOf(os.id().getPath()) + ".SYS", programs);
+    }
+
+    /*
+     * FreeBSD keeps what it is made of apart from what is added to it: the base system has the root and /usr to
+     * itself, and everything installed afterwards, from a package or from ports, goes under /usr/local. It is
+     * the first thing anybody coming from a Linux notices, and looking in /usr/bin for a program is how.
+     */
+    private static void freebsd(final IOsHost host, final List<InstallerLayout.Entry> out) {
+        out.add(file("etc/rc.conf", FileType.CFG));
+        out.add(dir("usr/local"));
+        out.add(dir("usr/local/share"));
+        for (final ProgramSpec spec : installed(host)) {
+            out.add(file("usr/local/bin/" + spec.commandName(), FileType.BIN));
+            out.add(dir("usr/local/share/" + spec.commandName()));
+            out.add(file("usr/local/share/" + spec.commandName() + "/readme", FileType.TXT));
+        }
     }
 
     private static void frames(final IOsHost host, final OsDef os, final List<InstallerLayout.Entry> out) {
@@ -82,7 +131,7 @@ public final class ProgramFilesProjection {
              * day put programs made for the one before it.
              */
             final boolean older = spec.era() != null && os.minEra() != null
-                    && spec.era().ordinal() < os.minEra().ordinal();
+                    && !spec.era().isAtLeast(os.minEra());
             final String folder = (older ? PROGRAM_FILES_X86 : PROGRAM_FILES) + "/" + spec.displayName();
             out.add(dir(folder));
             out.add(file(folder + "/" + spec.commandName() + ".exe", FileType.EXE));
@@ -126,9 +175,10 @@ public final class ProgramFilesProjection {
     /** The projected folders and files directly inside {@code dir}, folders first. */
     public static List<InstallerLayout.Entry> list(final IOsHost host, final String dir) {
         final String prefix = dir.isEmpty() ? "" : dir + "/";
+        final boolean exact = exactCase(host);
         final List<InstallerLayout.Entry> out = new ArrayList<>();
         for (final InstallerLayout.Entry entry : all(host)) {
-            if (!entry.path().startsWith(prefix)) {
+            if (!entry.path().regionMatches(!exact, 0, prefix, 0, prefix.length())) {
                 continue;
             }
             final String rest = entry.path().substring(prefix.length());
@@ -145,8 +195,11 @@ public final class ProgramFilesProjection {
         if (path.isEmpty()) {
             return false;
         }
+        final boolean exact = exactCase(host);
+        final String inside = path + "/";
         for (final InstallerLayout.Entry entry : all(host)) {
-            if (entry.directory() && entry.path().equals(path) || entry.path().startsWith(path + "/")) {
+            if (entry.directory() && same(exact, entry.path(), path)
+                    || entry.path().regionMatches(!exact, 0, inside, 0, inside.length())) {
                 return true;
             }
         }
@@ -155,19 +208,23 @@ public final class ProgramFilesProjection {
 
     /** Whether {@code path} is a projected file. */
     public static boolean isFile(final IOsHost host, final String path) {
-        for (final InstallerLayout.Entry entry : all(host)) {
-            if (!entry.directory() && entry.path().equals(path)) {
-                return true;
-            }
-        }
-        return false;
+        return fileAt(host, path) != null;
     }
 
     /** The text of a projected file, or empty for one that is not text or not there. */
-    public static Optional<String> text(final IOsHost host, final String path) {
+    public static Optional<String> text(final IOsHost host, final String typed) {
         final OsDef os = host.installedOs();
-        if (os == null || !isFile(host, path)) {
+        final InstallerLayout.Entry found = os == null ? null : fileAt(host, typed);
+        if (found == null) {
             return Optional.empty();
+        }
+        // The path as the tree spells it, which on the families that ignore case need not be how it was typed.
+        final String path = found.path();
+        if (os.platform() == Platform.MC_DOS) {
+            final Optional<String> own = McDosTree.text(dosFacts(host, os), path);
+            if (own.isPresent()) {
+                return own;
+            }
         }
         if (path.equals(SYSTEM + "/frames.ini")) {
             return Optional.of("[system]\nedition=" + os.displayName() + "\nversion=" + ProgramVersions.of(os.id())
@@ -188,27 +245,72 @@ public final class ProgramFilesProjection {
                     + "ID=" + os.id().getPath() + "\nPRETTY_NAME=\"" + os.displayName() + " "
                     + ProgramVersions.of(os.id()) + "\"\n");
         }
+        if (path.equals("etc/rc.conf")) {
+            // What the startup scripts read, which is this machine: its name, and its network when it has one.
+            return Optional.of("hostname=\"" + Installers.hostName(host) + "\"\n"
+                    + (host.networkAttached() ? "ifconfig_em0=\"DHCP\"\n" : "")
+                    + "dumpdev=\"AUTO\"\n");
+        }
+        if (path.equals("etc/inittab")) {
+            // The run level the system comes up at, and the one line that keeps a login on the console.
+            return Optional.of("is:2:initdefault:\nco:234:respawn:/etc/getty console console\n");
+        }
         for (final ProgramSpec spec : installed(host)) {
             final String frames = "/" + spec.displayName() + "/readme.txt";
             if (path.endsWith(frames) && (path.startsWith(PROGRAM_FILES) || path.startsWith(PROGRAM_FILES_X86))
-                    || path.equals("usr/share/" + spec.commandName() + "/readme")) {
-                return Optional.of(readme(spec));
+                    || path.equals("usr/share/" + spec.commandName() + "/readme")
+                    || path.equals("usr/local/share/" + spec.commandName() + "/readme")
+                    || path.equals("usr/lib/" + spec.commandName() + "/readme")
+                    || path.equals(McDosTree.readmeOf(McDosTree.nameOf(spec.commandName())))) {
+                return Optional.of(readme(spec, os.platform() == Platform.FRAMES));
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Whether a path on that machine has to be spelt in the case the tree spells it in. The families met at a
+     * Unix prompt tell {@code Readme} from {@code README}; MC-DOS and Frames never did, and somebody typing
+     * {@code type autoexec.bat} means the file that is listed in capitals.
+     */
+    private static boolean exactCase(final IOsHost host) {
+        final OsDef os = host.installedOs();
+        return os == null || os.platform().unixLike();
+    }
+
+    private static boolean same(final boolean exact, final String listed, final String typed) {
+        return exact ? listed.equals(typed) : listed.equalsIgnoreCase(typed);
+    }
+
+    /** The projected file at that path, by that family's rule about case, or null when there is none. */
+    @Nullable
+    private static InstallerLayout.Entry fileAt(final IOsHost host, final String path) {
+        final boolean exact = exactCase(host);
+        for (final InstallerLayout.Entry entry : all(host)) {
+            if (!entry.directory() && same(exact, entry.path(), path)) {
+                return entry;
+            }
+        }
+        return null;
     }
 
     private static String shellOf(final OsDef os) {
         return os.id().getPath().equals("frames_95") ? "explorer.exe" : "frames.exe";
     }
 
-    private static String readme(final ProgramSpec spec) {
+    /**
+     * A program's own notes, ending on how to take it off again.
+     *
+     * @param hasThisPc whether the system is one with This PC on it, which is the only place that way out exists
+     */
+    private static String readme(final ProgramSpec spec, final boolean hasThisPc) {
         final String key = "program.jsc." + spec.id().getPath() + ".desc";
         final String description = Component.translatable(key).getString().replace(key, "");
         return spec.displayName() + " " + ProgramVersions.of(spec.id()) + "\n"
                 + spec.houseOr(SoftwareHouse.MIDSOFT).name() + "\n\n"
                 + (description.isBlank() ? "" : description + "\n\n")
-                + "Installed on this computer. To remove it, use This PC or the prompt's uninstall.\n";
+                + "Installed on this computer. To remove it, use "
+                + (hasThisPc ? "This PC or the prompt's uninstall" : "the prompt's uninstall") + ".\n";
     }
 
     private static InstallerLayout.Entry dir(final String path) {

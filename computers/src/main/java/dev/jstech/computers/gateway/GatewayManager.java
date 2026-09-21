@@ -112,7 +112,7 @@ public final class GatewayManager {
             if (log.size() >= GatewayManagerStatePayload.MAX_ROWS) {
                 break;
             }
-            log.add(new WireLog(GatewayLog.clock(e.dayTime()), e.who(), e.what(), e.result(), e.tone().ordinal()));
+            log.add(new WireLog(GatewayLog.clock(e.dayTime()), e.who(), e.what(), e.result(), e.tone().id()));
         }
         final List<WireLog> recent = new ArrayList<>(log.subList(0, Math.min(RECENT, log.size())));
         final List<WireComputer> computers = new ArrayList<>();

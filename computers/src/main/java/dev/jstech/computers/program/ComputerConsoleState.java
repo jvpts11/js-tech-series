@@ -7,6 +7,14 @@
  */
 package dev.jstech.computers.program;
 
+import dev.jstech.computers.gui.CdeStyle;
+import dev.jstech.computers.os.ProgramVersions;
+import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.computers.os.install.SetupJob;
+import dev.jstech.computers.program.install.LiveInstallState;
+import dev.jstech.computers.program.job.JobStorage;
+import dev.jstech.computers.program.job.MachineJobs;
+import java.util.Collection;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -20,6 +28,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The per-computer state behind the Command Prompt: the command history (so it survives closing the prompt or the Monitor, and a world reload) and the set of programs the player has installed on this computer. Held on the host BlockEntity and saved with its NBT.
@@ -30,8 +39,30 @@ public final class ComputerConsoleState {
 
     private final Deque<String> history = new ArrayDeque<>();
     private final Set<String> installed = new LinkedHashSet<>();
+
+    /**
+     * The work this machine does with nobody at it: lines left running and lines to be run at an hour.
+     *
+     * <p>They belong to the computer and not to whoever typed them, so they go with it through a save and
+     * carry on while the player is away, which is the whole reason for having them.
+     */
+    private final MachineJobs jobs = new MachineJobs();
     private String wallpaper = "";
+    /** CDE's palette and the backdrop of each workspace, as {@code CdeStyle} keeps them; empty until one is chosen. */
+    private String cdeStyle = "";
     private String computerName = "";
+    /**
+     * Which run of this machine is on the glass, counted up every time the machine starts over.
+     *
+     * <p>What a terminal has printed belongs to the run of the machine that printed it. A restart ends that
+     * run, and the lines from before it are not the new system's: a machine that had an installation typed
+     * into it came up showing the whole installation, and a disk swapped for a blank one came up showing the
+     * session of the disk that had been taken out.
+     *
+     * <p>Deliberately not saved. A machine reloaded from disk is a machine whose terminal nobody is looking
+     * at, and counting from zero again only means the first terminal opened after a reload starts clean.
+     */
+    private long session;
     private final ComputerSettings settings = new ComputerSettings();
 
     /** The per-computer settings owned by the Settings app and the {@code config} command. */
@@ -48,6 +79,11 @@ public final class ComputerConsoleState {
     private final Map<String, Integer> iconCells = new LinkedHashMap<>();
 
     /** The command history, oldest first. */
+    /** The work this machine does with nobody at it. */
+    public MachineJobs jobs() {
+        return this.jobs;
+    }
+
     public List<String> history() {
         return new ArrayList<>(history);
     }
@@ -97,11 +133,18 @@ public final class ComputerConsoleState {
         }
     }
 
-    /** Every installed package whose recorded version is not {@code current}. */
-    public java.util.List<String> outdatedPackages(final String current) {
-        final java.util.List<String> out = new java.util.ArrayList<>();
+    /**
+     * Every installed package behind the version this build ships for it.
+     *
+     * <p>Each package against its own version, which is what a package manager reconciles: a version is part
+     * of a program's face, so an update brings each one up to what this build of it is, not to a single
+     * number shared by all of them. It used to take one version to hold every package to, which read as
+     * "everything is outdated" the moment a machine carried a package installed at its own version.
+     */
+    public List<String> outdatedPackages() {
+        final List<String> out = new ArrayList<>();
         for (final String id : installed) {
-            if (!current.equals(installedVersions.get(id))) {
+            if (!ProgramVersions.of(id).equals(installedVersions.get(id))) {
                 out.add(id);
             }
         }
@@ -116,17 +159,17 @@ public final class ComputerConsoleState {
      * The program being set up right now, if any. One at a time: a machine installs one thing and
      * then the next, and a second request while one runs is told the machine is busy.
      */
-    @org.jetbrains.annotations.Nullable
-    private dev.jstech.computers.os.install.SetupJob setup;
+    @Nullable
+    private SetupJob setup;
 
     /** What the machine is setting up, or null when nothing. */
-    @org.jetbrains.annotations.Nullable
-    public dev.jstech.computers.os.install.SetupJob setup() {
+    @Nullable
+    public SetupJob setup() {
         return setup;
     }
 
     /** Starts a setup; the caller has already checked the machine can take the program. */
-    public void beginSetup(final dev.jstech.computers.os.install.SetupJob job) {
+    public void beginSetup(final SetupJob job) {
         this.setup = job;
     }
 
@@ -139,16 +182,16 @@ public final class ComputerConsoleState {
      * A live installation medium booted on this computer (the manual Arch / Gentoo install), until it reboots
      * into the installed system. Persisted so a half-done install survives a reload.
      */
-    private dev.jstech.computers.program.install.LiveInstallState liveInstall;
+    private LiveInstallState liveInstall;
 
     /** The live installation in progress, or null when the computer is not booted from a live medium. */
-    public dev.jstech.computers.program.install.LiveInstallState liveInstall() {
+    public LiveInstallState liveInstall() {
         return liveInstall;
     }
 
     /** Boots a live medium: starts a fresh manual installation of the given distribution. */
-    public void startLiveInstall(final dev.jstech.computers.program.install.LiveInstallState.Distro distro) {
-        this.liveInstall = new dev.jstech.computers.program.install.LiveInstallState(distro);
+    public void startLiveInstall(final LiveInstallState.Distro distro) {
+        this.liveInstall = new LiveInstallState(distro);
     }
 
     /** Ends the live session (the install completed, or the medium was abandoned). */
@@ -157,80 +200,26 @@ public final class ComputerConsoleState {
     }
 
     /*
-     * Packages a source-based package manager (emerge) is still compiling: program id -> the game tick at
-     * which the build finishes and the program becomes installed. Settled lazily by the shell on the next
-     * command, so no per-tick agent is needed.
+     * The tool running in front of this machine's terminal, if one is: a fetch, an unpack, a compile. Kept
+     * apart from this class because it is a thing of its own, with its own rules about what is written down.
      */
-    private final Map<String, Long> pendingBuilds = new LinkedHashMap<>();
+    private final TerminalForeground foreground = new TerminalForeground();
 
-    /** Starts (or restarts) a source build of {@code programId} that completes at game tick {@code readyAtTick}. */
-    public void startBuild(final String programId, final long readyAtTick) {
-        pendingBuilds.put(programId, readyAtTick);
+    /** What is running in front of the terminal, which may be nothing. */
+    public TerminalForeground foreground() {
+        return this.foreground;
     }
 
-    /** As {@link #startBuild(String, long)}, also recording the build's full duration for progress lines. */
-    public void startBuild(final String programId, final long readyAtTick, final long totalTicks) {
-        pendingBuilds.put(programId, readyAtTick);
-        buildTotals.put(programId, totalTicks);
+    /** Which run of this machine is on the glass. */
+    public long session() {
+        return this.session;
     }
 
-    /*
-     * The full duration of each running build, so the console can print percentage progress. Persisted
-     * beside the completion ticks; entries leave with their build.
-     */
-    private final Map<String, Long> buildTotals = new LinkedHashMap<>();
-
-    /** The full duration in ticks of a running build, or 0 when unknown. */
-    public long buildTotal(final String programId) {
-        return buildTotals.getOrDefault(programId, 0L);
-    }
-
-    /** Cancels a build still compiling; returns whether one was pending. */
-    public boolean cancelBuild(final String programId) {
-        buildTotals.remove(programId);
-        return pendingBuilds.remove(programId) != null;
-    }
-
-    /** The builds still compiling: program id to completion tick. */
-    public Map<String, Long> pendingBuilds() {
-        return java.util.Collections.unmodifiableMap(pendingBuilds);
-    }
-
-    /**
-     * Moves every build whose completion tick has passed into the installed set, returning the ids that
-     * just finished (in start order). Each finished id is also queued for {@link #drainFinishedBuilds()},
-     * so the shell can announce it on the player's next command even though the build settled silently.
-     */
-    public java.util.List<String> settleBuilds(final long nowTick) {
-        final java.util.List<String> done = new java.util.ArrayList<>();
-        final java.util.Iterator<Map.Entry<String, Long>> it = pendingBuilds.entrySet().iterator();
-        while (it.hasNext()) {
-            final Map.Entry<String, Long> e = it.next();
-            if (e.getValue() <= nowTick) {
-                installed.add(e.getKey());
-                done.add(e.getKey());
-                finishedBuilds.add(e.getKey());
-                buildTotals.remove(e.getKey());
-                it.remove();
-            }
-        }
-        return done;
-    }
-
-    /*
-     * Builds that finished but have not been announced to the player yet (persisted, so a build that
-     * completes while the world is unloaded is still reported the next time the shell is used).
-     */
-    private final java.util.List<String> finishedBuilds = new java.util.ArrayList<>();
-
-    /** Returns and clears the finished-but-unannounced build ids, in completion order. */
-    public java.util.List<String> drainFinishedBuilds() {
-        if (finishedBuilds.isEmpty()) {
-            return java.util.List.of();
-        }
-        final java.util.List<String> out = java.util.List.copyOf(finishedBuilds);
-        finishedBuilds.clear();
-        return out;
+    /** The machine started over: whatever a terminal printed belongs to the run that has just ended. */
+    public void newSession() {
+        this.session++;
+        /* Whatever was running in front of it went down with the machine, unfinished. */
+        this.foreground.clear();
     }
 
     /** The chosen desktop wallpaper id ({@code ""} means the OS default). */
@@ -242,13 +231,32 @@ public final class ComputerConsoleState {
         this.wallpaper = id == null ? "" : id;
     }
 
+    /** CDE's look on this machine, which is its wallpaper and its window colours at once. */
+    public CdeStyle cdeStyle() {
+        return CdeStyle.parse(this.cdeStyle);
+    }
+
+    public void setCdeStyle(final CdeStyle style) {
+        this.cdeStyle = style == null || style.equals(CdeStyle.DEFAULT) ? "" : style.encoded();
+    }
+
     /** The player-given computer name ({@code ""} means unset). */
     public String computerName() {
         return computerName;
     }
 
+    /**
+     * Names the computer, cut to the length a name may be.
+     *
+     * <p>Cut here, at the machine that keeps it, rather than only where it is typed. The name rides on
+     * several packets to the screens that show it, some of which refuse a string past their own length by
+     * throwing rather than by trimming, so a name that was never cut at the source would take the player's
+     * desktop down instead of simply reading short.
+     */
     public void setComputerName(final String name) {
-        this.computerName = name == null ? "" : name;
+        final String given = name == null ? "" : name;
+        this.computerName = given.length() <= InstallerFlow.MOST_NAME_LETTERS ? given
+                : given.substring(0, InstallerFlow.MOST_NAME_LETTERS);
     }
 
     /*
@@ -259,12 +267,12 @@ public final class ComputerConsoleState {
     private Long sshTarget;
 
     /** The packed position of the machine this session is connected to, or null when local. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public Long sshTarget() {
         return sshTarget;
     }
 
-    public void setSshTarget(@org.jetbrains.annotations.Nullable final Long packedPos) {
+    public void setSshTarget(@Nullable final Long packedPos) {
         this.sshTarget = packedPos;
     }
 
@@ -307,9 +315,8 @@ public final class ComputerConsoleState {
         sessions.clear();
         terminalDrive = 'C';
         installed.clear();
-        pendingBuilds.clear();
-        buildTotals.clear();
-        finishedBuilds.clear();
+        // Whatever was being built went with the system it was being built for.
+        foreground.clear();
     }
 
     /** Sets the current drive and stores that drive's current directory. */
@@ -386,12 +393,12 @@ public final class ComputerConsoleState {
     private final Map<String, Community> community = new LinkedHashMap<>();
 
     /** Every player-written program installed here. */
-    public java.util.Collection<Community> community() {
-        return java.util.List.copyOf(community.values());
+    public Collection<Community> community() {
+        return List.copyOf(community.values());
     }
 
     /** One of them, or null. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public Community communityProgram(final String name) {
         return community.get(name);
     }
@@ -412,6 +419,7 @@ public final class ComputerConsoleState {
             historyTag.add(StringTag.valueOf(line));
         }
         tag.put("History", historyTag);
+        JobStorage.save(this.jobs, tag);
         if (setup != null) {
             // A setup half done goes with the machine, so the world coming back finds it still copying.
             final CompoundTag job = new CompoundTag();
@@ -450,28 +458,19 @@ public final class ComputerConsoleState {
             }
             tag.put("Community", written);
         }
-        if (!pendingBuilds.isEmpty()) {
-            final CompoundTag builds = new CompoundTag();
-            pendingBuilds.forEach(builds::putLong);
-            tag.put("PendingBuilds", builds);
-        }
-        if (!buildTotals.isEmpty()) {
-            final CompoundTag totals = new CompoundTag();
-            buildTotals.forEach(totals::putLong);
-            tag.put("BuildTotals", totals);
-        }
-        if (!finishedBuilds.isEmpty()) {
-            final ListTag finished = new ListTag();
-            for (final String id : finishedBuilds) {
-                finished.add(StringTag.valueOf(id));
-            }
-            tag.put("FinishedBuilds", finished);
-        }
         if (liveInstall != null) {
             tag.putString("LiveInstall", liveInstall.serialize());
         }
+        if (foreground.running()) {
+            final CompoundTag front = new CompoundTag();
+            foreground.save(front);
+            tag.put("Foreground", front);
+        }
         if (!wallpaper.isEmpty()) {
             tag.putString("Wallpaper", wallpaper);
+        }
+        if (!cdeStyle.isEmpty()) {
+            tag.putString("CdeStyle", cdeStyle);
         }
         if (!computerName.isEmpty()) {
             tag.putString("ComputerName", computerName);
@@ -499,13 +498,13 @@ public final class ComputerConsoleState {
         // Always written, even empty: a machine whose player unpinned everything must not get the default back.
         final ListTag pinned = new ListTag();
         for (final String id : settings.pinned()) {
-            pinned.add(net.minecraft.nbt.StringTag.valueOf(id));
+            pinned.add(StringTag.valueOf(id));
         }
         s.put("Pinned", pinned);
         if (!settings.favourites().isEmpty()) {
             final ListTag favourites = new ListTag();
             for (final String id : settings.favourites()) {
-                favourites.add(net.minecraft.nbt.StringTag.valueOf(id));
+                favourites.add(StringTag.valueOf(id));
             }
             s.put("Favourites", favourites);
         }
@@ -533,6 +532,11 @@ public final class ComputerConsoleState {
             settings.defaultApps().forEach(apps::putString);
             s.put("DefaultApps", apps);
         }
+        if (!settings.variables().isEmpty()) {
+            final CompoundTag named = new CompoundTag();
+            settings.variables().forEach(named::putString);
+            s.put("Variables", named);
+        }
         tag.put("Settings", s);
     }
 
@@ -546,6 +550,7 @@ public final class ComputerConsoleState {
 
     public void load(final CompoundTag tag) {
         history.clear();
+        JobStorage.load(this.jobs, tag);
         for (final Tag entry : tag.getList("History", Tag.TAG_STRING)) {
             history.addLast(entry.getAsString());
         }
@@ -560,7 +565,7 @@ public final class ComputerConsoleState {
         setup = null;
         if (tag.contains("Setup")) {
             final CompoundTag job = tag.getCompound("Setup");
-            setup = new dev.jstech.computers.os.install.SetupJob(job.getString("Program"), job.getString("Name"),
+            setup = new SetupJob(job.getString("Program"), job.getString("Name"),
                     job.getString("House"), job.getInt("SizeMb"), job.getString("Source"),
                     job.getBoolean("Removing"), job.getInt("Total"), job.getInt("Left"),
                     job.getString("Via"), job.getString("Package"));
@@ -580,28 +585,12 @@ public final class ComputerConsoleState {
             }
         }
         liveInstall = tag.contains("LiveInstall")
-                ? dev.jstech.computers.program.install.LiveInstallState.deserialize(
+                ? LiveInstallState.deserialize(
                         tag.getString("LiveInstall"))
                 : null;
-        pendingBuilds.clear();
-        if (tag.contains("PendingBuilds")) {
-            final CompoundTag builds = tag.getCompound("PendingBuilds");
-            for (final String id : builds.getAllKeys()) {
-                pendingBuilds.put(id, builds.getLong(id));
-            }
-        }
-        buildTotals.clear();
-        if (tag.contains("BuildTotals")) {
-            final CompoundTag totals = tag.getCompound("BuildTotals");
-            for (final String id : totals.getAllKeys()) {
-                buildTotals.put(id, totals.getLong(id));
-            }
-        }
-        finishedBuilds.clear();
-        for (final Tag entry : tag.getList("FinishedBuilds", Tag.TAG_STRING)) {
-            finishedBuilds.add(entry.getAsString());
-        }
+        foreground.load(tag.getCompound("Foreground"));
         wallpaper = tag.getString("Wallpaper");
+        cdeStyle = tag.getString("CdeStyle");
         computerName = tag.getString("ComputerName");
         iconCells.clear();
         for (final Tag entry : tag.getList("IconCells", Tag.TAG_COMPOUND)) {
@@ -625,19 +614,19 @@ public final class ComputerConsoleState {
         settings.setTaskbarCentered(!s.contains("TaskbarCentered") || s.getBoolean("TaskbarCentered"));
         settings.setDarkMode(s.getBoolean("DarkMode"));
         if (s.contains("Pinned")) {
-            final java.util.List<String> pinned = new java.util.ArrayList<>();
-            for (final net.minecraft.nbt.Tag entry : s.getList("Pinned", net.minecraft.nbt.Tag.TAG_STRING)) {
+            final List<String> pinned = new ArrayList<>();
+            for (final Tag entry : s.getList("Pinned", Tag.TAG_STRING)) {
                 pinned.add(entry.getAsString());
             }
             settings.setPinned(pinned);
         }
-        final java.util.List<String> favourites = new java.util.ArrayList<>();
-        for (final net.minecraft.nbt.Tag entry : s.getList("Favourites", net.minecraft.nbt.Tag.TAG_STRING)) {
+        final List<String> favourites = new ArrayList<>();
+        for (final Tag entry : s.getList("Favourites", Tag.TAG_STRING)) {
             favourites.add(entry.getAsString());
         }
         settings.setFavourites(favourites);
-        final java.util.List<ComputerSettings.Share> shares = new java.util.ArrayList<>();
-        final ListTag sharesTag = s.getList("Shares", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        final List<ComputerSettings.Share> shares = new ArrayList<>();
+        final ListTag sharesTag = s.getList("Shares", Tag.TAG_COMPOUND);
         for (int i = 0; i < sharesTag.size(); i++) {
             final CompoundTag each = sharesTag.getCompound(i);
             shares.add(new ComputerSettings.Share(each.getString("Name"), each.getString("Path"),
@@ -657,5 +646,11 @@ public final class ComputerConsoleState {
             apps.put(key, appsTag.getString(key));
         }
         settings.putDefaultApps(apps);
+        final Map<String, String> named = new LinkedHashMap<>();
+        final CompoundTag namedTag = s.getCompound("Variables");
+        for (final String key : namedTag.getAllKeys()) {
+            named.put(key, namedTag.getString(key));
+        }
+        settings.putVariables(named);
     }
 }

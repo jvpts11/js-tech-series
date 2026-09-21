@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.peripheral.PeripheralLinkValidator;
@@ -82,12 +83,12 @@ public class MonitorBlockEntity extends BlockEntity implements IPeripheralEndpoi
     private BlockPos remoteSession;
 
     /** Starts (or ends, with {@code null}) a remote session showing {@code machine} on this screen. */
-    public void setRemoteSession(@org.jetbrains.annotations.Nullable final BlockPos machine) {
+    public void setRemoteSession(@Nullable final BlockPos machine) {
         this.remoteSession = machine;
     }
 
     /** The machine a remote session is showing here, or null when the screen is showing its own. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public BlockPos remoteSession() {
         return remoteSession;
     }
@@ -148,7 +149,7 @@ public class MonitorBlockEntity extends BlockEntity implements IPeripheralEndpoi
         // LIT = true only when the linked computer is actively running, not just linked but powered off.
         final boolean computerRunning = linkedOwner != null
                 && level.getBlockEntity(BlockPos.of(linkedOwner))
-                        instanceof dev.jstech.computers.os.IOsHost host
+                        instanceof IOsHost host
                 && host.isRunning();
         if (!computerRunning) {
             bootTicks = 0;

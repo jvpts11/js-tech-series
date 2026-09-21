@@ -19,6 +19,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Menu for the Server Router's config GUI: no item slots; it exposes the live topology summary the router writes into its synced data (input face, managed-rack budget, and one row per output-face section with its rack/server counts and load-balance mode), and routes a row's mode-cycle click back to the router.
@@ -42,7 +43,7 @@ public class ServerRouterMenu extends AbstractContainerMenu {
         addDataSlots(data);
     }
 
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public static ServerRouterMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                                final RegistryFriendlyByteBuf buf) {
         final BlockPos pos = buf.readBlockPos();
@@ -61,7 +62,7 @@ public class ServerRouterMenu extends AbstractContainerMenu {
         return initialName;
     }
 
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public Direction inputFace() {
         final int v = data.get(ServerRouterBlockEntity.DATA_INPUT_FACE);
         return v < 0 ? null : Direction.from3DDataValue(v);
@@ -88,7 +89,7 @@ public class ServerRouterMenu extends AbstractContainerMenu {
                 + section * ServerRouterBlockEntity.DATA_PER_SECTION + field);
     }
 
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public Direction sectionFace(final int i) {
         final int v = sectionField(i, 0);
         return v < 0 ? null : Direction.from3DDataValue(v);
@@ -103,9 +104,7 @@ public class ServerRouterMenu extends AbstractContainerMenu {
     }
 
     public LoadBalanceMode sectionMode(final int i) {
-        final int ord = sectionField(i, 3);
-        final LoadBalanceMode[] values = LoadBalanceMode.values();
-        return ord >= 0 && ord < values.length ? values[ord] : LoadBalanceMode.ROUND_ROBIN;
+        return LoadBalanceMode.byId(sectionField(i, 3));
     }
 
     @Override

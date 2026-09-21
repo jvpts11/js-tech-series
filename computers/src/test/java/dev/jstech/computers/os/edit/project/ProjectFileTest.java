@@ -12,14 +12,15 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.computers.vm.listing.AsmProgram;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class ProjectFileTest {
 
     private static ProjectFile stockWatch() {
-        return new ProjectFile("StockWatch", ProjectFile.Kind.SCRIPT, "jsc:cannon",
-                List.of("StockWatch.can", "Helpers.can"), List.of("Helpers"), "build/StockWatch.asm");
+        return new ProjectFile("StockWatch", ProjectFile.Kind.SCRIPT, "jsc:sigma_sharp",
+                List.of("StockWatch.sgs", "Helpers.sgs"), List.of("Helpers"), "build/StockWatch.asm");
     }
 
     @Test
@@ -33,9 +34,42 @@ class ProjectFileTest {
         final String text = stockWatch().write();
         assertTrue(text.contains("name: StockWatch\n"));
         assertTrue(text.contains("kind: script\n"));
-        assertTrue(text.contains("sources: StockWatch.can, Helpers.can\n"));
+        assertTrue(text.contains("sources: StockWatch.sgs, Helpers.sgs\n"));
         assertTrue(text.contains("references: Helpers\n"));
         assertTrue(text.contains("entry: build/StockWatch.asm\n"));
+        assertTrue(text.contains("platform: jsc:x86\n"));
+    }
+
+    @Test
+    void read_aProjectWithNoPlatformLine_isBuiltForTheOldestThatRunsIt() {
+        final ProjectFile back = ProjectFile.read("name: Old\nkind: console\nlanguage: jsc:sigma_sharp\n"
+                + "sources: Old.sgs\nreferences: \nentry: build/Old.asm\n");
+        assertEquals(AsmProgram.DEFAULT_ARCHITECTURE, back.platform());
+    }
+
+    @Test
+    void withPlatform_buildsForThatOneInstead() {
+        assertEquals("jsc:x86_64", stockWatch().withPlatform("jsc:x86_64").platform());
+        assertEquals("jsc:x86_64",
+                ProjectFile.read(stockWatch().withPlatform("jsc:x86_64").write()).platform());
+    }
+
+    @Test
+    void withPlatform_theOneItAlreadyHas_isTheSameProject() {
+        final ProjectFile project = stockWatch();
+        assertSame(project, project.withPlatform(project.platform()));
+    }
+
+    /*
+     * A project keeps its platform through every other change. Rebuilding the record by hand in each of these is
+     * exactly where a field gets dropped, and dropping this one would quietly send a program back to the default.
+     */
+    @Test
+    void everyOtherChange_keepsThePlatform() {
+        final ProjectFile built = stockWatch().withPlatform("jsc:x86_64");
+        assertEquals("jsc:x86_64", built.withSource("More.sgs").platform());
+        assertEquals("jsc:x86_64", built.withoutSource("Helpers.sgs").platform());
+        assertEquals("jsc:x86_64", built.withReference("Other").platform());
     }
 
     @Test
@@ -50,15 +84,15 @@ class ProjectFileTest {
 
     @Test
     void read_trimsListsAndDropsEmptyEntries() {
-        final ProjectFile file = ProjectFile.read("sources:  a.can ,, b.can , \n");
-        assertEquals(List.of("a.can", "b.can"), file.sources());
+        final ProjectFile file = ProjectFile.read("sources:  a.sgs ,, b.sgs , \n");
+        assertEquals(List.of("a.sgs", "b.sgs"), file.sources());
     }
 
     @Test
     void withSource_addsOnceAndKeepsOrder() {
-        final ProjectFile more = stockWatch().withSource("Format.can");
-        assertEquals(List.of("StockWatch.can", "Helpers.can", "Format.can"), more.sources());
-        assertSame(more, more.withSource("Format.can"));
+        final ProjectFile more = stockWatch().withSource("Format.sgs");
+        assertEquals(List.of("StockWatch.sgs", "Helpers.sgs", "Format.sgs"), more.sources());
+        assertSame(more, more.withSource("Format.sgs"));
     }
 
     @Test
@@ -71,8 +105,10 @@ class ProjectFileTest {
     @Test
     void buildsAListing_isFalseForALibraryAndForNoEntry() {
         assertTrue(stockWatch().buildsAListing());
-        assertFalse(new ProjectFile("L", ProjectFile.Kind.LIBRARY, "jsc:cannon", List.of(), List.of(), "").buildsAListing());
-        assertFalse(new ProjectFile("E", ProjectFile.Kind.CONSOLE, "jsc:cannon", List.of(), List.of(), "").buildsAListing());
+        assertFalse(new ProjectFile("L", ProjectFile.Kind.LIBRARY, "jsc:sigma_sharp", List.of(), List.of(), "")
+                .buildsAListing());
+        assertFalse(new ProjectFile("E", ProjectFile.Kind.CONSOLE, "jsc:sigma_sharp", List.of(), List.of(), "")
+                .buildsAListing());
     }
 
     @Test
@@ -85,7 +121,7 @@ class ProjectFileTest {
 
     @Test
     void fileName_andDefaultEntry_followTheName() {
-        assertEquals("StockWatch.canproj", ProjectFile.fileName("StockWatch"));
+        assertEquals("StockWatch.sgsproj", ProjectFile.fileName("StockWatch"));
         assertEquals("build/StockWatch.asm", ProjectFile.defaultEntry("StockWatch"));
     }
 }

@@ -11,8 +11,11 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.item.RackGadgetItem;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.operation.index.Allocation;
+import dev.jstech.computers.operation.index.IndexHealth;
 import dev.jstech.computers.operation.index.ItemLocation;
 import dev.jstech.computers.operation.index.StorageAllocator;
 import dev.jstech.computers.operation.index.StorageLockTable;
@@ -20,8 +23,13 @@ import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.network.ServerNode;
+import dev.jstech.core.operation.IOperationResult;
+import dev.jstech.core.operation.OperationDispatch;
+import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
+import java.util.HashSet;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
@@ -32,6 +40,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The live catalog of what the network's public storage holds, kept in the Mainframe's RAM.
@@ -42,14 +51,14 @@ public final class NetworkIndex {
     private final StorageLockTable<StorageKey> locks = new StorageLockTable<>();
     private final Map<NodeUuid, Long> indexedModCounts = new LinkedHashMap<>();
     // What the index is currently worth trusting, so hot events and ghost rows stop being invisible.
-    private final dev.jstech.computers.operation.index.IndexHealth health =
-            new dev.jstech.computers.operation.index.IndexHealth();
+    private final IndexHealth health =
+            new IndexHealth();
 
     /** How much read latency the Predictive Cache service saves its bay, in percent. */
     private static final int PREDICTIVE_CACHE_CUT_PERCENT = 15;
 
     /** The index's own health: what a hot event left unconfirmed and what a mass removal orphaned. */
-    public dev.jstech.computers.operation.index.IndexHealth health() {
+    public IndexHealth health() {
         return health;
     }
     /*
@@ -58,6 +67,19 @@ public final class NetworkIndex {
      * (those are keyed by the Operation's id and freed when it settles).
      */
     private final Map<StorageKey, ManualLock> manualLocks = new LinkedHashMap<>();
+
+    /**
+     * How many rebuilds have been asked for, so that only the newest one publishes what it built.
+     *
+     * <p>A rebuild reads the whole network and hands the answer back later, and two of them can be in the air
+     * at once. Whichever finished last used to win, which is not the same as whichever was asked for last: a
+     * rebuild started before a change could land after one started after it, and put the network back the way
+     * it was before the change with nothing to say it had. Each one now carries the count it was asked at, and
+     * an older one that comes back late gives up rather than speaking over a newer one.
+     *
+     * <p>Read from the thread doing the building as well as from the one asking, so it is volatile.
+     */
+    private volatile long rebuildsAsked;
 
     private record ManualLock(UUID id, long amount) {
     }
@@ -146,7 +168,7 @@ public final class NetworkIndex {
                         + node.asString().substring(0, Math.min(6, node.asString().length())));
             }
         }
-        final java.util.Set<NodeUuid> stale = new java.util.HashSet<>(dirty);
+        final Set<NodeUuid> stale = new HashSet<>(dirty);
         stale.addAll(gone);
         dropServers(stale);
         for (final NodeUuid node : gone) {
@@ -169,7 +191,7 @@ public final class NetworkIndex {
     }
 
     public int vacuum(final ServerLevel level, final NetworkUuid network) {
-        final java.util.Set<NodeUuid> registered = new java.util.HashSet<>();
+        final Set<NodeUuid> registered = new HashSet<>();
         if (network != null) {
             final NetworkSystem system = NetworkSystem.get(level);
             for (final ServerNode server : system.serversOf(network)) {
@@ -226,7 +248,7 @@ public final class NetworkIndex {
         }
     }
 
-    private void dropServers(final java.util.Set<NodeUuid> servers) {
+    private void dropServers(final Set<NodeUuid> servers) {
         final var entries = catalog.entrySet().iterator();
         while (entries.hasNext()) {
             final List<ItemLocation> rows = entries.next().getValue();
@@ -257,7 +279,7 @@ public final class NetworkIndex {
     private static int latencyOf(final ServerRackBlockEntity rack, final int slot, final StorageTier tier) {
         int cut = 0;
         if (rack.hasCacheCard(slot)) {
-            cut += dev.jstech.computers.item.RackGadgetItem.CACHE_LATENCY_CUT_PERCENT;
+            cut += RackGadgetItem.CACHE_LATENCY_CUT_PERCENT;
         }
         if (rack.hasService(slot, "predictive_cache")) {
             cut += PREDICTIVE_CACHE_CUT_PERCENT;
@@ -279,8 +301,9 @@ public final class NetworkIndex {
      * between, so the swap never hides a write.
      */
     public void rebuildAsync(final ServerLevel level, final NetworkUuid network,
-                             final dev.jstech.core.operation.OperationDispatch dispatch,
-                             @org.jetbrains.annotations.Nullable final Runnable onDone) {
+                             final OperationDispatch dispatch,
+                             @Nullable final Runnable onDone) {
+        final long asked = ++this.rebuildsAsked;
         final List<NodeSnapshot> snapshots = new ArrayList<>();
         final NetworkSystem system = NetworkSystem.get(level);
         for (final ServerNode server : system.serversOf(network)) {
@@ -300,6 +323,18 @@ public final class NetworkIndex {
             }
         }
         dispatch.submit(context -> {
+            /*
+             * Somebody asked again while this was waiting its turn. Building would only be work for an answer
+             * that is already out of date and would not be published, so it is dropped here instead.
+             */
+            if (asked < this.rebuildsAsked) {
+                context.onMainThread(() -> {
+                    if (onDone != null) {
+                        onDone.run();
+                    }
+                });
+                return IOperationResult.success();
+            }
             final Map<StorageKey, List<ItemLocation>> built = new LinkedHashMap<>();
             final Map<NodeUuid, Long> modCounts = new LinkedHashMap<>();
             for (final NodeSnapshot snapshot : snapshots) {
@@ -312,17 +347,24 @@ public final class NetworkIndex {
                 modCounts.put(snapshot.node(), snapshot.modCount());
             }
             context.onMainThread(() -> {
-                catalog.clear();
-                catalog.putAll(built);
-                indexedModCounts.clear();
-                indexedModCounts.putAll(modCounts);
-                health.onFullRebuild(); // a rebuild from scratch settles every doubt the index carried
+                /*
+                 * A newer rebuild was asked for while this one was building. Its answer is the one that counts,
+                 * so this one goes no further than saying it is done: what it built describes a network that
+                 * has already moved on.
+                 */
+                if (asked >= this.rebuildsAsked) {
+                    catalog.clear();
+                    catalog.putAll(built);
+                    indexedModCounts.clear();
+                    indexedModCounts.putAll(modCounts);
+                    health.onFullRebuild(); // a rebuild from scratch settles every doubt the index carried
+                }
                 if (onDone != null) {
                     onDone.run();
                 }
             });
-            return dev.jstech.core.operation.IOperationResult.success();
-        }, dev.jstech.core.operation.OperationPriority.MEDIUM_HIGH);
+            return IOperationResult.success();
+        }, OperationPriority.MEDIUM_HIGH);
     }
 
     private void indexPc(final PersonalComputerBlockEntity pc, final NodeUuid node) {
@@ -347,18 +389,19 @@ public final class NetworkIndex {
     }
 
     private static long hardwareCapOf(final ServerRackBlockEntity rack, final int slot) {
-        final ItemStack stack = rack.getServers().getStackInSlot(slot);
-        if (stack.getItem() instanceof ServerItem) {
-            final ComputerBuild build = ServerItem.build(stack);
-            if (build != null) {
-                /*
-                 * A cabinet over its thermal budget slows every machine in it, so the throughput a
-                 * server can promise the network drops with it.
-                 */
-                return rack.throttled(Math.min(build.totalCapacity(), build.ramBuffer()));
-            }
+        /*
+         * The cabinet has this build already and keeps it until the bay's parts change. Asking the item to
+         * build it again, which is what this did, walked every part of a server on every transfer that named it.
+         */
+        final ComputerBuild build = rack.buildIn(slot);
+        if (build == null) {
+            return Long.MAX_VALUE;
         }
-        return Long.MAX_VALUE;
+        /*
+         * A cabinet over its thermal budget slows every machine in it, so the throughput a
+         * server can promise the network drops with it.
+         */
+        return rack.throttled(Math.min(build.totalCapacity(), build.ramBuffer()));
     }
 
     private static StorageTier tierOf(final ServerRackBlockEntity rack, final int slot) {
@@ -368,7 +411,7 @@ public final class NetworkIndex {
          */
         StorageTier fastest = StorageTier.HDD;
         for (final ItemStack drive : rack.claimedDriveStacks(slot)) {
-            if (drive.getItem() instanceof dev.jstech.computers.item.DiskItem disk) {
+            if (drive.getItem() instanceof DiskItem disk) {
                 fastest = fastest.faster(disk.spec().tier());
             }
         }
@@ -408,7 +451,7 @@ public final class NetworkIndex {
         return total;
     }
 
-    public long grossAvailable(final StorageKey key, final java.util.Set<NodeUuid> allowed) {
+    public long grossAvailable(final StorageKey key, final Set<NodeUuid> allowed) {
         long total = 0L;
         for (final ItemLocation location : catalog.getOrDefault(key, List.of())) {
             if (allowed == null || allowed.contains(location.server())) {
@@ -450,7 +493,8 @@ public final class NetworkIndex {
                     if (level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
                         final long freeWeight = rack.getServerStorage(loc.slot()).freeWeight();
                         if (freeWeight > 0L) {
-                            room.put(server.nodeUuid(), new ItemLocation(server.nodeUuid(), tierOf(rack, loc.slot()), freeWeight));
+                            room.put(server.nodeUuid(), new ItemLocation(server.nodeUuid(),
+                                    tierOf(rack, loc.slot()), freeWeight));
                         }
                     }
                 });
@@ -497,7 +541,7 @@ public final class NetworkIndex {
     }
 
     public Allocation lock(final UUID operation, final StorageKey key, final long demand,
-                           final java.util.Set<NodeUuid> allowed) {
+                           final Set<NodeUuid> allowed) {
         final List<ItemLocation> sources;
         if (allowed == null) {
             sources = locations(key);
@@ -535,7 +579,7 @@ public final class NetworkIndex {
      * @param allowed the servers the hold may draw from, or {@code null} for the whole network
      * @return the amount actually held (0 if the type was already locked or nothing was free to hold)
      */
-    public long manualLock(final StorageKey key, final long demand, final java.util.Set<NodeUuid> allowed) {
+    public long manualLock(final StorageKey key, final long demand, final Set<NodeUuid> allowed) {
         if (demand <= 0L || manualLocks.containsKey(key)) {
             return 0L;
         }
@@ -582,6 +626,27 @@ public final class NetworkIndex {
         return out;
     }
 
+    /**
+     * Puts back the holds a world was saved with, once the catalog has been read again.
+     *
+     * <p>A hold promises to last until somebody lets it go, and a world being closed is not somebody letting
+     * it go. The reservation itself cannot be saved, because it points at where the things were and a reload
+     * reads the network afresh, so what is kept is what was held and of what; each is then taken again
+     * against what is there now. A hold that can no longer be met in full holds what it can, which is the
+     * truth about the network rather than a promise the storage can no longer keep.
+     *
+     * @return how many of them could be taken again
+     */
+    public int restoreManualLocks(final Map<StorageKey, Long> held) {
+        int taken = 0;
+        for (final Map.Entry<StorageKey, Long> hold : held.entrySet()) {
+            if (this.manualLock(hold.getKey(), hold.getValue(), null) > 0L) {
+                taken++;
+            }
+        }
+        return taken;
+    }
+
     public void clear() {
         catalog.clear();
         locks.clear();
@@ -615,7 +680,7 @@ public final class NetworkIndex {
 
     // DROP (destruction, irreversible; only the Mainframe Maintenance tab calls this)
 
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private static ServerStore storeOf(final ServerLevel level, final NodeUuid server) {
         return NetworkSystem.get(level).locationOf(server)
                 .map(loc -> level.getBlockEntity(BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack
@@ -624,7 +689,7 @@ public final class NetworkIndex {
     }
 
     public long dropType(final ServerLevel level, final NetworkUuid network, final StorageKey key,
-                         @org.jetbrains.annotations.Nullable final java.util.Set<NodeUuid> allowed) {
+                         @Nullable final Set<NodeUuid> allowed) {
         if (network == null) {
             return 0L;
         }
@@ -648,7 +713,7 @@ public final class NetworkIndex {
         }
         long destroyed = 0L;
         // Copy the keys first: extract mutates the store's view as it goes.
-        for (final StorageKey key : new java.util.ArrayList<>(store.view().keySet())) {
+        for (final StorageKey key : new ArrayList<>(store.view().keySet())) {
             destroyed += store.extract(key, store.count(key));
         }
         return destroyed;

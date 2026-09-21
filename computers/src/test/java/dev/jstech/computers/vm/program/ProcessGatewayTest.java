@@ -1,0 +1,228 @@
+/*
+ * SPDX-License-Identifier: LGPL-3.0-only
+ *
+ * Copyright (C) 2026 jvpts11
+ *
+ * This file is part of J's Computers.
+ */
+package dev.jstech.computers.vm.program;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import dev.jstech.computers.sigma.SigmaCompiler;
+import dev.jstech.computers.sigma.SourceFile;
+import dev.jstech.computers.vm.listing.AsmProgram;
+import dev.jstech.computers.vm.listing.AsmReader;
+import dev.jstech.computers.vm.listing.ListingProblem;
+import dev.jstech.computers.vm.system.MemberId;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+
+/**
+ * What a Σ# program sees of the machine's Gateways: which there are, which one it chose, what is on the other side, and
+ * what a ComputerCraft computer says to it. The choice and the listening are the program's own and come back with it
+ * from a save; the rest the machine answers.
+ */
+class ProcessGatewayTest {
+
+    private static final long ROOM = 256L * 1024;
+    private static final int PLENTY = 1_000_000;
+    private static final List<String> NAMES = List.of("north", "west");
+
+    /** A machine with two Gateways, which writes down every question it was asked and the Gateway it went through. */
+    private static final class Machine implements IHost {
+
+        private final List<String> asked = new ArrayList<>();
+        /** Whether this machine has Gateways at all; one without answers none of their calls. */
+        private final boolean has;
+
+        Machine() {
+            this(true);
+        }
+
+        Machine(final boolean has) {
+            this.has = has;
+        }
+
+        @Override
+        public long tick() {
+            return 0;
+        }
+
+        @Override
+        public long dayTime() {
+            return 0;
+        }
+
+        @Override
+        public long day() {
+            return 0;
+        }
+
+        @Override
+        public IWorldFunction bind(final MemberId id) {
+            if (!this.has || !"Gateway".equals(id.owner())) {
+                return null;
+            }
+            return (call, target, arguments, line) -> {
+                this.asked.add(id.name() + ":" + call.gateway() + Arrays.asList(arguments));
+                return answer(id.name(), call, arguments, line);
+            };
+        }
+
+        private static Object answer(final String name, final IWorldCall call, final Object[] arguments,
+                                     final int line) {
+            return switch (name) {
+                case "Online", "TurnOn", "Shutdown", "Reboot", "Send" -> true;
+                case "Current" -> call.gateway().isEmpty() ? NAMES.getFirst() : call.gateway();
+                case "Names" -> {
+                    final Values.ListValue names = new Values.ListValue();
+                    names.items().addAll(NAMES);
+                    yield names;
+                }
+                case "Select" -> {
+                    final String named = String.valueOf(arguments[0]);
+                    if (!NAMES.contains(named)) {
+                        throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line,
+                                "this computer has no Gateway called " + named);
+                    }
+                    call.chooseGateway(named);
+                    yield true;
+                }
+                case "Computers" -> {
+                    final Values.Obj one = new Values.Obj("CcComputer");
+                    one.set("Id", 3L);
+                    one.set("Name", "computer_3");
+                    one.set("Label", "turtle bay");
+                    one.set("Online", true);
+                    final Values.ListValue all = new Values.ListValue();
+                    all.items().add(one);
+                    yield all;
+                }
+                case "Peripherals" -> {
+                    final Values.Obj one = new Values.Obj("CcPeripheral");
+                    one.set("Name", "monitor_0");
+                    one.set("Type", "monitor");
+                    final Values.ListValue methods = new Values.ListValue();
+                    methods.items().addAll(List.of("write", "setCursorPos"));
+                    one.set("Methods", methods);
+                    final Values.ListValue all = new Values.ListValue();
+                    all.items().add(one);
+                    yield all;
+                }
+                case "Call" -> "done";
+                default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, "Gateway has no " + name);
+            };
+        }
+    }
+
+    private static final String PRELUDE =
+            "using System.*; using System.IO.*; using System.Collections.*; using System.Network.*; namespace Tests; ";
+
+    private static ProgramImage load(final String source) {
+        final SigmaCompiler.Result built =
+                SigmaCompiler.compile(List.of(new SourceFile("Bridge.sgs", PRELUDE + source)));
+        assertTrue(built.ok(), () -> String.join("\n", built.lines()));
+        final AsmReader reader = new AsmReader(built.assembly());
+        final AsmProgram program = reader.read();
+        assertFalse(reader.hasProblems(), () -> String.join("\n",
+                reader.problems().stream().map(ListingProblem::format).toList()) + "\n" + built.assembly());
+        return ProgramImage.of(program);
+    }
+
+    private static Process start(final ProgramImage program, final Machine machine) {
+        final Process process = new Process(program, ROOM, machine);
+        process.begin(process.create(program.entryPoint()), "OnInit");
+        process.step(PLENTY);
+        return process;
+    }
+
+    /** A program that asks its Gateway everything there is to ask, and listens for what comes back. */
+    private static final String BRIDGE = """
+            class Bridge : IScript {
+                public void OnInit() {
+                    Console.PrintLine("online " + Gateway.Online);
+                    Console.PrintLine("first " + Gateway.Current);
+                    Console.PrintLine("names " + Gateway.Names().Count);
+                    Console.PrintLine("picked " + Gateway.Select("west"));
+                    Console.PrintLine("now " + Gateway.Current);
+                    foreach (CcComputer one in Gateway.Computers()) {
+                        Console.PrintLine("computer " + one.Id + " " + one.Label + " " + one.Online);
+                    }
+                    foreach (CcPeripheral device in Gateway.Peripherals()) {
+                        Console.PrintLine("device " + device.Name + " " + device.Type + " " + device.Methods.Count);
+                    }
+                    Console.PrintLine("called " + Gateway.Call("monitor_0", "setCursorPos", 1, 2));
+                    Console.PrintLine("power " + Gateway.TurnOn(3) + Gateway.Shutdown(3) + Gateway.Reboot(3));
+                    Console.PrintLine("sent " + Gateway.Send(3, "hello"));
+                    Gateway.OnMessage(Heard);
+                }
+                void Heard(GatewayMessage said) {
+                    Console.PrintLine("heard " + said.From + " " + said.Text + " " + said.Tick);
+                }
+                public void OnTick() { }
+                public void OnDestroy() { }
+            }
+            """;
+
+    @Test
+    void gateway_answersEverythingAProgramAsksOfIt() {
+        final Machine machine = new Machine();
+        final Process process = start(load(BRIDGE), machine);
+        assertEquals(Process.State.FINISHED, process.state(), process::message);
+        assertEquals(List.of("online true", "first north", "names 2", "picked true", "now west",
+                "computer 3 turtle bay true", "device monitor_0 monitor 2", "called done",
+                "power truetruetrue", "sent true"), process.console());
+    }
+
+    @Test
+    void select_makesEveryCallAfterwardsGoThroughThatGateway() {
+        final Machine machine = new Machine();
+        final Process process = start(load(BRIDGE), machine);
+        assertEquals("west", process.gatewayName());
+        assertTrue(machine.asked.contains("Select:[west]"), machine.asked.toString());
+        assertTrue(machine.asked.contains("Current:[]"), "the first question is about whichever comes first");
+        assertTrue(machine.asked.contains("Current:west[]"), "and afterwards about the one it chose");
+        assertTrue(machine.asked.contains("Call:west[monitor_0, setCursorPos, 1, 2]"),
+                "a call goes through the chosen Gateway with everything the method takes");
+    }
+
+    @Test
+    void onMessage_handsTheProgramWhatAComputerSaid() {
+        final Machine machine = new Machine();
+        final Process process = start(load(BRIDGE), machine);
+        assertTrue(process.deliverGatewayMessage(3, "hello", 7), "the program is listening");
+        process.step(PLENTY);
+        assertEquals("heard 3 hello 7", process.console().getLast());
+    }
+
+    @Test
+    void save_keepsTheChosenGatewayAndTheListening() {
+        final Machine machine = new Machine();
+        final ProgramImage program = load(BRIDGE);
+        Process process = start(program, machine);
+        final Snapshot shot = process.save();
+        process = Process.restore(program, shot, machine);
+        assertEquals("west", process.gatewayName());
+        assertTrue(process.deliverGatewayMessage(5, "again", 9), "it is still listening after the save");
+        process.step(PLENTY);
+        assertEquals("heard 5 again 9", process.console().getLast());
+    }
+
+    @Test
+    void gateway_saysSoOnAMachineThatHasNone() {
+        final Process process = start(load("""
+                class Bridge : IScript {
+                    public void OnInit() { Console.PrintLine("online " + Gateway.Online); }
+                    public void OnTick() { }
+                    public void OnDestroy() { }
+                }
+                """), new Machine(false));
+        assertEquals(Process.State.HALTED, process.state());
+        assertTrue(process.message().contains("Gateway"), process.message());
+    }
+}

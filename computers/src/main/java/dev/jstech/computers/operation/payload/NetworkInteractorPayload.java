@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.program.ComputerSettings;
+import dev.jstech.computers.storage.StorageKey;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -25,7 +27,7 @@ import java.util.List;
  * @param usedItems       the network's used storage in item-equivalents
  * @param serverCount     the number of Servers on the network
  * @param crafts          the network's craft catalog (Crafting tab), with per-entry availability dots
- * @param favourites      the data this computer keeps starred, by {@link dev.jstech.computers.storage.StorageKey#id()}
+ * @param favourites      the data this computer keeps starred, by {@link StorageKey#id()}
  * @param capacityItems   the network's whole storage in item-equivalents, for the storage gauge
  * @param usedMb          the same use in megabytes, which is what the drives' labels say
  * @param capacityMb      the same whole in megabytes; counted by the drives, since what an item costs
@@ -38,7 +40,7 @@ public record NetworkInteractorPayload(List<NetworkItemEntry> networkItems, List
         implements CustomPacketPayload {
 
     public static final int MAX_ENTRIES = 512;
-    public static final int MAX_FAVOURITES = dev.jstech.computers.program.ComputerSettings.MAX_FAVOURITES;
+    public static final int MAX_FAVOURITES = ComputerSettings.MAX_FAVOURITES;
     public static final int MAX_ID = 128;
 
     public static final CustomPacketPayload.Type<NetworkInteractorPayload> TYPE =
@@ -75,6 +77,17 @@ public record NetworkInteractorPayload(List<NetworkItemEntry> networkItems, List
         final long capacityMb = buf.readVarLong();
         return new NetworkInteractorPayload(network, local, online, used, servers, crafts, favourites, capacity,
                 usedMb, capacityMb);
+    }
+
+    /*
+     * Copied, because this is built straight from the index the network keeps and then written to the client
+     * while the network goes on changing it. What the terminal shows is the picture it was sent.
+     */
+    public NetworkInteractorPayload {
+        networkItems = List.copyOf(networkItems);
+        localItems = List.copyOf(localItems);
+        crafts = List.copyOf(crafts);
+        favourites = List.copyOf(favourites);
     }
 
     @Override

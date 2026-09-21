@@ -8,11 +8,13 @@
 package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
+import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.network.DataTier;
 
 import java.util.EnumSet;
 import java.util.Set;
+import net.minecraft.world.item.Item;
 
 /**
  * The Supercomputer Rack: the same 8U cabinet as the Server Rack (units, front slots, KVM, the
@@ -39,8 +41,8 @@ public class SupercomputerRackBlock extends ServerRackBlock {
     }
 
     @Override
-    protected net.minecraft.world.item.Item blockItem() {
-        return dev.jstech.computers.ComputingModule.SUPERCOMPUTER_RACK_ITEM.get();
+    protected Item blockItem() {
+        return ComputingModule.SUPERCOMPUTER_RACK_ITEM.get();
     }
 
     @Override

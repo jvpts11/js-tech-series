@@ -7,7 +7,20 @@
  */
 package dev.jstech.computers.os.media;
 
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.os.Branding;
+import dev.jstech.computers.os.MinSpecTooltip;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.PackageManagerKind;
+import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.ProgramKind;
+import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.SoftwareHouse;
+import dev.jstech.computers.os.fs.FilesystemContents;
+import dev.jstech.computers.os.fs.FilesystemTooltip;
 import dev.jstech.computers.storage.ServerStorageContents;
+import java.util.ArrayList;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -59,11 +72,11 @@ public class FormattedMediaItem extends MediaItem {
          * medium carrying files reads as such, not as a blank installer. The installer/data lines only
          * show for a medium with no files of its own.
          */
-        final dev.jstech.computers.os.fs.FilesystemContents fs = stack.getOrDefault(
-                dev.jstech.computers.ComputingModule.FILESYSTEM.get(),
-                dev.jstech.computers.os.fs.FilesystemContents.EMPTY);
+        final FilesystemContents fs = stack.getOrDefault(
+                ComputingModule.FILESYSTEM.get(),
+                FilesystemContents.EMPTY);
         if (!fs.files().isEmpty()) {
-            dev.jstech.computers.os.fs.FilesystemTooltip.append(fs, tooltip);
+            FilesystemTooltip.append(fs, tooltip);
             super.appendHoverText(stack, context, tooltip, flag);
             return;
         }
@@ -71,19 +84,19 @@ public class FormattedMediaItem extends MediaItem {
         final ResourceLocation payload = MediaItem.payload(stack);
         switch (MediaItem.kind(stack)) {
             case OS_INSTALL -> {
-                final dev.jstech.computers.os.OsDef os =
-                        payload == null ? null : dev.jstech.computers.os.OsRegistry.getOs(payload);
+                final OsDef os =
+                        payload == null ? null : OsRegistry.getOs(payload);
                 if (payload != null) {
                     tooltip.add(Component.translatable("os.jsc." + payload.getPath())
                             .withStyle(ChatFormatting.AQUA)
                             .append(os == null ? Component.empty() : Component.literal("  "
                                     + os.house().name() + " · "
-                                    + dev.jstech.computers.os.Branding.osYear(os.displayName(), os.minEra()))
+                                    + Branding.osYear(os.displayName(), os.minEra()))
                                     .withStyle(ChatFormatting.GRAY)));
                     tooltip.add(Component.literal("Bootable installer" + (os == null ? "" : " · "
-                            + dev.jstech.computers.os.MinSpecTooltip.eraLabel(os.minEra()) + " era"))
+                            + MinSpecTooltip.eraLabel(os.minEra()) + " era"))
                             .withStyle(ChatFormatting.GREEN));
-                    tooltip.addAll(dev.jstech.computers.os.MinSpecTooltip.osMinSpec(payload));
+                    tooltip.addAll(MinSpecTooltip.osMinSpec(payload));
                     // The id a shell or a manifest names it by, so a stick on a shelf is enough to know it.
                     tooltip.add(Component.literal("Package: " + payload.getPath()).withStyle(ChatFormatting.GOLD));
                     tooltip.add(Component.literal(insertHint(format) + ", then install from the firmware or This PC.")
@@ -94,8 +107,8 @@ public class FormattedMediaItem extends MediaItem {
             }
             case PROGRAM_INSTALL -> {
                 if (payload != null) {
-                    final dev.jstech.computers.os.ProgramSpec spec =
-                            dev.jstech.computers.os.OsRegistry.getProgram(payload);
+                    final ProgramSpec spec =
+                            OsRegistry.getProgram(payload);
                     /*
                      * Lead with the program's friendly, translated name, then its house and the year it was
                      * written. A disc of a bundled program has no shipper to lean on, so it says Midsoft.
@@ -103,16 +116,16 @@ public class FormattedMediaItem extends MediaItem {
                     tooltip.add(Component.translatable("program.jsc." + payload.getPath())
                             .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
                             .append(spec == null ? Component.empty() : Component.literal("  "
-                                    + spec.houseOr(dev.jstech.computers.os.SoftwareHouse.MIDSOFT).name()
-                                    + " · " + dev.jstech.computers.os.Branding.year(spec.era()))
+                                    + spec.houseOr(SoftwareHouse.MIDSOFT).name()
+                                    + " · " + Branding.year(spec.era()))
                                     .withStyle(ChatFormatting.GRAY)));
                     tooltip.add(Component.literal(spec != null
-                            && spec.kind() == dev.jstech.computers.os.ProgramKind.SERVICE
+                            && spec.kind() == ProgramKind.SERVICE
                             ? "Service disc" : "Program disc").withStyle(ChatFormatting.YELLOW));
                     // What it actually does, so a disc is not just a name on a shelf.
                     tooltip.add(Component.translatable("program.jsc." + payload.getPath() + ".desc")
                             .withStyle(ChatFormatting.GRAY));
-                    tooltip.addAll(dev.jstech.computers.os.MinSpecTooltip.programMinSpec(payload));
+                    tooltip.addAll(MinSpecTooltip.programMinSpec(payload));
                     if (spec != null) {
                         /*
                          * The package id and the command that installs it: the only other place to learn
@@ -123,8 +136,7 @@ public class FormattedMediaItem extends MediaItem {
                                 .withStyle(ChatFormatting.DARK_GRAY));
                     }
                     tooltip.add(Component.literal(insertHint(format) + ": run "
-                            + (spec != null && spec.platforms().equals(java.util.Set.of(
-                                    dev.jstech.computers.os.Platform.LINUX))
+                            + (spec != null && Platform.onlyUnixLike(spec.platforms())
                                     ? "install.sh" : (format == MediaFormat.FLOPPY || format == MediaFormat.CD
                                             ? "SETUP.EXE" : "setup.exe"))
                             + ", or Install from This PC.")
@@ -156,19 +168,26 @@ public class FormattedMediaItem extends MediaItem {
      * The package-manager commands that install {@code spec}, one per platform family it runs on: the
      * Frames manager first, then the Linux form. A program with no platform that has a manager gets none.
      */
-    public static List<String> installCommands(final dev.jstech.computers.os.ProgramSpec spec) {
-        final List<String> commands = new java.util.ArrayList<>(2);
-        if (spec.platforms().contains(dev.jstech.computers.os.Platform.FRAMES)) {
-            commands.add(command(dev.jstech.computers.os.PackageManagerKind.PCKMGR, spec));
+    public static List<String> installCommands(final ProgramSpec spec) {
+        final List<String> commands = new ArrayList<>(2);
+        if (spec.platforms().contains(Platform.FRAMES)) {
+            commands.add(command(PackageManagerKind.PCKMGR, spec));
         }
-        if (spec.platforms().contains(dev.jstech.computers.os.Platform.LINUX)) {
-            commands.add(command(dev.jstech.computers.os.PackageManagerKind.APT, spec));
+        if (spec.platforms().contains(Platform.LINUX)) {
+            commands.add(command(PackageManagerKind.APT, spec));
+        }
+        if (spec.platforms().contains(Platform.FREEBSD)) {
+            commands.add(command(PackageManagerKind.PKG, spec));
+        }
+        // System V has no manager that asks a network: its tool reads the medium this is written on.
+        if (spec.platforms().contains(Platform.UNIX)) {
+            commands.add("installpkg");
         }
         return commands;
     }
 
-    private static String command(final dev.jstech.computers.os.PackageManagerKind manager,
-                                  final dev.jstech.computers.os.ProgramSpec spec) {
+    private static String command(final PackageManagerKind manager,
+                                  final ProgramSpec spec) {
         final String verb = manager.installVerb();
         return manager.command() + (verb.isEmpty() ? " " : " " + verb + " ") + spec.commandName();
     }

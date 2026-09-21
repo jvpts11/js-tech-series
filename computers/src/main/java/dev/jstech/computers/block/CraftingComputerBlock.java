@@ -10,14 +10,23 @@ package dev.jstech.computers.block;
 import com.mojang.serialization.MapCodec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.menu.CraftingComputerMenu;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.IRearFacingDataPort;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
+import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -28,6 +37,7 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -48,12 +58,12 @@ public class CraftingComputerBlock extends HorizontalDirectionalBlock
      * board the machine accepts: only a board of this era (and of the era's form factor) installs. The
      * base block is the Standard era; the Vintage and Legacy variants override this.
      */
-    public dev.jstech.core.tier.HardwareEra era() {
-        return dev.jstech.core.tier.HardwareEra.STANDARD;
+    public HardwareEra era() {
+        return HardwareEra.STANDARD;
     }
 
     @Override
-    public dev.jstech.core.tier.HardwareEra chassisEra() {
+    public HardwareEra chassisEra() {
         return era();
     }
 
@@ -68,17 +78,17 @@ public class CraftingComputerBlock extends HorizontalDirectionalBlock
     }
 
     @Override
-    public java.util.Set<DataTier> acceptedCableTiers() {
+    public Set<DataTier> acceptedCableTiers() {
         /*
          * Data via Ethernet (rear port, through a Personal Router to the backbone) plus the crafting cable
          * that runs to the Crafting Switches.
          */
-        return java.util.Set.of(DataTier.T1_ETHERNET, DataTier.CRAFTING);
+        return Set.of(DataTier.T1_ETHERNET, DataTier.CRAFTING);
     }
 
     @Override
-    public boolean connectsOnFace(final net.minecraft.world.level.block.state.BlockState state,
-                                  final net.minecraft.core.Direction face, final DataTier tier) {
+    public boolean connectsOnFace(final BlockState state,
+                                  final Direction face, final DataTier tier) {
         /*
          * The crafting cable attaches on any face (the machine-delivery search walks out of all six);
          * the data cable keeps the rear-only port.
@@ -97,27 +107,27 @@ public class CraftingComputerBlock extends HorizontalDirectionalBlock
     }
 
     @Override
-    protected net.minecraft.world.InteractionResult useWithoutItem(
+    protected InteractionResult useWithoutItem(
             final BlockState state, final Level level, final BlockPos pos,
-            final net.minecraft.world.entity.player.Player player,
-            final net.minecraft.world.phys.BlockHitResult hit) {
-        if (!level.isClientSide() && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
+            final Player player,
+            final BlockHitResult hit) {
+        if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof CraftingComputerBlockEntity computer) {
             serverPlayer.openMenu(
-                    new net.minecraft.world.SimpleMenuProvider(
-                            (id, inventory, p) -> new dev.jstech.computers.menu.CraftingComputerMenu(
+                    new SimpleMenuProvider(
+                            (id, inventory, p) -> new CraftingComputerMenu(
                                     id, inventory, computer),
-                            net.minecraft.network.chat.Component.translatable("block.jsc.crafting_computer")),
+                            Component.translatable("block.jsc.crafting_computer")),
                     buf -> buf.writeBlockPos(pos));
         }
-        return net.minecraft.world.InteractionResult.sidedSuccess(level.isClientSide());
+        return InteractionResult.sidedSuccess(level.isClientSide());
     }
 
     @Override
     protected void onRemove(final BlockState state, final Level level, final BlockPos pos,
                             final BlockState newState, final boolean movedByPiston) {
         if (!state.is(newState.getBlock())
-                && level instanceof net.minecraft.server.level.ServerLevel serverLevel
+                && level instanceof ServerLevel serverLevel
                 && level.getBlockEntity(pos) instanceof CraftingComputerBlockEntity computer) {
             computer.onBroken(serverLevel); // drop this computer's network-node registration
         }
@@ -126,9 +136,9 @@ public class CraftingComputerBlock extends HorizontalDirectionalBlock
 
     @Override
     public BlockState playerWillDestroy(final Level level, final BlockPos pos, final BlockState state,
-                                        final net.minecraft.world.entity.player.Player player) {
+                                        final Player player) {
         // Spill the installed hardware so a broken Crafting Computer never destroys its components.
-        if (level instanceof net.minecraft.server.level.ServerLevel serverLevel
+        if (level instanceof ServerLevel serverLevel
                 && !player.getAbilities().instabuild
                 && level.getBlockEntity(pos) instanceof CraftingComputerBlockEntity computer) {
             BlockDrops.spill(serverLevel, pos, computer.getHardware());

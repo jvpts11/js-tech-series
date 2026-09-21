@@ -7,10 +7,11 @@
  */
 package dev.jstech.computers.client.os;
 
-import dev.jstech.computers.cannon.CannonSemantics;
-import dev.jstech.computers.cannon.SourceFile;
-import dev.jstech.computers.cannon.sem.IMemberSymbol;
-import dev.jstech.computers.cannon.sem.NamedType;
+import dev.jstech.computers.sigma.LanguageLevel;
+import dev.jstech.computers.sigma.SigmaSemantics;
+import dev.jstech.computers.sigma.SourceFile;
+import dev.jstech.computers.sigma.sem.IMemberSymbol;
+import dev.jstech.computers.sigma.sem.NamedType;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.os.edit.ProblemReport;
@@ -23,9 +24,11 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.TextField;
+import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -84,7 +87,7 @@ public final class ExposureApp implements IDesktopApp {
     private final TextField askField = new TextField(64);
     private final Button askOk;
     private String askTitle = "";
-    private java.util.function.Consumer<String> askAction = value -> { };
+    private Consumer<String> askAction = value -> { };
 
     /* The question asked before a file with changes is closed. */
     private final Popup askClose = new Popup(() -> "Save changes to " + closingName() + "?", 176, 40)
@@ -205,7 +208,7 @@ public final class ExposureApp implements IDesktopApp {
     /* The file actions */
 
     private void newFile() {
-        ask("New File", "untitled.can", name -> {
+        ask("New File", "untitled.sgs", name -> {
             if (!name.isEmpty()) {
                 createFile(name);
             }
@@ -315,11 +318,18 @@ public final class ExposureApp implements IDesktopApp {
         if (doc == null) {
             return;
         }
+        final LanguageLevel level = LanguageLevel.ofSource(doc.path());
+        if (level == null) {
+            this.workspace.say(doc.name() + " is not a program to run");
+            return;
+        }
         this.workspace.save();
         final String source = doc.path();
         final int dot = source.lastIndexOf('.');
         final String built = (dot > source.lastIndexOf('/') ? source.substring(0, dot) : source) + ".asm";
-        DesktopScreen.requestTypeAtTerminal(List.of("cannonc " + quote(source), "cannon run " + quote(built)));
+        // Each language is built by its own compiler, so a Σ source is held to what Σ has.
+        DesktopScreen.requestTypeAtTerminal(
+                List.of(level.compiler() + " " + quote(source), "sigma run " + quote(built)));
     }
 
     private static String quote(final String path) {
@@ -342,7 +352,7 @@ public final class ExposureApp implements IDesktopApp {
     }
 
     /** Asks for one thing in a small window and does something with the answer. */
-    private void ask(final String title, final String initial, final java.util.function.Consumer<String> action) {
+    private void ask(final String title, final String initial, final Consumer<String> action) {
         this.askTitle = title;
         this.askAction = action;
         this.askField.set(initial);
@@ -358,7 +368,7 @@ public final class ExposureApp implements IDesktopApp {
     }
 
     private void layoutAskClose(final Popup p) {
-        final List<dev.jstech.core.client.gui.component.UiComponent> c = p.children();
+        final List<UiComponent> c = p.children();
         final int by = p.bottom() - 15;
         c.get(0).setBounds(p.right() - 134, by, 38, 11);
         c.get(1).setBounds(p.right() - 92, by, 50, 11);
@@ -458,8 +468,8 @@ public final class ExposureApp implements IDesktopApp {
             return this.outlineRows;
         }
         final List<Outline> rows = new ArrayList<>();
-        if (doc.path().toLowerCase(java.util.Locale.ROOT).endsWith(".can")) {
-            for (final NamedType type : CannonSemantics.check(
+        if (LanguageLevel.ofSource(doc.path()) != null) {
+            for (final NamedType type : SigmaSemantics.check(
                     List.of(new SourceFile(doc.name(), text))).model().declaredTypes()) {
                 rows.add(new Outline(0, type.name(), 0));
                 for (final IMemberSymbol member : type.members()) {

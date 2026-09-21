@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.program.iql;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,12 +33,12 @@ public final class IqlDefinitionParser {
      * Splits a procedure body into its statements: {@code "{ a; b }"} becomes {@code ["a", "b"]}, and a
      * bare statement (no braces) becomes a single-element list. Empty statements are dropped.
      */
-    public static java.util.List<String> splitBody(final String body) {
+    public static List<String> splitBody(final String body) {
         String inner = body.strip();
         if (inner.startsWith("{") && inner.endsWith("}")) {
             inner = inner.substring(1, inner.length() - 1);
         }
-        final java.util.List<String> statements = new java.util.ArrayList<>();
+        final List<String> statements = new ArrayList<>();
         for (final String part : inner.split(";")) {
             final String statement = part.strip();
             if (!statement.isEmpty()) {

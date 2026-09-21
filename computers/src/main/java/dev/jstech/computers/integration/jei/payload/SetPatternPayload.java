@@ -39,6 +39,11 @@ public record SetPatternPayload(BlockPos host, BlockPos monitorPos, List<ItemSta
                     ByteBufCodecs.stringUtf8(MAX_ID), SetPatternPayload::recipeId,
                     SetPatternPayload::new);
 
+    /* Copied on the way in, so what arrives from a client cannot change under whoever is acting on it. */
+    public SetPatternPayload {
+        grid = List.copyOf(grid);
+    }
+
     @Override
     public Type<? extends CustomPacketPayload> type() {
         return TYPE;

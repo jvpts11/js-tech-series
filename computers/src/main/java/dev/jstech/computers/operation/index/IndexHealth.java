@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.operation.index;
 
+import dev.jstech.core.id.IStableId;
+import dev.jstech.core.id.StableIds;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -27,13 +30,31 @@ import java.util.Set;
 public final class IndexHealth {
 
     /** What the index is currently worth trusting. */
-    public enum State {
+    public enum State implements IStableId {
         /** Consistent: every entry was confirmed by the last pass. */
-        OK,
+        OK(0),
         /** Hot events left entries the index has not re-read. Recommends a reindex. */
-        STALE,
+        STALE(1),
         /** Mass removals left ghost entries pointing at storage that is gone. Recommends a vacuum. */
-        FRAGMENTED
+        FRAGMENTED(2);
+
+        private static final StableIds<State> IDS = StableIds.of(State.class);
+
+        private final int id;
+
+        State(final int id) {
+            this.id = id;
+        }
+
+        @Override
+        public int id() {
+            return id;
+        }
+
+        /** The state that declares {@code id}; an id no state declares reads as {@link #OK}. */
+        public static State byId(final int id) {
+            return IDS.byId(id, OK);
+        }
     }
 
     /** One flagged item type and the machine the doubt came from. */

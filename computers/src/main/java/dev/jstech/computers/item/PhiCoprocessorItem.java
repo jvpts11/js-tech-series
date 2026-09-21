@@ -9,6 +9,7 @@ package dev.jstech.computers.item;
 
 import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.PhiCoprocessorSpec;
+import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -35,7 +36,7 @@ public class PhiCoprocessorItem extends SpecItem<PhiCoprocessorSpec> implements 
                                 final List<Component> tooltip, final TooltipFlag flag) {
         final PhiCoprocessorSpec spec = spec();
         tooltip.add(Component.literal(spec.cores() + " cores @ "
-                        + String.format(java.util.Locale.ROOT, "%.2f", spec.mhz() / 1000.0) + " GHz")
+                        + String.format(Locale.ROOT, "%.2f", spec.mhz() / 1000.0) + " GHz")
                 .withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.literal("Supercomputer slots 1-" + spec.maxSlot())
                 .withStyle(ChatFormatting.GOLD));

@@ -40,6 +40,11 @@ public record SoftwareHouse(String name, String legalName) {
     public static final SoftwareHouse DEBIAN_CIRCLE = new SoftwareHouse("Debian Circle", "the Debian Circle");
     public static final SoftwareHouse ARCH_COLLECTIVE = new SoftwareHouse("Arch Collective", "the Arch Collective");
     public static final SoftwareHouse GENTOO_FOUNDRY = new SoftwareHouse("Gentoo Foundry", "the Gentoo Foundry");
+    public static final SoftwareHouse DAEMON_FOUNDATION =
+            new SoftwareHouse("Daemon Foundation", "the Daemon Foundation");
+    public static final SoftwareHouse BELLWETHER_LABS = new SoftwareHouse("Bellwether Labs", "Bellwether Labs");
+    public static final SoftwareHouse OPEN_DESK_CONSORTIUM =
+            new SoftwareHouse("Open Desk Consortium", "the Open Desk Consortium");
     public static final SoftwareHouse KDE_GUILD = new SoftwareHouse("KDE Guild", "the KDE Guild");
     public static final SoftwareHouse GNOME_TRUST = new SoftwareHouse("GNOME Trust", "the GNOME Trust");
     /** Cinnamon's house. */
@@ -50,9 +55,9 @@ public record SoftwareHouse(String name, String legalName) {
     public static final SoftwareHouse VAULTIS = new SoftwareHouse("Vaultis", "Vaultis Storage Inc.");
     /** The hardware house's own network tools. */
     public static final SoftwareHouse JSC = new SoftwareHouse(Branding.HARDWARE_HOUSE, Branding.HARDWARE_HOUSE);
-    /** The open house behind the Cannon compiler and its runtime, owned by nobody who sells hardware. */
-    public static final SoftwareHouse CANNON_FOUNDATION =
-            new SoftwareHouse("Cannon Foundation", "the Cannon Foundation");
+    /** The open house behind the Σ# compiler and its runtime, owned by nobody who sells hardware. */
+    public static final SoftwareHouse SIGMA_FOUNDATION =
+            new SoftwareHouse("Sigma Foundation", "the Sigma Foundation");
     /** The house behind Exposure, the editor that shows you every complaint at once. */
     public static final SoftwareHouse DAYLIGHT_FOUNDATION =
             new SoftwareHouse("Daylight Foundation", "the Daylight Foundation");

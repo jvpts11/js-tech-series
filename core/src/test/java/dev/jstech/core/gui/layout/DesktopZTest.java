@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Core.
  */
 package dev.jstech.core.gui.layout;
 
@@ -169,6 +169,20 @@ class DesktopZTest {
         final int backItem = DesktopZ.windowZ(0, 2) + DesktopZ.BAND_COUNT;
         assertTrue(backItem < DesktopZ.windowZ(1, 2),
                 "a background window's item and count must stay behind the window in front of it");
+    }
+
+    @Test
+    void flatCountOffset_landsInFrontOfTheItemAndNotBehindTheWindow() {
+        /*
+         * A label drawn where a count goes lifts nothing by itself, so it takes the band directly. Handed
+         * the offset meant for renderItemDecorations it would sit DECORATION_LIFT behind the window, which
+         * is where a network item's total went and why nobody ever saw one.
+         */
+        assertEquals(DesktopZ.BAND_COUNT, DesktopZ.flatCountOffset());
+        assertTrue(DesktopZ.flatCountOffset() > DesktopZ.BAND_ITEM,
+                "a flat count must sit in front of the model it belongs to");
+        assertTrue(DesktopZ.flatCountOffset() > 0,
+                "a flat count must sit in front of the window that drew it, never behind it");
     }
 
     @Test

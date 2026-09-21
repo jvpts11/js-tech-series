@@ -7,18 +7,23 @@
  */
 package dev.jstech.computers.client;
 
-import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.gui.MonitorGlass;
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
+import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.computers.os.InstallMode;
+import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.core.tier.HardwareEra;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,10 +44,10 @@ import java.util.List;
  * medium onto the default disk, then close), which the client journey tests drive through
  * {@link #installButtonCenter()}.
  */
-public class FirmwareScreen extends Screen {
+public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
-    private static final int W = 340;
-    private static final int H = 214;
+    private static final int W = MonitorGlass.WIDTH;
+    private static final int H = MonitorGlass.HEIGHT;
 
     // Vintage: green phosphor CLI BIOS
     private static final int CLI_BG     = 0xFF021207;
@@ -80,14 +85,21 @@ public class FirmwareScreen extends Screen {
     private static final int PAGE_STORAGE = 3;
 
     /** The array mode highlighted on the storage page, and where its rows were drawn. */
-    private int storageSel;
+    private RaidMode storageSel = RaidMode.NONE;
     private int storageRowY;
     private int storageRowH = 10;
     private static final String[] PAGES = {"Boot", "Boot Order", "Hardware", "Storage"};
     private static final int ROW_H = 12;
 
+    /** How often the setup asks the machine what it holds, in ticks: often enough to see a disc swapped. */
+    private static final int ASK_EVERY = 10;
+
     /** The screen currently open, so the state reply finds it. */
     private static FirmwareScreen active;
+
+    /** The setup the machine last described, kept until the session that shows it is built. */
+    @Nullable
+    private static Setup pending;
 
     private final BlockPos computerPos;
     private final BlockPos monitorPos;
@@ -97,6 +109,8 @@ public class FirmwareScreen extends Screen {
     private FirmwareStatePayload state;
     private int page = PAGE_BOOT;
     private int selected;
+    /** Ticks since the machine was last asked what it holds. */
+    private int sinceAsked;
 
     // Hit boxes recomputed each frame for the active layout.
     private final List<int[]> rowHits = new ArrayList<>();
@@ -108,13 +122,32 @@ public class FirmwareScreen extends Screen {
     private String notice = "";
     private long noticeUntil;
 
-    public FirmwareScreen(final BlockPos computerPos, final BlockPos monitorPos, final FirmwareKind kind,
-                          final String machineName) {
-        super(Component.literal("Firmware Setup"));
-        this.computerPos = computerPos;
-        this.monitorPos = monitorPos;
-        this.kind = kind;
-        this.machineName = machineName;
+    public FirmwareScreen(final MonitorSessionMenu session, final Inventory inventory, final Component title) {
+        super(session, inventory, title);
+        this.imageWidth = W;
+        this.imageHeight = H;
+        this.titleLabelX = OFF_SCREEN;
+        this.inventoryLabelY = OFF_SCREEN;
+        this.computerPos = session.hostPos();
+        this.monitorPos = session.monitorPos();
+        final Setup setup = pending != null ? pending
+                : new Setup(FirmwareKind.forEra(
+                        session.hardwareEra() == null ? HardwareEra.STANDARD : session.hardwareEra()), "");
+        this.kind = setup.kind();
+        this.machineName = setup.machineName();
+    }
+
+    /** Which firmware this machine wears and what it is called, said before its setup is opened. */
+    public static void expect(final FirmwareKind kind, final String machineName) {
+        pending = new Setup(kind, machineName);
+    }
+
+    /** One machine's setup: the look its board's age gives it, and the name written across the top. */
+    private record Setup(FirmwareKind kind, String machineName) {
+
+        Setup {
+            machineName = machineName == null ? "" : machineName;
+        }
     }
 
     @Override
@@ -122,6 +155,24 @@ public class FirmwareScreen extends Screen {
         super.init();
         active = this;
         PacketDistributor.sendToServer(new RequestFirmwareStatePayload(computerPos));
+    }
+
+    /**
+     * Asks the machine what it has again, now and then, while the setup is open.
+     *
+     * <p>A setup reads the machine every time it is looked at, because what is in the machine is what a player
+     * is in there to change: taking one installation disc out of a drive and putting another in used to leave
+     * the boot list saying the disc that had been removed, so booting it installed the wrong system. The list
+     * was read once when the screen opened and never again.
+     */
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        this.sinceAsked++;
+        if (this.sinceAsked >= ASK_EVERY) {
+            this.sinceAsked = 0;
+            PacketDistributor.sendToServer(new RequestFirmwareStatePayload(computerPos));
+        }
     }
 
     @Override
@@ -183,11 +234,9 @@ public class FirmwareScreen extends Screen {
         // On the storage page Enter applies the highlighted array mode; there are no boot entries there.
         if (page == PAGE_STORAGE) {
             if (state != null && state.raid().present()
-                    && (storageSel == 0 || state.raid().drives()
-                            >= dev.jstech.computers.rack.RaidMode
-                                    .values()[storageSel].minDrives())) {
-                PacketDistributor.sendToServer(new FirmwareActionPayload(computerPos, monitorPos,
-                        FirmwareActionPayload.ACTION_RAID_MODE, storageSel, -1));
+                    && (storageSel == RaidMode.NONE || state.raid().drives() >= storageSel.minDrives())) {
+                PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos,
+                        FirmwareActionPayload.ACTION_RAID_MODE, storageSel.id(), -1));
             }
             return;
         }
@@ -197,7 +246,7 @@ public class FirmwareScreen extends Screen {
         }
         if (page == PAGE_ORDER) {
             if (e.kind() == FirmwareStatePayload.KIND_DISK) {
-                PacketDistributor.sendToServer(new FirmwareActionPayload(computerPos, monitorPos,
+                PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos,
                         FirmwareActionPayload.ACTION_SET_BOOT, e.ref(), -1));
             }
             return;
@@ -210,14 +259,22 @@ public class FirmwareScreen extends Screen {
          * installation sequence so both routes to a new system look and feel the same. A live medium
          * (Arch, Gentoo) really does just boot, and its system is put on the disk by hand afterwards.
          */
-        if (e.kind() == FirmwareStatePayload.KIND_MEDIA && e.installMode() == 0) {
+        if (e.kind() == FirmwareStatePayload.KIND_MEDIA && e.installMode() == InstallMode.GUIDED.id()) {
             openInstaller(e.label(), e.ref());
             return;
         }
         final int action = e.kind() == FirmwareStatePayload.KIND_DISK
                 ? FirmwareActionPayload.ACTION_BOOT_DISK : FirmwareActionPayload.ACTION_BOOT_MEDIA;
-        PacketDistributor.sendToServer(new FirmwareActionPayload(computerPos, monitorPos, action, e.ref(), -1));
-        onClose();
+        PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos, action, e.ref(), -1));
+        /*
+         * And nothing else: the machine puts the next screen up, and this one goes when that one arrives.
+         * Closing here as well sent the server a close right behind the request, and the server handles them
+         * in that order: it opened the self-test for this player and then closed it again, while the client,
+         * which had already been told to show it, showed it. The player sat at a screen the server did not
+         * know they were looking at, so the self-test ended and handed over to nobody, and a terminal
+         * reached that way answered nothing at all, since no line typed into it came from a screen the
+         * server had open.
+         */
     }
 
     /**
@@ -234,14 +291,14 @@ public class FirmwareScreen extends Screen {
                  * installer anyway, which then played a write the server refused without saying so.
                  */
                 notice(e.installMode() < 0 ? "There is no installer on that medium."
-                        : systemNameOf(e.label()) + " needs " + reasonOf(e.detail()) + " hardware.");
+                        : systemNameOf(e.label()) + " needs " + e.note() + " hardware.");
                 return;
             }
             /*
              * A live/source medium (Arch, Gentoo) has no one-click install: "installing" it means booting
              * its shell and putting the system on the disk by hand, so the action boots the medium.
              */
-            if (e.installMode() != 0) {
+            if (e.installMode() != InstallMode.GUIDED.id()) {
                 activateSelected();
                 return;
             }
@@ -266,21 +323,53 @@ public class FirmwareScreen extends Screen {
         return label.replace(" installer", "").replace(" (live)", "");
     }
 
-    /** The "why not" the server appends to a medium's detail after a dash, or the whole detail. */
-    private static String reasonOf(final String detail) {
-        final int dash = detail.indexOf(" - ");
-        return dash < 0 ? detail : detail.substring(dash + 3);
+    /**
+     * The boot disk as the hardware page names it: the slot, and the system that slot actually boots.
+     *
+     * <p>A slot number on its own tells a player which disk the machine reaches for and not what it will get,
+     * which on a machine with a system on each disk is the only part of the answer worth having.
+     */
+    private String bootDiskLine() {
+        if (state == null || state.bootSlot() < 0) {
+            return "automatic";
+        }
+        final String slot = "Disk " + state.bootSlot();
+        for (final FirmwareStatePayload.Entry e : state.entries()) {
+            if (e.kind() == FirmwareStatePayload.KIND_DISK && e.ref() == state.bootSlot()) {
+                return slot + "  (" + e.label() + ")";
+            }
+        }
+        return slot;
     }
 
     /**
-     * Hands over to the installation sequence. Writing the system is that screen's job, so the
-     * player watches it happen instead of the firmware closing and the system appearing later.
+     * Where an entry lives, as a setup page names it: the disk by its slot and its model, or a drive by the
+     * kind of drive it is, with whatever stands in the way of booting it said after.
+     */
+    private static String entryWhere(final FirmwareStatePayload.Entry e) {
+        final String where = e.kind() == FirmwareStatePayload.KIND_DISK
+                ? "Disk " + e.ref() + " · " + e.device() : e.device();
+        return e.note().isEmpty() ? where : where + " - " + e.note();
+    }
+
+    /**
+     * Hands over to the installation sequence: the machine is told to start, and what it answers decides
+     * which screen the player lands on.
+     *
+     * <p>The firmware deliberately opens nothing itself. A system with an installer of its own puts the
+     * machine into it and the player gets that installer, drawn the way that system was drawn; a system
+     * that only copies gets the plain progress; and a machine that writes it there and then goes straight
+     * back to the prompt. The firmware cannot tell which of the three it is, because that depends on the
+     * medium and on what the machine can hold, and only the machine knows both.
+     *
+     * <p>Opening a screen here would settle that question before asking it, which is what used to happen:
+     * every install wore the same box whatever system it was, and the installers each system was drawn for
+     * were never reached from this button.
      */
     private void openInstaller(final String osLabel, final long readerRef) {
         final int target = state == null ? -1 : state.installTargetSlot();
-        final String targetLabel = target < 0 ? "the default disk" : "Disk " + target;
-        minecraft.setScreen(new OsInstallScreen(computerPos, monitorPos, kind, osLabel, targetLabel,
-                target, readerRef));
+        PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos,
+                FirmwareActionPayload.ACTION_INSTALL, readerRef, target));
     }
 
     /** Screen centre of the primary install action drawn on the last frame (client tests click it). */
@@ -292,13 +381,12 @@ public class FirmwareScreen extends Screen {
     // Render
 
     @Override
-    public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
-        renderBackground(g, mouseX, mouseY, partialTick);
+    protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
         rowHits.clear();
         bootHit = null;
         installHit = null;
-        final int x = (width - W) / 2;
-        final int y = (height - H) / 2;
+        final int x = this.leftPos;
+        final int y = this.topPos;
         MonitorFrame.renderBody(g, x, y, W, H, era(), font);
         switch (kind) {
             case CLI_BIOS  -> renderCliBios(g, x, y, mouseX, mouseY);
@@ -307,11 +395,21 @@ public class FirmwareScreen extends Screen {
         }
     }
 
+    /** The machine's own generation, so the bezel is the monitor that machine would really have. */
+    @Override
+    @Nullable
+    protected HardwareEra screenEra() {
+        return this.getMenu().hardwareEra();
+    }
+
+    /**
+     * The same, never null: a firmware whose machine cannot say its age is read back off the look it wears,
+     * which is the one thing about it that always came from that age.
+     */
     private HardwareEra era() {
-        final Minecraft mc = Minecraft.getInstance();
-        if (mc.level != null && mc.level.getBlockEntity(computerPos)
-                instanceof dev.jstech.computers.os.IOsHost host) {
-            return host.displayEra();
+        final HardwareEra said = this.screenEra();
+        if (said != null) {
+            return said;
         }
         return switch (kind) {
             case CLI_BIOS -> HardwareEra.VINTAGE;
@@ -325,8 +423,8 @@ public class FirmwareScreen extends Screen {
     }
 
     private String eraLabel() {
-        return state == null ? "-" : switch (HardwareEra.values()[Math.min(state.eraOrdinal(),
-                HardwareEra.values().length - 1)]) {
+        final HardwareEra era = state == null ? null : HardwareEra.find(state.eraId());
+        return era == null ? "-" : switch (era) {
             case VINTAGE -> "Vintage";
             case LEGACY -> "Legacy";
             case STANDARD -> "Standard";
@@ -343,7 +441,7 @@ public class FirmwareScreen extends Screen {
         border(g, x, y, CLI_DIM);
         final int tx = x + 14;
         int ty = y + 10;
-        final String title = dev.jstech.computers.os.Branding.biosBanner(era());
+        final String title = Branding.biosBanner(era());
         g.drawString(font, title, tx, ty, CLI_BRIGHT, false);
         // The machine's name takes what is left of the line, cut short rather than drawn over the title.
         final int nameRoom = x + W - 14 - (tx + font.width(title) + 10);
@@ -360,7 +458,7 @@ public class FirmwareScreen extends Screen {
         }
         ty += 14;
         if (page == PAGE_HARDWARE) {
-            renderHardwareLines(g, tx, ty, 11, CLI_TEXT, CLI_BRIGHT, CLI_DIM);
+            renderHardwareLines(g, tx, ty, 11, CLI_TEXT, CLI_BRIGHT, CLI_DIM, W - 28);
         } else if (page == PAGE_STORAGE) {
             renderStorageLines(g, tx, ty, 11, CLI_TEXT, CLI_BRIGHT, CLI_DIM, W - 28);
         } else {
@@ -377,7 +475,8 @@ public class FirmwareScreen extends Screen {
                 final boolean sel = i == selected;
                 final String mark = page == PAGE_ORDER && state.bootSlot() == e.ref()
                         && e.kind() == FirmwareStatePayload.KIND_DISK ? "*" : " ";
-                final String line = (sel ? ">" : " ") + mark + (i + 1) + ". " + e.label() + "  (" + e.detail() + ")";
+                final String line = (sel ? ">" : " ") + mark + (i + 1) + ". " + e.label()
+                        + "  (" + entryWhere(e) + ")";
                 rowHits.add(new int[]{tx, ty, W - 28, ROW_H});
                 g.drawString(font, line, tx, ty, e.bootable() || page == PAGE_ORDER ? (sel ? CLI_BRIGHT : CLI_TEXT) : CLI_DIM, false);
                 ty += ROW_H;
@@ -403,7 +502,8 @@ public class FirmwareScreen extends Screen {
         g.fill(x, y, x + W, y + H, BLUE_BG);
         border(g, x, y, BLUE_BORDER);
         g.fill(x, y, x + W, y + 14, BLUE_TITLE);
-        drawCentered(g, "J's Computers BIOS Setup Utility", x + W / 2, y + 3, BLUE_BG);
+        // The house that made the board, not the mod: no screen inside the fiction names the mod.
+        drawCentered(g, Branding.HARDWARE_HOUSE + " BIOS Setup Utility", x + W / 2, y + 3, BLUE_BG);
         int px = x + 8;
         for (int i = 0; i < PAGES.length; i++) {
             tabHits[i] = new int[]{px - 3, y + 16, font.width(PAGES[i]) + 6, 12};
@@ -425,7 +525,7 @@ public class FirmwareScreen extends Screen {
         final String help;
         if (page == PAGE_HARDWARE) {
             drawBox(g, boxX, top, boxW, boxH, "System Information");
-            renderHardwareLines(g, boxX + 8, top + 18, 13, BLUE_TEXT, BLUE_VALUE, BLUE_DIM);
+            renderHardwareLines(g, boxX + 8, top + 18, 13, BLUE_TEXT, BLUE_VALUE, BLUE_DIM, boxW - 16);
             help = "The hardware this firmware detected at power-on.";
         } else if (page == PAGE_STORAGE) {
             drawBox(g, boxX, top, boxW, boxH, "Storage Controller");
@@ -498,8 +598,13 @@ public class FirmwareScreen extends Screen {
         border(g, x, y, UEFI_PH);
         g.fill(x, y, x + W, y + 20, UEFI_HEAD);
         g.fill(x, y + 20, x + W, y + 22, UEFI_ACCENT);
-        g.drawString(font, "J's Computers", x + 10, y + 6, UEFI_TEXT, false);
-        g.drawString(font, "UEFI", x + W - font.width("UEFI") - 10, y + 6, UEFI_DIM, false);
+        g.drawString(font, Branding.HARDWARE_HOUSE, x + 10, y + 6, UEFI_TEXT, false);
+        /*
+         * The firmware's own version, from the one place that decides it, so this header and the self-test
+         * that ran before it cannot disagree about which firmware the player is looking at.
+         */
+        final String version = "UEFI " + Branding.biosVersion(era());
+        g.drawString(font, version, x + W - font.width(version) - 10, y + 6, UEFI_DIM, false);
 
         final int top = y + 30;
         final int navX = x + 10;
@@ -522,7 +627,7 @@ public class FirmwareScreen extends Screen {
 
         if (page == PAGE_HARDWARE) {
             panel(g, mainX, top, mainW, panelH, "System Information");
-            renderHardwareLines(g, mainX + 8, top + 22, 15, UEFI_KEY, UEFI_TEXT, UEFI_DIM);
+            renderHardwareLines(g, mainX + 8, top + 22, 15, UEFI_KEY, UEFI_TEXT, UEFI_DIM, mainW - 16);
         } else if (page == PAGE_STORAGE) {
             panel(g, mainX, top, mainW, panelH, "Storage Controller");
             renderStorageLines(g, mainX + 8, top + 22, 15, UEFI_KEY, UEFI_TEXT, UEFI_DIM, mainW - 16);
@@ -560,7 +665,7 @@ public class FirmwareScreen extends Screen {
                 final String first = page == PAGE_ORDER && state.bootSlot() == e.ref()
                         && e.kind() == FirmwareStatePayload.KIND_DISK ? "  [first]" : "";
                 g.drawString(font, e.label() + first, mainX + 20, ry + 3, e.bootable() || page == PAGE_ORDER ? UEFI_TEXT : UEFI_DIM, false);
-                final String detail = e.detail();
+                final String detail = entryWhere(e);
                 final String shown = font.width(detail) > mainW - 130 ? trimTo(detail, mainW - 130) : detail;
                 g.drawString(font, shown, mainX + mainW - font.width(shown) - 8, ry + 3, UEFI_DIM, false);
                 ry += ROW_H + 4;
@@ -593,21 +698,51 @@ public class FirmwareScreen extends Screen {
 
     /** The hardware page's key/value lines in the caller's palette. */
     private void renderHardwareLines(final GuiGraphics g, final int x, final int y, final int lh,
-                                     final int keyColor, final int valueColor, final int dimColor) {
+                                     final int keyColor, final int valueColor, final int dimColor,
+                                     final int width) {
         int ty = y;
-        final String cpu = state == null ? "detecting ..." : state.cpuLabel();
-        final String ram = state == null ? "detecting ..." : state.ramMb() + " it";
+        final FirmwareStatePayload.Machine machine = state == null ? null : state.machine();
+        final String detecting = "detecting ...";
+        /*
+         * What the firmware found, in its own words: the processor by model with its architecture beside it,
+         * memory in megabytes with the slots it fills, the board, the video card, and the monitors really
+         * linked out of the board's ports. This page used to say "connected" whether one was or not.
+         */
+        final String cpu = machine == null || machine.cpuName().isEmpty() ? detecting : machine.cpuName();
+        final String arch = machine == null || !machine.hasCpu() ? detecting
+                : machine.cpuArch() + "  (" + machine.cpuBits() + "-bit)";
+        final String cores = machine == null || !machine.hasCpu() ? detecting
+                : machine.cores() + " @ " + machine.cpuMhz() + " MHz";
+        final String ram = machine == null ? detecting
+                : machine.ramMb() + " MB  (" + machine.ramModules() + " of " + machine.ramSlots() + " slots)";
+        final String video = machine == null || machine.gpuName().isEmpty() ? "none" : machine.gpuName();
+        final String board = machine == null || machine.boardName().isEmpty() ? detecting : machine.boardName();
+        final String monitors = machine == null ? detecting
+                : machine.monitors() + " of " + machine.ports() + " ports linked";
         final String[][] kv = {
                 {"Processor", cpu},
+                {"Architecture", arch},
+                {"Cores", cores},
                 {"Memory", ram},
+                /* The newest firmware calls the card graphics; the boards before it called it the video adapter. */
+                {kind == FirmwareKind.UEFI ? "Graphics" : "Video", video},
+                {"Board", board},
+                {"Monitors", monitors},
                 {"Hardware Era", eraLabel()},
-                {"Monitor", "connected"},
-                {"Boot Disk", state == null || state.bootSlot() < 0 ? "automatic" : "Disk " + state.bootSlot()},
+                {"Boot Disk", bootDiskLine()},
                 {"Install Target", state == null || state.installTargetSlot() < 0 ? "no disk" : "Disk " + state.installTargetSlot()},
         };
+        /*
+         * The values start at a column and end where the page does. A board and a graphics card are named by
+         * whoever made them, at whatever length they chose, and drawn at full length they ran out of the page
+         * and across the help panel beside it.
+         */
+        final int valueAt = Math.min(110, width / 2);
+        final int room = Math.max(20, width - valueAt);
         for (final String[] pair : kv) {
-            g.drawString(font, pair[0], x, ty, keyColor, false);
-            g.drawString(font, pair[1], x + 110, ty, pair[1].startsWith("detecting") ? dimColor : valueColor, false);
+            g.drawString(font, InstallerFrames.clip(font, pair[0], valueAt - 6), x, ty, keyColor, false);
+            g.drawString(font, InstallerFrames.clip(font, pair[1], room), x + valueAt, ty,
+                    pair[1].startsWith("detecting") ? dimColor : valueColor, false);
             ty += lh;
         }
     }
@@ -629,8 +764,8 @@ public class FirmwareScreen extends Screen {
              * straight through the border and over the help panel beside it.
              */
             ty += lh;
-            for (final net.minecraft.util.FormattedCharSequence line : font.split(
-                    net.minecraft.network.chat.Component.literal(
+            for (final FormattedCharSequence line : font.split(
+                    Component.literal(
                             "Mount a RAID Controller in this machine's gadget bay."), maxWidth)) {
                 g.drawString(font, line, x, ty, dimColor, false);
                 ty += lh;
@@ -653,21 +788,25 @@ public class FirmwareScreen extends Screen {
         ty += lh;
         storageRowY = ty;
         storageRowH = lh;
-        final var modes = dev.jstech.computers.rack.RaidMode.values();
-        for (int i = 0; i < modes.length; i++) {
-            final var mode = modes[i];
-            final boolean current = i == raid.mode();
-            final boolean usable = i == 0 || raid.drives() >= mode.minDrives();
-            final long capacity = i < raid.capacities().size() ? raid.capacities().get(i) : 0L;
-            final String label = (storageSel == i ? "> " : "  ")
-                    + (i == 0 ? "NONE (independent)" : mode.name());
-            final String detail = !usable ? "needs " + mode.minDrives() + " drives"
-                    : capacity + " items" + (i == 1 ? "  +25% throughput"
-                            : i == 2 ? "  survives to 1 drive"
-                                    : i == 3 ? "  survives 1 loss" : "");
+        // The server sends one capacity per mode, in the order the modes are declared, which is the order listed here.
+        int row = 0;
+        for (final RaidMode mode : RaidMode.values()) {
+            final boolean current = mode.id() == raid.mode();
+            final boolean usable = mode == RaidMode.NONE || raid.drives() >= mode.minDrives();
+            final long capacity = row < raid.capacities().size() ? raid.capacities().get(row) : 0L;
+            final String label = (storageSel == mode ? "> " : "  ")
+                    + (mode == RaidMode.NONE ? "NONE (independent)" : mode.name());
+            final String strength = switch (mode) {
+                case NONE -> "";
+                case RAID0 -> "  +25% throughput";
+                case RAID1 -> "  survives to 1 drive";
+                case RAID5 -> "  survives 1 loss";
+            };
+            final String detail = !usable ? "needs " + mode.minDrives() + " drives" : capacity + " items" + strength;
             g.drawString(font, label, x, ty, current ? 0xFF39D6C4 : usable ? valueColor : dimColor, false);
             g.drawString(font, detail, x + 130, ty, dimColor, false);
             ty += lh;
+            row++;
         }
         g.drawString(font, "Enter applies the mode. Changing it erases the array.", x, ty + 4,
                 dimColor, false);
@@ -763,7 +902,7 @@ public class FirmwareScreen extends Screen {
             }
             case 265 -> { // Up
                 if (page == PAGE_STORAGE) {
-                    storageSel = Math.max(0, storageSel - 1);
+                    storageSel = storageSel.previous();
                 } else {
                     selected = Math.max(0, selected - 1);
                 }
@@ -772,9 +911,7 @@ public class FirmwareScreen extends Screen {
             }
             case 264 -> { // Down
                 if (page == PAGE_STORAGE) {
-                    storageSel = Math.min(
-                            dev.jstech.computers.rack.RaidMode.values().length - 1,
-                            storageSel + 1);
+                    storageSel = storageSel.next();
                 } else {
                     selected = Math.min(Math.max(0, rows().size() - 1), selected + 1);
                 }
@@ -815,7 +952,7 @@ public class FirmwareScreen extends Screen {
             return;
         }
         confirmFormatRef = Long.MIN_VALUE;
-        PacketDistributor.sendToServer(new FirmwareActionPayload(computerPos, monitorPos,
+        PacketDistributor.sendToServer(FirmwareActionPayload.of(computerPos, monitorPos,
                 FirmwareActionPayload.ACTION_FORMAT, e.ref(), -1));
     }
 

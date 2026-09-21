@@ -57,6 +57,24 @@ public final class InstallerLayoutTest {
     }
 
     @Test
+    public void entries_aUnixSystemMediumCarriesTheBootFilesItsFamilyNames() {
+        final InstallerLayout.Facts freeBsd = new InstallerLayout.Facts("FreeBSD", "freebsd", "freebsd", true, false,
+                true, 2005, "Daemon Foundation", "", List.of(), "FreeBSD", "any computer", List.of(),
+                List.of("boot/loader", "boot/kernel/kernel"));
+        final List<String> paths = paths(InstallerLayout.entries(MediaFormat.CD, freeBsd));
+        assertTrue(paths.containsAll(List.of("boot", "boot/kernel", "boot/loader", "boot/kernel/kernel")),
+                paths.toString());
+        assertFalse(paths.contains("boot/vmlinuz"), "a FreeBSD disc carries no Linux kernel: " + paths);
+        assertTrue(paths.indexOf("boot/kernel") < paths.indexOf("install.sh"), "folders come before files");
+    }
+
+    @Test
+    public void entries_aLinuxSystemMediumKeepsItsKernelAndFirstFilesystem() {
+        final List<String> paths = paths(InstallerLayout.entries(MediaFormat.CD, system(true)));
+        assertTrue(paths.containsAll(List.of("boot/vmlinuz", "boot/initrd.img")), paths.toString());
+    }
+
+    @Test
     public void entries_cdAddsAutorunAndACabinet() {
         final List<String> paths = paths(InstallerLayout.entries(MediaFormat.CD, program()));
         assertTrue(paths.contains("AUTORUN.INF"));

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -62,24 +63,63 @@ public final class ComputerAccess {
         boolean admits(ServerPlayer player, P payload);
     }
 
-    /** Registers a payload a client sends, handled only for a sender its gate admits. */
+    /**
+     * What a screen is told when its gate refuses what it sent.
+     *
+     * <p>Most screens need nothing: a click that does not arrive leaves a button unpressed and the screen
+     * still makes sense. A terminal does not. It writes what was typed the moment it is typed and waits for
+     * the machine to answer, so a line dropped here leaves a command on the glass with nothing under it,
+     * over and over, which reads as a machine that has broken rather than one that is no longer listening.
+     */
+    @FunctionalInterface
+    public interface IRefusal<P> {
+
+        void tell(ServerPlayer player, P payload);
+    }
+
+    /**
+     * Registers a payload a client sends, handled only for a sender its gate admits: on the server thread, with
+     * the sender and the level the sender is in.
+     */
     public static <P extends CustomPacketPayload> void accept(final PayloadRegistrar registrar,
                                                               final CustomPacketPayload.Type<P> type,
                                                               final StreamCodec<? super RegistryFriendlyByteBuf, P> codec,
                                                               final IGate<P> gate,
-                                                              final IPayloadHandler<P> handler) {
-        registrar.playToServer(type, codec, guarded(type, gate, handler));
+                                                              final IServerPayloadHandler<P> handler) {
+        accept(registrar, type, codec, gate, handler, null);
+    }
+
+    /** The same, for a payload whose sender has to be told when it is refused. */
+    public static <P extends CustomPacketPayload> void accept(
+            final PayloadRegistrar registrar,
+            final CustomPacketPayload.Type<P> type,
+            final StreamCodec<? super RegistryFriendlyByteBuf, P> codec,
+            final IGate<P> gate,
+            final IServerPayloadHandler<P> handler,
+            @Nullable final IRefusal<P> refusal) {
+        registrar.playToServer(type, codec, guarded(type, gate, handler, refusal));
     }
 
     /** The same gate around a handler, for a payload registered some other way (one that travels both ways). */
     public static <P extends CustomPacketPayload> IPayloadHandler<P> guarded(final CustomPacketPayload.Type<P> type,
                                                                             final IGate<P> gate,
-                                                                            final IPayloadHandler<P> handler) {
+                                                                            final IServerPayloadHandler<P> handler) {
+        return guarded(type, gate, handler, null);
+    }
+
+    /** The same, telling the sender when it is refused. */
+    public static <P extends CustomPacketPayload> IPayloadHandler<P> guarded(final CustomPacketPayload.Type<P> type,
+                                                                            final IGate<P> gate,
+                                                                            final IServerPayloadHandler<P> handler,
+                                                                            @Nullable final IRefusal<P> refusal) {
         return (payload, context) -> context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player && gate.admits(player, payload)) {
-                handler.handle(payload, context);
-            } else {
-                refused(context.player(), type);
+                handler.handle(payload, player, player.serverLevel());
+                return;
+            }
+            refused(context.player(), type);
+            if (refusal != null && context.player() instanceof ServerPlayer player) {
+                refusal.tell(player, payload);
             }
         });
     }
@@ -105,9 +145,9 @@ public final class ComputerAccess {
         return anyOf(machine(host), (player, payload) -> ScreenSessions.closedDesktopOf(player, host.apply(payload)));
     }
 
-    /** At a plain screen the server opened on that machine: the firmware, the self-test, the installer or the KVM. */
+    /** At one of the monitor's own sessions on that machine: the self-test, the firmware, an installer, the KVM. */
     public static <P> IGate<P> screen(final Function<P, BlockPos> host) {
-        return (player, payload) -> ScreenSessions.admits(player, host.apply(payload));
+        return menu(MonitorSessionMenu.class, MonitorSessionMenu::hostPos, host);
     }
 
     /** In a menu of that kind, open on that block. */

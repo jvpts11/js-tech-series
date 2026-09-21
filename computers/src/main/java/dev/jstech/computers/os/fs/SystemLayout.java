@@ -7,8 +7,12 @@
  */
 package dev.jstech.computers.os.fs;
 
+import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.OsCapability;
 
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.ShellFamily;
+import dev.jstech.computers.os.UnixTree;
 import java.util.List;
 
 /**
@@ -42,23 +46,12 @@ public final class SystemLayout {
             "Users/Public/Documents"
     );
 
-    /** The directory a POSIX (Linux) system shows as the desktop once a desktop environment is installed. */
-    public static final String POSIX_DESKTOP_DIR = "home/player/Desktop";
-
-    /** The ordered system tree a POSIX (Linux) OS lays down on install (parents before children). */
-    private static final List<String> POSIX_DIRECTORIES = List.of(
-            "bin",
-            "etc",
-            "home",
-            "home/player",
-            "home/player/Desktop",
-            "home/player/Documents",
-            "media",
-            "tmp",
-            "usr",
-            "usr/bin",
-            "var"
-    );
+    /**
+     * The directory a Linux or FreeBSD system shows as the desktop once a desktop environment is installed. What
+     * asks on behalf of a particular system asks {@link #desktopDirFor(OsDef, KernelDef)}, since System V keeps
+     * its people somewhere else.
+     */
+    public static final String POSIX_DESKTOP_DIR = UnixTree.HOME_AND_MEDIA.desktopPath();
 
     /**
      * Returns the system directories the given capability provisions on install.
@@ -70,21 +63,26 @@ public final class SystemLayout {
         return capability == OsCapability.FULL_DESKTOP ? DESKTOP_DIRECTORIES : List.of();
     }
 
-    /** The desktop folder for an OS: the Unix home desktop on a POSIX kernel, the Windows-style one otherwise. */
-    public static String desktopDirFor(final dev.jstech.computers.os.KernelDef kernel) {
-        return kernel != null && kernel.shellFamily() == dev.jstech.computers.os.ShellFamily.POSIX
-                ? POSIX_DESKTOP_DIR : DESKTOP_DIR;
+    /**
+     * The desktop folder for an OS: the desktop under that system's own home on a POSIX kernel, the
+     * Windows-style one otherwise.
+     */
+    public static String desktopDirFor(final OsDef os, final KernelDef kernel) {
+        if (kernel == null || kernel.shellFamily() != ShellFamily.POSIX) {
+            return DESKTOP_DIR;
+        }
+        return os == null ? POSIX_DESKTOP_DIR : UnixTree.of(os.platform()).desktopPath();
     }
 
     /**
      * Returns the system directories an OS provisions on install, by its kernel's shell family: a POSIX
-     * kernel lays down the Unix tree regardless of capability (a Linux TTY still has /home and /etc), a DOS
-     * kernel follows the capability rule above.
+     * kernel lays down its family's Unix tree regardless of capability (a terminal system still has a home and
+     * /etc), a DOS kernel follows the capability rule above.
      */
-    public static List<String> directoriesFor(final dev.jstech.computers.os.OsDef os,
-                                              final dev.jstech.computers.os.KernelDef kernel) {
-        if (kernel != null && kernel.shellFamily() == dev.jstech.computers.os.ShellFamily.POSIX) {
-            return POSIX_DIRECTORIES;
+    public static List<String> directoriesFor(final OsDef os,
+                                              final KernelDef kernel) {
+        if (kernel != null && kernel.shellFamily() == ShellFamily.POSIX) {
+            return UnixTree.of(os.platform()).directories();
         }
         return directoriesFor(os.capability());
     }

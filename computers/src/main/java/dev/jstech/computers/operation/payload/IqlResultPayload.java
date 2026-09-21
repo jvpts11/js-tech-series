@@ -33,6 +33,11 @@ public record IqlResultPayload(boolean ok, String message, List<Row> rows) imple
                     Row.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ROWS)), IqlResultPayload::rows,
                     IqlResultPayload::new);
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public IqlResultPayload {
+        rows = List.copyOf(rows);
+    }
+
     @Override
     public CustomPacketPayload.Type<IqlResultPayload> type() {
         return TYPE;

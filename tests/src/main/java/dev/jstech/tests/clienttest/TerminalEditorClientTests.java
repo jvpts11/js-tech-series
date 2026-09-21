@@ -75,7 +75,7 @@ public final class TerminalEditorClientTests {
         return ctx.thenBuild(0, world -> {
                     final CraftingComputerBlockEntity computer = world.placeRunningCraftingComputer(COMPUTER);
                     computer.installOs(FRAMES_XP);
-                    for (final String id : new String[] {"vim", "emacs", "cannonc"}) {
+                    for (final String id : new String[] {"vim", "emacs", "sgsc"}) {
                         computer.console().install(program(id).toString());
                     }
                     seed.accept(computer);
@@ -98,7 +98,7 @@ public final class TerminalEditorClientTests {
     @ClientTest(timeoutTicks = 2400)
     public static void vim_writesAFileAndGivesTheTerminalBack(final ClientTestContext ctx) {
         atTheTerminal(ctx)
-                .then(SETTLE, () -> ctx.type("vim progs/hello.can"))
+                .then(SETTLE, () -> ctx.type("vim progs/hello.sgs"))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
                 .thenWaitUntil(() -> shell(ctx) != null && shell(ctx).editing(), SCREEN_WAIT, "Vim to take the terminal")
                 .thenScreenshot(2, "vim-open")
@@ -122,10 +122,10 @@ public final class TerminalEditorClientTests {
                 .then(1, () -> ctx.type(":wq"))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
                 .thenWaitUntil(() -> shell(ctx) != null && !shell(ctx).editing(), SCREEN_WAIT, "Vim to give the terminal back")
-                .thenWaitUntilServer(level -> diskText(ctx, level, "progs/hello.can").contains("class Hello")
-                                && !diskText(ctx, level, "progs/hello.can").contains("this line goes"),
+                .thenWaitUntilServer(level -> diskText(ctx, level, "progs/hello.sgs").contains("class Hello")
+                                && !diskText(ctx, level, "progs/hello.sgs").contains("this line goes"),
                         SCREEN_WAIT, "the file to be on the disk without the cut line",
-                        level -> diskText(ctx, level, "progs/hello.can"))
+                        level -> diskText(ctx, level, "progs/hello.sgs"))
                 .thenScreenshot(2, "vim-saved");
     }
 
@@ -135,14 +135,14 @@ public final class TerminalEditorClientTests {
      */
     @ClientTest(timeoutTicks = 2400)
     public static void vim_opensAFileNamedFromInsideItsFolderAndCutsToTheEnd(final ClientTestContext ctx) {
-        atTheTerminal(ctx, computer -> DiskFilesystem.write(computer.systemDisk(), "progs/notes.can",
-                        dev.jstech.computers.os.fs.FileType.CAN, "abc def\nend", Long.MAX_VALUE,
+        atTheTerminal(ctx, computer -> DiskFilesystem.write(computer.systemDisk(), "progs/notes.sgs",
+                        dev.jstech.computers.os.fs.FileType.SGS, "abc def\nend", Long.MAX_VALUE,
                         dev.jstech.computers.os.FilesystemKind.HIERARCHICAL))
                 .then(SETTLE, () -> ctx.type("cd progs"))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
                 .thenWaitUntil(() -> shell(ctx) != null && shell(ctx).prompt().contains("progs"), SCREEN_WAIT,
                         "the prompt to be inside the folder")
-                .then(SETTLE, () -> ctx.type("vim notes.can"))
+                .then(SETTLE, () -> ctx.type("vim notes.sgs"))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
                 .thenWaitUntil(() -> shell(ctx) != null && shell(ctx).editing(), SCREEN_WAIT, "Vim to take the terminal")
                 .thenWaitUntil(() -> shell(ctx).editorText().startsWith("abc def"), SCREEN_WAIT,
@@ -154,8 +154,8 @@ public final class TerminalEditorClientTests {
                         "D cuts from the cursor to the end of the line")
                 .then(1, () -> ctx.type(":w"))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
-                .thenWaitUntilServer(level -> diskText(ctx, level, "progs/notes.can").equals("abc \nend"),
-                        SCREEN_WAIT, ":w to write the file where it was", level -> diskText(ctx, level, "progs/notes.can"))
+                .thenWaitUntilServer(level -> diskText(ctx, level, "progs/notes.sgs").equals("abc \nend"),
+                        SCREEN_WAIT, ":w to write the file where it was", level -> diskText(ctx, level, "progs/notes.sgs"))
                 .then(1, () -> ctx.type(":q"))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
                 .thenWaitUntil(() -> shell(ctx) != null && !shell(ctx).editing(), SCREEN_WAIT, "Vim to give the terminal back");
@@ -165,7 +165,7 @@ public final class TerminalEditorClientTests {
     @ClientTest(timeoutTicks = 2400)
     public static void emacs_compilesTheBufferOnMxCompile(final ClientTestContext ctx) {
         atTheTerminal(ctx)
-                .then(SETTLE, () -> ctx.type("emacs progs/prog.can"))
+                .then(SETTLE, () -> ctx.type("emacs progs/prog.sgs"))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
                 .thenWaitUntil(() -> shell(ctx) != null && shell(ctx).editing(), SCREEN_WAIT, "Emacs to take the terminal")
                 .then(SETTLE, () -> ctx.type("using System.IO.*; namespace P; class A { static void Main() { Console.PrintLine(\"x\"); } }"))

@@ -7,9 +7,14 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.crafting.PatternWorkbench;
+import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.tier.HardwareEra;
@@ -25,9 +30,9 @@ import java.util.Set;
 /**
  * One machine in a rack, addressed as a host of its own. A rack answers machine questions for the
  * unit its monitor's channel is showing; this view pins every such call to {@code row} instead, so a
- * caller that must reach a specific node (the Supercomputer Console installing a system on all of
- * them) does not have to touch the KVM. Stateless: it holds nothing but the rack and the row, and
- * every call runs through the rack's own code path.
+ * caller that must reach a specific node (the Cluster Manager putting a system on all of them) does
+ * not have to touch the KVM. Stateless: it holds nothing but the rack and the row, and every call
+ * runs through the rack's own code path.
  */
 public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHost {
 
@@ -45,8 +50,26 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
+    public void serviceUninstalled(final String programPath) {
+        rack.serviceUninstalled(row, programPath);
+    }
+
+    @Override
     public boolean needsPost() {
         return rack.asUnit(row, rack::needsPost);
+    }
+
+    @Override
+    public boolean haltedAtPost() {
+        return rack.asUnit(row, rack::haltedAtPost);
+    }
+
+    @Override
+    public void resumeFromHalt() {
+        rack.asUnit(row, () -> {
+            rack.resumeFromHalt();
+            return null;
+        });
     }
 
     @Override
@@ -68,6 +91,119 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
             rack.setPendingInstallSlot(slot);
             return null;
         });
+    }
+
+    @Override
+    public boolean keepsInstalls() {
+        return true;
+    }
+
+    @Override
+    @Nullable
+    public OsInstallJob installing() {
+        return rack.asUnit(row, rack::installing);
+    }
+
+    @Override
+    public void setInstalling(@Nullable final OsInstallJob job) {
+        rack.asUnit(row, () -> {
+            rack.setInstalling(job);
+            return null;
+        });
+    }
+
+    @Override
+    @Nullable
+    public InstallerFlow installer() {
+        return rack.asUnit(row, rack::installer);
+    }
+
+    @Override
+    public void setInstaller(@Nullable final InstallerFlow flow) {
+        rack.asUnit(row, () -> {
+            rack.setInstaller(flow);
+            return null;
+        });
+    }
+
+    @Override
+    public boolean onScreen() {
+        return rack.asUnit(row, rack::onScreen);
+    }
+
+    @Override
+    public int postRemaining() {
+        return rack.asUnit(row, rack::postRemaining);
+    }
+
+    @Override
+    public boolean atBootMenu() {
+        return rack.asUnit(row, rack::atBootMenu);
+    }
+
+    @Override
+    public int menuRemaining() {
+        return rack.asUnit(row, rack::menuRemaining);
+    }
+
+    @Override
+    public void holdBootMenu() {
+        rack.asUnit(row, () -> {
+            rack.holdBootMenu();
+            return null;
+        });
+    }
+
+    @Override
+    public void leaveBootMenu() {
+        rack.asUnit(row, () -> {
+            rack.leaveBootMenu();
+            return null;
+        });
+    }
+
+    @Override
+    public void restartFromBootMenu() {
+        rack.asUnit(row, () -> {
+            rack.restartFromBootMenu();
+            return null;
+        });
+    }
+
+    @Override
+    public boolean booting() {
+        return rack.asUnit(row, rack::booting);
+    }
+
+    @Override
+    public int bootRemaining() {
+        return rack.asUnit(row, rack::bootRemaining);
+    }
+
+    @Override
+    public int bootTotal() {
+        return rack.asUnit(row, rack::bootTotal);
+    }
+
+    @Override
+    public BootSequence bootSequence() {
+        return rack.asUnit(row, rack::bootSequence);
+    }
+
+    @Override
+    @Nullable
+    public ComputerBuild currentBuild() {
+        return rack.asUnit(row, rack::currentBuild);
+    }
+
+    @Override
+    public boolean hasBootableMedium() {
+        return rack.asUnit(row, rack::hasBootableMedium);
+    }
+
+    @Override
+    public void markChanged() {
+        rack.setChanged();
     }
 
     @Override
@@ -93,6 +229,19 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     public void setOpenWindows(final List<OpenWindow> windows) {
         rack.asUnit(row, () -> {
             rack.setOpenWindows(windows);
+            return null;
+        });
+    }
+
+    @Override
+    public int desktopWorkspace() {
+        return rack.asUnit(row, rack::desktopWorkspace);
+    }
+
+    @Override
+    public void setDesktopWorkspace(final int workspace) {
+        rack.asUnit(row, () -> {
+            rack.setDesktopWorkspace(workspace);
             return null;
         });
     }
@@ -189,6 +338,12 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
+    @Nullable
+    public ResourceLocation installedSpaceId() {
+        return rack.asUnit(row, rack::installedSpaceId);
+    }
+
+    @Override
     public boolean validateOsSession() {
         return rack.asUnit(row, rack::validateOsSession);
     }
@@ -267,7 +422,7 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
 
     @Override
     @Nullable
-    public dev.jstech.computers.crafting.PatternWorkbench studio() {
+    public PatternWorkbench studio() {
         return rack.asUnit(row, rack::studio);
     }
 

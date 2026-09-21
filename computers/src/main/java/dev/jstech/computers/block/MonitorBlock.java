@@ -11,26 +11,61 @@ import com.mojang.serialization.MapCodec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
+import dev.jstech.computers.menu.DesktopMenu;
+import dev.jstech.computers.menu.DosTerminalMenu;
+import dev.jstech.computers.menu.LinuxTtyMenu;
+import dev.jstech.computers.menu.MonitorSessionMenu;
+import dev.jstech.computers.menu.NetTerminalMenu;
+import dev.jstech.computers.operation.payload.OpenBootMenuPayload;
 import dev.jstech.computers.operation.payload.OpenComputerUiPayload;
+import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
+import dev.jstech.computers.operation.payload.OpenInstallerPayload;
+import dev.jstech.computers.operation.payload.OpenKvmPayload;
+import dev.jstech.computers.operation.payload.OpenPostPayload;
+import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
+import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
+import dev.jstech.computers.operation.payload.ScreenSessions;
+import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.boot.SystemIntegrity;
+import dev.jstech.computers.os.OsDisks;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.boot.BootController;
+import dev.jstech.computers.os.boot.BootIdentity;
+import dev.jstech.computers.os.boot.BootLines;
+import dev.jstech.computers.os.boot.BootSplash;
+import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.computers.os.install.Installers;
+import dev.jstech.computers.os.install.OsInstallJob;
+import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
 import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.util.BlockEntityTickers;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.OptionalLong;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -149,8 +184,8 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
          * the KVM Switch is for. Without one the screen cannot address a bay at all.
          */
         if (level.getBlockEntity(owner)
-                instanceof dev.jstech.computers.blockentity.ServerRackBlockEntity rack) {
-            final java.util.List<Integer> computers = rack.computerSlots();
+                instanceof ServerRackBlockEntity rack) {
+            final List<Integer> computers = rack.computerSlots();
             if (computers.isEmpty()) {
                 player.displayClientMessage(
                         Component.translatable("block.jsc.monitor.rack_empty"), true);
@@ -184,8 +219,16 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         NO_POWER,
         /** A fresh power-up or a restart: the power-on self-test first. */
         POST,
+        /** The machine is copying a system onto a disk: the screen joins it where it has got to. */
+        INSTALLING,
+        /** The machine is standing at its boot manager, waiting to be told what to start. */
+        BOOT_MENU,
+        /** The self-test is done and the system is coming up: the screen joins that instead. */
+        BOOTING,
         /** A guided installer has written the system and still waits for the reboot that boots it. */
         INSTALLER,
+        /** The system is closing down before the machine starts over: the screen joins that. */
+        GOING_DOWN,
         /** Hand over to whatever the boot target is (firmware, shell, desktop). */
         BOOT
     }
@@ -200,13 +243,52 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         if (!computer.isRunning()) {
             return Entry.NO_POWER;
         }
-        if (computer.needsPost()) {
+        /*
+         * Both of these are the self-test's screen: one is a machine in the middle of it, the other is a
+         * machine standing at the end of one that found nothing to boot. The second used to be invisible to
+         * anybody who was not already watching, so opening the monitor on such a machine fell through to its
+         * setup with no word about why it had not booted.
+         */
+        if (computer.needsPost() || computer.haltedAtPost()) {
             return Entry.POST;
+        }
+        /*
+         * A machine closing down is doing exactly one thing, and it comes before everything below: without
+         * this, looking away during a restart and looking back put the player on the desktop of a system that
+         * was in the middle of being closed.
+         */
+        if (computer.goingDown()) {
+            return Entry.GOING_DOWN;
+        }
+        if (computer.installing() != null) {
+            return Entry.INSTALLING;
+        }
+        /*
+         * An installer holds the machine from its first page to the restart that ends it, so the last page
+         * still counts as being in one even with nothing left to copy. It only holds it while what it wrote
+         * is still there, though: a disk formatted or pulled between the install and the restart leaves
+         * nothing to restart into, and the machine goes back to whatever it would boot.
+         */
+        final InstallerFlow installer = computer.installer();
+        if (installer != null) {
+            final int wrote = installer.targetSlot();
+            final boolean systemStillThere = wrote < 0 ? computer.hasOs()
+                    : OsDisks.hasSystem(computer.diskInSlot(wrote));
+            if (systemStillThere) {
+                return Entry.INSTALLING;
+            }
+            computer.setInstaller(null);
+        }
+        if (computer.atBootMenu()) {
+            return Entry.BOOT_MENU;
+        }
+        if (computer.booting()) {
+            return Entry.BOOTING;
         }
         final int slot = computer.pendingInstallSlot();
         if (slot != IOsHost.NO_PENDING_INSTALL) {
             final boolean systemStillThere = slot < 0 ? computer.hasOs()
-                    : dev.jstech.computers.os.OsDisks.hasSystem(computer.diskInSlot(slot));
+                    : OsDisks.hasSystem(computer.diskInSlot(slot));
             if (systemStillThere) {
                 return Entry.INSTALLER;
             }
@@ -215,7 +297,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         return Entry.BOOT;
     }
 
-    private static void openSession(final ServerPlayer player, final Level level, final BlockPos monitorPos,
+    public static void openSession(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                     final BlockPos owner) {
         if (level.getBlockEntity(owner) instanceof IOsHost computer) {
             switch (entryFor(computer)) {
@@ -225,6 +307,22 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                 }
                 case POST -> {
                     openPost(player, level, monitorPos, owner);
+                    return;
+                }
+                case INSTALLING -> {
+                    openInstallProgress(player, level, monitorPos, owner, computer);
+                    return;
+                }
+                case BOOT_MENU -> {
+                    openBootMenu(player, level, monitorPos, owner, computer);
+                    return;
+                }
+                case BOOTING -> {
+                    openSystemBoot(player, level, monitorPos, owner, computer);
+                    return;
+                }
+                case GOING_DOWN -> {
+                    openSystemDown(player, level, monitorPos, owner, computer);
                     return;
                 }
                 case INSTALLER -> {
@@ -238,43 +336,160 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         openBootTarget(player, level, monitorPos, owner);
     }
 
+    /** Sends the client the boot manager this machine is standing at, with what is left of its wait. */
+    public static void openBootMenu(final ServerPlayer player, final Level level, final BlockPos monitorPos,
+                                    final BlockPos owner, final IOsHost computer) {
+        PacketDistributor.sendToPlayer(player, new OpenBootMenuPayload(
+                owner, monitorPos,
+                BootLines.menuFor(computer, computer.menuRemaining()),
+                computer.menuRemaining()));
+        openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.BOOT_MENU);
+    }
+
+    /**
+     * Sends the client the system this machine is bringing up, at the point the machine has reached.
+     *
+     * <p>What is on the glass goes first and the session that shows it second, in that order, so the screen
+     * is built with the machine's own lines already in hand rather than blank for a tick.
+     */
+    public static void openSystemBoot(final ServerPlayer player, final Level level, final BlockPos monitorPos,
+                                      final BlockPos owner, final IOsHost computer) {
+        PacketDistributor.sendToPlayer(player, new OpenSystemBootPayload(
+                owner, monitorPos, computer.bootRemaining(), computer.bootTotal(),
+                computer.bootSequence(), false, splashOf(computer), identityOf(computer)));
+        openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.SYSTEM_BOOT);
+    }
+
+    /**
+     * Who is coming up: the desktop, the system by the name it prints of itself, and the machine's host name,
+     * which a desktop's own loading screen may name.
+     *
+     * <p>The desktop is what the machine booted with rather than what is installed on it: a desktop added a
+     * moment ago waits for a restart, so the screen that shows a desktop coming up has to show the one that
+     * really is.
+     */
+    private static BootIdentity identityOf(final IOsHost computer) {
+        final ResourceLocation desktop = computer.bootedDesktopId();
+        final OsDef system = computer.installedOs();
+        return new BootIdentity(desktop == null ? "" : desktop.getPath(),
+                system == null ? "" : system.displayName(), Installers.hostName(computer),
+                computer.console() == null ? "" : computer.console().cdeStyle().encoded());
+    }
+
+    /**
+     * Sends the client the system this machine is closing down, at the point it has reached.
+     *
+     * <p>The same screen as a system coming up and for the same reason: the machine is the one keeping the
+     * time, so a monitor opened half way through a restart joins the goodbye where it is rather than starting
+     * it over or missing it. Nothing dark follows it, because what follows it is the self-test.
+     */
+    public static void openSystemDown(final ServerPlayer player, final Level level, final BlockPos monitorPos,
+                                      final BlockPos owner, final IOsHost computer) {
+        PacketDistributor.sendToPlayer(player, new OpenSystemBootPayload(
+                owner, monitorPos, computer.downRemaining(), computer.downTotal(),
+                BootLines.shutdownFor(computer, true), false, splashOf(computer),
+                identityOf(computer).goingDown()));
+        openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.SYSTEM_BOOT);
+    }
+
+    /** The picture that machine's system comes up behind, or the plain one when it has no system. */
+    private static BootSplash splashOf(final IOsHost computer) {
+        final OsDef system = computer.installedOs();
+        return system == null ? BootSplash.PLAIN : BootSplash.of(system.platform(), system.familyRank());
+    }
+
+    /**
+     * Opens one of a monitor's sessions: the self-test, the boot manager, a system coming up, the firmware
+     * setup, an installer, or a rack's channel switch.
+     *
+     * <p>All of them are one menu with a phase, so the server is told when a player closes one and stops
+     * counting them as watching. That is what stopped an installer's next page turning up in front of
+     * somebody who had walked away from the machine.
+     *
+     * <p>A player already in that session on that machine is left where they are. Opening a menu tears the
+     * screen down and builds it again, so doing it for every page of an installer threw away the page that had
+     * just arrived and put the one before it back: what a player saw was a Next that did nothing.
+     */
+    public static void openSession(final ServerPlayer player, final Level level, final BlockPos monitorPos,
+                                    final BlockPos owner, final IOsHost computer,
+                                    final MonitorSessionMenu.Phase phase) {
+        if (MonitorSessionMenu.isShowing(player, owner, phase)) {
+            return;
+        }
+        final HardwareEra era = computer.displayEra();
+        // The machine's own name: these screens write their own headings, so nothing draws this one.
+        final Component title = level.getBlockState(owner).getBlock().getName();
+        player.openMenu(new SimpleMenuProvider(
+                (id, inv, p) -> new MonitorSessionMenu(id, inv, monitorPos, owner, era, phase), title),
+                buf -> MonitorSessionMenu.writeOpenBuffer(buf, monitorPos, owner, era, phase));
+    }
+
+    /** Sends the client the copy this machine is in the middle of, at the point the machine has reached. */
+    private static void openInstallProgress(final ServerPlayer player, final Level level, final BlockPos monitorPos,
+                                            final BlockPos owner, final IOsHost computer) {
+        final InstallerFlow flow = computer.installer();
+        final OsInstallJob job = computer.installing();
+        if (flow != null) {
+            /*
+             * The installer is the machine's, so a monitor opened halfway through is put on the page the
+             * machine has reached, with the work it has already done behind it.
+             */
+            final int done = job == null ? flow.ticksTotal() : job.ticksTotal() - job.ticksLeft();
+            PacketDistributor.sendToPlayer(player, OpenInstallerPayload
+                    .of(owner, monitorPos, flow, done));
+            openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.INSTALLER);
+            return;
+        }
+        if (job == null) {
+            return;
+        }
+        final HardwareEra era = computer.displayEra();
+        final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
+        final OsDef os = OsRegistry
+                .getOs(ResourceLocation.tryParse(job.osId()));
+        PacketDistributor.sendToPlayer(player, new OsInstallProgressPayload(
+                owner, monitorPos, kind.id(), os != null ? os.displayName() : job.osId(),
+                job.targetSlot() < 0 ? "the default disk" : "Disk " + job.targetSlot(),
+                job.ticksLeft(), job.ticksTotal()));
+        openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.INSTALL_PROGRESS);
+    }
+
     /** Sends the client the finished installer's reboot prompt for the system it just put on the disk. */
     private static void openInstallerPrompt(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                             final BlockPos owner, final IOsHost computer) {
         final int slot = computer.pendingInstallSlot();
         final HardwareEra era = computer.displayEra();
         final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
-        final net.minecraft.resources.ResourceLocation osId = slot < 0 ? computer.installedOsId()
-                : computer.diskInSlot(slot).get(dev.jstech.computers.ComputingModule.SYSTEM_OS.get());
-        final dev.jstech.computers.os.OsDef os = osId == null ? null
-                : dev.jstech.computers.os.OsRegistry.getOs(osId);
+        final ResourceLocation osId = slot < 0 ? computer.installedOsId()
+                : OsDisks.systemOn(computer.diskInSlot(slot));
+        final OsDef os = osId == null ? null
+                : OsRegistry.getOs(osId);
         final String osName = os != null ? os.displayName() : "";
         final String targetLabel = slot < 0 ? "the default disk" : "Disk " + slot;
-        dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, owner);
-        PacketDistributor.sendToPlayer(player, new dev.jstech.computers.operation.payload
-                .OpenInstallDonePayload(owner, monitorPos, kind.ordinal(), osName, targetLabel, slot, ""));
+        PacketDistributor.sendToPlayer(player, new OpenInstallDonePayload(
+                owner, monitorPos, kind.id(), osName, targetLabel, slot, ""));
+        openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.INSTALL_PROGRESS);
     }
 
     /** Sends the client the switch's channel bar: every machine this rack can put on the monitor. */
     private static void openKvmChannels(
             final ServerPlayer player,
-            final dev.jstech.computers.blockentity.ServerRackBlockEntity rack,
+            final ServerRackBlockEntity rack,
             final BlockPos monitorPos) {
-        final java.util.List<dev.jstech.computers.operation.payload
-                .OpenKvmPayload.Channel> channels = new java.util.ArrayList<>();
+        final List<OpenKvmPayload.Channel> channels = new ArrayList<>();
         for (final int slot : rack.computerSlots()) {
-            final net.minecraft.world.item.ItemStack stack = rack.getServers().getStackInSlot(slot);
-            final String custom = dev.jstech.computers.item.ServerItem.customName(stack);
-            channels.add(new dev.jstech.computers.operation.payload
-                    .OpenKvmPayload.Channel(slot,
+            final ItemStack stack = rack.getServers().getStackInSlot(slot);
+            final String custom = ServerItem.customName(stack);
+            channels.add(new OpenKvmPayload.Channel(slot,
                     custom.isEmpty() ? "bay " + (slot + 1) + "U" : custom,
                     rack.bayPowerOn(slot)
-                            && dev.jstech.computers.item.ServerItem.build(stack) != null));
+                            && ServerItem.build(stack) != null));
         }
-        dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, rack.getBlockPos());
         PacketDistributor.sendToPlayer(player,
-                new dev.jstech.computers.operation.payload.OpenKvmPayload(
+                new OpenKvmPayload(
                         rack.getBlockPos(), monitorPos, rack.activeChannel(), channels));
+        openSession(player, rack.getLevel(), monitorPos, rack.getBlockPos(), rack,
+                MonitorSessionMenu.Phase.KVM);
     }
 
     /** Sends the client the era-styled power-on self-test for the host computer on this monitor. */
@@ -284,9 +499,20 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final String name = level.getBlockState(owner).getBlock().getName().getString();
         final HardwareEra era = ownerBe instanceof IOsHost c ? c.displayEra() : null;
         final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
-        dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, owner);
-        PacketDistributor.sendToPlayer(player, new dev.jstech.computers.operation.payload
-                .OpenPostPayload(owner, monitorPos, kind.ordinal(), name));
+        final int remaining = ownerBe instanceof IOsHost machine ? machine.postRemaining() : 0;
+        // A machine standing at a failed self-test opens at the end of it, not at the start of another one.
+        final boolean halted = ownerBe instanceof IOsHost machine && machine.haltedAtPost();
+        /*
+         * What the machine found wrong with its own disk, when that is why it stopped: a system whose loader
+         * has been deleted is found and will not start, and the screen says which file it wanted.
+         */
+        final String complaint = ownerBe instanceof IOsHost machine
+                ? SystemIntegrity.check(machine).complaint() : "";
+        PacketDistributor.sendToPlayer(player,
+                new OpenPostPayload(owner, monitorPos, kind.id(), name, remaining, halted, complaint));
+        if (ownerBe instanceof IOsHost machine) {
+            openSession(player, level, monitorPos, owner, machine, MonitorSessionMenu.Phase.POST);
+        }
     }
 
     /**
@@ -317,13 +543,30 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
             case FIRMWARE -> openFirmwareUi(player, level, monitorPos, owner, ownerBe);
             case FULL_DESKTOP -> openDesktopUi(player, level, monitorPos, owner, ownerBe);
             case TERMINAL_ONLY -> openCommandPrompt(player, level, monitorPos, owner);
-            case NETWORK_GUI -> openTerminal(player, level, monitorPos, owner);
+            /*
+             * What a network machine opens is the space installed on it, not what the system is capable of.
+             * Take the space off and the machine is a prompt, exactly as a Linux with its desktop removed is
+             * a TTY; put another on and that one draws instead.
+             */
+            case NETWORK_GUI -> {
+                if (ownerBe instanceof IOsHost machine && machine.installedSpaceId() != null) {
+                    openTerminal(player, level, monitorPos, owner);
+                } else {
+                    openCommandPrompt(player, level, monitorPos, owner);
+                }
+            }
         }
-        // Booting into an installed OS is an advancement criterion (the live installers do not count yet).
+        /*
+         * The first time an installed system comes up in front of somebody, and only then. The mark lives on the
+         * disk with the system, so erasing it and installing again is a first boot again; before the mark existed
+         * this fired on every single boot, which made "first boot" mean nothing at all.
+         */
         if (target != BootController.BootTarget.FIRMWARE
                 && ownerBe instanceof IOsHost c && c.installedOsId() != null
-                && (c.console() == null || c.console().liveInstall() == null)) {
-            dev.jstech.computers.ComputingModule.OS_FIRST_BOOT.get()
+                && (c.console() == null || c.console().liveInstall() == null)
+                && !c.systemWelcome().seen()) {
+            c.setSystemWelcome(c.systemWelcome().met());
+            ComputingModule.OS_FIRST_BOOT.get()
                     .trigger(player, c.installedOsId());
         }
     }
@@ -341,8 +584,10 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         final String name = level.getBlockState(owner).getBlock().getName().getString();
         final HardwareEra era = ownerBe instanceof IOsHost c ? c.displayEra() : null;
         final FirmwareKind kind = FirmwareKind.forEra(era != null ? era : HardwareEra.STANDARD);
-        dev.jstech.computers.operation.payload.ScreenSessions.opened(player, monitorPos, owner);
-        PacketDistributor.sendToPlayer(player, new OpenComputerUiPayload(owner, monitorPos, kind.ordinal(), name));
+        PacketDistributor.sendToPlayer(player, new OpenComputerUiPayload(owner, monitorPos, kind.id(), name));
+        if (ownerBe instanceof IOsHost machine) {
+            openSession(player, level, monitorPos, owner, machine, MonitorSessionMenu.Phase.FIRMWARE);
+        }
     }
 
     /** Opens the desktop shell (a real container menu) for the host's installed FULL_DESKTOP OS. */
@@ -350,7 +595,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
                                       final BlockPos owner, final BlockEntity ownerBe) {
         if (ownerBe instanceof IOsHost c && c.installedOsId() != null) {
             final String name = level.getBlockState(owner).getBlock().getName().getString();
-            final net.minecraft.resources.ResourceLocation osId = c.installedOsId();
+            final ResourceLocation osId = c.installedOsId();
             final Component title = level.getBlockState(owner).getBlock().getName();
             /*
              * The machine's RAM and what its system, desktop and services already hold: the desktop weighs
@@ -363,12 +608,12 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
              * The desktop this session booted, not whatever is on disk right now: a package installed
              * since the machine came up belongs to the next boot.
              */
-            final net.minecraft.resources.ResourceLocation desktopId =
+            final ResourceLocation desktopId =
                     c.bootedDesktopId() != null ? c.bootedDesktopId() : osId;
             player.openMenu(new SimpleMenuProvider(
-                    (id, inv, p) -> new dev.jstech.computers.menu.DesktopMenu(
+                    (id, inv, p) -> new DesktopMenu(
                             id, inv, monitorPos, owner, osId, desktopId, name, ramTotalMb, ramReservedMb), title),
-                    buf -> dev.jstech.computers.menu.DesktopMenu.writeOpenBuffer(
+                    buf -> DesktopMenu.writeOpenBuffer(
                             buf, monitorPos, owner, osId, desktopId, name, ramTotalMb, ramReservedMb));
         }
     }
@@ -380,68 +625,85 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
             final HardwareEra era = host.displayEra();
             final Component title = level.getBlockState(owner).getBlock().getName();
             /*
-             * A POSIX (Linux) OS gets a login banner and a bash-style prompt: tell the client which shell,
-             * host name and OS it is booting so it can draw them before the first command round-trip.
+             * A system met at a Unix prompt gets a login banner and a prompt in its shell's shape: tell the
+             * client which shell, host name and system it is, and what that system runs on, so it can draw
+             * them before the first command round-trip.
              */
-            final dev.jstech.computers.os.OsDef os = host.installedOs();
-            final dev.jstech.computers.program.install.LiveInstallState live =
+            final OsDef os = host.installedOs();
+            final LiveInstallState live =
                     host.console() == null ? null : host.console().liveInstall();
-            final boolean posix = dev.jstech.computers.program.ServerCliComputer.shellFamilyOf(host)
-                    == dev.jstech.computers.os.ShellFamily.POSIX;
-            final String shellId;
-            final String hostname;
-            final String osLabel;
+            final boolean posix = ServerCliComputer.shellFamilyOf(host)
+                    == ShellFamily.POSIX;
+            final ConsoleIdentity console;
             if (live != null) {
                 // A booted live medium: a root shell on the installer, named after the medium.
-                shellId = "live";
-                hostname = live.hostname();
-                osLabel = (live.distro() == dev.jstech.computers.program.install.LiveInstallState.Distro.ARCH
-                        ? "Arch Linux" : "Gentoo") + " live";
+                console = new ConsoleIdentity(ConsoleIdentity.LIVE, live.hostname(),
+                        (live.distro() == LiveInstallState.Distro.ARCH ? "Arch Linux" : "Gentoo") + " live",
+                        Platform.LINUX, host.processorBits());
             } else {
-                shellId = posix && os != null ? os.shellId() : "";
-                hostname = posix
-                        && host instanceof dev.jstech.computers.terminal.IComputerTerminalHost terminalHost
-                        && level instanceof net.minecraft.server.level.ServerLevel serverLevel
-                        ? new dev.jstech.computers.program.ServerCliComputer(terminalHost, serverLevel)
+                final String hostname = posix
+                        && host instanceof IComputerTerminalHost terminalHost
+                        && level instanceof ServerLevel serverLevel
+                        ? new ServerCliComputer(terminalHost, serverLevel)
                                 .hostname()
                         : "";
-                osLabel = os == null ? "" : os.displayName();
+                console = new ConsoleIdentity(posix && os != null ? os.shellId() : "", hostname,
+                        os == null ? "" : os.displayName(), os == null ? null : os.platform(),
+                        host.processorBits());
             }
             /*
              * Each platform gets its own console screen: the Linux TTY (installed distributions and live
-             * media), the MC-DOS terminal, and the MC-NET Command Prompt window, never each other's.
+             * media), the MC-DOS terminal and the network system's, never each other's.
              */
             final boolean tty = posix || live != null;
             final boolean dos = !tty && os != null
-                    && os.platform() == dev.jstech.computers.os.Platform.MC_DOS;
+                    && os.platform() == Platform.MC_DOS;
+            final boolean net = !tty && os != null
+                    && os.platform() == Platform.MC_NET;
+            // Which run of the machine this terminal belongs to, so it does not come up showing another's lines.
+            final long session = host.console() == null ? 0L : host.console().session();
             player.openMenu(new SimpleMenuProvider(
                     (id, inv, p) -> tty
-                            ? new dev.jstech.computers.menu.LinuxTtyMenu(
-                                    id, inv, monitorPos, owner, era, shellId, hostname, osLabel)
+                            ? new LinuxTtyMenu(id, inv, monitorPos, owner, era, console, session)
                             : dos
-                                    ? new dev.jstech.computers.menu.DosTerminalMenu(
-                                            id, inv, monitorPos, owner, era, shellId, hostname, osLabel)
-                                    : new CommandPromptMenu(id, inv, monitorPos, owner, era, shellId, hostname, osLabel),
+                                    ? new DosTerminalMenu(id, inv, monitorPos, owner, era, console, session)
+                                    : net
+                                            ? new NetTerminalMenu(id, inv, monitorPos, owner, era, console, session)
+                                            : new CommandPromptMenu(id, inv, monitorPos, owner, era, console,
+                                                    session),
                     title),
-                    buf -> CommandPromptMenu.writeOpenBuffer(buf, monitorPos, owner, era, shellId, hostname, osLabel));
+                    buf -> CommandPromptMenu.writeOpenBuffer(buf, monitorPos, owner, era, console, session));
         }
     }
 
     private static void openTerminal(final ServerPlayer player, final Level level,
                                      final BlockPos monitorPos, final BlockPos owner) {
-        if (level.getBlockEntity(owner) instanceof IComputerTerminalHost host) {
+        final BlockEntity ownerBe = level.getBlockEntity(owner);
+        if (ownerBe instanceof IComputerTerminalHost host) {
             final Component title = level.getBlockState(owner).getBlock().getName();
             // Reopen on the tab the player last used here (persisted on the Monitor).
             final int initialTab =
                     level.getBlockEntity(monitorPos) instanceof MonitorBlockEntity monitor
                             ? monitor.lastTab() : ComputerTerminalMenu.TAB_NETWORK;
+            /*
+             * Which space is drawing goes with the window, because the console that knows it never leaves
+             * the server. A machine that is not a network machine at all sends none and gets the terminal
+             * the mod has always drawn here, which is what every desktop's Network Interactor is.
+             */
+            final ResourceLocation spaceId = ownerBe instanceof IOsHost machine
+                    ? machine.installedSpaceId() : null;
+            /*
+             * What the system calls itself goes with the window too, because the prompt inside the space
+             * greets with it and the client cannot read a disk it is not holding.
+             */
+            final OsDef running = ownerBe instanceof IOsHost machine ? machine.installedOs() : null;
+            final String systemName = running == null ? "" : running.displayName();
             player.openMenu(new SimpleMenuProvider(
-                    (id, inv, p) -> new ComputerTerminalMenu(id, inv, host, owner, monitorPos, initialTab), title),
-                    buf -> {
-                        buf.writeBlockPos(monitorPos);
-                        buf.writeBlockPos(owner);
-                        buf.writeVarInt(initialTab);
-                    });
+                    (id, inv, p) -> new ComputerTerminalMenu(id, inv, host, owner, monitorPos, initialTab,
+                            spaceId, systemName),
+                    title),
+                    buf -> ComputerTerminalMenu.writeOpenBuffer(buf, monitorPos, owner, initialTab, spaceId,
+                            systemName));
         }
     }
 
@@ -449,7 +711,7 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements EntityBl
         if (!(level instanceof ServerLevel serverLevel)) {
             return Component.translatable("block.jsc.monitor.unlinked");
         }
-        final java.util.OptionalLong host =
+        final OptionalLong host =
                 PeripheralLinks.discoverOwner(serverLevel, monitorPos.asLong());
         if (host.isEmpty()) {
             return Component.translatable("block.jsc.monitor.no_computer");

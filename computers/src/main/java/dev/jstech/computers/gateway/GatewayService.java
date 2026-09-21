@@ -10,28 +10,22 @@ package dev.jstech.computers.gateway;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
-import dev.jstech.computers.cannon.CannonCosts;
-import dev.jstech.computers.cannon.machine.HostFiles;
-import dev.jstech.computers.cannon.machine.HostIql;
-import dev.jstech.computers.cannon.machine.HostNetwork;
-import dev.jstech.computers.cannon.machine.HostOperations;
-import dev.jstech.computers.cannon.machine.HostProgram;
-import dev.jstech.computers.cannon.machine.HostRemote;
-import dev.jstech.computers.cannon.machine.MachineHost;
-import dev.jstech.computers.cannon.machine.MachinePrograms;
-import dev.jstech.computers.cannon.run.Halt;
-import dev.jstech.computers.cannon.run.IHost;
+import dev.jstech.computers.machine.ProgramLauncher;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkSelectOperation;
 import dev.jstech.computers.operation.NetworkStorage;
-import dev.jstech.computers.operation.payload.ComputingPayloads;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.operation.payload.network.NetworkLookup;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.computers.vm.program.IProgramParent;
+import dev.jstech.computers.vm.program.ProgramPriority;
+import dev.jstech.computers.vm.system.CallCost;
+import dev.jstech.computers.vm.system.SigmaCosts;
 import dev.jstech.core.operation.OperationPriority;
 import dev.jstech.core.peripheral.IPeripheralOwner;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -77,6 +71,9 @@ public final class GatewayService {
     /** The file calls that change what is on a disk rather than only reading it. */
     private static final List<String> WRITES_FILES =
             List.of("Write", "Append", "Delete", "MkDir", "Put", "MakeDir", "Remove");
+
+    /** A list the other side asks for, priced as a program's read is, by how many rows it brings back. */
+    private static final CallCost ROWS = CallCost.perRow(SigmaCosts.READ);
 
     /** Who is asking, from the other side: a ComputerCraft computer by its id. */
     public record Caller(int id) {
@@ -166,14 +163,14 @@ public final class GatewayService {
     public long capacity(final Caller caller) throws GatewayRefusedException {
         read(caller, "capacity");
         final long value = shell.networkUse().capacity();
-        charge(CannonCosts.GLANCE_NETWORK);
+        charge(SigmaCosts.GLANCE_NETWORK);
         return value;
     }
 
     public long used(final Caller caller) throws GatewayRefusedException {
         read(caller, "used");
         final long value = shell.networkUse().stored();
-        charge(CannonCosts.GLANCE_NETWORK);
+        charge(SigmaCosts.GLANCE_NETWORK);
         return value;
     }
 
@@ -186,14 +183,14 @@ public final class GatewayService {
                 out.put(nameOf(entry.getKey()), entry.getValue());
             }
         }
-        charge(HostNetwork.priceOf(out.size()));
+        charge(ROWS.at(out.size(), 0));
         return out;
     }
 
     public long total(final Caller caller, final String name) throws GatewayRefusedException {
         read(caller, "total " + name);
         final long value = storage().count(resolve(name));
-        charge(CannonCosts.READ);
+        charge(SigmaCosts.READ);
         return value;
     }
 
@@ -203,10 +200,10 @@ public final class GatewayService {
         final List<Map<String, Object>> rows = new ArrayList<>();
         for (final Map.Entry<NodeUuid, Long> entry : storage().breakdown(resolve(name)).entrySet()) {
             if (entry.getValue() > 0L) {
-                rows.add(row("server", ComputingPayloads.serverLabel(level, entry.getKey()), "quantity", entry.getValue()));
+                rows.add(row("server", NetworkLookup.serverLabel(level, entry.getKey()), "quantity", entry.getValue()));
             }
         }
-        charge(HostNetwork.priceOf(rows.size()));
+        charge(ROWS.at(rows.size(), 0));
         return rows;
     }
 
@@ -216,7 +213,7 @@ public final class GatewayService {
         for (final ICliComputer.ServerUse server : shell.servers()) {
             rows.add(row("name", server.name(), "used", server.stored(), "capacity", server.capacity(), "online", true));
         }
-        charge(HostNetwork.priceOf(rows.size()));
+        charge(ROWS.at(rows.size(), 0));
         return rows;
     }
 
@@ -232,7 +229,7 @@ public final class GatewayService {
             rows.add(row("name", host.hostname(), "label", host.name(), "os", host.os(), "type", host.type(),
                     "online", host.running(), "shares", sharesByHost.getOrDefault(host.hostname(), List.of())));
         }
-        charge(HostNetwork.priceOf(rows.size()));
+        charge(ROWS.at(rows.size(), 0));
         return rows;
     }
 
@@ -252,7 +249,7 @@ public final class GatewayService {
         op.setPriority(priorityOf(priority));
         op.abortWhen(gateway::isRemoved);
         op.onSettle(() -> settled(caller, op));
-        return started(caller, what, op, CannonCosts.SUBMIT);
+        return started(caller, what, op, SigmaCosts.SUBMIT);
     }
 
     /** Pushes up to {@code quantity} of {@code name} from the buffer into the network; the operation's id. */
@@ -284,7 +281,7 @@ public final class GatewayService {
             returnToBuffer(key, op.leftover());
             settled(caller, op);
         });
-        return started(caller, what, op, CannonCosts.SUBMIT);
+        return started(caller, what, op, SigmaCosts.SUBMIT);
     }
 
     /** Asks the network to craft {@code quantity} of {@code name}; the operation's id. */
@@ -304,14 +301,14 @@ public final class GatewayService {
         }
         made[0] = op;
         op.setPriority(priorityOf(priority));
-        return started(caller, what, op, CannonCosts.SUBMIT);
+        return started(caller, what, op, SigmaCosts.SUBMIT);
     }
 
     /** One operation by id (or an unambiguous prefix), in flight or settled this past hour; null when unknown. */
     @Nullable
     public Map<String, Object> operation(final Caller caller, final String id) throws GatewayRefusedException {
         read(caller, "operation " + id);
-        charge(CannonCosts.READ);
+        charge(SigmaCosts.READ);
         final MainframeBlockEntity mainframe = mainframe();
         for (final INetworkOperation live : mainframe.liveOperations()) {
             if (matches(live.operationId(), id)) {
@@ -333,7 +330,7 @@ public final class GatewayService {
         for (final OperationRecord record : mainframe().activeOperationRecords()) {
             rows.add(row(record));
         }
-        charge(HostNetwork.priceOf(rows.size()));
+        charge(ROWS.at(rows.size(), 0));
         return rows;
     }
 
@@ -341,7 +338,7 @@ public final class GatewayService {
     public boolean cancel(final Caller caller, final String id) throws GatewayRefusedException {
         final String what = "cancel " + id;
         operations(caller, what);
-        charge(CannonCosts.SUBMIT);
+        charge(SigmaCosts.SUBMIT);
         final MainframeBlockEntity mainframe = mainframe();
         for (final INetworkOperation live : mainframe.liveOperations()) {
             if (matches(live.operationId(), id)) {
@@ -373,34 +370,20 @@ public final class GatewayService {
         if (!(remote.machine() instanceof AbstractComputerBlockEntity machine)) {
             throw denied(caller, what, computer + " cannot run programs");
         }
-        final int dot = program.lastIndexOf('.');
-        final String extension = dot < 0 ? "" : program.substring(dot + 1).toLowerCase(Locale.ROOT);
-        if (dev.jstech.core.JsCore.languages().runnerOf(extension) == null) {
-            throw denied(caller, what, program + ": nothing installed runs a program of this kind");
+        final ProgramLauncher.Launch launch = ProgramLauncher.launch(machine, program, remote::readFile,
+                new ArrayList<>(args), IProgramParent.NONE, ProgramPriority.named(priority), 0);
+        if (!launch.ok()) {
+            throw denied(caller, what, switch (launch.refusal()) {
+                case NO_RUNNER -> program + ": nothing installed runs a program of this kind";
+                case NO_MEMORY -> computer + ": " + launch.roomMb() + " MB will not fit in " + launch.freeMb()
+                        + " MB of free memory";
+                case UNREADABLE, NOT_STARTED -> computer + ": " + launch.message();
+            });
         }
-        final ICliComputer.FsResult read = remote.readFile(program);
-        if (!read.ok()) {
-            throw denied(caller, what, computer + ": " + read.message());
-        }
-        final int room = MachinePrograms.DEFAULT_HEAP_MB;
-        if (!machine.ramLedger().fits(room)) {
-            throw denied(caller, what, computer + ": " + room + " MB will not fit in " + machine.ramLedger().freeMb()
-                    + " MB of free memory");
-        }
-        final int slash = Math.max(program.lastIndexOf('\\'), program.lastIndexOf('/'));
-        final String name = slash < 0 ? program : program.substring(slash + 1);
-        final String level = priority == null || priority.isBlank() ? MachinePrograms.DEFAULT_PRIORITY
-                : priority.toLowerCase(Locale.ROOT);
-        final MachinePrograms.Started started = machine.cannon().start(name, read.message(), room, machine,
-                new ArrayList<>(args), 0, level);
-        if (!started.ok()) {
-            throw denied(caller, what, computer + ": " + started.message());
-        }
-        machine.setChanged();
         gateway.stats().count(GatewayStats.Kind.OPERATION, now());
-        gateway.logged(caller.label(), what, "process " + started.id(), GatewayLog.Tone.OK);
-        charge(CannonCosts.SUBMIT);
-        return started.id();
+        gateway.logged(caller.label(), what, "process " + launch.id(), GatewayLog.Tone.OK);
+        charge(SigmaCosts.SUBMIT);
+        return launch.id();
     }
 
     // Watches and the log
@@ -412,7 +395,7 @@ public final class GatewayService {
         final long total = storage().count(key);
         gateway.watch(caller.id(), nameOf(key), total);
         gateway.logged(caller.label(), "watch " + nameOf(key), "ok", GatewayLog.Tone.OK);
-        charge(CannonCosts.READ);
+        charge(SigmaCosts.READ);
         return total;
     }
 
@@ -420,7 +403,7 @@ public final class GatewayService {
     public boolean unwatch(final Caller caller, final String name) throws GatewayRefusedException {
         admit(caller, "unwatch " + name);
         final boolean was = gateway.unwatch(caller.id(), nameOf(resolve(name)));
-        charge(CannonCosts.GLANCE_NETWORK);
+        charge(SigmaCosts.GLANCE_NETWORK);
         return was;
     }
 
@@ -432,7 +415,7 @@ public final class GatewayService {
                 : kind.startsWith("warn") ? GatewayLog.Tone.BUSY : GatewayLog.Tone.OK;
         final String line = text == null ? "" : text.length() > WHAT_LENGTH ? text.substring(0, WHAT_LENGTH) : text;
         gateway.logged(caller.label(), line, kind.isEmpty() ? "info" : kind, tone);
-        charge(CannonCosts.GLANCE_NETWORK);
+        charge(SigmaCosts.GLANCE_NETWORK);
     }
 
     // The gate every request goes through
@@ -493,14 +476,8 @@ public final class GatewayService {
     }
 
     private OperationPriority priorityOf(@Nullable final String name) {
-        OperationPriority asked = OperationPriority.DEFAULT;
-        if (name != null && !name.isBlank()) {
-            try {
-                asked = OperationPriority.valueOf(name.trim().toUpperCase(Locale.ROOT));
-            } catch (final IllegalArgumentException notAPriority) {
-                asked = OperationPriority.DEFAULT;
-            }
-        }
+        final OperationPriority asked = name == null ? OperationPriority.DEFAULT
+                : OperationPriority.fromKeyword(name).orElse(OperationPriority.DEFAULT);
         return gateway.permissions().cap(asked);
     }
 
@@ -546,7 +523,7 @@ public final class GatewayService {
     private static Map<String, Object> row(final OperationRecord record) {
         return row("id", record.id().toString(), "type", typeName(record.type()), "status", status(record.status()),
                 "item", record.key() == null ? "" : nameOf(record.key()), "requested", record.requested(),
-                "moved", record.moved(), "priority", record.priority().name().toLowerCase(Locale.ROOT));
+                "moved", record.moved(), "priority", record.priority().serializedName());
     }
 
     private static Map<String, Object> row(final Object... pairs) {

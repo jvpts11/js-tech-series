@@ -20,6 +20,9 @@ import net.minecraft.nbt.CompoundTag;
  *
  * <p>Nothing here may block. A machine runs its programs on the server thread, so a step spends the
  * instructions it was given and returns, however far through the program that leaves it.
+ *
+ * <p>What a program writes for a person, the time it reads and the memory it may hold go through the view of the
+ * machine its language was given ({@link IMachineView}), and the machine keeps the lines.
  */
 public interface ILanguageProcess {
 
@@ -58,26 +61,17 @@ public interface ILanguageProcess {
     /** What it said when it stopped, or an empty string while it is still going. */
     String message();
 
-    /** What it has written for a person to read, oldest kept line first. */
-    List<String> console();
-
-    /** How many lines it has written since it started, the ones no longer kept included. */
-    int written();
-
     /**
      * How many instructions it has spent since it started.
      *
      * <p>The nearest thing a program has to how long it has been running, and the only honest measure of
      * it: a program on a fast machine gets more done per second than one on a slow machine, and this
-     * counts the work, not the seconds.
+     * counts the work, not the seconds. A long, because a program that stays up runs as long as the world does.
      */
-    int spent();
+    long spent();
 
-    /** How many bytes it is holding. */
+    /** How many bytes it is holding; how many it may hold is the machine's to say. */
     long heldBytes();
-
-    /** How many it was allowed. */
-    long heapBytes();
 
     /**
      * Whether this program stays up.

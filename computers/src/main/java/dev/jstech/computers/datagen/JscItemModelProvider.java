@@ -8,8 +8,10 @@
 package dev.jstech.computers.datagen;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import net.minecraft.data.PackOutput;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.neoforged.neoforge.client.model.generators.ItemModelProvider;
 import net.neoforged.neoforge.client.model.generators.ModelFile;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
@@ -40,17 +42,17 @@ public class JscItemModelProvider extends ItemModelProvider {
         getBuilder(name)
                 .parent(new ModelFile.UncheckedModelFile("builtin/entity"))
                 .transforms()
-                .transform(net.minecraft.world.item.ItemDisplayContext.GUI)
+                .transform(ItemDisplayContext.GUI)
                 .rotation(30, 225, 0).scale(0.625F).end()
-                .transform(net.minecraft.world.item.ItemDisplayContext.GROUND)
+                .transform(ItemDisplayContext.GROUND)
                 .translation(0, 3, 0).scale(0.25F).end()
-                .transform(net.minecraft.world.item.ItemDisplayContext.FIXED)
+                .transform(ItemDisplayContext.FIXED)
                 .scale(0.5F).end()
-                .transform(net.minecraft.world.item.ItemDisplayContext.THIRD_PERSON_RIGHT_HAND)
+                .transform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND)
                 .rotation(75, 45, 0).translation(0, 2.5F, 0).scale(0.375F).end()
-                .transform(net.minecraft.world.item.ItemDisplayContext.FIRST_PERSON_RIGHT_HAND)
+                .transform(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND)
                 .rotation(0, 45, 0).scale(0.4F).end()
-                .transform(net.minecraft.world.item.ItemDisplayContext.FIRST_PERSON_LEFT_HAND)
+                .transform(ItemDisplayContext.FIRST_PERSON_LEFT_HAND)
                 .rotation(0, 225, 0).scale(0.4F).end()
                 .end();
     }
@@ -191,9 +193,9 @@ public class JscItemModelProvider extends ItemModelProvider {
         }
 
         // Per-era hardware catalog: a generated (layer0 = item texture) model for every component.
-        dev.jstech.computers.HardwareItems.DISKS.forEach(h -> basicItem(h.get()));
-        dev.jstech.computers.HardwareItems.CPUS.forEach(h -> basicItem(h.get()));
-        dev.jstech.computers.HardwareItems.RAMS.forEach(h -> basicItem(h.get()));
+        HardwareItems.DISKS.forEach(h -> basicItem(h.get()));
+        HardwareItems.CPUS.forEach(h -> basicItem(h.get()));
+        HardwareItems.RAMS.forEach(h -> basicItem(h.get()));
         /*
          * These newly added GPUs ship without a repo texture yet (the artwork is pending review); mark each
          * expected texture as generated so basicItem can reference it without the datagen existence check
@@ -202,8 +204,8 @@ public class JscItemModelProvider extends ItemModelProvider {
         for (final String previewOnlyGpu : PREVIEW_ONLY_GPU_TEXTURES) {
             existingFileHelper.trackGenerated(modLoc("item/" + previewOnlyGpu), TEXTURE);
         }
-        dev.jstech.computers.HardwareItems.GPUS.forEach(h -> basicItem(h.get()));
-        dev.jstech.computers.HardwareItems.PSUS.forEach(h -> basicItem(h.get()));
-        dev.jstech.computers.HardwareItems.MOTHERBOARDS.forEach(h -> basicItem(h.get()));
+        HardwareItems.GPUS.forEach(h -> basicItem(h.get()));
+        HardwareItems.PSUS.forEach(h -> basicItem(h.get()));
+        HardwareItems.MOTHERBOARDS.forEach(h -> basicItem(h.get()));
     }
 }

@@ -8,8 +8,10 @@
 package dev.jstech.computers.block.part;
 
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.computers.storage.ChemicalBridges;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.util.Utf8Text;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -115,10 +117,9 @@ public abstract sealed class AbstractBusPart implements ICablePart permits Impor
         return name;
     }
 
-    /** Sets the bus name, trimmed and length-clamped; an empty name means the bus is unaddressable by query. */
+    /** Sets the bus name, trimmed and cut to fit; an empty name means the bus is unaddressable by query. */
     public void setName(final String newName) {
-        final String trimmed = newName == null ? "" : newName.strip();
-        this.name = trimmed.length() > MAX_NAME_LENGTH ? trimmed.substring(0, MAX_NAME_LENGTH) : trimmed;
+        this.name = Utf8Text.field(newName, MAX_NAME_LENGTH);
         markHostChanged();
     }
 
@@ -163,7 +164,7 @@ public abstract sealed class AbstractBusPart implements ICablePart permits Impor
         return FluidUtil.getFluidContained(stack)
                 .filter(f -> !f.isEmpty())
                 .map(StorageKey::of)
-                .or(() -> dev.jstech.computers.storage.ChemicalBridges.chemicalOf(stack)
+                .or(() -> ChemicalBridges.chemicalOf(stack)
                         .map(StorageKey::chemical))
                 .orElseGet(() -> StorageKey.of(stack));
     }

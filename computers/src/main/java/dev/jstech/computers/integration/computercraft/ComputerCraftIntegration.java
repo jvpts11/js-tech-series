@@ -10,11 +10,8 @@ package dev.jstech.computers.integration.computercraft;
 import dan200.computercraft.api.ComputerCraftAPI;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.gateway.IGatewayBridge;
-import net.minecraft.server.packs.PackType;
-import net.minecraft.server.packs.repository.Pack;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.event.AddPackFindersEvent;
 import org.jetbrains.annotations.Nullable;
 
 /**

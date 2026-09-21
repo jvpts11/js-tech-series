@@ -13,11 +13,15 @@ import dev.jstech.computers.operation.payload.FolderContentPayload;
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.operation.payload.RequestFolderContentPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
+import dev.jstech.computers.hardware.ArchitectureSpec;
+import dev.jstech.computers.hardware.Architectures;
 import dev.jstech.computers.os.edit.InkPalette;
 import dev.jstech.computers.os.edit.ProblemReport;
 import dev.jstech.computers.os.edit.project.ProjectFile;
 import dev.jstech.computers.os.edit.project.ProjectTemplate;
 import dev.jstech.computers.os.edit.project.SolutionFile;
+import dev.jstech.computers.sigma.LanguageLevel;
+import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.client.gui.component.AmountStepper;
 import dev.jstech.core.client.gui.component.Button;
@@ -31,6 +35,7 @@ import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.TextField;
+import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.language.IProgrammingLanguage;
 import java.util.ArrayDeque;
@@ -39,12 +44,15 @@ import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
@@ -76,6 +84,11 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private static final String KEY = "Virtual Studio";
 
     private static final List<String> DOCK_TABS = List.of("ERROR LIST", "OUTPUT", "TERMINAL");
+    /** Wide enough for the longest architecture name there is at three quarters of the font. */
+    private static final int PLATFORM_BTN_W = 30;
+    private static final int PLATFORM_GREEN = 0xFF2E7D32;
+    private static final int PLATFORM_AMBER = 0xFFB35C00;
+
     private static final int DOCK_ERRORS = 0;
     private static final int DOCK_OUTPUT = 1;
     private static final int DOCK_TERMINAL = 2;
@@ -163,8 +176,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     /* The New Project wizard */
     private final Popup templates = new Popup("Create a new project", 302, 172).setLayouter(this::layoutTemplates);
     private final TextField templateSearch = new TextField(32);
-    private final ListView<ProjectTemplate> templateList;
-    private final ListView<ProjectTemplate> recentList;
+    private final ListView<ProjectTemplate.Offer> templateList;
+    private final ListView<ProjectTemplate.Offer> recentList;
     private final Button templateKind;
     private final Button templateLanguage;
     private final Button templatePlatform;
@@ -174,7 +187,11 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private String languageFilter = "";
     private String platformFilter = "";
     /** The templates used lately on each machine, newest first, for the wizard's left pane. */
-    private static final Map<BlockPos, Deque<ProjectTemplate>> RECENT_TEMPLATES = new LinkedHashMap<>();
+    private static final Map<BlockPos, Deque<ProjectTemplate.Offer>> RECENT_TEMPLATES = new LinkedHashMap<>();
+
+    /** What the wizard opens on: the shape most programs are, in the language most of them are written in. */
+    private static final ProjectTemplate.Offer FIRST_OFFER =
+            new ProjectTemplate.Offer(ProjectTemplate.CONSOLE_APP, LanguageLevel.SIGMA_SHARP);
     private final Popup configure = new Popup("Configure your new project", 240, 124).setLayouter(this::layoutConfigure);
     private final TextField projectName = new TextField(32);
     private final TextField locationField = new TextField(64);
@@ -183,7 +200,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private final Label configureNote;
     private final Button create;
     private boolean sameFolder = true;
-    private ProjectTemplate chosen = ProjectTemplate.CONSOLE_APP;
+    private ProjectTemplate.Offer chosen = FIRST_OFFER;
     private boolean addingToSolution;
     /** Where the wizard puts the solution: the machine's program folder until the player picks another. */
     private String location = LOCATION;
@@ -209,9 +226,13 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private final TextField askField = new TextField(64);
     private final Button askOk;
     private String askTitle = "";
-    private java.util.function.Consumer<String> askAction = value -> { };
-    private final Popup properties = new Popup("Project Properties", 170, 70).setLayouter(this::layoutProperties);
+    private Consumer<String> askAction = value -> { };
+    private final Popup properties = new Popup("Project Properties", 170, 112).setLayouter(this::layoutProperties);
     private final List<Label> propertyLines = new ArrayList<>();
+    private final Label platformLabel;
+    /** One button per architecture there is, in the order the series was built. */
+    private final List<Button> platformButtons = new ArrayList<>();
+    private final Label platformHint;
     private final Button propertiesClose;
     private String propertiesOf = "";
     private final Popup options = new Popup("Options", 170, 60).setLayouter(this::layoutOptions);
@@ -229,30 +250,13 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         this.dockTabs = this.root.add(new TabStrip(DOCK_TABS).fitToLabels(12).setUnderline(true));
         this.errors = this.root.add(new ListView<>(this::errorRows, ROW_H, this::drawErrorRow)).setOnClick(this::onError);
         this.outputList = this.root.add(new ListView<>(() -> this.output, ROW_H, this::drawOutputRow));
-        this.terminal = this.root.add(new ShellView(host, false, false));
+        this.terminal = this.root.add(new ShellView(host, false, ""));
         this.terminal.setOnIdle(this::typeNext);
         this.tabs.setCloseable(this::closeTab);
-        this.askClose.add(new Button("Save", () -> {
-            this.askClose.close();
-            this.workspace.setCurrent(this.closing);
-            this.workspace.save();
-            this.workspace.close(this.closing);
-        }).setPrimary(true));
-        this.askClose.add(new Button("Don't Save", () -> {
-            this.askClose.close();
-            this.workspace.close(this.closing);
-        }));
-        this.askClose.add(new Button("Cancel", this.askClose::close));
-        this.askDelete.add(new Button("Delete", () -> {
-            this.askDelete.close();
-            deleteNode();
-        }).setPrimary(true));
-        this.askDelete.add(new Button("Cancel", this.askDelete::close));
+        buildPrompts();
         this.start = this.root.add(new Button("Start", this::startProgram).setPrimary(true));
         this.root.add(this.menuBar);
-        this.menuBar.add("File", this::fileMenu).add("Edit", this::editMenu).add("View", this::viewMenu)
-                .add("Project", this::projectMenu).add("Build", this::buildMenu).add("Debug", this::debugMenu)
-                .add("Tools", this::toolsMenu).add("Help", this::helpMenu);
+        buildMenuBar();
 
         /*
          * The wizard's first page: the templates used lately on the left, and on the right the whole
@@ -305,12 +309,49 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             final int line = i;
             this.propertyLines.add(this.properties.add(new Label(() -> propertyText(line))));
         }
+        this.platformLabel = this.properties.add(new Label("Platform target", Label.Tone.DIM));
+        for (final ArchitectureSpec architecture : Architectures.all()) {
+            this.platformButtons.add(this.properties.add(new Button(architecture.name(),
+                    () -> setPlatform(architecture.id())).setLabelScale(0.75f)));
+        }
+        this.platformHint = this.properties.add(new Label(this::platformHintText)
+                .setColor(this::platformHintColor));
         this.propertiesClose = this.properties.add(new Button("Close", this.properties::close).setPrimary(true));
         this.options.add(new Label("Tab size", Label.Tone.DIM));
         this.options.add(this.tabStepper.setRange(2, 8).setAmount(4).setOnChange(v -> setTabSize((int) v)));
         this.completionsBox = this.options.add(new Checkbox(() -> "Suggest what can follow a name",
                 () -> this.completionsOn, () -> this.completionsOn = !this.completionsOn));
         this.optionsClose = this.options.add(new Button("Close", this.options::close).setPrimary(true));
+    }
+
+    /**
+     * The two questions the editor asks before doing something it cannot take back: whether to save a file
+     * being closed, and whether a file really is to be deleted. Neither offers its dangerous answer first.
+     */
+    private void buildPrompts() {
+        this.askClose.add(new Button("Save", () -> {
+            this.askClose.close();
+            this.workspace.setCurrent(this.closing);
+            this.workspace.save();
+            this.workspace.close(this.closing);
+        }).setPrimary(true));
+        this.askClose.add(new Button("Don't Save", () -> {
+            this.askClose.close();
+            this.workspace.close(this.closing);
+        }));
+        this.askClose.add(new Button("Cancel", this.askClose::close));
+        this.askDelete.add(new Button("Delete", () -> {
+            this.askDelete.close();
+            deleteNode();
+        }).setPrimary(true));
+        this.askDelete.add(new Button("Cancel", this.askDelete::close));
+    }
+
+    /** The eight menus across the top, each filled when it is opened rather than now. */
+    private void buildMenuBar() {
+        this.menuBar.add("File", this::fileMenu).add("Edit", this::editMenu).add("View", this::viewMenu)
+                .add("Project", this::projectMenu).add("Build", this::buildMenu).add("Debug", this::debugMenu)
+                .add("Tools", this::toolsMenu).add("Help", this::helpMenu);
     }
 
     /* What a test, or "Open with", asks of it */
@@ -337,6 +378,11 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         return new ArrayList<>(this.projects.keySet());
     }
 
+    /** The names the suggestion list offers, top to bottom; empty when none is up. */
+    public List<String> completionLabels() {
+        return this.completions.labels();
+    }
+
     /** What the Output pane says, one line after another. */
     public List<String> outputLines() {
         return List.copyOf(this.output);
@@ -355,7 +401,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             openSolutionFolder(slash > 0 ? path.substring(0, slash) : "");
             return;
         }
-        if (path.endsWith("." + ProjectFile.EXTENSION)) {
+        if (ProjectFile.isProjectFile(path)) {
             final int slash = path.lastIndexOf('/');
             final String projectDir = slash > 0 ? path.substring(0, slash) : "";
             final int up = projectDir.lastIndexOf('/');
@@ -429,7 +475,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             readNextProject();
             return;
         }
-        if (path.endsWith("." + ProjectFile.EXTENSION)) {
+        if (ProjectFile.isProjectFile(path)) {
             if (exists) {
                 final ProjectFile project = ProjectFile.read(content);
                 this.projects.put(project.name(), project);
@@ -519,8 +565,31 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private void saveProject(final ProjectFile project) {
         this.projects.put(project.name(), project);
         PacketDistributor.sendToServer(new SaveFilePayload(this.host,
-                join(projectDir(project.name()), ProjectFile.fileName(project.name())), project.write()));
+                join(projectDir(project.name()), project.fileName()), project.write()));
         FilesApps.diskChanged();
+    }
+
+    /** The project that lives in that folder, or null when the folder is nobody's. */
+    private ProjectFile projectIn(final String dir) {
+        for (final ProjectFile project : this.projects.values()) {
+            if (projectDir(project.name()).equals(dir)) {
+                return project;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * What a source of that project ends in, dot included: whatever the language it is written in says, which is
+     * how a Σ project lists, adds and builds {@code .sg} files where a Σ# one does {@code .sgs}.
+     */
+    private static String sourceSuffix(final ProjectFile project) {
+        final IProgrammingLanguage language = project == null ? null
+                : JsCore.languages().get(ResourceLocation.tryParse(project.language()));
+        if (language == null || language.sourceExtensions().isEmpty()) {
+            return "." + LanguageLevel.SIGMA_SHARP.sourceExtension();
+        }
+        return "." + language.sourceExtensions().iterator().next();
     }
 
     private void closeSolution() {
@@ -584,7 +653,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     private String languageName(final String id) {
         final IProgrammingLanguage language = id.contains(":")
-                ? JsCore.languages().get(net.minecraft.resources.ResourceLocation.tryParse(id)) : null;
+                ? JsCore.languages().get(ResourceLocation.tryParse(id)) : null;
         return language == null ? id : language.displayName() + " 1.0";
     }
 
@@ -817,7 +886,9 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         final String dir = this.foldersToRead.poll();
         if (dir != null) {
             CodeFileReplies.expectFolder(this, dir);
-            PacketDistributor.sendToServer(new RequestFolderContentPayload(this.host, dir, ".can"));
+            // Each folder is read for the sources of its own project, since a Σ# program may stand on a Σ library.
+            PacketDistributor.sendToServer(new RequestFolderContentPayload(this.host, dir,
+                    sourceSuffix(projectIn(dir))));
             return;
         }
         compileBuilding();
@@ -839,7 +910,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             return;
         }
         final IProgrammingLanguage language = JsCore.languages().get(
-                net.minecraft.resources.ResourceLocation.tryParse(project.language()));
+                ResourceLocation.tryParse(project.language()));
         if (language == null) {
             this.output.add(project.name() + ": no language called " + project.language());
             buildNext();
@@ -869,7 +940,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             buildNext();
             return;
         }
-        final IProgrammingLanguage.CompileResult result = language.compile(sources);
+        final IProgrammingLanguage.CompileResult result = language.compile(sources, project.platform());
         finishBuild(project.name(), join(projectDir(project.name()), project.entry()), result, names);
         buildNext();
     }
@@ -957,7 +1028,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
      * from the root so it is found wherever the shell stands.
      */
     private void runListing(final String path) {
-        runInTerminal(List.of("cd \\", "cannon run \"" + path.replace('/', '\\') + "\""));
+        runInTerminal(List.of("cd \\", "sigma run \"" + path.replace('/', '\\') + "\""));
     }
 
     /** Clean: the listings every project built are deleted, and the tree stops showing them. */
@@ -974,7 +1045,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         this.workspace.refresh();
     }
 
-    /** Package: the prompt's canpack does it, in the project's folder, at the terminal. */
+    /** Package: the prompt's sgpack does it, in the project's folder, at the terminal. */
     private void packageStartup() {
         final ProjectFile project = this.projects.get(startupName());
         if (project == null) {
@@ -983,8 +1054,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         }
         runInTerminal(List.of(
                 "cd \\" + projectDir(project.name()).replace('/', '\\'),
-                "canpack init " + project.name(),
-                "canpack build"));
+                "sgpack init " + project.name(),
+                "sgpack build"));
     }
 
     /* The New Project wizard */
@@ -999,7 +1070,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         this.templatePlatform.setLabel("All platforms");
         this.templateKind.setLabel("All types");
         this.templateList.setSelected(0);
-        this.chosen = ProjectTemplate.CONSOLE_APP;
+        this.chosen = FIRST_OFFER;
         this.templates.open();
     }
 
@@ -1043,24 +1114,24 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         };
     }
 
-    private void drawRecent(final GuiGraphics g, final UiContext ctx, final ProjectTemplate template,
+    private void drawRecent(final GuiGraphics g, final UiContext ctx, final ProjectTemplate.Offer offer,
                             final int index, final int x, final int y, final int width, final int height,
                             final boolean hovered, final boolean selected) {
         ctx.skin().listRow(g, x, y, width, height, hovered, selected);
-        FileIcons.draw(g, x + 2, y + 1, iconOf(template));
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(template.title(), width - 16), x + 14, y + 1,
+        FileIcons.draw(g, x + 2, y + 1, iconOf(offer.template()));
+        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(offer.title(), width - 16), x + 14, y + 1,
                 ctx.skin().listRowText(selected), false);
-        final String kind = template.tags().isEmpty() ? "" : template.tags().getLast();
-        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth("Cannon  " + kind, width - 16), x + 14, y + 10,
-                ctx.skin().dim(), false);
+        final String kind = offer.tags().getLast();
+        g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(offer.language().mark() + "  " + kind, width - 16),
+                x + 14, y + 10, ctx.skin().dim(), false);
     }
 
-    /** The templates that fit what was typed and the two filters. */
-    private List<ProjectTemplate> matchingTemplates() {
-        final List<ProjectTemplate> out = new ArrayList<>();
-        final String typed = this.templateSearch.edit().toLowerCase(java.util.Locale.ROOT).trim();
-        for (final ProjectTemplate template : ProjectTemplate.values()) {
-            if (!template.isKind(this.kindFilter)) {
+    /** The templates that fit what was typed and the three filters, each in every language it comes in. */
+    private List<ProjectTemplate.Offer> matchingTemplates() {
+        final List<ProjectTemplate.Offer> out = new ArrayList<>();
+        final String typed = this.templateSearch.edit().toLowerCase(Locale.ROOT).trim();
+        for (final ProjectTemplate.Offer template : ProjectTemplate.Offer.all()) {
+            if (!template.template().isKind(this.kindFilter)) {
                 continue;
             }
             if (!this.languageFilter.isEmpty() && !template.tags().contains(this.languageFilter)) {
@@ -1069,8 +1140,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             if (!this.platformFilter.isEmpty() && !template.tags().contains(this.platformFilter)) {
                 continue;
             }
-            if (!typed.isEmpty() && !template.title().toLowerCase(java.util.Locale.ROOT).contains(typed)
-                    && !template.description().toLowerCase(java.util.Locale.ROOT).contains(typed)) {
+            if (!typed.isEmpty() && !template.title().toLowerCase(Locale.ROOT).contains(typed)
+                    && !template.description().toLowerCase(Locale.ROOT).contains(typed)) {
                 continue;
             }
             out.add(template);
@@ -1078,14 +1149,17 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         return out;
     }
 
-    private void drawTemplate(final GuiGraphics g, final UiContext ctx, final ProjectTemplate template,
+    private void drawTemplate(final GuiGraphics g, final UiContext ctx, final ProjectTemplate.Offer template,
                               final int index, final int x, final int y, final int width, final int height,
                               final boolean hovered, final boolean selected) {
         ctx.skin().listRow(g, x, y, width, height, hovered, selected);
-        FileIcons.draw(g, x + 3, y + 2, iconOf(template));
+        FileIcons.draw(g, x + 3, y + 2, iconOf(template.template()));
         final int textX = x + 16;
         final int textW = width - 19;
         g.drawString(ctx.font(), template.title(), textX, y + 1, ctx.skin().listRowText(selected), false);
+        // The language at the far end of the title's row, since two rows of one shape differ in nothing else there.
+        final String mark = template.language().mark();
+        g.drawString(ctx.font(), mark, x + width - 4 - ctx.font().width(mark), y + 1, ctx.skin().dim(), false);
         g.drawString(ctx.font(), ctx.font().plainSubstrByWidth(template.description(), textW), textX, y + 9,
                 ctx.skin().dim(), false);
         final String tags = String.join("  ", template.tags());
@@ -1094,7 +1168,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     private void pickTemplate(final int index) {
-        final List<ProjectTemplate> shown = matchingTemplates();
+        final List<ProjectTemplate.Offer> shown = matchingTemplates();
         if (index >= 0 && index < shown.size()) {
             this.chosen = shown.get(index);
             this.templateList.setSelected(index);
@@ -1108,7 +1182,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     private void openConfigure() {
         this.templates.close();
-        final String name = uniqueProjectName(this.chosen == ProjectTemplate.CLASS_LIBRARY ? "Library" : "App");
+        final String name = uniqueProjectName(
+                this.chosen.template() == ProjectTemplate.CLASS_LIBRARY ? "Library" : "App");
         this.projectName.set(name);
         this.locationField.set(shownLocation(this.location));
         this.locationField.setEnabled(!this.addingToSolution);
@@ -1172,7 +1247,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
      * Creates a new solution around one project of {@code template}, as the wizard's Create does with
      * the same directory for both, and opens it.
      */
-    public void createProject(final ProjectTemplate template, final String name) {
+    public void createProject(final ProjectTemplate.Offer template, final String name) {
         create(template, name, name, false);
     }
 
@@ -1192,13 +1267,13 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     /** Takes the wizard from its template page to its names page with {@code template} chosen. */
-    public void chooseTemplate(final ProjectTemplate template) {
+    public void chooseTemplate(final ProjectTemplate.Offer template) {
         this.chosen = template;
         openConfigure();
     }
 
     /** The solution file, the project file and the first source, then the solution opens. */
-    private void create(final ProjectTemplate template, final String project, final String sol,
+    private void create(final ProjectTemplate.Offer template, final String project, final String sol,
                         final boolean intoSolution) {
         if (project.isEmpty() || project.contains("/") || project.contains("\\") || project.contains(" ")) {
             this.workspace.say("A project name is one word, without slashes");
@@ -1211,11 +1286,11 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         final String dir = this.addingToSolution ? this.solutionDir : join(this.location, sol);
         final ProjectFile file = this.chosen.project(project);
         final SolutionFile solutionFile = (this.addingToSolution ? this.solution : new SolutionFile(sol, List.of(), ""))
-                .withProject(SolutionFile.projectPath(project));
+                .withProject(SolutionFile.projectPath(file));
         PacketDistributor.sendToServer(new SaveFilePayload(this.host, join(dir, SolutionFile.fileName(sol)),
                 solutionFile.write()));
         PacketDistributor.sendToServer(new SaveFilePayload(this.host,
-                join(join(dir, project), ProjectFile.fileName(project)), file.write()));
+                join(join(dir, project), file.fileName()), file.write()));
         final String first = this.chosen.firstSource(project);
         if (!first.isEmpty()) {
             PacketDistributor.sendToServer(new SaveFilePayload(this.host, join(join(dir, project), first),
@@ -1239,7 +1314,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private String currentWhenLoaded = "";
 
     private void layoutTemplates(final Popup p) {
-        final List<dev.jstech.core.client.gui.component.UiComponent> c = p.children();
+        final List<UiComponent> c = p.children();
         final int x = p.x() + 4;
         final int top = p.contentTop() + 2;
         final int bottom = p.bottom() - 16;
@@ -1269,7 +1344,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         final int x = p.x() + 4;
         int y = p.contentTop() + 1;
         final int w = p.width() - 8;
-        final List<dev.jstech.core.client.gui.component.UiComponent> c = p.children();
+        final List<UiComponent> c = p.children();
         // The template's name and tags, the way the page is headed.
         c.get(0).setBounds(x, y, w, 9);
         y += 9;
@@ -1295,20 +1370,21 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     /** The templates used lately on this machine, for the wizard's left pane. */
-    private List<ProjectTemplate> recentTemplates() {
+    private List<ProjectTemplate.Offer> recentTemplates() {
         return new ArrayList<>(RECENT_TEMPLATES.getOrDefault(this.host, new ArrayDeque<>()));
     }
 
     private void pickRecent(final int index) {
-        final List<ProjectTemplate> recent = recentTemplates();
+        final List<ProjectTemplate.Offer> recent = recentTemplates();
         if (index >= 0 && index < recent.size()) {
             this.chosen = recent.get(index);
             openConfigure();
         }
     }
 
-    private void rememberTemplate(final ProjectTemplate template) {
-        final Deque<ProjectTemplate> recent = RECENT_TEMPLATES.computeIfAbsent(this.host, h -> new ArrayDeque<>());
+    private void rememberTemplate(final ProjectTemplate.Offer template) {
+        final Deque<ProjectTemplate.Offer> recent =
+                RECENT_TEMPLATES.computeIfAbsent(this.host, h -> new ArrayDeque<>());
         recent.remove(template);
         recent.addFirst(template);
         while (recent.size() > 3) {
@@ -1339,6 +1415,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     private void showProperties(final String name) {
         this.propertiesOf = name;
+        refreshPlatformButtons();
         this.properties.open();
     }
 
@@ -1362,11 +1439,90 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             label.setBounds(p.x() + 4, y, p.width() - 8, 9);
             y += 9;
         }
+        /*
+         * A library has no platform of its own: it is compiled into whatever program references it, and that
+         * program's target is the one that counts. So the row is not there rather than there and doing nothing.
+         */
+        final boolean shown = buildsForAPlatform();
+        y += 2;
+        this.platformLabel.setVisible(shown);
+        this.platformLabel.setBounds(p.x() + 4, y, p.width() - 8, 9);
+        y += 10;
+        /*
+         * The buttons take the row on their own rather than sitting beside the words, so that the row still holds
+         * every architecture when a mod has brought two of its own.
+         */
+        int x = p.x() + 4;
+        for (final Button button : this.platformButtons) {
+            button.setVisible(shown);
+            button.setBounds(x, y, PLATFORM_BTN_W, 11);
+            x += PLATFORM_BTN_W + 2;
+        }
+        y += 13;
+        this.platformHint.setVisible(shown);
+        this.platformHint.setBounds(p.x() + 4, y, p.width() - 8, 9);
         this.propertiesClose.setBounds(p.right() - 38, p.bottom() - 14, 34, 11);
     }
 
+    /** Whether the project the popup is open on builds something of its own, and so has a platform to pick. */
+    private boolean buildsForAPlatform() {
+        final ProjectFile project = this.projects.get(this.propertiesOf);
+        return project != null && project.buildsAListing();
+    }
+
+    /** Builds the project for that architecture from now on, and lights the button that says so. */
+    private void setPlatform(final String architecture) {
+        final ProjectFile project = this.projects.get(this.propertiesOf);
+        if (project == null) {
+            return;
+        }
+        saveProject(project.withPlatform(architecture));
+        refreshPlatformButtons();
+    }
+
+    /** Lights the architecture the open project is built for, and unlights the rest. */
+    private void refreshPlatformButtons() {
+        final ProjectFile project = this.projects.get(this.propertiesOf);
+        final String current = project == null ? AsmProgram.DEFAULT_ARCHITECTURE : project.platform();
+        final List<ArchitectureSpec> all = Architectures.all();
+        for (int i = 0; i < this.platformButtons.size() && i < all.size(); i++) {
+            this.platformButtons.get(i).setPrimary(all.get(i).id().equals(current));
+        }
+    }
+
+    /** What the line under the buttons says: which machines the program will run on once it is built. */
+    private String platformHintText() {
+        final ProjectFile project = this.projects.get(this.propertiesOf);
+        if (project == null) {
+            return "";
+        }
+        final ArchitectureSpec built = Architectures.byId(project.platform()).orElse(null);
+        if (built == null) {
+            return "nothing here answers to " + project.platform();
+        }
+        final List<String> runners = new ArrayList<>();
+        for (final ArchitectureSpec machine : Architectures.all()) {
+            if (machine.runs(built)) {
+                runners.add(machine.name());
+            }
+        }
+        return runners.isEmpty() ? "no machine here runs it"
+                : "runs on " + String.join(" and ", runners) + " machines";
+    }
+
+    /*
+     * Green while the project is built for the architecture a program gets when nobody asks, which is the one that
+     * reaches every machine it could reach. Anything else is a decision to leave machines behind, and the line goes
+     * amber so that it is a decision somebody sees themselves making.
+     */
+    private int platformHintColor() {
+        final ProjectFile project = this.projects.get(this.propertiesOf);
+        return project != null && AsmProgram.DEFAULT_ARCHITECTURE.equals(project.platform())
+                ? PLATFORM_GREEN : PLATFORM_AMBER;
+    }
+
     private void layoutOptions(final Popup p) {
-        final List<dev.jstech.core.client.gui.component.UiComponent> c = p.children();
+        final List<UiComponent> c = p.children();
         c.get(0).setBounds(p.x() + 4, p.contentTop() + 4, 50, 9);
         this.tabStepper.setBounds(p.x() + 56, p.contentTop() + 2, 96, 12);
         this.completionsBox.setBounds(p.x() + 4, p.contentTop() + 18, p.width() - 8, 9);
@@ -1380,7 +1536,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         }
     }
 
-    private void ask(final String title, final String initial, final java.util.function.Consumer<String> action) {
+    private void ask(final String title, final String initial, final Consumer<String> action) {
         this.askTitle = title;
         this.askAction = action;
         this.askField.set(initial);
@@ -1402,7 +1558,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     private void layoutAskClose(final Popup p) {
-        final List<dev.jstech.core.client.gui.component.UiComponent> c = p.children();
+        final List<UiComponent> c = p.children();
         final int y = p.bottom() - 15;
         c.get(0).setBounds(p.x() + 4, y, 40, 11);
         c.get(1).setBounds(p.x() + 48, y, 60, 11);
@@ -1630,14 +1786,15 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     private List<ContextMenu.Item> helpMenu() {
         return List.of(item("About Virtual Studio", true,
-                () -> this.workspace.say("Virtual Studio, by Midsoft. Cannon 1.0.")));
+                () -> this.workspace.say("Virtual Studio, by Midsoft. Σ# 1.0 and Σ 1.0.")));
     }
 
     /* What the menus do */
 
     /** The kinds the Open Project/Solution window offers: what the studio opens as a solution, then everything. */
     private static final List<FileDialog.Filter> SOLUTION_FILTERS = List.of(
-            FileDialog.Filter.of("Solutions", SolutionFile.EXTENSION, ProjectFile.EXTENSION),
+            FileDialog.Filter.of("Solutions", SolutionFile.EXTENSION, LanguageLevel.SIGMA_SHARP.projectExtension(),
+                    LanguageLevel.SIGMA.projectExtension()),
             FileDialog.Filter.ALL);
 
     private void openSolutionByPicker() {
@@ -1677,7 +1834,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     private void newFile() {
         final String project = currentProject();
-        ask("New File", "untitled.can", name -> {
+        ask("New File", "untitled" + sourceSuffix(this.projects.get(project)), name -> {
             if (name.isEmpty()) {
                 return;
             }
@@ -1696,7 +1853,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         if (project == null) {
             return;
         }
-        ask("Add New Item", "Class1.can", file -> {
+        ask("Add New Item", "Class1" + sourceSuffix(project), file -> {
             if (file.isEmpty()) {
                 return;
             }
@@ -1717,7 +1874,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         final List<CommandPalette.Entry> entries = new ArrayList<>();
         for (final CodeWorkspace.TreeRow row : this.workspace.tree()) {
             final String path = row.file().path();
-            if (!row.file().directory() && path.startsWith(projectDir(name) + "/") && path.endsWith(".can")) {
+            if (!row.file().directory() && path.startsWith(projectDir(name) + "/")
+                    && path.endsWith(sourceSuffix(project))) {
                 final String relative = path.substring(projectDir(name).length() + 1);
                 if (!project.sources().contains(relative)) {
                     entries.add(new CommandPalette.Entry(relative, "", () -> saveProject(project.withSource(relative))));
@@ -1823,7 +1981,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     private void layoutAskDelete(final Popup p) {
-        final List<dev.jstech.core.client.gui.component.UiComponent> c = p.children();
+        final List<UiComponent> c = p.children();
         final int y = p.bottom() - 15;
         c.get(0).setBounds(p.x() + 4, y, 44, 11);
         c.get(1).setBounds(p.right() - 44, y, 40, 11);
@@ -2050,7 +2208,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         final CodeWorkspace.Doc doc = this.workspace.current();
         // What the Start Window does not show is hidden outright: a list with no room still has rows to draw.
         final boolean start = this.page == Page.START;
-        for (final dev.jstech.core.client.gui.component.UiComponent part
+        for (final UiComponent part
                 : List.of(this.start, this.explorer, this.tabs, this.dockTabs, this.errors, this.outputList,
                         this.terminal)) {
             part.setVisible(!start);
@@ -2176,7 +2334,7 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
                 this::openSolutionByPicker, palette);
         ry = card(g, font, rx, ry, cardW, "Open a local folder", "Any folder of programs",
                 this::openFolderByPicker, palette);
-        ry = card(g, font, rx, ry, cardW, "Open a file", "One .can, no project",
+        ry = card(g, font, rx, ry, cardW, "Open a file", "One .sgs or .sg, no project",
                 this::openFileFromStart, palette);
         card(g, font, rx, ry, cardW, "Create a new project", "Start from a template",
                 () -> newProject(false), palette);

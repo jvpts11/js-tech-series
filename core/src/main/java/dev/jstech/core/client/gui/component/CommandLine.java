@@ -8,11 +8,13 @@
 package dev.jstech.core.client.gui.component;
 
 import dev.jstech.core.client.gui.logic.TextEditState;
+import dev.jstech.core.gui.LineHistory;
+import java.util.function.Consumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.function.BooleanSupplier;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
@@ -28,21 +30,48 @@ public final class CommandLine extends UiComponent {
     private static final int BACKGROUND = 0xFF101820;
     private static final int PROMPT = 0xFF40C060;
 
+    /** What picked-out letters are drawn on: a wash of the ink the line is written in. */
+    private static final int PICKED = 0x50CDD6E2;
+
+    /** How many lines of a paste a terminal will run: enough for a handful of commands, and no more. */
+    private static final int MOST_PASTED_LINES = 16;
+
     private final int maxLength;
-    private final java.util.function.Consumer<String> onSubmit;
+    private final Consumer<String> onSubmit;
     private final TextEditState input;
-    private final List<String> history = new ArrayList<>();
-    private int historyIndex = -1;
+    private final LineHistory history = new LineHistory();
     private Supplier<String> prompt = () -> ">";
     private Supplier<String> idleText = () -> "";
     private IntSupplier idleColor = () -> PROMPT;
     private int background = BACKGROUND;
     private int textColor = PROMPT;
+    private BooleanSupplier unseen = () -> false;
+    private BooleanSupplier takesNothing = () -> false;
 
-    public CommandLine(final int maxLength, final java.util.function.Consumer<String> onSubmit) {
+    public CommandLine(final int maxLength, final Consumer<String> onSubmit) {
         this.maxLength = Math.max(1, maxLength);
         this.onSubmit = onSubmit;
         this.input = new TextEditState(this.maxLength);
+    }
+
+    /**
+     * Whether what is typed is kept off the line, the way a password is: taken, and never drawn, not even as
+     * dots, and never kept for the arrow keys to bring back.
+     */
+    public CommandLine setUnseen(final BooleanSupplier value) {
+        unseen = value;
+        return this;
+    }
+
+    /**
+     * Whether Enter on an empty line is an answer in its own right.
+     *
+     * <p>At a shell it is not, and nothing is sent. At a question it usually is: it takes the default, which
+     * is how most of a partition editor's questions are meant to be answered.
+     */
+    public CommandLine setTakesNothing(final BooleanSupplier value) {
+        takesNothing = value;
+        return this;
     }
 
     /** The line shown instead of an empty prompt, with its colour; empty text shows the prompt. */
@@ -92,10 +121,20 @@ public final class CommandLine extends UiComponent {
          * The caret takes the room of one character so the line can be scrolled to keep it in view even
          * when it sits at the very end, which is where it is most of the time.
          */
-        final String full = prompt.get() + " " + input.edit() + " ";
-        final int caretAt = prompt.get().length() + 1 + input.caret();
+        final boolean hidden = unseen.getAsBoolean();
+        final String full = prompt.get() + " " + (hidden ? "" : input.edit()) + " ";
+        final int caretAt = prompt.get().length() + 1 + (hidden ? 0 : input.caret());
         final String shown = Texts.tail(ctx.font(), full, width() - 6);
         final int dropped = full.length() - shown.length();
+        if (isFocused() && !hidden && input.hasSelection()) {
+            // Under the letters, so what Shift and the arrows picked out reads as picked out.
+            final int from = Math.max(0, prompt.get().length() + 1 + input.selectionStart() - dropped);
+            final int to = Math.max(from, Math.min(shown.length(),
+                    prompt.get().length() + 1 + input.selectionEnd() - dropped));
+            final int left = x() + 3 + ctx.font().width(shown.substring(0, Math.min(from, shown.length())));
+            g.fill(left, y() + 1, left + ctx.font().width(shown.substring(Math.min(from, shown.length()), to)),
+                    y() + 11, PICKED);
+        }
         g.drawString(ctx.font(), shown, x() + 3, y() + 2, textColor, false);
         if (isFocused()) {
             final int visibleCaret = Math.max(0, Math.min(shown.length(), caretAt - dropped));
@@ -124,6 +163,14 @@ public final class CommandLine extends UiComponent {
             return false;
         }
         final boolean control = (modifiers & GLFW.GLFW_MOD_CONTROL) != 0;
+        final boolean shift = (modifiers & GLFW.GLFW_MOD_SHIFT) != 0;
+        if (control && key == GLFW.GLFW_KEY_C) {
+            return copy();
+        }
+        if (control && key == GLFW.GLFW_KEY_V) {
+            paste();
+            return true;
+        }
         switch (key) {
             case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> submit();
             case GLFW.GLFW_KEY_BACKSPACE -> input.backspace();
@@ -132,18 +179,24 @@ public final class CommandLine extends UiComponent {
                 if (control) {
                     input.wordLeft();
                 } else {
-                    input.left();
+                    input.left(shift);
                 }
             }
             case GLFW.GLFW_KEY_RIGHT -> {
                 if (control) {
                     input.wordRight();
                 } else {
-                    input.right();
+                    input.right(shift);
                 }
             }
-            case GLFW.GLFW_KEY_HOME -> input.home();
-            case GLFW.GLFW_KEY_END -> input.end();
+            case GLFW.GLFW_KEY_HOME -> input.home(shift);
+            case GLFW.GLFW_KEY_END -> input.end(shift);
+            case GLFW.GLFW_KEY_A -> {
+                if (!control) {
+                    return false;
+                }
+                input.selectAll();
+            }
             case GLFW.GLFW_KEY_UP -> recall(-1);
             case GLFW.GLFW_KEY_DOWN -> recall(1);
             default -> {
@@ -153,32 +206,56 @@ public final class CommandLine extends UiComponent {
         return true;
     }
 
+    /** Puts what is picked out of the line on the clipboard; with nothing picked out this key is not ours. */
+    private boolean copy() {
+        final String picked = input.selectedText();
+        if (picked.isEmpty()) {
+            return false;
+        }
+        Minecraft.getInstance().keyboardHandler.setClipboard(picked);
+        return true;
+    }
+
+    /**
+     * Types what is on the clipboard.
+     *
+     * <p>Several lines run one after another, which is what a terminal does with a paste; the last stays on
+     * the line unrun, since a paste that did not end in a newline is a line somebody is still writing. A paste
+     * longer than a terminal has any business running is cut short.
+     */
+    private void paste() {
+        final String text = Minecraft.getInstance().keyboardHandler.getClipboard();
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+        final String[] lines = text.split("\r?\n", -1);
+        for (int i = 0; i < lines.length && i < MOST_PASTED_LINES; i++) {
+            for (final char ch : lines[i].toCharArray()) {
+                if (ch >= 32 && ch != 127) {
+                    input.type(ch);
+                }
+            }
+            if (i < lines.length - 1 && i < MOST_PASTED_LINES - 1) {
+                submit();
+            }
+        }
+    }
+
     private void submit() {
         final String line = input.edit().trim();
         input.sync("");
-        historyIndex = -1;
-        if (line.isEmpty()) {
+        history.rest();
+        if (line.isEmpty() && !takesNothing.getAsBoolean()) {
             return;
         }
-        if (history.isEmpty() || !history.get(history.size() - 1).equals(line)) {
+        // Neither an empty answer nor one that was not for showing is something to bring back later.
+        if (!unseen.getAsBoolean()) {
             history.add(line);
         }
         onSubmit.accept(line);
     }
 
     private void recall(final int direction) {
-        if (history.isEmpty()) {
-            return;
-        }
-        if (historyIndex == -1) {
-            historyIndex = history.size();
-        }
-        historyIndex = Math.max(0, Math.min(history.size(), historyIndex + direction));
-        if (historyIndex >= history.size()) {
-            historyIndex = -1;
-            input.sync("");
-        } else {
-            input.sync(history.get(historyIndex));
-        }
+        history.recall(direction).ifPresent(input::sync);
     }
 }

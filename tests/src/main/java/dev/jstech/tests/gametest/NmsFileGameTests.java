@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Tech Series.
  */
 package dev.jstech.tests.gametest;
 
@@ -66,7 +66,7 @@ public final class NmsFileGameTests {
                 new ItemStack(ComputingModule.PSU_650G.get()));
         hw.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
-        // installOs writes SYSTEM_OS onto the disk component and returns true on success.
+        // installOs writes the systems component onto the disk component and returns true on success.
         final boolean installed = mf.installOs(SO_REDE);
         if (!installed) {
             helper.fail("installOs returned false at " + pos);
@@ -153,10 +153,17 @@ public final class NmsFileGameTests {
                     mf.setChanged();
 
                     final List<DiskFilesystem.FileEntry> all = DiskFilesystem.list(sysDisk, "", kind);
-                    // There should be two real files (excluding any .dat projections).
-                    final long realCount = all.stream().filter(e -> !e.readOnly()).count();
-                    helper.assertTrue(realCount == 2L,
-                            "expected 2 real files; got: " + realCount);
+                    /*
+                     * Both files that were written are there and are the player's to change. Asserted by
+                     * name rather than by counting what is on the disk: the system keeps files of its own
+                     * there too, the file that starts it among them, and a count would call every one of
+                     * those a failure of this test.
+                     */
+                    for (final String written : new String[] {"script.iql", "notes.txt"}) {
+                        helper.assertTrue(all.stream().anyMatch(e -> e.path().equals(written)
+                                        && !e.readOnly()),
+                                "expected " + written + " on the disk and writable; got: " + all);
+                    }
 
                     // Filter to .iql only, mirroring the iqlFileList() helper in the payload handler.
                     final long iqlCount = all.stream().filter(e -> e.type() == FileType.IQL).count();

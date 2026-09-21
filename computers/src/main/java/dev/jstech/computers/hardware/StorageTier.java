@@ -50,8 +50,11 @@ public enum StorageTier {
         return speedMultiplier;
     }
 
-    /** The faster of the two by hardware class, whatever the configured latencies happen to be. */
+    /**
+     * The faster of the two by hardware class, whatever the configured latencies happen to be. The classes are
+     * declared slowest first.
+     */
     public StorageTier faster(final StorageTier other) {
-        return other.ordinal() > this.ordinal() ? other : this;
+        return other.compareTo(this) > 0 ? other : this;
     }
 }

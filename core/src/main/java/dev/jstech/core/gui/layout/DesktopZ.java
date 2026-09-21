@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Core.
  */
 package dev.jstech.core.gui.layout;
 
@@ -94,6 +94,18 @@ public final class DesktopZ {
     /** Pose offset to apply before {@code renderItemDecorations} so the count lands in the same band. */
     public static int countOffset() {
         return BAND_COUNT - DECORATION_LIFT;
+    }
+
+    /**
+     * Pose offset for flat drawing that belongs where a count belongs: a fill, a label, a small mark.
+     *
+     * <p>Not the same number as {@link #countOffset()}, and the difference is the whole point: that one
+     * subtracts the lift {@code renderItemDecorations} adds back, so applying it to something that lifts
+     * nothing puts the drawing two hundred BEHIND the window instead of in front of its items, where
+     * nobody ever sees it again.
+     */
+    public static int flatCountOffset() {
+        return BAND_COUNT;
     }
 
     /** The front-most depth any window band can reach, counts included. */

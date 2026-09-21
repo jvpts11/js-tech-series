@@ -7,6 +7,11 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.gui.CdeStyle;
+import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.computers.program.ComputerSettings;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -14,6 +19,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Server to client: the listing of the desktop folder for the Frames desktop background. Each entry
@@ -23,18 +29,22 @@ import java.util.List;
  * <p>{@code iconCells} carries every free-positioned desktop icon's pinned grid cell, so the client
  * places those icons exactly where the player dropped them; an icon with no entry flows into the next
  * free auto-layout cell. {@code pinned} names the programs pinned to the panel, by program id path, in
- * the order they sit there.
+ * the order they sit there. {@code defaultApps} holds the program chosen with Always for each extension.
+ * {@code cdeStyle} is CDE's palette and backdrops as the machine keeps them, which only CDE reads.
+ * {@code trashFull} says whether anything is in the desktop's trash, which is the picture its icon wears.
  */
-public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String wallpaper,
+public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String wallpaper, String cdeStyle,
                                   String computerName, List<String> programs,
                                   List<WireIconCell> iconCells, Prefs prefs,
-                                  List<WireCommunity> community, List<String> pinned)
+                                  List<WireCommunity> community, List<String> pinned,
+                                  Map<String, String> defaultApps, boolean trashFull)
         implements CustomPacketPayload {
 
     public static final int MAX_FILES = 256;
     public static final int MAX_PROGRAMS = 16;
     public static final int MAX_ICON_CELLS = 256;
-    public static final int MAX_PINNED = dev.jstech.computers.program.ComputerSettings.MAX_PINNED;
+    public static final int MAX_PINNED = ComputerSettings.MAX_PINNED;
+    public static final int MAX_DEFAULT_APPS = ComputerSettings.MAX_DEFAULT_APPS;
 
     /** How many player-written programs one desktop shows; the same cap the Mirror's shelf has. */
     public static final int MAX_COMMUNITY = 64;
@@ -80,7 +90,7 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "desktop_files"));
 
     /*
-     * Written out by hand: composite takes six pairs and this carries seven things. The alternative was
+     * Written out by hand: composite takes six pairs and this carries eleven things. The alternative was
      * to bundle two of them into a record nobody else wants, which would have cost a reader more than
      * these two short methods do.
      */
@@ -91,7 +101,14 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
         DiskFilesPayload.WireFile.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_FILES))
                 .encode(buf, payload.files);
         buf.writeUtf(payload.wallpaper, 48);
-        buf.writeUtf(payload.computerName, 48);
+        buf.writeUtf(clip(payload.cdeStyle, CdeStyle.MOST_LETTERS), CdeStyle.MOST_LETTERS);
+        /*
+         * A name as long as a name may be. Written at that length, and cut to it rather than refused: this
+         * packet is what puts a desktop in front of somebody, and a name a letter too long used to throw here
+         * and leave them with no desktop at all.
+         */
+        buf.writeUtf(clip(payload.computerName, InstallerFlow.MOST_NAME_LETTERS),
+                InstallerFlow.MOST_NAME_LETTERS);
         ByteBufCodecs.stringUtf8(32).apply(ByteBufCodecs.list(MAX_PROGRAMS)).encode(buf, payload.programs);
         WireIconCell.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ICON_CELLS)).encode(buf, payload.iconCells);
         Prefs.STREAM_CODEC.encode(buf, payload.prefs);
@@ -104,6 +121,16 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             buf.writeUtf(clip(one.entry(), 128), 128);
         }
         ByteBufCodecs.stringUtf8(32).apply(ByteBufCodecs.list(MAX_PINNED)).encode(buf, payload.pinned);
+        buf.writeVarInt(Math.min(payload.defaultApps.size(), MAX_DEFAULT_APPS));
+        int written = 0;
+        for (final Map.Entry<String, String> one : payload.defaultApps.entrySet()) {
+            if (written++ == MAX_DEFAULT_APPS) {
+                break;
+            }
+            buf.writeUtf(clip(one.getKey(), 32), 32);
+            buf.writeUtf(clip(one.getValue(), 64), 64);
+        }
+        buf.writeBoolean(payload.trashFull);
     }
 
     private static String clip(final String text, final int max) {
@@ -115,19 +142,37 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
         final List<DiskFilesPayload.WireFile> files =
                 DiskFilesPayload.WireFile.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_FILES)).decode(buf);
         final String wallpaper = buf.readUtf(48);
-        final String computerName = buf.readUtf(48);
+        final String cdeStyle = buf.readUtf(CdeStyle.MOST_LETTERS);
+        final String computerName = buf.readUtf(InstallerFlow.MOST_NAME_LETTERS);
         final List<String> programs =
                 ByteBufCodecs.stringUtf8(32).apply(ByteBufCodecs.list(MAX_PROGRAMS)).decode(buf);
         final List<WireIconCell> cells =
                 WireIconCell.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ICON_CELLS)).decode(buf);
         final Prefs prefs = Prefs.STREAM_CODEC.decode(buf);
         final int count = Math.min(buf.readVarInt(), MAX_COMMUNITY);
-        final List<WireCommunity> community = new java.util.ArrayList<>(count);
+        final List<WireCommunity> community = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             community.add(new WireCommunity(buf.readUtf(32), buf.readUtf(16), buf.readUtf(128)));
         }
         final List<String> pinned = ByteBufCodecs.stringUtf8(32).apply(ByteBufCodecs.list(MAX_PINNED)).decode(buf);
-        return new DesktopFilesPayload(files, wallpaper, computerName, programs, cells, prefs, community, pinned);
+        final int apps = Math.min(buf.readVarInt(), MAX_DEFAULT_APPS);
+        final Map<String, String> defaultApps = new LinkedHashMap<>();
+        for (int i = 0; i < apps; i++) {
+            defaultApps.put(buf.readUtf(32), buf.readUtf(64));
+        }
+        final boolean trashFull = buf.readBoolean();
+        return new DesktopFilesPayload(files, wallpaper, cdeStyle, computerName, programs, cells, prefs, community,
+                pinned, defaultApps, trashFull);
+    }
+
+    /* Copied on the way in, so what the desktop is handed cannot change under it after it arrives. */
+    public DesktopFilesPayload {
+        files = List.copyOf(files);
+        programs = List.copyOf(programs);
+        iconCells = List.copyOf(iconCells);
+        community = List.copyOf(community);
+        pinned = List.copyOf(pinned);
+        defaultApps = Map.copyOf(defaultApps);
     }
 
     @Override

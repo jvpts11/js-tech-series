@@ -7,6 +7,12 @@
  */
 package dev.jstech.computers.rack;
 
+import dev.jstech.core.id.IStableId;
+import dev.jstech.core.id.IStableName;
+import dev.jstech.core.id.StableIds;
+import dev.jstech.core.id.StableNames;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
 
 /**
@@ -15,28 +21,46 @@ import java.util.List;
  * throughput rules are unit tested on their own.
  *
  * <p>Without a controller the bay's drives stay independent volumes; that is the {@link #NONE}
- * case, and it is what every bay does by default.
+ * case, and it is what every bay does by default. The controller item keeps the mode as its
+ * {@link #serializedName()}; the firmware's storage page sends and shows it by {@link #id()}.
  */
-public enum RaidMode {
+public enum RaidMode implements IStableId, IStableName {
 
     /** No array: each drive is its own volume, as on any other computer. */
-    NONE(1, 0),
+    NONE(0, "none", 1, 0),
     /** Striping: full capacity and faster storage operations, but losing any drive loses it all. */
-    RAID0(2, 0),
+    RAID0(1, "raid0", 2, 0),
     /** Mirror: the smallest drive's capacity, surviving down to a single drive. */
-    RAID1(2, Integer.MAX_VALUE),
+    RAID1(2, "raid1", 2, Integer.MAX_VALUE),
     /** Parity: capacity of all but one drive, surviving exactly one loss; needs three drives. */
-    RAID5(3, 1);
+    RAID5(3, "raid5", 3, 1);
 
     /** The storage-throughput bonus of a healthy stripe, in percent. */
     public static final int STRIPE_THROUGHPUT_BONUS_PERCENT = 25;
 
+    private static final StableIds<RaidMode> IDS = StableIds.of(RaidMode.class);
+    private static final StableNames<RaidMode> NAMES = StableNames.of(RaidMode.class);
+
+    private final int id;
+    private final String serializedName;
     private final int minDrives;
     private final int lossesTolerated;
 
-    RaidMode(final int minDrives, final int lossesTolerated) {
+    RaidMode(final int id, final String serializedName, final int minDrives, final int lossesTolerated) {
+        this.id = id;
+        this.serializedName = serializedName;
         this.minDrives = minDrives;
         this.lossesTolerated = lossesTolerated;
+    }
+
+    @Override
+    public int id() {
+        return id;
+    }
+
+    @Override
+    public String serializedName() {
+        return serializedName;
     }
 
     /** How many drives the mode needs before it forms an array at all. */
@@ -120,5 +144,34 @@ public enum RaidMode {
     public boolean rebuildable(final int originalDrives, final int presentDrives) {
         return presentDrives < originalDrives && survives(originalDrives, presentDrives)
                 && this != RAID0;
+    }
+
+    /** The mode listed before this one on the firmware's storage page, staying on the first. */
+    public RaidMode previous() {
+        return switch (this) {
+            case NONE, RAID0 -> NONE;
+            case RAID1 -> RAID0;
+            case RAID5 -> RAID1;
+        };
+    }
+
+    /** The mode listed after this one on the firmware's storage page, staying on the last. */
+    public RaidMode next() {
+        return switch (this) {
+            case NONE -> RAID0;
+            case RAID0 -> RAID1;
+            case RAID1, RAID5 -> RAID5;
+        };
+    }
+
+    /** The mode that declares {@code id}, or null when none does. */
+    @Nullable
+    public static RaidMode find(final int id) {
+        return IDS.find(id);
+    }
+
+    /** The mode that declares {@code name}; a name no mode declares reads as {@link #NONE}, independent volumes. */
+    public static RaidMode byName(@Nullable final String name) {
+        return NAMES.byName(name, NONE);
     }
 }

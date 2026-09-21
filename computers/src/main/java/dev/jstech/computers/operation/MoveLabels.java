@@ -36,8 +36,8 @@ public final class MoveLabels {
      * the row has to say which one, or a player looking at four hundred pulls of iron cannot tell which
      * of their programs to go and fix.
      */
-    public static String cannon(final String script) {
-        return script == null || script.isBlank() ? "Cannon" : "Cannon: " + script;
+    public static String sigma(final String script) {
+        return script == null || script.isBlank() ? "Σ#" : "Σ#: " + script;
     }
 
     /** The host name of a computer that has no name of its own anywhere. */

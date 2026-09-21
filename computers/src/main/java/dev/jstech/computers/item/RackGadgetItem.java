@@ -58,21 +58,14 @@ public class RackGadgetItem extends Item {
         if (kindOf(stack) != Kind.RAID_CONTROLLER) {
             return RaidMode.NONE;
         }
-        final String stored = stack.get(ComputingModule.RAID_MODE.get());
-        if (stored == null) {
-            return RaidMode.NONE;
-        }
-        try {
-            return RaidMode.valueOf(stored);
-        } catch (final IllegalArgumentException ignored) {
-            return RaidMode.NONE; // an unknown mode degrades to independent volumes
-        }
+        // An unset or unknown mode degrades to independent volumes.
+        return RaidMode.byName(stack.get(ComputingModule.RAID_MODE.get()));
     }
 
     /** Writes a RAID mode onto a controller stack (a no-op for any other item). */
     public static void setRaidMode(final ItemStack stack, final RaidMode mode) {
         if (kindOf(stack) == Kind.RAID_CONTROLLER) {
-            stack.set(ComputingModule.RAID_MODE.get(), mode.name());
+            stack.set(ComputingModule.RAID_MODE.get(), mode.serializedName());
         }
     }
 

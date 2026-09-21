@@ -8,6 +8,8 @@
 package dev.jstech.computers.storage;
 
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.rack.RaidMode;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -57,8 +59,8 @@ public final class ServerStore implements IWeightedStore {
     }
 
     public long capacity() {
-        final dev.jstech.computers.rack.RaidMode mode = rack.raidModeOf(serverSlot);
-        if (mode == dev.jstech.computers.rack.RaidMode.NONE) {
+        final RaidMode mode = rack.raidModeOf(serverSlot);
+        if (mode == RaidMode.NONE) {
             return drives().capacity();
         }
         if (rack.raidFailed(serverSlot)) {
@@ -70,7 +72,7 @@ public final class ServerStore implements IWeightedStore {
          */
         final List<Long> sizes = new ArrayList<>();
         for (final ItemStack drive : rack.claimedDriveStacks(serverSlot)) {
-            if (drive.getItem() instanceof dev.jstech.computers.item.DiskItem disk) {
+            if (drive.getItem() instanceof DiskItem disk) {
                 sizes.add(disk.spec().capacityItems());
             }
         }

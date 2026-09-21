@@ -27,6 +27,19 @@ import net.minecraft.world.level.block.entity.BlockEntity;
  */
 public final class GatewayCommand implements ICliCommand {
 
+    /**
+     * On any computer with ports for peripherals, which is every computer a gateway can be hung off.
+     *
+     * <p>Not on having one: a gateway is plugged in and unplugged while the machine runs, and a player who has just
+     * bought one would be told the verb does not exist rather than that nothing is linked yet. So the command is
+     * there and says what is there, which is the answer that teaches.
+     */
+    @Override
+    public CommandScope scope() {
+        return CommandScope.everywhere().needing(CommandScope.Need.PORTS);
+    }
+
+
     @Override
     public String name() {
         return "gateway";

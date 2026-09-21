@@ -57,13 +57,13 @@ a watched total moves, and `jsc_operation(id, status)` when an operation of thei
 
 ## What one of our programs can ask of them
 
-From Cannon, through `Gateway`: which computers and peripherals are on the other side, calling any of
+From Σ#, through `Gateway`: which computers and peripherals are on the other side, calling any of
 their peripherals by name, turning their computers on and off, and sending them a line. The language
-reference has the shape of every call, on the [Cannon page](CANNON.md).
+reference has the shape of every call, on the [Σ# page](SIGMA.md).
 
 The bridge stops there on purpose. A program of ours does not reach into one of their computers' files
 or prompt, and a program does not cross from one kind of computer to the other: each side is programmed
-in its own language, and the Gateway is what they share. Their computers speak Lua, ours speak Cannon,
+in its own language, and the Gateway is what they share. Their computers speak Lua, ours speak Σ#,
 and the network is the thing in the middle.
 
 ## What it costs, and what it is allowed

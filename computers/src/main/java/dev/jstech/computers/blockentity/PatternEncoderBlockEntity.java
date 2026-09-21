@@ -16,6 +16,9 @@ import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaFormat;
+import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.id.IStableId;
+import dev.jstech.core.id.StableIds;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralEndpoint;
 import dev.jstech.core.peripheral.PeripheralLinkValidator;
@@ -44,6 +47,13 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
+import software.bernie.geckolib.animatable.GeoBlockEntity;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
 /**
  * The Pattern Encoder: the burner that puts recipe files onto removable media. It is a peripheral of a
@@ -56,7 +66,7 @@ import java.util.Optional;
  * disks, a Legacy one writes CDs, a Standard one writes DVDs, CDs and USB sticks (and no floppies).
  */
 public class PatternEncoderBlockEntity extends BlockEntity implements IPeripheralEndpoint,
-        software.bernie.geckolib.animatable.GeoBlockEntity {
+        GeoBlockEntity {
 
     /** The most jobs waiting behind the one being written. */
     public static final int QUEUE_MAX = 8;
@@ -65,29 +75,52 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
      * The body's only motion: the disc spins and the activity lamp pulses while the head is down. No part
      * ever moves out of the block; everything else the body shows is bone visibility set by the renderer.
      */
-    private static final software.bernie.geckolib.animation.RawAnimation WRITE =
-            software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("animation.pattern_encoder.write");
+    private static final RawAnimation WRITE =
+            RawAnimation.begin().thenLoop("animation.pattern_encoder.write");
 
-    private final software.bernie.geckolib.animatable.instance.AnimatableInstanceCache geckoCache =
-            software.bernie.geckolib.util.GeckoLibUtil.createInstanceCache(this);
+    private final AnimatableInstanceCache geckoCache =
+            GeckoLibUtil.createInstanceCache(this);
 
     @Override
     public void registerControllers(
-            final software.bernie.geckolib.animation.AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new software.bernie.geckolib.animation.AnimationController<>(this, "work", 0,
-                state -> busy() ? state.setAndContinue(WRITE) : software.bernie.geckolib.animation.PlayState.STOP));
+            final AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(new AnimationController<>(this, "work", 0,
+                state -> busy() ? state.setAndContinue(WRITE) : PlayState.STOP));
     }
 
     @Override
-    public software.bernie.geckolib.animatable.instance.AnimatableInstanceCache getAnimatableInstanceCache() {
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
         return geckoCache;
     }
     /** How long a finished or failed job stays on the display before the next one starts. */
     public static final int HOLD_TICKS = 30;
 
     /** Where a job is. */
-    public enum Phase {
-        IDLE, SEEK, WRITE, VERIFY, DONE, ERROR
+    public enum Phase implements IStableId {
+        IDLE(0),
+        SEEK(1),
+        WRITE(2),
+        VERIFY(3),
+        DONE(4),
+        ERROR(5);
+
+        private static final StableIds<Phase> IDS = StableIds.of(Phase.class);
+
+        private final int id;
+
+        Phase(final int id) {
+            this.id = id;
+        }
+
+        @Override
+        public int id() {
+            return id;
+        }
+
+        /** The phase that declares {@code id}; an id no phase declares reads as {@link #IDLE}. */
+        public static Phase byId(final int id) {
+            return IDS.byId(id, IDLE);
+        }
     }
 
     /** One file waiting to be burned: its base name (no extension) and its content. */
@@ -466,8 +499,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
         if (!(mediaStack.getItem() instanceof FormattedMediaItem item)) {
             return 0L;
         }
-        final long capacity = (long) item.format().capacityItems()
-                * dev.jstech.computers.storage.StorageKey.MB_EQ_PER_ITEM;
+        final long capacity = (long) item.format().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
         final long used = DiskFilesystem.filesWeight(mediaStack);
         return Math.max(0L, capacity - used);
     }
@@ -540,7 +572,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
             final CompoundTag job = jobs.getCompound(i);
             queue.addLast(new BurnRequest(job.getString("Name"), job.getString("Content")));
         }
-        phase = phaseOf(tag.getString("Phase"));
+        phase = Phase.byId(tag.getByte("Phase"));
         phaseTicks = tag.getInt("PhaseTicks");
         phaseTotal = tag.getInt("PhaseTotal");
         writeTicks = tag.getInt("WriteTicks");
@@ -548,15 +580,6 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
         message = tag.getString("Message");
         completed = tag.getInt("Completed");
         linkedOwner = tag.contains(NBT_LINKED_OWNER) ? tag.getLong(NBT_LINKED_OWNER) : null;
-    }
-
-    private static Phase phaseOf(final String name) {
-        for (final Phase p : Phase.values()) {
-            if (p.name().equals(name)) {
-                return p;
-            }
-        }
-        return Phase.IDLE;
     }
 
     @Override
@@ -571,7 +594,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
             jobs.add(t);
         }
         tag.put("Queue", jobs);
-        tag.putString("Phase", phase.name());
+        tag.putByte("Phase", (byte) phase.id());
         tag.putInt("PhaseTicks", phaseTicks);
         tag.putInt("PhaseTotal", phaseTotal);
         tag.putInt("WriteTicks", writeTicks);
@@ -597,7 +620,7 @@ public class PatternEncoderBlockEntity extends BlockEntity implements IPeriphera
         final CompoundTag tag = super.getUpdateTag(registries);
         // The client draws the bay, the display and the LEDs; the queued contents themselves stay on the server.
         tag.put("Media", media.serializeNBT(registries));
-        tag.putString("Phase", phase.name());
+        tag.putByte("Phase", (byte) phase.id());
         tag.putInt("PhaseTicks", phaseTicks);
         tag.putInt("PhaseTotal", phaseTotal);
         tag.putInt("WriteTicks", writeTicks);

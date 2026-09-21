@@ -7,6 +7,16 @@
  */
 package dev.jstech.computers.terminal;
 
+import dev.jstech.computers.operation.MoveLabels;
+import dev.jstech.computers.operation.index.IndexHealth;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.computers.storage.IDataSink;
+import dev.jstech.computers.storage.LocalStore;
+import dev.jstech.core.tier.HardwareEra;
+import dev.jstech.core.uuid.NetworkUuid;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * The read-only monitoring data a computer exposes to the Monitor terminal's Local tab.
  */
@@ -26,8 +36,8 @@ public interface IComputerTerminalHost {
 
     int networkServerCount();
 
-    @org.jetbrains.annotations.Nullable
-    dev.jstech.core.uuid.NetworkUuid networkUuid();
+    @Nullable
+    NetworkUuid networkUuid();
 
     int installedCpus();
 
@@ -49,9 +59,9 @@ public interface IComputerTerminalHost {
 
     long localStorageCapacity();
 
-    dev.jstech.computers.storage.IDataSink localStorage();
+    IDataSink localStorage();
 
-    dev.jstech.computers.storage.LocalStore localStore();
+    LocalStore localStore();
 
     int usableStorageSlots();
 
@@ -88,11 +98,11 @@ public interface IComputerTerminalHost {
     }
 
     /**
-     * The storage index's health as an {@link dev.jstech.computers.operation.index.IndexHealth.State}
-     * ordinal, so the terminal can show a permanent status strip. Hosts that own no index report OK.
+     * The storage index's health as the id of an {@link IndexHealth.State},
+     * so the terminal can show a permanent status strip. Hosts that own no index report OK.
      */
     default int indexHealthState() {
-        return dev.jstech.computers.operation.index.IndexHealth.State.OK.ordinal();
+        return IndexHealth.State.OK.id();
     }
 
     /** How many item types the index has flagged as unconfirmed or orphaned. */
@@ -115,8 +125,8 @@ public interface IComputerTerminalHost {
      * it to skin the GUI in the host computer's era; a {@code null} era keeps the default look. A board-backed
      * computer overrides this with its installed era; a host with no board reports {@code null}.
      */
-    @org.jetbrains.annotations.Nullable
-    default dev.jstech.core.tier.HardwareEra installedEra() {
+    @Nullable
+    default HardwareEra installedEra() {
         return null;
     }
 
@@ -125,8 +135,8 @@ public interface IComputerTerminalHost {
      * installed board's era otherwise. Defaults to {@link #installedEra()}; a block entity whose chassis fixes a
      * fixed era overrides this to report that chassis era even when no board is installed.
      */
-    @org.jetbrains.annotations.Nullable
-    default dev.jstech.core.tier.HardwareEra displayEra() {
+    @Nullable
+    default HardwareEra displayEra() {
         return installedEra();
     }
 
@@ -162,7 +172,7 @@ public interface IComputerTerminalHost {
      * A host that cannot store it (none today) returns {@code null} and the console degrades to a
      * fresh, non-persistent session.
      */
-    default dev.jstech.computers.program.ComputerConsoleState console() {
+    default ComputerConsoleState console() {
         return null;
     }
 
@@ -171,24 +181,24 @@ public interface IComputerTerminalHost {
      * else the custom name from the assembly screen, else the installed system's id, else a plain "computer".
      */
     default String hostname() {
-        final dev.jstech.computers.program.ComputerConsoleState console = console();
+        final ComputerConsoleState console = console();
         String customName = "";
         String osId = "";
-        if (this instanceof dev.jstech.computers.os.IOsHost computer) {
+        if (this instanceof IOsHost computer) {
             customName = computer.customName();
             if (computer.installedOs() != null) {
                 osId = computer.installedOs().id().getPath();
             }
         }
-        return dev.jstech.computers.operation.MoveLabels.hostname(
+        return MoveLabels.hostname(
                 console == null ? "" : console.computerName(), customName, osId);
     }
 
     /**
      * The label an Operation's provenance shows for this computer acting through {@code program}, one of the
-     * {@link dev.jstech.computers.operation.MoveLabels} names: {@code "host (program)"}.
+     * {@link MoveLabels} names: {@code "host (program)"}.
      */
     default String originLabel(final String program) {
-        return dev.jstech.computers.operation.MoveLabels.via(hostname(), program);
+        return MoveLabels.via(hostname(), program);
     }
 }

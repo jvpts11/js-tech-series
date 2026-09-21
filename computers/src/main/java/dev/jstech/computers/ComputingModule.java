@@ -7,43 +7,111 @@
  */
 package dev.jstech.computers;
 
+import com.mojang.serialization.Codec;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.advancement.OsFirstBootTrigger;
+import dev.jstech.computers.block.ClusterManagementComputerBlock;
 import dev.jstech.computers.block.CraftingComputerBlock;
+import dev.jstech.computers.block.CraftingSwitchBlock;
 import dev.jstech.computers.block.DataCableBlock;
+import dev.jstech.computers.block.HbwInterfaceBlock;
+import dev.jstech.computers.block.LegacyClusterManagementComputerBlock;
+import dev.jstech.computers.block.LegacyCraftingComputerBlock;
+import dev.jstech.computers.block.LegacyMainframeBlock;
 import dev.jstech.computers.block.LegacyMonitorBlock;
+import dev.jstech.computers.block.LegacyPersonalComputerBlock;
+import dev.jstech.computers.block.LegacyServerRackBlock;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.MainframePartBlock;
+import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.block.NetworkGatewayBlock;
+import dev.jstech.computers.block.PatternEncoderBlock;
+import dev.jstech.computers.block.PeripheralCableBlock;
 import dev.jstech.computers.block.PersonalComputerBlock;
 import dev.jstech.computers.block.PersonalRouterBlock;
+import dev.jstech.computers.block.ServerRackBlock;
+import dev.jstech.computers.block.ServerRackPartBlock;
+import dev.jstech.computers.block.ServerRouterBlock;
+import dev.jstech.computers.block.SupercomputerRackBlock;
+import dev.jstech.computers.block.TankBlock;
+import dev.jstech.computers.block.VintageClusterManagementComputerBlock;
+import dev.jstech.computers.block.VintageCraftingComputerBlock;
+import dev.jstech.computers.block.VintageMainframeBlock;
 import dev.jstech.computers.block.VintageMonitorBlock;
+import dev.jstech.computers.block.VintagePersonalComputerBlock;
+import dev.jstech.computers.block.VintageServerRackBlock;
+import dev.jstech.computers.block.part.CablePartItem;
+import dev.jstech.computers.block.part.CablePartType;
+import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.blockentity.CraftingSwitchBlockEntity;
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.MainframePartBlockEntity;
+import dev.jstech.computers.blockentity.MonitorBlockEntity;
+import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
+import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.PersonalRouterBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
-import dev.jstech.computers.hardware.CpuSocket;
+import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
+import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
+import dev.jstech.computers.blockentity.TankBlockEntity;
+import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
+import dev.jstech.computers.hardware.CpuSocketId;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.CraftingCardSpec;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.PcieGeneration;
+import dev.jstech.computers.hardware.PhiCoprocessorSpec;
 import dev.jstech.computers.hardware.PsuSpec;
 import dev.jstech.computers.hardware.RamGeneration;
 import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.item.CabinetBlockItem;
+import dev.jstech.computers.item.ClusterInterfaceCardItem;
 import dev.jstech.computers.item.CpuItem;
 import dev.jstech.computers.item.CraftingCardItem;
 import dev.jstech.computers.item.DiskItem;
 import dev.jstech.computers.item.GpuItem;
+import dev.jstech.computers.item.MainframeBlockItem;
 import dev.jstech.computers.item.MotherboardItem;
+import dev.jstech.computers.item.PhiCoprocessorItem;
 import dev.jstech.computers.item.PsuItem;
+import dev.jstech.computers.item.RackGadgetItem;
+import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.RamItem;
+import dev.jstech.computers.item.ServerCaseItem;
+import dev.jstech.computers.item.ServerHardwareHandler;
+import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.menu.ClusterManagementComputerMenu;
+import dev.jstech.computers.menu.CommandPromptMenu;
+import dev.jstech.computers.menu.ComputerTerminalMenu;
+import dev.jstech.computers.menu.CraftingComputerMenu;
+import dev.jstech.computers.menu.CraftingSwitchMenu;
+import dev.jstech.computers.menu.DesktopMenu;
+import dev.jstech.computers.menu.DosTerminalMenu;
+import dev.jstech.computers.menu.ExportBusMenu;
+import dev.jstech.computers.menu.ImportBusMenu;
+import dev.jstech.computers.menu.InputBusMenu;
+import dev.jstech.computers.menu.LinuxTtyMenu;
+import dev.jstech.computers.menu.NetTerminalMenu;
 import dev.jstech.computers.menu.MainframeMenu;
+import dev.jstech.computers.menu.MonitorSessionMenu;
+import dev.jstech.computers.menu.NetworkGatewayMenu;
+import dev.jstech.computers.menu.PatternEncoderMenu;
 import dev.jstech.computers.menu.PersonalComputerMenu;
+import dev.jstech.computers.menu.ReceivingBusMenu;
+import dev.jstech.computers.menu.ServerAssemblyMenu;
+import dev.jstech.computers.menu.ServerRackMenu;
+import dev.jstech.computers.menu.ServerRouterMenu;
+import dev.jstech.computers.os.DiskSystems;
+import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaDriveType;
 import dev.jstech.computers.os.media.MediaFormat;
@@ -51,13 +119,30 @@ import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlock;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.computers.storage.DiskUsage;
+import dev.jstech.computers.storage.ServerStorageContents;
+import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.network.DataTier;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.tier.IndustrialTier;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
+import net.minecraft.advancements.CriterionTrigger;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -89,12 +174,12 @@ public final class ComputingModule {
             DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, JsComputers.MODID);
 
     /** Advancement criteria triggers: booting a computer into an OS (the Arch / Gentoo challenges use it). */
-    public static final DeferredRegister<net.minecraft.advancements.CriterionTrigger<?>> TRIGGERS =
-            DeferredRegister.create(net.minecraft.core.registries.Registries.TRIGGER_TYPE, JsComputers.MODID);
-    public static final net.neoforged.neoforge.registries.DeferredHolder<net.minecraft.advancements.CriterionTrigger<?>,
-            dev.jstech.computers.advancement.OsFirstBootTrigger> OS_FIRST_BOOT =
+    public static final DeferredRegister<CriterionTrigger<?>> TRIGGERS =
+            DeferredRegister.create(Registries.TRIGGER_TYPE, JsComputers.MODID);
+    public static final DeferredHolder<CriterionTrigger<?>,
+            OsFirstBootTrigger> OS_FIRST_BOOT =
             TRIGGERS.register("os_first_boot",
-                    dev.jstech.computers.advancement.OsFirstBootTrigger::new);
+                    OsFirstBootTrigger::new);
 
     public static final DeferredRegister<MenuType<?>> MENUS =
             DeferredRegister.create(Registries.MENU, JsComputers.MODID);
@@ -106,67 +191,67 @@ public final class ComputingModule {
      * Data components: a Server item carries its state in its NBT: the items it
      * stores, the hardware it is built from, and its network node identity.
      */
-    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
-            net.minecraft.core.component.DataComponentType<
-                    dev.jstech.computers.storage.ServerStorageContents>>
+    public static final DeferredHolder<DataComponentType<?>,
+            DataComponentType<
+                    ServerStorageContents>>
             SERVER_STORAGE = COMPONENTS.registerComponentType("server_storage", b -> b
-                    .persistent(dev.jstech.computers.storage.ServerStorageContents.CODEC)
+                    .persistent(ServerStorageContents.CODEC)
                     .networkSynchronized(
-                            dev.jstech.computers.storage.ServerStorageContents.STREAM_CODEC));
+                            ServerStorageContents.STREAM_CODEC));
 
     /*
      * A drive's stored items live in the save-wide volume store, not on the item: the item carries the
      * volume's id and a usage summary, so a drive holding thousands of types stays a tiny item.
      */
-    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
-            net.minecraft.core.component.DataComponentType<java.util.UUID>>
+    public static final DeferredHolder<DataComponentType<?>,
+            DataComponentType<UUID>>
             DISK_VOLUME = COMPONENTS.registerComponentType("disk_volume", b -> b
-                    .persistent(net.minecraft.core.UUIDUtil.CODEC)
-                    .networkSynchronized(net.minecraft.core.UUIDUtil.STREAM_CODEC));
+                    .persistent(UUIDUtil.CODEC)
+                    .networkSynchronized(UUIDUtil.STREAM_CODEC));
 
-    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
-            net.minecraft.core.component.DataComponentType<
-                    dev.jstech.computers.storage.DiskUsage>>
+    public static final DeferredHolder<DataComponentType<?>,
+            DataComponentType<
+                    DiskUsage>>
             DISK_USAGE = COMPONENTS.registerComponentType("disk_usage", b -> b
-                    .persistent(dev.jstech.computers.storage.DiskUsage.CODEC)
-                    .networkSynchronized(dev.jstech.computers.storage.DiskUsage.STREAM_CODEC));
+                    .persistent(DiskUsage.CODEC)
+                    .networkSynchronized(DiskUsage.STREAM_CODEC));
 
-    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
-            net.minecraft.core.component.DataComponentType<net.minecraft.world.item.component.ItemContainerContents>>
+    public static final DeferredHolder<DataComponentType<?>,
+            DataComponentType<ItemContainerContents>>
             SERVER_HARDWARE = COMPONENTS.registerComponentType("server_hardware", b -> b
-                    .persistent(net.minecraft.world.item.component.ItemContainerContents.CODEC)
-                    .networkSynchronized(net.minecraft.world.item.component.ItemContainerContents.STREAM_CODEC));
+                    .persistent(ItemContainerContents.CODEC)
+                    .networkSynchronized(ItemContainerContents.STREAM_CODEC));
 
-    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
-            net.minecraft.core.component.DataComponentType<java.util.UUID>>
+    public static final DeferredHolder<DataComponentType<?>,
+            DataComponentType<UUID>>
             SERVER_NODE_UUID = COMPONENTS.registerComponentType("server_node_uuid", b -> b
-                    .persistent(net.minecraft.core.UUIDUtil.CODEC)
-                    .networkSynchronized(net.minecraft.core.UUIDUtil.STREAM_CODEC));
+                    .persistent(UUIDUtil.CODEC)
+                    .networkSynchronized(UUIDUtil.STREAM_CODEC));
 
     /*
      * A RAID Controller carries its array configuration: the mode it runs and how many member
      * drives the array was formed with (so a missing member reads as degraded rather than smaller).
      */
-    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
-            net.minecraft.core.component.DataComponentType<String>>
+    public static final DeferredHolder<DataComponentType<?>,
+            DataComponentType<String>>
             RAID_MODE = COMPONENTS.registerComponentType("raid_mode", b -> b
-                    .persistent(com.mojang.serialization.Codec.STRING)
-                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8));
+                    .persistent(Codec.STRING)
+                    .networkSynchronized(ByteBufCodecs.STRING_UTF8));
 
-    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
-            net.minecraft.core.component.DataComponentType<Integer>>
+    public static final DeferredHolder<DataComponentType<?>,
+            DataComponentType<Integer>>
             RAID_MEMBERS = COMPONENTS.registerComponentType("raid_members", b -> b
-                    .persistent(com.mojang.serialization.Codec.INT)
-                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT));
+                    .persistent(Codec.INT)
+                    .networkSynchronized(ByteBufCodecs.VAR_INT));
 
     /*
      * A rack server's software state (console history, installed programs, settings) persists WITH
      * the item, so it moves between racks with the machine. Server-side only: never network-synced.
      */
-    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
-            net.minecraft.core.component.DataComponentType<net.minecraft.nbt.CompoundTag>>
+    public static final DeferredHolder<DataComponentType<?>,
+            DataComponentType<CompoundTag>>
             SERVER_CONSOLE = COMPONENTS.registerComponentType("server_console", b -> b
-                    .persistent(net.minecraft.nbt.CompoundTag.CODEC));
+                    .persistent(CompoundTag.CODEC));
 
     /*
      * The software a disk carries: installed programs and their versions, the desktop preferences, and
@@ -175,27 +260,27 @@ public final class ComputingModule {
      * this on the block entity meant a newly installed system still believed the old one's programs
      * were present. Server-side only: never network-synced.
      */
-    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
-            net.minecraft.core.component.DataComponentType<net.minecraft.nbt.CompoundTag>>
+    public static final DeferredHolder<DataComponentType<?>,
+            DataComponentType<CompoundTag>>
             DISK_CONSOLE = COMPONENTS.registerComponentType("disk_console", b -> b
-                    .persistent(net.minecraft.nbt.CompoundTag.CODEC));
+                    .persistent(CompoundTag.CODEC));
 
-    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
-            net.minecraft.core.component.DataComponentType<String>>
+    public static final DeferredHolder<DataComponentType<?>,
+            DataComponentType<String>>
             COMPUTER_NAME = COMPONENTS.registerComponentType("computer_name", b -> b
-                    .persistent(com.mojang.serialization.Codec.STRING)
-                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8));
+                    .persistent(Codec.STRING)
+                    .networkSynchronized(ByteBufCodecs.STRING_UTF8));
 
     /*
      * How much of a (non-Server) computer disk's storage is public, as a per-mille 0..1000. The
      * component rides on the disk ItemStack so the split travels with the disk when it is pulled
      * and reinserted. An absent component reads as fully private (see DiskItem.publicPermille).
      */
-    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
-            net.minecraft.core.component.DataComponentType<Integer>>
+    public static final DeferredHolder<DataComponentType<?>,
+            DataComponentType<Integer>>
             DISK_PUBLIC_PERMILLE = COMPONENTS.registerComponentType("disk_public_permille", b -> b
-                    .persistent(com.mojang.serialization.Codec.intRange(0, 1000))
-                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT));
+                    .persistent(Codec.intRange(0, 1000))
+                    .networkSynchronized(ByteBufCodecs.VAR_INT));
 
     /*
      * OS media subsystem: components that together describe the content of a MediaItem.
@@ -203,39 +288,37 @@ public final class ComputingModule {
      */
 
     // Installer payload (OS_INSTALL / PROGRAM_INSTALL): the OS or program id.
-    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
-            net.minecraft.core.component.DataComponentType<net.minecraft.resources.ResourceLocation>>
+    public static final DeferredHolder<DataComponentType<?>,
+            DataComponentType<ResourceLocation>>
             MEDIA_PAYLOAD = COMPONENTS.registerComponentType("media_payload", b -> b
-                    .persistent(net.minecraft.resources.ResourceLocation.CODEC)
-                    .networkSynchronized(net.minecraft.resources.ResourceLocation.STREAM_CODEC));
+                    .persistent(ResourceLocation.CODEC)
+                    .networkSynchronized(ResourceLocation.STREAM_CODEC));
 
     /*
      * Which of the three content kinds this medium carries. Absent component → OS_INSTALL (safe
      * default that keeps legacy blank media behaving as installer media).
      */
-    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
-            net.minecraft.core.component.DataComponentType<MediaKind>>
+    public static final DeferredHolder<DataComponentType<?>,
+            DataComponentType<MediaKind>>
             MEDIA_KIND = COMPONENTS.registerComponentType("media_kind", b -> b
-                    .persistent(com.mojang.serialization.Codec.STRING.xmap(
-                            MediaKind::valueOf, MediaKind::name))
-                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8.map(
-                            MediaKind::valueOf, MediaKind::name)));
+                    .persistent(StableCodecs.byName(MediaKind.class))
+                    .networkSynchronized(StableCodecs.byId(MediaKind.class, MediaKind.OS_INSTALL)));
 
     // Data contents (DATA kind): a portable item/fluid storage snapshot.
-    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
-            net.minecraft.core.component.DataComponentType<
-                    dev.jstech.computers.storage.ServerStorageContents>>
+    public static final DeferredHolder<DataComponentType<?>,
+            DataComponentType<
+                    ServerStorageContents>>
             MEDIA_DATA = COMPONENTS.registerComponentType("media_data", b -> b
-                    .persistent(dev.jstech.computers.storage.ServerStorageContents.CODEC)
+                    .persistent(ServerStorageContents.CODEC)
                     .networkSynchronized(
-                            dev.jstech.computers.storage.ServerStorageContents.STREAM_CODEC));
+                            ServerStorageContents.STREAM_CODEC));
 
     // Capacity of a DATA medium in item-equivalents. Absent → MediaItem.DEFAULT_CAPACITY.
-    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
-            net.minecraft.core.component.DataComponentType<Integer>>
+    public static final DeferredHolder<DataComponentType<?>,
+            DataComponentType<Integer>>
             MEDIA_CAPACITY = COMPONENTS.registerComponentType("media_capacity", b -> b
-                    .persistent(com.mojang.serialization.Codec.INT)
-                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT));
+                    .persistent(Codec.INT)
+                    .networkSynchronized(ByteBufCodecs.VAR_INT));
 
     /*
      * Disk filesystem components: files and the installed OS live on the DiskItem stack so
@@ -243,34 +326,36 @@ public final class ComputingModule {
      */
 
     // The filesystem contents of a disk volume: path-keyed map of stored files.
-    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
-            net.minecraft.core.component.DataComponentType<
-                    dev.jstech.computers.os.fs.FilesystemContents>>
+    public static final DeferredHolder<DataComponentType<?>,
+            DataComponentType<
+                    FilesystemContents>>
             FILESYSTEM = COMPONENTS.registerComponentType("filesystem", b -> b
-                    .persistent(dev.jstech.computers.os.fs.FilesystemContents.CODEC)
+                    .persistent(FilesystemContents.CODEC)
                     .networkSynchronized(
-                            dev.jstech.computers.os.fs.FilesystemContents.STREAM_CODEC));
+                            FilesystemContents.STREAM_CODEC));
 
     /*
-     * The OS installed on a system disk: a ResourceLocation identifying the registered OsDef.
-     * Present only on bootable disks; absent on plain data disks.
+     * The systems a disk carries and which of them it boots, with what each of them remembers about having been
+     * met. Present only on bootable disks; absent on plain data disks. It used to be one system written straight
+     * onto the disk, so installing a second wrote over the first, and one mark for the disk rather than one per
+     * system, which would have had a second system arrive already met.
      */
-    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
-            net.minecraft.core.component.DataComponentType<net.minecraft.resources.ResourceLocation>>
-            SYSTEM_OS = COMPONENTS.registerComponentType("system_os", b -> b
-                    .persistent(net.minecraft.resources.ResourceLocation.CODEC)
-                    .networkSynchronized(net.minecraft.resources.ResourceLocation.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>,
+            DataComponentType<DiskSystems>>
+            DISK_SYSTEMS = COMPONENTS.registerComponentType("disk_systems", b -> b
+                    .persistent(DiskSystems.CODEC)
+                    .networkSynchronized(DiskSystems.STREAM_CODEC));
 
     /*
      * A user-chosen label for a disk or media volume, shown in This PC and the explorer drive tree and
      * editable there. Rides on the ItemStack so it travels with the disk/medium. Absent → the volume's
      * default name (e.g. "Local Disk" for a system disk, "Removable Drive" for a medium).
      */
-    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>,
-            net.minecraft.core.component.DataComponentType<String>>
+    public static final DeferredHolder<DataComponentType<?>,
+            DataComponentType<String>>
             VOLUME_LABEL = COMPONENTS.registerComponentType("volume_label", b -> b
-                    .persistent(com.mojang.serialization.Codec.STRING)
-                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8));
+                    .persistent(Codec.STRING)
+                    .networkSynchronized(ByteBufCodecs.STRING_UTF8));
 
     private static BlockBehaviour.Properties cableProperties() {
         return BlockBehaviour.Properties.of()
@@ -308,23 +393,23 @@ public final class ComputingModule {
             "crafting_cable", () -> new BlockItem(CRAFTING_CABLE.get(), new Item.Properties()));
 
     // Crafting Switch: declares up to 5 adjacent machines, wired to a Crafting Computer over the crafting cable.
-    public static final DeferredBlock<dev.jstech.computers.block.CraftingSwitchBlock> CRAFTING_SWITCH =
+    public static final DeferredBlock<CraftingSwitchBlock> CRAFTING_SWITCH =
             BLOCKS.register("crafting_switch",
-                    () -> new dev.jstech.computers.block.CraftingSwitchBlock(
+                    () -> new CraftingSwitchBlock(
                             BlockBehaviour.Properties.of().strength(1.5F)));
 
     public static final DeferredItem<BlockItem> CRAFTING_SWITCH_ITEM = ITEMS.register(
             "crafting_switch", () -> new BlockItem(CRAFTING_SWITCH.get(), new Item.Properties()));
 
-    public static final DeferredBlock<dev.jstech.computers.block.PeripheralCableBlock> PERIPHERAL_CABLE =
+    public static final DeferredBlock<PeripheralCableBlock> PERIPHERAL_CABLE =
             BLOCKS.register("peripheral_cable",
-                    () -> new dev.jstech.computers.block.PeripheralCableBlock(cableProperties()));
+                    () -> new PeripheralCableBlock(cableProperties()));
 
     public static final DeferredItem<BlockItem> PERIPHERAL_CABLE_ITEM = ITEMS.register(
             "peripheral_cable", () -> new BlockItem(PERIPHERAL_CABLE.get(), new Item.Properties()));
 
-    public static final DeferredBlock<dev.jstech.computers.block.MonitorBlock> MONITOR =
-            BLOCKS.register("monitor", () -> new dev.jstech.computers.block.MonitorBlock(
+    public static final DeferredBlock<MonitorBlock> MONITOR =
+            BLOCKS.register("monitor", () -> new MonitorBlock(
                     BlockBehaviour.Properties.of()
                             .mapColor(MapColor.COLOR_BLACK)
                             .strength(1.0F)
@@ -367,10 +452,10 @@ public final class ComputingModule {
                             CRAFTING_CABLE.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>,
-            BlockEntityType<dev.jstech.computers.blockentity.CraftingSwitchBlockEntity>>
+            BlockEntityType<CraftingSwitchBlockEntity>>
             CRAFTING_SWITCH_BE = BLOCK_ENTITIES.register("crafting_switch",
                     () -> BlockEntityType.Builder.of(
-                            dev.jstech.computers.blockentity.CraftingSwitchBlockEntity::new,
+                            CraftingSwitchBlockEntity::new,
                             CRAFTING_SWITCH.get()).build(null));
 
     // Routers
@@ -390,9 +475,9 @@ public final class ComputingModule {
                     () -> BlockEntityType.Builder.of(PersonalRouterBlockEntity::new,
                             PERSONAL_ROUTER.get()).build(null));
 
-    public static final DeferredBlock<dev.jstech.computers.block.ServerRouterBlock> SERVER_ROUTER =
+    public static final DeferredBlock<ServerRouterBlock> SERVER_ROUTER =
             BLOCKS.register("server_router",
-                    () -> new dev.jstech.computers.block.ServerRouterBlock(
+                    () -> new ServerRouterBlock(
                             BlockBehaviour.Properties.of()
                                     .mapColor(MapColor.COLOR_GRAY)
                                     .strength(0.6F)
@@ -403,21 +488,21 @@ public final class ComputingModule {
             "server_router", () -> new BlockItem(SERVER_ROUTER.get(), new Item.Properties()));
 
     public static final DeferredHolder<BlockEntityType<?>,
-            BlockEntityType<dev.jstech.computers.blockentity.ServerRouterBlockEntity>> SERVER_ROUTER_BE =
+            BlockEntityType<ServerRouterBlockEntity>> SERVER_ROUTER_BE =
             BLOCK_ENTITIES.register("server_router",
                     () -> BlockEntityType.Builder.of(
-                            dev.jstech.computers.blockentity.ServerRouterBlockEntity::new,
+                            ServerRouterBlockEntity::new,
                             SERVER_ROUTER.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>,
-            BlockEntityType<dev.jstech.computers.blockentity.MonitorBlockEntity>> MONITOR_BE =
+            BlockEntityType<MonitorBlockEntity>> MONITOR_BE =
             BLOCK_ENTITIES.register("monitor",
                     () -> BlockEntityType.Builder.of(
-                            dev.jstech.computers.blockentity.MonitorBlockEntity::new,
+                            MonitorBlockEntity::new,
                             MONITOR.get(), VINTAGE_MONITOR.get(), LEGACY_MONITOR.get()).build(null));
 
-    public static final DeferredBlock<dev.jstech.computers.block.TankBlock> TANK =
-            BLOCKS.register("tank", () -> new dev.jstech.computers.block.TankBlock(
+    public static final DeferredBlock<TankBlock> TANK =
+            BLOCKS.register("tank", () -> new TankBlock(
                     BlockBehaviour.Properties.of()
                             .mapColor(MapColor.COLOR_LIGHT_BLUE)
                             .strength(0.6F)
@@ -428,64 +513,64 @@ public final class ComputingModule {
             "tank", () -> new BlockItem(TANK.get(), new Item.Properties()));
 
     public static final DeferredHolder<BlockEntityType<?>,
-            BlockEntityType<dev.jstech.computers.blockentity.TankBlockEntity>> TANK_BE =
+            BlockEntityType<TankBlockEntity>> TANK_BE =
             BLOCK_ENTITIES.register("tank",
                     () -> BlockEntityType.Builder.of(
-                            dev.jstech.computers.blockentity.TankBlockEntity::new,
+                            TankBlockEntity::new,
                             TANK.get()).build(null));
 
     // Interaction buses: move items between the network and adjacent inventories
 
-    public static final DeferredItem<dev.jstech.computers.block.part.CablePartItem> IMPORT_BUS_ITEM =
-            ITEMS.register("import_bus", () -> new dev.jstech.computers.block.part.CablePartItem(
+    public static final DeferredItem<CablePartItem> IMPORT_BUS_ITEM =
+            ITEMS.register("import_bus", () -> new CablePartItem(
                     new Item.Properties(),
-                    dev.jstech.computers.block.part.CablePartType.IMPORT));
+                    CablePartType.IMPORT));
 
-    public static final DeferredItem<dev.jstech.computers.block.part.CablePartItem> EXPORT_BUS_ITEM =
-            ITEMS.register("export_bus", () -> new dev.jstech.computers.block.part.CablePartItem(
+    public static final DeferredItem<CablePartItem> EXPORT_BUS_ITEM =
+            ITEMS.register("export_bus", () -> new CablePartItem(
                     new Item.Properties(),
-                    dev.jstech.computers.block.part.CablePartType.EXPORT));
+                    CablePartType.EXPORT));
 
-    public static final DeferredItem<dev.jstech.computers.block.part.CablePartItem> INPUT_BUS_ITEM =
-            ITEMS.register("input_bus", () -> new dev.jstech.computers.block.part.CablePartItem(
+    public static final DeferredItem<CablePartItem> INPUT_BUS_ITEM =
+            ITEMS.register("input_bus", () -> new CablePartItem(
                     new Item.Properties(),
-                    dev.jstech.computers.block.part.CablePartType.INPUT));
+                    CablePartType.INPUT));
 
-    public static final DeferredItem<dev.jstech.computers.block.part.CablePartItem> RECEIVING_BUS_ITEM =
-            ITEMS.register("receiving_bus", () -> new dev.jstech.computers.block.part.CablePartItem(
+    public static final DeferredItem<CablePartItem> RECEIVING_BUS_ITEM =
+            ITEMS.register("receiving_bus", () -> new CablePartItem(
                     new Item.Properties(),
-                    dev.jstech.computers.block.part.CablePartType.RECEIVING));
+                    CablePartType.RECEIVING));
 
     public static final DeferredHolder<MenuType<?>,
-            MenuType<dev.jstech.computers.menu.ExportBusMenu>> EXPORT_BUS_MENU =
+            MenuType<ExportBusMenu>> EXPORT_BUS_MENU =
             MENUS.register("export_bus", () -> IMenuTypeExtension.create(
-                    dev.jstech.computers.menu.ExportBusMenu::fromNetwork));
+                    ExportBusMenu::fromNetwork));
 
     public static final DeferredHolder<MenuType<?>,
-            MenuType<dev.jstech.computers.menu.ImportBusMenu>> IMPORT_BUS_MENU =
+            MenuType<ImportBusMenu>> IMPORT_BUS_MENU =
             MENUS.register("import_bus", () -> IMenuTypeExtension.create(
-                    dev.jstech.computers.menu.ImportBusMenu::fromNetwork));
+                    ImportBusMenu::fromNetwork));
 
     public static final DeferredHolder<MenuType<?>,
-            MenuType<dev.jstech.computers.menu.CraftingSwitchMenu>> CRAFTING_SWITCH_MENU =
+            MenuType<CraftingSwitchMenu>> CRAFTING_SWITCH_MENU =
             MENUS.register("crafting_switch", () -> IMenuTypeExtension.create(
-                    dev.jstech.computers.menu.CraftingSwitchMenu::fromNetwork));
+                    CraftingSwitchMenu::fromNetwork));
 
     public static final DeferredHolder<MenuType<?>,
-            MenuType<dev.jstech.computers.menu.InputBusMenu>> INPUT_BUS_MENU =
+            MenuType<InputBusMenu>> INPUT_BUS_MENU =
             MENUS.register("input_bus", () -> IMenuTypeExtension.create(
-                    dev.jstech.computers.menu.InputBusMenu::fromNetwork));
+                    InputBusMenu::fromNetwork));
 
     public static final DeferredHolder<MenuType<?>,
-            MenuType<dev.jstech.computers.menu.ReceivingBusMenu>> RECEIVING_BUS_MENU =
+            MenuType<ReceivingBusMenu>> RECEIVING_BUS_MENU =
             MENUS.register("receiving_bus", () -> IMenuTypeExtension.create(
-                    dev.jstech.computers.menu.ReceivingBusMenu::fromNetwork));
+                    ReceivingBusMenu::fromNetwork));
 
     // Server Rack: houses Server items as network nodes
 
-    public static final DeferredBlock<dev.jstech.computers.block.ServerRackBlock> SERVER_RACK =
+    public static final DeferredBlock<ServerRackBlock> SERVER_RACK =
             BLOCKS.register("server_rack",
-                    () -> new dev.jstech.computers.block.ServerRackBlock(
+                    () -> new ServerRackBlock(
                             BlockBehaviour.Properties.of()
                                     .mapColor(MapColor.METAL)
                                     .strength(1.5F)
@@ -496,20 +581,20 @@ public final class ComputingModule {
      * How a rack cabinet sits in an item slot: 3 blocks tall is its longest side, and its model spans
      * x -1.5..0.5, y 0..3, z -0.5..1.5 blocks around the controller, so its middle moves by this much.
      */
-    private static final dev.jstech.computers.item.CabinetBlockItem.Fit RACK_FIT =
-            new dev.jstech.computers.item.CabinetBlockItem.Fit(48.0F, 0.5F, -1.5F, -0.5F);
+    private static final CabinetBlockItem.Fit RACK_FIT =
+            new CabinetBlockItem.Fit(48.0F, 0.5F, -1.5F, -0.5F);
 
     public static final DeferredItem<BlockItem> SERVER_RACK_ITEM = ITEMS.register(
-            "server_rack", () -> new dev.jstech.computers.item.CabinetBlockItem(
+            "server_rack", () -> new CabinetBlockItem(
                     SERVER_RACK.get(), new Item.Properties(), "rack", "server_rack", "rack", RACK_FIT));
 
     /*
      * The supercomputer cabinet: the same foundation, but it seats only Supercomputer Nodes and its
      * rear port takes only the high-compute fabric.
      */
-    public static final DeferredBlock<dev.jstech.computers.block.SupercomputerRackBlock>
+    public static final DeferredBlock<SupercomputerRackBlock>
             SUPERCOMPUTER_RACK = BLOCKS.register("supercomputer_rack",
-                    () -> new dev.jstech.computers.block.SupercomputerRackBlock(
+                    () -> new SupercomputerRackBlock(
                             BlockBehaviour.Properties.of()
                                     .mapColor(MapColor.METAL)
                                     .strength(1.5F)
@@ -517,7 +602,7 @@ public final class ComputingModule {
                                     .noOcclusion()));
 
     public static final DeferredItem<BlockItem> SUPERCOMPUTER_RACK_ITEM = ITEMS.register(
-            "supercomputer_rack", () -> new dev.jstech.computers.item.CabinetBlockItem(
+            "supercomputer_rack", () -> new CabinetBlockItem(
                     SUPERCOMPUTER_RACK.get(), new Item.Properties(), "rack", "supercomputer_rack",
                     "rack", RACK_FIT));
 
@@ -525,9 +610,9 @@ public final class ComputingModule {
      * The Server Rack of the earlier eras: the same cabinet in its decade's materials, seating only
      * servers of its own era or earlier.
      */
-    public static final DeferredBlock<dev.jstech.computers.block.LegacyServerRackBlock>
+    public static final DeferredBlock<LegacyServerRackBlock>
             LEGACY_SERVER_RACK = BLOCKS.register("legacy_server_rack",
-                    () -> new dev.jstech.computers.block.LegacyServerRackBlock(
+                    () -> new LegacyServerRackBlock(
                             BlockBehaviour.Properties.of()
                                     .mapColor(MapColor.METAL)
                                     .strength(1.5F)
@@ -535,13 +620,13 @@ public final class ComputingModule {
                                     .noOcclusion()));
 
     public static final DeferredItem<BlockItem> LEGACY_SERVER_RACK_ITEM = ITEMS.register(
-            "legacy_server_rack", () -> new dev.jstech.computers.item.CabinetBlockItem(
+            "legacy_server_rack", () -> new CabinetBlockItem(
                     LEGACY_SERVER_RACK.get(), new Item.Properties(), "rack", "legacy_server_rack",
                     "rack", RACK_FIT));
 
-    public static final DeferredBlock<dev.jstech.computers.block.VintageServerRackBlock>
+    public static final DeferredBlock<VintageServerRackBlock>
             VINTAGE_SERVER_RACK = BLOCKS.register("vintage_server_rack",
-                    () -> new dev.jstech.computers.block.VintageServerRackBlock(
+                    () -> new VintageServerRackBlock(
                             BlockBehaviour.Properties.of()
                                     .mapColor(MapColor.METAL)
                                     .strength(1.5F)
@@ -549,13 +634,13 @@ public final class ComputingModule {
                                     .noOcclusion()));
 
     public static final DeferredItem<BlockItem> VINTAGE_SERVER_RACK_ITEM = ITEMS.register(
-            "vintage_server_rack", () -> new dev.jstech.computers.item.CabinetBlockItem(
+            "vintage_server_rack", () -> new CabinetBlockItem(
                     VINTAGE_SERVER_RACK.get(), new Item.Properties(), "rack", "vintage_server_rack",
                     "rack", RACK_FIT));
 
-    public static final DeferredBlock<dev.jstech.computers.block.ServerRackPartBlock> SERVER_RACK_PART =
+    public static final DeferredBlock<ServerRackPartBlock> SERVER_RACK_PART =
             BLOCKS.register("server_rack_part",
-                    () -> new dev.jstech.computers.block.ServerRackPartBlock(
+                    () -> new ServerRackPartBlock(
                             BlockBehaviour.Properties.of()
                                     .mapColor(MapColor.METAL)
                                     .strength(1.5F)
@@ -569,70 +654,85 @@ public final class ComputingModule {
                             VINTAGE_SERVER_RACK.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>,
-            BlockEntityType<dev.jstech.computers.blockentity.ServerRackPartBlockEntity>> SERVER_RACK_PART_BE =
+            BlockEntityType<ServerRackPartBlockEntity>> SERVER_RACK_PART_BE =
             BLOCK_ENTITIES.register("server_rack_part",
                     () -> BlockEntityType.Builder.of(
-                            dev.jstech.computers.blockentity.ServerRackPartBlockEntity::new,
+                            ServerRackPartBlockEntity::new,
                             SERVER_RACK_PART.get()).build(null));
 
     public static final DeferredHolder<MenuType<?>,
-            MenuType<dev.jstech.computers.menu.ServerRackMenu>> SERVER_RACK_MENU =
+            MenuType<ServerRackMenu>> SERVER_RACK_MENU =
             MENUS.register("server_rack", () -> IMenuTypeExtension.create(
-                    dev.jstech.computers.menu.ServerRackMenu::fromNetwork));
+                    ServerRackMenu::fromNetwork));
 
     public static final DeferredHolder<MenuType<?>,
-            MenuType<dev.jstech.computers.menu.ServerAssemblyMenu>> SERVER_ASSEMBLY_MENU =
+            MenuType<ServerAssemblyMenu>> SERVER_ASSEMBLY_MENU =
             MENUS.register("server_assembly", () -> IMenuTypeExtension.create(
-                    dev.jstech.computers.menu.ServerAssemblyMenu::fromNetwork));
+                    ServerAssemblyMenu::fromNetwork));
 
     public static final DeferredHolder<MenuType<?>,
-            MenuType<dev.jstech.computers.menu.ComputerTerminalMenu>> COMPUTER_TERMINAL_MENU =
+            MenuType<ComputerTerminalMenu>> COMPUTER_TERMINAL_MENU =
             MENUS.register("computer_terminal", () -> IMenuTypeExtension.create(
-                    dev.jstech.computers.menu.ComputerTerminalMenu::fromNetwork));
+                    ComputerTerminalMenu::fromNetwork));
 
     public static final DeferredHolder<MenuType<?>,
-            MenuType<dev.jstech.computers.menu.CommandPromptMenu>> COMMAND_PROMPT_MENU =
+            MenuType<CommandPromptMenu>> COMMAND_PROMPT_MENU =
             MENUS.register("command_prompt", () -> IMenuTypeExtension.create(
-                    dev.jstech.computers.menu.CommandPromptMenu::fromNetwork));
+                    CommandPromptMenu::fromNetwork));
 
     /*
-     * Each terminal platform opens its own screen: MC-DOS and the Linux TTY carry the Command Prompt's
-     * data but are separate menu types, so the MC-NET window is never reused for another system's console.
+     * Every session on a monitor that is not a system: the self-test, the boot manager, the firmware setup,
+     * a system coming up, an installer, and the rack's channel switch. One menu with a phase rather than one
+     * per screen, because they carry exactly the same thing and differ only in what is drawn on the glass.
      */
     public static final DeferredHolder<MenuType<?>,
-            MenuType<dev.jstech.computers.menu.DosTerminalMenu>> DOS_TERMINAL_MENU =
+            MenuType<MonitorSessionMenu>> MONITOR_SESSION_MENU =
+            MENUS.register("monitor_session", () -> IMenuTypeExtension.create(
+                    MonitorSessionMenu::fromNetwork));
+
+    /*
+     * Each terminal platform opens its own screen. They carry the same data and differ in how the machine
+     * greets and where it stands, so no system is ever met in another's voice.
+     */
+    public static final DeferredHolder<MenuType<?>,
+            MenuType<DosTerminalMenu>> DOS_TERMINAL_MENU =
             MENUS.register("dos_terminal", () -> IMenuTypeExtension.create(
-                    dev.jstech.computers.menu.DosTerminalMenu::fromNetwork));
+                    DosTerminalMenu::fromNetwork));
 
     public static final DeferredHolder<MenuType<?>,
-            MenuType<dev.jstech.computers.menu.LinuxTtyMenu>> LINUX_TTY_MENU =
+            MenuType<LinuxTtyMenu>> LINUX_TTY_MENU =
             MENUS.register("linux_tty", () -> IMenuTypeExtension.create(
-                    dev.jstech.computers.menu.LinuxTtyMenu::fromNetwork));
+                    LinuxTtyMenu::fromNetwork));
 
     public static final DeferredHolder<MenuType<?>,
-            MenuType<dev.jstech.computers.menu.DesktopMenu>> DESKTOP_MENU =
+            MenuType<NetTerminalMenu>> NET_TERMINAL_MENU =
+            MENUS.register("net_terminal", () -> IMenuTypeExtension.create(
+                    NetTerminalMenu::fromNetwork));
+
+    public static final DeferredHolder<MenuType<?>,
+            MenuType<DesktopMenu>> DESKTOP_MENU =
             MENUS.register("desktop", () -> IMenuTypeExtension.create(
-                    dev.jstech.computers.menu.DesktopMenu::fromNetwork));
+                    DesktopMenu::fromNetwork));
 
     // Hardware components (Standard era, minimal set to build a Mainframe)
 
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_MTX_P = ITEMS.register(
             "motherboard_mtx_p", () -> new MotherboardItem(new Item.Properties(),
-                    new MotherboardSpec(dev.jstech.computers.hardware.FormFactor.MTX,
-                            HardwareEra.STANDARD, CpuSocket.LGA_2011, 4,
+                    new MotherboardSpec(FormFactor.MTX,
+                            HardwareEra.STANDARD, CpuSocketId.LGA_2011, 4,
                             Set.of(RamGeneration.DDR3), 8, PcieGeneration.PCIE_3_0, 6, 4, 8)));
 
     public static final DeferredItem<CpuItem> CPU_SERVO_2620 = ITEMS.register(
             "cpu_servo_2620", () -> new CpuItem(new Item.Properties(),
-                    new CpuSpec(HardwareEra.STANDARD, CpuSocket.LGA_2011, 6, 2000, 95, false)));
+                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 6, 2000, 95, false)));
 
     public static final DeferredItem<CpuItem> CPU_SERVO_2690 = ITEMS.register(
             "cpu_servo_2690", () -> new CpuItem(new Item.Properties(),
-                    new CpuSpec(HardwareEra.STANDARD, CpuSocket.LGA_2011, 8, 2900, 135, false)));
+                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 8, 2900, 135, false)));
 
     public static final DeferredItem<CpuItem> CPU_SERVO_2699 = ITEMS.register(
             "cpu_servo_2699", () -> new CpuItem(new Item.Properties(),
-                    new CpuSpec(HardwareEra.STANDARD, CpuSocket.LGA_2011, 18, 2300, 145, false)));
+                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.LGA_2011, 18, 2300, 145, false)));
 
     public static final DeferredItem<RamItem> RAM_DDR3_8192 = ITEMS.register(
             "ram_ddr3_8192", () -> new RamItem(new Item.Properties(),
@@ -654,21 +754,21 @@ public final class ComputingModule {
      * The Cluster Interface Cards: exclusive to the Cluster Management Computer, one per era. Each era
      * reaches further and writes more nodes at once. Numbers are estimates.
      */
-    public static final DeferredItem<dev.jstech.computers.item.ClusterInterfaceCardItem> SERIAL_CONSOLE_CARD =
-            ITEMS.register("serial_console_card", () -> new dev.jstech.computers.item.ClusterInterfaceCardItem(
-                    new Item.Properties(), new dev.jstech.computers.hardware.ClusterInterfaceCardSpec(
+    public static final DeferredItem<ClusterInterfaceCardItem> SERIAL_CONSOLE_CARD =
+            ITEMS.register("serial_console_card", () -> new ClusterInterfaceCardItem(
+                    new Item.Properties(), new ClusterInterfaceCardSpec(
                             HardwareEra.VINTAGE, IndustrialTier.T2, PcieGeneration.PCI,
-                            dev.jstech.computers.hardware.ClusterInterfaceCardSpec.Reach.DATACENTERS, 1, 10)));
-    public static final DeferredItem<dev.jstech.computers.item.ClusterInterfaceCardItem> MANAGEMENT_NIC =
-            ITEMS.register("management_nic", () -> new dev.jstech.computers.item.ClusterInterfaceCardItem(
-                    new Item.Properties(), new dev.jstech.computers.hardware.ClusterInterfaceCardSpec(
+                            ClusterInterfaceCardSpec.Reach.DATACENTERS, 1, 10)));
+    public static final DeferredItem<ClusterInterfaceCardItem> MANAGEMENT_NIC =
+            ITEMS.register("management_nic", () -> new ClusterInterfaceCardItem(
+                    new Item.Properties(), new ClusterInterfaceCardSpec(
                             HardwareEra.LEGACY, IndustrialTier.T3, PcieGeneration.PCIE_1_0,
-                            dev.jstech.computers.hardware.ClusterInterfaceCardSpec.Reach.SUPERCOMPUTERS, 2, 20)));
-    public static final DeferredItem<dev.jstech.computers.item.ClusterInterfaceCardItem> FABRIC_HOST_ADAPTER =
-            ITEMS.register("fabric_host_adapter", () -> new dev.jstech.computers.item.ClusterInterfaceCardItem(
-                    new Item.Properties(), new dev.jstech.computers.hardware.ClusterInterfaceCardSpec(
+                            ClusterInterfaceCardSpec.Reach.SUPERCOMPUTERS, 2, 20)));
+    public static final DeferredItem<ClusterInterfaceCardItem> FABRIC_HOST_ADAPTER =
+            ITEMS.register("fabric_host_adapter", () -> new ClusterInterfaceCardItem(
+                    new Item.Properties(), new ClusterInterfaceCardSpec(
                             HardwareEra.STANDARD, IndustrialTier.T4, PcieGeneration.PCIE_3_0,
-                            dev.jstech.computers.hardware.ClusterInterfaceCardSpec.Reach.ALL, 4, 35)));
+                            ClusterInterfaceCardSpec.Reach.ALL, 4, 35)));
 
     public static final DeferredItem<PsuItem> PSU_650G = ITEMS.register(
             "psu_650g", () -> new PsuItem(new Item.Properties(), new PsuSpec(650, 90)));
@@ -678,9 +778,9 @@ public final class ComputingModule {
      * the Standard one writes DVDs, CDs and USB sticks, the Legacy one CDs, the Vintage one floppies.
      */
 
-    public static final DeferredBlock<dev.jstech.computers.block.PatternEncoderBlock> PATTERN_ENCODER =
+    public static final DeferredBlock<PatternEncoderBlock> PATTERN_ENCODER =
             BLOCKS.register("pattern_encoder",
-                    () -> new dev.jstech.computers.block.PatternEncoderBlock(
+                    () -> new PatternEncoderBlock(
                             BlockBehaviour.Properties.of()
                                     .mapColor(MapColor.COLOR_GRAY)
                                     .strength(1.5F)
@@ -695,17 +795,17 @@ public final class ComputingModule {
      * How an encoder body sits in an item slot: the body is one full block (x -0.5..0.5, y 0..1,
      * z -0.5..0.5 around its origin), so only the height needs re-centring.
      */
-    private static final dev.jstech.computers.item.CabinetBlockItem.Fit ENCODER_FIT =
-            new dev.jstech.computers.item.CabinetBlockItem.Fit(16.0F, 0.0F, -0.5F, 0.0F);
+    private static final CabinetBlockItem.Fit ENCODER_FIT =
+            new CabinetBlockItem.Fit(16.0F, 0.0F, -0.5F, 0.0F);
 
     public static final DeferredItem<BlockItem> PATTERN_ENCODER_ITEM = ITEMS.register(
-            "pattern_encoder", () -> new dev.jstech.computers.item.CabinetBlockItem(
+            "pattern_encoder", () -> new CabinetBlockItem(
                     PATTERN_ENCODER.get(), new Item.Properties(), "pattern_encoder", "pattern_encoder",
                     "pattern_encoder", ENCODER_FIT));
 
-    public static final DeferredBlock<dev.jstech.computers.block.PatternEncoderBlock> LEGACY_PATTERN_ENCODER =
+    public static final DeferredBlock<PatternEncoderBlock> LEGACY_PATTERN_ENCODER =
             BLOCKS.register("legacy_pattern_encoder",
-                    () -> new dev.jstech.computers.block.PatternEncoderBlock(
+                    () -> new PatternEncoderBlock(
                             BlockBehaviour.Properties.of()
                                     .mapColor(MapColor.COLOR_LIGHT_GRAY)
                                     .strength(1.5F)
@@ -713,13 +813,13 @@ public final class ComputingModule {
                                     .noOcclusion(), HardwareEra.LEGACY));
 
     public static final DeferredItem<BlockItem> LEGACY_PATTERN_ENCODER_ITEM = ITEMS.register(
-            "legacy_pattern_encoder", () -> new dev.jstech.computers.item.CabinetBlockItem(
+            "legacy_pattern_encoder", () -> new CabinetBlockItem(
                     LEGACY_PATTERN_ENCODER.get(), new Item.Properties(), "pattern_encoder", "legacy_pattern_encoder",
                     "pattern_encoder", ENCODER_FIT));
 
-    public static final DeferredBlock<dev.jstech.computers.block.PatternEncoderBlock> VINTAGE_PATTERN_ENCODER =
+    public static final DeferredBlock<PatternEncoderBlock> VINTAGE_PATTERN_ENCODER =
             BLOCKS.register("vintage_pattern_encoder",
-                    () -> new dev.jstech.computers.block.PatternEncoderBlock(
+                    () -> new PatternEncoderBlock(
                             BlockBehaviour.Properties.of()
                                     .mapColor(MapColor.TERRACOTTA_WHITE)
                                     .strength(1.5F)
@@ -727,21 +827,21 @@ public final class ComputingModule {
                                     .noOcclusion(), HardwareEra.VINTAGE));
 
     public static final DeferredItem<BlockItem> VINTAGE_PATTERN_ENCODER_ITEM = ITEMS.register(
-            "vintage_pattern_encoder", () -> new dev.jstech.computers.item.CabinetBlockItem(
+            "vintage_pattern_encoder", () -> new CabinetBlockItem(
                     VINTAGE_PATTERN_ENCODER.get(), new Item.Properties(), "pattern_encoder", "vintage_pattern_encoder",
                     "pattern_encoder", ENCODER_FIT));
 
     public static final DeferredHolder<BlockEntityType<?>,
-            BlockEntityType<dev.jstech.computers.blockentity.PatternEncoderBlockEntity>> PATTERN_ENCODER_BE =
+            BlockEntityType<PatternEncoderBlockEntity>> PATTERN_ENCODER_BE =
             BLOCK_ENTITIES.register("pattern_encoder",
                     () -> BlockEntityType.Builder.of(
-                            dev.jstech.computers.blockentity.PatternEncoderBlockEntity::new,
+                            PatternEncoderBlockEntity::new,
                             PATTERN_ENCODER.get(), LEGACY_PATTERN_ENCODER.get(), VINTAGE_PATTERN_ENCODER.get()).build(null));
 
     public static final DeferredHolder<MenuType<?>,
-            MenuType<dev.jstech.computers.menu.PatternEncoderMenu>> PATTERN_ENCODER_MENU =
+            MenuType<PatternEncoderMenu>> PATTERN_ENCODER_MENU =
             MENUS.register("pattern_encoder", () -> IMenuTypeExtension.create(
-                    dev.jstech.computers.menu.PatternEncoderMenu::fromNetwork));
+                    PatternEncoderMenu::fromNetwork));
 
     /*
      * OS media subsystem: a peripheral block that holds one MediaItem and exposes the
@@ -794,25 +894,25 @@ public final class ComputingModule {
      * The Network Gateway: a peripheral of one of our computers that is, on its other face, a ComputerCraft
      * peripheral, so the two families of computers reach each other through it. Managed from its host.
      */
-    public static final DeferredBlock<dev.jstech.computers.block.NetworkGatewayBlock> NETWORK_GATEWAY =
-            BLOCKS.register("network_gateway", () -> new dev.jstech.computers.block.NetworkGatewayBlock(
+    public static final DeferredBlock<NetworkGatewayBlock> NETWORK_GATEWAY =
+            BLOCKS.register("network_gateway", () -> new NetworkGatewayBlock(
                     BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK).strength(1.5F).sound(SoundType.METAL)));
     public static final DeferredItem<BlockItem> NETWORK_GATEWAY_ITEM = ITEMS.register("network_gateway",
             () -> new BlockItem(NETWORK_GATEWAY.get(), new Item.Properties()));
     public static final DeferredHolder<BlockEntityType<?>,
-            BlockEntityType<dev.jstech.computers.blockentity.NetworkGatewayBlockEntity>> NETWORK_GATEWAY_BE =
+            BlockEntityType<NetworkGatewayBlockEntity>> NETWORK_GATEWAY_BE =
             BLOCK_ENTITIES.register("network_gateway",
-                    () -> BlockEntityType.Builder.of(dev.jstech.computers.blockentity.NetworkGatewayBlockEntity::new,
+                    () -> BlockEntityType.Builder.of(NetworkGatewayBlockEntity::new,
                             NETWORK_GATEWAY.get()).build(null));
     public static final DeferredHolder<MenuType<?>,
-            MenuType<dev.jstech.computers.menu.NetworkGatewayMenu>> NETWORK_GATEWAY_MENU =
+            MenuType<NetworkGatewayMenu>> NETWORK_GATEWAY_MENU =
             MENUS.register("network_gateway", () -> IMenuTypeExtension.create(
-                    dev.jstech.computers.menu.NetworkGatewayMenu::fromNetwork));
+                    NetworkGatewayMenu::fromNetwork));
 
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_EEB_P = ITEMS.register(
             "motherboard_eeb_p", () -> new MotherboardItem(new Item.Properties(),
-                    new MotherboardSpec(dev.jstech.computers.hardware.FormFactor.EEB,
-                            HardwareEra.STANDARD, CpuSocket.LGA_2011, 2,
+                    new MotherboardSpec(FormFactor.EEB,
+                            HardwareEra.STANDARD, CpuSocketId.LGA_2011, 2,
                             Set.of(RamGeneration.DDR3), 8, PcieGeneration.PCIE_3_0, 6, 6, 6)));
 
     /**
@@ -824,21 +924,21 @@ public final class ComputingModule {
         }
     }
 
-    public static final java.util.List<DiskEntry> DISKS = registerDisks();
+    public static final List<DiskEntry> DISKS = registerDisks();
 
-    private static java.util.List<DiskEntry> registerDisks() {
-        final java.util.List<DiskEntry> disks = new java.util.ArrayList<>();
+    private static List<DiskEntry> registerDisks() {
+        final List<DiskEntry> disks = new ArrayList<>();
         for (final StorageTier tier : StorageTier.values()) {
             for (final DiskSize size : DiskSize.values()) {
-                final String id = "disk_" + tier.name().toLowerCase(java.util.Locale.ROOT) + "_" + size.id();
+                final String id = "disk_" + tier.name().toLowerCase(Locale.ROOT) + "_" + size.id();
                 final DeferredItem<DiskItem> item = ITEMS.register(id, () -> new DiskItem(
                         new Item.Properties(),
-                        new DiskSpec(tier, dev.jstech.core.tier.HardwareEra.STANDARD,
+                        new DiskSpec(tier, HardwareEra.STANDARD,
                                 size.capacityItems(), tier.tdpWatts())));
                 disks.add(new DiskEntry(tier, size, item));
             }
         }
-        return java.util.List.copyOf(disks);
+        return List.copyOf(disks);
     }
 
     public static DiskItem disk(final StorageTier tier, final DiskSize size) {
@@ -852,149 +952,149 @@ public final class ComputingModule {
 
     // Server items
 
-    public static final DeferredItem<dev.jstech.computers.item.ServerCaseItem> SERVER_CASE =
+    public static final DeferredItem<ServerCaseItem> SERVER_CASE =
             ITEMS.register("server_case",
-                    () -> new dev.jstech.computers.item.ServerCaseItem(new Item.Properties()));
+                    () -> new ServerCaseItem(new Item.Properties()));
 
-    public static final DeferredItem<dev.jstech.computers.item.ServerItem> SERVER =
-            ITEMS.register("server", () -> new dev.jstech.computers.item.ServerItem(
+    public static final DeferredItem<ServerItem> SERVER =
+            ITEMS.register("server", () -> new ServerItem(
                     new Item.Properties()));
 
     /*
      * The servers of the earlier eras: a case of its era takes only boards of that era, and seats in a
      * cabinet of its era or later.
      */
-    public static final DeferredItem<dev.jstech.computers.item.ServerCaseItem> LEGACY_SERVER_CASE =
+    public static final DeferredItem<ServerCaseItem> LEGACY_SERVER_CASE =
             ITEMS.register("legacy_server_case",
-                    () -> new dev.jstech.computers.item.ServerCaseItem(new Item.Properties()));
+                    () -> new ServerCaseItem(new Item.Properties()));
 
-    public static final DeferredItem<dev.jstech.computers.item.ServerItem> LEGACY_SERVER =
-            ITEMS.register("legacy_server", () -> new dev.jstech.computers.item.ServerItem(
+    public static final DeferredItem<ServerItem> LEGACY_SERVER =
+            ITEMS.register("legacy_server", () -> new ServerItem(
                     new Item.Properties(),
-                    dev.jstech.computers.rack.RackChassis.LEGACY_SERVER));
+                    RackChassis.LEGACY_SERVER));
 
-    public static final DeferredItem<dev.jstech.computers.item.ServerCaseItem> VINTAGE_SERVER_CASE =
+    public static final DeferredItem<ServerCaseItem> VINTAGE_SERVER_CASE =
             ITEMS.register("vintage_server_case",
-                    () -> new dev.jstech.computers.item.ServerCaseItem(new Item.Properties()));
+                    () -> new ServerCaseItem(new Item.Properties()));
 
-    public static final DeferredItem<dev.jstech.computers.item.ServerItem> VINTAGE_SERVER =
-            ITEMS.register("vintage_server", () -> new dev.jstech.computers.item.ServerItem(
+    public static final DeferredItem<ServerItem> VINTAGE_SERVER =
+            ITEMS.register("vintage_server", () -> new ServerItem(
                     new Item.Properties(),
-                    dev.jstech.computers.rack.RackChassis.VINTAGE_SERVER));
+                    RackChassis.VINTAGE_SERVER));
 
-    public static final DeferredItem<dev.jstech.computers.item.ServerCaseItem> STORAGE_SERVER_CASE =
+    public static final DeferredItem<ServerCaseItem> STORAGE_SERVER_CASE =
             ITEMS.register("storage_server_case",
-                    () -> new dev.jstech.computers.item.ServerCaseItem(new Item.Properties()));
+                    () -> new ServerCaseItem(new Item.Properties()));
 
-    public static final DeferredItem<dev.jstech.computers.item.ServerItem> STORAGE_SERVER =
-            ITEMS.register("storage_server", () -> new dev.jstech.computers.item.ServerItem(
+    public static final DeferredItem<ServerItem> STORAGE_SERVER =
+            ITEMS.register("storage_server", () -> new ServerItem(
                     new Item.Properties(),
-                    dev.jstech.computers.rack.RackChassis.STORAGE_SERVER));
+                    RackChassis.STORAGE_SERVER));
 
     // Rack units: equipment that serves the cabinet and spends the same rack-unit budget servers do.
-    public static final DeferredItem<dev.jstech.computers.item.RackUnitItem> KVM_SWITCH =
+    public static final DeferredItem<RackUnitItem> KVM_SWITCH =
             ITEMS.register("kvm_switch",
-                    () -> new dev.jstech.computers.item.RackUnitItem(new Item.Properties(),
-                            dev.jstech.computers.item.RackUnitItem.Kind.KVM_SWITCH));
+                    () -> new RackUnitItem(new Item.Properties(),
+                            RackUnitItem.Kind.KVM_SWITCH));
 
-    public static final DeferredItem<dev.jstech.computers.item.RackUnitItem> RACK_UPS =
+    public static final DeferredItem<RackUnitItem> RACK_UPS =
             ITEMS.register("rack_ups",
-                    () -> new dev.jstech.computers.item.RackUnitItem(new Item.Properties(),
-                            dev.jstech.computers.item.RackUnitItem.Kind.RACK_UPS));
+                    () -> new RackUnitItem(new Item.Properties(),
+                            RackUnitItem.Kind.RACK_UPS));
 
-    public static final DeferredItem<dev.jstech.computers.item.RackUnitItem> COOLING_UNIT =
+    public static final DeferredItem<RackUnitItem> COOLING_UNIT =
             ITEMS.register("cooling_unit",
-                    () -> new dev.jstech.computers.item.RackUnitItem(new Item.Properties(),
-                            dev.jstech.computers.item.RackUnitItem.Kind.COOLING_UNIT));
+                    () -> new RackUnitItem(new Item.Properties(),
+                            RackUnitItem.Kind.COOLING_UNIT));
 
     /*
      * Bay gadgets: they occupy a gadget slot on the rack's front panel and serve the machine
      * mounted in that row.
      */
-    public static final DeferredItem<dev.jstech.computers.item.RackGadgetItem> RAID_CONTROLLER =
+    public static final DeferredItem<RackGadgetItem> RAID_CONTROLLER =
             ITEMS.register("raid_controller",
-                    () -> new dev.jstech.computers.item.RackGadgetItem(new Item.Properties(),
-                            dev.jstech.computers.item.RackGadgetItem.Kind.RAID_CONTROLLER));
+                    () -> new RackGadgetItem(new Item.Properties(),
+                            RackGadgetItem.Kind.RAID_CONTROLLER));
 
-    public static final DeferredItem<dev.jstech.computers.item.RackGadgetItem> CACHE_CARD =
+    public static final DeferredItem<RackGadgetItem> CACHE_CARD =
             ITEMS.register("cache_card",
-                    () -> new dev.jstech.computers.item.RackGadgetItem(new Item.Properties(),
-                            dev.jstech.computers.item.RackGadgetItem.Kind.CACHE_CARD));
+                    () -> new RackGadgetItem(new Item.Properties(),
+                            RackGadgetItem.Kind.CACHE_CARD));
 
-    public static final DeferredItem<dev.jstech.computers.item.ServerCaseItem> COMPUTE_SERVER_CASE =
+    public static final DeferredItem<ServerCaseItem> COMPUTE_SERVER_CASE =
             ITEMS.register("compute_server_case",
-                    () -> new dev.jstech.computers.item.ServerCaseItem(new Item.Properties()));
+                    () -> new ServerCaseItem(new Item.Properties()));
 
-    public static final DeferredItem<dev.jstech.computers.item.ServerItem> COMPUTE_SERVER =
-            ITEMS.register("compute_server", () -> new dev.jstech.computers.item.ServerItem(
+    public static final DeferredItem<ServerItem> COMPUTE_SERVER =
+            ITEMS.register("compute_server", () -> new ServerItem(
                     new Item.Properties(),
-                    dev.jstech.computers.rack.RackChassis.COMPUTE_SERVER));
+                    RackChassis.COMPUTE_SERVER));
 
-    public static net.minecraft.world.item.ItemStack defaultServer() {
-        final net.minecraft.world.item.ItemStack stack = new net.minecraft.world.item.ItemStack(SERVER.get());
-        final net.minecraft.core.NonNullList<net.minecraft.world.item.ItemStack> hardware =
-                net.minecraft.core.NonNullList.withSize(
-                        dev.jstech.computers.item.ServerHardwareHandler.SLOTS,
-                        net.minecraft.world.item.ItemStack.EMPTY);
-        hardware.set(dev.jstech.computers.item.ServerHardwareHandler.MOBO,
-                new net.minecraft.world.item.ItemStack(MOTHERBOARD_EEB_P.get()));
-        hardware.set(dev.jstech.computers.item.ServerHardwareHandler.CPU_START,
-                new net.minecraft.world.item.ItemStack(CPU_SERVO_2620.get()));
-        hardware.set(dev.jstech.computers.item.ServerHardwareHandler.RAM_START,
-                new net.minecraft.world.item.ItemStack(RAM_DDR3_8192.get()));
-        hardware.set(dev.jstech.computers.item.ServerHardwareHandler.PSU,
-                new net.minecraft.world.item.ItemStack(PSU_650G.get()));
+    public static ItemStack defaultServer() {
+        final ItemStack stack = new ItemStack(SERVER.get());
+        final NonNullList<ItemStack> hardware =
+                NonNullList.withSize(
+                        ServerHardwareHandler.SLOTS,
+                        ItemStack.EMPTY);
+        hardware.set(ServerHardwareHandler.MOBO,
+                new ItemStack(MOTHERBOARD_EEB_P.get()));
+        hardware.set(ServerHardwareHandler.CPU_START,
+                new ItemStack(CPU_SERVO_2620.get()));
+        hardware.set(ServerHardwareHandler.RAM_START,
+                new ItemStack(RAM_DDR3_8192.get()));
+        hardware.set(ServerHardwareHandler.PSU,
+                new ItemStack(PSU_650G.get()));
         stack.set(SERVER_HARDWARE.get(),
-                net.minecraft.world.item.component.ItemContainerContents.fromItems(hardware));
+                ItemContainerContents.fromItems(hardware));
         return stack;
     }
 
     /** A 2U storage server ready to run: the same board, CPU, RAM and supply as the default server. */
-    public static net.minecraft.world.item.ItemStack defaultStorageServer() {
-        final net.minecraft.world.item.ItemStack stack = new net.minecraft.world.item.ItemStack(STORAGE_SERVER.get());
-        final net.minecraft.core.NonNullList<net.minecraft.world.item.ItemStack> hardware =
-                net.minecraft.core.NonNullList.withSize(
-                        dev.jstech.computers.item.ServerHardwareHandler.SLOTS,
-                        net.minecraft.world.item.ItemStack.EMPTY);
-        hardware.set(dev.jstech.computers.item.ServerHardwareHandler.MOBO,
-                new net.minecraft.world.item.ItemStack(MOTHERBOARD_EEB_P.get()));
-        hardware.set(dev.jstech.computers.item.ServerHardwareHandler.CPU_START,
-                new net.minecraft.world.item.ItemStack(CPU_SERVO_2620.get()));
-        hardware.set(dev.jstech.computers.item.ServerHardwareHandler.RAM_START,
-                new net.minecraft.world.item.ItemStack(RAM_DDR3_8192.get()));
-        hardware.set(dev.jstech.computers.item.ServerHardwareHandler.PSU,
-                new net.minecraft.world.item.ItemStack(PSU_650G.get()));
+    public static ItemStack defaultStorageServer() {
+        final ItemStack stack = new ItemStack(STORAGE_SERVER.get());
+        final NonNullList<ItemStack> hardware =
+                NonNullList.withSize(
+                        ServerHardwareHandler.SLOTS,
+                        ItemStack.EMPTY);
+        hardware.set(ServerHardwareHandler.MOBO,
+                new ItemStack(MOTHERBOARD_EEB_P.get()));
+        hardware.set(ServerHardwareHandler.CPU_START,
+                new ItemStack(CPU_SERVO_2620.get()));
+        hardware.set(ServerHardwareHandler.RAM_START,
+                new ItemStack(RAM_DDR3_8192.get()));
+        hardware.set(ServerHardwareHandler.PSU,
+                new ItemStack(PSU_650G.get()));
         stack.set(SERVER_HARDWARE.get(),
-                net.minecraft.world.item.component.ItemContainerContents.fromItems(hardware));
+                ItemContainerContents.fromItems(hardware));
         return stack;
     }
 
-    public static net.minecraft.world.item.ItemStack cpulessServer() {
-        final net.minecraft.world.item.ItemStack stack = new net.minecraft.world.item.ItemStack(SERVER.get());
-        final net.minecraft.core.NonNullList<net.minecraft.world.item.ItemStack> hardware =
-                net.minecraft.core.NonNullList.withSize(
-                        dev.jstech.computers.item.ServerHardwareHandler.SLOTS,
-                        net.minecraft.world.item.ItemStack.EMPTY);
-        hardware.set(dev.jstech.computers.item.ServerHardwareHandler.MOBO,
-                new net.minecraft.world.item.ItemStack(MOTHERBOARD_EEB_P.get()));
-        hardware.set(dev.jstech.computers.item.ServerHardwareHandler.RAM_START,
-                new net.minecraft.world.item.ItemStack(RAM_DDR3_8192.get()));
-        hardware.set(dev.jstech.computers.item.ServerHardwareHandler.PSU,
-                new net.minecraft.world.item.ItemStack(PSU_650G.get()));
+    public static ItemStack cpulessServer() {
+        final ItemStack stack = new ItemStack(SERVER.get());
+        final NonNullList<ItemStack> hardware =
+                NonNullList.withSize(
+                        ServerHardwareHandler.SLOTS,
+                        ItemStack.EMPTY);
+        hardware.set(ServerHardwareHandler.MOBO,
+                new ItemStack(MOTHERBOARD_EEB_P.get()));
+        hardware.set(ServerHardwareHandler.RAM_START,
+                new ItemStack(RAM_DDR3_8192.get()));
+        hardware.set(ServerHardwareHandler.PSU,
+                new ItemStack(PSU_650G.get()));
         stack.set(SERVER_HARDWARE.get(),
-                net.minecraft.world.item.component.ItemContainerContents.fromItems(hardware));
+                ItemContainerContents.fromItems(hardware));
         return stack;
     }
 
     public static final DeferredItem<MotherboardItem> MOTHERBOARD_ATX_P = ITEMS.register(
             "motherboard_atx_p", () -> new MotherboardItem(new Item.Properties(),
-                    new MotherboardSpec(dev.jstech.computers.hardware.FormFactor.ATX,
-                            HardwareEra.STANDARD, CpuSocket.AM3, 1,
+                    new MotherboardSpec(FormFactor.ATX,
+                            HardwareEra.STANDARD, CpuSocketId.AM3, 1,
                             Set.of(RamGeneration.DDR3), 4, PcieGeneration.PCIE_3_0, 4, 2, 4)));
 
     public static final DeferredItem<CpuItem> CPU_ASCENT_965 = ITEMS.register(
             "cpu_ascent_965", () -> new CpuItem(new Item.Properties(),
-                    new CpuSpec(HardwareEra.STANDARD, CpuSocket.AM3, 4, 3400, 125, false)));
+                    new CpuSpec(HardwareEra.STANDARD, CpuSocketId.AM3, 4, 3400, 125, false)));
 
     // Mainframe
 
@@ -1016,27 +1116,27 @@ public final class ComputingModule {
             "mainframe", () -> new MainframeBlock(mainframeProperties()));
 
     public static final DeferredItem<BlockItem> MAINFRAME_ITEM = ITEMS.register(
-            "mainframe", () -> new dev.jstech.computers.item.MainframeBlockItem(
+            "mainframe", () -> new MainframeBlockItem(
                     MAINFRAME.get(), new Item.Properties(), "mainframe"));
 
     /*
      * Earlier-era Mainframes: the same orchestrator and block entity, differing only by era, accepted
      * MTX board and skin. Same 3x2x2 multiblock geometry and shared parts.
      */
-    public static final DeferredBlock<dev.jstech.computers.block.VintageMainframeBlock>
+    public static final DeferredBlock<VintageMainframeBlock>
             VINTAGE_MAINFRAME = BLOCKS.register("vintage_mainframe",
-                    () -> new dev.jstech.computers.block.VintageMainframeBlock(mainframeProperties()));
+                    () -> new VintageMainframeBlock(mainframeProperties()));
 
     public static final DeferredItem<BlockItem> VINTAGE_MAINFRAME_ITEM = ITEMS.register(
-            "vintage_mainframe", () -> new dev.jstech.computers.item.MainframeBlockItem(
+            "vintage_mainframe", () -> new MainframeBlockItem(
                     VINTAGE_MAINFRAME.get(), new Item.Properties(), "vintage_mainframe"));
 
-    public static final DeferredBlock<dev.jstech.computers.block.LegacyMainframeBlock>
+    public static final DeferredBlock<LegacyMainframeBlock>
             LEGACY_MAINFRAME = BLOCKS.register("legacy_mainframe",
-                    () -> new dev.jstech.computers.block.LegacyMainframeBlock(mainframeProperties()));
+                    () -> new LegacyMainframeBlock(mainframeProperties()));
 
     public static final DeferredItem<BlockItem> LEGACY_MAINFRAME_ITEM = ITEMS.register(
-            "legacy_mainframe", () -> new dev.jstech.computers.item.MainframeBlockItem(
+            "legacy_mainframe", () -> new MainframeBlockItem(
                     LEGACY_MAINFRAME.get(), new Item.Properties(), "legacy_mainframe"));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MainframeBlockEntity>> MAINFRAME_BE =
@@ -1068,9 +1168,9 @@ public final class ComputingModule {
      * Earlier-era Personal Computers: the same machine and block entity, differing only by era, accepted
      * board and skin.
      */
-    public static final DeferredBlock<dev.jstech.computers.block.VintagePersonalComputerBlock>
+    public static final DeferredBlock<VintagePersonalComputerBlock>
             VINTAGE_PERSONAL_COMPUTER = BLOCKS.register("vintage_personal_computer",
-                    () -> new dev.jstech.computers.block.VintagePersonalComputerBlock(
+                    () -> new VintagePersonalComputerBlock(
                             BlockBehaviour.Properties.of()
                                     .mapColor(MapColor.COLOR_GRAY)
                                     .strength(2.0F)));
@@ -1079,9 +1179,9 @@ public final class ComputingModule {
             "vintage_personal_computer",
             () -> new BlockItem(VINTAGE_PERSONAL_COMPUTER.get(), new Item.Properties()));
 
-    public static final DeferredBlock<dev.jstech.computers.block.LegacyPersonalComputerBlock>
+    public static final DeferredBlock<LegacyPersonalComputerBlock>
             LEGACY_PERSONAL_COMPUTER = BLOCKS.register("legacy_personal_computer",
-                    () -> new dev.jstech.computers.block.LegacyPersonalComputerBlock(
+                    () -> new LegacyPersonalComputerBlock(
                             BlockBehaviour.Properties.of()
                                     .mapColor(MapColor.COLOR_GRAY)
                                     .strength(2.0F)));
@@ -1113,9 +1213,9 @@ public final class ComputingModule {
      * Earlier-era Crafting Computers: the same machine and block entity, differing only by era, accepted
      * board and skin.
      */
-    public static final DeferredBlock<dev.jstech.computers.block.VintageCraftingComputerBlock>
+    public static final DeferredBlock<VintageCraftingComputerBlock>
             VINTAGE_CRAFTING_COMPUTER = BLOCKS.register("vintage_crafting_computer",
-                    () -> new dev.jstech.computers.block.VintageCraftingComputerBlock(
+                    () -> new VintageCraftingComputerBlock(
                             BlockBehaviour.Properties.of()
                                     .mapColor(MapColor.COLOR_GRAY)
                                     .strength(2.0F)));
@@ -1124,9 +1224,9 @@ public final class ComputingModule {
             "vintage_crafting_computer",
             () -> new BlockItem(VINTAGE_CRAFTING_COMPUTER.get(), new Item.Properties()));
 
-    public static final DeferredBlock<dev.jstech.computers.block.LegacyCraftingComputerBlock>
+    public static final DeferredBlock<LegacyCraftingComputerBlock>
             LEGACY_CRAFTING_COMPUTER = BLOCKS.register("legacy_crafting_computer",
-                    () -> new dev.jstech.computers.block.LegacyCraftingComputerBlock(
+                    () -> new LegacyCraftingComputerBlock(
                             BlockBehaviour.Properties.of()
                                     .mapColor(MapColor.COLOR_GRAY)
                                     .strength(2.0F)));
@@ -1142,83 +1242,83 @@ public final class ComputingModule {
                             LEGACY_CRAFTING_COMPUTER.get()).build(null));
 
     public static final DeferredHolder<MenuType<?>,
-            MenuType<dev.jstech.computers.menu.CraftingComputerMenu>> CRAFTING_COMPUTER_MENU =
+            MenuType<CraftingComputerMenu>> CRAFTING_COMPUTER_MENU =
             MENUS.register("crafting_computer", () -> IMenuTypeExtension.create(
-                    dev.jstech.computers.menu.CraftingComputerMenu::fromNetwork));
+                    CraftingComputerMenu::fromNetwork));
 
     /*
      * Cluster Management Computer: a full computer that, with a Cluster Interface Card, drives every
      * supercomputer fabric and datacenter section on its network as one machine. Three eras.
      */
-    public static final DeferredBlock<dev.jstech.computers.block.ClusterManagementComputerBlock>
+    public static final DeferredBlock<ClusterManagementComputerBlock>
             CLUSTER_MANAGEMENT_COMPUTER = BLOCKS.register("cluster_management_computer",
-                    () -> new dev.jstech.computers.block.ClusterManagementComputerBlock(
+                    () -> new ClusterManagementComputerBlock(
                             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY).strength(2.0F)));
     public static final DeferredItem<BlockItem> CLUSTER_MANAGEMENT_COMPUTER_ITEM = ITEMS.register(
             "cluster_management_computer",
             () -> new BlockItem(CLUSTER_MANAGEMENT_COMPUTER.get(), new Item.Properties()));
-    public static final DeferredBlock<dev.jstech.computers.block.VintageClusterManagementComputerBlock>
+    public static final DeferredBlock<VintageClusterManagementComputerBlock>
             VINTAGE_CLUSTER_MANAGEMENT_COMPUTER = BLOCKS.register("vintage_cluster_management_computer",
-                    () -> new dev.jstech.computers.block.VintageClusterManagementComputerBlock(
+                    () -> new VintageClusterManagementComputerBlock(
                             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY).strength(2.0F)));
     public static final DeferredItem<BlockItem> VINTAGE_CLUSTER_MANAGEMENT_COMPUTER_ITEM = ITEMS.register(
             "vintage_cluster_management_computer",
             () -> new BlockItem(VINTAGE_CLUSTER_MANAGEMENT_COMPUTER.get(), new Item.Properties()));
-    public static final DeferredBlock<dev.jstech.computers.block.LegacyClusterManagementComputerBlock>
+    public static final DeferredBlock<LegacyClusterManagementComputerBlock>
             LEGACY_CLUSTER_MANAGEMENT_COMPUTER = BLOCKS.register("legacy_cluster_management_computer",
-                    () -> new dev.jstech.computers.block.LegacyClusterManagementComputerBlock(
+                    () -> new LegacyClusterManagementComputerBlock(
                             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY).strength(2.0F)));
     public static final DeferredItem<BlockItem> LEGACY_CLUSTER_MANAGEMENT_COMPUTER_ITEM = ITEMS.register(
             "legacy_cluster_management_computer",
             () -> new BlockItem(LEGACY_CLUSTER_MANAGEMENT_COMPUTER.get(), new Item.Properties()));
     public static final DeferredHolder<BlockEntityType<?>,
-            BlockEntityType<dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity>>
+            BlockEntityType<ClusterManagementComputerBlockEntity>>
             CLUSTER_MANAGEMENT_COMPUTER_BE = BLOCK_ENTITIES.register("cluster_management_computer",
                     () -> BlockEntityType.Builder.of(
-                            dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity::new,
+                            ClusterManagementComputerBlockEntity::new,
                             CLUSTER_MANAGEMENT_COMPUTER.get(), VINTAGE_CLUSTER_MANAGEMENT_COMPUTER.get(),
                             LEGACY_CLUSTER_MANAGEMENT_COMPUTER.get()).build(null));
     public static final DeferredHolder<MenuType<?>,
-            MenuType<dev.jstech.computers.menu.ClusterManagementComputerMenu>>
+            MenuType<ClusterManagementComputerMenu>>
             CLUSTER_MANAGEMENT_COMPUTER_MENU = MENUS.register("cluster_management_computer",
                     () -> IMenuTypeExtension.create(
-                            dev.jstech.computers.menu.ClusterManagementComputerMenu::fromNetwork));
+                            ClusterManagementComputerMenu::fromNetwork));
 
     /*
      * Supercomputer: the nodes are rack computers seated in Supercomputer Racks; the racks are tied
      * together by the high-compute fabric and uplinked to the data network by one HBW Interface.
      */
 
-    public static final DeferredItem<dev.jstech.computers.item.ServerItem> SUPERCOMPUTER_NODE =
-            ITEMS.register("supercomputer_node", () -> new dev.jstech.computers.item.ServerItem(
+    public static final DeferredItem<ServerItem> SUPERCOMPUTER_NODE =
+            ITEMS.register("supercomputer_node", () -> new ServerItem(
                     new Item.Properties(),
-                    dev.jstech.computers.rack.RackChassis.SUPERCOMPUTER_NODE));
+                    RackChassis.SUPERCOMPUTER_NODE));
 
     /** A node ready to run: board, CPU, RAM, supply, and the entry crafting co-processor in its slot. */
-    public static net.minecraft.world.item.ItemStack defaultSupercomputerNode() {
-        final net.minecraft.world.item.ItemStack stack = new net.minecraft.world.item.ItemStack(SUPERCOMPUTER_NODE.get());
-        final net.minecraft.core.NonNullList<net.minecraft.world.item.ItemStack> hardware =
-                net.minecraft.core.NonNullList.withSize(
-                        dev.jstech.computers.item.ServerHardwareHandler.SLOTS,
-                        net.minecraft.world.item.ItemStack.EMPTY);
-        hardware.set(dev.jstech.computers.item.ServerHardwareHandler.MOBO,
-                new net.minecraft.world.item.ItemStack(MOTHERBOARD_EEB_P.get()));
-        hardware.set(dev.jstech.computers.item.ServerHardwareHandler.CPU_START,
-                new net.minecraft.world.item.ItemStack(CPU_SERVO_2620.get()));
-        hardware.set(dev.jstech.computers.item.ServerHardwareHandler.RAM_START,
-                new net.minecraft.world.item.ItemStack(RAM_DDR3_8192.get()));
-        hardware.set(dev.jstech.computers.item.ServerHardwareHandler.GPU_START,
-                new net.minecraft.world.item.ItemStack(PHI_5100.get()));
-        hardware.set(dev.jstech.computers.item.ServerHardwareHandler.PSU,
-                new net.minecraft.world.item.ItemStack(PSU_650G.get()));
+    public static ItemStack defaultSupercomputerNode() {
+        final ItemStack stack = new ItemStack(SUPERCOMPUTER_NODE.get());
+        final NonNullList<ItemStack> hardware =
+                NonNullList.withSize(
+                        ServerHardwareHandler.SLOTS,
+                        ItemStack.EMPTY);
+        hardware.set(ServerHardwareHandler.MOBO,
+                new ItemStack(MOTHERBOARD_EEB_P.get()));
+        hardware.set(ServerHardwareHandler.CPU_START,
+                new ItemStack(CPU_SERVO_2620.get()));
+        hardware.set(ServerHardwareHandler.RAM_START,
+                new ItemStack(RAM_DDR3_8192.get()));
+        hardware.set(ServerHardwareHandler.GPU_START,
+                new ItemStack(PHI_5100.get()));
+        hardware.set(ServerHardwareHandler.PSU,
+                new ItemStack(PSU_650G.get()));
         stack.set(SERVER_HARDWARE.get(),
-                net.minecraft.world.item.component.ItemContainerContents.fromItems(hardware));
+                ItemContainerContents.fromItems(hardware));
         return stack;
     }
 
-    public static final DeferredBlock<dev.jstech.computers.block.HbwInterfaceBlock>
+    public static final DeferredBlock<HbwInterfaceBlock>
             HBW_INTERFACE = BLOCKS.register("hbw_interface",
-                    () -> new dev.jstech.computers.block.HbwInterfaceBlock(
+                    () -> new HbwInterfaceBlock(
                             BlockBehaviour.Properties.of()
                                     .mapColor(MapColor.COLOR_GRAY)
                                     .strength(2.0F)
@@ -1228,36 +1328,36 @@ public final class ComputingModule {
             "hbw_interface", () -> new BlockItem(HBW_INTERFACE.get(), new Item.Properties()));
 
     public static final DeferredHolder<BlockEntityType<?>,
-            BlockEntityType<dev.jstech.computers.blockentity.HbwInterfaceBlockEntity>>
+            BlockEntityType<HbwInterfaceBlockEntity>>
             HBW_INTERFACE_BE = BLOCK_ENTITIES.register("hbw_interface",
                     () -> BlockEntityType.Builder.of(
-                            dev.jstech.computers.blockentity.HbwInterfaceBlockEntity::new,
+                            HbwInterfaceBlockEntity::new,
                             HBW_INTERFACE.get()).build(null));
 
-    public static final DeferredItem<dev.jstech.computers.item.PhiCoprocessorItem> PHI_5100 =
-            ITEMS.register("phi_5100", () -> new dev.jstech.computers.item.PhiCoprocessorItem(
-                    new Item.Properties(), new dev.jstech.computers.hardware.PhiCoprocessorSpec(
+    public static final DeferredItem<PhiCoprocessorItem> PHI_5100 =
+            ITEMS.register("phi_5100", () -> new PhiCoprocessorItem(
+                    new Item.Properties(), new PhiCoprocessorSpec(
                             IndustrialTier.T3, 2, 60, 1050, 225)));
 
-    public static final DeferredItem<dev.jstech.computers.item.PhiCoprocessorItem> PHI_7120 =
-            ITEMS.register("phi_7120", () -> new dev.jstech.computers.item.PhiCoprocessorItem(
-                    new Item.Properties(), new dev.jstech.computers.hardware.PhiCoprocessorSpec(
+    public static final DeferredItem<PhiCoprocessorItem> PHI_7120 =
+            ITEMS.register("phi_7120", () -> new PhiCoprocessorItem(
+                    new Item.Properties(), new PhiCoprocessorSpec(
                             IndustrialTier.T4, 3, 61, 1240, 250)));
 
-    public static final DeferredItem<dev.jstech.computers.item.PhiCoprocessorItem> PHI_7290 =
-            ITEMS.register("phi_7290", () -> new dev.jstech.computers.item.PhiCoprocessorItem(
-                    new Item.Properties(), new dev.jstech.computers.hardware.PhiCoprocessorSpec(
+    public static final DeferredItem<PhiCoprocessorItem> PHI_7290 =
+            ITEMS.register("phi_7290", () -> new PhiCoprocessorItem(
+                    new Item.Properties(), new PhiCoprocessorSpec(
                             IndustrialTier.T4, 4, 72, 1500, 270)));
 
-    public static final DeferredItem<dev.jstech.computers.item.PhiCoprocessorItem> PHI_9000 =
-            ITEMS.register("phi_9000", () -> new dev.jstech.computers.item.PhiCoprocessorItem(
-                    new Item.Properties(), new dev.jstech.computers.hardware.PhiCoprocessorSpec(
+    public static final DeferredItem<PhiCoprocessorItem> PHI_9000 =
+            ITEMS.register("phi_9000", () -> new PhiCoprocessorItem(
+                    new Item.Properties(), new PhiCoprocessorSpec(
                             IndustrialTier.T5, 6, 96, 1800, 300)));
 
     public static final DeferredHolder<MenuType<?>,
-            MenuType<dev.jstech.computers.menu.ServerRouterMenu>> SERVER_ROUTER_MENU =
+            MenuType<ServerRouterMenu>> SERVER_ROUTER_MENU =
             MENUS.register("server_router", () -> IMenuTypeExtension.create(
-                    dev.jstech.computers.menu.ServerRouterMenu::fromNetwork));
+                    ServerRouterMenu::fromNetwork));
 
     public static void register(final IEventBus modEventBus) {
         /*

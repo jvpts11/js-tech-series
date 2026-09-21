@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.vm.program.UiWidgets;
 import java.util.List;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
@@ -17,7 +18,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * What a player did to a widget of a Cannon program's window: which window, which widget, and what it
+ * What a player did to a widget of a Σ# program's window: which window, which widget, and what it
  * was (a button pressed, a line typed, a box ticked, a row picked, a place on a canvas, a window closed).
  *
  * @param said   what the change was, for what carries words: a line typed
@@ -30,7 +31,7 @@ public record UiEventPayload(BlockPos hostPos, int program, long window, long wi
     public static final Set<String> KINDS = Set.of("click", "text", "submit", "toggle", "select", "close");
 
     /** The longest line a player can put in a program's box. */
-    public static final int MAX_TEXT = 256;
+    public static final int MAX_TEXT = UiWidgets.MOST_TEXT;
 
     public static final CustomPacketPayload.Type<UiEventPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "ui_event"));

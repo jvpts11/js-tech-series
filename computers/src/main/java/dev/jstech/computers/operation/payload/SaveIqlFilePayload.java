@@ -29,8 +29,14 @@ public record SaveIqlFilePayload(BlockPos hostPos, String fileName,
     /** Maximum base-name length (without the {@code .iql} extension). */
     public static final int MAX_NAME_LEN = 32;
 
-    /** Maximum length of an IQL script, sent either way. */
-    public static final int MAX_CONTENT_LEN = 8192;
+    /**
+     * Maximum length of an IQL script, sent either way.
+     *
+     * <p>The same ceiling every other file has. It used to be a quarter of it, and a {@code .iql} written
+     * in the editor, which allows the larger one, could then not be opened here at all: the cap throws
+     * when it is handed more than it takes. Two ways of reaching one file have to agree about its size.
+     */
+    public static final int MAX_CONTENT_LEN = FileContentPayload.MAX_CONTENT;
 
     public static final CustomPacketPayload.Type<SaveIqlFilePayload> TYPE =
             new CustomPacketPayload.Type<>(

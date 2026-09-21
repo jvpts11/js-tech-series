@@ -44,10 +44,28 @@ public final class InstallerLayout {
      * @param platforms       the platforms it runs on, already joined for display
      * @param host            the computer it installs on, already worded for display
      * @param installCommands the package-manager commands, one per line
+     * @param bootFiles       what a system's medium starts the machine from, as that family names it: a kernel
+     *                        and its first filesystem on a Linux, the loader and the kernel on FreeBSD, the one
+     *                        file System V keeps at its root
      */
     public record Facts(String name, String packageId, String idPath, boolean system, boolean service,
                         boolean linux, int year, String house, String description, List<String> needs,
-                        String platforms, String host, List<String> installCommands) {
+                        String platforms, String host, List<String> installCommands, List<String> bootFiles) {
+
+        /** What a Linux medium boots from, which is what a medium carries when nothing says otherwise. */
+        public static final List<String> LINUX_BOOT = List.of("boot/vmlinuz", "boot/initrd.img");
+
+        public Facts {
+            bootFiles = bootFiles == null ? LINUX_BOOT : List.copyOf(bootFiles);
+        }
+
+        public Facts(final String name, final String packageId, final String idPath, final boolean system,
+                     final boolean service, final boolean linux, final int year, final String house,
+                     final String description, final List<String> needs, final String platforms,
+                     final String host, final List<String> installCommands) {
+            this(name, packageId, idPath, system, service, linux, year, house, description, needs, platforms, host,
+                    installCommands, LINUX_BOOT);
+        }
     }
 
     /** One projected file or folder. */
@@ -63,12 +81,24 @@ public final class InstallerLayout {
         if (facts.linux()) {
             out.add(dir("boot"));
             out.add(dir("pool"));
+            // The folders the boot files sit in, which FreeBSD has one more of than a Linux does.
+            if (facts.system()) {
+                for (final String bootFile : facts.bootFiles()) {
+                    for (int slash = bootFile.indexOf('/'); slash > 0; slash = bootFile.indexOf('/', slash + 1)) {
+                        final Entry parent = dir(bootFile.substring(0, slash));
+                        if (!out.contains(parent)) {
+                            out.add(parent);
+                        }
+                    }
+                }
+            }
             out.add(file("install.sh", FileType.SH));
             out.add(file("README.txt", FileType.TXT));
             out.add(file(facts.idPath() + ".pkg", FileType.PKG));
             if (facts.system()) {
-                out.add(file("boot/vmlinuz", FileType.BIN));
-                out.add(file("boot/initrd.img", FileType.BIN));
+                for (final String bootFile : facts.bootFiles()) {
+                    out.add(file(bootFile, FileType.BIN));
+                }
             } else {
                 out.add(file("pool/" + facts.idPath() + "-" + facts.year() + ".tar", FileType.BIN));
             }

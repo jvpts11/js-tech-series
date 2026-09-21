@@ -8,8 +8,10 @@
 package dev.jstech.computers.menu;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.ClusterManagementComputerBlock;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.gui.layout.ClusterManagementComputerLayout;
+import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -101,7 +103,7 @@ public class ClusterManagementComputerMenu extends AbstractComputerMenu {
     }
 
     @Nullable
-    public dev.jstech.core.tier.HardwareEra hardwareEra() {
+    public HardwareEra hardwareEra() {
         return blockEntity.displayEra();
     }
 
@@ -179,7 +181,7 @@ public class ClusterManagementComputerMenu extends AbstractComputerMenu {
     public boolean stillValid(final Player player) {
         return access.evaluate((level, pos) ->
                 level.getBlockState(pos).getBlock()
-                        instanceof dev.jstech.computers.block.ClusterManagementComputerBlock
+                        instanceof ClusterManagementComputerBlock
                         && player.canInteractWithBlock(pos, 4.0), true);
     }
 }

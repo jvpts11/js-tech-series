@@ -3,9 +3,11 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Core.
  */
 package dev.jstech.core.operation;
+
+import java.util.Objects;
 
 /**
  * Outcome of running an {@link IOperationTask} on a virtual thread.
@@ -19,16 +21,25 @@ public sealed interface IOperationResult {
     }
 
     /**
-     * The task failed; {@code reason} is a self-contained, human-readable message.
+     * The task failed, and {@code cause} is why, in a form that can be shown to whoever asked for it.
      */
-    record Failure(String reason) implements IOperationResult {
+    record Failure(OperationFailure cause) implements IOperationResult {
+
+        public Failure {
+            Objects.requireNonNull(cause, "cause must not be null");
+        }
     }
 
     static IOperationResult success() {
         return new Success();
     }
 
-    static IOperationResult failure(final String reason) {
-        return new Failure(reason);
+    /** A failure under that translation key, with whatever fills the holes in the line it names. */
+    static IOperationResult failure(final String key, final String... arguments) {
+        return new Failure(OperationFailure.of(key, arguments));
+    }
+
+    static IOperationResult failure(final OperationFailure cause) {
+        return new Failure(cause);
     }
 }

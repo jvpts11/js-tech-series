@@ -12,7 +12,7 @@ import java.util.Locale;
 /**
  * How a Network Gateway is named. A Gateway gets a default name the first time it links to a computer
  * ({@code gateway-1}, {@code gateway-2} on the same host), the player may rename it from the Gateway
- * Manager or the shell, and the name is what the ComputerCraft side and Cannon programs address it by,
+ * Manager or the shell, and the name is what the ComputerCraft side and Σ# programs address it by,
  * so it is kept to the characters both are comfortable with.
  */
 public final class GatewayName {

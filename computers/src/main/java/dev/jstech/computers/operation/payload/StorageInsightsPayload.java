@@ -58,6 +58,13 @@ public record StorageInsightsPayload(long totalItems, int typeCount, int serverC
         return new StorageInsightsPayload(totalItems, typeCount, serverCount, top, low, servers);
     }
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public StorageInsightsPayload {
+        topItems = List.copyOf(topItems);
+        lowItems = List.copyOf(lowItems);
+        servers = List.copyOf(servers);
+    }
+
     @Override
     public CustomPacketPayload.Type<StorageInsightsPayload> type() {
         return TYPE;

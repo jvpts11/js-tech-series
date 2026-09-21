@@ -10,6 +10,7 @@ package dev.jstech.core.client.gui.component;
 import dev.jstech.core.client.gui.logic.TextDocument;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -65,6 +66,26 @@ public final class TextArea extends UiComponent {
     /** How many lines fit in the bounds. */
     public int visibleLines() {
         return Math.max(1, (height() - 2) / LINE_H);
+    }
+
+    /**
+     * The first line the view is showing, counting from nothing.
+     *
+     * <p>Anything drawn beside the text has to agree with where the text actually is: a column of line
+     * numbers down the side is the case this exists for, and it is wrong by a whole screen without it.
+     */
+    public int firstVisibleLine() {
+        return scroll;
+    }
+
+    /** How tall one row is, which is the pitch anything drawn alongside the text has to match. */
+    public int lineHeight() {
+        return LINE_H;
+    }
+
+    /** Where the first row is drawn inside the bounds, so a column beside it lines up with the text. */
+    public int textTop() {
+        return y() + 1;
     }
 
     private void followCaret() {
@@ -210,7 +231,7 @@ public final class TextArea extends UiComponent {
 
     @Override
     public boolean mouseScrolled(final double mx, final double my, final double delta) {
-        if (net.minecraft.client.gui.screens.Screen.hasShiftDown() && lastFont != null) {
+        if (Screen.hasShiftDown() && lastFont != null) {
             final int room = Math.max(8, room());
             final int max = Math.max(0, widest(lastFont) + 2 - room);
             shift = Math.max(0, Math.min(max, shift - (int) Math.signum(delta) * 24));

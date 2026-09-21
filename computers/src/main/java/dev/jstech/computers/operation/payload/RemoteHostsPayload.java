@@ -44,6 +44,11 @@ public record RemoteHostsPayload(List<Entry> hosts) implements CustomPacketPaylo
                     ENTRY_CODEC.apply(ByteBufCodecs.list(MAX_HOSTS)), RemoteHostsPayload::hosts,
                     RemoteHostsPayload::new);
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public RemoteHostsPayload {
+        hosts = List.copyOf(hosts);
+    }
+
     @Override
     public CustomPacketPayload.Type<RemoteHostsPayload> type() {
         return TYPE;

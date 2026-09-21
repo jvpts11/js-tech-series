@@ -7,8 +7,15 @@
  */
 package dev.jstech.computers.integration.computercraft;
 
+import dan200.computercraft.api.lua.LuaException;
+import dan200.computercraft.api.peripheral.IPeripheral;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
+import dev.jstech.computers.gateway.GatewayRefusedException;
 import dev.jstech.computers.gateway.IGatewayBridge;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A Gateway's ComputerCraft side: the peripheral CC computers wrap and the node that joins CC's wired
@@ -68,42 +75,42 @@ final class GatewayBridge implements IGatewayBridge {
     }
 
     @Override
-    public java.util.Map<String, String> peripherals() {
-        final java.util.Map<String, String> out = new java.util.LinkedHashMap<>();
+    public Map<String, String> peripherals() {
+        final Map<String, String> out = new LinkedHashMap<>();
         element.peripherals().forEach((name, found) -> out.put(name, found.getType()));
         return out;
     }
 
     @Override
-    public java.util.List<String> methodsOf(final String name) {
-        final dan200.computercraft.api.peripheral.IPeripheral found = element.peripherals().get(name);
-        return found == null ? java.util.List.of() : GatewayCalls.methodsOf(found);
+    public List<String> methodsOf(final String name) {
+        final IPeripheral found = element.peripherals().get(name);
+        return found == null ? List.of() : GatewayCalls.methodsOf(found);
     }
 
     @Override
-    public Object call(final String name, final String method, final java.util.List<Object> arguments)
-            throws dev.jstech.computers.gateway.GatewayRefusedException {
-        final dan200.computercraft.api.peripheral.IPeripheral found = element.peripherals().get(name);
+    public Object call(final String name, final String method, final List<Object> arguments)
+            throws GatewayRefusedException {
+        final IPeripheral found = element.peripherals().get(name);
         if (found == null) {
-            throw new dev.jstech.computers.gateway.GatewayRefusedException(
+            throw new GatewayRefusedException(
                     "there is no " + name + " on this Gateway's wire");
         }
         try {
             return GatewayCalls.call(found, method, arguments);
-        } catch (final dan200.computercraft.api.lua.LuaException refused) {
-            throw new dev.jstech.computers.gateway.GatewayRefusedException(
+        } catch (final LuaException refused) {
+            throw new GatewayRefusedException(
                     refused.getMessage() == null ? name + "." + method + " failed" : refused.getMessage());
         }
     }
 
     @Override
-    public java.util.List<java.util.Map<String, Object>> computers() {
-        final java.util.List<java.util.Map<String, Object>> out = new java.util.ArrayList<>();
+    public List<Map<String, Object>> computers() {
+        final List<Map<String, Object>> out = new ArrayList<>();
         element.peripherals().forEach((name, found) -> {
             if (!GatewayWiredElement.isComputer(found)) {
                 return;
             }
-            final java.util.Map<String, Object> row = new java.util.LinkedHashMap<>();
+            final Map<String, Object> row = new LinkedHashMap<>();
             row.put("Name", name);
             row.put("Id", numberOf(found, "getID"));
             row.put("Label", textOf(found, "getLabel"));
@@ -115,7 +122,7 @@ final class GatewayBridge implements IGatewayBridge {
 
     @Override
     public boolean power(final int computerId, final String what) {
-        for (final dan200.computercraft.api.peripheral.IPeripheral found : element.peripherals().values()) {
+        for (final IPeripheral found : element.peripherals().values()) {
             if (!GatewayWiredElement.isComputer(found) || numberOf(found, "getID") != computerId) {
                 continue;
             }
@@ -125,9 +132,9 @@ final class GatewayBridge implements IGatewayBridge {
                 default -> "reboot";
             };
             try {
-                GatewayCalls.call(found, method, java.util.List.of());
+                GatewayCalls.call(found, method, List.of());
                 return true;
-            } catch (final dan200.computercraft.api.lua.LuaException refused) {
+            } catch (final LuaException refused) {
                 return false;
             }
         }
@@ -135,21 +142,21 @@ final class GatewayBridge implements IGatewayBridge {
     }
 
     /* What a computer answers about itself, or nothing at all when it will not say. */
-    private static Object quietly(final dan200.computercraft.api.peripheral.IPeripheral found,
+    private static Object quietly(final IPeripheral found,
                                   final String method) {
         try {
-            return GatewayCalls.call(found, method, java.util.List.of());
-        } catch (final dan200.computercraft.api.lua.LuaException refused) {
+            return GatewayCalls.call(found, method, List.of());
+        } catch (final LuaException refused) {
             return null;
         }
     }
 
-    private static long numberOf(final dan200.computercraft.api.peripheral.IPeripheral found,
+    private static long numberOf(final IPeripheral found,
                                  final String method) {
         return quietly(found, method) instanceof Number number ? number.longValue() : -1L;
     }
 
-    private static String textOf(final dan200.computercraft.api.peripheral.IPeripheral found,
+    private static String textOf(final IPeripheral found,
                                  final String method) {
         final Object said = quietly(found, method);
         return said == null ? "" : String.valueOf(said);

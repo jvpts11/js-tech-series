@@ -101,3 +101,35 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
 sourceSets.main.resources.srcDir generateModMetadata
 // Regenerate it on every project reload instead of by hand.
 neoForge.ideSyncTask generateModMetadata
+
+/*
+ * Benchmarks of the Σ# runtime, run on demand and never part of the build: gradlew :computers:jmh. Options for
+ * JMH go through -PjmhArgs (-PjmhArgs="-bm thrpt -tu ms" reports instructions per millisecond); the results land in
+ * build/reports/jmh/results.json.
+ */
+sourceSets {
+    jmh {
+        java.srcDir 'src/jmh/java'
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+}
+
+dependencies {
+    jmhImplementation "org.openjdk.jmh:jmh-core:${jmh_version}"
+    jmhAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:${jmh_version}"
+}
+
+tasks.register('jmh', JavaExec) {
+    description = 'Runs the JMH benchmarks of the Σ# runtime.'
+    group = 'verification'
+    classpath = sourceSets.jmh.runtimeClasspath
+    mainClass = 'org.openjdk.jmh.Main'
+    // The forked JVM gets its classpath through a jar, since the full one is too long for a Windows command line.
+    systemProperty 'jmh.separateClasspathJAR', 'true'
+    def results = layout.buildDirectory.file('reports/jmh/results.json').get().asFile
+    args(providers.gradleProperty('jmhArgs').getOrElse('').tokenize() + ['-rf', 'json', '-rff', results.absolutePath])
+    doFirst {
+        results.parentFile.mkdirs()
+    }
+}

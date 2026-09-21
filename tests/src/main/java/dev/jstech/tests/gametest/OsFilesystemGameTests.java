@@ -3,10 +3,12 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Tech Series.
  */
 package dev.jstech.tests.gametest;
 
+import dev.jstech.computers.os.OsDisks;
+import dev.jstech.computers.os.DiskSystems;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -40,7 +42,7 @@ import java.util.Optional;
 
 /**
  * In-world integration tests for the disk filesystem data model:
- * the FILESYSTEM and SYSTEM_OS data components on a DiskItem stack.
+ * the FILESYSTEM and DISK_SYSTEMS data components on a DiskItem stack.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -62,10 +64,10 @@ public final class OsFilesystemGameTests {
         final FilesystemContents fs = new FilesystemContents(Map.of("a.iql", file));
         stack.set(ComputingModule.FILESYSTEM.get(), fs);
 
-        // Stamp it with a SYSTEM_OS identifying mc_net.
+        // Stamp it with the systems component identifying mc_net.
         final ResourceLocation osId =
                 ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_net");
-        stack.set(ComputingModule.SYSTEM_OS.get(), osId);
+        stack.set(ComputingModule.DISK_SYSTEMS.get(), DiskSystems.of(osId));
 
         /*
          * copy() exercises the DataComponent codec path (the components are serialised and
@@ -89,11 +91,11 @@ public final class OsFilesystemGameTests {
                             "File type must survive copy; got: " + recovered_file.type());
 
                     final ResourceLocation recoveredOs =
-                            copy.get(ComputingModule.SYSTEM_OS.get());
+                            OsDisks.systemOn(copy);
                     helper.assertTrue(recoveredOs != null,
-                            "SYSTEM_OS component must survive stack.copy()");
+                            "DISK_SYSTEMS component must survive stack.copy()");
                     helper.assertTrue(osId.equals(recoveredOs),
-                            "SYSTEM_OS must equal jsc:mc_net after copy; got: " + recoveredOs);
+                            "the system on the disk must equal jsc:mc_net after copy; got: " + recoveredOs);
                 })
                 .thenSucceed();
     }
@@ -124,7 +126,7 @@ public final class OsFilesystemGameTests {
     }
 
     /**
-     * Verifies that the installed OS lives on the system disk's SYSTEM_OS component:
+     * Verifies that the installed OS lives on the system disk's DISK_SYSTEMS component:
      * installing the OS stamps the disk, and removing that disk makes hasOs() return false
      * (the computer falls back to firmware).
      */
@@ -164,12 +166,12 @@ public final class OsFilesystemGameTests {
                     helper.assertTrue(soRede.equals(mainframe.installedOsId()),
                             "installedOsId() must equal jsc:mc_net; got " + mainframe.installedOsId());
 
-                    // The system disk stack must carry the SYSTEM_OS component.
+                    // The system disk stack must carry the DISK_SYSTEMS component.
                     final ItemStack sysDisk = mainframe.systemDisk();
                     helper.assertFalse(sysDisk.isEmpty(), "systemDisk() must return a non-empty stack");
-                    final ResourceLocation onDisk = sysDisk.get(ComputingModule.SYSTEM_OS.get());
+                    final ResourceLocation onDisk = OsDisks.systemOn(sysDisk);
                     helper.assertTrue(soRede.equals(onDisk),
-                            "the system disk stack must carry SYSTEM_OS == jsc:mc_net; got " + onDisk);
+                            "the system disk stack must carry that system == jsc:mc_net; got " + onDisk);
 
                     // Remove the disk from the inventory, and the OS must disappear with it.
                     inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START, ItemStack.EMPTY);
@@ -436,7 +438,7 @@ public final class OsFilesystemGameTests {
     }
 
     /**
-     * A file's kind follows its name: renamed from .txt to .can it is a program, since its kind is read
+     * A file's kind follows its name: renamed from .txt to .sgs it is a program, since its kind is read
      * off the extension everywhere else and a text file wearing a program's name would open in nothing.
      */
     @GameTest(template = ARENA)
@@ -447,17 +449,17 @@ public final class OsFilesystemGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     DiskFilesystem.write(disk, "progs/hello.txt", FileType.TXT, "class A {}", 1000L,
                             FilesystemKind.HIERARCHICAL);
-                    helper.assertTrue(DiskFilesystem.rename(disk, "progs/hello.txt", "progs/hello.can",
+                    helper.assertTrue(DiskFilesystem.rename(disk, "progs/hello.txt", "progs/hello.sgs",
                                     FilesystemKind.HIERARCHICAL), "renaming across kinds must succeed");
                     FileType kind = null;
                     for (final DiskFilesystem.FileEntry entry
                             : DiskFilesystem.list(disk, "progs", FilesystemKind.HIERARCHICAL)) {
-                        if (entry.path().equals("progs/hello.can")) {
+                        if (entry.path().equals("progs/hello.sgs")) {
                             kind = entry.type();
                         }
                     }
-                    helper.assertTrue(kind == FileType.CAN, "the renamed file must be a program, was " + kind);
-                    final Optional<String> content = DiskFilesystem.read(disk, "progs/hello.can");
+                    helper.assertTrue(kind == FileType.SGS, "the renamed file must be a program, was " + kind);
+                    final Optional<String> content = DiskFilesystem.read(disk, "progs/hello.sgs");
                     helper.assertTrue(content.isPresent() && "class A {}".equals(content.get()),
                             "the content must survive the change of kind");
                 })

@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.core.id.IStableId;
+import dev.jstech.core.id.StableIds;
 import dev.jstech.core.tier.HardwareEra;
 
 /**
@@ -19,13 +21,26 @@ import dev.jstech.core.tier.HardwareEra;
  * <p>This enum is pure (it depends only on {@link HardwareEra}, which is itself pure) so it
  * compiles and runs in the JUnit test sourceset without any Minecraft dependency.
  */
-public enum FirmwareKind {
+public enum FirmwareKind implements IStableId {
     /** Text-mode command-line BIOS. Used on Vintage-era hardware. */
-    CLI_BIOS,
+    CLI_BIOS(0),
     /** Classic blue-panel visual BIOS. Used on Legacy-era hardware. */
-    BLUE_BIOS,
+    BLUE_BIOS(1),
     /** Modern UEFI interface. Used on Standard-era hardware and above. */
-    UEFI;
+    UEFI(2);
+
+    private static final StableIds<FirmwareKind> IDS = StableIds.of(FirmwareKind.class);
+
+    private final int id;
+
+    FirmwareKind(final int id) {
+        this.id = id;
+    }
+
+    @Override
+    public int id() {
+        return id;
+    }
 
     /**
      * Returns the firmware kind appropriate for the given hardware era.
@@ -41,5 +56,10 @@ public enum FirmwareKind {
             case LEGACY -> BLUE_BIOS;
             default -> UEFI;
         };
+    }
+
+    /** The kind that declares {@code id}; an id no kind declares reads as {@link #UEFI}, the look of any later era. */
+    public static FirmwareKind byId(final int id) {
+        return IDS.byId(id, UEFI);
     }
 }

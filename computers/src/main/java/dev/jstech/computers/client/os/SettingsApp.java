@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.operation.payload.RequestFirmwarePayload;
 import dev.jstech.computers.operation.payload.RequestSettingsPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
@@ -362,6 +363,9 @@ public final class SettingsApp implements IDesktopApp {
         heading("About", x, y, w);
         y += 12;
         y = specRow(x, y, w, "Processor", d.cpuLabel() + " - " + d.cpuMhz() + " MHz");
+        if (!d.cpuArch().isEmpty()) {
+            y = specRow(x, y, w, "Architecture", d.cpuArch());
+        }
         if (d.ramMb() > 0) {
             y = specRow(x, y, w, "Memory", group(d.ramMb()) + " MB");
         }
@@ -528,7 +532,7 @@ public final class SettingsApp implements IDesktopApp {
         heading("Storage", x, y, w);
         y += 13;
         for (final SettingsSnapshotPayload.DiskUse disk : d.disks()) {
-            final String cap = dev.jstech.computers.hardware.DiskSpec.sizeLabel(disk.capMb());
+            final String cap = DiskSpec.sizeLabel(disk.capMb());
             pagePanel.add(new Label(disk.label() + (disk.system() ? "  [sys]" : ""))).setBounds(x, y, w - font.width(cap) - 4, 8);
             pagePanel.add(new Label(cap, Label.Tone.DIM).setAlign(Label.Align.RIGHT)).setBounds(x, y, w, 8);
             y += 10;

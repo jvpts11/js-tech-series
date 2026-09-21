@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.block.part;
 
+import com.mojang.logging.LogUtils;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -16,22 +17,25 @@ import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.persistence.SavedValue;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import org.slf4j.Logger;
 
 /**
  * An Import Bus part: pulls data from the inventory its mounted face touches (items OR fluids, with no distinction) and pushes it into the network as INSERT Operations dispatched by the Mainframe. An empty filter imports everything; a set filter imports only that one type and the min/max window keeps the NETWORK stocked of it (with hysteresis).
  */
 public non-sealed class ImportBusPart extends AbstractBusPart {
 
-    private static final org.slf4j.Logger LOGGER = com.mojang.logging.LogUtils.getLogger();
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final int MIN_BATCH = 64;
     private static final int FLUSH_TICKS = 20;
 
@@ -187,7 +191,7 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
         final StorageKey drop = bufferKey != null ? bufferKey : flushedKey;
         final long dropAmount = bufferKey != null ? bufferAmount : flushedAmount;
         if (drop != null && drop.isItem() && dropAmount > 0L && host != null) {
-            net.minecraft.world.Containers.dropItemStack(level,
+            Containers.dropItemStack(level,
                     host.getBlockPos().getX(), host.getBlockPos().getY(), host.getBlockPos().getZ(),
                     drop.stack((int) Math.min(dropAmount, Integer.MAX_VALUE)));
         }
@@ -225,8 +229,8 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
         flushedAmount = 0L;
         final var ops = registries.createSerializationContext(NbtOps.INSTANCE);
         if (tag.contains("BufferKey")) {
-            StorageKey.CODEC.parse(ops, tag.get("BufferKey"))
-                    .resultOrPartial(err -> LOGGER.warn("Import bus dropped a buffered payload it could not decode: {}", err))
+            SavedValue.read(StorageKey.CODEC.parse(ops, tag.get("BufferKey")),
+                            LOGGER, "what an import bus was holding")
                     .ifPresent(key -> {
                         bufferKey = key;
                         bufferAmount = tag.getLong("BufferAmount");
@@ -240,8 +244,8 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
          */
         if (tag.contains("FlushedKey")) {
             final long flushedAmt = tag.getLong("FlushedAmount");
-            StorageKey.CODEC.parse(ops, tag.get("FlushedKey"))
-                    .resultOrPartial(err -> LOGGER.warn("Import bus dropped an in-flight payload it could not decode: {}", err))
+            SavedValue.read(StorageKey.CODEC.parse(ops, tag.get("FlushedKey")),
+                            LOGGER, "what an import bus had on its way in")
                     .ifPresent(key -> {
                         if (bufferKey == null) {
                             bufferKey = key;

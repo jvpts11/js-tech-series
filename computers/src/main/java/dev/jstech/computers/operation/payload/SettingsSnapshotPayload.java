@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.install.InstallerFlow;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -41,6 +42,7 @@ public record SettingsSnapshotPayload(
         int netshare,
         String cpuLabel,
         int cpuMhz,
+        String cpuArch,
         int ramMb,
         int vramMb,
         String osLabel,
@@ -59,15 +61,19 @@ public record SettingsSnapshotPayload(
     /** One folder this computer shares with the network: its share name, its path and whether others may write. */
     public record ShareRow(String name, String path, boolean writable) {}
 
-    /** One holder of RAM for the System Monitor: what it is called, its megabytes and its kind's name. */
     /**
-     * One thing holding memory: what to call it, how many megabytes, what kind it is, and the number it
-     * answers to if it is something that can be ended.
+     * One thing holding memory: what to call it, how many megabytes it was given, how many bytes of them it is
+     * holding this moment, the serialized name of its ledger kind, and the number it answers to if it is
+     * something that can be ended.
+     *
+     * <p>Both sizes travel because both are shown: the megabytes are what the machine promised and what a new
+     * program is measured against, and the bytes are what is really in there, which is what moves while a
+     * program runs.
      *
      * <p>A window is ended by its name, but two scripts can be started from the same file and only the
      * number tells them apart, so the number travels for those and is 0 for everything else.
      */
-    public record RamUse(String label, int mb, String kind, int id) {}
+    public record RamUse(String label, int mb, long heldBytes, String kind, int id) {}
 
     public static final int MAX = 64;
 
@@ -76,6 +82,14 @@ public record SettingsSnapshotPayload(
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SettingsSnapshotPayload> STREAM_CODEC =
             StreamCodec.of(SettingsSnapshotPayload::encode, SettingsSnapshotPayload::decode);
+
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public SettingsSnapshotPayload {
+        disks = List.copyOf(disks);
+        installed = List.copyOf(installed);
+        ramUses = List.copyOf(ramUses);
+        shares = List.copyOf(shares);
+    }
 
     @Override
     public CustomPacketPayload.Type<SettingsSnapshotPayload> type() {
@@ -93,7 +107,7 @@ public record SettingsSnapshotPayload(
     private static void encode(final RegistryFriendlyByteBuf buf, final SettingsSnapshotPayload p) {
         buf.writeBlockPos(p.hostPos);
         buf.writeUtf(clip(p.wallpaper, LABEL_MAX), LABEL_MAX);
-        buf.writeUtf(clip(p.computerName, LABEL_MAX), LABEL_MAX);
+        buf.writeUtf(clip(p.computerName, InstallerFlow.MOST_NAME_LETTERS), InstallerFlow.MOST_NAME_LETTERS);
         buf.writeInt(p.accent);
         buf.writeBoolean(p.clock12h);
         buf.writeVarInt(p.guiScale);
@@ -106,6 +120,7 @@ public record SettingsSnapshotPayload(
         buf.writeVarInt(p.netshare);
         buf.writeUtf(clip(p.cpuLabel, 64), 64);
         buf.writeVarInt(p.cpuMhz);
+        buf.writeUtf(clip(p.cpuArch, 48), 48);
         buf.writeVarInt(p.ramMb);
         buf.writeVarInt(p.vramMb);
         buf.writeUtf(clip(p.osLabel, LABEL_MAX), LABEL_MAX);
@@ -128,6 +143,7 @@ public record SettingsSnapshotPayload(
             final RamUse r = p.ramUses.get(i);
             buf.writeUtf(clip(r.label(), LABEL_MAX), LABEL_MAX);
             buf.writeVarInt(r.mb());
+            buf.writeVarLong(r.heldBytes());
             buf.writeUtf(clip(r.kind(), 16), 16);
             buf.writeVarInt(r.id());
         }
@@ -149,7 +165,7 @@ public record SettingsSnapshotPayload(
     private static SettingsSnapshotPayload decode(final RegistryFriendlyByteBuf buf) {
         final BlockPos pos = buf.readBlockPos();
         final String wallpaper = buf.readUtf(48);
-        final String computerName = buf.readUtf(48);
+        final String computerName = buf.readUtf(InstallerFlow.MOST_NAME_LETTERS);
         final int accent = buf.readInt();
         final boolean clock12h = buf.readBoolean();
         final int guiScale = buf.readVarInt();
@@ -162,6 +178,7 @@ public record SettingsSnapshotPayload(
         final int netshare = buf.readVarInt();
         final String cpuLabel = buf.readUtf(64);
         final int cpuMhz = buf.readVarInt();
+        final String cpuArch = buf.readUtf(48);
         final int ramMb = buf.readVarInt();
         final int vramMb = buf.readVarInt();
         final String osLabel = buf.readUtf(48);
@@ -180,7 +197,8 @@ public record SettingsSnapshotPayload(
         final int ramUseCount = Math.min(buf.readVarInt(), MAX);
         final List<RamUse> ramUses = new ArrayList<>(ramUseCount);
         for (int i = 0; i < ramUseCount; i++) {
-            ramUses.add(new RamUse(buf.readUtf(48), buf.readVarInt(), buf.readUtf(16), buf.readVarInt()));
+            ramUses.add(new RamUse(buf.readUtf(48), buf.readVarInt(), buf.readVarLong(), buf.readUtf(16),
+                    buf.readVarInt()));
         }
         final int shareCount = Math.min(buf.readVarInt(), MAX);
         final List<ShareRow> shares = new ArrayList<>(shareCount);
@@ -190,6 +208,7 @@ public record SettingsSnapshotPayload(
         final boolean remoteAllowed = buf.readBoolean();
         return new SettingsSnapshotPayload(pos, wallpaper, computerName, accent, clock12h, guiScale, brightness,
                 saveDrive, removableAutoOpen, themePreset, taskbarCentered, darkMode, netshare, cpuLabel, cpuMhz,
-                ramMb, vramMb, osLabel, platform, installed, disks, ramUsedMb, ramUses, shares, remoteAllowed);
+                cpuArch, ramMb, vramMb, osLabel, platform, installed, disks, ramUsedMb, ramUses, shares,
+                remoteAllowed);
     }
 }

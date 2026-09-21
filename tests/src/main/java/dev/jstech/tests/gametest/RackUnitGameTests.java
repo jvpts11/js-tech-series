@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Tech Series.
  */
 package dev.jstech.tests.gametest;
 
@@ -98,10 +98,12 @@ public final class RackUnitGameTests {
                     // The same row again is refused; nothing sneaks into another row.
                     player.setItemInHand(InteractionHand.MAIN_HAND, ComputingModule.defaultServer());
                     helper.useBlock(pos, player, hitOn(helper, pos, Direction.NORTH, 0.5));
-                    helper.assertTrue(mountedServers(rack) == 1 && !player.getItemInHand(InteractionHand.MAIN_HAND).isEmpty(),
+                    helper.assertTrue(mountedServers(rack) == 1
+                                    && !player.getItemInHand(InteractionHand.MAIN_HAND).isEmpty(),
                             "a taken row refuses the unit instead of seating it elsewhere");
                     // The bottom row (texel 8) cannot take a 2U chassis: refused, not moved up.
-                    player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ComputingModule.STORAGE_SERVER.get()));
+                    player.setItemInHand(InteractionHand.MAIN_HAND,
+                            new ItemStack(ComputingModule.STORAGE_SERVER.get()));
                     helper.useBlock(pos, player, hitOn(helper, pos, Direction.NORTH, 0.25));
                     helper.assertTrue(mountedServers(rack) == 1 && rack.getServers().getStackInSlot(7).isEmpty(),
                             "a 2U chassis aimed at the bottom row is refused");
@@ -178,7 +180,8 @@ public final class RackUnitGameTests {
                                     .insertItem(2, new ItemStack(ComputingModule.SERVER.get()), false).isEmpty(),
                             "the first free row after the 2U chassis must accept a 1U server");
                     helper.assertTrue(!rack.getServers()
-                                    .insertItem(7, new ItemStack(ComputingModule.COMPUTE_SERVER.get()), false).isEmpty(),
+                                    .insertItem(7, new ItemStack(ComputingModule.COMPUTE_SERVER.get()), false)
+                                    .isEmpty(),
                             "a 2U chassis must not hang past the bottom of the rack");
                 })
                 .thenSucceed();
@@ -243,8 +246,8 @@ public final class RackUnitGameTests {
                     helper.assertTrue(mcNet.equals(rack.installedOsId()),
                             "the installed OS id reads back from the bay drive");
                     helper.assertTrue(rack.getFrontSlots().getStackInSlot(0)
-                                    .get(ComputingModule.SYSTEM_OS.get()) != null,
-                            "the SYSTEM_OS component lives on the drive itself");
+                                    .get(ComputingModule.DISK_SYSTEMS.get()) != null,
+                            "the DISK_SYSTEMS component lives on the drive itself");
                     helper.assertTrue(dev.jstech.computers.os.boot.BootController
                                     .targetForComputer(rack)
                                     != dev.jstech.computers.os.boot.BootController.BootTarget.FIRMWARE,
@@ -265,7 +268,7 @@ public final class RackUnitGameTests {
                     helper.assertTrue(rack.validateOsSession(), "an installed system validates the session");
                     // Hotswap the OS drive out: the system travels with it and the session dies.
                     final ItemStack pulled = rack.getFrontSlots().extractItem(0, 1, false);
-                    helper.assertTrue(pulled.get(ComputingModule.SYSTEM_OS.get()) != null,
+                    helper.assertTrue(pulled.get(ComputingModule.DISK_SYSTEMS.get()) != null,
                             "the pulled drive carries the installed system with it");
                     helper.assertTrue(!rack.validateOsSession(),
                             "pulling the OS drive kills the machine's session");
@@ -388,7 +391,8 @@ public final class RackUnitGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     helper.assertTrue(rack.getServers()
-                                    .insertItem(0, new ItemStack(ComputingModule.STORAGE_SERVER.get()), false).isEmpty(),
+                                    .insertItem(0, new ItemStack(ComputingModule.STORAGE_SERVER.get()), false)
+                                    .isEmpty(),
                             "the 2U storage chassis mounts at the top");
                     helper.assertTrue(!rack.getServers()
                                     .insertItem(1, new ItemStack(ComputingModule.RACK_UPS.get()), false).isEmpty(),
@@ -574,9 +578,35 @@ public final class RackUnitGameTests {
                                     .anyMatch(h -> h.hostname().equals("vault")),
                             "the rack server shows up as a reachable host");
 
+                    helper.assertTrue(cli.sshSession().isEmpty(),
+                            "with no session open the shell names no machine");
+
                     helper.assertTrue(cli.sshConnect("vault").ok(), "ssh connects to the server");
                     helper.assertTrue(mainframe.console().sshTarget() != null,
                             "the session records the machine it is connected to");
+                    /*
+                     * The session has to name the machine at the OTHER end. It used to answer with the local
+                     * machine's name, which nothing read, so a DOS prompt looked the same connected or not.
+                     */
+                    helper.assertTrue(cli.sshSession().equals("vault"),
+                            "the session names the machine it is connected to; got '" + cli.sshSession() + "'");
+
+                    /*
+                     * Every line typed while the session is open goes to the far machine, and both terminals a
+                     * player can type at ask this one rule. The shell window on a desktop used to ask nobody and
+                     * ran everything on the machine standing in front of the player.
+                     */
+                    final var routed = dev.jstech.computers.program.cli.SshTerminal.targetOf(
+                            mainframe, helper.getLevel(), "help");
+                    helper.assertTrue(routed != null, "an open session sends the line to the far machine");
+                    helper.assertTrue("vault".equals(routed.hostname()),
+                            "to the machine it is connected to; got " + routed.hostname());
+                    helper.assertTrue(dev.jstech.computers.program.cli.SshTerminal.targetOf(
+                                    mainframe, helper.getLevel(), "exit") == null,
+                            "while exit stays at home, or there would be no way back out of the session");
+                    final String shown = dev.jstech.computers.program.cli.SshTerminal.prompt(cli, cli);
+                    helper.assertTrue(shown.startsWith("[vault] "),
+                            "and the prompt says where the lines are going; got '" + shown + "'");
 
                     helper.assertTrue(cli.sshConnect("nowhere").message().contains("host not found"),
                             "an unknown host is reported, not silently ignored");
@@ -584,6 +614,8 @@ public final class RackUnitGameTests {
                     helper.assertTrue(cli.sshDisconnect().ok(), "exit closes the session");
                     helper.assertTrue(mainframe.console().sshTarget() == null,
                             "the session is gone after exit");
+                    helper.assertTrue(cli.sshSession().isEmpty(),
+                            "the shell names no machine once the session is closed");
                     helper.assertTrue(!cli.sshDisconnect().ok(),
                             "exit with no session says so instead of pretending");
                 })
@@ -597,23 +629,27 @@ public final class RackUnitGameTests {
         final var mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
-                    final var cli = new dev.jstech.computers.program.ServerCliComputer(
-                            mainframe, helper.getLevel());
                     final var console = mainframe.console();
-                    final String version = dev.jstech.computers.program
+                    final String build = dev.jstech.computers.program
                             .ServerCliComputer.modVersion();
+                    /*
+                     * A package is held to its own version and not to the mod's build, which is what an
+                     * update reconciles: the machine already carries the interface its system shipped with,
+                     * at that interface's own version, and holding it to a build number would call it
+                     * outdated for ever.
+                     */
+                    final String own = dev.jstech.computers.os.ProgramVersions.of("jsc:test_package");
 
-                    // Nothing to reconcile on a machine with no packages.
                     console.install("jsc:test_package");
                     helper.assertTrue(console.installedVersion("jsc:test_package").isEmpty(),
                             "a package installed outside the manager carries no version yet");
-                    helper.assertTrue(console.outdatedPackages(version).contains("jsc:test_package"),
+                    helper.assertTrue(console.outdatedPackages().contains("jsc:test_package"),
                             "an unversioned package reads as outdated");
 
-                    console.setInstalledVersion("jsc:test_package", version);
-                    helper.assertTrue(console.outdatedPackages(version).isEmpty(),
-                            "a package at the current build is up to date");
-                    helper.assertTrue(!version.isEmpty(), "the current build has a version string");
+                    console.setInstalledVersion("jsc:test_package", own);
+                    helper.assertTrue(console.outdatedPackages().isEmpty(),
+                            "every package at its own version is up to date; got " + console.outdatedPackages());
+                    helper.assertTrue(!build.isEmpty(), "the current build has a version string");
                 })
                 .thenSucceed();
     }
@@ -816,7 +852,8 @@ public final class RackUnitGameTests {
                         helper.assertTrue((chassis.rackType()
                                         == dev.jstech.computers.rack.RackChassis.RackType.SERVER)
                                         == server,
-                                chassis + (server ? " belongs in the Server Rack" : " belongs in the Supercomputer Rack"));
+                                chassis + (server ? " belongs in the Server Rack"
+                                        : " belongs in the Supercomputer Rack"));
                     }
                     helper.assertTrue(!rack.acceptsChassis(ComputingModule.defaultSupercomputerNode()),
                             "a node is refused by the general cabinet");

@@ -129,6 +129,50 @@ public final class ProgramFilesGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * MC-DOS: the system at the root of the disk, its tools under DOS, and a directory of its own for a program
+     * once it is installed, which the startup file's search path then names.
+     */
+    @GameTest(template = ARENA)
+    public static void mcDos_keepsItselfAtTheRootOfTheDisk(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2), "mc_dos");
+        if (computer == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerCliComputer cli = new ServerCliComputer(computer, helper.getLevel());
+                    final CliShell shell = CliCommands.shellFor(cli, 52);
+                    final String root = run(shell, cli, "dir");
+                    helper.assertFalse(root.contains("File Not Found"), "the root is not empty; got " + root);
+                    helper.assertTrue(root.contains("COMMAND.COM") && root.contains("MCDOS.SYS")
+                                    && root.contains("CONFIG.SYS") && root.contains("AUTOEXEC.BAT")
+                                    && root.contains("DOS"),
+                            "the system is at the root of its disk; got " + root);
+                    helper.assertFalse(root.contains("Program Files") || root.contains("usr"),
+                            "and nothing of another family's is; got " + root);
+                    final String tools = run(shell, cli, "dir DOS");
+                    helper.assertTrue(tools.contains("HIMEM.SYS") && tools.contains("README.TXT"),
+                            "its tools are under DOS; got " + tools);
+                    final String typed = run(shell, cli, "type autoexec.bat");
+                    helper.assertTrue(typed.contains("PATH C:\\DOS"),
+                            "a name is found whatever case it is typed in; got " + typed);
+                    helper.assertFalse(typed.contains("C:\\SCC"), "and names no program before one is installed");
+
+                    computer.console().install(jsc("scc").toString());
+                    helper.assertTrue(run(shell, cli, "dir").contains("SCC"), "an installed program has a directory");
+                    final String program = run(shell, cli, "dir SCC");
+                    helper.assertTrue(program.contains("SCC.EXE") && program.contains("README.TXT"),
+                            "with the program and its notes in it; got " + program);
+                    helper.assertTrue(run(shell, cli, "type AUTOEXEC.BAT").contains("PATH C:\\DOS;C:\\SCC"),
+                            "and the search path names it");
+                    final String del = run(shell, cli, "del COMMAND.COM");
+                    helper.assertTrue(run(shell, cli, "dir").contains("COMMAND.COM"),
+                            "the command processor cannot be deleted; del said " + del);
+                })
+                .thenSucceed();
+    }
+
     /** Linux: an installed package under /usr/bin and /usr/share, and the distribution in /etc/os-release. */
     @GameTest(template = ARENA)
     public static void linux_listsInstalledPackagesUnderUsr(final GameTestHelper helper) {

@@ -7,9 +7,17 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.os.DesktopEnvironmentDef;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.WorkspaceSet;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.gui.layout.WindowGeometry;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
 
 /**
  * One open program window on the {@link DesktopScreen}: a draggable, resizable frame hosting a
@@ -34,6 +42,15 @@ public final class DesktopWindow {
     public static final int RESIZE_TOP = 4;
     public static final int RESIZE_BOTTOM = 8;
 
+    /**
+     * The title-bar buttons, by the numbers {@link #buttonAt} answers with. The way out is the button a Motif
+     * bar keeps at its left end, where it opens the window's menu before it closes anything.
+     */
+    public static final int BUTTON_NONE = 0;
+    public static final int BUTTON_MINIMIZE = 1;
+    public static final int BUTTON_MAXIMIZE = 2;
+    public static final int BUTTON_CLOSE = 3;
+
     /** Hands each window the order it was opened in, which is the order the panel lists programs in. */
     private static int nextSerial;
 
@@ -45,7 +62,7 @@ public final class DesktopWindow {
      * its owner on the panel, always sits in front of it, and keeps the owner from taking input while
      * it is up, the way an Open or Save window holds the program that opened it.
      */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private DesktopWindow owner;
     private int x;
     private int y;
@@ -56,6 +73,10 @@ public final class DesktopWindow {
     private boolean maximized;
     // Which title-bar button is currently held down: 0 none, 1 minimize, 2 maximize, 3 close.
     private int pressedBtn;
+    // Whether the skin last drawn with keeps the way out at the left end of the bar, as Motif does.
+    private boolean menuAtLeft;
+    // Which workspaces the window is on, as a WorkspaceSet: one of them, several, or all.
+    private int workspaces = WorkspaceSet.only(0);
     // Geometry saved before maximizing, to restore on un-maximize.
     private int restoreX;
     private int restoreY;
@@ -110,12 +131,12 @@ public final class DesktopWindow {
     }
 
     /** The window this is a dialog of, or null. */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public DesktopWindow owner() {
         return owner;
     }
 
-    public void setOwner(@org.jetbrains.annotations.Nullable final DesktopWindow value) {
+    public void setOwner(@Nullable final DesktopWindow value) {
         this.owner = value;
     }
 
@@ -393,6 +414,8 @@ public final class DesktopWindow {
                        final int mouseX, final int mouseY, final float partialTick,
                        final int screenW, final int screenH, final int taskbarH, final int workTop) {
         resolveGeometry(screenW, screenH, taskbarH, workTop);
+        // Where the buttons stand is the skin's to say, and the hit tests below have to agree with the drawing.
+        this.menuAtLeft = skin.menuAtLeft();
         final int wx = curX;
         final int wy = curY;
         final int ww = curW;
@@ -407,15 +430,16 @@ public final class DesktopWindow {
             skin.windowShadow(g, wx, wy, ww, wh);
         }
         skin.windowFrame(g, wx, wy, ww, wh);
-        skin.titleBar(g, wx, wy, ww, TITLE_H, focused);
+        skin.titleBar(g, wx, wy, ww, TITLE_H, focused, closeX() - wx + BTN + 2,
+                dialog() ? 3 : wx + ww - minX() + 2);
         /*
          * The program's own icon at the left of the bar, the way every desktop of these generations marked
          * which program a window belongs to. A key nothing answers to simply gets no icon.
          */
-        final dev.jstech.computers.os.DesktopEnvironmentDef desktop =
-                dev.jstech.computers.os.OsRegistry.getDesktop(
-                        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("jsc", skin.osPath()));
-        final dev.jstech.computers.os.ProgramSpec program =
+        final DesktopEnvironmentDef desktop =
+                OsRegistry.getDesktop(
+                        ResourceLocation.fromNamespaceAndPath("jsc", skin.osPath()));
+        final ProgramSpec program =
                 desktop == null ? null : desktop.programFor(appKey);
         final boolean titleIcon = program != null && !skin.titleCentered();
         if (titleIcon) {
@@ -425,10 +449,11 @@ public final class DesktopWindow {
          * Where the title sits is part of the skin's identity, not a constant: the GNOME form centres it,
          * and the title is clamped short of the controls so a long one never runs under them.
          */
-        final String title = app.title();
+        final String title = titleOn(desktop);
         final int textLeft = wx + (titleIcon ? 3 + ICON + 3 : 4);
+        final int titleFloor = menuAtLeft ? closeX() + BTN + 5 : wx + 4;
         final int titleX = skin.titleCentered()
-                ? Math.max(wx + 4, Math.min(wx + (ww - font.width(title)) / 2, minX() - font.width(title) - 4))
+                ? Math.max(titleFloor, Math.min(wx + (ww - font.width(title)) / 2, minX() - font.width(title) - 4))
                 : textLeft;
         g.drawString(font, title, titleX, wy + 3,
                 focused ? skin.titleText() : 0xFF5B6674, focused && skin.textShadow());
@@ -466,9 +491,9 @@ public final class DesktopWindow {
         final int cy = wy + TITLE_H + 4;
         final int cw = ww - 8;
         final int ch = wh - TITLE_H - 8;
-        final org.joml.Matrix4f mat = g.pose().last().pose();
-        final dev.jstech.core.gui.layout.WindowGeometry.Rect clip =
-                dev.jstech.core.gui.layout.WindowGeometry.scissor(
+        final Matrix4f mat = g.pose().last().pose();
+        final WindowGeometry.Rect clip =
+                WindowGeometry.scissor(
                         mat.m30(), mat.m31(), mat.m00(), mat.m11(), cx, cy, cx + cw, cy + ch);
         g.enableScissor(clip.x(), clip.y(), clip.x() + clip.w(), clip.y() + clip.h());
         app.applySkin(skin);
@@ -501,13 +526,13 @@ public final class DesktopWindow {
         final float s = Math.min(bw / (float) curW, bh / (float) curH);
         final float dx = bx + (bw - curW * s) / 2f;
         final float dy = by + (bh - curH * s) / 2f;
-        dev.jstech.core.client.gui.component.Draw.pushScissor(g, bx, by, bx + bw, by + bh);
+        Draw.pushScissor(g, bx, by, bx + bw, by + bh);
         g.pose().pushPose();
         g.pose().translate(dx - curX * s, dy - curY * s, 0);
         g.pose().scale(s, s, 1f);
         render(g, font, skin, -10000, -10000, 0f, screenW, screenH, taskbarH, workTop);
         g.pose().popPose();
-        dev.jstech.core.client.gui.component.Draw.popScissor(g);
+        Draw.popScissor(g);
     }
 
     /**
@@ -529,16 +554,20 @@ public final class DesktopWindow {
         }
     }
 
+    /*
+     * Three buttons at the right end, close outermost, on every desktop but Motif's, where the one way out is
+     * the menu button at the LEFT end and minimise and maximise have the right end to themselves.
+     */
     private int closeX() {
-        return curX + curW - BTN - 3;
+        return menuAtLeft ? curX + 3 : curX + curW - BTN - 3;
     }
 
     private int maxX() {
-        return curX + curW - 2 * BTN - 5;
+        return menuAtLeft ? curX + curW - BTN - 3 : curX + curW - 2 * BTN - 5;
     }
 
     private int minX() {
-        return curX + curW - 3 * BTN - 7;
+        return menuAtLeft ? curX + curW - 2 * BTN - 5 : curX + curW - 3 * BTN - 7;
     }
 
     public boolean closeBoxHit(final double mx, final double my) {
@@ -553,18 +582,48 @@ public final class DesktopWindow {
         return !dialog() && inBtn(mx, my, minX());
     }
 
-    /** Which title-bar button is under the point: 1 = minimize, 2 = maximize, 3 = close, 0 = none. */
+    /** The middle of a title-bar button, in desktop pixels, by the numbers {@link #buttonAt} answers with. */
+    public int[] buttonCentre(final int button) {
+        final int bx = button == BUTTON_MINIMIZE ? minX() : button == BUTTON_MAXIMIZE ? maxX() : closeX();
+        return new int[] {bx + BTN / 2, curY + 2 + BTN / 2};
+    }
+
+    /** Which title-bar button is under the point, or {@link #BUTTON_NONE}. */
     public int buttonAt(final double mx, final double my) {
         if (closeBoxHit(mx, my)) {
-            return 3;
+            return BUTTON_CLOSE;
         }
         if (maximizeBoxHit(mx, my)) {
-            return 2;
+            return BUTTON_MAXIMIZE;
         }
         if (minimizeBoxHit(mx, my)) {
-            return 1;
+            return BUTTON_MINIMIZE;
         }
-        return 0;
+        return BUTTON_NONE;
+    }
+
+    /**
+     * What the window is called on that desktop, on its title bar and everywhere the panel lists it. A program
+     * that gives only its own generic name goes by the name this desktop gives it: Dolphin on Plasma, the File
+     * Manager on CDE. A title of the program's own making, such as a dialog's or a document's, is kept as it is.
+     */
+    public String titleOn(@Nullable final DesktopEnvironmentDef desktop) {
+        final ProgramSpec program = desktop == null ? null : desktop.programFor(appKey);
+        final String own = app.title();
+        return program != null && !dialog() && own.equals(program.displayName()) ? appKey : own;
+    }
+
+    public int workspaces() {
+        return workspaces;
+    }
+
+    public void setWorkspaces(final int set) {
+        this.workspaces = WorkspaceSet.normalised(set);
+    }
+
+    /** Whether the window shows while that workspace is up. */
+    public boolean on(final int shown) {
+        return WorkspaceSet.holds(workspaces, shown);
     }
 
     /** Marks which title-bar button is held down (1/2/3); it is drawn pushed-in until released (0 clears). */

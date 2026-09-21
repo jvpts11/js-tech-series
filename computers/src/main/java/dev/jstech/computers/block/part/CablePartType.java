@@ -7,27 +7,37 @@
  */
 package dev.jstech.computers.block.part;
 
+import dev.jstech.core.id.IStableId;
+import dev.jstech.core.id.StableIds;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * The kinds of part that can be attached to a data cable's face.
  */
-public enum CablePartType {
+public enum CablePartType implements IStableId {
 
-    IMPORT,
-    EXPORT,
-    INPUT,
-    RECEIVING;
+    IMPORT(0),
+    EXPORT(1),
+    INPUT(2),
+    RECEIVING(3);
 
-    private static final CablePartType[] BY_ID = values();
+    private static final StableIds<CablePartType> IDS = StableIds.of(CablePartType.class);
 
-    public byte id() {
-        return (byte) ordinal();
+    private final int id;
+
+    CablePartType(final int id) {
+        this.id = id;
     }
 
+    @Override
+    public int id() {
+        return id;
+    }
+
+    /** The part type a save or the cable's sync names by {@code id}, or null for an id no type declares. */
     @Nullable
-    public static CablePartType byId(final byte id) {
-        return id >= 0 && id < BY_ID.length ? BY_ID[id] : null;
+    public static CablePartType find(final int id) {
+        return IDS.find(id);
     }
 
     public ICablePart create() {

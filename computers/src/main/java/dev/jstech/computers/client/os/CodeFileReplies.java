@@ -34,6 +34,16 @@ public final class CodeFileReplies {
         default void onContent(String path, String content, boolean exists) {
         }
 
+        /**
+         * The file is there but is past what a packet may carry, so nothing came with it.
+         *
+         * <p>A window that can save has to answer this, or it shows an empty page and saving that page
+         * writes the real file away. Doing nothing leaves the window as it was, which is the safe default
+         * for one that only reads.
+         */
+        default void onContentTooLarge(String path) {
+        }
+
         /** The folder it asked to list. */
         default void onListing(DiskFilesPayload listing) {
         }
@@ -102,12 +112,22 @@ public final class CodeFileReplies {
 
     /** Delivers a file's content, and says whether it was the one somebody was waiting for. */
     public static boolean content(final String path, final String text, final boolean exists) {
+        return content(path, text, exists, false);
+    }
+
+    /** The same, for a file the machine could not hand over because of its size. */
+    public static boolean content(final String path, final String text, final boolean exists,
+                                  final boolean tooLarge) {
         if (content == null || !content.about().equals(path)) {
             return false;
         }
         final IReader reader = content.reader();
         content = null;
-        reader.onContent(path, text, exists);
+        if (tooLarge) {
+            reader.onContentTooLarge(path);
+        } else {
+            reader.onContent(path, text, exists);
+        }
         return true;
     }
 

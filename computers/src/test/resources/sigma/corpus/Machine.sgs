@@ -1,0 +1,35 @@
+using System.*;
+using System.IO.*;
+using System.Collections.*;
+using System.Machine.*;
+namespace Corpus;
+class MachineCorpus {
+    static void Main() {
+        bool there = File.Exists("a.txt");
+        string text = File.Read("a.txt");
+        if (File.TryRead("a.txt", out string held)) {
+            Console.PrintLine(held);
+        }
+        bool wrote = File.Write("a.txt", "x") && File.Append("a.txt", "y");
+        bool tidied = File.Delete("a.txt") && File.MkDir("d");
+        foreach (string entry in File.List("C:\\")) {
+            Console.PrintLine(entry);
+        }
+        Console.PrintLine("" + there + text + wrote + tidied);
+
+        string name = Computer.Name;
+        CpuInfo cpu = Computer.Cpu;
+        OsInfo os = Computer.Os;
+        int ram = Computer.RamMb + Computer.FreeRamMb;
+        bool online = Computer.Online;
+        Console.PrintLine(name + cpu.Mhz + cpu.Cores + cpu.Era + cpu.Architecture
+            + os.Id + os.Name + ram + online);
+        foreach (DiskInfo disk in Computer.Disks()) {
+            Console.PrintLine(disk.Mount + disk.UsedMb + disk.CapacityMb);
+        }
+        List<string> programs = Computer.Programs();
+        foreach (ProcessInfo process in Computer.Processes()) {
+            Console.PrintLine("" + process.Id + process.Name + process.State + process.HeldBytes + programs.Count);
+        }
+    }
+}

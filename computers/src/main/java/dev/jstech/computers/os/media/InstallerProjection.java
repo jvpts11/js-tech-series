@@ -8,6 +8,7 @@
 package dev.jstech.computers.os.media;
 
 import dev.jstech.computers.os.Branding;
+import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.MinSpecTooltip;
 import dev.jstech.computers.os.OsDef;
@@ -15,6 +16,7 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.SoftwareHouse;
 import dev.jstech.computers.os.fs.InstallerLayout;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -96,23 +98,23 @@ public final class InstallerProjection {
     }
 
     private static InstallerLayout.Facts systemFacts(final OsDef os) {
-        final boolean linux = os.platform() == Platform.LINUX;
+        final boolean linux = os.platform().unixLike();
         return new InstallerLayout.Facts(
                 os.displayName(), os.id().getPath(), os.id().getPath(), true, false, linux,
                 Branding.osYear(os.displayName(), os.minEra()), os.house().name(),
                 Component.translatable("os.jsc." + os.id().getPath() + ".desc").getString()
                         .replace("os.jsc." + os.id().getPath() + ".desc", ""),
                 plain(MinSpecTooltip.osMinSpec(os.id())), os.platform().label(), "any computer",
-                List.of());
+                List.of(), KernelNames.bootFiles(os.platform()));
     }
 
     private static InstallerLayout.Facts programFacts(final ProgramSpec spec) {
-        final boolean linux = spec.platforms().equals(java.util.Set.of(Platform.LINUX));
+        final boolean linux = Platform.onlyUnixLike(spec.platforms());
         return new InstallerLayout.Facts(
                 spec.displayName(), spec.commandName(), spec.id().getPath(), false,
                 spec.kind() == ProgramKind.SERVICE, linux, Branding.year(spec.era()),
                 // A disc of a bundled program has no shipper to be credited to, so it says Midsoft.
-                spec.houseOr(dev.jstech.computers.os.SoftwareHouse.MIDSOFT).name(),
+                spec.houseOr(SoftwareHouse.MIDSOFT).name(),
                 Component.translatable("program.jsc." + spec.id().getPath() + ".desc").getString()
                         .replace("program.jsc." + spec.id().getPath() + ".desc", ""),
                 plain(MinSpecTooltip.programMinSpec(spec.id())),

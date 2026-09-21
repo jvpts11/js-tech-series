@@ -7,7 +7,9 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.computers.item.HardwareTooltip;
 import dev.jstech.core.tier.HardwareEra;
+import java.util.Set;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -42,7 +44,7 @@ public final class MinSpecTooltip {
     /** "Needs X hardware or later", with the era in the colour every hardware tooltip gives it. */
     private static Component needsEra(final HardwareEra era) {
         return line("Needs ")
-                .append(dev.jstech.computers.item.HardwareTooltip.eraName(era, eraLabel(era)))
+                .append(HardwareTooltip.eraName(era, eraLabel(era)))
                 .append(line(" hardware or later"));
     }
 
@@ -63,7 +65,7 @@ public final class MinSpecTooltip {
          * The era floor sits with the hardware minimums because that is what it is: a machine of an
          * older generation cannot run it at any clock speed.
          */
-        if (prog.minEra() != dev.jstech.core.tier.HardwareEra.VINTAGE) {
+        if (prog.minEra() != HardwareEra.VINTAGE) {
             // Worded exactly like the OS line above: the same requirement must not read as two rules.
             lines.add(needsEra(prog.minEra()));
         }
@@ -79,17 +81,21 @@ public final class MinSpecTooltip {
         return lines;
     }
 
-    /** The OS floor a program needs: its Frames version when it declares one, otherwise its platforms. */
+    /**
+     * The system floor a program needs: the one it names in its family's order, otherwise its platforms.
+     *
+     * <p>The name comes from the systems themselves rather than being written here, so a family the mod does
+     * not ship reads the same way as the one it does.
+     */
     private static String minOsLabel(final ProgramSpec prog) {
-        return switch (prog.minOsRank()) {
-            case 3 -> "Frames 11";
-            case 2 -> "Frames XP or newer";
-            default -> platformsLabel(prog.platforms());
-        };
+        if (prog.minOsRank() <= 0) {
+            return platformsLabel(prog.platforms());
+        }
+        return OsRegistry.systemOfRank(prog.minOsRank()) + " or newer";
     }
 
     /** A readable, comma-joined list of platform labels in enum order. */
-    public static String platformsLabel(final java.util.Set<Platform> platforms) {
+    public static String platformsLabel(final Set<Platform> platforms) {
         final List<String> names = new ArrayList<>(platforms.size());
         for (final Platform p : Platform.values()) {
             if (platforms.contains(p)) {

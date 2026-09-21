@@ -8,16 +8,24 @@
 package dev.jstech.computers.menu;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.operation.payload.RenameServerPayload;
+import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.core.tier.HardwareEra;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Menu for assembling a Server: hardware slots (board, CPU, RAM, GPU, PSU, disks) over the held Server item's hardware, plus the player inventory.
@@ -65,9 +73,9 @@ public class ServerAssemblyMenu extends AbstractComputerMenu {
                 ? board.spec() : null;
     }
 
-    private dev.jstech.computers.rack.RackChassis chassis() {
+    private RackChassis chassis() {
         final var chassis = ServerItem.chassisOf(owner.getItemInHand(hand));
-        return chassis != null ? chassis : dev.jstech.computers.rack.RackChassis.SERVER;
+        return chassis != null ? chassis : RackChassis.SERVER;
     }
 
     public int boardCpuSlots() {
@@ -94,23 +102,23 @@ public class ServerAssemblyMenu extends AbstractComputerMenu {
         return new ServerAssemblyMenu(containerId, playerInventory, buf.readEnum(InteractionHand.class));
     }
 
-    @org.jetbrains.annotations.Nullable
-    public dev.jstech.computers.hardware.ComputerBuild currentBuild() {
-        final java.util.List<ItemStack> parts = new java.util.ArrayList<>(HARDWARE_SLOTS);
+    @Nullable
+    public ComputerBuild currentBuild() {
+        final List<ItemStack> parts = new ArrayList<>(HARDWARE_SLOTS);
         for (int i = 0; i < HARDWARE_SLOTS; i++) {
             parts.add(slots.get(i).getItem());
         }
         return ServerItem.buildFrom(parts);
     }
 
-    @org.jetbrains.annotations.Nullable
-    public dev.jstech.core.tier.HardwareEra hardwareEra() {
-        final dev.jstech.computers.hardware.ComputerBuild build = currentBuild();
+    @Nullable
+    public HardwareEra hardwareEra() {
+        final ComputerBuild build = currentBuild();
         return build == null ? null : build.motherboard().era();
     }
 
-    @org.jetbrains.annotations.Nullable
-    public java.util.UUID nodeUuid() {
+    @Nullable
+    public UUID nodeUuid() {
         return ServerItem.nodeUuid(owner.getItemInHand(hand));
     }
 
@@ -122,9 +130,9 @@ public class ServerAssemblyMenu extends AbstractComputerMenu {
     public void setServerName(final String name) {
         final String capped = name.strip();
         ServerItem.setCustomName(owner.getItemInHand(hand),
-                capped.length() > dev.jstech.computers.operation.payload.RenameServerPayload.MAX_LEN
+                capped.length() > RenameServerPayload.MAX_LEN
                         ? capped.substring(0,
-                            dev.jstech.computers.operation.payload.RenameServerPayload.MAX_LEN)
+                            RenameServerPayload.MAX_LEN)
                         : capped);
         broadcastChanges();
     }

@@ -81,8 +81,8 @@ public record FilesystemContents(Map<String, StoredFile> files, Set<String> dire
     private static FilesystemContents fromParts(final List<Line> lines, final List<String> dirs) {
         final Map<String, StoredFile> map = new LinkedHashMap<>();
         for (final Line line : lines) {
-            // Resolve FileType from the stored extension; fall back to TXT for unknown types.
-            final FileType type = FileType.fromExtension(line.ext()).orElse(FileType.TXT);
+            // The kind comes from the stored extension; a kind the machines do not know is stored with none.
+            final FileType type = FileType.of(line.ext());
             map.put(line.path(), new StoredFile(line.path(), type, line.content(), line.mod()));
         }
         return new FilesystemContents(map, new LinkedHashSet<>(dirs));

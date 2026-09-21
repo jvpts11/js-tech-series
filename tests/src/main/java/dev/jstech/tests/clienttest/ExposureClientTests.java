@@ -68,7 +68,7 @@ public final class ExposureClientTests {
         ctx.thenBuild(0, world -> {
                     final CraftingComputerBlockEntity computer = world.placeRunningCraftingComputer(COMPUTER);
                     computer.installOs(FRAMES_XP);
-                    for (final String id : new String[] {"exposure", "cannonc", "cannonrt"}) {
+                    for (final String id : new String[] {"exposure", "sgsc", "sigma"}) {
                         computer.console().install(program(id).toString());
                     }
                     world.placeMonitor(MONITOR, Direction.EAST);
@@ -90,35 +90,35 @@ public final class ExposureClientTests {
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenWaitUntil(() -> !exposure(ctx).asking(), SCREEN_WAIT, "Escape to put the question away")
                 // File > New File, answered the way the small window is answered.
-                .then(SETTLE, () -> exposure(ctx).createFile("hello.can"))
-                .thenWaitUntil(() -> exposure(ctx).openFile().endsWith("hello.can"), SCREEN_WAIT, "the new file to be open")
+                .then(SETTLE, () -> exposure(ctx).createFile("hello.sgs"))
+                .thenWaitUntil(() -> exposure(ctx).openFile().endsWith("hello.sgs"), SCREEN_WAIT, "the new file to be open")
                 .then(SETTLE, () -> ctx.type("using System.IO.*; namespace Hello; "
                         + "class Hello { static void Main() { Console.PrintLine(\"hi\"); } }"))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_S, GLFW.GLFW_MOD_CONTROL))
-                .thenWaitUntilServer(level -> diskText(ctx, level, "progs/hello.can").contains("class Hello"),
-                        SCREEN_WAIT, "the file to be on the disk", level -> diskText(ctx, level, "progs/hello.can"))
-                .thenWaitUntil(() -> exposure(ctx).fileNames().contains("hello.can") && exposure(ctx).problemCount() == 0,
+                .thenWaitUntilServer(level -> diskText(ctx, level, "progs/hello.sgs").contains("class Hello"),
+                        SCREEN_WAIT, "the file to be on the disk", level -> diskText(ctx, level, "progs/hello.sgs"))
+                .thenWaitUntil(() -> exposure(ctx).fileNames().contains("hello.sgs") && exposure(ctx).problemCount() == 0,
                         SCREEN_WAIT, "the folder to list the file with nothing wrong")
                 .thenScreenshot(2, "exposure-saved")
                 // A second, broken file: the table blames it, and only it.
-                .then(SETTLE, () -> exposure(ctx).createFile("broken.can"))
-                .thenWaitUntil(() -> exposure(ctx).openFile().endsWith("broken.can"), SCREEN_WAIT, "the second file to be open")
+                .then(SETTLE, () -> exposure(ctx).createFile("broken.sgs"))
+                .thenWaitUntil(() -> exposure(ctx).openFile().endsWith("broken.sgs"), SCREEN_WAIT, "the second file to be open")
                 .then(SETTLE, () -> ctx.type("class Broken { int x = ; }"))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_S, GLFW.GLFW_MOD_CONTROL))
                 .thenWaitUntil(() -> exposure(ctx).problemCount() > 0, SCREEN_WAIT, "the table to list the broken program")
                 .thenScreenshot(2, "exposure-problems")
-                .thenAssert(0, () -> exposure(ctx).fileNames().contains("broken.can"), "the folder lists both files")
+                .thenAssert(0, () -> exposure(ctx).fileNames().contains("broken.sgs"), "the folder lists both files")
                 // File > Open File goes through the system's file window; the row picked and Open opens it.
                 .then(SETTLE, () -> exposure(ctx).showOpenFileDialog())
-                .thenWaitUntil(() -> exposure(ctx).dialog().isOpen() && exposure(ctx).dialog().rowNames().contains("hello.can"),
+                .thenWaitUntil(() -> exposure(ctx).dialog().isOpen() && exposure(ctx).dialog().rowNames().contains("hello.sgs"),
                         SCREEN_WAIT, "the Open File window to list the folder's sources")
                 .thenAssert(0, () -> ctx.screen(DesktopScreen.class).dialogWindowFor(LAUNCHER) != null
                                 && ctx.screen(DesktopScreen.class).openWindowLabels().stream().filter(LAUNCHER::equals).count() == 1,
                         "the Open File window is a dialog of the editor, not a window the machine counts")
                 .thenScreenshot(2, "open-file-dialog")
-                .then(SETTLE, () -> ctx.clickDesktop(exposure(ctx).dialog().rowPoint("hello.can")))
+                .then(SETTLE, () -> ctx.clickDesktop(exposure(ctx).dialog().rowPoint("hello.sgs")))
                 .then(SETTLE, () -> ctx.clickDesktop(exposure(ctx).dialog().primaryPoint()))
-                .thenWaitUntil(() -> !exposure(ctx).dialog().isOpen() && exposure(ctx).openFile().endsWith("hello.can"),
+                .thenWaitUntil(() -> !exposure(ctx).dialog().isOpen() && exposure(ctx).openFile().endsWith("hello.sgs"),
                         SCREEN_WAIT, "Open to open the file it named");
     }
 }

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
 import dev.jstech.computers.operation.payload.OperationRecord;
@@ -17,17 +18,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The Craft tab: a scrollable catalog grid of craftable patterns plus running/recent craft rows.
+ * The Craft heading: every pattern the network can make, and what it is making right now.
+ *
+ * <p>The catalogue on the left, what is running and what has just finished on the right, because a player
+ * asking for a craft wants to see the queue they are adding to without changing heading to find it.
  */
 final class CraftTerminalTab extends AbstractTerminalTab {
 
-    // Layout constants, mirroring ComputerTerminalScreen; update together if layout changes.
-    private static final int NET_X = 68;
-    private static final int CRAFT_COLS = 9;
-    private static final int CRAFT_ROWS = 2;
-    private static final int CRAFT_GRID_Y = 40;
-    private static final int CRAFT_RUNNING_Y = 82;
-    private static final int CRAFT_RECENT_Y = 116;
+    private static final int GRID_X = ComputerTerminalLayout.GRID_X;
+    private static final int GRID_Y = ComputerTerminalLayout.GRID_Y;
+    private static final int CRAFT_COLS = ComputerTerminalLayout.GRID_COLS;
+    /** The catalogue keeps the grid's own rows, minus two so the panel beside it has a foot to stand on. */
+    private static final int CRAFT_ROWS = ComputerTerminalLayout.GRID_ROWS - 2;
+
+    private static final int PANE_X = ComputerTerminalLayout.PANE_X;
+    private static final int PANE_Y = ComputerTerminalLayout.PANE_Y;
+    private static final int PANE_W = ComputerTerminalLayout.PANE_W;
+
+    /** Where the running and the finished start inside the panel. */
+    private static final int RUNNING_Y = PANE_Y + 6;
+    private static final int RECENT_Y = PANE_Y + 62;
+    private static final int RUNNING_ROWS = 3;
+    private static final int RECENT_ROWS = 4;
 
     CraftTerminalTab(final ComputerTerminalScreen screen, final ComputerTerminalMenu menu) {
         super(screen, menu);
@@ -36,14 +48,14 @@ final class CraftTerminalTab extends AbstractTerminalTab {
     @Override
     public void renderTabBg(final GuiGraphics g, final int x, final int y,
                             final int cx, final int cy, final int cw,
-                            final int mouseX, final int mouseY) {
+                            final int mouseX, final int mouseY, final float partialTick) {
         final var catalog = menu.craftCatalog();
         final int maxScroll = Math.max(0, (catalog.size() + CRAFT_COLS - 1) / CRAFT_COLS - CRAFT_ROWS);
         screen.craftScroll = Math.max(0, Math.min(screen.craftScroll, maxScroll));
         for (int row = 0; row < CRAFT_ROWS; row++) {
             for (int col = 0; col < CRAFT_COLS; col++) {
-                final int sx = x + NET_X + col * 18;
-                final int sy = y + CRAFT_GRID_Y + row * 18;
+                final int sx = x + GRID_X + col * 18;
+                final int sy = y + GRID_Y + row * 18;
                 slotBg(g, sx, sy);
                 final int index = (row + screen.craftScroll) * CRAFT_COLS + col;
                 if (index < catalog.size()) {
@@ -58,72 +70,73 @@ final class CraftTerminalTab extends AbstractTerminalTab {
                 }
             }
         }
-        // RUNNING rows: panel strip + progress bar.
+        screen.paneBg(g, x, y);
+        // RUNNING rows: a strip per craft with the bar that says how far it has got.
         final var running = runningCrafts();
-        for (int i = 0; i < Math.min(2, running.size()); i++) {
+        for (int i = 0; i < Math.min(RUNNING_ROWS, running.size()); i++) {
             final OperationRecord op = running.get(i);
-            final int ry = y + CRAFT_RUNNING_Y + 9 + i * 12;
-            g.fill(x + NET_X, ry, x + NET_X + CRAFT_COLS * 18, ry + 10, PANEL());
-            final int barX = x + NET_X + 92;
-            final int barW = 56;
-            g.fill(barX, ry + 3, barX + barW, ry + 7, TRACK());
+            final int ry = y + RUNNING_Y + 12 + i * 14;
+            g.fill(x + PANE_X + 4, ry, x + PANE_X + PANE_W - 4, ry + 12, TAB_ON());
+            final int barX = x + PANE_X + 8;
+            final int barW = PANE_W - 16;
+            g.fill(barX, ry + 9, barX + barW, ry + 11, TRACK());
             final int pct = op.requested() <= 0 ? 0
                     : (int) Math.min(100, op.moved() * 100 / Math.max(1, op.requested()));
-            g.fill(barX, ry + 3, barX + barW * pct / 100, ry + 7, ACCENT());
+            g.fill(barX, ry + 9, barX + barW * pct / 100, ry + 11, ACCENT());
         }
-        // RECENT rows: plain strips (status text is drawn in renderTabLabels).
         final var recent = recentCrafts();
-        for (int i = 0; i < Math.min(recentRows(), recent.size()); i++) {
-            final int ry = y + CRAFT_RECENT_Y + 9 + i * 10;
-            g.fill(x + NET_X, ry, x + NET_X + CRAFT_COLS * 18, ry + 9, PANEL());
+        for (int i = 0; i < Math.min(RECENT_ROWS, recent.size()); i++) {
+            final int ry = y + RECENT_Y + 12 + i * 11;
+            g.fill(x + PANE_X + 4, ry, x + PANE_X + PANE_W - 4, ry + 10, PANEL());
         }
     }
 
     @Override
     public void renderTabLabels(final GuiGraphics g, final int cx, final int cy, final int cw) {
-        /*
-         * Note: this method uses screen-relative Y constants directly (CRAFT_GRID_Y, etc.),
-         * matching the original craftLabels which didn't use the cy parameter.
-         */
         final var catalog = menu.craftCatalog();
-        g.drawString(font(), "CRAFTABLE", NET_X, 30, DIM(), false);
-        g.drawString(font(), catalog.size() + (catalog.size() == 1 ? " pattern" : " patterns"),
-                NET_X + 64, 30, TEXT(), false);
+        g.drawString(font(), "CRAFTABLE", GRID_X, cy + 20, DIM(), false);
+        final String count = catalog.size() + (catalog.size() == 1 ? " pattern" : " patterns");
+        g.drawString(font(), count, GRID_X + CRAFT_COLS * 18 - font().width(count), cy + 20, TEXT(), false);
         if (catalog.isEmpty()) {
-            g.drawString(font(), "no patterns loaded - use a Pattern Reader", NET_X, CRAFT_GRID_Y + 6, DIM(), false);
+            g.drawString(font(), "no patterns loaded", GRID_X, GRID_Y + 6, DIM(), false);
+            g.drawString(font(), "load one from a medium under Patterns", GRID_X, GRID_Y + 18, DIM(), false);
         }
         final int totalRows = (catalog.size() + CRAFT_COLS - 1) / CRAFT_COLS;
         if (totalRows > CRAFT_ROWS) {
-            g.drawString(font(), (screen.craftScroll + 1) + "/" + (totalRows - CRAFT_ROWS + 1),
-                    NET_X + CRAFT_COLS * 18 - 24, 30, DIM(), false);
+            final String at = (screen.craftScroll + 1) + "/" + (totalRows - CRAFT_ROWS + 1);
+            g.drawString(font(), at, GRID_X, GRID_Y + CRAFT_ROWS * 18 + 4, DIM(), false);
         }
-        g.drawString(font(), "RUNNING", NET_X, CRAFT_RUNNING_Y, DIM(), false);
+
+        final int px = PANE_X + 6;
+        final int right = PANE_X + PANE_W - 6;
+        g.drawString(font(), "RUNNING", px, RUNNING_Y, DIM(), false);
         final var running = runningCrafts();
         if (running.isEmpty()) {
-            g.drawString(font(), "-", NET_X + 48, CRAFT_RUNNING_Y, DIM(), false);
+            g.drawString(font(), "nothing being made", px, RUNNING_Y + 14, DIM(), false);
         }
-        for (int i = 0; i < Math.min(2, running.size()); i++) {
+        for (int i = 0; i < Math.min(RUNNING_ROWS, running.size()); i++) {
             final OperationRecord op = running.get(i);
-            final int ry = CRAFT_RUNNING_Y + 10 + i * 12;
-            g.drawString(font(), trim(op.name().getString(), 9), NET_X + 3, ry, TEXT(), false);
-            g.drawString(font(), fmt(op.moved()) + "/" + fmt(op.requested()), NET_X + 56, ry, DIM(), false);
+            final int ry = RUNNING_Y + 14 + i * 14;
+            g.drawString(font(), font().plainSubstrByWidth(op.name().getString(), PANE_W - 70), px + 2, ry,
+                    TEXT(), false);
+            final String made = fmt(op.moved()) + "/" + fmt(op.requested());
+            g.drawString(font(), made, right - font().width(made) - 2, ry, DIM(), false);
         }
-        g.drawString(font(), "RECENT", NET_X, CRAFT_RECENT_Y, DIM(), false);
+
+        g.drawString(font(), "JUST MADE", px, RECENT_Y, DIM(), false);
         final var recent = recentCrafts();
         if (recent.isEmpty()) {
-            g.drawString(font(), "-", NET_X + 44, CRAFT_RECENT_Y, DIM(), false);
+            g.drawString(font(), "nothing yet", px, RECENT_Y + 14, DIM(), false);
         }
-        for (int i = 0; i < Math.min(recentRows(), recent.size()); i++) {
+        for (int i = 0; i < Math.min(RECENT_ROWS, recent.size()); i++) {
             final OperationRecord op = recent.get(i);
-            final int ry = CRAFT_RECENT_Y + 10 + i * 10;
-            g.drawString(font(), trim(op.name().getString(), 11) + " x" + fmt(op.moved()),
-                    NET_X + 3, ry, TEXT(), false);
+            final int ry = RECENT_Y + 14 + i * 11;
             final String st = switch (op.status()) {
-                case OperationRecord.STATUS_COMPLETED -> "COMPLETED";
-                case OperationRecord.STATUS_PARTIAL -> "PARTIAL";
-                case OperationRecord.STATUS_RESOURCE_LOCKED -> "LOCKED";
-                case OperationRecord.STATUS_DISCARDED -> "DISCARDED";
-                default -> "FAILED";
+                case OperationRecord.STATUS_COMPLETED -> "done";
+                case OperationRecord.STATUS_PARTIAL -> "partial";
+                case OperationRecord.STATUS_RESOURCE_LOCKED -> "locked";
+                case OperationRecord.STATUS_DISCARDED -> "dropped";
+                default -> "failed";
             };
             final int color = switch (op.status()) {
                 case OperationRecord.STATUS_COMPLETED -> GREEN();
@@ -131,7 +144,10 @@ final class CraftTerminalTab extends AbstractTerminalTab {
                 case OperationRecord.STATUS_DISCARDED -> DIM();
                 default -> RED();
             };
-            g.drawString(font(), st, NET_X + CRAFT_COLS * 18 - font().width(st) - 3, ry, color, false);
+            final String name = font().plainSubstrByWidth(
+                    op.name().getString() + " x" + fmt(op.moved()), PANE_W - 26 - font().width(st));
+            g.drawString(font(), name, px + 2, ry, TEXT(), false);
+            g.drawString(font(), st, right - font().width(st) - 2, ry, color, false);
         }
     }
 
@@ -153,13 +169,5 @@ final class CraftTerminalTab extends AbstractTerminalTab {
             }
         }
         return out;
-    }
-
-    private int recentRows() {
-        return menu.mainframeHost() ? 3 : 2;
-    }
-
-    private static String trim(final String s, final int max) {
-        return s.length() <= max ? s : s.substring(0, max - 1) + "…";
     }
 }

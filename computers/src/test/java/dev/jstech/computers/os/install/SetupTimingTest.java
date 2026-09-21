@@ -78,4 +78,62 @@ class SetupTimingTest {
         assertTrue(SetupTiming.rateOf(MediaFormat.CD) < SetupTiming.rateOf(MediaFormat.DVD));
         assertTrue(SetupTiming.rateOf(MediaFormat.DVD) < SetupTiming.rateOf(MediaFormat.USB));
     }
+
+    /** One core at the reference clock is the machine everything else is measured against. */
+    @Test
+    void cpuFactor_readsAProcessorAgainstTheReferenceOne() {
+        assertEquals(1.0, SetupTiming.cpuFactor(1, 2_000), 1e-9);
+        assertEquals(2.0, SetupTiming.cpuFactor(2, 2_000), 1e-9);
+        assertEquals(1.8, SetupTiming.cpuFactor(2, 1_800), 1e-9);
+        assertEquals(14.0, SetupTiming.cpuFactor(8, 3_500), 1e-9);
+    }
+
+    /** However small the processor, it never drags an install below the floor on its own. */
+    @Test
+    void cpuFactor_neverFallsBelowItsFloor() {
+        assertEquals(SetupTiming.CPU_MIN_FACTOR, SetupTiming.cpuFactor(1, 200), 1e-9);
+        assertEquals(SetupTiming.CPU_MIN_FACTOR, SetupTiming.cpuFactor(0, 0), 1e-9);
+        assertEquals(SetupTiming.CPU_MIN_FACTOR, SetupTiming.cpuFactor(-4, -100), 1e-9);
+    }
+
+    /** A missing disk tier reads as the slowest one there is rather than stopping the clock. */
+    @Test
+    void installRate_treatsNoDiskTierAsTheMechanicalOne() {
+        assertEquals(SetupTiming.installRate(MediaFormat.CD, 1, 2, 2_000),
+                SetupTiming.installRate(MediaFormat.CD, 0, 2, 2_000), 1e-9);
+    }
+
+    /**
+     * The three parts each pull their own weight, and the disk is the one a player chooses on the page in
+     * front of them: the same system off the same medium on the same processor lands four times sooner on a
+     * solid-state disk than on a mechanical one.
+     */
+    @Test
+    void installTicks_answersToTheMediumTheDiskAndTheProcessor() {
+        // Frames XP, 1536 MB, off a CD on a two-core 1.8 GHz machine: 4 x 1 x 1.8 = 7.2 MB/s, past the ceiling.
+        assertEquals(SetupTiming.MAX_SECONDS,
+                seconds(SetupTiming.installTicks(1_536, MediaFormat.CD, 1, 2, 1_800)));
+        // The same machine with a solid-state disk: four times the rate, and it comes in under the ceiling.
+        assertEquals(53, seconds(SetupTiming.installTicks(1_536, MediaFormat.CD, 4, 2, 1_800)));
+        // And on the disk after that, it is a glance: 4 x 16 x 1.8 = 115 MB/s.
+        assertEquals(13, seconds(SetupTiming.installTicks(1_536, MediaFormat.CD, 16, 2, 1_800)));
+    }
+
+    /** Both ends stay where every other setup's do, so no install is missed or waited out forever. */
+    @Test
+    void installTicks_staysBetweenTheFloorAndTheCeiling() {
+        assertEquals(SetupTiming.MIN_SECONDS,
+                seconds(SetupTiming.installTicks(4, MediaFormat.USB, 16, 8, 3_500)));
+        assertEquals(SetupTiming.MAX_SECONDS,
+                seconds(SetupTiming.installTicks(20_480, MediaFormat.FLOPPY, 1, 1, 200)));
+    }
+
+    /**
+     * A machine of the first age, installing the system of the first age off the medium of the first age.
+     * Nothing about it is fast, and it is still over in seconds, because the system is four megabytes.
+     */
+    @Test
+    void installTicks_leavesTheEarliestMachineWithAShortWait() {
+        assertEquals(8, seconds(SetupTiming.installTicks(4, MediaFormat.FLOPPY, 1, 1, 200)));
+    }
 }

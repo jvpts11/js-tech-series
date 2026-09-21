@@ -7,6 +7,9 @@
  */
 package dev.jstech.computers.gateway;
 
+import dev.jstech.core.id.IStableId;
+import dev.jstech.core.id.StableIds;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -23,14 +26,27 @@ public final class GatewayLog {
     public static final int CAPACITY = 40;
 
     /** How an entry ended, for the colour it is shown in. */
-    public enum Tone {
-        OK,
-        BUSY,
-        DENIED;
+    public enum Tone implements IStableId {
+        OK(0),
+        BUSY(1),
+        DENIED(2);
 
-        public static Tone at(final int index) {
-            final Tone[] all = values();
-            return all[Math.max(0, Math.min(all.length - 1, index))];
+        private static final StableIds<Tone> IDS = StableIds.of(Tone.class);
+
+        private final int id;
+
+        Tone(final int id) {
+            this.id = id;
+        }
+
+        @Override
+        public int id() {
+            return id;
+        }
+
+        /** The tone that declares {@code id}; an id no tone declares reads as {@link #OK}. */
+        public static Tone byId(final int id) {
+            return IDS.byId(id, OK);
         }
     }
 

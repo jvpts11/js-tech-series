@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.storage.StorageKey;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -20,8 +21,8 @@ import net.minecraft.resources.ResourceLocation;
  * this is the one sanctioned way to move that item by hand, not a byte copy of a file, but an
  * atomic item transfer.
  *
- * <p>The server resolves {@code datPath} back to its {@link dev.jstech.computers
- * .storage.StorageKey} by re-projecting the computer's system-disk storage (the projection is
+ * <p>The server resolves {@code datPath} back to its {@link StorageKey} by re-projecting the
+ * computer's system-disk storage (the projection is
  * deterministic), extracts the stored quantity from the computer's local storage, and inserts it
  * into the medium addressed by {@code mediaVolumeKey} (e.g. {@code media:<readerPos>}). The move is
  * conservative: whatever does not fit on the medium stays in the computer's storage, so no item is

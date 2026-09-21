@@ -151,6 +151,12 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
                     return new Detail(kind, index, name, sub, online, balance, nodes, queue);
                 });
 
+        /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+        public Detail {
+            nodes = List.copyOf(nodes);
+            queue = List.copyOf(queue);
+        }
+
         public static Detail none() {
             return new Detail(-1, -1, "", "", false, 0, List.of(), List.of());
         }
@@ -201,6 +207,11 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
                             elapsed, cancelled, lanes, last);
                 });
 
+        /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+        public WireJob {
+            lanes = List.copyOf(lanes);
+        }
+
         public static WireJob none(final String lastSummary) {
             return new WireJob(false, 0, "", -1, -1, 0, 0, 0, 0, 0, false, List.of(), lastSummary);
         }
@@ -223,6 +234,13 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
                     NetworkItemEntry.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ITEMS)), ClusterManagerStatePayload::items,
                     WireDest.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_DESTS)), ClusterManagerStatePayload::dests,
                     ClusterManagerStatePayload::new);
+
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public ClusterManagerStatePayload {
+        clusters = List.copyOf(clusters);
+        items = List.copyOf(items);
+        dests = List.copyOf(dests);
+    }
 
     @Override
     public CustomPacketPayload.Type<ClusterManagerStatePayload> type() {

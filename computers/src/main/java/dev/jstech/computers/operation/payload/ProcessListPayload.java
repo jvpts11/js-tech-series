@@ -39,6 +39,11 @@ public record ProcessListPayload(List<ProcessLine> processes) implements CustomP
                     ProcessLine.STREAM_CODEC.apply(ByteBufCodecs.list(MAX)), ProcessListPayload::processes,
                     ProcessListPayload::new);
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public ProcessListPayload {
+        processes = List.copyOf(processes);
+    }
+
     @Override
     public CustomPacketPayload.Type<ProcessListPayload> type() {
         return TYPE;

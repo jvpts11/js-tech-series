@@ -47,6 +47,12 @@ public record SetProcessingPatternPayload(BlockPos host, BlockPos monitorPos,
                     ByteBufCodecs.stringUtf8(MAX_TYPE), SetProcessingPatternPayload::recipeType,
                     SetProcessingPatternPayload::new);
 
+    /* Copied on the way in, so what arrives from a client cannot change under whoever is acting on it. */
+    public SetProcessingPatternPayload {
+        inputs = List.copyOf(inputs);
+        outputs = List.copyOf(outputs);
+    }
+
     @Override
     public Type<? extends CustomPacketPayload> type() {
         return TYPE;

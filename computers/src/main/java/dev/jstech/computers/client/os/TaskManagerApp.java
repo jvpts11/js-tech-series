@@ -7,13 +7,17 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.operation.payload.EndProcessPayload;
 import dev.jstech.computers.operation.payload.RequestSettingsPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload.DiskUse;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload.RamUse;
+import dev.jstech.computers.os.RamLedger;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -45,12 +49,6 @@ public final class TaskManagerApp implements IDesktopApp {
     private static final int ROW_H = 10;
     private static final int MENU_H = 11;
     private static final int STATUS_H = 11;
-
-    private static final String KIND_WINDOW = "WINDOW";
-    private static final String KIND_SYSTEM = "SYSTEM";
-    private static final String KIND_DESKTOP = "DESKTOP";
-    private static final String KIND_SERVICE = "SERVICE";
-    private static final String KIND_PROCESS = "PROCESS";
 
     private final BlockPos host;
     private final Form form;
@@ -112,7 +110,7 @@ public final class TaskManagerApp implements IDesktopApp {
     private List<RamUse> tasks() {
         final List<RamUse> out = new ArrayList<>();
         for (final RamUse use : processes()) {
-            if (KIND_WINDOW.equals(use.kind())) {
+            if (kindOf(use) == RamLedger.Kind.WINDOW) {
                 out.add(use);
             }
         }
@@ -122,7 +120,7 @@ public final class TaskManagerApp implements IDesktopApp {
     private List<RamUse> services() {
         final List<RamUse> out = new ArrayList<>();
         for (final RamUse use : processes()) {
-            if (KIND_SERVICE.equals(use.kind())) {
+            if (kindOf(use) == RamLedger.Kind.SERVICE) {
                 out.add(use);
             }
         }
@@ -161,15 +159,16 @@ public final class TaskManagerApp implements IDesktopApp {
         if (use == null) {
             return;
         }
-        if (KIND_WINDOW.equals(use.kind())) {
+        final RamLedger.Kind kind = kindOf(use);
+        if (kind == RamLedger.Kind.WINDOW) {
             DesktopScreen.requestClose(use.label());
-        } else if (KIND_PROCESS.equals(use.kind())) {
+        } else if (kind == RamLedger.Kind.PROCESS) {
             /*
              * A script is ended by its number: two of them can have come from the same file, and the
              * machine is the one that knows which is which.
              */
             PacketDistributor.sendToServer(
-                    new dev.jstech.computers.operation.payload.EndProcessPayload(host, use.id()));
+                    new EndProcessPayload(host, use.id()));
         } else {
             return;
         }
@@ -179,7 +178,7 @@ public final class TaskManagerApp implements IDesktopApp {
 
     private boolean canEnd() {
         final RamUse use = selectedRow();
-        return use != null && (KIND_WINDOW.equals(use.kind()) || KIND_PROCESS.equals(use.kind()));
+        return use != null && (kindOf(use) == RamLedger.Kind.WINDOW || kindOf(use) == RamLedger.Kind.PROCESS);
     }
 
     private int totalMb() {
@@ -188,6 +187,23 @@ public final class TaskManagerApp implements IDesktopApp {
 
     private int usedMb() {
         return data == null ? 0 : data.ramUsedMb();
+    }
+
+    /**
+     * The bytes the machine is really holding this moment. The committed megabytes above are what it promised
+     * and what says whether one more program fits; this is what moves while the programs run.
+     */
+    private long heldBytes() {
+        long sum = 0L;
+        for (final RamUse use : processes()) {
+            sum += use.heldBytes();
+        }
+        return sum;
+    }
+
+    /** The same in whole megabytes, for the meters and the history, which are drawn against the installed RAM. */
+    private int heldMb() {
+        return (int) (heldBytes() / RamLedger.BYTES_PER_MB);
     }
 
     /** This process's share of the machine's load, by what it holds. See {@link Load} for what that means. */
@@ -228,7 +244,8 @@ public final class TaskManagerApp implements IDesktopApp {
         load.step(2.0 + services().size() * 0.8 + tasks().size() * 0.6);
         final int at = samples % HISTORY;
         cpuHistory[at] = load.percent();
-        memHistory[at] = usedMb();
+        // The graph follows what is held, so a program filling memory draws a rising line.
+        memHistory[at] = heldMb();
         samples++;
     }
 
@@ -388,7 +405,7 @@ public final class TaskManagerApp implements IDesktopApp {
         final int graphH = (h - 34) / 2;
         gauge(g, font, x + 2, y + 8, meterW, graphH - 10, load.percent() + " %");
         Texts.small(g, font, "CPU Usage", x + 2, y, skin.dim());
-        gauge(g, font, x + 2, y + graphH + 16, meterW, graphH - 10, usedMb() + " MB");
+        gauge(g, font, x + 2, y + graphH + 16, meterW, graphH - 10, heldMb() + " MB");
         Texts.small(g, font, "Memory Usage", x + 2, y + graphH + 8, skin.dim());
         final int gx = x + meterW + 8;
         final int gw = w - meterW - 10;
@@ -403,7 +420,7 @@ public final class TaskManagerApp implements IDesktopApp {
             {"Programs", String.valueOf(tasks().size())},
             {"Services", String.valueOf(services().size())}});
         facts(g, font, x + half + 2, fy, half - 4, new String[][] {
-            {"Total MB", JsTechTheme.fmt(totalMb())},
+            {"In use", RamLedger.heldLabel(heldBytes())},
             {"Free MB", JsTechTheme.fmt(Math.max(0, totalMb() - usedMb()))},
             {"Processor", clock()}});
     }
@@ -472,7 +489,7 @@ public final class TaskManagerApp implements IDesktopApp {
         }
         final int cardH = 22;
         if (page == 0) {
-            card(g, font, px, y + 4, pw / 2 - 2, cardH, "Memory", usedMb() + " / " + totalMb() + " MB");
+            card(g, font, px, y + 4, pw / 2 - 2, cardH, "Memory", heldMb() + " / " + totalMb() + " MB");
             card(g, font, px + pw / 2 + 2, y + 4, pw / 2 - 2, cardH, "Processor",
                     load.percent() + "%  " + clock());
         }
@@ -528,8 +545,8 @@ public final class TaskManagerApp implements IDesktopApp {
             }
             final String tag = disk.label() + (disk.system() ? " (system)" : "");
             Texts.small(g, font, Texts.clip(font, tag, w - 70), x, row, skin.text());
-            final String use = dev.jstech.computers.hardware.DiskSpec.sizeLabel(disk.usedMb())
-                    + " / " + dev.jstech.computers.hardware.DiskSpec.sizeLabel(disk.capMb());
+            final String use = DiskSpec.sizeLabel(disk.usedMb())
+                    + " / " + DiskSpec.sizeLabel(disk.capMb());
             Texts.small(g, font, use, x + w - Texts.smallWidth(font, use), row, skin.dim());
             final double frac = Math.min(1.0, (double) disk.usedMb() / Math.max(1L, disk.capMb()));
             g.fill(x, row + 9, x + w, row + 15, skin.fieldBg());
@@ -660,7 +677,8 @@ public final class TaskManagerApp implements IDesktopApp {
             final int text = index == selected ? 0xFFFFFFFF : skin.text();
             final int dim = index == selected ? 0xFFFFFFFF : skin.dim();
             if (detailed) {
-                final String mb = JsTechTheme.fmt(use.mb()) + " MB";
+                // What it is holding, not what it was promised: the number that moves while a program runs.
+                final String mb = RamLedger.heldLabel(use.heldBytes());
                 final int mbW = Texts.smallWidth(font, mb);
                 final String cpu = cpuOf(use) + "%";
                 final int cpuW = Texts.smallWidth(font, cpu);
@@ -687,14 +705,20 @@ public final class TaskManagerApp implements IDesktopApp {
         Texts.small(g, font, label, x + (w - tw) / 2, y + (h - 7) / 2, enabled ? skin.text() : skin.dim());
     }
 
+    /** The ledger kind a row names, or null for a name the ledger does not declare. */
+    @Nullable
+    private static RamLedger.Kind kindOf(final RamUse use) {
+        return RamLedger.Kind.find(use.kind());
+    }
+
     private static String kindLabel(final String kind) {
-        return switch (kind) {
-            case KIND_SYSTEM -> "system";
-            case KIND_DESKTOP -> "desktop";
-            case KIND_SERVICE -> "service";
-            case KIND_WINDOW -> "program";
-            case KIND_PROCESS -> "script";
-            default -> kind.toLowerCase(Locale.ROOT);
+        final RamLedger.Kind known = RamLedger.Kind.find(kind);
+        return known == null ? kind.toLowerCase(Locale.ROOT) : switch (known) {
+            case SYSTEM -> "system";
+            case DESKTOP -> "desktop";
+            case SERVICE -> "service";
+            case WINDOW -> "program";
+            case PROCESS -> "script";
         };
     }
 
@@ -795,7 +819,7 @@ public final class TaskManagerApp implements IDesktopApp {
 
     /** The vanilla font, which the hit-tests measure with exactly as the drawing does. */
     private static Font font() {
-        return net.minecraft.client.Minecraft.getInstance().font;
+        return Minecraft.getInstance().font;
     }
 
     /** Where the End button sits on the page in front, or null when this page has none. */

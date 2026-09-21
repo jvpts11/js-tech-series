@@ -8,6 +8,9 @@
 package dev.jstech.computers.item;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.rack.RackChassis;
+import java.util.Set;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -102,7 +105,7 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
 
     /** Whether a board belongs to the era of the case it is going into (no case known: anything goes). */
     private boolean boardMatchesCaseEra(final ItemStack board) {
-        final dev.jstech.computers.rack.RackChassis chassis = ServerItem.chassisOf(held());
+        final RackChassis chassis = ServerItem.chassisOf(held());
         return chassis == null || !(board.getItem() instanceof MotherboardItem item)
                 || item.spec().era() == chassis.era();
     }
@@ -116,8 +119,8 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
              * case takes only a board of its own era, like every other computer's chassis.
              */
             return MotherboardItem.fits(stack,
-                    java.util.Set.of(dev.jstech.computers.hardware.FormFactor.EEB,
-                            dev.jstech.computers.hardware.FormFactor.EATX))
+                    Set.of(FormFactor.EEB,
+                            FormFactor.EATX))
                     && boardMatchesCaseEra(stack);
         }
         if (slot == PSU) {
@@ -137,7 +140,7 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
              */
             if (stack.getItem() instanceof PhiCoprocessorItem) {
                 return ServerItem.chassisOf(held())
-                        == dev.jstech.computers.rack.RackChassis.SUPERCOMPUTER_NODE
+                        == RackChassis.SUPERCOMPUTER_NODE
                         && !holdsCoprocessorOutside(slot);
             }
             return stack.getItem() instanceof GpuItem;

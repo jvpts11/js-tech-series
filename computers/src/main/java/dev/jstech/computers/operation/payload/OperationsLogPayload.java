@@ -29,6 +29,14 @@ public record OperationsLogPayload(List<OperationRecord> operations) implements 
             OperationRecord.STREAM_CODEC.apply(ByteBufCodecs.list(MAX))
                     .map(OperationsLogPayload::new, OperationsLogPayload::operations);
 
+    /*
+     * Copied, because this is built from the log the network keeps and then written to the client while the
+     * network goes on adding to it. What the terminal shows is the log as it was when it was sent.
+     */
+    public OperationsLogPayload {
+        operations = List.copyOf(operations);
+    }
+
     @Override
     public CustomPacketPayload.Type<OperationsLogPayload> type() {
         return TYPE;

@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.os.HostScope;
+import dev.jstech.computers.os.Platform;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -55,9 +57,9 @@ class CliShellTest {
     @Test
     void run_helpListsEveryRegisteredCommand() {
         final String out = joined("help");
-        assertTrue(out.contains("operation"));
-        assertTrue(out.contains("find"));
-        assertTrue(out.contains("lock"));
+        assertTrue(out.contains("iql"));
+        assertTrue(out.contains("interac"));
+        assertTrue(out.contains("net"));
     }
 
     @Test
@@ -112,8 +114,10 @@ class CliShellTest {
     }
 
     @Test
-    void run_operationQueryOffNetworkErrors() {
+    void run_operationOffNetworkIsNotOfferedAtAll() {
         computer.onNetwork = false;
+        assertFalse(shell.find("operation").available(computer),
+                "a machine with no network under it has nothing to ask the network for");
         assertTrue(anyStyle("operation query items", CliStyle.ERROR));
     }
 
@@ -156,7 +160,13 @@ class CliShellTest {
         assertTrue(response.lines().stream().anyMatch(l -> l.style() == CliStyle.ERROR));
     }
 
-    /** An in-memory ICliComputer that records the last effecting call so tests can assert on it. */
+    /**
+     * An in-memory computer holding only the parts these commands reach: what it is, the network it reads, the work it
+     * is asked for and the programs it has. It records the last effecting call so tests can assert on it.
+     *
+     * <p>A Mainframe running MC-NET, because that is the machine every command under test is offered on: the DOS
+     * verbs belong to that family of systems, and the upkeep of the storage index belongs to the machine that keeps it.
+     */
     private static final class FakeComputer implements ICliComputer {
         boolean running;
         boolean onNetwork = true;
@@ -165,11 +175,25 @@ class CliShellTest {
         final List<StoredItem> stock = new ArrayList<>();
 
         @Override public String name() {
-            return "TEST-PC";
+            return "TEST-MF";
         }
 
         @Override public String type() {
-            return "Personal Computer";
+            return "Mainframe";
+        }
+
+        /*
+         * The shell these tests drive is the DOS command set, so the machine under it says it is a system
+         * that speaks DOS. It used to say MC-NET and pass anyway, because MC-NET was counted among the
+         * DOS-speaking systems; it has its own words now, and a fixture claiming one family while running
+         * another's verbs tests nothing that is true of either.
+         */
+        @Override public Platform platform() {
+            return Platform.MC_DOS;
+        }
+
+        @Override public boolean hostIs(final HostScope scope) {
+            return scope == HostScope.ANY || scope == HostScope.MAINFRAME;
         }
 
         @Override public String nodeId() {
@@ -199,10 +223,6 @@ class CliShellTest {
             return "net7f3a";
         }
 
-        @Override public boolean isMainframe() {
-            return false;
-        }
-
         @Override public NetSummary network() {
             return new NetSummary(onNetwork, 2, 1, 0, stock.size(), true);
         }
@@ -227,50 +247,9 @@ class CliShellTest {
             return object.equalsIgnoreCase("items") ? query(where, server, limit) : List.of();
         }
 
-        @Override public List<Holding> find(final String item) {
-            return List.of();
-        }
-
-        @Override public OpResult select(final String item, final long quantity) {
-            lastCall = "select(" + item + ", " + quantity + ")";
-            return OpResult.ok("ok - pulling " + quantity + " " + item);
-        }
-
-        @Override public OpResult insert(final String item, final long quantity) {
-            lastCall = "insert(" + item + ", " + quantity + ")";
-            return OpResult.ok("ok");
-        }
-
-        @Override public OpResult craft(final String item, final long quantity) {
-            lastCall = "craft(" + item + ", " + quantity + ")";
-            return OpResult.ok("ok");
-        }
-
-        @Override public OpResult lock(final String item, final long quantity) {
-            lastCall = "lock(" + item + ", " + quantity + ")";
-            return OpResult.ok("ok");
-        }
-
-        @Override public OpResult unlock(final String item) {
-            lastCall = "unlock(" + item + ")";
-            return OpResult.ok("ok");
-        }
-
-        @Override public List<StoredItem> locks() {
-            return List.of();
-        }
-
-        @Override public List<ActiveOp> activeOps() {
-            return List.of();
-        }
-
         @Override public OpResult maintenance(final String action) {
             lastCall = "maintenance(" + action + ")";
             return OpResult.ok("done");
-        }
-
-        @Override public List<String> peripherals() {
-            return List.of();
         }
 
         @Override public List<ProgramInfo> programs() {

@@ -7,28 +7,56 @@
  */
 package dev.jstech.core.operation;
 
+import dev.jstech.core.id.IStableId;
+import dev.jstech.core.id.IStableName;
+import dev.jstech.core.id.StableIds;
+import dev.jstech.core.id.StableNames;
+
 import java.util.Locale;
 import java.util.Optional;
 
 /**
  * Scheduling priority of an Operation. The Mainframe hands its queue slots to the highest level first and
  * keeps submission order inside a level; a manual request and an automation job both start at
- * {@link #MEDIUM} unless the requester says otherwise.
+ * {@link #MEDIUM} unless the requester says otherwise. Levels are declared lowest first, so {@code compareTo}
+ * orders them.
  */
-public enum OperationPriority {
-    LOW("LOW"),
-    MEDIUM_LOW("MED-"),
-    MEDIUM("MED"),
-    MEDIUM_HIGH("MED+"),
-    HIGH("HIGH");
+public enum OperationPriority implements IStableId, IStableName {
+    /*
+     * Numbered in tens rather than one after another, so that a level can be put between two of these later
+     * without any of the numbers already written into a world having to move.
+     */
+    LOW(10, "low", "LOW"),
+    MEDIUM_LOW(20, "medium_low", "MED-"),
+    MEDIUM(30, "medium", "MED"),
+    MEDIUM_HIGH(40, "medium_high", "MED+"),
+    HIGH(50, "high", "HIGH");
 
     /** The level every Operation starts at when the requester does not choose one. */
     public static final OperationPriority DEFAULT = MEDIUM;
 
+    private static final StableIds<OperationPriority> IDS = StableIds.of(OperationPriority.class);
+    private static final StableNames<OperationPriority> NAMES = StableNames.of(OperationPriority.class);
+
+    private final int id;
+    private final String serializedName;
     private final String label;
 
-    OperationPriority(final String label) {
+    OperationPriority(final int id, final String serializedName, final String label) {
+        this.id = id;
+        this.serializedName = serializedName;
         this.label = label;
+    }
+
+    @Override
+    public int id() {
+        return id;
+    }
+
+    /** The keyword a statement, a command or a ComputerCraft call names the level by. */
+    @Override
+    public String serializedName() {
+        return serializedName;
     }
 
     /** A four-character tag for dense views (task lists, dialogs). */
@@ -38,37 +66,41 @@ public enum OperationPriority {
 
     /** The next level up, saturating at {@link #HIGH}. */
     public OperationPriority raise() {
-        return values()[Math.min(values().length - 1, ordinal() + 1)];
+        return switch (this) {
+            case LOW -> MEDIUM_LOW;
+            case MEDIUM_LOW -> MEDIUM;
+            case MEDIUM -> MEDIUM_HIGH;
+            case MEDIUM_HIGH, HIGH -> HIGH;
+        };
     }
 
     /** The next level down, saturating at {@link #LOW}. */
     public OperationPriority lower() {
-        return values()[Math.max(0, ordinal() - 1)];
+        return switch (this) {
+            case LOW, MEDIUM_LOW -> LOW;
+            case MEDIUM -> MEDIUM_LOW;
+            case MEDIUM_HIGH -> MEDIUM;
+            case HIGH -> MEDIUM_HIGH;
+        };
     }
 
-    /** The level at {@code ordinal}, clamped into range so a stale byte from disk or the wire never throws. */
-    public static OperationPriority byOrdinal(final int ordinal) {
-        final OperationPriority[] levels = values();
-        return levels[Math.max(0, Math.min(levels.length - 1, ordinal))];
+    /** The level that declares {@code id}; an id no level declares reads as {@link #DEFAULT}, so a stale byte never throws. */
+    public static OperationPriority byId(final int id) {
+        return IDS.byId(id, DEFAULT);
     }
 
     /**
-     * Resolves a keyword as typed in a statement or a command, case-insensitively: the enum names, their
-     * hyphenated spellings ({@code MEDIUM-HIGH}), and {@code NORMAL} as an alias of {@link #MEDIUM}.
+     * Resolves a keyword as typed in a statement or a command, case-insensitively: the levels' names, their
+     * hyphenated spellings ({@code medium-high}), and {@code normal} as an alias of {@link #MEDIUM}.
      */
     public static Optional<OperationPriority> fromKeyword(final String keyword) {
         if (keyword == null) {
             return Optional.empty();
         }
-        final String normalized = keyword.trim().toUpperCase(Locale.ROOT).replace('-', '_');
-        if (normalized.equals("NORMAL")) {
+        final String normalized = keyword.trim().toLowerCase(Locale.ROOT).replace('-', '_');
+        if (normalized.equals("normal")) {
             return Optional.of(MEDIUM);
         }
-        for (final OperationPriority level : values()) {
-            if (level.name().equals(normalized)) {
-                return Optional.of(level);
-            }
-        }
-        return Optional.empty();
+        return Optional.ofNullable(NAMES.find(normalized));
     }
 }

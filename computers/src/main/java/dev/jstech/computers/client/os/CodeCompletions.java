@@ -8,13 +8,13 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
-import dev.jstech.computers.cannon.CannonCosts;
-import dev.jstech.computers.cannon.CannonSemantics;
-import dev.jstech.computers.cannon.SourceFile;
-import dev.jstech.computers.cannon.edit.CannonCompletions;
-import dev.jstech.computers.cannon.edit.CompletionContext;
-import dev.jstech.computers.cannon.sem.BuiltIns;
-import dev.jstech.computers.cannon.sem.SemanticModel;
+import dev.jstech.computers.sigma.LanguageLevel;
+import dev.jstech.computers.sigma.SigmaSemantics;
+import dev.jstech.computers.sigma.SourceFile;
+import dev.jstech.computers.sigma.edit.SigmaCompletions;
+import dev.jstech.computers.sigma.edit.CompletionContext;
+import dev.jstech.computers.sigma.sem.BuiltIns;
+import dev.jstech.computers.sigma.sem.SemanticModel;
 import dev.jstech.core.client.gui.component.ContextMenu;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.logic.TextDocument;
@@ -26,7 +26,7 @@ import net.minecraft.client.gui.GuiGraphics;
 /**
  * The list an editor offers after a name and a dot, and what happens when one is taken.
  *
- * <p>Cannon is the language that can answer this: the checker knows every type it brings and every type
+ * <p>Σ# is the language that can answer this: the checker knows every type it brings and every type
  * the program declares, with the members of each, and the variables it met on its way through the
  * bodies. A language a pack registers gets its source coloured and its complaints listed all the same,
  * and simply offers nothing here, which is honest about what the registry promises and what it does not.
@@ -46,7 +46,7 @@ public final class CodeCompletions {
     /** Whether the strip under the list says what the call on it will cost the program. */
     private boolean showCosts;
     /** What each offered call is, kept beside the list so the strip can price the one being looked at. */
-    private final List<String> offered = new ArrayList<>();
+    private final List<SigmaCompletions.Item> offered = new ArrayList<>();
     /** The names on the list, in its order, for a test asking what an editor offered. */
     private final List<String> labels = new ArrayList<>();
 
@@ -87,7 +87,8 @@ public final class CodeCompletions {
     public void offer(final CodeArea area, final String path,
                       final List<IProgrammingLanguage.SourceText> others, final int[] bounds) {
         close();
-        if (!isCannon(path)) {
+        final LanguageLevel level = LanguageLevel.ofSource(path);
+        if (level == null) {
             return;
         }
         final TextDocument doc = area.document();
@@ -97,17 +98,18 @@ public final class CodeCompletions {
         if (where == null || caret == null) {
             return;
         }
-        final List<CannonCompletions.Item> found = find(path, doc, others, where);
+        // Read the same way for both languages, then cut down to what the one this file is written in has.
+        final List<SigmaCompletions.Item> found = SigmaCompletions.within(level, find(path, doc, others, where));
         if (found.isEmpty()) {
             return;
         }
         final List<ContextMenu.Item> entries = new ArrayList<>(Math.min(found.size(), MAX_ITEMS));
         this.offered.clear();
         this.labels.clear();
-        for (final CannonCompletions.Item item : found.subList(0, Math.min(found.size(), MAX_ITEMS))) {
+        for (final SigmaCompletions.Item item : found.subList(0, Math.min(found.size(), MAX_ITEMS))) {
             entries.add(new ContextMenu.Item(item.signature(), true,
                     () -> take(doc, where, item.label())));
-            this.offered.add(item.owner() + "." + item.label());
+            this.offered.add(item);
             this.labels.add(item.label());
         }
         this.menu.open(entries, caret[0], caret[1] + CodeArea.lineHeight(),
@@ -123,7 +125,7 @@ public final class CodeCompletions {
      * that: a variable, a field of the type around the caret, {@code this}, or a type on its static side,
      * so {@code Network.} offers what the network can do and {@code counter.} what a counter can.
      */
-    private List<CannonCompletions.Item> find(final String path, final TextDocument doc,
+    private List<SigmaCompletions.Item> find(final String path, final TextDocument doc,
                                               final List<IProgrammingLanguage.SourceText> others,
                                               final CompletionContext.Where where) {
         final List<SourceFile> sources = new ArrayList<>(others.size() + 1);
@@ -134,11 +136,11 @@ public final class CodeCompletions {
             }
         }
         SemanticModel model = null;
-        CannonCompletions.Scope scope = CannonCompletions.Scope.NONE;
+        SigmaCompletions.Scope scope = SigmaCompletions.Scope.NONE;
         try {
-            final CannonSemantics.Result result = CannonSemantics.checkTolerant(sources);
+            final SigmaSemantics.Result result = SigmaSemantics.checkTolerant(sources);
             model = result.model();
-            scope = CannonCompletions.scopeAt(model, result.unit(path), path, doc.cursorLine() + 1);
+            scope = SigmaCompletions.scopeAt(model, result.unit(path), path, doc.cursorLine() + 1);
         } catch (final RuntimeException e) {
             /*
              * A half-written file can put the checker somewhere it was never meant to be. The list then
@@ -148,14 +150,14 @@ public final class CodeCompletions {
             JsComputers.LOGGER.debug("Completions could not read {}", path, e);
         }
         if (where.onUsing()) {
-            return CannonCompletions.namespaces(this.builtIns, model, where.receiver(), where.prefix());
+            return SigmaCompletions.namespaces(this.builtIns, model, where.receiver(), where.prefix());
         }
         if (!where.intoMember()) {
-            return CannonCompletions.names(this.builtIns, model, scope, where.prefix());
+            return SigmaCompletions.names(this.builtIns, model, scope, where.prefix());
         }
-        final CannonCompletions.Target target =
-                CannonCompletions.resolve(this.builtIns, model, scope, where.chain());
-        return target == null ? List.of() : CannonCompletions.members(target, where.prefix());
+        final SigmaCompletions.Target target =
+                SigmaCompletions.resolve(this.builtIns, model, scope, where.chain());
+        return target == null ? List.of() : SigmaCompletions.members(target, where.prefix());
     }
 
     /** Puts the chosen name in, in place of however much of it had been typed. */
@@ -166,11 +168,6 @@ public final class CodeCompletions {
         for (int i = 0; i < label.length(); i++) {
             doc.insert(label.charAt(i));
         }
-    }
-
-    /** Whether the file is one this can answer for. */
-    private static boolean isCannon(final String path) {
-        return path != null && path.toLowerCase(java.util.Locale.ROOT).endsWith(".can");
     }
 
     /** Draws the list, which belongs over everything else the editor drew. */
@@ -184,19 +181,18 @@ public final class CodeCompletions {
     /**
      * The strip under the list: what the call the keyboard is on will cost the program.
      *
-     * <p>A call that never reaches the machine says so, because "free" is the useful thing to know
-     * about the calls that are free on purpose.
+     * <p>Every call of the library and the machine is priced, the free ones too, because "free" is the
+     * useful thing to know about the calls that are free on purpose.
      */
     private void drawCost(final GuiGraphics g, final UiContext ctx) {
         final int at = this.menu.selected();
         if (at < 0 || at >= this.offered.size()) {
             return;
         }
-        final String[] call = this.offered.get(at).split("\\.", 2);
-        if (call.length < 2 || !CannonCosts.known(call[0], call[1])) {
+        final String text = SigmaCompletions.costOf(this.offered.get(at));
+        if (text == null) {
             return;
         }
-        final String text = "costs " + CannonCosts.of(call[0], call[1]).describe();
         final int y = this.menu.bottom();
         g.fill(this.menu.x() - 1, y, this.menu.right() + 1, y + ROW_H + 1, 0xFF000000);
         g.fill(this.menu.x(), y, this.menu.right(), y + ROW_H, ctx.skin().fieldBg());

@@ -8,9 +8,12 @@
 package dev.jstech.tests;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.core.JsCore;
+import dev.jstech.tests.testkit.ToyLanguage;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.gametest.GameTestHooks;
 import org.slf4j.Logger;
 
 /**
@@ -28,5 +31,12 @@ public final class JsTests {
     public JsTests(final IEventBus modEventBus, final ModContainer modContainer) {
         LOGGER.warn("J's Tech Series Tests {} loaded. This is a development-only test mod: it is not part of the"
                 + " series, adds nothing to the game and must not be installed.", modContainer.getModInfo().getVersion());
+        if (GameTestHooks.isGametestServer()) {
+            /*
+             * The language API's tests need a language that is not the series' own, and languages are only taken
+             * while the game loads; a client run stays as a player sees it.
+             */
+            JsCore.languages().register(new ToyLanguage());
+        }
     }
 }

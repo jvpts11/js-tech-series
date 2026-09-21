@@ -9,10 +9,12 @@ package dev.jstech.computers.os;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.computers.api.ComputersRegisterEvent;
+import dev.jstech.computers.os.install.InstallerStyle;
+import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.tier.HardwareEra;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -22,7 +24,7 @@ import java.util.Optional;
  * the kernel it runs on, the disk footprint it consumes on installation, an optional install
  * media item that carries the OS installer payload, and its display name (which datagen writes to
  * {@link #titleKey()}). The {@link #CODEC} keeps this JSON-serialisable, so the built-in OSes can
- * later move to a datapack; today the Java registration through {@link JSComputersAPI} is the source.
+ * later move to a datapack; today the Java registration through {@link ComputersRegisterEvent} is the source.
  *
  * @param id             unique registry key for this OS (e.g. {@code jsc:mc_dos})
  * @param capability     the capability tier this OS provides to programs and the player
@@ -46,6 +48,10 @@ import java.util.Optional;
  * @param house          who wrote it: the name on its banner, its copyright line and its install disc
  * @param ramMb          megabytes the running system holds for itself before any program opens; a program
  *                       bundled with it weighs a share of this ({@link RamLedger#bundledWeightMb})
+ * @param familyRank     where this system sits in its own family's order, counting from one, so a program can
+ *                       ask for a system of that family no older than a given one. Zero, the default, means
+ *                       the family has no order: nothing is newer or older than anything else in it, and a
+ *                       program is decided by the platform alone
  */
 public record OsDef(
         ResourceLocation id,
@@ -61,26 +67,32 @@ public record OsDef(
         InstallMode installMode,
         Optional<ResourceLocation> bundledDesktop,
         SoftwareHouse house,
-        int ramMb
+        int ramMb,
+        InstallerStyle installerStyle,
+        int familyRank
 ) {
 
     public static final Codec<OsDef> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             ResourceLocation.CODEC.fieldOf("id").forGetter(OsDef::id),
-            enumCodec(OsCapability.class).fieldOf("capability").forGetter(OsDef::capability),
-            enumCodec(HardwareEra.class).fieldOf("min_era").forGetter(OsDef::minEra),
+            StableCodecs.byName(OsCapability.class).fieldOf("capability").forGetter(OsDef::capability),
+            StableCodecs.byName(HardwareEra.class).fieldOf("min_era").forGetter(OsDef::minEra),
             ResourceLocation.CODEC.fieldOf("kernel").forGetter(OsDef::kernelId),
             Codec.INT.optionalFieldOf("footprint_mb", 0).forGetter(OsDef::footprintMb),
             ResourceLocation.CODEC.optionalFieldOf("install_media").forGetter(OsDef::installMediaId),
-            enumCodec(Platform.class).fieldOf("platform").forGetter(OsDef::platform),
+            StableCodecs.byName(Platform.class).fieldOf("platform").forGetter(OsDef::platform),
             Codec.STRING.optionalFieldOf("display_name", "").forGetter(OsDef::displayName),
             Codec.STRING.optionalFieldOf("shell", "cmd").forGetter(OsDef::shellId),
-            enumCodec(PackageManagerKind.class).optionalFieldOf("package_manager", PackageManagerKind.NONE)
+            StableCodecs.byName(PackageManagerKind.class).optionalFieldOf("package_manager", PackageManagerKind.NONE)
                     .forGetter(OsDef::packageManager),
-            enumCodec(InstallMode.class).optionalFieldOf("install_mode", InstallMode.GUIDED)
+            StableCodecs.byName(InstallMode.class).optionalFieldOf("install_mode", InstallMode.GUIDED)
                     .forGetter(OsDef::installMode),
             ResourceLocation.CODEC.optionalFieldOf("bundled_desktop").forGetter(OsDef::bundledDesktop),
             SoftwareHouse.CODEC.optionalFieldOf("house", SoftwareHouse.MIDSOFT).forGetter(OsDef::house),
-            Codec.INT.optionalFieldOf("ram_mb", 0).forGetter(OsDef::ramMb)
+            Codec.INT.optionalFieldOf("ram_mb", 0).forGetter(OsDef::ramMb),
+            StableCodecs.byName(InstallerStyle.class)
+                    .optionalFieldOf("installer", InstallerStyle.PLAIN)
+                    .forGetter(OsDef::installerStyle),
+            Codec.INT.optionalFieldOf("family_rank", 0).forGetter(OsDef::familyRank)
     ).apply(inst, OsDef::new));
 
     /**
@@ -99,22 +111,63 @@ public record OsDef(
         return new OsDef(id, capability, minEra, kernelId, footprintMb, Optional.empty(), platform,
                 displayName, "cmd",
                 platform == Platform.FRAMES ? PackageManagerKind.PCKMGR : PackageManagerKind.NONE,
-                InstallMode.GUIDED, bundledDesktop, house, 0);
+                InstallMode.GUIDED, bundledDesktop, house, 0,
+                InstallerStyle.PLAIN, 0);
     }
 
     /** A Linux distribution: TTY capability on the Linux kernel, no bundled desktop, installable from the Legacy era. */
     public static OsDef linuxDistro(final ResourceLocation id, final int footprintMb, final String displayName,
                                     final String shellId, final PackageManagerKind packageManager,
                                     final InstallMode installMode, final SoftwareHouse house) {
-        return new OsDef(id, OsCapability.TERMINAL_ONLY, HardwareEra.LEGACY,
-                ResourceLocation.fromNamespaceAndPath("jsc", "linux"), footprintMb, Optional.empty(),
-                Platform.LINUX, displayName, shellId, packageManager, installMode, Optional.empty(), house, 0);
+        return terminalSystem(id, ResourceLocation.fromNamespaceAndPath("jsc", "linux"), Platform.LINUX,
+                HardwareEra.LEGACY, footprintMb, displayName, shellId, packageManager, installMode, house);
+    }
+
+    /**
+     * A system that comes up at a terminal on a kernel and a platform of its own, and takes a desktop as a
+     * package afterwards if it takes one at all: what a Linux distribution is, and what the systems that are
+     * no Linux but are met at the same kind of prompt are too.
+     */
+    public static OsDef terminalSystem(final ResourceLocation id, final ResourceLocation kernelId,
+                                       final Platform platform, final HardwareEra minEra, final int footprintMb,
+                                       final String displayName, final String shellId,
+                                       final PackageManagerKind packageManager, final InstallMode installMode,
+                                       final SoftwareHouse house) {
+        return new OsDef(id, OsCapability.TERMINAL_ONLY, minEra, kernelId, footprintMb, Optional.empty(), platform,
+                displayName, shellId, packageManager, installMode, Optional.empty(), house, 0,
+                InstallerStyle.PLAIN, 0);
     }
 
     /** The same system, holding {@code megabytes} of RAM for itself while it runs. */
     public OsDef withRam(final int megabytes) {
         return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
-                shellId, packageManager, installMode, bundledDesktop, house, megabytes);
+                shellId, packageManager, installMode, bundledDesktop, house, megabytes, installerStyle,
+                familyRank);
+    }
+
+    /**
+     * The same system, placed at {@code rank} in its family's order, counting from one.
+     *
+     * <p>A family whose systems say nothing here has no order, which is the answer for most of them: one
+     * Linux distribution is not newer than another in any way a program can ask about. A family that does
+     * have an order says so here, once, on each of its systems, and that is where the answer lives. It used
+     * to be a list of three names written into the registry, which meant a family the mod did not ship could
+     * never have an order at all.
+     */
+    public OsDef withRank(final int rank) {
+        return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
+                shellId, packageManager, installMode, bundledDesktop, house, ramMb, installerStyle, rank);
+    }
+
+    /**
+     * The same system, installed by an installer of its own rather than the plain one.
+     *
+     * <p>A system that says nothing here gets the plain installer, which is what an addon's system and anything
+     * still waiting for a pass of its own are drawn with.
+     */
+    public OsDef withInstaller(final InstallerStyle style) {
+        return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
+                shellId, packageManager, installMode, bundledDesktop, house, ramMb, style, familyRank);
     }
 
     public OsDef {
@@ -139,6 +192,13 @@ public record OsDef(
         if (ramMb < 0) {
             ramMb = 0;
         }
+        if (installerStyle == null) {
+            installerStyle = InstallerStyle.PLAIN;
+        }
+        // A rank below zero would read as older than a family's own first system, which nothing can be.
+        if (familyRank < 0) {
+            familyRank = 0;
+        }
     }
 
     /**
@@ -153,10 +213,5 @@ public record OsDef(
     /** The translation key for this OS's display name, in vanilla {@code os.<ns>.<path>} form. */
     public String titleKey() {
         return "os." + id.getNamespace() + "." + id.getPath();
-    }
-
-    private static <E extends Enum<E>> Codec<E> enumCodec(final Class<E> type) {
-        return Codec.STRING.xmap(s -> Enum.valueOf(type, s.toUpperCase(Locale.ROOT)),
-                e -> e.name().toLowerCase(Locale.ROOT));
     }
 }

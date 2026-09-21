@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Tech Series.
  */
 package dev.jstech.tests.gametest;
 
@@ -162,7 +162,7 @@ public final class ScaleBenchmarkGameTests {
         report.put("racks", params.racks()).put("servers", params.servers()).put("nodes", params.nodes())
                 .put("personal_computers", params.personalComputers()).put("types", params.types())
                 .put("types_small", smallTypes).put("ops_per_tick", OPS_PER_TICK)
-                .put("drives_per_server", params.drivesPerServer()).put("drive_size", params.driveSize().name())
+                .put("drives_per_server", params.drivesPerServer()).put("drive_size", params.driveSize().id())
                 .put("max_lot", params.maxLot()).put("mainframe_queues", base.mainframe().parallelQueues());
 
         /*
@@ -185,6 +185,7 @@ public final class ScaleBenchmarkGameTests {
         final String[] crashed = new String[1];
         final long[] craftedBefore = new long[1];
         final double[] firstIdle = {Double.NaN};
+        final double[] firstIdleFull = {Double.NaN};
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + WARMUP_TICKS, () -> guarded(() -> {
                     final boolean networked = base.mainframe().networkUuid() != null;
@@ -256,8 +257,13 @@ public final class ScaleBenchmarkGameTests {
                  * catalog is one enormous tick; measured any sooner, a hundredth of THAT is what the number
                  * reports, which is a measurement of how fast the machine seeded and not of the idle cost.
                  */
-                .thenExecuteAfter(TICK_AVERAGE_WINDOW + 20, () -> {
-                    report.put("idle_full_ms", averageTickMs(server));
+                .thenExecuteAfter(TICK_AVERAGE_WINDOW + 20, () -> firstIdleFull[0] = averageTickMs(server))
+                /*
+                 * The full-catalog idle cost is the better of two consecutive windows as well: a run whose loaded
+                 * tick came out cheaper than its idle one had an autosave inside the single window it measured.
+                 */
+                .thenExecuteAfter(TICK_AVERAGE_WINDOW, () -> {
+                    report.put("idle_full_ms", Math.min(firstIdleFull[0], averageTickMs(server)));
                     craftedBefore[0] = craftedOutput(level, base);
                 })
                 .thenWaitUntil(() -> drive(helper, full, crashed))

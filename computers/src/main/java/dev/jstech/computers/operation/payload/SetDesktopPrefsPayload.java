@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.install.InstallerFlow;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -22,6 +23,19 @@ import net.minecraft.resources.ResourceLocation;
 public record SetDesktopPrefsPayload(BlockPos hostPos, String wallpaper, String computerName)
         implements CustomPacketPayload {
 
+    /**
+     * The name is cut to what a name may be before it is ever written to the wire.
+     *
+     * <p>The codec below refuses a longer one by throwing rather than by trimming, and this packet is sent
+     * from the settings a player is typing in, so the cut has to happen here: an over-long name should read
+     * short on the other side, not disconnect whoever typed it.
+     */
+    public SetDesktopPrefsPayload {
+        computerName = computerName == null ? ""
+                : computerName.length() <= InstallerFlow.MOST_NAME_LETTERS ? computerName
+                : computerName.substring(0, InstallerFlow.MOST_NAME_LETTERS);
+    }
+
     public static final CustomPacketPayload.Type<SetDesktopPrefsPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "set_desktop_prefs"));
 
@@ -29,7 +43,7 @@ public record SetDesktopPrefsPayload(BlockPos hostPos, String wallpaper, String 
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC, SetDesktopPrefsPayload::hostPos,
                     ByteBufCodecs.stringUtf8(48), SetDesktopPrefsPayload::wallpaper,
-                    ByteBufCodecs.stringUtf8(48), SetDesktopPrefsPayload::computerName,
+                    ByteBufCodecs.stringUtf8(InstallerFlow.MOST_NAME_LETTERS), SetDesktopPrefsPayload::computerName,
                     SetDesktopPrefsPayload::new);
 
     @Override

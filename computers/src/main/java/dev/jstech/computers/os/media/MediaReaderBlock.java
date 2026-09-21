@@ -7,15 +7,16 @@
  */
 package dev.jstech.computers.os.media;
 
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.peripheral.PeripheralCableType;
 import dev.jstech.core.peripheral.IPeripheralConnectable;
 import dev.jstech.core.util.BlockEntityTickers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
@@ -23,6 +24,7 @@ import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -34,6 +36,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -53,8 +58,7 @@ public class MediaReaderBlock extends HorizontalDirectionalBlock implements Enti
 
     public static final MapCodec<MediaReaderBlock> CODEC = RecordCodecBuilder.mapCodec(instance ->
             instance.group(
-                    Codec.STRING.xmap(MediaDriveType::valueOf, MediaDriveType::name)
-                            .fieldOf("drive_type").forGetter(b -> b.driveType),
+                    StableCodecs.byName(MediaDriveType.class).fieldOf("drive_type").forGetter(b -> b.driveType),
                     propertiesCodec()
             ).apply(instance, MediaReaderBlock::new));
 
@@ -126,7 +130,7 @@ public class MediaReaderBlock extends HorizontalDirectionalBlock implements Enti
                 return ItemInteractionResult.SUCCESS;
             }
             // The drive reads this format but the slot is taken. Say so, or the click looks ignored.
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+            player.displayClientMessage(Component.literal(
                     "The drive already holds a disc - sneak-click to eject it."), true);
             return ItemInteractionResult.SUCCESS;
         }
@@ -136,7 +140,7 @@ public class MediaReaderBlock extends HorizontalDirectionalBlock implements Enti
          * player holding a DVD at a CD drive has no other way to learn the difference.
          */
         if (heldStack.getItem() instanceof MediaItem) {
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+            player.displayClientMessage(Component.literal(
                     "This " + driveName(reader) + " cannot read that disc."), true);
             return ItemInteractionResult.SUCCESS;
         }
@@ -158,17 +162,17 @@ public class MediaReaderBlock extends HorizontalDirectionalBlock implements Enti
      * stick standing out of its front when one is docked. Its shape follows the model so a player can
      * stand things on it and walk past the stick; the disc drives stay full blocks.
      */
-    private static final net.minecraft.world.phys.shapes.VoxelShape DOCK_NORTH_SOUTH =
+    private static final VoxelShape DOCK_NORTH_SOUTH =
             Block.box(1, 0, 3, 15, 6.5, 13);
-    private static final net.minecraft.world.phys.shapes.VoxelShape DOCK_EAST_WEST =
+    private static final VoxelShape DOCK_EAST_WEST =
             Block.box(3, 0, 1, 13, 6.5, 15);
 
     @Override
-    protected net.minecraft.world.phys.shapes.VoxelShape getShape(
-            final BlockState state, final net.minecraft.world.level.BlockGetter level, final BlockPos pos,
-            final net.minecraft.world.phys.shapes.CollisionContext context) {
+    protected VoxelShape getShape(
+            final BlockState state, final BlockGetter level, final BlockPos pos,
+            final CollisionContext context) {
         if (driveType != MediaDriveType.DOCK_STATION) {
-            return net.minecraft.world.phys.shapes.Shapes.block();
+            return Shapes.block();
         }
         return state.getValue(FACING).getAxis() == Direction.Axis.Z ? DOCK_NORTH_SOUTH : DOCK_EAST_WEST;
     }

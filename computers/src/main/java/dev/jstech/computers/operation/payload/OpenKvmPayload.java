@@ -47,6 +47,11 @@ public record OpenKvmPayload(BlockPos rackPos, BlockPos monitorPos, int activeCh
                     CHANNEL_CODEC.apply(ByteBufCodecs.list(MAX_CHANNELS)), OpenKvmPayload::channels,
                     OpenKvmPayload::new);
 
+    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    public OpenKvmPayload {
+        channels = List.copyOf(channels);
+    }
+
     @Override
     public CustomPacketPayload.Type<OpenKvmPayload> type() {
         return TYPE;

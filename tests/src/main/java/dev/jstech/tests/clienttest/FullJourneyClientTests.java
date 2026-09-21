@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Tech Series.
  */
 package dev.jstech.tests.clienttest;
 
@@ -11,10 +11,11 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.client.BootSequenceScreen;
 import dev.jstech.computers.client.CraftingComputerScreen;
 import dev.jstech.computers.client.FirmwareScreen;
 import dev.jstech.computers.client.MainframeScreen;
-import dev.jstech.computers.client.OsInstallScreen;
+import dev.jstech.computers.client.InstallerScreen;
 import dev.jstech.computers.client.ServerRackScreen;
 import dev.jstech.computers.client.os.CraftingManagerApp;
 import dev.jstech.computers.client.os.DesktopScreen;
@@ -68,6 +69,21 @@ public final class FullJourneyClientTests {
         return dev.jstech.computers.os.install.SetupTiming.ticks(Programs.get(program).minDiskMb(),
                 dev.jstech.computers.os.media.MediaFormat.CD, false) + SCREEN_WAIT;
     }
+    /**
+     * How long a system takes to be written from its medium, worked out the way the machine works it out,
+     * plus the usual slack.
+     *
+     * <p>This is not a round number on purpose. The firmware hands over to the system's OWN installer now,
+     * and that installer copies at the speed the medium really gives, which is minutes rather than the
+     * couple of seconds the old shared progress box took. A fixed wait here would be a guess that goes
+     * stale the moment a medium or a system's footprint changes.
+     */
+    private static int osInstallWait(final net.minecraft.resources.ResourceLocation osId,
+                                     final dev.jstech.computers.os.media.MediaFormat format) {
+        return dev.jstech.computers.os.install.SetupTiming.ticks(
+                dev.jstech.computers.os.OsRegistry.getOs(osId).footprintMb(), format, false) + BOOT_WAIT;
+    }
+
     /** Long enough for a cold start's POST to play out on the monitor before the desktop shows. */
     private static final int BOOT_WAIT = 400;
 
@@ -229,13 +245,18 @@ public final class FullJourneyClientTests {
                     final int[] install = ctx.screen(FirmwareScreen.class).installButtonCenter();
                     ctx.click(install[0], install[1]);
                 })
-                // The firmware hands over to the install sequence: confirm it, then the write takes its time.
-                .thenAwaitScreen(OsInstallScreen.class, SCREEN_WAIT)
-                .then(SETTLE, () -> {
-                    final int[] confirm = ctx.screen(OsInstallScreen.class).primaryButtonCenter();
-                    ctx.click(confirm[0], confirm[1]);
-                })
-                .thenWaitUntilServer(level -> mainframe(ctx, level).hasOs(), BOOT_WAIT,
+                /*
+                 * The setup restarts the machine into the installation rather than opening it over itself: a
+                 * computer puts a system on a disk by starting from the medium that carries it. So the
+                 * self-test runs again first, and the installer is what comes up after it. This one has no
+                 * look of its own yet, so it welcomes and copies: one key takes its suggestion and the write
+                 * takes its time.
+                 */
+                .thenAwaitScreen(BootSequenceScreen.class, BOOT_WAIT)
+                .thenAwaitScreen(InstallerScreen.class, BOOT_WAIT)
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .thenWaitUntilServer(level -> mainframe(ctx, level).hasOs(),
+                        osInstallWait(NETWORK_OS, dev.jstech.computers.os.media.MediaFormat.FLOPPY),
                         "the install sequence to write the Network OS from the linked floppy",
                         level -> "hasOs=" + mainframe(ctx, level).hasOs())
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
@@ -323,12 +344,24 @@ public final class FullJourneyClientTests {
                     final int[] install = ctx.screen(FirmwareScreen.class).installButtonCenter();
                     ctx.click(install[0], install[1]);
                 })
-                .thenAwaitScreen(OsInstallScreen.class, SCREEN_WAIT)
-                .then(SETTLE, () -> {
-                    final int[] confirm = ctx.screen(OsInstallScreen.class).primaryButtonCenter();
-                    ctx.click(confirm[0], confirm[1]);
-                })
-                .thenWaitUntilServer(level -> cc(ctx, level).hasOs(), BOOT_WAIT,
+                /*
+                 * This system installs through a wizard, and the wizard does not ask everything up front:
+                 * it asks where the system goes before it starts, and what the computer is called while the
+                 * copy is already running, at the point the system reaches that question. So each page is
+                 * waited for and then answered with its own suggestion, rather than answering three times
+                 * at the start and hoping the pages are there to hear it.
+                 *
+                 * As above, the setup restarts the machine into it: the self-test comes first.
+                 */
+                .thenAwaitScreen(BootSequenceScreen.class, BOOT_WAIT)
+                .thenAwaitScreen(InstallerScreen.class, BOOT_WAIT)
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .thenWaitUntil(() -> "NAME".equals(ctx.screen(InstallerScreen.class).pageName()),
+                        osInstallWait(FRAMES_XP, dev.jstech.computers.os.media.MediaFormat.CD),
+                        "Setup to ask what the computer is called")
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .thenWaitUntilServer(level -> cc(ctx, level).hasOs(),
+                        osInstallWait(FRAMES_XP, dev.jstech.computers.os.media.MediaFormat.CD),
                         "the install sequence to write the desktop system from the linked CD drive",
                         level -> "hasOs=" + cc(ctx, level).hasOs())
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))

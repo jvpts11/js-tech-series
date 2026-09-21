@@ -9,9 +9,13 @@ package dev.jstech.computers.os;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.item.DiskItem;
+import dev.jstech.computers.os.boot.SystemIntegrity;
+import dev.jstech.computers.os.boot.SystemWelcome;
 import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.fs.SystemLayout;
+import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import net.minecraft.resources.ResourceLocation;
@@ -20,6 +24,7 @@ import net.minecraft.world.item.ItemStack;
 import java.util.List;
 import java.util.function.IntFunction;
 import java.util.function.ObjIntConsumer;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The disk-set logic every OS-hosting machine shares: which disk boots, where an install lands,
@@ -30,13 +35,78 @@ import java.util.function.ObjIntConsumer;
  */
 public final class OsDisks {
 
+    /** Answered by the slot search when a disk already carries the system and nothing has to be written. */
+    private static final int ALREADY_THERE = -2;
+
     private OsDisks() {
     }
 
-    /** Whether the stack is a disk stamped with a registered operating system. */
+    /** The systems that disk carries; a disk nobody has installed anything onto carries none. */
+    public static DiskSystems systemsOn(final ItemStack disk) {
+        return disk.getOrDefault(ComputingModule.DISK_SYSTEMS.get(), DiskSystems.NONE);
+    }
+
+    /**
+     * The system that disk boots, or nothing when it carries none the machines know.
+     *
+     * <p>What almost every caller wants: a disk may carry several now, and the one it boots is the one that
+     * answers for it everywhere a single system used to.
+     */
+    @Nullable
+    public static ResourceLocation systemOn(final ItemStack disk) {
+        final ResourceLocation osId = systemsOn(disk).boots();
+        return osId != null && OsRegistry.getOs(osId) != null ? osId : null;
+    }
+
+    /** Whether the stack is a disk carrying at least one registered operating system. */
     public static boolean hasSystem(final ItemStack disk) {
-        final ResourceLocation osId = disk.get(ComputingModule.SYSTEM_OS.get());
-        return osId != null && OsRegistry.getOs(osId) != null;
+        for (final ResourceLocation osId : systemsOn(disk).ids()) {
+            if (OsRegistry.getOs(osId) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** What the system that disk boots remembers about being greeted; a disk with no mark has met nobody. */
+    public static SystemWelcome welcomeOn(final ItemStack disk) {
+        return welcomeOn(disk, systemsOn(disk).boots());
+    }
+
+    /** What that system on that disk remembers about being greeted, since each of them remembers its own. */
+    public static SystemWelcome welcomeOn(final ItemStack disk, @Nullable final ResourceLocation osId) {
+        return systemsOn(disk).welcomeOf(osId);
+    }
+
+    /** The same disk with that system's mark written back onto it. */
+    public static ItemStack remembering(final ItemStack disk, @Nullable final ResourceLocation osId,
+                                        final SystemWelcome welcome) {
+        final ItemStack updated = disk.copy();
+        updated.set(ComputingModule.DISK_SYSTEMS.get(), systemsOn(disk).remembering(osId, welcome));
+        return updated;
+    }
+
+    /**
+     * The slot the machine boots from, or {@code -1} when nothing on it carries a system.
+     *
+     * <p>The same search {@link #systemDisk} makes, answering where rather than what, for the callers that have
+     * to write something back onto that disk.
+     */
+    public static int systemDiskSlot(final int diskCount, final IntFunction<ItemStack> diskInSlot,
+                                     final int preferredSlot) {
+        if (preferredSlot >= 0 && preferredSlot < diskCount) {
+            final ItemStack preferred = diskInSlot.apply(preferredSlot);
+            if (preferred.getItem() instanceof DiskItem && hasSystem(preferred)) {
+                return preferredSlot;
+            }
+        }
+        for (int i = 0; i < diskCount; i++) {
+            final ItemStack stack = diskInSlot.apply(i);
+            if (stack.getItem() instanceof DiskItem && hasSystem(stack)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /**
@@ -88,6 +158,54 @@ public final class OsDisks {
      * (capacity − stored items − files). On success the stamped disk is written back through
      * {@code setDiskInSlot} so the owner's change hooks fire.
      */
+    /**
+     * Whether that system can go onto that disk at all: the same question {@link #installOs} answers on its way
+     * to writing, asked on its own so a machine can refuse before it spends a minute copying rather than after.
+     *
+     * <p>A disk already carrying the system answers yes, since putting it there again is nothing to do.
+     */
+    public static boolean roomFor(final int diskCount, final IntFunction<ItemStack> diskInSlot,
+                                  final ResourceLocation osId, final int preferredSlot) {
+        final OsDef def = OsRegistry.getOs(osId);
+        if (def == null) {
+            return false;
+        }
+        final int targetSlot = targetFor(diskCount, diskInSlot, osId, preferredSlot);
+        if (targetSlot == ALREADY_THERE) {
+            return true;
+        }
+        if (targetSlot < 0) {
+            return false;
+        }
+        final ItemStack disk = diskInSlot.apply(targetSlot);
+        if (systemsOn(disk).has(osId)) {
+            return true;
+        }
+        final DiskItem target = (DiskItem) disk.getItem();
+        final long freeWeight = target.spec().capacityItems() * StorageKey.MB_EQ_PER_ITEM
+                - DriveVolumes.usedWeight(disk) - DiskFilesystem.filesWeight(disk);
+        return def.footprintItemsOn(target.spec().era()) * StorageKey.MB_EQ_PER_ITEM <= freeWeight;
+    }
+
+    /**
+     * The slot that system would go onto: the one asked for when it holds a disk, else a disk already carrying
+     * it ({@link #ALREADY_THERE}), else the default target, and {@code -1} when there is no disk at all.
+     */
+    private static int targetFor(final int diskCount, final IntFunction<ItemStack> diskInSlot,
+                                 final ResourceLocation osId, final int preferredSlot) {
+        if (preferredSlot >= 0 && preferredSlot < diskCount
+                && diskInSlot.apply(preferredSlot).getItem() instanceof DiskItem) {
+            return preferredSlot;
+        }
+        for (int i = 0; i < diskCount; i++) {
+            final ItemStack stack = diskInSlot.apply(i);
+            if (stack.getItem() instanceof DiskItem && systemsOn(stack).has(osId)) {
+                return ALREADY_THERE;
+            }
+        }
+        return defaultInstallSlot(diskCount, diskInSlot);
+    }
+
     public static boolean installOs(final int diskCount, final IntFunction<ItemStack> diskInSlot,
                                     final ObjIntConsumer<ItemStack> setDiskInSlot,
                                     final ResourceLocation osId, final int preferredSlot) {
@@ -95,42 +213,36 @@ public final class OsDisks {
         if (def == null) {
             return false;
         }
-        int targetSlot = -1;
-        if (preferredSlot >= 0 && preferredSlot < diskCount
-                && diskInSlot.apply(preferredSlot).getItem() instanceof DiskItem) {
-            targetSlot = preferredSlot;
-        } else {
-            for (int i = 0; i < diskCount; i++) {
-                final ItemStack stack = diskInSlot.apply(i);
-                if (!(stack.getItem() instanceof DiskItem)) {
-                    continue;
-                }
-                if (osId.equals(stack.get(ComputingModule.SYSTEM_OS.get()))) {
-                    // Already stamped with this OS; treat as re-install: success with no mutation.
-                    return true;
-                }
-            }
-            targetSlot = defaultInstallSlot(diskCount, diskInSlot);
-        }
-        if (targetSlot == -1) {
-            return false; // no disk installed
-        }
-        final ItemStack disk = diskInSlot.apply(targetSlot);
-        if (osId.equals(disk.get(ComputingModule.SYSTEM_OS.get()))) {
-            return true; // re-install onto the same disk: nothing to do
-        }
-        final DiskItem target = (DiskItem) disk.getItem();
-        final long diskCapacityItems = target.spec().capacityItems();
-        final long storageUsedWeight = DriveVolumes.usedWeight(disk);
-        final long fsUsedWeight = DiskFilesystem.filesWeight(disk);
-        // Free weight in mB-eq; the system's size in megabytes costs items at the disk's own era.
-        final long freeWeight =
-                diskCapacityItems * StorageKey.MB_EQ_PER_ITEM - storageUsedWeight - fsUsedWeight;
-        if (def.footprintItemsOn(target.spec().era()) * StorageKey.MB_EQ_PER_ITEM > freeWeight) {
+        if (!roomFor(diskCount, diskInSlot, osId, preferredSlot)) {
             return false;
         }
+        final int targetSlot = targetFor(diskCount, diskInSlot, osId, preferredSlot);
+        if (targetSlot == ALREADY_THERE) {
+            /*
+             * A disk already carries it, so there is nothing to add; what there may be is something to put
+             * back. Installing over a system whose files have been deleted is how a wrecked machine is
+             * repaired, and a repair that did nothing because the disk still remembered the system would be
+             * no repair at all.
+             */
+            for (int slot = 0; slot < diskCount; slot++) {
+                final ItemStack carrying = diskInSlot.apply(slot);
+                if (systemsOn(carrying).has(osId)) {
+                    final ItemStack repaired = carrying.copy();
+                    writeLoader(repaired, def);
+                    setDiskInSlot.accept(repaired, slot);
+                    break;
+                }
+            }
+            return true;
+        }
+        final ItemStack disk = diskInSlot.apply(targetSlot);
+        /*
+         * Installed beside whatever the disk already carries rather than over it, and booting by default, which
+         * is what a machine does the moment you finish installing something on it. A disk that carried a system
+         * used to simply lose it here, with nothing anywhere saying so.
+         */
         final ItemStack updated = disk.copy();
-        updated.set(ComputingModule.SYSTEM_OS.get(), osId);
+        updated.set(ComputingModule.DISK_SYSTEMS.get(), systemsOn(disk).with(osId));
         /*
          * A graphical desktop OS lays down the Windows-like system folder skeleton on first install
          * (Program Files, Windows, Users\Public\Desktop, ...). Terminal/network OSes get nothing.
@@ -144,8 +256,37 @@ public final class OsDisks {
             }
             updated.set(ComputingModule.FILESYSTEM.get(), fs);
         }
+        writeLoader(updated, def);
         setDiskInSlot.accept(updated, targetSlot);
         return true;
+    }
+
+    /**
+     * Writes the one file that starts the system, and the folder it sits in.
+     *
+     * <p>A system is a real thing on a real disk here, which is what makes deleting it mean something: a
+     * machine whose loader is gone finds a system and will not start it, and one whose folder is gone finds
+     * nothing at all. Installing again writes this back, which is how such a machine is repaired.
+     */
+    private static void writeLoader(final ItemStack disk, final OsDef def) {
+        final String loader = SystemIntegrity.loaderOf(def);
+        final String folder = SystemIntegrity.folderOf(def);
+        if (loader.isEmpty()) {
+            return;
+        }
+        FilesystemContents fs = disk.getOrDefault(ComputingModule.FILESYSTEM.get(), FilesystemContents.EMPTY);
+        if (!folder.isEmpty()) {
+            fs = fs.withDir(folder);
+        }
+        disk.set(ComputingModule.FILESYSTEM.get(), fs);
+        /*
+         * Written in the kind of filesystem the system's own kernel gives it, not in the one every system
+         * used to have. A flat disk keeps its loader at the root because it has no folder to keep it in.
+         */
+        final KernelDef kernel = OsRegistry.getKernel(def.kernelId());
+        DiskFilesystem.write(disk, loader, FileType.SYS, def.displayName() + " loader",
+                Long.MAX_VALUE,
+                kernel != null ? kernel.filesystem() : FilesystemKind.HIERARCHICAL);
     }
 
     /**
@@ -164,7 +305,11 @@ public final class OsDisks {
         }
         final boolean hadSystem = hasSystem(disk);
         final ItemStack updated = disk.copy();
-        updated.remove(ComputingModule.SYSTEM_OS.get());
+        /*
+         * Every system on it, and with them every greeting each of them remembered: installing again on this
+         * disk is a first meeting again, which is what a format means.
+         */
+        updated.remove(ComputingModule.DISK_SYSTEMS.get());
         updated.remove(ComputingModule.FILESYSTEM.get());
         DriveVolumes.erase(updated);
         updated.remove(ComputingModule.DISK_PUBLIC_PERMILLE.get());
@@ -177,11 +322,11 @@ public final class OsDisks {
      * the first desktop-environment package installed on it (a Linux distribution after its desktop
      * package went in), else null (a TTY-only or network OS).
      */
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public static ResourceLocation installedDesktopId(
-            @org.jetbrains.annotations.Nullable final OsDef os,
-            @org.jetbrains.annotations.Nullable
-            final dev.jstech.computers.program.ComputerConsoleState console) {
+            @Nullable final OsDef os,
+            @Nullable
+            final ComputerConsoleState console) {
         if (os == null) {
             return null;
         }
@@ -203,6 +348,64 @@ public final class OsDisks {
     }
 
     /**
+     * The operating space a network machine draws with, or null when it has none and is a bare prompt.
+     *
+     * <p>What a desktop environment is to a Linux, for the system that has no desktop: the space is a package,
+     * so the machine draws whatever is installed on it and falls back to its prompt when nothing is. That is
+     * why what a monitor opens is asked of this and not of {@link OsCapability}: a network system is capable of
+     * a screen, and whether it has one to show is a thing about the machine rather than about the system.
+     */
+    @Nullable
+    public static ResourceLocation installedSpaceId(
+            @Nullable final OsDef os,
+            @Nullable final ComputerConsoleState console) {
+        if (os == null || os.capability() != OsCapability.NETWORK_GUI || console == null) {
+            return null;
+        }
+        for (final String id : console.installed()) {
+            final ResourceLocation rl = ResourceLocation.tryParse(id);
+            final ProgramSpec spec = rl == null ? null : OsRegistry.getProgram(rl);
+            if (spec != null && spec.kind() == ProgramKind.OPERATING_SPACE
+                    && OsRegistry.getSpace(rl) != null) {
+                return rl;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Puts the space a network system ships with onto the machine, which is what its install pays for.
+     *
+     * <p>Every other kind of system either bundles its interface with itself (the Frames editions) or leaves
+     * the player to fetch one (the distributions). A network system does neither: it arrives with a space on
+     * and the space can be taken off afterwards, so the install writes it and nothing else does. A machine
+     * that already has one keeps it, so installing the system again over a space somebody chose does not
+     * quietly swap it for ours.
+     *
+     * <p>Which space is the system's own is read off the register rather than named here, so a network system
+     * an addon brings arrives with the addon's space by the same rule.
+     *
+     * @return whether a space was put on, so a caller only writes the machine back when something changed
+     */
+    public static boolean installBundledSpace(@Nullable final OsDef os,
+                                              @Nullable final ComputerConsoleState console) {
+        if (os == null || os.capability() != OsCapability.NETWORK_GUI || console == null
+                || installedSpaceId(os, console) != null) {
+            return false;
+        }
+        for (final ProgramSpec spec : OsRegistry.programs()) {
+            if (spec.kind() == ProgramKind.OPERATING_SPACE
+                    && spec.platforms().contains(os.platform())
+                    && OsRegistry.getSpace(spec.id()) != null) {
+                console.install(spec.id().toString());
+                console.setInstalledVersion(spec.id().toString(), ProgramVersions.of(spec.id().toString()));
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Free weight in mB-equivalents available on a system disk for user files: the disk capacity
      * minus the stored items, the existing files, and the installed OS footprint.
      */
@@ -213,10 +416,17 @@ public final class OsDisks {
         final long capacity = diskItem.spec().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
         final long storageUsed = DriveVolumes.usedWeight(disk);
         final long fsUsed = DiskFilesystem.filesWeight(disk);
-        final ResourceLocation osId = disk.get(ComputingModule.SYSTEM_OS.get());
-        final OsDef os = osId != null ? OsRegistry.getOs(osId) : null;
-        final long osReserved = os != null
-                ? os.footprintItemsOn(diskItem.spec().era()) * StorageKey.MB_EQ_PER_ITEM : 0L;
+        /*
+         * Every system on the disk takes its own room. A disk carrying two used to be charged for one of them,
+         * so it read as having space it did not have and a third install could be accepted onto nothing.
+         */
+        long osReserved = 0L;
+        for (final ResourceLocation osId : systemsOn(disk).ids()) {
+            final OsDef os = OsRegistry.getOs(osId);
+            if (os != null) {
+                osReserved += os.footprintItemsOn(diskItem.spec().era()) * StorageKey.MB_EQ_PER_ITEM;
+            }
+        }
         return Math.max(0L, capacity - storageUsed - fsUsed - osReserved);
     }
 

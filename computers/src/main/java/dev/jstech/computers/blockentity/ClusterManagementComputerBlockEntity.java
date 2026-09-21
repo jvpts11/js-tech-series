@@ -19,6 +19,7 @@ import dev.jstech.computers.hardware.PcieGeneration;
 import dev.jstech.computers.item.ClusterInterfaceCardItem;
 import dev.jstech.computers.item.MotherboardItem;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.os.InstallMode;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsGating;
 import dev.jstech.computers.os.IOsHost;
@@ -26,12 +27,15 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.core.id.IStableId;
 import dev.jstech.core.network.NetworkSystem;
+import dev.jstech.core.network.ServerRouterElement;
 import dev.jstech.core.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
@@ -237,7 +241,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
         final long now = serverLevel.getGameTime();
         final boolean refresh = now != routersRefreshedAt;
         routersRefreshedAt = now;
-        for (final dev.jstech.core.network.ServerRouterElement router : system.routersOf(networkUuid())) {
+        for (final ServerRouterElement router : system.routersOf(networkUuid())) {
             if (serverLevel.getBlockEntity(BlockPos.of(router.pos())) instanceof ServerRouterBlockEntity routerBe) {
                 if (refresh) {
                     routerBe.recomputeNow();
@@ -375,7 +379,21 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
 
     // the install job: timed, per node, cancellable
 
-    public enum JobKind { SYSTEM, PROGRAM }
+    public enum JobKind implements IStableId {
+        SYSTEM(0),
+        PROGRAM(1);
+
+        private final int id;
+
+        JobKind(final int id) {
+            this.id = id;
+        }
+
+        @Override
+        public int id() {
+            return id;
+        }
+    }
 
     /** One node being written right now. */
     public record Lane(NodeRef node, String name, int ticksTotal, int ticksLeft) {
@@ -492,7 +510,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
         }
         if (kind == JobKind.SYSTEM) {
             final OsDef os = OsRegistry.getOs(medium.id());
-            if (os == null || os.installMode() != dev.jstech.computers.os.InstallMode.GUIDED) {
+            if (os == null || os.installMode() != InstallMode.GUIDED) {
                 return "that system installs by hand from its own shell";
             }
         } else {
@@ -747,7 +765,7 @@ public class ClusterManagementComputerBlockEntity extends AbstractComputerBlockE
             case DATA_DATACENTERS -> datacenterSections().size();
             case DATA_LANES -> parallelLanes();
             case DATA_MANAGER_INSTALLED -> console() != null
-                    && console().isInstalled(dev.jstech.computers.program.Programs.CLUSTER_MANAGER.toString())
+                    && console().isInstalled(Programs.CLUSTER_MANAGER.toString())
                     ? 1 : 0;
             default -> 0;
         };

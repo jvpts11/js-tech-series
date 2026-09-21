@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.EraThemes;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
@@ -26,8 +27,46 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
     /** The skin this screen paints with for the current render pass; STANDARD until {@link #init} resolves it. */
     protected EraTheme theme = EraThemes.STANDARD;
 
+    /**
+     * Where a label goes when the screen draws none.
+     *
+     * <p>A computer screen that fills a monitor writes its own headings and has no use for the two a
+     * container screen puts up by itself, and there is no switch for turning them off; putting them far
+     * enough out is how it is done.
+     */
+    protected static final int OFF_SCREEN = -10_000;
+
+    /** The size a machine's own words are written at, and the step from one line of them to the next. */
+    protected static final float WALL_SCALE = TextWall.SCALE;
+    protected static final int WALL_ROW = TextWall.ROW;
+
     protected AbstractComputerScreen(final T menu, final Inventory playerInventory, final Component title) {
         super(menu, playerInventory, title);
+    }
+
+    /** Draws one line of a text wall with its top left corner at {@code (x, y)}. */
+    protected void wall(final GuiGraphics g, final String line, final int x, final int y, final int color) {
+        TextWall.draw(g, font, line, x, y, color);
+    }
+
+    /** The same, centred on {@code cx}. */
+    protected void wallCentered(final GuiGraphics g, final String line, final int cx, final int y, final int color) {
+        TextWall.centered(g, font, line, cx, y, color);
+    }
+
+    /** The same, ending at {@code right} rather than starting at a left edge. */
+    protected void wallRight(final GuiGraphics g, final String line, final int right, final int y, final int color) {
+        TextWall.right(g, font, line, right, y, color);
+    }
+
+    /** How wide that line comes out at wall size, in screen pixels. */
+    protected int wallWidth(final String line) {
+        return TextWall.width(font, line);
+    }
+
+    /** That line cut to the room it has, so a name somebody else chose cannot run past its column. */
+    protected String wallClip(final String line, final int room) {
+        return TextWall.clip(font, line, room);
     }
 
     /**
@@ -46,9 +85,9 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
      * coordinates. A recipe viewer placing its panel beside the monitor reads this so the panel sits next to the
      * bezel rather than over it.
      */
-    public dev.jstech.computers.client.theme.MonitorFrameStyle.Geometry frameBounds() {
+    public MonitorFrameStyle.Geometry frameBounds() {
         final HardwareEra era = screenEra();
-        return dev.jstech.computers.client.theme.MonitorFrameStyle
+        return MonitorFrameStyle
                 .forEra(era == null ? HardwareEra.STANDARD : era)
                 .geometry(leftPos, topPos, imageWidth, imageHeight);
     }

@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Tech Series.
  */
 package dev.jstech.tests.clienttest;
 
@@ -20,22 +20,36 @@ import java.util.List;
 public final class ClientTestSuite {
 
     private static final List<Class<?>> CLASSES = List.of(
-            CannonEditorClientTests.class,
+            SigmaEditorClientTests.class,
+            CdeClientTests.class,
             CraftingChainClientTests.class,
             DesktopMenuClientTests.class,
             ExposureClientTests.class,
             FilesSyncClientTests.class,
+            FreeBsdClientTests.class,
             FullJourneyClientTests.class,
             GatewayManagerClientTests.class,
             InstallMediaClientTests.class,
+            InteracTuiClientTests.class,
+            LeftoverProgramsClientTests.class,
+            LiveInstallClientTests.class,
+            McNetSpaceClientTests.class,
             TaskbarClientTests.class,
             TerminalEditorClientTests.class,
             MekanismClientTests.class,
             NetworkInteractorClientTests.class,
             NetworkSharesClientTests.class,
+            OpenWithClientTests.class,
+            PanelStylesClientTests.class,
             SettingsSharingClientTests.class,
+            SourceBuildClientTests.class,
             SystemUiClientTests.class,
-            UiSweepClientTests.class);
+            TerminalSelectionClientTests.class,
+            TerminalWidthClientTests.class,
+            TrashClientTests.class,
+            UiSweepClientTests.class,
+            WreckedMachineClientTests.class,
+            UnixClientTests.class);
 
     private ClientTestSuite() {
     }

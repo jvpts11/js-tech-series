@@ -7,9 +7,9 @@
  */
 package dev.jstech.computers.client;
 
-import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.client.os.IDesktopApp;
 import dev.jstech.computers.client.os.DesktopWindow;
+import dev.jstech.computers.client.os.OsSkin;
 import dev.jstech.computers.client.theme.NmsThemes;
 import dev.jstech.computers.gui.layout.NmsLayout;
 import dev.jstech.computers.operation.payload.IqlFileContentPayload;
@@ -24,6 +24,8 @@ import dev.jstech.computers.operation.payload.SaveIqlFilePayload;
 import dev.jstech.computers.program.ProgramKeybinds;
 import dev.jstech.core.client.gui.theme.EraTheme;
 import dev.jstech.core.client.gui.theme.JsTechTheme;
+import java.util.HashSet;
+import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -34,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * The Network Management Studio as a desktop window (an {@link IDesktopApp}): an in-world clone of SQL
@@ -119,8 +122,8 @@ public final class NmsApp implements IDesktopApp {
     private double lastMouseX;
     private double lastMouseY;
     private EraTheme theme = NmsThemes.of(null);
-    private dev.jstech.computers.client.os.OsSkin osSkin =
-            dev.jstech.computers.client.os.OsSkin.fallback();
+    private OsSkin osSkin =
+            OsSkin.fallback();
 
     private IqlEditor editor;
     private final List<IqlResultPayload.Row> rows = new ArrayList<>();
@@ -269,7 +272,7 @@ public final class NmsApp implements IDesktopApp {
         liveItemTypes = payload.itemTypes();
         liveOperations = payload.operations();
         liveEngine = payload.engine();
-        final java.util.Set<String> expanded = new java.util.HashSet<>();
+        final Set<String> expanded = new HashSet<>();
         if (treeRoot != null) {
             captureExpanded(treeRoot, expanded);
         }
@@ -282,7 +285,7 @@ public final class NmsApp implements IDesktopApp {
         return node.inject != null ? node.inject : node.label;
     }
 
-    private void captureExpanded(final Node node, final java.util.Set<String> out) {
+    private void captureExpanded(final Node node, final Set<String> out) {
         if (node.expanded) {
             out.add(nodeKey(node));
         }
@@ -291,7 +294,7 @@ public final class NmsApp implements IDesktopApp {
         }
     }
 
-    private void applyExpanded(final Node node, final java.util.Set<String> expanded) {
+    private void applyExpanded(final Node node, final Set<String> expanded) {
         if (node.expandable()) {
             node.expanded = expanded.contains(nodeKey(node));
         }
@@ -546,7 +549,7 @@ public final class NmsApp implements IDesktopApp {
     // rendering
 
     @Override
-    public void applySkin(final dev.jstech.computers.client.os.OsSkin skin) {
+    public void applySkin(final OsSkin skin) {
         this.osSkin = skin;
     }
 
@@ -1071,10 +1074,10 @@ public final class NmsApp implements IDesktopApp {
             fileMenuOpen = false;
             return true;
         }
-        final boolean ctrl = (mods & org.lwjgl.glfw.GLFW.GLFW_MOD_CONTROL) != 0;
-        final boolean shift = (mods & org.lwjgl.glfw.GLFW.GLFW_MOD_SHIFT) != 0;
+        final boolean ctrl = (mods & GLFW.GLFW_MOD_CONTROL) != 0;
+        final boolean shift = (mods & GLFW.GLFW_MOD_SHIFT) != 0;
         if (ctrl) {
-            if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_S) {
+            if (key == GLFW.GLFW_KEY_S) {
                 if (shift) {
                     fileSaveAs();
                 } else {
@@ -1082,11 +1085,11 @@ public final class NmsApp implements IDesktopApp {
                 }
                 return true;
             }
-            if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_N) {
+            if (key == GLFW.GLFW_KEY_N) {
                 fileNew();
                 return true;
             }
-            if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_O) {
+            if (key == GLFW.GLFW_KEY_O) {
                 fileOpen();
                 return true;
             }

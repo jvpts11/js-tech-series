@@ -8,8 +8,11 @@
 package dev.jstech.computers.menu;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.CraftingComputerBlock;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.gui.layout.CraftingComputerLayout;
+import dev.jstech.core.tier.HardwareEra;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -18,6 +21,7 @@ import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Menu for the Crafting Computer's assembly surface: motherboard, PSU, CPU, RAM, PCIe (where the Crafting Card goes) and disks (each restricted to its component category and clamped to the count the installed motherboard offers) plus the player inventory.
@@ -61,7 +65,7 @@ public class CraftingComputerMenu extends AbstractComputerMenu {
         addDataSlots(this.data);
     }
 
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     public static CraftingComputerMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                                    final RegistryFriendlyByteBuf buf) {
         if (playerInventory.player.level().getBlockEntity(buf.readBlockPos())
@@ -71,7 +75,7 @@ public class CraftingComputerMenu extends AbstractComputerMenu {
         return null;
     }
 
-    public net.minecraft.core.BlockPos computerPos() {
+    public BlockPos computerPos() {
         return blockEntity.getBlockPos();
     }
 
@@ -95,8 +99,8 @@ public class CraftingComputerMenu extends AbstractComputerMenu {
         return blockEntity.boardDiskSlots();
     }
 
-    @org.jetbrains.annotations.Nullable
-    public dev.jstech.core.tier.HardwareEra hardwareEra() {
+    @Nullable
+    public HardwareEra hardwareEra() {
         return blockEntity.displayEra();
     }
 
@@ -174,7 +178,7 @@ public class CraftingComputerMenu extends AbstractComputerMenu {
          */
         return access.evaluate((level, pos) ->
                 level.getBlockState(pos).getBlock()
-                        instanceof dev.jstech.computers.block.CraftingComputerBlock
+                        instanceof CraftingComputerBlock
                         && player.canInteractWithBlock(pos, 4.0), true);
     }
 

@@ -3,20 +3,36 @@
  *
  * Copyright (C) 2026 jvpts11
  *
- * This file is part of J's Computers.
+ * This file is part of J's Core.
  */
 package dev.jstech.core.uuid;
+
+import dev.jstech.core.id.IStableId;
+import dev.jstech.core.id.StableIds;
 
 /**
  * Lifecycle state of a network UUID.
  */
-public enum NetworkUuidState {
+public enum NetworkUuidState implements IStableId {
 
-    ACTIVE,
+    ACTIVE(0),
 
-    ORPHANED,
+    ORPHANED(1),
 
-    CONFLICTED;
+    CONFLICTED(2);
+
+    private static final StableIds<NetworkUuidState> IDS = StableIds.of(NetworkUuidState.class);
+
+    private final int id;
+
+    NetworkUuidState(final int id) {
+        this.id = id;
+    }
+
+    @Override
+    public int id() {
+        return id;
+    }
 
     public boolean isOperational() {
         return this == ACTIVE;
@@ -24,5 +40,10 @@ public enum NetworkUuidState {
 
     public boolean isRecoverable() {
         return this == ORPHANED || this == CONFLICTED;
+    }
+
+    /** The state that declares {@code id}; an id no state declares reads as {@link #ACTIVE}. */
+    public static NetworkUuidState byId(final int id) {
+        return IDS.byId(id, ACTIVE);
     }
 }

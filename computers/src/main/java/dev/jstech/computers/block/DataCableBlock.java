@@ -7,14 +7,15 @@
  */
 package dev.jstech.computers.block;
 
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.block.part.ICablePart;
 import dev.jstech.computers.blockentity.DataCableBlockEntity;
+import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.network.DataTier;
+import dev.jstech.core.network.IDataNetworkConnectable;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.util.BlockEntityTickers;
 import net.minecraft.core.BlockPos;
@@ -58,9 +59,9 @@ public class DataCableBlock extends PipeBlock implements EntityBlock {
 
     public static final MapCodec<DataCableBlock> CODEC = RecordCodecBuilder.mapCodec(instance ->
             instance.group(
-                    Codec.STRING.fieldOf("tier").forGetter(block -> block.tier.name()),
+                    StableCodecs.byName(DataTier.class).fieldOf("tier").forGetter(block -> block.tier),
                     propertiesCodec()
-            ).apply(instance, (tierName, props) -> new DataCableBlock(props, DataTier.valueOf(tierName))));
+            ).apply(instance, (tier, props) -> new DataCableBlock(props, tier)));
 
     private static final Map<Direction, AABB> PART_BOXES = buildPartBoxes();
     private static final Map<Direction, VoxelShape> PART_SHAPES = buildPartShapes();
@@ -119,7 +120,7 @@ public class DataCableBlock extends PipeBlock implements EntityBlock {
          * The cable only shows a connection where the device actually accepts a cable on that face
          * (a computer accepts one on its rear only), so the rendered nub never lies about connectivity.
          */
-        return neighbor instanceof dev.jstech.core.network.IDataNetworkConnectable device
+        return neighbor instanceof IDataNetworkConnectable device
                 && device.acceptedCableTiers().contains(this.tier)
                 && device.connectsOnFace(neighborState, direction.getOpposite(), this.tier);
     }

@@ -134,13 +134,13 @@ public final class OperationStatisticsGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 6, () -> rackBe.getServerStorage(0).insert(Items.COBBLESTONE, 200))
                 .thenExecuteAfter(2, () -> {
-                    helper.assertTrue(cliContains(shell.run("stats", cli), "no operations settled"),
+                    helper.assertTrue(cliContains(shell.run("interac stats", cli), "no operations settled"),
                             "an idle network has nothing to report");
                     helper.assertTrue(cliContains(shell.run("operation select 30 cobblestone", cli), "SELECT queued"),
                             "the pull queues");
                 })
                 .thenExecuteAfter(30, () -> {
-                    final CliShell.Response stats = shell.run("stats", cli);
+                    final CliShell.Response stats = shell.run("interac stats", cli);
                     helper.assertTrue(cliContains(stats, "SELECT") && cliContains(stats, "1 ops"),
                             "stats lists the settled SELECT; got " + stats.lines());
                     helper.assertTrue(cliContains(stats, "peak 1 in flight"), "the day's peak is reported");

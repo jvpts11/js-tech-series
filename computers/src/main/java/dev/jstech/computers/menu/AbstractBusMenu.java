@@ -9,6 +9,7 @@ package dev.jstech.computers.menu;
 
 import dev.jstech.computers.block.DataCableBlock;
 import dev.jstech.computers.block.part.AbstractBusPart;
+import dev.jstech.computers.block.part.CablePartType;
 import dev.jstech.computers.gui.layout.BusLayout;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -104,8 +105,8 @@ public abstract class AbstractBusMenu extends AbstractComputerMenu {
      */
     public boolean stockControlsApply() {
         final var kind = part.type();
-        return kind != dev.jstech.computers.block.part.CablePartType.INPUT
-                && kind != dev.jstech.computers.block.part.CablePartType.RECEIVING;
+        return kind != CablePartType.INPUT
+                && kind != CablePartType.RECEIVING;
     }
 
     public int min() {

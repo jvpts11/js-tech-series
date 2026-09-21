@@ -7,6 +7,7 @@
  */
 package dev.jstech.industrial.recipe;
 
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.industrial.IndustrialModule;
@@ -67,7 +68,7 @@ public record MaceratingRecipe(Ingredient ingredient, ItemStack result, int proc
                 instance.group(
                         Ingredient.CODEC_NONEMPTY.fieldOf("ingredient").forGetter(MaceratingRecipe::ingredient),
                         ItemStack.CODEC.fieldOf("result").forGetter(MaceratingRecipe::result),
-                        com.mojang.serialization.Codec.INT.optionalFieldOf("processing_time", 200)
+                        Codec.INT.optionalFieldOf("processing_time", 200)
                                 .forGetter(MaceratingRecipe::processingTime)
                 ).apply(instance, MaceratingRecipe::new));
 

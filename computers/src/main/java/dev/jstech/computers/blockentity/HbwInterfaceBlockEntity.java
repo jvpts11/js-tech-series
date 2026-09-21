@@ -14,9 +14,12 @@ import dev.jstech.computers.item.PhiCoprocessorItem;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.core.network.DataTier;
 import dev.jstech.core.network.NetworkSystem;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -79,7 +82,7 @@ public class HbwInterfaceBlockEntity extends BlockEntity {
     private long parallelCrafts;
 
     // operationId -> number of parallel slots it holds; one craft can hold several so it can fan out across CCs.
-    private final java.util.Map<UUID, Integer> activeCraftSlots = new java.util.LinkedHashMap<>();
+    private final Map<UUID, Integer> activeCraftSlots = new LinkedHashMap<>();
 
     public HbwInterfaceBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.HBW_INTERFACE_BE.get(), pos, state);
@@ -133,7 +136,7 @@ public class HbwInterfaceBlockEntity extends BlockEntity {
                 final BlockState state = serverLevel.getBlockState(neighbor);
                 // The fabric is the high-compute cable only. A cabinet is a leaf on it, not a conduit.
                 if (state.getBlock() instanceof DataCableBlock cable
-                        && cable.tier() == dev.jstech.core.network.DataTier.HPC) {
+                        && cable.tier() == DataTier.HPC) {
                     queue.add(neighbor);
                     continue;
                 }
@@ -232,7 +235,7 @@ public class HbwInterfaceBlockEntity extends BlockEntity {
         for (final Direction direction : Direction.values()) {
             final BlockPos neighbor = worldPosition.relative(direction);
             if (serverLevel.getBlockState(neighbor).getBlock() instanceof DataCableBlock cable
-                    && cable.tier() == dev.jstech.core.network.DataTier.T2_HBW) {
+                    && cable.tier() == DataTier.T2_HBW) {
                 return neighbor.asLong();
             }
         }
@@ -299,8 +302,8 @@ public class HbwInterfaceBlockEntity extends BlockEntity {
     }
 
     /** The crafts holding slots here right now, by operation id, for the console's queue view. */
-    public java.util.Map<UUID, Integer> heldSlots() {
-        return java.util.Map.copyOf(activeCraftSlots);
+    public Map<UUID, Integer> heldSlots() {
+        return Map.copyOf(activeCraftSlots);
     }
 
     public void releaseCraftSlot(final UUID operationId) {
