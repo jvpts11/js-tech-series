@@ -47,6 +47,19 @@ jobs:
             echo "CHANGELOG.md has no section for $VERSION."
             exit 1
           fi
+          # A release body may be 125,000 characters and a long cycle writes more than that, so the notes
+          # are cut at the last whole entry that fits and say where the rest of them are.
+          limit=123000
+          if [ "$(wc -m < release-notes.md)" -gt "$limit" ]; then
+            awk -v limit="$limit" '{ size += length($0) + 1; if (size > limit) exit; print }' \
+              release-notes.md > release-notes.cut
+            # The cut can land inside an entry, so the last one is dropped whole rather than left half said.
+            awk '/^- / { last = NR } { line[NR] = $0 } END { for (i = 1; i < last; i++) print line[i] }' \
+              release-notes.cut > release-notes.md
+            printf '\nThe rest of this version'"'"'s entries are in [CHANGELOG.md](%s/%s/blob/%s/CHANGELOG.md).\n' \
+              "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_REF_NAME" >> release-notes.md
+            echo "Notes cut to $(wc -m < release-notes.md) characters."
+          fi
           # A release that brings more than fixes gives its name after the date: "## [0.3.0a] - 2026-09-13 - The Programming Update".
           name=$(grep -m 1 -F "## [$VERSION]" CHANGELOG.md | sed -n 's/^## \[[^]]*\] - [0-9-]* - //p')
           if [ -n "$name" ]; then
