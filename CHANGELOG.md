@@ -50,6 +50,11 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   by line. KnotHub runs on a server beside the Messenger Service, and the history belongs to that machine
   the same way. It sits under the package manager rather than beside it: a package is a finished thing one
   player hands to another, and this is the code before it became one.
+- The eight programs and the two services carry icons of their own, in the three styles the desktops here
+  are drawn in: the outlined artwork of the earliest edition, the glossy one after it, and the flat one the
+  later editions and the Linux desktops wear. A card and a heart, a coiled snake round an apple, a parcel,
+  a painter's palette, a sheet of cells, two speech bubbles, the fork of a history, and the two services as
+  the server that runs them with what they serve badged on the corner.
 - The editor grew into a real one. It was a name, a text area and a status line; it now has line numbers,
   find and replace, go to line, the line and column in the bar, Open and Save As through the system's own
   file window, and more than one file open at a time. A page with unsaved work on it asks once before it
