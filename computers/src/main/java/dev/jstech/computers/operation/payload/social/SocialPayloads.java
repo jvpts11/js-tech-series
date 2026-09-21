@@ -7,7 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.social;
 
-import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.ServerServices;
 import dev.jstech.computers.client.os.KnotApp;
 import dev.jstech.computers.client.os.MessengerApp;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
@@ -24,7 +24,6 @@ import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.program.KnotRepository;
 import dev.jstech.computers.program.MessengerLog;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.network.NetworkSystem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,14 +43,19 @@ import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.niHo
  * The payloads behind the two programs where the other end is another player: the messenger and the
  * source repository.
  *
- * <p>Both services live on the network's Mainframe, the way the IQL Engine and the Mirror do, and both
- * are reached through whichever computer the player happens to be sitting at. That is what makes them
- * the network's rather than one machine's.
+ * <p>Both services run on a server mounted in a rack, and both are reached through whichever computer the
+ * player happens to be sitting at. The service belongs to that machine: somebody mounted it, installed the
+ * software and switched it on, and pulling the server takes the conversations and the source with it. What
+ * the network gives is only the way to reach it from anywhere on the network.
  */
 public final class SocialPayloads {
 
     /** The longest line of a comparison that travels, which is what the payload's own cap allows. */
     private static final int MAX_DIFF_LINE = 240;
+
+    /** The services these two windows talk to, by the path each is installed under. */
+    private static final String MESSENGER_SERVICE = "messenger_service";
+    private static final String KNOT_SERVICE = "knothub";
 
     private SocialPayloads() {
     }
@@ -72,15 +76,23 @@ public final class SocialPayloads {
 
     private static void handleMessenger(final MessengerActionPayload payload, final ServerPlayer player,
                                         final ServerLevel level) {
-        final MainframeBlockEntity mainframe = orchestratorFor(player, level,
-                payload.hostPos(), payload.monitorPos());
-        if (mainframe == null) {
+        final ServerServices.Host host = serviceFor(player, level,
+                payload.hostPos(), payload.monitorPos(), MESSENGER_SERVICE);
+        if (host == null) {
+            /*
+             * No server on this network is running it. The window is told so rather than left waiting, and
+             * it puts its own compose box beyond use: a message typed into a service that does not exist
+             * has nowhere at all to go, and letting it look sent would be the worst of the answers.
+             */
             PacketDistributor.sendToPlayer(player, new MessengerStatePayload(
                     new MessengerStatePayload.Service(false, "", 0L, 0),
                     List.of(), List.of(MessengerLog.LOBBY), MessengerLog.LOBBY, List.of()));
             return;
         }
-        final MessengerLog log = mainframe.messengerLog();
+        final MessengerLog log = host.rack().messengerAt(host.slot());
+        if (log == null) {
+            return;
+        }
         final String who = player.getGameProfile().getName();
         final String room = payload.room().isBlank() ? MessengerLog.LOBBY : payload.room();
         final long now = level.getGameTime();
@@ -90,10 +102,10 @@ public final class SocialPayloads {
             log.disconnect(who);
             return; // nothing to draw for a window that is closing
         }
-        log.connect(who, now);
+        log.connect(who, room, now);
         final boolean spoke = switch (payload.action()) {
-            case MessengerActionPayload.SAY -> mainframe.messengerSay(room, who, payload.text(), now, false);
-            case MessengerActionPayload.NUDGE -> mainframe.messengerSay(room, who, "", now, true);
+            case MessengerActionPayload.SAY -> log.say(room, who, payload.text(), now, false) != null;
+            case MessengerActionPayload.NUDGE -> log.say(room, who, "", now, true) != null;
             default -> false;
         };
         /*
@@ -102,33 +114,37 @@ public final class SocialPayloads {
          * seconds, and telling all of them each time would be a packet for every pair of people watching.
          */
         if (spoke) {
-            tellEveryone(level, mainframe, room);
+            host.changed(); // what was said rides on the Server item, so it is written down at once
+            tellEveryone(level, host, log);
         } else {
-            PacketDistributor.sendToPlayer(player, stateOf(mainframe, room, log));
+            PacketDistributor.sendToPlayer(player, stateOf(host, room, log));
         }
     }
 
     /**
      * Sends the state to every player on the server who has this network's messenger open.
      *
+     * <p>Each of them is sent the room they are actually looking at, not the room that was just spoken in.
+     * Sending everybody the same room moved their window into a conversation they had not opened, so one
+     * person saying something in the lobby pulled everybody else out of whatever they were reading.
+     *
      * <p>Somebody who has left the game is dropped here rather than being left counted for ever. The
      * window says goodbye when it closes, but a client that crashed or a player who logged out never got
      * to, and the service's memory cost would climb with people who are not there any more.
      */
-    private static void tellEveryone(final ServerLevel level, final MainframeBlockEntity mainframe,
-                                     final String room) {
-        final MessengerLog log = mainframe.messengerLog();
+    private static void tellEveryone(final ServerLevel level, final ServerServices.Host host,
+                                     final MessengerLog log) {
         for (final String who : log.connected()) {
             final ServerPlayer other = level.getServer().getPlayerList().getPlayerByName(who);
             if (other == null) {
                 log.disconnect(who);
             } else {
-                PacketDistributor.sendToPlayer(other, stateOf(mainframe, room, log));
+                PacketDistributor.sendToPlayer(other, stateOf(host, log.roomOf(who), log));
             }
         }
     }
 
-    private static MessengerStatePayload stateOf(final MainframeBlockEntity mainframe,
+    private static MessengerStatePayload stateOf(final ServerServices.Host host,
                                                  final String room, final MessengerLog log) {
         final List<MessengerStatePayload.Line> lines = new ArrayList<>();
         final List<String> connected = log.connected();
@@ -138,15 +154,22 @@ public final class SocialPayloads {
         }
         final List<String> rooms = log.rooms();
         return new MessengerStatePayload(
-                new MessengerStatePayload.Service(mainframe.isMessengerActive(), nameOf(mainframe),
+                new MessengerStatePayload.Service(true,
+                        cut(host.name(), MessengerStatePayload.Service.MAX_HOST),
                         log.historyBytes(), log.ramMb()),
-                clip(connected, MessengerStatePayload.MAX_NAMES),
-                clip(rooms, MessengerStatePayload.MAX_NAMES), room, lines);
+                names(connected), names(rooms), cut(room, MessengerStatePayload.MAX_NAME_LETTERS), lines);
     }
 
-    /** What a machine calls itself, or nothing when it has not been named. */
-    private static String nameOf(final MainframeBlockEntity mainframe) {
-        return mainframe.console() == null ? "" : mainframe.console().computerName();
+    /** As many names as the packet lists, each as long as it carries one. */
+    private static List<String> names(final List<String> values) {
+        final List<String> out = new ArrayList<>(Math.min(values.size(), MessengerStatePayload.MAX_NAMES));
+        for (final String value : values) {
+            if (out.size() >= MessengerStatePayload.MAX_NAMES) {
+                break;
+            }
+            out.add(cut(value, MessengerStatePayload.MAX_NAME_LETTERS));
+        }
+        return out;
     }
 
     private static void handleMessengerState(final MessengerStatePayload payload, final Player player) {
@@ -157,21 +180,21 @@ public final class SocialPayloads {
 
     private static void handleKnot(final KnotActionPayload payload, final ServerPlayer player,
                                    final ServerLevel level) {
-        final MainframeBlockEntity mainframe = orchestratorFor(player, level,
-                payload.hostPos(), payload.monitorPos());
-        if (mainframe == null || !mainframe.isKnotActive()) {
+        final ServerServices.Host host = serviceFor(player, level,
+                payload.hostPos(), payload.monitorPos(), KNOT_SERVICE);
+        final KnotRepository repository = host == null ? null : host.rack().knotAt(host.slot());
+        if (repository == null) {
             PacketDistributor.sendToPlayer(player, new KnotStatePayload(
                     new KnotStatePayload.Service(false, "", 0L), List.of(), List.of(), 0, List.of()));
             return;
         }
-        final KnotRepository repository = mainframe.knotRepository();
         final String note = switch (payload.action()) {
-            case KnotActionPayload.PUSH -> push(payload, player, level, mainframe);
+            case KnotActionPayload.PUSH -> push(payload, player, level, host, repository);
             case KnotActionPayload.PULL -> pull(payload, level, repository);
             default -> "";
         };
         PacketDistributor.sendToPlayer(player,
-                knotStateOf(mainframe, repository, payload.revision(), note));
+                knotStateOf(host, repository, payload.revision(), note));
     }
 
     /**
@@ -181,7 +204,8 @@ public final class SocialPayloads {
      * button that does nothing at all is the worst of the possible answers.
      */
     private static String push(final KnotActionPayload payload, final ServerPlayer player,
-                               final ServerLevel level, final MainframeBlockEntity mainframe) {
+                               final ServerLevel level, final ServerServices.Host host,
+                               final KnotRepository repository) {
         if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
             return "No computer";
         }
@@ -193,10 +217,12 @@ public final class SocialPayloads {
         if (content == null) {
             return "No " + payload.file() + " on this machine";
         }
-        return mainframe.knotCommit(payload.file(), player.getGameProfile().getName(),
-                payload.message(), content, level.getGameTime()) == null
-                ? "Nothing changed since the last revision"
-                : "Pushed " + payload.file();
+        if (repository.commit(payload.file(), player.getGameProfile().getName(),
+                payload.message(), content, level.getGameTime()) == null) {
+            return "Nothing changed since the last revision";
+        }
+        host.changed();
+        return "Pushed " + payload.file();
     }
 
     /** Writes a revision back onto the machine's disk, where the editor can open it. */
@@ -225,7 +251,7 @@ public final class SocialPayloads {
         return "Wrote r" + revision.number() + " to " + file;
     }
 
-    private static KnotStatePayload knotStateOf(final MainframeBlockEntity mainframe,
+    private static KnotStatePayload knotStateOf(final ServerServices.Host host,
                                                 final KnotRepository repository, final int shown,
                                                 final String note) {
         final List<KnotStatePayload.Revision> revisions = new ArrayList<>();
@@ -236,8 +262,8 @@ public final class SocialPayloads {
                     revision.message(), file == null ? "" : file));
         }
         return new KnotStatePayload(
-                new KnotStatePayload.Service(mainframe.isKnotActive(), nameOf(mainframe),
-                        repository.bytes(), clipLine(note)),
+                new KnotStatePayload.Service(true, cut(host.name(), KnotStatePayload.Service.MAX_HOST),
+                        repository.bytes(), cut(note, KnotStatePayload.Service.MAX_NOTE)),
                 clip(repository.files(), KnotStatePayload.MAX_FILES),
                 revisions, shown, diffOf(repository, shown));
     }
@@ -280,28 +306,19 @@ public final class SocialPayloads {
     /* Shared */
 
     /**
-     * The Mainframe that orchestrates the network the player's machine is on, or null when there is none.
+     * The server on the player's network that is running {@code programPath}, or null when none is.
      *
-     * <p>Both services live there rather than on the computer in front of the player, which is what makes
-     * them the network's: two players at two different machines are talking to the same service.
+     * <p>The service runs somewhere else than the computer in front of the player, which is what makes it
+     * worth having: two players at two different machines reach the same one. Null is a complete answer,
+     * and the window shows it as the service not being there.
      */
     @Nullable
-    private static MainframeBlockEntity orchestratorFor(final ServerPlayer player, final ServerLevel level,
-                                                        final BlockPos hostPos, final BlockPos monitorPos) {
-        final IComputerTerminalHost host = niHost(player, level, hostPos, monitorPos);
-        if (host == null) {
-            return null;
-        }
-        if (host instanceof MainframeBlockEntity self) {
-            return self;
-        }
-        if (host.networkUuid() == null) {
-            return null;
-        }
-        return NetworkSystem.get(level).mainframePositionOf(host.networkUuid())
-                .map(pos -> level.getBlockEntity(BlockPos.of(pos))
-                        instanceof MainframeBlockEntity mainframe ? mainframe : null)
-                .orElse(null);
+    private static ServerServices.Host serviceFor(final ServerPlayer player, final ServerLevel level,
+                                                  final BlockPos hostPos, final BlockPos monitorPos,
+                                                  final String programPath) {
+        final IComputerTerminalHost terminal = niHost(player, level, hostPos, monitorPos);
+        return terminal == null ? null
+                : ServerServices.find(level, terminal.networkUuid(), programPath);
     }
 
     private static FileType typeOf(final String path) {
@@ -322,6 +339,17 @@ public final class SocialPayloads {
      * than being shown short.
      */
     private static String clipLine(final String text) {
-        return text.length() > MAX_DIFF_LINE ? text.substring(0, MAX_DIFF_LINE) : text;
+        return cut(text, MAX_DIFF_LINE);
+    }
+
+    /**
+     * Cuts a string to what its field carries.
+     *
+     * <p>Every one of these fields refuses what it is handed by throwing rather than by shortening it, so a
+     * machine named at length, or a note built out of a long file name, would take the whole window down
+     * instead of simply reading short. Cut where the answer is built, once, for each field that can grow.
+     */
+    private static String cut(final String text, final int most) {
+        return text.length() > most ? text.substring(0, most) : text;
     }
 }

@@ -57,6 +57,13 @@ public final class FileOpeners {
         BY_TYPE.put(FileType.SGPROJ, List.of("virtual_studio", EDITOR));
         BY_TYPE.put(FileType.IQL, List.of("nms", EDITOR));
         BY_TYPE.put(FileType.CRAFT, List.of("crafting_manager"));
+        /*
+         * An archive opens in the archiver and a picture in the paint program, the way the file each of
+         * them writes is the file it reads back. Leaving them unclaimed meant a double-click on one did
+         * nothing at all and Open with offered no program for it, which looked like the file being broken.
+         */
+        BY_TYPE.put(FileType.ARK, List.of("ark"));
+        BY_TYPE.put(FileType.PIX, List.of("paint"));
         BY_TYPE.put(FileType.TXT, List.of(EDITOR));
         BY_TYPE.put(FileType.CFG, List.of(EDITOR));
         BY_TYPE.put(FileType.CSV, List.of(EDITOR));

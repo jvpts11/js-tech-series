@@ -50,6 +50,7 @@ import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.WorkspaceSet;
+import dev.jstech.computers.os.fs.Archive;
 import dev.jstech.computers.os.fs.FileOpeners;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FsPaths;
@@ -125,6 +126,9 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private int shownWorkspace;
     private final List<Launcher> launchers = new ArrayList<>();
     private final List<String> installedPrograms = new ArrayList<>();
+
+    /** The archiver, by the id the desktop knows it under; nothing of its is offered without it installed. */
+    private static final String ARCHIVER = "ark";
 
     /** The Linux desktops' own ways of opening a program: Kickoff, the Mint menu, the Activities overview. */
     private final LinuxLaunchers linuxLaunchers = new LinuxLaunchers(this);
@@ -3414,6 +3418,7 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
             if (!file.directory()) {
                 entries.add(ContextMenu.Item.submenu("Open with", openWithItems(file.path())));
             }
+            addArchiveItems(entries, file, di);
             entries.add(ContextMenu.Item.separator());
             /*
              * A projection of what a drive holds is not a file anybody wrote, so it cannot be renamed or
@@ -3439,6 +3444,33 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
     private static ContextMenu.Item deskItem(
             final String label, final boolean enabled, final Runnable action) {
         return new ContextMenu.Item(label, enabled, action);
+    }
+
+    /**
+     * What the archiver offers on a desktop icon, when the machine has it installed.
+     *
+     * <p>The same two entries the explorer offers, because the desktop is a folder like any other and a
+     * menu that changed depending on which window a file was looked at through would be the odd one.
+     */
+    private void addArchiveItems(final List<ContextMenu.Item> entries,
+                                 final DiskFilesPayload.WireFile file, final int index) {
+        if (!installedPrograms.contains(ARCHIVER) || file.projectsItem()) {
+            return;
+        }
+        entries.add(ContextMenu.Item.separator());
+        if (Archive.EXTENSION.equalsIgnoreCase(file.ext())) {
+            entries.add(deskItem("Extract here", true, () -> deskFiles.extractHere(index)));
+            return;
+        }
+        entries.add(deskItem("Compress to " + Archive.leaf(archiveNameOf(file.path())), true,
+                () -> deskFiles.compress(index)));
+    }
+
+    /** The name the archive of a thing would take, for the menu entry that offers to make it. */
+    private static String archiveNameOf(final String path) {
+        final String leaf = Archive.leaf(path);
+        final int dot = leaf.lastIndexOf('.');
+        return (dot > 0 ? leaf.substring(0, dot) : leaf) + "." + Archive.EXTENSION;
     }
 
     /* What a test reads of the desktop's menu and its scale. */
@@ -5694,6 +5726,8 @@ public final class DesktopScreen extends AbstractContainerScreen<DesktopMenu>
         if (active == this) {
             active = null;
         }
+        // A screen that is gone is told nothing more about what it asked the machine for.
+        CodeFileReplies.forget(deskFiles);
         super.removed();
     }
 

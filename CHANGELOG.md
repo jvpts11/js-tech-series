@@ -14,25 +14,34 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
 - **67ark**, which packs many files into one that really weighs less. A disk here counts the bytes of what
   is on it, so archiving a folder of logs is how a small disk is made to stretch; text that repeats packs
   hardest, so a log collapses much further than a config does, and the program shows what each one saved.
-  Opening an archive lists what is inside it without unpacking anything.
+  Opening an archive lists what is inside it without unpacking anything. It is also on the right button,
+  where an archiver belongs: any file or folder, in the explorer or on the desktop, offers to compress into
+  an archive beside it, and an archive offers to take everything back out where it stands. Compressing a
+  folder packs what is in it, however deep it goes.
 - **Paint**, a real picture rather than a grid of blocks: a canvas up to 128 by 128 in a palette of 256
   colours, every tool the program it is named after had, zoom and undo. What it writes is about a kilobyte
   where a colour per pixel would be twenty-four, which is what makes keeping pictures on a disk possible at
   all. A picture can be hung on the desktop as its wallpaper, so something a player drew ends up on every
-  screen of that machine.
+  screen of that machine. Its files, like the archiver's, open on a double-click and carry an icon of their
+  own in every listing.
 - **Exceed**, a sheet of cells. Besides the arithmetic a spreadsheet has always done, a cell can ask the
   network what it is holding: how many of a thing, how much room is left, how many servers there are. Those
   cells are drawn apart from the ones the player typed, so nobody wonders why a number moved by itself, and
   they are worked out from what the machine last said rather than from asking the world. It reads and
   writes the comma separated files the mod already had, so a sheet is a file any other program can open.
 - **Midsoft Messenger** and its **Messenger Service**, the first program here where the other end is
-  another player: who is on the network, a window per conversation, and the nudge. The history lives on the
-  network's own machine, so a conversation is there when you next sit down at any machine on it. The
-  service is also the first in the mod that does not cost a fixed amount: it grows on the disk as it keeps
-  what people said, and in the machine's memory as more of them are connected, and the window shows both.
+  another player: who is on the network, a window per conversation, and the nudge. The service runs on a
+  server mounted in a rack, which is what a server is for, and is reached from any computer on that
+  network, so a conversation is there when you next sit down at any machine on it. The history belongs to
+  that server and rides on the Server item with everything else it holds: pull the machine out of the
+  cabinet and the conversations go with it. The service is also the first in the mod that does not cost a
+  fixed amount: it grows on the disk as it keeps what people said, and in the machine's memory as more of
+  them are connected, and the window shows both. With no server on the network running it, the window says
+  so and will not pretend to send anything.
 - **Knot** and **KnotHub**, which keep the source a network is still arguing over. Push a file from the
   machine you are at, pull a revision back onto it, and read who changed what with the changes marked line
-  by line. It sits under the package manager rather than beside it: a package is a finished thing one
+  by line. KnotHub runs on a server beside the Messenger Service, and the history belongs to that machine
+  the same way. It sits under the package manager rather than beside it: a package is a finished thing one
   player hands to another, and this is the code before it became one.
 - The editor grew into a real one. It was a name, a text area and a status line; it now has line numbers,
   find and replace, go to line, the line and column in the bar, Open and Save As through the system's own
@@ -98,6 +107,12 @@ All notable changes to the J's Tech Series are recorded here, newest first. The 
   breaking where the others have two.
 
 ### Fixed
+- A service is listed as running and weighs what it asks for. Every installed service was looked up by the
+  bare name of its program while every way of installing one writes down the whole name, so no service ever
+  matched: none was listed on the machine it was on and none of the memory they hold was counted against it.
+  Installing one from a package manager also only flipped its switch without recording it at all, and a
+  package built from source was recorded without the version it was built at, which listed it as out of date
+  the moment it finished building.
 - The Patterns heading asks the machine once a second instead of once a frame. It asked for both halves of
   what it shows every time it drew, which is several messages a tick for as long as an answer is on its way
   and an unending run of them on a machine that never answers, which is any machine further than eight

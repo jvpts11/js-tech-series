@@ -17,7 +17,6 @@ import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.Platform;
-import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.os.SoftwareHouse;
@@ -159,11 +158,14 @@ public final class SetupRunner {
                     case "iqlengine" -> mainframe.uninstallIqlEngine();
                     case "automation_engine" -> mainframe.uninstallAutomationEngine();
                     case "mirror" -> mainframe.uninstallMirror();
-                    case "messenger_service" -> mainframe.uninstallMessenger();
-                    case "knothub" -> mainframe.uninstallKnot();
                     default -> { }
                 }
             }
+            /*
+             * Whatever the service was keeping goes with it. A machine that kept a conversation nobody can
+             * reach any more, and went on paying for it in disk space, would be keeping a ghost.
+             */
+            host.serviceUninstalled(path);
             return;
         }
         if (host instanceof MainframeBlockEntity mainframe) {
@@ -171,18 +173,11 @@ public final class SetupRunner {
                 case "iqlengine" -> mainframe.installIqlEngine();
                 case "automation_engine" -> mainframe.installAutomationEngine();
                 case "mirror" -> mainframe.installMirror();
-                case "messenger_service" -> mainframe.installMessenger();
-                case "knothub" -> mainframe.installKnot();
                 default -> { }
             }
         }
         console.install(id);
         console.setInstalledVersion(id, ProgramVersions.of(id));
-    }
-
-    /** Whether {@code spec} is a service a Mainframe switches on, which install and remove both special-case. */
-    public static boolean isMainframeService(final ProgramSpec spec) {
-        return spec.kind() == ProgramKind.SERVICE;
     }
 
     private static String sourceName(final MediaFormat medium) {

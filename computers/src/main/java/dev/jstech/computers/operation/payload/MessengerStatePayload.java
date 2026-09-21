@@ -38,10 +38,19 @@ public record MessengerStatePayload(Service service, List<String> people, List<S
      */
     public record Service(boolean online, String host, long historyBytes, int ramMb) {
 
+        /**
+         * The longest name of the machine running it that travels.
+         *
+         * <p>Said out loud because a machine may be named far longer than this and the codec below refuses
+         * what it is handed by throwing rather than by shortening it, so whoever fills this in cuts the
+         * name to here first.
+         */
+        public static final int MAX_HOST = 64;
+
         public static final StreamCodec<RegistryFriendlyByteBuf, Service> STREAM_CODEC =
                 StreamCodec.composite(
                         ByteBufCodecs.BOOL, Service::online,
-                        ByteBufCodecs.stringUtf8(64), Service::host,
+                        ByteBufCodecs.stringUtf8(MAX_HOST), Service::host,
                         ByteBufCodecs.VAR_LONG, Service::historyBytes,
                         ByteBufCodecs.VAR_INT, Service::ramMb,
                         Service::new);
@@ -52,6 +61,15 @@ public record MessengerStatePayload(Service service, List<String> people, List<S
 
     /** How many people and rooms are listed. */
     public static final int MAX_NAMES = 64;
+
+    /**
+     * How long one of those names may be.
+     *
+     * <p>A room is named after the two people talking in it, and a name is folded to lower case on the way
+     * in, which in some alphabets makes it longer than it was. The codec refuses what it is handed by
+     * throwing, so whoever fills these in cuts them to here first.
+     */
+    public static final int MAX_NAME_LETTERS = 48;
 
     /** One thing somebody said, as the window shows it. */
     public record Line(String from, String text, boolean nudge, boolean online) {
@@ -71,11 +89,11 @@ public record MessengerStatePayload(Service service, List<String> people, List<S
     public static final StreamCodec<RegistryFriendlyByteBuf, MessengerStatePayload> STREAM_CODEC =
             StreamCodec.composite(
                     Service.STREAM_CODEC, MessengerStatePayload::service,
-                    ByteBufCodecs.stringUtf8(48).apply(ByteBufCodecs.list(MAX_NAMES)),
+                    ByteBufCodecs.stringUtf8(MAX_NAME_LETTERS).apply(ByteBufCodecs.list(MAX_NAMES)),
                     MessengerStatePayload::people,
-                    ByteBufCodecs.stringUtf8(48).apply(ByteBufCodecs.list(MAX_NAMES)),
+                    ByteBufCodecs.stringUtf8(MAX_NAME_LETTERS).apply(ByteBufCodecs.list(MAX_NAMES)),
                     MessengerStatePayload::rooms,
-                    ByteBufCodecs.stringUtf8(48), MessengerStatePayload::room,
+                    ByteBufCodecs.stringUtf8(MAX_NAME_LETTERS), MessengerStatePayload::room,
                     Line.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_LINES)), MessengerStatePayload::lines,
                     MessengerStatePayload::new);
 

@@ -40,6 +40,8 @@ import dev.jstech.computers.os.media.LiveMedium;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.ComputerConsoleState;
+import dev.jstech.computers.program.KnotRepository;
+import dev.jstech.computers.program.MessengerLog;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackChassis;
@@ -353,6 +355,13 @@ public class ServerRackBlockEntity extends BlockEntity
         ResourceLocation bootedDesktopId;
         /** The windows open on this machine's desktop; machine state that rides on the Server item. */
         final List<OpenWindow> openWindows = new ArrayList<>();
+        /*
+         * What this machine's own services are keeping. They ride on the Server item with everything else,
+         * so pulling a server out of a rack takes its conversations and its source history with it, which
+         * is what makes a service belong to a machine rather than to the network it happens to be on.
+         */
+        final MessengerLog messenger = new MessengerLog();
+        final KnotRepository knot = new KnotRepository("main");
         /** Which of that desktop's workspaces is up, which goes wherever the windows it sorts go. */
         int desktopWorkspace;
         /** A guided installer that wrote the system but is still waiting for its reboot. */
@@ -419,6 +428,8 @@ public class ServerRackBlockEntity extends BlockEntity
                             copying.getInt("Total"), copying.getInt("Left"));
                 }
                 state.installerMemo = saved.contains("Installer") ? saved.getCompound("Installer") : null;
+                ServiceStateNbt.loadMessenger(saved, state.messenger);
+                ServiceStateNbt.loadKnot(saved, state.knot);
                 if (saved.contains("Studio") && getLevel() != null) {
                     state.studio.load(saved.getCompound("Studio"), getLevel().registryAccess());
                 }
@@ -451,6 +462,66 @@ public class ServerRackBlockEntity extends BlockEntity
     public boolean hasService(final int slot, final String programPath) {
         final ComputerConsoleState console = consoleOf(slot);
         return console != null && console.isInstalled("jsc:" + programPath);
+    }
+
+    /** Whether the machine at {@code slot} is switched on and its hardware can run at all. */
+    public boolean unitRunning(final int slot) {
+        return slot >= 0 && slot < CAPACITY_U && asUnit(slot, this::isRunning);
+    }
+
+    /**
+     * The row of the first machine in this rack that is running {@code programPath}, or {@code -1}.
+     *
+     * <p>A service only answers on a machine that is up: a server somebody switched off is as good as one
+     * that never had the software, which is the whole reason the service lives on a machine rather than on
+     * the network.
+     */
+    public int serviceSlot(final String programPath) {
+        for (int slot = 0; slot < CAPACITY_U; slot++) {
+            if (hasService(slot, programPath) && unitRunning(slot)) {
+                return slot;
+            }
+        }
+        return -1;
+    }
+
+    /** The conversations the machine at {@code slot} is keeping, or null when that row holds no machine. */
+    @Nullable
+    public MessengerLog messengerAt(final int slot) {
+        return consoleOf(slot) == null ? null : unitState(slot).messenger;
+    }
+
+    /** The source the machine at {@code slot} is keeping, or null when that row holds no machine. */
+    @Nullable
+    public KnotRepository knotAt(final int slot) {
+        return consoleOf(slot) == null ? null : unitState(slot).knot;
+    }
+
+    /** Writes what the machine at {@code slot} holds back onto its item, after a service changed it. */
+    public void flushServices(final int slot) {
+        flushConsole(slot);
+        setChanged();
+    }
+
+    /** Lets go of whatever the service taken off the machine at {@code slot} was keeping. */
+    public void serviceUninstalled(final int slot, final String programPath) {
+        if (consoleOf(slot) == null) {
+            return;
+        }
+        final UnitState state = unitState(slot);
+        switch (programPath) {
+            case "messenger_service" -> state.messenger.clear();
+            case "knothub" -> state.knot.clear();
+            default -> {
+                return; // every other service keeps nothing of its own, so there is nothing to let go of
+            }
+        }
+        flushServices(slot);
+    }
+
+    @Override
+    public void serviceUninstalled(final String programPath) {
+        serviceUninstalled(soleComputerSlot(), programPath);
     }
 
     /** Writes the in-memory console of the unit at {@code slot} back onto its Server item. */
@@ -494,6 +565,8 @@ public class ServerRackBlockEntity extends BlockEntity
         if (pages != null) {
             tag.put("Installer", pages);
         }
+        ServiceStateNbt.saveMessenger(tag, state.messenger);
+        ServiceStateNbt.saveKnot(tag, state.knot);
         if (getLevel() != null) {
             final CompoundTag studioTag = new CompoundTag();
             state.studio.save(studioTag, getLevel().registryAccess());

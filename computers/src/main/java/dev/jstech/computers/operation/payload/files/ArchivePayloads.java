@@ -107,8 +107,25 @@ public final class ArchivePayloads {
 
     private static String pack(final IOsHost computer, final ItemStack disk, final FilesystemKind kind,
                                final ArchiveFilesPayload payload, final ServerLevel level) {
-        final List<StoredFile> files = new ArrayList<>(payload.paths().size());
+        /*
+         * A folder stands for everything under it, so compressing one from the right button packs what is
+         * in it rather than failing on a path that names no file. Gathered here because only the machine
+         * knows what a folder holds.
+         */
+        final List<String> wanted = new ArrayList<>();
         for (final String path : payload.paths()) {
+            if (DiskFilesystem.read(disk, path).isPresent()) {
+                wanted.add(path);
+                continue;
+            }
+            final int before = wanted.size();
+            gather(disk, path, kind, wanted);
+            if (wanted.size() == before) {
+                return "Nothing in " + Archive.leaf(path);
+            }
+        }
+        final List<StoredFile> files = new ArrayList<>(wanted.size());
+        for (final String path : wanted) {
             /*
              * The archive must not be one of the files going into it. Written over a file that is then
              * deleted as an original, everything that went in would be gone: the archive overwrites it,
@@ -158,7 +175,8 @@ public final class ArchivePayloads {
         }
         int removed = 0;
         if (payload.removeOriginals()) {
-            for (final String path : payload.paths()) {
+            // What actually went in, so a folder that stood for its files takes those files away.
+            for (final String path : wanted) {
                 if (DiskFilesystem.delete(disk, path)) {
                     removed++;
                 }
@@ -170,6 +188,34 @@ public final class ArchivePayloads {
         return "Packed " + files.size() + " into " + Archive.leaf(payload.archivePath())
                 + ", " + before + " bytes became " + after
                 + (removed > 0 ? ", " + removed + " removed" : "");
+    }
+
+    /**
+     * Every real file at or under {@code dir}, however deep, added to {@code out}.
+     *
+     * <p>The projected view of what a drive is holding is left out: it is a window onto the network's
+     * storage rather than a file, and packing it would archive a picture of something that is still there.
+     */
+    private static void gather(final ItemStack disk, final String dir, final FilesystemKind kind,
+                               final List<String> out) {
+        /*
+         * A flat disk has no folders, so a path that named no file names nothing at all. Without this the
+         * listing, which ignores the folder it is given on such a disk, would answer with every file there.
+         */
+        if (kind != FilesystemKind.HIERARCHICAL) {
+            return;
+        }
+        for (final DiskFilesystem.FileEntry entry : DiskFilesystem.list(disk, dir, kind)) {
+            if (!entry.type().virtualProjection() && !out.contains(entry.path())) {
+                out.add(entry.path());
+            }
+        }
+        for (final String sub : DiskFilesystem.listDirs(disk, dir, kind)) {
+            // Only downwards, so a listing that ever named its own folder could not send this round for ever.
+            if (sub.length() > dir.length() && sub.startsWith(dir)) {
+                gather(disk, sub, kind, out);
+            }
+        }
     }
 
     private static void handleExtract(final ExtractArchivePayload payload, final ServerPlayer player,

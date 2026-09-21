@@ -30,8 +30,8 @@ import java.util.Locale;
  * Midsoft Messenger: the first program here where the other end is another player.
  *
  * <p>Who is on the network down the left, the conversation on the right, and the nudge. The history lives
- * on the network's own machine rather than on either computer, so a conversation is there when you next
- * sit down at any machine on that network.
+ * on the server running the service rather than on either computer, so a conversation is there when you
+ * next sit down at any machine on that network, and it goes with the server if somebody pulls it.
  *
  * <p>The bar at the bottom of the roster carries what the service weighs. That is not decoration: the
  * service really grows on the disk as it keeps what people said and in memory as more of them connect, so
@@ -110,7 +110,12 @@ public final class MessengerApp implements IDesktopApp {
     }
 
     private void say() {
-        final String text = compose.edit().strip();
+        /*
+         * Nothing is sent to a service that is not there. The client alone let a message look sent while no
+         * server on the network was running the service, which is the one answer a chat window must never
+         * give: the words went nowhere and nobody was ever going to read them.
+         */
+        final String text = state.service().online() ? compose.edit().strip() : "";
         if (text.isEmpty()) {
             return;
         }
@@ -121,6 +126,9 @@ public final class MessengerApp implements IDesktopApp {
     }
 
     private void sendNudge() {
+        if (!state.service().online()) {
+            return;
+        }
         this.lastAskMs = System.currentTimeMillis();
         PacketDistributor.sendToServer(new MessengerActionPayload(
                 host, monitorPos, MessengerActionPayload.NUDGE, room, ""));
@@ -298,7 +306,9 @@ public final class MessengerApp implements IDesktopApp {
             ry += ROW_H;
         }
         if (lines.isEmpty()) {
-            g.drawString(font, state.service().online() ? "Nothing said yet" : "No Messenger Service here",
+            final String empty = state.service().online()
+                    ? "Nothing said yet" : "No Messenger Service on this network";
+            g.drawString(font, font.plainSubstrByWidth(empty, right - x - MARGIN * 2),
                     x + MARGIN, y + 3, skin.dim(), false);
         }
     }
@@ -309,7 +319,11 @@ public final class MessengerApp implements IDesktopApp {
         compose.setBounds(x + MARGIN, y + 2, Math.max(20, width - MARGIN * 2), 12);
         nudge.setBounds(x + MARGIN, y + 16, nudgeW, 11);
         send.setBounds(x + width - MARGIN - sendW, y + 16, sendW, 11);
-        compose.setEnabled(state.service().online());
+        // With no service on the network there is nothing to say anything to, and the bar says so.
+        final boolean serving = state.service().online();
+        compose.setEnabled(serving);
+        send.setEnabled(serving);
+        nudge.setEnabled(serving);
     }
 
     private void drawStatus(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
@@ -318,13 +332,16 @@ public final class MessengerApp implements IDesktopApp {
         final String left = service.online()
                 ? "on " + (service.host().isBlank() ? "the network" : service.host())
                 : "no service";
-        g.drawString(font, left, x + MARGIN, y + 2, skin.dim(), false);
         /*
          * What it weighs, which is the whole point of the program: the history on the disk and the memory
-         * it is holding for the people connected to it right now.
+         * it is holding for the people connected to it right now. Drawn first, because it is the number
+         * this program exists to show and the name on the left gives way to it rather than over it.
          */
         final String right = bytes(service.historyBytes()) + "   " + service.ramMb() + " MB";
         g.drawString(font, right, x + width - MARGIN - font.width(right), y + 2, skin.text(), false);
+        final int room = width - MARGIN * 3 - font.width(right);
+        g.drawString(font, font.plainSubstrByWidth(left, Math.max(0, room)), x + MARGIN, y + 2,
+                skin.dim(), false);
     }
 
     private static String bytes(final long value) {

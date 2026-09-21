@@ -32,6 +32,12 @@ public record KnotActionPayload(BlockPos hostPos, BlockPos monitorPos, int actio
     /** Write a revision back onto this machine's disk. */
     public static final int PULL = 2;
 
+    /** The longest path a push may name, which is also what the answer carries back. */
+    public static final int MAX_PATH = 160;
+
+    /** The longest thing that may be said about a revision. */
+    public static final int MAX_MESSAGE = 128;
+
     public static final CustomPacketPayload.Type<KnotActionPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "knot_action"));
 
@@ -40,8 +46,8 @@ public record KnotActionPayload(BlockPos hostPos, BlockPos monitorPos, int actio
                     BlockPos.STREAM_CODEC, KnotActionPayload::hostPos,
                     BlockPos.STREAM_CODEC, KnotActionPayload::monitorPos,
                     ByteBufCodecs.VAR_INT, KnotActionPayload::action,
-                    ByteBufCodecs.stringUtf8(160), KnotActionPayload::file,
-                    ByteBufCodecs.stringUtf8(128), KnotActionPayload::message,
+                    ByteBufCodecs.stringUtf8(MAX_PATH), KnotActionPayload::file,
+                    ByteBufCodecs.stringUtf8(MAX_MESSAGE), KnotActionPayload::message,
                     ByteBufCodecs.VAR_INT, KnotActionPayload::revision,
                     KnotActionPayload::new);
 

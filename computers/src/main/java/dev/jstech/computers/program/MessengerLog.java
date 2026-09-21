@@ -105,9 +105,13 @@ public final class MessengerLog {
     public static final long IDLE_TICKS = 200L;
 
     private final List<Message> messages = new ArrayList<>();
-    /** Who has it open, and when each of them was last heard from. */
-    private final Map<String, Long> connected = new LinkedHashMap<>();
+    /** Who has it open: which room each of them is looking at, and when each was last heard from. */
+    private final Map<String, Presence> connected = new LinkedHashMap<>();
     private long bytes;
+
+    /** Somebody with the messenger open: the room on their screen, and when they last said so. */
+    private record Presence(String room, long at) {
+    }
 
     /**
      * Keeps what somebody said, dropping the oldest once the service is full.
@@ -191,16 +195,26 @@ public final class MessengerLog {
     }
 
     /**
-     * Says somebody has the messenger open, at {@code at}; answers whether that was news.
+     * Says somebody has the messenger open on {@code room}, at {@code at}; answers whether that was news.
      *
-     * <p>The moment is kept as well as the name, because a window that goes quiet has to be let go of: see
-     * {@link #forgetIdle}.
+     * <p>Three things are kept and each earns its place. The name is who is there. The moment is so a
+     * window that goes quiet can be let go of, see {@link #forgetIdle}. The room is so that what one
+     * person says can be told to the people looking at that conversation without dragging everybody else's
+     * window into it, which is what {@link #roomOf} is for.
      */
-    public boolean connect(final String who, final long at) {
+    public boolean connect(final String who, final String room, final long at) {
         if (who == null || who.isBlank()) {
             return false;
         }
-        return connected.put(who, at) == null;
+        return connected.put(who,
+                new Presence(room == null || room.isBlank() ? LOBBY : room.toLowerCase(Locale.ROOT), at))
+                == null;
+    }
+
+    /** The room somebody has open, or the lobby when they have none open at all. */
+    public String roomOf(final String who) {
+        final Presence presence = connected.get(who);
+        return presence == null ? LOBBY : presence.room();
     }
 
     /** Says somebody closed it; answers whether that was news. */
@@ -221,7 +235,7 @@ public final class MessengerLog {
         final var walk = connected.entrySet().iterator();
         while (walk.hasNext()) {
             final var entry = walk.next();
-            if (now - entry.getValue() > IDLE_TICKS) {
+            if (now - entry.getValue().at() > IDLE_TICKS) {
                 walk.remove();
                 gone++;
             }

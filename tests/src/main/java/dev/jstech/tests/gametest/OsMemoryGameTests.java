@@ -91,7 +91,8 @@ public final class OsMemoryGameTests {
                     helper.assertTrue(mainframe.ramReservedMb() == 64,
                             "Frames XP holds 64 MB for itself; got " + mainframe.ramReservedMb());
 
-                    mainframe.console().install("iqlengine");
+                    // By the whole id, which is what every install path on a real machine writes down.
+                    mainframe.console().install("jsc:iqlengine");
                     mainframe.installIqlEngine();
                     helper.assertTrue(mainframe.ramReservedMb() == 88,
                             "a running service holds its share on top of the system; got "
@@ -121,7 +122,7 @@ public final class OsMemoryGameTests {
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     mainframe.setNeedsPost(false);
-                    mainframe.console().install("iqlengine");
+                    mainframe.console().install("jsc:iqlengine");
                     mainframe.installIqlEngine();
                     helper.assertTrue(mainframe.ramReservedMb() == 88,
                             "the Engine holds its 24 MB while it runs; got " + mainframe.ramReservedMb());
@@ -130,7 +131,7 @@ public final class OsMemoryGameTests {
                     helper.assertTrue(mainframe.ramReservedMb() == 64,
                             "a service that is stopped holds nothing, though it is still installed; got "
                                     + mainframe.ramReservedMb());
-                    helper.assertTrue(mainframe.console().isInstalled("iqlengine"),
+                    helper.assertTrue(mainframe.console().isInstalled("jsc:iqlengine"),
                             "and stopping it did not uninstall it");
 
                     mainframe.setIqlEngineRunning(true);
@@ -175,7 +176,7 @@ public final class OsMemoryGameTests {
                 .placeRunningPersonalComputer(new BlockPos(2, 2, 2));
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    computer.console().install("sigma");
+                    computer.console().install("jsc:sigma");
                     helper.assertTrue(computer.ramLedger().usedMb(RamLedger.Kind.SERVICE) == 0,
                             "a runtime with nothing to run holds nothing; got "
                                     + computer.ramLedger().usedMb(RamLedger.Kind.SERVICE));
@@ -235,7 +236,7 @@ public final class OsMemoryGameTests {
                     mainframe.setNeedsPost(false);
                     helper.assertTrue(mainframe.ramReservedMb() == 48,
                             "Ubuntu at the TTY holds 48 MB; got " + mainframe.ramReservedMb());
-                    mainframe.console().install("kde_plasma");
+                    mainframe.console().install("jsc:kde_plasma");
                     mainframe.setBootedDesktopId(id("kde_plasma"));
                     final RamLedger ledger = mainframe.ramLedger();
                     helper.assertTrue(ledger.usedMb(RamLedger.Kind.DESKTOP) == 224,

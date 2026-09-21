@@ -9,8 +9,10 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.gui.layout.FilesLayout;
 import dev.jstech.computers.machine.MachineListing;
+import dev.jstech.computers.operation.payload.ArchiveFilesPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.EjectMediaPayload;
+import dev.jstech.computers.operation.payload.ExtractArchivePayload;
 import dev.jstech.computers.operation.payload.InstallFromMediaPayload;
 import dev.jstech.computers.operation.payload.MediumTransferPayload;
 import dev.jstech.computers.operation.payload.MkdirPayload;
@@ -22,6 +24,7 @@ import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.fs.Archive;
 import dev.jstech.computers.os.fs.FileOpeners;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.InstallerLayout;
@@ -74,7 +77,10 @@ import java.util.Set;
  * lists' layout rather than draw in it. The geometry lives in {@link FilesLayout}, where a test proves
  * nothing overlaps.
  */
-public final class FilesApp implements IDesktopApp {
+public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
+
+    /** The archiver, by the id the desktop knows it under; nothing is offered without it installed. */
+    private static final String ARCHIVER = "ark";
 
     private static final long DOUBLE_CLICK_MS = 300L;
     private static final int HISTORY_MAX = 32;
@@ -333,6 +339,7 @@ public final class FilesApp implements IDesktopApp {
     @Override
     public void onClosed() {
         FilesApps.forget(this);
+        CodeFileReplies.forget(this);
     }
 
     /** The names listed right now, top to bottom, which is what a player sees in the window. */
@@ -1474,6 +1481,7 @@ public final class FilesApp implements IDesktopApp {
                     items.add(ContextMenu.Item.submenu("Open with", openWith));
                 }
             }
+            addArchiveItems(items, target, ro);
             items.add(ContextMenu.Item.separator());
             items.add(new ContextMenu.Item("Cut", !ro && !target.file().readOnly(), () -> cut(target)));
             items.add(new ContextMenu.Item("Copy", !target.file().readOnly(), () -> copy(target)));
@@ -1504,6 +1512,59 @@ public final class FilesApp implements IDesktopApp {
         }
         items.add(new ContextMenu.Item("Refresh", true, () -> request(dir)));
         return items;
+    }
+
+    /**
+     * What the archiver offers on the thing under the cursor, when the machine has it installed.
+     *
+     * <p>This is where compressing belongs. A player who wants a folder packed away reaches for the right
+     * button on the folder, not for a program they then have to find the folder again inside; and an
+     * archive they have just been handed is unpacked the same way. Nothing is offered at all on a machine
+     * without the archiver, because the menu should not name a program that is not there.
+     */
+    private void addArchiveItems(final List<ContextMenu.Item> items, final Row target, final boolean ro) {
+        if (!DesktopScreen.installedProgramIds().contains(ARCHIVER) || target.file() == null
+                || target.file().projectsItem()) {
+            return;
+        }
+        final String path = target.file().path();
+        items.add(ContextMenu.Item.separator());
+        if (Archive.EXTENSION.equalsIgnoreCase(target.file().ext())) {
+            items.add(new ContextMenu.Item("Extract here", !ro, () -> extractHere(path)));
+            return;
+        }
+        items.add(new ContextMenu.Item("Compress to " + Archive.leaf(archiveNameFor(path)), !ro,
+                () -> compress(path)));
+    }
+
+    /** The archive a thing is packed into: its own name with the archive's extension, beside it. */
+    private static String archiveNameFor(final String path) {
+        final String leaf = Archive.leaf(path);
+        final int dot = leaf.lastIndexOf('.');
+        final String stem = dot > 0 ? leaf.substring(0, dot) : leaf;
+        final int slash = path.lastIndexOf('/');
+        final String folder = slash > 0 ? path.substring(0, slash + 1) : "";
+        return folder + stem + "." + Archive.EXTENSION;
+    }
+
+    private void compress(final String path) {
+        CodeFileReplies.expectSaved(this);
+        PacketDistributor.sendToServer(new ArchiveFilesPayload(
+                host, archiveNameFor(path), List.of(path), false));
+    }
+
+    private void extractHere(final String path) {
+        CodeFileReplies.expectSaved(this);
+        final int slash = path.lastIndexOf('/');
+        PacketDistributor.sendToServer(new ExtractArchivePayload(
+                host, path, "", slash > 0 ? path.substring(0, slash) : ""));
+    }
+
+    @Override
+    public void onSaved(final boolean ok, final String message) {
+        // The folder has changed under the window either way, so it is read again before anything else.
+        request(dir);
+        DesktopScreen.raise(host, ok ? "67ark" : "Could not do that", message, "");
     }
 
     /**

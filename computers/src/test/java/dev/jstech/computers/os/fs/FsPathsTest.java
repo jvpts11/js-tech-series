@@ -46,4 +46,20 @@ class FsPathsTest {
     void isValidPath_noneRejectsEverything() {
         assertFalse(FsPaths.isValidPath("a.txt", FilesystemKind.NONE));
     }
+
+    @Test
+    void isValidPath_refusesAPathLongerThanThePacketsCarry() {
+        /*
+         * Every segment of this is legal and the whole is not. A file at the end of folders nested this
+         * deep could be made and then never asked about again, because the fields that carry a path
+         * refuse a longer one by throwing.
+         */
+        final StringBuilder deep = new StringBuilder("a");
+        while (deep.length() <= FsPaths.MAX_PATH_LENGTH) {
+            deep.append("/folder");
+        }
+        assertFalse(FsPaths.isValidPath(deep.toString(), FilesystemKind.HIERARCHICAL));
+        assertTrue(FsPaths.isValidPath(deep.substring(0, FsPaths.MAX_PATH_LENGTH - 4) + ".txt",
+                FilesystemKind.HIERARCHICAL), "a path right at the limit is still a path");
+    }
 }

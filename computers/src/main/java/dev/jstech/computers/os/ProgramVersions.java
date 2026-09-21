@@ -24,6 +24,15 @@ public final class ProgramVersions {
 
     private static final Map<String, String> BY_PATH = Map.ofEntries(
             Map.entry("minesweeper", "5.1"),
+            Map.entry("solitaire", "5.1"),
+            Map.entry("snake", "1.2"),
+            Map.entry("ark", "6.7"),
+            Map.entry("paint", "5.1"),
+            Map.entry("exceed", "12.0"),
+            Map.entry("messenger", "7.5"),
+            Map.entry("messenger_service", "7.5"),
+            Map.entry("knot", "2.4"),
+            Map.entry("knothub", "2.4"),
             Map.entry("nms", "19.3"),
             Map.entry("iqlengine", "16.0"),
             Map.entry("crafting_manager", "3.2"),

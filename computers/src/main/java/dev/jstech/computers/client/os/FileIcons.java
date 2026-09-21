@@ -24,7 +24,8 @@ import net.minecraft.client.gui.GuiGraphics;
 public final class FileIcons {
 
     /** What an icon stands for. */
-    public enum Kind { UP, FOLDER, HOME, IQL, DOC, DAT, EXE, PKG, INF, BIN, CFG, LOG, CRAFT, SOURCE, PROGRAM, BUNDLE }
+    public enum Kind { UP, FOLDER, HOME, IQL, DOC, DAT, EXE, PKG, INF, BIN, CFG, LOG, CRAFT, SOURCE, PROGRAM,
+        BUNDLE, IMAGE }
 
     private FileIcons() {
     }
@@ -52,7 +53,9 @@ public final class FileIcons {
             case "cfg" -> Kind.CFG;
             case "log" -> Kind.LOG;
             case "craft" -> Kind.CRAFT;
-            case "cpk", "sln", "sgsproj", "sgproj" -> Kind.BUNDLE;
+            // An archive is a thing with other things inside it, which is what the parcel already stands for.
+            case "cpk", "sln", "sgsproj", "sgproj", "ark" -> Kind.BUNDLE;
+            case "pix" -> Kind.IMAGE;
             default -> Kind.DOC;
         };
     }
@@ -125,6 +128,14 @@ public final class FileIcons {
                 doc(g, x, y, 0xFFE6DCCF, 0xFF7D5B2E);
                 g.fill(x + 1, y + 5, x + 10, y + 6, 0xFF7D5B2E);
                 g.fill(x + 5, y + 2, x + 6, y + 9, 0xFF7D5B2E);
+            }
+            // A picture: a page holding a small landscape, which is what a picture file is at this size.
+            case IMAGE -> {
+                doc(g, x, y, 0xFFD6E6F2, 0xFF3F6B8A);
+                g.fill(x + 3, y + 3, x + w - 2, y + 7, 0xFF9CC8E8);
+                g.fill(x + 3, y + 6, x + w - 2, y + 7, 0xFF4E8B4A);
+                g.fill(x + 4, y + 5, x + 6, y + 7, 0xFF4E8B4A);
+                g.fill(x + w - 4, y + 4, x + w - 3, y + 5, 0xFFF2D46A);
             }
             case DOC -> doc(g, x, y, 0xFFDFE3EA, 0xFF8A93A6);
         }

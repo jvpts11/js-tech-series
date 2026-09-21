@@ -8,199 +8,192 @@
 package dev.jstech.tests.gametest;
 
 import dev.jstech.computers.ComputingModule;
-import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.blockentity.ServerServices;
+import dev.jstech.computers.os.HostScope;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.install.SetupGate;
 import dev.jstech.computers.program.KnotRepository;
 import dev.jstech.computers.program.MessengerLog;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestWorldBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * The two services whose cost follows how much they are used, in a real world with a real Mainframe.
+ * The two services whose cost follows how much they are used, on the machines that really run them.
  *
- * <p>The rules and the arithmetic are covered by plain JUnit over {@code MessengerLog} and
- * {@code KnotRepository}. What only a running machine can answer is here: that installing switches them
- * on, that a powered-off machine serves nothing, that what they keep survives being written to the disk
- * and read back, and that taking one off takes what it held with it.
+ * <p>Both belong to a server mounted in a rack, not to the network and not to the Mainframe: somebody
+ * mounts the machine, installs the software and switches it on, and pulling the server takes the
+ * conversations and the source history with it. The rules and the arithmetic are covered by plain JUnit
+ * over {@code MessengerLog} and {@code KnotRepository}; what only a running world can answer is here.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
 public final class SocialServiceGameTests {
 
     private static final String ARENA = "empty";
-    private static final int SETTLE = 4;
+    private static final int SETTLE = 6;
 
-    /** Stands a Mainframe up the way placing one does, and hands back its block entity. */
-    private static MainframeBlockEntity mainframe(final GameTestHelper helper, final BlockPos at) {
-        helper.setBlock(at, ComputingModule.MAINFRAME.get().defaultBlockState()
-                .setValue(MainframeBlock.FACING, Direction.NORTH));
-        ((MainframeBlock) ComputingModule.MAINFRAME.get()).setPlacedBy(
-                helper.getLevel(), helper.absolutePos(at), helper.getBlockState(at), null, ItemStack.EMPTY);
-        if (!(helper.getBlockEntity(at) instanceof MainframeBlockEntity machine)) {
-            throw new IllegalStateException("no Mainframe at " + at);
+    private static final String MESSENGER = "messenger_service";
+    private static final String KNOTHUB = "knothub";
+
+    /** A Mainframe, a cable and a rack with one server in row 0, all on one network. */
+    private record Base(MainframeBlockEntity mainframe, ServerRackBlockEntity rack) {
+
+        /** The service the network offers under that name, or null when no machine on it runs one. */
+        private ServerServices.Host serving(final GameTestHelper helper, final String programPath) {
+            return ServerServices.find(helper.getLevel(), mainframe.networkUuid(), programPath);
         }
-        return machine;
     }
 
-    @GameTest(template = ARENA)
-    public static void messenger_isOffUntilItIsInstalled(final GameTestHelper helper) {
-        final MainframeBlockEntity machine = mainframe(helper, new BlockPos(2, 2, 2));
-        helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> {
-                    helper.assertFalse(machine.isMessengerInstalled(),
-                            "a fresh Mainframe should not be running a messenger");
-                    helper.assertFalse(machine.isMessengerActive(), "nothing installed cannot be active");
-                    helper.assertTrue(machine.installMessenger(), "installing it should be news");
-                    helper.assertFalse(machine.installMessenger(), "installing it twice is not news");
-                    helper.assertTrue(machine.isMessengerInstalled(), "it should be installed now");
-                })
-                .thenSucceed();
+    private static Base base(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final MainframeBlockEntity mainframe = world.placeRunningMainframe(new BlockPos(1, 2, 2));
+        helper.setBlock(new BlockPos(2, 2, 2), ComputingModule.HBW_CABLE.get());
+        final ServerRackBlockEntity rack = world.placeSeededRack(new BlockPos(3, 2, 2), Direction.EAST);
+        // A machine with nothing on its drive takes no software at all, so the server gets a system first.
+        rack.unitHost(0).installOs(ResourceLocation.fromNamespaceAndPath("jsc", "debian"));
+        return new Base(mainframe, rack);
     }
 
-    /**
-     * A machine with no power serves nobody, however installed the service is.
-     *
-     * <p>A Mainframe stood up in an arena has no energy behind it, which is exactly the state this rule is
-     * about: the service is there, it is not stopped, and it still refuses, because the machine under it
-     * is not running.
-     */
+    /* The messenger */
+
     @GameTest(template = ARENA)
-    public static void messenger_keepsNothingWhileTheMachineHasNoPower(final GameTestHelper helper) {
-        final MainframeBlockEntity machine = mainframe(helper, new BlockPos(2, 2, 2));
+    public static void messenger_isNowhereOnTheNetworkUntilAServerRunsIt(final GameTestHelper helper) {
+        final Base base = base(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    machine.installMessenger();
-                    helper.assertFalse(machine.isRunning(), "this arena's Mainframe has no power");
-                    helper.assertFalse(machine.isMessengerActive(),
-                            "a service on a machine with no power is not serving");
-                    helper.assertFalse(machine.messengerSay("lobby", "ada", "the smelter stalled",
-                            helper.getLevel().getGameTime(), false),
-                            "a machine with no power should keep nothing");
-                    helper.assertTrue(machine.messengerLog().size() == 0, "and nothing should be kept");
+                    helper.assertTrue(base.serving(helper, MESSENGER) == null,
+                            "a network with nothing installed offers no messenger");
+                    base.rack().consoleOf(0).install("jsc:" + MESSENGER);
+                    helper.assertTrue(base.rack().hasService(0, MESSENGER),
+                            "the server should be running it now");
+                    helper.assertTrue(base.serving(helper, MESSENGER) != null,
+                            "and the network should find it on that server");
                 })
                 .thenSucceed();
     }
 
     @GameTest(template = ARENA)
-    public static void messenger_weighsWhatItKeeps(final GameTestHelper helper) {
-        final MainframeBlockEntity machine = mainframe(helper, new BlockPos(2, 2, 2));
+    public static void messenger_isNotServedByAMachineSwitchedOff(final GameTestHelper helper) {
+        final Base base = base(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    machine.installMessenger();
-                    final MessengerLog log = machine.messengerLog();
+                    base.rack().consoleOf(0).install("jsc:" + MESSENGER);
+                    helper.assertTrue(base.rack().unitRunning(0), "the seeded server comes up running");
+                    base.rack().toggleBayPower(0);
+                    helper.assertFalse(base.rack().unitRunning(0),
+                            "a bay whose switch is off runs nothing");
+                    helper.assertTrue(base.rack().serviceSlot(MESSENGER) < 0,
+                            "and the rack offers no service off a machine that is not running");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void messenger_weighsWhatItKeepsOnTheServerHoldingIt(final GameTestHelper helper) {
+        final Base base = base(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    base.rack().consoleOf(0).install("jsc:" + MESSENGER);
+                    final MessengerLog log = base.rack().messengerAt(0);
+                    helper.assertTrue(log != null, "a mounted server holds a messenger log");
                     final long before = log.historyBytes();
                     log.say("lobby", "ada", "the smelter stalled",
                             helper.getLevel().getGameTime(), false);
                     helper.assertTrue(log.historyBytes() > before,
                             "keeping a message should cost disk space");
-                    helper.assertTrue(log.size() == 1, "one message should be kept");
+                    log.connect("ada", MessengerLog.LOBBY, helper.getLevel().getGameTime());
+                    log.connect("grace", MessengerLog.LOBBY, helper.getLevel().getGameTime());
+                    helper.assertTrue(log.ramMb() > MessengerLog.BASE_RAM_MB,
+                            "two people connected should cost more than the floor, got " + log.ramMb());
                 })
                 .thenSucceed();
     }
 
     @GameTest(template = ARENA)
-    public static void messenger_keepsNothingWhileItIsStopped(final GameTestHelper helper) {
-        final MainframeBlockEntity machine = mainframe(helper, new BlockPos(2, 2, 2));
+    public static void messenger_ridesOnTheServerItemBetweenRacks(final GameTestHelper helper) {
+        final Base base = base(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    machine.installMessenger();
-                    helper.assertTrue(machine.setMessengerRunning(false), "stopping it should be news");
-                    helper.assertFalse(machine.isMessengerActive(), "a stopped service serves nobody");
-                    helper.assertFalse(machine.messengerSay("lobby", "ada", "hello",
-                            helper.getLevel().getGameTime(), false),
-                            "a stopped service should keep nothing");
-                    helper.assertTrue(machine.messengerLog().size() == 0, "nothing should have been kept");
-                })
-                .thenSucceed();
-    }
-
-    @GameTest(template = ARENA)
-    public static void messenger_dropsEverybodyWhenItIsStopped(final GameTestHelper helper) {
-        final MainframeBlockEntity machine = mainframe(helper, new BlockPos(2, 2, 2));
-        helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> {
-                    machine.installMessenger();
-                    final MessengerLog log = machine.messengerLog();
-                    log.connect("ada", helper.getLevel().getGameTime());
-                    log.connect("grace", helper.getLevel().getGameTime());
-                    final int busy = log.ramMb();
-                    helper.assertTrue(busy > MessengerLog.BASE_RAM_MB,
-                            "two people connected should cost more than the floor");
-                    machine.setMessengerRunning(false);
-                    helper.assertTrue(log.ramMb() == MessengerLog.BASE_RAM_MB,
-                            "a stopped service should fall back to its floor, was " + log.ramMb());
-                })
-                .thenSucceed();
-    }
-
-    @GameTest(template = ARENA)
-    public static void messenger_survivesBeingWrittenAndReadBack(final GameTestHelper helper) {
-        final MainframeBlockEntity machine = mainframe(helper, new BlockPos(2, 2, 2));
-        helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> {
-                    machine.installMessenger();
-                    // Said straight into the log, because this is about the writing and not about the gate.
-                    machine.messengerLog().say("smelter", "ada", "bay three again",
+                    final ServerRackBlockEntity rack = base.rack();
+                    rack.consoleOf(0).install("jsc:" + MESSENGER);
+                    rack.messengerAt(0).say("smelter", "ada", "bay three again",
                             helper.getLevel().getGameTime(), false);
-                    final CompoundTag tag = machine.saveWithoutMetadata(helper.getLevel().registryAccess());
-                    helper.assertTrue(tag.contains("MessengerLog"),
-                            "the tag written should carry the conversation");
-                    machine.loadWithComponents(tag, helper.getLevel().registryAccess());
-                    helper.assertTrue(machine.isMessengerInstalled(), "it should still be installed");
-                    helper.assertTrue(machine.messengerLog().size() == 1,
-                            "the conversation should have come back, found "
-                                    + machine.messengerLog().size());
-                    helper.assertTrue(machine.messengerLog().room("smelter", 10).size() == 1,
-                            "it should have come back in the room it was said in");
+                    rack.flushServices(0);
+                    /*
+                     * Pulled out and put back: taking the machine out drops everything the rack was holding
+                     * in memory for that row, so what comes back can only have come off the item.
+                     */
+                    final ItemStack server = rack.getServers().extractItem(0, 1, false);
+                    helper.assertFalse(server.isEmpty(), "the machine should have come out");
+                    helper.assertTrue(rack.messengerAt(0) == null, "and that row should hold none");
+                    rack.getServers().setStackInSlot(0, server);
+                    final MessengerLog back = rack.messengerAt(0);
+                    helper.assertTrue(back != null && back.size() == 1,
+                            "the conversation should have travelled with the machine, found "
+                                    + (back == null ? "no machine" : back.size()));
+                    helper.assertTrue(back.room("smelter", 10).size() == 1,
+                            "and come back in the room it was said in");
+                    helper.assertTrue(rack.hasService(0, MESSENGER),
+                            "the service should have travelled with it too");
                 })
                 .thenSucceed();
     }
 
     @GameTest(template = ARENA)
     public static void messenger_takesItsConversationsWithItWhenRemoved(final GameTestHelper helper) {
-        final MainframeBlockEntity machine = mainframe(helper, new BlockPos(2, 2, 2));
+        final Base base = base(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    machine.installMessenger();
-                    machine.messengerLog().say("lobby", "ada", "hello",
+                    final ServerRackBlockEntity rack = base.rack();
+                    rack.consoleOf(0).install("jsc:" + MESSENGER);
+                    rack.messengerAt(0).say("lobby", "ada", "hello",
                             helper.getLevel().getGameTime(), false);
-                    helper.assertTrue(machine.uninstallMessenger(), "removing it should be news");
-                    helper.assertTrue(machine.messengerLog().size() == 0,
+                    rack.consoleOf(0).uninstall("jsc:" + MESSENGER);
+                    rack.serviceUninstalled(0, MESSENGER);
+                    helper.assertTrue(rack.messengerAt(0).size() == 0,
                             "a service nobody can reach keeps nothing");
-                    helper.assertTrue(machine.messengerLog().historyBytes() == 0L,
+                    helper.assertTrue(rack.messengerAt(0).historyBytes() == 0L,
                             "and it weighs nothing either");
                 })
                 .thenSucceed();
     }
 
+    /* The repository */
+
     @GameTest(template = ARENA)
-    public static void knot_isOffUntilItIsInstalled(final GameTestHelper helper) {
-        final MainframeBlockEntity machine = mainframe(helper, new BlockPos(2, 2, 2));
+    public static void knot_isNowhereOnTheNetworkUntilAServerRunsIt(final GameTestHelper helper) {
+        final Base base = base(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    helper.assertFalse(machine.isKnotInstalled(), "a fresh Mainframe keeps no source");
-                    helper.assertTrue(machine.installKnot(), "installing it should be news");
-                    helper.assertFalse(machine.installKnot(), "installing it twice is not news");
+                    helper.assertTrue(base.serving(helper, KNOTHUB) == null,
+                            "a network with nothing installed keeps no source");
+                    base.rack().consoleOf(0).install("jsc:" + KNOTHUB);
+                    helper.assertTrue(base.serving(helper, KNOTHUB) != null,
+                            "the network should find it on that server");
                 })
                 .thenSucceed();
     }
 
     @GameTest(template = ARENA)
     public static void knot_weighsWhatItKeeps(final GameTestHelper helper) {
-        final MainframeBlockEntity machine = mainframe(helper, new BlockPos(2, 2, 2));
+        final Base base = base(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    machine.installKnot();
-                    final KnotRepository repository = machine.knotRepository();
+                    base.rack().consoleOf(0).install("jsc:" + KNOTHUB);
+                    final KnotRepository repository = base.rack().knotAt(0);
+                    helper.assertTrue(repository != null, "a mounted server holds a repository");
                     final long before = repository.bytes();
-                    // Committed straight into the repository: this is about the weight, not about the gate.
                     helper.assertTrue(repository.commit("plant.sgs", "ada", "first pass",
                             "int floor = 8000;", helper.getLevel().getGameTime()) != null,
                             "it should have kept that");
@@ -210,68 +203,28 @@ public final class SocialServiceGameTests {
                 .thenSucceed();
     }
 
-    /** Whatever is installed, a machine with no power keeps nothing. */
     @GameTest(template = ARENA)
-    public static void knot_keepsNothingWhileTheMachineHasNoPower(final GameTestHelper helper) {
-        final MainframeBlockEntity machine = mainframe(helper, new BlockPos(2, 2, 2));
+    public static void knot_ridesOnTheServerItemAndKeepsItsNumbering(final GameTestHelper helper) {
+        final Base base = base(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    machine.installKnot();
-                    helper.assertFalse(machine.isKnotActive(),
-                            "a service on a machine with no power is not serving");
-                    helper.assertTrue(machine.knotCommit("a.sgs", "ada", "m", "x",
-                            helper.getLevel().getGameTime()) == null,
-                            "a machine with no power should keep nothing");
-                })
-                .thenSucceed();
-    }
-
-    @GameTest(template = ARENA)
-    public static void knot_keepsNothingWhileItIsNotInstalled(final GameTestHelper helper) {
-        final MainframeBlockEntity machine = mainframe(helper, new BlockPos(2, 2, 2));
-        helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> helper.assertTrue(
-                        machine.knotCommit("a.sgs", "ada", "m", "x", helper.getLevel().getGameTime()) == null,
-                        "a service that is not installed keeps nothing"))
-                .thenSucceed();
-    }
-
-    @GameTest(template = ARENA)
-    public static void knot_survivesBeingWrittenAndReadBack(final GameTestHelper helper) {
-        final MainframeBlockEntity machine = mainframe(helper, new BlockPos(2, 2, 2));
-        helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> {
-                    machine.installKnot();
-                    machine.knotRepository().commit("plant.sgs", "ada", "first pass",
+                    final ServerRackBlockEntity rack = base.rack();
+                    rack.consoleOf(0).install("jsc:" + KNOTHUB);
+                    rack.knotAt(0).commit("plant.sgs", "ada", "first pass",
                             "int floor = 8000;", helper.getLevel().getGameTime());
-                    machine.knotRepository().commit("plant.sgs", "grace", "raise it",
+                    rack.knotAt(0).commit("plant.sgs", "grace", "raise it",
                             "int floor = 10000;", helper.getLevel().getGameTime());
-                    final CompoundTag tag = machine.saveWithoutMetadata(helper.getLevel().registryAccess());
-                    machine.loadWithComponents(tag, helper.getLevel().registryAccess());
-                    helper.assertTrue(machine.isKnotInstalled(), "it should still be installed");
-                    helper.assertTrue(machine.knotRepository().revisionsOf("plant.sgs").size() == 2,
-                            "both revisions should have come back, found "
-                                    + machine.knotRepository().revisionsOf("plant.sgs").size());
-                    helper.assertTrue("int floor = 10000;".equals(machine.knotRepository().head("plant.sgs")),
+                    rack.flushServices(0);
+                    final ItemStack server = rack.getServers().extractItem(0, 1, false);
+                    rack.getServers().setStackInSlot(0, server);
+                    final KnotRepository back = rack.knotAt(0);
+                    helper.assertTrue(back != null && back.revisionsOf("plant.sgs").size() == 2,
+                            "both revisions should have travelled with the machine, found "
+                                    + (back == null ? "no machine" : back.revisionsOf("plant.sgs").size()));
+                    helper.assertTrue("int floor = 10000;".equals(back.head("plant.sgs")),
                             "the newest text should have come back");
-                })
-                .thenSucceed();
-    }
-
-    @GameTest(template = ARENA)
-    public static void knot_keepsNumberingAfterBeingReadBack(final GameTestHelper helper) {
-        final MainframeBlockEntity machine = mainframe(helper, new BlockPos(2, 2, 2));
-        helper.startSequence()
-                .thenExecuteAfter(SETTLE, () -> {
-                    machine.installKnot();
-                    machine.knotRepository().commit("a.sgs", "ada", "one", "1",
-                            helper.getLevel().getGameTime());
-                    machine.knotRepository().commit("a.sgs", "ada", "two", "2",
-                            helper.getLevel().getGameTime());
-                    final CompoundTag tag = machine.saveWithoutMetadata(helper.getLevel().registryAccess());
-                    machine.loadWithComponents(tag, helper.getLevel().registryAccess());
-                    final KnotRepository.Revision next = machine.knotRepository().commit("a.sgs", "grace",
-                            "three", "3", helper.getLevel().getGameTime());
+                    final KnotRepository.Revision next = back.commit("plant.sgs", "grace",
+                            "three", "int floor = 12000;", helper.getLevel().getGameTime());
                     helper.assertTrue(next != null && next.number() == 3,
                             "numbering must carry on from what was read back, got "
                                     + (next == null ? "nothing" : next.number()));
@@ -281,17 +234,43 @@ public final class SocialServiceGameTests {
 
     @GameTest(template = ARENA)
     public static void knot_takesItsHistoryWithItWhenRemoved(final GameTestHelper helper) {
-        final MainframeBlockEntity machine = mainframe(helper, new BlockPos(2, 2, 2));
+        final Base base = base(helper);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    machine.installKnot();
-                    machine.knotRepository().commit("a.sgs", "ada", "one", "1",
+                    final ServerRackBlockEntity rack = base.rack();
+                    rack.consoleOf(0).install("jsc:" + KNOTHUB);
+                    rack.knotAt(0).commit("a.sgs", "ada", "one", "1",
                             helper.getLevel().getGameTime());
-                    helper.assertTrue(machine.uninstallKnot(), "removing it should be news");
-                    helper.assertTrue(machine.knotRepository().files().isEmpty(),
+                    rack.consoleOf(0).uninstall("jsc:" + KNOTHUB);
+                    rack.serviceUninstalled(0, KNOTHUB);
+                    helper.assertTrue(rack.knotAt(0).files().isEmpty(),
                             "a service nobody can reach keeps nothing");
-                    helper.assertTrue(machine.knotRepository().bytes() == 0L,
+                    helper.assertTrue(rack.knotAt(0).bytes() == 0L,
                             "and it weighs nothing either");
+                })
+                .thenSucceed();
+    }
+
+    /* Where they may be installed at all */
+
+    @GameTest(template = ARENA)
+    public static void socialServices_refuseToInstallOnAMainframe(final GameTestHelper helper) {
+        final Base base = base(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    for (final String path : new String[] {MESSENGER, KNOTHUB}) {
+                        final ProgramSpec spec = OsRegistry.getProgram(
+                                ResourceLocation.fromNamespaceAndPath("jsc", path));
+                        helper.assertTrue(spec != null, path + " should be a registered program");
+                        helper.assertTrue(spec.hostScope() == HostScope.SERVER,
+                                path + " belongs on a server in a rack");
+                        helper.assertTrue(SetupGate.refusal(base.mainframe(), spec, false, true).isPresent(),
+                                path + " must refuse a Mainframe");
+                        helper.assertTrue(
+                                SetupGate.refusal(base.rack().unitHost(0), spec, false, true).isEmpty(),
+                                path + " must accept a server, said: " + SetupGate
+                                        .refusal(base.rack().unitHost(0), spec, false, true).orElse(""));
+                    }
                 })
                 .thenSucceed();
     }

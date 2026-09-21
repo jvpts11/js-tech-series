@@ -31,8 +31,6 @@ import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.install.SetupRunner;
-import dev.jstech.computers.program.KnotRepository;
-import dev.jstech.computers.program.MessengerLog;
 import dev.jstech.computers.program.iql.IqlCatalog;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
@@ -1629,80 +1627,6 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     /** Installs the Automation Engine on the Mainframe; returns false if it was already installed. */
     public boolean installAutomationEngine() {
         return services.installAutomationEngine();
-    }
-
-    /* The Messenger Service: the one service whose weight follows how much it is used. */
-
-    public boolean isMessengerInstalled() {
-        return services.messenger().installed();
-    }
-
-    public boolean isMessengerRunning() {
-        return services.messenger().running();
-    }
-
-    /** Serving only when installed, not stopped, and the Mainframe itself is powered. */
-    public boolean isMessengerActive() {
-        return services.messenger().active();
-    }
-
-    /** Installs the Messenger Service; false when it was already on. */
-    public boolean installMessenger() {
-        return services.messenger().install();
-    }
-
-    /** Takes it off, and the conversations with it. */
-    public boolean uninstallMessenger() {
-        return services.messenger().uninstall();
-    }
-
-    /** Starts or stops it; stopping drops everybody who had it open. */
-    public boolean setMessengerRunning(final boolean running) {
-        return services.messenger().setRunning(running);
-    }
-
-    /** The conversations it is keeping, which is also what says what it weighs. */
-    public MessengerLog messengerLog() {
-        return services.messenger().log();
-    }
-
-    /** Keeps what somebody said; false when the service is not serving or there was nothing to keep. */
-    public boolean messengerSay(final String room, final String from, final String text,
-                                final long at, final boolean nudge) {
-        return services.messenger().say(room, from, text, at, nudge);
-    }
-
-    /* KnotHub: the source a network keeps while it is still being argued over. */
-
-    public boolean isKnotInstalled() {
-        return services.knot().installed();
-    }
-
-    /** Serving only when installed and the Mainframe is powered. */
-    public boolean isKnotActive() {
-        return services.knot().active();
-    }
-
-    /** Installs KnotHub; false when it was already on. */
-    public boolean installKnot() {
-        return services.knot().install();
-    }
-
-    /** Takes it off, and the history with it. */
-    public boolean uninstallKnot() {
-        return services.knot().uninstall();
-    }
-
-    /** What it is keeping. */
-    public KnotRepository knotRepository() {
-        return services.knot().repository();
-    }
-
-    /** Saves a file as it stands; null when nothing changed or the service is not serving. */
-    @Nullable
-    public KnotRepository.Revision knotCommit(final String file, final String author,
-                                              final String message, final String content, final long at) {
-        return services.knot().commit(file, author, message, content, at);
     }
 
     public boolean isMirrorInstalled() {

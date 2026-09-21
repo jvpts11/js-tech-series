@@ -484,6 +484,18 @@ public interface IOsHost extends IPeripheralOwner {
     }
 
     /**
+     * Told after a service was taken off this machine, so whatever it was keeping can go with it.
+     *
+     * <p>A service that holds something of its own, a history or a body of source, has to be able to let go
+     * of it: what it kept is unreachable the moment the software is gone, and a machine still paying disk
+     * space for it would be keeping something nobody can ever read again.
+     *
+     * @param programPath the program's path, without its namespace
+     */
+    default void serviceUninstalled(final String programPath) {
+    }
+
+    /**
      * This machine's memory ledger: the running system's own share, the desktop package it booted, the
      * services it is running, the programs it is running and the windows it has open, each weighed under the
      * installed system. A machine that is off or has no system holds nothing.
@@ -508,7 +520,12 @@ public interface IOsHost extends IPeripheralOwner {
         final ComputerConsoleState console = console();
         if (console != null) {
             for (final ProgramSpec spec : OsRegistry.programs()) {
-                if (spec.kind() == ProgramKind.SERVICE && console.isInstalled(spec.id().getPath())
+                /*
+                 * By the whole id, which is how every install path writes it down. Asking by the path alone
+                 * matched nothing, so no service ever weighed anything here and none of them was listed as
+                 * running, whatever the player had installed.
+                 */
+                if (spec.kind() == ProgramKind.SERVICE && console.isInstalled(spec.id().toString())
                         && serviceRunning(spec)) {
                     ledger.add(spec.displayName(), spec.ramMbOn(os), RamLedger.Kind.SERVICE);
                 }

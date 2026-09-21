@@ -386,6 +386,11 @@ public final class PackageService {
             final String id = spec.id().toString();
             return ICliPackages.Installing.running(new TtyScriptProcess(SourceBuild.of(spec, builder, ask, () -> {
                 console.install(id);
+                /*
+                 * And at the version it was built at, like every other way of installing it. Without this a
+                 * package built from source was listed as outdated the moment it finished building.
+                 */
+                console.setInstalledVersion(id, ProgramVersions.of(id));
                 machine.setChanged();
             })));
         }
@@ -485,14 +490,23 @@ public final class PackageService {
         final ComputerConsoleState console = this.terminal.console();
         // A Mainframe service switches its flag on directly (a prebuilt daemon, so no source build either).
         if (machine instanceof MainframeBlockEntity mf && spec.kind() == ProgramKind.SERVICE) {
-            final boolean done = switch (spec.id().getPath()) {
+            final boolean switchedOn = switch (spec.id().getPath()) {
                 case "iqlengine" -> mf.installIqlEngine();
                 case "automation_engine" -> mf.installAutomationEngine();
                 case "mirror" -> mf.installMirror();
-                case "messenger_service" -> mf.installMessenger();
-                case "knothub" -> mf.installKnot();
-                default -> console != null && console.install(spec.id().toString());
+                default -> false;
             };
+            /*
+             * And listed in the console as well as switched on, which is what the disc's setup does. Only
+             * the flag was set here, so a service installed from a package manager was serving while the
+             * machine still reported nothing installed, and the memory it held was never counted.
+             */
+            final String id = spec.id().toString();
+            final boolean listed = console != null && console.install(id);
+            if (listed) {
+                console.setInstalledVersion(id, ProgramVersions.of(id));
+            }
+            final boolean done = switchedOn || listed;
             machine.setChanged();
             return done ? ICliComputer.OpResult.ok("Setting up " + spec.commandName() + " ... done")
                     : ICliComputer.OpResult.fail(spec.commandName() + " could not be set up");

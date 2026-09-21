@@ -400,19 +400,21 @@ public final class OsBootstrap {
             ProgramSpec.of(rl("exceed"), "exceed", "Exceed", false, DESKTOPS, 64, ProgramKind.APP, 2, HostScope.ANY)
                     .withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(64),
             /*
-             * The Messenger: a service on the Mainframe and a client on every computer. Its declared memory
-             * is only its floor; what it really costs grows with the conversations it keeps and with how
-             * many people have the messenger open, which is the whole point of it.
+             * The Messenger: a service on a server in a rack and a client on every computer. Its declared
+             * memory is only its floor; what it really costs grows with the conversations it keeps and with
+             * how many people have the messenger open, which is the whole point of it. It belongs on a
+             * server rather than on the Mainframe because that is what a server is for: the Mainframe
+             * orchestrates the network, the servers run the things it serves.
              */
             ProgramSpec.of(rl("messenger_service"), "msgsvc", "Messenger Service", false,
-                            ALL_PLATFORMS, 48, ProgramKind.SERVICE, 2, HostScope.MAINFRAME)
+                            ALL_PLATFORMS, 48, ProgramKind.SERVICE, 2, HostScope.SERVER)
                     .withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(8),
             ProgramSpec.of(rl("messenger"), "messenger", "Midsoft Messenger", false, DESKTOPS, 48,
                             ProgramKind.APP, 2, HostScope.ANY)
                     .withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(32),
             // KnotHub keeps the source a network is still arguing over; Knot is what a computer reads it with.
             ProgramSpec.of(rl("knothub"), "knothub", "KnotHub", false, ALL_PLATFORMS, 64,
-                            ProgramKind.SERVICE, 2, HostScope.MAINFRAME)
+                            ProgramKind.SERVICE, 2, HostScope.SERVER)
                     .withEra(STANDARD).withHouse(SoftwareHouse.DAYLIGHT_FOUNDATION).withRam(16),
             ProgramSpec.of(rl("knot"), "knot", "Knot", false, DESKTOPS, 48, ProgramKind.APP, 2, HostScope.ANY)
                     .withEra(STANDARD).withHouse(SoftwareHouse.DAYLIGHT_FOUNDATION).withRam(32),

@@ -51,15 +51,6 @@ final class MainframeServices {
 
     private final IqlJobAgent jobAgent = new IqlJobAgent();
 
-    /*
-     * The two services whose cost follows their use rather than being a number written down. Each keeps
-     * its own state and its own reading and writing, so this class stays the place they are held rather
-     * than the place they are implemented. They are built in the constructor because they need the
-     * machine, which a field initialiser here would still see as nothing.
-     */
-    private final MessengerService messenger;
-    private final KnotService knot;
-
     /** Jobs the player paused from the Processes tab (lowercased names); a paused job never fires. */
     private final Set<String> pausedJobs = new HashSet<>();
 
@@ -82,20 +73,10 @@ final class MainframeServices {
 
     MainframeServices(final MainframeBlockEntity mainframe) {
         this.mainframe = mainframe;
-        this.messenger = new MessengerService(mainframe);
-        this.knot = new KnotService(mainframe);
     }
 
     IqlCatalog catalog() {
         return catalog;
-    }
-
-    MessengerService messenger() {
-        return messenger;
-    }
-
-    KnotService knot() {
-        return knot;
     }
 
     /** Runs the jobs whose moment has come, which is the one thing here that happens by itself. */
@@ -277,8 +258,6 @@ final class MainframeServices {
         uninstallMirror();
         uninstallIqlEngine();
         uninstallAutomationEngine();
-        messenger.uninstall();
-        knot.uninstall();
     }
 
     void save(final CompoundTag tag) {
@@ -314,8 +293,6 @@ final class MainframeServices {
         if (!savedScript.isEmpty()) {
             tag.putString("IqlScript", savedScript);
         }
-        messenger.save(tag);
-        knot.save(tag);
     }
 
     void load(final CompoundTag tag) {
@@ -348,7 +325,5 @@ final class MainframeServices {
             pausedJobs.add(paused.getString(i));
         }
         savedScript = tag.getString("IqlScript");
-        messenger.load(tag);
-        knot.load(tag);
     }
 }

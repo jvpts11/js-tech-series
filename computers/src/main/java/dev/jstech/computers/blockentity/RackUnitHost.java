@@ -50,6 +50,11 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
+    public void serviceUninstalled(final String programPath) {
+        rack.serviceUninstalled(row, programPath);
+    }
+
+    @Override
     public boolean needsPost() {
         return rack.asUnit(row, rack::needsPost);
     }

@@ -7,10 +7,13 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.operation.payload.ArchiveFilesPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
+import dev.jstech.computers.operation.payload.ExtractArchivePayload;
 import dev.jstech.computers.operation.payload.MkdirPayload;
 import dev.jstech.computers.operation.payload.RenameFilePayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
+import dev.jstech.computers.os.fs.Archive;
 import dev.jstech.computers.os.fs.FileType;
 import java.util.List;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -30,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>The whole name is edited, extension included. The extension is what decides which program opens a file,
  * and keeping it out of reach left a text file that should have been a program with no way to become one.
  */
-final class DeskFiles {
+final class DeskFiles implements CodeFileReplies.IReader {
 
     /** The desktop file being renamed in place, as an index into the desktop's own listing, or -1. */
     private int renaming = -1;
@@ -138,6 +141,54 @@ final class DeskFiles {
             return;
         }
         DeskTrash.delete(desktop.hostPos(), List.of(f.path()));
+    }
+
+    /**
+     * Packs the desktop file at {@code idx} into an archive of its own name, beside it.
+     *
+     * <p>Here as well as in the explorer because the desktop is a folder like any other and a player who
+     * keeps their work on it should not have to open a window to tidy it away.
+     */
+    void compress(final int idx) {
+        final DiskFilesPayload.WireFile file = fileAt(idx);
+        if (file == null) {
+            return;
+        }
+        CodeFileReplies.expectSaved(this);
+        PacketDistributor.sendToServer(new ArchiveFilesPayload(desktop.hostPos(),
+                archiveNameFor(file.path()), List.of(file.path()), false));
+    }
+
+    /** Takes everything out of the desktop archive at {@code idx}, onto the desktop beside it. */
+    void extractHere(final int idx) {
+        final DiskFilesPayload.WireFile file = fileAt(idx);
+        if (file == null) {
+            return;
+        }
+        CodeFileReplies.expectSaved(this);
+        PacketDistributor.sendToServer(new ExtractArchivePayload(desktop.hostPos(), file.path(), "",
+                desktop.deskDir()));
+    }
+
+    @Override
+    public void onSaved(final boolean ok, final String message) {
+        desktop.showBalloon(ok ? "67ark" : "Could not do that", message);
+        FilesApps.diskChanged();
+    }
+
+    @Nullable
+    private DiskFilesPayload.WireFile fileAt(final int idx) {
+        final var files = desktop.deskFiles();
+        return idx < 0 || idx >= files.size() ? null : files.get(idx);
+    }
+
+    /** The archive a thing is packed into: its own name with the archive's extension, beside it. */
+    private static String archiveNameFor(final String path) {
+        final String leaf = Archive.leaf(path);
+        final int dot = leaf.lastIndexOf('.');
+        final String stem = dot > 0 ? leaf.substring(0, dot) : leaf;
+        final int slash = path.lastIndexOf('/');
+        return (slash > 0 ? path.substring(0, slash + 1) : "") + stem + "." + Archive.EXTENSION;
     }
 
     /**

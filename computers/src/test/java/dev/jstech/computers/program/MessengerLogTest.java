@@ -94,10 +94,10 @@ class MessengerLogTest {
     @Test
     void theMemoryCost_growsWithHowManyAreConnected() {
         assertEquals(MessengerLog.BASE_RAM_MB, log.ramMb());
-        log.connect("ada", 0L);
+        log.connect("ada", MessengerLog.LOBBY, 0L);
         assertEquals(MessengerLog.BASE_RAM_MB + MessengerLog.RAM_PER_PERSON_MB, log.ramMb());
-        log.connect("grace", 0L);
-        log.connect("linus", 0L);
+        log.connect("grace", MessengerLog.LOBBY, 0L);
+        log.connect("linus", MessengerLog.LOBBY, 0L);
         assertEquals(MessengerLog.BASE_RAM_MB + 3 * MessengerLog.RAM_PER_PERSON_MB, log.ramMb());
         log.disconnect("grace");
         assertEquals(MessengerLog.BASE_RAM_MB + 2 * MessengerLog.RAM_PER_PERSON_MB, log.ramMb());
@@ -105,12 +105,26 @@ class MessengerLogTest {
 
     @Test
     void connect_andDisconnect_sayWhetherAnythingChanged() {
-        assertTrue(log.connect("ada", 0L));
-        assertFalse(log.connect("ada", 1L), "connecting twice is not news");
+        assertTrue(log.connect("ada", MessengerLog.LOBBY, 0L));
+        assertFalse(log.connect("ada", MessengerLog.LOBBY, 1L), "connecting twice is not news");
         assertTrue(log.disconnect("ada"));
         assertFalse(log.disconnect("ada"));
-        assertFalse(log.connect("", 0L));
-        assertFalse(log.connect(null, 0L));
+        assertFalse(log.connect("", MessengerLog.LOBBY, 0L));
+        assertFalse(log.connect(null, MessengerLog.LOBBY, 0L));
+    }
+
+    @Test
+    void roomOf_isWhateverThePersonLastLookedAt() {
+        final String pair = MessengerLog.privateRoom("ada", "grace");
+        log.connect("ada", pair, 0L);
+        log.connect("grace", MessengerLog.LOBBY, 0L);
+        assertEquals(pair, log.roomOf("ada"), "a window says which conversation it is showing");
+        assertEquals(MessengerLog.LOBBY, log.roomOf("grace"));
+        assertEquals(MessengerLog.LOBBY, log.roomOf("linus"), "somebody who is not there is nowhere");
+        log.connect("ada", MessengerLog.LOBBY, 1L);
+        assertEquals(MessengerLog.LOBBY, log.roomOf("ada"), "and it moves when they move");
+        log.connect("ada", "", 2L);
+        assertEquals(MessengerLog.LOBBY, log.roomOf("ada"), "a window that names no room is in the lobby");
     }
 
     @Test
@@ -119,8 +133,8 @@ class MessengerLogTest {
          * A window says goodbye when it is closed, but a player who walked away or whose client crashed
          * never got to. Without this the service holds memory for them for ever.
          */
-        log.connect("ada", 100L);
-        log.connect("grace", 100L);
+        log.connect("ada", MessengerLog.LOBBY, 100L);
+        log.connect("grace", MessengerLog.LOBBY, 100L);
         assertEquals(0, log.forgetIdle(100L + MessengerLog.IDLE_TICKS),
                 "nobody is let go of before their time is up");
         assertEquals(2, log.connected().size());
@@ -132,9 +146,9 @@ class MessengerLogTest {
 
     @Test
     void forgetIdle_keepsSomebodyWhoHasJustBeenHeardFrom() {
-        log.connect("ada", 100L);
-        log.connect("grace", 100L);
-        log.connect("ada", 500L); // ada said something again
+        log.connect("ada", MessengerLog.LOBBY, 100L);
+        log.connect("grace", MessengerLog.LOBBY, 100L);
+        log.connect("ada", MessengerLog.LOBBY, 500L); // ada said something again
         log.forgetIdle(500L);
         assertEquals(List.of("ada"), log.connected(), "grace went quiet, ada did not");
     }

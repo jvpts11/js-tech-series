@@ -107,7 +107,8 @@ public final class KnotApp implements IDesktopApp {
     }
 
     private void push() {
-        final String named = file.edit().strip();
+        // Nothing is pushed to a service that is not there, whatever route reached this method.
+        final String named = state.service().online() ? file.edit().strip() : "";
         if (named.isEmpty()) {
             return;
         }
@@ -117,7 +118,7 @@ public final class KnotApp implements IDesktopApp {
     }
 
     private void pull() {
-        if (picked <= 0) {
+        if (picked <= 0 || !state.service().online()) {
             return;
         }
         PacketDistributor.sendToServer(new KnotActionPayload(

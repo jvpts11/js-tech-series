@@ -20,6 +20,16 @@ public final class FsPaths {
     /** Maximum length (in characters) for a single file or directory name segment: what a wire field carrying one must fit. */
     public static final int MAX_NAME_LENGTH = 64;
 
+    /**
+     * Maximum length (in characters) of a whole path, folders and all.
+     *
+     * <p>Segments were bounded and the path they built was not, so folders nested deeply enough made a path
+     * longer than any of the packets that carry one. Those fields refuse what they are handed by throwing,
+     * so the file existed and nothing could then ask about it, open it or pack it away. A path is held to
+     * what the packets carry, which is where the limit really is.
+     */
+    public static final int MAX_PATH_LENGTH = 160;
+
     private FsPaths() {
     }
 
@@ -78,7 +88,7 @@ public final class FsPaths {
      * @return true if the path is valid for the given kind
      */
     public static boolean isValidPath(final String path, final FilesystemKind kind) {
-        if (path == null || kind == null) {
+        if (path == null || kind == null || path.length() > MAX_PATH_LENGTH) {
             return false;
         }
         return switch (kind) {

@@ -201,6 +201,18 @@ public final class KnotRepository {
     }
 
     /**
+     * Throws away every file and every revision of it, and starts numbering again.
+     *
+     * <p>This is what taking the service off does: source nobody can reach any more is not kept, and the
+     * numbering starts over because the history the old numbers belonged to is gone with it.
+     */
+    public void clear() {
+        files.clear();
+        history.clear();
+        nextNumber = 1;
+    }
+
+    /**
      * What changed between two texts, line by line.
      *
      * <p>The simplest comparison that tells the truth: a line in both is context, a line only in the older
